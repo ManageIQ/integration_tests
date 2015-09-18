@@ -37,4 +37,4 @@ def test_bad_password():
 
     with error.expected('Sorry, the username or password you entered is incorrect.'):
         login.login(user)
-    assert login.page.is_displayed()
+        assert login.page.is_displayed()
