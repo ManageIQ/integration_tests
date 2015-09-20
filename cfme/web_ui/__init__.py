@@ -1306,7 +1306,14 @@ class Input(Pretty):
     pretty_attrs = ['names']
 
     def __init__(self, *names):
-        self.names = names
+        self._names = names
+
+    @property
+    def names(self):
+        if len(self._names) == 1 and isinstance(self._names[0], dict):
+            return (version.pick(self._names[0]),)
+        else:
+            return self._names
 
     def locate(self):
         # If the end of the locator is changed, modify also the choice in Radio!!!
@@ -3210,3 +3217,64 @@ fill.prefer((DynamicTable, Anything), (object, Mapping))
 fill.prefer((DynamicTable.Row, Anything), (object, Mapping))
 fill.prefer((Select, types.NoneType), (object, types.NoneType))
 fill.prefer((DHTMLSelect, types.NoneType), (object, types.NoneType))
+
+
+class AngularSelect(object):
+    BUTTON = "//button[@data-id='{}']"
+
+    def __init__(self, loc, none=None):
+        self.none = none
+        if isinstance(loc, AngularSelect):
+            self._loc = loc._loc
+        else:
+            self._loc = self.BUTTON.format(loc)
+
+    def locate(self):
+        return sel.move_to_element(self._loc)
+
+    @property
+    def select(self):
+        return Select('select#{}'.format(self.did))
+
+    @property
+    def did(self):
+        return sel.element(self._loc).get_attribute('data-id')
+
+    @property
+    def is_open(self):
+        el = sel.element(self._loc)
+        return el.get_attribute('aria-expanded') == "true"
+
+    def open(self):
+        el = sel.element(self._loc)
+        el.click()
+
+    def select_by_visible_text(self, text):
+        if not self.is_open:
+            self.open()
+        new_loc = self._loc + '/../div/ul/li[contains(., "{}")]'.format(text)
+        sel.click(new_loc)
+
+    def select_by_value(self, value):
+        self.select = Select('select#{}'.format(self.did))
+        options_map = [a.value for a in self.select.all_options]
+        index = options_map.index(value)
+        if not self.is_open:
+            self.open()
+        new_loc = self._loc + '/../div/ul/li[@data-original-index={}]'.format(index)
+        sel.click(new_loc)
+
+    @property
+    def all_options(self):
+        return self.select.all_options
+
+
+@fill.method((AngularSelect, sel.ByText))
+@fill.method((AngularSelect, basestring))
+def _fill_angular_string(obj, s):
+    obj.select_by_visible_text(s)
+
+
+@fill.method((AngularSelect, sel.ByValue))
+def _fill_angular_value(obj, s):
+    obj.select_by_value(s)

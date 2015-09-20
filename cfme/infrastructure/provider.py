@@ -19,18 +19,17 @@ import cfme.web_ui.toolbar as tb
 from cfme.common.provider import BaseProvider
 import utils.conf as conf
 from cfme.web_ui import (
-    Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input
+    Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
+    AngularSelect
 )
 from cfme.web_ui.form_buttons import FormButton
 from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
-from utils import version
+from utils import version, deferred_verpick
 from utils.pretty import Pretty
 
-
-add_infra_provider = FormButton("Add this Infrastructure Provider")
 
 details_page = Region(infoblock_type='detail')
 
@@ -50,11 +49,17 @@ discover_form = Form(
 
 properties_form = Form(
     fields=[
-        ('type_select', Select("select#server_emstype")),
+        ('type_select', {version.LOWEST: Select('select#server_emstype'),
+                         '5.5': AngularSelect("server_emstype")}),
         ('name_text', Input("name")),
         ('hostname_text', Input("hostname")),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
-        ('api_port', Input("port")),
+        ('api_port', Input(
+            {
+                version.LOWEST: "port",
+                "5.5": "api_port",
+            }
+        )),
         ('sec_protocol', Select("select#security_protocol")),
         ('sec_realm', Input("realm"))
     ])
@@ -110,7 +115,7 @@ class Provider(Updateable, Pretty, BaseProvider):
     page_name = "infrastructure"
     quad_name = "infra_prov"
     properties_form = properties_form
-    add_provider_button = add_infra_provider
+    add_provider_button = form_buttons.FormButton("Add this Infrastructure Provider")
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None):
@@ -122,8 +127,7 @@ class Provider(Updateable, Pretty, BaseProvider):
         self.provider_data = provider_data
         self.zone = zone
         self.vm_name = version.pick({version.LOWEST: "VMs", '5.5': "VMs and Instances"})
-        self.template_name = version.pick(
-            {version.LOWEST: "Templates", '5.5': "VM Templates and Images"})
+        self.template_name = "Templates"
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
