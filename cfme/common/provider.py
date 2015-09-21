@@ -155,7 +155,7 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
         for cred in self.credentials:
             fill(credential_form, updates.get('credentials', {}).get(cred, None),
                  validate=validate_credentials)
-        self._submit(cancel, form_buttons.save)
+        self._submit(cancel, self.save_button)
         name = updates['name'] or self.name
         if not cancel:
             flash.assert_message_match('{} Provider "{}" was saved'.format(self.string_name, name))

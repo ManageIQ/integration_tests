@@ -27,7 +27,7 @@ from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
-from utils import version, deferred_verpick
+from utils import version
 from utils.pretty import Pretty
 
 
@@ -112,6 +112,7 @@ class Provider(Updateable, Pretty, BaseProvider):
     quad_name = "infra_prov"
     properties_form = properties_form
     add_provider_button = form_buttons.FormButton("Add this Infrastructure Provider")
+    save_button = form_buttons.FormButton("Save Changes")
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None):

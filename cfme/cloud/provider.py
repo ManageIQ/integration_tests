@@ -101,6 +101,9 @@ class Provider(Updateable, Pretty, BaseProvider):
     add_provider_button = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton("Add this Cloud Provider"),
          '5.5': form_buttons.FormButton("Add")})
+    save_button = deferred_verpick(
+        {version.LOWEST: form_buttons.FormButton("Save Changes"),
+         '5.5': form_buttons.FormButton("Save changes")})
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
         if not credentials:
