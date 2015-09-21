@@ -4,8 +4,8 @@ from fixtures.pytest_store import store
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons, Input, \
-    Table, UpDownSelect
+from cfme.web_ui import AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash, \
+    form_buttons, Input, Table, UpDownSelect
 from cfme.web_ui.menu import nav
 from utils.log import logger
 from utils.update import Updateable
@@ -248,7 +248,10 @@ class Group(Updateable, Pretty):
     group_form = Form(
         fields=[
             ('description_txt', Input('description')),
-            ('role_select', Select("//*[@id='group_role']")),
+            ('role_select', {
+                version.LOWEST: Select("//*[@id='group_role']"),
+                "5.5": AngularSelect("group_role")}),
+            ('group_tenant', AngularSelect("group_tenant"), {"appeared_in", "5.5"})
         ])
     pretty_attrs = ['description', 'role']
 
