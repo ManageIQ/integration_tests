@@ -426,6 +426,13 @@ class IPAppliance(object):
             # Fix SELinux things
             ssh_client.run_command("restorecon -R /etc/sysconfig/network-scripts")
             ssh_client.run_command("restorecon /etc/sysconfig/network")
+            # Stop the evmserverd and move the logs somewhere
+            ssh_client.run_command("service evmserverd stop")
+            ssh_client.run_command("mkdir -p /var/www/miq/vmdb/log/preconfigure-logs")
+            ssh_client.run_command(
+                "mv /var/www/miq/vmdb/log/*.log /var/www/miq/vmdb/log/preconfigure-logs/")
+            ssh_client.run_command(
+                "mv /var/www/miq/vmdb/log/*.gz /var/www/miq/vmdb/log/preconfigure-logs/")
 
     @property
     def managed_providers(self):
