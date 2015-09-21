@@ -6,7 +6,7 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import (Form, Region, Select, fill, form_buttons, flash, Table,
+from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons, flash, Table,
     Quadicon, CheckboxTree, Input)
 from cfme.web_ui.menu import nav
 from utils import version
@@ -47,8 +47,12 @@ class Timeprofile(Updateable):
     timeprofile_form = Form(
         fields=[
             ("description", Input("description")),
-            ("scope", Select("select#profile_type")),
-            ("timezone", Select("select#profile_tz")),
+            ("scope", {
+                version.LOWEST: Select("select#profile_type"),
+                "5.5": AngularSelect("profile_type")}),
+            ("timezone", {
+                version.LOWEST: Select("select#profile_tz"),
+                "5.5": AngularSelect("profile_tz")}),
             ("days", Input("all_days")),
             ("hours", Input("all_hours")),
         ]
@@ -113,15 +117,25 @@ class Visual(Updateable):
 
     item_form = Form(
         fields=[
-            ('grid_view', Select('//select[@id="perpage_grid"]')),
-            ('tile_view', Select('//select[@id="perpage_tile"]')),
-            ('list_view', Select('//select[@id="perpage_list"]')),
-            ('reports', Select('//select[@id="perpage_reports"]')),
+            ('grid_view', {
+                version.LOWEST: Select('//select[@id="perpage_grid"]'),
+                "5.5": AngularSelect('perpage_grid')}),
+            ('tile_view', {
+                version.LOWEST: Select('//select[@id="perpage_tile"]'),
+                "5.5": AngularSelect("perpage_tile")}),
+            ('list_view', {
+                version.LOWEST: Select('//select[@id="perpage_list"]'),
+                "5.5": AngularSelect("perpage_list")}),
+            ('reports', {
+                version.LOWEST: Select('//select[@id="perpage_reports"]'),
+                "5.5": AngularSelect("perpage_reports")}),
         ])
 
     startpage_form = Form(
         fields=[
-            ('login_page', Select('//select[@id="start_page"]'))])
+            ('login_page', {
+                version.LOWEST: Select('//select[@id="start_page"]'),
+                "5.5": AngularSelect("start_page")})])
 
     quadicons_form = Form(
         fields=[
@@ -137,8 +151,12 @@ class Visual(Updateable):
 
     display_form = Form(
         fields=[
-            ('chart_theme', Select('//select[@id="display_reporttheme"]')),
-            ('time_zone', Select('//select[@id="display_timezone"]')),
+            ('chart_theme', {
+                version.LOWEST: Select('//select[@id="display_reporttheme"]'),
+                "5.5": AngularSelect("display_reporttheme")}),
+            ('time_zone', {
+                version.LOWEST: Select('//select[@id="display_timezone"]'),
+                "5.5": AngularSelect("display_timezone")}),
         ])
 
     save_button = form_buttons.FormButton("Add this Time Profile")
