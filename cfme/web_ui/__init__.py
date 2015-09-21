@@ -3253,15 +3253,18 @@ class AngularSelect(object):
         if not self.is_open:
             self.open()
         new_loc = self._loc + '/../div/ul/li[contains(., "{}")]'.format(text)
+        e = sel.element(new_loc)
+        sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)
 
     def select_by_value(self, value):
-        self.select = Select('select#{}'.format(self.did))
         options_map = [a.value for a in self.select.all_options]
         index = options_map.index(value)
         if not self.is_open:
             self.open()
         new_loc = self._loc + '/../div/ul/li[@data-original-index={}]'.format(index)
+        e = sel.element(new_loc)
+        sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)
 
     @property
@@ -3272,9 +3275,15 @@ class AngularSelect(object):
 @fill.method((AngularSelect, sel.ByText))
 @fill.method((AngularSelect, basestring))
 def _fill_angular_string(obj, s):
-    obj.select_by_visible_text(s)
+    if s:
+        obj.select_by_visible_text(s)
+    else:
+        return
 
 
 @fill.method((AngularSelect, sel.ByValue))
 def _fill_angular_value(obj, s):
-    obj.select_by_value(s)
+    if s.value:
+        obj.select_by_value(s.value)
+    else:
+        return
