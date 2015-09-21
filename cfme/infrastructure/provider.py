@@ -54,13 +54,9 @@ properties_form = Form(
         ('name_text', Input("name")),
         ('hostname_text', Input("hostname")),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
-        ('api_port', Input(
-            {
-                version.LOWEST: "port",
-                "5.5": "api_port",
-            }
-        )),
-        ('sec_protocol', Select("select#security_protocol")),
+        ('api_port', Input("port")),
+        ('sec_protocol', {version.LOWEST: Select("select#security_protocol"),
+                         '5.5': AngularSelect("security_protocol")}),
         ('sec_realm', Input("realm"))
     ])
 
