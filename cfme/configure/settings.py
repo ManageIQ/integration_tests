@@ -164,7 +164,7 @@ class Visual(Updateable):
     @property
     def grid_view_limit(self):
         sel.force_navigate("my_settings_visual")
-        return int(sel.text(self.item_form.grid_view.first_selected_option))
+        return int(self.item_form.grid_view.first_selected_option_text)
 
     @grid_view_limit.setter
     def grid_view_limit(self, value):
@@ -175,7 +175,7 @@ class Visual(Updateable):
     @property
     def tile_view_limit(self):
         sel.force_navigate("my_settings_visual")
-        return int(sel.text(self.item_form.tile_view.first_selected_option))
+        return int(self.item_form.tile_view.first_selected_option_text)
 
     @tile_view_limit.setter
     def tile_view_limit(self, value):
@@ -186,7 +186,7 @@ class Visual(Updateable):
     @property
     def list_view_limit(self):
         sel.force_navigate("my_settings_visual")
-        return int(sel.text(self.item_form.list_view.first_selected_option))
+        return int(self.item_form.list_view.first_selected_option_text)
 
     @list_view_limit.setter
     def list_view_limit(self, value):
@@ -197,7 +197,7 @@ class Visual(Updateable):
     @property
     def report_view_limit(self):
         sel.force_navigate("my_settings_visual")
-        return int(sel.text(self.item_form.reports.first_selected_option))
+        return int(self.item_form.reports.first_selected_option_text)
 
     @report_view_limit.setter
     def report_view_limit(self, value):
@@ -208,7 +208,7 @@ class Visual(Updateable):
     @property
     def login_page(self):
         sel.force_navigate("my_settings_visual")
-        return int(sel.text(self.startpage_form.login_page.first_selected_option))
+        return int(self.startpage_form.login_page.first_selected_option_text)
 
     @login_page.setter
     def login_page(self, value):
@@ -290,7 +290,7 @@ class Visual(Updateable):
     @property
     def timezone(self):
         sel.force_navigate("my_settings_visual")
-        return sel.text(self.display_form.time_zone.first_selected_option)
+        return self.display_form.time_zone.first_selected_option_text
 
     @timezone.setter
     def timezone(self, value):

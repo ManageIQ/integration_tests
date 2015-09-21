@@ -106,10 +106,19 @@ def elements(o, **kwargs):
 
     Returns: A list of WebElement objects
     """
+    check_visibility = kwargs.pop("check_visibility", True)
     if hasattr(o, "locate"):
-        return [e for e in elements(o.locate(), **kwargs) if is_displayed(e)]
+        els = elements(o.locate(), **kwargs)
+        if check_visibility:
+            return [e for e in els if is_displayed(e)]
+        else:
+            return els
     elif callable(o):
-        return [e for e in elements(o(), **kwargs) if is_displayed(e)]
+        els = elements(o(), **kwargs)
+        if check_visibility:
+            return [e for e in els if is_displayed(e)]
+        else:
+            els
     else:
         raise TypeError("Unprocessable type for elements({}) -> class {} (kwargs: {})".format(
             str(repr(o)), o.__class__.__name__, str(repr(kwargs))
@@ -1251,7 +1260,10 @@ class Select(SeleniumSelect, Pretty):
 
     @property
     def _el(self):
-        return element(self) if self.is_patternfly else move_to_element(self)
+        if self.is_patternfly:
+            return element(self, check_visibility=False)
+        else:
+            return move_to_element(self)
 
     @property
     def all_options(self):
@@ -1277,7 +1289,9 @@ class Select(SeleniumSelect, Pretty):
         Selenium's all_selected_options iterates over ALL of the options, this directly returns
         only those that are selected.
         """
-        return execute_script("return arguments[0].selectedOptions;", element(self))
+        return execute_script(
+            "return arguments[0].selectedOptions;",
+            element(self, check_visibility=not self.is_patternfly))
 
     @property
     def first_selected_option(self):
@@ -1289,6 +1303,15 @@ class Select(SeleniumSelect, Pretty):
             return self.all_selected_options[0]
         except IndexError:
             raise NoSuchElementException("No options are selected")
+
+    @property
+    def first_selected_option_text(self):
+        if not self.is_patternfly:
+            return text(self.first_selected_option)
+        else:
+            parser = HTMLParser()
+            return parser.unescape(
+                execute_script("return arguments[0].innerHTML;", self.first_selected_option))
 
     def deselect_all(self):
         """Fast variant of the original deselect_all.
@@ -1307,7 +1330,9 @@ class Select(SeleniumSelect, Pretty):
 
     def get_value_by_text(self, text):
         # unescape because it turns <> into &lt;&gt; which we don't want in xpath
-        opt = element(".//option[.={}]".format(unescape(quoteattr(text))), root=element(self))
+        opt = element(
+            ".//option[.={}]".format(unescape(quoteattr(text))),
+            root=element(self, check_visibility=not self.is_patternfly))
         return get_attribute(opt, "value")
 
     def select_by_value(self, value):
@@ -1317,7 +1342,7 @@ class Select(SeleniumSelect, Pretty):
             execute_script(
                 "$(arguments[0]).selectpicker('val', arguments[1]);"
                 "$(arguments[0]).trigger('change');",
-                element(self), value)
+                element(self, check_visibility=not self.is_patternfly), value)
             return None
 
     def select_by_visible_text(self, text):

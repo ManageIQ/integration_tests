@@ -3023,7 +3023,16 @@ class ButtonGroup(object):
             key: The name of the key field text before the button group.
         """
         self.key = key
-        self.locator = '//td[@class="key" and normalize-space(text())="{}"]/..'.format(self.key)
+
+    @property
+    def locator(self):
+        attr = re.sub(r"&amp;", "&", quoteattr(self.key))  # We don't need it in xpath
+        if version.current_version() < "5.5":
+            return '//td[@class="key" and normalize-space(.)={}]/..'.format(attr)
+        else:
+            return (
+                '//label[contains(@class, "control-label") and normalize-space(.)={}]/..'
+                .format(attr))
 
     def locate(self):
         """ Moves to the element """
@@ -3031,20 +3040,27 @@ class ButtonGroup(object):
         return sel.move_to_element(self.locator)
 
     @property
+    def locator_base(self):
+        if version.current_version() < "5.5":
+            return self.locator + "/td[2]"
+        else:
+            return self.locator + "/div"
+
+    @property
     def active(self):
         """ Returns the alt tag text of the active button in thr group. """
-        loc = sel.element(self.locator + '/td[2]/ul/li[@class="active"]/img')
+        loc = sel.element(self.locator_base + '/ul/li[@class="active"]/img')
         return loc.get_attribute('alt')
 
     def status(self, alt):
         """ Returns the status of the button identified by the Alt Text of the image. """
-        active_loc = self.locator + '/td[2]/ul/li/img[@alt="{}"]'.format(alt)
+        active_loc = self.locator_base + '/ul/li/img[@alt="{}"]'.format(alt)
         try:
             sel.element(active_loc)
             return True
         except NoSuchElementException:
             pass
-        inactive_loc = self.locator + '/td[2]/ul/li/a/img[@alt="{}"]'.format(alt)
+        inactive_loc = self.locator_base + '/ul/li/a/img[@alt="{}"]'.format(alt)
         try:
             sel.element(inactive_loc)
             return False
@@ -3054,7 +3070,7 @@ class ButtonGroup(object):
     def choose(self, alt):
         """ Sets the ButtonGroup to select the button identified by the alt text. """
         if not self.status(alt):
-            inactive_loc = self.locator + '/td[2]/ul/li/a/img[@alt="{}"]'.format(alt)
+            inactive_loc = self.locator_base + '/ul/li/a/img[@alt="{}"]'.format(alt)
             sel.click(inactive_loc)
 
 
@@ -3278,6 +3294,10 @@ class AngularSelect(object):
     @property
     def first_selected_option(self):
         return self.select.first_selected_option
+
+    @property
+    def first_selected_option_text(self):
+        return self.select.first_selected_option_text
 
 
 @fill.method((AngularSelect, sel.ByText))
