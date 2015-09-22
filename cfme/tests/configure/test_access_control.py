@@ -151,7 +151,7 @@ def test_user_edit_tag():
     user = new_user()
     user.create()
     user.edit_tags("Cost Center *", "Cost Center 001")
-    row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+    row = sel.elements("//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
         "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
     tag = sel.text(row).strip()
     assert tag == "Cost Center: Cost Center 001", "User edit tag failed"
@@ -162,7 +162,7 @@ def test_user_remove_tag():
     user = new_user()
     user.create()
     sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": user})
-    row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+    row = sel.elements("//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
         "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
     tag = sel.text(row).strip()
     user.edit_tags("Department", "Engineering")
@@ -233,7 +233,7 @@ def test_group_edit_tag():
     group = new_group()
     group.create()
     group.edit_tags("Cost Center *", "Cost Center 001")
-    row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+    row = sel.elements("//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
         "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
     tag = sel.text(row).strip()
     assert tag == "Cost Center: Cost Center 001", "Group edit tag failed"
@@ -244,7 +244,7 @@ def test_group_remove_tag():
     group = new_group()
     group.create()
     sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": group})
-    row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+    row = sel.elements("//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
         "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
     tag = sel.text(row).strip()
     group.edit_tags("Department", "Engineering")
