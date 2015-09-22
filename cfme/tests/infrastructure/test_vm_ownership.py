@@ -100,7 +100,7 @@ def new_user(group_only_user_owned):
 
 
 def test_form_button_validation(request, user1, setup_infra_provider):
-    set_vm_to_user = VM.factory('cu-9-5', setup_infra_provider)
+    set_vm_to_user = VM.factory(setup_infra_provider.data['ownership_vm'], setup_infra_provider)
     # Reset button test
     set_vm_to_user.set_ownership(user=user1.name, click_reset=True)
     # Cancel button test
@@ -112,7 +112,7 @@ def test_form_button_validation(request, user1, setup_infra_provider):
 
 
 def test_user_ownership_crud(request, user1, setup_infra_provider):
-    set_vm_to_user = VM.factory('cu-9-5', setup_infra_provider)
+    set_vm_to_user = VM.factory(setup_infra_provider.data['ownership_vm'], setup_infra_provider)
     # Set the ownership and checking it
     set_vm_to_user.set_ownership(user=user1.name)
     login.login(user1.credential.principal, user1.credential.secret)
@@ -125,7 +125,7 @@ def test_user_ownership_crud(request, user1, setup_infra_provider):
 
 
 def test_group_ownership_on_user_only_role(request, user2, setup_infra_provider):
-    set_vm_to_group = VM.factory('cu-9-5', setup_infra_provider)
+    set_vm_to_group = VM.factory(setup_infra_provider.data['ownership_vm'], setup_infra_provider)
     set_vm_to_group.set_ownership(group=user2.group.description)
     login.login(user2.credential.principal, user2.credential.secret)
     assert(set_vm_to_group.exists, "vm not found")
@@ -137,7 +137,7 @@ def test_group_ownership_on_user_only_role(request, user2, setup_infra_provider)
 
 
 def test_group_ownership_on_user_or_group_role(request, user3, setup_infra_provider):
-    set_vm_to_group = VM.factory('cu-9-5', setup_infra_provider)
+    set_vm_to_group = VM.factory(setup_infra_provider.data['ownership_vm'], setup_infra_provider)
     set_vm_to_group.set_ownership(group=user3.group.description)
     login.login(user3.credential.principal, user3.credential.secret)
     assert(set_vm_to_group.exists, "vm not found")
@@ -149,9 +149,9 @@ def test_group_ownership_on_user_or_group_role(request, user3, setup_infra_provi
 
 
 # @pytest.mark.meta(blockers=[1202947])
-@pytest.mark.skipif('True')
+@pytest.mark.skipif('True', 'BZ#1202947 is logged in 5.4, but reproducible in all the streams')
 def test_ownership_transfer(request, user1, user3, setup_infra_provider):
-    set_vm_to_user = VM.factory('cu-9-5', setup_infra_provider)
+    set_vm_to_user = VM.factory(setup_infra_provider.data['ownership_vm'], setup_infra_provider)
     # Setting ownership
     login.login_admin()
     set_vm_to_user.set_ownership(user=user1.name)
