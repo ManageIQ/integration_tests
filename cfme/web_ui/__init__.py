@@ -107,7 +107,11 @@ class Region(Pretty):
 
     def __getattr__(self, name):
         if hasattr(self, 'locators') and name in self.locators:
-            return self.locators[name]
+            locator = self.locators[name]
+            if isinstance(locator, dict):
+                return version.pick(locator)
+            else:
+                return locator
         else:
             raise AttributeError("Region has no attribute named " + name)
 
