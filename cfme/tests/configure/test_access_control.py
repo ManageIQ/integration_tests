@@ -114,7 +114,11 @@ def test_user_password_required_error_validation():
         credential=Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret=None),
         email='xyz@redhat.com',
         group=group_user)
-    with error.expected("Password_digest can't be blank"):
+    if version.current_version < "5.5":
+        check = "Password_digest can't be blank"
+    else:
+        check = "Password can't be blank"
+    with error.expected(check):
         user.create()
 
 
