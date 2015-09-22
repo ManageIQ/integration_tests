@@ -410,7 +410,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         if load_details:
             self.load_details()
 
-    def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
+    def set_ownership(self, user=None, group=None, vm_type=None,
+            click_cancel=False, click_reset=False):
         """Set ownership of the VM/Instance or Template/Image"""
         sel.click(self.find_quadicon(False, False, False))
         cfg_btn('Set Ownership')
@@ -425,7 +426,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         else:
             action = form_buttons.save
             msg_assert = lambda: flash.assert_success_message(
-                'Ownership saved for selected Virtual Machine')
+                'Ownership saved for selected {}'.format(VM.VM_TYPE))
         fill(set_ownership_form, {'user_name': user, 'group_name': group},
              action=action)
         msg_assert()
@@ -457,6 +458,7 @@ def date_retire_element(fill_data):
 
 class VM(BaseVM):
     TO_RETIRE = None
+    VM_TYPE = None
 
     retire_form = Form(fields=[
         ('date_retire', date_retire_element),

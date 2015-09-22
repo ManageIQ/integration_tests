@@ -181,6 +181,7 @@ class Instance(VM):
     TO_OPEN_EDIT = "Edit this Instance"
     TO_RETIRE = "Retire this Instance"
     QUADICON_TYPE = "instance"
+    VM.VM_TYPE = "Instance"
 
     def create(self):
         """Provisions an instance with the given properties through CFME
