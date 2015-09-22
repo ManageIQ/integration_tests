@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from datetime import date
 from random import choice
 
 from utils import testgen
 from utils.blockers import BZ
 from utils.miq_soap import MiqVM, set_client
 from utils.providers import setup_a_provider as _setup_a_provider
+from utils.version import appliance_build_date, current_version
 
 pytest_generate_tests = testgen.generate(
     testgen.infra_providers,
@@ -16,6 +18,14 @@ pytest_generate_tests = testgen.generate(
 )
 
 pytestmark = [pytest.mark.ignore_stream("5.5", "upstream")]
+
+
+# SOAP was removed on 8. July, and that will most likely go away with the next version too.
+# Version check because that change won't go to 5.4 I presume. 5.5 covers both upstream and next
+# version to come.
+pytestmark = [
+    pytest.mark.uncollectif(
+        lambda: appliance_build_date() > date(2015, 7, 8) and current_version >= "5.5")]
 
 
 @pytest.fixture(scope="class")
