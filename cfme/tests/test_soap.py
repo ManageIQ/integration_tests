@@ -17,6 +17,7 @@ pytest_generate_tests = testgen.generate(
 
 pytestmark = [pytest.mark.ignore_stream("5.5", "upstream")]
 
+
 @pytest.fixture(scope="class")
 def setup_a_provider():
     _setup_a_provider("infra")
