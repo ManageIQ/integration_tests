@@ -507,6 +507,17 @@ class AnalysisProfile(Pretty, Updateable):
         sel.handle_alert()
         flash.assert_no_errors()
 
+    def copy(self, name=None):
+        if not name:
+            name = self.name + "copy"
+        sel.force_navigate("cfg_analysis_profile", context={"analysis_profile": self})
+        tb.select('Configuration', 'Copy this selected Analysis Profile')
+        new_profile = AnalysisProfile(name=name, description=self.description, files=self.files)
+        fill(self.form, {'name': new_profile.name},
+             action=form_buttons.add)
+        flash.assert_success_message('Analysis Profile "{}" was saved'.format(new_profile.name))
+        return new_profile
+
     @property
     def exists(self):
         try:

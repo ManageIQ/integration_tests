@@ -31,6 +31,8 @@ def test_host_analysis_profile_crud():
     p.create()
     with update(p):
         p.files = ["qwer"]
+    copied_profile = p.copy()
+    copied_profile.delete()
     p.delete()
 
 
