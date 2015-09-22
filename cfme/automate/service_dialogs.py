@@ -4,7 +4,7 @@ import functools
 from cfme.web_ui import menu
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
-from cfme.web_ui import Form, Select, SplitTable, accordion,\
+from cfme.web_ui import AngularSelect, Form, Select, SplitTable, accordion,\
     fill, flash, form_buttons, Table, Tree, Input
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -46,17 +46,24 @@ element_form = Form(fields=[
     ('ele_label', Input("field_label")),
     ('ele_name', Input("field_name")),
     ('ele_desc', Input("field_description")),
-    ('choose_type', Select("//select[@id='field_typ']")),
+    ('choose_type', {
+        version.LOWEST: Select("//select[@id='field_typ']"),
+        "5.5": AngularSelect("field_typ")}),
     ('default_text_box', Input("field_default_value")),
-    ('field_required', Input("field_required")),
+    ('field_required', {
+        version.LOWEST: Input("field_required"),
+        "5.5": AngularSelect("field_required")}),
     ('field_past_dates', Input("field_past_dates")),
     ('field_entry_point', Input("field_entry_point")),
     ('field_show_refresh_button', Input("field_show_refresh_button")),
     ('entry_value', Input("entry[value]")),
     ('entry_description', Input("entry[description]")),
     ('add_entry_button', Input("accept")),
+    # This one too? vvv I could not find it in the form
     ('field_category', Select("//select[@id='field_category']")),
-    ('text_area', Input("field_default_value")),
+    ('text_area', {
+        version.LOWEST: Input("field_default_value"),
+        "5.5": AngularSelect("field_default_value")}),
     ('dynamic_chkbox', Input("field_dynamic")),
     ('apply_btn', '//a[@title="Apply"]')
 ])
