@@ -134,9 +134,11 @@ class TreeNode(pretty.Pretty):
 class CopiableTreeNode(TreeNode):
     copy_form = Form(fields=[
         ("domain", Select("select#domain")),
-        ("domain_text_only",
-            "//fieldset[p]//tr[./td[@class='key' and normalize-space(.)='To Domain']]/"
-            "td[not(@class='key') and not(select)]"),
+        ("domain_text_only", {
+            version.LOWEST: "//fieldset[p]//tr[./td[@class='key' and normalize-space(.)="
+                            "'To Domain']]/td[not(@class='key') and not(select)]",
+            "5.5": "//label[contains(@class, 'control-label') and normalize-space(.)='To Domain']/"
+                   "../div/p"}),
         ("override", Input("override_source"))
     ])
 
