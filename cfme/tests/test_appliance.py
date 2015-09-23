@@ -9,24 +9,45 @@ from utils import db, version
 pytestmark = pytest.mark.smoke
 
 
+def _rpms_present_packages():
+    # autogenerate the rpms to test based on the current appliance version
+    # and the list of possible packages that can be installed
+    current_version = version.current_version()
+    possible_packages = [
+        'cfme',
+        'cfme-appliance',
+        'cfme-lib',
+        'nfs-utils',
+        'nfs-utils-lib',
+        'libnfsidmap',
+        'mingw32-cfme-host',
+        'ipmitool',
+        'prince',
+        'netapp-manageability-sdk',
+        'rhn-client-tools',
+        'rhn-check',
+        'rhnlib'
+    ]
+
+    def package_filter(package):
+        package_tests = [
+            # stopped shipping this with 5.4
+            package == 'mingw32-cfme-host' and current_version >= '5.4',
+            # stopped shipping these with 5.5
+            package in ('cfme-lib', 'netapp-manageability-sdk') and current_version >= 5.5,
+            # nfs-utils-lib was superseded by libnfsidmap in el7/cfme 5.5
+            # so filter out nfs-utils-lib on 5.5 and up, and libnfsidmap below 5.5
+            package == 'nfs-utils-lib' and current_version >= '5.5',
+            package == 'libnfsidmap' and current_version < '5.5',
+        ]
+        # If any of the package tests eval'd to true, filter this package out
+        return not any(package_tests)
+
+    return filter(package_filter, possible_packages)
+
+
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.parametrize(('package'), [
-    'cfme',
-    'cfme-appliance',
-    'cfme-lib',
-    'nfs-utils',
-    'nfs-utils-lib',
-    'mingw32-cfme-host',
-    'ipmitool',
-    'prince',
-    'netapp-manageability-sdk',
-    'rhn-client-tools',
-    'rhn-check',
-    'rhnlib',
-])
-@pytest.mark.meta(
-    # TODO: Change to uncollecting when possible.
-    skip=lambda package: package == "mingw32-cfme-host" and version.current_version() >= "5.4")
+@pytest.mark.parametrize(('package'), _rpms_present_packages())
 def test_rpms_present(ssh_client, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations"""
     exit, stdout = ssh_client.run_command('rpm -q %s' % package)
@@ -61,7 +82,7 @@ def test_evm_running(ssh_client):
     assert 'started' in stdout.lower()
 
 
-@pytest.mark.uncollectif(lambda service: version.current_version().is_in_series('upstream')
+@pytest.mark.uncollectif(lambda service: version.current_version() >= '5.5'
     and service == 'iptables')
 @pytest.mark.parametrize(('service'), [
     'evmserverd',
@@ -93,7 +114,7 @@ def test_iptables_rules(ssh_client, proto, port):
     # get the current iptables state, nicely formatted for us by iptables-save
     res = ssh_client.run_command('iptables-save')
     # get everything from the input chain
-    input_rules = filter(lambda line: line.startswith('-A INPUT'), res.output.splitlines())
+    input_rules = filter(lambda line: line.startswith('-A IN'), res.output.splitlines())
 
     # filter to make sure we have a rule that matches the given proto and port
     def rule_filter(rule):
@@ -101,7 +122,8 @@ def test_iptables_rules(ssh_client, proto, port):
         # if not, this can be broken up into its individual components
         matches = [
             '-p {proto}',
-            '-m {proto} --dport {port} -j ACCEPT'
+            '-m {proto} --dport {port}',
+            '-j ACCEPT'
         ]
         return all([match.format(proto=proto, port=port) in rule for match in matches])
     assert filter(rule_filter, input_rules)
@@ -147,7 +169,12 @@ def test_certificates_present(ssh_client, soft_assert):
             ("/etc/pki/product-default/69.pem", '0f7e6e9343c2b7fe1162f06dd92c93c3'),
             ("/etc/pki/product/167.pem", '1a67ad5013806cad9d839180b6564e00'),
             ("/etc/pki/product/201.pem", '0a2739f9ad6f4f5288379295004a1d7d')
-        ]
+        ],
+        '5.5': [
+            ("/etc/pki/product/69.pem", '0f0be32ac9d262df51d951d41dc05a24'),
+            ("/etc/pki/product/167.pem", '1a67ad5013806cad9d839180b6564e00'),
+            ("/etc/pki/product/201.pem", 'd0e06fcada93d373e802d427a920e0d7')
+        ],
     })
     for filename, given_md5 in filenames_md5s:
         file_exists = ssh_client.run_command("test -f '%s'" % filename)[0] == 0

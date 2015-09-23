@@ -22,7 +22,7 @@ from fixtures.pytest_store import store
 
 
 page = Region(
-    title={version.LOWEST: "Dashboard", version.LATEST: "Login"},
+    title={version.LOWEST: "Dashboard", '5.5': "Login"},
     locators={
         'username': Input("user_name"),
         'password': Input("user_password"),
