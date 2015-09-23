@@ -11,7 +11,8 @@ from cfme.exceptions import FlashMessageException
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import InfoBlock, fill, flash
-from utils import testgen, version
+from utils import mgmt_system, testgen, version
+from utils.blockers import BZ
 from utils.log import logger
 from utils.providers import setup_provider
 from utils.wait import wait_for, TimedOutError
@@ -21,7 +22,12 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.sel.go_to("dashboard"),
-    pytest.mark.long_running
+    pytest.mark.long_running,
+    pytest.mark.meta(blockers=[
+        BZ(
+            1265466,
+            unblock=lambda provider: not isinstance(provider.mgmt, mgmt_system.RHEVMSystem))
+    ])
 ]
 
 

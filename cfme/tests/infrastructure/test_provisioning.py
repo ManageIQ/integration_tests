@@ -6,13 +6,19 @@ from cfme.common.provider import cleanup_vm
 from cfme.provisioning import do_vm_provisioning
 from cfme.services import requests
 from cfme.web_ui import fill
-from utils import normalize_text, testgen
+from utils import mgmt_system, normalize_text, testgen
+from utils.blockers import BZ
 from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
-    pytest.mark.usefixtures('uses_infra_providers')
+    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.meta(blockers=[
+        BZ(
+            1265466,
+            unblock=lambda provider: not isinstance(provider.mgmt, mgmt_system.RHEVMSystem))
+    ])
 ]
 
 
