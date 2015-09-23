@@ -92,9 +92,9 @@ def message(el):
 
 
 def get_messages():
-    """Return a list of flash messages"""
+    """Return a list of visible flash messages"""
     sel.wait_for_ajax()
-    return map(message, sel.elements(area.message))
+    return map(message, [e for e in sel.elements(area.message) if sel.is_displayed(e)])
 
 
 def dismiss():

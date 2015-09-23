@@ -192,6 +192,8 @@ def _t(t, root=None):
 @elements.method(set)
 def _l(l, **kwargs):
     """If we pass an iterable (non-tuple), just find everything relevant from it by all locators."""
+    if not l:
+        return []
     found = reduce(lambda a, b: a + b, map(lambda loc: elements(loc, **kwargs), l))
     seen = set([])
     result = []

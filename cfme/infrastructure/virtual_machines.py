@@ -227,24 +227,38 @@ class Vm(BaseVM, Common):
             toolbar.select('Delete Snapshots', 'Delete Selected Snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             if not cancel:
-                flash.assert_message_match(
-                    'Delete Snapshot initiated for 1 VM and Instance from the CFME Database')
+                if version.current_version() >= "5.5":
+                    flash.assert_message_match(
+                        'Remove Snapshot initiated for 1 VM and Instance from the CFME Database')
+                else:
+                    flash.assert_message_match(
+                        'Delete Snapshot initiated for 1 VM and Instance from the CFME Database')
 
         def delete_all(self, cancel=False):
             self._nav_to_snapshot_mgmt()
             toolbar.select('Delete Snapshots', 'Delete All Existing Snapshots', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             if not cancel:
-                flash.assert_message_match(
-                    'Delete All Snapshots initiated for 1 VM and Instance from the CFME Database')
+                if version.current_version() >= "5.5":
+                    flash.assert_message_match(
+                        'Remove All Snapshots initiated for 1 VM and Instance from the '
+                        'CFME Database')
+                else:
+                    flash.assert_message_match(
+                        'Delete All Snapshots initiated for 1 VM and Instance from the CFME '
+                        'Database')
 
         def revert_to(self, cancel=False):
             self._nav_to_snapshot_mgmt()
             snapshot_tree.click_path(*snapshot_tree.find_path_to(re.compile(self.name)))
             toolbar.select('Revert to selected snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
-            flash.assert_message_match(
-                'Revert To A Snapshot initiated for 1 VM and Instance from the CFME Database')
+            if version.current_version() >= "5.5":
+                flash.assert_message_match(
+                    'Revert To Snapshot initiated for 1 VM and Instance from the CFME Database')
+            else:
+                flash.assert_message_match(
+                    'Revert To A Snapshot initiated for 1 VM and Instance from the CFME Database')
 
     # POWER CONTROL OPTIONS
     SUSPEND = "Suspend"
