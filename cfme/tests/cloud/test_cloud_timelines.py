@@ -108,7 +108,7 @@ def db_event(db, provider):
 
 
 @pytest.mark.meta(
-    blockers=BZ(1201923, unblock=lambda provider: provider.type != 'ec2'),
+    blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2'), 1265404],
 )
 @pytest.mark.uncollectif(
     lambda provider: current_version() < "5.4" and provider.type != 'openstack')
