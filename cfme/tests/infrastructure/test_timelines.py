@@ -75,6 +75,7 @@ def count_events(vm_name, nav_step):
     return 0
 
 
+@pytest.mark.meta(blockers=[1264183])
 def test_provider_event(provider, gen_events, test_vm):
     """Tests provider event on timelines
 
