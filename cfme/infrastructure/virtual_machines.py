@@ -367,6 +367,36 @@ class Vm(BaseVM, Common):
             requests.wait_for_request, [cells], fail_func=requests.reload, num_sec=900, delay=20)
         return Template(template_name, self.provider)
 
+    @property
+    def total_snapshots(self):
+        """Returns the number of snapshots for this VM. If it says ``None``, returns ``0``."""
+        snapshots = self.get_detail(properties=("Properties", "Snapshots")).strip().lower()
+        if snapshots == "none":
+            return 0
+        else:
+            return int(snapshots)
+
+    @property
+    def current_snapshot_name(self):
+        """Returns the current snapshot name."""
+        self.load_details(refresh=True)
+        sel.click(InfoBlock("Properties", "Snapshots"))
+        text = sel.text("//a[contains(normalize-space(.), '(Active)')]").strip()
+        return re.sub(r"\s*\(Active\)$", "", text)
+
+    @property
+    def current_snapshot_description(self):
+        """Returns the current snapshot name."""
+        self.load_details(refresh=True)
+        sel.click(InfoBlock("Properties", "Snapshots"))
+        l = "|".join([
+            # Newer
+            "//label[normalize-space(.)='Description']/../div/p",
+            # Older
+            "//td[@class='key' and normalize-space(.)='Description']/.."
+            "/td[not(contains(@class, 'key'))]"])
+        return sel.text(l).strip()
+
     class CfmeRelationship(object):
 
         relationship_form = Form(

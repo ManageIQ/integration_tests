@@ -3,7 +3,7 @@ from functools import partial
 from cfme import web_ui as ui
 from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, accordion, fill, flash, form_buttons, menu, DHTMLSelect
+from cfme.web_ui import Form, accordion, fill, flash, form_buttons, menu, DHTMLSelect, AngularSelect
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils import version
@@ -103,7 +103,10 @@ class ButtonGroup(Updateable):
         sel.force_navigate('new_button_group', context={"buttongroup": self})
         fill(button_group_form, {'btn_group_text': self.text,
                                  'btn_group_hvr_text': self.hover})
-        select = DHTMLSelect("div#button_div")
+        if version.current_version() < "5.5":
+            select = DHTMLSelect("div#button_div")
+        else:
+            select = AngularSelect("button_image")
         select.select_by_value(1)
         sel.click(button_group_form.add_button)
         flash.assert_success_message('Buttons Group "{}" was added'.format(self.hover))
@@ -159,7 +162,10 @@ class Button(Updateable):
         sel.force_navigate('new_button', context={'buttongroup': self.group})
         fill(button_form, {'btn_text': self.text,
                            'btn_hvr_text': self.hover})
-        select = DHTMLSelect("div#button_div")
+        if version.current_version() < "5.5":
+            select = DHTMLSelect("div#button_div")
+        else:
+            select = AngularSelect("button_image")
         select.select_by_value(2)
         fill(button_form, {'select_dialog': self.dialog.label if self.dialog is not None else None,
                            'system_process': self.system,

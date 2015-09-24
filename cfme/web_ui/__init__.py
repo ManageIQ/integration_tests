@@ -3278,6 +3278,7 @@ class AngularSelect(object):
         sel.click(new_loc)
 
     def select_by_value(self, value):
+        value = str(value)  # Because what we read from the page is a string
         options_map = [a.value for a in self.select.all_options]
         index = options_map.index(value)
         if not self.is_open:
