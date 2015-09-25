@@ -256,10 +256,15 @@ def test_provider_crud(request, rest_api, from_detail):
     """
     if "create" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
+
+    if current_version() < "5.5":
+        provider_type = "EmsVmware"
+    else:
+        provider_type = "ManageIQ::Providers::Vmware::InfraManager"
     provider = rest_api.collections.providers.action.create(
         hostname=fauxfactory.gen_alphanumeric(),
         name=fauxfactory.gen_alphanumeric(),
-        type="EmsVmware",
+        type=provider_type,
     )[0]
     if from_detail:
         provider.action.delete()
