@@ -111,7 +111,7 @@ def vm_name(provider, small_template):
             logger.exception(e)
 
 
-@pytest.mark.meta(server_roles=["+automate", "+notifier"])
+@pytest.mark.meta(server_roles=["+automate", "+notifier"], blockers=[1266547])
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         vm_name, provider, request, smtp_test, register_event):
     """ Tests alerts for vm turned on more than twice in 15 minutes
