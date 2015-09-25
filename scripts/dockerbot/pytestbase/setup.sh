@@ -13,6 +13,14 @@ run_n_log () {
 on_exit () {
     log "Beginning shutdown proc..."
     echo $RES > $ARTIFACTOR_DIR/result.txt
+    if [ -z "$MASTER_AVAILABLE" ]; then
+        log "cfme_tests master not available - exiting..."
+        return
+    fi
+    log "Checking out master branch..."
+    git checkout origin/master
+    log "Running pip update..."
+    run_pip_update
     if [ -n "$POST_TASK" ]; then
         [ $RES -eq 0 ] && OUT_RESULT="passed" || OUT_RESULT="failed"
         log "Posting result..."
@@ -35,16 +43,25 @@ do_or_die () {
     try=0
     ret_val=1
     while [ "$ret_val" -ne "0" ]; do
-    if [ "$try" -lt "$max_retry" ]; then
-        let try+=1;
-        log "Running the command - try $try of $max_retry..."
-        eval "$cmd"
-        let ret_val="$?";
+        if [ "$try" -lt "$max_retry" ]; then
+            let try+=1;
+            log "Running the command - try $try of $max_retry..."
+            eval "$cmd"
+            let ret_val="$?";
+        else
+            log "Failed to run the command $try times - exiting now..."
+            exit
+        fi
+    done
+}
+
+# Runs pip update - optionally can make use of wheelhouse
+run_pip_update () {
+    if [ -n "$WHEEL_HOST_URL" ]; then
+        run_n_log "pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements.txt"
     else
-        log "Failed to run the command $try times - exiting now..."
-        exit
+        run_n_log "pip install -Ur $CFME_REPO_DIR/requirements.txt"
     fi
-done
 }
 
 trap on_exit EXIT
@@ -58,6 +75,7 @@ do_or_die "git init >> $ARTIFACTOR_DIR/setup.txt 2>&1"
 do_or_die "git remote add origin $CFME_REPO >> $ARTIFACTOR_DIR/setup.txt 2>&1"
 do_or_die "git fetch >> $ARTIFACTOR_DIR/setup.txt 2>&1"
 do_or_die "git checkout -t origin/master >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+MASTER_AVAILABLE=true
 
 # Copy the credentials files into the conf folder instead of bothing to make symlinks
 cp $CFME_CRED_REPO_DIR/complete/* $CFME_REPO_DIR/conf/
@@ -121,11 +139,7 @@ fi
 
 # If specified, update PIP
 if [ -n "$UPDATE_PIP" ]; then
-    if [ -n "$WHEEL_HOST_URL" ]; then
-        run_n_log "pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements.txt"
-    else
-        run_n_log "pip install -Ur $CFME_REPO_DIR/requirements.txt"
-    fi
+    run_pip_update
 fi
 
 # If asked, provision the appliance, and update the APPLIANCE variable
@@ -183,5 +197,3 @@ set +e
 log "$PYTEST"
 run_n_log "$PYTEST"
 RES=$?
-
-
