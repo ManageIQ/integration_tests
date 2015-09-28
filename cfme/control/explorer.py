@@ -886,14 +886,6 @@ class Alert(Updateable, Pretty):
         snmp_trap_hosts), the dependent variables will be None'd to ensure that things like
         :py:class:`NoSuchElementException` do not happen.
     """
-    manual_email = Region(
-        locators=dict(
-            field=Input("email"),
-            add="//img[@alt='Add'][contains(@onclick, 'add_email')]",
-            present_emails="//a[contains(@href, 'remove_email')]"
-        )
-    )
-
     form = Form(
         fields=[
             ("description", Input("description")),
