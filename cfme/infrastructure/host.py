@@ -29,7 +29,7 @@ from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
-from utils import version
+from utils import deferred_verpick, version
 from utils.pretty import Pretty
 
 
@@ -77,7 +77,6 @@ drift_table = CheckboxTable({
 })
 
 host_add_btn = FormButton('Add this Host')
-forced_saved = FormButton("Save Changes", dimmed_alt="Save", force_click=True)
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 pow_btn = partial(tb.select, 'Power')
@@ -126,6 +125,12 @@ class Host(Updateable, Pretty):
 
     """
     pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
+
+    forced_saved = deferred_verpick(
+        {version.LOWEST: form_buttons.FormButton(
+            "Save Changes", dimmed_alt="Save", force_click=True),
+         '5.5': form_buttons.FormButton(
+            "Save changes", dimmed_alt="Save changes", force_click=True)})
 
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
@@ -202,7 +207,7 @@ class Host(Updateable, Pretty):
         # Workaround for issue with form_button staying dimmed.
         try:
             logger.debug("Trying to save update for host with id: " + str(self.get_db_id))
-            self._submit(cancel, forced_saved)
+            self._submit(cancel, self.forced_saved)
             logger.debug("save worked, no exception")
         except Exception as e:
             logger.debug("exception detected: " + str(e))
@@ -219,7 +224,7 @@ class Host(Updateable, Pretty):
                 " data: {'default_verify':'%s'}})" %
                 (str(sel.current_url().split('/')[5]),
                     updates.get('credentials', None).verify_secret))
-            self._submit(cancel, forced_saved)
+            self._submit(cancel, self.forced_saved)
 
     def delete(self, cancel=True):
         """
