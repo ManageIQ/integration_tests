@@ -289,7 +289,9 @@ def _scan_rest(rest_api, vm, rest):
 def _scan_ui(vm):
     logger.info('Initiating vm smart scan on ' + vm.provider.name + ":" + vm.name)
     vm.smartstate_scan(cancel=False, from_details=True)
-    flash.assert_message_contain("Smart State Analysis initiated")
+    flash.assert_message_contain(version.pick({
+        version.LOWEST: "Smart State Analysis initiated",
+        "5.5": "Analysis initiated for 1 VM and Instance from the CFME Database"}))
 
     # wait for task to complete
     pytest.sel.force_navigate('tasks_my_vm')
