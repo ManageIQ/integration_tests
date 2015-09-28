@@ -226,6 +226,7 @@ class Instance(VM):
 class OpenStackInstance(Instance):
     # CFME & provider power control options
     START = "Start"  # START also covers RESUME and UNPAUSE (same as in CFME 5.4+ web UI)
+    POWER_ON = START  # For compatibility with the infra objects.
     SUSPEND = "Suspend"
     TERMINATE = "Terminate"
     # CFME-only power control options
@@ -337,6 +338,7 @@ class OpenStackInstance(Instance):
 class EC2Instance(Instance):
     # CFME & provider power control options
     START = "Start"
+    POWER_ON = START  # For compatibility with the infra objects.
     STOP = "Stop"
     TERMINATE = "Terminate"
     # CFME-only power control options

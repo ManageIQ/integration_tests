@@ -14,27 +14,24 @@ from collections import Mapping
 import cfme.fixtures.pytest_selenium as sel
 from cfme import web_ui
 from utils.log import logger
-from utils import version
 from utils.pretty import Pretty
 
-# Entry points
-_entry_div = "|".join([
-    # Old type
+# Entry point
+# There have been different types of the entry points throughout the history, sometimes even
+# different versions in one build.
+_entry_loc = "|".join([
     "//div[contains(@class, 'ui-tabs')]",
-    # New, bootstrap type
-    "//ul[contains(@class, 'nav-tabs')]"])
-_entry_ul = {
-    '5.3': '//ul[contains(@class, "ui-tabs-nav") or @class="tab2" or @class="tab3"]',
-    version.LOWEST: '//ul[@id="tab" and @class="tab"]'
-}
+    "//ul[contains(@class, 'nav-tabs')]",
+    "//ul[contains(@class, 'ui-tabs-nav') or @class='tab2' or @class='tab3']",
+    "//ul[@id='tab' and @class='tab']"])
 
 
 def _root():
     """ Returns the div element encapsulating whole tab strip as an entry point.
 
-    Returns: WebElement
+    Returns: :py:class:`list` of :py:class:`cfme.fixtures.pytest_selenium.WebElement`.
     """
-    return sel.first_from(_entry_div, _entry_ul)
+    return sel.elements(_entry_loc)
 
 
 def get_all_tabs():
@@ -50,7 +47,8 @@ def get_selected_tab():
 
     Returns: :py:class:`str` Displayed name
     """
-    return sel.element(".//li[@aria-selected='true' or @class='active']/a", root=_root())\
+    return sel.element(
+        ".//li[@aria-selected='true' or contains(@class, 'active')]/a", root=_root())\
         .text\
         .strip()\
         .encode("utf-8")

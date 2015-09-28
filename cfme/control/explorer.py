@@ -1136,8 +1136,10 @@ class Action(Updateable, Pretty):
         Form(
             fields=[
                 ("parent_type", Select("select#parent_type")),
-                ("tags", CheckboxSelect(
-                    "//*[@id='action_options_div']/fieldset/table/tbody/tr[2]/td[2]/table")),
+                ("tags", CheckboxSelect({
+                    version.LOWEST:
+                    "//*[@id='action_options_div']/fieldset/table/tbody/tr[2]/td[2]/table",
+                    "5.5": "//label[normalize-space(.)='Categories']/../div/table/tbody"})),
             ]
         ),
 
@@ -1174,10 +1176,11 @@ class Action(Updateable, Pretty):
         ),
 
         "Remove Tags":
-        CheckboxSelect(
-            "//div[@id='action_options_div']//td[@class='key' and normalize-space(.)='Categories']"
-            "/../td/table/tbody"
-        ),
+        CheckboxSelect({
+            version.LOWEST: "//div[@id='action_options_div']//td[@class='key' and "
+                            "normalize-space(.)='Categories']/../td/table/tbody",
+            "5.5": "//label[normalize-space(.)='Categories']/../div/table/tbody",
+        }),
 
         "Send an E-mail":
         Form(

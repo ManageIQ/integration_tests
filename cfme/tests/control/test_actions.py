@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """ Tests used to check whether assigned actions really do what they're supposed to do.
 
+This module is currently being slowly reworked to not use SOAP, because it was dropped from support.
+
 Required YAML keys:
     * Provider must have hostname (not amazon)
     * Provider must have section provisioning/template (otherwise test will be skipped)
@@ -23,6 +25,7 @@ from utils.blockers import BZ
 from utils.db import cfmedb
 from utils.log import logger
 from utils.miq_soap import MiqVM
+from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -30,13 +33,14 @@ from utils.pretty import Pretty
 
 class VMWrapper(Pretty):
     """This class binds a provider_mgmt object with VM name. Useful for on/off operation"""
-    __slots__ = ("_mgmt", "_vm", "soap")
-    pretty_attrs = ['_vm', '_mgmt']
+    __slots__ = ("_prov", "_vm", "soap", "crud")
+    pretty_attrs = ['_vm', '_prov']
 
-    def __init__(self, provider_mgmt, vm_name, soap):
-        self._mgmt = provider_mgmt
+    def __init__(self, provider, vm_name, soap):
+        self._prov = provider
         self._vm = vm_name
         self.soap = soap
+        self.crud = VM.factory(vm_name, self._prov)
 
     @property
     def name(self):
@@ -44,11 +48,11 @@ class VMWrapper(Pretty):
 
     @property
     def provider(self):
-        return self._mgmt
+        return self._prov.mgmt
 
     def __getattr__(self, key):
         """Creates partial functions proxying to mgmt_system.<function_name>(vm_name)"""
-        func = getattr(self._mgmt, key)
+        func = getattr(self._prov.mgmt, key)
         return partial(func, self._vm)
 
 
@@ -68,7 +72,7 @@ def pytest_generate_tests(metafunc):
         if ((metafunc.function is test_action_create_snapshot_and_delete_last)
             or
             (metafunc.function is test_action_create_snapshots_and_delete_them)) \
-                and args['provider'].type == "rhevm":
+                and args['provider'].type in {"rhevm", "openstack", "ec2"}:
             continue
 
         new_idlist.append(idlist[i])
@@ -159,16 +163,19 @@ def vm(request, provider, setup_provider_modscope, small_template, vm_name):
     # Make it appear in the provider
     provider.refresh_provider_relationships()
 
-    # Get the SOAP object
-    soap = wait_for(
-        lambda: get_vm_object(vm_name),
-        message="VM object {} appears in CFME".format(vm_name),
-        fail_condition=None,
-        num_sec=600,
-        delay=15,
-    )[0]
+    if current_version() < "5.4":
+        # Get the SOAP object
+        soap = wait_for(
+            lambda: get_vm_object(vm_name),
+            message="VM object {} appears in CFME".format(vm_name),
+            fail_condition=None,
+            num_sec=600,
+            delay=15,
+        )[0]
+    else:
+        soap = None
 
-    return VMWrapper(provider.mgmt, vm_name, soap)
+    return VMWrapper(provider, vm_name, soap)
 
 
 @pytest.fixture(scope="module")
@@ -353,9 +360,8 @@ def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off, vm
     assign_policy_for_testing.assign_actions_to_event("VM Power On Request",
                                                       ["Prevent current event from proceeding"])
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
-    # Request VM's start (through API)
-    # TODO: Convert to REST or web UI
-    vm.soap.power_on()
+    # Request VM's start (through UI)
+    vm.crud.power_control_from_cfme(vm.crud.POWER_ON, cancel=False)
     try:
         wait_for(vm.is_vm_running, num_sec=600, delay=5)
     except TimedOutError:
@@ -450,6 +456,8 @@ def test_action_create_snapshot_and_delete_last(
     Metadata:
         test_flag: actions, provision
     """
+    if not hasattr(vm.crud, "total_snapshots"):
+        pytest.skip("This provider does not support snapshots yet!")
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
     snapshot_create_action = explorer.Action(
@@ -466,19 +474,19 @@ def test_action_create_snapshot_and_delete_last(
         assign_policy_for_testing.assign_events()
         snapshot_create_action.delete()
 
-    snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
+    snapshots_before = vm.crud.total_snapshots
     # Power off to invoke snapshot creation
     vm.stop_vm()
     vm_crud_refresh()
-    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=800,
+    wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
              message="wait for snapshot appear", delay=5)
-    assert vm.soap.ws_attributes["v_snapshot_newest_description"] == "Created by EVM Policy Action"
-    assert vm.soap.ws_attributes["v_snapshot_newest_name"] == snapshot_name
+    assert vm.crud.current_snapshot_description == "Created by EVM Policy Action"
+    assert vm.crud.current_snapshot_name == snapshot_name
     # Snapshot created and validated, so let's delete it
-    snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
+    snapshots_before = vm.crud.total_snapshots
     # Power on to invoke last snapshot deletion
     vm.start_vm()
-    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] < snapshots_before, num_sec=800,
+    wait_for(lambda: vm.crud.total_snapshots < snapshots_before, num_sec=800,
              message="wait for snapshot deleted", delay=5)
 
 
@@ -513,12 +521,12 @@ def test_action_create_snapshots_and_delete_them(
             n: Sequential number of snapshot for logging.
         """
         # Power off to invoke snapshot creation
-        snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
+        snapshots_before = vm.crud.total_snapshots
         vm.stop_vm()
         vm_crud_refresh()
-        wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=800,
+        wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
                  message="wait for snapshot %d to appear" % (n + 1), delay=5)
-        assert vm.soap.ws_attributes["v_snapshot_newest_name"] == snapshot_name
+        assert vm.crud.current_snapshot_name == snapshot_name
         vm.start_vm()
         vm_crud_refresh()
 
@@ -531,7 +539,7 @@ def test_action_create_snapshots_and_delete_them(
     # Power on to invoke all snapshots deletion
     vm.start_vm()
     vm_crud_refresh()
-    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] == 0, num_sec=800,
+    wait_for(lambda: vm.crud.total_snapshots == 0, num_sec=800,
              message="wait for snapshots to be deleted", delay=5)
 
 
@@ -575,6 +583,8 @@ def test_action_initiate_smartstate_analysis(
         pytest.fail("CFME did not analyse the VM %s" % vm.name)
 
 
+# TODO: Get the id other way than from SOAP.
+@pytest.mark.uncollectif(lambda: current_version() >= "5.4")  # Need to get the id somehow different
 def test_action_raise_automation_event(
         request, assign_policy_for_testing, vm, vm_on, ssh_client, vm_crud_refresh):
     """ This test tests actions 'Raise Automation Event'.
@@ -617,6 +627,9 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refr
     Metadata:
         test_flag: actions, provision
     """
+    if "Service Level: Gold" in vm.crud.get_tags():
+        vm.crud.remove_tag(("Service Level", "Gold"))
+
     tag_assign_action = explorer.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
@@ -633,9 +646,7 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refr
     vm_crud_refresh()
     try:
         wait_for(
-            lambda: any(
-                [tag.category == "service_level" and tag.tag_name == "gold" for tag in vm.soap.tags]
-            ),
+            lambda: "Service Level: Gold" in vm.crud.get_tags(),
             num_sec=600,
             message="tag presence check"
         )
@@ -650,6 +661,14 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
     Metadata:
         test_flag: actions, provision
     """
+    if "Service Level: Gold" not in vm.crud.get_tags():
+        vm.crud.add_tag(("Service Level", "Gold"), single_value=True)
+
+    @request.addfinalizer
+    def _remove_tag():
+        if "Service Level: Gold" in vm.crud.get_tags():
+            vm.crud.remove_tag(("Service Level", "Gold"))
+
     tag_unassign_action = explorer.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
@@ -665,10 +684,9 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
     vm.start_vm()
     vm_crud_refresh()
     try:
+
         wait_for(
-            lambda: not any(
-                [tag.category == "service_level" and tag.tag_name == "gold" for tag in vm.soap.tags]
-            ),
+            lambda: "Service Level: Gold" not in vm.crud.get_tags(),
             num_sec=600,
             message="tag presence check"
         )
