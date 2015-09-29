@@ -70,6 +70,7 @@ def set_cloud_provider_quad():
 
 
 @grid_uncollectif
+@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 @pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
 def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
@@ -89,6 +90,7 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
 
 
 @grid_uncollectif
+@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 @pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
 def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
@@ -108,6 +110,7 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
 
 
 @grid_uncollectif
+@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 @pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
 def test_list_page_per_item(request, setup_a_provider, page, set_list):
@@ -127,6 +130,7 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
 
 
 @landing_uncollectif
+@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
 def test_start_page(request, setup_a_provider, start_page):
     """ Tests start page
