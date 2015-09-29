@@ -105,6 +105,7 @@ def set_template_quad():
 
 
 @grid_uncollectif
+@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     """ Tests grid items per page
@@ -121,6 +122,7 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
 
 
 @grid_uncollectif
+@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
     """ Tests tile items per page
@@ -137,6 +139,7 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
 
 
 @grid_uncollectif
+@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 def test_list_page_per_item(request, setup_a_provider, page, set_list):
     """ Tests list items per page
@@ -152,6 +155,7 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
         assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)
 
 
+@pytest.mark.meta(blockers=[1267148])
 def test_report_page_per_item(setup_a_provider, set_report):
     """ Tests report items per page
 
@@ -167,6 +171,7 @@ def test_report_page_per_item(setup_a_provider, set_report):
 
 
 @landing_uncollectif
+@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
 def test_start_page(request, setup_a_provider, start_page):
     """ Tests start page
