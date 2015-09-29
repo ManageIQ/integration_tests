@@ -57,9 +57,8 @@ def test_timezone_setting(set_timezone):
     assert sel.is_displayed(locator), "Timezone settings Failed"
 
 
-@pytest.mark.ignore_stream("upstream")
-@pytest.mark.ignore_stream("5.4")
 @grid_uncollectif
+@pytest.mark.uncollectif(lambda: version.current_version() >= "5.4")
 @pytest.mark.parametrize('name', displaysettings, scope="module")
 def test_color_setting(request, name):
     """ Tests  color settings
