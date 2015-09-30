@@ -9,8 +9,8 @@ import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound, CandidateNotFound
 from cfme.web_ui import (
-    Calendar, CheckboxSelect, DynamicTable, Form, InfoBlock, Input, MultiFill, Region, Select,
-    Table, accordion, fill, flash, form_buttons)
+    AngularSelect, Calendar, CheckboxSelect, DynamicTable, Form, InfoBlock, Input, MultiFill,
+    Region, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.menu import nav
 from utils.db import cfmedb
 from utils.log import logger
@@ -1064,7 +1064,9 @@ class LDAPAuthSetting(AuthSetting):
         ("ldaphost_2", Input("authentication_ldaphost_2")),
         ("ldaphost_3", Input("authentication_ldaphost_3")),
         ("port", Input("authentication_ldapport")),
-        ("user_type", Select("select#authentication_user_type")),
+        ("user_type", {
+            version.LOWEST: Select("select#authentication_user_type"),
+            "5.5": AngularSelect("authentication_user_type")}),
         ("user_suffix", Input("authentication_user_suffix")),
         ("get_groups", Input("ldap_role")),
         ("get_direct_groups", Input("get_direct_groups")),
