@@ -167,6 +167,17 @@ class SSHClient(paramiko.SSHClient):
         return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {}'.format(command),
             timeout=timeout)
 
+    def run_rails_console(self, command, sandbox=False, timeout=RUNCMD_TIMEOUT):
+        """Runs Ruby inside of rails console. stderr is thrown away right now but could prove useful
+        for future performance analysis of the queries rails runs.  The command is encapsulated by
+        double quotes. Sandbox rolls back all changes made to the database if used.
+        """
+        if sandbox:
+            return self.run_command('cd /var/www/miq/vmdb; echo \"' + command + '\" '
+                '| bundle exec bin/rails c -s 2> /dev/null', timeout=timeout)
+        return self.run_command('cd /var/www/miq/vmdb; echo \"' + command + '\" '
+            '| bundle exec bin/rails c 2> /dev/null', timeout=timeout)
+
     def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT):
         logger.info("Running rake command `{}`".format(command))
         return self.run_command('cd /var/www/miq/vmdb; bin/rake {}'.format(command),

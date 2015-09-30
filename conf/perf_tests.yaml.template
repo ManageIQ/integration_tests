@@ -1,5 +1,15 @@
 test_queue:
     infra_time: 28800
+feature:
+    capacity_and_utilization:
+        perf_capture: 10
+    discovery:
+        provider: 10
+    refresh:
+        provider_init: 10
+        provider_nc: 10
+        host: 10
+        vm: 10
 ui:
     threshold:
         selenium: 60000
