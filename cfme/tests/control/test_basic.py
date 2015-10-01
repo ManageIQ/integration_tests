@@ -293,6 +293,8 @@ def test_policy_profile_crud(random_vm_control_policy, random_host_control_polic
     soft_assert(not profile.exists, "The policy profile {} exists!".format(profile.description))
 
 
+# RUBY expression type is no longer supported.
+@pytest.mark.uncollectif(lambda expression: "RUBY" in expression and current_version() >= "5.5")
 @pytest.mark.parametrize(("expression", "verify"), VM_EXPRESSIONS_TO_TEST)
 def test_modify_vm_condition_expression(
         vm_condition_for_expressions, expression, verify, soft_assert):
