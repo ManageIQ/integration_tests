@@ -9,7 +9,9 @@ from cfme.exceptions import (
     VmOrInstanceNotFound, TemplateNotFound, OptionNotAvailable, UnknownProviderType)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Form, InfoBlock, Quadicon, Select, fill, flash, form_buttons, paginator, toolbar)
+    AngularCalendarInput, Form, InfoBlock, Quadicon, Select, fill, flash, form_buttons, paginator,
+    toolbar)
+from utils import version
 from utils.log import logger
 from utils.mgmt_system import ActionNotSupported, VMInstanceNotFound
 from utils.pretty import Pretty
@@ -25,7 +27,7 @@ lcl_btn = partial(toolbar.select, "Lifecycle")
 pol_btn = partial(toolbar.select, "Policy")
 pwr_btn = partial(toolbar.select, "Power")
 
-retire_remove_button = "//span[@id='remove_button']/a/img"
+retire_remove_button = "//span[@id='remove_button']/a/img|//a/img[contains(@src, 'clear.png')]"
 
 set_ownership_form = Form(fields=[
     ('user_name', Select("//select[@id='user_name']")),
@@ -459,7 +461,10 @@ class VM(BaseVM):
     TO_RETIRE = None
 
     retire_form = Form(fields=[
-        ('date_retire', date_retire_element),
+        ('date_retire', {
+            version.LOWEST: date_retire_element,
+            "5.5": AngularCalendarInput(
+                "retirement_date", "//label[contains(normalize-space(.), 'Retirement Date')]")}),
         ('warn', sel.Select("select#retirement_warn"))
     ])
 
@@ -590,7 +595,11 @@ class VM(BaseVM):
         """
         self.load_details()
         lcl_btn("Set Retirement Date")
-        sel.wait_for_element("#miq_date_1")
+        if callable(self.retire_form.date_retire):
+            # It is the old functiton
+            sel.wait_for_element("#miq_date_1")
+        else:
+            sel.wait_for_element(self.retire_form.date_retire)
         if when is None:
             try:
                 wait_for(lambda: sel.is_displayed(retire_remove_button), num_sec=5, delay=0.2)

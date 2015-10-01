@@ -9,6 +9,7 @@
 
 * **Elemental**
 
+  * :py:class:`AngularCalendarInput`
   * :py:class:`ButtonGroup`
   * :py:class:`Calendar`
   * :py:class:`ColorGroup`
@@ -1147,13 +1148,19 @@ def _sd_fill_date(calendar, value):
     else:
         sel.set_attribute(input, "value", date_str)
         # Now when we set the value, we need to simulate a change event.
-        try:
-            sel.execute_script(
+        if sel.get_attribute(input, "data-date-autoclose"):
+            # New one
+            script = "$(\"#%s\").trigger('changeDate');"
+        else:
+            # Old one
+            script = (
                 "if(typeof $j == 'undefined') {var jq = $;} else {var jq = $j;} "
-                "jq(\"#%s\").change();" % calendar.name)
+                "jq(\"#%s\").change();")
+        try:
+            sel.execute_script(script % calendar.name)
         except sel_exceptions.WebDriverException as e:
             logger.warning(
-                "An exception was raised during handling of the Calendar #{}'s change event:\n{}"
+                "An exception was raised during handling of the Cal #{}'s change event:\n{}"
                 .format(calendar.name, str(e)))
     sel.wait_for_ajax()
 
@@ -1305,12 +1312,17 @@ class Input(Pretty):
     Also applies on ``textarea``, which is basically input with multiple lines (if it has name).
 
     Args:
-        names: Possible values (or) of the ``name`` attribute.
-    """
-    pretty_attrs = ['names']
+        *names: Possible values (or) of the ``name`` attribute.
 
-    def __init__(self, *names):
+    Keywords:
+        use_id: Whether to use ``id`` instead of ``name``. Useful if there is some input that does
+            not have ``name`` attribute present.
+    """
+    pretty_attrs = ['_names', '_use_id']
+
+    def __init__(self, *names, **kwargs):
         self._names = names
+        self._use_id = kwargs.pop("use_id", False)
 
     @property
     def names(self):
@@ -1319,10 +1331,13 @@ class Input(Pretty):
         else:
             return self._names
 
+    def _generate_attr(self, name):
+        return "@{}={}".format("id" if self._use_id else "name", quoteattr(name))
+
     def locate(self):
         # If the end of the locator is changed, modify also the choice in Radio!!!
         return '//*[(self::input or self::textarea) and ({})]'.format(
-            " or ".join("@name={}".format(quoteattr(name)) for name in self.names)
+            " or ".join(self._generate_attr(name) for name in self.names)
         )
 
     def __add__(self, string):
@@ -3316,3 +3331,43 @@ def _fill_angular_value(obj, s):
         obj.select_by_value(s.value)
     else:
         return
+
+
+class AngularCalendarInput(Pretty):
+    pretty_attrs = "input_name", "click_away_element"
+
+    def __init__(self, input_name, click_away_element):
+        self.input_name = input_name
+        self.click_away_element = click_away_element
+
+    @property
+    def input(self):
+        return Input(self.input_name, use_id=True)
+
+    @property
+    def clear_button(self):
+        return sel.element("../a/img", root=self.input)
+
+    def locate(self):
+        return self.input.locate()
+
+    def fill(self, value):
+        if isinstance(value, date):
+            value = '%s/%s/%s' % (value.month, value.day, value.year)
+        else:
+            value = str(value)
+        try:
+            sel.click(self.input)
+            sel.set_text(self.input, value)
+        finally:
+            # To ensure the calendar itself is closed
+            sel.click(self.click_away_element)
+
+    def clear(self):
+        if sel.text(self.input).strip():
+            sel.click(self.clear_button)
+
+
+@fill.method((AngularCalendarInput, Anything))
+def _fill_angular_calendar_input(obj, a):
+    return obj.fill(a)
