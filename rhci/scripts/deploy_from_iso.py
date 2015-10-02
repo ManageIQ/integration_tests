@@ -12,156 +12,197 @@ but for now it's just vsphere55.
 from time import sleep
 
 from fauxfactory import gen_alpha
+from novaclient.utils import find_resource
 
-from utils.conf import cfme_data, rhci, credentials_rhci
-from utils.providers import get_mgmt
-from utils.wait import TimedOutError, wait_for
+from utils.conf import credentials, rhci
+from utils.wait import wait_for
 
-from rhci_common import save_rhci_conf, vnc_client
+from rhci_common import get_mgmt, neutron_client, openstack_vnc_console, save_rhci_conf, ssh_client
 
 # bunch of static stuff that we can argparse/yaml/env up later
-deployment_conf = rhci['deployments']['basic']['iso']
-rootpw = credentials_rhci[deployment_conf['rootpw_credential']].password
-provider_key = 'vsphere55'
+deployment = 'basic'
+provider_key = 'cci7'
+image_id = 'RHCI-6.0-RHEL-7-20150829.0-RHCI-x86_64'
+# random ID - put this at the beginning of resource names to associate them with
+# this build run; the cleanup script will look for this prefix and delete all associated resources
+deployment_id = gen_alpha()
+# can be the network name or id
+public_net_id = 'rhci-qe-jenkins'
+# need at least 12G of RAM, so the smallest flavor we can use is m1.xlarge
+# like network, can be the flavor name or ID
+flavor_id = 'm1.xlarge'
+floating_ip_pool = '10.8.188.0/24'
 
-# latest iso
-# tpl = 'rhci-iso-boot-tpl-dnd'
-# beta iso
-tpl = 'rhci-iso-boot-tpl-beta1-dnd'
-mgmt = get_mgmt(provider_key)
-api = mgmt.api
-vm_name = 'rhci_test_{}'.format(gen_alpha())
-print 'Provisioning RHCI VM {} on {}'.format(vm_name, provider_key)
-
-mgmt.clone_vm(tpl, vm_name, power_on=False, sparse=True)
-vm = mgmt._get_vm(vm_name)
-
-config_spec = api.create('VirtualMachineConfigSpec')
-device_changes = []
-config_spec.deviceChange = device_changes
-extra_config = []
-config_spec.extraConfig = extra_config
-
-# XXX CD setup doesn't work, changing the file backing doesn't update the iso in vsphere
-#     the temporary solution, which is terrible, is to manually create the template with
-#     the correct iso attached, and not use the placeholder; psav recommends disconnecting
-#     the current CD, and then reconnecting with the new backing.
-# fish out the template cdrom
-# for cd in vm.config.hardware.device:
-#     if '(VirtualCdrom)' in str(cd):
-#         break
-# swap out the placeholder backing for on with the real iso
-# cd_backing = api.create('VirtualCdromIsoBackingInfo')
-# cd_backing.fileName = cd.backing.fileName.replace('placeholder.iso', iso)
-# cd_backing.datastore = cd.backing.datastore
-# cd.backing = cd_backing
-#
-# cd.deviceInfo.summary = cd.deviceInfo.summary.replace('placeholder.iso', iso)
-# cd_spec = api.create('VirtualDeviceConfigSpec')
-# cd_spec.device = cd
-# cd_spec.operation = api.create('VirtualDeviceConfigSpecOperation').add
-# cd_spec.fileOperation = api.create('VirtualDeviceConfigSpecFileOperation').replace
-# print cd_spec
-# device_changes.append(cd_spec)
-
-# add a thinprovisioned disk
-disk_backing = api.create("VirtualDiskFlatVer2BackingInfo")
-disk_backing.datastore = None
-disk_backing.diskMode = "persistent"
-disk_backing.thinProvisioned = True
-
-disk = api.create("VirtualDisk")
-disk.backing = disk_backing
-disk.controllerKey = 1000
-disk.key = 3000
-disk.unitNumber = 1
-disk.capacityInKB = 83886080
-
-disk_spec = api.create("VirtualDeviceConfigSpec")
-disk_spec.device = disk
-disk_spec.fileOperation = api.create("VirtualDeviceConfigSpecFileOperation").create
-disk_spec.operation = api.create("VirtualDeviceConfigSpecOperation").add
-device_changes.append(disk_spec)
-
-# Set boot to EFI -- template uses BIOS by default, so we only add the efi firmware if desired
-# firmware = api.create('OptionValue', key='firmware', value='efi')
-# extra_config.append(firmware)
-
-# Config VNC endpoint -- defaults to 5990
-# TODO: Inject some net_check-fu here to make sure the vnc port is available
-# vnc_port = api.create('OptionValue', key='RemoteDisplay.vnc.port', value='5991')
-# extra_config.append(vnc_port)
-
-# enable nested virt, note that this is vhv.allow = TRUE on vsphere5, and isn't available before 5
-extra_config.append(api.create('OptionValue', key='vhv.enable', value='TRUE'))
-
-# apply the custom config
-try:
-    vm.ReconfigVM_Task(spec=config_spec)
-except:
-    print 'failed to reconfigure VM, cleaning up'
-    raise
-
-# Fire up the VM
-mgmt.start_vm(vm_name)
-
-# Send keystrokes to start installer (via VNC)
-# TODO The actions we take and port we connect to can be conditional, based whether this
-#      is efi (or not) and what VNC port we chose. For now, assume not efi and 5990
-
-# This is terrible. Need a better way to get the host network addr from a VM
-# and it should probably work on all providers that have hosts, e.g. get_vm_host_addr
-host_name = vm.runtime.host.name
-for host in cfme_data.management_systems[provider_key].hosts:
-    if host_name in host['name']:
-        break
-else:
-    print 'No host found :('
-
-# sleep a little bit to let vmware start up the vnc server
-sleep(45)
-# very important to use the display number here, *not* the port
-vnc_connect = '{}:90'.format(host['name'])
-
-# write out the data for later steps
-# vm_names is a list, as additional vms are spawned for use,
-# add them here so they all get deleted in the cleanup step
 save_rhci_conf(**{
-    'vm_names': [vm_name],
+    'deployment': deployment,
+    'deployment_id': deployment_id,
     'provider_key': provider_key,
-    'vnc_endpoint': vnc_connect,
 })
 
-# for bios, need to go down, then hit enter when the menu appears, currently the default
-# for efi, the first option is missing, just hit enter. VNC has an "expect" mechanism that
-# is unfortunately unreliable, so here we just get to sleep long enough for the menu to appear
-# but not so long that the menu default to booting the first hard drive
-vnc = vnc_client(vnc_connect)
-vnc.press('down')
-vnc.press('enter')
+# derived stuff based on the parsed args above
+deployment_conf = rhci['deployments'][deployment]['iso']
+rootpw = credentials[deployment_conf['rootpw_credential']].password
+mgmt = get_mgmt()
+api = mgmt.api
+neutron_api = neutron_client(mgmt)
+vm_name = '{} anaconda'.format(deployment_id)
 
-# wait for anaconda to start
-sleep(120)
+print 'Provisioning RHCI VM {} on {}'.format(vm_name, provider_key)
+
+# get a ref to the public net
+# can go through nova or neutron, nova returns more useful values (objects, not dicts)
+public_net = find_resource(api.networks, public_net_id)
+
+# create our private network
+# private network is managed by satellite, so no subnet, no router, etc
+private_net_id = '{} private'.format(deployment_id)
+neutron_api.create_network({'network':
+    {
+        'name': '{} private'.format(deployment_id),
+        'router:external': False,
+        'shared': False,
+        'admin_state_up': True
+    }
+})
+private_net = find_resource(api.networks, private_net_id)
+
+# attach a subnet to the private network, using the link local v4 space
+neutron_api.create_subnet({'subnet':
+    {
+        'name': '{} subnet'.format(deployment_id),
+        'cidr': '169.254.0.0/16',
+        'enable_dhcp': False,
+        'network_id': private_net.id,
+        'gateway_ip': None,
+        'ip_version': 4
+    }
+})
+
+
+# set up the block dev mapping for creating the install volume, need at least 60G for fusor
+# these are set to delete on terminate so we don't have to deal with volumes on cleanup
+volumes_spec = [
+    {
+        'source_type': 'blank',
+        'destination_type': 'volume',
+        'volume_size': 100,
+        'delete_on_termination': False
+    },
+]
+
+# add the nics, eth0 is public, eth1 is private
+nics_spec = [
+    {'net-id': public_net.id},
+    {'net-id': private_net.id},
+]
+
+# get the image and flavor
+image = find_resource(api.images, image_id)
+flavor = find_resource(api.flavors, flavor_id)
+
+# write out the data for later steps
+save_rhci_conf(public_net_id=public_net.id, private_net_id=private_net.id)
+
+# actually make the thing!
+anaconda_instance = api.servers.create(vm_name, image, flavor,
+    availability_zone='nova', security_groups=['default'],
+    block_device_mapping_v2=volumes_spec, nics=nics_spec)
+
+# try to pull in the fancy, but private, instance status monitor, else fall back to mgmt wait
+try:
+    from novaclient.v2.shell import _poll_for_status
+    _poll_for_status(api.servers.get, anaconda_instance.id, 'building', ['active'])
+except ImportError:
+    mgmt.wait_vm_running(vm_name)
+
+# rename the volume so we can easily clean it up later, also set it bootable
+instance_volume = mgmt.capi.volumes.find(display_name='{}-blank-vol'.format(anaconda_instance.id))
+instance_volume.update(display_name='{} satellite volume'.format(deployment_id))
+instance_volume.manager.set_bootable(instance_volume, True)
+
+floating_ip = api.floating_ips.create(pool=floating_ip_pool)
+print 'Adding floating ip {} to instance'.format(floating_ip.ip)
+anaconda_instance.add_floating_ip(floating_ip.ip)
+
+save_rhci_conf(**{
+    'ip_address': floating_ip.ip
+})
+
+# sleep a bit to let the PXE menu load up
+sleep(15)
+
+# need to go down, then hit enter when the menu appears
+# yup. I made a selenium-based VNC driver for novnc. Please please please find a better way.
+vnc = openstack_vnc_console(vm_name)
+vnc.press('Down')
+vnc.press('Return')
+
+# give anaconda a minute to start
+sleep(60)
 
 # fill in the root password
-vnc.press('tab')  # highlight the root password config screen
+vnc.press('Tab')  # highlight the root password config screen
 vnc.press('space')  # select the root password config screen
 vnc.type(rootpw)  # password
-vnc.press('tab')  # select next field
+vnc.press('Tab')  # select next field
 vnc.type(rootpw)  # verify password
-vnc.press('tab')  # select done button
-vnc.press('enter')  # hit enter to select "done", which move the caret to the first field again
-vnc.type(['tab', 'tab', 'enter'])  # tab back through the fields, select done again
+vnc.press('Tab')  # select done button
+vnc.press('Return')  # hit enter to select "done", which move the caret to the first field again
+vnc.type(['Tab', 'Tab', 'Return'])  # tab back through the fields, select done again
 
-# should now be in anaconda, need to wait for the vm to have a readable ip addr
-# this means that the installer succeeded and rebooted into the installed system
-# when not using vsphere, we'll need to add more checks, e.g. anaconda isn't running but gdm is
-try:
-    wait_result = wait_for(mgmt.get_ip_address, func_args=[vm_name],
-        func_kwargs={'timeout': 5}, num_sec=3600, delay=60, fail_condition=None)
-    print 'ISO deployment verification succeeded'
-    # add the IP addr to the vm info
-    save_rhci_conf(ip_address=str(wait_result.out))
-except TimedOutError:
-    print 'ISO deployment verification failed, cleaning up the VM'
-    mgmt.delete_vm(vm_name)
+# at this point, the installer will run for a few minutes, and attempt to reboot. At that point,
+# it will fail because the first hard drive is still the iso image. So, we've got to kill this
+# instance, and build another that boots from the volume we just made.
+
+# The install takes 10-15 minutes, so we'll give it 20 for some padding.
+sleep(1200)
+anaconda_instance.delete()
+
+
+def volume_available_wait(volume):
+    volume.get()
+    return volume.status == 'available'
+
+# wait for the instance volume to become available so we can attach it to a new instance
+wait_for(volume_available_wait, func_args=[instance_volume], fail_condition=False)
+
+# recreate the instance using the same settings, but no image and referencing the volume
+# that was created and used during the anaconda install step
+
+fusor_vm_name = '{} fusor'.format(deployment_id)
+fusor_volumes_spec = [
+    {
+        'destination_type': 'volume',
+        'device_name': '/dev/sda',
+        'delete_on_termination': False,
+        'uuid': instance_volume.id,
+        'source_type': 'volume',
+        'boot_index': 0,
+    },
+    # If you want/need swap (not sure yet...)
+    # {
+    #     'source_type': 'blank',
+    #     'destination_type': 'local',
+    #     'boot_index': -1,
+    #     'delete_on_termination': True,
+    #     'guest_format': 'swap',
+    #     'volume_size': 6
+    # }
+]
+
+fusor_instance = api.servers.create(fusor_vm_name, None, flavor,
+    availability_zone='nova', security_groups=['default'],
+    block_device_mapping_v2=fusor_volumes_spec, nics=nics_spec)
+# wait for the vm to come back up, then reassign the floating IP
+mgmt.wait_vm_running(fusor_vm_name)
+anaconda_instance.add_floating_ip(floating_ip.ip)
+save_rhci_conf(fusor_vm_name=fusor_vm_name)
+
+print 'Waiting for SSH to become available on {}'.format(floating_ip.ip)
+
+
+def ssh_wait():
+    # ssh_client from rhci_common
+    res = ssh_client().run_command('true')
+    return res.rc == 0
+wait_for(ssh_wait, squash_exceptions=True)

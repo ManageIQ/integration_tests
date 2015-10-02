@@ -17,105 +17,91 @@ This duplicates code from the deploy_iso script. Once this is automated work sho
 be done to deduplicate what we can.
 
 """
-from fauxfactory import gen_alpha
+from novaclient.utils import find_resource
 
-from utils.providers import get_mgmt
-
-from rhci_common import save_rhci_conf, ssh_client
 from utils.conf import rhci
+from utils.providers import providers_data
 from utils.wait import wait_for
 
-# bunch of static stuff that we can argparse up later
-provider_key = 'vsphere55'
+from rhci_common import find_best_flavor, get_mgmt, save_rhci_conf, ssh_client
+
 # read vm configs from here
-discovery = rhci['deployments']['basic']['fusor-installer']['discovery_vms']
+deployment_conf = rhci['deployments'][rhci.deployment]
+discovery = deployment_conf['fusor-installer']['discovery_vms']
 # then write the created VMs out to here
-fusor_kwargs = rhci['deployments']['basic']['fusor']['kwargs']
-# latest iso
-tpl = 'rhci-foreman-discovery-tpl-dnd'
-mgmt = get_mgmt(provider_key)
+fusor_kwargs = deployment_conf['fusor']['kwargs']
+# this should probably be stashed in the conf
+pxe_image_name = 'PXE Booter'
+mgmt = get_mgmt()
 api = mgmt.api
+pxe_image = find_resource(api.images, pxe_image_name)
+
+# server zones for normal and nested virt; hypervisors need to be nested
+server_zone = providers_data[rhci.provider_key].server_zone
+nested_server_zone = providers_data[rhci.provider_key].nested_server_zone
 
 
-def setup_vm(cpu_count, memory, disk_size):
+def setup_vm(vm_suffix, cpu_count, memory, disk_size, nested=False):
     # These should all be ints since they're coming from yaml,
     # but some healthy paranoia is probably warranted
     cpu_count, memory, disk_size = int(cpu_count), int(memory), int(disk_size)
-    vm_name = 'rhci_test_{}'.format(gen_alpha())
-    print 'Provisioning RHCI VM {} on {}'.format(vm_name, provider_key)
+    flavor = find_best_flavor(api, cpu_count, memory, disk_size)
+    vm_name = '{} {}'.format(rhci.deployment_id, vm_suffix)
+    print 'Provisioning RHCI VM {} on {}'.format(vm_name, rhci.provider_key)
 
-    mgmt.clone_vm(tpl, vm_name, power_on=False, sparse=True)
-    vm = mgmt._get_vm(vm_name)
+    # make a new volume based on PXE boot image
+    volume_name = '{} volume'.format(vm_name)
+    volume = mgmt.capi.volumes.create(name=volume_name,
+        imageRef=pxe_image.id, size=disk_size)
 
-    config_spec = api.create('VirtualMachineConfigSpec')
-    device_changes = []
-    config_spec.deviceChange = device_changes
-    extra_config = []
-    config_spec.extraConfig = extra_config
+    # needed this in the deploy iso step, should be generalized
+    def volume_available_wait(volume):
+        volume.get()
+        return volume.status == 'available'
+    wait_for(volume_available_wait, func_args=[volume], fail_condition=False)
 
-    # add a thinprovisioned disk
-    disk_backing = api.create("VirtualDiskFlatVer2BackingInfo")
-    disk_backing.datastore = None
-    disk_backing.diskMode = "persistent"
-    disk_backing.thinProvisioned = True
+    # rename the volume for cleanup
+    # while a name was specified in the create call above, as far as I can tell
+    # cinder just ignores that and defaults to the volume's id
+    volume = find_resource(mgmt.capi.volumes, volume.id)
+    volume.update(display_name=volume_name)
+    # and, of course, we're looking to boot from this volume, so make it bootable
+    volume.manager.set_bootable(volume, True)
 
-    disk = api.create("VirtualDisk")
-    disk.backing = disk_backing
-    disk.controllerKey = 1000
-    disk.key = 3000
-    disk.unitNumber = 1
-    disk.capacityInKB = disk_size * 1024 * 1024
+    volumes_spec = [
+        {
+            'destination_type': 'volume',
+            'device_name': '/dev/sda',
+            'delete_on_termination': False,
+            'uuid': volume.id,
+            'source_type': 'volume',
+            'boot_index': 0,
+        }
+    ]
 
-    disk_spec = api.create("VirtualDeviceConfigSpec")
-    disk_spec.device = disk
-    disk_spec.fileOperation = api.create("VirtualDeviceConfigSpecFileOperation").create
-    disk_spec.operation = api.create("VirtualDeviceConfigSpecOperation").add
-    device_changes.append(disk_spec)
+    # attach a nic to the private net
+    nics_spec = [
+        {'net-id': rhci.private_net_id},
+    ]
 
-    # change the CPU count
-    config_spec.numCPUs = cpu_count
+    if nested:
+        zone = nested_server_zone
+    else:
+        zone = server_zone
 
-    # change the memory
-    config_spec.memoryMB = memory * 1024
+    # XXX This isn't working, the volume creation is failing.
+    # A bug was reported on the error I was seeing, with the workaround being to manually
+    # create the volume from the image, and then boot with the source_type 'volume', instead of
+    # source_type 'image'. Next up: cinder api spelunkation
+    instance = api.servers.create(vm_name, None, flavor,
+        availability_zone=zone, security_groups=['default'],
+        block_device_mapping_v2=volumes_spec, nics=nics_spec)
+    mgmt.wait_vm_running(vm_name)
 
-    # enable nested virt
-    extra_config.append(api.create('OptionValue', key='vhv.enable', value='TRUE'))
-
-    # apply the custom config
-    try:
-        vm.ReconfigVM_Task(spec=config_spec)
-    except:
-        print 'failed to reconfigure VM, cleaning up'
-        raise
-
-    # don't know which device is the network adapter,
-    # but it's definitely the one that has the macAddress property
-    for dev in vm.config.hardware.device:
-        try:
-            mac_addr = dev.macAddress
-        except AttributeError:
-            continue
+    # we only added the one nic...
+    mac_addr = instance.interface_list()[0].mac_addr
     return {'vm_name': vm_name, 'mac_addr': str(mac_addr)}
 
-# setup the hypervisors
-hypervisor_macs = []
-rhci.rhevm_hypervisors = []
-for __ in range(discovery.num_hypervisors):
-    vm = setup_vm(**discovery.hypervisor_conf)
-    rhci.vm_names.append(vm['vm_name'])
-    rhci.rhevm_hypervisors.append(vm['vm_name'])
-    hypervisor_macs.append(vm['mac_addr'])
-
-# setup the engine
-vm = setup_vm(**discovery.engine_conf)
-rhci.vm_names.append(vm['vm_name'])
-rhci.rhevm_engine = vm['vm_name']
-engine_mac = vm['mac_addr']
-
-# write their macs so we can use them in the fusor step
-fusor_kwargs['rhevh_macs'] = hypervisor_macs
-fusor_kwargs['rhevm_mac'] = engine_mac
-save_rhci_conf()
 
 print 'Waiting for PXE setup to complete on the master'
 client = ssh_client()
@@ -130,12 +116,21 @@ def pxe_ready_wait():
 wait_for(pxe_ready_wait, num_sec=600)
 
 print 'Starting VMs into foreman discovery mode'
+# setup the hypervisors
+hypervisor_macs = []
+rhci.rhevm_hypervisors = []
+for i in range(discovery.num_hypervisors):
+    vm_suffix = 'hypervisor {}'.format(i)
+    vm = setup_vm(vm_suffix, nested=True, **discovery.hypervisor_conf)
+    rhci.rhevm_hypervisors.append(vm['vm_name'])
+    hypervisor_macs.append(vm['mac_addr'])
 
+# setup the engine
+vm = setup_vm('engine', nested=False, **discovery.engine_conf)
+rhci.rhevm_engine = vm['vm_name']
+engine_mac = vm['mac_addr']
 
-def start(vm_name):
-    mgmt.start_vm(vm_name)
-    print '{} started'.format(vm_name)
-
-start(rhci.rhevm_engine)
-for vm_name in rhci.rhevm_hypervisors:
-    start(vm_name)
+# write their macs so we can use them in the fusor step
+fusor_kwargs['rhevh_macs'] = hypervisor_macs
+fusor_kwargs['rhevm_mac'] = engine_mac
+save_rhci_conf()

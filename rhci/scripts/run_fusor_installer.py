@@ -2,43 +2,49 @@
 """Run fusor installer
 
 Using the vm info file written out in a previous step, automate fusor-installer using VNC
+
+This uses VNC for a few reasons:
+
+    - VNC accurately reflects the user experience, and ensures that launch-fusor-installer has run
+    - We already have a working VNC remote controller
+    - SSH access in openstack isn't (yet) reliable
+
 """
 import requests
 
-from utils.conf import rhci, credentials_rhci
+from utils.conf import rhci, credentials
 from utils.wait import wait_for
 
-from rhci_common import save_rhci_conf, vnc_client
+from rhci_common import save_rhci_conf, openstack_vnc_console
 
-# hard-coded for now, we can deal with different deployment types later
-# basic is 1 hypervisor, 1 engine, 1 cloudforms
-deployment_conf = rhci['deployments']['basic']['fusor-installer']
+deployment_conf = rhci['deployments'][rhci.deployment]['fusor-installer']
 
 
 def fill_fusor_installer_field(field_number, value):
     # select the field
     for n in str(field_number):
         vnc.type(n, sleep=.1)
-    vnc.press('enter', sleep=.4)
+    vnc.press('Return', sleep=.4)
 
     # fill in the value
     vnc.type(value, sleep=0.1)
-    vnc.press('enter', sleep=1)
+    vnc.press('Return', sleep=1)
 
-# We expect this to be set in the deploy ISO step
-vnc = vnc_client(rhci['vnc_endpoint'])
+
+vnc = openstack_vnc_console(rhci.fusor_vm_name)
 
 # login: activate the prompt and log in
 # mash space a few times to make sure the screen blank is cleared
 vnc.type(['space', 'space', 'space'], sleep=3)
 
 # select 'Not listed?' to bring up the username prompt
-vnc.type(['tab', 'space'], sleep=2)
+vnc.type(['Tab', 'space'], sleep=2)
 
-creds = credentials_rhci[deployment_conf['rootpw_credential']]
+# we use the ssh creds to log in here
+creds = credentials['ssh']
 # username
 vnc.type(creds.username)
-vnc.press('enter', sleep=2)
+vnc.press('Return', sleep=2)
 
 # password
 vnc.type(creds.password)
@@ -46,21 +52,21 @@ vnc.type(creds.password)
 # terminal will have focus, but fusor-installer is still starting
 # sleep long enough to let it load (with some padding), but not so long
 # that the screensaver starts up and locks the screen
-vnc.press('enter', sleep=120)
+vnc.press('Return', sleep=120)
 
 # select eth1 (option pops up on its own)
-vnc.type(['2', 'enter'], sleep=3)
+vnc.type(['2', 'Return'], sleep=3)
 
 for fields in deployment_conf['fields']:
     fill_fusor_installer_field(*fields)
 
+# replace foreman URL with ipaddr so we don't rely on dns for that ui to work
+# and also to deal with openstack floating IPs, which will differ from what fusor sees
 ui_url = 'https://{}'.format(rhci.ip_address)
-# replace foreman URL with ipaddr (so we don't rely on rdns for that ui to work)
-rhci['fusor_ui_url'] = ui_url
-save_rhci_conf()
+save_rhci_conf(fusor_ui_url=ui_url)
 
 # Install!
-vnc.type(['1', 'enter'])
+vnc.type(['1', 'Return'])
 
 # Wait for web UI
 print "Waiting for foreman UI to become available at {}".format(ui_url)
