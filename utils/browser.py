@@ -70,7 +70,7 @@ def ensure_browser_open(url=None):
             start()
     except:
         # If we couldn't poke the browser for any other reason, start a new one
-        start()
+        start(base_url=url)
     if thread_locals.wharf:
         thread_locals.wharf.renew()
     if url and browser().current_url != url:

@@ -25,6 +25,7 @@ from utils.timeutil import local_tz
 from utils.version import current_version
 from utils.wait import wait_for
 from heatclient import client as heat_client
+from keystoneclient.exceptions import Forbidden
 
 
 # TODO The following monkeypatch nonsense is criminal, and would be
@@ -587,9 +588,14 @@ class OpenstackSystem(MgmtSystemAPIBase):
         if filter_tenants:
             # Filter instances based on their tenant ID
             # needed for CFME 5.3 and higher
-            tenants = self._get_tenants()
-            ids = [tenant.id for tenant in tenants]
-            instances = filter(lambda i: i.tenant_id in ids, instances)
+            try:
+                tenant_ids = [t.id for t in self._get_tenants()]
+            except Forbidden:
+                # Access to the tenant api is forbidden; we probably aren't an admin
+                # Default to VMs owned by the current tenant
+                tenant_ids = [self.kapi.tenant_id]
+
+            instances = filter(lambda i: i.tenant_id in tenant_ids, instances)
         return instances
 
     def _get_all_templates(self):
