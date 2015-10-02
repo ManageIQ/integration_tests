@@ -20,8 +20,10 @@ class FormButton(Pretty):
         dimmed_alt: In case the ``alt`` param is different in the dimmed variant of the button.
         force_click: Click always, even if it is dimmed. (Causes an error if not visible)
         partial_alt: Whether the alt matching should be only partial (``in``).
+        ng_click: To match the angular buttons, you can use this to specify the contents of
+            ``ng-click`` attributeh.
     """
-    pretty_attrs = ['_alt', '_dimmed_alt', '_force', '_partial']
+    pretty_attrs = ['_alt', '_dimmed_alt', '_force', '_partial', '_ng_click']
 
     class Button:
         """Holds pieces of the XPath to be assembled."""
@@ -37,19 +39,30 @@ class FormButton(Pretty):
         ON_CURRENT_TAB = (
             "not(ancestor::div[contains(@class, 'tab-pane') and not(contains(@class, 'active'))])")
 
-    def __init__(self, alt, dimmed_alt=None, force_click=False, partial_alt=False):
+    def __init__(self, alt, dimmed_alt=None, force_click=False, partial_alt=False, ng_click=None):
         self._alt = alt
         self._dimmed_alt = dimmed_alt
         self._force = force_click
         self._partial = partial_alt
+        self._ng_click = ng_click
 
     def alt_expr(self, dimmed=False):
         if self._partial:
-            return "(contains(normalize-space(@alt), {}))".format(
-                quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
+            if self._ng_click is None:
+                return "(contains(normalize-space(@alt), {}))".format(
+                    quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
+            else:
+                return "(contains(normalize-space(@alt), {}) or @ng-click={})".format(
+                    quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt),
+                    quoteattr(self._ng_click))
         else:
-            return "(normalize-space(@alt)={})".format(
-                quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
+            if self._ng_click is None:
+                return "(normalize-space(@alt)={})".format(
+                    quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
+            else:
+                return "(normalize-space(@alt)={} or @ng-click={})".format(
+                    quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt),
+                    quoteattr(self._ng_click))
 
     def _format_generator(self, dimmed=False, include_dimmed_alt=False):
         """Generates a dict that will be passed to the formatting strings."""
@@ -107,8 +120,8 @@ class FormButton(Pretty):
         return "{}({})".format(self.__class__.__name__, str(repr(self._alt)))
 
 add = FormButton("Add")
-save = FormButton("Save Changes", dimmed_alt="Save")
-angular_save = FormButton("Save changes")
+save = FormButton("Save Changes", dimmed_alt="Save", ng_click="saveClicked()")
+angular_save = FormButton("Save changes", ng_click="saveClicked()")
 cancel = FormButton("Cancel")
 cancel_changes = FormButton("Cancel Changes")
 submit = FormButton("Submit")
