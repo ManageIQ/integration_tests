@@ -1,5 +1,6 @@
 from copy import copy
 from functools import partial
+from xml.sax.saxutils import quoteattr
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui.menu import nav
@@ -26,7 +27,10 @@ cfg_btn = partial(tb.select, 'Configuration')
 
 
 def datastore_checkbox(name):
-    return "//img[contains(@src, 'chk') and ../../td[normalize-space(.)='%s']]" % name
+    return version.pick({
+        version.LOWEST: "//img[contains(@src, 'chk') and ../../td[normalize-space(.)={}]]",
+        "5.5": "//input[@type='checkbox' and ../../td[normalize-space(.)={}]]"
+    }).format(quoteattr(name))
 
 
 def table_select(name):
