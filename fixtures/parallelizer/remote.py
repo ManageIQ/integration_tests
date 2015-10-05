@@ -107,12 +107,16 @@ class SlaveManager(object):
                 break
         return True
 
-    def pytest_sessionfinish(self, session, exitstatus):
-        self.message('shutting down')
-        self.send_event('shutdown')
+    def pytest_sessionfinish(self):
+        self.shutdown()
 
     def handle_quit(self):
         self.message('shutting down after the current test due to QUIT signal')
+        self.quit_signaled = True
+
+    def shutdown(self):
+        self.message('shutting down')
+        self.send_event('shutdown')
         self.quit_signaled = True
 
     def _test_generator(self):
