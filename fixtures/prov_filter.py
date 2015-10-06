@@ -1,5 +1,15 @@
+from collections import OrderedDict
 from utils.conf import cfme_data
 from utils.log import logger
+from utils.version import current_version
+
+
+_version_operator_map = OrderedDict([('>=', lambda o, v: o >= v),
+                                    ('<=', lambda o, v: o <= v),
+                                    ('==', lambda o, v: o == v),
+                                    ('!=', lambda o, v: o != v),
+                                    ('>', lambda o, v: o > v),
+                                     ('<', lambda o, v: o < v)])
 
 
 def provider_keys():
@@ -54,6 +64,18 @@ def parse_filter(cmd_filter):
     filtered_providers = provider_keys()
     for provider in provider_keys():
         data = cfme_data['management_systems'][provider]
+        restricted_version = data.get('restricted_version', None)
+        if restricted_version:
+            for op, comparator in _version_operator_map.items():
+                # split string by op; if the split works, version won't be empty
+                head, op, version = restricted_version.partition(op)
+                if not version:
+                    continue
+                if not comparator(current_version(), version):
+                    filtered_providers.remove(provider)
+                break
+            else:
+                raise Exception('Operator not found in {}'.format(restricted_version))
         tags = data.get('tags', [])
         if provider not in cmd_filter and not set(tags) & set(cmd_filter):
             filtered_providers.remove(provider)
