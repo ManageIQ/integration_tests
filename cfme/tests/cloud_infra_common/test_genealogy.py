@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.cloud.instance import edit_form
 from utils import testgen
 from utils.providers import is_cloud_provider
 
@@ -76,7 +75,7 @@ def test_vm_genealogy_detected(
 
     if from_edit:
         vm_crud.open_edit()
-        parent = pytest.sel.text(edit_form.parent_sel.first_selected_option).strip()
+        parent = pytest.sel.text(vm_crud.edit_form.parent_sel.first_selected_option).strip()
         assert parent.startswith(small_template), "The parent template not detected!"
     else:
         vm_crud_ancestors = vm_crud.genealogy.ancestors

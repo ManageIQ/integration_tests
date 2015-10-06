@@ -9,8 +9,8 @@ from cfme.exceptions import (
     VmOrInstanceNotFound, TemplateNotFound, OptionNotAvailable, UnknownProviderType)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    AngularCalendarInput, Form, InfoBlock, Quadicon, Select, fill, flash, form_buttons, paginator,
-    toolbar)
+    AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
+    form_buttons, paginator, toolbar)
 from utils import version
 from utils.log import logger
 from utils.mgmt_system import ActionNotSupported, VMInstanceNotFound
@@ -50,6 +50,21 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
     """
     pretty_attrs = ['name', 'provider', 'template_name']
     _registered_types = {}
+
+    # Forms
+    edit_form = Form(
+        fields=[
+            ('custom_ident', Input("custom_1")),
+            ('description_tarea', "//textarea[@id='description']"),
+            ('parent_sel', {
+                version.LOWEST: Select("//select[@name='chosen_parent']"),
+                "5.5": AngularSelect("chosen_parent")}),
+            ('child_sel', Select("//select[@id='kids_chosen']", multi=True)),
+            ('vm_sel', Select("//select[@id='choices_chosen']", multi=True)),
+            ('add_btn', "//img[@alt='Move selected VMs to left']"),
+            ('remove_btn', "//img[@alt='Move selected VMs to right']"),
+            ('remove_all_btn', "//img[@alt='Move all VMs to right']"),
+        ])
 
     ###
     # Factory class methods
