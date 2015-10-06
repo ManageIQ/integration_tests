@@ -22,7 +22,7 @@ pytestmark = [pytest.mark.ignore_stream("5.2")]
 
 
 @pytest.fixture(scope="module")
-def provider():
+def a_provider():
     return _setup_a_provider("infra")
 
 
@@ -158,7 +158,7 @@ def test_add_delete_multiple_service_catalogs(rest_api):
 
 
 @pytest.mark.ignore_stream("5.3")
-def test_provider_refresh(request, provider, rest_api):
+def test_provider_refresh(request, a_provider, rest_api):
     """Test checking that refresh invoked from the REST API works.
 
     It provisions a VM when the Provider inventory functionality is disabled, then the functionality
@@ -181,12 +181,12 @@ def test_provider_refresh(request, provider, rest_api):
     """
     if "refresh" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
-    provider_rest = rest_api.collections.providers.find_by(name=provider.name)[0]
+    provider_rest = rest_api.collections.providers.find_by(name=a_provider.name)[0]
     with server_roles_disabled("ems_inventory", "ems_operations"):
         vm_name = deploy_template(
-            provider.key,
+            a_provider.key,
             "test_rest_prov_refresh_{}".format(fauxfactory.gen_alphanumeric(length=4)))
-        request.addfinalizer(lambda: provider.mgmt.delete_vm(vm_name))
+        request.addfinalizer(lambda: a_provider.mgmt.delete_vm(vm_name))
     provider_rest.reload()
     old_refresh_dt = provider_rest.last_refresh_date
     assert provider_rest.action.refresh()["success"], "Refresh was unsuccessful"
@@ -210,7 +210,7 @@ def test_provider_refresh(request, provider, rest_api):
 
 
 @pytest.mark.ignore_stream("5.3")
-def test_provider_edit(request, provider, rest_api):
+def test_provider_edit(request, a_provider, rest_api):
     """Test editing a provider using REST API.
 
     Prerequisities:
@@ -275,14 +275,14 @@ def test_provider_crud(request, rest_api, from_detail):
 
 
 @pytest.fixture(scope="module")
-def vm(request, provider, rest_api):
+def vm(request, a_provider, rest_api):
     if "refresh" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
-    provider_rest = rest_api.collections.providers.find_by(name=provider.name)[0]
+    provider_rest = rest_api.collections.providers.find_by(name=a_provider.name)[0]
     vm_name = deploy_template(
-        provider.key,
+        a_provider.key,
         "test_rest_vm_{}".format(fauxfactory.gen_alphanumeric(length=4)))
-    request.addfinalizer(lambda: provider.mgmt.delete_vm(vm_name))
+    request.addfinalizer(lambda: a_provider.mgmt.delete_vm(vm_name))
     provider_rest.action.refresh()
     wait_for(
         lambda: len(rest_api.collections.vms.find_by(name=vm_name)) > 0,
@@ -294,7 +294,7 @@ def vm(request, provider, rest_api):
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
 @pytest.mark.ignore_stream("5.3")
-def test_set_vm_owner(request, provider, rest_api, vm, from_detail):
+def test_set_vm_owner(request, rest_api, vm, from_detail):
     """Test whether set_owner action from the REST API works.
 
     Prerequisities:
@@ -330,7 +330,7 @@ def test_set_vm_owner(request, provider, rest_api, vm, from_detail):
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
 @pytest.mark.ignore_stream("5.3")
-def test_vm_add_lifecycle_event(request, provider, rest_api, vm, from_detail, db):
+def test_vm_add_lifecycle_event(request, rest_api, vm, from_detail, db):
     """Test that checks whether adding a lifecycle event using the REST API works.
 
     Prerequisities:
