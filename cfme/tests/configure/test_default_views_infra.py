@@ -181,7 +181,6 @@ def test_details_view(request, setup_a_provider, key):
     reset_default_view(button_name, default_view)
 
 
-@pytest.mark.meta(blockers=[1228130])
 @pytest.mark.parametrize('key', exp_comp_params, scope="module")
 def test_exists_view(request, setup_a_provider, key):
     name = re.split(r"\/", key)
