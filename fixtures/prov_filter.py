@@ -1,7 +1,4 @@
 from collections import OrderedDict
-
-import pytest
-
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.version import current_version
@@ -20,24 +17,21 @@ def provider_keys():
 
 
 class ProviderFilter(object):
-    def __init__(self):
-        # this gets populated in pytest_configure
-        self.cmdline_filter = None
-        # this gets populated on the first access to .providers
-        self._providers = None
+    def __init__(self, defaults):
+        self._filtered_providers = defaults
 
     @property
     def providers(self):
-        if self._providers is None:
-            self._providers = parse_filter(self.cmdline_filter)
-            logger.debug('Filtering providers with {}, leaves {}'.format(
-                self.cmdline_filter, self._providers))
-        return self._providers
+        return self._filtered_providers
+
+    @providers.setter
+    def providers(self, filtered):
+        self._filtered_providers = parse_filter(filtered)
 
     def __contains__(self, provider):
         return provider in self.providers
 
-filtered = ProviderFilter()
+filtered = ProviderFilter(provider_keys())
 
 
 def pytest_addoption(parser):
@@ -47,20 +41,24 @@ def pytest_addoption(parser):
         help="list of providers or tags to include in test")
 
 
-@pytest.mark.hookwrapper
 def pytest_configure(config):
-    # some other pytest_configure implementations try to access filtered.providers,
-    # so wrap it and try to run before them
-    filtered.cmdline_filter = config.getoption('use_provider') or ['default']
-    assert filtered.cmdline_filter is not None
-    yield
+    """ Filters the list of providers as part of pytest configuration. """
+
+    cmd_filter = config.getvalueorskip('use_provider')
+    if not cmd_filter:
+        cmd_filter = ["default"]
+
+    filtered.providers = cmd_filter
+
+    logger.debug('Filtering providers with {}, leaves {}'.format(
+        cmd_filter, filtered.providers))
 
 
-def parse_filter(cmdline_filter):
+def parse_filter(cmd_filter):
     """ Parse a list of command line filters and return a filtered set of providers.
 
     Args:
-        cmdline_filter: A list of ``--use-provider`` options.
+        cmd_filter: A list of ``--use-provider`` options.
     """
 
     filtered_providers = provider_keys()
@@ -79,6 +77,6 @@ def parse_filter(cmdline_filter):
             else:
                 raise Exception('Operator not found in {}'.format(restricted_version))
         tags = data.get('tags', [])
-        if provider not in cmdline_filter and not set(tags) & set(cmdline_filter):
+        if provider not in cmd_filter and not set(tags) & set(cmd_filter):
             filtered_providers.remove(provider)
     return filtered_providers
