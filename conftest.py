@@ -17,6 +17,7 @@ from fixtures.artifactor_plugin import art_client, appliance_ip_address
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
 from utils import ports
+from utils.conf import rdb
 from utils.log import logger
 from utils.path import data_path
 from utils.net import net_check
@@ -119,10 +120,14 @@ def appliance_police():
     # time to call a human
     msg = 'Help! My appliance {} crashed with: {}'.format(store.current_appliance.url, e_message)
     store.slave_manager.message(msg)
-    Rdb(msg).set_trace(**{
-        'subject': 'RDB Breakpoint: Appliance failure',
-        'recipients': ['semyers@redhat.com', 'psavage@redhat.com'],
-    })
+    if 'appliance_police_recipients' in rdb:
+        rdb_kwargs = {
+            'subject': 'RDB Breakpoint: Appliance failure',
+            'recipients': rdb.appliance_police_recipients,
+        }
+    else:
+        rdb_kwargs = {}
+    Rdb(msg).set_trace(**rdb_kwargs)
     store.slave_manager.message('Resuming testing following remote debugging')
 
 
