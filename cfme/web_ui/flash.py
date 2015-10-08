@@ -135,6 +135,17 @@ def verify_rails_error(f):
     return g
 
 
+def verpick_message(f):
+    """Wrapper that resolves eventual verpick dictionary passed to the function."""
+    # TODO: If we find such use for more places, this would deserve extraction in utils/
+    @wraps(f)
+    def g(m, *args, **kwargs):
+        if isinstance(m, dict):
+            m = version.pick(m)
+        return f(m, *args, **kwargs)
+    return g
+
+
 @verify_rails_error
 def assert_no_errors(messages=None):
     """Asserts that there are no current Error messages. If no messages
@@ -149,6 +160,7 @@ def assert_no_errors(messages=None):
 
 
 @verify_rails_error
+@verpick_message
 def assert_message_match(m):
     """ Asserts that a message matches a specific string."""
     logger.debug('Asserting flash message match for "{}"'.format(m))
@@ -158,6 +170,7 @@ def assert_message_match(m):
 
 
 @verify_rails_error
+@verpick_message
 def assert_message_contain(m):
     """ Asserts that a message contains a specific string """
     if not any([m in fm.message for fm in get_messages()]):
@@ -165,6 +178,7 @@ def assert_message_contain(m):
 
 
 @verify_rails_error
+@verpick_message
 def assert_success_message(m):
     """Asserts that there are no errors and a (green) info message
     matches the given string."""
