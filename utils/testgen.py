@@ -85,6 +85,7 @@ More information on ``parametrize`` can be found in pytest's documentation:
 import pytest
 import random
 
+from collections import OrderedDict
 from cfme.exceptions import UnknownProviderType
 from cfme.infrastructure.pxe import get_pxe_server_from_config
 from fixtures.prov_filter import filtered
@@ -95,6 +96,14 @@ from utils.conf import cfme_data
 from utils.log import logger
 from utils.providers import (
     cloud_provider_type_map, infra_provider_type_map, provider_type_map, get_crud)
+
+
+_version_operator_map = OrderedDict([('>=', lambda o, v: o >= v),
+                                    ('<=', lambda o, v: o <= v),
+                                    ('==', lambda o, v: o == v),
+                                    ('!=', lambda o, v: o != v),
+                                    ('>', lambda o, v: o > v),
+                                    ('<', lambda o, v: o < v)])
 
 
 def generate(gen_func, *args, **kwargs):
@@ -237,6 +246,11 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         argnames.append('provider')
 
     for provider, data in cfme_data.get('management_systems', {}).iteritems():
+
+        # Check provider hasn't been filtered out with --use-provider
+        if provider not in filtered:
+            continue
+
         try:
             prov_obj = get_crud(provider)
         except UnknownProviderType:
@@ -246,6 +260,20 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         if provider_types is not None and prov_obj.type not in provider_types:
             # Skip unwanted types
             continue
+
+        restricted_version = data.get('restricted_version', None)
+        if restricted_version:
+            logger.info('we found a restricted version')
+            for op, comparator in _version_operator_map.items():
+                # split string by op; if the split works, version won't be empty
+                head, op, ver = restricted_version.partition(op)
+                if not ver:  # This means that the operator was not found
+                    continue
+                if not comparator(version.current_version(), ver):
+                    skip = True
+                break
+            else:
+                raise Exception('Operator not found in {}'.format(restricted_version))
 
         # Test to see the test has meta data, if it does and that metadata contains
         # a test_flag kwarg, then check to make sure the provider contains that test_flag
@@ -282,10 +310,6 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                 # Ignore SCVMM on 5.2
                 continue
         except Exception:  # No SSH connection
-            continue
-
-        # Check provider hasn't been filtered out with --use-provider
-        if prov_obj.key not in filtered:
             continue
 
         # Get values for the requested fields, filling in with None for undefined fields
