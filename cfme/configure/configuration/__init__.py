@@ -466,7 +466,11 @@ class AnalysisProfile(Pretty, Updateable):
             ("description", "input#description")],
         tab_fields={
             "Category": [
-                ("categories", CheckboxSelect("table#formtest")),
+                ("categories", CheckboxSelect({
+                    version.LOWEST: "table#formtest",
+                    "5.5":
+                    "//h3[normalize-space(.)='Category Selection']/.."
+                    "//div[contains(@class, 'col-md-8')]"})),
             ],
             "File": [
                 ("files", DynamicTable(

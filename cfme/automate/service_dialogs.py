@@ -50,9 +50,7 @@ element_form = Form(fields=[
         version.LOWEST: Select("//select[@id='field_typ']"),
         "5.5": AngularSelect("field_typ")}),
     ('default_text_box', Input("field_default_value")),
-    ('field_required', {
-        version.LOWEST: Input("field_required"),
-        "5.5": AngularSelect("field_required")}),
+    ('field_required', Input("field_required")),
     ('field_past_dates', Input("field_past_dates")),
     ('field_entry_point', Input("field_entry_point")),
     ('field_show_refresh_button', Input("field_show_refresh_button")),

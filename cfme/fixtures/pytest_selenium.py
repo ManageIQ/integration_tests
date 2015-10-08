@@ -620,7 +620,12 @@ def text(loc, **kwargs):
 
     Returns: A string containing the text of the element.
     """
-    return move_to_element(loc, **kwargs).text
+    try:
+        return move_to_element(loc, **kwargs).text
+    except exceptions.CannotScrollException:
+        # Work around, the element is not movable to
+        el = element(loc, **kwargs)
+        return execute_script("return arguments[0].textContent || arguments[0].innerText;", el)
 
 
 def text_sane(loc, **kwargs):
@@ -979,6 +984,10 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # Set this to True in the handlers below to trigger a browser restart
     recycle = False
 
+    # Set this to True in handlers to restart evmserverd on the appliance
+    # Includes recycling so you don't need to specify recycle = False
+    restart_evmserverd = False
+
     # remember the current user, if any
     current_user = store.user
 
@@ -1106,6 +1115,15 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 cfme_exc.cfme_exception_text()
             ))
             recycle = True
+        elif is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
+            # 502
+            logger.exception("Proxy error detected. Killing browser and restarting evmserverd.")
+            req = elements("/html/body/p[1]//a")
+            req = text(req[0]) if req else "No request stated"
+            reason = elements("/html/body/p[2]/strong")
+            reason = text(reason[0]) if reason else "No reason stated"
+            logger.info("Proxy error: {} / {}".format(req, reason))
+            restart_evmserverd = True
         elif is_displayed("//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
             # 503 and similar sort of errors
             title = text("//body/h1")
@@ -1137,7 +1155,12 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 'service evmserverd status').output)
             raise
 
-    if recycle:
+    if restart_evmserverd:
+        logger.info("evmserverd restart requested")
+        store.current_appliance.restart_evm_service()
+        store.current_appliance.wait_for_web_ui()
+
+    if recycle or restart_evmserverd:
         browser().quit()  # login.current_user() will be retained for next login
         logger.debug('browser killed on try %d' % _tries)
         # If given a "start" nav destination, it won't be valid after quitting the browser

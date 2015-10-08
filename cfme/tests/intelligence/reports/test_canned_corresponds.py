@@ -27,8 +27,11 @@ def test_providers_summary(soft_assert, setup_a_provider):
             continue
         provider_fake_obj = Provider(name=provider["Name"])
         sel.force_navigate("infrastructure_provider", context={"provider": provider_fake_obj})
+        hostname = version.pick({
+            version.LOWEST: ("Hostname", "Hostname"),
+            "5.5": ("Host Name", "Hostname")})
         soft_assert(
-            provider_props("Hostname") == provider["Hostname"],
+            provider_props(hostname[0]) == provider[hostname[1]],
             "Hostname does not match at {}".format(provider["Name"]))
 
         if version.current_version() < "5.4":

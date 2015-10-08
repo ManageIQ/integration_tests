@@ -1,13 +1,10 @@
-""" A model of Instances page in CFME
-
-:var edit_form: A :py:class:`cfme.web_ui.Form` object describing the instance edit form.
-"""
+""" A model of Instances page in CFME."""
 from cfme.common.vm import VM, Template
 from cfme.exceptions import InstanceNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import (
-    accordion, fill, flash, paginator, toolbar, CheckboxTree, Form, Region, Select, Tree, Quadicon)
+    accordion, fill, flash, paginator, toolbar, CheckboxTree, Region, Tree, Quadicon)
 from cfme.web_ui.menu import nav
 from functools import partial
 from utils import deferred_verpick, version
@@ -35,19 +32,6 @@ manage_policies_tree = CheckboxTree(
         "5.3": "//div[@id='protect_treebox']/ul"
     }
 )
-
-# Forms
-edit_form = Form(
-    fields=[
-        ('custom_ident', "//*[@id='custom_1']"),
-        ('description_tarea', "//textarea[@id='description']"),
-        ('parent_sel', Select("//select[@name='chosen_parent']")),
-        ('child_sel', Select("//select[@id='kids_chosen']", multi=True)),
-        ('vm_sel', Select("//select[@id='choices_chosen']", multi=True)),
-        ('add_btn', "//img[@alt='Move selected VMs to left']"),
-        ('remove_btn', "//img[@alt='Move selected VMs to right']"),
-        ('remove_all_btn', "//img[@alt='Move all VMs to right']"),
-    ])
 
 
 nav.add_branch(
