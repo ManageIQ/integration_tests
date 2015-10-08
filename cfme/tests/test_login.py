@@ -1,16 +1,22 @@
 import pytest
 from cfme import dashboard, login, Credential
 from cfme.configure.access_control import User
-from utils import conf, error
+from utils import browser, conf, error
 
 pytestmark = pytest.mark.usefixtures('browser')
 
 
 @pytest.yield_fixture(scope="function")
 def check_logged_out():
-    login.logout()
+    if browser.browser() is not None:
+        browser.quit()
+        browser.ensure_browser_open()
+        login.logout()
     yield
-    login.logout()
+    if browser.browser() is not None:
+        browser.quit()
+        browser.ensure_browser_open()
+        login.logout()
 
 
 @pytest.mark.sauce
