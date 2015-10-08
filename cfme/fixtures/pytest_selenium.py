@@ -620,7 +620,12 @@ def text(loc, **kwargs):
 
     Returns: A string containing the text of the element.
     """
-    return move_to_element(loc, **kwargs).text
+    try:
+        return move_to_element(loc, **kwargs).text
+    except exceptions.CannotScrollException:
+        # Work around, the element is not movable to
+        el = element(loc, **kwargs)
+        return execute_script("return arguments[0].textContent || arguments[0].innerText;", el)
 
 
 def text_sane(loc, **kwargs):
