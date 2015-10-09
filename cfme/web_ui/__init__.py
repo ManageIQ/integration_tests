@@ -3287,7 +3287,7 @@ class AngularSelect(object):
     def select_by_visible_text(self, text):
         if not self.is_open:
             self.open()
-        new_loc = self._loc + '/../div/ul/li[contains(., "{}")]'.format(text)
+        new_loc = self._loc + '/../div/ul/li/a[contains(., "{}")]'.format(text)
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)
