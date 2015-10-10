@@ -68,7 +68,7 @@ class RHEVMSystem(RHEVMSystemBase):
             storage.set_type("iscsi")
             storage.set_logical_unit([lu])
             disk = params.Disk()
-            disk.set_name('direct_lun')
+            disk.set_name(dlun_name)
             disk.set_interface("virtio")
             disk.set_type("iscsi")
             disk.set_format("raw")
