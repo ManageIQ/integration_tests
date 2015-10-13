@@ -16,6 +16,7 @@
 </script>
 {% endblock %}
 {% block body %}
+<div ng-app="myAppliancesApp">
 
 {% if not request.user.is_superuser %}
     <h2>Listing and operation of your appliances</h2>
@@ -37,7 +38,6 @@
         </select>
     </h2>
 {% endif %}
-<div ng-app="myAppliancesApp">
 {% for pool in pools %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
         <div class="panel-heading">
@@ -195,7 +195,7 @@
         </table>
     </div>
 {% endfor %}
-</div>
+
 {% if display_legend %}
     <h3>Legend</h3>
     <ul>
@@ -275,6 +275,16 @@
                 <input type="number" class="form-control" id="count" name="count" min="1" value="1" {% if per_pool_quota_enabled %}max="{{per_pool_quota}}"{% endif %}>
               </div>
             </div>
+            <div class="form-group">
+              <label for="exp_hours" class="col-md-2 control-label">Expiration:</label>
+              <div class="col-md-4" ng-controller="EditExpiration">
+                Default? <input type="checkbox" id="exp_default" name="exp_default" ng-model="defaultTimeout"><br>
+                <input type="number" id="exp_days" name="exp_days" min="0" max="7" ng-model="expDays" ng-disabled="defaultTimeout" ng-change="updateForm()"> D
+                <input type="number" id="exp_hours" name="exp_hours" min="0" max="24" ng-model="expHours" ng-disabled="defaultTimeout" ng-change="updateForm()"> H
+                <input type="number" id="exp_mins" name="exp_mins" min="0" max="59" ng-model="expMins" ng-disabled="defaultTimeout" ng-change="updateForm()"> M
+                <input type="hidden" id="expiration" name="expiration" ng-model="expiration" value="{[{ expiration }]}"> <strong> = {[{ expiration }]} minutes</strong>
+              </div>
+            </div>
             <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
         </form>
         <script type="text/javascript">
@@ -340,4 +350,5 @@
         <h3>You reached the limit of your account, no more pools</h3>
     {% endif %}
 {% endif %}
+</div>
 {% endblock %}
