@@ -213,7 +213,9 @@ def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_
     state_change_time = testing_instance.get_detail(('Power Management', 'State Changed On'))
     testing_instance.power_control_from_cfme(
         option=testing_instance.SOFT_REBOOT, cancel=False, from_details=True)
-    flash.assert_message_contain("Restart initiated")
+    flash.assert_message_contain(version.pick({
+        version.LOWEST: "Restart initiated",
+        "5.5": "Restart Guest initiated"}))
     wait_for_state_change_time_refresh(testing_instance, state_change_time, timeout=720)
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, from_details=True)
