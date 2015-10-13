@@ -10,6 +10,7 @@ from cfme.web_ui import (
     CheckboxSelect, Form, InfoBlock, Select, ShowingInputs, accordion, fill, toolbar, Input)
 from cfme.web_ui import flash, form_buttons
 from cfme.web_ui.menu import nav
+from utils import version
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.wait import wait_for
@@ -111,8 +112,9 @@ nav.add_branch(
 
 visibility_obj = ShowingInputs(
     Select("//select[@id='visibility_typ']"),
-    CheckboxSelect("//div[@id='form_role_visibility']//table/"
-                   "tbody/tr/td[not(contains(@class, 'key'))]/table"),
+    CheckboxSelect({
+        version.LOWEST: "//td[normalize-space(.)='User Roles']/../td/table",
+        "5.5": "//label[normalize-space(.)='User Roles']/../div/table"}),
     min_values=1
 )
 
