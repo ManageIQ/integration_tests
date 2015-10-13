@@ -2,6 +2,7 @@
 import pytest
 
 from cfme.web_ui.mixins import pull_splitter, left_half_size
+from utils.version import current_version
 
 
 TOLERANCE = 20
@@ -13,6 +14,7 @@ LOCATIONS = [
 
 @pytest.mark.parametrize("location", LOCATIONS)
 @pytest.mark.meta(blockers=[1219019])
+@pytest.mark.uncollectif(lambda: current_version() >= "5.5")
 def test_pull_splitter(location):
     """This test tests whether the setting of the position of the left/right splitter is persisted
     correctly."""
