@@ -11,7 +11,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import AngularSelect, Calendar, Form, Region, Table, Select, fill
-from utils import lazycache
+from utils import lazycache, version
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -361,16 +361,18 @@ class MenuShortcuts(Pretty):
     would be with :py:class:`dict` but you cannot specify aliases, just menu names.
 
     Args:
-        select_loc: Locator pointing to the selector.
+        select_name: Name of the select
     """
-    pretty_attrs = ['_select_loc']
+    pretty_attrs = ['_select_name']
 
-    def __init__(self, select_loc):
-        self._select_loc = select_loc
+    def __init__(self, select_name):
+        self._select_name = select_name
 
     @property
     def select(self):
-        return Select(self._select_loc)
+        return version.pick({
+            version.LOWEST: Select("select#{}".format(self._select_name)),
+            "5.5": AngularSelect(self._select_name)})
 
     @property
     def opened_boxes_ids(self):
