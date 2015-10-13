@@ -414,7 +414,7 @@ def request_pool(request):
         preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
         yum_update = request.POST.get("yum_update", "false").lower() == "true"
         count = int(request.POST["count"])
-        lease_time = 60
+        lease_time = int(request.POST.get("expiration", 60))
         pool_id = AppliancePool.create(
             request.user, group, version, date, provider, count, lease_time, preconfigured,
             yum_update).id

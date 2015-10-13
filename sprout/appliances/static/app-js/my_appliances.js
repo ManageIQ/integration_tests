@@ -72,3 +72,25 @@ myAppliancesApp.controller('EditVmName', function ($scope, $http, $timeout, $win
         $scope.editing = true;
     };
 });
+
+myAppliancesApp.controller('EditExpiration', function ($scope) {
+    $scope.defaultTimeout = true;
+    $scope.expiration = 60;
+
+    $scope.expDays = 0;
+    $scope.expHours = 1;
+    $scope.expMins = 0;
+
+    updateForm = function() {
+        if($scope.defaultTimeout) {
+            $scope.expiration = 60;
+        } else {
+            $scope.expiration = $scope.expMins + 60*$scope.expHours + 60*24*$scope.expDays;
+        }
+    }
+
+    $scope.$watch("defaultTimeout", updateForm);
+    $scope.$watch("expDays", updateForm);
+    $scope.$watch("expHours", updateForm);
+    $scope.$watch("expMins", updateForm);
+});
