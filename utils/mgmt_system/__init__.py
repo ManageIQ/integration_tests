@@ -25,6 +25,56 @@ from ovirtsdk.xml import params
 
 
 class RHEVMSystem(RHEVMSystemBase):
+
+    def start_vm(self, vm_name=None, **kwargs):
+        self.wait_vm_steady(vm_name)
+        self.logger.info(' Starting RHEV VM %s' % vm_name)
+        vm = self._get_vm(vm_name)
+        if vm.status.get_state() == 'up':
+            self.logger.info(' RHEV VM %s os already running.' % vm_name)
+            return True
+        else:
+            if 'initialization' in kwargs:
+                vm.start(kwargs['initialization'])
+            else:
+                vm.start()
+            self.wait_vm_running(vm_name)
+            return True
+
+    def deploy_template(self, template, *args, **kwargs):
+        import pdb
+        pdb.set_trace()
+        self.logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
+        timeout = kwargs.pop('timeout', 900)
+        power_on = kwargs.pop('power_on', True)
+        vm_kwargs = {
+            'name': kwargs['vm_name'],
+            'cluster': self.api.clusters.get(kwargs['cluster']),
+            'template': self.api.templates.get(template)
+        }
+
+        if 'placement_policy_host' in kwargs and 'placement_policy_affinity' in kwargs:
+            host = params.Host(name=kwargs['placement_policy_host'])
+            policy = params.VmPlacementPolicy(host=host,
+                affinity=kwargs['placement_policy_affinity'])
+            vm_kwargs['placement_policy'] = policy
+        vm = params.VM(**vm_kwargs)
+        self.api.vms.add(vm)
+        self.wait_vm_stopped(kwargs['vm_name'], num_sec=timeout)
+        if power_on:
+            version = self.api.get_product_info().get_full_version()
+            if template.startswith("cfme-55") and version.startswith("3.4"):
+                action = params.Action(vm=params.VM(initialization=params.Initialization(
+                    cloud_init=params.CloudInit(users=params.Users(
+                        user=[params.User(user_name="root", password="smartvm")])))))
+                ciargs = {}
+                ciargs['initialization'] = action
+                self.start_vm(vm_name=kwargs['vm_name'], **ciargs)
+                pdb.set_trace()
+            else:
+                self.start_vm(vm_name=kwargs['vm_name'])
+        return kwargs['vm_name']
+
     def connect_direct_lun_to_appliance(self, vm_name, disconnect):
         """Connects or disconnects the direct lun disk to an appliance.
 
