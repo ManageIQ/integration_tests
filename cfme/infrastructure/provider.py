@@ -8,7 +8,6 @@
 :var default_form: A :py:class:`cfme.web_ui.Form` object describing the default credentials form.
 :var candu_form: A :py:class:`cfme.web_ui.Form` object describing the C&U credentials form.
 """
-
 from functools import partial
 
 from utils.db import cfmedb
@@ -59,6 +58,7 @@ properties_form = Form(
                          '5.5': AngularSelect("security_protocol")}),
         ('sec_realm', Input("realm"))
     ])
+
 
 manage_policies_tree = CheckboxTree(
     {
@@ -159,7 +159,7 @@ class Provider(Updateable, Pretty, BaseProvider):
                             .filter(ext_management_systems.name == self.name))
             return len(hostlist)
         else:
-            return int(self.get_detail("Relationships", "Hosts"))
+            return int(self.get_detail("Relationships", "host.png", use_icon=True))
 
     def num_cluster(self, db=True):
         """ Returns the providers number of templates, as shown on the Details page."""
@@ -172,7 +172,7 @@ class Provider(Updateable, Pretty, BaseProvider):
                            .filter(ext_management_systems.name == self.name))
             return len(clulist)
         else:
-            return int(self.get_detail("Relationships", "Clusters"))
+            return int(self.get_detail("Relationships", "cluster.png", use_icon=True))
 
     def discover(self):
         """
@@ -218,6 +218,26 @@ class VMwareProvider(Provider):
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'VMware vCenter',
+                'hostname_text': kwargs.get('hostname'),
+                'ipaddress_text': kwargs.get('ip_address')}
+
+
+class OpenstackInfraProvider(Provider):
+    STATS_TO_MATCH = ['num_template', 'num_host']
+
+    def __init__(self, name=None, credentials=None, key=None, hostname=None,
+                 ip_address=None, start_ip=None, end_ip=None, provider_data=None):
+        super(OpenstackInfraProvider, self).__init__(name=name, credentials=credentials,
+                                             key=key, provider_data=provider_data)
+
+        self.hostname = hostname
+        self.ip_address = ip_address
+        self.start_ip = start_ip
+        self.end_ip = end_ip
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name'),
+                'type_select': create and 'OpenStack Platform Director',
                 'hostname_text': kwargs.get('hostname'),
                 'ipaddress_text': kwargs.get('ip_address')}
 

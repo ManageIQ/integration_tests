@@ -15,8 +15,8 @@ from fixtures.pytest_store import store
 from cfme.web_ui import Quadicon, paginator, toolbar
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import UnknownProviderType
-from cfme.infrastructure.provider import RHEVMProvider, VMwareProvider, SCVMMProvider
-from cfme.cloud.provider import EC2Provider, OpenStackProvider
+from cfme.infrastructure.provider import (
+    OpenstackInfraProvider, RHEVMProvider, VMwareProvider, SCVMMProvider)
 from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
 from utils.log import logger, perflog
@@ -27,6 +27,7 @@ infra_provider_type_map = {
     'virtualcenter': mgmt_system.VMWareSystem,
     'rhevm': mgmt_system.RHEVMSystem,
     'scvmm': mgmt_system.SCVMMSystem,
+    'openstack-infra': mgmt_system.OpenstackInfraSystem,
 }
 
 #: mapping of cloud provider type names to :py:mod:`utils.mgmt_system` classes
@@ -300,6 +301,10 @@ def setup_provider(provider_key, validate=True, check_existing=True):
     return provider
 
 
+def setup_provider_by_name(provider_name, *args, **kwargs):
+    return setup_provider(get_provider_key(provider_name), *args, **kwargs)
+
+
 def setup_providers(validate=True, check_existing=True):
     """Run :py:func:`setup_provider` for every provider (cloud and infra)
 
@@ -534,19 +539,22 @@ def get_crud(provider_config_name):
             start_ip = end_ip = prov_config.get('ipaddress')
 
     if prov_type == 'ec2':
+        from cfme.cloud.provider import EC2Provider
         return EC2Provider(name=prov_config['name'],
             region=prov_config['region'],
             credentials={'default': credentials},
             zone=prov_config['server_zone'],
             key=provider_config_name)
     elif prov_type == 'openstack':
+        from cfme.cloud.provider import OpenStackProvider
         return OpenStackProvider(name=prov_config['name'],
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
             api_port=prov_config['port'],
             credentials={'default': credentials},
             zone=prov_config['server_zone'],
-            key=provider_config_name)
+            key=provider_config_name,
+            infra_provider=prov_config.get('infra_provider'))
     elif prov_type == 'virtualcenter':
         return VMwareProvider(name=prov_config['name'],
             hostname=prov_config['hostname'],
@@ -580,6 +588,17 @@ def get_crud(provider_config_name):
             credentials={'default': credentials,
                          'candu': candu_credentials},
             zone=prov_config['server_zone'],
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip)
+    elif prov_type == "openstack-infra":
+        credentials = get_credentials_from_config(
+            prov_config['credentials'])
+        return OpenstackInfraProvider(
+            name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials={'default': credentials},
             key=provider_config_name,
             start_ip=start_ip,
             end_ip=end_ip)

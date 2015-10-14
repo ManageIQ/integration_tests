@@ -12,7 +12,7 @@ class Credential(Pretty):
     """
     pretty_attrs = ['principal', 'secret']
 
-    def __init__(self, principal=None, secret=None, verify_secret=None):
+    def __init__(self, principal=None, secret=None, verify_secret=None, **ignore):
         self.principal = principal
         self.secret = secret
         self.verify_secret = verify_secret

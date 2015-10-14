@@ -461,7 +461,7 @@ class IPAppliance(object):
                 provider_keys.add(provider_key)
         return provider_keys
 
-    @lazycache
+    @property
     def has_os_infra(self):
         """If there is an OS Infra set up as a provider, some of the UI changes"""
         ems_table = self.db["ext_management_systems"]
@@ -470,7 +470,7 @@ class IPAppliance(object):
             ems_table.type == "EmsOpenstackInfra").count()
         return count > 0
 
-    @lazycache
+    @property
     def has_non_os_infra(self):
         """If there is any non-OS-infra set up as a provider, some of the UI changes"""
         ems_table = self.db["ext_management_systems"]

@@ -16,6 +16,8 @@ from utils import conf
 from utils.log import logger
 from utils.ssh import SSHClient
 
+# Temporary
+from openstack_infra import OpenstackInfraSystem  # NOQA
 
 # Overrides
 

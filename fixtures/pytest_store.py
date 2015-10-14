@@ -26,7 +26,6 @@ from _pytest.terminal import TerminalReporter
 from py.io import TerminalWriter
 
 from utils import conf, diaper, lazycache, property_or_none
-from utils.signals import on_signal
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -72,6 +71,10 @@ class Store(object):
         # so we don't have to keep going through pluginmanager
         self._terminalreporter = None
         self._user = None
+
+    @property
+    def has_config(self):
+        return self.config is not None
 
     @property
     def user(self):
@@ -220,9 +223,3 @@ def write_line(line, **kwargs):
         # resume capturing
         with diaper:
             store.capturemanager.resumecapture()
-
-
-@on_signal("providers_changed")
-def clear_openstack_infra_flag():
-    del store.current_appliance.has_os_infra
-    del store.current_appliance.has_non_os_infra
