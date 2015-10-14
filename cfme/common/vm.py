@@ -310,10 +310,13 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
             return InfoBlock.text(*properties)
 
     @classmethod
-    def get_first_vm_title(cls, do_not_navigate=False):
+    def get_first_vm_title(cls, do_not_navigate=False, provider=None):
         """Get the title of first VM/Instance."""
         if not do_not_navigate:
-            sel.force_navigate(cls.ALL_LIST_LOCATION)
+            if provider is None:
+                sel.force_navigate(cls.ALL_LIST_LOCATION)
+            else:
+                provider.load_all_provider_vms()
         return Quadicon.get_first_quad_title()
 
     @property

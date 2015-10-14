@@ -47,7 +47,7 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
     request.addfinalizer(lambda: profile.delete() if profile.exists else None)
     profile.create()
     # Now assign this malformed profile to a VM
-    vm = VM.factory(Vm.get_first_vm_title(), setup_a_provider)
+    vm = VM.factory(Vm.get_first_vm_title(provider=setup_a_provider), setup_a_provider)
     vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
     pytest.sel.force_navigate("dashboard")
