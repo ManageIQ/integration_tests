@@ -566,6 +566,9 @@ class VM(BaseVM):
                     logger.debug("Powering up VM %s to shut it down correctly on %s." %
                                  (self.name, self.provider.key))
                     self.provider.mgmt.start_vm(self.name)
+                    self.provider.mgmt.wait_vm_steady(self.name)
+                    self.provider.mgmt.stop_vm(self.name)
+                    self.provider.mgmt.wait_vm_steady(self.name)
             except ActionNotSupported:
                 # Action is not supported on mgmt system. Simply continue
                 pass
