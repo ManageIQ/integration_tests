@@ -25,7 +25,7 @@ from ovirtsdk.xml import params
 
 
 class RHEVMSystem(RHEVMSystemBase):
-    def connect_direct_lun_to_appliance(self, vm_name, disconnect):
+    def connect_direct_lun_to_appliance(self, vm_name, disconnect, readonly=True):
         """Connects or disconnects the direct lun disk to an appliance.
 
         Args:
@@ -78,6 +78,7 @@ class RHEVMSystem(RHEVMSystemBase):
             disk.set_format("raw")
             disk.set_lun_storage(storage)
             disk.set_shareable(True)
+            disk.set_read_only(readonly)
             disk = self.api.disks.add(disk)
             dlun = self.api.disks.get(dlun_name)
 
