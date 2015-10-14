@@ -105,7 +105,7 @@ def get_appliance(provider):
             appliance.configure_fleecing()
             appliance_list[provider.key] = appliance
         except Exception as e:
-            logger.error("Exception: %s" % str(e))
+            logger.warning("Exception: %s" % str(e))
             # provision appliance and configure
             ver_to_prov = str(version.current_version())
             logger.info("provisioning {} appliance on {}...".format(ver_to_prov, provider.key))

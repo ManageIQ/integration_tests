@@ -1,5 +1,6 @@
 # Imports for backward compatility and convenience
 # NOQA all the things because
+import time
 from mgmtsystem.base import *  # NOQA
 from mgmtsystem.exceptions import *  # NOQA
 from mgmtsystem import exceptions  # NOQA
@@ -12,6 +13,7 @@ from mgmtsystem.kubernetes import Kubernetes  # NOQA
 from mgmtsystem.openshift import Openshift  # NOQA
 
 from utils import conf
+from utils.log import logger
 from utils.ssh import SSHClient
 
 
@@ -79,20 +81,33 @@ class RHEVMSystem(RHEVMSystemBase):
 
         # add it
         if not disconnect:
-            # is the disk present and active?
-            vm_disk_list = vm.get_disks().list()
-            for vm_disk in vm_disk_list:
-                if vm_disk.name == dlun_name:
-                    if vm_disk.active:
-                        return
-                    else:
-                        vm_disk.activate()
-                        return
+            retries = 0
+            while retries < 3:
+                retries += 1
+                direct_lun = params.Disk(id=dlun.id)
+                try:
+                    # is the disk present and active?
+                    vm_disk_list = vm.get_disks().list()
+                    for vm_disk in vm_disk_list:
+                        if vm_disk.name == dlun_name:
+                            if vm_disk.active:
+                                return
+                            else:
+                                vm_disk.activate()
+                                return
 
-            # if not present, add it and activate
-            direct_lun = params.Disk(id=dlun.id)
-            added_lun = vm.disks.add(direct_lun)
-            added_lun.activate()
+                    # if not present, add it and activate
+                    direct_lun = params.Disk(id=dlun.id)
+                    added_lun = vm.disks.add(direct_lun)
+                    added_lun.activate()
+                except Exception as e:
+                    logger.error("Exception caught: %s" % str(e))
+                    if retries == 3:
+                        logger.error("exhausted retries and giving up")
+                        raise
+                    else:
+                        logger.info("sleeping for 30s and retrying to connect direct lun")
+                        time.sleep(30)
 
             # Init SSH client, run pvscan on the appliance
             ssh_kwargs = {

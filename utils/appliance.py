@@ -227,9 +227,13 @@ class Appliance(object):
             if not roles["smartproxy"]:
                 roles["smartproxy"] = True
                 set_server_roles(**roles)
-                ver_list = str(self.version).split(".")
-                if ver_list[0] is "5" and ver_list[1] is "2" and int(ver_list[3]) > 5:
-                    sleep(600)
+                # web ui crashes
+                if str(self.version).startswith("5.2.5") or str(self.version).startswith("5.5"):
+                    try:
+                        self.ipapp.wait_for_web_ui(timeout=300, running=False)
+                    except:
+                        pass
+                    self.ipapp.wait_for_web_ui(running=True)
 
             # add provider
             log_callback('Setting up provider...')
@@ -241,6 +245,7 @@ class Appliance(object):
 
             # if rhev, set relationship
             if self.is_on_rhev:
+                log_callback('Setting up CFME VM relationship...')
                 vm = VM.factory(self.vm_name, get_crud(self._provider_name))
                 cfme_rel = Vm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(server_name()), server_id())
@@ -923,9 +928,9 @@ class IPAppliance(object):
             # failure to update is fatal, kill this process
             raise KeyboardInterrupt(msg)
 
+        self.log.error(result.output)
         if result.rc != 0:
             self.log.error('appliance update failed')
-            self.log.error(result.output)
             msg = 'Appliance {} failed to update RHEL, error in logs'.format(self.address)
             log_callback(msg)
             raise ApplianceException(msg)
@@ -1276,7 +1281,8 @@ class IPAppliance(object):
             running: Specifies if we wait for web UI to start or stop (default ``True``)
                      ``True`` == start, ``False`` == stop
         """
-        log_callback('Waiting for web UI to appear')
+        prefix = "" if running else "dis"
+        (log_callback or self.log.info)('Waiting for web UI to ' + prefix + 'appear')
         result, wait = wait_for(self._check_appliance_ui_wait_fn, num_sec=timeout,
             fail_condition=not running, delay=10)
         return result
