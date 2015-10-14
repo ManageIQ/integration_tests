@@ -2,7 +2,8 @@
 """Module handling Dashboards accordion.
 """
 from cfme.fixtures import pytest_selenium as sel
-from cfme.intelligence.reports.ui_elements import DashboardWidgetSelector
+from cfme.intelligence.reports.ui_elements import (
+    DashboardWidgetSelector, NewerDashboardWidgetSelector)
 from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar, Input
 from cfme.web_ui.menu import nav
 from utils import version
@@ -66,7 +67,9 @@ class Dashboard(Updateable, Pretty):
         ("name", Input("name")),
         ("title", Input("description")),
         ("locked", Input("locked")),
-        ("widgets", DashboardWidgetSelector("//div[@id='form_widgets_div']")),
+        ("widgets", {
+            version.LOWEST: DashboardWidgetSelector("//div[@id='form_widgets_div']"),
+            "5.5": NewerDashboardWidgetSelector("//div[@id='form_widgets_div']")}),
     ])
     pretty_attrs = ['name', 'group', 'title', 'widgets']
 
