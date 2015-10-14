@@ -10,7 +10,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Calendar, Form, Region, Table, Select, fill
+from cfme.web_ui import AngularSelect, Calendar, Form, Region, Table, Select, fill
 from utils import lazycache
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
@@ -514,7 +514,7 @@ class DashboardWidgetSelector(Pretty):
     _remove_button = ".//div[@id='modules']//div[contains(@id, 'w_')]/div"\
         "/h2[div/span[contains(@class, 'modtitle_text') and normalize-space(.)='{}']]"\
         "/a[@title='Remove this widget']"
-    pretty_attrs = ['root_loc']
+    pretty_attrs = ['_root_loc']
 
     def __init__(self, root_loc="//div[@id='form_widgets_div']"):
         self._root_loc = root_loc
@@ -568,6 +568,35 @@ class DashboardWidgetSelector(Pretty):
     def clear(self):
         for item in self.selected_items:
             self.deselect(item)
+
+
+class NewerDashboardWidgetSelector(DashboardWidgetSelector):
+    """Dashboard widget selector from 5.5 onwards."""
+    _remove_button = ".//a[../../h3[normalize-space(.)='{}']]"
+    _selected = ".//div[@id='modules']//h3"
+    _select = AngularSelect("widget")
+
+    def select(self, *items):
+        sel.wait_for_ajax()
+        for item in items:
+            self._select.select_by_visible_text(item)
+
+    # Disable some functions
+    def _open_close_combo(self):
+        pass
+
+    _is_combo_opened = False
+
+    def _open_combo(self):
+        pass
+
+    def _close_combo(self):
+        pass
+
+    @property
+    @contextmanager
+    def combo(self):
+        yield
 
 
 @fill.method((DashboardWidgetSelector, Sequence))
