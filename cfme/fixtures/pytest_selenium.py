@@ -1415,7 +1415,14 @@ def _select_tuple(loc, val):
             return
     elif not value:
         return
-    return select_by_value(Select(loc), value)
+
+    # Do not "cast" the loc unless it is needed
+    from cfme.web_ui import AngularSelect
+    if type(loc) in {Select, AngularSelect}:
+        l = loc
+    else:
+        l = Select(loc)
+    return select_by_value(l, value)
 
 
 @select.method((object, type(None)))
@@ -1430,7 +1437,14 @@ def _select_str(loc, s):
             return
     elif not value:
         return
-    return select_by_text(Select(loc), str(value))
+
+    # Do not "cast" the loc unless it is needed
+    from cfme.web_ui import AngularSelect
+    if type(loc) in {Select, AngularSelect}:
+        l = loc
+    else:
+        l = Select(loc)
+    return select_by_text(l, str(value))
 
 
 @select.method((object, Iterable))
@@ -1508,13 +1522,25 @@ def deselect(loc, o):
 
 @deselect.method((object, ByValue))
 def _deselect_val(loc, val):
-    return deselect_by_value(Select(loc), val.value)
+    # Do not "cast" the loc unless it is needed
+    from cfme.web_ui import AngularSelect
+    if type(loc) in {Select, AngularSelect}:
+        l = loc
+    else:
+        l = Select(loc)
+    return deselect_by_value(l, val.value)
 
 
 @deselect.method((object, basestring))
 @deselect.method((object, ByText))
 def _deselect_text(loc, s):
-    return deselect_by_text(Select(loc), str(s))
+    # Do not "cast" the loc unless it is needed
+    from cfme.web_ui import AngularSelect
+    if type(loc) in {Select, AngularSelect}:
+        l = loc
+    else:
+        l = Select(loc)
+    return deselect_by_text(l, str(s))
 
 
 @deselect.method((object, Iterable))

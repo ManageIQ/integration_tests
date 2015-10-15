@@ -3313,6 +3313,10 @@ class AngularSelect(object):
         return self.select.all_options
 
     @property
+    def options(self):
+        return self.select.options
+
+    @property
     def first_selected_option(self):
         return self.select.first_selected_option
 

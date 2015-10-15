@@ -179,7 +179,7 @@ class MenuWidget(Widget):
         ("title", Input("title")),
         ("description", Input("description")),
         ("active", Input("enabled")),
-        ("shortcuts", MenuShortcuts("//select[@id='add_shortcut']")),
+        ("shortcuts", MenuShortcuts("add_shortcut")),
         ("visibility", visibility_obj),
     ])
     TITLE = "Menu"
