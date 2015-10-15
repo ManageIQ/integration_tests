@@ -9,6 +9,10 @@
 .label {
   display: inline-block;
 }
+.no_bord {
+  border: none;
+  background-color: transparent;
+}
 </style>
 {% endblock %}
 
@@ -56,6 +60,26 @@
       {{ndata}}
     </div>
     <br>
+    <div>
+      {% if top10 %}
+        <h3>Top 10 Exceptions</h3>
+        <table class="table table-striped">
+          <tr><td>Exception</td><td>Test</td><td>No Tests</td></tr>
+        {% for t10error in top10 %}
+          <tr>
+            <td>
+              <pre class="no_bord">{{ t10error[0][0] }}</pre>
+            </td>
+            <td><a href="#{{t10error[0][1]|e}}" data-toggle="tooltip" title="{{t10error[0][1]}}">{{t10error[0][1]|truncate(50)}}</a>
+            </td>
+            <td>
+              {{ t10error|length }}
+            </td>
+          </tr>
+        {% endfor %}
+        </table>
+      {% endif %}
+    </div>
     <div>
       {% if blocker_skip_count > 0 %}
       <h3>Blocker Skips ({{blocker_skip_count}})</h3>
