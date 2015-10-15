@@ -12,6 +12,12 @@ In addition to making sure that virsh will work, this automation requires SSH ac
 libvirt host to look at the arpwatch DB, and it derives the SSH hostname from the
 LIBVIRT_DEFAULT_URI environment variable.
 
+Example value:
+LIBVIRT_DEFAULT_URI=qemu+ssh://username@1.2.3.4/system
+
+Note that with this example you'll need to establish host trust and passwordless authentication
+with the libvirt host before running this script.
+
 """
 import os
 import sys
@@ -65,10 +71,19 @@ shell_args = {
     'image_path': image_path,
     'vnc_password': vnc_password
 }
-cmd = sarge.shell_format('virt-install -n {vm_name} --os-variant=rhel7 --ram {memory}'
-    ' --vcpus {cpus} --disk bus="virtio,size={disk_size}" --cdrom {image_path}'
-    ' --network {public_net_config}' ' --network {private_net_config} --cdrom {image_path}'
-    ' --graphics "vnc,listen=0.0.0.0,password={vnc_password}" --noautoconsole', **shell_args)
+cmd = sarge.shell_format('virt-install'
+    ' -n {vm_name}'
+    ' --os-variant=rhel7'
+    ' --ram {memory}'
+    ' --vcpus {cpus}'
+    ' --disk bus="virtio,size={disk_size}"'
+    ' --cdrom {image_path}'
+    ' --network {public_net_config}'
+    ' --network {private_net_config}'
+    ' --boot hd'
+    ' --graphics "vnc,listen=0.0.0.0,password={vnc_password}"'
+    ' --noautoconsole',
+    **shell_args)
 
 # this will block while virt-install runs
 proc = sarge.capture_both(cmd)

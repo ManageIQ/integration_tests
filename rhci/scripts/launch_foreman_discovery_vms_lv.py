@@ -53,9 +53,18 @@ def setup_vm(vm_suffix, cpu_count, memory, disk_size, nested=False):
         'private_net_config': 'bridge:br1',
         'vnc_password': vnc_password
     }
-    cmd = sarge.shell_format('virt-install -n {vm_name} --os-variant=rhel7 --ram {memory} --pxe'
-        ' --vcpus {cpus} --disk bus="virtio,size={disk_size}" --network {private_net_config}'
-        ' --graphics "vnc,listen=0.0.0.0,password={vnc_password}" --noautoconsole', **shell_args)
+    cmd = sarge.shell_format('virt-install'
+        ' -n {vm_name}'
+        ' --os-variant=rhel7'
+        ' --ram {memory}'
+        ' --pxe'
+        ' --vcpus {cpus}'
+        ' --disk bus="virtio,size={disk_size}"'
+        ' --network {private_net_config}'
+        ' --boot net,hd'
+        ' --graphics "vnc,listen=0.0.0.0,password={vnc_password}"'
+        ' --noautoconsole',
+        **shell_args)
 
     proc = sarge.capture_both(cmd)
     if proc.returncode != 0:
