@@ -54,26 +54,27 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         (vm_name, template_name, data['name']))
     try:
         try:
-            logger.debug("Deploy args: " + str(deploy_args))
+            logger.debug("Deploy args: {}".format(deploy_args))
             vm_name = mgmt.deploy_template(template_name, timeout=timeout, **deploy_args)
             logger.info("Provisioned VM/instance %s" % vm_name)  # instance ID in case of EC2
         except Exception as e:
-            logger.error('Could not provisioning VM/instance %s (%s)', vm_name, e)
+            logger.error('Could not provisioning VM/instance {} ({}: {})'.format(
+                vm_name, type(e).__name__, str(e)))
             try:
                 logger.info("VM/Instance status: {}".format(mgmt.vm_status(vm_name)))
             except Exception as f:
                 logger.error(
                     "Could not retrieve VM/Instance status: {}: {}".format(
                         type(f).__name__, str(f)))
-            logger.info('Attempting cleanup on VM/instance %s', vm_name)
+            logger.info('Attempting cleanup on VM/instance {}'.format(vm_name))
             try:
                 if mgmt.does_vm_exist(vm_name):
                     # Stop the vm first
-                    logger.warning('Destroying VM/instance %s', vm_name)
+                    logger.warning('Destroying VM/instance {}'.format(vm_name))
                     if mgmt.delete_vm(vm_name):
-                        logger.info('VM/instance %s destroyed', vm_name)
+                        logger.info('VM/instance {} destroyed'.format(vm_name))
                     else:
-                        logger.error('Error destroying VM/instance %s', vm_name)
+                        logger.error('Error destroying VM/instance {}'.format(vm_name))
             except Exception as f:
                 logger.error(
                     'Could not destroy VM/instance {} ({}: {})'.format(
