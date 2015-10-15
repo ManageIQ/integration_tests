@@ -162,6 +162,19 @@ sections = {
             _tree_func_with_grid("Instances by Provider", "Instances by Provider")),
         ('clouds_stacks', 'Stacks')
     ),
+    ('containers', 'Containers'): (
+        ('containers_providers', 'Providers'),
+        ('containers_projects', 'Projects'),
+        ('containers_nodes', 'Nodes'),
+        ('containers_pods', 'Pods'),
+        ('containers_routes', 'Routes'),
+        ('containers_replicators', 'Replicators'),
+        ('containers_services', 'Services'),
+        ('containers_containers', 'Containers'),
+        ('containers_images', 'Container Images'),
+        ('containers_image_registries', 'Image Registries'),
+        ('containers_topology', 'Topology')
+    ),
     ('infrastructure', 'Infrastructure'): (
         ('infrastructure_providers', 'Providers', toolbar.set_vms_grid_view),
         ('infrastructure_clusters', "/ems_cluster"),

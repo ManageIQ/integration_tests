@@ -62,19 +62,30 @@ credential_form = TabStripForm(
     ])
 
 
-class BaseProvider(PolicyProfileAssignable, Taggable):
+class BaseProvider(Taggable):
+    # List of constants that every non-abstract subclass must have defined
+    STATS_TO_MATCH = []
+    string_name = ""
+    page_name = ""
+    edit_page_suffix = ""
+    detail_page_suffix = ""
+    quad_name = None
+    properties_form = None
+    add_provider_button = None
+    save_button = None
+
     class Credential(cfme.Credential, Updateable):
         """Provider credentials
 
            Args:
-             **kwargs: If using amqp type credential, amqp = True"""
+             type: One of [amqp, candu, ssh, token] (optional)
+             domain: Domain for default credentials (optional)
+        """
 
         def __init__(self, **kwargs):
             super(BaseProvider.Credential, self).__init__(**kwargs)
-            self.amqp = kwargs.get('amqp')
-            self.candu = kwargs.get('candu')
-            self.domain = kwargs.get('domain')
-            self.ssh = kwargs.get('ssh')
+            self.type = kwargs.get('cred_type', None)
+            self.domain = kwargs.get('domain', None)
 
     @property
     def data(self):
@@ -95,11 +106,14 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
     @property
     def category(self):
         # Prevent circular imports
-        from utils.providers import cloud_provider_type_map, infra_provider_type_map
+        from utils.providers import (
+            cloud_provider_type_map, infra_provider_type_map, container_provider_type_map)
         if self.type in cloud_provider_type_map:
             return "cloud"
         elif self.type in infra_provider_type_map:
             return "infra"
+        elif self.type in container_provider_type_map:
+            return "container"
         else:
             return "unknown"
 
@@ -163,8 +177,8 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
            updates (dict): fields that are changing.
            cancel (boolean): whether to cancel out of the update.
         """
-
-        sel.force_navigate('{}_provider_edit'.format(self.page_name), context={'provider': self})
+        sel.force_navigate('{}_{}'.format(self.page_name, self.edit_page_suffix),
+            context={'provider': self})
         fill(self.properties_form, self._form_mapping(**updates))
         for cred in self.credentials:
             fill(credential_form, updates.get('credentials', {}).get(cred, None),
@@ -181,8 +195,7 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
         Args:
             cancel: Whether to cancel the deletion, defaults to True
         """
-
-        sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
+        self.load_details()
         cfg_btn('Remove this {} Provider from the VMDB'.format(self.string_name),
             invokes_alert=True)
         sel.handle_alert(cancel=cancel)
@@ -197,18 +210,6 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
         if self.exists:
             self.delete(*args, **kwargs)
 
-    def wait_for_creds_ok(self):
-        """Waits for provider's credentials to become O.K. (circumvents the summary rails exc.)"""
-        self.refresh_provider_relationships(from_list_view=True)
-
-        def _wait_f():
-            sel.force_navigate("{}_providers".format(self.page_name))
-            q = Quadicon(self.name, self.quad_name)
-            creds = q.creds
-            return creds == "checkmark"
-
-        wait_for(_wait_f, num_sec=300, delay=5, message="credentials of {} ok!".format(self.name))
-
     def validate(self, db=True):
         """ Validates that the detail page matches the Providers information.
 
@@ -222,7 +223,7 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
 
         # If we're not using db, make sure we are on the provider detail page
         if not db:
-            sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
+            self.load_details()
 
         # Initial bullet check
         if self._do_stats_match(client, self.STATS_TO_MATCH, db=db):
@@ -230,7 +231,7 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
             return
         else:
             # Set off a Refresh Relationships
-            sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
+            self.load_details()
             tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
             sel.handle_alert()
 
@@ -267,10 +268,7 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
         if refresh_timer:
             if refresh_timer.is_it_time():
                 logger.info(' Time for a refresh!')
-                sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
-                tb.select("Configuration", "Refresh Relationships and Power States",
-                          invokes_alert=True)
-                sel.handle_alert(cancel=False)
+                self.refresh_provider_relationships()
                 refresh_timer.reset()
 
         for stat in stats_to_match:
@@ -292,33 +290,6 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
         else:
             return True
 
-    def num_template(self, db=True):
-        """ Returns the providers number of templates, as shown on the Details page."""
-        if db:
-            ext_management_systems = cfmedb()["ext_management_systems"]
-            vms = cfmedb()["vms"]
-            truthy = True  # This is to prevent a lint error with ==True
-            temlist = list(cfmedb().session.query(vms.name)
-                           .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                           .filter(ext_management_systems.name == self.name)
-                           .filter(vms.template == truthy))
-            return len(temlist)
-        else:
-            return int(self.get_detail("Relationships", self.template_name))
-
-    def num_vm(self, db=True):
-        """ Returns the providers number of instances, as shown on the Details page."""
-        if db:
-            ext_management_systems = cfmedb()["ext_management_systems"]
-            vms = cfmedb()["vms"]
-            falsey = False  # This is to prevent a lint error with ==False
-            vmlist = list(cfmedb().session.query(vms.name)
-                          .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                          .filter(ext_management_systems.name == self.name)
-                          .filter(vms.template == falsey))
-            return len(vmlist)
-        return int(self.get_detail("Relationships", self.vm_name))
-
     @property
     def exists(self):
         ems = cfmedb()['ext_management_systems']
@@ -334,6 +305,66 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
         logger.info('Waiting for a provider to delete...')
         wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
                  message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)
+
+    def refresh_provider_relationships(self, from_list_view=False):
+        """Clicks on Refresh relationships button in provider"""
+        if from_list_view:
+            sel.force_navigate("{}_providers".format(self.page_name))
+            sel.check(Quadicon(self.name, self.quad_name).checkbox())
+        else:
+            self.load_details()
+        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
+        sel.handle_alert(cancel=False)
+
+    def _on_detail_page(self):
+        """ Returns ``True`` if on the providers detail page, ``False`` if not."""
+        ensure_browser_open()
+        return sel.is_displayed(
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
+
+    def load_details(self, refresh=False):
+        """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
+        if not self._on_detail_page():
+            logger.debug("load_details: not on details already, navigating")
+            sel.force_navigate('{}_{}'.format(self.page_name, self.detail_page_suffix),
+                context={'provider': self})
+        else:
+            logger.debug("load_details: already on details, refreshing")
+            if refresh:
+                tb.refresh()
+
+    def get_detail(self, *ident, **kwargs):
+        """ Gets details from the details infoblock
+
+        The function first ensures that we are on the detail page for the specific provider.
+
+        Args:
+            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+
+        Keywords:
+            use_icon: Whether to use icon matching
+        Returns: A string representing the contents of the InfoBlock's value.
+        """
+        self.load_details()
+        if kwargs.get("use_icon", False):
+            title, icon = ident
+            return details_page.infoblock(title).by_member_icon(icon).text
+        else:
+            return details_page.infoblock.text(*ident)
+
+
+class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
+    def wait_for_creds_ok(self):
+        """Waits for provider's credentials to become O.K. (circumvents the summary rails exc.)"""
+        self.refresh_provider_relationships(from_list_view=True)
+
+        def _wait_f():
+            sel.force_navigate("{}_providers".format(self.page_name))
+            q = Quadicon(self.name, self.quad_name)
+            creds = q.creds
+            return creds == "checkmark"
+
+        wait_for(_wait_f, num_sec=300, delay=5, message="credentials of {} ok!".format(self.name))
 
     @property
     def _assigned_policy_profiles(self):
@@ -378,38 +409,32 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
     def _is_policy_profile_row_checked(self, row):
         return "Check" in row.find_element_by_xpath("../td[@width='16px']/img").get_attribute("src")
 
-    def refresh_provider_relationships(self, from_list_view=False):
-        """Clicks on Refresh relationships button in provider"""
-        if from_list_view:
-            sel.force_navigate("{}_providers".format(self.page_name))
-            sel.check(Quadicon(self.name, self.quad_name).checkbox())
+    def num_template(self, db=True):
+        """ Returns the providers number of templates, as shown on the Details page."""
+        if db:
+            ext_management_systems = cfmedb()["ext_management_systems"]
+            vms = cfmedb()["vms"]
+            truthy = True  # This is to prevent a lint error with ==True
+            temlist = list(cfmedb().session.query(vms.name)
+                           .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                           .filter(ext_management_systems.name == self.name)
+                           .filter(vms.template == truthy))
+            return len(temlist)
         else:
-            sel.force_navigate('{}_provider'.format(self.page_name), context={"provider": self})
-        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
-        sel.handle_alert(cancel=False)
+            return int(self.get_detail("Relationships", self.template_name))
 
-    def _load_details(self):
-        if not self._on_detail_page():
-            sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
-
-    def get_detail(self, *ident, **kwargs):
-        """ Gets details from the details infoblock
-
-        The function first ensures that we are on the detail page for the specific provider.
-
-        Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-
-        Keywords:
-            use_icon: Whether to use icon matching
-        Returns: A string representing the contents of the InfoBlock's value.
-        """
-        self._load_details()
-        if kwargs.get("use_icon", False):
-            title, icon = ident
-            return details_page.infoblock(title).by_member_icon(icon).text
-        else:
-            return details_page.infoblock.text(*ident)
+    def num_vm(self, db=True):
+        """ Returns the providers number of instances, as shown on the Details page."""
+        if db:
+            ext_management_systems = cfmedb()["ext_management_systems"]
+            vms = cfmedb()["vms"]
+            falsey = False  # This is to prevent a lint error with ==False
+            vmlist = list(cfmedb().session.query(vms.name)
+                          .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                          .filter(ext_management_systems.name == self.name)
+                          .filter(vms.template == falsey))
+            return len(vmlist)
+        return int(self.get_detail("Relationships", self.vm_name))
 
     def load_all_provider_instances(self):
         return self.load_all_provider_vms()
@@ -420,7 +445,7 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
         If it could click through the link in infoblock, returns ``True``. If it sees that the
         number of instances is 0, it returns ``False``.
         """
-        sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
+        self.load_details()
         if details_page.infoblock.text("Relationships", self.vm_name) == "0":
             return False
         else:
@@ -436,47 +461,34 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
         If it could click through the link in infoblock, returns ``True``. If it sees that the
         number of images is 0, it returns ``False``.
         """
-        sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
+        self.load_details()
         if details_page.infoblock.text("Relationships", self.template_name) == "0":
             return False
         else:
             sel.click(details_page.infoblock.element("Relationships", self.template_name))
             return True
 
-    def load_details(self, refresh=False):
-        """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
-        if not hasattr(self, "_on_detail_page") or not self._on_detail_page():
-            logger.debug("load_details: not on details already")
-            sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
-        else:
-            if refresh:
-                tb.refresh()
-
-    def _on_detail_page(self):
-        """ Returns ``True`` if on the providers detail page, ``False`` if not."""
-        ensure_browser_open()
-        return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
-
 
 @fill.method((Form, BaseProvider.Credential))
 def _fill_credential(form, cred, validate=None):
-    """How to fill in a credential (either amqp or default).  Validates the
-    credential if that option is passed in.
+    """How to fill in a credential. Validates the credential if that option is passed in.
     """
-    if cred.amqp:
+    if cred.type == 'amqp':
         fill(credential_form, {'amqp_principal': cred.principal,
                                'amqp_secret': cred.secret,
                                'amqp_verify_secret': cred.verify_secret,
                                'validate_btn': validate})
-    elif cred.candu:
+    elif cred.type == 'candu':
         fill(credential_form, {'candu_principal': cred.principal,
                                'candu_secret': cred.secret,
                                'candu_verify_secret': cred.verify_secret,
                                'validate_btn': validate})
-    elif cred.ssh:
+    elif cred.type == 'ssh':
         fill(credential_form, {'ssh_user': cred.principal,
                                'ssh_key': cred.secret})
+    elif cred.type == 'token':
+        fill(credential_form, {'token_secret': cred.token,
+                               'validate_btn': validate})
     else:
         if cred.domain:
             principal = r'{}\{}'.format(cred.domain, cred.principal)

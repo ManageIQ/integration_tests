@@ -15,7 +15,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.provider import OpenstackInfraProvider
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
-from cfme.common.provider import BaseProvider
+from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect
 from cfme.web_ui import Input
@@ -77,7 +77,7 @@ nav.add_branch('clouds_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
-class Provider(Updateable, Pretty, BaseProvider):
+class Provider(Updateable, Pretty, CloudInfraProvider):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
 
@@ -99,6 +99,8 @@ class Provider(Updateable, Pretty, BaseProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
     page_name = "clouds"
+    detail_page_suffix = 'provider'
+    edit_page_suffix = 'provider_edit'
     quad_name = "cloud_prov"
     vm_name = "Instances"
     template_name = "Images"

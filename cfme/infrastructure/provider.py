@@ -15,14 +15,13 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
-from cfme.common.provider import BaseProvider
+from cfme.common.provider import CloudInfraProvider
 import utils.conf as conf
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
     AngularSelect
 )
 from cfme.web_ui.form_buttons import FormButton
-from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -86,7 +85,7 @@ nav.add_branch('infrastructure_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
-class Provider(Updateable, Pretty, BaseProvider):
+class Provider(Updateable, Pretty, CloudInfraProvider):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -109,6 +108,8 @@ class Provider(Updateable, Pretty, BaseProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
     page_name = "infrastructure"
+    detail_page_suffix = 'provider'
+    edit_page_suffix = 'provider_edit'
     quad_name = "infra_prov"
     properties_form = properties_form
     add_provider_button = form_buttons.FormButton("Add this Infrastructure Provider")
@@ -128,12 +129,6 @@ class Provider(Updateable, Pretty, BaseProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
-
-    def _on_detail_page(self):
-        """ Returns ``True`` if on the providers detail page, ``False`` if not."""
-        ensure_browser_open()
-        return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
 
     def num_datastore(self, db=True):
         """ Returns the providers number of templates, as shown on the Details page."""
