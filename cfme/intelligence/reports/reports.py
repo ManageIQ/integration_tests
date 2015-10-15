@@ -270,12 +270,14 @@ class CustomReport(Updateable):
         toolbar.select("Queue")
         flash.assert_no_errors()
         if wait_for_finish:
+            # Get the queued_at value to always target the correct row
+            queued_at = sel.text(list(records_table.rows())[0].queued_at)
+
             def _get_state():
-                try:
-                    first_row = list(records_table.rows())[0]
-                except IndexError:
-                    return False
-                return sel.text(first_row.status).strip().lower() == "finished"
+                row = records_table.find_row("queued_at", queued_at)
+                status = sel.text(row.status).strip().lower()
+                assert status != "error", sel.text(row)
+                return status == "finished"
 
             wait_for(
                 _get_state,
@@ -418,13 +420,13 @@ def queue_canned_report(*path):
     toolbar.select("Queue")
     flash.assert_no_errors()
     tabstrip.select_tab("Saved Reports")
+    queued_at = sel.text(list(records_table.rows())[0].queued_at)
 
     def _get_state():
-        try:
-            first_row = list(records_table.rows())[0]
-        except IndexError:
-            return False
-        return sel.text(first_row.status).strip().lower() == "finished"
+        row = records_table.find_row("queued_at", queued_at)
+        status = sel.text(row.status).strip().lower()
+        assert status != "error", sel.text(row)
+        return status == "finished"
 
     wait_for(
         _get_state,
