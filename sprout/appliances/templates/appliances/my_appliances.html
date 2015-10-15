@@ -137,6 +137,7 @@
                         </div>
                     </td>
                     <td>
+                        {% if not appliance.marked_for_deletion %}
                         <div class="btn-toolbar" role="toolbar" aria-label="Appliance lease time control">
                             <div class="btn-group" role="group" aria-label="...">
                             <a href="{% url 'appliance_action' appliance.id 'set_lease' 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
@@ -149,6 +150,7 @@
                             {% endif %}
                             </div>
                         </div>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -180,6 +182,7 @@
                             {% endfor %}
                             </select>
                         </form>
+                        {% if not pool.not_needed_anymore %}
                         | Set expiration for all vms:
                         <a href="{% url 'prolong_lease_pool' pool.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
                         <a href="{% url 'prolong_lease_pool' pool.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
@@ -188,6 +191,7 @@
                         <a href="{% url 'prolong_lease_pool' pool.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
                         {% if request.user.is_superuser %}
                             <a href="{% url 'dont_expire_pool' pool.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
+                        {% endif %}
                         {% endif %}
                     </td>
                 </tr>
