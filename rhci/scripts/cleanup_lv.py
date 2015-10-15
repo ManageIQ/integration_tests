@@ -10,19 +10,30 @@ from utils.conf import rhci
 
 from rhci_common import virsh
 
-# We didn't specify a pool when creating the stuff, so the default
-# would have been used, which is most commonly called: "default"
-volume_pool = 'default'
-
-for vm_name in virsh('list --name').splitlines():
+# Shut the vms down
+vms = virsh('list --name --all').splitlines()
+for vm_name in vms:
     if not str(vm_name).startswith(rhci.deployment_id):
         continue
 
     print 'Powering off VM {}'.format(vm_name)
     virsh('destroy {}'.format(vm_name))
 
-    print 'Cleaning up VM volume for {}'.format(vm_name)
-    virsh('vol-delete {} {}'.format(vm_name, volume_pool))
+# find and destroy the volumes
+# pool-list and vol-list don't have the name --name option like list,
+# so we slice the lines with [2:] to skip the headers
+for pool_line in virsh('pool-list').splitlines()[2:]:
+    pool_name = pool_line.split()[0]
+    for vol_line in virsh('vol-list {}'.format(pool_name)).splitlines()[2:]:
+        vol_name = vol_line.split()[0]
+        if vol_name.startswith(rhci.deployment_id):
+            print 'Deleting volume {} in pool {}'.format(vol_name, pool_name)
+            virsh('vol-delete {} {}'.format(vol_name, pool_name))
+
+# Go back through an undefine the VMs
+for vm_name in vms:
+    if not str(vm_name).startswith(rhci.deployment_id):
+        continue
 
     print 'Removing VM {} from libvirt inventory'.format(vm_name)
     virsh('undefine {}'.format(vm_name))

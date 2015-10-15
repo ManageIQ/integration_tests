@@ -17,6 +17,8 @@ This duplicates code from the deploy_iso script. Once this is automated work sho
 be done to deduplicate what we can.
 
 """
+from time import sleep
+
 import sarge
 import sys
 from xml.etree import ElementTree
@@ -61,7 +63,7 @@ def setup_vm(vm_suffix, cpu_count, memory, disk_size, nested=False):
         ' --vcpus {cpus}'
         ' --disk bus="virtio,size={disk_size}"'
         ' --network {private_net_config}'
-        ' --boot net,hd'
+        ' --boot "network,hd"'
         ' --graphics "vnc,listen=0.0.0.0,password={vnc_password}"'
         ' --noautoconsole',
         **shell_args)
@@ -112,3 +114,7 @@ engine_mac = vm['mac_addr']
 fusor_kwargs['rhevh_macs'] = hypervisor_macs
 fusor_kwargs['rhevm_mac'] = engine_mac
 save_rhci_conf()
+
+# sleep for a minute to let the pxe boot menu time out and boot into foreman discovery
+# the sleep a little more to let discovery actually take place
+sleep(90)

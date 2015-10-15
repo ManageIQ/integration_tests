@@ -80,7 +80,7 @@ cmd = sarge.shell_format('virt-install'
     ' --cdrom {image_path}'
     ' --network {public_net_config}'
     ' --network {private_net_config}'
-    ' --boot hd'
+    ' --boot "hd,cdrom"'
     ' --graphics "vnc,listen=0.0.0.0,password={vnc_password}"'
     ' --noautoconsole',
     **shell_args)

@@ -17,6 +17,8 @@ This duplicates code from the deploy_iso script. Once this is automated work sho
 be done to deduplicate what we can.
 
 """
+from time import sleep
+
 from novaclient.utils import find_resource
 
 from utils.conf import rhci
@@ -134,3 +136,7 @@ engine_mac = vm['mac_addr']
 fusor_kwargs['rhevh_macs'] = hypervisor_macs
 fusor_kwargs['rhevm_mac'] = engine_mac
 save_rhci_conf()
+
+# sleep for a minute to let the pxe boot menu time out and boot into foreman discovery
+# the sleep a little more to let discovery actually take place
+sleep(90)
