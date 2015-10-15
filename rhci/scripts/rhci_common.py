@@ -1,5 +1,6 @@
 import time
 
+import sarge
 from neutronclient.v2_0.client import Client as Neutron
 from novaclient.utils import find_resource
 from vncdotool import api as vnc
@@ -22,6 +23,13 @@ def ssh_client():
 
 def get_mgmt():
     return _get_mgmt(conf.rhci.provider_key)
+
+
+def virsh(args):
+    result = sarge.capture_stdout('virsh {}'.format(args))
+    if result.returncode != 0:
+        raise RuntimeError('virsh command failed with exit code {}'.format(result.returncode))
+    return result.stdout.read().strip()
 
 
 def neutron_client():
@@ -78,6 +86,7 @@ class VNCTyper(object):
 
         # all vncdotool keymapping are lowercase, and all uppercase letters are treated
         # as lowercase anyway (hence the need for this fun shift handling)
+        print 'press {}'.format(key)
         self.client.keyPress(key.lower())
 
         if key in self._shift_chars:

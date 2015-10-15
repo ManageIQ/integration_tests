@@ -40,8 +40,6 @@ class RoboNamespace(object):
 
 def robo_spoofer():
     ui_url = conf.rhci.fusor_ui_url
-    # spoofs cfme_tests conf keys to support using robottelo
-    conf.runtime['env']['base_url'] = ui_url
 
     # spoofs robottelo conf keys that we can figure out from the rhci config
     url_parts = urlparse(ui_url)
