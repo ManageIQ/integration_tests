@@ -425,7 +425,7 @@ def format_marker(mstring, mark="-"):
 def _custom_excepthook(type, value, traceback):
     file, lineno, function, __ = extract_tb(traceback)[-1]
     text = ''.join(format_tb(traceback)).strip()
-    logger.error('Unhandled %s', type.__name__)
+    logger.error('Unhandled {}'.format(type.__name__))
     logger.error(text, extra={'source_file': file, 'source_lineno': lineno})
     _original_excepthook(type, value, traceback)
 
