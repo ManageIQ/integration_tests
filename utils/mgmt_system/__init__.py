@@ -42,8 +42,6 @@ class RHEVMSystem(RHEVMSystemBase):
             return True
 
     def deploy_template(self, template, *args, **kwargs):
-        import pdb
-        pdb.set_trace()
         self.logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
         timeout = kwargs.pop('timeout', 900)
         power_on = kwargs.pop('power_on', True)
@@ -70,7 +68,6 @@ class RHEVMSystem(RHEVMSystemBase):
                 ciargs = {}
                 ciargs['initialization'] = action
                 self.start_vm(vm_name=kwargs['vm_name'], **ciargs)
-                pdb.set_trace()
             else:
                 self.start_vm(vm_name=kwargs['vm_name'])
         return kwargs['vm_name']
