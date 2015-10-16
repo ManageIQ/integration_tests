@@ -14,6 +14,7 @@ artifactor:
 """
 import csv
 import datetime
+import difflib
 import math
 import os
 import re
@@ -136,6 +137,7 @@ class Reporter(ArtifactorBasePlugin):
             pass
 
     def process_data(self, artifacts, log_dir, version, name_filter=None):
+        tb_errors = []
         blocker_skip_count = 0
         provider_skip_count = 0
         template_data = {'tests': [], 'qa': []}
@@ -194,7 +196,9 @@ class Reporter(ArtifactorBasePlugin):
                     elif "screenshot" in filename:
                         test_data['screenshot'] = filename.replace(log_dir, "")
                     elif "short-traceback" in filename:
-                        test_data['short_tb'] = open(filename).read()
+                        short_tb_data = open(filename).read()
+                        test_data['short_tb'] = short_tb_data
+                        tb_errors.append((short_tb_data, test_name))
                     elif "rbac-traceback" in filename:
                         test_data['rbac'] = filename.replace(log_dir, "")
                     elif "traceback" in filename:
@@ -226,6 +230,7 @@ class Reporter(ArtifactorBasePlugin):
                 if urls:
                     test_data["urls"] = urls
             template_data['tests'].append(test_data)
+        template_data['top10'] = self.top10(tb_errors)
         template_data['counts'] = counts
         template_data['blocker_skip_count'] = blocker_skip_count
         template_data['provider_skip_count'] = provider_skip_count
@@ -250,6 +255,20 @@ class Reporter(ArtifactorBasePlugin):
                     seconds=math.ceil(test['duration'])))
 
         return template_data
+
+    def top10(self, tb_errors):
+        sets = []
+        for i, entry in enumerate(tb_errors):
+            for tset in sets:
+                if difflib.SequenceMatcher(a=entry[0][:10], b=tset[0][0][:10]).ratio() > .8:
+                    if difflib.SequenceMatcher(a=entry[0][:20], b=tset[0][0][:20]).ratio() > .7:
+                        if difflib.SequenceMatcher(a=entry[0][:30], b=tset[0][0][:30]).ratio() > .6:
+                            tset.append(entry)
+                            break
+            else:
+                sets.append([entry])
+
+        return sorted(sets, lambda p, q: cmp(len(p), len(q)), reverse=True)[:10]
 
     def build_dict(self, path, container, contents):
         """
