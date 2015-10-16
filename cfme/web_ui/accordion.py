@@ -10,13 +10,18 @@ Usage:
       acc.click('Diagnostics')
       acc.is_active('Diagnostics')
 """
+
+from xml.sax.saxutils import quoteattr
+
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import AccordionItemNotFound
 from cfme.web_ui import Tree
+from utils import version
 
 DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
 DHX_LABEL = '*[contains(@class, "dhx_acc_item_label") or contains(@data-remote, "true")]'
 DHX_ARROW = 'div[contains(@class, "dhx_acc_item_arrow")]'
+NEW_ACC = '//div[@id="accordion"]//h4[@class="panel-title"]//a[normalize-space(.)={}]'
 
 
 def locate(name):
@@ -26,8 +31,10 @@ def locate(name):
         name: The name of the accordion.
     Returns: A web element of the selected accordion.
     """
-
-    xpath = '//%s/%s//span[normalize-space(.)="%s"]' % (DHX_ITEM, DHX_LABEL, name)
+    xpath = version.pick({
+        version.LOWEST: '//{}/{}//span[normalize-space(.)="{}"]'.format(
+            DHX_ITEM, DHX_LABEL, name),
+        '5.5.0.6': NEW_ACC.format(quoteattr(name))})
     return xpath
 
 
@@ -45,6 +52,24 @@ def click(name):
         raise AccordionItemNotFound("Accordion item '{}' not found!".format(name))
 
 
+def _get_accordion_collapsed(name):
+    """ Returns if an accordion is collapsed or not, used with is_active
+
+    Args:
+        name: The name of the accordion
+    Returns: ``True`` if the accordion is open, ``False`` if it is closed.
+    """
+
+    if version.current_version() < '5.5.0.6':
+        root = sel.element(locate(name))
+        el = sel.element('./%s/%s' % (DHX_LABEL, DHX_ARROW), root=root)
+        class_att = sel.get_attribute(el, 'class').split(" ")
+        return "item_opened" in class_att
+    else:
+        class_att = sel.get_attribute(sel.element(locate(name)), 'class').split(" ")
+        return "collapsed" not in class_att
+
+
 def is_active(name):
     """ Checks if an accordion is currently open
 
@@ -54,14 +79,9 @@ def is_active(name):
         name: The name of the accordion.
     Returns: ``True`` if the button is depressed, ``False`` if not.
     """
+
     try:
-        root = sel.element(locate(name))
-        el = sel.element('./%s/%s' % (DHX_LABEL, DHX_ARROW), root=root)
-        class_att = sel.get_attribute(el, 'class').split(" ")
-        if "item_opened" in class_att:
-            return True
-        else:
-            return False
+        return _get_accordion_collapsed(name)
     except sel.NoSuchElementException:
         raise AccordionItemNotFound("Accordion item '{}' not found!".format(name))
 
@@ -80,7 +100,11 @@ def tree(name, *path):
         *path: If specified, it will directly pass these parameters into click_path of Tree.
             Otherwise it returns the Tree object.
     """
-    click(name)
+    try:
+        if not is_active(name):
+            click(name)
+    except AccordionItemNotFound:
+        click(name)
     tree = Tree(
         sel.first_from(
             # Current tree
@@ -89,6 +113,8 @@ def tree(name, *path):
             # Legacy tree
             "../../div[contains(@class, 'dhxcont_global_content_area')]//"
             "div[@class='containerTableStyle']//table[not(ancestor::tr[contains(@style,'none')])]",
+            # New accordion tree
+            "../../..//div[@class='panel-body']//ul[@class='dynatree-container']",
             root=sel.element(locate(name))
         )
     )
