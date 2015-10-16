@@ -1066,7 +1066,11 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             _login_func()
             # If this failed, no help with that :/
 
-        logger.info('Navigating to %s' % page_name)
+        ctx = kwargs.get("context", False)
+        if ctx:
+            logger.info('Navigating to {} with context: {}'.format(page_name, ctx))
+        else:
+            logger.info('Navigating to {}'.format(page_name))
         menu.nav.go_to(page_name, *args, **kwargs)
     except (KeyboardInterrupt, ValueError):
         # KeyboardInterrupt: Don't block this while navigating
