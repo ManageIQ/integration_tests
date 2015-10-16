@@ -11,7 +11,7 @@ Usage:
       acc.is_active('Diagnostics')
 """
 
-from xml.sax.saxutils import quoteattr
+from xml.sax.saxutils import quoteattr, unescape
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import AccordionItemNotFound
@@ -34,7 +34,7 @@ def locate(name):
     xpath = version.pick({
         version.LOWEST: '//{}/{}//span[normalize-space(.)="{}"]'.format(
             DHX_ITEM, DHX_LABEL, name),
-        '5.5.0.6': NEW_ACC.format(quoteattr(name))})
+        '5.5.0.6': NEW_ACC.format(unescape(quoteattr(name)))})
     return xpath
 
 
