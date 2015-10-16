@@ -6,9 +6,9 @@ import re
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Region, Table, tabstrip, toolbar
+from utils import deferred_verpick, version
 from utils.timeutil import parsetime
 from utils.pretty import Pretty
-from utils.version import LOWEST, current_version
 from utils.wait import wait_for
 
 page = Region(
@@ -17,7 +17,7 @@ page = Region(
         'reset_widgets_button': toolbar.root_loc('Reset Dashboard Widgets'),
         'csrf_token': "//meta[@name='csrf-token']",
         'user_dropdown': {
-            LOWEST: '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
+            version.LOWEST: '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
             '5.4': '//nav//ul[contains(@class, "navbar-utility")]'
                    '/li[contains(@class, "dropdown")]/a'
         }
@@ -47,17 +47,36 @@ def dashboards():
 
 
 class Widget(Pretty):
-    _name = "//div[@id='{}']//span[contains(@class, 'modtitle_text')]"
+    _name = deferred_verpick({
+        version.LOWEST: "//div[@id='{}']//span[contains(@class, 'modtitle_text')]",
+        "5.5": "//div[@id='{}']//h3",
+        version.LATEST: "//div[@id='{}']//span[contains(@class, 'modtitle_text')]"})
     _remove = "//div[@id='{}']//a[@title='Remove from Dashboard']"
     _minimize = "//div[@id='{}']//a[@title='Minimize']"
     _restore = "//div[@id='{}']//a[@title='Restore']"
-    _footer = "//div[@id='{}']//div[@class='modboxfooter']"
+    _footer = "//div[@id='{}']//div[@class='modboxfooter' or contains(@class, 'panel-footer')]"
     _zoom = "//div[@id='{}']//a[@title='Zoom in on this chart']"
-    _zoomed_name = "//div[@id='lightbox_div']//span[contains(@class, 'modtitle_text')]"
-    _zoomed_close = "//div[@id='lightbox_div']//a[@title='Close']"
+    _zoomed_name = deferred_verpick({
+        version.LOWEST: "//div[@id='lightbox_div']//span[contains(@class, 'modtitle_text')]",
+        "5.5": "//div[@id='lightbox_div']//h3",
+        version.LATEST: "//div[@id='lightbox_div']//span[contains(@class, 'modtitle_text')]"})
+    _zoomed_close = deferred_verpick({
+        version.LOWEST: "//div[@id='lightbox_div']//a[@title='Close']",
+        "5.5": "//div[@id='lightbox_div']//a[@title='Close']/i",
+        version.LATEST: "//div[@id='lightbox_div']//a[@title='Close']"})
     _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
-    _content = "//div[@id='{}']//div[contains(@class, 'modboxin')]"
+    _content = deferred_verpick({
+        version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]",
+        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]/div[contains(@id, 'box')]",
+        version.LATEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]"})
     _content_type_54 = "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]"
+
+    # 5.5+ updated
+    _menu_opener = "//div[@id='{}']//a[contains(@class, 'dropdown-toggle')]/i"
+    _menu_container = "//div[@id='{}']//ul[contains(@class, 'dropdown-menu')]"
+    _menu_minmax = _menu_container + "/li/a[contains(@id, 'minmax')]"
+    _menu_remove = _menu_container + "/li/a[contains(@id, 'close')]"
+    _menu_zoom = _menu_container + "/li/a[contains(@id, 'zoom')]"
 
     pretty_attrs = ['_div_id']
 
@@ -65,12 +84,17 @@ class Widget(Pretty):
         self._div_id = div_id
 
     @property
+    def newer_version(self):
+        # TODO: Keep an eye on it, when upstream appl gets the newer version
+        return version.current_version() >= "5.5" and version.appliance_is_downstream()
+
+    @property
     def name(self):
         return sel.text(self._name.format(self._div_id)).encode("utf-8")
 
     @property
     def content_type(self):
-        if current_version() < "5.4":
+        if version.current_version() < "5.4" or self.newer_version:
             return sel.get_attribute(self._content.format(self._div_id), "class").rsplit(" ", 1)[-1]
         else:
             return sel.get_attribute(self._content_type_54.format(self._div_id), "class").strip()
@@ -112,36 +136,66 @@ class Widget(Pretty):
     @property
     def is_minimized(self):
         self.close_zoom()
-        return not sel.is_displayed(self._minimize.format(self._div_id))
+        if not self.newer_version:
+            return not sel.is_displayed(self._minimize.format(self._div_id))
+        else:
+            return not sel.is_displayed(self._content.format(self._div_id))
 
     @property
     def can_zoom(self):
         """Can this Widget be zoomed?"""
-        return sel.is_displayed(self._zoom.format(self._div_id))
+        self.close_zoom()
+        if not self.newer_version:
+            return sel.is_displayed(self._zoom.format(self._div_id))
+        else:
+            self.open_dropdown_menu()
+            zoomable = sel.is_displayed(self._menu_zoom.format(self._div_id))
+            self.close_dropdown_menu()
+            return zoomable
+
+    def _click_menu_button_by_loc(self, loc):
+        self.close_zoom()
+        try:
+            self.open_dropdown_menu()
+            sel.click(loc.format(self._div_id))
+        finally:
+            self.close_dropdown_menu()
 
     def remove(self, cancel=False):
         """Remove this Widget."""
         self.close_zoom()
-        sel.click(self._remove.format(self._div_id), wait_ajax=False)  # alert
-        sel.handle_alert(cancel)
+        if not self.newer_version:
+            sel.click(self._remove.format(self._div_id), wait_ajax=False)  # alert
+            sel.handle_alert(cancel)
+        else:
+            self._click_menu_button_by_loc(self._menu_remove)
 
     def minimize(self):
         """Minimize this Widget."""
         self.close_zoom()
         if not self.is_minimized:
-            sel.click(self._minimize.format(self._div_id))
+            if not self.newer_version:
+                sel.click(self._minimize.format(self._div_id))
+            else:
+                self._click_menu_button_by_loc(self._menu_minmax)
 
     def restore(self):
         """Return the Widget back from minimalization."""
         self.close_zoom()
         if self.is_minimized:
-            sel.click(self._restore.format(self._div_id))
+            if not self.newer_version:
+                sel.click(self._restore.format(self._div_id))
+            else:
+                self._click_menu_button_by_loc(self._menu_minmax)
 
     def zoom(self):
         """Zoom this Widget."""
         self.close_zoom()
         if not self.is_zoomed():
-            sel.click(self._zoom.format(self._div_id))
+            if not self.newer_version:
+                sel.click(self._zoom.format(self._div_id))
+            else:
+                self._click_menu_button_by_loc(self._menu_zoom)
 
     @classmethod
     def is_zoomed(cls):
@@ -149,7 +203,7 @@ class Widget(Pretty):
 
     @classmethod
     def get_zoomed_name(cls):
-        return sel.text(cls._zoomed_name).encode("utf-8")
+        return sel.text(cls._zoomed_name).encode("utf-8").strip()
 
     @classmethod
     def close_zoom(cls):
@@ -179,6 +233,29 @@ class Widget(Pretty):
     def by_type(cls, content_type):
         """Returns Widget with specified content_type."""
         return filter(lambda w: w.content_type == content_type, cls.all())
+
+    # 5.5+ specific methods
+    @property
+    def is_dropdown_menu_opened(self):
+        return sel.is_displayed(self._menu_container.format(self._div_id))
+
+    def open_dropdown_menu(self):
+        if not sel.is_displayed(self._menu_opener.format(self._div_id)):
+            return  # Not a 5.5+
+        self.close_dropdown_menu()
+        sel.click(self._menu_opener.format(self._div_id))
+        wait_for(
+            lambda: self.is_dropdown_menu_opened,
+            num_sec=10, delay=0.2, message="widget dropdown menu opend")
+
+    def close_dropdown_menu(self):
+        if not sel.is_displayed(self._menu_opener.format(self._div_id)):
+            return  # Not a 5.5+
+        if self.is_dropdown_menu_opened:
+            sel.click("//a[contains(@class, 'navbar-brand')]/img")
+            wait_for(
+                lambda: not self.is_dropdown_menu_opened,
+                num_sec=10, delay=0.2, message="widget dropdown menu closed")
 
 
 class BaseWidgetContent(Pretty):
