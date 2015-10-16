@@ -3,11 +3,12 @@ from functools import partial
 from collections import OrderedDict
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
-    flash, form_buttons, menu, tabstrip, DHTMLSelect, Input, Tree
+    flash, form_buttons, menu, tabstrip, DHTMLSelect, Input, Tree, AngularSelect
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.version import current_version
+from utils import version
 
 cfg_btn = partial(tb.select, "Configuration")
 accordion_tree = partial(accordion.tree, "Catalog Items")
@@ -34,7 +35,9 @@ basic_info_form = Form(
         ('select_provider', Select("//select[@id='manager_id']")),
         ('field_entry_point', Input("fqname")),
         ('edit_button', form_buttons.save),
-        ('apply_btn', '//a[@title="Apply"]')
+        ('apply_btn', {
+            version.LOWEST: '//a[@title="Apply"]',
+            version.LATEST: '//a[@data-original-title="Apply"]'})
     ])
 
 edit_tags_form = Form(
@@ -249,8 +252,12 @@ class CatalogItem(Updateable, Pretty):
         sel.wait_for_element(button_group_form.btn_group_text)
         fill(button_group_form, {'btn_group_text': "group_text",
                                  'btn_group_hvr_text': "descr"})
-        select = DHTMLSelect("div#button_div")
-        select.select_by_value(1)
+        if current_version() > "5.5":
+            select = AngularSelect("button_image")
+            select.select_by_visible_text("Button Image 1")
+        else:
+            select = DHTMLSelect("div#button_div")
+            select.select_by_value(1)
         sel.click(button_group_form.add_button)
         flash.assert_success_message('Buttons Group "descr" was added')
 
@@ -261,8 +268,12 @@ class CatalogItem(Updateable, Pretty):
         sel.wait_for_element(button_form.btn_text)
         fill(button_form, {'btn_text': "btn_text",
                            'btn_hvr_text': "btn_descr"})
-        select = DHTMLSelect("div#button_div")
-        select.select_by_value(2)
+        if current_version() > "5.5":
+            select = AngularSelect("button_image")
+            select.select_by_visible_text("Button Image 1")
+        else:
+            select = DHTMLSelect("div#button_div")
+            select.select_by_value(2)
         fill(button_form, {'select_dialog': self.dialog,
                            'system_process': "Request",
                            'request': "InspectMe"})
