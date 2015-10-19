@@ -3262,19 +3262,20 @@ fill.prefer((DHTMLSelect, types.NoneType), (object, types.NoneType))
 class AngularSelect(object):
     BUTTON = "//button[@data-id='{}']"
 
-    def __init__(self, loc, none=None):
+    def __init__(self, loc, none=None, multi=False):
         self.none = none
         if isinstance(loc, AngularSelect):
             self._loc = loc._loc
         else:
             self._loc = self.BUTTON.format(loc)
+        self.multi = multi
 
     def locate(self):
         return sel.move_to_element(self._loc)
 
     @property
     def select(self):
-        return Select('select#{}'.format(self.did))
+        return Select('select#{}'.format(self.did), multi=self.multi)
 
     @property
     def did(self):
@@ -3340,6 +3341,12 @@ def _fill_angular_value(obj, s):
         obj.select_by_value(s.value)
     else:
         return
+
+
+@fill.method((AngularSelect, list))
+def _fill_angular_list(obj, l):
+    for i in l:
+        fill(obj, i)
 
 
 class AngularCalendarInput(Pretty):

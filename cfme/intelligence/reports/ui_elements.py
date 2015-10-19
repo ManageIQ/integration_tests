@@ -199,7 +199,12 @@ def _fill_recordgrouper(rg, d):
     logger.info("  Filling {} with data {}".format(str(rg), str(d)))
     for row_column_name, content in d.iteritems():
         row = rg.table.find_row("column_name", row_column_name)
-        fill(PivotCalcSelect(sel.get_attribute(row.calculations, "id")), content)
+        if version.current_version() >= "5.5":
+            select = sel.element("./select", root=row.calculations)
+            select_id = sel.get_attribute(select, "id")
+            fill(AngularSelect(select_id, multi=True), content)
+        else:
+            fill(PivotCalcSelect(sel.get_attribute(row.calculations, "id")), content)
 
 
 class ColumnStyleTable(Pretty):
