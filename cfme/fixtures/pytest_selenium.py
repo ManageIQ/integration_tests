@@ -508,7 +508,7 @@ def click(loc, wait_ajax=True, no_custom_handler=False):
     """
     if hasattr(loc, "_custom_click_handler") and not no_custom_handler:
         # Object can implement own modification of click behaviour
-        return loc._custom_click_handler()
+        return loc._custom_click_handler(wait_ajax=wait_ajax)
 
     # Move mouse cursor to element
     move_to_element(loc)
