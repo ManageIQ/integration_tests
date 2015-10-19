@@ -161,24 +161,20 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     Does some counter-badness measures.
 
     Args:
-        prov_class: "infra" or "cloud"
+        prov_class: "infra", "cloud" or "container"
         prov_type: "ec2", "virtualcenter" or any other valid type
         validate: Whether to validate the provider.
         check_existing: Whether to check if the provider already exists.
         required_keys: A set of required keys for the provider data to have
     """
 
-    if prov_class == "infra":
-        potential_providers = list_infra_providers()
-        if prov_type:
-            providers = []
-            for provider in potential_providers:
-                if providers_data[provider]['type'] == prov_type:
-                    providers.append(provider)
+    if prov_class in ("infra", "cloud", "container"):
+        if prov_class == "infra":
+            potential_providers = list_infra_providers()
+        elif prov_class == "cloud":
+            potential_providers = list_cloud_providers()
         else:
-            providers = potential_providers
-    elif prov_class == "cloud":
-        potential_providers = list_cloud_providers()
+            potential_providers = list_container_providers()
         if prov_type:
             providers = []
             for provider in potential_providers:
@@ -305,10 +301,11 @@ def setup_provider_by_name(provider_name, *args, **kwargs):
     return setup_provider(get_provider_key(provider_name), *args, **kwargs)
 
 
-def setup_providers(validate=True, check_existing=True):
-    """Run :py:func:`setup_provider` for every provider (cloud and infra)
+def setup_providers(prov_classes=('cloud', 'infra'), validate=True, check_existing=True):
+    """Run :py:func:`setup_provider` for every provider (cloud and infra only, by default)
 
     Args:
+        prov_classes: list of provider classes to setup ('cloud', 'infra' and 'container')
         validate: see description in :py:func:`setup_provider`
         check_existing: see description in :py:func:`setup_provider`
 
@@ -322,8 +319,12 @@ def setup_providers(validate=True, check_existing=True):
 
     # Defer validation
     setup_kwargs = {'validate': False, 'check_existing': check_existing}
-    added_providers.extend(setup_cloud_providers(**setup_kwargs))
-    added_providers.extend(setup_infrastructure_providers(**setup_kwargs))
+    if 'cloud' in prov_classes:
+        added_providers.extend(setup_cloud_providers(**setup_kwargs))
+    if 'infra' in prov_classes:
+        added_providers.extend(setup_infrastructure_providers(**setup_kwargs))
+    if 'container' in prov_classes:
+        added_providers.extend(setup_container_providers(**setup_kwargs))
 
     if validate:
         map(methodcaller('validate'), added_providers)
@@ -333,11 +334,11 @@ def setup_providers(validate=True, check_existing=True):
     return added_providers
 
 
-def _setup_providers(cloud_or_infra, validate, check_existing):
-    """Helper to set up all cloud or infra providers, and then validate them
+def _setup_providers(prov_class, validate, check_existing):
+    """Helper to set up all cloud, infra or container providers, and then validate them
 
     Args:
-        cloud_or_infra: Like the name says: 'cloud' or 'infra' (a string)
+        prov_class: Provider class - 'cloud, 'infra' or 'container' (a string)
         validate: see description in :py:func:`setup_provider`
         check_existing: see description in :py:func:`setup_provider`
 
@@ -345,7 +346,7 @@ def _setup_providers(cloud_or_infra, validate, check_existing):
         A list of provider objects that have been created.
 
     """
-    # Pivot behavior on cloud_or_infra
+    # Pivot behavior on prov_class
     options_map = {
         'cloud': {
             'navigate': 'clouds_providers',
@@ -356,18 +357,23 @@ def _setup_providers(cloud_or_infra, validate, check_existing):
             'navigate': 'infrastructure_providers',
             'quad': 'infra_prov',
             'list': list_infra_providers
+        },
+        'container': {
+            'navigate': 'container_providers',
+            'quad': None,
+            'list': list_container_providers
         }
     }
     # Check for existing providers all at once, to prevent reloading
     # the providers page for every provider in cfme_data
-    if not options_map[cloud_or_infra]['list']():
+    if not options_map[prov_class]['list']():
         return []
     if check_existing:
-        sel.force_navigate(options_map[cloud_or_infra]['navigate'])
+        sel.force_navigate(options_map[prov_class]['navigate'])
         add_providers = []
-        for provider_key in options_map[cloud_or_infra]['list']():
+        for provider_key in options_map[prov_class]['list']():
             provider_name = conf.cfme_data.get('management_systems', {})[provider_key]['name']
-            quad = Quadicon(provider_name, options_map[cloud_or_infra]['quad'])
+            quad = Quadicon(provider_name, options_map[prov_class]['quad'])
             for page in paginator.pages():
                 if sel.is_displayed(quad):
                     logger.debug('Provider "%s" exists, skipping' % provider_key)
@@ -375,8 +381,8 @@ def _setup_providers(cloud_or_infra, validate, check_existing):
             else:
                 add_providers.append(provider_key)
     else:
-        # Add all cloud or infra providers unconditionally
-        add_providers = options_map[cloud_or_infra]['list']()
+        # Add all cloud, infra or container providers unconditionally
+        add_providers = options_map[prov_class]['list']()
 
     if add_providers:
         logger.info('Providers to be added: %s' % ', '.join(add_providers))
@@ -424,6 +430,21 @@ def setup_infrastructure_providers(validate=True, check_existing=True):
     return _setup_providers('infra', validate, check_existing)
 
 
+def setup_container_providers(validate=True, check_existing=True):
+    """Run :py:func:`setup_container_provider` for every container provider
+
+    Args:
+        validate: see description in :py:func:`setup_provider`
+        check_existing: see description in :py:func:`setup_provider`
+
+
+    Returns:
+        An list of :py:class:`cfme.container.provider.Provider` instances.
+
+    """
+    return _setup_providers('container', validate, check_existing)
+
+
 def clear_cloud_providers(validate=True):
     sel.force_navigate('clouds_providers')
     logger.debug('Checking for existing cloud providers...')
@@ -454,6 +475,21 @@ def clear_infra_providers(validate=True):
             wait_for_no_infra_providers()
 
 
+def clear_container_providers(validate=True):
+    sel.force_navigate('containers_providers')
+    logger.debug('Checking for existing container providers...')
+    total = paginator.rec_total()
+    if total is not None and int(total) > 0:
+        logger.info(' Providers exist, so removing all container providers')
+        paginator.results_per_page('100')
+        sel.click(paginator.check_all())
+        toolbar.select('Configuration', 'Remove Containers Providers from the VMDB',
+                       invokes_alert=True)
+        sel.handle_alert()
+        if validate:
+            wait_for_no_container_providers()
+
+
 def get_paginator_value():
     total = paginator.rec_total()
     if total is None:
@@ -476,6 +512,13 @@ def wait_for_no_infra_providers():
              num_sec=1000, fail_func=sel.refresh)
 
 
+def wait_for_no_container_providers():
+    sel.force_navigate('containers_providers')
+    logger.debug('Waiting for all container providers to disappear...')
+    wait_for(lambda: get_paginator_value() == 0, message="Delete all container providers",
+             num_sec=1000, fail_func=sel.refresh)
+
+
 def clear_providers():
     """Rudely clear all providers on an appliance
 
@@ -486,8 +529,10 @@ def clear_providers():
     perflog.start('utils.providers.clear_providers')
     clear_cloud_providers(validate=False)
     clear_infra_providers(validate=False)
+    clear_container_providers(validate=False)
     wait_for_no_cloud_providers()
     wait_for_no_infra_providers()
+    wait_for_no_container_providers()
     perflog.stop('utils.providers.clear_providers')
 
 
@@ -511,10 +556,12 @@ def destroy_vm(provider_mgmt, vm_name):
         logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, e.message)
 
 
-def get_credentials_from_config(credential_config_name):
+def get_credentials_from_config(credential_config_name, cred_type=None):
     creds = conf.credentials[credential_config_name]
-    return BaseProvider.Credential(principal=creds['username'],
-                               secret=creds['password'])
+    return BaseProvider.Credential(
+        principal=creds['username'],
+        secret=creds['password'],
+        cred_type=cred_type)
 
 
 def get_crud(provider_config_name):
@@ -577,8 +624,8 @@ def get_crud(provider_config_name):
             sec_realm=prov_config['sec_realm'])
     elif prov_type == 'rhevm':
         if prov_config.get('candu_credentials', None):
-            candu_credentials = get_credentials_from_config(prov_config['candu_credentials'])
-            candu_credentials.candu = True
+            candu_credentials = get_credentials_from_config(
+                prov_config['candu_credentials'], cred_type='candu')
         else:
             candu_credentials = None
         return RHEVMProvider(name=prov_config['name'],
@@ -592,8 +639,6 @@ def get_crud(provider_config_name):
             start_ip=start_ip,
             end_ip=end_ip)
     elif prov_type == "openstack-infra":
-        credentials = get_credentials_from_config(
-            prov_config['credentials'])
         return OpenstackInfraProvider(
             name=prov_config['name'],
             hostname=prov_config['hostname'],
@@ -602,8 +647,14 @@ def get_crud(provider_config_name):
             key=provider_config_name,
             start_ip=start_ip,
             end_ip=end_ip)
+    elif prov_type == 'kubernetes':
+        # TODO
+        pass
+    elif prov_type == 'openshift':
+        # TODO
+        pass
     else:
-        raise UnknownProviderType('{} is not a known infra provider type'.format(prov_type))
+        raise UnknownProviderType('{} is not a known provider type'.format(prov_type))
 
 
 class UnknownProvider(Exception):
