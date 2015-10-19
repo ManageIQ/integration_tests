@@ -68,7 +68,7 @@
         {% for t10error in top10 %}
           <tr>
             <td>
-              <pre class="no_bord">{{ t10error[0][0] }}</pre>
+              <pre class="no_bord">{{ t10error[0][0]|e }}</pre>
             </td>
             <td><a href="#{{t10error[0][1]|e}}" data-toggle="tooltip" title="{{t10error[0][1]}}">{{t10error[0][1]|truncate(50)}}</a>
             </td>

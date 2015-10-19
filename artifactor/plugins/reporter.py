@@ -261,8 +261,8 @@ class Reporter(ArtifactorBasePlugin):
         for i, entry in enumerate(tb_errors):
             for tset in sets:
                 if difflib.SequenceMatcher(a=entry[0][:10], b=tset[0][0][:10]).ratio() > .8:
-                    if difflib.SequenceMatcher(a=entry[0][:20], b=tset[0][0][:20]).ratio() > .7:
-                        if difflib.SequenceMatcher(a=entry[0][:30], b=tset[0][0][:30]).ratio() > .6:
+                    if difflib.SequenceMatcher(a=entry[0][:20], b=tset[0][0][:20]).ratio() > .75:
+                        if difflib.SequenceMatcher(a=entry[0][:30], b=tset[0][0][:30]).ratio() > .7:
                             tset.append(entry)
                             break
             else:
