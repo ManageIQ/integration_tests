@@ -1360,7 +1360,7 @@ class Select(SeleniumSelect, Pretty):
     def get_value_by_text(self, text):
         # unescape because it turns <> into &lt;&gt; which we don't want in xpath
         opt = element(
-            ".//option[.={}]".format(unescape(quoteattr(text))),
+            ".//option[normalize-space(.)={}]".format(unescape(quoteattr(text))),
             root=element(self, check_visibility=not self.is_patternfly))
         return get_attribute(opt, "value")
 
