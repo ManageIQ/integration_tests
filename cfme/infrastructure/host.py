@@ -19,8 +19,8 @@ import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
-    Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill, form_buttons,
-    paginator, Input, mixins
+    AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
+    form_buttons, paginator, Input, mixins
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui import listaccordion as list_acc
@@ -61,7 +61,9 @@ credential_form = Form(
         ('validate_multi_host', form_buttons.validate_multi_host),
         ('save_btn', form_buttons.save),
         ('cancel_changes', form_buttons.cancel_changes),
-        ('validate_host', Select('select#validate_id')),
+        ('validate_host', {
+            version.LOWEST: Select('select#validate_id'),
+            "5.5": AngularSelect("validate_id")}),
     ])
 
 manage_policies_tree = CheckboxTree(
