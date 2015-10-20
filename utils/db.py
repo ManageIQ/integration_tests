@@ -96,6 +96,9 @@ class Db(Mapping):
             self.hostname = hostname
 
         self.credentials = credentials or conf.credentials['database']
+        self.credentials['port'] = ports.DB
+        if 'custom_ports' in conf.env and 'database' in conf.env['custom_ports']:
+            self.credentials['port'] = conf.env['custom_ports']['database']
 
     def __getitem__(self, table_name):
         """Access tables as items contained in this db
@@ -213,7 +216,7 @@ class Db(Mapping):
     def db_url(self):
         """The connection URL for this database, including credentials"""
         template = "postgresql://{username}:{password}@{host}:{port}/vmdb_production"
-        result = template.format(host=self.hostname, port=ports.DB, **self.credentials)
+        result = template.format(host=self.hostname, **self.credentials)
         logger.info("[DB] db_url is {}".format(result))
         return result
 
