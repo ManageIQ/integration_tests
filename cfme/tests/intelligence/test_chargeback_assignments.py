@@ -14,6 +14,7 @@ def provider():
     return setup_a_provider(prov_class="infra", prov_type="virtualcenter")
 
 
+@pytest.mark.meta(blockers=[1273654])
 def test_assign_compute_enterprise(provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
@@ -71,6 +72,7 @@ def test_assign_compute_taggedvm(provider):
         == "Default", 'Selection does not match')
 
 
+@pytest.mark.meta(blockers=[1273654])
 def test_assign_storage_enterprise(provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
