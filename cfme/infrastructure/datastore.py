@@ -9,7 +9,7 @@ import ui_navigate as nav
 # needed before grafting
 import cfme.web_ui.menu  # noqa
 
-from cfme.exceptions import CandidateNotFound
+from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg
 from functools import partial
@@ -142,7 +142,7 @@ class Datastore(Pretty):
                     version.LOWEST: "Show all registered VMs",
                     "5.3": "Show registered VMs"})
                 list_acc.select('Relationships', path)
-            except sel.NoSuchElementException:
+            except (sel.NoSuchElementException, ListAccordionLinkNotFound):
                 return []
         return [q.name for q in Quadicon.all("vm")]
 

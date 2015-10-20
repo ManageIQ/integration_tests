@@ -111,8 +111,8 @@ def test_delete_datastore(setup_provider, provider, remove_test):
     """
     data_store = remove_test['datastore']
     test_datastore = datastore.Datastore(name=data_store)
-    host_count = test_datastore.get_hosts()
-    vm_count = test_datastore.get_vms()
+    host_count = len(test_datastore.get_hosts())
+    vm_count = len(test_datastore.get_vms())
     if host_count != 0:
         test_datastore.delete_all_attached_hosts()
         test_datastore.wait_for_delete_all()
