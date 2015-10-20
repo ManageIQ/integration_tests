@@ -59,11 +59,12 @@ credential_form = Form(
         ('ipmi_verify_secret', Input("ipmi_verify")),
         ('validate_btn', form_buttons.validate),
         ('validate_multi_host', form_buttons.validate_multi_host),
-        ('save_btn', form_buttons.save),
-        ('cancel_changes', form_buttons.cancel_changes),
-        ('validate_host', {
-            version.LOWEST: Select('select#validate_id'),
-            "5.5": AngularSelect("validate_id")}),
+        ('save_btn', {version.LOWEST: form_buttons.save,
+            '5.5': form_buttons.angular_save}),
+        ('cancel_changes', {version.LOWEST: form_buttons.cancel_changes,
+            '5.5': form_buttons.cancel}),
+        ('validate_host', {version.LOWEST: Select('select#validate_id'),
+            '5.5': AngularSelect('validate_id')}),
     ])
 
 manage_policies_tree = CheckboxTree(
