@@ -27,5 +27,6 @@ def test_openldap_auth(request, setup_first_provider, configure_openldap_auth_mo
     user = User(name=data["fullname"], credential=credentials)
     request.addfinalizer(user.delete)
     request.addfinalizer(login.login_admin)
-    login.login(data["username"], data["password"])
-    assert login.current_full_name() == data["fullname"]
+    with user:
+        login.login(user)
+        assert login.current_full_name() == data["fullname"]
