@@ -116,6 +116,7 @@ def test_filter_save_cancel(vms, subset_of_vms, expression_for_vms_subset):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=[1273032])
 def test_filter_save_and_load(request, vms, subset_of_vms, expression_for_vms_subset):
     sel.force_navigate("infra_vms")
     filter_name = fauxfactory.gen_alphanumeric()
@@ -132,6 +133,7 @@ def test_filter_save_and_load(request, vms, subset_of_vms, expression_for_vms_su
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=[1273032])
 def test_filter_save_and_cancel_load(request):
     sel.force_navigate("infra_vms")
     filter_name = fauxfactory.gen_alphanumeric()
@@ -152,6 +154,7 @@ def test_filter_save_and_cancel_load(request):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=[1273032])
 def test_filter_save_and_load_cancel(request, vms, subset_of_vms):
     sel.force_navigate("infra_vms")
     filter_name = fauxfactory.gen_alphanumeric()
@@ -207,6 +210,7 @@ def test_quick_search_with_filter(request, vms, subset_of_vms, expression_for_vm
     assert len(all_vms_visible) == 1 and chosen_vm in all_vms_visible
 
 
+@pytest.mark.meta(blockers=[1273032])
 def test_can_delete_filter():
     sel.force_navigate("infra_vms")
     filter_name = fauxfactory.gen_alphanumeric()
@@ -221,7 +225,7 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1097150])
+@pytest.mark.meta(blockers=[1097150, 1273032])
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     sel.force_navigate("infra_vms")
@@ -238,7 +242,7 @@ def test_delete_button_should_appear_after_save(request):
         pytest.fail("Could not delete filter right after saving!")
 
 
-@pytest.mark.meta(blockers=[1097150])
+@pytest.mark.meta(blockers=[1097150, 1273032])
 def test_cannot_delete_more_than_once(request):
     """When Delete button appars, it does not want to go away"""
     sel.force_navigate("infra_vms")
