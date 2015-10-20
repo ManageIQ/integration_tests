@@ -49,8 +49,7 @@ def dashboards():
 class Widget(Pretty):
     _name = deferred_verpick({
         version.LOWEST: "//div[@id='{}']//span[contains(@class, 'modtitle_text')]",
-        "5.5": "//div[@id='{}']//h3",
-        version.LATEST: "//div[@id='{}']//span[contains(@class, 'modtitle_text')]"})
+        "5.5": "//div[@id='{}']//h3"})
     _remove = "//div[@id='{}']//a[@title='Remove from Dashboard']"
     _minimize = "//div[@id='{}']//a[@title='Minimize']"
     _restore = "//div[@id='{}']//a[@title='Restore']"
@@ -58,17 +57,14 @@ class Widget(Pretty):
     _zoom = "//div[@id='{}']//a[@title='Zoom in on this chart']"
     _zoomed_name = deferred_verpick({
         version.LOWEST: "//div[@id='lightbox_div']//span[contains(@class, 'modtitle_text')]",
-        "5.5": "//div[@id='lightbox_div']//h3",
-        version.LATEST: "//div[@id='lightbox_div']//span[contains(@class, 'modtitle_text')]"})
+        "5.5": "//div[@id='lightbox_div']//h3"})
     _zoomed_close = deferred_verpick({
         version.LOWEST: "//div[@id='lightbox_div']//a[@title='Close']",
-        "5.5": "//div[@id='lightbox_div']//a[@title='Close']/i",
-        version.LATEST: "//div[@id='lightbox_div']//a[@title='Close']"})
+        "5.5": "//div[@id='lightbox_div']//a[@title='Close']/i"})
     _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
     _content = deferred_verpick({
         version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]",
-        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]/div[contains(@id, 'box')]",
-        version.LATEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]"})
+        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]/div[contains(@id, 'box')]"})
     _content_type_54 = "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]"
 
     # 5.5+ updated
@@ -85,8 +81,7 @@ class Widget(Pretty):
 
     @property
     def newer_version(self):
-        # TODO: Keep an eye on it, when upstream appl gets the newer version
-        return version.current_version() >= "5.5" and version.appliance_is_downstream()
+        return version.current_version() >= "5.5"
 
     @property
     def name(self):
