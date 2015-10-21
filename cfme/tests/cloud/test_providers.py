@@ -6,11 +6,12 @@ import uuid
 
 import pytest
 
-import cfme.web_ui.flash as flash
 import utils.error as error
 from cfme import Credential
+from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, EC2Provider, wait_for_a_provider,
-    Provider, OpenStackProvider)
+    Provider, OpenStackProvider, properties_form)
+from cfme.web_ui import fill, flash
 from utils import testgen, version
 from utils.providers import get_credentials_from_config
 from utils.update import update
@@ -37,7 +38,9 @@ def test_add_cancelled_validation(request):
     prov = EC2Provider()
     request.addfinalizer(prov.delete_if_exists)
     prov.create(cancel=True)
-    flash.assert_message_match('Add of new Cloud Provider was cancelled by the user')
+    flash.assert_message_match({
+        version.LOWEST: 'Add of new Cloud Provider was cancelled by the user',
+        '5.5': 'Add of Cloud Provider was cancelled by the user'})
 
 
 def test_password_mismatch_validation():
@@ -92,13 +95,19 @@ def test_provider_crud(provider):
     provider.wait_for_delete()
 
 
-def test_type_required_validation(request):
+def test_type_required_validation(request, soft_assert):
     """Test to validate type while adding a provider"""
     prov = Provider()
 
     request.addfinalizer(prov.delete_if_exists)
-    with error.expected('Type is required'):
-        prov.create()
+    if version.current_version() < "5.5":
+        with error.expected('Type is required'):
+            prov.create()
+    else:
+        pytest.sel.force_navigate("clouds_provider_new")
+        fill(properties_form.name_text, "foo")
+        soft_assert("ng-invalid-required" in properties_form.type_select.classes)
+        soft_assert(not prov.add_provider_button.can_be_clicked)
 
 
 def test_name_required_validation(request):
@@ -108,19 +117,30 @@ def test_name_required_validation(request):
         region='us-east-1')
 
     request.addfinalizer(prov.delete_if_exists)
-    with error.expected("Name can't be blank"):
-        prov.create()
+    if version.current_version() < "5.5":
+        with error.expected("Name can't be blank"):
+            prov.create()
+    else:
+        # It must raise an exception because it keeps on the form
+        with error.expected(FlashMessageException):
+            prov.create()
+        assert properties_form.name_text.angular_help_block == "Required"
 
 
-def test_region_required_validation(request):
+def test_region_required_validation(request, soft_assert):
     """Tests to validate the region while adding a provider"""
     prov = EC2Provider(
         name=fauxfactory.gen_alphanumeric(5),
         region=None)
 
     request.addfinalizer(prov.delete_if_exists)
-    with error.expected('Region is not included in the list'):
-        prov.create()
+    if version.current_version() < "5.5":
+        with error.expected('Region is not included in the list'):
+            prov.create()
+    else:
+        with error.expected(FlashMessageException):
+            prov.create()
+        soft_assert("ng-invalid-required" in properties_form.amazon_region_select.classes)
 
 
 def test_host_name_required_validation(request):
@@ -131,8 +151,14 @@ def test_host_name_required_validation(request):
         ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
 
     request.addfinalizer(prov.delete_if_exists)
-    with error.expected("Host Name can't be blank"):
-        prov.create()
+    if version.current_version() < "5.5":
+        with error.expected("Host Name can't be blank"):
+            prov.create()
+    else:
+        # It must raise an exception because it keeps on the form
+        with error.expected(FlashMessageException):
+            prov.create()
+        assert properties_form.hostname_text.angular_help_block == "Required"
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() > '5.4')
@@ -157,7 +183,13 @@ def test_api_port_blank_validation(request):
         api_port='')
 
     request.addfinalizer(prov.delete_if_exists)
-    prov.create()
+    if version.current_version() < "5.5":
+        prov.create()
+    else:
+        # It must raise an exception because it keeps on the form
+        with error.expected(FlashMessageException):
+            prov.create()
+        assert properties_form.api_port.angular_help_block == "Required"
 
 
 def test_user_id_max_character_validation():

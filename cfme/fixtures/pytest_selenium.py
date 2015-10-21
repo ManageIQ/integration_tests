@@ -651,6 +651,11 @@ def value(loc):
     return get_attribute(loc, 'value')
 
 
+def classes(loc):
+    """Return a list of classes attached to the element."""
+    return set(execute_script("return arguments[0].classList;", element(loc)))
+
+
 def tag(loc):
     """
     Returns the tag name of an element
@@ -1293,6 +1298,10 @@ class Select(SeleniumSelect, Pretty):
             return element(self, check_visibility=False)
         else:
             return move_to_element(self)
+
+    @property
+    def classes(self):
+        return classes(self._el)
 
     @property
     def all_options(self):
