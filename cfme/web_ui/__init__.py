@@ -1340,6 +1340,15 @@ class Input(Pretty):
             " or ".join(self._generate_attr(name) for name in self.names)
         )
 
+    @property
+    def angular_help_block(self):
+        """Returns the angular helper text (like 'Required')."""
+        loc = "{}/following-sibling::span".format(self.locate())
+        if sel.is_displayed(loc):
+            return sel.text(loc).strip()
+        else:
+            return None
+
     def __add__(self, string):
         return self.locate() + string
 
@@ -3312,6 +3321,11 @@ class AngularSelect(object):
     @property
     def all_options(self):
         return self.select.all_options
+
+    @property
+    def classes(self):
+        """Combines class from the button and from select."""
+        return sel.classes(self) | sel.classes("select#{}".format(self.did))
 
     @property
     def options(self):
