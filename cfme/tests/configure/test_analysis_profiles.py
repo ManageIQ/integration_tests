@@ -36,7 +36,7 @@ def test_host_analysis_profile_crud():
     p.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1263073, forced_streams=["5.4"])])
+@pytest.mark.meta(blockers=[BZ(1263073, forced_streams=["5.4", "5.5"])])
 def test_vmanalysis_profile_description_validation():
     """ Test to validate description in vm profiles"""
     p = VMAnalysisProfile(
