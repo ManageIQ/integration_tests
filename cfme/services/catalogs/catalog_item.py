@@ -37,7 +37,7 @@ basic_info_form = Form(
         ('edit_button', form_buttons.save),
         ('apply_btn', {
             version.LOWEST: '//a[@title="Apply"]',
-            version.LATEST: '//a[@data-original-title="Apply"]'})
+            '5.5': '//a[normalize-space(.)="Apply"]'})
     ])
 
 edit_tags_form = Form(
