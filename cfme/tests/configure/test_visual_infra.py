@@ -155,7 +155,7 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
         assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)
 
 
-@pytest.mark.meta(blockers=[1267148])
+@pytest.mark.meta(blockers=[1267148, 1273529])
 def test_report_page_per_item(setup_a_provider, set_report):
     """ Tests report items per page
 
