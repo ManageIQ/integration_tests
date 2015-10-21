@@ -15,6 +15,9 @@ cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
 entry_table = Table("//div[@id='field_values_div']/form/fieldset/table")
 text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table[@class='style1']")
+text_area_table = Table({version.LOWEST: "//div[@id='dialog_field_div']/fieldset/table"
+                        "[@class='style1']",
+                    '5.5': "//div[@id='dialog_field_div']/div[@class='form-horizontal']"})
 dynamic_tree = Tree({version.LOWEST: "//div[@class='dhxcont_global_content_area']"
                                      "[not(contains(@style, 'display: none'))]/div/div/div/div/div"
                                      "/fieldset/div/ul[@class='dynatree-container']",
