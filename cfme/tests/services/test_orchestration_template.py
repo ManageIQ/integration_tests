@@ -73,6 +73,7 @@ def test_orchestration_template_crud(provisioning):
     template.delete()
 
 
+@pytest.mark.meta(blockers=[1271723])
 def test_copy_template(provisioning):
     template_type = provisioning['stack_provisioning']['template_type']
     template = OrchestrationTemplate(template_type=template_type,
