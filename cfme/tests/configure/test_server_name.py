@@ -7,7 +7,6 @@ from fixtures.pytest_store import store
 from cfme.web_ui import flash, InfoBlock
 
 
-@pytest.mark.meta(blockers=[1202781])
 @pytest.mark.sauce
 def test_server_name():
     """Tests that changing the server name updates the about page"""
