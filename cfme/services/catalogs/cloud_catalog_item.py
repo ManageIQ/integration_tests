@@ -41,7 +41,9 @@ basic_info_form = Form(
         ('select_dialog', Select("//select[@id='dialog_id']")),
         ('edit_button', form_buttons.save),
         ('field_entry_point', Input("fqname")),
-        ('apply_btn', '//a[@title="Apply"]')
+        ('apply_btn', {
+            version.LOWEST: '//a[@title="Apply"]',
+            '5.5': '//a[normalize-space(.)="Apply"]'})
     ])
 
 
