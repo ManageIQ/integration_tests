@@ -10,6 +10,7 @@ import requests
 
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2246"])
+@pytest.mark.meta(blockers=[1272618])
 def test_about_links():
     sel.force_navigate('about')
     for link_key, link_loc in about.product_assistance.locators.items():
