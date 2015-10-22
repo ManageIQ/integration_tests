@@ -65,14 +65,14 @@ def get_ssh_client(hostname):
 
 def stop_db_process(address):
     with get_ssh_client(address) as ssh:
-        assert ssh.run_command('service {}-postgresql stop')[0] == 0,\
-            "Could not stop postgres process on {}".format(db.scl_name(), address)
+        assert ssh.run_command('service {}-postgresql stop'.format(db.scl_name()))[0] == 0,\
+            "Could not stop postgres process on {}".format(address)
 
 
 def start_db_process(address):
     with get_ssh_client(address) as ssh:
-        assert ssh.run_command('service {}-postgresql start')[0] == 0,\
-            "Could not start postgres process on {}".format(db.scl_name(), address)
+        assert ssh.run_command('service {}-postgresql start'.format(db.scl_name()))[0] == 0,\
+            "Could not start postgres process on {}".format(address)
 
 
 def update_appliance_uuid(address):
