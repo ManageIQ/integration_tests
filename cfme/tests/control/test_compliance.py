@@ -115,7 +115,7 @@ def fleecing_vm(
 def do_scan(vm, additional_item_check=None):
     if vm.rediscover_if_analysis_data_present():
         # policy profile assignment is lost so reassign
-        vm.assign_policy_profiles(*vm._assigned_pp)
+        vm.assign_policy_profiles(*vm.assigned_policy_profiles)
 
     def _scan():
         return vm.get_detail(properties=("Lifecycle", "Last Analyzed")).lower()
