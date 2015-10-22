@@ -38,7 +38,10 @@ def main(trackerbot_url, mark_usable=None):
     else:
         usable = {'usable': mark_usable}
 
-    existing_provider_templates = [pt['id'] for pt in trackerbot.depaginate(api, api.providertemplate.get())['objects']]
+    existing_provider_templates = [
+        pt['id']
+        for pt
+        in trackerbot.depaginate(api, api.providertemplate.get())['objects']]
 
     # Find some templates and update the API
     for template_name, providers in template_providers.items():
