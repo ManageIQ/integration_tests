@@ -179,7 +179,7 @@ def poke_trackerbot(self):
     template_usability = []
     # Extract data from trackerbot
     tbapi = trackerbot()
-    objects = depaginate(tbapi, tbapi.providertemplate().get(limit=TRACKERBOT_PAGINATE))
+    objects = depaginate(tbapi, tbapi.providertemplate().get(limit=TRACKERBOT_PAGINATE))["objects"]
     per_group = {}
     for obj in objects:
         if obj["template"]["group"]["name"] not in per_group:
