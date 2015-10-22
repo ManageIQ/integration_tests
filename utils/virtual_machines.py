@@ -34,8 +34,14 @@ def _vm_cleanup(mgmt, vm_name):
             'Could not destroy VM/instance {} ({}: {})'.format(vm_name, type(f).__name__, str(f)))
 
 
-def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
-
+def deploy_template(provider_key, vm_name, template_name=None, timeout=900,
+        **deploy_args):
+    """
+    Args:
+        provider_key: Provider key on which the VM is to be created
+        vm_name: Name of the VM to be deployed
+        template_name: Name of the template that the VM is deployed from
+    """
     allow_skip = deploy_args.pop("allow_skip", ())
     if isinstance(allow_skip, dict):
         skip_exceptions = allow_skip.keys()
@@ -52,6 +58,16 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     data = provider_crud.get_yaml_data()
 
     deploy_args.update(vm_name=vm_name)
+
+    if template_name is None:
+        try:
+            deploy_args.update(template=data['small_template'])
+        except KeyError:
+            raise ValueError('small_template not defined for Provider {} in cfme_data.yaml').format(
+                provider_key)
+    else:
+        deploy_args.update(template=template_name)
+
     if isinstance(mgmt, RHEVMSystem):
         if 'default_cluster' not in deploy_args:
             deploy_args.update(cluster=data['default_cluster'])
@@ -69,15 +85,12 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     else:
         raise Exception("Unsupported provider type: %s" % mgmt.__class__.__name__)
 
-    if template_name is None:
-        template_name = data['small_template']
-
     logger.info("Getting ready to deploy VM/instance %s from template %s on provider %s" %
-        (vm_name, template_name, data['name']))
+        (vm_name, deploy_args['template'], data['name']))
     try:
         try:
             logger.debug("Deploy args: {}".format(deploy_args))
-            vm_name = mgmt.deploy_template(template_name, timeout=timeout, **deploy_args)
+            vm_name = mgmt.deploy_template(timeout=timeout, **deploy_args)
             logger.info("Provisioned VM/instance %s" % vm_name)  # instance ID in case of EC2
         except Exception as e:
             logger.error('Could not provisioning VM/instance {} ({}: {})'.format(
