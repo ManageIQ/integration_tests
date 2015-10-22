@@ -27,7 +27,7 @@ from utils.appliance import Appliance as CFMEAppliance
 from utils.path import project_path
 from utils.providers import get_mgmt
 from utils.timeutil import parsetime
-from utils.trackerbot import api, parse_template
+from utils.trackerbot import api, depaginate, parse_template
 
 
 LOCK_EXPIRE = 60 * 15  # 15 minutes
@@ -43,6 +43,7 @@ VERSION_REGEXPS = [
     r"cfme-(\d)(\d)(\d)(\d{2})-",   # cfme-53111-   -> 5.3.1.11, cfme-53101 -> 5.3.1.1
 ]
 VERSION_REGEXPS = map(re.compile, VERSION_REGEXPS)
+TRACKERBOT_PAGINATE = 20
 
 
 def retrieve_cfme_appliance_version(template_name):
@@ -177,7 +178,8 @@ def poke_trackerbot(self):
     """
     template_usability = []
     # Extract data from trackerbot
-    objects = trackerbot().providertemplate().get(limit=10000)["objects"]
+    tbapi = trackerbot()
+    objects = depaginate(tbapi, tbapi.providertemplate().get(limit=TRACKERBOT_PAGINATE))
     per_group = {}
     for obj in objects:
         if obj["template"]["group"]["name"] not in per_group:
