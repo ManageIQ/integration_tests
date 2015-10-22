@@ -36,7 +36,7 @@ from rhci_common import vnc_client, save_rhci_conf, ssh_client, virsh
 
 # bunch of static stuff that we can argparse/yaml/env up later
 deployment = 'basic'
-image_path = '/srv/storage/iso/rhci/RHCI-6.0-RHEL-7-20150829.0-RHCI-x86_64-dvd1.iso'
+image_path = '/tmp/RHCI-6.0-RHEL-7-20150829.0-RHCI-x86_64-dvd1.iso'
 # random ID - put this at the beginning of resource names to associate them with
 # this build run; the cleanup script will look for this prefix and delete all associated resources
 deployment_id = gen_alpha()
@@ -169,6 +169,8 @@ save_rhci_conf(**{
 print 'Waiting for SSH to become available on {}'.format(ip_address)
 
 
+# (TODO: need to check if the VM doesn;t start and help it along if it needs it)
+#     even when I caught it down and started, ssh_wait didn;t seem to work, connection timeout?
 def ssh_wait():
     # ssh_client from rhci_common
     res = ssh_client().run_command('true')

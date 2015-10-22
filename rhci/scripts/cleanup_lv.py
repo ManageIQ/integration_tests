@@ -11,6 +11,7 @@ from utils.conf import rhci
 from rhci_common import virsh
 
 # Shut the vms down
+# (TODO:  check if running first and skip if not)
 vms = virsh('list --name --all').splitlines()
 for vm_name in vms:
     if not str(vm_name).startswith(rhci.deployment_id):

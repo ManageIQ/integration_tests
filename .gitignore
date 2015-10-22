@@ -66,4 +66,4 @@ notebooks/.ipynb_checkpoints
 cfme-qe-yamls
 rhci-qe-data
 robottelo
-robottelo.log
+rhci/robottelo.log

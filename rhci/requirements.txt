@@ -1,5 +1,7 @@
 # the test runner
-pytest
+pytest==2.7.0
+sarge
+python-neutronclient
 
 # requirements for rhci scripts
 requests
