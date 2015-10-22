@@ -1,5 +1,5 @@
 # the test runner
-pytest
+pytest==2.7.0
 
 # requirements for rhci scripts
 requests
