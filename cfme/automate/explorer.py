@@ -553,18 +553,23 @@ class Class(CopiableTreeNode, Updateable):
                         ('max_retries_text', Input(loc('field%s_max_retries%s'))),
                         ('max_time_text', Input(loc('field%s_max_time%s'))),
                         ('add_entry_button', "//img[@alt='Add this entry']"),
-                        ('remove_entry_button',
-                         remove("//a[contains(@title, 'delete this') "
-                                "and contains(@href, 'arr_id=%s')]/img" % idx))])
+                        ('remove_entry_button', remove(
+                            "//a[(contains(@title, 'delete this') or "
+                            "contains(@confirm, 'delete field')) and "
+                            "contains(@href, 'arr_id=%s')]/img" % idx))])
 
-    schema_edit_page = Region(locators={'add_field_btn': "//img[@alt='Equal-green']"})
+    schema_edit_page = Region(locators={
+        'add_field_btn': {
+            version.LOWEST: "//img[@alt='Equal-green']",
+            "5.5.0.7": "//img[@alt='Equal green']"}})
 
     def edit_schema(self, add_fields=None, remove_fields=None):
         sel.force_navigate("automate_explorer_schema_edit", context={'tree_item': self})
         for remove_field in remove_fields or []:
             f = remove_field.get_form()
             fill(f, {}, action=f.remove_entry_button, action_always=True)
-            sel.handle_alert()
+            if version.current_version() < "5.5.0.7":
+                sel.handle_alert()
 
         for add_field in add_fields or []:
             sel.click(self.schema_edit_page.add_field_btn)
