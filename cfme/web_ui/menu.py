@@ -171,13 +171,14 @@ def nav_to_fn(toplevel, secondlevel=None, reset_action=None):
                 sel.execute_script('document.location.href="{}"'.format(href))
             except NoSuchElementException:
                 raise
-
+        sel.wait_for_ajax()
         if reset_action is not None:
             if callable(reset_action):
                 reset_action()
             else:
                 sel.click(reset_action)
         # todo move to element on the active tab to clear the menubox
+        sel.wait_for_ajax()
     return f
 
 
