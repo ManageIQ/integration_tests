@@ -157,6 +157,7 @@ def find_ip_addr():
 
 print 'Finding IP Address for MAC {}'.format(mac_addr)
 wait_res = wait_for(find_ip_addr, delay=30, num_sec=1200)
+libvirt_ssh_client.close()
 
 # If the wait failed, it raised a TimedOutError, and the script has exited. Otherwise...
 ip_address = wait_res.out
@@ -167,12 +168,19 @@ save_rhci_conf(**{
 })
 
 print 'Waiting for SSH to become available on {}'.format(ip_address)
-
-
-# (TODO: need to check if the VM doesn;t start and help it along if it needs it)
-#     even when I caught it down and started, ssh_wait didn;t seem to work, connection timeout?
-def ssh_wait():
-    # ssh_client from rhci_common
-    res = ssh_client().run_command('true')
-    return res.rc == 0
-wait_for(ssh_wait, handle_exception=True, num_sec=1200)
+count = 0
+while count < 21:
+    count += 1
+    try:
+        if virsh('domstate {}'.format(vm_name)) != 'running':
+            print "VM not started so issuing start command..."
+            virsh('start {}'.format(vm_name))
+        ssh_client().run_command('true')
+        ssh_client().close()
+        print "SSH available, exiting..."
+        count = 50
+    except:
+        print "SSH not available, sleeping 60 seconds to try again"
+        sleep(60)
+if count < 25:
+    raise Exception('SSH never came available after {} minutes'.format(str(count)))
