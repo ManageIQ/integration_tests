@@ -11,14 +11,16 @@ from utils.conf import rhci
 from rhci_common import virsh
 
 # Shut the vms down
-# (TODO:  check if running first and skip if not)
 vms = virsh('list --name --all').splitlines()
 for vm_name in vms:
     if not str(vm_name).startswith(rhci.deployment_id):
         continue
 
-    print 'Powering off VM {}'.format(vm_name)
-    virsh('destroy {}'.format(vm_name))
+    if virsh('domstate {}'.format(vm_name)) == 'running':
+        print 'Powering off VM {}'.format(vm_name)
+        virsh('destroy {}'.format(vm_name))
+    else:
+        print 'VM {} is already shut down, skipping...'.format(vm_name)
 
 # find and destroy the volumes
 # pool-list and vol-list don't have the name --name option like list,
