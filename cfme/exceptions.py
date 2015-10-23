@@ -27,13 +27,8 @@ class CFMEExceptionOccured(CFMEException):
     pass
 
 
-class ToolbarOptionGreyed(CFMEException):
-    """Raised when toolbar wants to click item that is greyed"""
-    pass
-
-
-class ToolbarOptionUnavailable(CFMEException):
-    """Raised when requested item is not found in the toolbar"""
+class ToolbarOptionGreyedOrUnavailable(CFMEException):
+    """Raised when toolbar wants to click item that is greyed or unavailable"""
     pass
 
 

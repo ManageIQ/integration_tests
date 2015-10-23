@@ -10,7 +10,7 @@ Usage:
 """
 import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
-from cfme.exceptions import ToolbarOptionGreyed, ToolbarOptionUnavailable
+from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from cfme.web_ui import Region
 from utils import version
 from utils.log import logger
@@ -69,7 +69,7 @@ def select_n_move(el):
     """
     # .. if we don't move the "mouse" the button stays active
     sel.click(el)
-    sel.move_to_element("#tP")
+    sel.move_to_element(".navbar-brand")
 
 
 def select(root, sub=None, invokes_alert=False):
@@ -90,34 +90,33 @@ def select(root, sub=None, invokes_alert=False):
         root = version.pick(root)
     if sub is not None and isinstance(sub, dict):
         sub = version.pick(sub)
-    if not is_greyed(root):
+
+    root_obj = version.pick({'5.4': 'miq_toolbars',
+        '5.5.0.7': 'ManageIQ.toolbars'})
+
+    if not is_greyed(root) and not is_greyed(root, sub):
+        buttons = sel.execute_script("return {}['center_tb']['buttons']".format(root_obj))
+
         try:
-            if sub is None and invokes_alert:
-                # We arrived into a place where alert will pop up so no moving and no ajax
-                sel.click(root_loc(root), wait_ajax=False)
-            else:
-                select_n_move(root_loc(root))
+            button_text_title = sel.get_attribute(sub_loc(sub), 'title')
         except sel.NoSuchElementException:
-            raise ToolbarOptionUnavailable("Toolbar button '{}' was not found.".format(root))
-        except sel.StaleElementReferenceException:
-            logger.debug('Stale toolbar button "{}", relocating'.format(root))
-            select(root, sub, invokes_alert)
-    else:
-        raise ToolbarOptionGreyed("Toolbar button {} is greyed!".format(root))
-    if sub:
-        sel.wait_for_ajax()
-        if not is_greyed(root, sub):
-            try:
-                if invokes_alert:
-                    # We arrived into a place where alert will pop up so no moving and no ajax
-                    sel.click(sub_loc(sub), wait_ajax=False)
-                else:
-                    select_n_move(sub_loc(sub))
-            except sel.NoSuchElementException:
-                raise ToolbarOptionUnavailable("Toolbar button '{}/{}' was not found.".format(
-                    root, sub))
+            raise ToolbarOptionGreyedOrUnavailable(
+                "Toolbar button {}/{} is greyed or unavailable!".format(root, sub))
+
+        for key, obj in buttons.iteritems():
+            title = obj.get('title', None)
+            if button_text_title == title:
+                break
         else:
-            raise ToolbarOptionGreyed("Toolbar option {}/{} is greyed!".format(root, sub))
+            raise ToolbarOptionGreyedOrUnavailable(
+                "Toolbar button {}/{} is greyed or unavailable!".format(root, sub))
+        sel.execute_script(
+            "{}['center_tb']['obj'].callEvent('onClick', ['{}'])".format(root_obj, key))
+    else:
+        raise ToolbarOptionGreyedOrUnavailable(
+            "Toolbar button {}/{} is greyed or unavailable!".format(root, sub))
+    if not invokes_alert:
+        sel.wait_for_ajax()
     return True
 
 
