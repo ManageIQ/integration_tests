@@ -25,9 +25,18 @@ def setup_infrastructure_providers(uses_infra_providers):
 def setup_cloud_providers(uses_cloud_providers):
     """Adds all cloud providers listed in cfme_data.yaml
 
-    This includes ``ec2`` and ``openstack`` providers types
+    This includes ``ec2`` and ``openstack`` provider types
     """
     providers.setup_cloud_providers(validate=True, check_existing=True)
+
+
+@pytest.fixture
+def setup_container_providers(uses_container_providers):
+    """Adds all container providers listed in cfme_data.yaml
+
+    This includes ``kubernetes`` and ``openshift`` provider types
+    """
+    providers.setup_container_providers(validate=True, check_existing=True)
 
 
 @pytest.fixture(scope='module')  # IGNORE:E1101
@@ -67,3 +76,13 @@ def has_no_infra_providers():
     the current appliance.
     """
     providers.clear_infra_providers()
+
+
+@pytest.fixture
+def has_no_container_providers():
+    """ Clears all container providers from an appliance
+
+    This is a destructive fixture. It will clear all container managements systems from
+    the current appliance.
+    """
+    providers.clear_container_providers()
