@@ -118,6 +118,8 @@ TOP_LEV_ACTIVE = '//ul[@id="maintab"]/li[contains(@class,"active")]/a[normalize-
 TOP_LEV_INACTIVE = '//ul[@id="maintab"]/li[contains(@class,"dropdown")]/a[normalize-space(.)="{}"]'
 SECOND_LEV_ACTIVE = '/../ul[contains(@class,"nav")]/li/a[normalize-space(.)="{}"]'
 SECOND_LEV_INACTIVE = '/../ul[contains(@class,"dropdown-menu")]/li/a[normalize-space(.)="{}"]'
+SECOND_LEV_ACTIVE_HREF = '/../ul[contains(@class,"nav")]/li/a[@href="{}"]'
+SECOND_LEV_INACTIVE_HREF = '/../ul[contains(@class,"dropdown-menu")]/li/a[@href="{}"]'
 
 
 def is_page_active(toplevel, secondlevel=None):
@@ -151,9 +153,15 @@ def nav_to_fn(toplevel, secondlevel=None, reset_action=None):
             else:
                 second_level = secondlevel
 
-            active_loc = (TOP_LEV_ACTIVE + SECOND_LEV_ACTIVE).format(top_level, second_level)
-            inactive_loc = (TOP_LEV_INACTIVE + SECOND_LEV_INACTIVE).format(
-                top_level, second_level)
+            if secondlevel.startswith('/'):
+                active_loc = (TOP_LEV_ACTIVE + SECOND_LEV_ACTIVE_HREF).format(
+                    top_level, second_level)
+                inactive_loc = (TOP_LEV_INACTIVE + SECOND_LEV_INACTIVE_HREF).format(
+                    top_level, second_level)
+            else:
+                active_loc = (TOP_LEV_ACTIVE + SECOND_LEV_ACTIVE).format(top_level, second_level)
+                inactive_loc = (TOP_LEV_INACTIVE + SECOND_LEV_INACTIVE).format(
+                    top_level, second_level)
             el = "{} | {}".format(active_loc, inactive_loc)
 
             try:
