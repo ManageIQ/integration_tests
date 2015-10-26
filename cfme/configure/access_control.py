@@ -251,25 +251,28 @@ class Group(Updateable, Pretty):
             ('role_select', {
                 version.LOWEST: Select("//*[@id='group_role']"),
                 "5.5": AngularSelect("group_role")}),
-            ('group_tenant', AngularSelect("group_tenant"), {"appeared_in", "5.5"})
+            ('group_tenant', AngularSelect("group_tenant"), {"appeared_in": "5.5"})
         ])
     pretty_attrs = ['description', 'role']
 
-    def __init__(self, description=None, role=None):
+    def __init__(self, description=None, role=None, tenant="My Company"):
         self.description = description
         self.role = role
+        self.tenant = tenant
 
     def create(self):
         sel.force_navigate('cfg_accesscontrol_group_add')
         fill(self.group_form, {'description_txt': self.description,
-                               'role_select': self.role},
+                               'role_select': self.role,
+                               'group_tenant': self.tenant},
              action=form_buttons.add)
         flash.assert_success_message('Group "%s" was saved' % self.description)
 
     def update(self, updates):
         sel.force_navigate("cfg_accesscontrol_group_edit", context={"group": self})
         fill(self.group_form, {'description_txt': updates.get('description'),
-                               'role_select': updates.get('role')},
+                               'role_select': updates.get('role'),
+                               'group_tenant': updates.get('tenant')},
              action=form_buttons.save)
         flash.assert_success_message(
             'Group "%s" was saved' % updates.get('description', self.description))
