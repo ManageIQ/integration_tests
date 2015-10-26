@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 from cfme.cloud.instance import Instance
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
-from cfme.exceptions import ToolbarOptionGreyed
+from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from utils import testgen
 from utils import version
 from utils.blockers import BZ
@@ -78,7 +78,7 @@ def gen_events(setup_provider, delete_fx_provider_event, provider, test_instance
 def count_events(instance_name, nav_step):
     try:
         nav_step()
-    except ToolbarOptionGreyed:
+    except ToolbarOptionGreyedOrUnavailable:
         return 0
     events = []
     for event in jstimelines.events():
