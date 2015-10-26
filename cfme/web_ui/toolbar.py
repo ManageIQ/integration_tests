@@ -41,7 +41,9 @@ def root_loc(root):
     Returns: A locator for the root button.
     """
     return (By.XPATH,
-            "//div[contains(@class, 'dhx_toolbar_btn')][contains(@title, %s)]" % quoteattr(root))
+            ("//div[contains(@class, 'dhx_toolbar_btn')][contains(@title, {})] | "
+             "//div[contains(@class, 'dhx_toolbar_btn')][contains(@data-original-title, {})]")
+            .format(quoteattr(root), quoteattr(root)))
 
 
 def sub_loc(sub):
@@ -94,27 +96,30 @@ def select(root, sub=None, invokes_alert=False):
     root_obj = version.pick({'5.4': 'miq_toolbars',
         '5.5.0.7': 'ManageIQ.toolbars'})
 
-    if not is_greyed(root) and not is_greyed(root, sub):
-        buttons = sel.execute_script("return {}['center_tb']['buttons']".format(root_obj))
-
-        try:
-            button_text_title = sel.get_attribute(sub_loc(sub), 'title')
-        except sel.NoSuchElementException:
-            raise ToolbarOptionGreyedOrUnavailable(
-                "Toolbar button {}/{} is greyed or unavailable!".format(root, sub))
-
-        for key, obj in buttons.iteritems():
-            title = obj.get('title', None)
-            if button_text_title == title:
-                break
-        else:
-            raise ToolbarOptionGreyedOrUnavailable(
-                "Toolbar button {}/{} is greyed or unavailable!".format(root, sub))
-        sel.execute_script(
-            "{}['center_tb']['obj'].callEvent('onClick', ['{}'])".format(root_obj, key))
+    if sub:
+        search = sub_loc(sub)
     else:
+        search = root_loc(root)
+
+    try:
+        idd = sel.get_attribute(search, 'idd')
+    except sel.NoSuchElementException:
         raise ToolbarOptionGreyedOrUnavailable(
             "Toolbar button {}/{} is greyed or unavailable!".format(root, sub))
+
+    buttons = sel.execute_script('return {}'.format(root_obj))
+    tb_name = None
+    for tb_key, tb_obj in buttons.iteritems():
+        for btn_key, btn_obj in tb_obj['buttons'].iteritems():
+            if btn_obj['name'] == idd:
+                tb_name = tb_key
+    if not tb_name:
+        raise ToolbarOptionGreyedOrUnavailable(
+            "Toolbar button {}/{} is greyed or unavailable!".format(root, sub))
+
+    sel.execute_script(
+        "{}['{}']['obj'].callEvent('onClick', ['{}'])".format(root_obj, tb_name, idd))
+
     if not invokes_alert:
         sel.wait_for_ajax()
     return True
