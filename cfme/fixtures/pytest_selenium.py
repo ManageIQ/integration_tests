@@ -448,7 +448,7 @@ def on_cfme_page():
         and is_displayed("//div[@id='footer']")) or is_displayed("//ul[@class='login_buttons']")
 
 
-def handle_alert(cancel=False, wait=30.0, squash=False):
+def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
     """Handles an alert popup.
 
     Args:
@@ -478,7 +478,11 @@ def handle_alert(cancel=False, wait=30.0, squash=False):
             WebDriverWait(browser(), wait).until(expected_conditions.alert_is_present())
         popup = browser().switch_to_alert()
         answer = 'cancel' if cancel else 'ok'
-        logger.info('Handling popup "%s", clicking %s' % (popup.text, answer))
+        t = "alert" if prompt is None else "prompt"
+        logger.info('Handling {} "{}", clicking {}'.format(t, popup.text, answer))
+        if prompt is not None:
+            logger.info("Typing in: {}".format(prompt))
+            popup.send_keys(prompt)
         popup.dismiss() if cancel else popup.accept()
         wait_for_ajax()
         return True

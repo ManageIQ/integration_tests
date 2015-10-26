@@ -11,7 +11,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import AngularSelect, Calendar, Form, Region, Table, Select, fill
-from utils import lazycache, version
+from utils import deferred_verpick, lazycache, version
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -619,11 +619,29 @@ def _fill_dws_str(dws, s):
 
 class FolderManager(Pretty):
     """Class used in Reports/Edit Reports menus."""
-    _fields = ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr/td"
-    _field = (
+    _fields = deferred_verpick({
+        version.LOWEST:
+        ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr/td",
+        "5.5.0.7": ".//div[@id='folder_grid']/ul/li"})
+    _field = deferred_verpick({
+        version.LOWEST:
         ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr"
-        "/td[normalize-space(.)='{}']")
+        "/td[normalize-space(.)='{}']",
+        "5.5.0.7": ".//div[@id='folder_grid']/ul/li[normalize-space(.)='{}']"})
     pretty_attrs = ['root']
+
+    # Keep the number of items in versions the same as buttons' and actions' values!
+    # If a new version arrives, extend all the tuples :)
+    versions = (version.LOWEST, "5.5.0.7")
+    actions = ("_click_button", "_click_button_i")
+    buttons = {
+        "move_top": ("Move selected folder top", "fa-angle-double-up"),
+        "move_bottom": ("Move selected folder to bottom", "fa-angle-double-down"),
+        "move_up": ("Move selected folder up", "fa-angle-up"),
+        "move_down": ("Move selected folder down", "fa-angle-down"),
+        "delete_folder": ("Delete selected folder and its contents", "fa-times"),
+        "add_subfolder": ("Add subfolder to selected folder", "fa-plus"),
+    }
 
     class _BailOut(Exception):
         pass
@@ -646,24 +664,23 @@ class FolderManager(Pretty):
     def _click_button(self, alt):
         sel.click(sel.element(".//img[@alt='{}']".format(alt), root=self.root))
 
-    # Button clicking functions
-    def move_top(self):
-        self._click_button("Move selected folder top")
+    def _click_button_i(self, klass):
+        sel.click(sel.element("i.{}".format(klass), root=self.root))
 
-    def move_bottom(self):
-        self._click_button("Move selected folder to bottom")
+    def __getattr__(self, attr):
+        """Resulve the button clicking action."""
+        try:
+            a_tuple = self.buttons[attr]
+        except KeyError:
+            raise AttributeError("Action {} does not exist".format(attr))
+        action = version.pick(dict(zip(self.versions, self.actions)))
+        action_meth = getattr(self, action)
+        action_data = version.pick(dict(zip(self.versions, a_tuple)))
 
-    def move_up(self):
-        self._click_button("Move selected folder up")
+        def _click_function():
+            action_meth(action_data)
 
-    def move_down(self):
-        self._click_button("Move selected folder down")
-
-    def delete_folder(self):
-        self._click_button("Delete selected folder and its contents")
-
-    def add_subfolder(self):
-        self._click_button("Add subfolder to selected folder")
+        return _click_function
 
     def commit(self):
         self._click_button("Commit expression element changes")
@@ -686,7 +703,11 @@ class FolderManager(Pretty):
 
         Returns: :py:class:`WebElement` if field is selected, else `None`
         """
-        selected_fields = filter(lambda el: "cellselected" in sel.get_attribute(el, "class"),
+        if version.current_version() < "5.5.0.7":
+            active = "cellselected"
+        else:
+            active = "active"
+        selected_fields = filter(lambda el: active in sel.get_attribute(el, "class"),
                                  self._all_fields)
         if len(selected_fields) == 0:
             return None
@@ -705,12 +726,15 @@ class FolderManager(Pretty):
     def add(self, subfolder):
         self.add_subfolder()
         wait_for(lambda: self.selected_field_element is not None, num_sec=5, delay=0.1)
-        sel.double_click(self.selected_field_element)
-        input = wait_for(
-            lambda: sel.elements("./input", root=self.selected_field_element),
-            num_sec=5, delay=0.1, fail_condition=[])[0][0]
-        sel.set_text(input, subfolder)
-        sel.send_keys(input, Keys.RETURN)
+        sel.double_click(self.selected_field_element, wait_ajax=False)
+        if version.current_version() < "5.5.0.7":
+            input = wait_for(
+                lambda: sel.elements("./input", root=self.selected_field_element),
+                num_sec=5, delay=0.1, fail_condition=[])[0][0]
+            sel.set_text(input, subfolder)
+            sel.send_keys(input, Keys.RETURN)
+        else:
+            sel.handle_alert(prompt=subfolder)
 
     def select_field(self, field):
         """Select field by text.
