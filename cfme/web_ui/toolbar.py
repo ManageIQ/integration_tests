@@ -82,7 +82,7 @@ def select(root, sub=None, invokes_alert=False):
             click, no ajax wait and no move away is done to be able to operate the alert that
             appears after click afterwards. Defaults to ``False``.
     Returns: ``True`` if everything went smoothly
-    Raises: :py:class:`cfme.exceptions.ToolbarOptionGreyed`
+    Raises: :py:class:`cfme.exceptions.ToolbarOptionGreyedOrUnavailable`
     """
     # wait for ajax on select to prevent pickup up a toolbar button in the middle of a page change
     sel.wait_for_ajax()
