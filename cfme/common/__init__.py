@@ -67,7 +67,9 @@ class PolicyProfileAssignable(object):
                 self.manage_policies_tree.check_node(policy_profile)
             else:
                 self.manage_policies_tree.uncheck_node(policy_profile)
-        sel.move_to_element('#tP')
+        sel.move_to_element({
+            version.LOWEST: '#tP',
+            "5.5": "//h3[1]"})
         form_buttons.save()
         flash.assert_no_errors()
 
