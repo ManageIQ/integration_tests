@@ -2584,7 +2584,9 @@ class EmailSelectForm(Pretty):
         from_address=Input('from'),
         user_emails=Select("//select[@id='user_email']"),
         manual_input=Input('email'),
-        add_email_manually="(//img | //i)[@title='Add' and contains(@onclick, 'add_email')]"
+        add_email_manually={
+            version.LOWEST: "(//img | //i)[@title='Add' and contains(@onclick, 'add_email')]",
+            "5.5": "//div[@alt='Add']/i"}
     ))
 
     @property
