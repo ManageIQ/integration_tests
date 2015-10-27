@@ -14,7 +14,6 @@ from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.version import LOWEST
 
-rate_tree = Tree("//div[@id='cb_rates_treebox']/ul")
 assignment_tree = Tree("//div[@id='cb_assignments_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")
 tb_select_new_chargeback = nav.fn(partial(tb_select, "Add a new Chargeback Rate"))
@@ -110,28 +109,23 @@ assign_form = Form(
         })),
         ('save_button', form_buttons.save)])
 
-
-nav.add_branch('chargeback',
-               {'chargeback_rates':
-                [nav.fn(partial(accordion.click, "Rates")),
-                 {'chargeback_rates_compute':
-                  [lambda d: rate_tree.click_path('Rates', 'Compute'),
-                   {'chargeback_rates_compute_new': tb_select_new_chargeback}],
-                  'chargeback_rates_compute_named':
-                  [lambda d: rate_tree.click_path('Rates', 'Compute', d['chargeback'].description),
-                   {'chargeback_rates_compute_edit': tb_select_edit_chargeback}],
-                  'chargeback_rates_storage':
-                  [lambda d: rate_tree.click_path('Rates', 'Storage'),
-                   {'chargeback_rates_storage_new': tb_select_new_chargeback}],
-                  'chargeback_rates_storage_named':
-                  [lambda d: rate_tree.click_path('Rates', 'Storage', d['chargeback'].description),
-                   {'chargeback_rates_storage_edit': tb_select_edit_chargeback}]}],
-                'chargeback_assignments':
-                [nav.fn(partial(accordion.click, "Assignments")),
-                 {'chargeback_assignments_compute':
-                  lambda d: assignment_tree.click_path('Assignments', 'Compute'),
-                 'chargeback_assignments_storage':
-                  lambda d: assignment_tree.click_path('Assignments', 'Storage')}]})
+nav.add_branch(
+    "chargeback", {
+        "chargeback_rates_compute": [
+            lambda _: accordion.tree("Rates", "Compute"),
+            {"chargeback_rates_compute_new": tb_select_new_chargeback}],
+        "chargeback_rates_compute_named": [
+            lambda d: accordion.tree("Rates", "Compute", d["chargeback"].description),
+            {"chargeback_rates_compute_edit": tb_select_edit_chargeback}],
+        "chargeback_rates_storage": [
+            lambda _: accordion.tree("Rates", "Storage"),
+            {"chargeback_rates_storage_new": tb_select_new_chargeback}],
+        "chargeback_rates_storage_named": [
+            lambda d: accordion.tree("Rates", "Storage", d["chargeback"].description),
+            {"chargeback_rates_storage_edit": tb_select_edit_chargeback}],
+        "chargeback_assignments_compute": lambda _: accordion.tree("Assignments", "Compute"),
+        "chargeback_assignments_storage": lambda _: accordion.tree("Assignments", "Storage"),
+    })
 
 
 HOURLY = 'hourly'
