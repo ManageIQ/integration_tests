@@ -12,6 +12,28 @@ from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSys
 from utils.mgmt_system import VMInstanceNotCloned
 
 
+def _vm_cleanup(mgmt, vm_name):
+    """Separated to make the logic able to propagate the exceptions directly."""
+    try:
+        logger.info("VM/Instance status: {}".format(mgmt.vm_status(vm_name)))
+    except Exception as f:
+        logger.error(
+            "Could not retrieve VM/Instance status: {}: {}".format(
+                type(f).__name__, str(f)))
+    logger.info('Attempting cleanup on VM/instance {}'.format(vm_name))
+    try:
+        if mgmt.does_vm_exist(vm_name):
+            # Stop the vm first
+            logger.warning('Destroying VM/instance {}'.format(vm_name))
+            if mgmt.delete_vm(vm_name):
+                logger.info('VM/instance {} destroyed'.format(vm_name))
+            else:
+                logger.error('Error destroying VM/instance {}'.format(vm_name))
+    except Exception as f:
+        logger.error(
+            'Could not destroy VM/instance {} ({}: {})'.format(vm_name, type(f).__name__, str(f)))
+
+
 def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
 
     allow_skip = deploy_args.pop("allow_skip", ())
@@ -60,27 +82,8 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         except Exception as e:
             logger.error('Could not provisioning VM/instance {} ({}: {})'.format(
                 vm_name, type(e).__name__, str(e)))
-            try:
-                logger.info("VM/Instance status: {}".format(mgmt.vm_status(vm_name)))
-            except Exception as f:
-                logger.error(
-                    "Could not retrieve VM/Instance status: {}: {}".format(
-                        type(f).__name__, str(f)))
-            logger.info('Attempting cleanup on VM/instance {}'.format(vm_name))
-            try:
-                if mgmt.does_vm_exist(vm_name):
-                    # Stop the vm first
-                    logger.warning('Destroying VM/instance {}'.format(vm_name))
-                    if mgmt.delete_vm(vm_name):
-                        logger.info('VM/instance {} destroyed'.format(vm_name))
-                    else:
-                        logger.error('Error destroying VM/instance {}'.format(vm_name))
-            except Exception as f:
-                logger.error(
-                    'Could not destroy VM/instance {} ({}: {})'.format(
-                        vm_name, type(f).__name__, str(f)))
-            finally:
-                raise e
+            _vm_cleanup(mgmt, vm_name)
+            raise
     except skip_exceptions as e:
         e_c = type(e)
         if e_c in callable_mapping and not callable_mapping[e_c](e):
