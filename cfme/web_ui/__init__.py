@@ -1849,6 +1849,7 @@ def _select_chkboxtree_seq(cbtree, values):
 class InfoBlock(Pretty):
     DETAIL = "detail"
     FORM = "form"
+    PF = "patternfly"
     _TITLE_CACHE = {}
 
     pretty_attrs = ["title"]
@@ -1897,9 +1898,14 @@ class InfoBlock(Pretty):
             (
                 '//*[h3[contains(normalize-space(.), "{}")] and table/tbody/tr/td['
                 'contains(@class, "key")]]'.format(self.title)
-            )
+            ),
             # The root element must contain table element because listaccordions were caught by the
             # locator. It used to be fieldset but it seems it can be really anything
+            # And here comes a new one, this time no table. (eg. 5.5.0.7 Configuration/About)
+            (
+                '//*[h3[contains(normalize-space(.), "{}")] and '
+                'div[contains(@class, "form-horizontal")]/div/label]'.format(self.title)
+            )
         ]
         found = sel.elements("|".join(possible_locators))
         if not found:
@@ -1907,6 +1913,8 @@ class InfoBlock(Pretty):
         root_el = found[0]
         if sel.elements("./table/tbody/tr/td[contains(@class, 'key')]", root=root_el):
             self._type = self.FORM
+        elif sel.elements("./div[contains(@class, 'form-horizontal')]/div/label", root=root_el):
+            self._type = self.PF
         else:
             self._type = self.DETAIL
         return root_el
@@ -1918,6 +1926,9 @@ class InfoBlock(Pretty):
 
     def by_member_icon(self, icon):
         """In case you want to find the item by icon in the value field (like OS infra diff.)"""
+        if self._type == self.PF:
+            raise NotImplementedError(
+                "I haven't implemented icons+patternfly infoblock yet, so fix me if you see this.")
         l = ".//table/tbody/tr/td[2]/img[contains(@src, {})]/../../td[1]".format(quoteattr(icon))
         return self.member(sel.text(l))
 
@@ -1968,6 +1979,10 @@ class InfoBlock(Pretty):
             elif self.ib.type == InfoBlock.FORM:
                 return './/table/tbody/tr/td[1][@class="key"][normalize-space(.)="{}"]/..'.format(
                     self.name)
+            elif self.ib.type == InfoBlock.PF:
+                return (
+                    './div[contains(@class, "form-horizontal")]'
+                    '/div[label[normalize-space(.)="{}"]]/div'.format(self.name))
 
         @property
         def pair(self):
@@ -1975,7 +1990,11 @@ class InfoBlock(Pretty):
 
         @property
         def container(self):
-            return sel.element("./td[2]", root=self.pair)
+            if self.ib.type == InfoBlock.PF:
+                # Because we get the element directly, not the two tds
+                return self.pair
+            else:
+                return sel.element("./td[2]", root=self.pair)
 
         def locate(self):
             return self.container
