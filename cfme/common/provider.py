@@ -343,6 +343,7 @@ class BaseProvider(Taggable):
 
         Keywords:
             use_icon: Whether to use icon matching
+
         Returns: A string representing the contents of the InfoBlock's value.
         """
         self.load_details()

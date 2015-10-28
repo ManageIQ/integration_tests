@@ -8,6 +8,7 @@ Some very important tips:
 * If you develop tests that use event testing, create a config in env.yaml:
 
   .. code-block:: yaml
+
     event_testing:
         port: 12345
 

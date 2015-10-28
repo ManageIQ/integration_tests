@@ -280,5 +280,9 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return Mock()
 
-MOCK_MODULES = ['pycurl', 'mgmtsystem', 'ovirt-engine-sdk-python']
+MOCK_MODULES = ['pycurl', 'mgmtsystem', 'ovirt-engine-sdk-python',
+                'mgmtsystem.base', 'mgmtsystem.exceptions',
+                'mgmtsystem.ec2', 'mgmtsystem.openstack', 'mgmtsystem.rhevm',
+                'mgmtsystem.scvmm', 'mgmtsystem.virtualcenter', 'mgmtsystem.kubernetes',
+                'mgmtsystem.openshift']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
