@@ -1,18 +1,19 @@
 """A set of functions for dealing with the paginator controls."""
-from cfme.web_ui import Select, Input
+from cfme.web_ui import Select, Input, AngularSelect
 import cfme.fixtures.pytest_selenium as sel
 import re
 from selenium.common.exceptions import NoSuchElementException
 from functools import partial
+from utils import version
 
 _locator = '(//div[@id="paging_div"] | //div[@id="records_div"])'
-_next = '//img[@alt="Next"]'
-_previous = '//img[@alt="Previous"]'
-_first = '//img[@alt="First"]'
-_last = '//img[@alt="Last"]'
+_next = '//img[@alt="Next"]|//li[contains(@class, "next")]'
+_previous = '//img[@alt="Previous"]|//li[contains(@class, "prev")]'
+_first = '//img[@alt="First"]|//li[contains(@class, "first")]'
+_last = '//img[@alt="Last"]|//li[contains(@class, "last")]'
 _num_results = '//select[@id="ppsetting" or @id="perpage_setting1"]'
 _sort_by = '//select[@id="sort_choice"]'
-_page_cell = '//td//td[contains(., " of ")]'
+_page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
 _check_all = Input("masterToggle")
 
 
@@ -28,6 +29,12 @@ def _page_nums():
 def check_all():
     """ Returns the Check All locator."""
     return sel.element(_locator + _check_all)
+
+
+def is_dimmed(btn):
+    class_att = btn.get_attribute('class').split(" ")
+    if {"dimmed", "disabled"}.intersection(set(class_att)):
+        return True
 
 
 def next():
@@ -60,8 +67,12 @@ def results_per_page(num):
     Args:
         num: Number of results per page
     """
-    select = sel.element(_locator + _num_results)
-    sel.select(Select(select), sel.ByText(str(num)))
+    if version.current_version() > '5.5.0.7':
+        select = AngularSelect('ppsetting')
+        sel.select(select, sel.ByText(str(num)))
+    else:
+        select = sel.element(_locator + _num_results)
+        sel.select(Select(select), sel.ByText(str(num)))
 
 
 def sort_by(sort):
@@ -70,8 +81,12 @@ def sort_by(sort):
     Args:
         sort: Value to sort by (visible text in select box)
     """
-    select = sel.element(_locator + _sort_by)
-    sel.select(Select(select), sel.ByText(sort))
+    if version.current_version() > '5.5.0.7':
+        select = AngularSelect('sort_choice')
+        sel.select(select, sel.ByText(str(sort)))
+    else:
+        select = sel.element(_locator + _sort_by)
+        sel.select(Select(select), sel.ByText(sort))
 
 
 def rec_offset():
@@ -100,7 +115,7 @@ def rec_total():
 
 def reset():
     """Reset the paginator to the first page or do nothing if no pages"""
-    if 'dimmed' not in first().get_attribute('class'):
+    if not is_dimmed(first()):
         sel.click(first())
 
 
@@ -117,7 +132,7 @@ def pages():
     reset()
     yield
     # Yield while there are more pages
-    while 'dimmed' not in next().get_attribute('class'):
+    while not is_dimmed(next()):
         sel.click(next())
         yield
 
