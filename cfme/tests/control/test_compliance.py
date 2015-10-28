@@ -7,7 +7,7 @@ from cfme.common.vm import VM
 from cfme.configure.configuration import VMAnalysisProfile
 from cfme.control.explorer import (
     VMCompliancePolicy, VMCondition, PolicyProfile)
-from utils.mgmt_system import VMNotFoundViaIP
+from utils.mgmt_system import exceptions
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version
@@ -57,7 +57,7 @@ def compliance_vm(request, provider):
                 "Error during appliance configuration. Skipping:\n{}: {}".format(
                     type(e).__name__, str(e)))
         vm = VM.factory(appl_name, provider)
-    except VMNotFoundViaIP:
+    except exceptions.VMNotFoundViaIP:
         logger.info("Provisioning a new appliance on provider {}.".format(provider.key))
         appliance = provision_appliance(
             vm_name_prefix=PREFIX + "host_",

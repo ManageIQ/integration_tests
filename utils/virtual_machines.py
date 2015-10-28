@@ -9,7 +9,7 @@ from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
 from ssl import SSLError
 from utils.log import logger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSystem, SCVMMSystem
-from utils.mgmt_system import VMInstanceNotCloned
+from utils.mgmt_system import exceptions
 
 
 def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
@@ -19,7 +19,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         skip_exceptions = allow_skip.keys()
         callable_mapping = allow_skip
     elif isinstance(allow_skip, basestring) and allow_skip.lower() == "default":
-        skip_exceptions = (OSOverLimit, RHEVRequestError, VMInstanceNotCloned, SSLError)
+        skip_exceptions = (OSOverLimit, RHEVRequestError, exceptions.VMInstanceNotCloned, SSLError)
         callable_mapping = {}
     else:
         skip_exceptions = allow_skip

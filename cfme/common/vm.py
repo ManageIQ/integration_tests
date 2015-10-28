@@ -13,7 +13,7 @@ from cfme.web_ui import (
     form_buttons, paginator, toolbar)
 from utils import version
 from utils.log import logger
-from utils.mgmt_system import ActionNotSupported, VMInstanceNotFound
+from utils.mgmt_system import exceptions
 from utils.pretty import Pretty
 from utils.timeutil import parsetime
 from utils.update import Updateable
@@ -572,14 +572,14 @@ class VM(BaseVM):
                     self.provider.mgmt.wait_vm_steady(self.name)
                     self.provider.mgmt.stop_vm(self.name)
                     self.provider.mgmt.wait_vm_steady(self.name)
-            except ActionNotSupported:
+            except exceptions.ActionNotSupported:
                 # Action is not supported on mgmt system. Simply continue
                 pass
             # One more check (for the suspended one)
             if self.provider.mgmt.does_vm_exist(self.name):
                 try:
                     return self.provider.mgmt.delete_vm(self.name)
-                except VMInstanceNotFound:
+                except exceptions.VMInstanceNotFound:
                     # Does not exist already
                     return True
         else:

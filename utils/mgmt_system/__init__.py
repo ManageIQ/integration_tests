@@ -1,8 +1,7 @@
 # Imports for backward compatility and convenience
 # NOQA all the things because
 import time
-from mgmtsystem.base import *  # NOQA
-from mgmtsystem.exceptions import *  # NOQA
+from mgmtsystem.base import VMInfo, MgmtSystemAPIBase, ContainerMgmtSystemAPIBase, Logger  # NOQA
 from mgmtsystem import exceptions  # NOQA
 from mgmtsystem.ec2 import EC2System  # NOQA
 from mgmtsystem.openstack import OpenstackSystem  # NOQA
