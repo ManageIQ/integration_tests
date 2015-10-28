@@ -11,26 +11,9 @@ Usage:
 import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
-from cfme.web_ui import Region
 from utils import version
 from utils.log import logger
 from xml.sax.saxutils import quoteattr
-
-# Common locators
-locators = Region(
-    locators={
-        'grid_view': "//div[@title='Grid View']",
-        'list_view': "//div[@title='List View']",
-        'tile_view': "//div[@title='Tile View']",
-        'compressed_view': "//div[@title='Compressed View']",
-        'expanded_view': "//div[@title='Expanded View']",
-        'details_view': "//div[@title='Details Mode']",
-        'exists_view': "//div[@title='Exists Mode']",
-        'hybrid_view': "//div[@title='Hybrid View']",
-        'graph_view': "//div[@title='Graph View']",
-        'tabular_view': "//div[@title='Tabular View']"
-    }
-)
 
 
 def root_loc(root):
@@ -42,8 +25,10 @@ def root_loc(root):
     """
     return (By.XPATH,
             ("//div[contains(@class, 'dhx_toolbar_btn')][contains(@title, {})] | "
-             "//div[contains(@class, 'dhx_toolbar_btn')][contains(@data-original-title, {})]")
-            .format(quoteattr(root), quoteattr(root)))
+             "//div[contains(@class, 'dhx_toolbar_btn')][contains(@data-original-title, {})] | "
+             "//button[normalize-space(.) = {}] |"
+             "//button[@data-original-title = {}]")
+            .format(quoteattr(root), quoteattr(root), quoteattr(root), quoteattr(root)))
 
 
 def sub_loc(sub):
@@ -55,8 +40,9 @@ def sub_loc(sub):
     """
     return (
         By.XPATH,
-        "//div[contains(@class, 'btn_sel_text')][normalize-space(text()) = {}]/../..".format(
-            quoteattr(sub)))
+        ("//div[contains(@class, 'btn_sel_text')][normalize-space(text()) = {}]/../.. |"
+         "//ul[contains(@class, 'dropdown-menu')]//li[normalize-space(.) = {}]").format(
+            quoteattr(sub), quoteattr(sub)))
 
 
 def select_n_move(el):
@@ -74,7 +60,35 @@ def select_n_move(el):
     sel.move_to_element(".navbar-brand")
 
 
-def select(root, sub=None, invokes_alert=False):
+def select(*args, **kwargs):
+    if version.current_version() > '5.5.0.7':
+        pf_select(*args, **kwargs)
+    else:
+        old_select(*args, **kwargs)
+
+
+def pf_select(root, sub=None, invokes_alert=False):
+
+    sel.wait_for_ajax()
+    if isinstance(root, dict):
+        root = version.pick(root)
+    if sub is not None and isinstance(sub, dict):
+        sub = version.pick(sub)
+
+    if sub:
+        sel.execute_script(
+            "return $('a:contains({})').trigger('click')".format(quoteattr(sub)))
+    else:
+        try:
+            sel.element("//button[@data-original-title = {}]".format(quoteattr(root)))
+            sel.execute_script(
+                "return $('*[data-original-title={}]').trigger('click')".format(quoteattr(root)))
+        except sel.NoSuchElementException:
+            sel.execute_script(
+                "return $('button:contains({})').trigger('click')".format(quoteattr(root)))
+
+
+def old_select(root, sub=None, invokes_alert=False):
     """ Clicks on a button by calling the :py:meth:`click_n_move` method.
 
     Args:
@@ -134,7 +148,7 @@ def is_active(root):
     """
     el = sel.element(root_loc(root))
     class_att = sel.get_attribute(el, 'class').split(" ")
-    if "over" in class_att:
+    if {"pres", "active", "pres_dis"}.intersection(set(class_att)):
         return True
     else:
         return False
@@ -154,14 +168,13 @@ def is_greyed(root, sub=None):
 
     el = sel.element(btn)
     class_att = sel.get_attribute(el, 'class').split(" ")
-
     if sub:
-        if "tr_btn_disabled" in class_att:
+        if {"tr_btn_disabled", "disabled"}.intersection(set(class_att)):
             logger.debug("{} option greyed out, mouseover reason: {}".format(
                 sub, sel.get_attribute(el, 'title')))
             return True
     else:
-        if "dis" in class_att:
+        if {"disabled", "dis"}.intersection(set(class_att)):
             return True
     return False
 
@@ -173,133 +186,3 @@ def refresh():
         sel.click("//div[@title='Reload current display']")
     else:
         sel.refresh()
-
-
-def is_vms_grid_view():
-    """Returns whether grid view is selected or not.
-    """
-    return "pres_dis" in sel.get_attribute(locators.grid_view, "class")
-
-
-def is_vms_list_view():
-    """Returns whether list view is selected or not.
-    """
-    return "pres_dis" in sel.get_attribute(locators.list_view, "class")
-
-
-def is_vms_tile_view():
-    """Returns whether tile view is selected or not.
-    """
-    return "pres_dis" in sel.get_attribute(locators.tile_view, "class")
-
-
-def is_vms_expanded_view():
-    """Returns whether expanded view is selected or not.
-    """
-    return "pres" in sel.get_attribute(locators.expanded_view, "class")
-
-
-def is_vms_compressed_view():
-    """Returns whether compressed view is selected or not.
-    """
-    return "pres" in sel.get_attribute(locators.compressed_view, "class")
-
-
-def is_vms_details_view():
-    """Returns whether details view is selected or not.
-    """
-    return "pres" in sel.get_attribute(locators.details_view, "class")
-
-
-def is_vms_exists_view():
-    """Returns whether exists mode is selected or not.
-    """
-    return "pres" in sel.get_attribute(locators.exists_view, "class")
-
-
-def is_vms_hybrid_view():
-    """Returns whether hybrid view is selected or not.
-    """
-    return "pres" in sel.get_attribute(locators.hybrid_view, "class")
-
-
-def is_vms_graph_view():
-    """Returns whether graph view is selected or not.
-    """
-    return "pres" in sel.get_attribute(locators.graph_view, "class")
-
-
-def is_vms_tabular_view():
-    """Returns whether tabular view is selected or not.
-    """
-    return "pres" in sel.get_attribute(locators.tabular_view, "class")
-
-
-def set_vms_grid_view():
-    """Set the view to grid.
-    """
-    if not is_vms_grid_view():
-        sel.click(locators.grid_view)
-
-
-def set_vms_list_view():
-    """Set the view to list.
-    """
-    if not is_vms_list_view():
-        sel.click(locators.list_view)
-
-
-def set_vms_tile_view():
-    """Set the view to tile.
-    """
-    if not is_vms_tile_view():
-        sel.click(locators.tile_view)
-
-
-def set_vms_expanded_view():
-    """Set the view to expanded.
-    """
-    if not is_vms_expanded_view():
-        sel.click(locators.expanded_view)
-
-
-def set_vms_compressed_view():
-    """Set the view to compressed.
-    """
-    if not is_vms_compressed_view():
-        sel.click(locators.compressed_view)
-
-
-def set_vms_details_view():
-    """Set the view to details.
-    """
-    if not is_vms_details_view():
-        sel.click(locators.details_view)
-
-
-def set_vms_exists_view():
-    """Set the view to exists.
-    """
-    if not is_vms_exists_view():
-        sel.click(locators.exists_view)
-
-
-def set_vms_hybrid_view():
-    """Set the view to hybrid.
-    """
-    if not is_vms_hybrid_view():
-        sel.click(locators.hybrid_view)
-
-
-def set_vms_graph_view():
-    """Set the view to graph.
-    """
-    if not is_vms_graph_view():
-        sel.click(locators.graph_view)
-
-
-def set_vms_tabular_view():
-    """Set the view to tabular.
-    """
-    if not is_vms_tabular_view():
-        sel.click(locators.tabular_view)
