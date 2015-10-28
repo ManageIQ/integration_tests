@@ -112,8 +112,8 @@ def test_tile_defaultview(request, setup_a_provider, key):
     set_tile_view(name[0])
     sel.force_navigate(name[1])
     if name[1] == "clouds_providers" or "clouds_instances":
-        tb.set_vms_tile_view()
-    assert tb.is_vms_tile_view(), "Tile Default view setting failed"
+        tb.select('Tile View')
+    assert tb.is_active('Tile View'), "Tile Default view setting failed"
     reset_default_view(name[0], default_view)
 
 
@@ -124,8 +124,8 @@ def test_list_defaultview(request, setup_a_provider, key):
     set_list_view(name[0])
     sel.force_navigate(name[1])
     if name[1] == "clouds_providers" or "clouds_instances":
-        tb.set_vms_list_view()
-    assert tb.is_vms_list_view(), "List Default view setting failed"
+        tb.select('List View')
+    assert tb.is_active('List View'), "List Default view setting failed"
     reset_default_view(name[0], default_view)
 
 
@@ -135,7 +135,7 @@ def test_grid_defaultview(request, setup_a_provider, key):
     default_view = get_default_view(name[0])
     set_grid_view(name[0])
     sel.force_navigate(name[1])
-    assert tb.is_vms_grid_view(), "Grid Default view setting failed"
+    assert tb.is_active('Grid View'), "Grid Default view setting failed"
     reset_default_view(name[0], default_view)
 
 
@@ -148,7 +148,7 @@ def test_expanded_view(request, setup_a_provider, key):
     Quadicon.select_first_quad()
     select_second_quad()
     tb.select(name[2], name[3])
-    assert tb.is_vms_expanded_view(), "Expanded view setting failed"
+    assert tb.is_active('Expanded View'), "Expanded view setting failed"
     reset_default_view(name[0], default_view)
 
 
@@ -161,7 +161,7 @@ def test_compressed_view(request, setup_a_provider, key):
     Quadicon.select_first_quad()
     select_second_quad()
     tb.select(name[2], name[3])
-    assert tb.is_vms_compressed_view(), "Compressed view setting failed"
+    assert tb.is_active('Compressed View'), "Compressed view setting failed"
     reset_default_view(name[0], default_view)
 
 
@@ -175,7 +175,7 @@ def test_details_view(request, setup_a_provider, key):
     Quadicon.select_first_quad()
     select_second_quad()
     tb.select(name[2], name[3])
-    assert tb.is_vms_details_view(), "Details view setting failed"
+    assert tb.is_active('Details Mode'), "Details view setting failed"
     reset_default_view(button_name, default_view)
 
 
@@ -189,5 +189,5 @@ def test_exists_view(request, setup_a_provider, key):
     Quadicon.select_first_quad()
     select_second_quad()
     tb.select(name[2], name[3])
-    assert tb.is_vms_exists_view(), "Exists view setting failed"
+    assert tb.is_active('Exists Mode'), "Exists view setting failed"
     reset_default_view(button_name, default_view)

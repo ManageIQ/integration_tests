@@ -43,7 +43,7 @@ sections = {
         ('services_requests', 'Requests')
     ),
     ('clouds', 'Clouds'): (
-        ('clouds_providers', 'Providers', toolbar.set_vms_grid_view),
+        ('clouds_providers', 'Providers', lambda: toolbar.select('Grid View')),
         ('clouds_availability_zones', 'Availability Zones'),
         ('clouds_tenants', 'Tenants'),
         ('clouds_flavors', 'Flavors'),
@@ -66,7 +66,7 @@ sections = {
         ('containers_topology', 'Topology')
     ),
     ('infrastructure', 'Infrastructure'): (
-        ('infrastructure_providers', 'Providers', toolbar.set_vms_grid_view),
+        ('infrastructure_providers', 'Providers', lambda: toolbar.select('Grid View')),
         ('infrastructure_clusters', "/ems_cluster"),
         ('infrastructure_hosts', "/host"),
         ('infrastructure_virtual_machines', 'Virtual Machines',
