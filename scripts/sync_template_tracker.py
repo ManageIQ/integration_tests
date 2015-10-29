@@ -74,7 +74,7 @@ def main(trackerbot_url, mark_usable=None):
 
     # Remove provider relationships where they no longer exist, skipping unresponsive providers,
     # and providers not known to this environment
-    for pt in api.providertemplate.get(limit=0)['objects']:
+    for pt in trackerbot.depaginate(api, api.providertemplate.get())['objects']:
         provider_key, template_name = pt['provider']['key'], pt['template']['name']
         if provider_key not in template_providers[template_name] \
                 and provider_key not in unresponsive_providers:
@@ -86,7 +86,7 @@ def main(trackerbot_url, mark_usable=None):
                     template_name, provider_key)
 
     # Remove templates that aren't on any providers anymore
-    for template in api.template.get(limit=0)['objects']:
+    for template in trackerbot.depaginate(api, api.template.get())['objects']:
         if not template['providers']:
             print "Deleting template %s (no providers)" % template['name']
             api.template(template['name']).delete()
