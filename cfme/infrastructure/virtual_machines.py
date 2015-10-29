@@ -123,7 +123,7 @@ class infrastructure_virtual_machines(object):
     class infra_templates(object):
         def navigate(_):
             accordion.tree("Templates", "All Templates")
-            toolbar.set_vms_grid_view()
+            toolbar.select('Grid View')
 
         class infra_templates_filter_folder(object):
             def navigate(ctx):
