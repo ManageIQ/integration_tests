@@ -68,6 +68,17 @@ def select(*args, **kwargs):
 
 
 def pf_select(root, sub=None, invokes_alert=False):
+    """ Clicks on a button by calling the click event with the jquery trigger.
+
+    Args:
+        root: The root button's name as a string.
+        sub: The sub button's name as a string. (optional)
+        invokes_alert: If ``True``, then the behaviour is little bit different. After the last
+            click, no ajax wait and no move away is done to be able to operate the alert that
+            appears after click afterwards. Defaults to ``False``.
+    Returns: ``True`` if everything went smoothly
+    Raises: :py:class:`cfme.exceptions.ToolbarOptionGreyedOrUnavailable`
+    """
 
     sel.wait_for_ajax()
     if isinstance(root, dict):
@@ -93,7 +104,7 @@ def pf_select(root, sub=None, invokes_alert=False):
 
 
 def old_select(root, sub=None, invokes_alert=False):
-    """ Clicks on a button by calling the :py:meth:`click_n_move` method.
+    """ Clicks on a button by calling the dhtmlx toolbar callEvent.
 
     Args:
         root: The root button's name as a string.
