@@ -50,7 +50,7 @@ nav.add_branch(
             lambda _: (accordion.tree('Providers',
                 version.pick({version.LOWEST: 'All Red Hat Satellite Providers',
                               version.UPSTREAM: 'All Foreman Providers'})),
-                toolbar.set_vms_grid_view()),
+                toolbar.select('Grid View')),
             {
                 'infrastructure_config_manager_new':
                 lambda _: cfg_btn('Add a new Provider'),
@@ -96,7 +96,7 @@ nav.add_branch(
             {
                 'infrastructure_config_system':
                 [
-                    lambda ctx: (toolbar.set_vms_grid_view(),
+                    lambda ctx: (toolbar.select('Grid View'),
                     sel.click(Quadicon(ctx['system'].name, None))),
                     {
                         'infrastructure_config_system_provision':

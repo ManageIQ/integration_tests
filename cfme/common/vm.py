@@ -274,7 +274,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
                 self.provider.load_all_provider_vms()
             else:
                 self.provider.load_all_provider_templates()
-            toolbar.set_vms_grid_view()
+            toolbar.select('Grid View')
         elif refresh:
             sel.refresh()
         if not paginator.page_controls_exist():
