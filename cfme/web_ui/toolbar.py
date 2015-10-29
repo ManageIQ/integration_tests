@@ -87,6 +87,10 @@ def pf_select(root, sub=None, invokes_alert=False):
             sel.execute_script(
                 "return $('button:contains({})').trigger('click')".format(quoteattr(root)))
 
+    if not invokes_alert:
+        sel.wait_for_ajax()
+    return True
+
 
 def old_select(root, sub=None, invokes_alert=False):
     """ Clicks on a button by calling the :py:meth:`click_n_move` method.
