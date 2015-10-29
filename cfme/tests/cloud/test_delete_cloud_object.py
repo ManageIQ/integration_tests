@@ -29,23 +29,23 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope="module")
 def set_grid():
     sel.force_navigate("clouds_images")
-    toolbar.set_vms_grid_view()
+    toolbar.select('Grid View')
 
 
 @pytest.fixture(scope="module")
 def set_grid_stack():
     sel.force_navigate("clouds_stacks")
-    toolbar.set_vms_grid_view()
+    toolbar.select('Grid View')
 
 
 def reset():
     sel.force_navigate("clouds_images")
-    toolbar.set_vms_list_view()
+    toolbar.select('List View')
 
 
 def reset_grid_stack():
     sel.force_navigate("clouds_stacks")
-    toolbar.set_vms_list_view()
+    toolbar.select('List View')
 
 
 def test_delete_instance(setup_provider, provider, remove_test):
