@@ -12,6 +12,7 @@ from functools import partial
 
 from utils.db import cfmedb
 import cfme.fixtures.pytest_selenium as sel
+from cfme.fixtures import rest_api
 from cfme.infrastructure.host import Host
 from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
@@ -85,6 +86,18 @@ nav.add_branch('infrastructure_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
+def special_func(def_func):
+    def f(*args, **kwargs):
+        method = kwargs.get('method', None)
+        if method:
+            kwargs.pop('method')
+            func = args[0].__getattribute__('num_host_{}'.format(method))
+        else:
+            func = def_func
+        return func(*args, **kwargs)
+    return f
+
+
 class Provider(Updateable, Pretty, CloudInfraProvider):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
@@ -144,17 +157,25 @@ class Provider(Updateable, Pretty, CloudInfraProvider):
         else:
             return int(self.get_detail("Relationships", "Datastores"))
 
-    def num_host(self, db=True):
-        """ Returns the providers number of instances, as shown on the Details page."""
-        if db:
-            ext_management_systems = cfmedb()["ext_management_systems"]
-            hosts = cfmedb()["hosts"]
-            hostlist = list(cfmedb().session.query(hosts.name)
-                            .join(ext_management_systems, hosts.ems_id == ext_management_systems.id)
-                            .filter(ext_management_systems.name == self.name))
-            return len(hostlist)
-        else:
-            return int(self.get_detail("Relationships", "host.png", use_icon=True))
+    @special_func
+    def num_host(self, *args, **kwargs):
+        provider = rest_api.collections.providers.find_by(name=self.name)[0]
+        num_host = 0
+        for host in rest_api.collections.hosts:
+            if host['ems_id'] == provider.id:
+                num_host += 1
+        return num_host
+
+    def num_host_db(self):
+        ext_management_systems = cfmedb()["ext_management_systems"]
+        hosts = cfmedb()["hosts"]
+        hostlist = list(cfmedb().session.query(hosts.name)
+                        .join(ext_management_systems, hosts.ems_id == ext_management_systems.id)
+                        .filter(ext_management_systems.name == self.name))
+        return len(hostlist)
+
+    def num_host_ui(self):
+        return int(self.get_detail("Relationships", "host.png", use_icon=True))
 
     def num_cluster(self, db=True):
         """ Returns the providers number of templates, as shown on the Details page."""
