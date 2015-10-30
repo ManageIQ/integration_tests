@@ -19,7 +19,7 @@ class _TestClass(object):
     def m1_vb(self):
         return "b"
 
-    @variable
+    @variable()
     def meth2(self, a):
         return a
 
@@ -27,11 +27,11 @@ class _TestClass(object):
     def m2_va(self, a, b):
         return a, b
 
-    @meth2.variant("b")
+    @meth2.variant("b", "c")
     def m2_vb(self):
         return "b"
 
-    @variable
+    @variable(alias="foobar")
     def can_reach_secret(self):
         return self.secret
 
@@ -43,6 +43,10 @@ def o():
 
 def test_proper_self(o):
     assert o.can_reach_secret() == o.secret
+
+
+def test_default_with_alias(o):
+    assert o.can_reach_secret(method="foobar") == o.secret
 
 
 def test_default_noparam(o):
@@ -67,7 +71,8 @@ def test_default_withparam(o):
     ["v", "params", "returns"],
     [
         ("a", [1, 2], (1, 2)),
-        ("b", [], "b")],
-    ids=["a", "b"])
+        ("b", [], "b"),
+        ("c", [], "b")],
+    ids=["a", "b", "c"])
 def test_variants_withparam(o, v, params, returns):
     assert o.meth2(*params, method=v) == returns
