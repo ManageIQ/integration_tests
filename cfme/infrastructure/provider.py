@@ -12,6 +12,7 @@ from functools import partial
 
 from utils.db import cfmedb
 import cfme.fixtures.pytest_selenium as sel
+from cfme.fixtures import rest_api
 from cfme.infrastructure.host import Host
 from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
@@ -144,8 +145,16 @@ class Provider(Updateable, Pretty, CloudInfraProvider):
         else:
             return int(self.get_detail("Relationships", "Datastores"))
 
-    def num_host(self, db=True):
+    def num_host(self, db=False, rest=True):
         """ Returns the providers number of instances, as shown on the Details page."""
+        if rest:
+            provider = rest_api.collections.providers.find_by(name=self.name)[0]
+            num_host = 0
+            for host in rest_api.collections.hosts:
+                if host['ems_id'] == provider.id:
+                    num_host += 1
+            return num_host
+
         if db:
             ext_management_systems = cfmedb()["ext_management_systems"]
             hosts = cfmedb()["hosts"]
