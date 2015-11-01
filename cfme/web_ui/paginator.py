@@ -16,6 +16,14 @@ _sort_by = '//select[@id="sort_choice"]'
 _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
 _check_all = Input("masterToggle")
 
+_records_re = r'\(\w+.*?(?P<offset>\d+).*?-.*?(?P<end>\d+).*?of.*?(?P<total>\d+)\)'
+# _records_re, in English:
+# find the the first word after an open paren (usually Item(s) or Row(s)),
+# non-greedy match up to the next match expression (abbreviated as NGM),
+# return the first digit found with name "offset",
+# NGM, "-", NGM, return the next digit found with name "end"
+# NGM, "of", NGM, return the next digit found with name "total" before the close paren
+
 
 def page_controls_exist():
     """ Simple check to see if page controls exist. """
@@ -89,28 +97,28 @@ def sort_by(sort):
         sel.select(Select(select), sel.ByText(sort))
 
 
+def _records():
+    matches = re.search(_records_re, _page_nums()).groupdict()
+    return {k: int(v) for k, v in matches.iteritems()}
+
+
 def rec_offset():
     """ Returns the first record offset."""
-    offset = re.search('\((Item|Items)*\s*(\d+)', _page_nums())
-    return offset.groups()[1]
+    return _records()['offset']
 
 
 def rec_end():
     """ Returns the record set index."""
-    offset = re.search('-(\d+)', _page_nums())
-    if offset:
-        return offset.groups()[0]
+    end = _records().get('end')
+    if end:
+        return end
     else:
         return rec_total()
 
 
 def rec_total():
     """ Returns the total number of records."""
-    offset = re.search('(\d+)\)', _page_nums())
-    if offset:
-        return offset.groups()[0]
-    else:
-        return None
+    return _records()['total']
 
 
 def reset():
@@ -134,6 +142,7 @@ def pages():
     # Yield while there are more pages
     while not is_dimmed(next()):
         sel.click(next())
+        assert rec_offset() <= rec_total(), 'paginator goes beyond total number of items'
         yield
 
 
