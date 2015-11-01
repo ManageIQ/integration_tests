@@ -133,13 +133,23 @@ class Provider(Updateable, Pretty, CloudInfraProvider):
     def num_datastore(self, db=True):
         """ Returns the providers number of templates, as shown on the Details page."""
         if db:
-            results = list(cfmedb().engine.execute(
-                'SELECT DISTINCT storages.name, hosts.ems_id '
-                'FROM ext_management_systems, hosts, storages, hosts_storages '
-                'WHERE hosts.id=hosts_storages.host_id AND '
-                'storages.id=hosts_storages.storage_id AND '
-                'hosts.ems_id=ext_management_systems.id AND '
-                'ext_management_systems.name=\'{}\''.format(self.name)))
+            query = version.pick({
+                version.LOWEST: {
+                    'SELECT DISTINCT storages.name, hosts.ems_id '
+                    'FROM ext_management_systems, hosts, storages, hosts_storages '
+                    'WHERE hosts.id=hosts_storages.host_id AND '
+                    'storages.id=hosts_storages.storage_id AND '
+                    'hosts.ems_id=ext_management_systems.id AND '
+                    'ext_management_systems.name=\'{}\''.format(self.name)},
+                "5.5.0.8": {
+                    'SELECT DISTINCT storages.name, hosts.ems_id '
+                    'FROM ext_management_systems, hosts, storages, host_storages '
+                    'WHERE hosts.id=host_storages.host_id AND '
+                    'storages.id=host_storages.storage_id AND '
+                    'hosts.ems_id=ext_management_systems.id AND '
+                    'ext_management_systems.name=\'{}\''.format(self.name)}
+            })
+            results = list(cfmedb().engine.execute(query.pop()))
             return len(results)
         else:
             return int(self.get_detail("Relationships", "Datastores"))
