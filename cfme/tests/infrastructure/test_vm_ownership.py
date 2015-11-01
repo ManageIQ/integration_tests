@@ -6,6 +6,9 @@ from cfme.common.vm import VM
 from utils.providers import setup_a_provider
 
 
+pytestmark = [pytest.mark.meta(blockers=[1276135])]
+
+
 @pytest.fixture(scope="module")
 def setup_infra_provider():
     return setup_a_provider(prov_class="infra", validate=True, check_existing=True,

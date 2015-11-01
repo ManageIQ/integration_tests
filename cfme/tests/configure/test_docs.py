@@ -69,6 +69,7 @@ def docs_info():
         ]
 
 
+@pytest.mark.meta(blockers=[1272618])
 @pytest.mark.sauce
 def test_links(guides, soft_assert):
     """Test whether the PDF documents are present."""
@@ -82,7 +83,7 @@ def test_links(guides, soft_assert):
         )
 
 
-@pytest.mark.meta(blockers=[1145326, "GH#ManageIQ/manageiq:2246"])
+@pytest.mark.meta(blockers=[1272618])
 def test_contents(guides, soft_assert):
     """Test contents of each document."""
     pytest.sel.force_navigate("about")
@@ -109,7 +110,7 @@ def test_contents(guides, soft_assert):
 
 
 @pytest.mark.sauce
-@pytest.mark.meta(blockers=[1232434, "GH#ManageIQ/manageiq:2246"])
+@pytest.mark.meta(blockers=[1232434, 1272618])
 def test_info(guides, soft_assert):
     pytest.sel.force_navigate("about")
     for link in guides:
@@ -132,7 +133,7 @@ def test_info(guides, soft_assert):
         )
 
 
-@pytest.mark.meta(blockers=[1026946])
+@pytest.mark.meta(blockers=[1272618])
 def test_all_docs_present(guides, docs_info):
     pytest.sel.force_navigate("about")
     docs_list = list(docs_info)

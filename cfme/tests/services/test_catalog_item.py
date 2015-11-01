@@ -86,7 +86,7 @@ def test_edit_tags(catalog_item):
     catalog_item.edit_tags("Cost Center *", "Cost Center 001")
 
 
-@pytest.mark.xfail(message='upstream -  https://bugzilla.redhat.com/show_bug.cgi?id=1092651')
+@pytest.mark.meta(blockers=[1092651])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):
