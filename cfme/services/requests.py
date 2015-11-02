@@ -2,13 +2,21 @@
 from contextlib import contextmanager
 from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Region, SplitTable, fill, flash, paginator, toolbar, Input
+from cfme.web_ui import Region, SplitTable, fill, flash, paginator, Table, toolbar, Input
+from utils import deferred_verpick, version
 from utils.log import logger
 
-request_list = SplitTable(
-    ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
-    ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1)
-)
+request_list = version.pick({
+    version.LOWEST: {
+        SplitTable(
+            ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
+            ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1)
+        )},
+    "5.5.0.8": {
+        Table('//*[@id="list_grid"]/table')
+    }
+})
+
 
 buttons = Region(
     locators=dict(
@@ -202,7 +210,9 @@ def go_to_request(cells):
     for page in paginator.pages():
         try:
             # found the row!
-            row, = request_list.find_rows_by_cells(cells)
+            import pytest
+            pytest.set_trace()
+            row = request_list.find_rows_by_cells(cells)
             sel.click(row)
             return True
         except ValueError:
