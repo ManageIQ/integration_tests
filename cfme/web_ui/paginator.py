@@ -129,11 +129,14 @@ def pages():
 
     """
     # Reset the paginator, then yield the first page
-    reset()
-    yield
-    # Yield while there are more pages
-    while not is_dimmed(next()):
-        sel.click(next())
+    if page_controls_exist():
+        reset()
+        yield
+        # Yield while there are more pages
+        while not is_dimmed(next()):
+            sel.click(next())
+            yield
+    else:
         yield
 
 
