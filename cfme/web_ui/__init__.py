@@ -2295,7 +2295,12 @@ class Quadicon(Pretty):
 
     @staticmethod
     def get_first_quad_title():
-        return sel.get_attribute("//div[@id='quadicon']/../../../tr/td/a", "title")
+        first_quad = "//div[@id='quadicon']/../../../tr/td/a"
+        title = sel.get_attribute(first_quad, "title")
+        if title:
+            return title
+        else:
+            return sel.get_attribute(first_quad, "data-original-title") or ""  # To ensure str
 
     @classproperty
     def any_present(cls):
