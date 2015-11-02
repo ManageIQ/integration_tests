@@ -87,16 +87,18 @@ def pf_select(root, sub=None, invokes_alert=False):
         sub = version.pick(sub)
 
     if sub:
+        q_sub = quoteattr(sub).replace("'", "\\'")
         sel.execute_script(
-            "return $('a:contains({})').trigger('click')".format(quoteattr(sub)))
+            "return $('a:contains({})').trigger('click')".format(q_sub))
     else:
+        q_root = quoteattr(root).replace("'", "\\'")
         try:
-            sel.element("//button[@data-original-title = {}]".format(quoteattr(root)))
+            sel.element("//button[@data-original-title = {}]".format(q_root))
             sel.execute_script(
-                "return $('*[data-original-title={}]').trigger('click')".format(quoteattr(root)))
+                "return $('*[data-original-title={}]').trigger('click')".format(q_root))
         except sel.NoSuchElementException:
             sel.execute_script(
-                "return $('button:contains({})').trigger('click')".format(quoteattr(root)))
+                "return $('button:contains({})').trigger('click')".format(q_root))
 
     if not invokes_alert:
         sel.wait_for_ajax()
