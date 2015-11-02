@@ -558,10 +558,12 @@ def destroy_vm(provider_mgmt, vm_name):
 
 def get_credentials_from_config(credential_config_name, cred_type=None):
     creds = conf.credentials[credential_config_name]
+    domain = creds.get('domain', None)
     return BaseProvider.Credential(
         principal=creds['username'],
         secret=creds['password'],
-        cred_type=cred_type)
+        cred_type=cred_type,
+        domain=domain)
 
 
 def get_crud(provider_config_name):
