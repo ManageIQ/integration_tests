@@ -2,13 +2,11 @@
 from contextlib import contextmanager
 from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Region, SplitTable, fill, flash, paginator, toolbar, Input
+from cfme.web_ui import Input, Region, SplitTable, Table, fill, flash, paginator, toolbar
+from utils import version
 from utils.log import logger
 
-request_list = SplitTable(
-    ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
-    ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1)
-)
+REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 
 buttons = Region(
     locators=dict(
@@ -24,7 +22,13 @@ buttons = Region(
 
 fields = Region(
     locators=dict(
-        reason=Input("reason")
+        reason=Input("reason"),
+        request_list={
+            version.LOWEST: SplitTable(
+                ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
+                ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1)),
+            "5.5.0.8": Table('//*[@id="list_grid"]/table'),
+        }
     )
 )
 
@@ -156,10 +160,13 @@ def wait_for_request(cells, partial_check=False):
          The matching :py:class:`cfme.web_ui.Table.Row` if found, ``False`` otherwise.
     """
     for page in paginator.pages():
-        if sel.elements(request_list._header_loc) and not sel.is_displayed(request_list):
+        # We check only for the SplitTable. Can't think of better detection.
+        if version.current_version() < "5.5.0.8"\
+                and sel.elements(fields.request_list._header_loc) and\
+                not sel.is_displayed(fields.request_list):
             # The table exists but it is hidden - no cells
             return False
-        results = request_list.find_rows_by_cells(cells, partial_check)
+        results = fields.request_list.find_rows_by_cells(cells, partial_check)
         if len(results) == 0:
             # row not on this page, assume it has yet to appear
             continue
@@ -176,7 +183,7 @@ def wait_for_request(cells, partial_check=False):
         # Request not found at all, can't continue
         return False
 
-    if row.request_state.text in ['Migrated', 'Finished']:
+    if row.request_state.text in REQUEST_FINISHED_STATES:
         return row
     else:
         return False
@@ -185,7 +192,7 @@ def wait_for_request(cells, partial_check=False):
 def debug_requests():
     logger.debug('Outputting current requests')
     for page in paginator.pages():
-        for row in request_list.rows():
+        for row in fields.request_list.rows():
             logger.debug(' {}'.format(row))
 
 
@@ -202,7 +209,7 @@ def go_to_request(cells):
     for page in paginator.pages():
         try:
             # found the row!
-            row, = request_list.find_rows_by_cells(cells)
+            row, = fields.request_list.find_rows_by_cells(cells)
             sel.click(row)
             return True
         except ValueError:
