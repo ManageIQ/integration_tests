@@ -58,6 +58,7 @@ deployment_conf = rhci['deployments'][deployment]['iso']
 rootpw = credentials[deployment_conf['rootpw_credential']].password
 vm_name = '{}-fusor'.format(deployment_id)
 vnc_password = 'rhci'
+libvirt_storage_pool = rhci['libvirt_storage_pool'] or 'default'
 
 print 'Provisioning RHCI VM {} via libvirt'.format(vm_name)
 
@@ -65,6 +66,7 @@ shell_args = {
     'vm_name': vm_name,
     'memory': 12288,
     'cpus': 4,
+    'libvirt_pool': libvirt_storage_pool,
     'disk_size': 100,
     'public_net_config': public_net_config,
     'private_net_config': private_net_config,
@@ -76,7 +78,7 @@ cmd = sarge.shell_format('virt-install'
     ' --os-variant=rhel7'
     ' --ram {memory}'
     ' --vcpus {cpus}'
-    ' --disk bus="virtio,size={disk_size}"'
+    ' --disk bus="virtio,pool={libvirt_pool},size={disk_size}"'
     ' --cdrom {image_path}'
     ' --network {public_net_config}'
     ' --network {private_net_config}'
