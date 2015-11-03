@@ -58,9 +58,9 @@ do_or_die () {
 # Runs pip update - optionally can make use of wheelhouse
 run_pip_update () {
     if [ -n "$WHEEL_HOST_URL" ]; then
-        run_n_log "pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements.txt"
+        run_n_log "PYCURL_SSL_LIBRARY=nss pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements.txt --no-cache-dir"
     else
-        run_n_log "pip install -Ur $CFME_REPO_DIR/requirements.txt"
+        run_n_log "PYCURL_SSL_LIBRARY=nss pip install -Ur $CFME_REPO_DIR/requirements.txt --no-cache-dir"
     fi
 }
 
