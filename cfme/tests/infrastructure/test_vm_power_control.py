@@ -365,7 +365,7 @@ class TestVmDetailsPowerControlPerProvider(object):
 def test_no_template_power_control(provider, setup_provider_funcscope):
     """ Ensures that no power button is displayed for templates."""
     provider.load_all_provider_templates()
-    toolbar.set_vms_grid_view()
+    toolbar.select('Grid View')
     try:
         with error.expected(NoSuchElementException):
             toolbar.select("Power")
