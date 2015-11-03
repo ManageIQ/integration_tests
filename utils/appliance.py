@@ -492,7 +492,7 @@ class IPAppliance(object):
     @lazycache
     def address(self):
         # If address wasn't set in __init__, use the hostname from base_url
-        if getattr(self, "_url", None) is not None:
+        if getattr(self, "url", None) is not None:
             parsed_url = urlparse(self.url)
             return parsed_url.netloc
         else:

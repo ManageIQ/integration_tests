@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 import random
 import time
-import urlparse
+from urlparse import urlparse
 
 from cfme.common.vm import VM
 from cfme.configure import tasks
@@ -105,7 +105,7 @@ def get_appliance(provider):
             appliance.configure_fleecing()
             appliance_list[provider.key] = appliance
         except Exception as e:
-            logger.warning("Exception: %s" % str(e))
+            logger.exception(e)
             # provision appliance and configure
             ver_to_prov = str(version.current_version())
             logger.info("provisioning {} appliance on {}...".format(ver_to_prov, provider.key))
@@ -118,7 +118,7 @@ def get_appliance(provider):
                 logger.info("appliance IP address: " + str(appliance.address))
                 appliance.configure(setup_fleece=True)
             except Exception as e:
-                logger.error("Exception: %s" % str(e))
+                logger.exception(e)
                 if appliance is not None:
                     appliance.destroy()
                 raise CFMEException(
@@ -163,9 +163,10 @@ def appliance_browser(get_appliance, provider, vm_template_name, os, fs_type):
     test_list.remove([provider.key, vm_template_name, os, fs_type])
 
     with get_appliance.ipapp.db.transaction:
-        with get_appliance.ipapp:  # To make REST API work
-            with get_appliance.browser_session() as browser:
-                yield browser
+        with get_appliance.ipapp(browser_steal=True):  # To make REST API work
+            logger.info("Running in the context of {}".format(get_appliance.name))
+            yield
+            logger.info("Exited context context of {}".format(get_appliance.name))
 
     # cleanup provisioned appliance if not more tests for it
     if provider.key is not main_provider:
