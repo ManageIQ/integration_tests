@@ -536,7 +536,7 @@ class IPAppliance(object):
         # Currently parses the os version out of redhat release file to allow for
         # rhel and centos appliances
         res = self.ssh_client.run_command(
-            r"cat /etc/redhat-release | sed 's/.* release \(.*\) (.*/\1/'")
+            r"cat /etc/redhat-release | sed 's/.* release \(.*\) (.*/\1/' #)")
         if res.rc != 0:
             raise RuntimeError('Unable to retrieve appliance OS version')
         return Version(res.output)
