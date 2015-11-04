@@ -269,25 +269,31 @@ def visible_pages():
     return sorted([reverse_lookup(*displayed) for displayed in displayed_menus])
 
 # Construct the nav tree based on sections
-_branches = dict()
+
 # The main tab destination is usually the first secondlevel page in that tab
 # Since this is redundant, it's arguable that the toplevel tabs should be
 # nav destination at all; they're included here "just in case". The toplevel
 # and secondlevel destinations exist at the same level of nav_tree because the
 # secondlevel destinations don't depend on the toplevel nav taking place to reach
 # their destination.
-for (toplevel_dest, toplevel), secondlevels in sections.items():
-    for level in secondlevels:
-        if len(level) == 2:
-            secondlevel_dest, secondlevel = level
-            reset_action = None
-        elif len(level) == 3:
-            secondlevel_dest, secondlevel, reset_action = level
-        else:
-            raise Exception("Wrong length of menu navigation tuple! ({})".format(len(level)))
-        _branches[secondlevel_dest] = nav_to_fn(toplevel, secondlevel, reset_action)
-    _branches[toplevel_dest] = [nav_to_fn(toplevel, None), {}]
 
+
+def branch_convert(input_set):
+    _branches = dict()
+    for (toplevel_dest, toplevel), secondlevels in input_set.items():
+        for level in secondlevels:
+            if len(level) == 2:
+                secondlevel_dest, secondlevel = level
+                reset_action = None
+            elif len(level) == 3:
+                secondlevel_dest, secondlevel, reset_action = level
+            else:
+                raise Exception("Wrong length of menu navigation tuple! ({})".format(len(level)))
+            _branches[secondlevel_dest] = nav_to_fn(toplevel, secondlevel, reset_action)
+        _branches[toplevel_dest] = [nav_to_fn(toplevel, None), {}]
+    return _branches
+
+_branches = branch_convert(sections)
 nav.add_branch('toplevel', _branches)
 
 
