@@ -1,5 +1,13 @@
-xpath = """
-return document.evaluate(path, document, null, 9, null).singleNodeValue;
+# -*- coding: utf-8 -*-
+from jsmin import jsmin
+
+xpath = """\
+function xpath(root, xpath) {
+    if(root == null)
+        root = document;
+    var nt = XPathResult.ANY_UNORDERED_NODE_TYPE;
+    return document.evaluate(xpath, root, null, nt, null).singleNodeValue;
+}
 """
 
 in_flight = """
@@ -46,5 +54,143 @@ set_angularjs_value_script = """\
     angular_elem.scope().$apply(function($scope) { setter($scope, value); });
 }(arguments[0], arguments[1]));
 """
+
+
+# The functions below do various JS magic to speed up the tree traversings to a maximum possible
+# level.
+
+# This function retrieves the root of the tree. Can wait for the tree to get initialized
+_tree_get_root = """\
+function get_root(loc) {
+    var start_time = new Date();
+    var root = null;
+    while(root === null && ((new Date()) - start_time) < 10000)
+    {
+        try {
+            root = $(loc).dynatree("getRoot");
+        } catch(err) {
+            // Nothing ...
+        }
+    }
+
+    return root;
+}
+"""
+
+# This function is used to DRY the decision on which text to match
+_get_level_name = xpath + """\
+function get_level_name(level, by_id) {
+    if(by_id){
+        return level.li.getAttribute("id");
+    } else {
+        return xpath(level.li, "./span/a").textContent;
+    }
+}
+"""
+
+# This function reads whole tree. If it faces an ajax load, it returns false.
+# If it does not return false, the result is complete.
+read_tree = jsmin(_tree_get_root + _get_level_name + """\
+function read_tree(root, read_id, _root_tree) {
+    if(read_id === undefined)
+        read_id = false;
+    if(_root_tree === undefined)
+        _root_tree = true;
+    if(_root_tree) {
+        root = get_root(root);
+        if(root === null)
+            return null;
+        if(!root.bExpanded) {
+            root.expand();
+            if(root.childList === null && root.data.isLazy){
+                return false;
+            }
+        }
+        var result = new Array();
+        var need_wait = false;
+        var children = (root.childList === null) ? [] : root.childList;
+        for(var i = 0; i < children.length; i++) {
+            var child = children[i];
+            var sub = read_tree(child, read_id, false);
+            if(sub === false)
+                need_wait = true;
+            else
+                result.push(sub);
+        }
+        if(need_wait)
+            return false;
+        else if(children.length == 0)
+            return null;
+        else
+            return result;
+    } else {
+        if(!root.bExpanded) {
+            root.expand();
+            if(root.childList === null && root.data.isLazy){
+                return false;
+            }
+        }
+        var name = get_level_name(root, read_id);
+
+        var result = new Array();
+        var need_wait = false;
+        var children = (root.childList === null) ? [] : root.childList;
+        for(var i = 0; i < children.length; i++) {
+            var child = children[i];
+            var sub = read_tree(child, read_id, false);
+            if(sub === false)
+                need_wait = true;
+            else
+                result.push(sub);
+        }
+        if(need_wait)
+            return false;
+        else if(children.length == 0)
+            return name;
+        else
+            return [name, result]
+
+    }
+}
+""")
+
+# This function searches for specified node by path. If it faces an ajax load, it returns false.
+# If it does not return false, the result is complete.
+find_leaf = jsmin(_tree_get_root + _get_level_name + """\
+function find_leaf(root, path, by_id) {
+    if(path.length == 0)
+        return null;
+    if(by_id === undefined)
+        by_id = false;
+    var item = get_root(root).childList[0];
+    if(get_level_name(item, by_id) != path[0])
+        throw "TREEITEM /" + path[0] + "/ NOT FOUND IN THE TREE";
+    for(var i = 1; i < path.length; i++) {
+        var last = (i + 1) == path.length;
+        var step = path[i];
+        var found = false;
+        if(!item.bExpanded) {
+            item.expand();
+            if(item.childList === null)
+                return false;  //We need to do wait_for_ajax and then repeat.
+        }
+
+        for(var j = 0; j < (item.childList || []).length; j++) {
+            var nextitem = item.childList[j];
+            var nextitem_name = get_level_name(nextitem, by_id);
+            if(nextitem_name == step) {
+                found = true;
+                item = nextitem;
+                break;
+            }
+        }
+
+        if(!found)
+            throw "TREEITEM /" + step + "/ NOT FOUND IN THE TREE";
+    }
+
+    return xpath(item.li, "./span/a");
+}
+""")
 
 # TODO: Get the url: directly from the attribute in the page?
