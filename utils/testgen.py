@@ -256,6 +256,10 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         except UnknownProviderType:
             continue
 
+        if not prov_obj:
+            logger.debug("Whilst trying to create an object for {} we failed".format(provider))
+            continue
+
         skip = False
         if provider_types is not None and prov_obj.type not in provider_types:
             # Skip unwanted types
