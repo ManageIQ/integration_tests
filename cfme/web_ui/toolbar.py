@@ -27,8 +27,11 @@ def root_loc(root):
             ("//div[contains(@class, 'dhx_toolbar_btn')][contains(@title, {})] | "
              "//div[contains(@class, 'dhx_toolbar_btn')][contains(@data-original-title, {})] | "
              "//button[normalize-space(.) = {}] |"
-             "//button[@data-original-title = {}]")
-            .format(quoteattr(root), quoteattr(root), quoteattr(root), quoteattr(root)))
+             "//button[@data-original-title = {}] |"
+             "//a[@data-original-title = {}]/.. |"
+             "//button[@title = {}]")
+            .format(quoteattr(root), quoteattr(root), quoteattr(root), quoteattr(root),
+                    quoteattr(root), quoteattr(root)))
 
 
 def sub_loc(sub):
@@ -93,7 +96,8 @@ def pf_select(root, sub=None, invokes_alert=False):
     else:
         q_root = quoteattr(root).replace("'", "\\'")
         try:
-            sel.element("//button[@data-original-title = {}]".format(q_root))
+            sel.element("//button[@data-original-title = {}] | "
+                        "//a[@data-original-title = {}]".format(q_root, q_root))
             sel.execute_script(
                 "return $('*[data-original-title={}]').trigger('click')".format(q_root))
         except sel.NoSuchElementException:
