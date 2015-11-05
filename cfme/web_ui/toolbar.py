@@ -23,12 +23,16 @@ def root_loc(root):
         root: The string name of the button.
     Returns: A locator for the root button.
     """
-    return (By.XPATH,
-            ("//div[contains(@class, 'dhx_toolbar_btn')][contains(@title, {})] | "
-             "//div[contains(@class, 'dhx_toolbar_btn')][contains(@data-original-title, {})] | "
-             "//button[normalize-space(.) = {}] |"
-             "//button[@data-original-title = {}]")
-            .format(quoteattr(root), quoteattr(root), quoteattr(root), quoteattr(root)))
+    return (
+        By.XPATH,
+        ("//div[contains(@class, 'dhx_toolbar_btn')][contains(@title, {})] | "
+        "//div[contains(@class, 'dhx_toolbar_btn')][contains(@data-original-title, {})] | "
+        "//div[contains(@class, 'toolbar-pf-view')]/ul/li/a[contains(@data-original-title, {})] |"
+        "//button[normalize-space(.) = {}] |"
+        "//button[@data-original-title = {}]")
+        .format(
+            quoteattr(root), quoteattr(root), quoteattr(root), quoteattr(root), quoteattr(root))
+    )
 
 
 def sub_loc(sub):
@@ -163,12 +167,25 @@ def is_active(root):
         root: The root button's name as a string.
     Returns: ``True`` if the button is depressed, ``False`` if not.
     """
-    el = sel.element(root_loc(root))
-    class_att = sel.get_attribute(el, 'class').split(" ")
-    if {"pres", "active", "pres_dis"}.intersection(set(class_att)):
-        return True
-    else:
+    if version.current_version() > '5.5.0.8':
+        loc = (
+            By.XPATH, "//div[contains(@class, 'toolbar-pf-view-selector')]/ul/\
+            li[contains(@class, 'active')]/a"
+        )
+        el = sel.element(loc)
+        class_att = []
+        class_att.append(sel.get_attribute(el, 'data-original-title'))
+        class_att.append(sel.get_attribute(el, 'title'))
+        if root in class_att:
+            return True
         return False
+    else:
+        el = sel.element(root_loc(root))
+        class_att = sel.get_attribute(el, 'class').split(" ")
+        if {"pres", "active", "pres_dis"}.intersection(set(class_att)):
+            return True
+        else:
+            return False
 
 
 def is_greyed(root, sub=None):
