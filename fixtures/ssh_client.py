@@ -58,7 +58,7 @@ def ssh_client_modscope(uses_ssh):
 def pytest_sessionfinish(session, exitstatus):
     """Loop through the appliance stack and close ssh connections"""
 
-    for appliance in store._current_appliance:
+    for appliance in store.appliance_stack:
         logger.debug('Closing ssh connection on {}'.format(appliance.address))
         try:
             appliance.ssh_client.close()

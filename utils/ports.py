@@ -17,9 +17,9 @@ class Ports(object):
 
     def __setattr__(self, attr, value):
         super(self.__class__, self).__setattr__(attr, value)
-        if self.store._current_appliance:
+        if self.store.any_appliance:
             self.logger.info("Cleaning up the current_appliance object")
-            self.store._current_appliance[-1]._ssh_client = None
+            self.store.current_appliance._ssh_client = None
 
 
 sys.modules[__name__] = Ports()

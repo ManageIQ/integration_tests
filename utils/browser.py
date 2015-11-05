@@ -230,47 +230,6 @@ def _load_firefox_profile():
     return profile
 
 
-class DuckwebQaTestSetup(object):
-    """A standin for mozwebqa's TestSetup class
-
-    Pretends to be a mozwebqa TestSetup so we can uninstall mozwebqa whithout
-    breaking old tests that aren't yet converted.
-
-    .. note::
-        This should never be used, and places where it's currently used should stop it.
-
-    """
-    def __init__(self):
-        self.selenium_client = DuckwebQaClient()
-        self.base_url = store.base_url
-        self.credentials = conf.credentials
-
-    @property
-    def selenium(self):
-        return browser()
-
-    @property
-    def timeout(self):
-        return self.selenium_client.timeout
-
-    @property
-    def default_implicit_wait(self):
-        return self.selenium_client.default_implicit_wait
-
-
-class DuckwebQaClient(object):
-    def __init__(self):
-        # These don't actually get used anywhere, they're here to help with the
-        # mozwebqa spoofage only. To change timeouts and wait values, pass
-        # different options to browser_session.
-        self.timeout = 60
-        self.default_implicit_wait = 10
-
-    @property
-    def selenium(self):
-        return browser()
-
-
 class Wharf(object):
     def __init__(self, wharf_url):
         self.wharf_url = wharf_url
@@ -324,6 +283,4 @@ class Wharf(object):
     def __nonzero__(self):
         return bool(self.docker_id)
 
-# Convenience name, duckwebqa is stateless, so we can just make one here
-testsetup = DuckwebQaTestSetup()
 atexit.register(quit)

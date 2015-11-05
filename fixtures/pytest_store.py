@@ -26,6 +26,7 @@ from _pytest.terminal import TerminalReporter
 from py.io import TerminalWriter
 
 from utils import conf, diaper, lazycache, property_or_none
+from utils.log import logger
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -88,18 +89,22 @@ class Store(object):
     def current_appliance(self):
         if not self._current_appliance:
             from utils.appliance import IPAppliance
-            self._current_appliance.append(IPAppliance(urlparse(self.base_url)))
+            self._current_appliance.append(IPAppliance(urlparse(conf.env['base_url'])))
         return self._current_appliance[-1]
+
+    @property
+    def any_appliance(self):
+        return bool(self._current_appliance)
+
+    @property
+    def appliance_stack(self):
+        return self._current_appliance
 
     @property
     def base_url(self):
         """ If there is a current appliance the base url of that appliance is returned
             else, the base_url from the config is returned."""
-        if self._current_appliance:
-            result = self._current_appliance[-1].url
-        else:
-            result = conf.env['base_url']
-        return result
+        return self.current_appliance.url
 
     @property
     def in_pytest_session(self):
@@ -164,7 +169,12 @@ store = Store()
 
 
 def _push_appliance(app):
+    was_before = store.current_appliance.address if store.any_appliance else None
     store._current_appliance.append(app)
+    if was_before is not None:
+        logger.info("Pushed appliance {} on stack (was {} before) ".format(app.address, was_before))
+    else:
+        logger.info("Pushed appliance {} on stack (empty stack before) ".format(app.address))
     if app.browser_steal:
         from utils import browser
         browser.start()
@@ -172,6 +182,12 @@ def _push_appliance(app):
 
 def _pop_appliance(app):
     store._current_appliance.pop()
+    if store.any_appliance:
+        logger.info(
+            "Popped appliance {} from the stack (now there is {})".format(
+                app.address, store.current_appliance.address))
+    else:
+        logger.info("Popped appliance {} from the stack. The stack is empty now.")
     if app.browser_steal:
         from utils import browser
         browser.start()
