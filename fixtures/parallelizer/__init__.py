@@ -31,6 +31,7 @@ The Workflow
 
 """
 
+import collections
 import difflib
 import json
 import os
@@ -192,6 +193,15 @@ class ParallelSession(object):
         self.slave_urls = SlaveDict()
         self.slave_tests = defaultdict(set)
         self.test_groups = self._test_item_generator()
+
+        self._pool = []
+        self.pool_lock = Lock()
+        from utils.conf import cfme_data
+        self.provs = sorted(set(cfme_data['management_systems'].keys()),
+                            key=len, reverse=True)
+        self.slave_allocation = collections.defaultdict(list)
+        self.used_prov = set()
+
         self.failed_slave_test_groups = deque()
         self.slave_spawn_count = 0
         self.sprout_client = None
@@ -491,7 +501,10 @@ class ParallelSession(object):
                 tests = list(self.failed_slave_test_groups.popleft())
         except IndexError:
             try:
-                tests = self.test_groups.next()
+                tests = self.get(slaveid)
+                # To return to the old parallelizer distributor, remove the line above
+                # and replace it with the line below.
+                # tests = self.test_groups.next()
             except StopIteration:
                 tests = []
 
@@ -680,6 +693,79 @@ class ParallelSession(object):
                 id = 'no params'
             self.log.info('sent tests with param %s %r' % (id, tests))
             yield tests
+
+    def get(self, slave):
+        with self.pool_lock:
+            if not self._pool:
+                for test_group in self.test_groups:
+                    self._pool.append(test_group)
+                    for test in test_group:
+                        if '[' in test:
+                            found_prov = []
+                            for pv in self.provs:
+                                if pv in test:
+                                    found_prov.append(pv)
+                                    break
+                            provs = list(set(found_prov).intersection(self.provs))
+                            if provs:
+                                self.used_prov = self.used_prov.union(set(provs))
+                if self.used_prov:
+                    self.ratio = float(len(self.slaves)) / float(len(self.used_prov))
+                else:
+                    self.ratio = 0.0
+            if not self._pool:
+                raise StopIteration
+            current_allocate = self.slave_allocation.get(slave, None)
+            num_provs_list = [len(v) for k, v in self.slave_allocation.iteritems()]
+            average_num_provs = sum(num_provs_list) / float(len(self.slaves))
+            for test_group in self._pool:
+                for test in test_group:
+                    if '[' in test:
+                        found_prov = []
+                        for pv in self.provs:
+                            if pv in test:
+                                found_prov.append(pv)
+                                break
+                        provs = list(set(found_prov).intersection(self.provs))
+                        if provs:
+                            prov = provs[0]
+                            num_slave_with_prov = len([sl for sl, provs_list
+                                in self.slave_allocation.iteritems()
+                                if prov in provs_list])
+                            if current_allocate:
+                                if prov in current_allocate:
+                                    # provider is already with the slave
+                                    self._pool.remove(test_group)
+                                    return test_group
+                                else:
+                                    if num_slave_with_prov >= self.ratio \
+                                       or len(self.slave_allocation[slave]) > average_num_provs:
+                                        # Already too many slaves with provider
+                                        continue
+                                    else:
+                                        # Adding provider to slave
+                                        self.slave_allocation[slave].append(prov)
+                                        self._pool.remove(test_group)
+                                        return test_group
+                            else:
+                                if num_slave_with_prov >= self.ratio \
+                                   or len(self.slave_allocation[slave]) > average_num_provs:
+                                    # Too many slaves
+                                    continue
+                                else:
+                                    # Adding provider to slave
+                                    self.slave_allocation[slave].append(prov)
+                                    self._pool.remove(test_group)
+                                    return test_group
+                        else:
+                            # No providers - ie, not a provider parametrized test
+                            self._pool.remove(test_group)
+                            return test_group
+                    else:
+                        # No params, so no need to think about providers
+                        self._pool.remove(test_group)
+                        return test_group
+            return []
 
 
 def report_collection_diff(slaveid, from_collection, to_collection):
