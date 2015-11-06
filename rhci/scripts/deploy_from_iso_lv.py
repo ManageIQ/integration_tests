@@ -36,7 +36,8 @@ from rhci_common import vnc_client, save_rhci_conf, ssh_client, virsh
 
 # bunch of static stuff that we can argparse/yaml/env up later
 deployment = 'basic'
-image_path = '/tmp/RHCI-6.0-RHEL-7-20150829.0-RHCI-x86_64-dvd1.iso'
+image_url = rhci['iso_urls']['latest']['RHCI']
+image_path = '/tmp/rhci-latest.iso'
 # random ID - put this at the beginning of resource names to associate them with
 # this build run; the cleanup script will look for this prefix and delete all associated resources
 deployment_id = gen_alpha()
@@ -60,6 +61,19 @@ vm_name = '{}-fusor'.format(deployment_id)
 vnc_password = 'rhci'
 libvirt_storage_pool = rhci['libvirt_storage_pool'] or 'default'
 
+# SSH into libvirt host and wget the RHCI ISO
+libvirt_ssh_client = SSHClient(hostname=libvirt_host, **libvirt_creds)
+print 'Downloading RHCI ISO to libvirt host...'
+cmd = "wget -q {} -O {}".format(image_url, image_path)
+res = libvirt_ssh_client.run_command(cmd)
+if res.rc != 0:
+    print "Error when downloading ISO from URL: {}".format(image_url)
+    print "{}".format(res.output.strip())
+    print "Failed to download RHCI ISO, stopping."
+
+    sys.exit(1)
+
+# virt-install the ISO we just downloaded
 print 'Provisioning RHCI VM {} via libvirt'.format(vm_name)
 
 shell_args = {
@@ -114,6 +128,7 @@ vnc.press('enter')
 sleep(60)
 
 # fill in the root password
+
 vnc.press('tab')  # highlight the root password config screen
 vnc.press('space')  # select the root password config screen
 vnc.type(rootpw)  # password
@@ -130,7 +145,7 @@ mac_addr = vm_xml_tree.find(".//interface/mac").attrib['address']
 
 # now it gets a little silly...SSH into the libvirt host, and watch the arp table
 # for this mac to appear, then grab the associated ip addr if/when it does
-libvirt_ssh_client = SSHClient(hostname=libvirt_host, **libvirt_creds)
+# libvirt_ssh_client = SSHClient(hostname=libvirt_host, **libvirt_creds)
 
 # The install takes 10-15 minutes, and reboots when done. libvirt sees the reboot, and
 # (sometimes) shuts down so wait 20 minutes for the vm to shut down,
