@@ -17,7 +17,8 @@ cfg_btn = partial(toolbar.select, "Configuration")
 
 dialog_table = SortTable({
     version.LOWEST: "//div[@id='records_div']//table[contains(@class, 'style3')]",
-    "5.4": "//div[@id='records_div']//table[contains(@class, 'datatable')]"})
+    "5.4": "//div[@id='records_div']//table[contains(@class, 'datatable')]",
+    "5.5": "//div[@id='records_div']//table[contains(@class, 'table')]"})
 
 
 def get_dialog_name(o):
