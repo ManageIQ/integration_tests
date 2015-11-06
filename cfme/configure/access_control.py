@@ -12,30 +12,8 @@ from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
 
+from configuration import server_region_string
 
-def server_region():
-    return store.current_appliance.server_region()
-
-
-def server_region_pair():
-    r = server_region()
-    return r, r
-
-
-def ac_tree(*path):
-    """DRY function to access the shared level of the accordion tree.
-
-    Args:
-        *path: Path to click in the tree that follows the '[cfme] region xyz' node
-    """
-    path = version.pick({
-        # "5.3": ["CFME Region: Region %d [%d]" % server_region_pair()] + list(path),
-        version.LOWEST: path,
-    })
-    return accordion.tree(
-        "Access Control",
-        *path
-    )
 
 tb_select = partial(tb.select, "Configuration")
 pol_btn = partial(tb.select, "Policy")
@@ -56,74 +34,63 @@ group_order_selector = UpDownSelect(
 nav.add_branch(
     'configuration',
     {
-        'configuration_accesscontrol':
+        'cfg_accesscontrol_users':
         [
-            nav.fn(partial(accordion.click, "Access Control")),
+            lambda d: accordion.tree("Access Control", server_region_string(), "Users"),
             {
-                'cfg_accesscontrol_users':
-                [
-                    lambda d: ac_tree("Users"),
-                    {
-                        'cfg_accesscontrol_user_add':
-                        lambda d: tb.select("Configuration", "Add a new User")
-                    }
-                ],
+                'cfg_accesscontrol_user_add':
+                lambda d: tb_select("Add a new User")
+            }
+        ],
 
-                'cfg_accesscontrol_user_ed':
-                [
-                    lambda ctx: ac_tree('Users', ctx.user.name),
-                    {
-                        'cfg_accesscontrol_user_edit':
-                        lambda d: tb_select('Edit this User')
-                    }
-                ],
+        'cfg_accesscontrol_user_ed':
+        [
+            lambda ctx:
+            accordion.tree("Access Control", server_region_string(), "Users", ctx.user.name),
+            {
+                'cfg_accesscontrol_user_edit':
+                lambda d: tb_select('Edit this User')
+            }
+        ],
 
-                'cfg_accesscontrol_groups':
-                [
-                    lambda d: ac_tree("Groups"),
-                    {
-                        'cfg_accesscontrol_group_add':
-                        lambda d: tb.select("Configuration", "Add a new Group")
-                    }
-                ],
+        'cfg_accesscontrol_groups':
+        [
+            lambda d: accordion.tree("Access Control", server_region_string(), "Groups"),
+            {
+                'cfg_accesscontrol_group_add':
+                lambda d: tb_select("Add a new Group"),
 
-                'cfg_accesscontrol_group_ed':
-                [
-                    lambda ctx: ac_tree('Groups', ctx.group.description),
-                    {
-                        'cfg_accesscontrol_group_edit':
-                        lambda d: tb_select('Edit this Group')
-                    }
-                ],
+                'cfg_accesscontrol_group_edit_seq':
+                lambda d: tb_select('Edit Sequence of User Groups for LDAP Look Up')
+            }
+        ],
 
-                'cfg_accesscontrol_group_order':
-                [
-                    lambda d: ac_tree("Groups"),
-                    {
-                        'cfg_accesscontrol_group_edit_seq':
-                        lambda d: tb.select("Configuration", 'Edit Sequence of User Groups '
-                        'for LDAP Look Up')
-                    }
-                ],
+        'cfg_accesscontrol_group_ed':
+        [
+            lambda ctx: accordion.tree(
+                "Access Control", server_region_string(), "Groups", ctx.group.description),
+            {
+                'cfg_accesscontrol_group_edit':
+                lambda d: tb_select('Edit this Group')
+            }
+        ],
 
-                'cfg_accesscontrol_Roles':
-                [
-                    lambda d: ac_tree("Roles"),
-                    {
-                        'cfg_accesscontrol_role_add':
-                        lambda d: tb.select("Configuration", "Add a new Role")
-                    }
-                ],
+        'cfg_accesscontrol_Roles':
+        [
+            lambda d: accordion.tree("Access Control", server_region_string(), "Roles"),
+            {
+                'cfg_accesscontrol_role_add':
+                lambda d: tb_select("Add a new Role")
+            }
+        ],
 
-                'cfg_accesscontrol_role_ed':
-                [
-                    lambda ctx: ac_tree('Roles', ctx.role.name),
-                    {
-                        'cfg_accesscontrol_role_edit':
-                        lambda d: tb_select('Edit this Role')
-                    }
-                ],
-
+        'cfg_accesscontrol_role_ed':
+        [
+            lambda ctx:
+            accordion.tree("Access Control", server_region_string(), "Roles", ctx.role.name),
+            {
+                'cfg_accesscontrol_role_edit':
+                lambda d: tb_select('Edit this Role')
             }
         ],
 

@@ -39,13 +39,6 @@ def table_select(name):
     sel.check(datastore_checkbox(name))
 
 
-def tree_item_not_found_is_leaf(e):
-    """Returns true if the given exception was while navigating a tree and
-       the item in the path that was missing was the last item."""
-    data = e.args[0]  # the data mapping
-    return isinstance(e, exceptions.CandidateNotFound) and data['index'] == len(data['path']) - 1
-
-
 def open_order_dialog_func(_):
     datastore_tree()
     cfg_btn("Edit Priority Order of Domains")
@@ -113,10 +106,12 @@ class TreeNode(pretty.Pretty):
             return [self.name_in_tree]
 
     def exists(self):
-        with error.handler(tree_item_not_found_is_leaf):
+        try:
             sel.force_navigate('automate_explorer_tree_path', context={'tree_item': self})
+        except exceptions.CandidateNotFound:
+            return False
+        else:
             return True
-        return False
 
     @property
     def nav_path(self):

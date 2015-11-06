@@ -70,6 +70,6 @@ def test_duplicate_namespace_disallowed(namespace):
 @pytest.mark.meta(blockers=[1140331])
 def test_permissions_namespace_crud(setup_single_provider, domain):
     """ Tests that a namespace can be manipulated only with the right permissions"""
-    tac.single_task_permission_test([['Automate', 'Explorer']],
+    tac.single_task_permission_test([['Everything', 'Automate', 'Explorer']],
                                     {'Namespace CRUD':
                                      lambda: test_namespace_crud(ta.a_namespace(domain=domain))})
