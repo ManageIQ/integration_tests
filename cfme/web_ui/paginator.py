@@ -8,9 +8,9 @@ from utils import version
 
 _locator = '(//div[@id="paging_div"] | //div[@id="records_div"])'
 _next = '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
-_previous = '//img[@alt="Previous"]|//li[contains(@class, "prev")]'
-_first = '//img[@alt="First"]|//li[contains(@class, "first")]'
-_last = '//img[@alt="Last"]|//li[contains(@class, "last")]'
+_previous = '//img[@alt="Previous"]|//li[contains(@class, "prev")]/span'
+_first = '//img[@alt="First"]|//li[contains(@class, "first")]/span'
+_last = '//img[@alt="Last"]|//li[contains(@class, "last")]/span'
 _num_results = '//select[@id="ppsetting" or @id="perpage_setting1"]'
 _sort_by = '//select[@id="sort_choice"]'
 _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
