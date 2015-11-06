@@ -7,7 +7,7 @@ from functools import partial
 from utils import version
 
 _locator = '(//div[@id="paging_div"] | //div[@id="records_div"])'
-_next = '//img[@alt="Next"]|//li[contains(@class, "next")]'
+_next = '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
 _previous = '//img[@alt="Previous"]|//li[contains(@class, "prev")]'
 _first = '//img[@alt="First"]|//li[contains(@class, "first")]'
 _last = '//img[@alt="Last"]|//li[contains(@class, "last")]'
