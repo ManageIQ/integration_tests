@@ -283,7 +283,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
             else:
                 raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
 
-        paginator.results_per_page(1000)
+        # this is causing some issues in 5.5.0.9, commenting out for a bit
+        # paginator.results_per_page(1000)
         for page in paginator.pages():
             if sel.is_displayed(quadicon, move_to=True):
                 if mark:
