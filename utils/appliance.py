@@ -1559,6 +1559,10 @@ class IPAppliance(object):
             if not quiet:
                 raise
 
+    def delete_all_providers(self):
+        for prov in self.rest_api.collections.providers:
+            prov.action.delete()
+
 
 class ApplianceSet(object):
     """Convenience class to ease access to appliances in appliance_set
