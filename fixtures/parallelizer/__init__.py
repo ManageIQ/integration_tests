@@ -41,6 +41,7 @@ from collections import OrderedDict, defaultdict, deque, namedtuple
 from itertools import count
 from threading import Lock, RLock, Thread, Timer
 from time import sleep, time
+from urlparse import urlparse
 
 import pytest
 import zmq
@@ -716,47 +717,51 @@ class ParallelSession(object):
             if not self._pool:
                 raise StopIteration
             current_allocate = self.slave_allocation.get(slave, None)
-            num_provs_list = [len(v) for k, v in self.slave_allocation.iteritems()]
-            average_num_provs = sum(num_provs_list) / float(len(self.slaves))
+            # num_provs_list = [len(v) for k, v in self.slave_allocation.iteritems()]
+            # average_num_provs = sum(num_provs_list) / float(len(self.slaves))
+            appliance_num_limit = 2
             for test_group in self._pool:
                 for test in test_group:
+                    # If the test is parametrized...
                     if '[' in test:
                         found_prov = []
                         for pv in self.provs:
                             if pv in test:
                                 found_prov.append(pv)
                                 break
+                        # The line below can probably be removed now, since we compare
+                        # providers in the loop above with self.provs, which is a list
+                        # of all providers.
                         provs = list(set(found_prov).intersection(self.provs))
+                        # If the parametrization contains a provider...
                         if provs:
                             prov = provs[0]
-                            num_slave_with_prov = len([sl for sl, provs_list
-                                in self.slave_allocation.iteritems()
-                                if prov in provs_list])
+                            # num_slave_with_prov = len([sl for sl, provs_list
+                            #    in self.slave_allocation.iteritems()
+                            #    if prov in provs_list])
+                            # If this slave/appliance already has providers then...
                             if current_allocate:
+                                # If the slave has _our_ provider
                                 if prov in current_allocate:
-                                    # provider is already with the slave
+                                    # provider is already with the slave, so just return the tests
                                     self._pool.remove(test_group)
                                     return test_group
+                                # If the slave doesn't have _our_ provider
                                 else:
-                                    if num_slave_with_prov >= self.ratio \
-                                       or len(self.slave_allocation[slave]) > average_num_provs:
-                                        # Already too many slaves with provider
+                                    # Check to see how many slaves there are with this provider
+                                    if len(self.slave_allocation[slave]) >= appliance_num_limit:
                                         continue
                                     else:
-                                        # Adding provider to slave
+                                        # Adding provider to slave since there are not too many
                                         self.slave_allocation[slave].append(prov)
                                         self._pool.remove(test_group)
                                         return test_group
+                            # If this slave doesn't have any providers...
                             else:
-                                if num_slave_with_prov >= self.ratio \
-                                   or len(self.slave_allocation[slave]) > average_num_provs:
-                                    # Too many slaves
-                                    continue
-                                else:
-                                    # Adding provider to slave
-                                    self.slave_allocation[slave].append(prov)
-                                    self._pool.remove(test_group)
-                                    return test_group
+                                # Adding provider to slave
+                                self.slave_allocation[slave].append(prov)
+                                self._pool.remove(test_group)
+                                return test_group
                         else:
                             # No providers - ie, not a provider parametrized test
                             self._pool.remove(test_group)
@@ -765,6 +770,36 @@ class ParallelSession(object):
                         # No params, so no need to think about providers
                         self._pool.remove(test_group)
                         return test_group
+                # Here means no tests were able to be sent
+            for test_group in self._pool:
+                for test in test_group:
+                    # If the test is parametrized...
+                    if '[' in test:
+                        found_prov = []
+                        for pv in self.provs:
+                            if pv in test:
+                                found_prov.append(pv)
+                                break
+                        # The line below can probably be removed now, since we compare
+                        # providers in the loop above with self.provs, which is a list
+                        # of all providers.
+                        provs = list(set(found_prov).intersection(self.provs))
+                        # If the parametrization contains a provider...
+                        if provs:
+                            # Already too many slaves with provider
+                            app_url = self.slave_urls[slave]
+                            app_ip = urlparse(app_url).netloc
+                            app = IPAppliance(app_ip)
+                            self.print_message('cleansing appliance', slave,
+                                purple=True)
+                            try:
+                                app.delete_all_providers()
+                            except:
+                                self.print_message('cloud not cleanse', slave,
+                                red=True)
+                            self.slave_allocation[slave] = [prov]
+                            self._pool.remove(test_group)
+                            return test_group
             return []
 
 
