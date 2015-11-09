@@ -23,7 +23,7 @@ def page_controls_exist():
 
 
 def _page_nums():
-    return sel.element(_locator + _page_cell).text
+    return sel.text(_locator + _page_cell)
 
 
 def check_all():
@@ -32,8 +32,13 @@ def check_all():
 
 
 def is_dimmed(btn):
-    class_att = btn.get_attribute('class').split(" ")
-    if {"dimmed", "disabled"}.intersection(set(class_att)):
+    tag = sel.tag(btn)
+    if tag == "li":
+        class_attr = sel.get_attribute(btn, "class")
+    elif tag == "span":
+        class_attr = sel.get_attribute(sel.element("..", root=btn), "class")
+    class_att = set(re.split(r"\s+", class_attr))
+    if {"dimmed", "disabled"}.intersection(class_att):
         return True
 
 
@@ -91,8 +96,12 @@ def sort_by(sort):
 
 def rec_offset():
     """ Returns the first record offset."""
-    offset = re.search('\((Item|Items)*\s*(\d+)', _page_nums())
-    return offset.groups()[1]
+    if version.current_version() > "5.5.0.7":
+        offset = re.search(r"Showing\s*(\d+)-", _page_nums())
+        return offset.groups()[0]
+    else:
+        offset = re.search('\((Item|Items)*\s*(\d+)', _page_nums())
+        return offset.groups()[1]
 
 
 def rec_end():
@@ -106,7 +115,10 @@ def rec_end():
 
 def rec_total():
     """ Returns the total number of records."""
-    offset = re.search('(\d+)\)', _page_nums())
+    if version.current_version() > "5.5.0.7":
+        offset = re.search(r"of\s*(\d+)\s*(?:items?)?", _page_nums())
+    else:
+        offset = re.search('(\d+)\)', _page_nums())
     if offset:
         return offset.groups()[0]
     else:
