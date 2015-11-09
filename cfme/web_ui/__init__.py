@@ -3349,7 +3349,7 @@ class AngularSelect(object):
         index = options_map.index(value)
         if not self.is_open:
             self.open()
-        new_loc = self._loc + '/../div/ul/li[@data-original-index={}]'.format(index)
+        new_loc = self._loc + '/../div/ul/li[@data-original-index={}]/a'.format(index)
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)
