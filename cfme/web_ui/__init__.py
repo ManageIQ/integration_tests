@@ -2180,7 +2180,7 @@ class Quadicon(Pretty):
         self._name = name
         self.qtype = qtype
 
-    @property
+    @classmethod
     def title_name(self):
         if version.current_version() > '5.5.0.7':
             return 'data-original-title'
@@ -2203,7 +2203,7 @@ class Quadicon(Pretty):
     def checkbox(self):
         """ Returns:  a locator for the internal checkbox for the quadicon"""
         return "//input[@type='checkbox' and ../../..//a[@{}={}]]".format(
-            self.title_name, quoteattr(self._name))
+            self.title_name(), quoteattr(self._name))
 
     @property
     def exists(self):
@@ -2218,14 +2218,14 @@ class Quadicon(Pretty):
         try:
             return sel.move_to_element('div/a',
                 root="//div[@id='quadicon' and ../../..//a[@{}={}]]".format(
-                    self.title_name, quoteattr(self._name)))
+                    self.title_name(), quoteattr(self._name)))
         except sel.NoSuchElementException:
             quads = sel.elements("//div[@id='quadicon']/../../../tr/td/a")
             if not quads:
                 raise sel.NoSuchElementException("Quadicon {} not found. No quads present".format(
                     self._name))
             else:
-                quad_names = [sel.get_attribute(quad, self.title_name) for quad in quads]
+                quad_names = [sel.get_attribute(quad, self.title_name()) for quad in quads]
                 raise sel.NoSuchElementException(
                     "Quadicon {} not found. These quads are present:\n{}".format(
                         self._name, ", ".join(quad_names)))
@@ -2233,7 +2233,7 @@ class Quadicon(Pretty):
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
         return "//div[contains(@class, {}) and ../../../..//a[@{}={}]]".format(
-            quoteattr("{}72".format(corner)), self.title_name,
+            quoteattr("{}72".format(corner)), self.title_name(),
             quoteattr(self._name))
 
     def __getattr__(self, name):
@@ -2283,7 +2283,7 @@ class Quadicon(Pretty):
             pages = paginator.pages()
         for page in pages:
             for href in sel.elements("//div[@id='quadicon']/../../../tr/td/a"):
-                yield cls(sel.get_attribute(href, cls.title_name), qtype)
+                yield cls(sel.get_attribute(href, cls.title_name()), qtype)
 
     @classmethod
     def first(cls, qtype=None):
