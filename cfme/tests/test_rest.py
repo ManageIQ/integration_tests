@@ -4,8 +4,11 @@ import datetime
 import fauxfactory
 import pytest
 
+from cfme import Credential
 from cfme.automate.service_dialogs import ServiceDialog
+from cfme.configure.access_control import User, Group
 from cfme.configure.configuration import server_roles_disabled
+from cfme.login import login
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
@@ -13,7 +16,7 @@ from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils import error, mgmt_system, testgen, version
+from utils import error, mgmt_system, testgen, conf, version
 
 
 pytest_generate_tests = testgen.generate(
@@ -130,6 +133,16 @@ def dialog():
 
 @pytest.mark.usefixtures("logged_in")
 @pytest.fixture(scope='function')
+def user():
+    user = User(credential=Credential(principal=fauxfactory.gen_alphanumeric(),
+        secret=fauxfactory.gen_alphanumeric()), name=fauxfactory.gen_alphanumeric(),
+        group=Group(description='EvmGroup-super_administrator'))
+    user.create()
+    return user
+
+
+@pytest.mark.usefixtures("logged_in")
+@pytest.fixture(scope='function')
 def service_templates(request, rest_api, dialog):
     catalog_items = []
     for index in range(1, 5):
@@ -237,6 +250,60 @@ def automation_requests_data():
             "auto_approve": True
         }
     } for index in range(1, 5)]
+
+
+@pytest.fixture(scope='function')
+def roles(request, rest_api):
+    if "create" not in rest_api.collections.roles.action.all:
+        pytest.skip("Create roles action is not implemented in this version")
+
+    roles_data = [{
+        "name": "role_name_{}".format(fauxfactory.gen_alphanumeric())
+    } for index in range(1, 5)]
+
+    roles = rest_api.collections.roles.action.create(*roles_data)
+    for role in roles:
+        wait_for(
+            lambda: rest_api.collections.roles.find_by(name=role.name),
+            num_sec=180,
+            delay=10,
+        )
+
+    @request.addfinalizer
+    def _finished():
+        ids = [r.id for r in roles]
+        delete_roles = [r for r in rest_api.collections.roles if r.id in ids]
+        if len(delete_roles) != 0:
+            rest_api.collections.roles.action.delete(*delete_roles)
+
+    return roles
+
+
+@pytest.fixture(scope='function')
+def categories(request, rest_api):
+    if "create" not in rest_api.collections.categories.action.all:
+        pytest.skip("Create categories action is not implemented in this version")
+    ctg_data = [{
+        'name': 'test_category_{}_{}'.format(fauxfactory.gen_alphanumeric().lower(), _index),
+        'description': 'test_category_{}_{}'.format(fauxfactory.gen_alphanumeric().lower(), _index)
+    } for _index in range(0, 5)]
+    ctgs = rest_api.collections.categories.action.create(*ctg_data)
+    for ctg in ctgs:
+        wait_for(
+            lambda: rest_api.collections.categories.find_by(description=ctg.description),
+            num_sec=180,
+            delay=10,
+        )
+
+    @request.addfinalizer
+    def _finished():
+        ids = [ctg.id for ctg in ctgs]
+        delete_ctgs = [ctg for ctg in rest_api.collections.categories
+            if ctg.id in ids]
+        if len(delete_ctgs) != 0:
+            rest_api.collections.categories.action.delete(*delete_ctgs)
+
+    return ctgs
 
 
 # Here also available the ability to create multiple provision request, but used the save
@@ -497,7 +564,7 @@ def test_retire_service_now(rest_api, services):
     retire_service.action.retire()
     wait_for(
         lambda: not rest_api.collections.services.find_by(name=retire_service.name),
-        num_sec=380,
+        num_sec=600,
         delay=10,
     )
 
@@ -762,6 +829,145 @@ def test_automation_requests(request, rest_api, automation_requests_data, multip
         return True
 
     wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+@pytest.mark.parametrize(
+    "multiple", [False, True],
+    ids=["one_request", "multiple_requests"])
+def test_edit_categories(rest_api, categories, multiple):
+    if "edit" not in rest_api.collections.categories.action.all:
+        pytest.skip("Edit categories action is not implemented in this version")
+
+    if multiple:
+        new_names = []
+        ctgs_data_edited = []
+        for ctg in categories:
+            new_name = fauxfactory.gen_alphanumeric().lower()
+            new_names.append(new_name)
+            ctg.reload()
+            ctgs_data_edited.append({
+                "href": ctg.href,
+                "description": "test_category_{}".format(new_name),
+            })
+        rest_api.collections.categories.action.edit(*ctgs_data_edited)
+        for new_name in new_names:
+            wait_for(
+                lambda: rest_api.collections.categories.find_by(description=new_name),
+                num_sec=180,
+                delay=10,
+            )
+    else:
+        ctg = rest_api.collections.categories.find_by(description=categories[0].description)[0]
+        new_name = 'test_category_{}'.format(fauxfactory.gen_alphanumeric().lower())
+        ctg.action.edit(description=new_name)
+        wait_for(
+            lambda: rest_api.collections.categories.find_by(description=new_name),
+            num_sec=180,
+            delay=10,
+        )
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+@pytest.mark.parametrize(
+    "multiple", [False, True],
+    ids=["one_request", "multiple_requests"])
+def test_delete_categories(rest_api, categories, multiple):
+    if "delete" not in rest_api.collections.categories.action.all:
+        pytest.skip("Delete categories action is not implemented in this version")
+
+    if multiple:
+        rest_api.collections.categories.action.delete(*categories)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            rest_api.collections.categories.action.delete(*categories)
+    else:
+        ctg = categories[0]
+        ctg.action.delete()
+        with error.expected("ActiveRecord::RecordNotFound"):
+            ctg.action.delete()
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+@pytest.mark.parametrize(
+    "multiple", [False, True],
+    ids=["one_request", "multiple_requests"])
+def test_edit_roles(rest_api, roles, multiple):
+    if "edit" not in rest_api.collections.roles.action.all:
+        pytest.skip("Edit roles action is not implemented in this version")
+
+    if multiple:
+        new_names = []
+        roles_data_edited = []
+        for role in roles:
+            new_name = fauxfactory.gen_alphanumeric()
+            new_names.append(new_name)
+            role.reload()
+            roles_data_edited.append({
+                "href": role.href,
+                "name": "role_name_{}".format(new_name),
+            })
+        rest_api.collections.roles.action.edit(*roles_data_edited)
+        for new_name in new_names:
+            wait_for(
+                lambda: rest_api.collections.roles.find_by(name=new_name),
+                num_sec=180,
+                delay=10,
+            )
+    else:
+        role = rest_api.collections.roles.find_by(name=roles[0].name)[0]
+        new_name = 'role_name_{}'.format(fauxfactory.gen_alphanumeric())
+        role.action.edit(name=new_name)
+        wait_for(
+            lambda: rest_api.collections.roles.find_by(name=new_name),
+            num_sec=180,
+            delay=10,
+        )
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_delete_roles(rest_api, roles):
+    if "delete" not in rest_api.collections.roles.action.all:
+        pytest.skip("Delete roles action is not implemented in this version")
+
+    rest_api.collections.roles.action.delete(*roles)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        rest_api.collections.roles.action.delete(*roles)
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_add_delete_role(rest_api):
+    if "add" not in rest_api.collections.roles.action.all:
+        pytest.skip("Add roles action is not implemented in this version")
+
+    role_data = {"name": "role_name_{}".format(format(fauxfactory.gen_alphanumeric()))}
+    role = rest_api.collections.roles.action.add(role_data)[0]
+    wait_for(
+        lambda: rest_api.collections.roles.find_by(name=role.name),
+        num_sec=180,
+        delay=10,
+    )
+    role.action.delete()
+    with error.expected("ActiveRecord::RecordNotFound"):
+        role.action.delete()
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_edit_user_password(rest_api, user):
+    if "edit" not in rest_api.collections.users.action.all:
+        pytest.skip("Edit action for users is not implemented in this version")
+    try:
+        for cur_user in rest_api.collections.users:
+            if cur_user.userid != conf.credentials['default']['username']:
+                rest_user = cur_user
+                break
+    except:
+        pytest.skip("There is no user to change password")
+
+    new_password = fauxfactory.gen_alphanumeric()
+    rest_user.action.edit(password=new_password)
+    cred = Credential(principal=rest_user.userid, secret=new_password)
+    new_user = User(credential=cred)
+    login(new_user)
 
 
 COLLECTIONS_IGNORED_53 = {
