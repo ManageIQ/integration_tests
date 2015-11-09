@@ -228,7 +228,10 @@ class Collection(object):
     def _find_by_filter(self, **params):
         search_query = []
         for key, value in params.iteritems():
-            search_query.append("{}={}".format(key, repr(str(value))))
+            if isinstance(value, int):
+                search_query.append("{}={}".format(key, value))
+            else:
+                search_query.append("{}={}".format(key, repr(str(value))))
         return SearchResult(self, self._api.get(self._href, **{"filter[]": search_query}))
 
     def get(self, **params):
