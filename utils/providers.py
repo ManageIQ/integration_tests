@@ -155,7 +155,7 @@ def get_mgmt_by_name(provider_name, *args, **kwargs):
 
 
 def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=True,
-                     required_keys=[]):
+                     required_keys=None):
     """Sets up a single provider robustly.
 
     Does some counter-badness measures.
@@ -167,7 +167,8 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         check_existing: Whether to check if the provider already exists.
         required_keys: A set of required keys for the provider data to have
     """
-
+    if not required_keys:
+        required_keys = []
     if prov_class in ("infra", "cloud", "container"):
         if prov_class == "infra":
             potential_providers = list_infra_providers()

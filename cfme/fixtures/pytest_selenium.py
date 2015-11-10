@@ -710,7 +710,7 @@ def unset_attribute(loc, attr):
         loc: A locator, expects either a string, WebElement, tuple.
         attr: Attribute name.
     """
-    logger.info("!!! ATTENTION! REMOVING READ-ONLY ATTRIBUTE {} OF {} TO {}!!!".format(attr, loc))
+    logger.info("!!! ATTENTION! REMOVING READ-ONLY ATTRIBUTE {} OF {}!!!".format(attr, loc))
     return execute_script("arguments[0].removeAttribute(arguments[1]);", element(loc), attr)
 
 

@@ -9,7 +9,7 @@ import cfme.web_ui.menu
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
-    accordion, Quadicon, Form, Input, fill, form_buttons, toolbar, SplitTable, mixins
+    accordion, Quadicon, Form, Input, fill, form_buttons, SplitTable, mixins
 )
 from utils import lazycache, version, conf
 from utils.log import logger
@@ -50,7 +50,7 @@ nav.add_branch(
             lambda _: (accordion.tree('Providers',
                 version.pick({version.LOWEST: 'All Red Hat Satellite Providers',
                               version.UPSTREAM: 'All Foreman Providers'})),
-                toolbar.select('Grid View')),
+                tb.select('Grid View')),
             {
                 'infrastructure_config_manager_new':
                 lambda _: cfg_btn('Add a new Provider'),
@@ -96,7 +96,7 @@ nav.add_branch(
             {
                 'infrastructure_config_system':
                 [
-                    lambda ctx: (toolbar.select('Grid View'),
+                    lambda ctx: (tb.select('Grid View'),
                     sel.click(Quadicon(ctx['system'].name, None))),
                     {
                         'infrastructure_config_system_provision':
@@ -357,7 +357,7 @@ class ConfigSystem(Pretty):
         """Tags the system by given tag"""
         self.navigate()
         # Workaround for BZ#1241867
-        toolbar.select('Policy', 'Edit Tags')
+        tb.select('Policy', 'Edit Tags')
         fill(mixins.tag_form, {'category': 'Cost Center *', 'tag': 'Cost Center 001'})
         # ---
         mixins.add_tag(tag, navigate=False)

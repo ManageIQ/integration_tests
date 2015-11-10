@@ -43,7 +43,7 @@ def log_event(action, event_type=None, resource_name=None):
     if event_type and resource_name:
         logger.info('%s "%s" event for resource "%s"', action, event_type, resource_name)
     elif event_type:
-        logger.info('%s "%s" event for resource "%s"', action, event_type)
+        logger.info('%s "%s" event', action, event_type)
 
 
 @route('/events', method='GET')
