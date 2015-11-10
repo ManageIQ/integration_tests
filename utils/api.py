@@ -85,13 +85,15 @@ class API(object):
                 raise APIException("JSONDecodeError: {}".format(data.text))
         return self._result_processor(data)
 
-    def get_entity(self, collection_or_name, entity_id):
+    def get_entity(self, collection_or_name, entity_id, attributes=None):
         if not isinstance(collection_or_name, Collection):
             collection = Collection(
                 self, "{}/{}".format(self._entry_point, collection_or_name), collection_or_name)
         else:
             collection = collection_or_name
         entity = Entity(collection, {"href": "{}/{}".format(collection._href, entity_id)})
+        if attributes is not None:
+            entity.reload(attributes=attributes)
         return entity
 
     def api_version(self, version):
@@ -258,8 +260,8 @@ class Collection(object):
     def __repr__(self):
         return "<Collection {} ({})>".format(repr(self.name), repr(self.description))
 
-    def __call__(self, id):
-        return self._api.get_entity(self, id)
+    def __call__(self, entity_id, attributes=None):
+        return self._api.get_entity(self, entity_id, attributes=attributes)
 
     def __iter__(self):
         self.reload(expand=True)
@@ -312,13 +314,16 @@ class Entity(object):
         else:  # Malformed
             raise ValueError("Malformed data: {}".format(repr(self._data)))
 
-    def reload(self, expand=None, get=True):
+    def reload(self, expand=None, get=True, attributes=None):
+        kwargs = {}
         if expand:
             if isinstance(expand, (list, tuple)):
                 expand = ",".join(map(str, expand))
-            kwargs = {"expand": expand}
-        else:
-            kwargs = {}
+            kwargs.update(expand=expand)
+        if attributes is not None:
+            if isinstance(attributes, basestring):
+                attributes = [attributes]
+            kwargs.update(attributes=",".join(attributes))
         if get:
             new = self.collection._api.get(self._href, **kwargs)
             if self._data is None:
