@@ -24,8 +24,9 @@ def keepalive_daemon():
     """
     while True:
         for vm_name in rhev_vms:
-            if virsh('domstate {}'.format(vm_name)) == 'shut off':
-                virsh('start {}'.format(vm_name))
+            if vm_name is not None:
+                if virsh('domstate {}'.format(vm_name)) == 'shut off':
+                    virsh('start {}'.format(vm_name))
         sleep(180)
 
 deployment = rhci['deployments'][rhci.deployment]['fusor']
