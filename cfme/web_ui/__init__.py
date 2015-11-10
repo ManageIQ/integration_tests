@@ -1045,7 +1045,7 @@ def fill_checkbox(cb, val):
 
 
 @multidispatch
-def fill(loc, content):
+def fill(loc, content, **kwargs):
     """
     Fills in a UI component with the given content.
 
