@@ -228,6 +228,10 @@ def poke_trackerbot(self):
         if not provider.provider_data.get("use_for_sprout", False):
             continue
         template_name = template["template"]["name"]
+        date = parse_template(template_name).datestamp
+        if not date:
+            # Not a CFME/MIQ template, ignore it.
+            continue
         # Preconfigured one
         try:
             Template.objects.get(
@@ -295,7 +299,7 @@ def create_appliance_template(self, provider_id, group_id, template_name):
         # Fire off the template preparation
         date = parse_template(template_name).datestamp
         if not date:
-            raise ValueError("Could not parse template name {} properly".format(template_name))
+            return
         template_version = retrieve_cfme_appliance_version(template_name)
         new_template_name = settings.TEMPLATE_FORMAT.format(
             group=group.id, date=date.strftime("%y%m%d"), rnd=fauxfactory.gen_alphanumeric(8))
@@ -918,7 +922,7 @@ def retrieve_appliance_ip(self, appliance_id):
 def refresh_appliances(self):
     """Dispatches the appliance refresh process among the providers"""
     self.logger.info("Initiating regular appliance provider refresh")
-    for provider in Provider.objects.all():
+    for provider in Provider.objects.filter(working=True):
         refresh_appliances_provider.delay(provider.id)
 
 
@@ -929,6 +933,9 @@ def refresh_appliances_provider(self, provider_id):
     """
     self.logger.info("Refreshing appliances in {}".format(provider_id))
     provider = Provider.objects.get(id=provider_id)
+    if not hasattr(provider.api, "all_vms"):
+        # Ignore this provider
+        return
     vms = provider.api.all_vms()
     dict_vms = {}
     uuid_vms = {}
