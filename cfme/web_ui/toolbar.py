@@ -34,6 +34,27 @@ def root_loc(root):
                     quoteattr(root), quoteattr(root)))
 
 
+def exists(root, sub=None):
+    sel.wait_for_ajax()
+    if isinstance(root, dict):
+        root = version.pick(root)
+    if sub is not None and isinstance(sub, dict):
+        sub = version.pick(sub)
+
+    quoted = None
+    if sub:
+        quoted = quoteattr(sub).replace("'", "\\'")
+    else:
+        quoted = quoteattr(root).replace("'", "\\'")
+
+    try:
+        sel.element("//button[@data-original-title = {}] | "
+                    "//a[@data-original-title = {}]".format(quoted, quoted))
+        return True
+    except:
+        return False
+
+
 def sub_loc(sub):
     """ Returns the locator of the sub button
 
