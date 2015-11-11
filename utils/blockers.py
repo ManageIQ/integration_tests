@@ -169,7 +169,7 @@ class BZ(Blocker):
         except xmlrpclib.Fault as e:
             code = e.faultCode
             s = e.faultString.strip().split("\n")[0]
-            logger.error("Bugzilla thrown a fault: {}/".format(code, s))
+            logger.error("Bugzilla thrown a fault: {}/{}".format(code, s))
             logger.warning("Ignoring and taking the bug as non-blocking")
             store.terminalreporter.write(
                 "Bugzila made a booboo: {}/{}\n".format(code, s), bold=True)

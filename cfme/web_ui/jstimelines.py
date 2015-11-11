@@ -79,12 +79,12 @@ def find_visible_events_for_vm(vm_name):
     Args:
         vm_name: The vm name.
     """
-    events = []
+    events_list = []
     for event in events():
         info = event.block_info()
         if info.get('title', None) == vm_name:
-            events.append(event)
-            return events
+            events_list.append(event)
+            return events_list
 
 
 def events():
