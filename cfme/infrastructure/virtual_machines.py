@@ -677,7 +677,14 @@ def get_all_vms(do_not_navigate=False):
     if not do_not_navigate:
         sel.force_navigate('infra_vms')
     vms = set([])
+
+    title_attr = version.pick({
+        version.LOWEST: "title",
+        "5.5": "data-original-title"})
+
     if not paginator.page_controls_exist():
+        for title in sel.elements(QUADICON_TITLE_LOCATOR):
+            vms.add(sel.get_attribute(title, title_attr))
         return vms
 
     paginator.results_per_page(1000)
@@ -685,7 +692,7 @@ def get_all_vms(do_not_navigate=False):
         try:
             for page in paginator.pages():
                 for title in sel.elements(QUADICON_TITLE_LOCATOR):
-                    vms.add(sel.get_attribute(title, "title"))
+                    vms.add(sel.get_attribute(title, title_attr))
         except sel.NoSuchElementException:
             pass
     return vms
