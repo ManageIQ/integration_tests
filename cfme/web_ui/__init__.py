@@ -2180,13 +2180,6 @@ class Quadicon(Pretty):
         self._name = name
         self.qtype = qtype
 
-    @classmethod
-    def title_name(self):
-        if version.current_version() > '5.5.0.7':
-            return 'data-original-title'
-        else:
-            return 'title'
-
     @property
     def qtype(self):
         return self._qtype
@@ -2202,8 +2195,7 @@ class Quadicon(Pretty):
 
     def checkbox(self):
         """ Returns:  a locator for the internal checkbox for the quadicon"""
-        return "//input[@type='checkbox' and ../../..//a[@{}={}]]".format(
-            self.title_name(), quoteattr(self._name))
+        return "//input[@type='checkbox' and ../../..//a[{}]]".format(self.a_cond)
 
     @property
     def exists(self):
@@ -2213,28 +2205,31 @@ class Quadicon(Pretty):
         except sel.NoSuchElementException:
             return False
 
+    @property
+    def a_cond(self):
+        return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
+
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
         try:
-            return sel.move_to_element('div/a',
-                root="//div[@id='quadicon' and ../../..//a[@{}={}]]".format(
-                    self.title_name(), quoteattr(self._name)))
+            return sel.move_to_element(
+                'div/a',
+                root="//div[@id='quadicon' and ../../..//a[{}]]".format(self.a_cond))
         except sel.NoSuchElementException:
             quads = sel.elements("//div[@id='quadicon']/../../../tr/td/a")
             if not quads:
                 raise sel.NoSuchElementException("Quadicon {} not found. No quads present".format(
                     self._name))
             else:
-                quad_names = [sel.get_attribute(quad, self.title_name()) for quad in quads]
+                quad_names = [self._get_title(quad) for quad in quads]
                 raise sel.NoSuchElementException(
                     "Quadicon {} not found. These quads are present:\n{}".format(
                         self._name, ", ".join(quad_names)))
 
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
-        return "//div[contains(@class, {}) and ../../../..//a[@{}={}]]".format(
-            quoteattr("{}72".format(corner)), self.title_name(),
-            quoteattr(self._name))
+        return "//div[contains(@class, {}) and ../../../..//a[{}]]".format(
+            quoteattr("{}72".format(corner)), self.a_cond)
 
     def __getattr__(self, name):
         """ Queries the quadrants by name
@@ -2268,6 +2263,14 @@ class Quadicon(Pretty):
         return self.locate()
 
     @classmethod
+    def _get_title(cls, el):
+        title = sel.get_attribute(el, "title")
+        if title is not None:
+            return title
+        else:
+            return sel.get_attribute(el, "data-original-title")
+
+    @classmethod
     def all(cls, qtype=None, this_page=False):
         """Allows iteration over Quadicons.
 
@@ -2283,7 +2286,7 @@ class Quadicon(Pretty):
             pages = paginator.pages()
         for page in pages:
             for href in sel.elements("//div[@id='quadicon']/../../../tr/td/a"):
-                yield cls(sel.get_attribute(href, cls.title_name()), qtype)
+                yield cls(cls._get_title(href), qtype)
 
     @classmethod
     def first(cls, qtype=None):
