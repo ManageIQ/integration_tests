@@ -15,6 +15,7 @@ from fixtures.pytest_store import store
 from cfme.web_ui import Quadicon, paginator, toolbar
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import UnknownProviderType
+from cfme.containers.provider import KubernetesProvider, OpenshiftProvider
 from cfme.infrastructure.provider import (
     OpenstackInfraProvider, RHEVMProvider, VMwareProvider, SCVMMProvider)
 from fixtures.prov_filter import filtered
@@ -560,11 +561,13 @@ def destroy_vm(provider_mgmt, vm_name):
 def get_credentials_from_config(credential_config_name, cred_type=None):
     creds = conf.credentials[credential_config_name]
     domain = creds.get('domain', None)
+    token = creds.get('token', None)
     return BaseProvider.Credential(
         principal=creds['username'],
         secret=creds['password'],
         cred_type=cred_type,
-        domain=domain)
+        domain=domain,
+        token=token)
 
 
 def get_crud(provider_config_name):
@@ -651,11 +654,25 @@ def get_crud(provider_config_name):
             start_ip=start_ip,
             end_ip=end_ip)
     elif prov_type == 'kubernetes':
-        # TODO
-        pass
+        token_creds = get_credentials_from_config(prov_config['credentials'], cred_type='token')
+        return KubernetesProvider(
+            name=prov_config['name'],
+            credentials={'token': token_creds},
+            key=provider_config_name,
+            zone=prov_config['server_zone'],
+            hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
+            port=prov_config['port'],
+            provider_data=prov_config)
     elif prov_type == 'openshift':
-        # TODO
-        pass
+        token_creds = get_credentials_from_config(prov_config['credentials'], cred_type='token')
+        return OpenshiftProvider(
+            name=prov_config['name'],
+            credentials={'token': token_creds},
+            key=provider_config_name,
+            zone=prov_config['server_zone'],
+            hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
+            port=prov_config['port'],
+            provider_data=prov_config)
     else:
         raise UnknownProviderType('{} is not a known provider type'.format(prov_type))
 

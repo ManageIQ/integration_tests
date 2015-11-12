@@ -33,6 +33,9 @@ manage_policies_tree = CheckboxTree(
 details_page = Region(infoblock_type='detail')
 
 credential_form = TabStripForm(
+    fields=[
+        ('token_secret', Input('bearer_token'))
+    ],
     tab_fields={
         "Default": [
             ('default_principal', Input("default_userid")),
@@ -62,13 +65,14 @@ credential_form = TabStripForm(
     ])
 
 
-class BaseProvider(Taggable):
+class BaseProvider(Taggable, Updateable):
     # List of constants that every non-abstract subclass must have defined
     STATS_TO_MATCH = []
     string_name = ""
     page_name = ""
     edit_page_suffix = ""
     detail_page_suffix = ""
+    refresh_text = ""
     quad_name = None
     properties_form = None
     add_provider_button = None
@@ -86,6 +90,8 @@ class BaseProvider(Taggable):
             super(BaseProvider.Credential, self).__init__(**kwargs)
             self.type = kwargs.get('cred_type', None)
             self.domain = kwargs.get('domain', None)
+            if self.type == 'token':
+                self.token = kwargs['token']
 
     @property
     def data(self):
@@ -184,7 +190,7 @@ class BaseProvider(Taggable):
             fill(credential_form, updates.get('credentials', {}).get(cred, None),
                  validate=validate_credentials)
         self._submit(cancel, self.save_button)
-        name = updates['name'] or self.name
+        name = updates.get('name', self.name)
         if not cancel:
             flash.assert_message_match('{} Provider "{}" was saved'.format(self.string_name, name))
 
@@ -231,9 +237,7 @@ class BaseProvider(Taggable):
             return
         else:
             # Set off a Refresh Relationships
-            self.load_details()
-            tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
-            sel.handle_alert()
+            self.refresh_provider_relationships()
 
             refresh_timer = RefreshTimer(time_for_refresh=300)
             wait_for(self._do_stats_match,
@@ -313,7 +317,7 @@ class BaseProvider(Taggable):
             sel.check(Quadicon(self.name, self.quad_name).checkbox())
         else:
             self.load_details()
-        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
+        tb.select("Configuration", self.refresh_text, invokes_alert=True)
         sel.handle_alert(cancel=False)
 
     def _on_detail_page(self):
@@ -355,6 +359,12 @@ class BaseProvider(Taggable):
 
 
 class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
+    vm_name = ""
+    template_name = ""
+    detail_page_suffix = 'provider'
+    edit_page_suffix = 'provider_edit'
+    refresh_text = "Refresh Relationships and Power States"
+
     def wait_for_creds_ok(self):
         """Waits for provider's credentials to become O.K. (circumvents the summary rails exc.)"""
         self.refresh_provider_relationships(from_list_view=True)

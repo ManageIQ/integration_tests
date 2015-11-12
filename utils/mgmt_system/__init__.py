@@ -8,8 +8,8 @@ from mgmtsystem.openstack import OpenstackSystem  # NOQA
 from mgmtsystem.rhevm import RHEVMSystem as RHEVMSystemBase  # NOQA
 from mgmtsystem.scvmm import SCVMMSystem  # NOQA
 from mgmtsystem.virtualcenter import VMWareSystem  # NOQA
-from mgmtsystem.kubernetes import Kubernetes  # NOQA
-from mgmtsystem.openshift import Openshift  # NOQA
+from kubernetes import Kubernetes  # NOQA
+from openshift import Openshift  # NOQA
 
 from utils import conf
 from utils.log import logger

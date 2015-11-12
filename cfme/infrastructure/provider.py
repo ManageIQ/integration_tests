@@ -23,7 +23,6 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.form_buttons import FormButton
 from utils.log import logger
-from utils.update import Updateable
 from utils.wait import wait_for
 from utils import version
 from utils.pretty import Pretty
@@ -85,7 +84,7 @@ nav.add_branch('infrastructure_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
-class Provider(Updateable, Pretty, CloudInfraProvider):
+class Provider(Pretty, CloudInfraProvider):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -108,8 +107,6 @@ class Provider(Updateable, Pretty, CloudInfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
     page_name = "infrastructure"
-    detail_page_suffix = 'provider'
-    edit_page_suffix = 'provider_edit'
     quad_name = "infra_prov"
     properties_form = properties_form
     add_provider_button = form_buttons.FormButton("Add this Infrastructure Provider")

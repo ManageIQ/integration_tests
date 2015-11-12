@@ -95,7 +95,8 @@ from utils import version
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.providers import (
-    cloud_provider_type_map, infra_provider_type_map, provider_type_map, get_crud)
+    cloud_provider_type_map, infra_provider_type_map, container_provider_type_map,
+    provider_type_map, get_crud)
 
 
 _version_operator_map = OrderedDict([('>=', lambda o, v: o >= v),
@@ -402,6 +403,14 @@ def infra_providers(metafunc, *fields, **options):
 
     """
     return provider_by_type(metafunc, infra_provider_type_map, *fields, **options)
+
+
+def container_providers(metafunc, *fields, **options):
+    """Wrapper for :py:func:`provider_by_type` that pulls types from
+    :py:attr:`utils.providers.container_provider_type_map`
+
+    """
+    return provider_by_type(metafunc, container_provider_type_map, *fields, **options)
 
 
 def all_providers(metafunc, *fields, **options):

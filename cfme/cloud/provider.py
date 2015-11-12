@@ -21,7 +21,6 @@ from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, Angular
 from cfme.web_ui import Input
 from utils.log import logger
 from utils.providers import setup_provider_by_name
-from utils.update import Updateable
 from utils.wait import wait_for
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
@@ -77,7 +76,7 @@ nav.add_branch('clouds_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
-class Provider(Updateable, Pretty, CloudInfraProvider):
+class Provider(Pretty, CloudInfraProvider):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
 
@@ -99,8 +98,6 @@ class Provider(Updateable, Pretty, CloudInfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
     page_name = "clouds"
-    detail_page_suffix = 'provider'
-    edit_page_suffix = 'provider_edit'
     quad_name = "cloud_prov"
     vm_name = "Instances"
     template_name = "Images"
