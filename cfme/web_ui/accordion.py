@@ -105,19 +105,16 @@ def tree(name, *path):
             click(name)
     except AccordionItemNotFound:
         click(name)
-    tree = Tree(
-        sel.first_from(
-            # Current tree
+    el = sel.element(
+        # | for only single query
+        "|".join([
+            # Current tree for 5.4 (still with dhx)
             "../../div[contains(@class, 'dhxcont_global_content_area')]//"
             "ul[@class='dynatree-container']",
-            # Legacy tree
-            "../../div[contains(@class, 'dhxcont_global_content_area')]//"
-            "div[@class='containerTableStyle']//table[not(ancestor::tr[contains(@style,'none')])]",
-            # New accordion tree
-            "../../..//div[@class='panel-body']//ul[@class='dynatree-container']",
-            root=sel.element(locate(name))
-        )
-    )
+            # Newer accordion tree
+            "../../..//div[@class='panel-body']//ul[@class='dynatree-container']"]),
+        root=sel.element(locate(name)))
+    tree = Tree(el)
     if path:
         return tree.click_path(*path)
     else:

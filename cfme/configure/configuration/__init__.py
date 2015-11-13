@@ -174,16 +174,15 @@ def edit_tag(cat_name, tag_name):
 def server_zone_description():
     return store.current_appliance.zone_description
 
+
+def server_region_string():
+    return "CFME Region: Region {} [{}]".format(*server_region_pair())
+
 nav.add_branch("configuration",
     {
         "cfg_settings_region":
         [
-            lambda _: settings_tree(
-                version.pick({
-                    version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
-                    "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
-                })
-            ),
+            lambda _: settings_tree(server_region_string()),
             {
                 "cfg_settings_region_details":
                 lambda _: tabs.select_tab("Details"),
@@ -227,7 +226,7 @@ nav.add_branch("configuration",
         ],
 
         "cfg_analysis_profiles": [
-            lambda _: settings_tree("Analysis Profiles"),
+            lambda _: settings_tree(server_region_string(), "Analysis Profiles"),
             {
                 "host_analysis_profile_add": lambda _: tb.select(
                     "Configuration", "Add Host Analysis Profile"),
@@ -237,7 +236,8 @@ nav.add_branch("configuration",
         ],
 
         "cfg_analysis_profile": [
-            lambda ctx: settings_tree("Analysis Profiles", str(ctx.analysis_profile)),
+            lambda ctx:
+            settings_tree(server_region_string(), "Analysis Profiles", str(ctx.analysis_profile)),
             {
                 "analysis_profile_edit":
                 lambda _: tb.select("Configuration", "Edit this Analysis Profile"),
@@ -246,24 +246,15 @@ nav.add_branch("configuration",
 
         "cfg_settings_defaultzone":
         lambda _: settings_tree(
-            version.pick({
-                version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
-                "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
-            }),
+            server_region_string(),
             "Zones",
-            version.pick({
-                version.LOWEST: "Zone: Default Zone",
-                "5.3": "Zone: Default Zone (current)"
-            }),
+            "Zone: Default Zone (current)",
         ),
 
         "cfg_settings_zones":
         [
             lambda _: settings_tree(
-                version.pick({
-                    version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
-                    "5.3": "CFME Region: Region %d [%d]" % server_region_pair(),
-                }),
+                server_region_string(),
                 "Zones"),
             {
                 "cfg_settings_zone":
@@ -280,10 +271,7 @@ nav.add_branch("configuration",
         "cfg_settings_schedules":
         [
             lambda _: settings_tree(
-                version.pick({
-                    version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
-                    "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
-                }),
+                server_region_string(),
                 "Schedules"),
             {
                 "cfg_settings_schedule":
@@ -300,16 +288,10 @@ nav.add_branch("configuration",
         "cfg_settings_currentserver":
         [
             lambda _: settings_tree(
-                version.pick({
-                    version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
-                    "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
-                }),
+                server_region_string(),
                 "Zones",
-                version.pick({
-                    version.LOWEST: "Zone: %s" % server_zone_description(),
-                    "5.3": "Zone: %s (current)" % server_zone_description()
-                }),
-                "Server: %s [%d] (current)" % (server_name(), server_id())
+                "Zone: {} (current)".format(server_zone_description()),
+                "Server: {} [{}] (current)".format(server_name(), server_id())
             ),
             {
                 "cfg_settings_currentserver_server":
@@ -340,12 +322,9 @@ nav.add_branch("configuration",
         "cfg_diagnostics_currentserver":
         [
             lambda _: diagnostics_tree(
-                "CFME Region: Region %d [%d]" % server_region_pair(),
-                version.pick({
-                    version.LOWEST: "Zone: Default Zone",
-                    "5.3": "Zone: Default Zone (current)"
-                }),
-                "Server: %s [%d] (current)" % (server_name(), server_id())
+                server_region_string(),
+                "Zone: Default Zone (current)",
+                "Server: {} [{}] (current)".format(server_name(), server_id())
             ),
             {
                 "cfg_diagnostics_server_summary":
@@ -382,11 +361,8 @@ nav.add_branch("configuration",
         "cfg_diagnostics_defaultzone":
         [
             lambda _: diagnostics_tree(
-                "CFME Region: Region %d [%d]" % server_region_pair(),
-                version.pick({
-                    version.LOWEST: "Zone: Default Zone",
-                    "5.3": "Zone: Default Zone (current)"
-                }),
+                server_region_string(),
+                "Zone: Default Zone (current)",
             ),
             {
                 "cfg_diagnostics_zone_roles_by_servers":
@@ -407,9 +383,7 @@ nav.add_branch("configuration",
         ],
         "cfg_diagnostics_region":
         [
-            lambda _: diagnostics_tree(
-                "CFME Region: Region %d [%d]" % server_region_pair()
-            ),
+            lambda _: diagnostics_tree(server_region_string()),
             {
                 "cfg_diagnostics_region_zones":
                 lambda _: tabs.select_tab("Zones"),

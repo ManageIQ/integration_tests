@@ -33,10 +33,12 @@ def check_all():
 
 def is_dimmed(btn):
     tag = sel.tag(btn)
-    if tag == "li":
+    if tag in {"li", "img"}:
         class_attr = sel.get_attribute(btn, "class")
     elif tag == "span":
         class_attr = sel.get_attribute(sel.element("..", root=btn), "class")
+    else:
+        raise TypeError("Wrong tag name {}".format(tag))
     class_att = set(re.split(r"\s+", class_attr))
     if {"dimmed", "disabled"}.intersection(class_att):
         return True

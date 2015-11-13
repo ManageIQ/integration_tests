@@ -404,8 +404,8 @@ def _test_vm_removal():
 
 
 @pytest.mark.parametrize('product_features, action',
-                        [([['Infrastructure', 'Virtual Machines', 'Accordions'],
-                          ['Infrastructure', 'Virtual Machines', 'VM Access Rules',
+                        [([['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+                          ['Everything', 'Infrastructure', 'Virtual Machines', 'VM Access Rules',
                            'Modify', 'Provision VMs']],
                         _test_vm_provision)])
 def test_permission_edit(request, product_features, action):
@@ -462,7 +462,7 @@ cat_name = "Configure"
 @pytest.mark.parametrize(
     'role,allowed_actions,disallowed_actions',
     [[_mk_role(product_features=[[['Everything'], False],  # minimal permission
-                                 [[cat_name, 'Tasks'], True]]),
+                                 [['Everything', cat_name, 'Tasks'], True]]),
       {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
       {
           'my services': _go_to('my_services'),
@@ -531,16 +531,17 @@ def single_task_permission_test(product_features, actions):
 
 @pytest.mark.meta(blockers=[1136112, 1262764])
 def test_permissions_role_crud():
-    single_task_permission_test([[cat_name, 'Configuration'],
-                                 ['Services', 'Catalogs Explorer']],
+    single_task_permission_test([['Everything', cat_name, 'Configuration'],
+                                 ['Everything', 'Services', 'Catalogs Explorer']],
                                 {'Role CRUD': test_role_crud})
 
 
 def test_permissions_vm_provisioning():
     single_task_permission_test(
         [
-            ['Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify', 'Provision VMs']
+            ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+            ['Everything', 'Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify',
+                'Provision VMs']
         ],
         {'Provision VM': _test_vm_provision}
     )

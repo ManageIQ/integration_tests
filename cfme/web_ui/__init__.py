@@ -60,7 +60,7 @@ from selenium.common.exceptions import NoSuchElementException, MoveTargetOutOfBo
 from multimethods import multimethod, multidispatch, Anything
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme import exceptions
+from cfme import exceptions, js
 from cfme.fixtures.pytest_selenium import browser
 from utils import classproperty, lazycache, version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
@@ -1408,19 +1408,16 @@ def _fill_radio(radio, value):
 class Tree(Pretty):
     """ A class directed at CFME Tree elements
 
-    The Tree class aims to deal with all kinds of CFME trees, at time of writing there
-    are two distinct types. One which uses ``<table>`` elements and another which uses
-    ``<ul>`` elements.
+    The Tree class aims to deal with all kinds of CFME trees
 
     Args:
-        locator: This is a locator object pointing to either the outer ``<table>`` or
-            ``<ul>`` element which contains the rest of the table.
+        locator: This is a locator object pointing to the ``<ul>`` element which contains the rest
+            of the table.
 
     Returns: A :py:class:`Tree` object.
 
     A Tree object is set up by using a locator which contains the node elements. This element
-    will usually be a ``<ul>`` in the case of a Dynatree, or a ``<table>`` in the case of a
-    Legacy tree.
+    will usually be a ``<ul>`` in the case of a Dynatree.
 
     Usage:
 
@@ -1447,14 +1444,6 @@ class Tree(Pretty):
             ]
         ]
 
-    Note:
-      For legacy trees, the first element is often ignored as it is not a proper tree
-      element ie. in Automate->Explorer the Datastore element doesn't really exist, so we
-      omit it from the click map.
-
-      Legacy trees rely on a complex ``<table><tbody><tr><td>`` setup. We class a ``<tbody>``
-      as a node.
-
     Note: Dynatrees, rely on a ``<ul><li>`` setup. We class a ``<li>`` as a node.
 
     """
@@ -1463,222 +1452,112 @@ class Tree(Pretty):
     def __init__(self, locator):
         self.locator = locator
 
+    @lazycache
+    def tree_id(self):
+        if isinstance(self.locator, basestring) and re.match(r"^[a-zA-Z0-9_-]+$", self.locator):
+            return self.locator
+        else:
+            el = sel.element(self.locator)
+            tag = sel.tag(el)
+            tree_id = None
+            if tag == "ul":
+                try:
+                    parent = sel.element("..", root=el)
+                    id_attr = sel.get_attribute(parent, "id")
+                    if id_attr:
+                        tree_id = id_attr
+                except sel.NoSuchElementException:
+                    pass
+            elif tag == "div":
+                tree_id = sel.get_attribute(el, "id") or None
+            else:
+                raise ValueError("Unknown element ({}) passed to the Tree!".format(tag))
+
+            if tree_id is None:
+                raise ValueError("Could not retrieve the id for Tree {}".format(repr(tree_id)))
+            else:
+                return tree_id
+
+    def locate(self):
+        return "#{}".format(self.tree_id)
+
+    def root_el(self):
+        return sel.element(self)
+
     def _get_tag(self):
         if getattr(self, 'tag', None) is None:
-            self.tag = sel.tag(sel.element(self.locator))
+            self.tag = sel.tag(self)
         return self.tag
 
-    def _detect(self):
-        """ Detects which type of tree is being used
+    def read_contents(self, by_id=False):
+        result = False
+        while result is False:
+            sel.wait_for_ajax()
+            result = sel.execute_script(
+                "{} return read_tree(arguments[0], arguments[1]);".format(js.read_tree),
+                self.locate(),
+                by_id)
+        return result
 
-        On invocation, first determines which type of Tree object it is dealing
-        with and then sets the internal variables to match elements of the specific tree class.
-
-        There are currently 4 attributes needed in the tree classes.
-
-        * expandable: the element to check if the tree is expanded/collapsed.
-        * is_expanded_condition: a tuple containing the element attribute and value to
-          identify that an element **is** expanded.
-        * node_label: an XPATH which describes a node's label (the element with just the text,
-          not including the expand arrow, etc), needing expansion with format specifier for
-          matching.
-        * node_root: XPATH expression for the entire node (including the expand arrow etc)
-        * click_expand: the element to click on to expand the tree at that level.
-        """
-        self.root_el = sel.element(self.locator)
-        if self._get_tag() == 'ul':
-            # Dynatree
-            self.expandable = './span'
-            self.is_expanded_condition = ('class', 'dynatree-expanded', 'dynatree-has-children')
-            self.node_root = ".//li[span/a[normalize-space(.)='%s']]"
-            self.node_label = ".//li/span/a[normalize-space(.)='%s']"
-            self.click_expand = "./span/span"
-            self.leaf = "./span/a"
-            # Locators for reading the tree
-            # Finds all child nodes
-            self.nodes_root = "./li[span/a[@class='dynatree-title']]"
-            # How to get from the node to the container of child nodes
-            self.nodes_root_continue = "./ul"
-            # Label locator
-            self.node_label_loc = "./span/a[@class='dynatree-title']"
-        elif self._get_tag() == 'table':
-            # Legacy Tree
-            self.expandable = 'tr/td[1]/img'
-            self.is_expanded_condition = ('src', 'open.png')
-            self.node_root = ".//span[normalize-space(.)='%s']/../../.."
-            self.node_label = ".//span[normalize-space(.)='%s']"
-            self.click_expand = "tr/td[1]/img"
-            self.leaf = "tr/td/span"
-            # Locators for reading the tree - we do not support, this kind of getting, we have cust.
-            self.nodes_root = None
-            self.nodes_root_continue = None
-            self.node_label_loc = None
-        else:
-            raise exceptions.TreeTypeUnknown(
-                'The locator described does not point to a known tree type')
-
-    def _is_expanded(self, el):
-        """ Checks to see if an element is expanded
-
-        Args:
-            el: The element to check.
-
-        Returns: ``True`` if the element is expanded, ``False`` if not.
-        """
-        try:
-            meta = sel.element(self.expandable, root=el)
-        except NoSuchElementException:
-            return True  # Some trees have always-expanded roots
-
-        # This is a condition of checking whether this even is expandable
-        if len(self.is_expanded_condition) == 3:
-            if self.is_expanded_condition[2] not in sel.get_attribute(
-                    meta, self.is_expanded_condition[0]):
-                return True  # no need to expand
-
-        # It should be expandable, so now just check
-        if self.is_expanded_condition[1] in sel.get_attribute(
-                meta, self.is_expanded_condition[0]):
-            return True
-        else:
-            return False
-
-    def _expand(self, el, state=True):
-        """ Expands a tree node
-
-        Checks if a tree node needs expanding and then expands it.
-
-        Args:
-            el: The element to expand.
-        """
-        if self._is_expanded(el) != state:
-            sel.click(sel.element(self.click_expand, root=el))
-            return True
-        else:
-            return False
-
-    def node_element(self, node_name, parent):
-        return sel.element((self.node_label % node_name), root=parent)
-
-    def node_root_element(self, node_name, parent):
-        return sel.element((self.node_root % node_name), root=parent)
-
-    def nodes_root_elements(self, parent):
-        return sel.elements(self.nodes_root, root=parent)
-
-    def expand_path(self, *path):
-        """ Clicks through a series of elements in a path.
-
-        Clicks through a tree, by expanding the levels in a single straight path and
-        returns the final element without clicking it.
+    def expand_path(self, *path, **kwargs):
+        """ Exposes a path.
 
         Args:
             *path: The path as multiple positional string arguments denoting the course to take.
 
-        Returns: The element at the leaf of the tree.
+        Keywords:
+            by_id: Whether to match ids instead of text.
 
-        Raises:
-            cfme.exceptions.CandidateNotFound: A candidate in the tree could not be found to
-                continue down the path.
-            cfme.exceptions.TreeTypeUnknown: A locator was passed to the constructor which
-                does not correspond to a known tree type.
+        Returns: The leaf web element.
 
         """
+        by_id = kwargs.pop("by_id", False)
+        result = False
 
-        # The detect here is required every time to avoid a StaleElementException if the
-        # Tree goes off screen and returns.
-        self._detect()
-
-        parent = self.locator
-        path = list(path)
-        node = None
-        for i, item in enumerate(path):
+        # We sometimes have to wait for ajax. In that case, JS function returns false
+        # Then we repeat and wait. It does not seem completely possible to wait for the data in JS
+        # as it runs on one thread it appears. So this way it will try to drill multiple times
+        # each time deeper and deeper :)
+        while result is False:
+            sel.wait_for_ajax()
             try:
-                node = self.node_root_element(item, parent)
-            except sel_exceptions.NoSuchElementException as e:
-                raise exceptions.CandidateNotFound(
-                    {'message': "%s: could not be found in the tree." % item,
-                     'path': path,
-                     'index': i,
-                     'cause': e})
-
-            self._expand(node)
-            parent = node
-
-        return node
-
-    def read_contents(self, parent=None, unexpand=False):
-        """Reads complete contents of the tree recursively.
-
-        Tree is represented as a list. If the item in the list is string, it is leaf element and it
-        is its name. If the item is a tuple, first element of the tuple is the name and second
-        element is the subtree (list).
-
-        Args:
-            parent: Starting element, used during recursion
-            unexpand: Whether it should unexpand the expanded levels to original state.
-        Returns: Tree in format mentioned in description
-        """
-        self._detect()
-        if parent is None and self._get_tag() == "table":
-            return self._legacy_read_contents()  # Legacy
-        parent = self.locator if parent is None else parent
-
-        result = []
-
-        for item in self.nodes_root_elements(parent):
-            item_name = sel.text(self.node_label_loc, root=item).encode("utf-8").strip()
-            expanded = self._expand(item, True)
-            try:
-                item_contents = self.read_contents(
-                    sel.element(self.nodes_root_continue, root=item), unexpand)
-                if item_contents is None:
-                    result.append(item_name)
+                result = sel.execute_script(
+                    "{} return find_leaf(arguments[0],arguments[1],arguments[2]);".format(
+                        js.find_leaf),
+                    self.locate(),
+                    path,
+                    by_id)
+            except sel.WebDriverException as e:
+                text = str(e)
+                match = re.search(r"TREEITEM /(.*?)/ NOT FOUND IN THE TREE", text)
+                if match is not None:
+                    item = match.groups()[0]
+                    raise exceptions.CandidateNotFound(
+                        {'message': "{}: could not be found in the tree.".format(item),
+                         'path': path,
+                         'cause': e})
                 else:
-                    result.append((item_name, item_contents))
-                    if expanded and unexpand:
-                        self._expand(item, False)
-            except NoSuchElementException:
-                result.append(item_name)
+                    # TODO: Should any other kinds of exceptions be added, handle them here
+                    raise
+        return result
 
-        return result if len(result) > 0 else None
-
-    def _legacy_read_contents(self):
-        self._detect()
-        entry = sel.element(".//tbody[not(tr/td[contains(@class, 'hiddenRow')])]",
-                            root=self.locator)
-
-        def _process_subtree(entry):
-            node_title = sel.text("./tr/td[@class='standartTreeRow']/span", root=entry)
-            self._expand(entry)
-            child_nodes = sel.elements("./tr[not(@title)]/td/table/tbody", root=entry)
-            if not child_nodes:
-                return node_title
-            else:
-                return (node_title, map(lambda tree: _process_subtree(tree), child_nodes))
-
-        return [_process_subtree(entry)]
-
-    def click_path(self, *path):
+    def click_path(self, *path, **kwargs):
         """ Exposes a path and then clicks it.
 
         Args:
             *path: The path as multiple positional string arguments denoting the course to take.
 
+        Keywords:
+            by_id: Whether to match ids instead of text.
+
         Returns: The leaf web element.
 
         """
-        # expand all but the last item
-        leaf = self.expand_path(*path[:-1]) or sel.element(self.locator)
-        if leaf:
-            try:
-                sel.click(self.node_element(path[-1], leaf))
-            except sel_exceptions.NoSuchElementException as e:
-                raise exceptions.CandidateNotFound(
-                    {'message': "%s: could not be found in the tree." % path[-1],
-                     'path': path,
-                     'index': len(path) - 1,
-                     'cause': e})
+        leaf = self.expand_path(*path, **kwargs)
+        logger.info("Path {} yielded menuitem {}".format(repr(path), repr(sel.text(leaf))))
+        if leaf is not None:
+            sel.wait_for_ajax()
+            sel.click(leaf)
         return leaf
 
     @classmethod
@@ -1696,7 +1575,7 @@ class Tree(Pretty):
         current = tree
         for i, step in enumerate(path, start=1):
             for node in current:
-                if isinstance(node, tuple):
+                if isinstance(node, list):
                     if node[0] == step:
                         current = node[1]
                         break
@@ -1725,7 +1604,7 @@ class Tree(Pretty):
 
         Useful for checking of contents of current tree level
         """
-        return map(lambda item: item[0] if isinstance(item, tuple) else item, tree)
+        return map(lambda item: item[0] if isinstance(item, list) else item, tree)
 
     def find_path_to(self, target):
         """ Method used to look up the exact path to an item we know only by its regexp or partial
@@ -1746,7 +1625,7 @@ class Tree(Pretty):
             if p is None:
                 p = []
             for item in t:
-                if isinstance(item, tuple):
+                if isinstance(item, list):
                     if target.match(item[0]) is None:
                         subtree = _find_in_tree(item[1], p + [item[0]])
                         if subtree is not None:
@@ -1769,30 +1648,11 @@ class Tree(Pretty):
 class CheckboxTree(Tree):
     """Tree that has a checkbox on each node, adds methods to check/uncheck them"""
 
-    def _is_legacy_checked(self, leaf):
-        checkbox = sel.element(self.node_checkbox, root=leaf)
-        src = sel.get_attribute(checkbox, 'src')
-        for on_off, imgattrs in self.node_images.items():
-            for imgattr in imgattrs:
-                if imgattr in src:
-                    return on_off
-        raise LookupError("Could not determine if Tree checkbox %s was checked or not"
-                          % checkbox)
+    node_checkbox = "../span[@class='dynatree-checkbox']"
 
-    def _is_dynatree_checked(self, leaf):
+    def _is_checked(self, leaf):
         return 'dynatree-selected' in \
-            sel.get_attribute(sel.element("span", root=leaf), 'class')
-
-    def _detect(self):
-        super(CheckboxTree, self)._detect()
-        if self._get_tag() == 'ul':
-            self.node_checkbox = "span/span[@class='dynatree-checkbox']"
-            self._is_checked = self._is_dynatree_checked
-        elif self._get_tag() == 'table':
-            self.node_checkbox = "tr/td[2]/img"
-            self.node_images = {True: ['iconCheckAll', 'radio_on'],
-                                False: ['iconUncheckAll', 'radio_off']}
-            self._is_checked = self._is_legacy_checked
+            sel.get_attribute(sel.element("..", root=leaf), 'class')
 
     def _check_uncheck_node(self, path, check=False):
         """ Checks or unchecks a node.
@@ -1801,7 +1661,6 @@ class CheckboxTree(Tree):
             *path: The path as multiple positional string arguments denoting the course to take.
             check: If ``True``, the node is checked, ``False`` the node is unchecked.
         """
-        self._detect()
         leaf = self.expand_path(*path)
         cb = sel.element(self.node_checkbox, root=leaf)
         if check is not self._is_checked(leaf):
