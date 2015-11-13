@@ -171,8 +171,9 @@ def test_certificates_present(ssh_client, soft_assert):
             ("/etc/pki/product/201.pem", '0a2739f9ad6f4f5288379295004a1d7d')
         ],
         '5.5': [
-            ("/etc/pki/product/69.pem", 'dc2d93e73dadcbcf46a2d8b9929b85d0'),
-            ("/etc/pki/product/167.pem", 'eb254372f5caf80098b19f5bbd292117')
+            ("/etc/pki/product/69.pem", '0f0be32ac9d262df51d951d41dc05a24'),
+            ("/etc/pki/product/167.pem", 'eb254372f5caf80098b19f5bbd292117'),
+            ("/etc/pki/product/201.pem", 'd0e06fcada93d373e802d427a920e0d7')
         ]
     })
     for filename, given_md5 in filenames_md5s:
