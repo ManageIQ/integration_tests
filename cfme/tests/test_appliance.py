@@ -145,6 +145,7 @@ def test_cpu_total(ssh_client):
     assert stdout >= 4
 
 
+@pytest.mark.meta(blockers=[1281883])
 @pytest.mark.ignore_stream("upstream")
 def test_certificates_present(ssh_client, soft_assert):
     """Test whether the required product certificates are present.
