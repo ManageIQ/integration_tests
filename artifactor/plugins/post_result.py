@@ -33,7 +33,8 @@ test_counts = defaultdict(int, {
 class PostResult(ArtifactorBasePlugin):
     def plugin_initialize(self):
         self.register_plugin_hook('finish_session', self.post_result)
-        test_report.check() and test_report.remove()
+        if test_report.check():
+            test_report.remove()
 
     def configure(self):
         self.configured = True

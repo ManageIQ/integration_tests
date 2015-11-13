@@ -57,8 +57,8 @@ class Video(ArtifactorBasePlugin):
             self.tests[test_ident].recorder = Recorder(os_filename, display=self.display,
                                                        quality=self.quality)
             self.tests[test_ident].recorder.start()
-        except:
-            pass
+        except Exception as e:
+            print e
         self.tests[test_ident].in_progress = True
         return None, {'artifacts': {test_ident: {'files': {self.ident: artifacts}}}}
 
@@ -68,13 +68,13 @@ class Video(ArtifactorBasePlugin):
         test_ident = "{}/{}".format(test_location, test_name)
         try:
             self.tests[test_ident].recorder.stop()
-        except:
-            pass
+        except Exception as e:
+            print e
         del self.tests[test_ident]
 
     def finish_session(self):
         try:
             for test in self.tests:
                 test.recorder.stop()
-        except:
-            pass
+        except Exception as e:
+            print e

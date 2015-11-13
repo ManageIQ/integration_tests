@@ -60,8 +60,7 @@ def overall_test_status(statuses):
             return "skipped"
         elif when == "call" and status[0] == 'failed':
             return "failed"
-    else:
-        return "passed"
+    return "passed"
 
 
 class Reporter(ArtifactorBasePlugin):
@@ -258,7 +257,7 @@ class Reporter(ArtifactorBasePlugin):
 
     def top10(self, tb_errors):
         sets = []
-        for i, entry in enumerate(tb_errors):
+        for entry in tb_errors:
             for tset in sets:
                 if difflib.SequenceMatcher(a=entry[0][:10], b=tset[0][0][:10]).ratio() > .8:
                     if difflib.SequenceMatcher(a=entry[0][:20], b=tset[0][0][:20]).ratio() > .75:

@@ -31,12 +31,12 @@ button_form = Form(
     ])
 
 
-def _new_button_group(context):
+def _new_button_group(_context):
     cfg_btn('Add a new Button Group')
     sel.wait_for_element(button_group_form.btn_group_text)
 
 
-def _new_button(context):
+def _new_button(_context):
     cfg_btn('Add a new Button')
     sel.wait_for_element(button_form.btn_text)
 
