@@ -47,7 +47,6 @@ class Merkyl(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def start_test(self, test_name, test_location, ip):
-        """Start a test"""
         test_ident = "{}/{}".format(test_location, test_name)
         if test_ident in self.tests:
             if self.tests[test_ident].in_progress:
@@ -84,10 +83,9 @@ class Merkyl(ArtifactorBasePlugin):
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifact_path, test_name, test_location, ip):
         test_ident = "{}/{}".format(test_location, test_name)
-        """Finish test"""
         artifacts = []
         for filename in self.files:
-            base, tail = os.path.split(filename)
+            _base, tail = os.path.split(filename)
             os_filename = self.ident + "-" + tail + ".log"
             os_filename = os.path.join(artifact_path, os_filename)
             with open(os_filename, "w") as f:
@@ -98,7 +96,7 @@ class Merkyl(ArtifactorBasePlugin):
                 artifacts.append(os_filename)
 
         for filename in self.tests[test_ident].extra_files:
-            base, tail = os.path.split(filename)
+            _base, tail = os.path.split(filename)
             os_filename = self.ident + "-" + tail + ".log"
             os_filename = os.path.join(artifact_path, os_filename)
             with open(os_filename, "w") as f:

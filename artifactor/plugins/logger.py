@@ -62,7 +62,6 @@ class Logger(ArtifactorBasePlugin):
         if not slaveid:
             slaveid = "Master"
         self.tests[slaveid].in_progress = False
-        pass
 
     @ArtifactorBasePlugin.check_configured
     def log_message(self, log_record, slaveid):
