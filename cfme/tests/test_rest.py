@@ -171,7 +171,7 @@ def services(request, a_provider, rest_api, dialog, service_catalogs):
         ('template', 'host', 'datastore', 'iso_file', 'vlan', 'catalog_item_type'))
 
     provisioning_data = {
-        'vm_name': 'vm_{}'.format(fauxfactory.gen_alphanumeric()),
+        'vm_name': 'test_rest_{}'.format(fauxfactory.gen_alphanumeric()),
         'host_name': {'name': [host]},
         'datastore_name': {'name': [datastore]}
     }
