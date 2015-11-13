@@ -217,7 +217,7 @@ class CatalogItem(Updateable, Pretty):
             dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
             sel.click(basic_info_form.apply_btn)
-        if(self.catalog_name is not None):
+        if self.catalog_name is not None and self.provisioning_data is not None:
             tabstrip.select_tab("Request Info")
             template = template_select_form.template_table.find_row_by_cells({
                 'Name': self.catalog_name,

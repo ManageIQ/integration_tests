@@ -3189,6 +3189,10 @@ class AngularSelect(object):
         return sel.element(self._loc).get_attribute('data-id')
 
     @property
+    def is_broken(self):
+        return sel.is_displayed(self) and sel.is_displayed(self.select)
+
+    @property
     def is_open(self):
         el = sel.element(self._loc)
         return el.get_attribute('aria-expanded') == "true"

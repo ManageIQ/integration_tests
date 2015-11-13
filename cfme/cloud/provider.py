@@ -51,6 +51,7 @@ properties_form = Form(
                 "5.5": "api_port",
             }
         )),
+        ("api_version", AngularSelect("api_version"), {"appeared_in": "5.5"}),
         ('infra_provider', {
             version.LOWEST: None,
             "5.4": Select("select#provider_id"),

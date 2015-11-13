@@ -1277,6 +1277,8 @@ class Select(SeleniumSelect, Pretty):
 
     Option = namedtuple("Option", ["text", "value"])
 
+    is_broken = False  # For compatibility with AngularSelect
+
     def __init__(self, loc, multi=False, none=None):
         self._none = none
         if isinstance(loc, Select):

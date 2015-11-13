@@ -259,3 +259,13 @@ def test_api_port_max_character_validation(request):
 
     request.addfinalizer(prov.delete_if_exists)
     prov.create()
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
+@pytest.mark.meta(blockers=[1278036])
+def test_openstack_provider_has_api_version():
+    """Check whether the Keystone API version field is present for Openstack."""
+    pytest.sel.force_navigate("clouds_provider_new")
+    fill(properties_form, {"type_select": "OpenStack"})
+    pytest.sel.wait_for_ajax()
+    assert pytest.sel.is_displayed(properties_form.api_version), "API version select is not visible"
