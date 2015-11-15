@@ -149,7 +149,12 @@ def test_provider_add_with_bad_credentials(provider):
         with error.expected('Cannot complete login due to an incorrect user name or password.'):
             provider.create(validate_credentials=True)
     elif isinstance(provider, RHEVMProvider):
-        with error.expected('401 Unauthorized'):
+        error_message = version.pick(
+            {'5.4': '401 Unauthorized',
+             '5.5': 'Credential validation was not successful: '
+                'Login failed due to a bad username or password.'}
+        )
+        with error.expected(error_message):
             provider.create(validate_credentials=True)
 
 
