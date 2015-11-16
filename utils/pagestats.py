@@ -99,7 +99,7 @@ def navigate_accordions(accordions, page_name, ui_bench_pg_limit, ui_worker_pid,
                     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, False,
                         sel.force_navigate, page_name), soft_assert))
             except CandidateNotFound:
-                logger.info('Could not navigate to: '.format(path[-1]))
+                logger.info('Could not navigate to: {}'.format(path[-1]))
             except UnexpectedAlertPresentException:
                 logger.warning('UnexpectedAlertPresentException - page_name: {}, accordion: {},'
                     ' path: {}'.format(page_name, acc_tree, path[-1]))

@@ -68,7 +68,7 @@ class SNMPTrapField(Pretty):
 
     @property
     def value_loc(self):
-        return Input('value__%s'.format(self.seq_id))
+        return Input('value__{}'.format(self.seq_id))
 
     @property
     def value(self):

@@ -148,7 +148,6 @@ class OpenStackProvider(Provider):
     def create(self, *args, **kwargs):
         # Override the standard behaviour to actually create the underlying infra first.
         if self.infra_provider is not None:
-            from cfme.infrastructure.provider import OpenstackInfraProvider
             if isinstance(self.infra_provider, OpenstackInfraProvider):
                 infra_provider_name = self.infra_provider.name
             else:
