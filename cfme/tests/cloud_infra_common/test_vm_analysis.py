@@ -210,7 +210,7 @@ def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
 
-    argnames, argvalues, idlist = testgen.infra_providers(
+    argnames, argvalues, idlist = testgen.all_providers(
         metafunc, 'vm_analysis', require_fields=True)
     argnames = argnames + ['vm_template_name', 'os', 'fs_type']
 

@@ -1670,6 +1670,20 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         if "allowed_datastores" in prov_data:
             deploy_args["allowed_datastores"] = prov_data["allowed_datastores"]
 
+    if prov_data["type"] == "openstack":
+        if 'sprout' in prov_data:
+            spdata = prov_data["sprout"]
+            if "flavour_name" in spdata:
+                deploy_args["flavour_name"] = spdata["flavour_name"]
+
+            if "network_name" in spdata:
+                deploy_args["network_name"] = spdata["network_name"]
+
+            if "floating_ip_pool" in spdata:
+                deploy_args["floating_ip_pool"] = spdata["floating_ip_pool"]
+
+            if "availability_zone" in spdata:
+                deploy_args["availability_zone"] = spdata["availability_zone"]
     provider.deploy_template(template_name, **deploy_args)
 
     return Appliance(provider_name, vm_name)
