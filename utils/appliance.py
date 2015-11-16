@@ -172,7 +172,7 @@ class Appliance(object):
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     @logger_wrap("Configure Appliance: {}")
-    def configure(self, setup_fleece=False, log_callback=None, **kwargs):
+    def configure(self, setup_fleece=False, timeout=600, log_callback=None, **kwargs):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
 
         Utility method to make things easier.
@@ -192,7 +192,7 @@ class Appliance(object):
 
         log_callback("Configuring appliance {}".format(self.vmname))
         with self.ipapp as ipapp:
-            ipapp.wait_for_ssh()
+            ipapp.wait_for_ssh(timeout=timeout)
             if kwargs:
                 self._custom_configure(**kwargs)
             else:
@@ -819,7 +819,6 @@ class IPAppliance(object):
         """Deploys the Merkyl log relay service to the appliance"""
 
         client = self.ssh_client
-
         client.run_command('mkdir -p /root/merkyl')
         for filename in ['__init__.py', 'merkyl.tpl', ('bottle.py.dontflake', 'bottle.py'),
                          'allowed.files']:
@@ -1669,6 +1668,21 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     if prov_data["type"] == "virtualcenter":
         if "allowed_datastores" in prov_data:
             deploy_args["allowed_datastores"] = prov_data["allowed_datastores"]
+
+    if prov_data["type"] == "openstack":
+        if 'sprout' in prov_data:
+            spdata = prov_data["sprout"]
+            if "flavour_name" in spdata:
+                deploy_args["flavour_name"] = spdata["flavour_name"]
+
+            if "network_name" in spdata:
+                deploy_args["network_name"] = spdata["network_name"]
+
+            if "floating_ip_pool" in spdata:
+                deploy_args["floating_ip_pool"] = spdata["floating_ip_pool"]
+
+            if "availability_zone" in spdata:
+                deploy_args["availability_zone"] = spdata["availability_zone"]
 
     provider.deploy_template(template_name, **deploy_args)
 

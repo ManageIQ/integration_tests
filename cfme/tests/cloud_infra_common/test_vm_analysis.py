@@ -116,7 +116,7 @@ def get_appliance(provider):
                     version=ver_to_prov,
                     provider_name=provider.key)
                 logger.info("appliance IP address: " + str(appliance.address))
-                appliance.configure(setup_fleece=True)
+                appliance.configure(setup_fleece=True, timeout=1800)
             except Exception as e:
                 logger.exception(e)
                 if appliance is not None:
@@ -210,7 +210,7 @@ def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
 
-    argnames, argvalues, idlist = testgen.infra_providers(
+    argnames, argvalues, idlist = testgen.all_providers(
         metafunc, 'vm_analysis', require_fields=True)
     argnames = argnames + ['vm_template_name', 'os', 'fs_type']
 
