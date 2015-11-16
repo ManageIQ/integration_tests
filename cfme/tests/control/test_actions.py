@@ -111,7 +111,7 @@ def get_vm_object(vm_name):
 
 @pytest.fixture(scope="module")
 def vm_name(provider):
-    return "test_act-{}-{}".format(provider.key, fauxfactory.gen_alpha().lower())
+    return "long-test_act-{}-{}".format(provider.key, fauxfactory.gen_alpha().lower())
 
 
 @pytest.fixture(scope="module")
