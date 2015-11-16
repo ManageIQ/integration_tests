@@ -116,7 +116,7 @@ def get_appliance(provider):
                     version=ver_to_prov,
                     provider_name=provider.key)
                 logger.info("appliance IP address: " + str(appliance.address))
-                appliance.configure(setup_fleece=True)
+                appliance.configure(setup_fleece=True, timeout=1800)
             except Exception as e:
                 logger.exception(e)
                 if appliance is not None:

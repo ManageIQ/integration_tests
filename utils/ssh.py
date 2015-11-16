@@ -174,8 +174,8 @@ class SSHClient(paramiko.SSHClient):
 
     def put_file(self, local_file, remote_file='.', **kwargs):
         logger.info("Transferring local file {} to remote {}".format(local_file, remote_file))
-        return SCPClient(self.get_transport(), progress=self._progress_callback).put(
-            local_file, remote_file, **kwargs)
+        timeout = float(RUNCMD_TIMEOUT)
+        return SCPClient(self.get_transport(), socket_timeout=timeout, progress=self._progress_callback).put(local_file, remote_file, **kwargs)
 
     def get_file(self, remote_file, local_path='', **kwargs):
         logger.info("Transferring remote file {} to local {}".format(remote_file, local_path))
