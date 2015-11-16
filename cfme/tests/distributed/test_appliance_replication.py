@@ -86,8 +86,8 @@ def get_replication_appliances():
        with unique region numbers.
     """
     ver_to_prov = str(version.current_version())
-    appl1 = provision_appliance(ver_to_prov, 'test_repl_A')
-    appl2 = provision_appliance(ver_to_prov, 'test_repl_B')
+    appl1 = provision_appliance(ver_to_prov, 'long-test_repl_A')
+    appl2 = provision_appliance(ver_to_prov, 'long-test_repl_B')
     appl1.configure(region=1, patch_ajax_wait=False)
     appl1.ipapp.wait_for_web_ui()
     update_appliance_uuid(appl2.address)
@@ -101,8 +101,8 @@ def get_distributed_appliances():
        that connects to the database of the first.
     """
     ver_to_prov = str(version.current_version())
-    appl1 = provision_appliance(ver_to_prov, 'test_childDB_A')
-    appl2 = provision_appliance(ver_to_prov, 'test_childDB_B')
+    appl1 = provision_appliance(ver_to_prov, 'long-test_childDB_A')
+    appl2 = provision_appliance(ver_to_prov, 'long-test_childDB_B')
     appl1.configure(region=1, patch_ajax_wait=False)
     appl1.ipapp.wait_for_web_ui()
     appl2.configure(region=1, patch_ajax_wait=False, key_address=appl1.address,

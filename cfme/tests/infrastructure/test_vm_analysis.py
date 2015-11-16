@@ -92,7 +92,7 @@ def delete_tasks_first():
 def get_appliance(provider):
     '''Fixture to provision appliance to the provider being tested if necessary'''
     global appliance_list, main_provider
-    appliance_vm_prefix = "test_vm_analysis"
+    appliance_vm_prefix = "long-test_ssa-appl_"
 
     if provider.key not in appliance_list:
         try:
@@ -129,7 +129,7 @@ def get_appliance(provider):
 
 @pytest.fixture(scope="class")
 def vm_name(vm_template_name):
-    return "test_vmfleece_" + vm_template_name + "_" + fauxfactory.gen_alphanumeric()
+    return "long-test_ssa_" + vm_template_name + "_" + fauxfactory.gen_alphanumeric()
 
 
 @pytest.fixture(scope="class")
