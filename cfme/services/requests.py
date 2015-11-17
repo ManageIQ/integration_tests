@@ -10,15 +10,16 @@ REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 
 buttons = Region(
     locators=dict(
-        approve="//div[@id='miq_alone' and @title='Approve this Request']/img",
-        deny="//div[@id='miq_alone' and @title='Deny this Request']/img",
-        copy="//div[@id='miq_alone' and @title='Copy original Request']/img",
-        edit="//div[@id='miq_alone' and @title='Edit the original Request']/img",
-        delete="//div[@id='miq_alone' and @title='Delete this Request']/img",
+        approve="//*[@title='Approve this Request']/img",
+        deny="//*[@title='Deny this Request']/img",
+        copy="//*[@title='Copy original Request']/img",
+        edit="//*[@title='Edit the original Request']/img",
+        delete="//*[@title='Delete this Request']/img",
         submit="//span[@id='buttons_on']/a[@title='Submit']",
         cancel="//a[@title='Cancel']",
     )
 )
+
 
 fields = Region(
     locators=dict(
@@ -239,7 +240,9 @@ def copy_request(cells):
         raise
     else:
         from cfme.provisioning import provisioning_form
-        sel.click(provisioning_form.submit_copy_button)
+        btn = provisioning_form.submit_copy_button
+        sel.wait_for_element(btn)
+        sel.click(btn)
         flash.assert_no_errors()
 
 
