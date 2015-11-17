@@ -320,13 +320,14 @@ class Reporter(ArtifactorBasePlugin):
             elif '_sub' in v:
                 percenstring = ""
                 bmax = 0
-                for kek, val in v['_stats'].iteritems():
-                    if kek not in ('skipped', 'xfailed'):
-                        bmax += val
+                for _, val in v['_stats'].iteritems():
+                    bmax += val
                 # If there were any NON skipped tests, we now calculate the percentage which
                 # passed.
                 if bmax:
-                    percen = "{:.2f}".format(float(v['_stats']['passed']) / float(bmax) * 100)
+                    percen = "{:.2f}".format((float(v['_stats']['passed']) +
+                                              float(v['_stats']['skipped']) +
+                                              float(v['_stats']['xfailed'])) / float(bmax) * 100)
                     if float(percen) == 100.0:
                         level = 'passed'
                     elif float(percen) > 80.0:
