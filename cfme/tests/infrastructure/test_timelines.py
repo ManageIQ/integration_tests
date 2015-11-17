@@ -75,7 +75,7 @@ def count_events(vm_name, nav_step):
     return 0
 
 
-@pytest.mark.meta(blockers=[1264183])
+@pytest.mark.meta(blockers=[1264183, 1281746])
 def test_provider_event(provider, gen_events, test_vm):
     """Tests provider event on timelines
 
@@ -90,6 +90,7 @@ def test_provider_event(provider, gen_events, test_vm):
              message="events to appear")
 
 
+@pytest.mark.meta(blockers=[1281746])
 def test_host_event(provider, gen_events, test_vm):
     """Tests host event on timelines
 
@@ -104,6 +105,7 @@ def test_host_event(provider, gen_events, test_vm):
              message="events to appear")
 
 
+@pytest.mark.meta(blockers=[1281746])
 def test_vm_event(provider, gen_events, test_vm):
     """Tests vm event on timelines
 
@@ -117,6 +119,7 @@ def test_vm_event(provider, gen_events, test_vm):
              message="events to appear")
 
 
+@pytest.mark.meta(blockers=[1281746])
 def test_cluster_event(provider, gen_events, test_vm):
     """Tests cluster event on timelines
 
