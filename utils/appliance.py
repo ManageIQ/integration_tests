@@ -164,6 +164,7 @@ class Appliance(object):
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def _configure_upstream(self, log_callback=None):
+        self.ipapp.set_hostname_to_dns_name(log_callback=log_callback)
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.setup_upstream_db(log_callback=log_callback)
@@ -651,6 +652,20 @@ class IPAppliance(object):
             msg = 'Setting the time failed on appliance'
             log_callback(msg)
             raise Exception(msg)
+
+    @logger_wrap("Set hostname: {}")
+    def set_hostname_to_dns_name(self, log_callback=None):
+        """Fixes appliance's hostname to match that from DNS"""
+        log_callback('Fixing hostname')
+        client = self.ssh_client
+        status, current = client.run_command("hostname")
+        try:
+            status, dnsname = socket.gethostbyaddr(self.address)[0]
+            if current != dnsname:
+                client.run_command("hostname {}".format(dnsname))
+        except:
+            self.log.warning("exception while setting appliance hostname")
+            return
 
     @logger_wrap("Work around missing Gem file: {}")
     def workaround_missing_gemfile(self, log_callback=None):
