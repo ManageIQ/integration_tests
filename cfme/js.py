@@ -83,7 +83,11 @@ function get_level_name(level, by_id) {
     if(by_id){
         return level.li.getAttribute("id");
     } else {
-        return xpath(level.li, "./span/a").textContent;
+        var e = xpath(level.li, "./span/a");
+        if(e === null)
+            return null;
+        else
+            return e.textContent;
     }
 }
 """
@@ -162,10 +166,24 @@ function find_leaf(root, path, by_id) {
         return null;
     if(by_id === undefined)
         by_id = false;
-    var item = get_root(root).childList[0];
-    if(get_level_name(item, by_id) != path[0])
-        throw "TREEITEM /" + path[0] + "/ NOT FOUND IN THE TREE";
-    for(var i = 1; i < path.length; i++) {
+    //var item = get_root(root).childList[0];
+    var item = get_root(root);
+    var i;  // The start of matching for path. Important because in one case, we already matched 1st
+    var lname = get_level_name(item, by_id);
+    if(item.childList.length == 1 && lname === null) {
+        item = item.childList[0];
+        i = 1;
+        if(get_level_name(item, by_id) != path[0])
+            throw "TREEITEM /" + path[0] + "/ NOT FOUND IN THE TREE";
+    } else if(lname === null) {
+        i = 0;
+    } else {
+        if(lname != path[0])
+            throw "TREEITEM /" + path[0] + "/ NOT FOUND IN THE TREE";
+        item = item.childList[0];
+        i = 1;
+    }
+    for(; i < path.length; i++) {
         var last = (i + 1) == path.length;
         var step = path[i];
         var found = false;
