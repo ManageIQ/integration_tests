@@ -118,6 +118,10 @@ class SSHClient(paramiko.SSHClient):
             # Only install ssh keys if they aren't installed (or currently being installed)
             return super(SSHClient, self).connect(**self._connect_kwargs)
 
+    def open_sftp(self, *args, **kwargs):
+        self.connect()
+        return super(SSHClient, self).open_sftp(*args, **kwargs)
+
     def get_transport(self, *args, **kwargs):
         if self.connected:
             logger.trace('reusing ssh transport')
