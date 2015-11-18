@@ -179,7 +179,7 @@ class DockerBot(object):
             r = requests.get(
                 'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
                 headers=headers)
-            body = r.json()['body']
+            body = r.json()['body'] or ""
             metadata = re.findall("{{(.*?)}}", body)
             if not metadata:
                 return {}
