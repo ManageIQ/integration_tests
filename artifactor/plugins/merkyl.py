@@ -85,7 +85,7 @@ class Merkyl(ArtifactorBasePlugin):
         test_ident = "{}/{}".format(test_location, test_name)
         artifacts = []
         for filename in self.files:
-            _base, tail = os.path.split(filename)
+            _, tail = os.path.split(filename)
             os_filename = self.ident + "-" + tail + ".log"
             os_filename = os.path.join(artifact_path, os_filename)
             with open(os_filename, "w") as f:
@@ -96,7 +96,7 @@ class Merkyl(ArtifactorBasePlugin):
                 artifacts.append(os_filename)
 
         for filename in self.tests[test_ident].extra_files:
-            _base, tail = os.path.split(filename)
+            _, tail = os.path.split(filename)
             os_filename = self.ident + "-" + tail + ".log"
             os_filename = os.path.join(artifact_path, os_filename)
             with open(os_filename, "w") as f:

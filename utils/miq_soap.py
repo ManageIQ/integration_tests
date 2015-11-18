@@ -218,7 +218,7 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
         """Returns an API from mgmt_system.py targeted at this provider"""
         # Find the credentials entry
         name = str(self.host_name)
-        from utils.conf import cfme_data, credentials
+        from utils.conf import credentials
         for prov_id, provider in cfme_data.get("management_systems", {}).iteritems():
             if provider.get("hostname", None) == name or provider.get("region", None) == name:
                 credentials = credentials.get(provider["credentials"], {})

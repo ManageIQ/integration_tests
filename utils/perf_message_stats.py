@@ -926,7 +926,7 @@ def perf_process_evm(evm_file, top_file):
     html_menu.write('Message Count: {}<br>'.format(len(messages)))
     html_menu.write('Command Count: {}<br>'.format(len(msg_cmds)))
 
-    html_menu.write('Parsed {} lines for workers<br>'.format(wkr_lc, timediff))
+    html_menu.write('Parsed {} lines for workers<br>'.format(wkr_lc))
     html_menu.write('Total Workers: {}<br>'.format(len(workers)))
     html_menu.write('Workers Memory Exceeded: {}<br>'.format(wkr_mem_exc))
     html_menu.write('Workers Uptime Exceeded: {}<br>'.format(wkr_upt_exc))
@@ -978,7 +978,7 @@ def perf_process_evm(evm_file, top_file):
     html_wkr_menu.write('Message Count: {}<br>'.format(len(messages)))
     html_wkr_menu.write('Command Count: {}<br>'.format(len(msg_cmds)))
 
-    html_wkr_menu.write('Parsed {} lines for workers<br>'.format(wkr_lc, timediff))
+    html_wkr_menu.write('Parsed {} lines for workers<br>'.format(wkr_lc))
     html_wkr_menu.write('Total Workers: {}<br>'.format(len(workers)))
     html_wkr_menu.write('Workers Memory Exceeded: {}<br>'.format(wkr_mem_exc))
     html_wkr_menu.write('Workers Uptime Exceeded: {}<br>'.format(wkr_upt_exc))
