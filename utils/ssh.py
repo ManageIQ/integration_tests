@@ -1,5 +1,6 @@
-# coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import re
+import socket
 import sys
 from collections import namedtuple
 from urlparse import urlparse
@@ -131,6 +132,7 @@ class SSHClient(paramiko.SSHClient):
         template = '%s\n'
         command = template % command
 
+        output = ''
         try:
             session = self.get_transport().open_session()
             if timeout:
@@ -138,7 +140,6 @@ class SSHClient(paramiko.SSHClient):
             session.exec_command(command)
             stdout = session.makefile()
             stderr = session.makefile_stderr()
-            output = ''
             while True:
                 if session.recv_ready:
                     for line in stdout:
@@ -158,6 +159,11 @@ class SSHClient(paramiko.SSHClient):
             return SSHResult(exit_status, output)
         except paramiko.SSHException as exc:
             logger.exception(exc)
+        except socket.timeout as e:
+            logger.error("Command `{}` timed out.".format(command))
+            logger.exception(e)
+            logger.error("Output of the command before it failed was:\n{}".format(output))
+            raise
 
         # Returning two things so tuple unpacking the return works even if the ssh client fails
         return SSHResult(1, None)
