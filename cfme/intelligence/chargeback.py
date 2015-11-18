@@ -123,8 +123,10 @@ nav.add_branch(
         "chargeback_rates_storage_named": [
             lambda d: accordion.tree("Rates", "Storage", d["chargeback"].description),
             {"chargeback_rates_storage_edit": tb_select_edit_chargeback}],
-        "chargeback_assignments_compute": lambda _: accordion.tree("Assignments", "Compute"),
-        "chargeback_assignments_storage": lambda _: accordion.tree("Assignments", "Storage"),
+        "chargeback_assignments_compute": lambda _: accordion.tree("Assignments", "Assignments",
+            "Compute"),
+        "chargeback_assignments_storage": lambda _: accordion.tree("Assignments", "Assignments",
+            "Storage"),
     })
 
 
