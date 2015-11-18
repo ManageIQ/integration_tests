@@ -262,3 +262,8 @@ class CannotScrollException(CFMEException):
 class StorageManagerNotFound(CFMEException):
     """Raised when a Storage Manager is not found"""
     pass
+
+
+class CUCommandException(CFMEException):
+    """Raised when one of the commands run to set up a CU VM fails """
+    pass
