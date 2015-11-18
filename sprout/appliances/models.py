@@ -918,23 +918,26 @@ class AppliancePool(MetadataMixin):
         self.logger.info("Killing")
         if self.appliances:
             for appliance in self.appliances:
-                if (
-                        save_lives and appliance.ready and appliance.leased_until is None
-                        and appliance.marked_for_deletion is False
-                        and not appliance.managed_providers
-                        and appliance.power_state not in appliance.BAD_POWER_STATES):
-                    with transaction.atomic():
-                        with appliance.kill_lock:
+                kill = False
+                with transaction.atomic():
+                    with appliance.kill_lock:
+                        if (
+                                save_lives and appliance.ready and appliance.leased_until is None
+                                and appliance.marked_for_deletion is False
+                                and not appliance.managed_providers
+                                and appliance.power_state not in appliance.BAD_POWER_STATES):
                             appliance.appliance_pool = None
                             appliance.datetime_leased = None
                             appliance.save()
-                        self.total_count -= 1
-                        if self.total_count < 0:
-                            self.total_count = 0  # Protection against stupidity
-                        self.save()
-                    appliance.set_status(
-                        "The appliance was taken out of dying pool {}".format(self.id))
-                else:
+                            self.total_count -= 1
+                            if self.total_count < 0:
+                                self.total_count = 0  # Protection against stupidity
+                            self.save()
+                            appliance.set_status(
+                                "The appliance was taken out of dying pool {}".format(self.id))
+                        else:
+                            kill = True
+                if kill:  # Because Appliance.kill uses kill_lock too
                     Appliance.kill(appliance)
 
             if self.current_count == 0:
