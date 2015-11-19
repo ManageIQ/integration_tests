@@ -178,7 +178,7 @@ class logger_wrap(object):
             if not cb:
                 cb = logger.info
             kwargs['log_callback'] = lambda msg: cb(self.args[0].format(msg))
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         return newfunc
 
 

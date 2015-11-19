@@ -1405,7 +1405,4 @@ def disconnect_direct_lun(self, appliance_id):
 @singleton_task()
 def appliance_yum_update(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
-    if appliance.preconfigured:
-        appliance.ipapp.update_rhel(setup_repos=False, reboot=False)
-    else:
-        appliance.ipapp.update_rhel(setup_repos=True, reboot=False)
+    appliance.ipapp.update_rhel(reboot=False)

@@ -845,6 +845,101 @@ class IPAppliance(object):
             log_callback("Setting it to start after reboot")
             client.run_command("chkconfig merkyl on")
 
+    def get_repofile_list(self):
+        """Returns list of repofiles present at the appliance.
+
+        Ignores certain files, like redhat.repo.
+        """
+        ftp = self.ssh_client.open_sftp()
+        ftp.chdir("/etc/yum.repos.d")
+        return [f for f in ftp.listdir() if f not in {"redhat.repo"} and f.endswith(".repo")]
+
+    def read_repos(self):
+        """Reads repofiles so it gives you mapping of id and url."""
+        result = {}
+        name_regexp = re.compile(r"^\[update-([^\]]+)\]")
+        baseurl_regexp = re.compile(r"baseurl\s*=\s*([^\s]+)")
+        for repofile in self.get_repofile_list():
+            rc, out = self.ssh_client.run_command("cat /etc/yum.repos.d/{}".format(repofile))
+            if rc != 0:
+                # Something happened meanwhile?
+                continue
+            out = out.strip()
+            name_match = name_regexp.search(out)
+            if name_match is None:
+                continue
+            baseurl_match = baseurl_regexp.search(out)
+            if baseurl_match is None:
+                continue
+            result[name_match.groups()[0]] = baseurl_match.groups()[0]
+        return result
+
+    # Regexp that looks for product type and version in the update URL
+    product_url_regexp = re.compile(r"/((?:[A-Z]+|CloudForms))(?:-|/)(\d+[^/]+)/")
+
+    def find_product_repos(self):
+        """Returns a dictionary of products, where the keys are names of product (repos) and values
+            are dictionaries where keys are the versions and values the names of the repositories.
+        """
+        products = {}
+        for repo_name, repo_url in self.read_repos().iteritems():
+            match = self.product_url_regexp.search(repo_url)
+            if match is None:
+                continue
+            product, ver = match.groups()
+            if product not in products:
+                products[product] = {}
+            products[product][ver] = repo_name
+        return products
+
+    def write_repofile(self, repo_id, repo_url, **kwargs):
+        """Wrapper around writing a repofile. You can specify conf options in kwargs."""
+        if "gpgcheck" not in kwargs:
+            kwargs["gpgcheck"] = 0
+        if "enabled" not in kwargs:
+            kwargs["enabled"] = 1
+        sftp = self.ssh_client.open_sftp()
+        logger.info("Writing a new repofile {} {}".format(repo_id, repo_url))
+        with sftp.open("/etc/yum.repos.d/{}.repo".format(repo_id), "w") as f:
+            f.write("[update-{}]\n".format(repo_id))
+            f.write("name=update-url-{}\n".format(repo_id))
+            f.write("baseurl={}\n".format(repo_url))
+            for k, v in kwargs.iteritems():
+                f.write("{}={}\n".format(k, v))
+        return repo_id
+
+    def add_product_repo(self, repo_url, **kwargs):
+        """This method ensures that when we add a new repo URL, there will be no other version
+            of such product present in the yum.repos.d. You can specify conf options in kwargs. They
+            will be applied only to newly created repo file.
+
+        Returns:
+            The repo id.
+        """
+        match = self.product_url_regexp.search(repo_url)
+        if match is None:
+            raise ValueError(
+                "The URL {} does not contain information about product and version.".format(
+                    repo_url))
+        for repo_id, url in self.read_repos().iteritems():
+            if url == repo_url:
+                # It is already there, so just enable it
+                self.enable_disable_repo(repo_id, True)
+                return repo_id
+        product, ver = match.groups()
+        repos = self.find_product_repos()
+        if product in repos:
+            for v, i in repos[product].iteritems():
+                logger.info("Deleting {} repo with version {} ({})".format(product, v, i))
+                self.ssh_client.run_command("rm -f /etc/yum.repos.d/{}.repo".format(i))
+        return self.write_repofile(fauxfactory.gen_alpha(), repo_url, **kwargs)
+
+    def enable_disable_repo(self, repo_id, enable):
+        logger.info("{} repository {}".format("Enabling" if enable else "Disabling", repo_id))
+        return self.ssh_client.run_command(
+            "sed -i 's/^enabled=./enabled={}/' /etc/yum.repos.d/{}.repo".format(
+                1 if enable else 0, repo_id)).rc == 0
+
     @logger_wrap("Update RHEL: {}")
     def update_rhel(self, *urls, **kwargs):
         """Update RHEL on appliance
@@ -864,14 +959,10 @@ class IPAppliance(object):
 
 
         """
-        if self.version.is_in_series('5.5'):
-            self.log.critical('RHEL updates are currently broken in 5.5!')
-            return
         urls = list(urls)
         log_callback = kwargs.pop("log_callback")
         skip_broken = kwargs.pop("skip_broken", False)
         reboot = kwargs.pop("reboot", True)
-        setup_repos = kwargs.pop("setup_repos", True)
         streaming = kwargs.pop("streaming", False)
         log_callback('updating appliance')
         if not urls:
@@ -881,7 +972,11 @@ class IPAppliance(object):
                 urls.extend(os.environ['update_urls'].split())
             else:
                 # fall back to cfme_data
-                updates_url = basic_info.get('rhel_updates_url')
+                if self.version >= "5.5":
+                    updates_url = basic_info.get('rhel7_updates_url')
+                else:
+                    updates_url = basic_info.get('rhel_updates_url')
+
                 if updates_url:
                     urls.append(updates_url)
 
@@ -895,25 +990,8 @@ class IPAppliance(object):
         else:
             client = self.ssh_client
 
-        if setup_repos:
-            # create repo file
-            log_callback('Creating repo file on appliance')
-            for url in urls:
-                repo_id = fauxfactory.gen_alphanumeric(8)
-                write_updates_repo = dedent('''\
-                    cat > /etc/yum.repos.d/{repo_id}.repo <<EOF
-                    [update-{repo_id}]
-                    name=update-url-{repo_id}
-                    baseurl={url}
-                    enabled=1
-                    gpgcheck=0
-                    EOF
-                    ''').format(repo_id=repo_id, url=url)
-                status, out = client.run_command(write_updates_repo)
-                if status != 0:
-                    msg = 'Failed to write repo updates repo to appliance'
-                    log_callback(msg)
-                    raise Exception(msg)
+        for url in urls:
+            self.add_product_repo(url)
 
         # update
         log_callback('Running rhel updates on appliance')
