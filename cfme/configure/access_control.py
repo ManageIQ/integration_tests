@@ -111,7 +111,8 @@ class User(Updateable, Pretty):
             ('name_txt', Input('name')),
             ('userid_txt', Input('userid')),
             ('password_txt', Input('password')),
-            ('password_verify_txt', Input('password2')),
+            ('password_verify_txt', {version.LOWEST: Input('password2'),
+                                     "5.5": Input('verify')}),
             ('email_txt', Input('email')),
             ('user_group_select', Select("//*[@id='chosen_group']")),
         ])
