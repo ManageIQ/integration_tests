@@ -1,3 +1,5 @@
+[![Code Health](https://landscape.io/github/RedHatQE/cfme_tests/master/landscape.svg?style=flat-square)](https://landscape.io/github/RedHatQE/cfme_tests/master)
+
 CloudForms: Management Engine - Tests
 =====================================
 
