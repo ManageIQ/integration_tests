@@ -166,8 +166,9 @@ function find_leaf(root, path, by_id) {
         return null;
     if(by_id === undefined)
         by_id = false;
-    //var item = get_root(root).childList[0];
     var item = get_root(root);
+    if(typeof item.childList === "undefined")
+        throw "CANNOT FIND TREE /" + root + "/";
     var i;  // The start of matching for path. Important because in one case, we already matched 1st
     var lname = get_level_name(item, by_id);
     if(item.childList.length == 1 && lname === null) {
