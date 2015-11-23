@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.automate.service_dialogs import ServiceDialog, dialogs_table
+from cfme.automate.service_dialogs import ServiceDialog, common
 from cfme.web_ui import paginator
 
 
@@ -53,7 +53,7 @@ def test_paginator(some_dialogs, soft_assert):
     paginator.results_per_page(50)
     paginator.results_per_page(5)
     # Now we must have only 5
-    soft_assert(len(list(dialogs_table.rows())) == 5, "Changing number of rows failed!")
+    soft_assert(len(list(common.dialogs_table.rows())) == 5, "Changing number of rows failed!")
     # try to browse
     current_rec_offset = None
     dialogs_found = set()
@@ -63,7 +63,7 @@ def test_paginator(some_dialogs, soft_assert):
             break
         if current_rec_offset is None:
             current_rec_offset = paginator.rec_offset()
-        for text in get_relevant_rows(dialogs_table):
+        for text in get_relevant_rows(common.dialogs_table):
             dialogs_found.add(text)
         current_rec_offset = paginator.rec_offset()
     assert set([dlg.label for dlg in some_dialogs]) <= dialogs_found, \

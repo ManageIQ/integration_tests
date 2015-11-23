@@ -5,7 +5,7 @@ from cfme.web_ui import menu
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import AngularSelect, Form, Select, SplitTable, accordion,\
-    fill, flash, form_buttons, Table, Tree, Input
+    fill, flash, form_buttons, Table, Tree, Input, Region
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils import version
@@ -69,9 +69,12 @@ element_form = Form(fields=[
     ('apply_btn', '//a[@title="Apply"]')
 ])
 
-dialogs_table = SplitTable(
-    header_data=('//div[@class="xhdr"]/table/tbody', 1),
-    body_data=('//div[@class="objbox"]/table/tbody', 1))
+common = Region(locators={
+    "dialogs_table": {
+        version.LOWEST: SplitTable(
+            header_data=('//div[@class="xhdr"]/table/tbody', 1),
+            body_data=('//div[@class="objbox"]/table/tbody', 1)),
+        "5.5": Table("//div[@id='list_grid']/table")}})
 
 
 def _all_servicedialogs_add_new(context):
