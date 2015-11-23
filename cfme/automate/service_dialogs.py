@@ -90,7 +90,7 @@ menu.nav.add_branch(
         ],
         'service_dialog':
         [
-            lambda ctx: accordion.tree('Service Dialogs', ctx['dialog'].label),
+            lambda ctx: accordion.tree('Service Dialogs', "All Dialogs", ctx['dialog'].label),
             {
                 'service_dialog_edit': menu.nav.partial(cfg_btn, "Edit this Dialog")
             }
