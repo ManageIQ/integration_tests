@@ -60,7 +60,7 @@ def make_template(client, hostname, name, library, network, ostype, username_scv
     script2 = "$JobGroupId01 = [Guid]::NewGuid().ToString();"
     script2 += "$LogNet = Get-SCLogicalNetwork -Name '" + network + "';"
     script2 += "New-SCVirtualNetworkAdapter -JobGroup $JobGroupID01 \
-            -MACAddressType Dynamic -LogicalNetwork $LogNet;"
+            -MACAddressType Dynamic -LogicalNetwork $LogNet -Synthetic;"
     script2 += "New-SCVirtualSCSIAdapter -JobGroup $JobGroupID01 -AdapterID 6 -Shared $False;"
     script2 += "New-SCHardwareProfile -Name '" + name + "' -Owner '" + username_scvmm + "' \
         -Description 'Temp profile used to create a VM Template' -MemoryMB  " + str(ram) + " \
