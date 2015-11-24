@@ -5,6 +5,7 @@ from cfme.web_ui import accordion, menu, flash, Quadicon, Region, Form, fill, fo
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.wait import wait_for
+from utils import version
 
 lifecycle_btn = partial(tb.select, "Lifecycle")
 reload_func = partial(tb.select, "Reload current display")
@@ -16,7 +17,9 @@ policy_btn = partial(tb.select, "Policy")
 
 retirement_form = Form(
     fields=[
-        ('retirement_date', ui.Calendar('miq_date_1')),
+        ('retirement_date', {
+            version.LOWEST: ui.Calendar('miq_date_1'),
+            '5.5': ui.Calendar('retirementDate')}),
         ('retirement_warning', ui.Select("select#retirement_warn"))
     ])
 
