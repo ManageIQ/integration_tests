@@ -42,7 +42,9 @@ properties_form = Form(
         ('hostname_text', Input("hostname")),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('custom_ident_text', Input("custom")),
-        ('host_platform', Select('//select[@id="user_assigned_os"]')),
+        ('host_platform', {
+            version.LOWEST: Select('//select[@id="user_assigned_os"]'),
+            '5.5': AngularSelect('user_assigned_os')}),
         ('ipmi_address_text', Input("ipmi_address")),
         ('mac_address_text', Input("mac_address")),
     ])
