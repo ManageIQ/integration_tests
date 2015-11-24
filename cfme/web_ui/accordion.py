@@ -47,7 +47,8 @@ def click(name):
     """
     try:
         el = sel.element(locate(name))
-        return sel.click(el)
+        if not is_active(name):
+            return sel.click(el)
     except sel.NoSuchElementException:
         raise AccordionItemNotFound("Accordion item '{}' not found!".format(name))
 
