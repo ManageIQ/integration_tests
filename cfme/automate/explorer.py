@@ -227,6 +227,8 @@ class Domain(TreeNode, Updateable):
         self.enabled = enabled
 
     def create(self, cancel=False):
+        if self.exists():
+            return
         sel.force_navigate('automate_explorer_domain_new', context={'tree_item': self.parent})
         fill(self.form, {'name': self.name,
                          'description': self.description,
@@ -358,6 +360,8 @@ class Namespace(TreeNode, Updateable):
     def create(self, cancel=False):
         if self.parent is not None and not self.parent.exists():
             self.parent.create()
+        if self.exists():
+            return
         sel.force_navigate('automate_explorer_namespace_new', context={'tree_item': self.parent})
         form_data = {'name': self.name,
                      'description': self.description}
@@ -457,6 +461,8 @@ class Class(CopiableTreeNode, Updateable):
     def create(self, cancel=False):
         if self.parent is not None and not self.parent.exists():
             self.parent.create()
+        if self.exists():
+            return
         sel.force_navigate("automate_explorer_class_new", context={"tree_item": self.namespace})
         fill(self.form, {'name_text': self.name,
                          'description_text': self.description,
@@ -618,6 +624,8 @@ class Method(CopiableTreeNode, Updateable):
     def create(self, cancel=False):
         if self.parent is not None and not self.parent.exists():
             self.parent.create()
+        if self.exists():
+            return
         sel.force_navigate("automate_explorer_method_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,
                          # 'display_name_text': self.display_name,
@@ -769,6 +777,8 @@ class Instance(CopiableTreeNode, Updateable):
     def create(self, cancel=False):
         if self.parent is not None and not self.parent.exists():
             self.parent.create()
+        if self.exists():
+            return
         sel.force_navigate("automate_explorer_instance_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,
                          'display_name_text': self.display_name,
