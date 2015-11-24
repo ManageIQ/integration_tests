@@ -112,16 +112,16 @@ assign_form = Form(
 nav.add_branch(
     "chargeback", {
         "chargeback_rates_compute": [
-            lambda _: accordion.tree("Rates", "Compute"),
+            lambda _: accordion.tree("Rates", "Rates", "Compute"),
             {"chargeback_rates_compute_new": tb_select_new_chargeback}],
         "chargeback_rates_compute_named": [
-            lambda d: accordion.tree("Rates", "Compute", d["chargeback"].description),
+            lambda d: accordion.tree("Rates", "Rates", "Compute", d["chargeback"].description),
             {"chargeback_rates_compute_edit": tb_select_edit_chargeback}],
         "chargeback_rates_storage": [
-            lambda _: accordion.tree("Rates", "Storage"),
+            lambda _: accordion.tree("Rates", "Rates", "Storage"),
             {"chargeback_rates_storage_new": tb_select_new_chargeback}],
         "chargeback_rates_storage_named": [
-            lambda d: accordion.tree("Rates", "Storage", d["chargeback"].description),
+            lambda d: accordion.tree("Rates", "Rates", "Storage", d["chargeback"].description),
             {"chargeback_rates_storage_edit": tb_select_edit_chargeback}],
         "chargeback_assignments_compute": lambda _: accordion.tree("Assignments", "Assignments",
             "Compute"),
