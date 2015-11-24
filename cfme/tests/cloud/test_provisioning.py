@@ -121,7 +121,7 @@ def test_provision_from_template_using_rest(
             "user_name": "admin",
             "owner_first_name": "Administrator",
             "owner_last_name": "Administratorovich",
-            "owner_email": "admin@cfme.example",
+            "owner_email": "admin@example.com",
             "auto_approve": True,
         },
         "tags": {
