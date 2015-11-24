@@ -970,6 +970,86 @@ def test_edit_user_password(rest_api, user):
     login(new_user)
 
 
+@pytest.fixture(scope='function')
+def rates(request, rest_api):
+    chargeback = rest_api.collections.chargebacks.find_by(rate_type='Compute')[0]
+    data = [{
+        'description': 'test_rate_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
+        'rate': 1,
+        'group': 'CPU',
+        'per_time': 'daily',
+        'per_unit': 'MHz',
+        'chargeback_rate_id': chargeback.id
+    } for _index in range(0, 3)]
+
+    rates = rest_api.collections.rates.action.create(*data)
+    for rate in data:
+        wait_for(
+            lambda: rest_api.collections.rates.find_by(description=rate.get('description')),
+            num_sec=180,
+            delay=10,
+        )
+
+    @request.addfinalizer
+    def _finished():
+        ids = [rate.id for rate in rates]
+        delete_rates = [rate for rate in rest_api.collections.rates if rate.id in ids]
+        if len(delete_rates) != 0:
+            rest_api.collections.rates.action.delete(*delete_rates)
+
+    return rates
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+@pytest.mark.parametrize(
+    "multiple", [False, True],
+    ids=["one_request", "multiple_requests"])
+def test_edit_rates(rest_api, rates, multiple):
+    if multiple:
+        new_descriptions = []
+        rates_data_edited = []
+        for rate in rates:
+            new_description = fauxfactory.gen_alphanumeric().lower()
+            new_descriptions.append(new_description)
+            rate.reload()
+            rates_data_edited.append({
+                "href": rate.href,
+                "description": "test_category_{}".format(new_description),
+            })
+        rest_api.collections.rates.action.edit(*rates_data_edited)
+        for new_description in new_descriptions:
+            wait_for(
+                lambda: rest_api.collections.rates.find_by(description=new_description),
+                num_sec=180,
+                delay=10,
+            )
+    else:
+        rate = rest_api.collections.rates.find_by(description=rates[0].description)[0]
+        new_description = 'test_rate_{}'.format(fauxfactory.gen_alphanumeric().lower())
+        rate.action.edit(description=new_description)
+        wait_for(
+            lambda: rest_api.collections.categories.find_by(description=new_description),
+            num_sec=180,
+            delay=10,
+        )
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+@pytest.mark.parametrize(
+    "multiple", [False, True],
+    ids=["one_request", "multiple_requests"])
+def test_delete_rates(rest_api, rates, multiple):
+    if multiple:
+        rest_api.collections.rates.action.delete(*rates)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            rest_api.collections.rates.action.delete(*rates)
+    else:
+        rate = rates[0]
+        rate.action.delete()
+        with error.expected("ActiveRecord::RecordNotFound"):
+            rate.action.delete()
+
+
 COLLECTIONS_IGNORED_53 = {
     "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
     "tags", "tasks",
