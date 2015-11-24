@@ -81,7 +81,10 @@ drift_table = CheckboxTable({
     "5.4": "//th[normalize-space(.)='Timestamp']/ancestor::table[1]"
 })
 
-host_add_btn = FormButton('Add this Host')
+host_add_btn = {
+    version.LOWEST: FormButton('Add this Host'),
+    "5.5": FormButton("Add")
+}
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 pow_btn = partial(tb.select, 'Power')
