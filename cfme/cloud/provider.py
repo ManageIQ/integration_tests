@@ -29,6 +29,7 @@ from utils.pretty import Pretty
 # Forms
 discover_form = Form(
     fields=[
+        ('discover_select', AngularSelect("discover_type_selected"), {"appeared_in": "5.5"}),
         ('username', "#userid"),
         ('password', "#password"),
         ('password_verify', "#verify"),
@@ -184,7 +185,7 @@ def get_all_providers(do_not_navigate=False):
     return providers
 
 
-def discover(credential, cancel=False):
+def discover(credential, cancel=False, d_type="Amazon"):
     """
     Discover cloud providers. Note: only starts discovery, doesn't
     wait for it to finish.
@@ -194,7 +195,7 @@ def discover(credential, cancel=False):
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
     sel.force_navigate('clouds_provider_discover')
-    form_data = {}
+    form_data = {'discover_select': d_type}
     if credential:
         form_data.update({'username': credential.principal,
                           'password': credential.secret,
