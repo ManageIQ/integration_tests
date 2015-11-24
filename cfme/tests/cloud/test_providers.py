@@ -21,7 +21,7 @@ pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="functio
 
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
-    discover(None)
+    discover(None, d_type="Amazon")
     ident = version.pick({version.LOWEST: 'User ID',
                           '5.4': 'Username'})
     flash.assert_message_match('{} is required'.format(ident))
@@ -29,8 +29,11 @@ def test_empty_discovery_form_validation():
 
 def test_discovery_cancelled_validation():
     """ Tests that the flash message is correct when discovery is cancelled."""
-    discover(None, cancel=True)
-    flash.assert_message_match('Amazon Cloud Providers Discovery was cancelled by the user')
+    discover(None, cancel=True, d_type="Amazon")
+    msg = version.pick(
+        {version.LOWEST: 'Amazon Cloud Providers Discovery was cancelled by the user',
+         '5.5': 'Cloud Providers Discovery was cancelled by the user'})
+    flash.assert_message_match(msg)
 
 
 def test_add_cancelled_validation(request):
@@ -49,7 +52,7 @@ def test_password_mismatch_validation():
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(7))
 
-    discover(cred)
+    discover(cred, d_type="Amazon")
     flash.assert_message_match('Password/Verify Password do not match')
 
 
@@ -57,7 +60,7 @@ def test_password_mismatch_validation():
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_providers_discovery_amazon():
     amazon_creds = get_credentials_from_config('cloudqe_amazon')
-    discover(amazon_creds)
+    discover(amazon_creds, d_type="Amazon")
     flash.assert_message_match('Amazon Cloud Providers: Discovery successfully initiated')
     wait_for_a_provider()
 
@@ -194,7 +197,7 @@ def test_api_port_blank_validation(request):
 
 def test_user_id_max_character_validation():
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51))
-    discover(cred)
+    discover(cred, d_type="Amazon")
 
 
 def test_password_max_character_validation():
@@ -203,7 +206,7 @@ def test_password_max_character_validation():
         principal=fauxfactory.gen_alphanumeric(5),
         secret=password,
         verify_secret=password)
-    discover(cred)
+    discover(cred, d_type="Amazon")
 
 
 def test_name_max_character_validation(request):
