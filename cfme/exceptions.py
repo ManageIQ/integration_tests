@@ -64,6 +64,13 @@ class CandidateNotFound(CFMEException):
     pass
 
 
+class TreeNotFound(CFMEException):
+    """
+    Raised if the tree used for  :py:meth:`cfme.web_ui.Tree.expand_path` cannot be found
+    """
+    pass
+
+
 class ElementOrBlockNotFound(CFMEException):
     """
     Raised if an Element or a Block is not found whilst locating in

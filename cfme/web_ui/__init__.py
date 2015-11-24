@@ -1536,9 +1536,13 @@ class Tree(Pretty):
                         {'message': "{}: could not be found in the tree.".format(item),
                          'path': path,
                          'cause': e})
-                else:
-                    # TODO: Should any other kinds of exceptions be added, handle them here
-                    raise
+                match = re.search(r"^CANNOT FIND TREE /(.*?)/$", text)
+                if match is not None:
+                    tree_id = match.groups()[0]
+                    raise exceptions.TreeNotFound(
+                        "Tree {} / {} not found.".format(tree_id, self.locator))
+                # Otherwise ...
+                raise
         return result
 
     def click_path(self, *path, **kwargs):
