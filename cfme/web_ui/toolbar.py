@@ -100,8 +100,13 @@ def pf_select(root, sub=None, invokes_alert=False):
             sel.execute_script(
                 "return $('*[data-original-title={}]').trigger('click')".format(q_root))
         except sel.NoSuchElementException:
-            sel.execute_script(
-                "return $('button:contains({})').trigger('click')".format(q_root))
+            try:
+                sel.element("//button[@title={}]".format(q_root))
+                sel.execute_script(
+                    "return $('button[title={}]').trigger('click')".format(q_root))
+            except sel.NoSuchElementException:
+                sel.execute_script(
+                    "return $('button:contains({})').trigger('click')".format(q_root))
 
     if not invokes_alert:
         sel.wait_for_ajax()
