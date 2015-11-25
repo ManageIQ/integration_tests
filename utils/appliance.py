@@ -160,7 +160,7 @@ class Appliance(object):
         self.ipapp.enable_internal_db(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
-        self.ipapp.update_rhel(log_callback=log_callback)
+        #self.ipapp.update_rhel(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def _configure_upstream(self, log_callback=None):
