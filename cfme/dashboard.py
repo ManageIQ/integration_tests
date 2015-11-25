@@ -64,7 +64,7 @@ class Widget(Pretty):
     _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
     _content = deferred_verpick({
         version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]",
-        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]/div[contains(@id, 'box')]"})
+        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]"})
     _content_type_54 = "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]"
 
     # 5.5+ updated
@@ -257,8 +257,10 @@ class BaseWidgetContent(Pretty):
     pretty_attrs = ['widget_box_id']
 
     def __init__(self, widget_box_id):
-        self.root = lambda: sel.element(
-            "//div[@id='{}']//div[contains(@class, 'modboxin')]".format(widget_box_id))
+        self.root = lambda: sel.element(version.pick({
+            version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modbox')]",
+            '5.5': "//div[@id='{}']//div[contains(@class, 'panel-body')]"
+        }).format(widget_box_id))
 
     @property
     def data(self):
