@@ -35,9 +35,6 @@ def pytest_generate_tests(metafunc):
             # No provisioning data available
             continue
 
-        if args['provider'].type == "scvmm":
-            continue
-
         # required keys should be a subset of the dict keys set
         if not {'template', 'host', 'datastore'}.issubset(args['provisioning'].viewkeys()):
             # Need all three for template provisioning
