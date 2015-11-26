@@ -363,7 +363,7 @@ class IPAppliance(object):
             if isinstance(address, ParseResult):
                 self.address = address.netloc
                 self.scheme = address.scheme
-                self.url = address.geturl()
+                self._url = address.geturl()
             else:
                 self.address = address
         self.browser_steal = browser_steal
@@ -492,8 +492,8 @@ class IPAppliance(object):
     @lazycache
     def address(self):
         # If address wasn't set in __init__, use the hostname from base_url
-        if getattr(self, "url", None) is not None:
-            parsed_url = urlparse(self.url)
+        if getattr(self, "_url", None) is not None:
+            parsed_url = urlparse(self._url)
             return parsed_url.netloc
         else:
             parsed_url = urlparse(store.base_url)
