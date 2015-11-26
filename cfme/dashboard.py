@@ -14,7 +14,10 @@ from utils.wait import wait_for
 page = Region(
     title="Dashboard",
     locators={
-        'reset_widgets_button': toolbar.root_loc('Reset Dashboard Widgets'),
+        'reset_widgets_button': {
+            version.LOWEST: toolbar.root_loc('Reset Dashboard Widgets'),
+            '5.5.0.11': toolbar.root_loc('Reset Dashboard Widgets to the defaults'),
+        },
         'csrf_token': "//meta[@name='csrf-token']",
         'user_dropdown': {
             version.LOWEST: '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
