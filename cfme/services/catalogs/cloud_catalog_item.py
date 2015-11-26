@@ -54,7 +54,7 @@ detail_form = Form(
 
 
 def _all_catalogitems_add_new(context):
-    catalog_item_tree.click_path('All Catalog Items')
+    accordion.tree('Catalog Items', 'All Catalog Items')
     tb_select('Add a New Catalog Item')
     provider_type = context['provider_type']
     sel.select("//select[@id='st_prov_type']", provider_type)
@@ -69,9 +69,8 @@ nav.add_branch(
     'services_catalogs',
     {'catalog_items': [nav.partial(accordion.click, 'Catalog Items'),
         {'catalog_item_new': _all_catalogitems_add_new,
-         'catalog_item': [lambda ctx: catalog_item_tree.
-                          click_path('All Catalog Items',
-                                     ctx['catalog'], ctx['catalog_item'].name),
+         'catalog_item': [lambda ctx: accordion.tree('Catalog Items', 'All Catalog Items',
+                                ctx['catalog'], ctx['catalog_item'].name),
                           {'catalog_item_edit': nav.partial(tb_select,
                                                             "Edit this Item")}]}]})
 
