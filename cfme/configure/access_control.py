@@ -159,6 +159,10 @@ class User(Updateable, Pretty):
 
     def update(self, updates):
         sel.force_navigate("cfg_accesscontrol_user_edit", context={"user": self})
+        if version.current_version() > '5.5':
+            sel.execute_script(
+                sel.get_attribute(
+                    sel.element('//a[@id="change_stored_password"]'), 'onClick'))
         fill(self.user_form, {'name_txt': updates.get('name'),
                               'userid_txt': updates.get('credential').principal,
                               'password_txt': updates.get('credential').secret,
@@ -175,6 +179,10 @@ class User(Updateable, Pretty):
         tb.select('Configuration', 'Copy this User to a new User')
         new_user = User(name=self.name + "copy",
                         credential=cfme.Credential(principal='redhat', secret='redhat'))
+        if version.current_version() > '5.5':
+            sel.execute_script(
+                sel.get_attribute(
+                    sel.element('//a[@id="change_stored_password"]'), 'onClick'))
 
         fill(self.user_form, {'name_txt': new_user.name,
                               'userid_txt': new_user.credential.principal,

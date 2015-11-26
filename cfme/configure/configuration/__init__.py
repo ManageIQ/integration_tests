@@ -626,6 +626,10 @@ class ServerLogDepot(Pretty):
                 "uri": self.uri,
             }
             if self.p_type != "nfs":
+                if version.current_version() > '5.5':
+                    sel.execute_script(
+                        sel.get_attribute(
+                            sel.element('//a[@id="change_stored_password"]'), 'onClick'))
                 details["user"] = self.username
                 details["password"] = self.password
 
