@@ -62,7 +62,11 @@ def _get_accordion_collapsed(name):
 
     if version.current_version() < '5.5.0.6':
         root = sel.element(locate(name))
-        el = sel.element('./%s/%s' % (DHX_LABEL, DHX_ARROW), root=root)
+        # It seems there are two possibilities, so let's handle both.
+        loc = "|".join([
+            "./{}/{}".format(DHX_LABEL, DHX_ARROW),
+            "../{}".format(DHX_ARROW)])
+        el = sel.element(loc, root=root)
         class_att = sel.get_attribute(el, 'class').split(" ")
         return "item_opened" in class_att
     else:
