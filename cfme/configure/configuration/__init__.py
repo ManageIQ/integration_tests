@@ -656,7 +656,7 @@ class ServerLogDepot(Pretty):
             sel.force_navigate("cfg_diagnostics_server_collect_settings")
             sel.wait_for_element(cls.server_collect_logs.type)
             sel.wait_for_ajax()
-            if sel.text(cls.server_collect_logs.type.first_selected_option) == "<No Depot>":
+            if cls.server_collect_logs.type.first_selected_option_text == "<No Depot>":
                 # Nothing to do here
                 sel.click(form_buttons.cancel)
             else:
