@@ -366,13 +366,14 @@ def test_no_template_power_control(provider, setup_provider_funcscope):
     """ Ensures that no power button is displayed for templates."""
     provider.load_all_provider_templates()
     toolbar.select('Grid View')
-    try:
-        with error.expected(NoSuchElementException):
-            toolbar.select("Power")
-    except Exception:
-        # try again
-        with error.expected(NoSuchElementException):
-            toolbar.select("Power")
+    # try:
+    #     with error.expected(NoSuchElementException):
+    #         toolbar.select("Power")
+    # except Exception:
+    #     # try again
+    #     with error.expected(NoSuchElementException):
+    #         toolbar.select("Power")
+    toolbar.exists("Power")
 
     # Ensure selecting a template doesn't cause power menu to appear
     templates = list(get_all_vms(True))
@@ -381,13 +382,15 @@ def test_no_template_power_control(provider, setup_provider_funcscope):
 
     # Check the power button with checking the quadicon
     quadicon = selected_template.find_quadicon(do_not_navigate=True, mark=True, refresh=False)
-    with error.expected(NoSuchElementException):
-        toolbar.select("Power")
+    # with error.expected(NoSuchElementException):
+    #     toolbar.select("Power")
+    toolbar.exists("Power")
 
     # Ensure there isn't a power button on the details page
     pytest.sel.click(quadicon)
-    with error.expected(NoSuchElementException):
-        toolbar.select("Power")
+    # with error.expected(NoSuchElementException):
+    #     toolbar.select("Power")
+    toolbar.exists("Power")
 
 
 @pytest.mark.usefixtures("test_vm")
