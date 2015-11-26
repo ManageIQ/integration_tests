@@ -60,7 +60,9 @@ class RHEVMSystem(RHEVMSystemBase):
         self.wait_vm_stopped(kwargs['vm_name'], num_sec=timeout)
         if power_on:
             version = self.api.get_product_info().get_full_version()
-            if template.startswith("cfme-55") and version.startswith("3.4"):
+            cfme_template = any(
+                template.startswith(pfx) for pfx in ["cfme-55", "s_tpl", "sprout_template"])
+            if cfme_template and version.startswith("3.4"):
                 action = params.Action(vm=params.VM(initialization=params.Initialization(
                     cloud_init=params.CloudInit(users=params.Users(
                         user=[params.User(user_name="root", password="smartvm")])))))
