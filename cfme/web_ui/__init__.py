@@ -3239,11 +3239,20 @@ class AngularSelect(object):
 
     @property
     def first_selected_option(self):
-        return self.select.first_selected_option
+        new_loc = self._loc + '/span'
+        e = sel.element(new_loc)
+        text = e.text
+        for option in self.all_options:
+            if option.text == text:
+                return option
+        return None
 
     @property
     def first_selected_option_text(self):
-        return self.select.first_selected_option_text
+        new_loc = self._loc + '/span'
+        e = sel.element(new_loc)
+        text = e.text
+        return text
 
 
 @fill.method((AngularSelect, sel.ByText))
