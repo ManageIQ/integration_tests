@@ -403,15 +403,21 @@ def _test_vm_removal():
     virtual_machines.remove(vm_name, cancel=True)
 
 
-@pytest.mark.parametrize('product_features, action',
-                        [([['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-                          ['Everything', 'Infrastructure', 'Virtual Machines', 'VM Access Rules',
-                           'Modify', 'Provision VMs']],
-                        _test_vm_provision)])
+@pytest.mark.parametrize(
+    'product_features, action',
+    [(
+        {version.LOWEST: [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+            ['Everything', 'Infrastructure', 'Virtual Machines', 'VM Access Rules',
+             'Modify', 'Provision VMs']],
+         '5.5': [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+             'Provision VMs']]},
+        _test_vm_provision)])
 def test_permission_edit(request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
     """
+    product_features = version.pick(product_features)
     request.addfinalizer(login.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
     role = ac.Role(name=role_name,
@@ -537,12 +543,19 @@ def test_permissions_role_crud():
 
 
 def test_permissions_vm_provisioning():
-    single_task_permission_test(
-        [
+    features = version.pick({
+        version.LOWEST: [
             ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
             ['Everything', 'Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify',
                 'Provision VMs']
         ],
+        '5.5': [
+            ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+                'Provision VMs']
+        ]})
+    single_task_permission_test(
+        features,
         {'Provision VM': _test_vm_provision}
     )
 
