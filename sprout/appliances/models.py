@@ -104,6 +104,11 @@ class Provider(MetadataMixin):
         help_text="How many simultaneous template configuring tasks can run on this provider.")
     appliance_limit = models.IntegerField(
         null=True, help_text="Hard limit of how many appliances can run on this provider")
+    disabled = models.BooleanField(default=False, help_text="We can disable providers if we want.")
+
+    @property
+    def is_working(self):
+        return self.working and not self.disabled
 
     @property
     def api(self):
@@ -777,23 +782,24 @@ class AppliancePool(MetadataMixin):
         if not version:
             versions = Template.get_versions(
                 template_group=group, ready=True, usable=True, preconfigured=preconfigured,
-                provider__working=True)
+                provider__working=True, provider__disabled=False)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
                 dates = Template.get_dates(template_group=group, version=version, ready=True,
-                    usable=True, preconfigured=preconfigured, provider__working=True)
+                    usable=True, preconfigured=preconfigured, provider__working=True,
+                    provider__disabled=False)
             else:
                 dates = Template.get_dates(
                     template_group=group, ready=True, usable=True, preconfigured=preconfigured,
-                    provider__working=True)
+                    provider__working=True, provider__disabled=False)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):
             group = Group.objects.get(id=group)
         if isinstance(provider, basestring):
-            provider = Provider.objects.get(id=provider, working=True)
+            provider = Provider.objects.get(id=provider, working=True, disabled=False)
         if not (version or date):
             raise Exception(
                 "Could not find proper combination of group, date, version and a working provider!")
