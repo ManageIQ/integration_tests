@@ -160,7 +160,7 @@ class Appliance(object):
         self.ipapp.enable_internal_db(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
-        # self.ipapp.update_rhel(log_callback=log_callback)
+        self.ipapp.update_rhel(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def _configure_upstream(self, log_callback=None):
@@ -875,7 +875,7 @@ class IPAppliance(object):
         return result
 
     # Regexp that looks for product type and version in the update URL
-    product_url_regexp = re.compile(r"/((?:[A-Z]+|CloudForms))(?:-|/)(\d+[^/]+)/")
+    product_url_regexp = re.compile(r"/((?:[A-Z]+|CloudForms|rhel))(?:-|/)(\d+[^/]+)/")
 
     def find_product_repos(self):
         """Returns a dictionary of products, where the keys are names of product (repos) and values
@@ -887,6 +887,8 @@ class IPAppliance(object):
             if match is None:
                 continue
             product, ver = match.groups()
+            if product == "rhel":
+                product = "RHEL"
             if product not in products:
                 products[product] = {}
             products[product][ver] = repo_name
