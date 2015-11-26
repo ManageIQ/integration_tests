@@ -75,7 +75,7 @@ def versions_for_group(request):
         else:
             versions = Template.get_versions(
                 template_group=group, ready=True, usable=True, exists=True,
-                preconfigured=preconfigured, provider__working=True)
+                preconfigured=preconfigured, provider__working=True, provider__disabled=False)
             if versions:
                 latest_version = versions[0]
 
@@ -466,7 +466,7 @@ def vms(request, current_provider=None):
         except ObjectDoesNotExist:
             providers.append((provider_key, True))
         else:
-            providers.append((provider_key, provider.working))
+            providers.append((provider_key, provider.is_working))
     if current_provider is None and providers:
         return redirect("vms_at_provider", current_provider=provider_keys[0])
     return render(request, 'appliances/vms/index.html', locals())
@@ -550,3 +550,21 @@ def task_result(request):
     if not result.ready():
         return json_response(None)
     return json_response(result.get(timeout=1))
+
+
+def provider_enable_disable(request, provider_id, disabled=None):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    try:
+        provider = Provider.objects.get(id=provider_id)
+    except ObjectDoesNotExist:
+        messages.error(request, 'Provider with ID {} does not exist!.'.format(provider_id))
+        return go_back_or_home(request)
+    if not request.user.is_superuser:
+        messages.error(request, 'Providers can be modified only by superusers.')
+        return go_back_or_home(request)
+    provider.disabled = disabled
+    provider.save()
+    messages.success(
+        request, 'Provider {}, {}.'.format(provider_id, "disabled" if disabled else "enabled"))
+    return go_back_or_home(request)

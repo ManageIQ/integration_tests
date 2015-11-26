@@ -25,7 +25,15 @@
 <div class="panel panel-primary" id="provider-{{ provider.id }}">
     <!-- Provider data -->
     <div class="panel-heading">
-        <strong>{{ provider.id }}</strong> - {{ provider.ip_address }}
+        <strong>{{ provider.id }}</strong> - {{ provider.ip_address }} (currently <strong>{% if provider.is_working %}IS{% else %}NOT{% endif %}</strong> working)
+        <br>
+        {% if request.user.is_superuser %}
+            {% if provider.disabled %}
+                <a href="{% url 'provider_enable' provider.id %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Enable</a>
+            {% else %}
+                <a href="{% url 'provider_disable' provider.id %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-off"></span> Disable</a>
+            {% endif %}
+        {% endif %}
     </div>
     <!-- Appliance list -->
     <div class="panel-body">

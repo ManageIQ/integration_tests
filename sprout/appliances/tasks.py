@@ -221,7 +221,7 @@ def poke_trackerbot(self):
                 # It is already obsolete, so ignore it
                 continue
         provider, create = Provider.objects.get_or_create(id=template["provider"]["key"])
-        if not provider.working:
+        if not provider.is_working:
             continue
         if "sprout" not in provider.provider_data:
             continue
@@ -922,7 +922,7 @@ def retrieve_appliance_ip(self, appliance_id):
 def refresh_appliances(self):
     """Dispatches the appliance refresh process among the providers"""
     self.logger.info("Initiating regular appliance provider refresh")
-    for provider in Provider.objects.filter(working=True):
+    for provider in Provider.objects.filter(working=True, disabled=False):
         refresh_appliances_provider.delay(provider.id)
 
 
