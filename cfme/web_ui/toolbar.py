@@ -29,6 +29,7 @@ def root_loc(root):
              "//button[normalize-space(.) = {0}] |"
              "//button[@data-original-title = {0}] |"
              "//a[@data-original-title = {0}]/.. |"
+             "//a[@title = {0}]/.. |"
              "//button[@title = {0}]")
             .format(quoteattr(root)))
 
