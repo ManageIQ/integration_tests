@@ -568,7 +568,9 @@ class ServerLogDepot(Pretty):
 
         server_collect_logs = Form(
             fields=[
-                ("type", Select("select#log_protocol")),
+                ("type", {
+                    version.LOWEST: Select("select#log_protocol"),
+                    '5.5': AngularSelect('log_protocol')}),
                 ("name", {
                     version.LOWEST: None,
                     "5.4": Input("depot_name")}),
@@ -1175,20 +1177,35 @@ class Schedule(Pretty):
         ("description", Input("description")),
         ("active", Input("enabled")),
         ("name", Input("name")),
-        ("action", Select("select#action_typ")),
-        ("filter_type", Select("select#filter_typ")),
-        ("filter_value", Select("select#filter_value")),
-        ("timer_type", Select("select#timer_typ")),
+        ("action", {
+            version.LOWEST: Select("select#action_typ"),
+            '5.5': AngularSelect('action_typ')}),
+        ("filter_type", {
+            version.LOWEST: Select("select#filter_typ"),
+            '5.5': AngularSelect('filter_typ')}),
+        ("filter_value", {
+            version.LOWEST: Select("select#filter_value"),
+            '5.5': AngularSelect('filter_value')}),
+        ("timer_type", {
+            version.LOWEST: Select("select#timer_typ"),
+            '5.5': AngularSelect('timer_typ')}),
         ("timer_hours", Select("select#timer_hours")),
         ("timer_days", Select("select#timer_days")),
         ("timer_weeks", Select("select#timer_weekss")),    # Not a typo!
         ("timer_months", Select("select#timer_months")),
-        ("time_zone", Select("select#time_zone")),
+        ("timer_value", AngularSelect('timer_value'), {"appeared_in": "5.5"}),
+        ("time_zone", {
+            version.LOWEST: Select("select#time_zone"),
+            '5.5': AngularSelect('time_zone')}),
         ("start_date", {
             "5.3": Calendar("miq_date_1"),
             "5.4": Calendar("miq_angular_date_1")}),
-        ("start_hour", Select("select#start_hour")),
-        ("start_min", Select("select#start_min")),
+        ("start_hour", {
+            version.LOWEST: Select("select#start_hour"),
+            '5.5': AngularSelect('start_hour')}),
+        ("start_min", {
+            version.LOWEST: Select("select#start_min"),
+            '5.5': AngularSelect('start_min')}),
     ])
 
     pretty_attrs = ['name', 'description', 'run_type', 'run_every',
@@ -1223,8 +1240,11 @@ class Schedule(Pretty):
         if run_type == "Once":
             self.details["timer_type"] = "Once"
         else:
+            field = version.pick({
+                version.LOWEST: self.tab[run_type],
+                '5.5': 'timer_value'})
             self.details["timer_type"] = run_type
-            self.details[self.tab[run_type]] = run_every
+            self.details[field] = run_every
 
     def create(self, cancel=False):
         """ Create a new schedule from the informations stored in the object.
@@ -1403,8 +1423,12 @@ class DatabaseBackupSchedule(Schedule):
         ("name", Input("name")),
         ("description", Input("description")),
         ("active", Input("enabled")),
-        ("action", Select("select#action_typ")),
-        ("log_protocol", Select("select#log_protocol")),
+        ("action", {
+            version.LOWEST: Select("select#action_typ"),
+            '5.5': AngularSelect('action_typ')}),
+        ("log_protocol", {
+            version.LOWEST: Select("select#log_protocol"),
+            '5.5': AngularSelect('log_protocol')}),
         ("depot_name", {
             "5.3": None,
             "5.4": Input("depot_name")}),
@@ -1412,17 +1436,26 @@ class DatabaseBackupSchedule(Schedule):
         ("log_userid", Input("log_userid")),
         ("log_password", Input("log_password")),
         ("log_verify", Input("log_verify")),
-        ("timer_type", Select("select#timer_typ")),
+        ("timer_type", {
+            version.LOWEST: Select("select#timer_typ"),
+            '5.5': AngularSelect('timer_typ')}),
         ("timer_hours", Select("select#timer_hours")),
         ("timer_days", Select("select#timer_days")),
         ("timer_weeks", Select("select#timer_weekss")),    # Not a typo!
         ("timer_months", Select("select#timer_months")),
-        ("time_zone", Select("select#time_zone")),
+        ("timer_value", AngularSelect('timer_value'), {"appeared_in": "5.5"}),
+        ("time_zone", {
+            version.LOWEST: Select("select#time_zone"),
+            '5.5': AngularSelect('time_zone')}),
         ("start_date", {
             "5.3": Calendar("miq_date_1"),
             "5.4": Calendar("miq_angular_date_1")}),
-        ("start_hour", Select("select#start_hour")),
-        ("start_min", Select("select#start_min"))
+        ("start_hour", {
+            version.LOWEST: Select("select#start_hour"),
+            '5.5': AngularSelect('start_hour')}),
+        ("start_min", {
+            version.LOWEST: Select("select#start_min"),
+            '5.5': AngularSelect('start_min')}),
     ])
 
     def __init__(self,
@@ -1480,8 +1513,11 @@ class DatabaseBackupSchedule(Schedule):
         if run_type == "Once":
             self.details["timer_type"] = "Once"
         else:
+            field = version.pick({
+                version.LOWEST: self.tab[run_type],
+                '5.5': 'timer_value'})
             self.details["timer_type"] = run_type
-            self.details[self.tab[run_type]] = run_every
+            self.details[field] = run_every
 
     def create(self, cancel=False, samba_validate=False):
         """ Create a new schedule from the informations stored in the object.
