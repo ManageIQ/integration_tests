@@ -75,7 +75,13 @@ def test_vm_genealogy_detected(
 
     if from_edit:
         vm_crud.open_edit()
-        parent = pytest.sel.text(vm_crud.edit_form.parent_sel.first_selected_option).strip()
+        opt = vm_crud.edit_form.parent_sel.first_selected_option
+        if isinstance(opt, tuple):
+            # AngularSelect
+            parent = opt.text.strip()
+        else:
+            # Ordinary Select
+            parent = pytest.sel.text(opt).strip()
         assert parent.startswith(small_template), "The parent template not detected!"
     else:
         vm_crud_ancestors = vm_crud.genealogy.ancestors
