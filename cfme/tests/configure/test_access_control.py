@@ -10,15 +10,15 @@ from cfme import login
 from cfme.configure.access_control import set_group_order
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
-from cfme.web_ui import flash, Table, toolbar as tb
+from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
 from utils.blockers import BZ
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
-from xml.sax.saxutils import quoteattr
 from utils import version
+from xml.sax.saxutils import quoteattr
 
 records_table = Table("//div[@id='main_div']//table")
 usergrp = ac.Group(description='EvmGroup-user')
@@ -151,9 +151,7 @@ def test_user_edit_tag():
     user = new_user()
     user.create()
     user.edit_tags("Cost Center *", "Cost Center 001")
-    row = sel.elements("//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
-        "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
-    tag = sel.text(row).strip()
+    tag = InfoBlock.text('Smart Management', 'My Company Tags')
     assert tag == "Cost Center: Cost Center 001", "User edit tag failed"
     user.delete()
 
@@ -161,12 +159,10 @@ def test_user_edit_tag():
 def test_user_remove_tag():
     user = new_user()
     user.create()
-    sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": user})
-    row = sel.elements("//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
-        "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
-    tag = sel.text(row).strip()
     user.edit_tags("Department", "Engineering")
     user.remove_tag("Department", "Engineering")
+    sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": user})
+    tag = InfoBlock.text('Smart Management', 'My Company Tags')
     assert tag != "Department: Engineering", "Remove User tag failed"
     user.delete()
 
@@ -236,9 +232,15 @@ def test_group_edit_tag():
     group = new_group()
     group.create()
     group.edit_tags("Cost Center *", "Cost Center 001")
-    row = sel.elements("//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
-        "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
-    tag = sel.text(row).strip()
+    e = version.pick({
+        version.LOWEST:
+            lambda: sel.elements(
+                "//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
+                "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags"))
+            ),
+        '5.5': lambda: InfoBlock('Smart Management', 'My Company Tags').element
+    })
+    tag = sel.text(e()).strip()
     assert tag == "Cost Center: Cost Center 001", "Group edit tag failed"
     group.delete()
 
@@ -248,11 +250,17 @@ def test_group_remove_tag():
     group = new_group()
     group.create()
     sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": group})
-    row = sel.elements("//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
-        "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
-    tag = sel.text(row).strip()
     group.edit_tags("Department", "Engineering")
     group.remove_tag("Department", "Engineering")
+    e = version.pick({
+        version.LOWEST:
+            lambda: sel.elements(
+                "//*[(self::th or self::td or self::label) and normalize-space(.)={}]/../.."
+                "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags"))
+            ),
+        '5.5': lambda: InfoBlock('Smart Management', 'My Company Tags').element
+    })
+    tag = sel.text(e()).strip()
     assert tag != "Department: Engineering", "Remove Group tag failed"
     group.delete()
 
