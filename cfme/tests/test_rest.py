@@ -497,7 +497,7 @@ def test_edit_service(rest_api, services):
     Metadata:
         test_flag: rest
     """
-    ser = rest_api.collections.services[0]
+    ser = services[0]
     new_name = fauxfactory.gen_alphanumeric()
     ser.action.edit(name=new_name)
     wait_for(
@@ -976,9 +976,9 @@ def rates(request, rest_api):
     data = [{
         'description': 'test_rate_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
         'rate': 1,
-        'group': 'CPU',
+        'group': 'cpu',
         'per_time': 'daily',
-        'per_unit': 'MHz',
+        'per_unit': 'megahertz',
         'chargeback_rate_id': chargeback.id
     } for _index in range(0, 3)]
 
