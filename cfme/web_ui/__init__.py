@@ -1763,6 +1763,11 @@ class InfoBlock(Pretty):
                 '//*[h3[contains(normalize-space(.), "{}")] and table/tbody/tr/td['
                 'contains(@class, "key")]]'.format(self.title)
             ),
+            # Newer Form type used in AC tagging:
+            (
+                '//h3[contains(normalize-space(.), "{}")]/following-sibling::div/table/tbody/tr/td['
+                'contains(@class, "key")]/../../../..'.format(self.title)
+            ),
             # The root element must contain table element because listaccordions were caught by the
             # locator. It used to be fieldset but it seems it can be really anything
             # And here comes a new one, this time no table. (eg. 5.5.0.7 Configuration/About)
