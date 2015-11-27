@@ -86,7 +86,7 @@ def pf_select(root, sub=None, invokes_alert=False):
     sel.wait_for_ajax()
     if isinstance(root, dict):
         root = version.pick(root)
-    if sub is not None and isinstance(sub, dict):
+    if isinstance(sub, dict):
         sub = version.pick(sub)
 
     if sub:
@@ -106,8 +106,13 @@ def pf_select(root, sub=None, invokes_alert=False):
                 sel.execute_script(
                     "return $('button[title={}]').trigger('click')".format(q_root))
             except sel.NoSuchElementException:
-                sel.execute_script(
-                    "return $('button:contains({})').trigger('click')".format(q_root))
+                try:
+                    sel.element("//button[contains(@title, {})]".format(q_root))
+                    sel.execute_script(
+                        "return $('button:contains({})').trigger('click')".format(q_root))
+                except sel.NoSuchElementException:
+                    # The view selection buttons?
+                    sel.click("//li/a[@title={}]/i/../..".format(q_root))
 
     if not invokes_alert:
         sel.wait_for_ajax()
@@ -212,3 +217,31 @@ def refresh():
         sel.click("//div[@title='Reload current display']")
     else:
         sel.refresh()
+
+
+def exists(root, sub=None, and_is_not_greyed=False):
+    """ Checks presence and usability of toolbar buttons.
+
+    By default it checks whether the button is available, not caring whether it is greyed or not.
+    You can optionally enable check for greyedness.
+
+    Args:
+        root: Button name.
+        sub: Item name (optional)
+        and_is_not_greyed: Check if the button is available to click.
+
+    """
+    sel.wait_for_ajax()
+    if isinstance(root, dict):
+        root = version.pick(root)
+    if isinstance(sub, dict):
+        sub = version.pick(sub)
+
+    try:
+        greyed = is_greyed(root, sub)
+        if and_is_not_greyed:
+            return not greyed
+        else:
+            return True
+    except sel.NoSuchElementException:
+        return False

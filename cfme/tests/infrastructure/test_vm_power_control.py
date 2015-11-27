@@ -7,8 +7,7 @@ import time
 from cfme.common.vm import VM
 from cfme.infrastructure.virtual_machines import get_all_vms
 from cfme.web_ui import toolbar
-from selenium.common.exceptions import NoSuchElementException
-from utils import testgen, error
+from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 from utils.version import appliance_is_downstream, current_version
@@ -362,17 +361,23 @@ class TestVmDetailsPowerControlPerProvider(object):
                         "ui: {} should !=  orig: {}".format(new_last_boot_time, last_boot_time))
 
 
-def test_no_template_power_control(provider, setup_provider_funcscope):
-    """ Ensures that no power button is displayed for templates."""
+def test_no_template_power_control(provider, setup_provider_funcscope, soft_assert):
+    """ Ensures that no power button is displayed for templates.
+
+    Prerequisities:
+        * An infra provider that has some templates.
+
+    Steps:
+        * Open the view of all templates of the provider
+        * Verify the Power toolbar button is not visible
+        * Select some template using the checkbox
+        * Verify the Power toolbar button is not visible
+        * Click on some template to get into the details page
+        * Verify the Power toolbar button is not visible
+    """
     provider.load_all_provider_templates()
     toolbar.select('Grid View')
-    try:
-        with error.expected(NoSuchElementException):
-            toolbar.select("Power")
-    except Exception:
-        # try again
-        with error.expected(NoSuchElementException):
-            toolbar.select("Power")
+    soft_assert(not toolbar.exists("Power"), "Power displayed in template grid view!")
 
     # Ensure selecting a template doesn't cause power menu to appear
     templates = list(get_all_vms(True))
@@ -381,13 +386,11 @@ def test_no_template_power_control(provider, setup_provider_funcscope):
 
     # Check the power button with checking the quadicon
     quadicon = selected_template.find_quadicon(do_not_navigate=True, mark=True, refresh=False)
-    with error.expected(NoSuchElementException):
-        toolbar.select("Power")
+    soft_assert(not toolbar.exists("Power"), "Power displayed when template quadicon checked!")
 
     # Ensure there isn't a power button on the details page
     pytest.sel.click(quadicon)
-    with error.expected(NoSuchElementException):
-        toolbar.select("Power")
+    soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
 @pytest.mark.usefixtures("test_vm")
