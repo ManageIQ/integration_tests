@@ -22,7 +22,7 @@ from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
     form_buttons, paginator, Input, mixins
 )
-from cfme.web_ui.form_buttons import FormButton
+from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
 from utils.db_queries import get_host_id
 from utils.ipmi import IPMI
@@ -209,7 +209,7 @@ class Host(Updateable, Pretty):
         """
 
         sel.force_navigate('infrastructure_host_edit', context={'host': self})
-        fill(properties_form, self._form_mapping(**updates))
+        change_stored_password()
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
 
         # Workaround for issue with form_button staying dimmed.
