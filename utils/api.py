@@ -494,12 +494,12 @@ class Action(object):
             return self._process_result(result)
 
     def _process_result(self, result):
-        if "id" in result:
+        if "href" in result:
+            return Entity(self.collection, result, incomplete=True)
+        elif "id" in result:
             d = copy(result)
             d["href"] = "{}/{}".format(self.collection._href, result["id"])
             return Entity(self.collection, d, incomplete=True)
-        elif "href" in result:
-            return Entity(self.collection, result, incomplete=True)
         # TODO: Remove the branch under this condition since it can cause bad things to happen!
         elif "request_state" in result and "requester_id" in result:
             collection = getattr(self.api.collections, "service_requests")
