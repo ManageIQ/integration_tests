@@ -8,6 +8,7 @@ from xml.sax.saxutils import quoteattr
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill
+from utils import version
 from utils.log import logger
 from utils.pretty import Pretty
 
@@ -130,6 +131,13 @@ validate_short = FormButton("Validate the credentials")
 validate_multi_host = FormButton("Validate the credentials by logging into the selected Host")
 host_provision_submit = FormButton("Submit this provisioning request")
 host_provision_cancel = FormButton("Cancel this provisioning request")
+
+
+def change_stored_password():
+    if version.current_version() > '5.5':
+        sel.execute_script(
+            sel.get_attribute(
+                sel.element('//a[@id="change_stored_password"]'), 'onClick'))
 
 
 @fill.method((FormButton, bool))

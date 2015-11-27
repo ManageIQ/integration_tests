@@ -12,6 +12,7 @@ from cfme.web_ui import (
     AngularSelect, Calendar, CheckboxSelect, DynamicTable, Form, InfoBlock, Input, MultiFill,
     Region, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.menu import nav
+from cfme.web_ui.form_buttons import change_stored_password
 from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
@@ -626,10 +627,7 @@ class ServerLogDepot(Pretty):
                 "uri": self.uri,
             }
             if self.p_type != "nfs":
-                if version.current_version() > '5.5':
-                    sel.execute_script(
-                        sel.get_attribute(
-                            sel.element('//a[@id="change_stored_password"]'), 'onClick'))
+                change_stored_password()
                 details["user"] = self.username
                 details["password"] = self.password
 
@@ -2087,6 +2085,7 @@ def set_replication_worker_host(host, port='5432'):
         host: Address of the hostname to replicate to.
     """
     sel.force_navigate("cfg_settings_currentserver_workers")
+    change_stored_password()
     fill(
         replication_worker,
         dict(host=host,

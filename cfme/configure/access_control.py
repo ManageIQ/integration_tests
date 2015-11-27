@@ -4,6 +4,7 @@ from fixtures.pytest_store import store
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
+from cfme.web_ui.form_buttons import change_stored_password
 from cfme.web_ui import AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash, \
     form_buttons, Input, Table, UpDownSelect
 from cfme.web_ui.menu import nav
@@ -159,10 +160,7 @@ class User(Updateable, Pretty):
 
     def update(self, updates):
         sel.force_navigate("cfg_accesscontrol_user_edit", context={"user": self})
-        if version.current_version() > '5.5':
-            sel.execute_script(
-                sel.get_attribute(
-                    sel.element('//a[@id="change_stored_password"]'), 'onClick'))
+        change_stored_password()
         fill(self.user_form, {'name_txt': updates.get('name'),
                               'userid_txt': updates.get('credential').principal,
                               'password_txt': updates.get('credential').secret,
@@ -179,11 +177,7 @@ class User(Updateable, Pretty):
         tb.select('Configuration', 'Copy this User to a new User')
         new_user = User(name=self.name + "copy",
                         credential=cfme.Credential(principal='redhat', secret='redhat'))
-        if version.current_version() > '5.5':
-            sel.execute_script(
-                sel.get_attribute(
-                    sel.element('//a[@id="change_stored_password"]'), 'onClick'))
-
+        change_stored_password()
         fill(self.user_form, {'name_txt': new_user.name,
                               'userid_txt': new_user.credential.principal,
                               'password_txt': new_user.credential.secret,
