@@ -27,10 +27,11 @@ def domain(request):
 
 @pytest.fixture(
     scope="function",
-    params=[ta.a_namespace, ta.a_namespace_with_path])
+    params=[ta.a_namespace, ta.a_namespace_with_path],
+    ids=["plain", "nested_existing"])
 def namespace(request, domain):
     # don't test with existing paths on upstream (there aren't any)
-    if request.param is ta.a_namespace_with_path and version.current_version() == version.LATEST:
+    if request.param is ta.a_namespace_with_path and version.current_version() == version.UPSTREAM:
         pytest.skip("don't test with existing paths on upstream (there aren't any)")
     return request.param(domain=domain)
 

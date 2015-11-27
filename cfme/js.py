@@ -92,9 +92,16 @@ function get_level_name(level, by_id) {
 }
 """
 
+# needs xpath to work, provided by dependencies of the other functions
+_expandable = """\
+function expandable(el) {
+    return xpath(el.li, "./span/span[contains(@class, 'dynatree-expander')]") !== null;
+}
+"""
+
 # This function reads whole tree. If it faces an ajax load, it returns false.
 # If it does not return false, the result is complete.
-read_tree = jsmin(_tree_get_root + _get_level_name + """\
+read_tree = jsmin(_tree_get_root + _get_level_name + _expandable + """\
 function read_tree(root, read_id, _root_tree) {
     if(read_id === undefined)
         read_id = false;
@@ -104,7 +111,7 @@ function read_tree(root, read_id, _root_tree) {
         root = get_root(root);
         if(root === null)
             return null;
-        if(!root.bExpanded) {
+        if(expandable(root) && (!root.bExpanded)) {
             root.expand();
             if(root.childList === null && root.data.isLazy){
                 return false;
@@ -128,7 +135,7 @@ function read_tree(root, read_id, _root_tree) {
         else
             return result;
     } else {
-        if(!root.bExpanded) {
+        if(expandable(root) && (!root.bExpanded)) {
             root.expand();
             if(root.childList === null && root.data.isLazy){
                 return false;
@@ -160,7 +167,7 @@ function read_tree(root, read_id, _root_tree) {
 
 # This function searches for specified node by path. If it faces an ajax load, it returns false.
 # If it does not return false, the result is complete.
-find_leaf = jsmin(_tree_get_root + _get_level_name + """\
+find_leaf = jsmin(_tree_get_root + _get_level_name + _expandable + """\
 function find_leaf(root, path, by_id) {
     if(path.length == 0)
         return null;
@@ -188,7 +195,7 @@ function find_leaf(root, path, by_id) {
         var last = (i + 1) == path.length;
         var step = path[i];
         var found = false;
-        if(!item.bExpanded) {
+        if(expandable(item) && (!item.bExpanded)) {
             item.expand();
             if(item.childList === null)
                 return false;  //We need to do wait_for_ajax and then repeat.
