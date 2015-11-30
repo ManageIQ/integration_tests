@@ -93,4 +93,5 @@ class Catalog(Updateable, Pretty):
         sel.force_navigate('catalog', context={'catalog': self})
         cfg_btn("Remove Item from the VMDB", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Catalog "{}": Delete successful'.format(self.description))
+        flash.assert_success_message(
+            'Catalog "{}": Delete successful'.format(self.description or self.name))
