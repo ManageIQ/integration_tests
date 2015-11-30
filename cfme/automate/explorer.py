@@ -8,7 +8,7 @@ import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
 from cfme.web_ui import Form, Table, Tree, UpDownSelect, fill, Select, ScriptBox, DHTMLSelect,\
-    Region, form_buttons, accordion, Input
+    Region, form_buttons, accordion, Input, AngularSelect
 import cfme.exceptions as exceptions
 from utils.update import Updateable
 from utils import error, version
@@ -132,7 +132,9 @@ class TreeNode(pretty.Pretty):
 
 class CopiableTreeNode(TreeNode):
     copy_form = Form(fields=[
-        ("domain", Select("select#domain")),
+        ("domain", {
+            version.LOWEST: Select("select#domain"),
+            "5.5": AngularSelect("domain")}),
         ("domain_text_only", {
             version.LOWEST: "//fieldset[p]//tr[./td[@class='key' and normalize-space(.)="
                             "'To Domain']]/td[not(@class='key') and not(select)]",
@@ -524,15 +526,15 @@ class Class(CopiableTreeNode, Updateable):
                 row_id = ""  # for new entries, id attribute has no trailing '_x'
             else:
                 idx = sel.get_attribute("//input[starts-with(@id, 'fields_name') and @value='%s']" %
-                                    self.name, 'id').split("_")[2]
+                                    self.name, 'id').split("_")[-1]
                 row_id = "_" + idx
 
-            def loc(fmt):
+            def loc(fmt, underscore=True):
                 if blank:
                     plural = ""
                 else:
                     plural = "s"
-                return fmt % (plural, row_id)
+                return fmt % (plural, row_id if underscore else row_id.lstrip("_"))
 
             def remove(loc):
                 """Return a callable that clicks but still allows popup dismissal"""
@@ -540,9 +542,12 @@ class Class(CopiableTreeNode, Updateable):
 
             return Form(
                 fields=[('name_text', Input(loc('field%s_name%s'))),
-                        ('type_select', DHTMLSelect(loc("//div[@id='field%s_aetype_id%s']"))),
-                        ('data_type_select',
-                         DHTMLSelect(loc("//div[@id='field%s_datatype_id%s']"))),
+                        ('type_select', {
+                            version.LOWEST: DHTMLSelect(loc("//div[@id='field%s_aetype_id%s']")),
+                            "5.5": AngularSelect(loc("field%s_aetype%s", underscore=False))}),
+                        ('data_type_select', {
+                            version.LOWEST: DHTMLSelect(loc("//div[@id='field%s_datatype_id%s']")),
+                            "5.5": AngularSelect(loc("field%s_datatype%s", underscore=False))}),
                         ('default_value_text', Input(loc('field%s_default_value%s'))),
                         ('display_name_text', Input(loc('field%s_display_name%s'))),
                         ('description_text', Input(loc('field%s_description%s'))),
@@ -642,8 +647,14 @@ class Method(CopiableTreeNode, Updateable):
         sel.force_navigate("automate_explorer_method_edit", context={"tree_item": self})
         fill(self.form, {'name_text': updates.get('name'),
                          'description_text': updates.get('description'),
-                         'data_text': updates.get('data')},
-             action=form_buttons.cancel if cancel else form_buttons.save)
+                         'data_text': updates.get('data')})
+        if not cancel:
+            if form_buttons.save.is_dimmed:
+                # Fire off the handlers manually
+                self.form.data_text.workaround_save_issue()
+            sel.click(form_buttons.save)
+        else:
+            sel.click(form_buttons.cancel)
 
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})
@@ -666,7 +677,7 @@ class InstanceFieldsRow(pretty.Pretty):
         "inst_value_{}", "inst_on_entry_{}", "inst_on_exit_{}",
         "inst_on_error_{}", "inst_collect_{}"
     )
-    pretty_attrs = ['row_id']
+    pretty_attrs = ['_row_id']
 
     def __init__(self, row_id):
         self._row_id = row_id
@@ -697,7 +708,8 @@ class InstanceFields(object):
     """
     fields = {
         version.LOWEST: "//div[@id='form_div']//table[@class='style3']//td[img]",
-        "5.4": "//div[@id='form_div']//table[thead]//td[img]"
+        "5.4": "//div[@id='form_div']//table[thead]//td[img]",
+        "5.5": "//div[@id='class_instances_div']//table//tr/td[./ul[contains(@class, 'icons')]]",
     }
 
     @property
@@ -707,8 +719,7 @@ class InstanceFields(object):
         Requires to be on the page
         """
         names = []
-        for cell in sel.elements("//div[@id='form_div']//table[@class='style3' "
-                                 "or contains(@class, 'table-striped')]//td[img]"):
+        for cell in sel.elements(self.fields):
             # The received text is something like u'  (blabla)' so we extract 'blabla'
             sel.move_to_element(cell)  # This is required in order to correctly read the content
             names.append(re.sub(r"^[^(]*\(([^)]+)\)[^)]*$", "\\1", sel.text(cell).encode("utf-8")))

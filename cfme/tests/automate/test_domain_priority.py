@@ -42,6 +42,17 @@ def original_domain(request):
     return domain
 
 
+@pytest.fixture(scope="module")
+def original_class(request, original_domain):
+    # take the Request class and copy it for own purposes.
+    cls = Class(
+        name="Request",
+        namespace=Namespace(name="System", parent=Domain(name="ManageIQ (Locked)")))
+    cls = cls.copy_to(original_domain)
+    request.addfinalizer(lambda: cls.delete() if cls.exists() else None)
+    return cls
+
+
 @pytest.fixture(scope="function")
 def original_method_write_data():
     return fauxfactory.gen_alphanumeric(32)
@@ -53,19 +64,11 @@ def copy_method_write_data():
 
 
 @pytest.fixture(scope="function")
-def original_method(request, original_method_write_data, original_domain):
+def original_method(request, original_method_write_data, original_domain, original_class):
     method = Method(
         name=fauxfactory.gen_alphanumeric(),
         data=METHOD_TORSO.format(original_method_write_data),
-        cls=Class(
-            name="Request",
-            namespace=Namespace(
-                name="System",
-                parent=original_domain
-            ),
-            setup_schema=[Class.SchemaField(name="meth5",
-                                            type_="Method")]
-        )
+        cls=original_class,
     )
     method.create()
     request.addfinalizer(lambda: method.delete() if method.exists() else None)
@@ -73,7 +76,7 @@ def original_method(request, original_method_write_data, original_domain):
 
 
 @pytest.fixture(scope="function")
-def original_instance(request, original_method, original_domain):
+def original_instance(request, original_method, original_domain, original_class):
     instance = Instance(
         name=fauxfactory.gen_alphanumeric(),
         values={
@@ -81,23 +84,14 @@ def original_instance(request, original_method, original_domain):
                 "value": original_method.name
             }
         },
-        cls=Class(
-            name="Request",
-            namespace=Namespace(
-                name="System",
-                parent=original_domain
-            ),
-            setup_schema=[Class.SchemaField(name="meth5",
-                                            type_="Method")]
-        )
+        cls=original_class,
     )
     instance.create()
     request.addfinalizer(lambda: instance.delete() if instance.exists() else None)
     return instance
 
 
-@pytest.mark.meta(server_roles="+automate")
-@pytest.mark.meta(blockers=[1254055])
+@pytest.mark.meta(blockers=[1254055], server_roles=["+automate"])
 def test_priority(
         request, ssh_client, original_method, original_instance, original_domain, copy_domain,
         original_method_write_data, copy_method_write_data):
@@ -117,7 +111,7 @@ def test_priority(
         * The file on appliance should contain the data as you selected.
         * Copy the method to the second (copy) domain.
         * Change the copied method so it writes different data.
-        * Set the domain order so the copy doamin is first.
+        * Set the domain order so the copy domain is first.
         * Run the same simulation again.
         * Check the file contents, it should be the same as the ćontent you entered last.
         * Then pick the domain order so the original domain is first.
@@ -147,9 +141,7 @@ def test_priority(
     # END OF FIRST SIMULATION
     # We've checked that the automate method works, so let's copy them to new domain
     copied_method = original_method.copy_to(copy_domain)
-    request.addfinalizer(lambda: copied_method.delete())
-    copied_instance = original_instance.copy_to(copy_domain)
-    request.addfinalizer(lambda: copied_instance.delete())
+    request.addfinalizer(copied_method.delete)
     # Set up a different thing to write to the file
     with update(copied_method):
         copied_method.data = METHOD_TORSO.format(copy_method_write_data)
@@ -162,8 +154,8 @@ def test_priority(
     simulate(
         instance="Request",
         message="create",
-        request=copied_instance.name,
-        attribute=None,  # Random selection, does not matter
+        request=original_instance.name,
+        attribute=None,  # Does not matter
         execute_methods=True
     )
     wait_for(
@@ -184,7 +176,7 @@ def test_priority(
         instance="Request",
         message="create",
         request=original_instance.name,
-        attribute=None,  # Random selection, does not matter
+        attribute=None,  # Does not matter
         execute_methods=True
     )
     wait_for(

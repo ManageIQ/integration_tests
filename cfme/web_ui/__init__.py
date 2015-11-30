@@ -2470,13 +2470,18 @@ class ScriptBox(Pretty):
         script = script.replace('\\"', '"').replace("\\n", "\n")
         return script
 
+    def workaround_save_issue(self):
+        # We need to fire off the handlers manually in some cases ...
+        sel.execute_script("%s._handlers.change.map(function(handler) { handler() });" % self.name)
+        sel.wait_for_ajax()
+
 
 @fill.method((ScriptBox, Anything))
 def fill_scriptbox(sb, script):
     """This function now clears and sets the ScriptBox.
     """
-    script = script.replace('"', '\\"').replace("\n", "\\n")
-    sel.execute_script('{}.setValue("{}");'.format(sb.name, script))
+    logger.info("Filling ScriptBox {} with\n{}".format(sb.name, script))
+    sel.execute_script('{}.setValue(arguments[0]);'.format(sb.name), script)
     sel.wait_for_ajax()
     sel.execute_script('{}.save();'.format(sb.name))
     sel.wait_for_ajax()
