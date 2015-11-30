@@ -24,9 +24,6 @@ dynamic_tree = Tree({version.LOWEST: "//div[@class='dhxcont_global_content_area'
                     '5.4': "//div[@class='dhxcont_global_content_area']"
                            "[not(contains(@style, 'display: none'))]/div/div/div/div/div/div"
                            "/div/div/div/ul[@class='dynatree-container']"})
-reorder_element_tree = Tree("//div[@class='dhxcont_global_content_area']"
-                            "[not(contains(@style, 'display: none'))]/div/div/div/div"
-                            "/ul[@class='dynatree-container']")
 
 label_form = Form(fields=[
     ('label', Input("label")),
@@ -184,9 +181,13 @@ class ServiceDialog(Updateable, Pretty):
         return sel.element('//div[@class="modbox"]/h2[@class="modtitle"]'
                           '[contains(normalize-space(.), "{}")]/..'.format(element_data))
 
-    def reorder_elements(self, box, *element_data):
+    def reorder_elements(self, tab, box, *element_data):
         sel.force_navigate('service_dialog_edit', context={'dialog': self})
-        reorder_element_tree.click_path(box)
+        if version.current_version() > "5.5":
+            tree = accordion.tree("Dialog")
+        else:
+            tree = Tree("dialog_edit_treebox")
+        tree.click_path(self.label, tab, box)
         list_ele = []
         for each_element in element_data:
             list_ele.append(each_element.get("ele_label"))

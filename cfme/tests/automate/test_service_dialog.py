@@ -211,4 +211,4 @@ def test_reorder_elements():
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
     dialog.create(element_1_data, element_2_data)
-    dialog.reorder_elements(dialog.box_label, element_1_data, element_2_data)
+    dialog.reorder_elements(dialog.tab_label, dialog.box_label, element_1_data, element_2_data)
