@@ -40,7 +40,7 @@ def test_provider_crud(request, provider):
 @pytest.mark.meta(blockers=[1274842])
 def test_provider_edit_port(request, a_container_provider):
     old_port = a_container_provider.port
+    request.addfinalizer(lambda: a_container_provider.update({'port': old_port}))
     with update(a_container_provider):
         a_container_provider.port = '1234'
-    request.addfinalizer(a_container_provider.update({'port': old_port}))
     assert str(a_container_provider.port) == a_container_provider.get_detail('Properties', 'Port')
