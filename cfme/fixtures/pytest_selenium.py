@@ -1041,12 +1041,21 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     if rails_e is not None:
         logger.warning("Page was blocked by rails error, renavigating.")
         logger.error(rails_e)
-        logger.debug('Top CPU consumers:')
-        logger.debug(store.current_appliance.ssh_client.run_command(
-            'top -c -b -n1 -M | head -30').output)
-        logger.debug('Top Memory consumers:')
-        logger.debug(store.current_appliance.ssh_client.run_command(
-            'top -c -b -n1 -M -a | head -30').output)
+        if version.current_version() < "5.5":
+            logger.debug('Top CPU consumers:')
+            logger.debug(store.current_appliance.ssh_client.run_command(
+                'top -c -b -n1 -M | head -30').output)
+            logger.debug('Top Memory consumers:')
+            logger.debug(store.current_appliance.ssh_client.run_command(
+                'top -c -b -n1 -M -a | head -30').output)
+        else:
+            # RHEL7 top does not know -M and -a
+            logger.debug('Top CPU consumers:')
+            logger.debug(store.current_appliance.ssh_client.run_command(
+                'top -c -b -n1 | head -30').output)
+            logger.debug('Top Memory consumers:')
+            logger.debug(store.current_appliance.ssh_client.run_command(
+                'top -c -b -n1 -o "%MEM" | head -30').output)
         logger.debug('Managed Providers:')
         logger.debug(store.current_appliance.managed_providers)
         quit()  # Refresh the session, forget loaded summaries, ...
