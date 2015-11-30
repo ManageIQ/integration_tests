@@ -134,10 +134,14 @@ host_provision_cancel = FormButton("Cancel this provisioning request")
 
 
 def change_stored_password():
-    if version.current_version() > '5.5':
-        sel.execute_script(
-            sel.get_attribute(
-                sel.element('//a[@id="change_stored_password"]'), 'onClick'))
+    try:
+        if version.current_version() > '5.5':
+            sel.execute_script(
+                sel.get_attribute(
+                    sel.element('//a[@id="change_stored_password"]'), 'onClick'))
+    except NoSuchElementException:
+        logger.info('Change stored PW not found, probably no creds already')
+        return
 
 
 @fill.method((FormButton, bool))
