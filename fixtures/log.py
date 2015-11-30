@@ -39,8 +39,13 @@ def pytest_runtest_logreport(report):
     test_tracking[_format_nodeid(report.nodeid, False)][report.when] = report.outcome
     if report.when == 'teardown':
         path, lineno, domaininfo = report.location
+        test_status = _test_status(_format_nodeid(report.nodeid, False))
+        if test_status == "failed":
+            logger().info(
+                "Managed providers: {}".format(
+                    ", ".join(pytest.store.current_appliance.managed_providers)))
         logger().info(log.format_marker('%s result: %s' % (_format_nodeid(report.nodeid),
-                _test_status(_format_nodeid(report.nodeid, False)))),
+                test_status)),
             extra={'source_file': path, 'source_lineno': lineno})
     if report.outcome == "skipped":
         # Usualy longrepr's a tuple, other times it isn't... :(
