@@ -458,10 +458,10 @@ class Class(CopiableTreeNode, Updateable):
         else:
             return "/" + path  # Starts with / from 5.4 onwards because of domains
 
-    def create(self, cancel=False):
+    def create(self, cancel=False, allow_duplicate=False):
         if self.parent is not None and not self.parent.exists():
             self.parent.create()
-        if self.exists():
+        if self.exists() and not allow_duplicate:
             return
         sel.force_navigate("automate_explorer_class_new", context={"tree_item": self.namespace})
         fill(self.form, {'name_text': self.name,
