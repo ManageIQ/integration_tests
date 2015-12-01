@@ -55,7 +55,7 @@ def test_schema_crud(a_class):
 def test_duplicate_class_disallowed(a_class):
     a_class.create()
     with error.expected("Name has already been taken"):
-        a_class.create()
+        a_class.create(allow_duplicate=True)
 
 
 def test_same_class_name_different_namespace(make_namespace):
