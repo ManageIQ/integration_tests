@@ -107,7 +107,7 @@ def resolve_blockers(item, blockers):
     # And then skip
     if use_blockers:
         name, location = get_test_idents(item)
-        bugs = [bug.bug_id for bug in use_blockers]
+        bugs = [bug.bug_id for bug in use_blockers if hasattr(bug, "bug_id")]
         skip_data = {'type': 'blocker', 'reason': bugs}
         art_client.fire_hook('skip_test', test_location=location, test_name=name,
             skip_data=skip_data)
