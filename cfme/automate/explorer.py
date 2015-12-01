@@ -621,10 +621,10 @@ class Method(CopiableTreeNode, Updateable):
     def parent(self, p):
         self.cls = p
 
-    def create(self, cancel=False):
+    def create(self, cancel=False, allow_duplicate=False):
         if self.parent is not None and not self.parent.exists():
             self.parent.create()
-        if self.exists():
+        if self.exists() and not allow_duplicate:
             return
         sel.force_navigate("automate_explorer_method_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,

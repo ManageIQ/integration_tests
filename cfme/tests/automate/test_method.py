@@ -63,4 +63,4 @@ def test_method_crud(a_method):
 def test_duplicate_method_disallowed(a_method):
     a_method.create()
     with error.expected("Name has already been taken"):
-        a_method.create()
+        a_method.create(allow_duplicate=True)
