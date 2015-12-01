@@ -29,7 +29,12 @@ def has_quotas(self):
     else:
         return True
 
+
+def is_a_bot(self):
+    return self.last_name.lower() == "bot"
+
 User.has_quotas = property(has_quotas)
+User.is_a_bot = property(is_a_bot)
 
 
 def apply_if_not_none(o, meth, *args, **kwargs):
@@ -239,7 +244,7 @@ class Provider(MetadataMixin):
         for appliance in Appliance.objects.filter(template__provider=self):
             if appliance.owner is None:
                 continue
-            owner = appliance.owner.username
+            owner = appliance.owner
             if owner not in per_user_usage:
                 per_user_usage[owner] = 1
             else:
@@ -257,10 +262,10 @@ class Provider(MetadataMixin):
     def complete_user_usage(cls):
         result = {}
         for provider in cls.objects.all():
-            for username, count in provider.user_usage:
-                if username not in result:
-                    result[username] = 0
-                result[username] += count
+            for user, count in provider.user_usage:
+                if user not in result:
+                    result[user] = 0
+                result[user] += count
         result = result.items()
         result.sort(key=lambda item: item[1], reverse=True)
         return result
