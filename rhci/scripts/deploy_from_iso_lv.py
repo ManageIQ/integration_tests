@@ -36,8 +36,7 @@ from rhci_common import vnc_client, save_rhci_conf, ssh_client, virsh
 
 # bunch of static stuff that we can argparse/yaml/env up later
 deployment = 'basic'
-image_url = rhci['iso_urls']['latest']['RHCI']
-image_path = '/tmp/rhci-latest.iso'
+image_path = '/tmp/rhci-dvd1.iso'
 # random ID - put this at the beginning of resource names to associate them with
 # this build run; the cleanup script will look for this prefix and delete all associated resources
 deployment_id = gen_alpha()
@@ -57,13 +56,14 @@ save_rhci_conf(**{
 # derived stuff based on the parsed args above
 deployment_conf = rhci['deployments'][deployment]['iso']
 rootpw = credentials[deployment_conf['rootpw_credential']].password
+image_url = rhci['iso_urls'][deployment_conf['build']]['RHCI']
 vm_name = '{}-fusor'.format(deployment_id)
 vnc_password = 'rhci'
 libvirt_storage_pool = rhci['libvirt_storage_pool'] or 'default'
 
 # SSH into libvirt host and wget the RHCI ISO
 libvirt_ssh_client = SSHClient(hostname=libvirt_host, **libvirt_creds)
-print 'Downloading RHCI ISO to libvirt host...'
+print 'Downloading RHCI ISO ({}) to libvirt host...'.format(deployment_conf['build'])
 cmd = "wget -q {} -O {}".format(image_url, image_path)
 res = libvirt_ssh_client.run_command(cmd)
 if res.rc != 0:
