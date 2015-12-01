@@ -476,7 +476,7 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
             message = str(message)
         art_log_record = {
             'level': level_name,
-            'message': message.decode('utf-8').encode("ascii", "xmlcharrefreplace"),
+            'message': message.decode('utf-8', "ignore").encode("ascii", "xmlcharrefreplace"),
             'extra': kwargs.get('extra', '')
         }
         self.artifactor.fire_hook('log_message', log_record=art_log_record, slaveid=self.slaveid)
