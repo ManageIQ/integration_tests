@@ -133,15 +133,20 @@ host_provision_submit = FormButton("Submit this provisioning request")
 host_provision_cancel = FormButton("Cancel this provisioning request")
 
 
+_stored_pw_script = '//a[@id="change_stored_password"]'
+_stored_pw_angular = "//a[@ng-hide='bChangeStoredPassword']"
+
+
 def change_stored_password():
-    try:
-        if version.current_version() > '5.5':
-            sel.execute_script(
-                sel.get_attribute(
-                    sel.element('//a[@id="change_stored_password"]'), 'onClick'))
-    except NoSuchElementException:
-        logger.info('Change stored PW not found, probably no creds already')
-        return
+    if version.current_version() > '5.5':
+        if sel.is_displayed(_stored_pw_script):
+                sel.execute_script(
+                    sel.get_attribute(
+                        sel.element(_stored_pw_script), 'onClick'))
+        elif sel.is_displayed(_stored_pw_angular):
+            sel.click(_stored_pw_angular)
+        else:
+            logger.info("Probably no creds")
 
 
 @fill.method((FormButton, bool))
