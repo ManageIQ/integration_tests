@@ -5,7 +5,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import (
     accordion, fill, flash, paginator, toolbar, CheckboxTree, Region, Tree, Quadicon)
-from cfme.web_ui.menu import nav
+from cfme.web_ui.menu import extend_nav
 from functools import partial
 from utils import deferred_verpick, version
 from utils.wait import wait_for
@@ -14,10 +14,10 @@ from utils.wait import wait_for
 cfg_btn = partial(toolbar.select, 'Configuration')
 pwr_btn = partial(toolbar.select, 'Power')
 
-# TODO: use accordion.tree
-visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
-                    "[not(contains(@style, 'display: none'))]/div/div/div"
-                    "/ul[@class='dynatree-container']")
+tree_inst_by_prov = partial(accordion.tree, "Instances By Provider")
+tree_instances = partial(accordion.tree, "Instances")
+tree_image_by_prov = partial(accordion.tree, "Images By Provider")
+tree_images = partial(accordion.tree, "Images")
 
 list_page = Region(title='Instances')
 
@@ -34,118 +34,69 @@ manage_policies_tree = CheckboxTree(
 )
 
 
-nav.add_branch(
-    "clouds_instances",
-    {
-        "clouds_instances_by_provider":
-        [
-            lambda _: accordion.tree("Instances by Provider", "Instances by Provider"),
-            {
-                "clouds_instances_provider_branch":
-                [
-                    lambda ctx: visible_tree.click_path(ctx["provider_name"]),
-                    {
-                        "availability_zone_branch":
-                        [
-                            lambda ctx: visible_tree.click_path(ctx["availability_zone"]),
-                            {
-                                "clouds_instance_obj":
-                                lambda ctx: visible_tree.click_path(ctx["instance_name"])
-                            }
-                        ]
-                    }
-                ],
+@extend_nav
+class clouds_instances:
+    def clouds_instances_by_provider(_):
+        tree_inst_by_prov("Instances by Provider")
 
-                "clouds_instances_archived_branch":
-                [
-                    lambda ctx: visible_tree.click_path('<Archived>'),
-                    {
-                        "clouds_instance_archive_obj":
-                        lambda ctx: visible_tree.click_path(ctx["archive_name"]),
-                    }
-                ],
+    def clouds_instances_provider_branch(ctx):
+        tree_inst_by_prov("Instances by Provider", ctx["provider_name"])
 
-                "clouds_instances_orphaned_branch":
-                [
-                    lambda ctx: visible_tree.click_path('<Orphaned>'),
-                    {
-                        "clouds_instance_orphan_obj":
-                        lambda ctx: visible_tree.click_path(ctx["orphan_name"]),
-                    }
-                ],
-            }
-        ],
+    def clouds_instance_obj(ctx):
+        tree_inst_by_prov("Instances by Provider", ctx["provider_name"], ctx["availability_zone"],
+            ctx["instance_name"])
 
-        "clouds_images_by_provider":
-        [
-            lambda _: accordion.tree("Images by Provider", "Images by Provider"),
-            {
-                "clouds_images_provider_branch":
-                [
-                    lambda ctx: visible_tree.click_path(ctx["provider_name"]),
-                    {
-                        "availability_zone_branch":
-                        [
-                            lambda ctx: visible_tree.click_path(ctx["availability_zone"]),
-                            {
-                                "clouds_image_obj":
-                                lambda ctx: visible_tree.click_path(ctx["image_name"])
-                            }
-                        ]
-                    }
-                ],
+    def clouds_instances_archived_branch(_):
+        tree_inst_by_prov("Instances by Provider", '<Archived>')
 
-                "clouds_images_archived_branch":
-                [
-                    lambda ctx: visible_tree.click_path('<Archived>'),
-                    {
-                        "clouds_image_archive_obj":
-                        lambda ctx: visible_tree.click_path(ctx["archive_name"]),
-                    }
-                ],
+    def clouds_instance_archive_obj(ctx):
+        tree_inst_by_prov("Instances by Provider", '<Archived>', ctx["archive_name"])
 
-                "clouds_images_orphaned_branch":
-                [
-                    lambda ctx: visible_tree.click_path('<Orphaned>'),
-                    {
-                        "clouds_image_orphan_obj":
-                        lambda ctx: visible_tree.click_path(ctx["orphan_name"]),
-                    }
-                ],
-            }
-        ],
+    def clouds_instances_orphaned_branch(_):
+        tree_inst_by_prov("Instances by Provider", '<Orphaned>')
 
-        "clouds_instances":
-        [
-            lambda _: accordion.tree("Instances", "All Instances"),
-            {
-                "clouds_instances_filter_folder":
-                [
-                    lambda ctx: visible_tree.click_path(ctx["folder_name"]),
-                    {
-                        "clouds_instances_filter":
-                        lambda ctx: visible_tree.click_path(ctx["filter_name"])
-                    }
-                ]
-            }
-        ],
+    def clouds_instance_orphan_obj(ctx):
+        tree_inst_by_prov("Instances by Provider", '<Orphaned>', ctx["orphan_name"])
 
-        "clouds_images":
-        [
-            lambda _: (accordion.tree("Images", "All Images")),
-            {
-                "clouds_images_filter_folder":
-                [
-                    lambda ctx: visible_tree.click_path(ctx["folder_name"]),
-                    {
-                        "clouds_images_filter":
-                        lambda ctx: visible_tree.click_path(ctx["filter_name"])
-                    }
-                ]
-            }
-        ]
-    }
-)
+    def clouds_images_by_provider(_):
+        tree_image_by_prov("Images by Provider")
+
+    def clouds_images_provider_branch(ctx):
+        tree_image_by_prov("Images by Provider", ctx["provider_name"])
+
+    def clouds_image_obj(ctx):
+        tree_image_by_prov(
+            "Images by Provider", ctx["provider_name"], ctx["availability_zone"], ctx["image_name"])
+
+    def clouds_images_archived_branch(ctx):
+        tree_image_by_prov("Images by Provider", '<Archived>')
+
+    def clouds_image_archive_obj(ctx):
+        tree_image_by_prov("Images by Provider", '<Archived>', ctx["archive_name"])
+
+    def clouds_images_orphaned_branch(_):
+        tree_image_by_prov("Images by Provider", '<Orphaned>')
+
+    def clouds_image_orphan_obj(ctx):
+        tree_image_by_prov("Images by Provider", '<Orphaned>', ctx["orphan_name"])
+
+    def clouds_instances(_):
+        tree_instances("All Instances")
+
+    def clouds_instances_filter_folder(ctx):
+        tree_instances("All Instances", ctx["folder_name"])
+
+    def clouds_instances_filter(ctx):
+        tree_instances("All Instances", ctx["folder_name"], ctx["filter_name"])
+
+    def clouds_images(_):
+        tree_images("All Images")
+
+    def clouds_images_filter_folder(ctx):
+        tree_images("All Images", ctx["folder_name"])
+
+    def clouds_images_filter(ctx):
+        tree_images("All Images", ctx["folder_name"], ctx["filter_name"])
 
 
 @VM.register_for_provider_type("cloud")
