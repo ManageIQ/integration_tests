@@ -14,9 +14,9 @@ from utils.wait import wait_for
 cfg_btn = partial(toolbar.select, 'Configuration')
 pwr_btn = partial(toolbar.select, 'Power')
 
-tree_inst_by_prov = partial(accordion.tree, "Instances By Provider")
+tree_inst_by_prov = partial(accordion.tree, "Instances by Provider")
 tree_instances = partial(accordion.tree, "Instances")
-tree_image_by_prov = partial(accordion.tree, "Images By Provider")
+tree_image_by_prov = partial(accordion.tree, "Images by Provider")
 tree_images = partial(accordion.tree, "Images")
 
 list_page = Region(title='Instances')
