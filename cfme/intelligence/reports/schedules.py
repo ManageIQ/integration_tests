@@ -11,6 +11,7 @@ from utils.db import cfmedb
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
+from utils import version
 
 
 cfg_btn = partial(toolbar.select, "Configuration")
@@ -134,7 +135,10 @@ class Schedule(Updateable, Pretty):
 
     def delete(self, cancel=False):
         sel.force_navigate("schedule", context={"schedule": self})
-        cfg_btn("Delete this Schedule from the Database", invokes_alert=True)
+        delete_label = version.pick({
+            "5.4": "Delete this Schedule from the Database",
+            "5.5": "Delete this Schedule from the VMDB"})
+        cfg_btn(delete_label, invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
         assert not self.exists, "Schedule does not exist!"
@@ -146,8 +150,12 @@ class Schedule(Updateable, Pretty):
         issue.
         """
         return (
-            "//td[preceding-sibling::td[contains(@class, 'key')"
-            " and normalize-space(.)='{}']]").format(item)
+            version.pick({
+                version.LOWEST: "//td[preceding-sibling::td[contains(@class, 'key')"
+                                " and normalize-space(.)='{}']]",
+                         "5.5": "//label[contains(@class, 'control-label')"
+                                " and normalize-space(.)='{}']/../div/p"}).format(item)
+        )
 
     def queue(self, wait_for_finish=False):
         """Queue this schedule.
