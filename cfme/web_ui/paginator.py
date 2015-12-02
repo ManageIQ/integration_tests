@@ -16,6 +16,9 @@ _sort_by = '//select[@id="sort_choice"]'
 _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
 _check_all = Input("masterToggle")
 
+_regexp = {version.LOWEST: r"(?:Item|Items)*\((?P<first>\d+)-(?P<last>\d+) of (?P<total>\d+)\)",
+           "5.5": r"Showing (?P<first>\d+)-(?P<last>\d+) of (?P<total>\d+) (?:item|items?)?"}
+
 
 def page_controls_exist():
     """ Simple check to see if page controls exist. """
@@ -74,12 +77,10 @@ def results_per_page(num):
     Args:
         num: Number of results per page
     """
-    if version.current_version() > '5.5.0.7':
-        select = AngularSelect('ppsetting')
-        sel.select(select, sel.ByText(str(num)))
-    else:
-        select = sel.element(_locator + _num_results)
-        sel.select(Select(select), sel.ByText(str(num)))
+    _select = version.pick({
+        version.LOWEST: Select(_locator + _num_results),
+        "5.5": AngularSelect('ppsetting')})
+    sel.select(_select, sel.ByText(str(num)))
 
 
 def sort_by(sort):
@@ -88,43 +89,33 @@ def sort_by(sort):
     Args:
         sort: Value to sort by (visible text in select box)
     """
-    if version.current_version() > '5.5.0.7':
-        select = AngularSelect('sort_choice')
-        sel.select(select, sel.ByText(str(sort)))
+    _select = version.pick({
+        version.LOWEST: Select(_locator + _sort_by),
+        "5.5": AngularSelect('sort_choice')})
+    sel.select(_select, sel.ByText(str(sort)))
+
+
+def _get_rec(partial):
+    offset = re.search(version.pick(_regexp), _page_nums())
+    if offset:
+        return offset.groupdict()[partial]
     else:
-        select = sel.element(_locator + _sort_by)
-        sel.select(Select(select), sel.ByText(sort))
+        return None
 
 
 def rec_offset():
     """ Returns the first record offset."""
-    if version.current_version() > "5.5.0.7":
-        offset = re.search(r"Showing\s*(\d+)-", _page_nums())
-        return offset.groups()[0]
-    else:
-        offset = re.search('\((Item|Items)*\s*(\d+)', _page_nums())
-        return offset.groups()[1]
+    return _get_rec('first')
 
 
 def rec_end():
     """ Returns the record set index."""
-    offset = re.search('-(\d+)', _page_nums())
-    if offset:
-        return offset.groups()[0]
-    else:
-        return rec_total()
+    return _get_rec('last')
 
 
 def rec_total():
     """ Returns the total number of records."""
-    if version.current_version() > "5.5.0.7":
-        offset = re.search(r"of\s*(\d+)\s*(?:items?)?", _page_nums())
-    else:
-        offset = re.search('(\d+)\)', _page_nums())
-    if offset:
-        return offset.groups()[0]
-    else:
-        return None
+    return _get_rec('total')
 
 
 def reset():
