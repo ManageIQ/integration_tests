@@ -1,44 +1,23 @@
+# -*- coding: utf-8 -*-
 """ A model of Workloads page in CFME
 """
+from functools import partial
+from cfme.web_ui import accordion, menu
 
-from cfme.web_ui import accordion, menu, Tree
+vm_instances_tree = partial(accordion.tree, "VMs & Instances")
+templates_images_tree = partial(accordion.tree, "Templates & Images")
 
 
-visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
-                    "[not(contains(@style, 'display: none'))]/div/div/div"
-                    "/ul[@class='dynatree-container']")
+@menu.extend_nav
+class services_workloads:
+    def service_vms_instances_filter_folder(ctx):
+        vm_instances_tree("All VMs & Instances", ctx["folder_name"])
 
-menu.nav.add_branch(
-    "services_workloads",
-    {
-        "service_vms_instances":
-        [
-            lambda _: accordion.tree("VMs & Instances", "All VMs & Instances"),
-            {
-                "service_vms_instances_filter_folder":
-                [
-                    lambda ctx: visible_tree.click_path(ctx["folder_name"]),
-                    {
-                        "service_vms_instances_filter":
-                        lambda ctx: visible_tree.click_path(ctx["filter_name"])
-                    }
-                ]
-            }
-        ],
+    def service_vms_instances_filter(ctx):
+        vm_instances_tree("All VMs & Instances", ctx["folder_name"], ctx["filter_name"])
 
-        "service_templates_images":
-        [
-            lambda _: (accordion.tree("Templates & Images", "All Templates & Images")),
-            {
-                "service_templates_images_filter_folder":
-                [
-                    lambda ctx: visible_tree.click_path(ctx["folder_name"]),
-                    {
-                        "service_templates_images_filter":
-                        lambda ctx: visible_tree.click_path(ctx["filter_name"])
-                    }
-                ]
-            }
-        ]
-    }
-)
+    def service_templates_images_filter_folder(ctx):
+        templates_images_tree("All Templates & Images", ctx["folder_name"])
+
+    def service_templates_images_filter(ctx):
+        templates_images_tree("All Templates & Images", ctx["folder_name"], ctx["filter_name"])
