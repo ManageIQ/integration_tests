@@ -6,6 +6,7 @@ from cfme.fixtures import pytest_selenium as sel
 from utils.blockers import BZ
 from utils.providers import setup_a_provider
 from cfme.cloud import instance  # NOQA
+from cfme.infrastructure import virtual_machines  # NOQA
 from cfme.services import workloads  # NOQA
 
 
