@@ -16,7 +16,7 @@ _sort_by = '//select[@id="sort_choice"]'
 _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
 _check_all = Input("masterToggle")
 
-_regexp = {version.LOWEST: r"(?:Item|Items)*\((?P<first>\d+)-(?P<last>\d+) of (?P<total>\d+)\)(?:item|items?)*",
+_regexp = {version.LOWEST: r"(?:Item|Items)*\((?P<first>\d+)-(?P<last>\d+) of (?P<total>\d+)\)",
            "5.5": r"Showing (?P<first>\d+)-(?P<last>\d+) of (?P<total>\d+) (?:item|items?)?"}
 
 
