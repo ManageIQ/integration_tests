@@ -21,7 +21,8 @@ class Migration(migrations.Migration):
                 ('per_pool_quota', models.IntegerField(null=True, blank=True)),
                 ('total_pool_quota', models.IntegerField(null=True, blank=True)),
                 ('total_vm_quota', models.IntegerField(null=True, blank=True)),
-                ('user', models.OneToOneField(related_name='quotas', to=settings.AUTH_USER_MODEL)),
+                ('user', models.OneToOneField(
+                    related_name='quotas', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
     ]

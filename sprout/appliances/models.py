@@ -90,9 +90,10 @@ class MetadataMixin(models.Model):
 
 
 class DelayedProvisionTask(MetadataMixin):
-    pool = models.ForeignKey("AppliancePool")
+    pool = models.ForeignKey("AppliancePool", on_delete=models.CASCADE)
     lease_time = models.IntegerField(null=True, blank=True)
-    provider_to_avoid = models.ForeignKey("Provider", null=True, blank=True)
+    provider_to_avoid = models.ForeignKey(
+        "Provider", null=True, blank=True, on_delete=models.CASCADE)
 
     def __unicode__(self):
         return u"Task {}: Provision on {}, lease time {}, avoid provider {}".format(
@@ -378,8 +379,10 @@ class Group(MetadataMixin):
 
 
 class Template(MetadataMixin):
-    provider = models.ForeignKey(Provider, help_text="Where does this template reside")
-    template_group = models.ForeignKey(Group, help_text="Which group the template belongs to.")
+    provider = models.ForeignKey(
+        Provider, on_delete=models.CASCADE, help_text="Where does this template reside")
+    template_group = models.ForeignKey(
+        Group, on_delete=models.CASCADE, help_text="Which group the template belongs to.")
     version = models.CharField(max_length=16, null=True, help_text="Downstream version.")
     date = models.DateField(help_text="Template build date (original).")
 
@@ -499,8 +502,9 @@ class Appliance(MetadataMixin):
         "stopped": Power.OFF,
         "running": Power.ON,
     }
-    template = models.ForeignKey(Template, help_text="Appliance's source template.")
-    appliance_pool = models.ForeignKey("AppliancePool", null=True,
+    template = models.ForeignKey(
+        Template, on_delete=models.CASCADE, help_text="Appliance's source template.")
+    appliance_pool = models.ForeignKey("AppliancePool", null=True, on_delete=models.CASCADE,
         help_text="Which appliance pool this appliance belongs to.")
     name = models.CharField(max_length=64, help_text="Appliance's name as it is in the provider.")
     ip_address = models.CharField(max_length=45, null=True, help_text="Appliance's IP address")
@@ -746,13 +750,15 @@ class Appliance(MetadataMixin):
 
 class AppliancePool(MetadataMixin):
     total_count = models.IntegerField(help_text="How many appliances should be in this pool.")
-    group = models.ForeignKey(Group, help_text="Group which is used to provision appliances.")
+    group = models.ForeignKey(
+        Group, on_delete=models.CASCADE, help_text="Group which is used to provision appliances.")
     provider = models.ForeignKey(
         Provider, help_text="If requested, appliances can be on single provider.", null=True,
-        blank=True)
+        blank=True, on_delete=models.CASCADE)
     version = models.CharField(max_length=16, null=True, help_text="Appliance version")
     date = models.DateField(null=True, help_text="Appliance date.")
-    owner = models.ForeignKey(User, help_text="User who owns the appliance pool")
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, help_text="User who owns the appliance pool")
 
     preconfigured = models.BooleanField(
         default=True, help_text="Whether to provision preconfigured appliances")
@@ -1008,7 +1014,7 @@ class AppliancePool(MetadataMixin):
 
 
 class MismatchVersionMailer(models.Model):
-    provider = models.ForeignKey(Provider)
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
     template_name = models.CharField(max_length=64)
     supposed_version = models.CharField(max_length=32)
     actual_version = models.CharField(max_length=32)
@@ -1016,7 +1022,7 @@ class MismatchVersionMailer(models.Model):
 
 
 class UserApplianceQuota(models.Model):
-    user = models.OneToOneField(User, related_name="quotas")
+    user = models.OneToOneField(User, related_name="quotas", on_delete=models.CASCADE)
     per_pool_quota = models.IntegerField(null=True, blank=True)
     total_pool_quota = models.IntegerField(null=True, blank=True)
     total_vm_quota = models.IntegerField(null=True, blank=True)

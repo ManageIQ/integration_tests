@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('supposed_version', models.CharField(max_length=32)),
                 ('actual_version', models.CharField(max_length=32)),
                 ('sent', models.BooleanField(default=False)),
-                ('provider', models.ForeignKey(to='appliances.Provider')),
+                ('provider', models.ForeignKey(to='appliances.Provider', on_delete=models.CASCADE)),
             ],
         ),
     ]
