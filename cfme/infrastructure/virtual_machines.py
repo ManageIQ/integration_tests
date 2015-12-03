@@ -32,10 +32,6 @@ pwr_btn = partial(toolbar.select, 'Power')
 
 create_button = form_buttons.FormButton("Create")
 
-visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
-                    "[not(contains(@style, 'display: none'))]/div/div/div"
-                    "/ul[@class='dynatree-container']")
-
 manage_policies_tree = CheckboxTree(
     {
         version.LOWEST: "//div[@id='treebox']/div/table",
@@ -74,63 +70,60 @@ retirement_date_form = Form(fields=[
 
 retire_remove_button = "//span[@id='remove_button']/a/img"
 
+vm_templates_tree = partial(accordion.tree, "VMs & Templates")
+vms_tree = partial(accordion.tree, "VMs")
+templates_tree = partial(accordion.tree, "Templates")
+
 
 @extend_nav
-class infrastructure_virtual_machines(object):
-    class infra_vm_and_templates(object):
+class infrastructure_virtual_machines:
+    def infra_vm_and_templates(_):
+        vm_templates_tree("All VMs & Templates")
+
+    def vm_templates_provider_branch(ctx):
+        vm_templates_tree("All VMs & Templates", ctx["provider_name"])
+
+    def datacenter_branch(ctx):
+        vm_templates_tree("All VMs & Templates", ctx["provider_name"], ctx["datacenter_name"])
+
+    def infra_vm_obj(ctx):
+        vm_templates_tree(
+            "All VMs & Templates", ctx["provider_name"], ctx["datacenter_name"], ctx["vm_name"])
+
+    def vm_templates_archived_branch(ctx):
+        vm_templates_tree("All VMs & Templates", "<Archived>")
+
+    def infra_archive_obj(ctx):
+        vm_templates_tree("All VMs & Templates", "<Archived>", ctx["archive_name"])
+
+    def vm_templates_orphaned_branch(ctx):
+        vm_templates_tree("All VMs & Templates", "<Orphaned>")
+
+    def infra_orphan_obj(ctx):
+        vm_templates_tree("All VMs & Templates", "<Orphaned>", ctx["orphan_name"])
+
+    class infra_vms:
         def navigate(_):
-            accordion.tree("VMs & Templates", "All VMs & Templates")
-
-        class vm_templates_provider_branch(object):
-            def navigate(ctx):
-                visible_tree.click_path(ctx["provider_name"])
-
-            class datacenter_branch(object):
-                def navigate(ctx):
-                    visible_tree.click_path(ctx["datacenter_name"])
-
-                def infra_vm_obj(ctx):
-                    visible_tree.click_path(ctx["vm_name"])
-
-        class vm_templates_archived_branch(object):
-            def navigate(ctx):
-                visible_tree.click_path("<Archived>")
-
-            def infra_archive_obj(ctx):
-                visible_tree.click_path(ctx["archive_name"])
-
-        class vm_templates_orphaned_branch(object):
-            def navigate(ctx):
-                visible_tree.click_path("<Orphaned>")
-
-            def infra_orphan_obj(ctx):
-                visible_tree.click_path(ctx["orphan_name"])
-
-    class infra_vms(object):
-        def navigate(_):
-            accordion.tree("VMs", "All VMs")
-
-        class infra_vms_filter_folder(object):
-            def navigate(ctx):
-                visible_tree.click_path(ctx["folder_name"])
-
-            def infra_vms_filter(ctx):
-                visible_tree.click_path(ctx["filter_name"])
+            vms_tree("All VMs")
 
         def infra_vm_by_name(ctx):
             sel.click(ctx['vm'].find_quadicon(do_not_navigate=True))
 
-    class infra_templates(object):
-        def navigate(_):
-            accordion.tree("Templates", "All Templates")
-            toolbar.select('Grid View')
+    def infra_vms_filter_folder(ctx):
+        vms_tree("All VMs", ctx["folder_name"])
 
-        class infra_templates_filter_folder(object):
-            def navigate(ctx):
-                visible_tree.click_path(ctx["folder_name"])
+    def infra_vms_filter(ctx):
+        vms_tree("All VMs", ctx["folder_name"], ctx["filter_name"])
 
-            def infra_templates_filter(ctx):
-                visible_tree.click_path(ctx["filter_name"])
+    def infra_templates(_):
+        templates_tree("All Templates")
+        toolbar.select('Grid View')
+
+    def infra_templates_filter_folder(ctx):
+        templates_tree("All Templates", ctx["folder_name"])
+
+    def infra_templates_filter(ctx):
+        templates_tree("All Templates", ctx["folder_name"], ctx["filter_name"])
 
 
 class Common(object):
