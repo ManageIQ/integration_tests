@@ -57,6 +57,7 @@ def test_paginator(some_dialogs, soft_assert):
     # try to browse
     current_rec_offset = None
     dialogs_found = set()
+    current_total = paginator.rec_total()
     for page in paginator.pages():
         if paginator.rec_offset() == current_rec_offset:
             soft_assert(False, "Paginator is locked, it does not advance to next page")
@@ -66,6 +67,10 @@ def test_paginator(some_dialogs, soft_assert):
         for text in get_relevant_rows(common.dialogs_table):
             dialogs_found.add(text)
         current_rec_offset = paginator.rec_offset()
+
+        new_total = paginator.rec_total()
+        assert current_total == new_total, \
+            "Total value has changed, expected {0}, but was {1}".format(current_total, new_total)
     assert set([dlg.label for dlg in some_dialogs]) <= dialogs_found, \
         "Could not find all dialogs by clicking the paginator!"
 
