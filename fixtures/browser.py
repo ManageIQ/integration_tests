@@ -29,8 +29,8 @@ def pytest_runtest_setup(item):
 
 def pytest_exception_interact(node, call, report):
     name, location = get_test_idents(node)
-    val = unicode(call.excinfo.value)
-    short_tb = '%s\n%s' % (call.excinfo.type.__name__, val.encode('ascii', 'ignore'))
+    val = call.excinfo.value.message.decode('utf-8', 'ignore')
+    short_tb = '%s\n%s' % (call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
     art_client.fire_hook('filedump', test_location=location, test_name=name,
                   filename="traceback.txt", contents=str(report.longrepr), fd_ident="tb")
     art_client.fire_hook('filedump', test_location=location, test_name=name,
