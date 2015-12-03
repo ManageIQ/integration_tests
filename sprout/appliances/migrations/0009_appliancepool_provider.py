@@ -16,7 +16,8 @@ class Migration(migrations.Migration):
             name='provider',
             field=models.ForeignKey(
                 blank=True, to='appliances.Provider',
-                help_text=b'If requested, appliances can be on single provider.', null=True),
+                help_text=b'If requested, appliances can be on single provider.', null=True,
+                on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

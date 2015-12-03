@@ -169,11 +169,13 @@ class Migration(migrations.Migration):
                 (
                     'provider',
                     models.ForeignKey(
-                        help_text=b'Where does this template reside', to='appliances.Provider')),
+                        help_text=b'Where does this template reside', to='appliances.Provider',
+                        on_delete=models.CASCADE)),
                 (
                     'template_group',
                     models.ForeignKey(
-                        help_text=b'Which group the template belongs to.', to='appliances.Group')),
+                        help_text=b'Which group the template belongs to.', to='appliances.Group',
+                        on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -183,14 +185,16 @@ class Migration(migrations.Migration):
             model_name='appliancepool',
             name='group',
             field=models.ForeignKey(
-                help_text=b'Group which is used to provision appliances.', to='appliances.Group'),
+                help_text=b'Group which is used to provision appliances.', to='appliances.Group',
+                on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='appliancepool',
             name='owner',
             field=models.ForeignKey(
-                help_text=b'User who owns the appliance pool', to=settings.AUTH_USER_MODEL),
+                help_text=b'User who owns the appliance pool', to=settings.AUTH_USER_MODEL,
+                on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -198,14 +202,16 @@ class Migration(migrations.Migration):
             name='appliance_pool',
             field=models.ForeignKey(
                 to='appliances.AppliancePool',
-                help_text=b'Which appliance pool this appliance belongs to.', null=True),
+                help_text=b'Which appliance pool this appliance belongs to.', null=True,
+                on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='appliance',
             name='template',
             field=models.ForeignKey(
-                help_text=b"Appliance's source template.", to='appliances.Template'),
+                help_text=b"Appliance's source template.", to='appliances.Template',
+                on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

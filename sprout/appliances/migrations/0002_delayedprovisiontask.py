@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                     models.IntegerField()),
                 (
                     'pool',
-                    models.ForeignKey(to='appliances.AppliancePool')),
+                    models.ForeignKey(to='appliances.AppliancePool', on_delete=models.CASCADE)),
             ],
             options={
             },

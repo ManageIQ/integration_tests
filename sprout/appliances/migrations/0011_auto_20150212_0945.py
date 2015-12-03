@@ -20,7 +20,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='delayedprovisiontask',
             name='provider_to_avoid',
-            field=models.ForeignKey(blank=True, to='appliances.Provider', null=True),
+            field=models.ForeignKey(
+                blank=True, to='appliances.Provider', null=True, on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

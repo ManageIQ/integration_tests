@@ -9,7 +9,6 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect
-from django.template.base import add_to_builtins
 
 from appliances.api import json_response
 from appliances.models import (
@@ -20,8 +19,6 @@ from appliances.tasks import (appliance_power_on, appliance_power_off, appliance
 
 from sprout.log import create_logger
 from utils.providers import get_mgmt
-
-add_to_builtins('appliances.templatetags.appliances_extras')
 
 
 def go_home(request):

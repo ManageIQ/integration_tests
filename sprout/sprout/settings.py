@@ -78,6 +78,9 @@ TEMPLATES = [
                 'appliances.context_processors.sprout_needs_update',
             ],
             'debug': True,
+            'builtins': [
+                'appliances.templatetags.appliances_extras',
+            ],
         },
     },
 ]
