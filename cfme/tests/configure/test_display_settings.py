@@ -49,10 +49,17 @@ def test_timezone_setting(set_timezone):
     Metadata:
         test_flag: visuals
     """
-    sel.force_navigate("my_settings_visual")
     locator = version.pick({
         version.LOWEST: '//div[@id="time"][contains(., "%s")]' % ("HST"),
-        '5.4': '//div[@class="container-fluid"][contains(., "%s")]' % ("HST")})
+        '5.4': '//div[@class="container-fluid"][contains(., "%s")]' % ("HST"),
+        '5.5': '//label[contains(@class,"control-label") and contains(., "Started On")]'
+               '/../div/p[contains(., "%s")]' % ("HST")
+    })
+
+    if version.current_version() > '5.5':
+        sel.force_navigate("cfg_diagnostics_server_summary")
+    else:
+        sel.force_navigate("my_settings_visual")
 
     assert sel.is_displayed(locator), "Timezone settings Failed"
 
