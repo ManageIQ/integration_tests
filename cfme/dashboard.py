@@ -67,7 +67,7 @@ class Widget(Pretty):
     _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
     _content = deferred_verpick({
         version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]",
-        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]"})
+        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]/div"})
     _content_type_54 = "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]"
 
     # 5.5+ updated
