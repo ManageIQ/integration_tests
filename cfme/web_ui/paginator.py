@@ -99,7 +99,7 @@ def sort_by(sort):
 def rec_offset():
     """ Returns the first record offset."""
     if version.current_version() > "5.5.0.7":
-        offset = re.search(r"Showing\s*(\d+)-", _page_nums())
+        offset = re.search(r"Showing\s*(\d+)\s*(?:-|of)", _page_nums())
         return offset.groups()[0]
     else:
         offset = re.search('\((Item|Items)*\s*(\d+)', _page_nums())
@@ -108,7 +108,7 @@ def rec_offset():
 
 def rec_end():
     """ Returns the record set index."""
-    offset = re.search('-(\d+)', _page_nums())
+    offset = re.search(r"(?:-|of)\s*(\d+)", _page_nums())
     if offset:
         return offset.groups()[0]
     else:
