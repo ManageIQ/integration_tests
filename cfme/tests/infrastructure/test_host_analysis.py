@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import pytest
+
 from cfme.configure import tasks
 from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
@@ -7,6 +9,7 @@ from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as 
 from utils import conf
 from utils import testgen
 from utils.blockers import BZ
+from utils.update import update
 from utils.wait import wait_for
 
 
@@ -59,31 +62,20 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
     host_data = get_host_data_by_name(provider.key, host_name)
     test_host = host.Host(name=host_name)
 
-    wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh)
+    wait_for(lambda: test_host.exists, delay=10, num_sec=120)
 
     if not test_host.has_valid_credentials:
-        test_host.update(
-            updates={'credentials': host.get_credentials_from_config(host_data['credentials'])}
-        )
-        wait_for(
-            lambda: test_host.has_valid_credentials,
-            delay=10,
-            num_sec=120,
-            fail_func=sel.refresh
-        )
+        with update(test_host):
+            test_host.credentials = host.get_credentials_from_config(host_data['credentials'])
+
+        wait_for(lambda: test_host.has_valid_credentials, delay=10, num_sec=120)
 
         # Remove creds after test
-        def test_host_remove_creds():
-            test_host.update(
-                updates={
-                    'credentials': host.Host.Credential(
-                        principal="",
-                        secret="",
-                        verify_secret=""
-                    )
-                }
-            )
-        request.addfinalizer(test_host_remove_creds)
+        @request.addfinalizer
+        def _host_remove_creds():
+            with update(test_host):
+                test_host.credentials = host.Host.Credential(
+                    principal="", secret="", verify_secret="")
 
     register_event(None, "host", host_name, ["host_analysis_request", "host_analysis_complete"])
 
@@ -91,6 +83,7 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
     test_host.run_smartstate_analysis()
 
     # Wait for the task to finish
+    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
     def is_host_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
@@ -101,13 +94,6 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
             'state': 'Finished'
         })
         return host_analysis_finished is not None
-
-    wait_for(
-        is_host_analysis_finished,
-        delay=15,
-        num_sec=480,
-        fail_func=lambda: tb.select('Reload')
-    )
 
     # Delete the task
     tasks.tasks_table.select_row_by_cells({
@@ -120,8 +106,8 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
     # Check results of the analysis
     # This is done on purpose; we cannot use the "bug" fixture here as
     # the bug doesnt block streams other than 5.3
-    services_bug = BZ(1156028)
-    if provider.type == "rhevm" and (not services_bug.data.is_opened):
+    services_bug = BZ(1156028, forced_streams=["5.3", "5.4", "5.5", "upstream"])
+    if provider.type == "rhevm" and (not services_bug.blocks):
         soft_assert(test_host.get_detail('Configuration', 'Services') != '0',
             'No services found in host detail')
 

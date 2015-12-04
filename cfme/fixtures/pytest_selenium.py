@@ -448,6 +448,33 @@ def on_cfme_page():
         and is_displayed("//div[@id='footer']")) or is_displayed("//ul[@class='login_buttons']")
 
 
+def get_alert():
+    return browser().switch_to_alert()
+
+
+def is_alert_present():
+    try:
+        get_alert().text
+    except NoAlertPresentException:
+        return False
+    else:
+        return True
+
+
+def dismiss_any_alerts():
+    """Loops until there are no further alerts present to dismiss.
+
+    Useful for handling the cases where the alert pops up multiple times.
+    """
+    try:
+        while is_alert_present():
+            alert = get_alert()
+            logger.warning("Dismissing additional alert with text: {}".format(alert.text))
+            alert.dismiss()
+    except NoAlertPresentException:  # Just in case. is_alert_present should be reliable, but still.
+        pass
+
+
 def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
     """Handles an alert popup.
 
@@ -471,12 +498,11 @@ def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
             or dismissing the alert.
 
     """
-
     # throws timeout exception if not found
     try:
         if wait:
             WebDriverWait(browser(), wait).until(expected_conditions.alert_is_present())
-        popup = browser().switch_to_alert()
+        popup = get_alert()
         answer = 'cancel' if cancel else 'ok'
         t = "alert" if prompt is None else "prompt"
         logger.info('Handling {} "{}", clicking {}'.format(t, popup.text, answer))
@@ -484,6 +510,8 @@ def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
             logger.info("Typing in: {}".format(prompt))
             popup.send_keys(prompt)
         popup.dismiss() if cancel else popup.accept()
+        # Should any problematic "double" alerts appear here, we don't care, just blow'em away.
+        dismiss_any_alerts()
         wait_for_ajax()
         return True
     except NoAlertPresentException:
