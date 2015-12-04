@@ -48,7 +48,7 @@ def guides():
 
 @pytest.fixture(scope="session")
 def docs_info():
-    if version.current_version() < "5.4.0.1" or (not version.appliance_is_downstream()):
+    if version.current_version() < "5.4.0.1":
         return [
             'Control',
             'Lifecycle and Automation',
@@ -57,7 +57,7 @@ def docs_info():
             'Insight',
             'Integration Services'
         ]
-    else:
+    elif version.current_version() < "5.5.0.12":
         return [
             'Insight',
             'Control',
@@ -67,6 +67,20 @@ def docs_info():
             'User',
             'Settings and Operations'
         ]
+    elif version.appliance_is_downstream():
+        return [
+            'Monitoring Alerts Reporting',
+            'General Configuration',
+            'Virtual Machines Hosts',
+            'Methods For Automation',
+            'Infrastructure Inventory',
+            'Providers',
+            'Scripting Actions',
+            'Defining Policies Profiles'
+        ]
+    else:
+        # Upstream version has no docs
+        return []
 
 
 @pytest.mark.meta(blockers=[1272618])
@@ -133,6 +147,7 @@ def test_info(guides, soft_assert):
         )
 
 
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1272618])
 def test_all_docs_present(guides, docs_info):
     pytest.sel.force_navigate("about")
