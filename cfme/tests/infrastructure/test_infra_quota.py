@@ -129,7 +129,7 @@ def provisioner(request, provider):
     return _provisioner
 
 
-@pytest.mark.meta(blockers=[1287102])
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.5')
 def test_group_quota_max_memory_check_by_tagging(
         provisioner, prov_data, template_name, provider, request, vm_name, set_group_memory, bug):
 
@@ -169,7 +169,7 @@ def test_group_quota_max_memory_check_by_tagging(
             '(Group Allocated Memory 0.00GB + Requested 4.00GB \> Quota 2.00GB)'
 
 
-@pytest.mark.meta(blockers=[1287102])
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.5')
 def test_group_quota_max_cpu_check_by_tagging(
         provisioner, prov_data, template_name, provider, request, vm_name, set_group_cpu, bug):
 
