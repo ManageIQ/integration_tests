@@ -143,7 +143,7 @@ from traceback import extract_tb, format_tb
 
 import psphere
 
-from utils import conf, lazycache
+from utils import conf, lazycache, safe_string
 from utils.path import get_rel_path, log_path
 
 MARKER_LEN = 80
@@ -470,13 +470,9 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         return SLAVEID or ""
 
     def art_log(self, level_name, message, kwargs):
-        if not isinstance(message, basestring):
-            # INTERNALERROR>     'message': message.encode("ascii", "xmlcharrefreplace"),
-            # INTERNALERROR> AttributeError: ReprExceptionInfo instance has no attribute 'encode'
-            message = str(message)
         art_log_record = {
             'level': level_name,
-            'message': message.decode('utf-8', "ignore").encode("ascii", "xmlcharrefreplace"),
+            'message': safe_string(message),
             'extra': kwargs.get('extra', '')
         }
         self.artifactor.fire_hook('log_message', log_record=art_log_record, slaveid=self.slaveid)
