@@ -1,0 +1,11 @@
+---
+:name: News
+:description: Access to News
+:feature_type: node
+:parent: everything
+:identifier: news
+:children:
+- :name: CNN
+  :description: CNN News Site
+  :feature_type: node
+  :identifier: news_cnn

@@ -1,0 +1,15 @@
+---
+:name: Red Hat
+:description: Access to Red Hat sectioin
+:feature_type: node
+:identifier: redhat
+:children:
+
+- :name: Red Hat Forums
+  :description: Access to Red Hat forums
+  :feature_type: node
+  :identifier: redhat_forum
+- :name: Red Hat Whatever
+  :description: Access to Red Hat whatever...
+  :feature_type: node
+  :identifier: redhat_whatever

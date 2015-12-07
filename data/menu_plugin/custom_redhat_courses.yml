@@ -1,0 +1,9 @@
+type: item
+name: Courses
+id: rht2
+feature: redhat
+rbac:
+  feature: redhat
+parent: redhat
+href: https://www.redhat.com/en/services/training/all-courses-exams
+item_type: big_iframe

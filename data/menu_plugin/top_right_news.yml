@@ -1,0 +1,7 @@
+type: section
+name: News
+placement: top_right
+id: news_top
+feature: news
+rbac:
+  feature: news
