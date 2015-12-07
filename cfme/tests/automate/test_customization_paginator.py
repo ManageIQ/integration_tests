@@ -65,7 +65,15 @@ def test_paginator(some_dialogs, soft_assert):
             current_rec_offset = paginator.rec_offset()
         for text in get_relevant_rows(common.dialogs_table):
             dialogs_found.add(text)
+
+        current_total = paginator.rec_total()
         current_rec_offset = paginator.rec_offset()
+        current_rec_end = paginator.rec_end()
+
+        assert current_rec_offset <= current_rec_end <= current_total, \
+            "Incorrect paginator value, expected {0} <= {1} <= {2}".format(
+                current_rec_offset, current_rec_end, current_total)
+
     assert set([dlg.label for dlg in some_dialogs]) <= dialogs_found, \
         "Could not find all dialogs by clicking the paginator!"
 
