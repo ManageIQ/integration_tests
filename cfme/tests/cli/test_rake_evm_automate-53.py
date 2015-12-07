@@ -26,7 +26,7 @@ def qe_ae_data(ssh_client, rake):
     ssh_client.put_file(cli_path.join("QECliTesting.yaml").strpath, "/root/QECliTesting.yaml")
     rc, stdout = rake(
         "evm:automate:import DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml PREVIEW=false "
-        "ENABLED=true")
+        "ENABLED=true SYSTEM=false")
     assert rc == 0, stdout
     # Now we have to enable the domain to make it work.
     qe_cli_testing = Domain(name="QECliTesting")
@@ -50,7 +50,8 @@ def test_evm_automate_import_export_works_upstream(ssh_client, rake, soft_assert
     """
     ssh_client.put_file(cli_path.join("QECliTesting.yaml").strpath, "/root/QECliTesting.yaml")
     rc, stdout = rake(
-        "evm:automate:import DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml PREVIEW=false")
+        "evm:automate:import DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml PREVIEW=false "
+        "SYSTEM=false")
     assert rc == 0, stdout
     ssh_client.run_command("rm -f QECliTesting.yaml")
     rc, stdout = rake("evm:automate:export DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml")
@@ -104,7 +105,7 @@ def test_evm_automate_convert(request, rake, ssh_client):
     assert rc == 0, stdout
     rc, stdout = rake(
         "evm:automate:import ZIP_FILE=/root/convert_test.zip DOMAIN=Default OVERWRITE=true "
-        "PREVIEW=false")
+        "PREVIEW=false SYSTEM=false")
     assert rc == 0, stdout
     # Extract the methods so we can see if it was imported
     rc, stdout = rake("evm:automate:extract_methods FOLDER=/root/automate_methods")
