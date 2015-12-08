@@ -1129,6 +1129,48 @@ def test_delete_tenants(rest_api, tenants, multiple):
             tenant.action.delete()
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_run_report(rest_api):
+    report = rest_api.collections.reports.find_by(name='VM Disk Usage')[0]
+    response = report.action.run()
+
+    @pytest.wait_for(timeout="5m", delay=5, message="REST running report finishes")
+    def _finished():
+        response.task.reload()
+        if response.task.status.lower() in {"error"}:
+            pytest.fail("Error when running report: `{}`".format(response.task.message))
+        return response.task.state.lower() == 'finished'
+
+    result = rest_api.collections.results.find_by(id=response.result_id)[0]
+    assert result.name == report.name
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_import_report(rest_api):
+    menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
+    data = {
+        'report': {
+            'menu_name': menu_name,
+            'col_order': ['col1', 'col2', 'col3'],
+            'cols': ['col1', 'col2', 'col3'],
+            'rpt_type': 'Custom',
+            'title': 'Test Report',
+            'db': 'My::Db',
+            'rpt_group': 'Custom',
+        },
+        'options': {'save': 'true'}
+    }
+    # Workaround, because method name is 'import' which is the same as reserved python name
+    _import = getattr(rest_api.collections.reports.action, 'import')
+    response, = _import(data)
+    assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
+    report = rest_api.collections.reports.find_by(name=menu_name)[0]
+    assert report.name == menu_name
+
+    response, = _import(data)
+    assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)
+
+
 COLLECTIONS_IGNORED_53 = {
     "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
     "tags", "tasks",

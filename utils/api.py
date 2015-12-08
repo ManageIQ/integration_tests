@@ -507,6 +507,8 @@ class Action(object):
             if "id" in result:
                 d["href"] = "{}/{}".format(collection._href, result["id"])
             return Entity(collection, d)
+        elif "message" in result:
+            return result
         else:
             raise NotImplementedError
 
