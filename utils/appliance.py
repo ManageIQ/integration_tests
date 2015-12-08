@@ -15,6 +15,7 @@ from time import sleep
 from urlparse import ParseResult, urlparse
 
 import requests
+import traceback
 
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_name, server_id
@@ -30,8 +31,9 @@ from utils.version import Version, get_stream, pick, LATEST
 from utils.signals import fire
 from utils.wait import wait_for
 
+RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # Do not import the whole stuff around
-if os.environ.get("RUNNING_UNDER_SPROUT", "false") == "false":
+if not RUNNING_UNDER_SPROUT:
     from cfme.configure.configuration import set_server_roles, get_server_roles
     from utils.providers import setup_provider
     from utils.browser import browser_session
@@ -394,7 +396,32 @@ class IPAppliance(object):
         self.push()
         return self
 
-    def __exit__(self, *args, **kwargs):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Fake soft assert to capture the screenshot during the test."""
+        from fixtures import artifactor_plugin
+        from cfme.fixtures.pytest_selenium import take_screenshot
+        if (
+                exc_type is not None and artifactor_plugin.test_name is not None and
+                artifactor_plugin.test_location is not None and not RUNNING_UNDER_SPROUT):
+            logger.info("Before we pop this appliance, a screenshot and a traceback will be taken.")
+            ss, ss_error = take_screenshot()
+            if ss_error:
+                ss_error = ss_error.encode("base64")
+            full_tb = "".join(traceback.format_tb(exc_tb))
+            full_tb = full_tb.encode('base64')
+            artifacts = {
+                'name': "{}: {}".format(exc_type.__name__, exc_val),
+                'traceback': full_tb,
+                'screenshot': ss,
+                'screenshot_error': ss_error}
+
+            artifactor_plugin.art_client.fire_hook(
+                'add_screenshot',
+                test_name=artifactor_plugin.test_name,
+                test_location=artifactor_plugin.test_location,
+                artifacts=artifacts)
+        elif exc_type is not None:
+            logger.info("Error happened but we are not inside a test run so no screenshot now.")
         self.pop()
 
     def __eq__(self, other):

@@ -179,6 +179,17 @@ class Reporter(ArtifactorBasePlugin):
                     test_data['duration'] = time.time() - test['start_time']
                     test_data['in_progress'] = True
 
+            # Prepare screenshots
+            test_data["screenshots"] = []
+            for screenshot in test.get("screenshots", []):
+                new_dict = {}
+                for k, v in screenshot.iteritems():
+                    if isinstance(v, basestring):
+                        new_dict[k] = v.replace(log_dir, "")
+                    else:
+                        new_dict[k] = v
+                test_data["screenshots"].append(new_dict)
+
             # Set up destinations for the files
             for ident in test.get('files', []):
                 if "softassert" in ident:

@@ -2,7 +2,8 @@
 
 from artifactor import Artifactor, initialize
 import argparse
-from artifactor.plugins import merkyl, logger, video, filedump, reporter, post_result, softassert
+from artifactor.plugins import (
+    merkyl, logger, video, filedump, reporter, post_result, softassert, screenshots)
 from artifactor import parse_setup_dir
 from utils.conf import env
 from utils.path import log_path
@@ -27,6 +28,7 @@ def run(port, run_id=None):
     art.register_plugin(video.Video, "video")
     art.register_plugin(filedump.Filedump, "filedump")
     art.register_plugin(softassert.SoftAssert, "softassert")
+    art.register_plugin(screenshots.MultiScreenshots, "screenshots")
     art.register_plugin(reporter.Reporter, "reporter")
     art.register_plugin(post_result.PostResult, "post-result")
     art.register_hook_callback('filedump', 'pre', parse_setup_dir,
@@ -39,6 +41,7 @@ def run(port, run_id=None):
     art.configure_plugin('video')
     art.configure_plugin('filedump')
     art.configure_plugin('softassert')
+    art.configure_plugin('screenshots')
     art.configure_plugin('reporter')
     art.configure_plugin('post-result')
     art.fire_hook('start_session', run_id=run_id)
