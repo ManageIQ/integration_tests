@@ -326,7 +326,9 @@ def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_as
         desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
     testing_instance.power_control_from_cfme(
         option=testing_instance.TERMINATE, cancel=False, from_details=True)
-    flash.assert_message_contain("Terminate initiated")
+    flash.assert_message_contain({
+        version.LOWEST: "Terminate initiated",
+        "5.5": "Vm Destroy initiated"})
     testing_instance.wait_to_disappear(timeout=600)
     if provider.type == 'openstack':
         soft_assert(not testing_instance.does_vm_exist_on_provider(), "instance still exists")
