@@ -116,7 +116,8 @@ def pytest_configure(config):
     yield
 
 
-def pytest_runtest_protocol(item):
+@pytest.mark.hookwrapper
+def pytest_runtest_setup(item):
     global session_ver
 
     if not session_ver:
@@ -131,6 +132,7 @@ def pytest_runtest_protocol(item):
     test_name = test_name
     art_client.fire_hook('start_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
+    yield
 
 
 def pytest_runtest_teardown(item, nextitem):
