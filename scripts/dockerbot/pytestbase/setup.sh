@@ -177,6 +177,9 @@ artifactor:
             enabled: True
             plugin: reporter
             only_failed: True
+        screenshots:
+            enabled: True
+            plugin: screenshots
 
 mail_collector:
     ports:
