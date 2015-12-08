@@ -129,7 +129,7 @@ def pytest_runtest_setup(item):
 
     name, location = get_test_idents(item)
     test_location = location
-    test_name = test_name
+    test_name = name
     art_client.fire_hook('start_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
     yield
