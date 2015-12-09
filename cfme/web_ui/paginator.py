@@ -16,9 +16,8 @@ _sort_by = '//select[@id="sort_choice"]'
 _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
 _check_all = Input("masterToggle")
 
-_prefix = r"(?:Item|Items|Rows|Row)*\s*"
-_regexp = {version.LOWEST: r"{}\((?P<first>\d+)-(?P<last>\d+) of (?P<total>\d+)\)".format(_prefix),
-           "5.5": r"Showing (?P<first>\d+)-(?P<last>\d+) of (?P<total>\d+) (?:item|items?)?"}
+_prefix = r"(?:Items?|Rows?|Showing)?\s*"
+_regexp = r"{}(?P<first>\d+)-?(?P<last>\d+)? of (?P<total>\d+)\s*(?:items?)?".format(_prefix)
 
 
 def page_controls_exist():
@@ -97,7 +96,7 @@ def sort_by(sort):
 
 
 def _get_rec(partial):
-    offset = re.search(version.pick(_regexp), _page_nums())
+    offset = re.search(_regexp, _page_nums())
     if offset:
         return offset.groupdict()[partial]
     else:
@@ -111,7 +110,12 @@ def rec_offset():
 
 def rec_end():
     """ Returns the record set index."""
-    return int(_get_rec('last'))
+    rec = _get_rec('last')
+    if rec is not None:
+        return int(rec)
+    else:
+        # Items might be displayed as 'Item 1 of 1'
+        return int(_get_rec('first'))
 
 
 def rec_total():
