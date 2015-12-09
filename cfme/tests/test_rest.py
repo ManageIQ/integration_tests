@@ -26,7 +26,7 @@ pytest_generate_tests = testgen.generate(
     scope="module"
 )
 
-pytestmark = [pytest.mark.ignore_stream("5.2")]
+pytestmark = [pytest.mark.ignore_stream("5.3")]
 
 
 @pytest.fixture(scope="module")
@@ -548,7 +548,6 @@ def test_delete_services(rest_api, services):
         rest_api.collections.services.action.delete(*services)
 
 
-@pytest.mark.ignore_stream("5.3")
 def test_retire_service_now(rest_api, services):
     """Test retiring a service
     Prerequisities:
@@ -569,7 +568,6 @@ def test_retire_service_now(rest_api, services):
     )
 
 
-@pytest.mark.ignore_stream("5.3")
 def test_retire_service_future(rest_api, services):
     """Test retiring a service
     Prerequisities:
@@ -647,7 +645,6 @@ def test_provider_refresh(request, a_provider, rest_api):
         vms[0].action.delete()
 
 
-@pytest.mark.ignore_stream("5.3")
 def test_provider_edit(request, a_provider, rest_api):
     """Test editing a provider using REST API.
     Prerequisities:
@@ -673,7 +670,6 @@ def test_provider_edit(request, a_provider, rest_api):
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["delete_from_detail", "delete_from_collection"])
-@pytest.mark.ignore_stream("5.3")
 def test_provider_crud(request, rest_api, from_detail):
     """Test the CRUD on provider using REST API.
     Steps:
@@ -726,7 +722,6 @@ def vm(request, a_provider, rest_api):
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
-@pytest.mark.ignore_stream("5.3")
 def test_set_vm_owner(request, rest_api, vm, from_detail):
     """Test whether set_owner action from the REST API works.
     Prerequisities:
@@ -759,7 +754,6 @@ def test_set_vm_owner(request, rest_api, vm, from_detail):
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
-@pytest.mark.ignore_stream("5.3")
 def test_vm_add_lifecycle_event(request, rest_api, vm, from_detail, db):
     """Test that checks whether adding a lifecycle event using the REST API works.
     Prerequisities:
@@ -1169,6 +1163,39 @@ def test_import_report(rest_api):
 
     response, = _import(data)
     assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_set_service_owner(rest_api, services):
+    if "set_ownership" not in rest_api.collections.services.action.all:
+        pytest.skip("Set owner action for service is not implemented in this version")
+    service = services[0]
+    user = rest_api.collections.users.find_by(userid='admin')[0]
+    data = {
+        "owner": {"href": user.href}
+    }
+    service.action.set_ownership(data)
+    service.reload()
+    assert hasattr(service, "evm_owner")
+    assert service.evm_owner.userid == user.userid
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_set_services_owner(rest_api, services):
+    if "set_ownership" not in rest_api.collections.services.action.all:
+        pytest.skip("Set owner action for service is not implemented in this version")
+    data = []
+    for service in services:
+        tmp_data = {
+            "href": service.href,
+            "owner": {"href": user.href}
+        }
+        data.append(tmp_data)
+    rest_api.collections.services.action.set_ownership(*data)
+    for service in services:
+        service.reload()
+        assert hasattr(service, "evm_owner")
+        assert service.evm_owner.userid == user.userid
 
 
 COLLECTIONS_IGNORED_53 = {
