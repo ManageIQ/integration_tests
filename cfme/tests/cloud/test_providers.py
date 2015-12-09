@@ -85,7 +85,7 @@ def test_provider_crud(provider):
         test_flag: crud
     """
     provider.create()
-    provider.validate(db=False)
+    provider.validate_stats(ui=True)
 
     old_name = provider.name
     with update(provider):

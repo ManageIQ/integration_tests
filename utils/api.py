@@ -7,6 +7,7 @@ import re
 import requests
 import simplejson
 from copy import copy
+from fixtures.pytest_store import store
 from utils.log import logger
 from utils.version import Version
 from utils.wait import wait_for
@@ -282,7 +283,7 @@ class Entity(object):
     # TODO: Extend these fields
     TIME_FIELDS = {
         "updated_on", "created_on", "last_scan_attempt_on", "state_changed_on", "lastlogon",
-        "updated_at", "created_at", "last_scan_on", "last_sync_on"}
+        "updated_at", "created_at", "last_scan_on", "last_sync_on", "last_refresh_date"}
     COLLECTION_MAPPING = dict(
         ems_id="providers",
         storage_id="data_stores",
@@ -512,3 +513,7 @@ class Action(object):
 
     def __repr__(self):
         return "<Action {} {}#{}>".format(self._method, self._container._obj._href, self._name)
+
+
+def rest_api():
+    return store.current_appliance.rest_api
