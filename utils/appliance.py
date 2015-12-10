@@ -14,6 +14,7 @@ from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
 
+import dateutil.parser
 import requests
 
 from cfme.common.vm import VM
@@ -1017,6 +1018,14 @@ class IPAppliance(object):
             self.reboot(wait_for_web_ui=False, log_callback=log_callback)
 
         return result
+
+    def utc_time(self):
+        client = self.ssh_client
+        status, output = client.run_command('date --iso-8601=seconds -u')
+        if not status:
+            return dateutil.parser.parse(output)
+        else:
+            raise Exception("Couldn't get datetime: {}".format(output))
 
     @logger_wrap("Patch ajax wait: {}")
     def patch_ajax_wait(self, reverse=False, log_callback=None):

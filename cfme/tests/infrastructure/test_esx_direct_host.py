@@ -99,4 +99,4 @@ def setup_provider(provider, original_provider_key):
 
 def test_validate(provider, setup_provider, provider_data):
     """Since the provider (host) gets added in the fixture, nothing special has to happen here."""
-    provider.validate(db=False)
+    provider.validate(ui=True)

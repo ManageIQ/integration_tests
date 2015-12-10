@@ -1,4 +1,5 @@
 from functools import partial
+import datetime
 
 from utils import conf
 from cfme.exceptions import (
@@ -10,6 +11,8 @@ from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons
 from cfme.web_ui.tabstrip import TabStripForm
 import cfme.fixtures.pytest_selenium as sel
+from fixtures.pytest_store import store
+from utils.api import rest_api
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
@@ -18,6 +21,7 @@ from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils import version
+from utils.varmeth import variable
 
 from . import PolicyProfileAssignable, Taggable
 
@@ -216,7 +220,29 @@ class BaseProvider(Taggable, Updateable):
         if self.exists:
             self.delete(*args, **kwargs)
 
-    def validate(self, db=True):
+    @variable(alias='rest')
+    def is_refreshed(self, refresh_timer=None):
+        if refresh_timer:
+            if refresh_timer.is_it_time():
+                logger.info(' Time for a refresh!')
+                self.refresh_provider_relationships()
+                refresh_timer.reset()
+        td = store.current_appliance.utc_time() - self.last_refresh_date()
+        if td > datetime.timedelta(0, 600):
+            self.refresh_provider_relationships()
+            return False
+        else:
+            return True
+
+    def validate(self):
+        refresh_timer = RefreshTimer(time_for_refresh=300)
+        wait_for(self.is_refreshed,
+                 [refresh_timer],
+                 message="is_refreshed",
+                 num_sec=1000,
+                 delay=60)
+
+    def validate_stats(self, ui=False):
         """ Validates that the detail page matches the Providers information.
 
         This method logs into the provider using the mgmt_system interface and collects
@@ -228,28 +254,50 @@ class BaseProvider(Taggable, Updateable):
         client = self.get_mgmt_system()
 
         # If we're not using db, make sure we are on the provider detail page
-        if not db:
+        if ui:
             self.load_details()
 
         # Initial bullet check
-        if self._do_stats_match(client, self.STATS_TO_MATCH, db=db):
+        if self._do_stats_match(client, self.STATS_TO_MATCH, ui=ui):
             client.disconnect()
             return
         else:
             # Set off a Refresh Relationships
-            self.refresh_provider_relationships()
+            method = 'ui' if ui else None
+            self.refresh_provider_relationships(method=method)
 
             refresh_timer = RefreshTimer(time_for_refresh=300)
             wait_for(self._do_stats_match,
                      [client, self.STATS_TO_MATCH, refresh_timer],
-                     {'db': db},
+                     {'ui': ui},
                      message="do_stats_match_db",
                      num_sec=1000,
                      delay=60)
 
         client.disconnect()
 
-    def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None, db=True):
+    @variable(alias='rest')
+    def refresh_provider_relationships(self):
+        col = rest_api().collections.providers.find_by(name=self.name)[0]
+        col.action.refresh()
+
+    @refresh_provider_relationships.variant('ui')
+    def refresh_provider_relationships_ui(self, from_list_view=False):
+        """Clicks on Refresh relationships button in provider"""
+        if from_list_view:
+            sel.force_navigate("{}_providers".format(self.page_name))
+            sel.check(Quadicon(self.name, self.quad_name).checkbox())
+        else:
+            self.load_details()
+        tb.select("Configuration", self.refresh_text, invokes_alert=True)
+        sel.handle_alert(cancel=False)
+
+    @variable(alias='rest')
+    def last_refresh_date(self):
+        col = rest_api().collections.providers.find_by(name=self.name)[0]
+        return col.last_refresh_date
+
+    def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None, ui=False):
         """ A private function to match a set of statistics, with a Provider.
 
         This function checks if the list of stats match, if not, the page is refreshed.
@@ -266,8 +314,10 @@ class BaseProvider(Taggable, Updateable):
             ProviderHasNoProperty: If the provider does not have the property defined.
         """
         host_stats = client.stats(*stats_to_match)
-        if not db:
+        method = None
+        if ui:
             sel.refresh()
+            method = 'ui'
 
         if refresh_timer:
             if refresh_timer.is_it_time():
@@ -277,7 +327,7 @@ class BaseProvider(Taggable, Updateable):
 
         for stat in stats_to_match:
             try:
-                cfme_stat = getattr(self, stat)(db=db)
+                cfme_stat = getattr(self, stat)(method=method)
                 success, value = tol_check(host_stats[stat],
                                            cfme_stat,
                                            min_error=0.05,
@@ -309,16 +359,6 @@ class BaseProvider(Taggable, Updateable):
         logger.info('Waiting for a provider to delete...')
         wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
                  message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)
-
-    def refresh_provider_relationships(self, from_list_view=False):
-        """Clicks on Refresh relationships button in provider"""
-        if from_list_view:
-            sel.force_navigate("{}_providers".format(self.page_name))
-            sel.check(Quadicon(self.name, self.quad_name).checkbox())
-        else:
-            self.load_details()
-        tb.select("Configuration", self.refresh_text, invokes_alert=True)
-        sel.handle_alert(cancel=False)
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
@@ -420,31 +460,34 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     def _is_policy_profile_row_checked(self, row):
         return "Check" in row.find_element_by_xpath("../td[@width='16px']/img").get_attribute("src")
 
-    def num_template(self, db=True):
+    @variable(alias="db")
+    def num_template(self):
         """ Returns the providers number of templates, as shown on the Details page."""
-        if db:
-            ext_management_systems = cfmedb()["ext_management_systems"]
-            vms = cfmedb()["vms"]
-            truthy = True  # This is to prevent a lint error with ==True
-            temlist = list(cfmedb().session.query(vms.name)
-                           .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                           .filter(ext_management_systems.name == self.name)
-                           .filter(vms.template == truthy))
-            return len(temlist)
-        else:
-            return int(self.get_detail("Relationships", self.template_name))
+        ext_management_systems = cfmedb()["ext_management_systems"]
+        vms = cfmedb()["vms"]
+        temlist = list(cfmedb().session.query(vms.name)
+                       .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                       .filter(ext_management_systems.name == self.name)
+                       .filter(vms.template == True))  # NOQA
+        return len(temlist)
 
-    def num_vm(self, db=True):
+    @num_template.variant('ui')
+    def num_template_ui(self):
+        return int(self.get_detail("Relationships", self.template_name))
+
+    @variable(alias="db")
+    def num_vm(self):
         """ Returns the providers number of instances, as shown on the Details page."""
-        if db:
-            ext_management_systems = cfmedb()["ext_management_systems"]
-            vms = cfmedb()["vms"]
-            falsey = False  # This is to prevent a lint error with ==False
-            vmlist = list(cfmedb().session.query(vms.name)
-                          .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                          .filter(ext_management_systems.name == self.name)
-                          .filter(vms.template == falsey))
-            return len(vmlist)
+        ext_management_systems = cfmedb()["ext_management_systems"]
+        vms = cfmedb()["vms"]
+        vmlist = list(cfmedb().session.query(vms.name)
+                      .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                      .filter(ext_management_systems.name == self.name)
+                      .filter(vms.template == False))  # NOQA
+        return len(vmlist)
+
+    @num_vm.variant('ui')
+    def num_vm_ui(self):
         return int(self.get_detail("Relationships", self.vm_name))
 
     def load_all_provider_instances(self):

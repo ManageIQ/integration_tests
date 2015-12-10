@@ -167,7 +167,7 @@ def test_provider_crud(provider):
     """
     provider.create()
     # Fails on upstream, all provider types - BZ1087476
-    provider.validate(db=False)
+    provider.validate_stats(ui=True)
 
     old_name = provider.name
     with update(provider):

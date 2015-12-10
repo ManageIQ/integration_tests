@@ -22,10 +22,12 @@ from cfme.web_ui import (
     AngularSelect
 )
 from cfme.web_ui.form_buttons import FormButton
+from utils.api import rest_api
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version
 from utils.pretty import Pretty
+from utils.varmeth import variable
 
 
 details_page = Region(infoblock_type='detail')
@@ -127,54 +129,72 @@ class Provider(Pretty, CloudInfraProvider):
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
 
-    def num_datastore(self, db=True):
+    @variable(alias='db')
+    def num_datastore(self):
+        storage_table_name = version.pick({version.LOWEST: 'hosts_storages',
+                                           '5.5.0.8': 'host_storages'})
         """ Returns the providers number of templates, as shown on the Details page."""
-        if db:
-            query = version.pick({
-                version.LOWEST: {
-                    'SELECT DISTINCT storages.name, hosts.ems_id '
-                    'FROM ext_management_systems, hosts, storages, hosts_storages '
-                    'WHERE hosts.id=hosts_storages.host_id AND '
-                    'storages.id=hosts_storages.storage_id AND '
-                    'hosts.ems_id=ext_management_systems.id AND '
-                    'ext_management_systems.name=\'{}\''.format(self.name)},
-                "5.5.0.8": {
-                    'SELECT DISTINCT storages.name, hosts.ems_id '
-                    'FROM ext_management_systems, hosts, storages, host_storages '
-                    'WHERE hosts.id=host_storages.host_id AND '
-                    'storages.id=host_storages.storage_id AND '
-                    'hosts.ems_id=ext_management_systems.id AND '
-                    'ext_management_systems.name=\'{}\''.format(self.name)}
-            })
-            results = list(cfmedb().engine.execute(query.pop()))
-            return len(results)
-        else:
+
+        results = list(cfmedb().engine.execute(
+            'SELECT DISTINCT storages.name, hosts.ems_id '
+            'FROM ext_management_systems, hosts, storages, {} '
+            'WHERE hosts.id={}.host_id AND '
+            'storages.id={}.storage_id AND '
+            'hosts.ems_id=ext_management_systems.id AND '
+            'ext_management_systems.name=\'{}\''.format(storage_table_name,
+                                                        storage_table_name, storage_table_name,
+                                                        self.name)))
+        return len(results)
+
+    @num_datastore.variant('ui')
+    def num_datastore_ui(self):
             return int(self.get_detail("Relationships", "Datastores"))
 
-    def num_host(self, db=True):
-        """ Returns the providers number of instances, as shown on the Details page."""
-        if db:
-            ext_management_systems = cfmedb()["ext_management_systems"]
-            hosts = cfmedb()["hosts"]
-            hostlist = list(cfmedb().session.query(hosts.name)
-                            .join(ext_management_systems, hosts.ems_id == ext_management_systems.id)
-                            .filter(ext_management_systems.name == self.name))
-            return len(hostlist)
-        else:
-            return int(self.get_detail("Relationships", "host.png", use_icon=True))
+    @variable(alias='rest')
+    def num_host(self):
+        provider = rest_api().collections.providers.find_by(name=self.name)[0]
+        num_host = 0
+        for host in rest_api().collections.hosts:
+            if host['ems_id'] == provider.id:
+                num_host += 1
+        return num_host
 
-    def num_cluster(self, db=True):
+    @num_host.variant('db')
+    def num_host_db(self):
+        ext_management_systems = cfmedb()["ext_management_systems"]
+        hosts = cfmedb()["hosts"]
+        hostlist = list(cfmedb().session.query(hosts.name)
+                        .join(ext_management_systems, hosts.ems_id == ext_management_systems.id)
+                        .filter(ext_management_systems.name == self.name))
+        return len(hostlist)
+
+    @num_host.variant('ui')
+    def num_host_ui(self):
+        return int(self.get_detail("Relationships", "host.png", use_icon=True))
+
+    @variable(alias='rest')
+    def num_cluster(self):
+        provider = rest_api().collections.providers.find_by(name=self.name)[0]
+        num_cluster = 0
+        for cluster in rest_api().collections.clusters:
+            if cluster['ems_id'] == provider.id:
+                num_cluster += 1
+        return num_cluster
+
+    @num_cluster.variant('db')
+    def num_cluster_db(self):
         """ Returns the providers number of templates, as shown on the Details page."""
-        if db:
-            ext_management_systems = cfmedb()["ext_management_systems"]
-            clusters = cfmedb()["ems_clusters"]
-            clulist = list(cfmedb().session.query(clusters.name)
-                           .join(ext_management_systems,
-                                 clusters.ems_id == ext_management_systems.id)
-                           .filter(ext_management_systems.name == self.name))
-            return len(clulist)
-        else:
-            return int(self.get_detail("Relationships", "cluster.png", use_icon=True))
+        ext_management_systems = cfmedb()["ext_management_systems"]
+        clusters = cfmedb()["ems_clusters"]
+        clulist = list(cfmedb().session.query(clusters.name)
+                       .join(ext_management_systems,
+                             clusters.ems_id == ext_management_systems.id)
+                       .filter(ext_management_systems.name == self.name))
+        return len(clulist)
+
+    @num_cluster.variant('ui')
+    def num_cluster_ui(self):
+        return int(self.get_detail("Relationships", "cluster.png", use_icon=True))
 
     def discover(self):
         """

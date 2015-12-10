@@ -7,6 +7,7 @@ from cfme.web_ui.menu import nav
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.pretty import Pretty
+from utils.varmeth import variable
 
 from . import cfg_btn, mon_btn, pol_btn
 
@@ -116,65 +117,87 @@ class Provider(BaseProvider, Pretty):
             "AND ext_management_systems.name='{1}'".format(table_str, self.name))
         return int(res.first()[0])
 
-    def num_project(self, db=True):
-        if db:
-            return self._num_db_generic('container_projects')
-        else:
-            return int(self.get_detail("Relationships", "Projects"))
+    @variable(alias='db')
+    def num_project(self):
+        return self._num_db_generic('container_projects')
 
-    def num_service(self, db=True):
-        if db:
-            return self._num_db_generic('container_services')
-        else:
-            return int(self.get_detail("Relationships", "Services"))
+    @num_project.variant('ui')
+    def num_project_ui(self):
+        return int(self.get_detail("Relationships", "Projects"))
 
-    def num_replication_controller(self, db=True):
-        if db:
-            return self._num_db_generic('container_replicators')
-        else:
-            return int(self.get_detail("Relationships", "Replicators"))
+    @variable(alias='db')
+    def num_service(self):
+        return self._num_db_generic('container_services')
 
-    def num_container_group(self, db=True):
-        if db:
-            return self._num_db_generic('container_groups')
-        else:
-            return int(self.get_detail("Relationships", "Pods"))
+    @num_service.variant('ui')
+    def num_service_ui(self):
+        return int(self.get_detail("Relationships", "Services"))
 
-    def num_pod(self, db=True):
+    @variable(alias='db')
+    def num_replication_controller(self):
+        return self._num_db_generic('container_replicators')
+
+    @num_replication_controller.variant('ui')
+    def num_replication_controller_ui(self):
+        return int(self.get_detail("Relationships", "Replicators"))
+
+    @variable(alias='db')
+    def num_container_group(self):
+        return self._num_db_generic('container_groups')
+
+    @num_container_group.variant('ui')
+    def num_container_group_ui(self):
+        return int(self.get_detail("Relationships", "Pods"))
+
+    @variable(alias='db')
+    def num_pod(self):
         # potato tomato
-        return self.num_container_group(db)
+        return self.num_container_group()
 
-    def num_node(self, db=True):
-        if db:
-            return self._num_db_generic('container_nodes')
-        else:
-            return int(self.get_detail("Relationships", "Nodes"))
+    @num_pod.variant('ui')
+    def num_pod_ui(self):
+        # potato tomato
+        return self.num_container_group(method='ui')
 
-    def num_container(self, db=True):
-        if db:
-            # Containers are linked to providers through container definitions and then through pods
-            res = cfmedb().engine.execute(
-                "SELECT count(*) "
-                "FROM ext_management_systems, container_groups, container_definitions, containers "
-                "WHERE containers.container_definition_id=container_definitions.id "
-                "AND container_definitions.container_group_id=container_groups.id "
-                "AND container_groups.ems_id=ext_management_systems.id "
-                "AND ext_management_systems.name='{}'".format(self.name))
-            return int(res.first()[0])
-        else:
-            return int(self.get_detail("Relationships", "Containers"))
+    @variable(alias='db')
+    def num_node(self):
+        return self._num_db_generic('container_nodes')
 
-    def num_image(self, db=True):
-        if db:
-            return self._num_db_generic('container_images')
-        else:
-            return int(self.get_detail("Relationships", "Images"))
+    @num_node.variant('ui')
+    def num_node_ui(self):
+        return int(self.get_detail("Relationships", "Nodes"))
 
-    def num_image_registry(self, db=True):
-        if db:
-            return self._num_db_generic('container_image_registries')
-        else:
-            return int(self.get_detail("Relationships", "Image Registries"))
+    @variable(alias='db')
+    def num_container(self):
+        # Containers are linked to providers through container definitions and then through pods
+        res = cfmedb().engine.execute(
+            "SELECT count(*) "
+            "FROM ext_management_systems, container_groups, container_definitions, containers "
+            "WHERE containers.container_definition_id=container_definitions.id "
+            "AND container_definitions.container_group_id=container_groups.id "
+            "AND container_groups.ems_id=ext_management_systems.id "
+            "AND ext_management_systems.name='{}'".format(self.name))
+        return int(res.first()[0])
+
+    @num_container.variant('ui')
+    def num_container_ui(self):
+        return int(self.get_detail("Relationships", "Containers"))
+
+    @variable(alias='db')
+    def num_image(self):
+        return self._num_db_generic('container_images')
+
+    @num_image.variant('ui')
+    def num_image_ui(self):
+        return int(self.get_detail("Relationships", "Images"))
+
+    @variable(alias='db')
+    def num_image_registry(self):
+        return self._num_db_generic('container_image_registries')
+
+    @num_image_registry.variant('ui')
+    def num_image_registry_ui(self):
+        return int(self.get_detail("Relationships", "Image Registries"))
 
 
 class KubernetesProvider(Provider):
@@ -214,8 +237,10 @@ class OpenshiftProvider(Provider):
                 'port_text': kwargs.get('port'),
                 'zone_select': kwargs.get('zone')}
 
-    def num_route(self, db=True):
-        if db:
-            return self._num_db_generic('container_routes')
-        else:
-            return int(self.get_detail("Relationships", "Routes"))
+    @variable(alias='db')
+    def num_route(self):
+        return self._num_db_generic('container_routes')
+
+    @num_route.variant('ui')
+    def num_route_ui(self):
+        return int(self.get_detail("Relationships", "Routes"))
