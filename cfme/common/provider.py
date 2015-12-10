@@ -227,7 +227,10 @@ class BaseProvider(Taggable, Updateable):
                 logger.info(' Time for a refresh!')
                 self.refresh_provider_relationships()
                 refresh_timer.reset()
-        td = store.current_appliance.utc_time() - self.last_refresh_date()
+        rdate = self.last_refresh_date()
+        if not rdate:
+            return False
+        td = store.current_appliance.utc_time() - rdate
         if td > datetime.timedelta(0, 600):
             self.refresh_provider_relationships()
             return False
@@ -294,8 +297,11 @@ class BaseProvider(Taggable, Updateable):
 
     @variable(alias='rest')
     def last_refresh_date(self):
-        col = rest_api().collections.providers.find_by(name=self.name)[0]
-        return col.last_refresh_date
+        try:
+            col = rest_api().collections.providers.find_by(name=self.name)[0]
+            return col.last_refresh_date
+        except AttributeError:
+            return None
 
     def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None, ui=False):
         """ A private function to match a set of statistics, with a Provider.
