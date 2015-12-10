@@ -283,7 +283,7 @@ class PXEServer(Updateable, Pretty):
             return None
 
     @get_pxe_image_type.variant('ui')
-    def get_pxe_image_type(self, image_name):
+    def get_pxe_image_type_ui(self, image_name):
         sel.force_navigate('infrastructure_pxe_servers')
         pxe_tree(self.name, 'PXE Images', image_name)
         return pxe_details_page.pxe_image_type.text
