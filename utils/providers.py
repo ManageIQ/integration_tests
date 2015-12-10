@@ -451,7 +451,7 @@ def clear_cloud_providers(validate=True):
     sel.force_navigate('clouds_providers')
     logger.debug('Checking for existing cloud providers...')
     total = paginator.rec_total()
-    if total is not None and int(total) > 0:
+    if total > 0:
         logger.info(' Providers exist, so removing all cloud providers')
         paginator.results_per_page('100')
         sel.click(paginator.check_all())
@@ -466,7 +466,7 @@ def clear_infra_providers(validate=True):
     sel.force_navigate('infrastructure_providers')
     logger.debug('Checking for existing infrastructure providers...')
     total = paginator.rec_total()
-    if total is not None and int(total) > 0:
+    if total > 0:
         logger.info(' Providers exist, so removing all infra providers')
         paginator.results_per_page('100')
         sel.click(paginator.check_all())
@@ -481,7 +481,7 @@ def clear_container_providers(validate=True):
     sel.force_navigate('containers_providers')
     logger.debug('Checking for existing container providers...')
     total = paginator.rec_total()
-    if total is not None and int(total) > 0:
+    if total > 0:
         logger.info(' Providers exist, so removing all container providers')
         paginator.results_per_page('100')
         sel.click(paginator.check_all())
@@ -493,11 +493,7 @@ def clear_container_providers(validate=True):
 
 
 def get_paginator_value():
-    total = paginator.rec_total()
-    if total is None:
-        return 0
-    else:
-        return int(total.strip())
+    return paginator.rec_total()
 
 
 def wait_for_no_cloud_providers():
