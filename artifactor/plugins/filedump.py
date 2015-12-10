@@ -14,6 +14,9 @@ artifactor:
 from artifactor import ArtifactorBasePlugin
 import base64
 import os
+import re
+
+from utils import normalize_text, safe_string
 
 
 class Filedump(ArtifactorBasePlugin):
@@ -26,34 +29,59 @@ class Filedump(ArtifactorBasePlugin):
         self.configured = True
 
     @ArtifactorBasePlugin.check_configured
-    def filedump(self, artifact_path, filename, contents, test_name, test_location, fd_ident,
-                 mode="w", contents_base64=False):
+    def filedump(self, artifact_path, description, contents, test_name, test_location,
+                 mode="w", contents_base64=False, display_type="primary", display_glyph=None,
+                 file_type=None, dont_write=False, os_filename=None, group_id=None):
         artifacts = []
-        os_filename = self.ident + "-" + filename
-        os_filename = os.path.join(artifact_path, os_filename)
+        if os_filename is None:
+            safe_name = re.sub(r"\s+", "_", normalize_text(safe_string(description)))
+            os_filename = self.ident + "-" + safe_name
+            os_filename = os.path.join(artifact_path, os_filename)
+            if file_type is not None and "screenshot" in file_type:
+                os_filename = os_filename + ".png"
+            elif file_type is not None and (
+                    "_tb" in file_type or "traceback" in file_type or file_type == "log"):
+                os_filename = os_filename + ".log"
+            elif file_type is not None and file_type == "html":
+                os_filename = os_filename + ".html"
+            elif file_type is not None and file_type == "video":
+                os_filename = os_filename + ".ogv"
+            else:
+                os_filename = os_filename + ".txt"
         if os.path.isfile(os_filename):
             os.remove(os_filename)
-        artifacts.append(os_filename)
-        with open(os_filename, mode) as f:
-            if contents_base64:
-                contents = base64.b64decode(contents)
-            f.write(contents)
+        artifacts.append({
+            "file_type": file_type,
+            "display_type": display_type,
+            "display_glyph": display_glyph,
+            "description": description,
+            "os_filename": os_filename,
+            "group_id": group_id,
+        })
+        if not dont_write:
+            with open(os_filename, mode) as f:
+                if contents_base64:
+                    contents = base64.b64decode(contents)
+                f.write(contents)
         test_ident = "{}/{}".format(test_location, test_name)
-        return None, {'artifacts': {test_ident: {'files': {fd_ident: artifacts}}}}
+        return None, {'artifacts': {test_ident: {'files': artifacts}}}
 
     @ArtifactorBasePlugin.check_configured
-    def sanitize(self, test_location, test_name, artifacts, fd_idents, words):
+    def sanitize(self, test_location, test_name, artifacts, words):
         test_ident = "{}/{}".format(test_location, test_name)
         filename = None
         try:
-            for fd_ident in fd_idents:
-                filenames = artifacts[test_ident]['files'][fd_ident]
-                for filename in filenames:
-                    with open(filename) as f:
-                        data = f.read()
-                    for word in words:
-                        data = data.replace(word, "*" * len(word))
-                    with open(filename, "w") as f:
-                        f.write(data)
+            for f in artifacts[test_ident]['files']:
+                if f["file_type"] not in {
+                        "traceback", "short_tb", "func_trace", "rbac", "soft_traceback",
+                        "soft_short_tb"}:
+                    continue
+                filename = f["os_filename"]
+                with open(filename) as f:
+                    data = f.read()
+                for word in words:
+                    data = data.replace(word, "*" * len(word))
+                with open(filename, "w") as f:
+                    f.write(data)
         except KeyError:
             pass

@@ -180,8 +180,8 @@ def pytest_runtest_call(item):
     if item.config.getvalue('tracer'):
         out = art_client.fire_hook('filedump', grab_result=True,
                                    test_name=item.name, test_location=item.parent.name,
-                                   filename="function_trace.txt", contents="",
-                                   fd_ident="func_trace")
+                                   description="Function trace", contents="",
+                                   file_type="func_trace", group_id="misc-artifacts")
         if out:
             filename = os.path.join(out['artifact_path'], 'filedump-function_trace.txt')
         else:

@@ -264,53 +264,19 @@
               {% endfor %}
               </ul>
             {% endif %}
-	    {% if test.softassert %}
-                <div>
-		<h4>Soft Asserts</h4>
-		<table>
-                {% for assertion in test.softassert %}
-                    <tr><td><strong>{{loop.index - 1}}</strong></td>
-                    {% for file in assertion %}
-                        <td><a class="label label-success" role="button" href="{{assertion[file]}}">{{file}}</a></td>
-                    {% endfor %}
-		    </tr>
-                {% endfor %}
-		</table>
-                </div>
-		<br>
-	    {% endif %}
             <div>
-                <h3>Artifacts</h3>
-                {% if test.rbac_screenshot %}
-                    <a href="{{test.rbac_screenshot}}" class="btn btn-primary" role="button">RBAC Screenshot</a>
+                {% if test.file_groups %}
+                <h3>Captured files</h3>
+                  <ul>
+                  {% for group, files in test.file_groups %}
+                    <li title="Group {{ group }}">
+                    {% for file in files %}
+                      <a href="{{file.filename}}" class="btn btn-{{file.display_type}}">{% if file.display_glyph %}<span class="glyphicon glyphicon-{{file.display_glyph}}"></span>{% endif %} {{file.description}}</a>
+                    {% endfor %}
+                    </li>
+                  {% endfor %}
+                  </ul>
                 {% endif %}
-                {% if test.screenshot %}
-                    <a href="{{test.screenshot}}" class="btn btn-primary" role="button">Screenshot</a>
-                {% endif %}
-                {% if test.rbac %}
-                    <a href="{{test.rbac}}" class="btn btn-success" role="button">RBAC Traceback</a>
-                {% endif %}
-                {% if test.full_tb %}
-                    <a href="{{test.full_tb}}" class="btn btn-success" role="button">Full Traceback</a>
-                {% endif %}
-                {% if test.cfme %}
-                    <a href="{{test.cfme}}" class="btn btn-success" role="button">CFME.log</a>
-                {% endif %}
-                {% if test.video %}
-                    <a href="{{test.video}}" class="btn btn-success" role="button">Video</a>
-                {% endif %}
-                {% if test.function %}
-                    <a href="{{test.function}}" class="btn btn-success" role="button">Function Trace</a>
-                {% endif %}
-                {% if test.event_testing %}
-                    <a href="{{test.event_testing}}" class="btn btn-success" role="button">Caught events</a>
-                {% endif %}
-                {% if test.emails %}
-                    <a href="{{test.emails}}" class="btn btn-success" role="button">Received e-mails</a>
-                {% endif %}
-                {% for file in test.merkyl %}
-                    <a href="{{file}}" class="btn btn-primary" role="button">{{file[file.rfind("/")+1:]}}</a>
-                {% endfor %}
             </div>
         </div>
     </div>

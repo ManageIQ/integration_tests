@@ -24,6 +24,7 @@ from contextlib import contextmanager
 from threading import local
 from functools import partial
 
+import fauxfactory
 import pytest
 
 from fixtures.artifactor_plugin import art_client
@@ -115,13 +116,27 @@ def handle_assert_artifacts(request, fail_message=None):
             ss_error = type(b_ex).__name__
     if ss_error:
         ss_error = ss_error.encode('base64')
-    artifacts = {'short_tb': short_tb,
-                 'full_tb': full_tb,
-                 'screenshot': ss,
-                 'screenshot_error': ss_error}
 
-    art_client.fire_hook('add_assertion', test_name=test_name, test_location=test_location,
-                         artifacts=artifacts)
+    # A simple id to match the artifacts together
+    sa_id = "softassert-{}".format(fauxfactory.gen_alpha(length=3).upper())
+
+    art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+        description="Soft Assert Traceback", contents=full_tb,
+        file_type="soft_traceback", display_type="danger", display_glyph="align-justify",
+        contents_base64=True, group_id=sa_id)
+    art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+        description="Soft Assert Short Traceback", contents=short_tb,
+        file_type="soft_short_tb", display_type="danger", display_glyph="align-justify",
+        contents_base64=True, group_id=sa_id)
+    if ss is not None:
+        art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+            description="Soft Assert Exception screenshot",
+            file_type="screenshot", mode="wb", contents_base64=True, contents=ss,
+            display_glyph="camera", group_id=sa_id)
+    if ss_error is not None:
+        art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+            description="Soft Assert Screenshot error", mode="w",
+            contents_base64=True, contents=ss_error, display_type="danger", group_id=sa_id)
 
 
 @contextmanager

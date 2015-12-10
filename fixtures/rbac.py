@@ -115,20 +115,20 @@ def save_traceback_file(node, contents):
     """
     name, location = get_test_idents(node)
     art_client.fire_hook('filedump', test_location=location, test_name=name,
-                         filename="rbac-traceback.txt",
-                         contents=contents, fd_ident="rbac")
+                         description="RBAC Traceback",
+                         contents=contents, file_type="rbac", group_id="RBAC")
 
 
 def save_screenshot(node, ss, sse):
     name, location = get_test_idents(node)
     if ss:
         art_client.fire_hook('filedump', test_location=location, test_name=name,
-                             filename="rbac_screenshot.png", fd_ident="rbac_screenshot", mode="wb",
-                             contents_base64=True, contents=ss)
+            description="RBAC Screenshot", file_type="rbac_screenshot", mode="wb",
+            contents_base64=True, contents=ss, display_glyph="camera", group_id="RBAC")
     if sse:
         art_client.fire_hook('filedump', test_location=location, test_name=name,
-                             filename="rbac_screenshot.txt", fd_ident="rbac_screenshot", mode="w",
-                             contents_base64=False, contents=sse)
+            description="RBAC Screenshot error", file_type="rbac_screenshot_error", mode="w",
+            contents_base64=False, contents=sse, display_type="danger", group_id="RBAC")
 
 
 def really_logout():

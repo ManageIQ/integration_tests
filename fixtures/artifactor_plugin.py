@@ -128,8 +128,7 @@ def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
     art_client.fire_hook('finish_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
-    art_client.fire_hook('sanitize', test_location=location, test_name=name,
-                         fd_idents=['func_trace'], words=words)
+    art_client.fire_hook('sanitize', test_location=location, test_name=name, words=words)
 
 
 def pytest_runtest_logreport(report):
@@ -146,8 +145,8 @@ def pytest_runtest_logreport(report):
             except AttributeError:
                 contents = str(report.longrepr)
             art_client.fire_hook('filedump', test_location=location, test_name=name,
-                                 filename="short-traceback.txt", contents=contents,
-                                 fd_ident="short_tb")
+                                 description="Short traceback", contents=contents,
+                                 file_type="short_tb", group_id="skipped")
     art_client.fire_hook('report_test', test_location=location,
                          test_name=name, test_xfail=xfail, test_when=report.when,
                          test_outcome=report.outcome)

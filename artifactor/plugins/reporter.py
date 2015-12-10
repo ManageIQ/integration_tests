@@ -204,50 +204,44 @@ class Reporter(ArtifactorBasePlugin):
                     test_data['in_progress'] = True
 
             # Set up destinations for the files
-            for ident in test.get('files', []):
-                if "softassert" in ident:
-                    clean_files = []
-                    for assertion in test['files']['softassert']:
-                        files = {k: v.replace(log_dir, "") for k, v in assertion.iteritems()}
-                        clean_files.append(files)
-                    test_data['softassert'] = sorted(clean_files)
-                    continue
-
-                for filename in test['files'].get(ident, []):
-                    if "rbac_screenshot" in filename:
-                        test_data['rbac_screenshot'] = filename.replace(log_dir, "")
-                    elif "screenshot" in filename:
-                        test_data['screenshot'] = filename.replace(log_dir, "")
-                    elif "short-traceback" in filename:
-                        short_tb_data = open(filename).read()
-                        test_data['short_tb'] = short_tb_data
-                        tb_errors.append((short_tb_data, test_name))
-                    elif "rbac-traceback" in filename:
-                        test_data['rbac'] = filename.replace(log_dir, "")
-                    elif "traceback" in filename:
-                        test_data['full_tb'] = filename.replace(log_dir, "")
-                    elif "video" in filename:
-                        test_data['video'] = filename.replace(log_dir, "")
-                    elif "cfme.log" in filename:
-                        test_data['cfme'] = filename.replace(log_dir, "")
-                    elif "function" in filename:
-                        test_data['function'] = filename.replace(log_dir, "")
-                    elif "emails.html" in filename:
-                        test_data['emails'] = filename.replace(log_dir, "")
-                    elif "events.html" in filename:
-                        test_data['event_testing'] = filename.replace(log_dir, "")
-                    elif "qa_contact.txt" in filename:
-                        test_data['qa_contact'] = []
-                        with open(filename, 'rb') as qafile:
+            test_data["file_groups"] = []
+            test_data['qa_contact'] = []
+            processed_groups = {}
+            order = 0
+            for file_dict in test.get('files', []):
+                group = file_dict["group_id"]
+                if group not in processed_groups:
+                    processed_groups[group] = (order, [])
+                    order += 1
+                processed_groups[group][-1].append(file_dict)
+            # Current structure:
+            # {groupid: (group_order, [{filedict1}, {filedict2}])}
+            # Sorting by group_order
+            processed_groups = sorted(processed_groups.iteritems(), key=lambda kv: kv[1][0])
+            # And now make it [(groupid, [{filedict1}, {filedict2}, ...])]
+            processed_groups = [(group_name, files) for group_name, (_, files) in processed_groups]
+            for group_name, file_dicts in processed_groups:
+                group_file_list = []
+                for file_dict in file_dicts:
+                    if file_dict["file_type"] == "qa_contact":
+                        with open(file_dict["os_filename"], 'rb') as qafile:
                             qareader = csv.reader(qafile, delimiter=',', quotechar='"')
                             for qacontact in qareader:
                                 test_data['qa_contact'].append(qacontact)
                                 if qacontact[0] not in template_data['qa']:
                                     template_data['qa'].append(qacontact[0])
-                if "merkyl" in ident:
-                    test_data['merkyl'] = [f.replace(log_dir, "")
-                                           for f in test['files']['merkyl']]
+                        continue  # Do not store, handled a different way :)
+                    elif file_dict["file_type"] == "short_tb":
+                        with open(file_dict["os_filename"], 'r') as short_tb:
+                            test_data["short_tb"] = short_tb.read()
+                        continue
+                    file_dict["filename"] = file_dict["os_filename"].replace(log_dir, "")
+                    group_file_list.append(file_dict)
 
+                test_data["file_groups"].append((group_name, group_file_list))
+            # Snd remove groups that are left empty because of eg. traceback or qa contact
+            test_data["file_groups"] = filter(
+                lambda group: len(group[1]) > 0, test_data["file_groups"])
             if "short_tb" in test_data and test_data["short_tb"]:
                 urls = [url for url in URL.findall(test_data["short_tb"])]
                 if urls:
