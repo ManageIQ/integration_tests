@@ -22,7 +22,8 @@ def get_current_toplevel_name():
 def _tree_func_with_grid(*args):
     def f():
         accordion.tree(*args)
-        toolbar.select('Grid View')
+        if toolbar.exists('Grid View'):
+            toolbar.select('Grid View')
     return f
 
 # Dictionary of (nav destination name, section title) section tuples
