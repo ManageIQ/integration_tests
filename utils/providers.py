@@ -19,7 +19,7 @@ from cfme.containers.provider import KubernetesProvider, OpenshiftProvider
 from cfme.infrastructure.provider import (
     OpenstackInfraProvider, RHEVMProvider, VMwareProvider, SCVMMProvider)
 from fixtures.prov_filter import filtered
-from utils import conf, mgmt_system
+from utils import conf, mgmt_system, version
 from utils.log import logger, perflog
 from utils.wait import wait_for
 
@@ -531,9 +531,12 @@ def clear_providers():
     perflog.start('utils.providers.clear_providers')
     clear_cloud_providers(validate=False)
     clear_infra_providers(validate=False)
-    clear_container_providers(validate=False)
+    if version.current_version() > '5.5':
+        clear_container_providers(validate=False)
     wait_for_no_cloud_providers()
     wait_for_no_infra_providers()
+    if version.current_version() > '5.5':
+        clear_container_providers(validate=False)
     wait_for_no_container_providers()
     perflog.stop('utils.providers.clear_providers')
 
