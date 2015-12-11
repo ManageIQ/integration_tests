@@ -170,7 +170,30 @@ appliance_provisioning:
               version: 1.2.3
             - name: name_secondary_2
               version: 1.3.3
-
+pxe:
+    pxe_servers:
+        rhel:
+            name: rhel
+            depot_type: Network File System
+            uri: 10.0.0.1
+            access_url: http://10.0.0.1
+            pxe_dir: pxe
+            windows_img_dir: microsoft
+            customization_dir: customization
+            pxe_img_menus_filename: menu.php
+    images:
+        - image1
+        - image2
+    templates:
+        rhel:
+            name: rhel6
+            description: my description
+            image_type: RHEL-6
+            template_type: Kickstart
+            script: anaconda.ks #localfile?
+    datastores:
+        - datastore1
+        - datastore2
 auth_modes:
     ldap_server:
         timeout_h: "1"
@@ -534,7 +557,128 @@ group_roles:
             configure:
                 - my_settings
                 - about
-
+provisioning:
+    linux_template_workflow:
+        template: linux_template
+        node: purpose_node
+        child_node: purpose_child_node
+        provision_type: VMware
+        pxe_server:
+        server_image:
+        count: 1
+        vm_name: aTestVM
+        vm_description: My Test VM Description
+        host: host.server.name.com
+        datastore: datastore1
+        when_to_provision: 1
+        power_on: True
+        time_until_retirement: 1 Month
+    rhevm_pxe_workflow:
+        template: rhevm_linux_template
+        node: purpose_node_x
+        child_node: purpose_chile_node_x
+        provision_type: PXE
+        pxe_server: pxe_nfs_test
+        server_image: rhel_server_image
+        count: 1
+        vm_name: aTestRhevmPxeVM
+        vm_description: My Test VM Description
+        host: host.server.name.com
+        datastore: iscsi_data
+        root_password: root_password
+        address_node_value: dhcp
+        customization_template: RHEL 6 Server PXE
+        when_to_provision: 1
+        power_on: True
+        time_until_retirement: Indefinite
+provisioning_setup:
+    rhevm_pxe_setup:
+        pxe_image_type_name: RHEL-6
+        pxe_server_name: pxe_nfs_test
+        access_url: http://server.com/ipxe
+        pxe_directory: pxe
+        customization_directory: customization
+        windows_image_directory: sources/m
+        uri: 11.11.11.11/var/www/html/ipxe/
+        uri_prefix: nfs
+        visibility: ---\n...
+        pxe_menu_file: http://server.com/ipxe/menu.php
+        menu_file_name: menu.php
+        menu_type: PxeMenuIpxe
+        default_for_windows: None
+        image_description: RHEL 6 x86_64 Server
+        initrd: http://${next-server}/server-dirs/images/pxeboot//initrd.img
+        kernel: http://${next-server}/server-dirs/images/pxeboot/vmlinuz
+        kernel_options: ramdisk_size=10000
+        image_name: rhel6server
+        image_path: menu.php
+        image_type: PxeImageIpxe
+        ks_file: px-ks.cfg
+        ct_description: PXE - RHEL 6 Server
+        ct_name: RHEL 6 Server PXE
+        ct_system: True
+        ct_type: CustomizationTemplateKickstart
+    host_provisioning_setup:
+        host:
+            name: do-not-use
+            hostname: do-not-use
+            ipaddress: 10.0.0.7
+            ipmi_address: 10.x.x.x
+            mac_address: aa:bb:cc:dd:ee:ff
+            ipmi_credentials: ipmi
+            user_assigned_os: VMware ESX
+        pxe_server:
+            pxe_image_type_name: ESX
+            pxe_server_name: pxe
+            access_url: http://server.com/tftpboot/
+            pxe_directory: pxelinux.cfg
+            uri_prefix: nfs
+            customization_directory: pxelinux.cfg
+            uri: 10.0.0.8/var/lib/tftpboot
+            visibility: ---\n...
+            windows_image_directory:
+            pxe_menu_file: http://server.com/tftpboot/pxelinux.cfg/default
+            menu_file_name: pxelinux.cfg/default
+            menu_type: PxeMenuPxelinux
+            default_for_windows: None
+            image_description: VMware-ESXi-5.5
+            initrd:
+            kernel: VMware-ESXi-5.5/mboot.c32
+            kernel_options: -c VMware-ESXi-5.5/boot.cfg
+            image_name: VMware-ESXi-5.5
+            image_path: pxelinux.cfg/default
+            image_type: PxeImagePxelinux
+            ks_file: vmware_esx_55.cfg
+            ct_description: ESX5.5
+            ct_name: ESX5.5
+            ct_system: True
+            ct_type: CustomizationTemplateKickstart
+        provision_request:
+            provider: vsphere5
+            request:
+                email: test@test.com
+                first_name: test
+                last_name: test
+                note: test
+                manager: a name
+            catalog:
+                prov_host: do-not-use
+                pxe_server: pxe
+                image: VMware-ESXi-5.5
+            environment:
+                datacenter: default
+                cluster: iscsi
+                datastores:
+                    - iscsi
+            customize:
+                hostname:
+                ip_addr:
+                subnet_mask: 255.255.255.0
+                gateway: 10.0.0.254
+                pw: test
+                dns: 10.0.0.253
+            schedule:
+                schedule: immediately
 clone_retire_setup:
     vmware_linux_workflow:
         vm_name: firstVM
