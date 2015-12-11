@@ -166,7 +166,8 @@ class Artifactor(Rigger):
             'artifactor_config': self.config,
             'log_dir': self.log_dir.strpath,
             'artifact_dir': self.artifact_dir.strpath,
-            'artifacts': dict()
+            'artifacts': dict(),
+            'old_artifacts': dict()
         }
 
     def handle_failure(self, exc):
@@ -194,6 +195,8 @@ def initialize(artifactor):
                                       name="default_finish_test")
     artifactor.register_hook_callback('start_session', 'pre', start_session,
                                       name="default_start_session")
+    artifactor.register_hook_callback('build_report', 'pre', merge_artifacts,
+                                      name="merge_artifacts")
     artifactor.initialized = True
 
 
@@ -202,6 +205,15 @@ def start_session(run_id=None):
     Convenience fire_hook for built in hook
     """
     return None, {'run_id': run_id}
+
+
+def merge_artifacts(old_artifacts, artifacts):
+    """
+    This is extremely important and merges the old_Artifacts from a composite-uncollect build
+    with the new artifacts for this run
+    """
+    old_artifacts.update(artifacts)
+    return {'old_artifacts': old_artifacts}, None
 
 
 def parse_setup_dir(test_name, test_location, artifactor_config, artifact_dir, run_id):

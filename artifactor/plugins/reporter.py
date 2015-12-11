@@ -74,10 +74,15 @@ class Reporter(ArtifactorBasePlugin):
         self.register_plugin_hook('skip_test', self.skip_test)
         self.register_plugin_hook('finish_test', self.finish_test)
         self.register_plugin_hook('session_info', self.session_info)
+        self.register_plugin_hook('composite_pump', self.composite_pump)
 
     def configure(self):
         self.only_failed = self.data.get('only_failed', False)
         self.configured = True
+
+    @ArtifactorBasePlugin.check_configured
+    def composite_pump(self, old_artifacts):
+        return None, {'old_artifacts': old_artifacts}
 
     @ArtifactorBasePlugin.check_configured
     def skip_test(self, test_location, test_name, skip_data):
@@ -95,7 +100,7 @@ class Reporter(ArtifactorBasePlugin):
         return None, {'artifacts': {test_ident: {'finish_time': time.time(), 'slaveid': slaveid}}}
 
     @ArtifactorBasePlugin.check_configured
-    def report_test(self, test_location, test_name, test_xfail, test_when, test_outcome):
+    def report_test(self, artifacts, test_location, test_name, test_xfail, test_when, test_outcome):
         test_ident = "{}/{}".format(test_location, test_name)
         return None, {'artifacts': {test_ident: {'statuses': {
             test_when: (test_outcome, test_xfail)}}}}
@@ -105,8 +110,8 @@ class Reporter(ArtifactorBasePlugin):
         return None, {'version': version}
 
     @ArtifactorBasePlugin.check_configured
-    def run_report(self, artifacts, artifact_dir, version=None):
-        template_data = self.process_data(artifacts, artifact_dir, version)
+    def run_report(self, old_artifacts, artifact_dir, version=None):
+        template_data = self.process_data(old_artifacts, artifact_dir, version)
 
         if self.only_failed:
             template_data['tests'] = [x for x in template_data['tests']
@@ -142,19 +147,35 @@ class Reporter(ArtifactorBasePlugin):
         template_data = {'tests': [], 'qa': []}
         template_data['version'] = version
         log_dir = local(log_dir).strpath + "/"
-        counts = {'passed': 0, 'failed': 0, 'skipped': 0, 'error': 0, 'xfailed': 0, 'xpassed': 0}
-        colors = {'passed': 'success',
-                  'failed': 'warning',
-                  'error': 'danger',
-                  'xpassed': 'danger',
-                  'xfailed': 'success',
-                  'skipped': 'info'}
+        counts = {
+            'passed': 0,
+            'failed': 0,
+            'skipped': 0,
+            'error': 0,
+            'xfailed': 0,
+            'xpassed': 0}
+        current_counts = {
+            'passed': 0,
+            'failed': 0,
+            'skipped': 0,
+            'error': 0,
+            'xfailed': 0,
+            'xpassed': 0}
+        colors = {
+            'passed': 'success',
+            'failed': 'warning',
+            'error': 'danger',
+            'xpassed': 'danger',
+            'xfailed': 'success',
+            'skipped': 'info'}
         # Iterate through the tests and process the counts and durations
         for test_name, test in artifacts.iteritems():
             if not test.get('statuses', None):
                 continue
             overall_status = overall_test_status(test['statuses'])
             counts[overall_status] += 1
+            if not test.get('old', False):
+                current_counts[overall_status] += 1
             color = colors[overall_status]
             # Set the overall status and then process duration
             test['statuses']['overall'] = overall_status
@@ -170,6 +191,9 @@ class Reporter(ArtifactorBasePlugin):
                 if test['skipped'].get('type', None) == 'blocker':
                     blocker_skip_count += 1
                     test_data['skip_blocker'] = test['skipped'].get('reason', None)
+
+            if test.get('old', False):
+                test_data['old'] = True
 
             if test.get('start_time', None):
                 if test.get('finish_time', None):
@@ -231,6 +255,7 @@ class Reporter(ArtifactorBasePlugin):
             template_data['tests'].append(test_data)
         template_data['top10'] = self.top10(tb_errors)
         template_data['counts'] = counts
+        template_data['current_counts'] = current_counts
         template_data['blocker_skip_count'] = blocker_skip_count
         template_data['provider_skip_count'] = provider_skip_count
 
