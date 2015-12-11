@@ -536,8 +536,7 @@ def clear_providers():
     wait_for_no_cloud_providers()
     wait_for_no_infra_providers()
     if version.current_version() > '5.5':
-        clear_container_providers(validate=False)
-    wait_for_no_container_providers()
+        wait_for_no_container_providers()
     perflog.stop('utils.providers.clear_providers')
 
 
