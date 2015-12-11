@@ -146,9 +146,13 @@ def old_select(root, sub=None, invokes_alert=False):
     else:
         search = root_loc(root)
 
-    try:
-        idd = sel.get_attribute(search, 'idd')
-    except sel.NoSuchElementException:
+    eles = sel.elements(search)
+
+    for ele in eles:
+        idd = sel.get_attribute(ele, 'idd')
+        if idd:
+            break
+    else:
         raise ToolbarOptionGreyedOrUnavailable(
             "Toolbar button {}/{} is greyed or unavailable!".format(root, sub))
 
