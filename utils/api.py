@@ -65,6 +65,7 @@ class API(object):
     def post(self, url, **payload):
         logger.info("[RESTAPI] POST {} {}".format(url, repr(payload)))
         data = requests.post(url, auth=self._auth, data=json.dumps(payload), verify=False)
+        logger.info("[RESTAPI] RESPONSE {}".format(data))
         try:
             data = data.json()
         except simplejson.scanner.JSONDecodeError:
@@ -77,6 +78,7 @@ class API(object):
     def delete(self, url, **payload):
         logger.info("[RESTAPI] DELETE {} {}".format(url, repr(payload)))
         data = requests.delete(url, auth=self._auth, data=json.dumps(payload), verify=False)
+        logger.info("[RESTAPI] RESPONSE {}".format(data))
         try:
             data = data.json()
         except simplejson.scanner.JSONDecodeError:
