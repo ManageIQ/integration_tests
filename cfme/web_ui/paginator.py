@@ -5,6 +5,7 @@ import re
 from selenium.common.exceptions import NoSuchElementException
 from functools import partial
 from utils import version
+from cfme.exceptions import PaginatorException
 
 _locator = '(//div[@id="paging_div"] | //div[@id="records_div"])'
 _next = '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
@@ -105,22 +106,34 @@ def _get_rec(partial):
 
 def rec_offset():
     """ Returns the first record offset."""
-    return int(_get_rec('first'))
+    try:
+        return int(_get_rec('first'))
+    except TypeError:
+            raise PaginatorException()
 
 
 def rec_end():
     """ Returns the record set index."""
     rec = _get_rec('last')
     if rec is not None:
-        return int(rec)
+        try:
+            return int(rec)
+        except TypeError:
+            raise PaginatorException()
     else:
         # Items might be displayed as 'Item 1 of 1'
-        return int(_get_rec('first'))
+        try:
+            return int(_get_rec('first'))
+        except TypeError:
+            raise PaginatorException()
 
 
 def rec_total():
     """ Returns the total number of records."""
-    return int(_get_rec('total'))
+    try:
+        return int(_get_rec('total'))
+    except TypeError:
+        raise PaginatorException()
 
 
 def reset():
