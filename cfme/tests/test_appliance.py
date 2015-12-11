@@ -2,7 +2,6 @@
 """Tests around the appliance"""
 
 import pytest
-import re
 
 from utils import db, version
 
@@ -157,7 +156,8 @@ def test_certificates_present(ssh_client, soft_assert):
     for cert in known_certs:
         cert_path_vaild = ssh_client.run_command("test -f '%s'" % cert)[0] == 0
         if cert_path_vaild:
-            rc, output = ssh_client.run_command("openssl verify -CAfile /etc/rhsm/ca/redhat-uep.pem '%s'" % cert)
+            rc, output = ssh_client.run_command( \
+            "openssl verify -CAfile /etc/rhsm/ca/redhat-uep.pem '%s'" % cert)
         assert cert_path_vaild and rc == 0
 
 
