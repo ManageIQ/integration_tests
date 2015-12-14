@@ -61,7 +61,15 @@ class CandidateNotFound(CFMEException):
     Raised if there is no candidate found whilst trying to traverse a tree in
     :py:meth:`cfme.web_ui.Tree.click_path`.
     """
-    pass
+    def __init__(self, d):
+        self.d = d
+
+    @property
+    def message(self):
+        return ", ".join("{}: {}".format(k, v) for k, v in self.d.iteritems())
+
+    def __str__(self):
+        return self.message
 
 
 class TreeNotFound(CFMEException):
