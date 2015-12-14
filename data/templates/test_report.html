@@ -32,13 +32,20 @@
       <h1>Test Report</h1>
       {% if version %}<h2>Version: {{version}}</h2>{% endif %}
     </div>
-    <div class="col-md-8 text-right">
+    <div class="col-md-8 text-right">Composite Run:
       <span class="label label-success">{{counts.passed}} Passed &nbsp;<input id="passed-check" type="checkbox" onclick="check_name('passed');"></span>
       <span class="label label-primary">{{counts.skipped}} Skipped &nbsp;<input id="skipped-check" type="checkbox" onclick="check_name('skipped');"></span>
       <span class="label label-warning">{{counts.failed}} Failed &nbsp;<input id="failed-check" type="checkbox" onclick="check_name('failed');" checked="checked"></span>
       <span class="label label-danger">{{counts.error}} Error &nbsp;<input id="error-check" type="checkbox" onclick="check_name('error');" checked="checked"></span>
       <span class="label label-danger">{{counts.xpassed}} XPassed &nbsp;<input id="xpassed-check" type="checkbox" onclick="check_name('xpassed');" checked="checked"></span>
-      <span class="label label-success">{{counts.xfailed}} XFailed &nbsp;<input id="xfailed-check" type="checkbox" onclick="check_name('xfailed');"></span>
+      <span class="label label-success">{{counts.xfailed}} XFailed &nbsp;<input id="xfailed-check" type="checkbox" onclick="check_name('xfailed');"></span><br>
+      This Run:
+      <span class="label label-success">{{current_counts.passed}} Passed &nbsp;<input id="passed-check" type="checkbox" onclick="check_name('passed');"></span>
+      <span class="label label-primary">{{current_counts.skipped}} Skipped &nbsp;<input id="skipped-check" type="checkbox" onclick="check_name('skipped');"></span>
+      <span class="label label-warning">{{current_counts.failed}} Failed &nbsp;<input id="failed-check" type="checkbox" onclick="check_name('failed');" checked="checked"></span>
+      <span class="label label-danger">{{current_counts.error}} Error &nbsp;<input id="error-check" type="checkbox" onclick="check_name('error');" checked="checked"></span>
+      <span class="label label-danger">{{current_counts.xpassed}} XPassed &nbsp;<input id="xpassed-check" type="checkbox" onclick="check_name('xpassed');" checked="checked"></span>
+      <span class="label label-success">{{current_counts.xfailed}} XFailed &nbsp;<input id="xfailed-check" type="checkbox" onclick="check_name('xfailed');"></span>
     <br>
     <form>User Filter:
       <select class="toggle-user">
@@ -48,6 +55,8 @@
       Show Blocker Skips<input id="show-blockers" type="checkbox" onclick="check_blockers();">
       &nbsp;
       Show Provider Skips<input id="show-providers" type="checkbox" onclick="check_providers();">
+      &nbsp;
+      Show Old Tests<input id="show-old" type="checkbox" onclick="check_old();">
     </form>
     </div>
   </div>
@@ -112,7 +121,7 @@
   <div class="col-md-8">
     <p></p>
 {% for test in tests %}
-    <div data="{{test.outcomes['overall']}}" {% if test.qa_contact %} data-qa="{{test.qa_contact[0][0]}}" {% else %} data-qa="Unknown" {% endif %} {% if test.skip_blocker %} data-blocker="{{test.skip_blocker}}" {% else %} data-blocker="None" {% endif %} {% if test.skip_provider %} data-provider="{{test.skip_provider}}" {% else %} data-provider="None" {% endif %} class="panel panel-inverse panel-{{test.color}}" data-test="test">
+    <div data="{{test.outcomes['overall']}}" {% if test.qa_contact %} data-qa="{{test.qa_contact[0][0]}}" {% else %} data-qa="Unknown" {% endif %} {% if test.skip_blocker %} data-blocker="{{test.skip_blocker}}" {% else %} data-blocker="None" {% endif %} {% if test.old %} data-old="{{test.old}}" {% else %} data-old="None" {% endif %} {% if test.skip_provider %} data-provider="{{test.skip_provider}}" {% else %} data-provider="None" {% endif %} class="panel panel-inverse panel-{{test.color}}" data-test="test">
         <div class="panel-heading">
             <div class="row">
                 <div class="col-md-10">
@@ -331,6 +340,20 @@ toggle_state = ['failed', 'error', 'xpassed']
 toggle_user = "none"
 toggle_blockers = false
 toggle_providers = false
+toggle_old = false
+
+function check_old()
+{
+  if ($('#show-old').is(":checked"))
+  {
+    toggle_old = true
+  }
+  else
+  {
+    toggle_old = false
+  }
+  update_display()
+}
 
 function check_blockers()
 {
@@ -402,6 +425,11 @@ function update_display()
       $(this).hide()
       return
     }
+    if (toggle_old == false && $(this).attr('data-old') != "None")
+    {
+      $(this).hide()
+      return
+    }
     $(this).show()
     return
   })
@@ -451,6 +479,7 @@ states = ["passed", "failed", "xpassed", "xfailed", "skipped", "error"]
 toggle_user = $(".toggle-user").val()
 check_providers()
 check_blockers()
+check_old()
 for (state in states){
   check_name(states[state])
 }
