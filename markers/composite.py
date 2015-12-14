@@ -58,10 +58,8 @@ def pytest_collection_modifyitems(session, config, items):
                     logger.info('Uncollecting {} as it passed last time'.format(item.name))
                     continue
                 else:
-                    print item.name
                     new_items.append(item)
             except:
-                print item.name
                 new_items.append(item)
 
         items[:] = new_items
