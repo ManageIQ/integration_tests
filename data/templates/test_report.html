@@ -40,12 +40,12 @@
       <span class="label label-danger">{{counts.xpassed}} XPassed &nbsp;<input id="xpassed-check" type="checkbox" onclick="check_name('xpassed');" checked="checked"></span>
       <span class="label label-success">{{counts.xfailed}} XFailed &nbsp;<input id="xfailed-check" type="checkbox" onclick="check_name('xfailed');"></span><br>
       This Run:
-      <span class="label label-success">{{current_counts.passed}} Passed &nbsp;<input id="passed-check" type="checkbox" onclick="check_name('passed');"></span>
-      <span class="label label-primary">{{current_counts.skipped}} Skipped &nbsp;<input id="skipped-check" type="checkbox" onclick="check_name('skipped');"></span>
-      <span class="label label-warning">{{current_counts.failed}} Failed &nbsp;<input id="failed-check" type="checkbox" onclick="check_name('failed');" checked="checked"></span>
-      <span class="label label-danger">{{current_counts.error}} Error &nbsp;<input id="error-check" type="checkbox" onclick="check_name('error');" checked="checked"></span>
-      <span class="label label-danger">{{current_counts.xpassed}} XPassed &nbsp;<input id="xpassed-check" type="checkbox" onclick="check_name('xpassed');" checked="checked"></span>
-      <span class="label label-success">{{current_counts.xfailed}} XFailed &nbsp;<input id="xfailed-check" type="checkbox" onclick="check_name('xfailed');"></span>
+      <span class="label label-success">{{current_counts.passed}} Passed &nbsp;</span>
+      <span class="label label-primary">{{current_counts.skipped}} Skipped &nbsp;</span>
+      <span class="label label-warning">{{current_counts.failed}} Failed &nbsp;</span>
+      <span class="label label-danger">{{current_counts.error}} Error &nbsp;</span>
+      <span class="label label-danger">{{current_counts.xpassed}} XPassed &nbsp;</span>
+      <span class="label label-success">{{current_counts.xfailed}} XFailed &nbsp;</span>
     <br>
     <form>User Filter:
       <select class="toggle-user">
@@ -336,70 +336,70 @@
 //    });
 //}
 
-toggle_state = ['failed', 'error', 'xpassed']
-toggle_user = "none"
-toggle_blockers = false
-toggle_providers = false
-toggle_old = false
+toggle_state = ['failed', 'error', 'xpassed'];
+toggle_user = "none";
+toggle_blockers = false;
+toggle_providers = false;
+toggle_old = false;
 
 function check_old()
 {
   if ($('#show-old').is(":checked"))
   {
-    toggle_old = true
+    toggle_old = true;
   }
   else
   {
-    toggle_old = false
+    toggle_old = false;
   }
-  update_display()
+  update_display();
 }
 
 function check_blockers()
 {
   if ($('#show-blockers').is(":checked"))
   {
-    toggle_blockers = true
+    toggle_blockers = true;
   }
   else
   {
-    toggle_blockers = false
+    toggle_blockers = false;
   }
-  update_display()
+  update_display();
 }
 
 function check_providers()
 {
   if ($('#show-providers').is(":checked"))
   {
-    toggle_providers = true
+    toggle_providers = true;
   }
   else
   {
-    toggle_providers = false
+    toggle_providers = false;
   }
-  update_display()
+  update_display();
 }
 
 function check_name(name)
 {
   if ($('#'+name+'-check').is(":checked"))
   {
-    idx = toggle_state.indexOf(name)
+    idx = toggle_state.indexOf(name);
     if (idx == -1)
     {
-      toggle_state.push(name)
+      toggle_state.push(name);
     }
   }
   else
   {
-    idx = toggle_state.indexOf(name)
+    idx = toggle_state.indexOf(name);
     if (idx > -1)
     {
-      toggle_state.splice(idx, 1)
+      toggle_state.splice(idx, 1);
     }
   }
-  update_display()
+  update_display();
 }
 
 function update_display()
@@ -407,40 +407,40 @@ function update_display()
   $('[data-test="test"]').each(function(item){
     if (toggle_state.indexOf($(this).attr('data')) == -1)
     {
-      $(this).hide()
-      return
+      $(this).hide();
+      return;
     }
     if (toggle_user != "none" && $(this).attr('data-qa') != toggle_user)
     {
-      $(this).hide()
-      return
+      $(this).hide();
+      return;
     }
     if (toggle_blockers == false && $(this).attr('data-blocker') != "None")
     {
-      $(this).hide()
-      return
+      $(this).hide();
+      return;
     }
     if (toggle_providers == false && $(this).attr('data-provider') != "None")
     {
-      $(this).hide()
-      return
+      $(this).hide();
+      return;
     }
     if (toggle_old == false && $(this).attr('data-old') != "None")
     {
-      $(this).hide()
-      return
+      $(this).hide();
+      return;
     }
-    $(this).show()
-    return
-  })
+    $(this).show();
+    return;
+  });
 }
 
 
 $().ready(function(){
 
 $( ".toggle-user" ).change(function() {
-  toggle_user = $(".toggle-user").val()
-  update_display()
+  toggle_user = $(".toggle-user").val();
+  update_display();
 });
 
 $(function() {
@@ -475,17 +475,17 @@ $(function() {
   });
 });
 
-states = ["passed", "failed", "xpassed", "xfailed", "skipped", "error"]
-toggle_user = $(".toggle-user").val()
-check_providers()
-check_blockers()
-check_old()
+states = ["passed", "failed", "xpassed", "xfailed", "skipped", "error"];
+toggle_user = $(".toggle-user").val();
+check_providers();
+check_blockers();
+check_old();
 for (state in states){
   check_name(states[state])
 }
 
-update_display()
-})
+update_display();
+});
 
 </script>
 {% endblock scripts %}
