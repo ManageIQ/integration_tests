@@ -33,7 +33,6 @@ doc_data.yaml
 .tox
 nosetests.xml
 chromedriver.log
-conf/*yaml
 pytest.ini
 
 # Translations
@@ -56,9 +55,6 @@ docs/modules
 notebooks/*.ipynb
 notebooks/.ipynb_checkpoints
 
-# yaml key
-.yaml_key
-
 # automation artifacts
 .generated_ssh_key*
 .appliance_template
@@ -66,3 +62,13 @@ notebooks/.ipynb_checkpoints
 cfme-qe-yamls
 rhci-qe-data
 
+# *~ backup files
+*~
+
+# YAML Options
+# exclude conf
+conf/*.yaml
+conf/*.eyaml
+
+# yaml key
+.yaml_key
