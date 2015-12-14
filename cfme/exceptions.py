@@ -274,3 +274,9 @@ class StorageManagerNotFound(CFMEException):
 class CUCommandException(CFMEException):
     """Raised when one of the commands run to set up a CU VM fails """
     pass
+
+
+class PaginatorException(CFMEException):
+    """Raised by functions in :py:mod:`cfme.web_ui.paginator`"""
+
+    pass
