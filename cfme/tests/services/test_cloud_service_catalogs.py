@@ -72,7 +72,7 @@ def catalog():
     yield catalog
 
 
-@pytest.mark.meta(blockers=1242706)
+@pytest.mark.meta(blockers=1290932)
 def test_cloud_catalog_item(setup_provider, provider, provisioning, dialog, catalog, request):
     """Tests cloud catalog item
 
