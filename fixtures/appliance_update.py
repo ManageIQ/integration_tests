@@ -21,13 +21,13 @@ def pytest_addoption(parser):
 
 
 def pytest_sessionstart(session):
-    if pytest.store.parallelizer_role not in {'slave', None}:
+    if pytest.store.parallelizer_role == 'master':
         return
     if not session.config.getoption("update_appliance"):
         return
-    pytest.store.terminalreporter.write("Initiating appliance update ...\n")
+    pytest.store.write_line("Initiating appliance update ...")
     urls = session.config.getoption("update_urls")
     pytest.store.current_appliance.update_rhel(*urls, reboot=True)
-    pytest.store.terminalreporter.write("Appliance update finished, waiting for UI ...\n")
+    pytest.store.write_line("Appliance update finished, waiting for UI ...")
     pytest.store.current_appliance.wait_for_web_ui()
-    pytest.store.terminalreporter.write("Appliance update finished ...\n")
+    pytest.store.write_line("Appliance update finished ...")

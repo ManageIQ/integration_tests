@@ -38,6 +38,7 @@ import os
 import signal
 import subprocess
 from collections import OrderedDict, defaultdict, deque, namedtuple
+from datetime import datetime
 from itertools import count
 from threading import Lock, RLock, Thread, Timer
 from time import sleep, time
@@ -419,7 +420,8 @@ class ParallelSession(object):
                 markup = {'blue': True}
             else:
                 markup = {'cyan': True}
-        self.terminal.write_ensure_prefix('(%s) ' % prefix, message, **markup)
+        stamp = datetime.now().strftime("%Y%m%d %H:%M:%S")
+        self.terminal.write_ensure_prefix('({})[{}] '.format(prefix, stamp), message, **markup)
 
     def ack(self, slaveid, event_name):
         """Acknowledge a slave's message"""
