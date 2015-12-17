@@ -1302,6 +1302,81 @@ def test_create_tag_with_wrong_arguments(rest_api):
         assert "Category id, href or name needs to be specified" in e.args[0]
 
 
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_vm_add_event(rest_api, vm, db, from_detail):
+    event = {
+        "event_type": "BadUserNameSessionEvent",
+        "event_message": "Cannot login user@test.domain {}".format(from_detail)
+    }
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    if from_detail:
+        assert rest_vm.action.add_event(event)["success"], "Could not add event"
+    else:
+        response = rest_api.collections.vms.action.add_event(rest_vm, **event)
+        assert (len(response) > 0, "Could not add event")
+
+    # DB check, doesn't work on 5.4
+    if version.current_version() < '5.5':
+        return True
+    events = db["event_streams"]
+    events_list = list(db.session.query(events).filter(
+        events.vm_name == vm,
+        events.message == event["event_message"],
+        events.event_type == event["event_type"],
+    ))
+    assert(len(events_list) == 1, "Could not find the event in the database")
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_vm_set_ownership(rest_api, vm):
+    if "set_ownership" not in rest_api.collections.services.action.all:
+        pytest.skip("Set owner action for service is not implemented in this version")
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    user = rest_api.collections.users.find_by(userid='admin')[0]
+    data = {
+        "owner": {"href": user.href}
+    }
+    rest_vm.action.set_ownership(**data)
+    rest_vm.reload()
+    assert hasattr(rest_vm, "evm_owner_id")
+    assert rest_vm.evm_owner_id == user.id
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_vms_set_ownership(rest_api, vm):
+    if "set_ownership" not in rest_api.collections.services.action.all:
+        pytest.skip("Set owner action for service is not implemented in this version")
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    group = rest_api.collections.groups.find_by(description='EvmGroup-super_administrator')[0]
+    data = {
+        "group": {"href": group.href}
+    }
+    rest_api.collections.vms.action.set_ownership(rest_vm, **data)
+    rest_vm.reload()
+    assert hasattr(rest_vm, "miq_group_id")
+    assert rest_vm.miq_group_id == group.id
+
+
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_vm_scan(rest_api, vm, from_detail):
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    if from_detail:
+        response = rest_vm.action.scan()
+    else:
+        response, = rest_api.collections.vms.action.scan(rest_vm)
+
+    @pytest.wait_for(timeout="5m", delay=5, message="REST running scanning vm finishes")
+    def _finished():
+        response.task.reload()
+        if response.task.status.lower() in {"error"}:
+            pytest.fail("Error when running report: `{}`".format(response.task.message))
+        return response.task.state.lower() == 'finished'
+
+
 COLLECTIONS_IGNORED_53 = {
     "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
     "tags", "tasks",
