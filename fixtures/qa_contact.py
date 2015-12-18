@@ -46,5 +46,7 @@ def pytest_runtest_teardown(item, nextitem):
                 qa_string = "".join(qa_arr)
         except:
             pass
-    art_client.fire_hook('filedump', test_location=location, test_name=name,
-                         filename="qa_contact.txt", contents=str(qa_string), fd_ident="qa")
+    art_client.fire_hook(
+        'filedump', test_location=location, test_name=name, description="QA Contact",
+        contents=str(qa_string), file_type="qa_contact", group_id="qa-contact")
+    # group_id is not used for qa contact now, but thinking into the future

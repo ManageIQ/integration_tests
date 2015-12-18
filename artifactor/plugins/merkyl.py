@@ -86,31 +86,25 @@ class Merkyl(ArtifactorBasePlugin):
         artifacts = []
         for filename in self.files:
             _, tail = os.path.split(filename)
-            os_filename = self.ident + "-" + tail + ".log"
-            os_filename = os.path.join(artifact_path, os_filename)
-            with open(os_filename, "w") as f:
-                url = "http://{}:{}/get/{}".format(ip, self.port, tail)
-                doc = requests.get(url, timeout=15)
-                content = doc.content
-                f.write(content)
-                artifacts.append(os_filename)
+            url = "http://{}:{}/get/{}".format(ip, self.port, tail)
+            doc = requests.get(url, timeout=15)
+            artifacts.append((tail, doc.content))
 
         for filename in self.tests[test_ident].extra_files:
             _, tail = os.path.split(filename)
-            os_filename = self.ident + "-" + tail + ".log"
-            os_filename = os.path.join(artifact_path, os_filename)
-            with open(os_filename, "w") as f:
-                url = "http://{}:{}/get/{}".format(ip, self.port, tail)
-                doc = requests.get(url, timeout=15)
-                content = doc.content
-                f.write(content)
-                artifacts.append(os_filename)
+            url = "http://{}:{}/get/{}".format(ip, self.port, tail)
+            doc = requests.get(url, timeout=15)
+            artifacts.append((tail, doc.content))
 
             url = "http://{}:{}/delete/{}".format(ip, self.port, tail)
             requests.get(url, timeout=15)
 
         del self.tests[test_ident]
-        return None, {'artifacts': {test_ident: {'files': {self.ident: artifacts}}}}
+        for filename, contents in artifacts:
+            self.fire_hook('filedump', test_location=test_location, test_name=test_name,
+                description="Merkyl: {}".format(filename), contents=contents, file_type="log",
+                display_type="danger", display_glyph="align-justify", group_id="merkyl")
+        return None, None
 
     @ArtifactorBasePlugin.check_configured
     def start_session(self, ip):

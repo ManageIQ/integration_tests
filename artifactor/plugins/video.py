@@ -60,7 +60,11 @@ class Video(ArtifactorBasePlugin):
         except Exception as e:
             print e
         self.tests[test_ident].in_progress = True
-        return None, {'artifacts': {test_ident: {'files': {self.ident: artifacts}}}}
+        for filename in artifacts:
+            self.fire_hook('filedump', test_location=test_location, test_name=test_name,
+                description="Video recording", file_type="video",
+                contents="", display_glyph="camera", dont_write=True, os_filename=filename,
+                group_id="misc-artifacts")
 
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifact_path, test_name, test_location):

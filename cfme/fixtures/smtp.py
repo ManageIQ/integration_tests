@@ -107,9 +107,11 @@ def pytest_runtest_call(item):
                 "filedump",
                 test_name=name,
                 test_location=location,
-                filename="emails.html",
+                description="received e-mails",
                 contents=item.funcargs["smtp_test"].get_html_report(),
-                fd_ident="emails"
+                file_type="html",
+                display_glyph="align-justify",
+                group_id="misc-artifacts",
             )
         except Exception as e:
             logger.exception(e)

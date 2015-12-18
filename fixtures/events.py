@@ -467,11 +467,13 @@ def pytest_runtest_call(item):
             'filedump',
             test_name=name,
             test_location=location,
-            filename="events.html",
+            description="Event testing report",
             contents=HTMLReport(
                 node_id, register_event.expectations, register_event.get_all_received_events()
             ).generate(),
-            fd_ident="event_testing"
+            file_type="html",
+            display_glyph="align-justify",
+            group_id="misc-artifacts",
         )
         logger.info("Clearing the database after testing ...")
         register_event._delete_database()

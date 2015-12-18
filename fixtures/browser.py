@@ -32,9 +32,11 @@ def pytest_exception_interact(node, call, report):
     val = call.excinfo.value.message.decode('utf-8', 'ignore')
     short_tb = '%s\n%s' % (call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
     art_client.fire_hook('filedump', test_location=location, test_name=name,
-                  filename="traceback.txt", contents=str(report.longrepr), fd_ident="tb")
+        description="Traceback", contents=str(report.longrepr), file_type="traceback",
+        display_type="danger", display_glyph="align-justify", group_id="pytest-exception")
     art_client.fire_hook('filedump', test_location=location, test_name=name,
-                  filename="short-traceback.txt", contents=short_tb, fd_ident="short_tb")
+        description="Short traceback", contents=short_tb, file_type="short_tb",
+        display_type="danger", display_glyph="align-justify", group_id="pytest-exception")
 
     # base64 encoded to go into a data uri, same for screenshots
     full_tb = str(report.longrepr).encode('base64').strip()
@@ -62,12 +64,14 @@ def pytest_exception_interact(node, call, report):
     template_data['screenshot_error'] = screenshot.error
     if screenshot.png:
         art_client.fire_hook('filedump', test_location=location, test_name=name,
-            filename="screenshot.png", fd_ident="screenshot", mode="wb", contents_base64=True,
-            contents=template_data['screenshot'])
+            description="Exception screenshot", file_type="screenshot", mode="wb",
+            contents_base64=True, contents=template_data['screenshot'], display_glyph="camera",
+            group_id="pytest-exception")
     if screenshot.error:
         art_client.fire_hook('filedump', test_location=location, test_name=name,
-            filename="screenshot.txt", fd_ident="screenshot", mode="w", contents_base64=False,
-            contents=template_data['screenshot_error'])
+            description="Screenshot error", mode="w", contents_base64=False,
+            contents=template_data['screenshot_error'], display_type="danger",
+            group_id="pytest-exception")
 
     failed_test_tracking['tests'].append(template_data)
     if is_error:
