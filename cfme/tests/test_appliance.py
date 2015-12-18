@@ -2,7 +2,6 @@
 """Tests around the appliance"""
 
 import pytest
-import re
 
 from utils import db, version
 
@@ -148,43 +147,18 @@ def test_cpu_total(ssh_client):
 @pytest.mark.meta(blockers=[1281883])
 @pytest.mark.ignore_stream("upstream")
 def test_certificates_present(ssh_client, soft_assert):
-    """Test whether the required product certificates are present.
+    """Test whether the required product certificates are present."""
 
-    This test is parametrized with the given file and its MD5 hash.
-    If the given MD5 hash is ``None``, it won't be checked.
+    known_certs = ["/etc/rhsm/ca/redhat-uep.pem",
+    "/etc/rhsm/ca/candlepin-stage.pem", "/etc/pki/product-default/69.pem",
+    "/etc/pki/product/167.pem", "/etc/pki/product/201.pem"]
 
-    From wiki:
-    `Ships with /etc/pki/product/<id>.pem where RHEL is "69" and CF is "167"`
-    """
-    filenames_md5s = version.pick({
-        version.LOWEST: [
-            ("/etc/pki/product/69.pem", None),
-            ("/etc/pki/product/167.pem", None)
-        ],
-        '5.3': [
-            ("/etc/pki/product/69.pem", None),
-            ("/etc/pki/product/167.pem", None),
-            ("/etc/pki/product/201.pem", None)
-        ],
-        '5.4.2': [
-            ("/etc/pki/product-default/69.pem", '0f7e6e9343c2b7fe1162f06dd92c93c3'),
-            ("/etc/pki/product/167.pem", '1a67ad5013806cad9d839180b6564e00'),
-            ("/etc/pki/product/201.pem", '0a2739f9ad6f4f5288379295004a1d7d')
-        ],
-        '5.5': [
-            ("/etc/pki/product/69.pem", '0f0be32ac9d262df51d951d41dc05a24'),
-            ("/etc/pki/product/167.pem", 'eb254372f5caf80098b19f5bbd292117'),
-            ("/etc/pki/product/201.pem", 'd0e06fcada93d373e802d427a920e0d7')
-        ]
-    })
-    for filename, given_md5 in filenames_md5s:
-        file_exists = ssh_client.run_command("test -f '%s'" % filename)[0] == 0
-        soft_assert(file_exists, "File %s does not exist!" % filename)
-        if given_md5:
-            md5_of_file = ssh_client.run_command("md5sum '%s'" % filename)[1].strip()
-            # Format `abcdef0123456789<whitespace>filename
-            md5_of_file = re.split(r"\s+", md5_of_file, 1)[0]
-            soft_assert(given_md5 == md5_of_file, "md5 of file %s differs" % filename)
+    for cert in known_certs:
+        cert_path_vaild = ssh_client.run_command("test -f '{}'".format(cert))[0] == 0
+        if cert_path_vaild:
+            rc, output = ssh_client.run_command(
+                "openssl verify -CAfile /etc/rhsm/ca/redhat-uep.pem '{}'".format(cert))
+        assert rc == 0
 
 
 @pytest.mark.ignore_stream("upstream")
