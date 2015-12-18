@@ -197,6 +197,8 @@ def initialize(artifactor):
                                       name="default_start_session")
     artifactor.register_hook_callback('build_report', 'pre', merge_artifacts,
                                       name="merge_artifacts")
+    artifactor.register_hook_callback('finish_session', 'pre', merge_artifacts,
+                                      name="merge_artifacts")
     artifactor.initialized = True
 
 
