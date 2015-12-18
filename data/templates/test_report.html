@@ -279,6 +279,20 @@
                 </div>
 		<br>
 	    {% endif %}
+            {% if test.screenshots %}
+            <h4>Captured screenshots (and tracebacks, if applicable)</h4>
+            <ul>
+            {% for screenshot in test.screenshots %}
+              <li>
+              <a href="{{screenshot.screenshot}}" class="btn btn-primary" role="button">Screenshot for {{screenshot.name}}</a>
+              {% if screenshot.traceback %}
+                <a href="{{screenshot.traceback}}" class="btn btn-danger" role="button">Traceback for {{screenshot.name}}</a>
+              {% endif %}
+              </li>
+            {% endfor %}
+            </ul>
+
+            {% endif %}
             <div>
                 <h3>Artifacts</h3>
                 {% if test.rbac_screenshot %}
