@@ -16,8 +16,6 @@ from artifactor import ArtifactorBasePlugin
 import os
 from utils.log import create_logger
 
-from fixtures.artifactor_plugin import art_client
-
 
 class Logger(ArtifactorBasePlugin):
 
@@ -59,7 +57,7 @@ class Logger(ArtifactorBasePlugin):
 
         for log_name in artifacts:
             desc = log_name.rsplit("-", 1)[-1]
-            art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+            self.fire_hook('filedump', test_location=test_location, test_name=test_name,
                 description=desc, contents="", file_type="log", display_glyph="align-justify",
                 dont_write=True, os_filename=log_name, group_id="pytest-logfile")
 

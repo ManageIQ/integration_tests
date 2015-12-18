@@ -17,7 +17,6 @@ artifactor:
 """
 
 from artifactor import ArtifactorBasePlugin
-from fixtures.artifactor_plugin import art_client
 import os.path
 import requests
 
@@ -102,7 +101,7 @@ class Merkyl(ArtifactorBasePlugin):
 
         del self.tests[test_ident]
         for filename, contents in artifacts:
-            art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+            self.fire_hook('filedump', test_location=test_location, test_name=test_name,
                 description="Merkyl: {}".format(filename), contents=contents, file_type="log",
                 display_type="danger", display_glyph="align-justify", group_id="merkyl")
         return None, None

@@ -17,8 +17,6 @@ from artifactor import ArtifactorBasePlugin
 import os
 from utils.video import Recorder
 
-from fixtures.artifactor_plugin import art_client
-
 
 class Video(ArtifactorBasePlugin):
 
@@ -63,7 +61,7 @@ class Video(ArtifactorBasePlugin):
             print e
         self.tests[test_ident].in_progress = True
         for filename in artifacts:
-            art_client.fire_hook('filedump', test_location=test_location, test_name=test_name,
+            self.fire_hook('filedump', test_location=test_location, test_name=test_name,
                 description="Video recording", file_type="video",
                 contents="", display_glyph="camera", dont_write=True, os_filename=filename,
                 group_id="misc-artifacts")

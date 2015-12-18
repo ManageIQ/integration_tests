@@ -48,8 +48,6 @@ class Filedump(ArtifactorBasePlugin):
                 os_filename = os_filename + ".ogv"
             else:
                 os_filename = os_filename + ".txt"
-        if os.path.isfile(os_filename):
-            os.remove(os_filename)
         artifacts.append({
             "file_type": file_type,
             "display_type": display_type,
@@ -59,6 +57,8 @@ class Filedump(ArtifactorBasePlugin):
             "group_id": group_id,
         })
         if not dont_write:
+            if os.path.isfile(os_filename):
+                os.remove(os_filename)
             with open(os_filename, mode) as f:
                 if contents_base64:
                     contents = base64.b64decode(contents)
