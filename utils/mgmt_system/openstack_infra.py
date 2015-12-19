@@ -1,6 +1,6 @@
 # coding: utf-8
 from keystoneclient.v2_0 import client as oskclient
-from novaclient.v1_1 import client as osclient
+from novaclient import client as osclient
 from novaclient.client import HTTPClient
 from requests.exceptions import Timeout
 
@@ -62,7 +62,8 @@ class OpenstackInfraSystem(MgmtSystemAPIBase):
     @property
     def api(self):
         if not self._api:
-            self._api = osclient.Client(self.username,
+            self._api = osclient.Client('2',
+                                        self.username,
                                         self.password,
                                         self.tenant,
                                         self.auth_url,
