@@ -241,7 +241,7 @@ def copy_request(cells):
     else:
         from cfme.provisioning import provisioning_form
         btn = provisioning_form.submit_copy_button
-        sel.wait_for_element(btn)
+        sel.move_to_element(btn)
         sel.click(btn)
         flash.assert_no_errors()
 
