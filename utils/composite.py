@@ -257,19 +257,7 @@ class ReportCompile(object):
             best_build_test = reports[best_build_number]['tests'][nodeid]
             composite_report['tests'][nodeid] = best_build_test
             composite_report['tests'][nodeid]['composite'] = nodedata
-            files = reports[best_build_number]['tests'][nodeid].setdefault('files', {})
-            for plugin, artifacts in files.items():
-                if plugin == 'softassert':
-                    # softassert is nested artifacts, which this doesn't deal with (yet)
-                    continue
-                new_artifacts = []
-                for artifact in artifacts:
-                    _remote, _local = self._translate_artifacts_path(artifact, best_build_number)
-                    remotes_done[_remote] = False
-                    if not self.no_artifacts:
-                        self._queue.put((_remote, _local, _remote, remotes_done))
-                        new_artifacts.append(_local)
-                reports[best_build_number]['tests'][nodeid]['files'][plugin] = new_artifacts
+            reports[best_build_number]['tests'][nodeid]['files'] = []
         # wait for all the files to arrive before building the report
         self._queue.join()
         self._progress_finish()
@@ -281,13 +269,12 @@ class ReportCompile(object):
             print 'Passing percent:', passing_percent
             # XXX: Terrible artifactor spoofing happens here.
             print 'Running artifactor reports'
-            r = reporter.Reporter('{} composite'.format(self.template), {})
-            r.configure()
+            r = reporter.ReporterBase()
             reports_done = {'composite': False, 'provider': False}
             self._progress_update(None, reports_done)
-            r.run_report(composite_report['tests'], self.work_dir.strpath)
+            r._run_report(composite_report['tests'], self.work_dir.strpath)
             self._progress_update('composite', reports_done)
-            r.run_provider_report(composite_report['tests'], self.work_dir.strpath)
+            r._run_provider_report(composite_report['tests'], self.work_dir.strpath)
             self._progress_update('provider', reports_done)
             self._progress_finish()
         except ZeroDivisionError:
