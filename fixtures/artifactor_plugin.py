@@ -84,6 +84,10 @@ if env.get('slaveid', None):
 appliance_ip_address = urlparse(env['base_url']).netloc
 session_ver = None
 
+# Used for the multiscreenshots
+test_location = None
+test_name = None
+
 
 def pytest_addoption(parser):
     parser.addoption("--run-id", action="store", default=None,
@@ -112,23 +116,34 @@ def pytest_configure(config):
     yield
 
 
-def pytest_runtest_protocol(item):
+@pytest.mark.hookwrapper
+def pytest_runtest_setup(item):
     global session_ver
 
     if not session_ver:
         session_ver = str(version.current_version())
         art_client.fire_hook('session_info', version=session_ver)
 
+    global test_name
+    global test_location
+
     name, location = get_test_idents(item)
+    test_location = location
+    test_name = name
     art_client.fire_hook('start_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
+    yield
 
 
 def pytest_runtest_teardown(item, nextitem):
+    global test_name
+    global test_location
     name, location = get_test_idents(item)
     art_client.fire_hook('finish_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
     art_client.fire_hook('sanitize', test_location=location, test_name=name, words=words)
+    test_name = None
+    test_location = None
 
 
 def pytest_runtest_logreport(report):
