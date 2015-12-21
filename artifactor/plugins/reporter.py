@@ -63,69 +63,23 @@ def overall_test_status(statuses):
     return "passed"
 
 
-class Reporter(ArtifactorBasePlugin):
-
-    def plugin_initialize(self):
-        self.register_plugin_hook('report_test', self.report_test)
-        self.register_plugin_hook('finish_session', self.run_report)
-        self.register_plugin_hook('finish_session', self.run_provider_report)
-        self.register_plugin_hook('build_report', self.run_report)
-        self.register_plugin_hook('start_test', self.start_test)
-        self.register_plugin_hook('skip_test', self.skip_test)
-        self.register_plugin_hook('finish_test', self.finish_test)
-        self.register_plugin_hook('session_info', self.session_info)
-        self.register_plugin_hook('composite_pump', self.composite_pump)
-
-    def configure(self):
-        self.only_failed = self.data.get('only_failed', False)
-        self.configured = True
-
-    @ArtifactorBasePlugin.check_configured
-    def composite_pump(self, old_artifacts):
-        return None, {'old_artifacts': old_artifacts}
-
-    @ArtifactorBasePlugin.check_configured
-    def skip_test(self, test_location, test_name, skip_data):
-        test_ident = "{}/{}".format(test_location, test_name)
-        return None, {'artifacts': {test_ident: {'skipped': skip_data}}}
-
-    @ArtifactorBasePlugin.check_configured
-    def start_test(self, test_location, test_name, slaveid):
-        test_ident = "{}/{}".format(test_location, test_name)
-        return None, {'artifacts': {test_ident: {'start_time': time.time(), 'slaveid': slaveid}}}
-
-    @ArtifactorBasePlugin.check_configured
-    def finish_test(self, test_location, test_name, slaveid):
-        test_ident = "{}/{}".format(test_location, test_name)
-        return None, {'artifacts': {test_ident: {'finish_time': time.time(), 'slaveid': slaveid}}}
-
-    @ArtifactorBasePlugin.check_configured
-    def report_test(self, artifacts, test_location, test_name, test_xfail, test_when, test_outcome):
-        test_ident = "{}/{}".format(test_location, test_name)
-        return None, {'artifacts': {test_ident: {'statuses': {
-            test_when: (test_outcome, test_xfail)}}}}
-
-    @ArtifactorBasePlugin.check_configured
-    def session_info(self, version=None):
-        return None, {'version': version}
-
-    @ArtifactorBasePlugin.check_configured
-    def run_report(self, old_artifacts, artifact_dir, version=None):
+class ReporterBase(object):
+    def _run_report(self, old_artifacts, artifact_dir, version=None):
         template_data = self.process_data(old_artifacts, artifact_dir, version)
 
-        if self.only_failed:
+        if hasattr(self, 'only_failed') and self.only_failed:
             template_data['tests'] = [x for x in template_data['tests']
                                   if x['outcomes']['overall'] not in ['passed']]
 
         self.render_report(template_data, 'report', artifact_dir, 'test_report.html')
 
-    @ArtifactorBasePlugin.check_configured
-    def run_provider_report(self, artifacts, artifact_dir, version=None):
+    def _run_provider_report(self, old_artifacts, artifact_dir, version=None):
         for mgmt in cfme_data['management_systems'].keys():
-            template_data = self.process_data(artifacts, artifact_dir, version, name_filter=mgmt)
+            template_data = self.process_data(old_artifacts, artifact_dir, version,
+                name_filter=mgmt)
 
             self.render_report(template_data, "report_{}".format(mgmt), artifact_dir,
-                               'test_report_provider.html')
+                'test_report_provider.html')
 
     def render_report(self, report, filename, log_dir, template):
         template_env = Environment(
@@ -366,3 +320,57 @@ class Reporter(ArtifactorBasePlugin):
                                                               pretty_time)
         list_string += '</ul>\n'
         return list_string
+
+
+class Reporter(ArtifactorBasePlugin, ReporterBase):
+    def plugin_initialize(self):
+        self.register_plugin_hook('report_test', self.report_test)
+        self.register_plugin_hook('finish_session', self.run_report)
+        self.register_plugin_hook('finish_session', self.run_provider_report)
+        self.register_plugin_hook('build_report', self.run_report)
+        self.register_plugin_hook('start_test', self.start_test)
+        self.register_plugin_hook('skip_test', self.skip_test)
+        self.register_plugin_hook('finish_test', self.finish_test)
+        self.register_plugin_hook('session_info', self.session_info)
+        self.register_plugin_hook('composite_pump', self.composite_pump)
+
+    def configure(self):
+        self.only_failed = self.data.get('only_failed', False)
+        self.configured = True
+
+    @ArtifactorBasePlugin.check_configured
+    def composite_pump(self, old_artifacts):
+        return None, {'old_artifacts': old_artifacts}
+
+    @ArtifactorBasePlugin.check_configured
+    def skip_test(self, test_location, test_name, skip_data):
+        test_ident = "{}/{}".format(test_location, test_name)
+        return None, {'artifacts': {test_ident: {'skipped': skip_data}}}
+
+    @ArtifactorBasePlugin.check_configured
+    def start_test(self, test_location, test_name, slaveid):
+        test_ident = "{}/{}".format(test_location, test_name)
+        return None, {'artifacts': {test_ident: {'start_time': time.time(), 'slaveid': slaveid}}}
+
+    @ArtifactorBasePlugin.check_configured
+    def finish_test(self, test_location, test_name, slaveid):
+        test_ident = "{}/{}".format(test_location, test_name)
+        return None, {'artifacts': {test_ident: {'finish_time': time.time(), 'slaveid': slaveid}}}
+
+    @ArtifactorBasePlugin.check_configured
+    def report_test(self, artifacts, test_location, test_name, test_xfail, test_when, test_outcome):
+        test_ident = "{}/{}".format(test_location, test_name)
+        return None, {'artifacts': {test_ident: {'statuses': {
+            test_when: (test_outcome, test_xfail)}}}}
+
+    @ArtifactorBasePlugin.check_configured
+    def session_info(self, version=None):
+        return None, {'version': version}
+
+    @ArtifactorBasePlugin.check_configured
+    def run_report(self, old_artifacts, artifact_dir, version=None):
+        self._run_report(old_artifacts, artifact_dir, version)
+
+    @ArtifactorBasePlugin.check_configured
+    def run_provider_report(self, old_artifacts, artifact_dir, version=None):
+        self._run_provider_report(old_artifacts, artifact_dir, version)
