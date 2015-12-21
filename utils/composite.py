@@ -17,8 +17,6 @@ from utils import trackerbot
 from utils.ssh import SSHClient
 
 lock = Lock()
-# These should pretty much never change...
-jenkins_host = composite['jenkins_host']
 
 
 def parse_args():
@@ -42,6 +40,8 @@ def parse_args():
 def _queue_worker(rc):
     # multithreaded file puller, takes tuples of remote, local, item, items_done
     # pulls the files and then updates the progress meter
+
+    jenkins_host = composite['jenkins_host']
     client = rc.ssh_client
     client.connect(jenkins_host, username=credentials['jenkins-result']['username'],
             password=credentials['jenkins-result']['password'],
@@ -176,6 +176,7 @@ class ReportCompile(object):
         log_dirs = self.template_log_dirs()
         reports = {}
         c = self.ssh_client
+        jenkins_host = composite['jenkins_host']
         c.connect(jenkins_host, username=credentials['jenkins-result']['username'],
             password=credentials['jenkins-result']['password'],
             timeout=10,
@@ -206,6 +207,7 @@ class ReportCompile(object):
         return reports
 
     def composite_status(self, reports=None):
+        jenkins_host = composite['jenkins_host']
         reports = reports or self.test_reports()
         results = {}
         # results dict structure:
