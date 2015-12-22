@@ -137,7 +137,7 @@ def is_page_active(toplevel, secondlevel=None):
     return True
 
 
-def nav_to_fn(toplevel, secondlevel=None, reset_action=None):
+def nav_to_fn(toplevel, secondlevel=None, reset_action=None, _final=False):
     def f(_):
         # Can't do this currently because silly menu traps us
         # if is_page_active(toplevel, secondlevel):
@@ -181,10 +181,19 @@ def nav_to_fn(toplevel, secondlevel=None, reset_action=None):
                 raise
         sel.wait_for_ajax()
         if reset_action is not None:
-            if callable(reset_action):
-                reset_action()
-            else:
-                sel.click(reset_action)
+            try:
+                if callable(reset_action):
+                    reset_action()
+                else:
+                    sel.click(reset_action)
+            except NoSuchElementException:
+                if _final:
+                    # We have tried to renavigate but still some problem. Never mind and explode.
+                    raise
+                else:
+                    # Work around the problem when the display selector disappears after returning
+                    # from VM summary view. Can be fixed by renavigating, it then appears again.
+                    nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
         # todo move to element on the active tab to clear the menubox
         sel.wait_for_ajax()
     return f
