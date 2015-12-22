@@ -46,7 +46,9 @@ def pytest_runtest_teardown(item, nextitem):
                 qa_string = "".join(qa_arr)
         except:
             pass
+    from fixtures.artifactor_plugin import SLAVEID
+    slaveid = SLAVEID or ""
     art_client.fire_hook(
         'filedump', test_location=location, test_name=name, description="QA Contact",
-        contents=str(qa_string), file_type="qa_contact", group_id="qa-contact")
+        contents=str(qa_string), file_type="qa_contact", group_id="qa-contact", slaveid=slaveid)
     # group_id is not used for qa contact now, but thinking into the future

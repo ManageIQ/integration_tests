@@ -24,19 +24,36 @@ class Filedump(ArtifactorBasePlugin):
     def plugin_initialize(self):
         self.register_plugin_hook('filedump', self.filedump)
         self.register_plugin_hook('sanitize', self.sanitize)
+        self.register_plugin_hook('start_test', self.start_test)
+        self.register_plugin_hook('finish_test', self.finish_test)
 
     def configure(self):
         self.configured = True
 
+    def start_test(self, artifact_path, test_name, test_location, slaveid):
+        if not slaveid:
+            slaveid = "Master"
+        self.store[slaveid] = {
+            "artifact_path": artifact_path,
+            "test_name": test_name,
+            "test_location": test_location
+        }
+
+    def finish_test(self, artifact_path, test_name, test_location, slaveid):
+        if not slaveid:
+            slaveid = "Master"
+
     @ArtifactorBasePlugin.check_configured
-    def filedump(self, artifact_path, description, contents, test_name, test_location,
-                 mode="w", contents_base64=False, display_type="primary", display_glyph=None,
-                 file_type=None, dont_write=False, os_filename=None, group_id=None):
+    def filedump(self, description, contents, slaveid, mode="w", contents_base64=False,
+                 display_type="primary", display_glyph=None, file_type=None,
+                 dont_write=False, os_filename=None, group_id=None):
+        if not slaveid:
+            slaveid = "Master"
         artifacts = []
         if os_filename is None:
             safe_name = re.sub(r"\s+", "_", normalize_text(safe_string(description)))
             os_filename = self.ident + "-" + safe_name
-            os_filename = os.path.join(artifact_path, os_filename)
+            os_filename = os.path.join(self.store[slaveid]['artifact_path'], os_filename)
             if file_type is not None and "screenshot" in file_type:
                 os_filename = os_filename + ".png"
             elif file_type is not None and (
@@ -63,7 +80,8 @@ class Filedump(ArtifactorBasePlugin):
                 if contents_base64:
                     contents = base64.b64decode(contents)
                 f.write(contents)
-        test_ident = "{}/{}".format(test_location, test_name)
+        test_ident = "{}/{}".format(self.store[slaveid]['test_location'],
+            self.store[slaveid]['test_name'])
         return None, {'artifacts': {test_ident: {'files': artifacts}}}
 
     @ArtifactorBasePlugin.check_configured

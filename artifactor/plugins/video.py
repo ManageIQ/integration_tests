@@ -38,7 +38,7 @@ class Video(ArtifactorBasePlugin):
         self.display = self.data.get('display', ':0')
 
     @ArtifactorBasePlugin.check_configured
-    def start_test(self, artifact_path, test_name, test_location):
+    def start_test(self, artifact_path, test_name, test_location, slaveid):
         test_ident = "{}/{}".format(test_location, test_name)
         if test_ident in self.tests:
             if self.tests[test_ident].in_progress:
@@ -64,7 +64,7 @@ class Video(ArtifactorBasePlugin):
             self.fire_hook('filedump', test_location=test_location, test_name=test_name,
                 description="Video recording", file_type="video",
                 contents="", display_glyph="camera", dont_write=True, os_filename=filename,
-                group_id="misc-artifacts")
+                           group_id="misc-artifacts", slaveid=slaveid)
 
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifact_path, test_name, test_location):

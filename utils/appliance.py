@@ -401,8 +401,7 @@ class IPAppliance(object):
         """Fake soft assert to capture the screenshot during the test."""
         from fixtures import artifactor_plugin
         if (
-                exc_type is not None and artifactor_plugin.test_name is not None and
-                artifactor_plugin.test_location is not None and not RUNNING_UNDER_SPROUT):
+                exc_type is not None and not RUNNING_UNDER_SPROUT):
             from cfme.fixtures.pytest_selenium import take_screenshot
             logger.info("Before we pop this appliance, a screenshot and a traceback will be taken.")
             ss, ss_error = take_screenshot()
@@ -413,22 +412,18 @@ class IPAppliance(object):
             g_id = "appliance-cm-screenshot-{}".format(fauxfactory.gen_alpha(length=6))
 
             artifactor_plugin.art_client.fire_hook('filedump',
-                test_location=artifactor_plugin.test_location,
-                test_name=artifactor_plugin.test_name,
+                slaveid=artifactor_plugin.SLAVEID,
                 description="Appliance CM error traceback", contents=full_tb, file_type="traceback",
                 display_type="danger", display_glyph="align-justify", group_id=g_id)
 
             if ss:
                 artifactor_plugin.art_client.fire_hook('filedump',
-                    test_location=artifactor_plugin.test_location,
-                    test_name=artifactor_plugin.test_name,
-                    description="Appliance CM error screenshot",
+                    slaveid=artifactor_plugin.SLAVEID, description="Appliance CM error screenshot",
                     file_type="screenshot", mode="wb", contents_base64=True, contents=ss,
                     display_glyph="camera", group_id=g_id)
             if ss_error:
                 artifactor_plugin.art_client.fire_hook('filedump',
-                    test_location=artifactor_plugin.test_location,
-                    test_name=artifactor_plugin.test_name,
+                    slaveid=artifactor_plugin.SLAVEID,
                     description="Appliance CM error screenshot failure", mode="w",
                     contents_base64=False, contents=ss_error, display_type="danger", group_id=g_id)
         elif exc_type is not None:

@@ -81,7 +81,7 @@ class Merkyl(ArtifactorBasePlugin):
             requests.get(url, timeout=15)
 
     @ArtifactorBasePlugin.check_configured
-    def finish_test(self, artifact_path, test_name, test_location, ip):
+    def finish_test(self, artifact_path, test_name, test_location, ip, slaveid):
         test_ident = "{}/{}".format(test_location, test_name)
         artifacts = []
         for filename in self.files:
@@ -102,8 +102,9 @@ class Merkyl(ArtifactorBasePlugin):
         del self.tests[test_ident]
         for filename, contents in artifacts:
             self.fire_hook('filedump', test_location=test_location, test_name=test_name,
-                description="Merkyl: {}".format(filename), contents=contents, file_type="log",
-                display_type="danger", display_glyph="align-justify", group_id="merkyl")
+                description="Merkyl: {}".format(filename), slaveid=slaveid,
+                contents=contents, file_type="log", display_type="danger",
+                display_glyph="align-justify", group_id="merkyl")
         return None, None
 
     @ArtifactorBasePlugin.check_configured

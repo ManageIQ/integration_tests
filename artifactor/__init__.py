@@ -186,6 +186,12 @@ class ArtifactorClient(RiggerClient):
 class ArtifactorBasePlugin(RiggerBasePlugin):
     """A sub from RiggerBasePlugin"""
 
+    @property
+    def store(self):
+        if not hasattr(self, '_store'):
+            self._store = {}
+        return self._store
+
 
 def initialize(artifactor):
     artifactor.parse_config()
