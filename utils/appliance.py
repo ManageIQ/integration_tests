@@ -16,6 +16,7 @@ from urlparse import ParseResult, urlparse
 
 import dateutil.parser
 import requests
+import traceback
 
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_name, server_id
@@ -31,8 +32,9 @@ from utils.version import Version, get_stream, pick, LATEST
 from utils.signals import fire
 from utils.wait import wait_for
 
+RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # Do not import the whole stuff around
-if os.environ.get("RUNNING_UNDER_SPROUT", "false") == "false":
+if not RUNNING_UNDER_SPROUT:
     from cfme.configure.configuration import set_server_roles, get_server_roles
     from utils.providers import setup_provider
     from utils.browser import browser_session
@@ -395,7 +397,37 @@ class IPAppliance(object):
         self.push()
         return self
 
-    def __exit__(self, *args, **kwargs):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Fake soft assert to capture the screenshot during the test."""
+        from fixtures import artifactor_plugin
+        if (
+                exc_type is not None and not RUNNING_UNDER_SPROUT):
+            from cfme.fixtures.pytest_selenium import take_screenshot
+            logger.info("Before we pop this appliance, a screenshot and a traceback will be taken.")
+            ss, ss_error = take_screenshot()
+            full_tb = "".join(traceback.format_tb(exc_tb))
+            short_tb = "{}: {}".format(exc_type.__name__, str(exc_val))
+            full_tb = "{}\n{}".format(full_tb, short_tb)
+
+            g_id = "appliance-cm-screenshot-{}".format(fauxfactory.gen_alpha(length=6))
+
+            artifactor_plugin.art_client.fire_hook('filedump',
+                slaveid=artifactor_plugin.SLAVEID,
+                description="Appliance CM error traceback", contents=full_tb, file_type="traceback",
+                display_type="danger", display_glyph="align-justify", group_id=g_id)
+
+            if ss:
+                artifactor_plugin.art_client.fire_hook('filedump',
+                    slaveid=artifactor_plugin.SLAVEID, description="Appliance CM error screenshot",
+                    file_type="screenshot", mode="wb", contents_base64=True, contents=ss,
+                    display_glyph="camera", group_id=g_id)
+            if ss_error:
+                artifactor_plugin.art_client.fire_hook('filedump',
+                    slaveid=artifactor_plugin.SLAVEID,
+                    description="Appliance CM error screenshot failure", mode="w",
+                    contents_base64=False, contents=ss_error, display_type="danger", group_id=g_id)
+        elif exc_type is not None:
+            logger.info("Error happened but we are not inside a test run so no screenshot now.")
         self.pop()
 
     def __eq__(self, other):
