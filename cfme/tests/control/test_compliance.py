@@ -144,7 +144,7 @@ def test_check_package_presence(request, fleecing_vm, ssh_client, vm_analysis, a
     condition = VMCondition(
         "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
         expression=("fill_find(field=VM and Instance.Guest Applications : Name, "
-            "skey=STARTS WITH, value=cfme-appliance, check=Check Count, ckey= = , cvalue=1)")
+            "skey=STARTS WITH, value=cfme, check=Check Count, ckey= = , cvalue=1)")
     )
     request.addfinalizer(lambda: diaper(condition.delete))
     policy = VMCompliancePolicy("Compliance {}".format(fauxfactory.gen_alphanumeric(8)))
