@@ -40,9 +40,9 @@ class PostResult(ArtifactorBasePlugin):
         self.configured = True
 
     @ArtifactorBasePlugin.check_configured
-    def post_result(self, artifacts, log_dir):
+    def post_result(self, old_artifacts, log_dir):
         report = {}
-        report['tests'] = artifacts
+        report['tests'] = old_artifacts
 
         def _inc_test_count(test):
             error = ""
@@ -53,7 +53,7 @@ class PostResult(ArtifactorBasePlugin):
             with log_path.join('no_status.log').open('a') as f:
                 f.write(error)
 
-        map(_inc_test_count, artifacts.values())
+        map(_inc_test_count, old_artifacts.values())
         report['test_counts'] = test_counts
         report['test_counts']['total'] = sum(test_counts.values())
 

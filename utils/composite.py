@@ -1,6 +1,5 @@
 import json
 import socket
-from argparse import ArgumentParser
 from collections import OrderedDict
 from Queue import Queue
 from threading import Lock, Thread
@@ -17,24 +16,6 @@ from utils import trackerbot
 from utils.ssh import SSHClient
 
 lock = Lock()
-
-
-def parse_args():
-    parser = ArgumentParser()
-    parser.add_argument('job_name')
-    parser.add_argument('template')
-    parser.add_argument('--no-artifacts', '-a', default=True,
-        help='Download the artifacts for the reports', action="store_true")
-    parser.add_argument('--work-dir', '-d', default=None,
-        help='Directory to use for caching work (a random dir will be used if missing)')
-    parser.add_argument('--num-builds', '-n', type=int, default=0,
-        help='Limit considered builds (after exclusions) to this number')
-    parser.add_argument('--minimum-build', '-m', type=int, default=0,
-        help='Do not consider build numbers lower than this')
-    parser.add_argument('--exclude-builds', '-x', type=int, nargs='+', default=[],
-        help='Exclude the given build number, multiple builds can be specified')
-    args = parser.parse_args()
-    return args
 
 
 def _queue_worker(rc):
