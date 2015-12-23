@@ -131,8 +131,6 @@ class ReporterBase(object):
             if not test.get('old', False):
                 current_counts[overall_status] += 1
             color = colors[overall_status]
-            # Set the overall status and then process duration
-            test['statuses']['overall'] = overall_status
             test_data = {'name': test_name, 'outcomes': test['statuses'],
                          'slaveid': test.get('slaveid', "Unknown"), 'color': color}
             if 'composite' in test:
@@ -353,9 +351,13 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
         return None, {'artifacts': {test_ident: {'start_time': time.time(), 'slaveid': slaveid}}}
 
     @ArtifactorBasePlugin.check_configured
-    def finish_test(self, test_location, test_name, slaveid):
+    def finish_test(self, artifacts, test_location, test_name, slaveid):
         test_ident = "{}/{}".format(test_location, test_name)
-        return None, {'artifacts': {test_ident: {'finish_time': time.time(), 'slaveid': slaveid}}}
+        overall_status = overall_test_status(artifacts[test_ident]['statuses'])
+        return None, {'artifacts': {test_ident: {
+            'finish_time': time.time(), 'slaveid': slaveid,
+            'statuses': {'overall': overall_status}
+        }}}
 
     @ArtifactorBasePlugin.check_configured
     def report_test(self, artifacts, test_location, test_name, test_xfail, test_when, test_outcome):
