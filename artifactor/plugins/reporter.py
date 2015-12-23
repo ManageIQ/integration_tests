@@ -131,6 +131,9 @@ class ReporterBase(object):
             if not test.get('old', False):
                 current_counts[overall_status] += 1
             color = colors[overall_status]
+            # This was removed previously but is needed as the overall is not generated
+            # until the test finishes. So this is here as a shim.
+            test['statuses']['overall'] = overall_status
             test_data = {'name': test_name, 'outcomes': test['statuses'],
                          'slaveid': test.get('slaveid', "Unknown"), 'color': color}
             if 'composite' in test:
