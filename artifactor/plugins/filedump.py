@@ -44,11 +44,17 @@ class Filedump(ArtifactorBasePlugin):
             slaveid = "Master"
 
     @ArtifactorBasePlugin.check_configured
-    def filedump(self, description, contents, slaveid, mode="w", contents_base64=False,
+    def filedump(self, description, contents, slaveid=None, mode="w", contents_base64=False,
                  display_type="primary", display_glyph=None, file_type=None,
-                 dont_write=False, os_filename=None, group_id=None):
-        if not slaveid:
-            slaveid = "Master"
+                 dont_write=False, os_filename=None, group_id=None, test_name=None,
+                 test_location=None):
+        if slaveid is not None:
+            if not slaveid:
+                slaveid = "Master"
+            test_ident = "{}/{}".format(self.store[slaveid]['test_location'],
+                self.store[slaveid]['test_name'])
+        else:
+            test_ident = "{}/{}".format(test_location, test_name)
         artifacts = []
         if os_filename is None:
             safe_name = re.sub(r"\s+", "_", normalize_text(safe_string(description)))
@@ -80,8 +86,7 @@ class Filedump(ArtifactorBasePlugin):
                 if contents_base64:
                     contents = base64.b64decode(contents)
                 f.write(contents)
-        test_ident = "{}/{}".format(self.store[slaveid]['test_location'],
-            self.store[slaveid]['test_name'])
+
         return None, {'artifacts': {test_ident: {'files': artifacts}}}
 
     @ArtifactorBasePlugin.check_configured
