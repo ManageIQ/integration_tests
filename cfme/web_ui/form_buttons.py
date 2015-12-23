@@ -133,16 +133,17 @@ host_provision_submit = FormButton("Submit this provisioning request")
 host_provision_cancel = FormButton("Cancel this provisioning request")
 
 
-_stored_pw_script = '//a[@id="change_stored_password"]'
+_stored_pw_script = '//a[contains(@id, "change_stored_password")]'
 _stored_pw_angular = "//a[@ng-hide='bChangeStoredPassword']"
 
 
 def change_stored_password():
     if version.current_version() > '5.5':
         if sel.is_displayed(_stored_pw_script):
-                sel.execute_script(
-                    sel.get_attribute(
-                        sel.element(_stored_pw_script), 'onClick'))
+            sel.execute_script(
+                sel.get_attribute(
+                    sel.element(_stored_pw_script), 'onClick'))
+            sel.wait_for_ajax()  # To play safe
         elif sel.is_displayed(_stored_pw_angular):
             sel.click(_stored_pw_angular)
         else:
