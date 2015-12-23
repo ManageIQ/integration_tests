@@ -195,6 +195,8 @@ class ArtifactorBasePlugin(RiggerBasePlugin):
 
 def initialize(artifactor):
     artifactor.parse_config()
+    artifactor.register_hook_callback('pre_start_test', 'pre', parse_setup_dir,
+                                      name="default_start_test")
     artifactor.register_hook_callback('start_test', 'pre', parse_setup_dir,
                                       name="default_start_test")
     artifactor.register_hook_callback('finish_test', 'pre', parse_setup_dir,

@@ -24,7 +24,7 @@ class Filedump(ArtifactorBasePlugin):
     def plugin_initialize(self):
         self.register_plugin_hook('filedump', self.filedump)
         self.register_plugin_hook('sanitize', self.sanitize)
-        self.register_plugin_hook('start_test', self.start_test)
+        self.register_plugin_hook('pre_start_test', self.start_test)
         self.register_plugin_hook('finish_test', self.finish_test)
 
     def configure(self):
