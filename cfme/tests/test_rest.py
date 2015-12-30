@@ -433,31 +433,31 @@ def test_delete_service_template(rest_api, service_templates):
         s_tpl.action.delete()
 
 
-# Didn't test properly
-@pytest.mark.uncollectif(True)
-def test_assign_unassign_service_template_to_service_catalog(rest_api,
-        service_catalogs, service_templates):
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_assign_unassign_service_template_to_service_catalog(rest_api, service_catalogs,
+        service_templates):
     """Tests assigning and unassigning the service templates to service catalog.
     Prerequisities:
         * An appliance with ``/api`` available.
     Steps:
-        * POST /api/service_catalogs/<id> (method ``assign``) with the list of dictionaries
-            service templates list
+        * POST /api/service_catalogs/<id>/service_templates (method ``assign``)
+            with the list of dictionaries service templates list
         * Check if the service_templates were assigned to the service catalog
-        * POST /api/service_catalogs/<id> (method ``unassign``) with the list of dictionaries
-            service templates list
+        * POST /api/service_catalogs/<id>/service_templates (method ``unassign``)
+            with the list of dictionaries service templates list
         * Check if the service_templates were unassigned to the service catalog
     Metadata:
         test_flag: rest
     """
 
     scl = service_catalogs[0]
+    stpl = service_templates[0]
+    scl.service_templates.action.assign(stpl)
     scl.reload()
-    scl.action.assign(*service_templates)
-    assert len(scl.service_templates) == len(service_templates)
+    assert stpl.id in [st.id for st in scl.service_templates.all]
+    scl.service_templates.action.unassign(stpl)
     scl.reload()
-    scl.action.unassign(*service_templates)
-    assert len(scl.service_templates) == 0
+    assert stpl.id not in [st.id for st in scl.service_templates.all]
 
 
 def test_edit_multiple_service_templates(rest_api, service_templates):
