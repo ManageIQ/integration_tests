@@ -947,6 +947,20 @@ def test_add_delete_role(rest_api):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_role_assign_and_unassign_feature(rest_api, roles):
+    feature, = rest_api.collections.features.find_by(name="Everything")
+    role = roles[0]
+    role.reload()
+    role.features.action.assign(feature)
+    role.reload()
+    # This verification works because the created roles don't have assigned features
+    assert feature.id in [f.id for f in role.features.all]
+    role.features.action.unassign(feature)
+    role.reload()
+    assert feature.id not in [f.id for f in role.features.all]
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_edit_user_password(rest_api, user):
     if "edit" not in rest_api.collections.users.action.all:
         pytest.skip("Edit action for users is not implemented in this version")
