@@ -239,11 +239,16 @@ class BaseProvider(Taggable, Updateable):
 
     def validate(self):
         refresh_timer = RefreshTimer(time_for_refresh=300)
-        wait_for(self.is_refreshed,
-                 [refresh_timer],
-                 message="is_refreshed",
-                 num_sec=1000,
-                 delay=60)
+        try:
+            wait_for(self.is_refreshed,
+                     [refresh_timer],
+                     message="is_refreshed",
+                     num_sec=1000,
+                     delay=60)
+        except Exception:
+            # To see the possible error.
+            self.load_details(refresh=True)
+            raise
 
     def validate_stats(self, ui=False):
         """ Validates that the detail page matches the Providers information.
