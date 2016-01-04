@@ -237,10 +237,10 @@ def appliance_action(request, appliance_id, action, x=None):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
-        messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
+        messages.warning(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
         return go_back_or_home(request)
     if not can_operate_appliance_or_pool(appliance, request.user):
-        messages.error(request, 'This appliance belongs either to some other user or nobody.')
+        messages.warning(request, 'This appliance belongs either to some other user or nobody.')
         return go_back_or_home(request)
     if action == "start":
         if appliance.power_state != Appliance.Power.ON:
@@ -262,7 +262,7 @@ def appliance_action(request, appliance_id, action, x=None):
             messages.success(request, 'Initiated reboot of appliance.')
             return go_back_or_home(request)
         else:
-            messages.error(request, 'Only powered on appliances can be rebooted')
+            messages.warning(request, 'Only powered on appliances can be rebooted')
             return go_back_or_home(request)
     elif action == "stop":
         if appliance.power_state != Appliance.Power.OFF:
@@ -286,7 +286,7 @@ def appliance_action(request, appliance_id, action, x=None):
         return go_back_or_home(request)
     elif action == "dont_expire":
         if not request.user.is_superuser:
-            messages.error(request, 'Disabling expiration time is allowed only for superusers.')
+            messages.warning(request, 'Disabling expiration time is allowed only for superusers.')
             return go_back_or_home(request)
         with transaction.atomic():
             appliance.leased_until = None
@@ -295,13 +295,13 @@ def appliance_action(request, appliance_id, action, x=None):
         return go_back_or_home(request)
     elif action == "set_lease":
         if not can_operate_appliance_or_pool(appliance, request.user):
-            messages.error(request, 'This appliance belongs either to some other user or nobody.')
+            messages.warning(request, 'This appliance belongs either to some other user or nobody.')
             return go_back_or_home(request)
         appliance.prolong_lease(time=int(x))
         messages.success(request, 'Lease prolonged successfully.')
         return go_back_or_home(request)
     else:
-        messages.error(request, "Unknown action '{}'".format(action))
+        messages.warning(request, "Unknown action '{}'".format(action))
 
 
 def prolong_lease_pool(request, pool_id, minutes):
@@ -310,10 +310,10 @@ def prolong_lease_pool(request, pool_id, minutes):
     try:
         appliance_pool = AppliancePool.objects.get(id=pool_id)
     except ObjectDoesNotExist:
-        messages.error(request, 'Appliance pool with ID {} does not exist!.'.format(pool_id))
+        messages.warning(request, 'Appliance pool with ID {} does not exist!.'.format(pool_id))
         return go_back_or_home(request)
     if not can_operate_appliance_or_pool(appliance_pool, request.user):
-        messages.error(request, 'This appliance belongs either to some other user or nobody.')
+        messages.warning(request, 'This appliance belongs either to some other user or nobody.')
         return go_back_or_home(request)
     appliance_pool.prolong_lease(time=int(minutes))
     messages.success(request, 'Lease prolonged successfully.')
@@ -326,10 +326,10 @@ def dont_expire_pool(request, pool_id):
     try:
         appliance_pool = AppliancePool.objects.get(id=pool_id)
     except ObjectDoesNotExist:
-        messages.error(request, 'Pool with ID {} does not exist!.'.format(pool_id))
+        messages.warning(request, 'Pool with ID {} does not exist!.'.format(pool_id))
         return go_back_or_home(request)
     if not request.user.is_superuser:
-        messages.error(request, 'Disabling expiration time is allowed only for superusers.')
+        messages.warning(request, 'Disabling expiration time is allowed only for superusers.')
         return go_back_or_home(request)
     with transaction.atomic():
         for appliance in appliance_pool.appliances:
@@ -345,15 +345,15 @@ def kill_pool(request, pool_id):
     try:
         pool = AppliancePool.objects.get(id=pool_id)
     except ObjectDoesNotExist:
-        messages.error(request, 'Pool with ID {} does not exist!.'.format(pool_id))
+        messages.warning(request, 'Pool with ID {} does not exist!.'.format(pool_id))
         return go_back_or_home(request)
     if not can_operate_appliance_or_pool(pool, request.user):
-        messages.error(request, 'This pool belongs either to some other user or nobody.')
+        messages.warning(request, 'This pool belongs either to some other user or nobody.')
         return go_back_or_home(request)
     try:
         pool.kill()
     except Exception as e:
-        messages.error(request, "Exception {}: {}".format(type(e).__name__, str(e)))
+        messages.warning(request, "Exception {}: {}".format(type(e).__name__, str(e)))
     else:
         messages.success(request, 'Kill successfully initiated.')
     return go_back_or_home(request)
@@ -381,13 +381,13 @@ def delete_template_provider(request, template_id):
     try:
         template = Template.objects.get(id=template_id)
     except ObjectDoesNotExist:
-        messages.error(request, 'Template with ID {} does not exist!.'.format(template_id))
+        messages.warning(request, 'Template with ID {} does not exist!.'.format(template_id))
         return go_back_or_home(request)
     if not request.user.is_superuser:
-        messages.error(request, 'Templates can be deleted only by superusers.')
+        messages.warning(request, 'Templates can be deleted only by superusers.')
         return go_back_or_home(request)
     if not template.can_be_deleted:
-        messages.error(request, 'This template cannot be deleted from the provider.')
+        messages.warning(request, 'This template cannot be deleted from the provider.')
         return go_back_or_home(request)
     delete_template_from_provider.delay(template.id)
     messages.success(request, 'Delete initiated.')
@@ -417,7 +417,7 @@ def request_pool(request):
             yum_update).id
         messages.success(request, "Pool requested - id {}".format(pool_id))
     except Exception as e:
-        messages.error(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
+        messages.warning(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
     return go_back_or_home(request)
 
 
@@ -445,7 +445,7 @@ def transfer_pool(request):
         #         appliance_rename.delay(
         #             appliance.id, user.username + appliance.name[len(original_owner.username):])
     except Exception as e:
-        messages.error(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
+        messages.warning(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
     else:
         messages.success(request, "Success!")
     finally:
@@ -555,10 +555,10 @@ def provider_enable_disable(request, provider_id, disabled=None):
     try:
         provider = Provider.objects.get(id=provider_id)
     except ObjectDoesNotExist:
-        messages.error(request, 'Provider with ID {} does not exist!.'.format(provider_id))
+        messages.warning(request, 'Provider with ID {} does not exist!.'.format(provider_id))
         return go_back_or_home(request)
     if not request.user.is_superuser:
-        messages.error(request, 'Providers can be modified only by superusers.')
+        messages.warning(request, 'Providers can be modified only by superusers.')
         return go_back_or_home(request)
     provider.disabled = disabled
     provider.save()
