@@ -228,8 +228,8 @@ class Domain(TreeNode, Updateable):
         self.description = description
         self.enabled = enabled
 
-    def create(self, cancel=False):
-        if self.exists():
+    def create(self, cancel=False, allow_duplicate=False):
+        if self.exists() and not allow_duplicate:
             return
         sel.force_navigate('automate_explorer_domain_new', context={'tree_item': self.parent})
         fill(self.form, {'name': self.name,
@@ -359,10 +359,10 @@ class Namespace(TreeNode, Updateable):
         self.description = description
         self.parent = parent or (domain if isinstance(domain, Domain) else Domain.default)
 
-    def create(self, cancel=False):
+    def create(self, cancel=False, allow_duplicate=False):
         if self.parent is not None and not self.parent.exists():
             self.parent.create()
-        if self.exists():
+        if self.exists() and not allow_duplicate:
             return
         sel.force_navigate('automate_explorer_namespace_new', context={'tree_item': self.parent})
         form_data = {'name': self.name,
@@ -785,10 +785,10 @@ class Instance(CopiableTreeNode, Updateable):
     def parent(self, p):
         self.cls = p
 
-    def create(self, cancel=False):
+    def create(self, cancel=False, allow_duplicate=False):
         if self.parent is not None and not self.parent.exists():
             self.parent.create()
-        if self.exists():
+        if self.exists() and not allow_duplicate:
             return
         sel.force_navigate("automate_explorer_instance_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,

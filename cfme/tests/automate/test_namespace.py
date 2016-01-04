@@ -64,7 +64,7 @@ def test_add_delete_namespace_nested(namespace):
 def test_duplicate_namespace_disallowed(namespace):
     namespace.create()
     with error.expected("Name has already been taken"):
-        namespace.create()
+        namespace.create(allow_duplicate=True)
 
 
 # provider needed as workaround for bz1035399

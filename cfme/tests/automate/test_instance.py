@@ -33,7 +33,7 @@ def test_instance_crud(an_instance):
 def test_duplicate_disallowed(an_instance):
     an_instance.create()
     with error.expected("Name has already been taken"):
-        an_instance.create()
+        an_instance.create(allow_duplicate=True)
 
 
 @pytest.mark.meta(blockers=[1148541])
