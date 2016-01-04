@@ -792,19 +792,19 @@ class AppliancePool(MetadataMixin):
         # Retrieve latest possible
         if not version:
             versions = Template.get_versions(
-                template_group=group, ready=True, usable=True, preconfigured=preconfigured,
-                provider__working=True, provider__disabled=False)
+                template_group=group, ready=True, usable=True, exists=True,
+                preconfigured=preconfigured, provider__working=True, provider__disabled=False)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
                 dates = Template.get_dates(template_group=group, version=version, ready=True,
-                    usable=True, preconfigured=preconfigured, provider__working=True,
+                    usable=True, exists=True, preconfigured=preconfigured, provider__working=True,
                     provider__disabled=False)
             else:
                 dates = Template.get_dates(
-                    template_group=group, ready=True, usable=True, preconfigured=preconfigured,
-                    provider__working=True, provider__disabled=False)
+                    template_group=group, ready=True, usable=True, exists=True,
+                    preconfigured=preconfigured, provider__working=True, provider__disabled=False)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):
@@ -814,11 +814,12 @@ class AppliancePool(MetadataMixin):
         if not (version or date):
             raise Exception(
                 "Could not find proper combination of group, date, version and a working provider!")
-        req = cls(
+        req_params = dict(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured, yum_update=yum_update)
+        req = cls(**req_params)
         if not req.possible_templates:
-            raise Exception("No possible templates! (query: {}".format(str(req.__dict__)))
+            raise Exception("No possible templates! (pool params: {})".format(str(req_params)))
         req.save()
         cls.class_logger(req.pk).info("Created")
         request_appliance_pool.delay(req.id, time_leased)
