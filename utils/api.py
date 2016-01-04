@@ -299,6 +299,11 @@ class Entity(object):
     # TODO: Extend
     SUBCOLLECTIONS = dict(
         service_catalogs={"service_templates"},
+        roles={"features"},
+    )
+
+    EXTENDED_COLLECTIONS = dict(
+        roles={"features"},
     )
 
     def __init__(self, collection, data, incomplete=False):
@@ -351,6 +356,13 @@ class Entity(object):
                 )
                 setattr(self, key, value)
             elif isinstance(value, dict) and "count" in value and "resources" in value:
+                href = self._href
+                if not href.endswith("/"):
+                    href += "/"
+                subcol = Collection(self.collection._api, href + key, key)
+                setattr(self, key, subcol)
+            elif isinstance(value, list) and key in self.EXTENDED_COLLECTIONS.get(
+                    self.collection.name, set([])):
                 href = self._href
                 if not href.endswith("/"):
                     href += "/"
