@@ -109,8 +109,8 @@ def main(trackerbot_url, mark_usable=None):
 
 def get_provider_templates(provider_key, template_providers, unresponsive_providers, thread_lock):
     # functionalized to make it easy to farm this out to threads
-    provider_mgmt = get_mgmt(provider_key)
     try:
+        provider_mgmt = get_mgmt(provider_key)
         if cfme_data['management_systems'][provider_key]['type'] == 'ec2':
             # dirty hack to filter out ec2 public images, because there are literally hundreds.
             templates = provider_mgmt.api.get_all_images(owners=['self'],
