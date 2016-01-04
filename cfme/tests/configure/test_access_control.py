@@ -211,7 +211,6 @@ def test_current_user_login_delete(request):
 
 
 # Group test cases
-@pytest.mark.meta(blockers=[1276135])
 def test_group_crud():
     group = new_group()
     group.create()
@@ -220,7 +219,6 @@ def test_group_crud():
     group.delete()
 
 
-@pytest.mark.meta(blockers=[1276135])
 def test_group_duplicate_name():
     group = new_group()
     group.create()
@@ -228,7 +226,6 @@ def test_group_duplicate_name():
         group.create()
 
 
-@pytest.mark.meta(blockers=[1276135])
 def test_group_edit_tag():
     group = new_group()
     group.create()
@@ -237,7 +234,6 @@ def test_group_edit_tag():
     group.delete()
 
 
-@pytest.mark.meta(blockers=[1276135])
 def test_group_remove_tag():
     group = new_group()
     group.create()
@@ -248,7 +244,6 @@ def test_group_remove_tag():
     group.delete()
 
 
-@pytest.mark.meta(blockers=[1276135])
 def test_description_required_error_validation():
     group = ac.Group(description=None, role='EvmRole-approver')
     with error.expected("Description can't be blank"):
@@ -267,7 +262,6 @@ def test_delete_default_group():
     flash.assert_message_match(flash_msg.format(group.description))
 
 
-@pytest.mark.meta(blockers=[1276135])
 def test_delete_group_with_assigned_user():
     flash_msg = \
         'EVM Group "{}": Error during \'destroy\': Still has users assigned'
@@ -289,7 +283,6 @@ def test_edit_default_group():
     flash.assert_message_match(flash_msg.format(group.description))
 
 
-@pytest.mark.meta(blockers=[1276135])
 def test_edit_sequence_usergroups(request):
     """Test for editing the sequence of user groups for LDAP lookup.
 
@@ -351,7 +344,6 @@ def test_edit_default_roles():
     flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
 
 
-@pytest.mark.meta(blockers=[1276135])
 def test_delete_roles_with_assigned_group():
     flash_msg = \
         'Role "{}": Error during \'destroy\': Cannot delete record because of dependent miq_groups'
