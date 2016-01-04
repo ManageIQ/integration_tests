@@ -403,9 +403,15 @@ class TestPowerControlRESTAPI(object):
         assert result.name == vm_name
         return result
 
-    def test_power_off(self, verify_vm_running, vm):
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["delete_from_detail", "delete_from_collection"])
+    def test_stop(self, rest_api, verify_vm_running, vm, from_detail):
         assert "stop" in vm.action
-        vm.action.stop()
+        if from_detail:
+            vm.action.stop()
+        else:
+            rest_api.collections.vms.action.stop(vm)
         wait_for(lambda: vm.power_state == "off", num_sec=300, delay=5, fail_func=vm.reload)
 
     def test_power_on(self, verify_vm_stopped, vm):
