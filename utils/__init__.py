@@ -208,3 +208,37 @@ def safe_string(o):
     if isinstance(o, unicode):
         o = o.encode("ascii", "xmlcharrefreplace")
     return o
+
+
+def process_pytest_path(path):
+    # Processes the path elements with regards to []
+    path = path.lstrip("/")
+    if len(path) == 0:
+        return []
+    try:
+        seg_end = path.index("/")
+    except ValueError:
+        seg_end = None
+    try:
+        param_start = path.index("[")
+    except ValueError:
+        param_start = None
+    try:
+        param_end = path.index("]")
+    except ValueError:
+        param_end = None
+    if seg_end is None:
+        # Definitely a final segment
+        return [path]
+    else:
+        if (param_start is not None and param_end is not None and seg_end > param_start
+                and seg_end < param_end):
+            # The / inside []
+            segment = path[:param_end + 1]
+            rest = path[param_end + 1:]
+            return [segment] + process_pytest_path(rest)
+        else:
+            # The / that is not inside []
+            segment = path[:seg_end]
+            rest = path[seg_end + 1:]
+            return [segment] + process_pytest_path(rest)

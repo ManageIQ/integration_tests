@@ -25,6 +25,7 @@ from copy import deepcopy
 from jinja2 import Environment, FileSystemLoader
 from py.path import local
 
+from utils import process_pytest_path
 from utils.conf import cfme_data  # Only for the provider specific reports
 from utils.path import template_path
 from artifactor import ArtifactorBasePlugin
@@ -248,7 +249,12 @@ class ReporterBase(object):
         Build a hierarchical dictionary including information about the stats at each level
         and the duration.
         """
-        segs = path.split('/')
+
+        if isinstance(path, basestring):
+            segs = process_pytest_path(path)
+        else:
+            segs = path
+
         head = segs[0]
         end = segs[1:]
 
@@ -262,7 +268,7 @@ class ReporterBase(object):
             if head not in container['_sub']:
                 container['_sub'][head] = deepcopy(_tests_tpl)
             # Call again to recurse down the tree.
-            self.build_dict('/'.join(end), container['_sub'][head], contents)
+            self.build_dict(end, container['_sub'][head], contents)
             container['_stats'][contents['outcomes']['overall']] += 1
             container['_duration'] += contents['duration']
 
@@ -285,9 +291,12 @@ class ReporterBase(object):
                 teststring = '<span name="mod_lev" class="label label-primary">T</span>'
                 label = '<span class="label label-{}">{}</span>'.format(
                     bimdict[v['outcomes']['overall']], v['outcomes']['overall'].upper())
-                link = ('<a href="#{}">{} {} {} '
-                        '<span style="color:#888888"><em>[{}]</em></span></a>').format(
-                    v['name'], os.path.split(v['name'])[1], teststring, label, pretty_time)
+                proc_name = process_pytest_path(v['name'])[-1]
+                link = (
+                    '<a href="#{}">{} {} {} <span style="color:#888888"><em>[{}]</em></span></a>'
+                    .format(v['name'], proc_name, teststring, label, pretty_time))
+                # Do we really need the os.path.split (now process_pytest_path) here?
+                # For me it seems the name is always the leaf
                 list_string += '<li>{}</li>\n'.format(link)
 
             # If there is a '_sub' attribute then we know we have other modules to go.
