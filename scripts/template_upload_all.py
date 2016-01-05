@@ -13,6 +13,7 @@ cfme_data['template_upload'] and/or provided as a command-line arguments.
 The scripts for respective providers are:
     - template_upload_rhevm.py
     - template_upload_rhos.py
+    - template_upload_scvmm.py
     - template_upload_vsphere.py
 """
 
@@ -161,6 +162,18 @@ def make_kwargs_rhos(cfme_data, provider):
     return kwargs
 
 
+def make_kwargs_scvmm(cfme_data, provider):
+    data = cfme_data['management_systems'][provider]
+
+    tenant_id = data['template_upload'].get('tenant_id', None)
+
+    kwargs = {'provider': provider}
+    if tenant_id:
+        kwargs['tenant_id'] = tenant_id
+
+    return kwargs
+
+
 def make_kwargs_vsphere(cfme_data, provider):
     data = cfme_data['management_systems'][provider]
     temp_up = cfme_data['template_upload']['template_upload_vsphere']
@@ -209,6 +222,8 @@ def browse_directory(dir_url):
     rhevm_image_name = rhevm_pattern.findall(string_from_url)
     rhos_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhos|openstack|rhelosp)[^"\'>]*)')
     rhos_image_name = rhos_pattern.findall(string_from_url)
+    scvmm_pattern = re.compile(r'<a href="?\'?([^"\']*hyperv[^"\'>]*)')
+    scvmm_image_name = scvmm_pattern.findall(string_from_url)
     vsphere_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')
     vsphere_image_name = vsphere_pattern.findall(string_from_url)
 
@@ -216,6 +231,8 @@ def browse_directory(dir_url):
         name_dict['template_upload_rhevm'] = rhevm_image_name[0]
     if len(rhos_image_name) is not 0:
         name_dict['template_upload_rhos'] = rhos_image_name[0]
+    if len(scvmm_image_name) is not 0:
+        name_dict['template_upload_scvmm'] = scvmm_image_name[0]
     if len(vsphere_image_name) is not 0:
         name_dict['template_upload_vsphere'] = vsphere_image_name[0]
 
@@ -276,6 +293,11 @@ if __name__ == "__main__":
                     if module not in dir_files.iterkeys():
                         continue
                     kwargs = make_kwargs_rhos(cfme_data, provider)
+                if 'scvmm' in mgmt_sys[provider]['type']:
+                    module = 'template_upload_scvmm'
+                    if module not in dir_files.iterkeys():
+                        continue
+                    kwargs = make_kwargs_scvmm(cfme_data, provider)
                 if 'virtualcenter' in mgmt_sys[provider]['type']:
                     module = 'template_upload_vsphere'
                     if module not in dir_files.iterkeys():
