@@ -3,7 +3,6 @@
 import pytest
 import re
 from utils.version import current_version
-from utils.wait import wait_for
 
 
 @pytest.yield_fixture(scope="module")
@@ -23,28 +22,31 @@ def test_evmserverd_stop(ssh_client):
 
     Steps:
         * Remember all server names from ``service evmserverd status`` command.
+            * Or the bin/rake evm:status on 5.5+ since the systemd status does not show that, this
+                applies also for next references to status.
         * Issue a ``service evmserverd stop`` command.
-        * Periodically check output of ``service evmserverd stop`` that all the servers are stopped.
+        * Periodically check output of ``service evmserverd status`` that all servers are stopped.
+        * For 5.5+: Really call ``service evmserverd status`` and check that the mentions of
+            stopping the service are present.
     """
-    if current_version() < "5.5":
-        server_names = {server["Server Name"] for server in ssh_client.status["servers"]}
-        assert ssh_client.run_command("service evmserverd stop").rc == 0
+    server_names = {server["Server Name"] for server in ssh_client.status["servers"]}
+    assert ssh_client.run_command("service evmserverd stop").rc == 0
 
-        def _check():
-            status = {server["Server Name"]: server for server in ssh_client.status["servers"]}
-            for server_name in server_names:
-                if status[server_name]["Status"] != "stopped":
-                    return False
-            return True
+    @pytest.wait_for(timeout="2m", delay=5)
+    def servers_stopped():
+        status = {server["Server Name"]: server for server in ssh_client.status["servers"]}
+        for server_name in server_names:
+            if status[server_name]["Status"] != "stopped":
+                return False
+        return True
 
-        wait_for(_check, num_sec=120, delay=5, message="servers stopped")
-    else:
-        assert ssh_client.run_command("service evmserverd stop").rc == 0
+    if current_version() >= "5.5":
         status = ssh_client.run_command("service evmserverd status")
         assert "Stopped EVM server daemon" in status.output
         assert "code=exited" in status.output
 
 
+@pytest.mark.uncollectif(lambda: current_version() >= "5.5")
 def test_evmserverd_start_twice(ssh_client):
     """If evmserverd start is ran twice, it will then tell that it is already running.
 
@@ -60,21 +62,14 @@ def test_evmserverd_start_twice(ssh_client):
     assert ssh_client.run_command("service evmserverd stop").rc == 0
     # Start first time
     res = ssh_client.run_command("service evmserverd start")
-    if current_version() < "5.5":
-        assert "running evm in background" in res.output.lower()
-    else:
-        assert "started evm server daemon" in res.output.lower()
+    assert "running evm in background" in res.output.lower()
     assert res.rc == 0
     # Start second time
     res = ssh_client.run_command("service evmserverd start")
-    if current_version() < "5.5":
-        assert "evm is already running" in res.output.lower()
+    assert "evm is already running" in res.output.lower()
     assert res.rc == 0
     # Verify the process is running
-    if current_version() < "5.5":
-        pid_match = re.search(r"\(PID=(\d+)\)", res.output)
-    else:
-        pid_match = re.search(r"Main PID: (\d+)", res.output)
+    pid_match = re.search(r"\(PID=(\d+)\)", res.output)
     assert pid_match is not None
     pid = int(pid_match.groups()[0])
     assert ssh_client.run_command("kill -0 {}".format(pid)).rc == 0
