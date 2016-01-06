@@ -7,7 +7,7 @@ from dateutil import parser
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render, redirect
 
 from appliances.api import json_response
@@ -38,15 +38,78 @@ def index(request):
     return render(request, 'index.html', locals())
 
 
-def providers(request):
+def providers(request, provider_id=None):
+    if provider_id is None:
+        try:
+            return redirect(
+                "specific_provider", provider_id=Provider.objects.order_by("id")[0].id)
+        except IndexError:
+            # No Provider
+            messages.info(request, "No provider present, redirected to the homepage.")
+            return go_home(request)
+    else:
+        try:
+            provider = Provider.objects.get(id=provider_id)
+        except ObjectDoesNotExist:
+            messages.warning(request, "Provider '{}' does not exist.".format(provider_id))
+            return redirect("providers")
     providers = Provider.objects.order_by("id")
     complete_usage = Provider.complete_user_usage()
     return render(request, 'appliances/providers.html', locals())
 
 
-def templates(request):
+def provider_usage(request):
+    complete_usage = Provider.complete_user_usage()
+    return render(request, 'appliances/provider_usage.html', locals())
+
+
+def templates(request, group_id=None, prov_id=None):
+    if group_id is None:
+        try:
+            return redirect("group_templates", group_id=Group.objects.order_by("id")[0].id)
+        except IndexError:
+            # No Group
+            messages.info(request, "No group present, redirected to the homepage.")
+            return go_home(request)
+    else:
+        try:
+            group = Group.objects.get(id=group_id)
+        except ObjectDoesNotExist:
+            messages.warning(request, "Group '{}' does not exist.".format(group_id))
+            return redirect("templates")
+    if prov_id is not None:
+        try:
+            provider = Provider.objects.get(id=prov_id)
+        except ObjectDoesNotExist:
+            messages.warning(request, "Provider '{}' does not exist.".format(prov_id))
+            return redirect("templates")
+    else:
+        provider = None
     groups = Group.objects.order_by("id")
     mismatched_versions = MismatchVersionMailer.objects.order_by("id")
+    prepared_table = []
+    zstream_rowspans = {}
+    version_rowspans = {}
+    for zstream, versions in group.zstreams_versions.iteritems():
+        for version in versions:
+            for provider in Provider.objects.all():
+                for template in Template.objects.filter(
+                        provider=provider, template_group=group, version=version, exists=True,
+                        ready=True):
+                    if zstream in zstream_rowspans:
+                        zstream_rowspans[zstream] += 1
+                        zstream_append = None
+                    else:
+                        zstream_rowspans[zstream] = 1
+                        zstream_append = zstream
+
+                    if version in version_rowspans:
+                        version_rowspans[version] += 1
+                        version_append = None
+                    else:
+                        version_rowspans[version] = 1
+                        version_append = version
+                    prepared_table.append((zstream_append, version_append, provider, template))
     return render(request, 'appliances/templates.html', locals())
 
 
@@ -375,23 +438,18 @@ def set_pool_description(request):
     return HttpResponse("")
 
 
-def delete_template_provider(request, template_id):
+def delete_template_provider(request):
     if not request.user.is_authenticated():
-        return go_home(request)
+        return HttpResponseForbidden("Only authenticated superusers can operate this action.")
+    template_id = request.POST["template_id"]
     try:
         template = Template.objects.get(id=template_id)
     except ObjectDoesNotExist:
-        messages.warning(request, 'Template with ID {} does not exist!.'.format(template_id))
-        return go_back_or_home(request)
+        raise Http404('Template with ID {} does not exist!.'.format(template_id))
     if not request.user.is_superuser:
-        messages.warning(request, 'Templates can be deleted only by superusers.')
-        return go_back_or_home(request)
-    if not template.can_be_deleted:
-        messages.warning(request, 'This template cannot be deleted from the provider.')
-        return go_back_or_home(request)
-    delete_template_from_provider.delay(template.id)
-    messages.success(request, 'Delete initiated.')
-    return go_back_or_home(request)
+        return HttpResponseForbidden("Only superusers can operate this action.")
+    task = delete_template_from_provider.delay(template.id)
+    return HttpResponse(task.id)
 
 
 def request_pool(request):

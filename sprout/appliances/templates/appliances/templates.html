@@ -1,97 +1,96 @@
 {% extends "base.html" %}
 {% block title %}Providers{% endblock %}
 {% block body %}
-{% if mismatched_versions %}
-    <h1>Listing of mismatched versions of templates</h1>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <td>Provider</td>
-                <td>Template name</td>
-                <td>Supposed version</td>
-                <td>True version</td>
-                <td>E-mail sent?</td>
-            </tr>
-        </thead>
-        <tbody>
-            {% for mismatch in mismatched_versions %}
-                <tr>
-                    <td>{{ mismatch.provider.id }}</td>
-                    <td>{{ mismatch.template_name }}</td>
-                    <td>{{ mismatch.supposed_version }}</td>
-                    <td>{{ mismatch.actual_version }}</td>
-                    <td>
-                        {% if mismatch.sent %}
-                            <span class="glyphicon glyphicon-ok"></span>
-                        {% else %}
-                            <span class="glyphicon glyphicon-remove"></span>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <h1>No version mismatches detected</h1>
-{% endif %}
-<h1>Listing template groups</h1>
+<ul class="nav nav-tabs">
 {% for group in groups %}
-    <div class="panel panel-primary">
-        <div class="panel-heading">
-            <strong>{{ group.id }}</strong>
-        </div>
-        <table class="table table-striped">
-            <thead>
-                <th>Name</th>
-                <th>Original name</th>
-                <th>Preconfigured?</th>
-                <th>Version</th>
-                <th>Date</th>
-                <th>Provider</th>
-                <th>Ready</th>
-                <th>Usable</th>
-                {% if request.user.is_superuser %}
-                    <th>Actions</th>
-                {% endif %}
-            </thead>
-            <tbody>
-            {% for template in group.existing_templates %}
-            <tr>
-                <td>{{ template.name }}</td>
-                <td>{{ template.original_name }}</td>
-                <td>{% if template.preconfigured %}yes{% else %}no{% endif %}</td>
-                <td>{{ template.version }}</td>
-                <td>{{ template.date }}</td>
-                <td>{{ template.provider.id }}</td>
-                <td>
-                {% if template.ready %}
-                        <button class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Ready</button>
-                    {% else %}
-                        <button class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> Not ready</button>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if template.usable %}
-                        <button class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Usable</button>
-                    {% else %}
-                        <button class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> Unusable</button>
-                    {% endif %}
-                </td>
-                {% if request.user.is_superuser %}
-                    <td>
-                        <div class="btn-toolbar" role="toolbar" aria-label="Template operations">
-                            <div class="btn-group" role="group" aria-label="">
-                                {% if template.can_be_deleted %}
-                                    <a href="{% url 'delete_template_provider' template.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-trash"></span> Delete in provider</a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </td>
-                {% endif %}
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <li {% if group.id == group_id %}class="active"{% endif %}><a href={% url 'group_templates' group.id %}>{{group.id}} ({{ group.existing_templates|length }})</a></li>
 {% endfor %}
+</ul>
+
+<table class="table">
+    <thead>
+        <th>Stream</th>
+        <th>Version</th>
+        <th>Provider</th>
+        <th>Name</th>
+        <th>Date</th>
+        <th>Configured</th>
+        <th>Actions</th>
+    </thead>
+    <tbody>
+        {% for zstream, version, provider, template in prepared_table %}
+        <tr id="{{ template.id }}">
+            {% if zstream %}<td rowspan={{ zstream_rowspans|keyvalue:zstream }}>{{ zstream }}</td>{% endif %}
+            {% if version %}<td rowspan={{ version_rowspans|keyvalue:version }}>{{ version }}</td>{% endif %}
+            <td><a href="{% url 'specific_provider' provider.id %}">{{ provider.id }}</a></td>
+            <td>{% if template.suggested_delete %}<strong>{% endif %}{{ template.name }}{% if template.suggested_delete %}</strong>{% endif %}</td>
+            <td>{{ template.date }}</td>
+            <td><span class="glyphicon glyphicon-{% if template.preconfigured %}ok{% else %}remove{% endif %}"></span></td>
+            <td>
+                {% if template.suggested_delete %}
+                    <button class="btn btn-danger btn-xs delete-template" data-template="{{ template.id }}" id="button-{{ template.id }}"><span class="glyphicon glyphicon-trash"></span> Delete from provider</button>
+                    <span class="spinner spinner-xs spinner-inline" id="spinner-{{ template.id }}"></span>
+                {% else %}
+                    <em>No actions suggested</em>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    function waitForDeletionFinish(template, task_id){
+        $.ajax({
+            type: "POST",
+            url: "{% url 'task_result' %}",
+            dataType: "json",
+            data: JSON.stringify({task_id: task_id}),
+        }).done(function(data){
+            if(data === null){
+                // Still waiting
+                setTimeout(function(){ waitForDeletionFinish(template, task_id); }, 1000);
+            } else if(data === true) {
+                addAlert("success", "Deletion of the template " + template + " was successfully finished.");
+                $("#spinner-" + template).hide();
+            } else if(data === false){
+                addAlert("danger", "Failed to delete template " + template);
+                $("#spinner-" + template).hide();
+                $("#button-" + template).show();
+            } else {
+                addAlert("danger", "Unexpected response " + data + " while deleting template " + template);
+                $("#spinner-" + template).hide();
+                $("#button-" + template).show();
+            }
+        }).fail(function(xhr, textStatus, errorThrown){
+            addAlert("danger", "Error during deleting the template " + template + ": '" + xhr.responseText + "'.");
+            $("#spinner-" + template).hide();
+            $("#button-" + template).show();
+        });
+    }
+
+    $(".spinner").hide();
+    // Template deletion
+    $('button.delete-template').click(function(){
+        var e = $(this);
+        var template = e.attr("data-template");
+        $("#spinner-" + template).show();
+        $("#button-" + template).hide();        
+        $.ajax({
+            type: "POST",
+            url: "{% url 'delete_template_provider' %}",
+            data: {template_id: template},
+            dataType: 'html'
+        }).done(function(data){
+            addAlert("info", "Deletion of the template " + template + " from provider initiated");
+            waitForDeletionFinish(template, data);
+        }).fail(function(xhr, textStatus, errorThrown){
+            addAlert("danger", "Error during tempalte delete request " + template + ": '" + xhr.responseText + "'.");
+            $("#spinner-" + template).hide();
+            $("#button-" + template).show();
+        })
+    });
+})
+</script>
 {% endblock %}

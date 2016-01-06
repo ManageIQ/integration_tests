@@ -14,3 +14,8 @@ def progress(value):
     return mark_safe(r"""<div class='progress progress-striped'>
         <div class='progress-bar' style='width: {p}%;'>
         <span class='sr-only'>{p}% Complete</span></div></div>""".format(p=p))
+
+
+@register.filter
+def keyvalue(d, k):
+    return d[k]

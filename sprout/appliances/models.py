@@ -400,7 +400,8 @@ class Group(MetadataMixin):
 
 class Template(MetadataMixin):
     provider = models.ForeignKey(
-        Provider, on_delete=models.CASCADE, help_text="Where does this template reside")
+        Provider, on_delete=models.CASCADE, help_text="Where does this template reside",
+        related_name="provider_templates")
     template_group = models.ForeignKey(
         Group, on_delete=models.CASCADE, help_text="Which group the template belongs to.")
     version = models.CharField(max_length=16, null=True, help_text="Downstream version.")

@@ -1,32 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Providers{% endblock %}
 {% block body %}
+<ul class="nav nav-tabs">
+{% for prov in providers %}
+    <li {% if prov.id == provider.id %}class="active"{% endif %}><a href={% url 'specific_provider' prov.id %}>{{prov.id}}</a></li>
+{% endfor %}
+</ul>
 <div class="panel panel-primary">
-    <div class="panel-heading">
-        <strong>Complete usage statistics</strong>
-    </div>
-    <table class="table table-striped">
-        <thead>
-            <th>User name</th>
-            <th>Number of appliances</th>
-        </thead>
-        <tbody>
-            {% for user, count in complete_usage %}
-            <tr>
-                <td>
-                {% if user.is_a_bot %}<em>{% endif %}
-                {% if request.user.is_superuser %}<a href="{% url 'user_appliances' user.username %}">{{ user.first_name }} {{ user.last_name }}</a>{% else %}{{ user.first_name }} {{ user.last_name }}{% endif %}
-                {% if user.is_a_bot %}</em>{% endif %}
-                </td>
-                <td>{{ count }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-<hr>
-{% for provider in providers %}
-<div class="panel panel-primary" id="provider-{{ provider.id }}">
     <!-- Provider data -->
     <div class="panel-heading">
         <strong>{{ provider.id }}</strong> - {{ provider.ip_address }} (currently <strong>{% if provider.is_working %}IS{% else %}NOT{% endif %}</strong> working)
@@ -132,7 +112,28 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <h2>Template list ({{ provider.provider_templates.all|length }})</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Template name</th>
+                    <th>Preconfigured</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if provider.provider_templates.all %}
+                {% for template in provider.provider_templates.all %}
+                    <tr>
+                        <td>{{ template.name }}</td>
+                        <td>{{ template.preconfigured }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="2"><em>No templates this provider ...</em></td></tr>
+            {% endif %}
+            </tbody>
+        </table>
     </div>
 </div>
-{% endfor %}
 {% endblock %}

@@ -1213,11 +1213,16 @@ def anyvm_delete(self, provider, vm):
 @singleton_task()
 def delete_template_from_provider(self, template_id):
     template = Template.objects.get(id=template_id)
-    template.provider_api.delete_template(template.name)
+    try:
+        template.provider_api.delete_template(template.name)
+    except Exception as e:
+        self.logger.exception(e)
+        return False
     with transaction.atomic():
         template = Template.objects.get(pk=template.pk)
         template.exists = False
         template.save()
+    return True
 
 
 @singleton_task()
