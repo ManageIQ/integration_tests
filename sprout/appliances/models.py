@@ -354,6 +354,26 @@ class Group(MetadataMixin):
     def unconfigured_shepherd_appliances(self):
         return self.shepherd_appliances(False)
 
+    @property
+    def zstreams_versions(self):
+        """Returns a dict with structure ``{zstream: [version1, version2, ...]``"""
+        zstreams = {}
+        for version in Template.get_versions(template_group=self, exists=True):
+            zstream = ".".join(version.split(".")[:3])
+            if zstream not in zstreams:
+                zstreams[zstream] = []
+            zstreams[zstream].append(version)
+        return zstreams
+
+    def pick_versions_to_delete(self):
+        to_delete = {}
+        for zstream, versions in self.zstreams_versions.iteritems():
+            versions = sorted(versions, key=Version, reverse=True)
+            versions_to_delete = versions[1:]
+            if versions_to_delete:
+                to_delete[zstream] = versions[1:]
+        return to_delete
+
     def get_fulfillment_percentage(self, preconfigured):
         """Return percentage of fulfillment of the group shepherd.
 

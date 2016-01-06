@@ -216,6 +216,11 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(minutes=60),
     },
 
+    'pick-templates-for-deletion': {
+        'task': 'appliances.tasks.pick_templates_for_deletion',
+        'schedule': timedelta(minutes=60),
+    },
+
     'obsolete-template-deleter': {
         'task': 'appliances.tasks.obsolete_template_deleter',
         'schedule': timedelta(days=1),

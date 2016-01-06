@@ -6,6 +6,7 @@ import hashlib
 import random
 import re
 import command
+import yaml
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
@@ -1406,3 +1407,48 @@ def disconnect_direct_lun(self, appliance_id):
 def appliance_yum_update(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
     appliance.ipapp.update_rhel(reboot=False)
+
+
+@singleton_task()
+def pick_templates_for_deletion(self):
+    """Applies some heuristics to guess templates that might be candidates to deletion."""
+    to_mail = {}
+    for group in Group.objects.all():
+        for zstream, versions in group.pick_versions_to_delete().iteritems():
+            for version in versions:
+                for template in Template.objects.filter(
+                        template_group=group, version=version, exists=True, suggested_delete=False):
+                    template.suggested_delete = True
+                    template.save()
+                    if group.id not in to_mail:
+                        to_mail[group.id] = {}
+                    if zstream not in to_mail[group.id]:
+                        to_mail[group.id][zstream] = {}
+                    if version not in to_mail[group.id][zstream]:
+                        to_mail[group.id][zstream][version] = []
+                    to_mail[group.id][zstream][version].append(
+                        "{} @ {}".format(template.name, template.provider.id))
+    if to_mail:
+        data = yaml.safe_dump(to_mail, default_flow_style=False)
+        email_body = """\
+Hello,
+
+just letting you know that there are some templates that you might like to delete:
+
+{}
+
+Visit Sprout's Templates page for more informations.
+
+Sincerely,
+Sprout.
+        """.format(data)
+        user_mails = []
+        for user in User.objects.filter(is_superuser=True):
+            if user.email:
+                user_mails.append(user.email)
+        send_mail(
+            "Possible candidates for tempalte deletion",
+            email_body,
+            "sprout-template-deletion-suggest@example.com",
+            user_mails,
+        )
