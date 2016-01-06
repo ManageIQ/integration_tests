@@ -78,36 +78,6 @@ def provision_data(
     return result
 
 
-@pytest.fixture(scope='function')
-def service_catalogs(request, rest_api):
-    name = fauxfactory.gen_alphanumeric()
-    rest_api.collections.service_catalogs.action.add(
-        name=name,
-        description="description_{}".format(name),
-        service_templates=[]
-    )[0]
-    wait_for(
-        lambda: rest_api.collections.service_catalogs.find_by(name=name),
-        num_sec=180,
-        delay=10,
-    )
-
-    scls_data = [{
-        "name": "name_{}_{}".format(name, index),
-        "description": "description_{}_{}".format(name, index),
-        "service_templates": []
-    } for index in range(1, 5)]
-    scls = rest_api.collections.service_catalogs.action.add(*scls_data)
-
-    @request.addfinalizer
-    def _finished():
-        scls = [_ for _ in rest_api.collections.service_catalogs]
-        if len(scls) != 0:
-            rest_api.collections.service_catalogs.action.delete(*scls)
-
-    return scls
-
-
 @pytest.mark.usefixtures("logged_in")
 @pytest.fixture(scope='function')
 def dialog():
@@ -336,68 +306,6 @@ def test_provision(request, provision_data, provider, rest_api):
 
     wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
-
-
-def test_delete_service_catalog(rest_api, service_catalogs):
-    scl = service_catalogs[0]
-    scl.action.delete()
-    with error.expected("ActiveRecord::RecordNotFound"):
-        scl.action.delete()
-
-
-def test_delete_service_catalogs(rest_api, service_catalogs):
-    rest_api.collections.service_catalogs.action.delete(*service_catalogs)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.collections.service_catalogs.action.delete(*service_catalogs)
-
-
-def test_edit_service_catalog(rest_api, service_catalogs):
-    """Tests editing a service catalog.
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/service_catalogs/<id>/ (method ``edit``) with the ``name``
-        * Check if the service_catalog with ``new_name`` exists
-    Metadata:
-        test_flag: rest
-    """
-    ctl = service_catalogs[0]
-    new_name = fauxfactory.gen_alphanumeric()
-    ctl.action.edit(name=new_name)
-    wait_for(
-        lambda: rest_api.collections.service_catalogs.find_by(name=new_name),
-        num_sec=180,
-        delay=10,
-    )
-
-
-def test_edit_multiple_service_catalogs(rest_api, service_catalogs):
-    """Tests editing multiple service catalogs at time.
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/service_catalogs (method ``edit``) with the list of dictionaries used to edit
-        * Check if the service_catalogs with ``new_name`` each exist
-    Metadata:
-        test_flag: rest
-    """
-
-    new_names = []
-    scls_data_edited = []
-    for scl in service_catalogs:
-        new_name = fauxfactory.gen_alphanumeric()
-        new_names.append(new_name)
-        scls_data_edited.append({
-            "href": scl.href,
-            "name": new_name,
-        })
-    rest_api.collections.service_catalogs.action.edit(*scls_data_edited)
-    for new_name in new_names:
-        wait_for(
-            lambda: rest_api.collections.service_catalogs.find_by(name=new_name),
-            num_sec=180,
-            delay=10,
-        )
 
 
 def test_edit_service_template(rest_api, service_templates):

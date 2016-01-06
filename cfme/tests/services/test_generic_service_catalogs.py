@@ -2,8 +2,9 @@
 import fauxfactory
 import pytest
 
-from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
+from cfme.rest import service_catalogs as _service_catalogs
+from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog_item import CatalogBundle
@@ -138,3 +139,78 @@ def test_delete_dialog_before_parent_item(catalog_item):
     service_dialog.delete()
     flash.assert_message_match(("Dialog \"{}\": Error during 'destroy': Dialog cannot be deleted " +
     "because it is connected to other components.").format(catalog_item.dialog))
+
+
+class TestServiceCatalogViaREST(object):
+    @pytest.fixture(scope="function")
+    def service_catalogs(self, request, rest_api):
+        return _service_catalogs(request, rest_api)
+
+    def test_delete_service_catalog(self, rest_api, service_catalogs):
+        """Tests delete service catalog via rest
+
+        Metadata:
+            test_flag: rest
+        """
+        scl = service_catalogs[0]
+        scl.action.delete()
+        with error.expected("ActiveRecord::RecordNotFound"):
+            scl.action.delete()
+
+    def test_delete_service_catalogs(self, rest_api, service_catalogs):
+        """Tests delete service catalogs via rest
+
+        Metadata:
+            test_flag: rest
+        """
+        rest_api.collections.service_catalogs.action.delete(*service_catalogs)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            rest_api.collections.service_catalogs.action.delete(*service_catalogs)
+
+    def test_edit_service_catalog(self, rest_api, service_catalogs):
+        """Tests editing a service catalog via rest.
+        Prerequisities:
+            * An appliance with ``/api`` available.
+        Steps:
+            * POST /api/service_catalogs/<id>/ (method ``edit``) with the ``name``
+            * Check if the service_catalog with ``new_name`` exists
+        Metadata:
+            test_flag: rest
+        """
+        ctl = service_catalogs[0]
+        new_name = fauxfactory.gen_alphanumeric()
+        ctl.action.edit(name=new_name)
+        wait_for(
+            lambda: rest_api.collections.service_catalogs.find_by(name=new_name),
+            num_sec=180,
+            delay=10,
+        )
+
+    def test_edit_multiple_service_catalogs(self, rest_api, service_catalogs):
+        """Tests editing multiple service catalogs at time.
+        Prerequisities:
+            * An appliance with ``/api`` available.
+        Steps:
+            * POST /api/service_catalogs (method ``edit``)
+                with the list of dictionaries used to edit
+            * Check if the service_catalogs with ``new_name`` each exist
+        Metadata:
+            test_flag: rest
+        """
+
+        new_names = []
+        scls_data_edited = []
+        for scl in service_catalogs:
+            new_name = fauxfactory.gen_alphanumeric()
+            new_names.append(new_name)
+            scls_data_edited.append({
+                "href": scl.href,
+                "name": new_name,
+            })
+        rest_api.collections.service_catalogs.action.edit(*scls_data_edited)
+        for new_name in new_names:
+            wait_for(
+                lambda: rest_api.collections.service_catalogs.find_by(name=new_name),
+                num_sec=180,
+                delay=10,
+            )
