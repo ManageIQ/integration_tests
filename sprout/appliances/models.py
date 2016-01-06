@@ -396,6 +396,8 @@ class Template(MetadataMixin):
     usable = models.BooleanField(default=False, help_text="Template is marked as usable")
 
     preconfigured = models.BooleanField(default=True, help_text="Is prepared for immediate use?")
+    suggested_delete = models.BooleanField(
+        default=False, help_text="Whether Sprout suggests deleting this template.")
 
     @property
     def provider_api(self):
