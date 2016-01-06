@@ -113,7 +113,7 @@
             </tbody>
         </table>
 
-        <h2>Template list ({{ provider.provider_templates.all|length }})</h2>
+        <h2>Template list ({{ provider.existing_templates|length }})</h2>
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -122,10 +122,10 @@
                 </tr>
             </thead>
             <tbody>
-            {% if provider.provider_templates.all %}
-                {% for template in provider.provider_templates.all %}
+            {% if provider.existing_templates.all %}
+                {% for template in provider.existing_templates.all %}
                     <tr id="template-{{ template.id }}">
-                        <td>{{ template.name }}</td>
+                        <td><a href="{% url 'group_templates' template.template_group.id %}#{{ template.id }}">{{ template.name }}</a></td>
                         <td>{{ template.preconfigured }}</td>
                     </tr>
                 {% endfor %}

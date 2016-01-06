@@ -117,6 +117,10 @@ class Provider(MetadataMixin):
         return self.working and not self.disabled
 
     @property
+    def existing_templates(self):
+        return self.provider_templates.filter(exists=True)
+
+    @property
     def api(self):
         return get_mgmt(self.id)
 
