@@ -420,6 +420,10 @@ class Template(MetadataMixin):
     suggested_delete = models.BooleanField(
         default=False, help_text="Whether Sprout suggests deleting this template.")
 
+    parent_template = models.ForeignKey(
+        "self", blank=True, null=True, related_name="child_templates",
+        help_text="What was source of this template?")
+
     @property
     def provider_api(self):
         return self.provider.api
@@ -431,6 +435,10 @@ class Template(MetadataMixin):
     @property
     def exists_in_provider(self):
         return self.name in self.provider_api.list_template()
+
+    @property
+    def exists_and_ready(self):
+        return self.exists and self.ready
 
     def set_status(self, status):
         with transaction.atomic():

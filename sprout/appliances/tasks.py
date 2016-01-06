@@ -233,17 +233,10 @@ def poke_trackerbot(self):
         if not date:
             # Not a CFME/MIQ template, ignore it.
             continue
-        # Preconfigured one
-        try:
-            Template.objects.get(
-                provider=provider, template_group=group, original_name=template_name,
-                preconfigured=True)
-        except ObjectDoesNotExist:
-            if template_name in provider.templates:
-                create_appliance_template.delay(provider.id, group.id, template_name)
         # Original one
+        original_template = None
         try:
-            Template.objects.get(
+            original_template = Template.objects.get(
                 provider=provider, template_group=group, original_name=template_name,
                 name=template_name, preconfigured=False)
         except ObjectDoesNotExist:
@@ -261,7 +254,18 @@ def poke_trackerbot(self):
                         name=template_name, preconfigured=False, date=date,
                         version=template_version, ready=True, exists=True, usable=True)
                     tpl.save()
+                    original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
+        # Preconfigured one
+        try:
+            Template.objects.get(
+                provider=provider, template_group=group, original_name=template_name,
+                preconfigured=True)
+        except ObjectDoesNotExist:
+            if template_name in provider.templates:
+                original_id = original_template.id if original_template is not None else None
+                create_appliance_template.delay(
+                    provider.id, group.id, template_name, source_template_id=original_id)
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
@@ -279,7 +283,7 @@ def poke_trackerbot(self):
 
 
 @logged_task()
-def create_appliance_template(self, provider_id, group_id, template_name):
+def create_appliance_template(self, provider_id, group_id, template_name, source_template_id=None):
     """This task creates a template from a fresh CFME template. In case of fatal error during the
     operation, the template object is deleted to make sure the operation will be retried next time
     when poke_trackerbot runs."""
@@ -320,9 +324,16 @@ def create_appliance_template(self, provider_id, group_id, template_name):
                         group=group.id[:2], date=date.strftime("%y%m%d"),  # Use only first 2 of grp
                         rnd=fauxfactory.gen_alphanumeric(2))  # And just 2 chars random
                     # TODO: If anything larger comes, do fix that!
+        if source_template_id is not None:
+            try:
+                source_template = Template.objects.get(id=source_template_id)
+            except ObjectDoesNotExist:
+                source_template = None
+        else:
+            source_template = None
         template = Template(
             provider=provider, template_group=group, name=new_template_name, date=date,
-            version=template_version, original_name=template_name)
+            version=template_version, original_name=template_name, parent_template=source_template)
         template.save()
     workflow = chain(
         prepare_template_deploy.si(template.id),
