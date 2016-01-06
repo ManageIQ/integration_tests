@@ -248,6 +248,11 @@ def poke_trackerbot(self):
                             template_name))
                     continue
                 template_version = retrieve_cfme_appliance_version(template_name)
+                if template_version is None:
+                    # Make up a faux version
+                    # First 3 fields of version get parsed as a zstream
+                    # therefore ... makes it a "nil" stream
+                    template_version = "...{}".format(date.strftime("%Y%m%d"))
                 with transaction.atomic():
                     tpl = Template(
                         provider=provider, template_group=group, original_name=template_name,
@@ -306,6 +311,11 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
         if not date:
             return
         template_version = retrieve_cfme_appliance_version(template_name)
+        if template_version is None:
+            # Make up a faux version
+            # First 3 fields of version get parsed as a zstream
+            # therefore ... makes it a "nil" stream
+            template_version = "...{}".format(date.strftime("%Y%m%d"))
         new_template_name = settings.TEMPLATE_FORMAT.format(
             group=group.id, date=date.strftime("%y%m%d"), rnd=fauxfactory.gen_alphanumeric(8))
         if provider.template_name_length is not None:

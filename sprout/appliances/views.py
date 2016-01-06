@@ -19,6 +19,7 @@ from appliances.tasks import (appliance_power_on, appliance_power_off, appliance
 
 from sprout.log import create_logger
 from utils.providers import get_mgmt
+from utils.version import Version
 
 
 def go_home(request):
@@ -90,7 +91,9 @@ def templates(request, group_id=None, prov_id=None):
     prepared_table = []
     zstream_rowspans = {}
     version_rowspans = {}
-    for zstream, versions in group.zstreams_versions.iteritems():
+    items = group.zstreams_versions.items()
+    items.sort(key=lambda pair: Version(pair[0]), reverse=True)
+    for zstream, versions in items:
         for version in versions:
             for provider in Provider.objects.all():
                 for template in Template.objects.filter(
