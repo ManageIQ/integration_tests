@@ -124,7 +124,7 @@
             <tbody>
             {% if provider.provider_templates.all %}
                 {% for template in provider.provider_templates.all %}
-                    <tr>
+                    <tr id="template-{{ template.id }}">
                         <td>{{ template.name }}</td>
                         <td>{{ template.preconfigured }}</td>
                     </tr>

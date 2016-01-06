@@ -22,7 +22,7 @@
         <tr id="{{ template.id }}">
             {% if zstream %}<td rowspan={{ zstream_rowspans|keyvalue:zstream }}>{{ zstream }}</td>{% endif %}
             {% if version %}<td rowspan={{ version_rowspans|keyvalue:version }}>{{ version }}</td>{% endif %}
-            <td><a href="{% url 'specific_provider' provider.id %}">{{ provider.id }}</a></td>
+            <td><a href="{% url 'specific_provider' provider.id %}#template-{{ template.id }}">{{ provider.id }}</a></td>
             <td>{% if template.suggested_delete %}<strong>{% endif %}{{ template.name }}{% if template.suggested_delete %}</strong>{% endif %}</td>
             <td>{{ template.date }}</td>
             <td><span class="glyphicon glyphicon-{% if template.preconfigured %}ok{% else %}remove{% endif %}"></span></td>
