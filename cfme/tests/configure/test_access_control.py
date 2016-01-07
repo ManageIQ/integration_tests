@@ -676,3 +676,28 @@ class TestTenantsViaREST(object):
             tenant.action.delete()
             with error.expected("ActiveRecord::RecordNotFound"):
                 tenant.action.delete()
+
+
+# Tenant/Project test cases
+@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
+def test_superadmin_tenant_crud():
+    """Test suppose to verify CRUD operations for CFME tenants
+
+    Prerequisities:
+        * This test is not depending on any other test and can be executed against fresh appliance.
+
+    Steps:
+        * Create tenant
+        * Update description of tenant
+        * Update name of tenat
+        * Delete tenant
+    """
+    tenant = ac.Tenant(
+        name='tenant1' + fauxfactory.gen_alphanumeric(),
+        description='tenant1 description')
+    tenant.create()
+    with update(tenant):
+        tenant.description = tenant.description + "edited"
+    with update(tenant):
+        tenant.name = tenant.name + "edited"
+    tenant.delete()

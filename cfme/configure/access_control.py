@@ -2,19 +2,19 @@ from functools import partial
 from cfme import Credential
 from fixtures.pytest_store import store
 import cfme
+from cfme.exceptions import CandidateNotFound
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.form_buttons import change_stored_password
 from cfme.web_ui import AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash, \
     form_buttons, Input, Table, UpDownSelect
-from cfme.web_ui.menu import nav
+from cfme.web_ui.menu import extend_nav, nav
 from utils.log import logger
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
 
 from configuration import server_region_string
-
 
 tb_select = partial(tb.select, "Configuration")
 pol_btn = partial(tb.select, "Policy")
@@ -76,6 +76,7 @@ nav.add_branch(
             }
         ],
 
+
         'cfg_accesscontrol_Roles':
         [
             lambda d: accordion.tree("Access Control", server_region_string(), "Roles"),
@@ -99,6 +100,32 @@ nav.add_branch(
         nav.fn(partial(accordion.click, "Assignments"))
     }
 )
+
+
+@extend_nav
+class configuration:
+    def cfg_tenant_project_create(context):
+        tenant = context["tenant"]
+        if tenant._default:
+            raise ValueError("Cannot create the root tenant {}".format(tenant.name))
+        accordion.tree("Access Control", server_region_string(), "Tenants", *tenant.parent_path)
+        if type(tenant) is Tenant:
+            tb_select("Add child Tenant to this Tenant")
+        elif type(tenant) is Project:
+            tb_select("Add Project to this Tenant")
+        else:
+            raise TypeError(
+                'You must pass either Tenant or Project class but not {}'.format(
+                    type(tenant).__name__))
+
+    class cfg_tenant_project:
+        def navigate(context):
+            tenant = context["tenant"]
+            accordion.tree("Access Control", server_region_string(), "Tenants", *tenant.tree_path)
+
+        def cfg_tenant_project_edit(_):
+            tb_select("Edit this item")
+            sel.wait_for_ajax()
 
 
 def simple_user(userid, password):
@@ -332,3 +359,120 @@ class Role(Updateable, Pretty):
              action=form_buttons.add)
         flash.assert_success_message('Role "%s" was saved' % new_role.name)
         return new_role
+
+
+class Tenant(Updateable, Pretty):
+    """ Class representing CFME tenants in the UI.
+    * Kudos to mfalesni *
+
+    The behaviour is shared with Project, which is the same except it cannot create more nested
+    tenants/projects.
+
+    Args:
+        name: Name of the tenant
+        description: Description of the tenant
+        parent_tenant: Parent tenant, can be None, can be passed as string or object
+    """
+    save_changes = form_buttons.FormButton("Save changes")
+    tenant_form = Form(
+        fields=[
+            ('name', Input('name')),
+            ('description', Input('description'))
+        ])
+    pretty_attrs = ["name", "description"]
+
+    @classmethod
+    def get_root_tenant(cls):
+        return cls(name="My Company", _default=True)
+
+    def __init__(self, name=None, description=None, parent_tenant=None, _default=False):
+        self.name = name
+        self.description = description
+        self.parent_tenant = parent_tenant
+        self._default = _default
+
+    @property
+    def parent_tenant(self):
+        if self._default:
+            return None
+        if self._parent_tenant:
+            return self._parent_tenant
+        return self.get_root_tenant()
+
+    @parent_tenant.setter
+    def parent_tenant(self, tenant):
+        if tenant is not None and isinstance(tenant, Project):
+            # If we try to
+            raise ValueError("Project cannot be a parent object.")
+        if isinstance(tenant, basestring):
+            # If parent tenant is passed as string,
+            # we assume that tenant name was passed instead of object
+            tenant = Tenant(tenant)
+        self._parent_tenant = tenant
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        else:
+            return self.name == other.name
+
+    @property
+    def exists(self):
+        try:
+            sel.force_navigate("cfg_tenant_project", context={"tenant": self})
+        except CandidateNotFound:
+            return False
+        else:
+            return True
+
+    @property
+    def tree_path(self):
+        if self._default:
+            return [self.name]
+        else:
+            return self.parent_tenant.tree_path + [self.name]
+
+    @property
+    def parent_path(self):
+        return self.tree_path[:-1]
+
+    def create(self, cancel=False):
+        sel.force_navigate("cfg_tenant_project_create", context={"tenant": self})
+        fill(self.tenant_form, self, action=form_buttons.add)
+        if type(self) is Tenant:
+            flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
+        elif type(self) is Project:
+            flash.assert_success_message('Project "{}" was saved'.format(self.name))
+        else:
+            raise TypeError(
+                'No Tenant or Project class passed to create method{}'.format(
+                    type(self).__name__))
+
+    def update(self, updates):
+        sel.force_navigate("cfg_tenant_project_edit", context={"tenant": self})
+        # Workaround - without this, update was failing sometimes
+        sel.wait_for_ajax()
+        # Workaround - form is appearing after short delay
+        sel.wait_for_element(self.tenant_form.description)
+        fill(self.tenant_form, updates, action=self.save_changes)
+        flash.assert_success_message(
+            'Project "{}" was saved'.format(updates.get('name', self.name)))
+
+    def delete(self, cancel=False):
+        sel.force_navigate("cfg_tenant_project", context={"tenant": self})
+        tb_select("Delete this item", invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+        flash.assert_success_message('Tenant "{}": Delete successful'.format(self.description))
+
+
+class Project(Tenant):
+    """ Class representing CFME projects in the UI.
+
+    Project cannot create more child tenants/projects.
+
+    Args:
+        name: Name of the project
+        description: Description of the project
+        parent_tenant: Parent project, can be None, can be passed as string or object
+    """
+    pass
