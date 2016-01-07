@@ -118,8 +118,6 @@ def load():
                 "utils.ext_auth",
                 "utils.hosts",
                 "utils.mgmt_system",
-                "utils.randomness",
-                "utils.rest_api",
                 "utils.smtp_collector_client",
                 "utils.ssh",
                 "multimethods",
@@ -147,13 +145,11 @@ def load():
         utils.ssh.SSHClient.run_command: THIS_ONLY,
         utils.ssh.SSHClient.run_rake_command: THIS_ONLY,
         utils.ssh.SSHClient.run_rails_command: THIS_ONLY,
-        utils.ssh.SSHClient.get_version: IGNORE,
         utils.ssh.SSHClient.get_build_datetime: THIS_ONLY,
         utils.ssh.SSHClient.is_appliance_downstream: THIS_ONLY,
         utils.ssh.SSHClient.appliance_has_netapp: THIS_ONLY,
         utils.ssh.SSHClient.put_file: IGNORE,
         utils.ssh.SSHClient.get_file: IGNORE,
-        cfme.web_ui.menu.any_box_displayed: THIS_ONLY,
     }
 
     default_depths = function_trace.add_all_at_depth(manual_depths, inspect, 0)
