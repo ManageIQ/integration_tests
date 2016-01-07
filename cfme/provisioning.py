@@ -262,14 +262,13 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
                 approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
             else:
                 approval = dict(text_like="%%Your Virtual Machine Request was approved%%")
+            expected_text = "Your virtual machine request has Completed - VM:%%%s" % vm_name
             return (
                 len(
                     smtp_test.get_emails(**approval)
                 ) > 0
                 and len(
-                    smtp_test.get_emails(
-                        subject_like="Your virtual machine request has Completed - VM:%%%s" % vm_name
-                    )
+                    smtp_test.get_emails(subject_like=expected_text)
                 ) > 0
             )
 
