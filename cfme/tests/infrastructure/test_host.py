@@ -3,6 +3,7 @@
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 import cfme.web_ui.flash as flash
+import pytest
 import random
 import utils.conf as conf
 
@@ -11,6 +12,8 @@ from cfme.infrastructure.provider import details_page
 from cfme.web_ui import Quadicon, fill
 from utils import testgen
 from utils import version
+
+pytestmark = [pytest.mark.meta(blockers=[1296258])]
 
 
 def config_option():
