@@ -39,10 +39,12 @@ def match(matchers, vm_name):
 
 def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
     with lock:
-        print '%s processing' % provider_key
+        print '{} processing'.format(provider_key)
     try:
         now = datetime.datetime.now()
-        provider = get_mgmt(provider_key)
+        with lock:
+            # Known conf issue :)
+            provider = get_mgmt(provider_key)
         for vm_name in provider.list_vm():
             if not match(matchers, vm_name):
                 continue
@@ -59,10 +61,11 @@ def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
                 with lock:
                     vms_to_delete[provider_key].add((vm_name, vm_delta))
         with lock:
-            print '%s finished' % provider_key
+            print '{} finished'.format(provider_key)
     except Exception as ex:
         with lock:
-            print '%s failed' % provider_key
+            # Print out the error message too because logs in the job get deleted
+            print '{} failed ({}: {})'.format(provider_key, type(ex).__name__, str(ex))
         logger.error('failed to process vms from provider %s', provider_key)
         logger.exception(ex)
 
