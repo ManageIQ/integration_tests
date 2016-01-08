@@ -72,3 +72,6 @@ conf/*.eyaml
 
 # yaml key
 .yaml_key
+
+# tracer logs
+tracelogs
