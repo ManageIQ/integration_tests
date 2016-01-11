@@ -39,11 +39,18 @@ Setup
   * ``libxml2-devel``
   * ``libxslt-devel``
   * ``zeromq3-devel``
-  * yum users: ``sudo yum install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel``
+  * ``libcurl-devel``
+  * yum users: ``sudo yum install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel``
 
 * Install python dependencies:
 
-  * ``pip install -Ur /path/to/virtualenv/cfme_tests/requirements.txt``
+  * ``PYCURL_SSL_LIBRARY=nss pip install -Ur /path/to/virtualenv/cfme_tests/requirements.txt``
+  * If you forget to use the ``PYCURL_SSL_LIBRARY`` env variable and you get a pycurl error, you
+    have to run it like this to fix it:
+
+    * Ensure you have ``libcurl-devel`` installed (this was not a prerequisite before so it can
+      happen)
+    * Run ``PYCURL_SSL_LIBRARY=nss pip install -U -r requirements.txt --no-cache-dir``
 
 * Copy template files in cfme_tests to the same file name without the ``.template`` extension
 
