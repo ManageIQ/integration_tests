@@ -50,3 +50,31 @@ def categories(request, rest_api, num=1):
             rest_api.collections.categories.action.delete(*delete_ctgs)
 
     return ctgs
+
+
+def tenants(request, rest_api, num=1):
+    parent = rest_api.collections.tenants.get(name='My Company')
+    data = [{
+        'description': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
+        'name': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
+        'divisible': 'true',
+        'use_config_for_attributes': 'false',
+        'parent': {'href': parent.href}
+    } for _index in range(0, num)]
+
+    tenants = rest_api.collections.tenants.action.create(*data)
+    for tenant in data:
+        wait_for(
+            lambda: rest_api.collections.tenants.find_by(name=tenant.get('name')),
+            num_sec=180,
+            delay=10,
+        )
+
+    @request.addfinalizer
+    def _finished():
+        ids = [tenant.id for tenant in tenants]
+        delete_tenants = [tenant for tenant in rest_api.collections.tenants if tenant.id in ids]
+        if len(delete_tenants) != 0:
+            rest_api.collections.tenants.action.delete(*delete_tenants)
+
+    return tenants

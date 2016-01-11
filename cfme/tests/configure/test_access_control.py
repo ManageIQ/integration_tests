@@ -10,6 +10,7 @@ from cfme import login
 from cfme.configure.access_control import set_group_order
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
+from cfme.rest import tenants as _tenants
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
@@ -17,6 +18,7 @@ from utils.blockers import BZ
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
+from utils.wait import wait_for
 from utils import version
 
 records_table = Table("//div[@id='main_div']//table")
@@ -620,3 +622,57 @@ def test_user_change_password(request):
         assert not login.logged_in()
         login.login(user)
         assert login.current_full_name() == user.name
+
+
+class TestTenantsViaREST(object):
+    @pytest.fixture(scope="function")
+    def tenants(self, request, rest_api):
+        return _tenants(request, rest_api, num=3)
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    @pytest.mark.parametrize(
+        "multiple", [False, True],
+        ids=["one_request", "multiple_requests"])
+    def test_edit_tenants(self, rest_api, tenants, multiple):
+        if multiple:
+            new_names = []
+            tenants_data_edited = []
+            for tenant in tenants:
+                new_name = fauxfactory.gen_alphanumeric().lower()
+                new_names.append(new_name)
+                tenant.reload()
+                tenants_data_edited.append({
+                    "href": tenant.href,
+                    "name": "test_tenants_{}".format(new_name),
+                })
+            rest_api.collections.tenants.action.edit(*tenants_data_edited)
+            for new_name in new_names:
+                wait_for(
+                    lambda: rest_api.collections.tenants.find_by(name=new_name),
+                    num_sec=180,
+                    delay=10,
+                )
+        else:
+            tenant = rest_api.collections.tenants.get(name=tenants[0].name)
+            new_name = 'test_tenant_{}'.format(fauxfactory.gen_alphanumeric().lower())
+            tenant.action.edit(name=new_name)
+            wait_for(
+                lambda: rest_api.collections.tenants.find_by(name=new_name),
+                num_sec=180,
+                delay=10,
+            )
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    @pytest.mark.parametrize(
+        "multiple", [False, True],
+        ids=["one_request", "multiple_requests"])
+    def test_delete_tenants(self, rest_api, tenants, multiple):
+        if multiple:
+            rest_api.collections.tenants.action.delete(*tenants)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                rest_api.collections.tenants.action.delete(*tenants)
+        else:
+            tenant = tenants[0]
+            tenant.action.delete()
+            with error.expected("ActiveRecord::RecordNotFound"):
+                tenant.action.delete()
