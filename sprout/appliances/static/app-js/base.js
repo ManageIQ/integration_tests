@@ -86,9 +86,14 @@ function addAlert(type, text) {
     if(type == "success"){
         icon = "<span class='pficon pficon-ok'></span>";
     } else if(type == "danger" || type == "warning"){
-        icon = "<span class='pficon-layered'><span class='pficon pficon-warning-triangle'></span><span class='pficon pficon-warning-exclamation'></span></span>";
+        icon = "<span class='pficon-layered'><span class='pficon pficon-warning-triangle-o'></span><span class='pficon pficon-warning-exclamation'></span></span>";
     }
-    return $("#alerts").append("<div class='alert alert-" + type + " alert-dismissible fade in' role='alert'><button class='close' data-dismiss='alert'>×</button> " + text + " " + icon + "</div>");
+    var rand_id = Math.round(Math.random() * 1000);
+    result = $("#alerts").append("<div class='alert alert-" + type + " alert-dismissible fade in' role='alert' id='alert-" + rand_id + "'><button class='close' data-dismiss='alert'>×</button> " + text + " " + icon + "</div>");
+    // Scroll to the alert
+    location.href = "#";
+    location.href = "#alert-" + rand_id;
+    return result;
 }
 
 $.ajaxSetup({

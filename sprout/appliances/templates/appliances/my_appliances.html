@@ -100,7 +100,7 @@
                     <td>
                         {% if appliance.managed_providers %}
                             {% for provider in appliance.managed_providers %}
-                                <a href="{% url 'providers' %}#provider-{{provider}}" class="btn btn-default btn-xs">{{provider}}</a>
+                                <a href="{% url 'specific_provider' provider %}" class="btn btn-default btn-xs">{{provider}}</a>
                             {% endfor %}
                         {% else %}
                             <em>Nothing! :)</em>

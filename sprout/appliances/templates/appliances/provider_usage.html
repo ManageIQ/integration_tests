@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Provider usage{% endblock %}
+{% block body %}
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <strong>Complete usage statistics</strong>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <th>User name</th>
+            <th>Number of appliances</th>
+        </thead>
+        <tbody>
+            {% for user, count in complete_usage %}
+            <tr>
+                <td>
+                {% if user.is_a_bot %}<em>{% endif %}
+                {% if request.user.is_superuser %}<a href="{% url 'user_appliances' user.username %}">{{ user.first_name }} {{ user.last_name }}</a>{% else %}{{ user.first_name }} {{ user.last_name }}{% endif %}
+                {% if user.is_a_bot %}</em>{% endif %}
+                </td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

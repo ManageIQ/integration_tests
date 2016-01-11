@@ -117,6 +117,10 @@ class Provider(MetadataMixin):
         return self.working and not self.disabled
 
     @property
+    def existing_templates(self):
+        return self.provider_templates.filter(exists=True)
+
+    @property
     def api(self):
         return get_mgmt(self.id)
 
@@ -354,6 +358,26 @@ class Group(MetadataMixin):
     def unconfigured_shepherd_appliances(self):
         return self.shepherd_appliances(False)
 
+    @property
+    def zstreams_versions(self):
+        """Returns a dict with structure ``{zstream: [version1, version2, ...]``"""
+        zstreams = {}
+        for version in Template.get_versions(template_group=self, exists=True):
+            zstream = ".".join(version.split(".")[:3])
+            if zstream not in zstreams:
+                zstreams[zstream] = []
+            zstreams[zstream].append(version)
+        return zstreams
+
+    def pick_versions_to_delete(self):
+        to_delete = {}
+        for zstream, versions in self.zstreams_versions.iteritems():
+            versions = sorted(versions, key=Version, reverse=True)
+            versions_to_delete = versions[1:]
+            if versions_to_delete:
+                to_delete[zstream] = versions[1:]
+        return to_delete
+
     def get_fulfillment_percentage(self, preconfigured):
         """Return percentage of fulfillment of the group shepherd.
 
@@ -380,7 +404,8 @@ class Group(MetadataMixin):
 
 class Template(MetadataMixin):
     provider = models.ForeignKey(
-        Provider, on_delete=models.CASCADE, help_text="Where does this template reside")
+        Provider, on_delete=models.CASCADE, help_text="Where does this template reside",
+        related_name="provider_templates")
     template_group = models.ForeignKey(
         Group, on_delete=models.CASCADE, help_text="Which group the template belongs to.")
     version = models.CharField(max_length=16, null=True, help_text="Downstream version.")
@@ -396,6 +421,12 @@ class Template(MetadataMixin):
     usable = models.BooleanField(default=False, help_text="Template is marked as usable")
 
     preconfigured = models.BooleanField(default=True, help_text="Is prepared for immediate use?")
+    suggested_delete = models.BooleanField(
+        default=False, help_text="Whether Sprout suggests deleting this template.")
+
+    parent_template = models.ForeignKey(
+        "self", blank=True, null=True, related_name="child_templates",
+        help_text="What was source of this template?")
 
     @property
     def provider_api(self):
@@ -408,6 +439,10 @@ class Template(MetadataMixin):
     @property
     def exists_in_provider(self):
         return self.name in self.provider_api.list_template()
+
+    @property
+    def exists_and_ready(self):
+        return self.exists and self.ready
 
     def set_status(self, status):
         with transaction.atomic():

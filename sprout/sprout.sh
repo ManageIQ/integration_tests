@@ -451,7 +451,7 @@ function backup_before_update() {
     echo ">>> Getting the current hash"
     git rev-parse HEAD > "${BACKUP_DIR}/backup.hash"
     echo ">> Dumping the database"
-    ./manage.py dumpdata --format=yaml --natural -e contenttypes -e sessions.Session -e auth.Permission > "${BACKUP_DIR}/database.yaml"
+    ./manage.py dumpdata --format=yaml --natural-foreign -e contenttypes -e sessions.Session -e auth.Permission > "${BACKUP_DIR}/database.yaml"
     echo ">>> Storing the backup in git"
     cd "${BACKUP_DIR}"
     git add .

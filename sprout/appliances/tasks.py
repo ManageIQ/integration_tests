@@ -6,6 +6,7 @@ import hashlib
 import random
 import re
 import command
+import yaml
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
@@ -232,17 +233,10 @@ def poke_trackerbot(self):
         if not date:
             # Not a CFME/MIQ template, ignore it.
             continue
-        # Preconfigured one
-        try:
-            Template.objects.get(
-                provider=provider, template_group=group, original_name=template_name,
-                preconfigured=True)
-        except ObjectDoesNotExist:
-            if template_name in provider.templates:
-                create_appliance_template.delay(provider.id, group.id, template_name)
         # Original one
+        original_template = None
         try:
-            Template.objects.get(
+            original_template = Template.objects.get(
                 provider=provider, template_group=group, original_name=template_name,
                 name=template_name, preconfigured=False)
         except ObjectDoesNotExist:
@@ -254,13 +248,29 @@ def poke_trackerbot(self):
                             template_name))
                     continue
                 template_version = retrieve_cfme_appliance_version(template_name)
+                if template_version is None:
+                    # Make up a faux version
+                    # First 3 fields of version get parsed as a zstream
+                    # therefore ... makes it a "nil" stream
+                    template_version = "...{}".format(date.strftime("%Y%m%d"))
                 with transaction.atomic():
                     tpl = Template(
                         provider=provider, template_group=group, original_name=template_name,
                         name=template_name, preconfigured=False, date=date,
                         version=template_version, ready=True, exists=True, usable=True)
                     tpl.save()
+                    original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
+        # Preconfigured one
+        try:
+            Template.objects.get(
+                provider=provider, template_group=group, original_name=template_name,
+                preconfigured=True)
+        except ObjectDoesNotExist:
+            if template_name in provider.templates:
+                original_id = original_template.id if original_template is not None else None
+                create_appliance_template.delay(
+                    provider.id, group.id, template_name, source_template_id=original_id)
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
@@ -278,7 +288,7 @@ def poke_trackerbot(self):
 
 
 @logged_task()
-def create_appliance_template(self, provider_id, group_id, template_name):
+def create_appliance_template(self, provider_id, group_id, template_name, source_template_id=None):
     """This task creates a template from a fresh CFME template. In case of fatal error during the
     operation, the template object is deleted to make sure the operation will be retried next time
     when poke_trackerbot runs."""
@@ -301,6 +311,11 @@ def create_appliance_template(self, provider_id, group_id, template_name):
         if not date:
             return
         template_version = retrieve_cfme_appliance_version(template_name)
+        if template_version is None:
+            # Make up a faux version
+            # First 3 fields of version get parsed as a zstream
+            # therefore ... makes it a "nil" stream
+            template_version = "...{}".format(date.strftime("%Y%m%d"))
         new_template_name = settings.TEMPLATE_FORMAT.format(
             group=group.id, date=date.strftime("%y%m%d"), rnd=fauxfactory.gen_alphanumeric(8))
         if provider.template_name_length is not None:
@@ -319,9 +334,16 @@ def create_appliance_template(self, provider_id, group_id, template_name):
                         group=group.id[:2], date=date.strftime("%y%m%d"),  # Use only first 2 of grp
                         rnd=fauxfactory.gen_alphanumeric(2))  # And just 2 chars random
                     # TODO: If anything larger comes, do fix that!
+        if source_template_id is not None:
+            try:
+                source_template = Template.objects.get(id=source_template_id)
+            except ObjectDoesNotExist:
+                source_template = None
+        else:
+            source_template = None
         template = Template(
             provider=provider, template_group=group, name=new_template_name, date=date,
-            version=template_version, original_name=template_name)
+            version=template_version, original_name=template_name, parent_template=source_template)
         template.save()
     workflow = chain(
         prepare_template_deploy.si(template.id),
@@ -1212,11 +1234,16 @@ def anyvm_delete(self, provider, vm):
 @singleton_task()
 def delete_template_from_provider(self, template_id):
     template = Template.objects.get(id=template_id)
-    template.provider_api.delete_template(template.name)
+    try:
+        template.provider_api.delete_template(template.name)
+    except Exception as e:
+        self.logger.exception(e)
+        return False
     with transaction.atomic():
         template = Template.objects.get(pk=template.pk)
         template.exists = False
         template.save()
+    return True
 
 
 @singleton_task()
@@ -1406,3 +1433,48 @@ def disconnect_direct_lun(self, appliance_id):
 def appliance_yum_update(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
     appliance.ipapp.update_rhel(reboot=False)
+
+
+@singleton_task()
+def pick_templates_for_deletion(self):
+    """Applies some heuristics to guess templates that might be candidates to deletion."""
+    to_mail = {}
+    for group in Group.objects.all():
+        for zstream, versions in group.pick_versions_to_delete().iteritems():
+            for version in versions:
+                for template in Template.objects.filter(
+                        template_group=group, version=version, exists=True, suggested_delete=False):
+                    template.suggested_delete = True
+                    template.save()
+                    if group.id not in to_mail:
+                        to_mail[group.id] = {}
+                    if zstream not in to_mail[group.id]:
+                        to_mail[group.id][zstream] = {}
+                    if version not in to_mail[group.id][zstream]:
+                        to_mail[group.id][zstream][version] = []
+                    to_mail[group.id][zstream][version].append(
+                        "{} @ {}".format(template.name, template.provider.id))
+    if to_mail:
+        data = yaml.safe_dump(to_mail, default_flow_style=False)
+        email_body = """\
+Hello,
+
+just letting you know that there are some templates that you might like to delete:
+
+{}
+
+Visit Sprout's Templates page for more informations.
+
+Sincerely,
+Sprout.
+        """.format(data)
+        user_mails = []
+        for user in User.objects.filter(is_superuser=True):
+            if user.email:
+                user_mails.append(user.email)
+        send_mail(
+            "Possible candidates for tempalte deletion",
+            email_body,
+            "sprout-template-deletion-suggest@example.com",
+            user_mails,
+        )
