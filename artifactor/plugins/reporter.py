@@ -148,6 +148,11 @@ class ReporterBase(object):
                     blocker_skip_count += 1
                     test_data['skip_blocker'] = test['skipped'].get('reason', None)
 
+            if 'skip_blocker' in test_data:
+                # Fix the inconveniently long list of repeated blockers until we sort out sets
+                # in riggerlib somehow.
+                test_data['skip_blocker'] = sorted(set(test_data['skip_blocker']))
+
             if test.get('old', False):
                 test_data['old'] = True
 
