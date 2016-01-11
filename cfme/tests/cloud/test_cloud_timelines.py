@@ -108,7 +108,8 @@ def db_event(db, provider):
 
 
 @pytest.mark.meta(
-    blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2'), 1265404, 1281746]
+    blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2', forced_streams=["5.5"]),
+    1265404, 1281746]
 )
 @pytest.mark.uncollectif(
     lambda provider: current_version() < "5.4" and provider.type != 'openstack')
@@ -126,7 +127,8 @@ def test_provider_event(setup_provider, provider, gen_events, test_instance):
 
 
 @pytest.mark.meta(
-    blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2'), 1281746]
+    blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2', forced_streams=["5.5"]),
+    1281746]
 )
 @pytest.mark.uncollectif(
     lambda provider: current_version() < "5.4" and provider.type != 'openstack')
