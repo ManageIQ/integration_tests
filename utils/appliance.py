@@ -363,12 +363,18 @@ class IPAppliance(object):
 
     def __init__(self, address=None, browser_steal=False):
         if address is not None:
-            if isinstance(address, ParseResult):
+            if not isinstance(address, ParseResult):
+                address = urlparse(str(address))
+            if not (address.scheme and address.netloc):
+                # Use .path (w.x.y.z ip format)
+                self.address = address.path
+                self.scheme = "https"
+                self._url = "https://{}/".format(address.path)
+            else:
+                # schema://w.x.y.z/ format
                 self.address = address.netloc
                 self.scheme = address.scheme
                 self._url = address.geturl()
-            else:
-                self.address = address
         self.browser_steal = browser_steal
         self._db_ssh_client = None
 
