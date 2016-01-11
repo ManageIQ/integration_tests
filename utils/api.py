@@ -243,7 +243,7 @@ class Collection(object):
         try:
             return self.find_by(**params)[0]
         except IndexError:
-            raise Exception("No such object!")
+            raise ValueError("No such '{}' matching query {}!".format(self.name, repr(params)))
 
     @property
     def count(self):
@@ -436,6 +436,11 @@ class ActionContainer(object):
                 self,
                 action["name"],
                 Action(self, action["name"], action["method"], action["href"]))
+
+    def execute_action(self, action_name, *args, **kwargs):
+        # To circumvent bad method names, like `import`, you can use this one directly
+        action = getattr(self, action_name)
+        return action(*args, **kwargs)
 
     @property
     def all(self):

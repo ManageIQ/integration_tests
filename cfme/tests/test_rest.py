@@ -78,36 +78,6 @@ def provision_data(
     return result
 
 
-@pytest.fixture(scope='function')
-def service_catalogs(request, rest_api):
-    name = fauxfactory.gen_alphanumeric()
-    rest_api.collections.service_catalogs.action.add(
-        name=name,
-        description="description_{}".format(name),
-        service_templates=[]
-    )[0]
-    wait_for(
-        lambda: rest_api.collections.service_catalogs.find_by(name=name),
-        num_sec=180,
-        delay=10,
-    )
-
-    scls_data = [{
-        "name": "name_{}_{}".format(name, index),
-        "description": "description_{}_{}".format(name, index),
-        "service_templates": []
-    } for index in range(1, 5)]
-    scls = rest_api.collections.service_catalogs.action.add(*scls_data)
-
-    @request.addfinalizer
-    def _finished():
-        scls = [_ for _ in rest_api.collections.service_catalogs]
-        if len(scls) != 0:
-            rest_api.collections.service_catalogs.action.delete(*scls)
-
-    return scls
-
-
 @pytest.mark.usefixtures("logged_in")
 @pytest.fixture(scope='function')
 def dialog():
@@ -338,68 +308,6 @@ def test_provision(request, provision_data, provider, rest_api):
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
-def test_delete_service_catalog(rest_api, service_catalogs):
-    scl = service_catalogs[0]
-    scl.action.delete()
-    with error.expected("ActiveRecord::RecordNotFound"):
-        scl.action.delete()
-
-
-def test_delete_service_catalogs(rest_api, service_catalogs):
-    rest_api.collections.service_catalogs.action.delete(*service_catalogs)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.collections.service_catalogs.action.delete(*service_catalogs)
-
-
-def test_edit_service_catalog(rest_api, service_catalogs):
-    """Tests editing a service catalog.
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/service_catalogs/<id>/ (method ``edit``) with the ``name``
-        * Check if the service_catalog with ``new_name`` exists
-    Metadata:
-        test_flag: rest
-    """
-    ctl = service_catalogs[0]
-    new_name = fauxfactory.gen_alphanumeric()
-    ctl.action.edit(name=new_name)
-    wait_for(
-        lambda: rest_api.collections.service_catalogs.find_by(name=new_name),
-        num_sec=180,
-        delay=10,
-    )
-
-
-def test_edit_multiple_service_catalogs(rest_api, service_catalogs):
-    """Tests editing multiple service catalogs at time.
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/service_catalogs (method ``edit``) with the list of dictionaries used to edit
-        * Check if the service_catalogs with ``new_name`` each exist
-    Metadata:
-        test_flag: rest
-    """
-
-    new_names = []
-    scls_data_edited = []
-    for scl in service_catalogs:
-        new_name = fauxfactory.gen_alphanumeric()
-        new_names.append(new_name)
-        scls_data_edited.append({
-            "href": scl.href,
-            "name": new_name,
-        })
-    rest_api.collections.service_catalogs.action.edit(*scls_data_edited)
-    for new_name in new_names:
-        wait_for(
-            lambda: rest_api.collections.service_catalogs.find_by(name=new_name),
-            num_sec=180,
-            delay=10,
-        )
-
-
 def test_edit_service_template(rest_api, service_templates):
     """Tests cediting a service template.
     Prerequisities:
@@ -618,7 +526,7 @@ def test_provider_refresh(request, a_provider, rest_api):
     """
     if "refresh" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
-    provider_rest = rest_api.collections.providers.find_by(name=a_provider.name)[0]
+    provider_rest = rest_api.collections.providers.get(name=a_provider.name)
     with server_roles_disabled("ems_inventory", "ems_operations"):
         vm_name = deploy_template(
             a_provider.key,
@@ -641,9 +549,9 @@ def test_provider_refresh(request, a_provider, rest_api):
         num_sec=180,
         delay=10,
     )
-    vms = rest_api.collections.vms.find_by(name=vm_name)
-    if "delete" in vms[0].action.all:
-        vms[0].action.delete()
+    vm = rest_api.collections.vms.get(name=vm_name)
+    if "delete" in vm.action.all:
+        vm.action.delete()
 
 
 def test_provider_edit(request, a_provider, rest_api):
@@ -708,7 +616,7 @@ def test_provider_crud(request, rest_api, from_detail):
 def vm(request, a_provider, rest_api):
     if "refresh" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
-    provider_rest = rest_api.collections.providers.find_by(name=a_provider.name)[0]
+    provider_rest = rest_api.collections.providers.get(name=a_provider.name)
     vm_name = deploy_template(
         a_provider.key,
         "test_rest_vm_{}".format(fauxfactory.gen_alphanumeric(length=4)))
@@ -740,7 +648,7 @@ def test_set_vm_owner(request, rest_api, vm, from_detail):
     """
     if "set_owner" not in rest_api.collections.vms.action.all:
         pytest.skip("Set owner action is not implemented in this version")
-    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    rest_vm = rest_api.collections.vms.get(name=vm)
     if from_detail:
         assert rest_vm.action.set_owner(owner="admin")["success"], "Could not set owner"
     else:
@@ -772,7 +680,7 @@ def test_vm_add_lifecycle_event(request, rest_api, vm, from_detail, db):
     """
     if "add_lifecycle_event" not in rest_api.collections.vms.action.all:
         pytest.skip("add_lifecycle_event action is not implemented in this version")
-    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    rest_vm = rest_api.collections.vms.get(name=vm)
     event = dict(
         status=fauxfactory.gen_alphanumeric(),
         message=fauxfactory.gen_alphanumeric(),
@@ -853,7 +761,7 @@ def test_edit_categories(rest_api, categories, multiple):
                 delay=10,
             )
     else:
-        ctg = rest_api.collections.categories.find_by(description=categories[0].description)[0]
+        ctg = rest_api.collections.categories.get(description=categories[0].description)
         new_name = 'test_category_{}'.format(fauxfactory.gen_alphanumeric().lower())
         ctg.action.edit(description=new_name)
         wait_for(
@@ -909,7 +817,7 @@ def test_edit_roles(rest_api, roles, multiple):
                 delay=10,
             )
     else:
-        role = rest_api.collections.roles.find_by(name=roles[0].name)[0]
+        role = rest_api.collections.roles.get(name=roles[0].name)
         new_name = 'role_name_{}'.format(fauxfactory.gen_alphanumeric())
         role.action.edit(name=new_name)
         wait_for(
@@ -948,7 +856,7 @@ def test_add_delete_role(rest_api):
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_role_assign_and_unassign_feature(rest_api, roles):
-    feature, = rest_api.collections.features.find_by(name="Everything")
+    feature = rest_api.collections.features.get(name="Everything")
     role = roles[0]
     role.reload()
     role.features.action.assign(feature)
@@ -981,7 +889,7 @@ def test_edit_user_password(rest_api, user):
 
 @pytest.fixture(scope='function')
 def rates(request, rest_api):
-    chargeback = rest_api.collections.chargebacks.find_by(rate_type='Compute')[0]
+    chargeback = rest_api.collections.chargebacks.get(rate_type='Compute')
     data = [{
         'description': 'test_rate_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
         'rate': 1,
@@ -1033,7 +941,7 @@ def test_edit_rates(rest_api, rates, multiple):
                 delay=10,
             )
     else:
-        rate = rest_api.collections.rates.find_by(description=rates[0].description)[0]
+        rate = rest_api.collections.rates.get(description=rates[0].description)
         new_description = 'test_rate_{}'.format(fauxfactory.gen_alphanumeric().lower())
         rate.action.edit(description=new_description)
         wait_for(
@@ -1061,7 +969,7 @@ def test_delete_rates(rest_api, rates, multiple):
 
 @pytest.fixture(scope='function')
 def tenants(request, rest_api):
-    parent = rest_api.collections.tenants.find_by(name='My Company')[0]
+    parent = rest_api.collections.tenants.get(name='My Company')
     data = [{
         'description': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
         'name': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
@@ -1112,7 +1020,7 @@ def test_edit_tenants(rest_api, tenants, multiple):
                 delay=10,
             )
     else:
-        tenant = rest_api.collections.tenants.find_by(name=tenants[0].name)[0]
+        tenant = rest_api.collections.tenants.get(name=tenants[0].name)
         new_name = 'test_tenant_{}'.format(fauxfactory.gen_alphanumeric().lower())
         tenant.action.edit(name=new_name)
         wait_for(
@@ -1140,7 +1048,7 @@ def test_delete_tenants(rest_api, tenants, multiple):
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_run_report(rest_api):
-    report = rest_api.collections.reports.find_by(name='VM Disk Usage')[0]
+    report = rest_api.collections.reports.get(name='VM Disk Usage')
     response = report.action.run()
 
     @pytest.wait_for(timeout="5m", delay=5, message="REST running report finishes")
@@ -1150,7 +1058,7 @@ def test_run_report(rest_api):
             pytest.fail("Error when running report: `{}`".format(response.task.message))
         return response.task.state.lower() == 'finished'
 
-    result = rest_api.collections.results.find_by(id=response.result_id)[0]
+    result = rest_api.collections.results.get(id=response.result_id)
     assert result.name == report.name
 
 
@@ -1169,14 +1077,12 @@ def test_import_report(rest_api):
         },
         'options': {'save': 'true'}
     }
-    # Workaround, because method name is 'import' which is the same as reserved python name
-    _import = getattr(rest_api.collections.reports.action, 'import')
-    response, = _import(data)
+    response, = rest_api.collections.reports.action.execute_action("import", data)
     assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
-    report = rest_api.collections.reports.find_by(name=menu_name)[0]
+    report = rest_api.collections.reports.get(name=menu_name)
     assert report.name == menu_name
 
-    response, = _import(data)
+    response, = rest_api.collections.reports.action.execute_action("import", data)
     assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)
 
 
@@ -1185,7 +1091,7 @@ def test_set_service_owner(rest_api, services):
     if "set_ownership" not in rest_api.collections.services.action.all:
         pytest.skip("Set owner action for service is not implemented in this version")
     service = services[0]
-    user = rest_api.collections.users.find_by(userid='admin')[0]
+    user = rest_api.collections.users.get(userid='admin')
     data = {
         "owner": {"href": user.href}
     }
@@ -1274,7 +1180,7 @@ def test_edit_tag(rest_api, tags):
     if "edit" not in rest_api.collections.tags.action.all:
         pytest.skip("Edit tags action is not implemented in this version")
 
-    tag = rest_api.collections.tags.find_by(name=tags[0].name)[0]
+    tag = rest_api.collections.tags.get(name=tags[0].name)
     new_name = 'test_tag_{}'.format(fauxfactory.gen_alphanumeric())
     tag.action.edit(name=new_name)
     wait_for(
@@ -1324,7 +1230,7 @@ def test_vm_add_event(rest_api, vm, db, from_detail):
         "event_type": "BadUserNameSessionEvent",
         "event_message": "Cannot login user@test.domain {}".format(from_detail)
     }
-    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    rest_vm = rest_api.collections.vms.get(name=vm)
     if from_detail:
         assert rest_vm.action.add_event(event)["success"], "Could not add event"
     else:
@@ -1347,8 +1253,8 @@ def test_vm_add_event(rest_api, vm, db, from_detail):
 def test_vm_set_ownership(rest_api, vm):
     if "set_ownership" not in rest_api.collections.services.action.all:
         pytest.skip("Set owner action for service is not implemented in this version")
-    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
-    user = rest_api.collections.users.find_by(userid='admin')[0]
+    rest_vm = rest_api.collections.vms.get(name=vm)
+    user = rest_api.collections.users.get(userid='admin')
     data = {
         "owner": {"href": user.href}
     }
@@ -1362,8 +1268,8 @@ def test_vm_set_ownership(rest_api, vm):
 def test_vms_set_ownership(rest_api, vm):
     if "set_ownership" not in rest_api.collections.services.action.all:
         pytest.skip("Set owner action for service is not implemented in this version")
-    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
-    group = rest_api.collections.groups.find_by(description='EvmGroup-super_administrator')[0]
+    rest_vm = rest_api.collections.vms.get(name=vm)
+    group = rest_api.collections.groups.get(description='EvmGroup-super_administrator')
     data = {
         "group": {"href": group.href}
     }
@@ -1377,7 +1283,7 @@ def test_vms_set_ownership(rest_api, vm):
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
 def test_vm_scan(rest_api, vm, from_detail):
-    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    rest_vm = rest_api.collections.vms.get(name=vm)
     if from_detail:
         response = rest_vm.action.scan()
     else:
