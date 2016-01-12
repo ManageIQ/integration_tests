@@ -18,10 +18,15 @@ import pytest
 
 from cfme.common.vm import VM
 from cfme.control import explorer
+from cfme.configure import tasks
+from cfme.infrastructure import host
+from cfme.web_ui import tabstrip as tabs, toolbar as tb
 from datetime import datetime
+from fixtures.pytest_store import store
 from functools import partial
 from utils import mgmt_system, testgen
 from utils.blockers import BZ
+from utils.conf import cfme_data
 from utils.db import cfmedb
 from utils.log import logger
 from utils.miq_soap import MiqVM
@@ -30,16 +35,18 @@ from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
 
+pytestmark = [pytest.mark.meta(server_roles="+automate +smartproxy +smartstate")]
+
 
 class VMWrapper(Pretty):
     """This class binds a provider_mgmt object with VM name. Useful for on/off operation"""
-    __slots__ = ("_prov", "_vm", "soap", "crud")
+    __slots__ = ("_prov", "_vm", "api", "crud")
     pretty_attrs = ['_vm', '_prov']
 
-    def __init__(self, provider, vm_name, soap):
+    def __init__(self, provider, vm_name, api):
         self._prov = provider
         self._vm = vm_name
-        self.soap = soap
+        self.api = api
         self.crud = VM.factory(vm_name, self._prov)
 
     @property
@@ -97,16 +104,25 @@ def get_vm_object(vm_name):
     Args:
         vm_name: VM name
     Returns:
-        If found, :py:class:`utils.miq_soap.MiqVM`. If not, `None`
+        If found, :py:class:`utils.miq_soap.MiqVM` for 5.4 and :py:class:`utils.api.Entity` for 5.5
+        If not, `None`
     """
-    vm_table = cfmedb()['vms']
-    for vm in cfmedb().session.query(vm_table.name, vm_table.guid)\
-            .filter(vm_table.template == False):  # NOQA
-        # Previous line is ok, if you change it to `is`, it won't work!
-        if vm.name == vm_name:
-            return MiqVM(vm.guid)
+    if current_version() < "5.5":
+        vm_table = cfmedb()['vms']
+        for vm in cfmedb().session.query(vm_table.name, vm_table.guid)\
+                .filter(vm_table.template == False):  # NOQA
+            # Previous line is ok, if you change it to `is`, it won't work!
+            if vm.name == vm_name:
+                return MiqVM(vm.guid)
+        else:
+            return None
     else:
-        return None
+        rest_api = pytest.store.current_appliance.rest_api
+        results = rest_api.collections.vms.find_by(name=vm_name)
+        if len(results) > 0:
+            return results[0]
+        else:
+            return None
 
 
 @pytest.fixture(scope="module")
@@ -114,12 +130,52 @@ def vm_name(provider):
     return "long-test_act-{}-{}".format(provider.key, fauxfactory.gen_alpha().lower())
 
 
+def set_host_credentials(request, provider, vm):
+    # Add credentials to host
+    host_name = vm.api.host.name
+    test_host = host.Host(name=host_name)
+
+    host_list = cfme_data.get('management_systems', {})[vm._prov.key].get('hosts', [])
+    host_data = [x for x in host_list if x.name == host_name][0]
+
+    if not test_host.has_valid_credentials:
+        test_host.update(
+            updates={'credentials': host.get_credentials_from_config(host_data['credentials'])},
+            validate_credentials=True
+        )
+
+    # Remove creds after test
+    @request.addfinalizer
+    def _host_remove_creds():
+        test_host.update(
+            updates={'credentials': host.Host.Credential(
+                principal="", secret="", verify_secret="")},
+            validate_credentials=False
+        )
+
+
 @pytest.fixture(scope="module")
-def vm(request, provider, setup_provider_modscope, small_template, vm_name):
+def local_setup_provider(request, setup_provider_modscope, provider):
+    if provider.type == 'virtualcenter':
+        store.current_appliance.install_vddk(reboot=True)
+        store.current_appliance.wait_for_web_ui()
+        try:
+            pytest.sel.refresh()
+        except AttributeError:
+            # In case no browser is started
+            pass
+
+
+@pytest.fixture(scope="module")
+def vm(request, provider, local_setup_provider, small_template, vm_name):
     if provider.type == "rhevm":
         kwargs = {"cluster": provider.data["default_cluster"]}
     elif provider.type == "virtualcenter":
         kwargs = {}
+    elif provider.type == "openstack":
+        kwargs = {}
+        if 'small_template_flavour' in provider.data:
+            kwargs = {"flavour_name": provider.data.get('small_template_flavour')}
     elif provider.type == "scvmm":
         kwargs = {
             "host_group": provider.data.get("provisioning", {}).get("host_group", "All Hosts")}
@@ -148,7 +204,7 @@ def vm(request, provider, setup_provider_modscope, small_template, vm_name):
 
     @request.addfinalizer
     def _finalize():
-        """if getting SOAP object failed, we would not get the VM deleted! So explicit teardown."""
+        """if getting REST object failed, we would not get the VM deleted! So explicit teardown."""
         logger.info("Shutting down VM with name {}".format(vm_name))
         if provider.mgmt.is_vm_suspended(vm_name):
             logger.info("Powering up VM {} to shut it down correctly.".format(vm_name))
@@ -163,19 +219,16 @@ def vm(request, provider, setup_provider_modscope, small_template, vm_name):
     # Make it appear in the provider
     provider.refresh_provider_relationships()
 
-    if current_version() < "5.4":
-        # Get the SOAP object
-        soap = wait_for(
-            lambda: get_vm_object(vm_name),
-            message="VM object {} appears in CFME".format(vm_name),
-            fail_condition=None,
-            num_sec=600,
-            delay=15,
-        )[0]
-    else:
-        soap = None
+    # Get the REST API object
+    api = wait_for(
+        lambda: get_vm_object(vm_name),
+        message="VM object {} appears in CFME".format(vm_name),
+        fail_condition=None,
+        num_sec=600,
+        delay=15,
+    )[0]
 
-    return VMWrapper(provider, vm_name, soap)
+    return VMWrapper(provider, vm_name, api)
 
 
 @pytest.fixture(scope="module")
@@ -203,6 +256,8 @@ def automate_role_set(request):
     roles = configuration.get_server_roles()
     old_roles = dict(roles)
     roles["automate"] = True
+    roles["smartproxy"] = True
+    roles["smartstate"] = True
     configuration.set_server_roles(**roles)
     yield
     configuration.set_server_roles(**old_roles)
@@ -543,7 +598,6 @@ def test_action_create_snapshots_and_delete_them(
              message="wait for snapshots to be deleted", delay=5)
 
 
-@pytest.mark.uncollect()
 def test_action_initiate_smartstate_analysis(
         request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
@@ -554,33 +608,59 @@ def test_action_initiate_smartstate_analysis(
     Metadata:
         test_flag: actions, provision
     """
+    # Set host credentials for VMWare
+    if isinstance(vm.provider, mgmt_system.VMWareSystem):
+        set_host_credentials(request, vm.provider, vm)
+
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On",
                                                       ["Initiate SmartState Analysis for VM"])
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
-    # Remember the time
-    switched_on = datetime.now()
+    switched_on = datetime.utcnow()
     # Start the VM
-    vm.start_vm()
-    vm_crud_refresh()
+    vm.crud.power_control_from_cfme(option=vm.crud.POWER_ON, cancel=False, from_details=True)
 
     # Wait for VM being tried analysed by CFME
     def wait_analysis_tried():
-        t = vm.soap.last_scan_attempt_on
-        return False if t is None else t >= switched_on
+        if current_version() > "5.5":
+            vm.api.reload()
+        try:
+            return vm.api.last_scan_attempt_on.replace(tzinfo=None) >= switched_on
+        except AttributeError:
+            return False
     try:
-        wait_for(wait_analysis_tried, num_sec=90, message="wait for analysis attempt", delay=5)
+        wait_for(wait_analysis_tried, num_sec=360, message="wait for analysis attempt", delay=5)
     except TimedOutError:
         pytest.fail("CFME did not even try analysing the VM %s" % vm.name)
 
+    # Check that analyse job has appeared in the list
+    # Wait for the task to finish
+    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+    def is_vm_analysis_finished():
+        """ Check if analysis is finished - if not, reload page
+        """
+        if not pytest.sel.is_displayed(tasks.tasks_table) or \
+           not tabs.is_tab_selected('All VM Analysis Tasks'):
+            pytest.sel.force_navigate('tasks_all_vm')
+        vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
+            'task_name': "Scan from Vm {}".format(vm.name),
+            'state': 'finished'
+        })
+        return vm_analysis_finished is not None
+
     # Wait for VM analysis to finish
     def wait_analysis_finished():
-        t = vm.soap.last_scan_on
-        return False if t is None else t >= switched_on
+        if current_version() > "5.5":
+            vm.api.reload()
+        try:
+            return vm.api.last_scan_on.replace(tzinfo=None) >= switched_on
+        except AttributeError:
+            return False
     try:
-        wait_for(wait_analysis_finished, num_sec=180, message="wait for analysis finished", delay=5)
+        wait_for(wait_analysis_finished, num_sec=600,
+                 message="wait for analysis finished", delay=60)
     except TimedOutError:
-        pytest.fail("CFME did not analyse the VM %s" % vm.name)
+        pytest.fail("CFME did not finish analysing the VM %s" % vm.name)
 
 
 # TODO: Get the id other way than from SOAP.
@@ -606,7 +686,7 @@ def test_action_raise_automation_event(
     def search_logs():
         rc, stdout = ssh_client.run_command(
             "cat /var/www/miq/vmdb/log/automation.log | grep 'MiqAeEvent.build_evm_event' |"
-            " grep 'event=<\"vm_poweroff\">' | grep 'id: %s'" % vm.soap.object.id
+            " grep 'event=<\"vm_poweroff\">' | grep 'id: %s'" % vm.api.object.id
             # not guid, but the ID
         )
         if rc != 0:  # Nothing found, so shortcut

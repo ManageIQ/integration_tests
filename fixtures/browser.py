@@ -6,6 +6,7 @@ from cfme.fixtures.pytest_selenium import take_screenshot
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from utils.datafile import template_env
 from utils.path import log_path
+from utils import safe_string
 
 browser_fixtures = {'browser'}
 
@@ -30,7 +31,7 @@ def pytest_runtest_setup(item):
 def pytest_exception_interact(node, call, report):
     from fixtures.artifactor_plugin import SLAVEID
     name, location = get_test_idents(node)
-    val = call.excinfo.value.message.decode('utf-8', 'ignore')
+    val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
     short_tb = '%s\n%s' % (call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
     art_client.fire_hook('filedump', test_location=location, test_name=name,
         description="Traceback", contents=str(report.longrepr), file_type="traceback",
