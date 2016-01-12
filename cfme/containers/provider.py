@@ -1,7 +1,7 @@
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Region, Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock
+    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock
 )
 from cfme.web_ui.menu import nav
 from utils.browser import ensure_browser_open
@@ -9,7 +9,7 @@ from utils.db import cfmedb
 from utils.pretty import Pretty
 from utils.varmeth import variable
 
-from . import cfg_btn, mon_btn, pol_btn
+from . import cfg_btn, mon_btn, pol_btn, details_page
 
 nav.add_branch(
     'containers_providers',
@@ -50,8 +50,6 @@ properties_form = Form(
         ('port_text', Input('port')),
         # ('zone_select', AngularSelect('server_zone'))
     ])
-
-details_page = Region(infoblock_type='detail')
 
 
 class Provider(BaseProvider, Pretty):
