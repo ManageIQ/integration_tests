@@ -3,6 +3,31 @@ Getting Started
 
 Setup
 -----
+You can use this shortcut to install the system and python dependencies which will leave you only
+with the need to copy the yamls and putting the ``.yaml_key`` in place. Copy this to an executable
+file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
+
+.. code-block:: bash
+
+  #!/usr/bin/env bash
+
+  if hash dnf;
+  then
+    YUM=dnf
+  else
+    YUM=yum
+  fi
+
+  sudo $YUM install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config
+  virtualenv .cfme_tests
+  echo "export PYTHONPATH='`pwd`'" | tee -a ./.cfme_tests/bin/activate
+  echo "export PYTHONDONTWRITEBYTECODE=yes" | tee -a ./.cfme_tests/bin/activate
+
+  . ./.cfme_tests/bin/activate
+  PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt
+  echo "Run '. ./.cfme_tests/bin/activate' to load the virtualenv"
+
+Detailed steps (manual environment setup):
 
 * Create a virtualenv from which to run tests
 
@@ -26,6 +51,7 @@ Setup
 
   * ``export PYTHONDONTWRITEBYTECODE="yes"``
 
+* Get the shared encryption key for credentials. Ask in CFME QE.
 * Make sure you set the shared secret for the credentials files encryption. There are two ways:
 
   * add ``export CFME_TESTS_KEY="our shared key"`` into the activate script
@@ -40,7 +66,10 @@ Setup
   * ``libxslt-devel``
   * ``zeromq3-devel``
   * ``libcurl-devel``
-  * yum users: ``sudo yum install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel``
+  * ``redhat-rpm-config`` if you use some kind of really stripped system.
+  * Fedora (possibly RHEL-like systems) users:
+    * ``hash dnf 2>/dev/null && { YUM=dnf; } || { YUM=yum; }``
+    * ``sudo $YUM install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config``
 
 * Install python dependencies:
 
