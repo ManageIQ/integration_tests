@@ -250,33 +250,6 @@ def roles(request, rest_api):
     return roles
 
 
-@pytest.fixture(scope='function')
-def categories(request, rest_api):
-    if "create" not in rest_api.collections.categories.action.all:
-        pytest.skip("Create categories action is not implemented in this version")
-    ctg_data = [{
-        'name': 'test_category_{}_{}'.format(fauxfactory.gen_alphanumeric().lower(), _index),
-        'description': 'test_category_{}_{}'.format(fauxfactory.gen_alphanumeric().lower(), _index)
-    } for _index in range(0, 5)]
-    ctgs = rest_api.collections.categories.action.create(*ctg_data)
-    for ctg in ctgs:
-        wait_for(
-            lambda: rest_api.collections.categories.find_by(description=ctg.description),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [ctg.id for ctg in ctgs]
-        delete_ctgs = [ctg for ctg in rest_api.collections.categories
-            if ctg.id in ids]
-        if len(delete_ctgs) != 0:
-            rest_api.collections.categories.action.delete(*delete_ctgs)
-
-    return ctgs
-
-
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
 @pytest.mark.meta(server_roles="+automate")
@@ -732,62 +705,6 @@ def test_automation_requests(request, rest_api, automation_requests_data, multip
         return True
 
     wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-@pytest.mark.parametrize(
-    "multiple", [False, True],
-    ids=["one_request", "multiple_requests"])
-def test_edit_categories(rest_api, categories, multiple):
-    if "edit" not in rest_api.collections.categories.action.all:
-        pytest.skip("Edit categories action is not implemented in this version")
-
-    if multiple:
-        new_names = []
-        ctgs_data_edited = []
-        for ctg in categories:
-            new_name = fauxfactory.gen_alphanumeric().lower()
-            new_names.append(new_name)
-            ctg.reload()
-            ctgs_data_edited.append({
-                "href": ctg.href,
-                "description": "test_category_{}".format(new_name),
-            })
-        rest_api.collections.categories.action.edit(*ctgs_data_edited)
-        for new_name in new_names:
-            wait_for(
-                lambda: rest_api.collections.categories.find_by(description=new_name),
-                num_sec=180,
-                delay=10,
-            )
-    else:
-        ctg = rest_api.collections.categories.get(description=categories[0].description)
-        new_name = 'test_category_{}'.format(fauxfactory.gen_alphanumeric().lower())
-        ctg.action.edit(description=new_name)
-        wait_for(
-            lambda: rest_api.collections.categories.find_by(description=new_name),
-            num_sec=180,
-            delay=10,
-        )
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-@pytest.mark.parametrize(
-    "multiple", [False, True],
-    ids=["one_request", "multiple_requests"])
-def test_delete_categories(rest_api, categories, multiple):
-    if "delete" not in rest_api.collections.categories.action.all:
-        pytest.skip("Delete categories action is not implemented in this version")
-
-    if multiple:
-        rest_api.collections.categories.action.delete(*categories)
-        with error.expected("ActiveRecord::RecordNotFound"):
-            rest_api.collections.categories.action.delete(*categories)
-    else:
-        ctg = categories[0]
-        ctg.action.delete()
-        with error.expected("ActiveRecord::RecordNotFound"):
-            ctg.action.delete()
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
