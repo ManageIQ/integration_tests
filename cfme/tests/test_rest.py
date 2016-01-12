@@ -12,7 +12,6 @@ from cfme.login import login
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
-from utils.api import APIException
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
@@ -955,109 +954,6 @@ def test_set_services_owner(rest_api, services):
         service.reload()
         assert hasattr(service, "evm_owner")
         assert service.evm_owner.userid == user.userid
-
-
-@pytest.fixture(scope='function')
-def tags(request, rest_api, categories):
-    if "create" not in rest_api.collections.tags.action.all:
-        pytest.skip("Create tags action is not implemented in this version")
-
-    # Category id, href or name needs to be specified for creating a new tag resource
-    tags = []
-    for ctg in categories:
-        data = {
-            'name': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
-            'description': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
-            'category': {'href': ctg.href}
-        }
-        tags.append(data)
-    tags = rest_api.collections.tags.action.create(*tags)
-    for tag in tags:
-        wait_for(
-            lambda: rest_api.collections.tags.find_by(name=tag.name),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [tag.id for tag in tags]
-        delete_tags = [tag for tag in rest_api.collections.tags if tag.id in ids]
-        if len(delete_tags) != 0:
-            rest_api.collections.tags.action.delete(*delete_tags)
-
-    return tags
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_edit_tags(rest_api, tags):
-    if "edit" not in rest_api.collections.tags.action.all:
-        pytest.skip("Edit tags action is not implemented in this version")
-
-    new_names = []
-    tags_data_edited = []
-    for tag in tags:
-        new_name = fauxfactory.gen_alphanumeric().lower()
-        new_names.append(new_name)
-        tag.reload()
-        tags_data_edited.append({
-            "href": tag.href,
-            "name": "test_tag_{}".format(new_name),
-        })
-    rest_api.collections.tags.action.edit(*tags_data_edited)
-    for new_name in new_names:
-        wait_for(
-            lambda: rest_api.collections.tags.find_by(name=new_name),
-            num_sec=180,
-            delay=10,
-        )
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_edit_tag(rest_api, tags):
-    if "edit" not in rest_api.collections.tags.action.all:
-        pytest.skip("Edit tags action is not implemented in this version")
-
-    tag = rest_api.collections.tags.get(name=tags[0].name)
-    new_name = 'test_tag_{}'.format(fauxfactory.gen_alphanumeric())
-    tag.action.edit(name=new_name)
-    wait_for(
-        lambda: rest_api.collections.tags.find_by(name=new_name),
-        num_sec=180,
-        delay=10,
-    )
-
-
-@pytest.mark.meta(blockers=[1290783])
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-@pytest.mark.parametrize(
-    "multiple", [False, True],
-    ids=["one_request", "multiple_requests"])
-def test_delete_tags(rest_api, tags, multiple):
-    if "delete" not in rest_api.collections.tags.action.all:
-        pytest.skip("Delete tags action is not implemented in this version")
-
-    if multiple:
-        rest_api.collections.tags.action.delete(*tags)
-        with error.expected("ActiveRecord::RecordNotFound"):
-            rest_api.collections.tags.action.delete(*tags)
-    else:
-        tag = tags[0]
-        tag.action.delete()
-        with error.expected("ActiveRecord::RecordNotFound"):
-            tag.action.delete()
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_create_tag_with_wrong_arguments(rest_api):
-    data = {
-        'name': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
-        'description': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower())
-    }
-    try:
-        rest_api.collections.tags.action.create(data)
-    except APIException as e:
-        assert "Category id, href or name needs to be specified" in e.args[0]
 
 
 @pytest.mark.parametrize(
