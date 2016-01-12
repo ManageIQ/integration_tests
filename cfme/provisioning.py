@@ -215,7 +215,7 @@ nav.add_branch('clouds_instances_by_provider', {
 
 
 def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, request,
-                       smtp_test, num_sec=1500, wait=True):
+                       smtp_test=None, num_sec=1500, wait=True):
     # generate_tests makes sure these have values
     sel.force_navigate('infrastructure_provision_vms', context={
         'provider': provider,
@@ -255,24 +255,26 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
         {version.LOWEST: 'VM Provisioned Successfully',
          "5.3": 'Vm Provisioned Successfully', })
 
-    # Wait for e-mails to appear
-    def verify():
-        if current_version() >= "5.4":
-            approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
-        else:
-            approval = dict(text_like="%%Your Virtual Machine Request was approved%%")
-        return (
-            len(
-                smtp_test.get_emails(**approval)
-            ) > 0
-            and len(
-                smtp_test.get_emails(
-                    subject_like="Your virtual machine request has Completed - VM:%%%s" % vm_name
-                )
-            ) > 0
-        )
+    if smtp_test is not None:
+        # Wait for e-mails to appear
+        def verify():
+            if current_version() >= "5.4":
+                approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
+            else:
+                approval = dict(text_like="%%Your Virtual Machine Request was approved%%")
+            return (
+                len(
+                    smtp_test.get_emails(**approval)
+                ) > 0
+                and len(
+                    smtp_test.get_emails(
+                        subject_like=(
+                            "Your virtual machine request has Completed - VM:%%%s" % vm_name)
+                    )
+                ) > 0
+            )
 
-    wait_for(verify, message="email receive check", delay=5)
+        wait_for(verify, message="email receive check", delay=5)
 
 
 def copy_request(cells, modifications):

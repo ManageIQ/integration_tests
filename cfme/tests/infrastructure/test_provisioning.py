@@ -5,20 +5,20 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.provisioning import do_vm_provisioning
 from cfme.services import requests
-from cfme.web_ui import fill
+from cfme.web_ui import fill, toolbar
 from utils import mgmt_system, normalize_text, testgen
 from utils.blockers import BZ
 from utils.log import logger
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate +notifier"),
     pytest.mark.usefixtures('uses_infra_providers'),
-    pytest.mark.meta(blockers=[
-        BZ(
-            1265466,
-            unblock=lambda provider: not isinstance(provider.mgmt, mgmt_system.RHEVMSystem))
-    ])
+    pytest.mark.meta(
+        blockers=[
+            BZ(
+                1265466,
+                unblock=lambda provider: not isinstance(provider.mgmt, mgmt_system.RHEVMSystem))],
+        server_roles="+automate +notifier")
 ]
 
 
@@ -98,7 +98,7 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_prov
 
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
 def test_provision_approval(
-        setup_provider, provider, provisioning, vm_name, smtp_test, request, edit):
+        setup_provider, provider, provisioning, vm_name, smtp_test, request, edit, soft_assert):
     """ Tests provisioning approval. Tests couple of things.
 
     * Approve manually
@@ -154,20 +154,30 @@ def test_provision_approval(
 
     do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
                        wait=False)
-    wait_for(
-        lambda:
-        len(filter(
-            lambda mail:
-            "your request for a new vms was not autoapproved" in normalize_text(mail["subject"]),
-            smtp_test.get_emails())) > 0,
-        num_sec=90, delay=5)
-    wait_for(
-        lambda:
-        len(filter(
-            lambda mail:
-            "virtual machine request was not approved" in normalize_text(mail["subject"]),
-            smtp_test.get_emails())) > 0,
-        num_sec=90, delay=5)
+
+    if not BZ(1289052).blocks:
+        try:
+            wait_for(
+                lambda:
+                len(filter(
+                    lambda mail:
+                    "request for a new vms was not autoapproved" in normalize_text(mail["subject"]),
+                    smtp_test.get_emails())) > 0,
+                timeout="8m", delay=5)
+        except TimedOutError:
+            toolbar.select("Reload")  # To see the current state of the cell
+            soft_assert(False, "E-mail about not auto-approving the request did not come.")
+        try:
+            wait_for(
+                lambda:
+                len(filter(
+                    lambda mail:
+                    "virtual machine request was not approved" in normalize_text(mail["subject"]),
+                    smtp_test.get_emails())) > 0,
+                timeout="3m", delay=5)
+        except TimedOutError:
+            toolbar.select("Reload")  # To see the current state of the cell
+            soft_assert(False, "E-mail about not approving the request did not come.")
 
     cells = {'Description': 'Provision from [{}] to [{}###]'.format(template, vm_name)}
     wait_for(lambda: requests.go_to_request(cells), num_sec=80, delay=5)
@@ -195,7 +205,7 @@ def test_provision_approval(
             lambda mail:
             "your virtual machine configuration was approved" in normalize_text(mail["subject"]),
             smtp_test.get_emails())) > 0,
-        num_sec=120, delay=5)
+        timeout="5m", delay=5)
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info(
