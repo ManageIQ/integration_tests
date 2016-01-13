@@ -70,6 +70,32 @@ def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
         logger.exception(ex)
 
 
+def delete_provider_vms(provider_key, vm_names):
+    with lock:
+        print 'Deleting VMs from {} ...'.format(provider_key)
+
+    try:
+        with lock:
+            provider = get_mgmt(provider_key)
+    except Exception as e:
+        with lock:
+            print "Could not retrieve the provider {}'s mgmt system ({}: {})".format(
+                provider_key, type(e).__name__, str(e))
+            logger.exception(e)
+
+    for vm_name in vm_names:
+        with lock:
+            print "Deleting {} from {}".format(vm_name, provider_key)
+        try:
+            provider.delete_vm(vm_name)
+        except Exception as e:
+            with lock:
+                print 'Failed to delete {} on {}'.format(vm_name, provider_key)
+                logger.exception(e)
+    with lock:
+        print "{} is done!".format(provider_key)
+
+
 def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     providers = providers or list_all_providers()
     delta = datetime.timedelta(hours=int(max_hours))
@@ -105,15 +131,19 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     if not vms_to_delete:
         print 'No VMs to delete.'
 
+    thread_queue = []
     for provider_key, vm_set in vms_to_delete.items():
-        provider = get_mgmt(provider_key)
-        for vm_name, __ in vm_set:
-            print 'Deleting %s on %s' % (vm_name, provider_key)
-            try:
-                provider.delete_vm(vm_name)
-            except Exception as ex:
-                print 'Failed to delete %s on %s' % (vm_name, provider_key)
-                logger.exception(ex)
+        thread = Thread(target=delete_provider_vms,
+            args=(provider_key, [name for name, t_delta in vm_set]))
+        # Mark as daemon thread for easy-mode KeyboardInterrupt handling
+        thread.daemon = True
+        thread_queue.append(thread)
+        thread.start()
+
+    for thread in thread_queue:
+        thread.join()
+
+    print "Deleting finished"
 
 if __name__ == "__main__":
     args = parse_cmd_line()
