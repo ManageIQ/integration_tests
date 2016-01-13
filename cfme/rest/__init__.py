@@ -52,6 +52,34 @@ def categories(request, rest_api, num=1):
     return ctgs
 
 
+def tags(request, rest_api, categories):
+    # Category id, href or name needs to be specified for creating a new tag resource
+    tags = []
+    for ctg in categories:
+        data = {
+            'name': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
+            'description': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
+            'category': {'href': ctg.href}
+        }
+        tags.append(data)
+    tags = rest_api.collections.tags.action.create(*tags)
+    for tag in tags:
+        wait_for(
+            lambda: rest_api.collections.tags.find_by(name=tag.name),
+            num_sec=180,
+            delay=10,
+        )
+
+    @request.addfinalizer
+    def _finished():
+        ids = [tag.id for tag in tags]
+        delete_tags = [tag for tag in rest_api.collections.tags if tag.id in ids]
+        if len(delete_tags) != 0:
+            rest_api.collections.tags.action.delete(*delete_tags)
+
+    return tags
+
+
 def tenants(request, rest_api, num=1):
     parent = rest_api.collections.tenants.get(name='My Company')
     data = [{
