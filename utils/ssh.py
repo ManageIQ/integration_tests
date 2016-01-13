@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import iso8601
 import re
 import socket
 import sys
@@ -9,7 +10,7 @@ import paramiko
 from scp import SCPClient
 import diaper
 
-from utils import conf, ports
+from utils import conf, ports, version
 from utils.log import logger
 from utils.net import net_check
 from fixtures.pytest_store import store
@@ -132,6 +133,8 @@ class SSHClient(paramiko.SSHClient):
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
     def run_command(self, command, timeout=RUNCMD_TIMEOUT):
+        if isinstance(command, dict):
+            command = version.pick(command)
         logger.info("Running command `{}`".format(command))
         template = '%s\n'
         command = template % command
@@ -230,7 +233,10 @@ class SSHClient(paramiko.SSHClient):
             contains dictionaries, one per line. You can refer inside the dictionary using the
             headers.
         """
-        data = self.run_command("service evmserverd status")
+        if version.current_version() < "5.5":
+            data = self.run_command("service evmserverd status")
+        else:
+            data = self.run_rake_command("evm:status")
         if data.rc != 0:
             raise Exception("service evmserverd status $?={}".format(data.rc))
         data = data.output.strip().split("\n\n")
@@ -242,6 +248,20 @@ class SSHClient(paramiko.SSHClient):
         if "checking evm status" not in srvs.lower():
             raise Exception("Wrong command output:\n{}".format(data.output))
 
+        def _process_dict(d):
+            d["PID"] = int(d["PID"])
+            d["ID"] = int(d["ID"])
+            try:
+                d["SPID"] = int(d["SPID"])
+            except ValueError:
+                d["SPID"] = None
+            if "Active Roles" in d:
+                d["Active Roles"] = set(d["Active Roles"].split(":"))
+            if "Last Heartbeat" in d:
+                d["Last Heartbeat"] = iso8601.parse_date(d["Last Heartbeat"])
+            if "Started On" in d:
+                d["Started On"] = iso8601.parse_date(d["Started On"])
+
         # Servers part
         srvs = srvs.split("\n")[1:]
         srv_headers = [h.strip() for h in srvs[0].strip().split("|")]
@@ -249,7 +269,9 @@ class SSHClient(paramiko.SSHClient):
         servers = []
         for server in srv_body:
             fields = [f.strip() for f in server.strip().split("|")]
-            servers.append(dict(zip(srv_headers, fields)))
+            srv = dict(zip(srv_headers, fields))
+            _process_dict(srv)
+            servers.append(srv)
 
         # Workers part
         wrks = wrks.split("\n")
@@ -258,7 +280,9 @@ class SSHClient(paramiko.SSHClient):
         workers = []
         for worker in wrk_body:
             fields = [f.strip() for f in worker.strip().split("|")]
-            workers.append(dict(zip(wrk_headers, fields)))
+            wrk = dict(zip(wrk_headers, fields))
+            _process_dict(wrk)
+            workers.append(wrk)
         return {"servers": servers, "workers": workers}
 
 
