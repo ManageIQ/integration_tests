@@ -63,6 +63,16 @@ class Appliance(object):
         self._provider_name = provider_name
         self.vmname = vm_name
 
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and (
+            self.vmname == other.vmname and self._provider_name == other._provider_name)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return int(hashlib.md5("{}@{}".format(self.vmname, self._provider_name)).hexdigest(), 16)
+
     @lazycache
     def ipapp(self):
         return IPAppliance(self.address)
@@ -149,31 +159,6 @@ class Appliance(object):
             self.ipapp.restart_evm_service(log_callback=log_callback)
             self.ipapp.wait_for_web_ui(log_callback=log_callback)
 
-    def _configure_5_2(self, log_callback=None):
-        self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
-        self.ipapp.fix_ntp_clock(log_callback=log_callback)
-        self.ipapp.enable_internal_db(log_callback=log_callback)
-        # need to skip_broken here until/unless we see a newer 52z build
-        self.ipapp.update_rhel(log_callback=log_callback, skip_broken=True)
-        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-
-    def _configure_5_3(self, log_callback=None):
-        self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
-        self.ipapp.fix_ntp_clock(log_callback=log_callback)
-        self.ipapp.enable_internal_db(log_callback=log_callback)
-        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-        self.ipapp.loosen_pgssl(log_callback=log_callback)
-        # self.ipapp.update_rhel(log_callback=log_callback)
-        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-
-    def _configure_upstream(self, log_callback=None):
-        self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
-        self.ipapp.fix_ntp_clock(log_callback=log_callback)
-        self.ipapp.setup_upstream_db(log_callback=log_callback)
-        self.ipapp.loosen_pgssl(log_callback=log_callback)
-        self.ipapp.restart_evm_service(log_callback=log_callback)
-        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-
     @logger_wrap("Configure Appliance: {}")
     def configure(self, setup_fleece=False, log_callback=None, **kwargs):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
@@ -192,21 +177,16 @@ class Appliance(object):
                          ``None`` (default ``None``)
 
         """
-
         log_callback("Configuring appliance {}".format(self.vmname))
-        with self.ipapp as ipapp:
-            ipapp.wait_for_ssh()
-            if kwargs:
+        if kwargs:
+            with self.ipapp:
                 self._custom_configure(**kwargs)
-            else:
-                configure_function = pick({
-                    '5.2': self._configure_5_2,
-                    '5.3': self._configure_5_3,
-                    LATEST: self._configure_upstream,
-                })
-                configure_function(log_callback=log_callback)
-            if setup_fleece:
-                self.configure_fleecing(log_callback=log_callback)
+        else:
+            # Defer to the IPAppliance.
+            self.ipapp.configure(log_callback=log_callback)
+        # And do configure the fleecing if requested
+        if setup_fleece:
+            self.configure_fleecing(log_callback=log_callback)
 
     def configure_fleecing(self, log_callback=None):
         if log_callback is None:
@@ -215,15 +195,15 @@ class Appliance(object):
             cb = log_callback
             log_callback = lambda message: cb("Configure fleecing: {}".format(message))
 
-        if self.is_on_vsphere:
-            self.ipapp.install_vddk(reboot=True, log_callback=log_callback)
-            self.ipapp.wait_for_web_ui(log_callback=log_callback)
-
-        if self.is_on_rhev:
-            self.add_rhev_direct_lun_disk()
-
         self.ipapp.browser_steal = True
         with self.ipapp:
+            if self.is_on_vsphere:
+                self.ipapp.install_vddk(reboot=True, log_callback=log_callback)
+                self.ipapp.wait_for_web_ui(log_callback=log_callback)
+
+            if self.is_on_rhev:
+                self.add_rhev_direct_lun_disk()
+
             log_callback('Enabling smart proxy role...')
             roles = get_server_roles()
             if not roles["smartproxy"]:
@@ -363,12 +343,18 @@ class IPAppliance(object):
 
     def __init__(self, address=None, browser_steal=False):
         if address is not None:
-            if isinstance(address, ParseResult):
+            if not isinstance(address, ParseResult):
+                address = urlparse(str(address))
+            if not (address.scheme and address.netloc):
+                # Use .path (w.x.y.z ip format)
+                self.address = address.path
+                self.scheme = "https"
+                self._url = "https://{}/".format(address.path)
+            else:
+                # schema://w.x.y.z/ format
                 self.address = address.netloc
                 self.scheme = address.scheme
                 self._url = address.geturl()
-            else:
-                self.address = address
         self.browser_steal = browser_steal
         self._db_ssh_client = None
 
@@ -438,6 +424,62 @@ class IPAppliance(object):
 
     def __hash__(self):
         return int(hashlib.md5(self.address).hexdigest(), 16)
+
+    # Configuration methods
+    @logger_wrap("Configure Appliance: {}")
+    def configure(self, log_callback=None, **kwargs):
+        """Configures appliance - database setup, rename, ntp sync, ajax wait patch
+
+        Utility method to make things easier.
+
+        Args:
+            db_address: Address of external database if set, internal database if ``None``
+                        (default ``None``)
+            name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
+            region: Number to assign to region (default ``0``)
+            fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
+            patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
+            loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
+            key_address: Fetch encryption key from this address if set, generate a new key if
+                         ``None`` (default ``None``)
+
+        """
+
+        log_callback("Configuring appliance {}".format(self.address))
+        with self as ipapp:
+            ipapp.wait_for_ssh()
+            configure_function = pick({
+                '5.2': self._configure_5_2,
+                '5.3': self._configure_5_3,
+                LATEST: self._configure_upstream,
+            })
+            configure_function(log_callback=log_callback)
+
+    # When calling any of these methods, `with self:` context must be entered.
+    def _configure_5_2(self, log_callback=None):
+        self.deploy_merkyl(start=True, log_callback=log_callback)
+        self.fix_ntp_clock(log_callback=log_callback)
+        self.enable_internal_db(log_callback=log_callback)
+        # need to skip_broken here until/unless we see a newer 52z build
+        self.update_rhel(log_callback=log_callback, skip_broken=True)
+        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
+    def _configure_5_3(self, log_callback=None):
+        self.deploy_merkyl(start=True, log_callback=log_callback)
+        self.fix_ntp_clock(log_callback=log_callback)
+        self.enable_internal_db(log_callback=log_callback)
+        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+        self.loosen_pgssl(log_callback=log_callback)
+        # self.ipapp.update_rhel(log_callback=log_callback)
+        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
+    def _configure_upstream(self, log_callback=None):
+        self.deploy_merkyl(start=True, log_callback=log_callback)
+        self.fix_ntp_clock(log_callback=log_callback)
+        self.setup_upstream_db(log_callback=log_callback)
+        self.loosen_pgssl(log_callback=log_callback)
+        self.restart_evm_service(log_callback=log_callback)
+        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def seal_for_templatizing(self):
         """Prepares the VM to be "generalized" for saving as a template."""
