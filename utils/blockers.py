@@ -43,7 +43,7 @@ class Blocker(object):
         return result
 
     @classmethod
-    def parse(cls, blocker):
+    def parse(cls, blocker, **kwargs):
         """Create a blocker object from some representation"""
         if isinstance(blocker, cls):
             return blocker
@@ -57,7 +57,7 @@ class Blocker(object):
                     raise ValueError(
                         "{} is a wrong engine specification for blocker! ({} available)".format(
                             engine, ", ".join(cls.all_blocker_engines().keys())))
-                return engine_class(spec)
+                return engine_class(spec, **kwargs)
             # EXTEND: If someone has other ideas, put them here
             raise ValueError("Could not parse blocker {}".format(blocker))
         else:

@@ -161,7 +161,7 @@ def test_vm_event(setup_provider, provider, db, gen_events, test_instance, bug):
         test_instance.load_details()
         toolbar.select('Monitoring', 'Timelines')
 
-    ec2_ui_bug = bug(1201923)
+    ec2_ui_bug = bug(1201923, forced_streams=["5.5"])
     if (ec2_ui_bug is None or provider.type == 'openstack'):
         # This fails for ec2... https://bugzilla.redhat.com/show_bug.cgi?id=1201923
         wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
