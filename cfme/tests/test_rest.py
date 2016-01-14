@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 """This module contains REST API specific tests."""
-import datetime
 import fauxfactory
 import pytest
 
 from cfme import Credential
-from cfme.automate.service_dialogs import ServiceDialog
 from cfme.configure.access_control import User, Group
 from cfme.configure.configuration import server_roles_disabled
 from cfme.login import login
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services import requests
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
@@ -79,30 +75,6 @@ def provision_data(
 
 @pytest.mark.usefixtures("logged_in")
 @pytest.fixture(scope='function')
-def dialog():
-    dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
-    element_data = dict(
-        ele_label="ele_{}".format(fauxfactory.gen_alphanumeric()),
-        ele_name=fauxfactory.gen_alphanumeric(),
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box="default value"
-    )
-    service_dialog = ServiceDialog(
-        label=dialog,
-        description="my dialog",
-        submit=True,
-        cancel=True,
-        tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()),
-        tab_desc="my tab desc",
-        box_label="box_{}".format(fauxfactory.gen_alphanumeric()),
-        box_desc="my box desc")
-    service_dialog.create(element_data)
-    return service_dialog
-
-
-@pytest.mark.usefixtures("logged_in")
-@pytest.fixture(scope='function')
 def user():
     user = User(credential=Credential(principal=fauxfactory.gen_alphanumeric(),
         secret=fauxfactory.gen_alphanumeric()), name=fauxfactory.gen_alphanumeric(),
@@ -140,66 +112,6 @@ def service_templates(request, rest_api, dialog):
             rest_api.collections.service_templates.action.delete(*s_tpls)
 
     return s_tpls
-
-
-@pytest.mark.usefixtures("setup_provider")
-@pytest.mark.usefixtures("logged_in")
-@pytest.fixture(scope='function')
-def services(request, a_provider, rest_api, dialog, service_catalogs):
-    """
-    The attempt to add the service entities via web
-    """
-    template, host, datastore, iso_file, vlan, catalog_item_type = map(a_provider.data.get(
-        "provisioning").get,
-        ('template', 'host', 'datastore', 'iso_file', 'vlan', 'catalog_item_type'))
-
-    provisioning_data = {
-        'vm_name': 'test_rest_{}'.format(fauxfactory.gen_alphanumeric()),
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]}
-    }
-
-    if a_provider.type == 'rhevm':
-        provisioning_data['provision_type'] = 'Native Clone'
-        provisioning_data['vlan'] = vlan
-        catalog_item_type = version.pick({
-            version.LATEST: "RHEV",
-            '5.3': "RHEV",
-            '5.2': "Redhat"
-        })
-    elif a_provider.type == 'virtualcenter':
-        provisioning_data['provision_type'] = 'VMware'
-    catalog = service_catalogs[0].name
-    item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
-                               description="my catalog", display_in=True,
-                               catalog=catalog,
-                               dialog=dialog.label,
-                               catalog_name=template,
-                               provider=a_provider.name,
-                               prov_data=provisioning_data)
-
-    catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=2000, delay=20)
-    assert row.last_message.text == 'Request complete'
-    try:
-        services = [_ for _ in rest_api.collections.services]
-        services[0]
-    except IndexError:
-        pytest.skip("There is no service to be taken")
-
-    @request.addfinalizer
-    def _finished():
-        services = [_ for _ in rest_api.collections.services]
-        if len(services) != 0:
-            rest_api.collections.services.action.delete(*services)
-
-    return services
 
 
 @pytest.fixture(scope='function')
@@ -366,117 +278,6 @@ def test_edit_multiple_service_templates(rest_api, service_templates):
             num_sec=180,
             delay=10,
         )
-
-
-def test_edit_service(rest_api, services):
-    """Tests editing a service.
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/services (method ``edit``) with the ``name``
-        * Check if the service with ``new_name`` exists
-    Metadata:
-        test_flag: rest
-    """
-    ser = services[0]
-    new_name = fauxfactory.gen_alphanumeric()
-    ser.action.edit(name=new_name)
-    wait_for(
-        lambda: rest_api.collections.services.find_by(name=new_name),
-        num_sec=180,
-        delay=10,
-    )
-
-
-def test_edit_multiple_services(rest_api, services):
-    """Tests editing multiple service catalogs at time.
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/services (method ``edit``) with the list of dictionaries used to edit
-        * Check if the services with ``new_name`` each exists
-    Metadata:
-        test_flag: rest
-    """
-    new_names = []
-    services_data_edited = []
-    for ser in services:
-        new_name = fauxfactory.gen_alphanumeric()
-        new_names.append(new_name)
-        services_data_edited.append({
-            "href": ser.href,
-            "name": new_name,
-        })
-    rest_api.collections.services.action.edit(*services_data_edited)
-    for new_name in new_names:
-        wait_for(
-            lambda: rest_api.collections.service_templates.find_by(name=new_name),
-            num_sec=180,
-            delay=10,
-        )
-
-
-def test_delete_service(rest_api, services):
-    service = rest_api.collections.services[0]
-    service.action.delete()
-    with error.expected("ActiveRecord::RecordNotFound"):
-        service.action.delete()
-
-
-def test_delete_services(rest_api, services):
-    rest_api.collections.services.action.delete(*services)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.collections.services.action.delete(*services)
-
-
-def test_retire_service_now(rest_api, services):
-    """Test retiring a service
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * Retrieve list of entities using GET /api/services , pick the first one
-        * POST /api/service/<id> (method ``retire``)
-    Metadata:
-        test_flag: rest
-    """
-    assert "retire" in rest_api.collections.services.action.all
-    retire_service = services[0]
-    retire_service.action.retire()
-    wait_for(
-        lambda: not rest_api.collections.services.find_by(name=retire_service.name),
-        num_sec=600,
-        delay=10,
-    )
-
-
-def test_retire_service_future(rest_api, services):
-    """Test retiring a service
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * Retrieve list of entities using GET /api/services , pick the first one
-        * POST /api/service/<id> (method ``retire``) with the ``retire_date``
-    Metadata:
-        test_flag: rest
-    """
-    assert "retire" in rest_api.collections.services.action.all
-
-    retire_service = services[0]
-    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime('%m/%d/%y')
-    future = {
-        "date": date,
-        "warn": "4",
-    }
-    date_before = retire_service.updated_at
-    retire_service.action.retire(future)
-
-    def _finished():
-        retire_service.reload()
-        if retire_service.updated_at > date_before:
-                return True
-        return False
-
-    wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
 
 
 def test_provider_refresh(request, a_provider, rest_api):
