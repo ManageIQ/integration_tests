@@ -1,5 +1,11 @@
 import fauxfactory
+import pytest
+from cfme.automate.service_dialogs import ServiceDialog
+from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services import requests
 from utils.wait import wait_for
+from utils import version
 
 
 def service_catalogs(request, rest_api):
@@ -106,3 +112,82 @@ def tenants(request, rest_api, num=1):
             rest_api.collections.tenants.action.delete(*delete_tenants)
 
     return tenants
+
+
+def dialog():
+    dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
+    element_data = dict(
+        ele_label="ele_{}".format(fauxfactory.gen_alphanumeric()),
+        ele_name=fauxfactory.gen_alphanumeric(),
+        ele_desc="my ele desc",
+        choose_type="Text Box",
+        default_text_box="default value"
+    )
+    service_dialog = ServiceDialog(
+        label=dialog,
+        description="my dialog",
+        submit=True,
+        cancel=True,
+        tab_label="tab_{}".format(fauxfactory.gen_alphanumeric()),
+        tab_desc="my tab desc",
+        box_label="box_{}".format(fauxfactory.gen_alphanumeric()),
+        box_desc="my box desc")
+    service_dialog.create(element_data)
+    return service_dialog
+
+
+def services(request, rest_api, a_provider, dialog, service_catalogs):
+    """
+    The attempt to add the service entities via web
+    """
+    template, host, datastore, iso_file, vlan, catalog_item_type = map(a_provider.data.get(
+        "provisioning").get,
+        ('template', 'host', 'datastore', 'iso_file', 'vlan', 'catalog_item_type'))
+
+    provisioning_data = {
+        'vm_name': 'test_rest_{}'.format(fauxfactory.gen_alphanumeric()),
+        'host_name': {'name': [host]},
+        'datastore_name': {'name': [datastore]}
+    }
+
+    if a_provider.type == 'rhevm':
+        provisioning_data['provision_type'] = 'Native Clone'
+        provisioning_data['vlan'] = vlan
+        catalog_item_type = version.pick({
+            version.LATEST: "RHEV",
+            '5.3': "RHEV",
+            '5.2': "Redhat"
+        })
+    elif a_provider.type == 'virtualcenter':
+        provisioning_data['provision_type'] = 'VMware'
+    catalog = service_catalogs[0].name
+    item_name = fauxfactory.gen_alphanumeric()
+    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
+                               description="my catalog", display_in=True,
+                               catalog=catalog,
+                               dialog=dialog.label,
+                               catalog_name=template,
+                               provider=a_provider.name,
+                               prov_data=provisioning_data)
+
+    catalog_item.create()
+    service_catalogs = ServiceCatalogs("service_name")
+    service_catalogs.order(catalog_item.catalog, catalog_item)
+    row_description = catalog_item.name
+    cells = {'Description': row_description}
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+        fail_func=requests.reload, num_sec=2000, delay=20)
+    assert row.last_message.text == 'Request complete'
+    try:
+        services = [_ for _ in rest_api.collections.services]
+        services[0]
+    except IndexError:
+        pytest.skip("There is no service to be taken")
+
+    @request.addfinalizer
+    def _finished():
+        services = [_ for _ in rest_api.collections.services]
+        if len(services) != 0:
+            rest_api.collections.services.action.delete(*services)
+
+    return services
