@@ -21,7 +21,7 @@ def blocker(uses_blockers):
     Returns:
         Instance of :py:class:`utils.blockers.Blocker`
     """
-    return lambda b: Blocker.parse(b)
+    return lambda b, **kwargs: Blocker.parse(b, **kwargs)
 
 
 @pytest.fixture(scope="function")
@@ -49,7 +49,7 @@ def bug(blocker):
     Returns:
         Instance of :py:class:`utils.bz.BugWrapper` or :py:class:`NoneType` if the bug is closed.
     """
-    return lambda bug_id: blocker("BZ#{}".format(bug_id)).bugzilla_bug
+    return lambda bug_id, **kwargs: blocker("BZ#{}".format(bug_id), **kwargs).bugzilla_bug
 
 
 def pytest_addoption(parser):
