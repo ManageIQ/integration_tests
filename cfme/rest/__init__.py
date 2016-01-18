@@ -1,5 +1,6 @@
 import fauxfactory
 import pytest
+
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
@@ -191,3 +192,29 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
             rest_api.collections.services.action.delete(*services)
 
     return services
+
+
+def roles(request, rest_api):
+    if "create" not in rest_api.collections.roles.action.all:
+        pytest.skip("Create roles action is not implemented in this version")
+
+    roles_data = [{
+        "name": "role_name_{}".format(fauxfactory.gen_alphanumeric())
+    } for index in range(1, 5)]
+
+    roles = rest_api.collections.roles.action.create(*roles_data)
+    for role in roles:
+        wait_for(
+            lambda: rest_api.collections.roles.find_by(name=role.name),
+            num_sec=180,
+            delay=10,
+        )
+
+    @request.addfinalizer
+    def _finished():
+        ids = [r.id for r in roles]
+        delete_roles = [r for r in rest_api.collections.roles if r.id in ids]
+        if len(delete_roles) != 0:
+            rest_api.collections.roles.action.delete(*delete_roles)
+
+    return roles

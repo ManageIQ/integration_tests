@@ -134,33 +134,6 @@ def automation_requests_data():
     } for index in range(1, 5)]
 
 
-@pytest.fixture(scope='function')
-def roles(request, rest_api):
-    if "create" not in rest_api.collections.roles.action.all:
-        pytest.skip("Create roles action is not implemented in this version")
-
-    roles_data = [{
-        "name": "role_name_{}".format(fauxfactory.gen_alphanumeric())
-    } for index in range(1, 5)]
-
-    roles = rest_api.collections.roles.action.create(*roles_data)
-    for role in roles:
-        wait_for(
-            lambda: rest_api.collections.roles.find_by(name=role.name),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [r.id for r in roles]
-        delete_roles = [r for r in rest_api.collections.roles if r.id in ids]
-        if len(delete_roles) != 0:
-            rest_api.collections.roles.action.delete(*delete_roles)
-
-    return roles
-
-
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
 @pytest.mark.meta(server_roles="+automate")
@@ -505,84 +478,6 @@ def test_automation_requests(request, rest_api, automation_requests_data, multip
         return True
 
     wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-@pytest.mark.parametrize(
-    "multiple", [False, True],
-    ids=["one_request", "multiple_requests"])
-def test_edit_roles(rest_api, roles, multiple):
-    if "edit" not in rest_api.collections.roles.action.all:
-        pytest.skip("Edit roles action is not implemented in this version")
-
-    if multiple:
-        new_names = []
-        roles_data_edited = []
-        for role in roles:
-            new_name = fauxfactory.gen_alphanumeric()
-            new_names.append(new_name)
-            role.reload()
-            roles_data_edited.append({
-                "href": role.href,
-                "name": "role_name_{}".format(new_name),
-            })
-        rest_api.collections.roles.action.edit(*roles_data_edited)
-        for new_name in new_names:
-            wait_for(
-                lambda: rest_api.collections.roles.find_by(name=new_name),
-                num_sec=180,
-                delay=10,
-            )
-    else:
-        role = rest_api.collections.roles.get(name=roles[0].name)
-        new_name = 'role_name_{}'.format(fauxfactory.gen_alphanumeric())
-        role.action.edit(name=new_name)
-        wait_for(
-            lambda: rest_api.collections.roles.find_by(name=new_name),
-            num_sec=180,
-            delay=10,
-        )
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_delete_roles(rest_api, roles):
-    if "delete" not in rest_api.collections.roles.action.all:
-        pytest.skip("Delete roles action is not implemented in this version")
-
-    rest_api.collections.roles.action.delete(*roles)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.collections.roles.action.delete(*roles)
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_add_delete_role(rest_api):
-    if "add" not in rest_api.collections.roles.action.all:
-        pytest.skip("Add roles action is not implemented in this version")
-
-    role_data = {"name": "role_name_{}".format(format(fauxfactory.gen_alphanumeric()))}
-    role = rest_api.collections.roles.action.add(role_data)[0]
-    wait_for(
-        lambda: rest_api.collections.roles.find_by(name=role.name),
-        num_sec=180,
-        delay=10,
-    )
-    role.action.delete()
-    with error.expected("ActiveRecord::RecordNotFound"):
-        role.action.delete()
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_role_assign_and_unassign_feature(rest_api, roles):
-    feature = rest_api.collections.features.get(name="Everything")
-    role = roles[0]
-    role.reload()
-    role.features.action.assign(feature)
-    role.reload()
-    # This verification works because the created roles don't have assigned features
-    assert feature.id in [f.id for f in role.features.all]
-    role.features.action.unassign(feature)
-    role.reload()
-    assert feature.id not in [f.id for f in role.features.all]
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
