@@ -680,7 +680,7 @@ class TestTenantsViaREST(object):
 
 # Tenant/Project test cases
 @pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
-def test_superadmin_tenant_crud():
+def test_superadmin_tenant_crud(request):
     """Test suppose to verify CRUD operations for CFME tenants
 
     Prerequisities:
@@ -695,9 +695,54 @@ def test_superadmin_tenant_crud():
     tenant = ac.Tenant(
         name='tenant1' + fauxfactory.gen_alphanumeric(),
         description='tenant1 description')
+
+    @request.addfinalizer
+    def _delete_tenant():
+        if tenant.exists:
+            tenant.delete()
+
     tenant.create()
     with update(tenant):
         tenant.description = tenant.description + "edited"
     with update(tenant):
         tenant.name = tenant.name + "edited"
+    tenant.delete()
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
+def test_superadmin_tenant_project_crud(request):
+    """Test suppose to verify CRUD operations for CFME projects
+
+    Prerequisities:
+        * This test is not depending on any other test and can be executed against fresh appliance.
+
+    Steps:
+        * Create tenant
+        * Create project as child to tenant
+        * Update description of project
+        * Update name of project
+        * Delete project
+        * Delete tenant
+    """
+    tenant = ac.Tenant(
+        name='tenant1' + fauxfactory.gen_alphanumeric(),
+        description='tenant1 description')
+    project = ac.Project(
+        name='project1' + fauxfactory.gen_alphanumeric(),
+        description='project1 description',
+        parent_tenant=tenant)
+
+    @request.addfinalizer
+    def _delete_tenant_and_project():
+        for item in [project, tenant]:
+            if item.exists:
+                item.delete()
+
+    tenant.create()
+    project.create()
+    with update(project):
+        project.description = project.description + "edited"
+    with update(project):
+        project.name = project.name + "edited"
+    project.delete()
     tenant.delete()
