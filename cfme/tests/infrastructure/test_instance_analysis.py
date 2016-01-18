@@ -55,7 +55,7 @@ DEB_BASED = {
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, "vm_analysis_new")
+    argnames, argvalues, idlist = testgen.all_providers(metafunc, "vm_analysis_new")
 
     new_idlist = []
     new_argvalues = []
@@ -167,8 +167,6 @@ def instance(request, local_setup_provider, provider, setup_ci_template, vm_anal
 
     mgmt_system = provider.get_mgmt_system()
 
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
-
     provisioning_data = {
         'vm_name': vm_name,
         'host_name': {'name': [host]},
@@ -182,17 +180,42 @@ def instance(request, local_setup_provider, provider, setup_ci_template, vm_anal
         if provider.type == 'rhevm':
             raise pytest.fail('rhevm requires a vlan value in provisioning info')
 
-    do_vm_provisioning(template, provider, vm_name, provisioning_data, request, None,
-                       num_sec=6000)
+    vm = VM.factory(vm_name, provider)
 
-    mgmt_system.start_vm(vm_name)
+    connect_ip = None
+    if provider.type == "openstack":
+        image = vm_analysis_new['image']
+        vm = VM.factory(vm_name, provider, image)
+        request.addfinalizer(vm.delete_from_provider)
+        connect_ip = mgmt_system.get_first_floating_ip()
+        provider.refresh_provider_relationships(method='ui')
+        inst_args = {
+            'email': 'image_provisioner@example.com',
+            'first_name': 'Image',
+            'last_name': 'Provisioner',
+            'template_name': image,
+            'notes': ('Testing provisioning from image {} to vm {} on provider {}'.format(
+                image, vm_name, provider.key)),
+            'instance_type': vm_analysis_new['instance_type'],
+            'availability_zone': vm_analysis_new['availability_zone'],
+            'security_groups': [vm_analysis_new['security_group']],
+            'cloud_network': vm_analysis_new['cloud_network'],
+            'public_ip_address': connect_ip,
+        }
+        sel.force_navigate("clouds_instances_by_provider")
+        vm.create(**inst_args)
+    else:
+        request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+        do_vm_provisioning(template, provider, vm_name, provisioning_data, request, None,
+                           num_sec=6000)
 
-    logger.info("VM {} provisioned, waiting for IP address to be assigned".format(vm_name))
-    connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=6000,
-                              handle_exception=True)
+        mgmt_system.start_vm(vm_name)
+
+        logger.info("VM {} provisioned, waiting for IP address to be assigned".format(vm_name))
+        connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=6000,
+                                  handle_exception=True)
     assert connect_ip is not None
 
-    vm = VM.factory(vm_name, provider)
     # Check that we can at least get the uptime via ssh this should only be possible
     # if the username and password have been set via the cloud-init script so
     # is a valid check
@@ -289,7 +312,6 @@ def test_ssa_vm(provider, instance, soft_assert):
     # We shouldn't use get_detail anymore - it takes too much time
     c_users = InfoBlock.text('Security', 'Users')
     c_groups = InfoBlock.text('Security', 'Groups')
-    c_image = InfoBlock.text('Relationships', 'Parent VM')
     c_packages = 0
     if instance.system_type != WINDOWS:
         c_packages = InfoBlock.text('Configuration', 'Packages')
@@ -297,7 +319,6 @@ def test_ssa_vm(provider, instance, soft_assert):
     logger.info("SSA shows {} users, {} groups and {} packages".format(
         c_users, c_groups, c_packages))
 
-    soft_assert(c_image == instance.image, "image: '{}' != '{}'".format(c_image, instance.image))
     soft_assert(e_icon_part in details_os_icon,
                 "details icon: '{}' not in '{}'".format(e_icon_part, details_os_icon))
     soft_assert(e_icon_part in quadicon_os_icon,
@@ -320,6 +341,15 @@ def test_ssa_vm(provider, instance, soft_assert):
         soft_assert(c_win32_services != '0', "win32 services: '{}' != '0'".format(c_win32_services))
         soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
         soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
+
+    image_label = 'Parent VM'
+    if provider.type == 'openstack':
+        image_label = 'VM Template'
+    # 5.4 doesn't have Parent VM field
+    if version.current_version() > "5.5" and provider.type != 'openstack':
+        c_image = InfoBlock.text('Relationships', image_label)
+        soft_assert(c_image == instance.image,
+                    "image: '{}' != '{}'".format(c_image, instance.image))
 
 
 @pytest.mark.long_running
