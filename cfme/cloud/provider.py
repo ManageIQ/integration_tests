@@ -53,6 +53,7 @@ properties_form = Form(
             }
         )),
         ("api_version", AngularSelect("api_version"), {"appeared_in": "5.5"}),
+        ('sec_protocol', AngularSelect("security_protocol"), {"appeared_in": "5.5"}),
         ('infra_provider', {
             version.LOWEST: None,
             "5.4": Select("select#provider_id"),
@@ -138,13 +139,14 @@ class EC2Provider(Provider):
 
 class OpenStackProvider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, infra_provider=None):
+                 ip_address=None, api_port=None, sec_protocol=None, infra_provider=None):
         super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
                                                 zone=zone, key=key)
         self.hostname = hostname
         self.ip_address = ip_address
         self.api_port = api_port
         self.infra_provider = infra_provider
+        self.sec_protocol = sec_protocol
 
     def create(self, *args, **kwargs):
         # Override the standard behaviour to actually create the underlying infra first.
@@ -166,6 +168,7 @@ class OpenStackProvider(Provider):
                 'hostname_text': kwargs.get('hostname'),
                 'api_port': kwargs.get('api_port'),
                 'ipaddress_text': kwargs.get('ip_address'),
+                'sec_protocol': kwargs.get('sec_protocol'),
                 'infra_provider': "---" if infra_provider is False else infra_provider}
 
 
