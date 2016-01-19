@@ -10,6 +10,7 @@ from cfme.intelligence.reports.schedules import Schedule
 from cfme.intelligence.reports.widgets import ChartWidget, MenuWidget, ReportWidget, RSSFeedWidget
 from utils.path import data_path
 from utils.update import update
+from utils import version
 
 
 report_crud_dir = data_path.join("reports_crud")
@@ -165,3 +166,43 @@ def test_dashboard_crud():
     with update(d):
         d.widgets = "Top Storage Consumers"
     d.delete()
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_run_report(rest_api):
+    report = rest_api.collections.reports.get(name='VM Disk Usage')
+    response = report.action.run()
+
+    @pytest.wait_for(timeout="5m", delay=5)
+    def rest_running_report_finishes():
+        response.task.reload()
+        if response.task.status.lower() in {"error"}:
+            pytest.fail("Error when running report: `{}`".format(response.task.message))
+        return response.task.state.lower() == 'finished'
+
+    result = rest_api.collections.results.get(id=response.result_id)
+    assert result.name == report.name
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_import_report(rest_api):
+    menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
+    data = {
+        'report': {
+            'menu_name': menu_name,
+            'col_order': ['col1', 'col2', 'col3'],
+            'cols': ['col1', 'col2', 'col3'],
+            'rpt_type': 'Custom',
+            'title': 'Test Report',
+            'db': 'My::Db',
+            'rpt_group': 'Custom',
+        },
+        'options': {'save': 'true'}
+    }
+    response, = rest_api.collections.reports.action.execute_action("import", data)
+    assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
+    report = rest_api.collections.reports.get(name=menu_name)
+    assert report.name == menu_name
+
+    response, = rest_api.collections.reports.action.execute_action("import", data)
+    assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)

@@ -580,46 +580,6 @@ def test_delete_rates(rest_api, rates, multiple):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_run_report(rest_api):
-    report = rest_api.collections.reports.get(name='VM Disk Usage')
-    response = report.action.run()
-
-    @pytest.wait_for(timeout="5m", delay=5, message="REST running report finishes")
-    def _finished():
-        response.task.reload()
-        if response.task.status.lower() in {"error"}:
-            pytest.fail("Error when running report: `{}`".format(response.task.message))
-        return response.task.state.lower() == 'finished'
-
-    result = rest_api.collections.results.get(id=response.result_id)
-    assert result.name == report.name
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_import_report(rest_api):
-    menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
-    data = {
-        'report': {
-            'menu_name': menu_name,
-            'col_order': ['col1', 'col2', 'col3'],
-            'cols': ['col1', 'col2', 'col3'],
-            'rpt_type': 'Custom',
-            'title': 'Test Report',
-            'db': 'My::Db',
-            'rpt_group': 'Custom',
-        },
-        'options': {'save': 'true'}
-    }
-    response, = rest_api.collections.reports.action.execute_action("import", data)
-    assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
-    report = rest_api.collections.reports.get(name=menu_name)
-    assert report.name == menu_name
-
-    response, = rest_api.collections.reports.action.execute_action("import", data)
-    assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_set_service_owner(rest_api, services):
     if "set_ownership" not in rest_api.collections.services.action.all:
         pytest.skip("Set owner action for service is not implemented in this version")
