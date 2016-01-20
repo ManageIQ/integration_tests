@@ -605,6 +605,7 @@ def get_crud(provider_config_name):
             credentials={'default': credentials},
             zone=prov_config['server_zone'],
             key=provider_config_name,
+            sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
             infra_provider=prov_config.get('infra_provider'))
     elif prov_type == 'virtualcenter':
         return VMwareProvider(name=prov_config['name'],
