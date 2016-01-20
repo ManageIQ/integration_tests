@@ -218,3 +218,32 @@ def roles(request, rest_api):
             rest_api.collections.roles.action.delete(*delete_roles)
 
     return roles
+
+
+def rates(request, rest_api):
+    chargeback = rest_api.collections.chargebacks.get(rate_type='Compute')
+    data = [{
+        'description': 'test_rate_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
+        'rate': 1,
+        'group': 'cpu',
+        'per_time': 'daily',
+        'per_unit': 'megahertz',
+        'chargeback_rate_id': chargeback.id
+    } for _index in range(0, 3)]
+
+    rates = rest_api.collections.rates.action.create(*data)
+    for rate in data:
+        wait_for(
+            lambda: rest_api.collections.rates.find_by(description=rate.get('description')),
+            num_sec=180,
+            delay=10,
+        )
+
+    @request.addfinalizer
+    def _finished():
+        ids = [rate.id for rate in rates]
+        delete_rates = [rate for rate in rest_api.collections.rates if rate.id in ids]
+        if len(delete_rates) != 0:
+            rest_api.collections.rates.action.delete(*delete_rates)
+
+    return rates

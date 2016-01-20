@@ -3,8 +3,11 @@ import fauxfactory
 import pytest
 import cfme.intelligence.chargeback as cb
 import cfme.web_ui.flash as flash
+from cfme.rest import rates as _rates
 from utils.update import update
+from utils.wait import wait_for
 import utils.error as error
+from utils import version
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
@@ -85,3 +88,57 @@ def test_delete_storage_chargeback():
     scb.create()
     scb.delete()
     flash.assert_message_match('The selected Chargeback Rate was deleted')
+
+
+class TestRatesViaREST(object):
+    @pytest.fixture(scope="function")
+    def rates(self, request, rest_api):
+        return _rates(request, rest_api)
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    @pytest.mark.parametrize(
+        "multiple", [False, True],
+        ids=["one_request", "multiple_requests"])
+    def test_edit_rates(self, rest_api, rates, multiple):
+        if multiple:
+            new_descriptions = []
+            rates_data_edited = []
+            for rate in rates:
+                new_description = fauxfactory.gen_alphanumeric().lower()
+                new_descriptions.append(new_description)
+                rate.reload()
+                rates_data_edited.append({
+                    "href": rate.href,
+                    "description": "test_category_{}".format(new_description),
+                })
+            rest_api.collections.rates.action.edit(*rates_data_edited)
+            for new_description in new_descriptions:
+                wait_for(
+                    lambda: rest_api.collections.rates.find_by(description=new_description),
+                    num_sec=180,
+                    delay=10,
+                )
+        else:
+            rate = rest_api.collections.rates.get(description=rates[0].description)
+            new_description = 'test_rate_{}'.format(fauxfactory.gen_alphanumeric().lower())
+            rate.action.edit(description=new_description)
+            wait_for(
+                lambda: rest_api.collections.rates.find_by(description=new_description),
+                num_sec=180,
+                delay=10,
+            )
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    @pytest.mark.parametrize(
+        "multiple", [False, True],
+        ids=["one_request", "multiple_requests"])
+    def test_delete_rates(self, rest_api, rates, multiple):
+        if multiple:
+            rest_api.collections.rates.action.delete(*rates)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                rest_api.collections.rates.action.delete(*rates)
+        else:
+            rate = rates[0]
+            rate.action.delete()
+            with error.expected("ActiveRecord::RecordNotFound"):
+                rate.action.delete()
