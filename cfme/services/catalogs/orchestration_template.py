@@ -2,9 +2,12 @@
 from functools import partial
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, fill, form_buttons, menu, Form, Input, flash, Select, ScriptBox
+from cfme.web_ui import paginator as pg
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
+from utils import error
+
 
 cfg_btn = partial(tb.select, "Configuration")
 accordion_tree = partial(accordion.tree, "Orchestration Templates")
@@ -68,20 +71,29 @@ class OrchestrationTemplate(Updateable, Pretty):
         self.template_name = template_name
         self.description = description
 
-    def create(self, content):
+    def create_form(self, content):
         sel.force_navigate('create_new_template',
                            context={'template_type': self.template_type})
         if(self.template_type == "CloudFormation Templates"):
             temp_type = "Amazon CloudFormation"
         else:
             temp_type = "OpenStack Heat"
-        fill(create_template_form, {'template_name': self.template_name,
-                                    'description': self.description,
+        fill(create_template_form, {'description': self.description,
                                     'template_type': temp_type,
-                                    'content': content},
+                                    'content': content,
+                                    'template_name': self.template_name},
             action=create_template_form.add_button)
-        flash.assert_success_message('Orchestration Template "%s" was saved' %
+
+    def create(self, content):
+        self.create_form(content)
+        try:
+            flash.assert_success_message('Orchestration Template "%s" was saved' %
                                      self.template_name)
+        except Exception as e:
+            if error.match("Error during 'Orchestration Template creation': Validation failed: \
+                            Md5 of content already exists (content must be unique)", e):
+                self.create_form(content + " ")
+            raise
 
     def update(self, updates):
         sel.force_navigate('edit_template',
@@ -101,6 +113,13 @@ class OrchestrationTemplate(Updateable, Pretty):
         sel.handle_alert()
         flash.assert_success_message('Orchestration Template "%s" was deleted.' %
                                      self.template_name)
+
+    def delete_all_templates(self):
+        sel.force_navigate('orch_template_type',
+                           context={'template_type': self.template_type})
+        sel.click(pg.check_all())
+        cfg_btn("Remove selected Orchestration Templates", invokes_alert=True)
+        sel.handle_alert()
 
     def copy_template(self, template_name, content):
         sel.force_navigate('select_template',

@@ -7,7 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons, flash, Table,
-    Quadicon, CheckboxTree, Input)
+    ButtonGroup, Quadicon, CheckboxTree, Input)
 from cfme.web_ui.menu import nav
 from utils import version
 from utils.pretty import Pretty
@@ -322,3 +322,19 @@ class DefaultFilter(Updateable, Pretty):
              action=form_buttons.save)
         if expect_success:
             flash.assert_success_message('Default Filters saved successfully')
+
+
+class DefaultViews(Updateable, Pretty):
+    pretty_attrs = ['button_group_name', 'view']
+
+    def __init__(self, button_group_name=None, view=None):
+        self.button_group_name = button_group_name
+        self.view = view
+
+    def set_view(self):
+        bg = ButtonGroup(self.button_group_name)
+        sel.force_navigate("my_settings_default_views")
+        default_view = bg.active
+        if(default_view != self.view):
+            bg.choose(self.view)
+            sel.click(form_buttons.save)
