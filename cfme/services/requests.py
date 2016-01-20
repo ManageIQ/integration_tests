@@ -197,6 +197,30 @@ def debug_requests():
             logger.debug(' {}'.format(row))
 
 
+def find_request(cells):
+    """Finds the request and opens the page
+
+    See :py:func:`wait_for_request` for futher details.
+
+    Args:
+        cells: Search data for the requests table.
+    Returns: Success of the action.
+    """
+    sel.force_navigate("services_requests")
+    for page in paginator.pages():
+        try:
+            # found the row!
+            row, = fields.request_list.find_rows_by_cells(cells)
+            return True
+        except ValueError:
+            # row not on this page, assume it has yet to appear
+            # it might be nice to add an option to fail at this point
+            continue
+    else:
+        # Request not found at all, can't continue
+        return False
+
+
 def go_to_request(cells):
     """Finds the request and opens the page
 

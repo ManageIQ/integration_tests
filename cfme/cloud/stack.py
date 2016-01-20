@@ -13,6 +13,7 @@ from utils.wait import wait_for
 details_page = Region(infoblock_type='detail')
 cfg_btn = partial(tb.select, "Configuration")
 pol_btn = partial(tb.select, 'Policy')
+lifecycle_btn = partial(tb.select, 'Lifecycle')
 output_table = SplitTable(
     ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
     ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1)
@@ -91,3 +92,14 @@ class Stack(Pretty):
         quad = Quadicon(self.name, 'stack')
         wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
             message="Wait stack to appear", num_sec=1000, fail_func=sel.refresh)
+
+    def retire_stack(self):
+        sel.force_navigate('clouds_stack', context={'stack': self})
+        lifecycle_btn("Retire this Orchestration Stack", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_success_message('Retirement initiated for 1 Orchestration'
+        ' Stack from the CFME Database')
+        sel.force_navigate("clouds_stacks")
+        quad = Quadicon(self.name, 'stack')
+        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
+            message="Wait stack to disappear", num_sec=500, fail_func=sel.refresh)
