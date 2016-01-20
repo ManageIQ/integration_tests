@@ -1,7 +1,7 @@
 import pytest
 import fauxfactory
 
-from cfme.configure.settings import DefaultViews  # NOQA
+from cfme.configure.settings import set_default_view
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
@@ -248,8 +248,7 @@ def test_retire_stack(setup_provider, provider, provisioning,
     Metadata:
         test_flag: provision
     """
-    dv = DefaultViews("Stacks", "Grid View")
-    dv.set_view()
+    set_default_view("Stacks", "Grid View")
     dialog_name, template = dialog
     method = METHOD_TORSO.replace('"Description" : "AWS',
                                   '"Description" : "Aamzon Web Services desc')
