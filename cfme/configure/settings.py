@@ -324,17 +324,10 @@ class DefaultFilter(Updateable, Pretty):
             flash.assert_success_message('Default Filters saved successfully')
 
 
-class DefaultViews(Updateable, Pretty):
-    pretty_attrs = ['button_group_name', 'view']
-
-    def __init__(self, button_group_name=None, view=None):
-        self.button_group_name = button_group_name
-        self.view = view
-
-    def set_view(self):
-        bg = ButtonGroup(self.button_group_name)
-        sel.force_navigate("my_settings_default_views")
-        default_view = bg.active
-        if(default_view != self.view):
-            bg.choose(self.view)
-            sel.click(form_buttons.save)
+def set_default_view(button_group_name, view):
+    bg = ButtonGroup(button_group_name)
+    sel.force_navigate("my_settings_default_views")
+    default_view = bg.active
+    if(default_view != view):
+        bg.choose(view)
+        sel.click(form_buttons.save)
