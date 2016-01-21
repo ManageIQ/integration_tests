@@ -3,8 +3,10 @@ import fauxfactory
 import pytest
 from cfme import Credential, login
 from cfme.common.vm import VM
+from cfme.rest import a_provider as _a_provider
+from cfme.rest import vm as _vm
 from utils.providers import setup_a_provider
-
+from utils import version
 
 pytestmark = [pytest.mark.meta(blockers=[1276135])]
 
@@ -143,6 +145,44 @@ def test_group_ownership_on_user_or_group_role(request, user3, setup_infra_provi
     set_vm_to_group.unset_ownership()
     with user3:
         assert(not set_vm_to_group.exists, "vm exists")
+
+
+class TestVmOwnershipRESTAPI(object):
+    @pytest.fixture(scope="module")
+    def a_provider(self):
+        return _a_provider()
+
+    @pytest.fixture(scope="module")
+    def vm(self, request, a_provider, rest_api):
+        return _vm(request, a_provider, rest_api)
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    def test_vm_set_ownership(self, rest_api, vm):
+        if "set_ownership" not in rest_api.collections.services.action.all:
+            pytest.skip("Set owner action for service is not implemented in this version")
+        rest_vm = rest_api.collections.vms.get(name=vm)
+        user = rest_api.collections.users.get(userid='admin')
+        data = {
+            "owner": {"href": user.href}
+        }
+        rest_vm.action.set_ownership(**data)
+        rest_vm.reload()
+        assert hasattr(rest_vm, "evm_owner_id")
+        assert rest_vm.evm_owner_id == user.id
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    def test_vms_set_ownership(self, rest_api, vm):
+        if "set_ownership" not in rest_api.collections.services.action.all:
+            pytest.skip("Set owner action for service is not implemented in this version")
+        rest_vm = rest_api.collections.vms.get(name=vm)
+        group = rest_api.collections.groups.get(description='EvmGroup-super_administrator')
+        data = {
+            "group": {"href": group.href}
+        }
+        rest_api.collections.vms.action.set_ownership(rest_vm, **data)
+        rest_vm.reload()
+        assert hasattr(rest_vm, "miq_group_id")
+        assert rest_vm.miq_group_id == group.id
 
 
 # @pytest.mark.meta(blockers=[1202947])
