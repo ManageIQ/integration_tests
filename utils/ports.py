@@ -18,8 +18,8 @@ class Ports(object):
     def __setattr__(self, attr, value):
         super(self.__class__, self).__setattr__(attr, value)
         if self.store.any_appliance:
-            self.logger.info("Cleaning up the current_appliance object")
-            self.store.current_appliance._ssh_client = None
+            self.logger.info("Invalidating lazy_cache ssh_client current_appliance object")
+            del(self.store.current_appliance.ssh_client)
 
 
 sys.modules[__name__] = Ports()
