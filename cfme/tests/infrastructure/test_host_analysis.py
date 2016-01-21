@@ -8,6 +8,7 @@ from cfme.infrastructure import host
 from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as tb, InfoBlock
 from utils import conf
 from utils import testgen
+from utils import version
 from utils.blockers import BZ
 from utils.update import update
 from utils.wait import wait_for
@@ -51,6 +52,8 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
+@pytest.mark.uncollectif(
+    lambda provider: version.current_version() == version.UPSTREAM and provider.type == 'rhevm')
 def test_run_host_analysis(request, setup_provider, provider, host_type, host_name, register_event,
                            soft_assert, bug):
     """ Run host SmartState analysis
@@ -119,8 +122,16 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
             'No users found in host detail')
         soft_assert(InfoBlock.text('Security', 'Groups') != '0',
             'No groups found in host detail')
+        soft_assert(InfoBlock.text('Security', 'SSH Root') != '',
+            'No packages found in host detail')
         soft_assert(InfoBlock.text('Configuration', 'Packages') != '0',
             'No packages found in host detail')
+        soft_assert(InfoBlock.text('Configuration', 'Files') != '0',
+            'No files found in host detail')
+
+        if not BZ(1055657, forced_streams=["5.4", "5.5", "upstream"]).blocks:
+            soft_assert(InfoBlock.text('Security', 'Firewall Rules') != '0',
+                        'No firewall rules found in host detail')
 
     elif host_type in ('esx', 'esxi'):
         soft_assert(InfoBlock.text('Configuration', 'Advanced Settings') != '0',
