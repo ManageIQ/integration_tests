@@ -129,7 +129,7 @@ def run(**kwargs):
     else:
         username_powershell = user[0]
 
-    username_scvmm = creds['username']
+    username_scvmm = creds['domain'] + "\\" + creds['username']
 
     scvmm_args = {
         "hostname": provider['ipaddress'],
