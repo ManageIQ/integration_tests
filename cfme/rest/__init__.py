@@ -268,3 +268,32 @@ def vm(request, a_provider, rest_api):
         lambda: len(rest_api.collections.vms.find_by(name=vm_name)) > 0,
         num_sec=600, delay=5)
     return vm_name
+
+
+def service_templates(request, rest_api, dialog):
+    catalog_items = []
+    for index in range(1, 5):
+        catalog_items.append(
+            CatalogItem(
+                item_type="Generic",
+                name="item_{}_{}".format(index, fauxfactory.gen_alphanumeric()),
+                description="my catalog", display_in=True,
+                dialog=dialog.label)
+        )
+
+    for catalog_item in catalog_items:
+        catalog_item.create()
+
+    try:
+        s_tpls = [_ for _ in rest_api.collections.service_templates]
+        s_tpls[0]
+    except IndexError:
+        pytest.skip("There is no service template to be taken")
+
+    @request.addfinalizer
+    def _finished():
+        s_tpls = [_ for _ in rest_api.collections.service_templates]
+        if len(s_tpls) != 0:
+            rest_api.collections.service_templates.action.delete(*s_tpls)
+
+    return s_tpls
