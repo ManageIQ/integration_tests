@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
 from celery import chain
-from django import forms
 from django.contrib import admin
-from django.contrib.admin.helpers import ActionForm
 from django.contrib.auth.admin import UserAdmin
 from django.db.models.query import QuerySet
 
@@ -153,28 +151,9 @@ class AppliancePoolAdmin(Admin):
         return instance.current_count
 
 
-class GroupProvisionAppliancePoolRequestForm(ActionForm):
-    number_appliances = forms.IntegerField(required=True, min_value=1)
-
-
 @register_for(Group)
 class GroupAdmin(Admin):
-    action_form = GroupProvisionAppliancePoolRequestForm
-    objectactions = ["request_pool"]
-    actions = objectactions
-
-    @action("Request appliances", "Request appliances pool")
-    def request_pool(self, request, groups):
-        number_appliances = int(request.POST.get('number_appliances', 1))
-        if number_appliances < 1:
-            self.message_user(request, "Number of appliances should >= 1!")
-            return
-        for group in groups:
-            pool = AppliancePool.create(request.user, group, num_appliances=number_appliances)
-            self.message_user(request, "Appliance pool {} was requested!".format(pool.id))
-            self.logger.info(
-                "User {}/{} requested appliance pool {}".format(
-                    request.user.pk, request.user.username, pool.id))
+    pass
 
 
 @register_for(Provider)

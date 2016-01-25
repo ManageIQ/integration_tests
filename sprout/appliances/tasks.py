@@ -1454,7 +1454,8 @@ def pick_templates_for_deletion(self):
                         to_mail[group.id][zstream][version] = []
                     to_mail[group.id][zstream][version].append(
                         "{} @ {}".format(template.name, template.provider.id))
-    if to_mail:
+    # TODO: Figure out why it was spamming
+    if to_mail and False:
         data = yaml.safe_dump(to_mail, default_flow_style=False)
         email_body = """\
 Hello,
@@ -1473,7 +1474,7 @@ Sprout.
             if user.email:
                 user_mails.append(user.email)
         send_mail(
-            "Possible candidates for tempalte deletion",
+            "Possible candidates for template deletion",
             email_body,
             "sprout-template-deletion-suggest@example.com",
             user_mails,
