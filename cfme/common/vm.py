@@ -48,6 +48,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
 
     In order to inherit these, you have to implement the ``on_details`` method.
     """
+    VM_TYPE = None
     pretty_attrs = ['name', 'provider', 'template_name']
     _registered_types = {}
 
@@ -443,7 +444,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         else:
             action = form_buttons.save
             msg_assert = lambda: flash.assert_success_message(
-                'Ownership saved for selected Virtual Machine')
+                'Ownership saved for selected {}'.format(VM.VM_TYPE))
         fill(set_ownership_form, {'user_name': user, 'group_name': group},
              action=action)
         msg_assert()
