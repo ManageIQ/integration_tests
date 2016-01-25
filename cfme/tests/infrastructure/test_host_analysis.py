@@ -5,7 +5,7 @@ from cfme.configure import tasks
 from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
-from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as tb
+from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as tb, InfoBlock
 from utils import conf
 from utils import testgen
 from utils.blockers import BZ
@@ -104,6 +104,9 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
     sel.handle_alert()
 
     # Check results of the analysis
+    drift_history = test_host.get_detail('Relationships', 'Drift History')
+    soft_assert(drift_history != '0', 'No drift history change found')
+
     # This is done on purpose; we cannot use the "bug" fixture here as
     # the bug doesnt block streams other than 5.3
     services_bug = BZ(1156028, forced_streams=["5.3", "5.4", "5.5", "upstream"])
@@ -112,15 +115,15 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
             'No services found in host detail')
 
     if host_type in ('rhel', 'rhev'):
-        soft_assert(test_host.get_detail('Security', 'Users') != '0',
+        soft_assert(InfoBlock.text('Security', 'Users') != '0',
             'No users found in host detail')
-        soft_assert(test_host.get_detail('Security', 'Groups') != '0',
+        soft_assert(InfoBlock.text('Security', 'Groups') != '0',
             'No groups found in host detail')
-        soft_assert(test_host.get_detail('Configuration', 'Packages') != '0',
+        soft_assert(InfoBlock.text('Configuration', 'Packages') != '0',
             'No packages found in host detail')
 
     elif host_type in ('esx', 'esxi'):
-        soft_assert(test_host.get_detail('Configuration', 'Advanced Settings') != '0',
+        soft_assert(InfoBlock.text('Configuration', 'Advanced Settings') != '0',
             'No advanced settings found in host detail')
 
         fw_bug = bug(1055657)
