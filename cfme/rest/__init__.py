@@ -5,6 +5,8 @@ from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
+from utils.providers import setup_a_provider as _setup_a_provider
+from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 from utils import version
 
@@ -247,3 +249,22 @@ def rates(request, rest_api):
             rest_api.collections.rates.action.delete(*delete_rates)
 
     return rates
+
+
+def a_provider():
+    return _setup_a_provider("infra")
+
+
+def vm(request, a_provider, rest_api):
+    if "refresh" not in rest_api.collections.providers.action.all:
+        pytest.skip("Refresh action is not implemented in this version")
+    provider_rest = rest_api.collections.providers.get(name=a_provider.name)
+    vm_name = deploy_template(
+        a_provider.key,
+        "test_rest_vm_{}".format(fauxfactory.gen_alphanumeric(length=4)))
+    request.addfinalizer(lambda: a_provider.mgmt.delete_vm(vm_name))
+    provider_rest.action.refresh()
+    wait_for(
+        lambda: len(rest_api.collections.vms.find_by(name=vm_name)) > 0,
+        num_sec=600, delay=5)
+    return vm_name

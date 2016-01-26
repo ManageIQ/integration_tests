@@ -559,36 +559,6 @@ def test_vm_add_event(rest_api, vm, db, from_detail):
     assert(len(events_list) == 1, "Could not find the event in the database")
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_vm_set_ownership(rest_api, vm):
-    if "set_ownership" not in rest_api.collections.services.action.all:
-        pytest.skip("Set owner action for service is not implemented in this version")
-    rest_vm = rest_api.collections.vms.get(name=vm)
-    user = rest_api.collections.users.get(userid='admin')
-    data = {
-        "owner": {"href": user.href}
-    }
-    rest_vm.action.set_ownership(**data)
-    rest_vm.reload()
-    assert hasattr(rest_vm, "evm_owner_id")
-    assert rest_vm.evm_owner_id == user.id
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_vms_set_ownership(rest_api, vm):
-    if "set_ownership" not in rest_api.collections.services.action.all:
-        pytest.skip("Set owner action for service is not implemented in this version")
-    rest_vm = rest_api.collections.vms.get(name=vm)
-    group = rest_api.collections.groups.get(description='EvmGroup-super_administrator')
-    data = {
-        "group": {"href": group.href}
-    }
-    rest_api.collections.vms.action.set_ownership(rest_vm, **data)
-    rest_vm.reload()
-    assert hasattr(rest_vm, "miq_group_id")
-    assert rest_vm.miq_group_id == group.id
-
-
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
