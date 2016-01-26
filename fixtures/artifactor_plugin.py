@@ -25,7 +25,7 @@ import diaper
 import pytest
 
 from artifactor import ArtifactorClient
-from fixtures.pytest_store import write_line
+from fixtures.pytest_store import write_line, store
 from utils.conf import env, credentials
 from utils.net import random_port, net_check
 from utils.path import project_path
@@ -83,6 +83,8 @@ if env.get('slaveid', None):
 
 appliance_ip_address = urlparse(env['base_url']).netloc
 session_ver = None
+session_build = None
+session_stream = None
 
 
 def pytest_addoption(parser):
@@ -115,10 +117,15 @@ def pytest_configure(config):
 @pytest.mark.hookwrapper
 def pytest_runtest_protocol(item):
     global session_ver
+    global session_build
+    global session_stream
 
     if not session_ver:
         session_ver = str(version.current_version())
-        art_client.fire_hook('session_info', version=session_ver)
+        session_build = store.current_appliance.build
+        session_stream = store.current_appliance.version.stream()
+        art_client.fire_hook('session_info', version=session_ver, build=session_build,
+            stream=session_stream, grab_result=True)
 
     name, location = get_test_idents(item)
     # This pre_start_test hook is needed so that filedump is able to make get the test
@@ -136,6 +143,8 @@ def pytest_runtest_teardown(item, nextitem):
     art_client.fire_hook('finish_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
     art_client.fire_hook('sanitize', test_location=location, test_name=name, words=words)
+    art_client.fire_hook('ostriz_send', test_location=location, test_name=name,
+                         slaveid=SLAVEID,)
 
 
 def pytest_runtest_logreport(report):

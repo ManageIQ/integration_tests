@@ -1,10 +1,7 @@
 from fixtures.artifactor_plugin import get_test_idents
-from utils.composite import ReportCompile
 from fixtures.pytest_store import store
-from fixtures.artifactor_plugin import art_client
 from utils.log import logger
-from utils import version
-from utils.trackerbot import api
+from utils.trackerbot import composite_uncollect
 
 
 def pytest_addoption(parser):
@@ -24,30 +21,16 @@ def pytest_collection_modifyitems(session, config, items):
 
     new_items = []
 
-    try:
-        stream_name = version.get_stream(version.current_version())
-        job_name = config.getvalue('composite_job_name') or "{}-tests".format(stream_name)
-        template_name = config.getvalue('composite_template_name') or \
-            api().group.get(name=stream_name)['objects'][0]['latest_template']
-        store.terminalreporter.write(
-            "Trying to collect composite results for "
-            "stream [{}], template [{}] and job [{}]\n".format(
-                stream_name, template_name, job_name))
-        if stream_name == "upstream":
-            rc = ReportCompile(job_name=job_name, template=template_name, num_builds=5)
-        else:
-            rc = ReportCompile(job_name=job_name, template=template_name)
-        pl = rc.compile()
-    except Exception as e:
-        store.terminalreporter.write("Stream collection failed: {}\n".format(e))
-        pl = None
+    build = store.current_appliance.build
+
+    pl = composite_uncollect(build)
 
     if pl:
         for test in pl['tests']:
             pl['tests'][test]['old'] = True
 
         # Here we pump into artifactor
-        art_client.fire_hook('composite_pump', old_artifacts=pl['tests'])
+        # art_client.fire_hook('composite_pump', old_artifacts=pl['tests'])
         for item in items:
             try:
                 name, location = get_test_idents(item)

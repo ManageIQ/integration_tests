@@ -5,6 +5,7 @@ from collections import defaultdict, namedtuple
 from datetime import date
 
 import slumber
+import requests
 
 from utils.conf import env
 from utils.providers import providers_data
@@ -267,6 +268,18 @@ def depaginate(api, result):
         'meta': ret_meta,
         'objects': ret_objects
     }
+
+
+def composite_uncollect(build):
+    """Composite build function"""
+
+    url = "{}{}".format(conf['ostriz'], build)
+    try:
+        resp = requests.get(url, timeout=3)
+        return resp.json()
+    except Exception as e:
+        print e
+        return {'tests': []}
 
 
 # Dict subclasses to help with JSON serialization

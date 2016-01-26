@@ -2,7 +2,7 @@
 
 from artifactor import Artifactor, initialize
 import argparse
-from artifactor.plugins import merkyl, logger, video, filedump, reporter, post_result
+from artifactor.plugins import merkyl, logger, video, filedump, reporter, post_result, ostriz
 from utils.conf import env
 from utils.path import log_path
 
@@ -27,6 +27,7 @@ def run(port, run_id=None):
     art.register_plugin(filedump.Filedump, "filedump")
     art.register_plugin(reporter.Reporter, "reporter")
     art.register_plugin(post_result.PostResult, "post-result")
+    art.register_plugin(ostriz.Ostriz, "ostriz")
 
     initialize(art)
 
@@ -36,6 +37,7 @@ def run(port, run_id=None):
     art.configure_plugin('filedump')
     art.configure_plugin('reporter')
     art.configure_plugin('post-result')
+    art.configure_plugin('ostriz')
     art.fire_hook('start_session', run_id=run_id)
 
     # Stash this where slaves can find it

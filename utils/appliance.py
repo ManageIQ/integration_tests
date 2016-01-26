@@ -607,6 +607,13 @@ class IPAppliance(object):
         return Version(res.output)
 
     @lazycache
+    def build(self):
+        res = self.ssh_client.run_command('cat /var/www/miq/vmdb/BUILD')
+        if res.rc != 0:
+            raise RuntimeError('Unable to retrieve appliance VMDB BUILD')
+        return res.output.strip("\n")
+
+    @lazycache
     def os_version(self):
         # Currently parses the os version out of redhat release file to allow for
         # rhel and centos appliances
