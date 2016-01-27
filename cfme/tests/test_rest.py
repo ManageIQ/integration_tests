@@ -7,12 +7,11 @@ from cfme import Credential
 from cfme.configure.access_control import User, Group
 from cfme.configure.configuration import server_roles_disabled
 from cfme.login import login
-from cfme.services.catalogs.catalog_item import CatalogItem
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils import error, mgmt_system, testgen, conf, version
+from utils import mgmt_system, testgen, conf, version
 
 
 pytest_generate_tests = testgen.generate(
@@ -83,37 +82,6 @@ def user():
     return user
 
 
-@pytest.mark.usefixtures("logged_in")
-@pytest.fixture(scope='function')
-def service_templates(request, rest_api, dialog):
-    catalog_items = []
-    for index in range(1, 5):
-        catalog_items.append(
-            CatalogItem(
-                item_type="Generic",
-                name="item_{}_{}".format(index, fauxfactory.gen_alphanumeric()),
-                description="my catalog", display_in=True,
-                dialog=dialog.label)
-        )
-
-    for catalog_item in catalog_items:
-        catalog_item.create()
-
-    try:
-        s_tpls = [_ for _ in rest_api.collections.service_templates]
-        s_tpls[0]
-    except IndexError:
-        pytest.skip("There is no service template to be taken")
-
-    @request.addfinalizer
-    def _finished():
-        s_tpls = [_ for _ in rest_api.collections.service_templates]
-        if len(s_tpls) != 0:
-            rest_api.collections.service_templates.action.delete(*s_tpls)
-
-    return s_tpls
-
-
 @pytest.fixture(scope='function')
 def automation_requests_data():
     return [{
@@ -163,94 +131,6 @@ def test_provision(request, provision_data, provider, rest_api):
 
     wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
-
-
-def test_edit_service_template(rest_api, service_templates):
-    """Tests cediting a service template.
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/service_templates (method ``edit``) with the ``name``
-        * Check if the service_template with ``new_name`` exists
-    Metadata:
-        test_flag: rest
-    """
-    scl = rest_api.collections.service_templates[0]
-    new_name = fauxfactory.gen_alphanumeric()
-    scl.action.edit(name=new_name)
-    wait_for(
-        lambda: rest_api.collections.service_catalogs.find_by(name=new_name),
-        num_sec=180,
-        delay=10,
-    )
-
-
-def test_delete_service_templates(rest_api, service_templates):
-    rest_api.collections.service_templates.action.delete(*service_templates)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.collections.service_templates.action.delete(*service_templates)
-
-
-def test_delete_service_template(rest_api, service_templates):
-    s_tpl = rest_api.collections.service_templates[0]
-    s_tpl.action.delete()
-    with error.expected("ActiveRecord::RecordNotFound"):
-        s_tpl.action.delete()
-
-
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_assign_unassign_service_template_to_service_catalog(rest_api, service_catalogs,
-        service_templates):
-    """Tests assigning and unassigning the service templates to service catalog.
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/service_catalogs/<id>/service_templates (method ``assign``)
-            with the list of dictionaries service templates list
-        * Check if the service_templates were assigned to the service catalog
-        * POST /api/service_catalogs/<id>/service_templates (method ``unassign``)
-            with the list of dictionaries service templates list
-        * Check if the service_templates were unassigned to the service catalog
-    Metadata:
-        test_flag: rest
-    """
-
-    scl = service_catalogs[0]
-    stpl = service_templates[0]
-    scl.service_templates.action.assign(stpl)
-    scl.reload()
-    assert stpl.id in [st.id for st in scl.service_templates.all]
-    scl.service_templates.action.unassign(stpl)
-    scl.reload()
-    assert stpl.id not in [st.id for st in scl.service_templates.all]
-
-
-def test_edit_multiple_service_templates(rest_api, service_templates):
-    """Tests editing multiple service catalogs at time.
-    Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/service_templates (method ``edit``) with the list of dictionaries used to edit
-        * Check if the service_templates with ``new_name`` each exists
-    Metadata:
-        test_flag: rest
-    """
-    new_names = []
-    service_tpls_data_edited = []
-    for tpl in service_templates:
-        new_name = fauxfactory.gen_alphanumeric()
-        new_names.append(new_name)
-        service_tpls_data_edited.append({
-            "href": tpl.href,
-            "name": new_name,
-        })
-    rest_api.collections.service_templates.action.edit(*service_tpls_data_edited)
-    for new_name in new_names:
-        wait_for(
-            lambda: rest_api.collections.service_templates.find_by(name=new_name),
-            num_sec=180,
-            delay=10,
-        )
 
 
 def test_provider_refresh(request, a_provider, rest_api):
