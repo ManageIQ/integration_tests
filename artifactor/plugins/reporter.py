@@ -383,8 +383,8 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
             test_when: (test_outcome, test_xfail)}}}}
 
     @ArtifactorBasePlugin.check_configured
-    def session_info(self, version=None):
-        return None, {'version': version}
+    def session_info(self, version=None, build=None, stream=None):
+        return None, {'build': build, 'stream': stream, 'version': version}
 
     @ArtifactorBasePlugin.check_configured
     def run_report(self, old_artifacts, artifact_dir, version=None):
