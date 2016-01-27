@@ -3,7 +3,7 @@
 from cfme.configure import tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
-from cfme.web_ui import flash, tabstrip as tabs, toolbar as tb, Quadicon
+from cfme.web_ui import flash, tabstrip as tabs, toolbar as tb, Quadicon, InfoBlock
 from utils import conf, testgen, version
 from utils.blockers import BZ
 from utils.wait import wait_for
@@ -71,7 +71,8 @@ def get_host_data_by_name(provider_key, host_name):
         BZ(1180467, unblock=lambda provider: provider.type != 'rhevm'),
     ]
 )
-def test_run_datastore_analysis(request, setup_provider, provider, datastore_type, datastore_name):
+def test_run_datastore_analysis(request, setup_provider, provider, datastore_type, datastore_name,
+                                soft_assert):
     """Tests smarthost analysis
 
     Metadata:
@@ -173,9 +174,12 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore_typ
     tb.select('Delete Tasks', 'Delete', invokes_alert=True)
     sel.handle_alert()
 
+    c_datastore = test_datastore.get_detail('Properties', 'Datastore Type')
     # Check results of the analysis and the datastore type
-    assert test_datastore.get_detail('Properties', 'Datastore Type') == datastore_type.upper(),\
-        'Datastore type does not match the type defined in yaml'
+    soft_assert(c_datastore == datastore_type.upper(),
+                'Datastore type does not match the type defined in yaml:' +
+                'expected "{}" but was "{}"'.format(datastore_type.upper(), c_datastore))
     for row_name in CONTENT_ROWS_TO_CHECK:
-        assert test_datastore.get_detail('Content', row_name) != '0',\
-            '{} in Content infoblock should not be 0'.format(row_name)
+        value = InfoBlock('Content', row_name).text
+        soft_assert(value != '0',
+                    'Expected value for {} to be non-empty'.format(row_name))
