@@ -646,6 +646,7 @@ def get_crud(provider_config_name):
     elif prov_type == "openstack-infra":
         return OpenstackInfraProvider(
             name=prov_config['name'],
+            sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
             credentials={'default': credentials},

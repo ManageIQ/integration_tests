@@ -248,7 +248,8 @@ class OpenstackInfraProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_host']
 
     def __init__(self, name=None, credentials=None, key=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None, provider_data=None):
+                 ip_address=None, start_ip=None, end_ip=None, provider_data=None,
+                 sec_protocol=None):
         super(OpenstackInfraProvider, self).__init__(name=name, credentials=credentials,
                                              key=key, provider_data=provider_data)
 
@@ -256,12 +257,14 @@ class OpenstackInfraProvider(Provider):
         self.ip_address = ip_address
         self.start_ip = start_ip
         self.end_ip = end_ip
+        self.sec_protocol = sec_protocol
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'OpenStack Platform Director',
                 'hostname_text': kwargs.get('hostname'),
-                'ipaddress_text': kwargs.get('ip_address')}
+                'ipaddress_text': kwargs.get('ip_address'),
+                'sec_protocol': kwargs.get('sec_protocol')}
 
 
 class SCVMMProvider(Provider):
