@@ -608,10 +608,13 @@ class IPAppliance(object):
 
     @lazycache
     def build(self):
-        res = self.ssh_client.run_command('cat /var/www/miq/vmdb/BUILD')
-        if res.rc != 0:
-            raise RuntimeError('Unable to retrieve appliance VMDB BUILD')
-        return res.output.strip("\n")
+        if self.ssh_client.is_appliance_downstream():
+            res = self.ssh_client.run_command('cat /var/www/miq/vmdb/BUILD')
+            if res.rc != 0:
+                raise RuntimeError('Unable to retrieve appliance VMDB version')
+            return res.output.strip("\n")
+        else:
+            return "master"
 
     @lazycache
     def os_version(self):
