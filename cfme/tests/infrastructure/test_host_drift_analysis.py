@@ -2,9 +2,10 @@
 
 import pytest
 
+from cfme.configure import tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
-from cfme.web_ui import DriftGrid, toolbar as tb
+from cfme.web_ui import DriftGrid, toolbar as tb, tabstrip as tabs
 from utils import conf, error, testgen
 from utils.wait import wait_for
 
@@ -85,6 +86,29 @@ def test_host_drift_analysis(request, setup_provider, provider, host_type, host_
     # initiate 1st analysis
     test_host.run_smartstate_analysis()
 
+    # Wait for the task to finish
+    def is_host_analysis_finished():
+        """ Check if analysis is finished - if not, reload page
+        """
+        if not sel.is_displayed(tasks.tasks_table) or not tabs.is_tab_selected('All Other Tasks'):
+            sel.force_navigate('tasks_all_other')
+        host_analysis_finished = tasks.tasks_table.find_row_by_cells({
+            'task_name': "SmartState Analysis for '{}'".format(host_name),
+            'state': 'Finished'
+        })
+        if host_analysis_finished:
+            # Delete the task
+            tasks.tasks_table.select_row_by_cells({
+                'task_name': "SmartState Analysis for '{}'".format(host_name),
+                'state': 'Finished'
+            })
+            tb.select('Delete Tasks', 'Delete', invokes_alert=True)
+            sel.handle_alert()
+        return host_analysis_finished is not None
+
+    wait_for(is_host_analysis_finished,
+             delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+
     # wait for for drift history num+1
     wait_for(
         lambda: int(test_host.get_detail('Relationships', 'Drift History')) == drift_num_orig + 1,
@@ -101,6 +125,10 @@ def test_host_drift_analysis(request, setup_provider, provider, host_type, host_
 
     # initiate 2nd analysis
     test_host.run_smartstate_analysis()
+
+    # Wait for the task to finish
+    wait_for(is_host_analysis_finished,
+             delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
 
     # wait for for drift history num+2
     wait_for(
