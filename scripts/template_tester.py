@@ -17,18 +17,20 @@ import sys
 from utils import trackerbot
 
 
-def get(api):
+def get(api, request_type=None):
     try:
-        template, provider_key, stream = trackerbot.templates_to_test(api, limit=1)[0]
+        template, provider_key, stream, provider_type =\
+            trackerbot.templates_to_test(api, request_type=request_type, limit=1)[0]
     except (IndexError, TypeError):
-        # No untested providertemplates, all is well
+        # No untested provider templates, all is well
         return 0
 
     # Print envvar exports to be eval'd
     export(
         appliance_template=template,
         provider_key=provider_key,
-        stream=stream
+        stream=stream,
+        provider_type=provider_type
     )
 
 
@@ -84,6 +86,7 @@ if __name__ == '__main__':
 
     parse_get = subs.add_parser('get', help='get a template to test')
     parse_get.set_defaults(func=get)
+    parse_get.add_argument('request_type', help='get a teamplate based on provider type')
 
     parse_latest = subs.add_parser('latest', help='get the latest usable template for a provider')
     parse_latest.set_defaults(func=latest)
@@ -107,7 +110,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     api = trackerbot.api(args.trackerbot_url)
     func_map = {
-        get: lambda: get(api),
+        get: lambda: get(api, args.request_type),
         latest: lambda: latest(api, args.stream, args.provider_key),
         mark: lambda: mark(api, args.provider_key, args.template, args.usable, args.diagnose),
         retest: lambda: retest(api, args.provider_key, args.template),

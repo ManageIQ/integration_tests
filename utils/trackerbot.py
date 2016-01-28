@@ -189,19 +189,24 @@ def latest_template(api, group, provider_key=None):
         return response['latest_templates'][group['name']]
 
 
-def templates_to_test(api, limit=1):
+def templates_to_test(api, limit=1, request_type=None):
     """get untested templates to pass to jenkins
 
     Args:
         limit: max number of templates to pull per request
+        request_type: request the provider_key of specific type
+        e.g openstack
 
     """
     templates = []
-    for pt in api.untestedtemplate.get(limit=limit, tested=False).get('objects', []):
+    for pt in api.untestedtemplate.get(
+            limit=limit, tested=False, provider__type=request_type).get(
+            'objects', []):
         name = pt['template']['name']
         group = pt['template']['group']['name']
         provider = pt['provider']['key']
-        templates.append([name, provider, group])
+        request_type = pt['provider']['type']
+        templates.append([name, provider, group, request_type])
     return templates
 
 
