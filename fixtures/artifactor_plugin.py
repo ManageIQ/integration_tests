@@ -125,7 +125,7 @@ def pytest_runtest_protocol(item):
         session_build = store.current_appliance.build
         session_stream = store.current_appliance.version.stream()
         art_client.fire_hook('session_info', version=session_ver, build=session_build,
-            stream=session_stream, grab_result=True)
+            stream=session_stream)
 
     name, location = get_test_idents(item)
     # This pre_start_test hook is needed so that filedump is able to make get the test
