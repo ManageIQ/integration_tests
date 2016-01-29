@@ -136,6 +136,38 @@ class TestServiceRESTAPI(object):
 
         wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
 
+        @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+        def test_set_service_owner(self, rest_api, services):
+            if "set_ownership" not in rest_api.collections.services.action.all:
+                pytest.skip("Set owner action for service is not implemented in this version")
+            service = services[0]
+            user = rest_api.collections.users.get(userid='admin')
+            data = {
+                "owner": {"href": user.href}
+            }
+            service.action.set_ownership(data)
+            service.reload()
+            assert hasattr(service, "evm_owner")
+            assert service.evm_owner.userid == user.userid
+
+        @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+        def test_set_services_owner(self, rest_api, services):
+            if "set_ownership" not in rest_api.collections.services.action.all:
+                pytest.skip("Set owner action for service is not implemented in this version")
+            data = []
+            user = rest_api.collections.users.get(userid='admin')
+            for service in services:
+                tmp_data = {
+                    "href": service.href,
+                    "owner": {"href": user.href}
+                }
+                data.append(tmp_data)
+            rest_api.collections.services.action.set_ownership(*data)
+            for service in services:
+                service.reload()
+                assert hasattr(service, "evm_owner")
+                assert service.evm_owner.userid == user.userid
+
 
 class TestServiceTemplateRESTAPI(object):
     @pytest.mark.usefixtures("logged_in")
