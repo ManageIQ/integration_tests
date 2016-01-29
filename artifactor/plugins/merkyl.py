@@ -76,9 +76,10 @@ class Merkyl(ArtifactorBasePlugin):
         ip = self.tests[test_ident].ip
 
         if filename not in self.files:
-            self.tests[test_ident].extra_files.update([filename])
-            url = "http://{}:{}/setup{}".format(ip, self.port, filename)
-            requests.get(url, timeout=15)
+            if filename not in self.tests[test_ident].extra_files:
+                self.tests[test_ident].extra_files.add(filename)
+                url = "http://{}:{}/setup{}".format(ip, self.port, filename)
+                requests.get(url, timeout=15)
 
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifact_path, test_name, test_location, ip, slaveid):
