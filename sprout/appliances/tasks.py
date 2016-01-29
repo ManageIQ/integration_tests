@@ -435,22 +435,7 @@ def prepare_template_seal(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Sealing template.")
     try:
-        with template.cfme.ipapp.ssh_client() as ssh:
-            ssh.run_command("rm -rf /etc/ssh/ssh_host_*")
-            if ssh.run_command("grep '^HOSTNAME' /etc/sysconfig/network").rc == 0:
-                # Replace it
-                ssh.run_command(
-                    "sed -i -r -e 's/^HOSTNAME=.*$/HOSTNAME=localhost.localdomain/' "
-                    "/etc/sysconfig/network")
-            else:
-                # Set it
-                ssh.run_command("echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network")
-            ssh.run_command("sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
-            ssh.run_command("sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
-            ssh.run_command("rm -f /etc/udev/rules.d/70-*")
-            # Fix SELinux things
-            ssh.run_command("restorecon -R /etc/sysconfig/network-scripts")
-            ssh.run_command("restorecon /etc/sysconfig/network")
+        template.cfme.ipapp.seal_for_templatizing()
     except Exception as e:
         template.set_status("Could not seal the template. Retrying.")
         self.retry(
