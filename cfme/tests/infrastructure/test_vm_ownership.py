@@ -147,6 +147,7 @@ def test_group_ownership_on_user_or_group_role(request, user3, setup_infra_provi
         assert(not set_vm_to_group.exists, "vm exists")
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 class TestVmOwnershipRESTAPI(object):
     @pytest.fixture(scope="module")
     def a_provider(self):
@@ -156,7 +157,6 @@ class TestVmOwnershipRESTAPI(object):
     def vm(self, request, a_provider, rest_api):
         return _vm(request, a_provider, rest_api)
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     def test_vm_set_ownership(self, rest_api, vm):
         if "set_ownership" not in rest_api.collections.services.action.all:
             pytest.skip("Set owner action for service is not implemented in this version")
@@ -170,7 +170,6 @@ class TestVmOwnershipRESTAPI(object):
         assert hasattr(rest_vm, "evm_owner_id")
         assert rest_vm.evm_owner_id == user.id
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     def test_vms_set_ownership(self, rest_api, vm):
         if "set_ownership" not in rest_api.collections.services.action.all:
             pytest.skip("Set owner action for service is not implemented in this version")
@@ -184,6 +183,34 @@ class TestVmOwnershipRESTAPI(object):
         assert hasattr(rest_vm, "miq_group_id")
         assert rest_vm.miq_group_id == group.id
 
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_set_vm_owner(self, request, rest_api, vm, from_detail):
+        """Test whether set_owner action from the REST API works.
+        Prerequisities:
+            * A VM
+        Steps:
+            * Find a VM id using REST
+            * Call either:
+                * POST /api/vms/<id> (method ``set_owner``) <- {"owner": "owner username"}
+                * POST /api/vms (method ``set_owner``) <- {"owner": "owner username",
+                    "resources": [{"href": ...}]}
+            * Query the VM again
+            * Assert it has the attribute ``evm_owner`` as we set it.
+        Metadata:
+            test_flag: rest
+        """
+        if "set_owner" not in rest_api.collections.vms.action.all:
+            pytest.skip("Set owner action is not implemented in this version")
+        rest_vm = rest_api.collections.vms.get(name=vm)
+        if from_detail:
+            assert rest_vm.action.set_owner(owner="admin")["success"], "Could not set owner"
+        else:
+            assert (
+                len(rest_api.collections.vms.action.set_owner(rest_vm, owner="admin")) > 0,
+                "Could not set owner")
+        rest_vm.reload()
+        assert hasattr(rest_vm, "evm_owner")
+        assert rest_vm.evm_owner.userid == "admin"
 
 # @pytest.mark.meta(blockers=[1202947])
 # def test_ownership_transfer(request, user1, user3, setup_infra_provider):
