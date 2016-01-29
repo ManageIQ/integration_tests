@@ -141,7 +141,7 @@ def pytest_runtest_protocol(item):
 def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
     art_client.fire_hook('finish_test', test_location=location, test_name=name,
-                         slaveid=SLAVEID, ip=appliance_ip_address)
+                         slaveid=SLAVEID, ip=appliance_ip_address, grab_result=True)
     art_client.fire_hook('sanitize', test_location=location, test_name=name, words=words)
     art_client.fire_hook('ostriz_send', test_location=location, test_name=name,
                          slaveid=SLAVEID,)

@@ -960,7 +960,8 @@ class IPAppliance(object):
         return result
 
     # Regexp that looks for product type and version in the update URL
-    product_url_regexp = re.compile(r"/((?:[A-Z]+|CloudForms|rhel))(?:-|/|/server/)(\d+[^/]*)/")
+    product_url_regexp = re.compile(
+        r"/((?:[A-Z]+|CloudForms|rhel|RHEL_Guest))(?:-|/|/server/)(\d+[^/]*)/")
 
     def find_product_repos(self):
         """Returns a dictionary of products, where the keys are names of product (repos) and values
