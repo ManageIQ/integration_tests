@@ -86,7 +86,8 @@ if __name__ == '__main__':
 
     parse_get = subs.add_parser('get', help='get a template to test')
     parse_get.set_defaults(func=get)
-    parse_get.add_argument('request_type', help='get a teamplate based on provider type')
+    parse_get.add_argument('--request_type', dest='request_type',
+                           help='get a teamplate based on provider type')
 
     parse_latest = subs.add_parser('latest', help='get the latest usable template for a provider')
     parse_latest.set_defaults(func=latest)
