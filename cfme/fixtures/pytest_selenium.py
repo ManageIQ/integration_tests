@@ -169,7 +169,7 @@ def _t(t, root=None):
     Handles the case when root= locator resolves to multiple elements. In that case all of them
     are processed and all results are put in the same list."""
     result = []
-    for root_element in (elements(root) if root is not None else [browser()]):
+    for root_element in (elements(root) if root is not None else [ensure_browser_open()]):
         # 20140920 - dajo - hack to get around selenium e is null bs
         count = 0
         while count < 8:
