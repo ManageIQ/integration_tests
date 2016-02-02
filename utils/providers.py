@@ -644,12 +644,19 @@ def get_crud(provider_config_name):
             start_ip=start_ip,
             end_ip=end_ip)
     elif prov_type == "openstack-infra":
+        credential_dict = {'default': credentials}
+        if 'ssh_credentials' in prov_config:
+            credential_dict['ssh'] = get_credentials_from_config(
+                prov_config['ssh_credentials'], cred_type='ssh')
+        if 'amqp_credentials' in prov_config:
+            credential_dict['amqp'] = get_credentials_from_config(
+                prov_config['amqp_credentials'], cred_type='amqp')
         return OpenstackInfraProvider(
             name=prov_config['name'],
             sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
-            credentials={'default': credentials},
+            credentials=credential_dict,
             key=provider_config_name,
             start_ip=start_ip,
             end_ip=end_ip)
