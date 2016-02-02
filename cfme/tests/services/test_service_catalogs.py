@@ -184,7 +184,6 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
 
 
 # Note here this needs to be reduced, doesn't need to test against all providers
-@pytest.mark.meta(blockers=[1256941])
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catalog):
     """Tests no template catalog item
@@ -204,8 +203,7 @@ def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catal
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
     catalog_item.create()
-    flash.assert_message_match(version.pick({version.LOWEST: "'Catalog/Name' is required",
-                                             "5.4": "Source_id must have valid template"}))
+    flash.assert_message_match("'Catalog/Name' is required")
 
 
 @pytest.mark.meta(blockers=[1210541])
