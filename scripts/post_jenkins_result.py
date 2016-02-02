@@ -21,7 +21,8 @@ test_return = runner_src.get('TEST_RETURN', '1') == '0'
 
 # 'stream' environ is set by jenkins for all stream test jobs
 # but not in the template tester
-if job_name != 'template-tester':
+if job_name not in ('template-tester', 'template-tester-openstack',
+                    'template-tester-rhevm', 'template-tester-virtualcenter'):
     # try to pull out the appliance template name
     template_src = read_env(project_path.join('.appliance_template'))
     template = template_src.get('appliance_template', 'Unknown')
