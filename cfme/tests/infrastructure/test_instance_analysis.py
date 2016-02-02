@@ -18,7 +18,7 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils.blockers import GH
 
-WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'linux_windows'}
+WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows'}
 
 RPM_BASED = {
     'rhel': {
@@ -241,7 +241,7 @@ def is_vm_analysis_finished(vm_name):
 
 def detect_system_type(vm):
 
-    if getattr(vm, 'ssh'):
+    if hasattr(vm, 'ssh'):
         system_release = safe_string(vm.ssh.run_command("cat /etc/os-release").output)
 
         all_systems_dict = RPM_BASED.values() + DEB_BASED.values()
@@ -268,7 +268,6 @@ def test_ssa_vm(provider, instance, soft_assert):
     if instance.system_type != WINDOWS:
         e_users = instance.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
         e_groups = instance.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
-
         e_packages = instance.ssh.run_command(
             instance.system_type['package-number']).output.strip('\n')
 
@@ -288,19 +287,37 @@ def test_ssa_vm(provider, instance, soft_assert):
     # We shouldn't use get_detail anymore - it takes too much time
     c_users = InfoBlock.text('Security', 'Users')
     c_groups = InfoBlock.text('Security', 'Groups')
-    c_packages = InfoBlock.text('Configuration', 'Packages')
     c_image = InfoBlock.text('Relationships', 'Parent VM')
+    c_packages = 0
+    if instance.system_type != WINDOWS:
+        c_packages = InfoBlock.text('Configuration', 'Packages')
+
     logger.info("SSA shows {} users, {} groups and {} packages".format(
         c_users, c_groups, c_packages))
 
-    soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
-    soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
-    soft_assert(c_packages == e_packages, "groups: '{}' != '{}'".format(c_groups, e_groups))
     soft_assert(c_image == instance.image, "image: '{}' != '{}'".format(c_image, instance.image))
     soft_assert(e_icon_part in details_os_icon,
                 "details icon: '{}' not in '{}'".format(e_icon_part, details_os_icon))
     soft_assert(e_icon_part in quadicon_os_icon,
                 "quad icon: '{}' not in '{}'".format(e_icon_part, details_os_icon))
+
+    if instance.system_type != WINDOWS:
+        soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
+        soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
+        soft_assert(c_packages == e_packages, "groups: '{}' != '{}'".format(c_groups, e_groups))
+    else:
+        # Make sure windows-specific data is not empty
+        c_patches = InfoBlock.text('Security', 'Patches')
+        c_applications = InfoBlock.text('Configuration', 'Applications')
+        c_win32_services = InfoBlock.text('Configuration', 'Win32 Services')
+        c_kernel_drivers = InfoBlock.text('Configuration', 'Kernel Drivers')
+        c_fs_drivers = InfoBlock.text('Configuration', 'File System Drivers')
+
+        soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
+        soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
+        soft_assert(c_win32_services != '0', "win32 services: '{}' != '0'".format(c_win32_services))
+        soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
+        soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
 
 @pytest.mark.long_running
@@ -311,9 +328,10 @@ def test_ssa_users(provider, instance, soft_assert):
         test_flag: vm_analysis
     """
     username = fauxfactory.gen_alphanumeric()
-
     expected = None
 
+    # In windows case we can't add new users (yet)
+    # So we simply check that user list doesn't cause any Rails errors
     if instance.system_type != WINDOWS:
         # Add a new user
         instance.ssh.run_command("userdel {0} || useradd {0}".format(username))
@@ -325,7 +343,8 @@ def test_ssa_users(provider, instance, soft_assert):
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Users'))
-    assert current == expected
+    if instance.system_type != WINDOWS:
+        assert current == expected
 
     # Make sure created user is in the list
     sel.click(InfoBlock("Security", "Users"))
@@ -340,7 +359,8 @@ def test_ssa_users(provider, instance, soft_assert):
         sel.wait_for_element(users)
         if users.find_row('Name', username):
             return
-    pytest.fail("User {0} was not found".format(username))
+    if instance.system_type != WINDOWS:
+        pytest.fail("User {0} was not found".format(username))
 
 
 @pytest.mark.long_running
@@ -351,7 +371,6 @@ def test_ssa_groups(provider, instance, soft_assert):
         test_flag: vm_analysis
     """
     group = fauxfactory.gen_alphanumeric()
-
     expected = None
 
     if instance.system_type != WINDOWS:
@@ -365,7 +384,8 @@ def test_ssa_groups(provider, instance, soft_assert):
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Groups'))
-    assert current == expected
+    if instance.system_type != WINDOWS:
+        assert current == expected
 
     # Make sure created group is in the list
     sel.click(InfoBlock("Security", "Groups"))
@@ -380,7 +400,8 @@ def test_ssa_groups(provider, instance, soft_assert):
         sel.wait_for_element(groups)
         if groups.find_row('Name', group):
             return
-    pytest.fail("Group {0} was not found".format(group))
+    if instance.system_type != WINDOWS:
+        pytest.fail("Group {0} was not found".format(group))
 
 
 @pytest.mark.long_running
@@ -390,6 +411,9 @@ def test_ssa_packages(provider, instance, soft_assert):
     Metadata:
         test_flag: vm_analysis
     """
+
+    if instance.system_type == WINDOWS:
+        pytest.skip("Windows has no packages")
 
     expected = None
     if 'package' not in instance.system_type.keys():
