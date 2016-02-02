@@ -280,7 +280,8 @@ class BaseProvider(Taggable, Updateable):
         client.disconnect()
 
     @variable(alias='rest')
-    def refresh_provider_relationships(self):
+    def refresh_provider_relationships(self, from_list_view=False):
+        # from_list_view is ignored as it is included here for sake of compatibility with UI call.
         col = rest_api().collections.providers.find_by(name=self.name)[0]
         col.action.refresh()
 
