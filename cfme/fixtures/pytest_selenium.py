@@ -1494,13 +1494,8 @@ def _select_str(loc, s):
     elif not value:
         return
 
-    # Do not "cast" the loc unless it is needed
-    from cfme.web_ui import AngularSelect
-    if type(loc) in {Select, AngularSelect}:
-        l = loc
-    else:
-        l = Select(loc)
-    return select_by_text(l, str(value))
+    loc = _locator_for_select(loc)
+    return select_by_text(loc, str(value))
 
 
 @select.method((object, Iterable))
@@ -1571,37 +1566,35 @@ def deselect_by_value(select_element, val):
     return _sel_desel(select_element, lambda s: ByValue(value(s)), 'deselect_by_value', val)
 
 
-@multidispatch
-def deselect(loc, o):
-    raise NotImplementedError('Unable to select {} in this type: {}'.format(o, loc))
+def deselect(loc, val_or_text):
+    """
 
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        val_or_text: either a single or an iterable of option values or description texts
 
-@deselect.method((object, ByValue))
-def _deselect_val(loc, val):
+    """
     # Do not "cast" the loc unless it is needed
+    loc = _locator_for_select(loc)
+    return _deselect(loc, val_or_text)
+
+
+def _locator_for_select(loc):
     from cfme.web_ui import AngularSelect
-    if type(loc) in {Select, AngularSelect}:
-        l = loc
+    if not isinstance(loc, (Select, AngularSelect)):
+        loc = Select(loc)
+    return loc
+
+
+def _deselect(loc, val_or_text):
+    if isinstance(val_or_text, ByValue):
+        return deselect_by_value(loc, val_or_text.value)
+    elif isinstance(val_or_text, (basestring, ByText)):
+        return deselect_by_text(loc, str(val_or_text))
+    elif isinstance(val_or_text, Iterable):
+        return [_deselect(loc, val_or_text_) for val_or_text_ in val_or_text]
     else:
-        l = Select(loc)
-    return deselect_by_value(l, val.value)
-
-
-@deselect.method((object, basestring))
-@deselect.method((object, ByText))
-def _deselect_text(loc, s):
-    # Do not "cast" the loc unless it is needed
-    from cfme.web_ui import AngularSelect
-    if type(loc) in {Select, AngularSelect}:
-        l = loc
-    else:
-        l = Select(loc)
-    return deselect_by_text(l, str(s))
-
-
-@deselect.method((object, Iterable))
-def _deselect_iter(loc, items):
-    return [deselect(loc, item) for item in items]
+        raise NotImplementedError('Unable to select {} in this type: {}'.format(val_or_text, loc))
 
 
 def execute_script(script, *args, **kwargs):
