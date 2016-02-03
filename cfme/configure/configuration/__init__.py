@@ -610,6 +610,13 @@ class ServerLogDepot(Pretty):
                     nfs="NFS",
                     smb="Samba",
                     dropbox="Red Hat Dropbox",
+                ),
+                "5.5": dict(
+                    anon_ftp=sel.ByValue("Anonymous FTP"),
+                    ftp=sel.ByValue("FTP"),
+                    nfs=sel.ByValue("NFS"),
+                    smb=sel.ByValue("Samba"),
+                    dropbox=sel.ByValue("Red Hat Dropbox")
                 )
             })
 
