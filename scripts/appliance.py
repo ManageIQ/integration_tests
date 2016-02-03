@@ -62,6 +62,27 @@ def main():
     return exit
 
 
+def process_arg(arg):
+    """Parse either number or a well-known values. Otherwise pass through."""
+    try:
+        return int(arg)
+    except ValueError:
+        pass
+    if arg == "True":
+        return True
+    elif arg == "False":
+        return False
+    elif arg == "None":
+        return None
+    else:
+        return arg
+
+
+def process_args(args):
+    """We need to pass more than just strings."""
+    return map(process_arg, args)
+
+
 def call_appliance(provider_name, vm_name, action, *args):
     # Given a provider class, find the named method and call it with
     # *args. This could possibly be generalized for other CLI tools.
@@ -74,7 +95,7 @@ def call_appliance(provider_name, vm_name, action, *args):
     if isinstance(getattr(type(appliance), action), property):
         return call
     else:
-        return call(*args)
+        return call(*process_args(args))
 
 if __name__ == '__main__':
     sys.exit(main())

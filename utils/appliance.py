@@ -271,13 +271,22 @@ class Appliance(object):
         self.provider.start_vm(self.vm_name)
         self.provider.wait_vm_running(self.vm_name)
 
-    def templatize(self):
+    def templatize(self, seal=True):
         """Marks the appliance as a template. Destroys the original VM in the process.
+
+        By default it runs the sealing process. If you have done it differently, you can opt out.
+
+        Args:
+            seal: Whether to run the sealing process (making the VM 'universal').
         """
-        if not self.is_running:
-            self.start()
-        self.ipapp.seal_for_templatizing()
-        self.stop()
+        if seal:
+            if not self.is_running:
+                self.start()
+            self.ipapp.seal_for_templatizing()
+            self.stop()
+        else:
+            if self.is_running:
+                self.stop()
         self.provider.mark_as_template(self.vm_name)
 
     @property
