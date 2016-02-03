@@ -39,26 +39,6 @@ def user():
     return user
 
 
-@pytest.fixture(scope='function')
-def automation_requests_data():
-    return [{
-        "uri_parts": {
-            "namespace": "System",
-            "class": "Request",
-            "instance": "InspectME",
-            "message": "create",
-        },
-        "parameters": {
-            "vm_name": "test_rest_{}".format(fauxfactory.gen_alphanumeric()),
-            "vm_memory": 4096,
-            "memory_limit": 16384,
-        },
-        "requester": {
-            "auto_approve": True
-        }
-    } for index in range(1, 5)]
-
-
 def test_provider_refresh(request, a_provider, rest_api):
     """Test checking that refresh invoked from the REST API works.
     It provisions a VM when the Provider inventory functionality is disabled, then the functionality
@@ -219,39 +199,6 @@ def test_vm_add_lifecycle_event(request, rest_api, vm, from_detail, db):
         lifecycle_events.status == event["status"],
         lifecycle_events.event == event["event"],
     ))) == 1, "Could not find the lifecycle event in the database"
-
-
-@pytest.mark.parametrize(
-    "multiple", [False, True],
-    ids=["one_request", "multiple_requests"])
-def test_automation_requests(request, rest_api, automation_requests_data, multiple):
-    """Test adding the automation request
-     Prerequisities:
-        * An appliance with ``/api`` available.
-    Steps:
-        * POST /api/automation_request - (method ``create``) add request
-        * Retrieve list of entities using GET /api/automation_request and find just added request
-    Metadata:
-        test_flag: rest, requests
-    """
-
-    if "automation_requests" not in rest_api.collections:
-        pytest.skip("automation request collection is not implemented in this version")
-
-    if multiple:
-        requests = rest_api.collections.automation_requests.action.create(*automation_requests_data)
-    else:
-        requests = rest_api.collections.automation_requests.action.create(
-            automation_requests_data[0])
-
-    def _finished():
-        for request in requests:
-            request.reload()
-            if request.status.lower() not in {"error"}:
-                return False
-        return True
-
-    wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')

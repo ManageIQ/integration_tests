@@ -297,3 +297,20 @@ def service_templates(request, rest_api, dialog):
             rest_api.collections.service_templates.action.delete(*s_tpls)
 
     return s_tpls
+
+
+def automation_requests_data(vm):
+    return [{
+        "uri_parts": {
+            "namespace": "System",
+            "class": "Request",
+            "instance": "InspectME",
+            "message": "create",
+        },
+        "parameters": {
+            "vm_name": vm,
+        },
+        "requester": {
+            "auto_approve": True
+        }
+    } for index in range(1, 5)]
