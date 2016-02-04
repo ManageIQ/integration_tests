@@ -1,6 +1,6 @@
 import ui_navigate as nav
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Quadicon, Region, SplitTable, flash, Form, fill, form_buttons
+from cfme.web_ui import Quadicon, Region, SplitTable, flash, Form, fill, form_buttons, Table
 from utils.pretty import Pretty
 from functools import partial
 from cfme.web_ui import toolbar as tb
@@ -8,16 +8,17 @@ from cfme import web_ui as ui
 from xml.sax.saxutils import quoteattr
 from cfme.exceptions import CFMEException
 from utils.wait import wait_for
+from utils import version
 
 
 details_page = Region(infoblock_type='detail')
 cfg_btn = partial(tb.select, "Configuration")
 pol_btn = partial(tb.select, 'Policy')
 lifecycle_btn = partial(tb.select, 'Lifecycle')
-output_table = SplitTable(
-    ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
-    ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1)
-)
+output_table = version.pick({'5.5': Table('//div[@id="list_grid"]/table'),
+                             '5.4': SplitTable(
+                            ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
+                            ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1))})
 
 edit_tags_form = Form(
     fields=[
@@ -65,7 +66,10 @@ class Stack(Pretty):
 
     def nav_to_security_group_link(self):
         sel.force_navigate('clouds_stack', context={'stack': self})
-        sel.click(details_page.infoblock.element("Relationships", "Security Groups"))
+        if version.current_version() <= '5.4':
+            sel.click(details_page.infoblock.element("Relationships", "Security Groups"))
+        if version.current_version() >= '5.5':
+            sel.click(details_page.infoblock.element("Relationships", "Security groups"))
 
     def nav_to_parameters_link(self):
         sel.force_navigate('clouds_stack', context={'stack': self})
