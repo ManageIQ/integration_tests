@@ -7,6 +7,7 @@ import dockerbot
 import json
 import requests
 import re
+import yaml
 from utils.conf import docker as docker_conf
 from utils.appliance import Appliance
 from utils.trackerbot import api
@@ -87,6 +88,7 @@ def create_run(db_pr, pr):
         tasks.append(dict(output="",
                           tid=fauxfactory.gen_alphanumeric(8),
                           result="pending",
+                          pr_metadata=pr['pr_metadata'],
                           stream=stream,
                           datestamp=str(datetime.now())))
     new_run['tasks'] = tasks
@@ -157,6 +159,7 @@ def run_tasks():
                                     test_id=task['tid'],
                                     nowait=True,
                                     pr=task['pr_number'],
+                                    pr_metadata=task['pr_metadata'],
                                     sprout=True,
                                     sprout_stream=stream,
                                     sprout_description=task['tid'])
@@ -287,6 +290,15 @@ def check_status(pr):
                 set_status(commit, states[task['result']], task['stream'])
     except HttpClientError:
         pass
+
+
+def get_pr_metadata(pr_body):
+    metadata = re.findall("{{(.*?)}}", pr_body)
+    if not metadata:
+        return {}
+    else:
+        ydata = yaml.safe_load(metadata[0])
+        return ydata
 
 
 def check_pr(pr):

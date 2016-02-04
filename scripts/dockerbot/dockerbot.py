@@ -7,11 +7,11 @@ import requests
 import os
 import os.path
 import docker
-import re
 import subprocess
 import sys
-import yaml
 import urlparse
+import re
+import yaml
 
 
 def _dgci(d, key):
@@ -128,6 +128,10 @@ class DockerBot(object):
             sel_container_name = sel.sel_name
             links = [(sel_container_name, 'selff')]
         self.pytest_name = self.args['test_id']
+        if 'pr_metadata' in self.args.keys():
+            self.pr_metadata = self.args['pr_metadata']
+        else:
+            self.pr_metadata = self.get_pr_metadata()
         self.create_pytest_envvars()
         self.handle_pr()
         self.log_path = self.create_log_path()
@@ -342,7 +346,6 @@ class DockerBot(object):
 
     def create_pytest_command(self):
         if self.args['auto_gen_test'] and self.args['pr']:
-            self.pr_metadata = self.get_pr_metadata(self.args['pr'])
             pytest = self.pr_metadata.get('pytest', None)
             sprout_appliances = self.pr_metadata.get('sprouts', 1)
             if pytest:
@@ -497,6 +500,9 @@ if __name__ == "__main__":
                       help='The branch name',
                       default=None)
     repo.add_argument('--pr',
+                      help='A PR Number (overides --branch)',
+                      default=None)
+    repo.add_argument('--pr-metadata',
                       help='A PR Number (overides --branch)',
                       default=None)
     repo.add_argument('--cfme-repo',
