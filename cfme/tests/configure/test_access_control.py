@@ -10,8 +10,6 @@ from cfme import login
 from cfme.configure.access_control import set_group_order
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
-from cfme.rest import tenants as _tenants
-from cfme.rest import roles as _roles
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
@@ -19,7 +17,6 @@ from utils.blockers import BZ
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
-from utils.wait import wait_for
 from utils import version
 
 records_table = Table("//div[@id='main_div']//table")
@@ -623,140 +620,6 @@ def test_user_change_password(request):
         assert not login.logged_in()
         login.login(user)
         assert login.current_full_name() == user.name
-
-
-class TestTenantsViaREST(object):
-    @pytest.fixture(scope="function")
-    def tenants(self, request, rest_api):
-        return _tenants(request, rest_api, num=3)
-
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-    @pytest.mark.parametrize(
-        "multiple", [False, True],
-        ids=["one_request", "multiple_requests"])
-    def test_edit_tenants(self, rest_api, tenants, multiple):
-        if multiple:
-            new_names = []
-            tenants_data_edited = []
-            for tenant in tenants:
-                new_name = fauxfactory.gen_alphanumeric().lower()
-                new_names.append(new_name)
-                tenant.reload()
-                tenants_data_edited.append({
-                    "href": tenant.href,
-                    "name": "test_tenants_{}".format(new_name),
-                })
-            rest_api.collections.tenants.action.edit(*tenants_data_edited)
-            for new_name in new_names:
-                wait_for(
-                    lambda: rest_api.collections.tenants.find_by(name=new_name),
-                    num_sec=180,
-                    delay=10,
-                )
-        else:
-            tenant = rest_api.collections.tenants.get(name=tenants[0].name)
-            new_name = 'test_tenant_{}'.format(fauxfactory.gen_alphanumeric().lower())
-            tenant.action.edit(name=new_name)
-            wait_for(
-                lambda: rest_api.collections.tenants.find_by(name=new_name),
-                num_sec=180,
-                delay=10,
-            )
-
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-    @pytest.mark.parametrize(
-        "multiple", [False, True],
-        ids=["one_request", "multiple_requests"])
-    def test_delete_tenants(self, rest_api, tenants, multiple):
-        if multiple:
-            rest_api.collections.tenants.action.delete(*tenants)
-            with error.expected("ActiveRecord::RecordNotFound"):
-                rest_api.collections.tenants.action.delete(*tenants)
-        else:
-            tenant = tenants[0]
-            tenant.action.delete()
-            with error.expected("ActiveRecord::RecordNotFound"):
-                tenant.action.delete()
-
-
-class TestRolesViaREST(object):
-    @pytest.fixture(scope="function")
-    def roles(self, request, rest_api):
-        return _roles(request, rest_api)
-
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-    @pytest.mark.parametrize(
-        "multiple", [False, True],
-        ids=["one_request", "multiple_requests"])
-    def test_edit_roles(self, rest_api, roles, multiple):
-        if "edit" not in rest_api.collections.roles.action.all:
-            pytest.skip("Edit roles action is not implemented in this version")
-
-        if multiple:
-            new_names = []
-            roles_data_edited = []
-            for role in roles:
-                new_name = fauxfactory.gen_alphanumeric()
-                new_names.append(new_name)
-                role.reload()
-                roles_data_edited.append({
-                    "href": role.href,
-                    "name": "role_name_{}".format(new_name),
-                })
-            rest_api.collections.roles.action.edit(*roles_data_edited)
-            for new_name in new_names:
-                wait_for(
-                    lambda: rest_api.collections.roles.find_by(name=new_name),
-                    num_sec=180,
-                    delay=10,
-                )
-        else:
-            role = rest_api.collections.roles.get(name=roles[0].name)
-            new_name = 'role_name_{}'.format(fauxfactory.gen_alphanumeric())
-            role.action.edit(name=new_name)
-            wait_for(
-                lambda: rest_api.collections.roles.find_by(name=new_name),
-                num_sec=180,
-                delay=10,
-            )
-
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-    def test_delete_roles(self, rest_api, roles):
-        if "delete" not in rest_api.collections.roles.action.all:
-            pytest.skip("Delete roles action is not implemented in this version")
-
-        rest_api.collections.roles.action.delete(*roles)
-        with error.expected("ActiveRecord::RecordNotFound"):
-            rest_api.collections.roles.action.delete(*roles)
-
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-    def test_add_delete_role(self, rest_api):
-        if "add" not in rest_api.collections.roles.action.all:
-            pytest.skip("Add roles action is not implemented in this version")
-
-        role_data = {"name": "role_name_{}".format(format(fauxfactory.gen_alphanumeric()))}
-        role = rest_api.collections.roles.action.add(role_data)[0]
-        wait_for(
-            lambda: rest_api.collections.roles.find_by(name=role.name),
-            num_sec=180,
-            delay=10,
-        )
-        role.action.delete()
-        with error.expected("ActiveRecord::RecordNotFound"):
-            role.action.delete()
-
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-    def test_role_assign_and_unassign_feature(self, rest_api, roles):
-        feature = rest_api.collections.features.get(name="Everything")
-        role = roles[0]
-        role.reload()
-        role.features.action.assign(feature)
-        role.reload()
-        # This verification works because the created roles don't have assigned features
-        assert feature.id in [f.id for f in role.features.all]
-        role.features.action.unassign(feature)
-        role.reload()
-        assert feature.id not in [f.id for f in role.features.all]
 
 
 # Tenant/Project test cases

@@ -89,34 +89,6 @@ def tags(request, rest_api, categories):
     return tags
 
 
-def tenants(request, rest_api, num=1):
-    parent = rest_api.collections.tenants.get(name='My Company')
-    data = [{
-        'description': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
-        'name': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
-        'divisible': 'true',
-        'use_config_for_attributes': 'false',
-        'parent': {'href': parent.href}
-    } for _index in range(0, num)]
-
-    tenants = rest_api.collections.tenants.action.create(*data)
-    for tenant in data:
-        wait_for(
-            lambda: rest_api.collections.tenants.find_by(name=tenant.get('name')),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [tenant.id for tenant in tenants]
-        delete_tenants = [tenant for tenant in rest_api.collections.tenants if tenant.id in ids]
-        if len(delete_tenants) != 0:
-            rest_api.collections.tenants.action.delete(*delete_tenants)
-
-    return tenants
-
-
 def dialog():
     dialog = "dialog_{}".format(fauxfactory.gen_alphanumeric())
     element_data = dict(
@@ -194,32 +166,6 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
             rest_api.collections.services.action.delete(*services)
 
     return services
-
-
-def roles(request, rest_api):
-    if "create" not in rest_api.collections.roles.action.all:
-        pytest.skip("Create roles action is not implemented in this version")
-
-    roles_data = [{
-        "name": "role_name_{}".format(fauxfactory.gen_alphanumeric())
-    } for index in range(1, 5)]
-
-    roles = rest_api.collections.roles.action.create(*roles_data)
-    for role in roles:
-        wait_for(
-            lambda: rest_api.collections.roles.find_by(name=role.name),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [r.id for r in roles]
-        delete_roles = [r for r in rest_api.collections.roles if r.id in ids]
-        if len(delete_roles) != 0:
-            rest_api.collections.roles.action.delete(*delete_roles)
-
-    return roles
 
 
 def rates(request, rest_api):
@@ -314,3 +260,82 @@ def automation_requests_data(vm):
             "auto_approve": True
         }
     } for index in range(1, 5)]
+
+
+def groups(request, rest_api, role, tenant, num=1):
+    data = [{
+        "description": "group_description_{}".format(fauxfactory.gen_alphanumeric()),
+        "role": {"href": role.href},
+        "tenant": {"href": tenant.href}
+    } for index in range(0, num)]
+
+    groups = _creating_skeleton(request, rest_api, "groups", data)
+    if num == 1:
+        return groups.pop()
+    return groups
+
+
+def roles(request, rest_api, num=1):
+    data = [{
+        "name": "role_name_{}".format(fauxfactory.gen_alphanumeric())
+    } for index in range(0, num)]
+
+    roles = _creating_skeleton(request, rest_api, "roles", data)
+    if num == 1:
+        return roles.pop()
+    return roles
+
+
+def tenants(request, rest_api, num=1):
+    parent = rest_api.collections.tenants.get(name='My Company')
+    data = [{
+        'description': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
+        'name': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
+        'divisible': 'true',
+        'use_config_for_attributes': 'false',
+        'parent': {'href': parent.href}
+    } for _index in range(0, num)]
+
+    tenants = _creating_skeleton(request, rest_api, "tenants", data)
+    if num == 1:
+        return tenants.pop()
+    return tenants
+
+
+def users(request, rest_api, num=1):
+    data = [{
+        "userid": "user_{}_{}".format(_index, fauxfactory.gen_alphanumeric(3)),
+        "name": "name_{}_{}".format(_index, fauxfactory.gen_alphanumeric()),
+        "password": "pass_{}_{}".format(_index, fauxfactory.gen_alphanumeric(3)),
+        "group": {"description": "EvmGroup-user"}
+    } for _index in range(0, num)]
+
+    users = _creating_skeleton(request, rest_api, "users", data)
+    if num == 1:
+        return users.pop()
+    return users
+
+
+def _creating_skeleton(request, rest_api, col_name, col_data):
+    collection = getattr(rest_api.collections, col_name)
+    if "create" not in collection.action.all:
+        pytest.skip("Create action for {} is not implemented in this version".format(col_name))
+    entities = collection.action.create(*col_data)
+    for entity in col_data:
+        if entity.get('name', None):
+            wait_for(lambda: collection.find_by(name=entity.get('name')), num_sec=180, delay=10)
+        elif entity.get('description', None):
+            wait_for(lambda: collection.find_by(
+                description=entity.get('description')), num_sec=180, delay=10)
+        else:
+            raise NotImplementedError
+
+    @request.addfinalizer
+    def _finished():
+        collection.reload()
+        ids = [e.id for e in entities]
+        delete_entities = [e for e in collection if e.id in ids]
+        if len(delete_entities) != 0:
+            collection.action.delete(*delete_entities)
+
+    return entities
