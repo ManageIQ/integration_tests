@@ -6,6 +6,7 @@ import traceback
 import dockerbot
 import json
 import requests
+import re
 from utils.conf import docker as docker_conf
 from utils.appliance import Appliance
 from utils.trackerbot import api
@@ -75,6 +76,13 @@ def create_run(db_pr, pr):
     tasks = []
     for group in tapi.group.get(stream=True)['objects']:
         stream = group['name']
+        stream_filter = pr['stream_filter']
+
+        if stream_filter is not None and stream not in stream_filter:
+            logger.info('Skipping task {} as stream {} not in stream filter {}'.format(
+                        db_pr['number'], stream, stream_filter))
+            continue
+
         logger.info('  Adding task stream {}...'.format(stream))
         tasks.append(dict(output="",
                           tid=fauxfactory.gen_alphanumeric(8),
@@ -299,10 +307,19 @@ def check_pr(pr):
 
     commit = pr['head']['sha']
     wip = False
+    pr['stream_filter'] = None
+    pr['pr_metadata'] = get_pr_metadata(pr['body'])
     try:
         db_pr = tapi.pr(pr['number']).get()
         last_run = tapi.run().get(pr__number=pr['number'], order_by='-datestamp',
                                   limit=1)['objects']
+
+        stream_filter_pr = pr['pr_metadata'].get('streams', None)
+        if stream_filter_pr:
+            logger.info('Found stream filter in body: {}'.format(stream_filter_pr))
+            pr['stream_filter'] = [x.strip() for x in stream_filter_pr.split(',')]
+            logger.info('Setting stream filter to {}'.format(pr['stream_filter']))
+
         if last_run:
             if last_run[0]['retest'] is True and "[WIP]" not in pr['title']:
                 logger.info('Re-testing PR {}'.format(pr['number']))
