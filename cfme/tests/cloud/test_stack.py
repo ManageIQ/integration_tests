@@ -42,7 +42,6 @@ def test_parameters_link(stack):
     stack.nav_to_parameters_link()
 
 
-@pytest.mark.meta(blockers=[1206016])
 def test_outputs_link(stack):
     stack.nav_to_output_link()
 
