@@ -178,8 +178,11 @@ class ServiceDialog(Updateable, Pretty):
             text_area_table.click_cell(1, value="Default text")
 
     def element(self, element_data):
-        return sel.element('//div[@class="modbox"]/h2[@class="modtitle"]'
-                          '[contains(normalize-space(.), "{}")]/..'.format(element_data))
+        return sel.element(version.pick({
+            '5.5': '//div[@class="panel-heading"]/h3[@class="panel-title"]'
+            '[contains(normalize-space(.), "{}")]/..'.format(element_data),
+            '5.4': '//div[@class="modbox"]/h2[@class="modtitle"]'
+            '[contains(normalize-space(.), "{}")]/..'.format(element_data)}))
 
     def reorder_elements(self, tab, box, *element_data):
         sel.force_navigate('service_dialog_edit', context={'dialog': self})
