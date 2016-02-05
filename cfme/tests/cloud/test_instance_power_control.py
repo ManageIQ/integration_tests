@@ -5,6 +5,7 @@ import pytest
 from cfme.cloud.instance import EC2Instance, Instance, OpenStackInstance, get_all_instances
 from cfme.fixtures import pytest_selenium as sel
 from utils import error, testgen, version
+from utils.blockers import GH
 from utils.wait import wait_for, TimedOutError
 
 pytestmark = [pytest.mark.usefixtures('test_power_control')]
@@ -340,3 +341,33 @@ def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_as
     soft_assert(
         testing_instance.name in get_all_instances(do_not_navigate=True),
         "instance is not among archived instances")
+
+
+@pytest.mark.ignore_stream("5.4")
+@pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+def test_terminate_via_rest(setup_provider_funcscope, provider, testing_instance, soft_assert,
+        verify_vm_running, rest_api, from_detail):
+    assert "terminate" in rest_api.collections.instances.action.all
+    if provider.type == 'ec2' and GH("ManageIQ/manageiq:6955").blocks:
+        pytest.skip("Termination ec2 is blocked by""manageiq/issues/6955")
+
+    testing_instance.wait_for_vm_state_change(
+        desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
+    vm = rest_api.collections.instances.get(name=testing_instance.name)
+    if from_detail:
+        vm.action.terminate()
+    else:
+        rest_api.collections.instances.action.terminate(vm)
+    if provider.type == 'openstack':
+        testing_instance.wait_to_disappear(timeout=800)
+        soft_assert(not testing_instance.does_vm_exist_on_provider(), "instance still exists")
+    else:
+        wait_for(lambda: vm.power_state == testing_instance.STATE_TERMINATED,
+            num_sec=600, delay=10, fail_func=vm.reload)
+    # Bug https://bugzilla.redhat.com/show_bug.cgi?id=1310067
+    # That's why we skip soft_assert for aws
+    if provider.type != 'ec2':
+        sel.force_navigate("clouds_instances_archived_branch")
+        soft_assert(
+            testing_instance.name in get_all_instances(do_not_navigate=True),
+            "instance is not among archived instances")
