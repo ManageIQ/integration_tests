@@ -297,7 +297,7 @@ class Vm(BaseVM, Common):
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
         try:
-            prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]
+            prov_data = cfme_data["management_systems"][self.provider.key]["provisioning"]
         except (KeyError, IndexError):
             raise ValueError("You have to specify the correct options in cfme_data.yaml")
         provisioning_data = {
