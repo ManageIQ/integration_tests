@@ -23,7 +23,8 @@ dynamic_tree = Tree({version.LOWEST: "//div[@class='dhxcont_global_content_area'
                                      "/fieldset/div/ul[@class='dynatree-container']",
                     '5.4': "//div[@class='dhxcont_global_content_area']"
                            "[not(contains(@style, 'display: none'))]/div/div/div/div/div/div"
-                           "/div/div/div/ul[@class='dynatree-container']"})
+                           "/div/div/div/ul[@class='dynatree-container']",
+                    '5.5': "//div[@class='modal-content']/div/div/ul[@class='dynatree-container']"})
 
 label_form = Form(fields=[
     ('label', Input("label")),
