@@ -195,6 +195,7 @@ def test_exists_view(request, setup_a_provider, key):
     reset_default_view(button_name, default_view)
 
 
+@pytest.mark.meta(blockers=[1305423])
 def test_hybrid_view(request, setup_a_provider):
     path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
     report = CannedSavedReport.new(path)
@@ -203,6 +204,7 @@ def test_hybrid_view(request, setup_a_provider):
     assert tb.is_active('Hybrid View'), "Hybrid view setting failed"
 
 
+@pytest.mark.meta(blockers=[1305423])
 def test_graph_view(request, setup_a_provider):
     path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
     report = CannedSavedReport.new(path)
@@ -211,6 +213,7 @@ def test_graph_view(request, setup_a_provider):
     assert tb.is_active('Graph View'), "Graph view setting failed"
 
 
+@pytest.mark.meta(blockers=[1305423])
 def test_tabular_view(request, setup_a_provider):
     path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
     report = CannedSavedReport.new(path)
