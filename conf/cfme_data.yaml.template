@@ -618,3 +618,5 @@ storage:
         file_shares:
             - col: val
               col2: val2
+
+cfme_annotations_path: data/testcase_tiers_and_types.csv
