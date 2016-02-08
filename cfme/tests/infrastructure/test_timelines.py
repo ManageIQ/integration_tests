@@ -3,14 +3,14 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
+from cfme.rest import a_provider as _a_provider
+from cfme.rest import vm as _vm
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from utils import testgen
 from utils import version
 from utils.log import logger
 from utils.wait import wait_for
-
-pytestmark = [pytest.mark.ignore_stream("upstream")]
 
 
 @pytest.fixture(scope="module")
@@ -75,6 +75,7 @@ def count_events(vm_name, nav_step):
     return 0
 
 
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1264183, 1281746])
 def test_provider_event(provider, gen_events, test_vm):
     """Tests provider event on timelines
@@ -90,6 +91,7 @@ def test_provider_event(provider, gen_events, test_vm):
              message="events to appear")
 
 
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1281746])
 def test_host_event(provider, gen_events, test_vm):
     """Tests host event on timelines
@@ -105,6 +107,7 @@ def test_host_event(provider, gen_events, test_vm):
              message="events to appear")
 
 
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1281746])
 def test_vm_event(provider, gen_events, test_vm):
     """Tests vm event on timelines
@@ -119,6 +122,7 @@ def test_vm_event(provider, gen_events, test_vm):
              message="events to appear")
 
 
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1281746])
 def test_cluster_event(provider, gen_events, test_vm):
     """Tests cluster event on timelines
@@ -132,3 +136,76 @@ def test_cluster_event(provider, gen_events, test_vm):
         toolbar.select('Monitoring', 'Timelines')
     wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
+
+
+class TestVmEventRESTAPI(object):
+    @pytest.fixture(scope="module")
+    def a_provider(self):
+        return _a_provider()
+
+    @pytest.fixture(scope="module")
+    def vm(self, request, a_provider, rest_api):
+        return _vm(request, a_provider, rest_api)
+
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_vm_add_event(self, rest_api, vm, db, from_detail):
+        event = {
+            "event_type": "BadUserNameSessionEvent",
+            "event_message": "Cannot login user@test.domain {}".format(from_detail)
+        }
+        rest_vm = rest_api.collections.vms.get(name=vm)
+        if from_detail:
+            assert rest_vm.action.add_event(event)["success"], "Could not add event"
+        else:
+            response = rest_api.collections.vms.action.add_event(rest_vm, **event)
+            assert (len(response) > 0, "Could not add event")
+
+        # DB check, doesn't work on 5.4
+        if version.current_version() < '5.5':
+            return True
+        events = db["event_streams"]
+        events_list = list(db.session.query(events).filter(
+            events.vm_name == vm,
+            events.message == event["event_message"],
+            events.event_type == event["event_type"],
+        ))
+        assert(len(events_list) == 1, "Could not find the event in the database")
+
+    @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+    def test_vm_add_lifecycle_event(self, request, rest_api, vm, from_detail, db):
+        """Test that checks whether adding a lifecycle event using the REST API works.
+        Prerequisities:
+            * A VM
+        Steps:
+            * Find the VM's id
+            * Prepare the lifecycle event data (``status``, ``message``, ``event``)
+            * Call either:
+                * POST /api/vms/<id> (method ``add_lifecycle_event``) <- the lifecycle data
+                * POST /api/vms (method ``add_lifecycle_event``) <- the lifecycle data
+                    and resources field specifying list of dicts containing hrefs to the VMs,
+                    in this case only one.
+            * Verify that appliance's database contains such entries in table ``lifecycle_events``
+        Metadata:
+            test_flag: rest
+        """
+        if "add_lifecycle_event" not in rest_api.collections.vms.action.all:
+            pytest.skip("add_lifecycle_event action is not implemented in this version")
+        rest_vm = rest_api.collections.vms.get(name=vm)
+        event = dict(
+            status=fauxfactory.gen_alphanumeric(),
+            message=fauxfactory.gen_alphanumeric(),
+            event=fauxfactory.gen_alphanumeric(),
+        )
+        if from_detail:
+            assert rest_vm.action.add_lifecycle_event(**event)["success"], "Could not add event"
+        else:
+            assert (
+                len(rest_api.collections.vms.action.add_lifecycle_event(rest_vm, **event)) > 0,
+                "Could not add event")
+        # DB check
+        lifecycle_events = db["lifecycle_events"]
+        assert len(list(db.session.query(lifecycle_events).filter(
+            lifecycle_events.message == event["message"],
+            lifecycle_events.status == event["status"],
+            lifecycle_events.event == event["event"],
+        ))) == 1, "Could not find the lifecycle event in the database"
