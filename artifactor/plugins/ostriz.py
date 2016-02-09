@@ -40,5 +40,6 @@ class Ostriz(ArtifactorBasePlugin):
         json_data['version'] = version
         json_data['build'] = build
         json_data['stream'] = stream
+        json_data['method'] = "automated"
         requests.post(self.url, data=json.dumps(json_data))
         return None, None
