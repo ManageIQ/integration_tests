@@ -43,7 +43,11 @@ SimpleCov.instance_variable_set("@result", SimpleCov::Result.from_hash(results))
 SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter
 SimpleCov.use_merging true
 SimpleCov.merge_timeout 2 << 28
-SimpleCov.add_group "APIs", "vmdb/app/apis"
+if Vmdb::Appliance.VERSION.start_with?('5.5', 'master')
+  SimpleCov.add_group "REST API", "vmdb/app/controllers/api_controller"
+else
+  SimpleCov.add_group "APIs", "vmdb/app/apis"
+end
 SimpleCov.add_group "Presenters", "vmdb/app/presenters"
 SimpleCov.add_group "Services", "vmdb/app/services"
 SimpleCov.result.format!

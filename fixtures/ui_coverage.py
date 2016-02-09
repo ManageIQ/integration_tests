@@ -73,7 +73,9 @@ appliance_coverage_root = rails_root.join('coverage')
 # local
 coverage_data = scripts_data_path.join('coverage')
 gemfile = coverage_data.join('Gemfile.dev.rb')
-coverage_hook = coverage_data.join('coverage_hook.rb')
+coverage_hook_lowest = coverage_data.join('coverage_hook_lowest.rb')
+coverage_hook_55 = coverage_data.join('coverage_hook_55.rb')
+coverage_hook_out_fn = 'coverage_hook.rb'
 coverage_merger = coverage_data.join('coverage_merger.rb')
 thing_toucher = coverage_data.join('thing_toucher.rb')
 coverage_output_dir = log_path.join('coverage')
@@ -155,6 +157,9 @@ class CoverageManager(object):
             # If the appliance runs out of memory, these can take *days* to complete,
             # so for now we'll just collect the raw coverage data and figure the merging
             # out later
+            # Edit, 10-Feb-2016:
+            # Currently, the reports are merged using the {stream}-reports job
+            # which utilizes the 'jjb/scripts/stream_reporter.sh' script instead
             # self._merge_coverage_reports()
             # self._retrieve_merged_reports()
         except Exception as exc:
@@ -178,6 +183,7 @@ class CoverageManager(object):
         version.pick({
             version.LOWEST: _bundle_install,
             '5.4': _gem_install,
+            '5.5': _gem_install,
             version.LATEST: _bundle_install,
         })()
 
@@ -185,9 +191,14 @@ class CoverageManager(object):
         # Clean appliance coverage dir
         self.ipapp.ssh_client.run_command('rm -rf {}'.format(
             appliance_coverage_root.strpath))
+        # Decide which coverage hook file to use based on version
+        coverage_hook = version.pick({
+            version.LOWEST: coverage_hook_lowest,
+            '5.5': coverage_hook_55
+        })
         # Put the coverage hook in the miq lib path
         self.ipapp.ssh_client.put_file(coverage_hook.strpath, rails_root.join(
-            '..', 'lib', coverage_hook.basename).strpath)
+            '..', 'lib', coverage_hook_out_fn).strpath)
         replacements = {
             'require': r"require 'coverage_hook'",
             'config': rails_root.join('config').strpath

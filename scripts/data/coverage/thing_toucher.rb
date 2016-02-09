@@ -14,6 +14,7 @@ INCLUDE_GLOBS = [
 # Models are loaded separately, so they're also excluded here.
 EXCLUDE_GLOBS = [
   '../lib/appliance_console*',
+  '../lib/coverage_hook*',
   'lib/extensions/**',
   'lib/db_administration/**',
   'lib/miq_automation_engine/**',
