@@ -361,7 +361,7 @@ def _setup_providers(prov_class, validate, check_existing):
             'list': list_infra_providers
         },
         'container': {
-            'navigate': 'container_providers',
+            'navigate': 'containers_providers',
             'quad': None,
             'list': list_container_providers
         }
