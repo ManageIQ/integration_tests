@@ -61,16 +61,11 @@ def test_host_drift_analysis(request, setup_provider, provider, host_type, host_
     # add credentials to host + finalizer to remove them
     if not test_host.has_valid_credentials:
         test_host.update(
-            updates={'credentials': host.get_credentials_from_config(host_data['credentials'])}
-        )
-        wait_for(
-            lambda: test_host.has_valid_credentials,
-            delay=10,
-            num_sec=120,
-            fail_func=sel.refresh,
-            message="has_valid_credentials"
+            updates={'credentials': host.get_credentials_from_config(host_data['credentials'])},
+            validate_credentials=True
         )
 
+        @request.addfinalizer
         def test_host_remove_creds():
             test_host.update(
                 updates={
@@ -81,7 +76,6 @@ def test_host_drift_analysis(request, setup_provider, provider, host_type, host_
                     )
                 }
             )
-        request.addfinalizer(test_host_remove_creds)
 
     # initiate 1st analysis
     test_host.run_smartstate_analysis()
