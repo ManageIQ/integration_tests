@@ -7,6 +7,7 @@ from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from utils import error
 from utils.update import update
+from utils.blockers import BZ
 import cfme.tests.configure.test_access_control as tac
 
 pytestmark = [pytest.mark.usefixtures("logged_in"),
@@ -86,7 +87,7 @@ def test_edit_tags(catalog_item):
     catalog_item.edit_tags("Cost Center *", "Cost Center 001")
 
 
-@pytest.mark.meta(blockers=[1092651])
+@pytest.mark.meta(blockers=[BZ(1092651, forced_streams=["5.3", "5.4", "5.5", "upstream"])])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):
@@ -94,6 +95,7 @@ def test_catalog_item_duplicate_name(catalog_item):
 
 
 def test_permissions_catalog_item_add(setup_cloud_providers, catalog_item):
-    """ Tests that a catalog can be added only with the right permissions"""
-    tac.single_task_permission_test([['Services', 'Catalogs Explorer', 'Catalog Items']],
+    """Test that a catalog can be added only with the right permissions."""
+    tac.single_task_permission_test([['Everything', 'Services', 'Catalogs Explorer',
+                                      'Catalog Items']],
                                     {'Add Catalog Item': catalog_item.create})
