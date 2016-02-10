@@ -6,6 +6,7 @@ import random
 import time
 from cfme.common.vm import VM
 from cfme.infrastructure.virtual_machines import get_all_vms
+from cfme.infrastructure.virtual_machines import Vm as VM_class
 from cfme.web_ui import toolbar
 from utils import testgen
 from utils.log import logger
@@ -403,26 +404,63 @@ class TestPowerControlRESTAPI(object):
         assert result.name == vm_name
         return result
 
-    @pytest.mark.parametrize(
-        "from_detail", [True, False],
-        ids=["delete_from_detail", "delete_from_collection"])
-    def test_stop(self, rest_api, verify_vm_running, vm, from_detail):
+    def verify_vm_rest_status(self, vm, status):
+        wait_for(lambda: vm.power_state == status,
+            num_sec=300, delay=5, fail_func=vm.reload,
+            message='wait for VM to stop (current state: {})'.format(vm.power_state))
+
+    def check_finish(self, provider, vm, status):
+        logger.info("VM: {} Power State: {} State on provider: {}".format(
+            vm.name, vm.power_state, provider.mgmt.vm_status(vm.name)))
+        return vm.power_state == status
+
+    def test_stop_detail(self, rest_api, provider, verify_vm_running, vm):
         assert "stop" in vm.action
-        if from_detail:
-            vm.action.stop()
-        else:
-            rest_api.collections.vms.action.stop(vm)
-        wait_for(lambda: vm.power_state == "off", num_sec=300, delay=5, fail_func=vm.reload)
+        self.verify_vm_rest_status(vm, status=VM_class.STATE_ON)
+        vm.action.stop()
+        wait_for(lambda: self.check_finish(provider, vm, status=VM_class.STATE_OFF),
+            num_sec=800, delay=10, fail_func=vm.reload,
+            message='wait for VM to stop (current state: {})'.format(vm.power_state))
 
-    def test_power_on(self, verify_vm_stopped, vm):
+    def test_power_on_detail(self, rest_api, provider, verify_vm_stopped, vm):
         assert "start" in vm.action
+        self.verify_vm_rest_status(vm, status=VM_class.STATE_OFF)
         vm.action.start()
-        wait_for(lambda: vm.power_state == "on", num_sec=300, delay=5, fail_func=vm.reload)
+        wait_for(lambda: self.check_finish(provider, vm, status=VM_class.STATE_ON),
+            num_sec=800, delay=10, fail_func=vm.reload,
+            message='wait for VM to start (current state: {})'.format(vm.power_state))
 
-    def test_suspend(self, verify_vm_running, vm):
+    def test_suspend_detail(self, rest_api, provider, verify_vm_running, vm):
         assert "suspend" in vm.action
+        self.verify_vm_rest_status(vm, status=VM_class.STATE_ON)
         vm.action.suspend()
-        wait_for(lambda: vm.power_state == "suspended", num_sec=300, delay=5, fail_func=vm.reload)
+        wait_for(lambda: self.check_finish(provider, vm, status=VM_class.STATE_SUSPENDED),
+            num_sec=800, delay=10, fail_func=vm.reload,
+            message='wait for VM to suspend (current state: {})'.format(vm.power_state))
+
+    def test_stop_collection(self, rest_api, provider, verify_vm_running, vm):
+        assert "stop" in vm.action
+        self.verify_vm_rest_status(vm, status=VM_class.STATE_ON)
+        rest_api.collections.vms.action.stop(vm)
+        wait_for(lambda: self.check_finish(provider, vm, status=VM_class.STATE_OFF),
+            num_sec=800, delay=10, fail_func=vm.reload,
+            message='wait for VM to stop (current state: {})'.format(vm.power_state))
+
+    def test_power_on_collection(self, rest_api, provider, verify_vm_stopped, vm):
+        assert "start" in vm.action
+        self.verify_vm_rest_status(vm, status=VM_class.STATE_OFF)
+        rest_api.collections.vms.action.start(vm)
+        wait_for(lambda: self.check_finish(provider, vm, status=VM_class.STATE_ON),
+            num_sec=800, delay=10, fail_func=vm.reload,
+            message='wait for VM to start (current state: {})'.format(vm.power_state))
+
+    def test_suspend_collection(self, rest_api, provider, verify_vm_running, vm):
+        assert "suspend" in vm.action
+        self.verify_vm_rest_status(vm, status=VM_class.STATE_ON)
+        rest_api.collections.vms.action.suspend(vm)
+        wait_for(lambda: self.check_finish(provider, vm, status=VM_class.STATE_SUSPENDED),
+            num_sec=800, delay=10, fail_func=vm.reload,
+            message='wait for VM to suspend (current state: {})'.format(vm.power_state))
 
 
 @pytest.mark.usefixtures("test_vm")
