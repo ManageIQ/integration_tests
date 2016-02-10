@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 from utils.conf import docker as docker_conf
 from utils.net import random_port, my_ip_address
+from scripts.dockerbot.check_prs import parse_pr_metadata
 import argparse
 import fauxfactory
 import requests
@@ -10,8 +11,6 @@ import docker
 import subprocess
 import sys
 import urlparse
-import re
-import yaml
 
 
 def _dgci(d, key):
@@ -184,12 +183,7 @@ class DockerBot(object):
                 'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
                 headers=headers)
             body = r.json()['body'] or ""
-            metadata = re.findall("{{(.*?)}}", body)
-            if not metadata:
-                return {}
-            else:
-                ydata = yaml.safe_load(metadata[0])
-                return ydata
+            return parse_pr_metadata(body)
 
     def find_files_by_pr(self, pr=None):
         self.requirements_update = False
@@ -503,7 +497,7 @@ if __name__ == "__main__":
                       help='A PR Number (overides --branch)',
                       default=None)
     repo.add_argument('--pr-metadata',
-                      help='A PR Number (overides --branch)',
+                      help='A PR body contents (if --pr is not passed)',
                       default=None)
     repo.add_argument('--cfme-repo',
                       help='The cfme repo',

@@ -292,7 +292,7 @@ def check_status(pr):
         pass
 
 
-def get_pr_metadata(pr_body):
+def parse_pr_metadata(pr_body):
     metadata = re.findall("{{(.*?)}}", pr_body)
     if not metadata:
         return {}
@@ -320,7 +320,7 @@ def check_pr(pr):
     commit = pr['head']['sha']
     wip = False
     pr['stream_filter'] = None
-    pr['pr_metadata'] = get_pr_metadata(pr['body'])
+    pr['pr_metadata'] = parse_pr_metadata(pr['number'])
     try:
         db_pr = tapi.pr(pr['number']).get()
         last_run = tapi.run().get(pr__number=pr['number'], order_by='-datestamp',
