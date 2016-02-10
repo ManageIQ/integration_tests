@@ -24,10 +24,11 @@ def test_vm_migrate(setup_provider, provider, request):
     Metadata:
         test_flag: migrate, provision
     """
-    vm = VM.factory("vmtest", provider)
+    # auto_test_services should exist to test migrate VM
+    vm = VM.factory("auto_test_services", provider)
     vm.migrate_vm("email@xyz.com", "first", "last")
     flash.assert_no_errors()
-    row_description = 'vmtest'
+    row_description = 'auto_test_services'
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=600, delay=20)
