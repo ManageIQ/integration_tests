@@ -30,6 +30,7 @@ from utils.path import project_path
 from utils.providers import get_mgmt
 from utils.timeutil import parsetime
 from utils.trackerbot import api, depaginate, parse_template
+from utils.wait import wait_for
 
 
 LOCK_EXPIRE = 60 * 15  # 15 minutes
@@ -156,12 +157,18 @@ def kill_appliance(self, appliance_id, replace_in_pool=False, minutes=60):
 
 
 @singleton_task()
-def kill_appliance_delete(self, appliance_id):
+def kill_appliance_delete(self, appliance_id, _delete_already_issued=False):
+    delete_issued = False
     try:
         appliance = Appliance.objects.get(id=appliance_id)
         if appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Deleting the appliance from provider")
-            appliance.provider_api.delete_vm(appliance.name)
+            # If we haven't issued the delete order, do it now
+            if not _delete_already_issued:
+                appliance.provider_api.delete_vm(appliance.name)
+                delete_issued = True
+            # In any case, retry to wait for the VM to be deleted, but next time do not issue delete
+            self.retry(args=(appliance_id, True), countdown=5, max_retries=60)
         appliance.delete()
     except ObjectDoesNotExist:
         # Appliance object already not there
@@ -171,7 +178,10 @@ def kill_appliance_delete(self, appliance_id):
             appliance.set_status("Could not delete appliance. Retrying.")
         except UnboundLocalError:
             return  # The appliance is not there any more
-        self.retry(args=(appliance_id,), exc=e, countdown=10, max_retries=5)
+        # In case of error retry, and also specify whether the delete order was already issued
+        self.retry(
+            args=(appliance_id, _delete_already_issued or delete_issued),
+            exc=e, countdown=5, max_retries=60)
 
 
 @singleton_task()
@@ -508,11 +518,17 @@ def prepare_template_delete_on_error(self, template_id):
     try:
         if template.provider_api.does_vm_exist(template.name):
             template.provider_api.delete_vm(template.name)
+            wait_for(template.provider_api.does_vm_exist, [template.name], timeout='5m', delay=10)
         if template.provider_api.does_template_exist(template.name):
             template.provider_api.delete_template(template.name)
+            wait_for(
+                template.provider_api.does_template_exist, [template.name], timeout='5m', delay=10)
         if (template.temporary_name is not None and
                 template.provider_api.does_template_exist(template.temporary_name)):
             template.provider_api.delete_template(template.temporary_name)
+            wait_for(
+                template.provider_api.does_template_exist,
+                [template.temporary_name], timeout='5m', delay=10)
         template.delete()
     except Exception as e:
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
@@ -752,6 +768,9 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                 if appliance.provider_api.does_vm_exist(appliance.name):
                     # Better to check it, you never know when does that fail
                     appliance.provider_api.delete_vm(appliance.name)
+                    wait_for(
+                        appliance.provider_api.does_vm_exist,
+                        [appliance.name], timeout='5m', delay=10)
             except:
                 pass  # Diaper here
             appliance.delete(do_not_touch_ap=True)
