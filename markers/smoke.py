@@ -27,9 +27,8 @@ def pytest_addoption(parser):
            help="halt the test run if smoke tests fail")
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.trylast
 def pytest_configure(config):
-    yield
     smoke_tests = SmokeTests(reporter(config))
     config.pluginmanager.register(smoke_tests, 'smoke_tests')
     config.addinivalue_line('markers', __doc__.splitlines()[0])

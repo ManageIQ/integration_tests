@@ -94,7 +94,7 @@ def pytest_addoption(parser):
                      help="A run id to assist in logging")
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.tryfirst
 def pytest_configure(config):
     global proc
     if not SLAVEID and not proc and isinstance(art_client, ArtifactorClient):
@@ -113,7 +113,6 @@ def pytest_configure(config):
     elif isinstance(art_client, ArtifactorClient):
         art_client.port = config.option.artifactor_port
     art_client.fire_hook('setup_merkyl', ip=appliance_ip_address)
-    yield
 
 
 @pytest.mark.hookwrapper

@@ -52,6 +52,7 @@ pytest.ini
 .settings
 .floo*
 .python-version
+.idea/
 
 # rendered documentation
 docs/_build
@@ -66,6 +67,9 @@ notebooks/*
 .jenkins*
 cfme-qe-yamls
 rhci-qe-data
+
+# pytest cache
+.cache/
 
 # *~ backup files
 *~
