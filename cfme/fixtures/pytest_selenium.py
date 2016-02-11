@@ -1571,39 +1571,6 @@ def deselect_by_value(select_element, val):
     return _sel_desel(select_element, lambda s: ByValue(value(s)), 'deselect_by_value', val)
 
 
-@multidispatch
-def deselect(loc, o):
-    raise NotImplementedError('Unable to select {} in this type: {}'.format(o, loc))
-
-
-@deselect.method((object, ByValue))
-def _deselect_val(loc, val):
-    # Do not "cast" the loc unless it is needed
-    from cfme.web_ui import AngularSelect
-    if type(loc) in {Select, AngularSelect}:
-        l = loc
-    else:
-        l = Select(loc)
-    return deselect_by_value(l, val.value)
-
-
-@deselect.method((object, basestring))
-@deselect.method((object, ByText))
-def _deselect_text(loc, s):
-    # Do not "cast" the loc unless it is needed
-    from cfme.web_ui import AngularSelect
-    if type(loc) in {Select, AngularSelect}:
-        l = loc
-    else:
-        l = Select(loc)
-    return deselect_by_text(l, str(s))
-
-
-@deselect.method((object, Iterable))
-def _deselect_iter(loc, items):
-    return [deselect(loc, item) for item in items]
-
-
 def execute_script(script, *args, **kwargs):
     """Wrapper for execute_script() to not have to pull browser() from somewhere.
 
