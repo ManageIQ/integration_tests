@@ -57,11 +57,17 @@ def call_appliance(order, result_dict, ip_address, action, args, kwargs):
         try:
             argspec = inspect.getargspec(call)
         except TypeError:
-            result = call(*args, **kwargs)
+            try:
+                result = call(*args, **kwargs)
+            except Exception as e:
+                result = e
         else:
             if argspec.keywords is not None or 'log_callback' in argspec.args:
                 kwargs['log_callback'] = generate_log_callback(ip_address)
-            result = call(*args, **kwargs)
+            try:
+                result = call(*args, **kwargs)
+            except Exception as e:
+                result = e
     with lock:
         result_dict[order] = result
 
@@ -120,9 +126,15 @@ def main(args):
     results = [pair[1] for pair in results]
 
     log_callback("Ended. Result printout follows:")
+    rc = 0
     for result in results:
-        print result
+        if isinstance(result, Exception):
+            print('Exception {}: {}'.format(type(result).__name__, str(result)))
+            rc = 1
+        else:
+            print(result)
+    return rc
 
 
 if __name__ == '__main__':
-    main(parse_args())
+    exit(main(parse_args()))
