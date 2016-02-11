@@ -21,6 +21,8 @@ import fauxfactory
 import os
 import sys
 
+import pytest  # NOQA: import to trigger initial pluginmanager
+
 from _pytest.terminal import TerminalReporter
 from cached_property import cached_property
 from py.io import TerminalWriter

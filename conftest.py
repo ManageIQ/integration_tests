@@ -30,11 +30,10 @@ class _AppliancePoliceException(Exception):
         return "{} (port {})".format(self.message, self.port)
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.tryfirst
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
-    yield
 
 
 @pytest.fixture(scope="session", autouse=True)

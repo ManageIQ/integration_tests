@@ -178,9 +178,9 @@ def _init_config(slave_options, slave_args):
     # This is a slightly modified form of _pytest.config.Config.fromdictargs
     # yaml is able to pack up the entire CmdOptions call from pytest, so
     # we can just set config.option to what was passed from the master in the slave_config yaml
-    from _pytest import config
-    pluginmanager = config.get_plugin_manager()
-    config = pluginmanager.config
+    import pytest  # NOQA
+    from _pytest.config import get_config
+    config = get_config()
     config.args = slave_args
     config._preparse(config.args, addopts=False)
     config.option = slave_options
@@ -190,6 +190,7 @@ def _init_config(slave_options, slave_args):
     config.option.appliances = []
     for pluginarg in config.option.plugins:
         config.pluginmanager.consider_pluginarg(pluginarg)
+    config.pluginmanager.consider_pluginarg('no:fixtures.parallelizer')
     return config
 
 

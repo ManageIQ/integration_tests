@@ -65,7 +65,7 @@ def test_instance(setup_provider, request, delete_instances_fin, provider, vm_na
 
 
 @pytest.fixture(scope="module")
-def gen_events(setup_provider, delete_fx_provider_event, provider, test_instance):
+def gen_events(setup_provider_modscope, delete_fx_provider_event, provider, test_instance):
     logger.debug('Starting, stopping VM')
     mgmt = provider.mgmt
     mgmt.stop_vm(test_instance.name)

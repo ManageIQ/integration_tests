@@ -147,8 +147,8 @@ class TestVmEventRESTAPI(object):
         return _a_provider()
 
     @pytest.fixture(scope="module")
-    def vm(self, request, a_provider, rest_api):
-        return _vm(request, a_provider, rest_api)
+    def vm(self, request, a_provider, rest_api_modscope):
+        return _vm(request, a_provider, rest_api_modscope)
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_vm_add_event(self, rest_api, vm, db, from_detail):

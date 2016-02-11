@@ -13,8 +13,8 @@ class TestVmOwnershipRESTAPI(object):
         return _a_provider()
 
     @pytest.fixture(scope="module")
-    def vm(self, request, a_provider, rest_api):
-        return _vm(request, a_provider, rest_api)
+    def vm(self, request, a_provider, rest_api_modscope):
+        return _vm(request, a_provider, rest_api_modscope)
 
     @pytest.mark.tier(3)
     def test_vm_set_ownership(self, rest_api, vm):
