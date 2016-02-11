@@ -42,11 +42,7 @@ for cred in credentials:
 
 
 def get_test_idents(item):
-
-    if getattr(item, 'location', None):
-        return item.location[2], item.location[0]
-    else:
-        return item.name, item.parent.name
+    return item.location[2], item.location[0]
 
 
 class DummyClient(object):
