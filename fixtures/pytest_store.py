@@ -23,9 +23,10 @@ import sys
 from urlparse import urlparse
 
 from _pytest.terminal import TerminalReporter
+from cached_property import cached_property
 from py.io import TerminalWriter
 
-from utils import conf, diaper, lazycache, property_or_none
+from utils import conf, diaper, property_or_none
 from utils.log import logger
 
 
@@ -152,7 +153,7 @@ class Store(object):
     def slave_manager(self):
         return self.pluginmanager.getplugin('slave_manager')
 
-    @lazycache
+    @cached_property
     def my_ip_address(self):
         try:
             # Check the environment first

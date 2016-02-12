@@ -1,6 +1,6 @@
 import pytest
 
-from utils import lazycache
+from cached_property import cached_property
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ class PropertyObject(object):
 
 
 class LazycacheTester(object):
-    @lazycache
+    @cached_property
     def cached_property(self):
         return PropertyObject('cached')
 

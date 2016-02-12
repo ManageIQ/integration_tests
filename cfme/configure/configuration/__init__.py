@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from contextlib import contextmanager
 from functools import partial
-
+from cached_property import cached_property
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 
@@ -18,7 +18,7 @@ from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
-from utils import version, conf, lazycache
+from utils import version, conf
 from utils.pretty import Pretty
 from utils.signals import fire, on_signal
 from utils.version import current_version
@@ -596,7 +596,7 @@ class ServerLogDepot(Pretty):
             self.password = password
             self.name = name
 
-        @lazycache
+        @cached_property
         def p_types(self):
             return version.pick({
                 version.LOWEST: dict(

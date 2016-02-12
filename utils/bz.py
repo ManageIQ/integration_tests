@@ -3,7 +3,7 @@ import re
 from bugzilla import Bugzilla as _Bugzilla
 from collections import Sequence
 
-from utils import lazycache
+from cached_property import cached_property
 from utils.conf import cfme_data, credentials
 from utils.log import logger
 from utils.version import (
@@ -88,19 +88,19 @@ class Bugzilla(object):
             url=url, user=username, password=password, cookiefile=None,
             tokenfile=None, product=product)
 
-    @lazycache
+    @cached_property
     def bugzilla(self):
         return _Bugzilla(**self.__kwargs)
 
-    @lazycache
+    @cached_property
     def loose(self):
         return cfme_data.get("bugzilla", {}).get("loose", [])
 
-    @lazycache
+    @cached_property
     def open_states(self):
         return cfme_data.get("bugzilla", {}).get("skip", set([]))
 
-    @lazycache
+    @cached_property
     def upstream_version(self):
         if self.default_product is not None:
             return self.default_product.latest_version

@@ -6,13 +6,8 @@ import os
 # import diaper for backward compatibility
 import diaper
 
-from cached_property import cached_property
-
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
-
-
-lazycache = cached_property
 
 
 def property_or_none(wrapped, *args, **kwargs):

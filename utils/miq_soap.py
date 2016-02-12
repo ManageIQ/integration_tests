@@ -5,7 +5,7 @@ Enables to operate Infrastructure objects. It has better VM provisioning code. O
 """
 from suds import WebFault
 
-from utils import lazycache
+from cached_property import cached_property
 from utils.conf import cfme_data
 from utils.db import cfmedb
 from utils.log import logger
@@ -69,7 +69,7 @@ class MiqInfraObject(object):
         """
         return getattr(get_client().service, self.GETTER_FUNC)(self.id)
 
-    @lazycache
+    @cached_property
     def name(self):
         return str(self.object.name)
 
@@ -139,19 +139,19 @@ class MiqInfraObject(object):
 
 # Here comes rails (but in a good way)
 class HasManyHosts(MiqInfraObject):
-    @lazycache
+    @cached_property
     def hosts(self):
         return [MiqHost(host.guid) for host in self.object.hosts]
 
 
 class HasManyEMSs(MiqInfraObject):
-    @lazycache
+    @cached_property
     def emss(self):
         return [MiqEms(ems.guid) for ems in self.object.ext_management_systems]
 
 
 class HasManyDatastores(MiqInfraObject):
-    @lazycache
+    @cached_property
     def datastores(self):
         return [MiqDatastore(store.id) for store in self.object.datastores]
 
@@ -163,19 +163,19 @@ class HasManyVMs(MiqInfraObject):
 
 
 class HasManyResourcePools(MiqInfraObject):
-    @lazycache
+    @cached_property
     def resource_pools(self):
         return [MiqResourcePool(rpool.id) for rpool in self.object.resource_pools]
 
 
 class BelongsToProvider(MiqInfraObject):
-    @lazycache
+    @cached_property
     def provider(self):
         return MiqEms(self.object.ext_management_system.guid)
 
 
 class BelongsToCluster(BelongsToProvider):
-    @lazycache
+    @cached_property
     def cluster(self):
         return MiqCluster(self.object.parent_cluster.id)
 
@@ -184,19 +184,19 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
     GETTER_FUNC = "FindEmsByGuid"
     TAG_PREFIX = "Ems"
 
-    @lazycache
+    @cached_property
     def port(self):
         return self.object.port
 
-    @lazycache
+    @cached_property
     def host_name(self):
         return self.object.hostname
 
-    @lazycache
+    @cached_property
     def ip_address(self):
         return self.object.ipaddress
 
-    @lazycache
+    @cached_property
     def clusters(self):
         return [MiqCluster(cluster.id) for cluster in self.object.clusters]
 
@@ -212,7 +212,7 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
     def all(cls):
         return [cls(ems.guid) for ems in get_client().service.GetEmsList()]
 
-    @lazycache
+    @cached_property
     def direct_connection(self):
         """Returns an API from mgmt_system.py targeted at this provider"""
         # Find the credentials entry
@@ -257,7 +257,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
     GETTER_FUNC = "FindVmByGuid"
     TAG_PREFIX = "Vm"
 
-    @lazycache
+    @cached_property
     def vendor(self):
         return self.object.vendor
 
@@ -448,7 +448,7 @@ class MiqCluster(
     GETTER_FUNC = "FindClusterById"
     TAG_PREFIX = "Cluster"
 
-    @lazycache
+    @cached_property
     def default_resource_pool(self):
         return MiqResourcePool(self.object.default_resource_pool.id)
 
@@ -461,7 +461,7 @@ class MiqResourcePool(HasManyHosts, HasManyEMSs):
     GETTER_FUNC = "FindResourcePoolById"
     TAG_PREFIX = "ResourcePool"
 
-    @lazycache
+    @cached_property
     def store_type(self):
         return str(self.object.store_type)
 

@@ -62,7 +62,7 @@ from multimethods import multimethod, multidispatch, Anything
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions, js
 from cfme.fixtures.pytest_selenium import browser
-from utils import lazycache, version
+from utils import version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
@@ -1453,7 +1453,7 @@ class Tree(Pretty):
     def __init__(self, locator):
         self.locator = locator
 
-    @lazycache
+    @cached_property
     def tree_id(self):
         if isinstance(self.locator, basestring) and re.match(r"^[a-zA-Z0-9_-]+$", self.locator):
             return self.locator
@@ -3010,7 +3010,7 @@ class DynamicTable(Pretty):
     def rows(self):
         return map(lambda r_el: self.Row(self, r_el), sel.elements(self.ROWS, root=self.root_loc))
 
-    @lazycache
+    @cached_property
     def header_names(self):
         return map(sel.text, sel.elements(".//thead/tr/th", root=self.root_loc))
 
