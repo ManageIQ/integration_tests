@@ -87,9 +87,8 @@ class Db(Mapping):
         tables, like the mapping interface or :py:meth:`values`.
 
     """
-    _table_cache = dict()
-
     def __init__(self, hostname=None, credentials=None):
+        self._table_cache = {}
         if hostname is None:
             self.hostname = store.current_appliance.db_address
         else:

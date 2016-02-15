@@ -9,6 +9,7 @@ import shutil
 import socket
 import subprocess
 import yaml
+from datetime import datetime
 from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
@@ -529,16 +530,22 @@ class IPAppliance(object):
         Returns:
             :py:class:`set` of :py:class:`str` - provider_key-s
         """
-        ems_table = self.db["ext_management_systems"]
         ip_addresses = set([])
-        for ems in self.db.session.query(ems_table):
-            if ems.ipaddress is not None:
-                ip_addresses.add(ems.ipaddress)
-            elif ems.hostname is not None:
-                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ems.hostname) is not None:
-                    ip_addresses.add(ems.hostname)
+        if (    # LISP powa!
+                (self.is_downstream and self.version >= '5.6')
+                or ((not self.is_downstream)
+                    and self.build_datetime >= datetime(year=2015, month=10, day=5))):
+            query = self._query_post_endpoints()
+        else:
+            query = self._query_pre_endpoints()
+        for ipaddress, hostname in query:
+            if ipaddress is not None:
+                ip_addresses.add(ipaddress)
+            elif hostname is not None:
+                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", hostname) is not None:
+                    ip_addresses.add(hostname)
                 else:
-                    ip_address = resolve_hostname(ems.hostname)
+                    ip_address = resolve_hostname(hostname)
                     if ip_address is not None:
                         ip_addresses.add(ip_address)
         provider_keys = set([])
@@ -546,6 +553,21 @@ class IPAppliance(object):
             if provider_data.get("ipaddress", None) in ip_addresses:
                 provider_keys.add(provider_key)
         return provider_keys
+
+    def _query_pre_endpoints(self):
+        ems_table = self.db["ext_management_systems"]
+        for ems in self.db.session.query(ems_table):
+            yield ems.ipaddress, ems.hostname
+
+    def _query_post_endpoints(self):
+        """After Oct 5th, 2015, the ipaddresses and stuff was separated in a separate table."""
+        ems_table = self.db["ext_management_systems"]
+        ep = self.db["endpoints"]
+        for ems in self.db.session.query(ems_table):
+            for endpoint in self.db.session.query(ep).filter(ep.resource_id == ems.id):
+                ipaddress = endpoint.ipaddress
+                hostname = endpoint.hostname
+                yield ipaddress, hostname
 
     @property
     def has_os_infra(self):
