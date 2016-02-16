@@ -690,3 +690,48 @@ def test_superadmin_tenant_project_crud(request):
         project.name = project.name + "edited"
     project.delete()
     tenant.delete()
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
+@pytest.mark.parametrize('number_of_childrens', [5])
+def test_superadmin_child_tenant_crud(request, number_of_childrens):
+    """Test CRUD operations for CFME child tenants, where several levels of tenants are created.
+
+    Prerequisities:
+        * This test is not depending on any other test and can be executed against fresh appliance.
+
+    Steps:
+        * Create 5 tenants where the next tenant is always child to the previous one
+        * Update description of tenant(N-1)_* in the tree
+        * Update name of tenant(N-1)_*
+        * Delete all created tenants in reversed order
+    """
+
+    tenant = None
+    tenant_list = []
+
+    @request.addfinalizer
+    def _delete_tenants():
+        # reversed because we need to go from the last one
+        for tenant in reversed(tenant_list):
+            if tenant.exists:
+                tenant.delete()
+
+    for i in range(1, number_of_childrens + 1):
+        new_tenant = ac.Tenant(
+            name="tenant{}_{}".format(i, fauxfactory.gen_alpha(4)),
+            description=fauxfactory.gen_alphanumeric(16),
+            parent_tenant=tenant)
+        tenant_list.append(new_tenant)
+        new_tenant.create()
+        tenant = new_tenant
+
+    tenant_update = tenant.parent_tenant
+    with update(tenant_update):
+        tenant_update.description = tenant_update.description + "edited"
+    with update(tenant_update):
+        tenant_update.name = tenant_update.name + "edited"
+
+    for tenant_item in reversed(tenant_list):
+        tenant_item.delete()
+        assert not tenant_item.exists
