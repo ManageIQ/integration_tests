@@ -84,13 +84,9 @@ def create_run(db_pr, pr):
             continue
 
         logger.info('  Adding task stream {}...'.format(stream))
-        pr_metadata = pr.get('pr_metadata', None)
-        if not pr_metadata:
-            pr_metadata = db_pr.get('pr_metadata', None)
         tasks.append(dict(output="",
                           tid=fauxfactory.gen_alphanumeric(8),
                           result="pending",
-                          pr_metadata=pr_metadata,
                           stream=stream,
                           datestamp=str(datetime.now())))
     new_run['tasks'] = tasks
@@ -133,6 +129,8 @@ def run_tasks():
         if tasks:
             task = tasks[0]
             stream = task['stream']
+            db_pr = tapi.pr(task['pr_number']).get()
+            pr_metadata = parse_pr_metadata(db_pr['description'])
             try:
                 # Get the latest available template and provision/configure an appliance
                 # template_obj = tapi.group(stream).get()
@@ -161,7 +159,7 @@ def run_tasks():
                                     test_id=task['tid'],
                                     nowait=True,
                                     pr=task['pr_number'],
-                                    pr_metadata=task['pr_metadata'],
+                                    pr_metadata=pr_metadata,
                                     sprout=True,
                                     sprout_stream=stream,
                                     sprout_description=task['tid'])
@@ -342,13 +340,11 @@ def check_pr(pr):
         tapi.pr(pr['number']).put({'current_commit_head': commit,
                                    'wip': wip,
                                    'title': pr['title'],
-                                   'pr_metadata': pr['pr_metadata'],
                                    'description': pr['body']})
     except HttpClientError:
         logger.info('PR {} not found in database, creating...'.format(pr['number']))
         new_pr = {'number': pr['number'],
                   'description': pr['body'],
-                  'pr_metadata': pr['pr_metadata'],
                   'current_commit_head': commit,
                   'title': pr['title']}
         tapi.pr().post(new_pr)
