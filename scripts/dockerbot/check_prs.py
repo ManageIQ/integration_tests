@@ -339,10 +339,12 @@ def check_pr(pr):
         tapi.pr(pr['number']).put({'current_commit_head': commit,
                                    'wip': wip,
                                    'title': pr['title'],
+                                   'pr_metadata': pr['pr_metadata'],
                                    'description': pr['body']})
     except HttpClientError:
         logger.info('PR {} not found in database, creating...'.format(pr['number']))
         new_pr = {'number': pr['number'],
+                  'pr_metadata': pr['pr_metadata'],
                   'description': pr['body'],
                   'current_commit_head': commit,
                   'title': pr['title']}
