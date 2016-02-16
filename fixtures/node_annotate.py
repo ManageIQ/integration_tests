@@ -51,8 +51,8 @@ def pytest_addoption(parser):
 
 def tier_matches(item, tiers):
     mark = item.keywords.get('tier')
-    if mark is None or getattr(mark, 'args', None) is None:
-        return True
+    if getattr(mark, 'args', None) is None:
+        return False
     return mark.args[0] in tiers
 
 
