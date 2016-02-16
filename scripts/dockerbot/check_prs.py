@@ -310,7 +310,7 @@ def check_pr(pr):
     commit = pr['head']['sha']
     wip = False
     pr['stream_filter'] = None
-    pr['pr_metadata'] = parse_pr_metadata(pr['number'])
+    pr['pr_metadata'] = parse_pr_metadata(pr['body'])
     try:
         db_pr = tapi.pr(pr['number']).get()
         last_run = tapi.run().get(pr__number=pr['number'], order_by='-datestamp',
