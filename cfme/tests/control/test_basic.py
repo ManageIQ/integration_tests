@@ -46,6 +46,31 @@ VM_EXPRESSIONS_TO_TEST = [
 ]
 
 
+@pytest.yield_fixture
+def random_alert():
+    alert = explorer.Alert(
+        fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
+    )
+    alert.create()
+    yield alert
+    alert.delete()
+
+
+@pytest.yield_fixture(params=[explorer.VMCompliancePolicy,
+                              explorer.HostCompliancePolicy,
+                              explorer.HostControlPolicy,
+                              explorer.VMControlPolicy],
+                      ids=["VMCompliancePolicy",
+                           "HostCompliancePolicy",
+                           "HostControlPolicy",
+                           "VMControlPolicy"])
+def random_policy(request):
+    policy = request.param(fauxfactory.gen_alphanumeric())
+    policy.create()
+    yield policy
+    policy.delete()
+
+
 @pytest.yield_fixture(scope="module")
 def vm_condition_for_expressions():
     cond = explorer.VMCondition(
@@ -101,6 +126,31 @@ def random_host_control_policy():
     policy.delete()
 
 
+@pytest.yield_fixture(params=[explorer.ClusterAlertProfile,
+                              explorer.DatastoreAlertProfile,
+                              explorer.HostAlertProfile,
+                              explorer.ProviderAlertProfile,
+                              explorer.ServerAlertProfile,
+                              explorer.VMInstanceAlertProfile],
+                      ids=[explorer.ClusterAlertProfile.TYPE,
+                           explorer.DatastoreAlertProfile.TYPE,
+                           explorer.HostAlertProfile.TYPE,
+                           explorer.ProviderAlertProfile.TYPE,
+                           explorer.ServerAlertProfile.TYPE,
+                           explorer.VMInstanceAlertProfile.TYPE])
+def alert_profile(request):
+    alert = explorer.Alert(
+        fauxfactory.gen_alphanumeric(),
+        based_on=request.param.TYPE,
+        timeline_event=True,
+        driving_event="Hourly Timer"
+    )
+    alert.create()
+    alert_profile = request.param(fauxfactory.gen_alphanumeric(), [alert])
+    yield alert_profile
+    alert.delete()
+
+
 def test_vm_condition_crud(soft_assert):
     condition = explorer.VMCondition(
         fauxfactory.gen_alphanumeric(),
@@ -150,7 +200,7 @@ def test_host_condition_crud(soft_assert):
     ))
 
 
-def test_action_crud(request, soft_assert):
+def test_action_crud(soft_assert):
     action = explorer.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
@@ -176,7 +226,7 @@ def test_action_crud(request, soft_assert):
     ))
 
 
-def test_vm_control_policy_crud(request, soft_assert):
+def test_vm_control_policy_crud(soft_assert):
     policy = explorer.VMControlPolicy(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
@@ -195,7 +245,7 @@ def test_vm_control_policy_crud(request, soft_assert):
     ))
 
 
-def test_vm_compliance_policy_crud(request, soft_assert):
+def test_vm_compliance_policy_crud(soft_assert):
     policy = explorer.VMCompliancePolicy(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
@@ -214,7 +264,7 @@ def test_vm_compliance_policy_crud(request, soft_assert):
     ))
 
 
-def test_host_control_policy_crud(request, soft_assert):
+def test_host_control_policy_crud(soft_assert):
     policy = explorer.HostControlPolicy(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
@@ -233,7 +283,7 @@ def test_host_control_policy_crud(request, soft_assert):
     ))
 
 
-def test_host_compliance_policy_crud(request, soft_assert):
+def test_host_compliance_policy_crud(soft_assert):
     policy = explorer.HostCompliancePolicy(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
@@ -250,6 +300,12 @@ def test_host_compliance_policy_crud(request, soft_assert):
     soft_assert(not policy.exists, "The policy {} exists!".format(
         policy.description
     ))
+
+
+def test_policies_copy(random_policy, soft_assert):
+    random_policy_copy = random_policy.copy()
+    soft_assert(random_policy_copy.exists, "The {} does not exist!".format(random_policy_copy))
+    random_policy_copy.delete()
 
 
 def test_assign_events_to_vm_control_policy(random_vm_control_policy, soft_assert):
@@ -330,4 +386,35 @@ def test_alert_crud(soft_assert):
     alert.delete()
     soft_assert(not alert.exists, "The alert {} exists!".format(
         alert.description
+    ))
+
+
+@pytest.mark.meta(blockers=[1303645], automates=[1303645])
+def test_control_alert_copy(random_alert, soft_assert):
+    alert_copy = random_alert.copy()
+    soft_assert(alert_copy.exists, "The alert {} does not exist!".format(
+        alert_copy.description
+    ))
+    alert_copy.delete()
+    soft_assert(not alert_copy.exists, "The alert {} exists!".format(
+        alert_copy.description
+    ))
+
+
+def test_alert_profile_crud(alert_profile, soft_assert):
+    alert_profile.create()
+    soft_assert(alert_profile.exists, "The alert profile {} does not exist!".format(
+        alert_profile.description
+    ))
+    with update(alert_profile):
+        alert_profile.notes = "Modified!"
+    sel.force_navigate("{}_alert_profile_edit".format(alert_profile.PREFIX),
+                       context={"alert_profile_name": alert_profile.description})
+    soft_assert(
+        sel.text(
+            alert_profile.form.notes) == "Modified!", "Modification failed!"
+    )
+    alert_profile.delete()
+    soft_assert(not alert_profile.exists, "The alert profile {} exists!".format(
+        alert_profile.description
     ))
