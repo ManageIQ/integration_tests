@@ -6,13 +6,12 @@ import traceback
 import dockerbot
 import json
 import requests
-import re
-import yaml
 from utils.conf import docker as docker_conf
 from utils.appliance import Appliance
 from utils.trackerbot import api
 from utils.log import create_logger
 from slumber.exceptions import HttpClientError
+from scripts import parse_pr_metadata
 
 token = docker_conf['gh_token']
 owner = docker_conf['gh_owner']
@@ -290,15 +289,6 @@ def check_status(pr):
                 set_status(commit, states[task['result']], task['stream'])
     except HttpClientError:
         pass
-
-
-def parse_pr_metadata(pr_body):
-    metadata = re.findall("{{(.*?)}}", pr_body)
-    if not metadata:
-        return {}
-    else:
-        ydata = yaml.safe_load(metadata[0])
-        return ydata
 
 
 def check_pr(pr):
