@@ -11,7 +11,7 @@ from utils.appliance import Appliance
 from utils.trackerbot import api
 from utils.log import create_logger
 from slumber.exceptions import HttpClientError
-from scripts import parse_pr_metadata
+from scripts.dockerbot import parse_pr_metadata
 
 token = docker_conf['gh_token']
 owner = docker_conf['gh_owner']
