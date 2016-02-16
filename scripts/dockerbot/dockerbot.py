@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 from utils.conf import docker as docker_conf
 from utils.net import random_port, my_ip_address
-from scripts.dockerbot.check_prs import parse_pr_metadata
+from scripts import parse_pr_metadata
 import argparse
 import fauxfactory
 import requests
