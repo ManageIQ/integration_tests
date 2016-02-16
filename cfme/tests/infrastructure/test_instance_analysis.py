@@ -9,51 +9,103 @@ from cfme.common.vm import VM
 from cfme.common.provider import cleanup_vm
 from cfme.configure import configuration, tasks
 from cfme.infrastructure import host
-from cfme.infrastructure.pxe import get_template_from_config
 from cfme.provisioning import do_vm_provisioning
 from cfme.web_ui import InfoBlock, Table, SplitTable, paginator, tabstrip as tabs, toolbar as tb
 from fixtures.pytest_store import store
-from utils import testgen, ssh
+from utils import testgen, ssh, safe_string, version
 from utils.conf import cfme_data
+from utils.log import logger
 from utils.wait import wait_for
-from utils.version import pick, LOWEST
+from utils.blockers import GH
+
+WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows'}
+
+RPM_BASED = {
+    'rhel': {
+        'id': "Red Hat", 'release-file': '/etc/redhat-release', 'icon': 'linux_redhat',
+        'package': "kernel", 'install-command': "",  # We don't install stuff on RHEL
+        'package-number': 'rpm -qa | wc -l'},
+    'centos': {
+        'id': "CentOS", 'release-file': '/etc/centos-release', 'icon': 'linux_centos',
+        'package': 'iso-codes', 'install-command': 'yum install -y {}',
+        'package-number': 'rpm -qa | wc -l'},
+    'fedora': {
+        'id': 'Fedora', 'release-file': '/etc/fedora-release', 'icon': 'linux_fedora',
+        'package': 'iso-codes', 'install-command': 'dnf install -y {}',
+        'package-number': 'rpm -qa | wc -l'},
+    'suse': {
+        'id': 'Suse', 'release-file': '/etc/SuSE-release', 'icon': 'linux_suse',
+        'package': 'iso-codes', 'install-command': 'zypper install -y {}',
+        'package-number': 'rpm -qa | wc -l'},
+}
+
+DEB_BASED = {
+    'ubuntu': {
+        'id': 'Ubuntu 14.04', 'release-file': '/etc/issue.net', 'icon': 'linux_ubuntu',
+        'package': 'iso-codes',
+        'install-command': 'env DEBIAN_FRONTEND=noninteractive apt-get -y install {}',
+        'package-number': "dpkg --get-selections | wc -l"},
+    'debian': {
+        'id': 'Debian ', 'release-file': '/etc/issue.net', 'icon': 'linux_debian',
+        'package': 'iso-codes',
+        'install-command': 'env DEBIAN_FRONTEND=noninteractive apt-get -y install {}',
+        'package-number': 'dpkg --get-selections | wc -l'},
+}
 
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, "vm_analysis_new")
 
-    new_argvalues = []
     new_idlist = []
+    new_argvalues = []
+
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # Don't know what type of instance to provision, move on
+
+        vms = []
+        provisioning_data = []
+
+        try:
+            vms = argvalue_tuple[0].get("vms")
+            provisioning_data = argvalue_tuple[0].get("provisioning")
+        except AttributeError:
+            # Provider has no provisioning and/or vms list set
             continue
 
-        if not {'analysis-username', 'analysis-pass', 'analysis-image'}.issubset(
-                args['provisioning'].viewkeys()):
-            # Need all for template provisioning
-            continue
+        for vm_analysis_key in vms:
+            # Each VM can redefine a provisioning data
+            vm_analysis_data = provisioning_data.copy()
+            vm_analysis_data.update(vms[vm_analysis_key])
 
-        # 'analysis-template' might be omitted
-        if 'analysis-template' in args['provisioning']:
-            cloud_init_template = args['provisioning']['analysis-template']
-            if cloud_init_template not in cfme_data.get('customization_templates', {}).keys():
+            if not {'image', 'fs-type'}.issubset(
+                    vm_analysis_data.viewkeys()):
                 continue
 
-            if 'cloud_init_template' not in argnames:
-                argnames = argnames + ['cloud_init_template']
-            argvalues[i].append(get_template_from_config(cloud_init_template))
+            if vm_analysis_data['fs-type'] not in ['ntfs', 'fat32']:
+                # Username and password are required for non-windows VMs
+                if not {'username', 'password'}.issubset(
+                        vm_analysis_data.viewkeys()):
+                    continue
 
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
+            # Set VM name here
+            vm_name = 'test_ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), vm_analysis_key)
+            vm_analysis_data['vm_name'] = vm_name
+
+            new_idlist.append('{}-{}'.format(idlist[i], vm_analysis_key))
+            new_argvalues.append([vm_analysis_data, args["provider"]])
 
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 @pytest.fixture(scope="module")
-def local_setup_provider(request, setup_provider_modscope, provider, provisioning):
+def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis_new):
+    if provider.type == 'rhevm' and version.current_version() < "5.5":
+        # See https://bugzilla.redhat.com/show_bug.cgi?id=1300030
+        pytest.skip("SSA is not supported on RHEVM for appliances earlier than 5.5 and upstream")
+    if GH("ManageIQ/manageiq:6506").blocks:
+        pytest.skip("Upstream provisioning is blocked by" +
+                    "https://github.com/ManageIQ/manageiq/issues/6506")
     if provider.type == 'virtualcenter':
         store.current_appliance.install_vddk(reboot=True)
         store.current_appliance.wait_for_web_ui()
@@ -63,9 +115,9 @@ def local_setup_provider(request, setup_provider_modscope, provider, provisionin
             # In case no browser is started
             pass
 
-        set_host_credentials(request, provisioning, provider)
+        set_host_credentials(request, vm_analysis_new, provider)
 
-    # SmartProxy role should be reset after reboot
+    # Make sure all roles are set
     roles = configuration.get_server_roles(db=False)
     roles["automate"] = True
     roles["smartproxy"] = True
@@ -81,19 +133,13 @@ def setup_ci_template(cloud_init_template=None):
         cloud_init_template.create()
 
 
-@pytest.fixture(scope="module")
-def vm_name(request):
-    vm_name = 'test_cloud_analysis_%s' % fauxfactory.gen_alphanumeric()
-    return vm_name
-
-
-def set_host_credentials(request, provisioning, provider):
+def set_host_credentials(request, vm_analysis_new, provider):
     # Add credentials to host
-    test_host = host.Host(name=provisioning['host'])
+    test_host = host.Host(name=vm_analysis_new['host'])
     wait_for(lambda: test_host.exists, delay=10, num_sec=120)
 
     host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
-    host_data = [x for x in host_list if x.name == provisioning['host']][0]
+    host_data = [x for x in host_list if x.name == vm_analysis_new['host']][0]
 
     if not test_host.has_valid_credentials:
         test_host.update(
@@ -112,12 +158,12 @@ def set_host_credentials(request, provisioning, provider):
 
 
 @pytest.fixture(scope="module")
-def testing_instance(request, local_setup_provider, provider, setup_ci_template,
-                     provisioning, vm_name):
+def instance(request, local_setup_provider, provider, setup_ci_template, vm_analysis_new):
     """ Fixture to provision instance on the provider
     """
-    template = provisioning.get('analysis-image', None) or provisioning['image']['name']
-    host, datastore = map(provisioning.get, ('host', 'datastore'))
+    vm_name = vm_analysis_new.get('vm_name')
+    template = vm_analysis_new.get('image', None)
+    host, datastore = map(vm_analysis_new.get, ('host', 'datastore'))
 
     mgmt_system = provider.get_mgmt_system()
 
@@ -129,32 +175,42 @@ def testing_instance(request, local_setup_provider, provider, setup_ci_template,
         'datastore_name': {'name': [datastore]},
     }
 
-    if provider.type != 'virtualcenter' and 'analysis-template' in provisioning:
-        # TODO: why wouldn't vmware show me available customizations?
-        provisioning_data['custom_template'] = {'name': [provisioning['analysis-template']]}
-
     try:
-        provisioning_data['vlan'] = provisioning['vlan']
+        provisioning_data['vlan'] = vm_analysis_new['vlan']
     except KeyError:
         # provisioning['vlan'] is required for rhevm provisioning
         if provider.type == 'rhevm':
             raise pytest.fail('rhevm requires a vlan value in provisioning info')
 
     do_vm_provisioning(template, provider, vm_name, provisioning_data, request, None,
-                       num_sec=900)
+                       num_sec=3600)
 
-    connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=300,
+    logger.info("VM {} provisioned, waiting for IP address to be assigned".format(vm_name))
+    connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=3600,
                               handle_exception=True)
+    assert connect_ip is not None
 
+    vm = VM.factory(vm_name, provider)
     # Check that we can at least get the uptime via ssh this should only be possible
     # if the username and password have been set via the cloud-init script so
     # is a valid check
-    ssh_client = ssh.SSHClient(hostname=connect_ip, username=provisioning['analysis-username'],
-                               password=provisioning['analysis-pass'], port=22)
-    wait_for(ssh_client.uptime, num_sec=300, handle_exception=True)
+    if vm_analysis_new['fs-type'] not in ['ntfs', 'fat32']:
+        logger.info("Waiting for {} to be available via SSH".format(connect_ip))
+        ssh_client = ssh.SSHClient(hostname=connect_ip, username=vm_analysis_new['username'],
+                                   password=vm_analysis_new['password'], port=22)
+        wait_for(ssh_client.uptime, num_sec=3600, handle_exception=True)
+        vm.ssh = ssh_client
 
-    vm = VM.factory(vm_name, provider)
-    vm.ssh_client = ssh_client
+    vm.system_type = detect_system_type(vm)
+    logger.info("Detected system type: {}".format(vm.system_type))
+    vm.image = vm_analysis_new['image']
+    vm.connect_ip = connect_ip
+
+    if provider.type == 'rhevm':
+        logger.info("Setting a relationship between VM and appliance")
+        from cfme.infrastructure.virtual_machines import Vm
+        cfme_rel = Vm.CfmeRelationship(vm)
+        cfme_rel.set_relationship(str(configuration.server_name()), configuration.server_id())
     return vm
 
 
@@ -175,7 +231,7 @@ def is_vm_analysis_finished(vm_name):
     except:
         return False
     # throw exception if status is error
-    if 'Error' in sel.get_attribute(sel.element('//td/img', root=el), 'title'):
+    if 'Error' in sel.get_attribute(sel.element('.//td/img', root=el), 'title'):
         raise Exception("Smart State Analysis errored")
     # Remove all finished tasks so they wouldn't poison other tests
     tb.select('Delete Tasks', 'Delete All', invokes_alert=True)
@@ -183,68 +239,119 @@ def is_vm_analysis_finished(vm_name):
     return True
 
 
+def detect_system_type(vm):
+
+    if hasattr(vm, 'ssh'):
+        system_release = safe_string(vm.ssh.run_command("cat /etc/os-release").output)
+
+        all_systems_dict = RPM_BASED.values() + DEB_BASED.values()
+        for x in all_systems_dict:
+            if x['id'].lower() in system_release.lower():
+                return x
+    else:
+        return WINDOWS
+
+
 @pytest.mark.long_running
-def test_ssa_vm(provider, testing_instance, soft_assert):
+def test_ssa_vm(provider, instance, soft_assert):
     """ Tests SSA can be performed and returns sane results
 
     Metadata:
         test_flag: vm_analysis
     """
 
-    users_number = None
-    group_number = None
-    packages_number = None
-    # TODO: Find out a way to read init processes reliably
-    system_release = testing_instance.ssh_client.run_command("cat /etc/system-release").output
+    e_users = None
+    e_groups = None
+    e_packages = None
+    e_icon_part = instance.system_type['icon']
 
-    if 'Red Hat Enterprise Linux' or 'Fedora' in system_release:
-        users_number = testing_instance.ssh_client.run_command(
-            "cat /etc/passwd | wc -l").output.strip('\n')
-        group_number = testing_instance.ssh_client.run_command(
-            "cat /etc/group | wc -l").output.strip('\n')
-        packages_number = testing_instance.ssh_client.run_command(
-            "rpm -qa | wc -l").output.strip('\n')
+    if instance.system_type != WINDOWS:
+        e_users = instance.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
+        e_groups = instance.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
+        e_packages = instance.ssh.run_command(
+            instance.system_type['package-number']).output.strip('\n')
 
-    testing_instance.smartstate_scan()
-    wait_for(lambda: is_vm_analysis_finished(testing_instance.name),
-             delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+    logger.info("Expecting to have {} users, {} groups and {} packages".format(
+        e_users, e_groups, e_packages))
 
-    # Check that all data has been fetched
-    soft_assert(testing_instance.get_detail(properties=('Security', 'Users')) == users_number)
-    soft_assert(testing_instance.get_detail(properties=('Security', 'Groups')) == group_number)
+    instance.smartstate_scan()
+    wait_for(lambda: is_vm_analysis_finished(instance.name),
+             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
 
-    soft_assert(testing_instance.get_detail(properties=('Configuration', 'Packages')) ==
-                packages_number)
+    # Check release and quadricon
+    quadicon_os_icon = instance.find_quadicon().os
+    details_os_icon = instance.get_detail(
+        properties=('Properties', 'Operating System'), icon_href=True)
+    logger.info("Icons: {}, {}".format(details_os_icon, quadicon_os_icon))
+
+    # We shouldn't use get_detail anymore - it takes too much time
+    c_users = InfoBlock.text('Security', 'Users')
+    c_groups = InfoBlock.text('Security', 'Groups')
+    c_image = InfoBlock.text('Relationships', 'Parent VM')
+    c_packages = 0
+    if instance.system_type != WINDOWS:
+        c_packages = InfoBlock.text('Configuration', 'Packages')
+
+    logger.info("SSA shows {} users, {} groups and {} packages".format(
+        c_users, c_groups, c_packages))
+
+    soft_assert(c_image == instance.image, "image: '{}' != '{}'".format(c_image, instance.image))
+    soft_assert(e_icon_part in details_os_icon,
+                "details icon: '{}' not in '{}'".format(e_icon_part, details_os_icon))
+    soft_assert(e_icon_part in quadicon_os_icon,
+                "quad icon: '{}' not in '{}'".format(e_icon_part, details_os_icon))
+
+    if instance.system_type != WINDOWS:
+        soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
+        soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
+        soft_assert(c_packages == e_packages, "groups: '{}' != '{}'".format(c_groups, e_groups))
+    else:
+        # Make sure windows-specific data is not empty
+        c_patches = InfoBlock.text('Security', 'Patches')
+        c_applications = InfoBlock.text('Configuration', 'Applications')
+        c_win32_services = InfoBlock.text('Configuration', 'Win32 Services')
+        c_kernel_drivers = InfoBlock.text('Configuration', 'Kernel Drivers')
+        c_fs_drivers = InfoBlock.text('Configuration', 'File System Drivers')
+
+        soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
+        soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
+        soft_assert(c_win32_services != '0', "win32 services: '{}' != '0'".format(c_win32_services))
+        soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
+        soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
 
 @pytest.mark.long_running
-def test_ssa_users(provider, testing_instance, soft_assert):
+def test_ssa_users(provider, instance, soft_assert):
     """ Tests SSA fetches correct results for users list
 
     Metadata:
         test_flag: vm_analysis
     """
     username = fauxfactory.gen_alphanumeric()
+    expected = None
 
-    # Add a new user
-    testing_instance.ssh_client.run_command("userdel {0} || useradd {0}".format(username))
-    output = testing_instance.ssh_client.run_command("cat /etc/passwd | wc -l").output
-    expected = output.strip('\n')
+    # In windows case we can't add new users (yet)
+    # So we simply check that user list doesn't cause any Rails errors
+    if instance.system_type != WINDOWS:
+        # Add a new user
+        instance.ssh.run_command("userdel {0} || useradd {0}".format(username))
+        expected = instance.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
 
-    testing_instance.smartstate_scan()
-    wait_for(lambda: is_vm_analysis_finished(testing_instance.name),
-             delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+    instance.smartstate_scan()
+    wait_for(lambda: is_vm_analysis_finished(instance.name),
+             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
 
     # Check that all data has been fetched
-    current = testing_instance.get_detail(properties=('Security', 'Users'))
-    assert current == expected, "Expected {0} but was {1} users".format(expected, current)
+    current = instance.get_detail(properties=('Security', 'Users'))
+    if instance.system_type != WINDOWS:
+        assert current == expected
 
     # Make sure created user is in the list
     sel.click(InfoBlock("Security", "Users"))
     template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
-    users = pick({
-        LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
-                           body_data=(template.format("objbox"), 0)),
+    users = version.pick({
+        version.LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
+                                   body_data=(template.format("objbox"), 0)),
         "5.5": Table('//table'),
     })
 
@@ -252,37 +359,40 @@ def test_ssa_users(provider, testing_instance, soft_assert):
         sel.wait_for_element(users)
         if users.find_row('Name', username):
             return
-    pytest.fail("User {0} was not found".format(username))
+    if instance.system_type != WINDOWS:
+        pytest.fail("User {0} was not found".format(username))
 
 
 @pytest.mark.long_running
-def test_ssa_groups(provider, testing_instance, soft_assert):
+def test_ssa_groups(provider, instance, soft_assert):
     """ Tests SSA fetches correct results for groups
 
     Metadata:
         test_flag: vm_analysis
     """
     group = fauxfactory.gen_alphanumeric()
+    expected = None
 
-    # Add a new group
-    testing_instance.ssh_client.run_command("groupdel {0} || groupadd {0}".format(group))
-    output = testing_instance.ssh_client.run_command("cat /etc/group | wc -l").output
-    expected = output.strip('\n')
+    if instance.system_type != WINDOWS:
+        # Add a new group
+        instance.ssh.run_command("groupdel {0} || groupadd {0}".format(group))
+        expected = instance.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
 
-    testing_instance.smartstate_scan()
-    wait_for(lambda: is_vm_analysis_finished(testing_instance.name),
-             delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+    instance.smartstate_scan()
+    wait_for(lambda: is_vm_analysis_finished(instance.name),
+             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
 
     # Check that all data has been fetched
-    current = testing_instance.get_detail(properties=('Security', 'Groups'))
-    assert current == expected, "Expected {0} but was {1} groups".format(expected, current)
+    current = instance.get_detail(properties=('Security', 'Groups'))
+    if instance.system_type != WINDOWS:
+        assert current == expected
 
     # Make sure created group is in the list
     sel.click(InfoBlock("Security", "Groups"))
     template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
-    groups = pick({
-        LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
-                           body_data=(template.format("objbox"), 0)),
+    groups = version.pick({
+        version.LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
+                                   body_data=(template.format("objbox"), 0)),
         "5.5": Table('//table'),
     })
 
@@ -290,38 +400,49 @@ def test_ssa_groups(provider, testing_instance, soft_assert):
         sel.wait_for_element(groups)
         if groups.find_row('Name', group):
             return
-    pytest.fail("Group {0} was not found".format(group))
+    if instance.system_type != WINDOWS:
+        pytest.fail("Group {0} was not found".format(group))
 
 
 @pytest.mark.long_running
-def test_ssa_packages(provider, testing_instance, soft_assert):
+def test_ssa_packages(provider, instance, soft_assert):
     """ Tests SSA fetches correct results for packages
 
     Metadata:
         test_flag: vm_analysis
     """
-    # Install a new package
-    package_name = "iso-codes-devel"
 
-    testing_instance.ssh_client.run_command(
-        "yum remove {0} -y || yum install {0} -y".format(package_name))
-    output = testing_instance.ssh_client.run_command("rpm -qa | wc -l").output
-    expected = output.strip('\n')
+    if instance.system_type == WINDOWS:
+        pytest.skip("Windows has no packages")
 
-    testing_instance.smartstate_scan()
-    wait_for(lambda: is_vm_analysis_finished(testing_instance.name),
-             delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+    expected = None
+    if 'package' not in instance.system_type.keys():
+        pytest.skip("Don't know how to update packages for {}".format(instance.system_type))
+
+    package_name = instance.system_type['package']
+    package_command = instance.system_type['install-command']
+    package_number_command = instance.system_type['package-number']
+
+    cmd = package_command.format(package_name)
+    output = instance.ssh.run_command(cmd.format(package_name)).output
+    logger.info("{0} output:\n{1}".format(cmd, output))
+
+    expected = instance.ssh.run_command(package_number_command).output.strip('\n')
+
+    instance.smartstate_scan()
+    wait_for(lambda: is_vm_analysis_finished(instance.name),
+             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
 
     # Check that all data has been fetched
-    current = testing_instance.get_detail(properties=('Configuration', 'Packages'))
-    assert current == expected, "Expected {0} but was {1} packages".format(expected, current)
+    current = instance.get_detail(properties=('Configuration', 'Packages'))
+    assert current == expected
 
     # Make sure new package is listed
     sel.click(InfoBlock("Configuration", "Packages"))
     template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
-    packages = pick({
-        LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
-                           body_data=(template.format("objbox"), 0)),
+    packages = version.pick({
+        version.LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
+                                   body_data=(template.format("objbox"), 0)),
         "5.5": Table('//table'),
     })
 
