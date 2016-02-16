@@ -76,7 +76,7 @@ def create_run(db_pr, pr):
     tasks = []
     for group in tapi.group.get(stream=True)['objects']:
         stream = group['name']
-        stream_filter = db_pr['stream_filter']
+        stream_filter = pr['stream_filter']
 
         if stream_filter is not None and stream not in stream_filter:
             logger.info('Skipping task {} as stream {} not in stream filter {}'.format(
@@ -84,10 +84,13 @@ def create_run(db_pr, pr):
             continue
 
         logger.info('  Adding task stream {}...'.format(stream))
+        pr_metadata = pr.get('pr_metadata', None)
+        if not pr_metadata:
+            pr_metadata = db_pr.get('pr_metadata', None)
         tasks.append(dict(output="",
                           tid=fauxfactory.gen_alphanumeric(8),
                           result="pending",
-                          pr_metadata=db_pr['pr_metadata'],
+                          pr_metadata=pr_metadata,
                           stream=stream,
                           datestamp=str(datetime.now())))
     new_run['tasks'] = tasks
@@ -158,6 +161,7 @@ def run_tasks():
                                     test_id=task['tid'],
                                     nowait=True,
                                     pr=task['pr_number'],
+                                    pr_metadata=task['pr_metadata'],
                                     sprout=True,
                                     sprout_stream=stream,
                                     sprout_description=task['tid'])
