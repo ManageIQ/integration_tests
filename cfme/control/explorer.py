@@ -38,7 +38,8 @@ def _ap_single_branch(ugly, nice):
     """generates branch for specific Alert Profile"""
     return [
         lambda ctx: accordion_func(
-            "Alert Profiles", "All Alert Profiles", "{} Alert Profiles".format(nice),
+            "Alert Profiles", "All Alert Profiles", "{} Alert Profiles".format(
+                version.pick(nice) if isinstance(nice, dict) else nice),
             ctx["alert_profile_name"])(None),
         {
             "{}_alert_profile_edit".format(ugly):
@@ -54,10 +55,12 @@ def _ap_multi_branch(ugly, nice):
     """Generates branch for listing and adding the profiles"""
     return [
         accordion_func(
-            "Alert Profiles", "All Alert Profiles", "{} Alert Profiles".format(nice)),
+            "Alert Profiles", "All Alert Profiles", "{} Alert Profiles".format(
+                version.pick(nice) if isinstance(nice, dict) else nice)),
         {
             "{}_alert_profile_new".format(ugly):
-            lambda _: cfg_btn("Add a New {} Alert Profile".format(nice))
+            lambda _: cfg_btn("Add a New {} Alert Profile".format(
+                version.pick(nice) if isinstance(nice, dict) else nice))
         }
     ]
 
@@ -370,14 +373,25 @@ nav.add_branch(
         "provider_alert_profile": _ap_single_branch("provider", "Provider"),
         "provider_alert_profiles": _ap_multi_branch("provider", "Provider"),
 
-        "host_alert_profile": _ap_single_branch("host", "Host"),
-        "host_alert_profiles": _ap_multi_branch("host", "Host"),
-
+        "host_alert_profile": _ap_single_branch("host", {
+            version.LOWEST: "Host",
+            "5.4": "Host / Node"
+        }),
+        "host_alert_profiles": _ap_multi_branch("host", {
+            version.LOWEST: "Host",
+            "5.4": "Host / Node"
+        }),
         "datastore_alert_profile": _ap_single_branch("datastore", "Datastore"),
         "datastore_alert_profiles": _ap_multi_branch("datastore", "Datastore"),
 
-        "cluster_alert_profile": _ap_single_branch("cluster", "Cluster"),
-        "cluster_alert_profiles": _ap_multi_branch("cluster", "Cluster"),
+        "cluster_alert_profile": _ap_single_branch("cluster", {
+            version.LOWEST: "Cluster",
+            "5.4": "Cluster / Deployment Role"
+        }),
+        "cluster_alert_profiles": _ap_multi_branch("cluster", {
+            version.LOWEST: "Cluster",
+            "5.4": "Cluster / Deployment Role"
+        })
     }
 )
 
@@ -499,11 +513,7 @@ class BaseCondition(Updateable, Pretty):
         """
         sel.force_navigate(self.PREFIX + "condition",
                            context=dict(condition_name=self.description))
-        if callable(self.DELETE_STRING):
-            delete_string = self.DELETE_STRING()
-        else:
-            delete_string = self.DELETE_STRING
-        cfg_btn(delete_string, invokes_alert=True)
+        cfg_btn(self.DELETE_STRING, invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
@@ -516,6 +526,7 @@ class VMCondition(BaseCondition, VMObject):
 class HostCondition(BaseCondition, HostObject):
     PREFIX = "host_"
 
+    @property
     def DELETE_STRING(self):
         if version.current_version() >= "5.4":
             return "Delete this Host / Node Condition"
@@ -619,6 +630,20 @@ class BasePolicy(Updateable, Pretty):
             action=form_buttons.cancel if cancel else form_buttons.add)
         flash.assert_no_errors()
 
+    def copy(self, cancel=False):
+        """Copy this Policy from CFME.
+
+        Args:
+            cancel: Whether to cancel the process instead of copying.
+        """
+        sel.force_navigate(self.PREFIX + "policy",
+                           context={"policy_name": self.description})
+        cfg_btn(self.COPY_STRING, invokes_alert=True)
+        sel.handle_alert(cancel)
+        flash.assert_no_errors()
+        new_description = "Copy of {}".format(self.description)
+        return type(self)(new_description)
+
     def update(self, updates):
         """Updates the informations in the object and then updates the Condition in CFME.
 
@@ -637,11 +662,7 @@ class BasePolicy(Updateable, Pretty):
             cancel: Whether to cancel the process instead of saving.
         """
         sel.force_navigate(self.PREFIX + "policy", context=dict(policy_name=self.description))
-        if callable(self.DELETE_STRING):
-            delete_string = self.DELETE_STRING()
-        else:
-            delete_string = self.DELETE_STRING
-        cfg_btn(delete_string, invokes_alert=True)
+        cfg_btn(self.DELETE_STRING, invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
@@ -800,11 +821,19 @@ class BaseControlPolicy(BasePolicy):
 class HostCompliancePolicy(BasePolicy, HostObject):
     PREFIX = "host_compliance_"
 
+    @property
     def DELETE_STRING(self):
         if version.current_version() >= "5.4":
             return "Delete this Host / Node Policy"
         else:
             return "Delete this Host Policy"
+
+    @property
+    def COPY_STRING(self):
+        if version.current_version() >= "5.4":
+            return "Copy this Host / Node Policy"
+        else:
+            return "Copy this Host Policy"
 
     def __str__(self):
         if version.current_version() >= "5.4":
@@ -816,19 +845,28 @@ class HostCompliancePolicy(BasePolicy, HostObject):
 class VMCompliancePolicy(BasePolicy, VMObject):
     PREFIX = "vm_compliance_"
     DELETE_STRING = "Delete this VM and Instance Policy"
+    COPY_STRING = "Copy this VM and Instance Policy"
 
     def __str__(self):
-        return "VM and Instance Compliance: %s" % self.description
+        return "VM and Instance Compliance: {}".format(self.description)
 
 
 class HostControlPolicy(BaseControlPolicy, HostObject):
     PREFIX = "host_control_"
 
+    @property
     def DELETE_STRING(self):
         if version.current_version() >= "5.4":
             return "Delete this Host / Node Policy"
         else:
             return "Delete this Host Policy"
+
+    @property
+    def COPY_STRING(self):
+        if version.current_version() >= "5.4":
+            return "Copy this Host / Node Policy"
+        else:
+            return "Copy this Host Policy"
 
     def __str__(self):
         if version.current_version() >= "5.4":
@@ -840,9 +878,10 @@ class HostControlPolicy(BaseControlPolicy, HostObject):
 class VMControlPolicy(BaseControlPolicy, VMObject):
     PREFIX = "vm_control_"
     DELETE_STRING = "Delete this VM and Instance Policy"
+    COPY_STRING = "Copy this VM and Instance Policy"
 
     def __str__(self):
-        return "VM and Instance Control: %s" % self.description
+        return "VM and Instance Control: {}".format(self.description)
 
 
 class Alert(Updateable, Pretty):
@@ -977,6 +1016,24 @@ class Alert(Updateable, Pretty):
         else:
             form_buttons.add()
         flash.assert_no_errors()
+
+    def copy(self, cancel=False):
+        """Copy this Alert from CFME.
+
+        Args:
+            cancel: Whether to cancel the copying (default False).
+        """
+        sel.force_navigate("control_explorer_alert", context={"alert_name": self.description})
+        cfg_btn("Copy this Alert", invokes_alert=True)
+        sel.handle_alert(cancel)
+        new_description = "{}_copy".format(self.description)
+        fill(self.form, {"description": new_description})
+        if cancel:
+            form_buttons.cancel()
+        else:
+            form_buttons.add()
+        flash.assert_no_errors()
+        return Alert(new_description)
 
     def update(self, updates, cancel=False):
         """Update the object with new values and save.
@@ -1437,6 +1494,7 @@ class BaseAlertProfile(Updateable, Pretty):
         notes: Notes for the Alert Profile.
     """
     PREFIX = None
+    TYPE = None
 
     form = Form(
         fields=[
@@ -1590,26 +1648,32 @@ class BaseAlertProfile(Updateable, Pretty):
 
 class ClusterAlertProfile(BaseAlertProfile):
     PREFIX = "cluster"
+    TYPE = "Cluster / Deployment Role"
 
 
 class DatastoreAlertProfile(BaseAlertProfile):
     PREFIX = "datastore"
+    TYPE = "Datastore"
 
 
 class HostAlertProfile(BaseAlertProfile):
     PREFIX = "host"
+    TYPE = "Host / Node"
 
 
 class ProviderAlertProfile(BaseAlertProfile):
     PREFIX = "provider"
+    TYPE = "Provider"
 
 
 class ServerAlertProfile(BaseAlertProfile):
     PREFIX = "server"
+    TYPE = "Server"
 
 
 class VMInstanceAlertProfile(BaseAlertProfile):
     PREFIX = "vm_instance"
+    TYPE = "VM and Instance"
 
 
 def event_policies(event):
