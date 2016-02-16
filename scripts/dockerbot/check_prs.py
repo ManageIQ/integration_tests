@@ -158,7 +158,6 @@ def run_tasks():
                                     test_id=task['tid'],
                                     nowait=True,
                                     pr=task['pr_number'],
-                                    pr_metadata=task['pr_metadata'],
                                     sprout=True,
                                     sprout_stream=stream,
                                     sprout_description=task['tid'])
