@@ -6,6 +6,8 @@ import traceback
 import dockerbot
 import json
 import requests
+import re
+import yaml
 from utils.conf import docker as docker_conf
 from utils.appliance import Appliance
 from utils.trackerbot import api
@@ -75,10 +77,18 @@ def create_run(db_pr, pr):
     tasks = []
     for group in tapi.group.get(stream=True)['objects']:
         stream = group['name']
+        stream_filter = pr['stream_filter']
+
+        if stream_filter is not None and stream not in stream_filter:
+            logger.info('Skipping task {} as stream {} not in stream filter {}'.format(
+                        db_pr['number'], stream, stream_filter))
+            continue
+
         logger.info('  Adding task stream {}...'.format(stream))
         tasks.append(dict(output="",
                           tid=fauxfactory.gen_alphanumeric(8),
                           result="pending",
+                          pr_metadata=pr['pr_metadata'],
                           stream=stream,
                           datestamp=str(datetime.now())))
     new_run['tasks'] = tasks
@@ -149,6 +159,7 @@ def run_tasks():
                                     test_id=task['tid'],
                                     nowait=True,
                                     pr=task['pr_number'],
+                                    pr_metadata=task['pr_metadata'],
                                     sprout=True,
                                     sprout_stream=stream,
                                     sprout_description=task['tid'])
@@ -281,6 +292,15 @@ def check_status(pr):
         pass
 
 
+def parse_pr_metadata(pr_body):
+    metadata = re.findall("{{(.*?)}}", pr_body)
+    if not metadata:
+        return {}
+    else:
+        ydata = yaml.safe_load(metadata[0])
+        return ydata
+
+
 def check_pr(pr):
     """ Checks through a PR and spawns runs if necessary
 
@@ -299,10 +319,19 @@ def check_pr(pr):
 
     commit = pr['head']['sha']
     wip = False
+    pr['stream_filter'] = None
+    pr['pr_metadata'] = parse_pr_metadata(pr['number'])
     try:
         db_pr = tapi.pr(pr['number']).get()
         last_run = tapi.run().get(pr__number=pr['number'], order_by='-datestamp',
                                   limit=1)['objects']
+
+        stream_filter_pr = pr['pr_metadata'].get('streams', None)
+        if stream_filter_pr:
+            logger.info('Found stream filter in body: {}'.format(stream_filter_pr))
+            pr['stream_filter'] = [x.strip() for x in stream_filter_pr.split(',')]
+            logger.info('Setting stream filter to {}'.format(pr['stream_filter']))
+
         if last_run:
             if last_run[0]['retest'] is True and "[WIP]" not in pr['title']:
                 logger.info('Re-testing PR {}'.format(pr['number']))

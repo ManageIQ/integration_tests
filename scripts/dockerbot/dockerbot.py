@@ -1,16 +1,15 @@
 #!/usr/bin/env python2
 from utils.conf import docker as docker_conf
 from utils.net import random_port, my_ip_address
+from scripts.dockerbot.check_prs import parse_pr_metadata
 import argparse
 import fauxfactory
 import requests
 import os
 import os.path
 import docker
-import re
 import subprocess
 import sys
-import yaml
 import urlparse
 
 
@@ -128,6 +127,10 @@ class DockerBot(object):
             sel_container_name = sel.sel_name
             links = [(sel_container_name, 'selff')]
         self.pytest_name = self.args['test_id']
+        if 'pr_metadata' in self.args.keys():
+            self.pr_metadata = self.args['pr_metadata']
+        else:
+            self.pr_metadata = self.get_pr_metadata()
         self.create_pytest_envvars()
         self.handle_pr()
         self.log_path = self.create_log_path()
@@ -180,12 +183,7 @@ class DockerBot(object):
                 'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
                 headers=headers)
             body = r.json()['body'] or ""
-            metadata = re.findall("{{(.*?)}}", body)
-            if not metadata:
-                return {}
-            else:
-                ydata = yaml.safe_load(metadata[0])
-                return ydata
+            return parse_pr_metadata(body)
 
     def find_files_by_pr(self, pr=None):
         self.requirements_update = False
@@ -342,7 +340,6 @@ class DockerBot(object):
 
     def create_pytest_command(self):
         if self.args['auto_gen_test'] and self.args['pr']:
-            self.pr_metadata = self.get_pr_metadata(self.args['pr'])
             pytest = self.pr_metadata.get('pytest', None)
             sprout_appliances = self.pr_metadata.get('sprouts', 1)
             if pytest:
@@ -498,6 +495,9 @@ if __name__ == "__main__":
                       default=None)
     repo.add_argument('--pr',
                       help='A PR Number (overides --branch)',
+                      default=None)
+    repo.add_argument('--pr-metadata',
+                      help='A PR body contents (if --pr is not passed)',
                       default=None)
     repo.add_argument('--cfme-repo',
                       help='The cfme repo',
