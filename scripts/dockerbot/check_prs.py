@@ -76,7 +76,7 @@ def create_run(db_pr, pr):
     tasks = []
     for group in tapi.group.get(stream=True)['objects']:
         stream = group['name']
-        stream_filter = pr['stream_filter']
+        stream_filter = db_pr['stream_filter']
 
         if stream_filter is not None and stream not in stream_filter:
             logger.info('Skipping task {} as stream {} not in stream filter {}'.format(
@@ -87,7 +87,7 @@ def create_run(db_pr, pr):
         tasks.append(dict(output="",
                           tid=fauxfactory.gen_alphanumeric(8),
                           result="pending",
-                          pr_metadata=pr['pr_metadata'],
+                          pr_metadata=db_pr['pr_metadata'],
                           stream=stream,
                           datestamp=str(datetime.now())))
     new_run['tasks'] = tasks
@@ -343,8 +343,8 @@ def check_pr(pr):
     except HttpClientError:
         logger.info('PR {} not found in database, creating...'.format(pr['number']))
         new_pr = {'number': pr['number'],
-                  'pr_metadata': pr['pr_metadata'],
                   'description': pr['body'],
+                  'pr_metadata': pr['pr_metadata'],
                   'current_commit_head': commit,
                   'title': pr['title']}
         tapi.pr().post(new_pr)
