@@ -7,6 +7,7 @@ import os
 from operator import itemgetter
 from utils.path import project_path
 from utils.conf import cfme_data
+from .pytest_store import  store
 
 
 class MarkFromMap(object):
@@ -30,7 +31,10 @@ def pytest_configure(config):
     if path:
         to_parse = project_path.join(path)
         parsed = parse(to_parse)
+        if not parsed:
+            store.terminalreporter.line('no test annotation found in %s' % to_parse, yellow=True)
     else:
+        store.terminalreporter.line('no test annotation found in %s' % path, yellow=True)
         parsed = []
     config.pluginmanager.register(
         MarkFromMap.from_parsed_list(parsed, 'tier', pytest.mark.tier))
