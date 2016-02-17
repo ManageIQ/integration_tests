@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% set title = 'Test Report' %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block content %}
+
+{% if upstream[0] %}
+<style>
+    body { font-family: Open Sans,Helvetica,Arial,sans-serif; }
+    th, td { padding: 5px }
+    .col th { text-align: left; border-top:#000000 !important;}
+    h1{ font-weight: unset; padding: 0px 14px; color: #666666;}
+    .col h1 { background-color: #27799c; color: #ffffff; font-size: 18px; padding: 10px 8px; }
+    .col h1 span {padding: 0px 12px }
+    table, th, td { border: 1px solid black; border-collapse: collapse;}
+    td.failed { color: #a94442; background-color: #f2dede; }
+    td.passed { color: #3c763d; background-color: #dff0d8; }
+    div.col { float: left; padding: 0 15px; width: 31%; }
+</style>
+<div class="col">
+    <h1>{{upstream[3]}} <span>({{upstream[4]}})</span></h1>
+    <table class="table table-sm">
+        <tr>
+            <th>{{upstream[0]}}</th>
+        </tr>
+        {% for passed in upstream[1] %}
+        <tr class="alert alert-success">
+                <td class="success"><span class="glyphicon glyphicon-ok" title="Passed"
+                          style="line-height: 1.66666667em; padding: 0px 8px;">
+                    </span>{{passed}}
+                </td>
+        </tr>
+        {% endfor %}
+        {% for failed in upstream[2] %}
+        <tr class="alert alert-danger">
+
+                <td class="danger"><span class="glyphicon glyphicon-remove" title="Failed"
+                          style="line-height: 1.66666667em; padding: 0px 8px">
+                    </span>{{failed}}
+                </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endif %}
+{% endblock content %}
