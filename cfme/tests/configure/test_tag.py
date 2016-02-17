@@ -3,8 +3,15 @@ import fauxfactory
 import pytest
 
 from cfme.configure.configuration import Category, Tag
-from cfme.rest import tags as _tags
+from cfme.rest import a_provider as _a_provider
 from cfme.rest import categories as _categories
+from cfme.rest import dialog as _dialog
+from cfme.rest import services as _services
+from cfme.rest import service_catalogs as _service_catalogs
+from cfme.rest import service_templates as _service_templates
+from cfme.rest import tenants as _tenants
+from cfme.rest import tags as _tags
+from cfme.rest import vm as _vm
 from utils.api import APIException
 from utils.blockers import BZ
 from utils.update import update
@@ -32,6 +39,7 @@ def test_tag_crud(category):
     tag.delete(cancel=False)
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 class TestTagsViaREST(object):
 
     @pytest.fixture(scope="function")
@@ -42,11 +50,46 @@ class TestTagsViaREST(object):
     def tags(self, request, rest_api, categories):
         return _tags(request, rest_api, categories)
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-    def test_edit_tags(self, rest_api, tags):
-        if "edit" not in rest_api.collections.tags.action.all:
-            pytest.skip("Edit tags action is not implemented in this version")
+    @pytest.fixture(scope="module")
+    def categories_mod(self, request, rest_api, num=3):
+        return _categories(request, rest_api, num)
 
+    @pytest.fixture(scope="module")
+    def tags_mod(self, request, rest_api, categories_mod):
+        return _tags(request, rest_api, categories_mod)
+
+    @pytest.fixture(scope="module")
+    def service_catalogs(self, request, rest_api):
+        return _service_catalogs(request, rest_api)
+
+    @pytest.fixture(scope="module")
+    def tenants(self, request, rest_api):
+        return _tenants(request, rest_api, num=1)
+
+    @pytest.fixture(scope="module")
+    def a_provider(self):
+        return _a_provider()
+
+    @pytest.fixture(scope="module")
+    def dialog(self):
+        return _dialog()
+
+    @pytest.fixture(scope="module")
+    def services(self, request, rest_api, a_provider, dialog, service_catalogs):
+        try:
+            return _services(request, rest_api, a_provider, dialog, service_catalogs)
+        except:
+            pass
+
+    @pytest.fixture(scope="module")
+    def service_templates(self, request, rest_api, dialog):
+        return _service_templates(request, rest_api, dialog)
+
+    @pytest.fixture(scope="module")
+    def vm(self, request, a_provider, rest_api):
+        return _vm(request, a_provider, rest_api)
+
+    def test_edit_tags(self, rest_api, tags):
         new_names = []
         tags_data_edited = []
         for tag in tags:
@@ -65,11 +108,7 @@ class TestTagsViaREST(object):
                 delay=10,
             )
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     def test_edit_tag(self, rest_api, tags):
-        if "edit" not in rest_api.collections.tags.action.all:
-            pytest.skip("Edit tags action is not implemented in this version")
-
         tag = rest_api.collections.tags.get(name=tags[0].name)
         new_name = 'test_tag_{}'.format(fauxfactory.gen_alphanumeric())
         tag.action.edit(name=new_name)
@@ -80,14 +119,10 @@ class TestTagsViaREST(object):
         )
 
     @pytest.mark.meta(blockers=[BZ(1290783, forced_streams=["5.5"])])
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     @pytest.mark.parametrize(
         "multiple", [False, True],
         ids=["one_request", "multiple_requests"])
     def test_delete_tags(self, rest_api, tags, multiple):
-        if "delete" not in rest_api.collections.tags.action.all:
-            pytest.skip("Delete tags action is not implemented in this version")
-
         if multiple:
             rest_api.collections.tags.action.delete(*tags)
             with error.expected("ActiveRecord::RecordNotFound"):
@@ -98,7 +133,6 @@ class TestTagsViaREST(object):
             with error.expected("ActiveRecord::RecordNotFound"):
                 tag.action.delete()
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     def test_create_tag_with_wrong_arguments(self, rest_api):
         data = {
             'name': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
@@ -108,3 +142,21 @@ class TestTagsViaREST(object):
             rest_api.collections.tags.action.create(data)
         except APIException as e:
             assert "Category id, href or name needs to be specified" in e.args[0]
+
+    @pytest.mark.parametrize(
+        "collection_name", ['clusters', 'hosts', 'data_stores', 'providers', 'resource_pools',
+        'services', 'service_templates', 'tenants', 'vms'])
+    def test_assign_and_unassign_tag(self, rest_api, tags_mod, a_provider, services,
+            service_templates, tenants, vm, collection_name):
+        col = getattr(rest_api.collections, collection_name)
+        col.reload()
+        if len(col.all) == 0:
+            pytest.skip("No available entity in {} to assign tag".format(collection_name))
+        collection = col[-1]
+        tag = tags_mod[0]
+        collection.tags.action.assign(tag)
+        collection.reload()
+        assert tag.id in [t.id for t in collection.tags.all]
+        collection.tags.action.unassign(tag)
+        collection.reload()
+        assert tag.id not in [t.id for t in collection.tags.all]

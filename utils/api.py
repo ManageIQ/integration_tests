@@ -300,6 +300,15 @@ class Entity(object):
     SUBCOLLECTIONS = dict(
         service_catalogs={"service_templates"},
         roles={"features"},
+        providers={"tags"},
+        hosts={"tags"},
+        data_stores={"tags"},
+        resource_pools={"tags"},
+        clusters={"tags"},
+        services={"tags"},
+        service_templates={"tags"},
+        tenants={"tags"},
+        vms={"tags"},
     )
 
     EXTENDED_COLLECTIONS = dict(
