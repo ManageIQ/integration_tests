@@ -17,7 +17,9 @@ class MarkFromMap(object):
     def pytest_itemcollected(self, item):
         mark = self.mark_map.get(item.nodeid)
         if mark is not None:
-            item.add_marker(mark)
+            # todo: warn when the applied marker differs from the data
+            if not item.get_marker(mark.name):
+                item.add_marker(mark)
 
     @classmethod
     def from_parsed_list(cls, parsed, key, map_value):
