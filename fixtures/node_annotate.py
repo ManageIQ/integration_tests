@@ -7,7 +7,7 @@ import os
 from operator import itemgetter
 from utils.path import project_path
 from utils.conf import cfme_data
-from .pytest_store import  store
+from .pytest_store import store
 
 
 class MarkFromMap(object):
@@ -36,21 +36,18 @@ def pytest_configure(config):
     else:
         store.terminalreporter.line('no test annotation found in %s' % path, yellow=True)
         parsed = []
-    config.pluginmanager.register(
-        MarkFromMap.from_parsed_list(parsed, 'tier', pytest.mark.tier))
-    config.pluginmanager.register(
-        MarkFromMap.from_parsed_list(parsed, 'type', pytest.mark.__getattr__))
+    config.pluginmanager.register(MarkFromMap.from_parsed_list(parsed, 'tier', pytest.mark.tier))
+    config.pluginmanager.register(MarkFromMap.from_parsed_list(parsed, 'type',
+                                                               pytest.mark.__getattr__))
 
 
 def pytest_addoption(parser):
     group = parser.getgroup('cfme')
-    group.addoption(
-        '--tier', type=int, action='append',
-        help='only run tests of the given tiers')
+    group.addoption('--tier', type=int, action='append', help='only run tests of the given tiers')
 
 
 def tier_matches(item, tiers):
-    mark = item.keywords.get('tier')
+    mark = item.get_marker('tier')
     if getattr(mark, 'args', None) is None:
         return False
     return mark.args[0] in tiers
@@ -98,7 +95,6 @@ def _clean(mapping):
             'tier': int(mapping['TestTier']),
             'id': generate_nodeid(mapping),
             'type': mapping['TestType'].lower(),
-            # '_map': mapping,
         }
     except (TypeError, ValueError):
         return None
