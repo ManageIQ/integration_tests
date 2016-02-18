@@ -260,7 +260,7 @@ class FTPClient(object):
 
     """
 
-    def __init__(self, host, login, password):
+    def __init__(self, host, login, password, upload_dir="/"):
         """ Constructor
 
         Args:
@@ -273,6 +273,7 @@ class FTPClient(object):
         self.password = password
         self.ftp = None
         self.dt = None
+        self.upload_dir = upload_dir
         self.connect()
         self.update_time_difference()
 
@@ -293,6 +294,7 @@ class FTPClient(object):
         """
         TIMECHECK_FILE_NAME = fauxfactory.gen_alphanumeric(length=16)
         void_file = StringIO(fauxfactory.gen_alpha())
+        self.cwd(self.upload_dir)
         assert "Transfer complete" in self.storbinary(TIMECHECK_FILE_NAME, void_file),\
             "Could not upload a file for time checking with name %s!" % TIMECHECK_FILE_NAME
         void_file.close()
@@ -301,6 +303,7 @@ class FTPClient(object):
             if name == TIMECHECK_FILE_NAME:
                 self.dt = now - time
                 self.dele(TIMECHECK_FILE_NAME)
+                self.cwd("/")
                 return True
         raise FTPException("The timecheck file was not found in the current FTP directory")
 

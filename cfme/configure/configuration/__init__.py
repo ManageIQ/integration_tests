@@ -633,7 +633,7 @@ class ServerLogDepot(Pretty):
                 "name": self.name,
                 "uri": self.uri,
             }
-            if self.p_type != "nfs":
+            if self.p_type not in {"nfs", "anon_ftp"}:
                 change_stored_password()
                 details["user"] = self.username
                 details["password"] = self.password

@@ -83,7 +83,8 @@ def pytest_generate_tests(metafunc):
     methods = [
         "ftp",
         "smb",
-        "nfs"
+        "nfs",
+        "anon_ftp"
     ]
 
     # FTP credentials for machines
@@ -104,16 +105,16 @@ def pytest_generate_tests(metafunc):
                 credentials = conf.credentials[credentials]
             except KeyError:
                 raise Exception(
-                    "No credentials with id '%s' found in credentials file!" % credentials)
+                    "No credentials with id {} found in credentials file!".format(credentials))
         else:
-            raise Exception("No credentials found in cfme_data for machine %s!" % machine_id)
+            raise Exception("No credentials found in cfme_data for machine {}!".format(machine_id))
         for depot_type, depot_type_content in machine_content.iteritems():
             if depot_type == 'credentials':
                 continue
-            assert depot_type in methods, "%s is illegal depot type" % depot_type
+            assert depot_type in methods, "{} is illegal depot type".format(depot_type)
             assert "hostname" in depot_type_content,\
-                "cfme_data.yaml/log_db_depot/%s/%s does not contain hostname!" %\
-                (machine_id, depot_type)
+                "cfme_data.yaml/log_db_depot/{}/{} does not contain hostname!"\
+                .format(machine_id, depot_type)
 
             hostname = depot_type_content["hostname"]
             if depot_type == "ftp" and machine_id not in machines_ftp:
@@ -121,8 +122,8 @@ def pytest_generate_tests(metafunc):
                 machines_ftp[machine_id]["hostname"] = hostname
 
             assert "use_for_log_collection" in depot_type_content,\
-                "cfme_data.yaml/log_db_depot/%s/%s does not contain use_for_log_collection key!" %\
-                (machine_id, depot_type)
+                "cfme_data.yaml/log_db_depot/{}/{} does not contain use_for_log_collection key!"\
+                .format(machine_id, depot_type)
             use_for_log_collection = depot_type_content["use_for_log_collection"]
             if not use_for_log_collection:
                 continue
@@ -130,10 +131,12 @@ def pytest_generate_tests(metafunc):
     new_parametrized = []
     # We have to inject also the ftp connection into the fixtures
     for depot_type, hostname, credentials, machine_id in parametrized:
-        assert machine_id in machines_ftp, "Machine %s does not have FTP access" % machine_id
-        ftp_credentials = machines_ftp[machine_id]
+        if depot_type != "anon_ftp":
+            assert machine_id in machines_ftp, "Machine {} does not have FTP access"\
+                .format(machine_id)
+            ftp_credentials = machines_ftp[machine_id]
 
-        def get_ftp():
+        def get_ftp(depot_type=depot_type):
             """ Returns FTP client generator targeted to the depot machine.
 
             Usage:
@@ -142,9 +145,24 @@ def pytest_generate_tests(metafunc):
                 ftp.recursively_delete()    # And so on ...
 
             """
-            return FTPClient(ftp_credentials["hostname"],
-                             ftp_credentials["username"],
-                             ftp_credentials["password"])
+            # Condition to check if it anonymous ftp or not, use default anonymous user
+            if depot_type == "anon_ftp":
+                ftp_user_name = "anonymous"
+                ftp_password = ""
+                # case anonymous connection cfme works only with hardcoded "incoming" directory
+                # incoming folder used for https://bugzilla.redhat.com/show_bug.cgi?id=1307019
+                upload_dir = "incoming"
+                ftp_host_name = hostname
+            else:
+                ftp_user_name = ftp_credentials["username"]
+                ftp_password = ftp_credentials["password"]
+                # if it's not anonymous using predefined credentials
+                upload_dir = "/"
+                ftp_host_name = ftp_credentials["hostname"]
+            return FTPClient(ftp_host_name,
+                             ftp_user_name,
+                             ftp_password,
+                             upload_dir)
         param_tuple = (depot_type, hostname, credentials, get_ftp)
         if param_tuple not in new_parametrized:
             new_parametrized.append(param_tuple)
@@ -161,7 +179,7 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
 
     It also provides a finalizer to disable the depot after test run.
     """
-    if depot_type not in ["nfs"]:
+    if depot_type not in ["nfs", "anon_ftp"]:
         credentials = configure.ServerLogDepot.Credentials(
             depot_type,
             fauxfactory.gen_alphanumeric(),
@@ -207,10 +225,14 @@ def test_collect_log_depot(depot_type,
     @request.addfinalizer
     def _clear_ftp():
         with depot_ftp() as ftp:
+            ftp.cwd(ftp.upload_dir)
             ftp.recursively_delete()
 
     # Prepare empty workspace
     with depot_ftp() as ftp:
+        # move to upload folder
+        ftp.cwd(ftp.upload_dir)
+        # delete all files
         ftp.recursively_delete()
 
     # Start the collection
@@ -223,7 +245,7 @@ def test_collect_log_depot(depot_type,
 
         # And must be older than the start time.
         for file in zip_files:
-            soft_assert(file.local_time < parsetime.now(), "%s is older." % file.name)
+            soft_assert(file.local_time < parsetime.now(), "{} is older.".format(file.name))
 
         # No file contains 'unknown_unknown' sequence
         # BZ: 1018578
