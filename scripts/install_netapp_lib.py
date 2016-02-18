@@ -1,22 +1,23 @@
 #!/usr/bin/env python2
-
+# -*- coding: utf-8 -*-
 """SSH into a running appliance and install Netapp SDK
 """
 
 import argparse
-import sys
-import time
-import os
 from urlparse import urlparse
-from utils.conf import cfme_data, credentials, env
-from utils.db import get_yaml_config, set_yaml_config
-from utils.ssh import SSHClient
+from utils.appliance import IPAppliance
+from utils.conf import cfme_data, env
 
 
 def parse_if_not_none(o):
     if o is None:
         return None
-    return urlparse(o).netloc
+    url = urlparse(o)
+    return url.netloc or url.path  # If you pass a plain IP, it will get in the .path
+
+
+def log(s):
+    print(s)
 
 
 def main():
@@ -34,65 +35,13 @@ def main():
         '(required for proper operation)', action="store_true")
 
     args = parser.parse_args()
+    print('Address: {}'.format(args.address))
+    print('SDK URL: {}'.format(args.sdk_url))
+    print('Restart: {}'.format(args.restart))
 
-    ssh_kwargs = {
-        'username': credentials['ssh']['username'],
-        'password': credentials['ssh']['password'],
-        'hostname': args.address
-    }
-
-    # Init SSH client
-    client = SSHClient(**ssh_kwargs)
-
-    # start
-    filename = args.sdk_url.split('/')[-1]
-    foldername = os.path.splitext(filename)[0]
-
-    # download
-    print 'Downloading sdk'
-    status, out = client.run_command('wget {url} -O {file} > /root/unzip.out 2>&1'.format(
-        url=args.sdk_url, file=filename))
-
-    # extract
-    print 'Extracting sdk ({})'.format(filename)
-    status, out = client.run_command('unzip -o -d /var/www/miq/vmdb/lib/ {}'.format(filename))
-    if status != 0:
-        print out
-        sys.exit(1)
-
-    # install
-    print 'Installing sdk ({})'.format(foldername)
-    path = "/var/www/miq/vmdb/lib/{}/lib/linux-64".format(foldername)
-    # Check if we haven't already added this line
-    if client.run_command("grep -F '{}' /etc/default/evm".format(path))[0] != 0:
-        status, out = client.run_command(
-            'echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:{}" >> /etc/default/evm'.format(path))
-        if status != 0:
-            print 'SDK installation failure (rc: {})'.format(out)
-            print out
-            sys.exit(1)
-    else:
-        print "Not needed to install, already done"
-
-    print "Running ldconfig"
-    client.run_command("ldconfig")
-
-    print "Modifying YAML configuration"
-    yaml = get_yaml_config("vmdb")
-    yaml["product"]["storage"] = True
-    set_yaml_config("vmdb", yaml)
-
-    client.run_command("touch /var/www/miq/vmdb/HAS_NETAPP")  # To mark that we installed netapp
-
-    # service evmserverd restart
-    if args.restart:
-        print 'Appliance restart'
-        status, out = client.run_command('reboot &')
-        time.sleep(30)  # To prevent clobbing with appliance shutting down
-        print 'evmserverd restarted, the UI should start shortly.'
-    else:
-        print 'evmserverd must be restarted before netapp sdk can be used'
+    appliance = IPAppliance(address=args.address)
+    appliance.install_netapp_sdk(sdk_url=args.sdk_url, reboot=args.restart, log_callback=log)
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()
