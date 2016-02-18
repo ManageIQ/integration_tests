@@ -38,7 +38,10 @@ def pytest_configure(config):
     else:
         store.terminalreporter.line('no test annotation found in %s' % path, yellow=True)
         parsed = []
-    config.pluginmanager.register(MarkFromMap.from_parsed_list(parsed, 'tier', pytest.mark.tier))
+    config.pluginmanager.register(MarkFromMap.from_parsed_list(
+        parsed, 'tier', pytest.mark.tier))
+    config.pluginmanager.register(MarkFromMap.from_parsed_list(
+        parsed, 'requirement', pytest.mark.requirement))
     config.pluginmanager.register(MarkFromMap.from_parsed_list(parsed, 'type',
                                                                pytest.mark.__getattr__))
 
@@ -46,6 +49,8 @@ def pytest_configure(config):
 def pytest_addoption(parser):
     group = parser.getgroup('cfme')
     group.addoption('--tier', type=int, action='append', help='only run tests of the given tiers')
+    group.addoption('--requirement', type=str, action='append',
+        help='only run tests of the given requirements')
 
 
 def tier_matches(item, tiers):
@@ -55,17 +60,30 @@ def tier_matches(item, tiers):
     return mark.args[0] in tiers
 
 
+def requirement_matches(item, requirements):
+    mark = item.get_marker('requirement')
+    if getattr(mark, 'args', None) is None:
+        return False
+    return mark.args[0] in requirements
+
+
 def pytest_collection_modifyitems(config, items):
     tiers = config.getoption('tier')
-    if not tiers:
+    requirements = config.getoption('requirement')
+    if not tiers and not requirements:
         return
     # TODO(rpfannsc) trim after pytest #1373 is done
     keep, discard = [], []
+
     for item in items:
-        if tier_matches(item, tiers):
-            keep.append(item)
-        else:
+        if tiers and not tier_matches(item, tiers):
             discard.append(item)
+            continue
+        elif requirements and not requirement_matches(item, requirements):
+            discard.append(item)
+            continue
+        else:
+            keep.append(item)
 
     items[:] = keep
     # TODO(rpfannsc) add a reason after pytest #1372 is fixed
@@ -94,6 +112,7 @@ def _clean(mapping):
     mapping.pop('', '')
     try:
         return {
+            'requirement': int(mapping['Requirement']),
             'tier': int(mapping['TestTier']),
             'id': generate_nodeid(mapping),
             'type': mapping['TestType'].lower(),
