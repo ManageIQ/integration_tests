@@ -8,6 +8,8 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.common.vm import VM
 from cfme.common.provider import cleanup_vm
 from cfme.configure import configuration, tasks
+from cfme.configure.configuration import VMAnalysisProfile
+from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
 from cfme.infrastructure import host
 from cfme.provisioning import do_vm_provisioning
 from cfme.web_ui import InfoBlock, Table, SplitTable, paginator, tabstrip as tabs, toolbar as tb
@@ -54,6 +56,8 @@ DEB_BASED = {
         'install-command': 'env DEBIAN_FRONTEND=noninteractive apt-get -y install {}',
         'package-number': 'dpkg --get-selections | wc -l'},
 }
+
+ssa_expect_file = "/etc/hosts"
 
 
 def pytest_generate_tests(metafunc):
@@ -128,14 +132,6 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
     configuration.set_server_roles(**roles)
 
 
-@pytest.fixture(scope="module")
-def setup_ci_template(cloud_init_template=None):
-    if cloud_init_template is None:
-        return
-    if not cloud_init_template.exists():
-        cloud_init_template.create()
-
-
 def set_host_credentials(request, vm_analysis_new, provider):
     # Add credentials to host
     test_host = host.Host(name=vm_analysis_new['host'])
@@ -161,7 +157,7 @@ def set_host_credentials(request, vm_analysis_new, provider):
 
 
 @pytest.fixture(scope="module")
-def instance(request, local_setup_provider, provider, setup_ci_template, vm_analysis_new):
+def instance(request, local_setup_provider, provider, vm_analysis_new):
     """ Fixture to provision instance on the provider
     """
     vm_name = vm_analysis_new.get('vm_name')
@@ -212,11 +208,9 @@ def instance(request, local_setup_provider, provider, setup_ci_template, vm_anal
         do_vm_provisioning(template, provider, vm_name, provisioning_data, request, None,
                            num_sec=6000)
 
-        mgmt_system.start_vm(vm_name)
-
-        logger.info("VM {} provisioned, waiting for IP address to be assigned".format(vm_name))
-        connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=6000,
-                                  handle_exception=True)
+    logger.info("VM {} provisioned, waiting for IP address to be assigned".format(vm_name))
+    connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], delay=10, num_sec=6000,
+                              handle_exception=False)
     assert connect_ip is not None
 
     # Check that we can at least get the uptime via ssh this should only be possible
@@ -226,7 +220,7 @@ def instance(request, local_setup_provider, provider, setup_ci_template, vm_anal
         logger.info("Waiting for {} to be available via SSH".format(connect_ip))
         ssh_client = ssh.SSHClient(hostname=connect_ip, username=vm_analysis_new['username'],
                                    password=vm_analysis_new['password'], port=22)
-        wait_for(ssh_client.uptime, num_sec=3600, handle_exception=True)
+        wait_for(ssh_client.uptime, num_sec=3600, handle_exception=False)
         vm.ssh = ssh_client
 
     vm.system_type = detect_system_type(vm)
@@ -240,6 +234,52 @@ def instance(request, local_setup_provider, provider, setup_ci_template, vm_anal
         cfme_rel = Vm.CfmeRelationship(vm)
         cfme_rel.set_relationship(str(configuration.server_name()), configuration.server_id())
     return vm
+
+
+@pytest.fixture(scope="module")
+def policy_profile(request, instance):
+    collected_files = [
+        {"Name": "/etc/redhat-access-insights/machine-id", "Collect Contents?": True},
+        {"Name": ssa_expect_file, "Collect Contents?": True},
+    ]
+
+    analysis_profile_name = 'ssa_analysis_{}'.format(fauxfactory.gen_alphanumeric())
+    analysis_profile = VMAnalysisProfile(analysis_profile_name, analysis_profile_name,
+                                         categories=["check_system"],
+                                         files=collected_files)
+    if analysis_profile.exists:
+        analysis_profile.delete()
+    analysis_profile.create()
+    request.addfinalizer(analysis_profile.delete)
+
+    action = Action(
+        'ssa_action_{}'.format(fauxfactory.gen_alpha()),
+        "Assign Profile to Analysis Task",
+        dict(analysis_profile=analysis_profile_name))
+    if action.exists:
+        action.delete()
+    action.create()
+    request.addfinalizer(action.delete)
+
+    policy = VMControlPolicy('ssa_policy_{}'.format(fauxfactory.gen_alpha()))
+    if policy.exists:
+        policy.delete()
+    policy.create()
+    request.addfinalizer(policy.delete)
+
+    policy.assign_events("VM Analysis Start")
+    request.addfinalizer(policy.assign_events)
+    policy.assign_actions_to_event("VM Analysis Start", action)
+
+    profile = PolicyProfile('ssa_policy_profile_{}'.format(fauxfactory.gen_alpha()),
+                            policies=[policy])
+    if profile.exists:
+        profile.delete()
+    profile.create()
+    request.addfinalizer(profile.delete)
+
+    instance.assign_policy_profiles(profile.description)
+    request.addfinalizer(lambda: instance.unassign_policy_profiles(profile.description))
 
 
 def is_vm_analysis_finished(vm_name):
@@ -485,3 +525,33 @@ def test_ssa_packages(provider, instance, soft_assert):
         if packages.find_row('Name', package_name):
             return
     pytest.fail("Package {0} was not found".format(package_name))
+
+
+@pytest.mark.long_running
+def test_ssa_files(provider, instance, policy_profile, soft_assert):
+    """Tests that instances can be scanned for specific file."""
+
+    if instance.system_type == WINDOWS:
+        pytest.skip("We cannot verify Windows files yet")
+
+    instance.smartstate_scan()
+    wait_for(lambda: is_vm_analysis_finished(instance.name),
+             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+
+    # Check that all data has been fetched
+    current = instance.get_detail(properties=('Configuration', 'Files'))
+    assert current != '0', "No files were scanned"
+
+    sel.click(InfoBlock("Configuration", "Files"))
+    template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
+    files = version.pick({
+        version.LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
+                                   body_data=(template.format("objbox"), 0)),
+        "5.5": Table('//table'),
+    })
+
+    for page in paginator.pages():
+        sel.wait_for_element(files)
+        if files.find_row('Name', ssa_expect_file):
+            return
+    pytest.fail("File {0} was not found".format(ssa_expect_file))
