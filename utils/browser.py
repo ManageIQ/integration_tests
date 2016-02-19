@@ -14,6 +14,7 @@ import requests
 from selenium import webdriver
 from selenium.common.exceptions import UnexpectedAlertPresentException, WebDriverException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
+from selenium.webdriver.remote.file_detector import UselessFileDetector
 
 from fixtures.pytest_store import store, write_line
 from utils import conf, tries
@@ -98,6 +99,8 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         # defaults to Firefox
         webdriver_name = browser_conf.get('webdriver', 'Firefox')
     webdriver_class = getattr(webdriver, webdriver_name)
+
+    webdriver_class.file_detector = UselessFileDetector()
 
     if base_url is None:
         base_url = store.base_url
