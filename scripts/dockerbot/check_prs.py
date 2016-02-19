@@ -53,7 +53,7 @@ def set_invalid_runs(db_pr):
         if run['result'] == "pending":
             run_db = tapi.run(run['id']).get()
             for task in run_db['tasks']:
-                tapi.task(task['tid']).put({'result': 'invalid', 'cleanup': False})
+                tapi.task(task['tid']).patch({'result': 'invalid', 'cleanup': False})
 
 
 def create_run(db_pr, pr):
@@ -101,7 +101,7 @@ def check_prs():
     for pr in prs:
         if pr['number'] not in numbers:
             logger.info("PR {} closed".format(pr['number']))
-            tapi.pr(pr['number']).put({'closed': True})
+            tapi.pr(pr['number']).patch({'closed': True})
 
 
 def run_tasks():
@@ -135,11 +135,11 @@ def run_tasks():
                 #     raise Exception('No template for stream')
                 # template = template_obj['latest_template']
                 # vm_name = 'dkb-{}'.format(task['tid'])
-                provider = "Sprout"
-                vm_name = "Sprout"
-                template = "Sprout"
-                tapi.task(task['tid']).put({'result': 'running', 'vm_name': vm_name,
-                                            'provider': provider, 'template': template})
+                task_update = {}
+                task_update['provider'] = "Sprout"
+                task_update['vm_name'] = "Sprout"
+                task_update['template'] = "Sprout"
+                tapi.task(task['tid']).patch(task_update)
 
                 # Create a dockerbot instance and run the PR test
                 dockerbot.DockerBot(dry_run=DEBUG,
@@ -153,11 +153,10 @@ def run_tasks():
                                     sprout_stream=stream,
                                     sprout_description=task['tid'])
                 cont_count += 1
-                tapi.task(task['tid']).put({'result': 'running', 'vm_name': vm_name,
-                                            'provider': provider, 'template': template})
+                tapi.task(task['tid']).patch({'result': 'running'})
             except Exception:
                 output = traceback.format_exc()
-                tapi.task(task['tid']).put({'result': 'failed', 'output': output})
+                tapi.task(task['tid']).patch({'result': 'failed', 'output': output})
         else:
             # No tasks to process - Happy Days!
             break
@@ -204,7 +203,7 @@ def vm_reaper():
                 docker_cleanup = True
 
             if docker_cleanup and vm_cleanup:
-                tapi.task(task['tid']).put({'cleanup': True})
+                tapi.task(task['tid']).patch({'cleanup': True})
 
 
 def set_status(commit, status, context):
@@ -225,9 +224,10 @@ def set_status(commit, status, context):
     }
     data_json = json.dumps(data)
 
-    headers = {'Authorization': 'token {}'.format(token)}
-    requests.post("https://api.github.com/repos/{}/{}/commits/{}/statuses".format(
-        owner, repo, commit), data=data_json, headers=headers)
+    if not DEBUG:
+        headers = {'Authorization': 'token {}'.format(token)}
+        requests.post("https://api.github.com/repos/{}/{}/commits/{}/statuses".format(
+            owner, repo, commit), data=data_json, headers=headers)
 
 
 def check_status(pr):
@@ -317,10 +317,12 @@ def check_pr(pr):
             create_run(db_pr, pr)
         else:
             wip = True
-        tapi.pr(pr['number']).put({'current_commit_head': commit,
-                                   'wip': wip,
-                                   'title': pr['title'],
-                                   'description': pr['body']})
+        tapi.pr(pr['number']).put({
+            'current_commit_head': commit,
+            'wip': wip,
+            'title': pr['title'],
+            'description': pr['body']}
+        )
     except HttpClientError:
         logger.info('PR {} not found in database, creating...'.format(pr['number']))
         new_pr = {'number': pr['number'],

@@ -223,7 +223,7 @@ def _as_providertemplate(provider, template):
 def post_task_result(tid, result, output=None):
     if not output:
         output = "No output capture"
-    api().task(tid).put({'result': result, 'output': output})
+    api().task(tid).patch({'result': result, 'output': output})
 
 
 def post_jenkins_result(job_name, number, stream, date, template,
