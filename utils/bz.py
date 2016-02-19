@@ -196,6 +196,8 @@ def check_fixed_in(fixed_in, version_series):
     # used to check if the bug belongs to that series
     if fixed_in is None:
         return True
+    if not isinstance(fixed_in, Version):
+        fixed_in = Version(fixed_in)
     return fixed_in.is_in_series(version_series)
 
 
