@@ -28,6 +28,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.remote.file_detector import LocalFileDetector, UselessFileDetector
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import singledispatch, multidispatch
@@ -754,15 +755,32 @@ def set_angularjs_value(loc, value):
 
 
 def send_keys(loc, text):
-    """
-    Sends the supplied keys to an element.
+    """Sends the supplied keys to an element. Handles the file upload fields on background.
+
+    If it detects the element is and input of type file, it uses the LocalFileDetector so
+    the file gets transferred properly. Otherwise it takes care of having UselessFileDetector.
 
     Args:
         loc: A locator, expects either a string, WebElement, tuple.
         text: The text to inject into the element.
     """
     if text is not None:
-        move_to_element(loc).send_keys(text)
+        file_intercept = False
+        # If the element is input type file, we will need to use the file detector
+        if tag(loc) == 'input':
+            type_attr = get_attribute(loc, 'type')
+            if type_attr and type_attr.strip() == 'file':
+                file_intercept = True
+        try:
+            if file_intercept:
+                # If we detected a file upload field, let's use the file detector.
+                browser().file_detector = LocalFileDetector()
+            move_to_element(loc).send_keys(text)
+        finally:
+            # Always the UselessFileDetector for all other kinds of fields, so do not leave
+            # the LocalFileDetector there.
+            if file_intercept:
+                browser().file_detector = UselessFileDetector()
         wait_for_ajax()
 
 
