@@ -1538,6 +1538,71 @@ class IPAppliance(object):
                 else:
                     log_callback('A reboot is required before vddk will work')
 
+    @logger_wrap("Install Netapp SDK: {}")
+    def install_netapp_sdk(self, sdk_url=None, reboot=False, log_callback=None):
+        """Installs the Netapp SDK.
+
+        Args:
+            sdk_url: Where the SDK zip file is located? (optional)
+            reboot: Whether to reboot the appliance afterwards? (Default False but reboot is needed)
+        """
+
+        def log_raise(exception_class, message):
+            log_callback(message)
+            raise exception_class(message)
+
+        if sdk_url is None:
+            try:
+                sdk_url = conf.cfme_data['basic_info']['netapp_sdk_url']
+            except KeyError:
+                raise Exception("cfme_data.yaml/basic_info/netapp_sdk_url is not present!")
+
+        filename = sdk_url.split('/')[-1]
+        foldername = os.path.splitext(filename)[0]
+
+        with self.ssh_client as ssh:
+            log_callback('Downloading SDK from {}'.format(sdk_url))
+            status, out = ssh.run_command(
+                'wget {url} -O {file} > /root/unzip.out 2>&1'.format(
+                    url=sdk_url, file=filename))
+            if status != 0:
+                log_raise(Exception, 'Could not download Netapp SDK: {}'.format(out))
+
+            log_callback('Extracting SDK ({})'.format(filename))
+            status, out = ssh.run_command(
+                'unzip -o -d /var/www/miq/vmdb/lib/ {}'.format(filename))
+            if status != 0:
+                log_raise(Exception, 'Could not extract Netapp SDK: {}'.format(out))
+
+            path = '/var/www/miq/vmdb/lib/{}/lib/linux-64'.format(foldername)
+            # Check if we haven't already added this line
+            if ssh.run_command("grep -F '{}' /etc/default/evm".format(path)).rc != 0:
+                log_callback('Installing SDK ({})'.format(foldername))
+                status, out = ssh.run_command(
+                    'echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:{}" >> /etc/default/evm'.format(
+                        path))
+                if status != 0:
+                    log_raise(Exception, 'SDK installation failure ($?={}): {}'.format(status, out))
+            else:
+                log_callback("Not needed to install, already done")
+
+            log_callback('ldconfig')
+            ssh.run_command('ldconfig')
+
+            log_callback('Modifying YAML configuration')
+            yaml = self.get_yaml_config('vmdb')
+            yaml['product']['storage'] = True
+            self.set_yaml_config('vmdb', yaml)
+
+            # To mark that we installed netapp
+            ssh.run_command("touch /var/www/miq/vmdb/HAS_NETAPP")
+
+            if reboot:
+                self.reboot(log_callback=log_callback)
+            else:
+                log_callback(
+                    'Appliance must be restarted before the netapp functionality can be used.')
+
     def wait_for_db(self, timeout=600):
         """Waits for appliance database to be ready
 
