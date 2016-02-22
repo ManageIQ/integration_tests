@@ -24,6 +24,7 @@ from . import PolicyProfileAssignable, Taggable
 
 cfg_btn = partial(toolbar.select, "Configuration")
 lcl_btn = partial(toolbar.select, "Lifecycle")
+mon_btn = partial(toolbar.select, 'Monitoring')
 pol_btn = partial(toolbar.select, "Policy")
 pwr_btn = partial(toolbar.select, "Power")
 
@@ -347,6 +348,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         self.load_details(refresh=True)
         cfg_btn(self.TO_OPEN_EDIT)
 
+    def open_timelines(self):
+        self.load_details(refresh=True)
+        mon_btn("Timelines")
+
     def rediscover(self):
         """Deletes the VM from the provider and lets it discover again"""
         self.delete(from_details=True)
@@ -514,6 +519,18 @@ class VM(BaseVM):
                     (self.name, option, str(cancel)))
         else:
             raise OptionNotAvailable(option + " is not visible or enabled")
+
+    def wait_candu_data_available(self, timeout=600):
+        """Waits until C&U data are available for this VM/Instance
+
+        Args:
+            timeout: Timeout passed to :py:func:`utils.wait.wait_for`
+        """
+        self.load_details(refresh=True)
+        wait_for(
+            lambda: not toolbar.is_greyed('Monitoring', 'Utilization'),
+            delay=10, handle_exception=True, num_sec=timeout,
+            fail_func=lambda: toolbar.select("Reload"))
 
     def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
                                  with_relationship_refresh=True):

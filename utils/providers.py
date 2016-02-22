@@ -269,6 +269,11 @@ def is_provider_setup(provider_key):
     return get_crud(provider_key).exists
 
 
+def existing_providers():
+    """Lists all providers that are already set up in the appliance."""
+    return filter(is_provider_setup, list_all_providers())
+
+
 def setup_provider(provider_key, validate=True, check_existing=True):
     """Add the named provider to CFME
 

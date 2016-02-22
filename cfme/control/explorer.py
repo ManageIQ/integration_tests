@@ -8,7 +8,7 @@ from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
 from cfme.web_ui import fill, flash, form_buttons, table_in_object
 from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSelectForm, \
-    CheckboxSelect, Input
+    CheckboxSelect, Input, AngularSelect
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
 from utils import version
@@ -929,38 +929,68 @@ class Alert(Updateable, Pretty):
         fields=[
             ("description", Input("description")),
             ("active", Input("enabled_cb")),
-            ("based_on", Select("select#miq_alert_db")),
-            ("evaluate", Select("select#exp_name")),
-            ("driving_event", Select("select#exp_event")),
-            ("based_on", Select("select#miq_alert_db")),
-            ("notification_frequency", Select("select#repeat_time")),
+            ("based_on", {
+                version.LOWEST: Select("select#miq_alert_db"),
+                "5.5": AngularSelect("miq_alert_db")}),
+            ("evaluate", {
+                version.LOWEST: Select("select#exp_name"),
+                "5.5": AngularSelect("exp_name")}),
+            ("driving_event", {
+                version.LOWEST: Select("select#exp_event"),
+                "5.5": AngularSelect("exp_event")}),
+            ("notification_frequency", {
+                version.LOWEST: Select("select#repeat_time"),
+                "5.5": AngularSelect("repeat_time")}),
             # Different evaluations begin
             # Event log threshold
-            ("event_log_message_type",
-                Select("select#select_event_log_message_filter_type")),
+            ("event_log_message_type", {
+                version.LOWEST: Select("select#select_event_log_message_filter_type"),
+                "5.5": AngularSelect("select_event_log_message_filter_type")}),
             ("event_log_message_value", Input("event_log_message_filter_value")),
             ("event_log_name", Input("event_log_name")),
             ("event_log_level", Input("event_log_level")),
             ("event_log_event_id", Input("event_log_event_id")),
             ("event_log_source", Input("event_log_source")),
-            ("event_time_threshold", Select("select#time_threshold")),  # shared
+            ("event_time_threshold", {
+                version.LOWEST: Select("select#time_threshold"),
+                "5.5": AngularSelect("time_threshold")}),  # shared
             ("event_count_threshold", Input("freq_threshold")),  # shared
             # Event threshold (uses the shared fields from preceeding section)
-            ("event_type", Select("select#event_types")),
+            ("event_type", {
+                version.LOWEST: Select("select#event_types"),
+                "5.5": AngularSelect("event_types")}),
             # HW reconfigured + VM Value Changed
-            ("hw_attribute", Select("select#select_hdw_attr")),
-            ("hw_attribute_operator", "select#select_operator"),
+            ("hw_attribute", {
+                version.LOWEST: Select("select#select_hdw_attr"),
+                "5.5": AngularSelect("select_hdw_attr")}),
+            ("hw_attribute_operator", {
+                version.LOWEST: Select("select#select_operator"),
+                "5.5": AngularSelect("select_operator")}),
             # Normal operating range
-            ("performance_field", Select("select#perf_column")),
-            ("performance_field_operator", Select("select#select_operator")),
-            ("performance_time_threshold", Select("select#rt_time_threshold")),
+            ("performance_field", {
+                version.LOWEST: Select("select#perf_column"),
+                "5.5": AngularSelect("perf_column")}),
+            ("performance_field_operator", {
+                version.LOWEST: Select("select#select_operator"),
+                "5.5": AngularSelect("select_operator")}),
+            ("performance_time_threshold", {
+                version.LOWEST: Select("select#rt_time_threshold"),
+                "5.5": AngularSelect("rt_time_threshold")}),
             # Real Time Performance (uses fields from previous)
             ("performance_field_value", Input("value_threshold")),
-            ("performance_trend", Select("select#trend_direction")),
-            ("performance_debug_trace", Select("select#debug_trace")),
+            ("performance_trend", {
+                version.LOWEST: Select("select#trend_direction"),
+                "5.5": AngularSelect("trend_direction")}),
+            ("performance_debug_trace", {
+                version.LOWEST: Select("select#debug_trace"),
+                "5.5": AngularSelect("debug_trace")}),
             # VMWare alarm
-            ("vmware_alarm_provider", Select("select#select_ems_id")),
-            ("vmware_alarm_type", Select("select#select_ems_alarm_mor")),
+            ("vmware_alarm_provider", {
+                version.LOWEST: Select("select#select_ems_id"),
+                "5.5": AngularSelect("select_ems_id")}),
+            ("vmware_alarm_type", {
+                version.LOWEST: Select("select#select_ems_alarm_mor"),
+                "5.5": AngularSelect("select_ems_alarm_mor")}),
             # Different evaluations end
             ("send_email", Input("send_email_cb")),
             ("emails", EmailSelectForm()),
@@ -1521,7 +1551,9 @@ class BaseAlertProfile(Updateable, Pretty):
 
     assignments = Form(
         fields=[
-            ("assign", Select("select#chosen_assign_to")),
+            ("assign", {
+                version.LOWEST: Select("select#chosen_assign_to"),
+                "5.5": AngularSelect("chosen_assign_to")}),
         ]
     )
 
