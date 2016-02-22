@@ -443,12 +443,6 @@ def wait_for_element(*locs, **kwargs):
     )
 
 
-def on_cfme_page():
-    """Check whether we are on a CFME page and not another or blank page"""
-    return (is_displayed("//div[@id='page_header_div']//div[contains(@class, 'brand')]")
-        and is_displayed("//div[@id='footer']")) or is_displayed("//ul[@class='login_buttons']")
-
-
 def get_alert():
     return browser().switch_to_alert()
 
@@ -831,19 +825,6 @@ def uncheck(loc):
     return checkbox(loc, False)
 
 
-def multi_check(locators):
-    """ Mass-check and uncheck for checkboxes.
-
-    Args:
-        locators: :py:class:`dict` or :py:class:`list` or whatever iterable of tuples.
-            Key is the locator, value bool with check status.
-
-    Returns: list of booleans indicating for each locator, whether any action was taken.
-
-    """
-    return [checkbox(locator, checked) for locator, checked in dict(locators).iteritems()]
-
-
 def current_url():
     """
     Returns the current_url of the page
@@ -873,59 +854,6 @@ def refresh():
     """
     browser().refresh()
 
-
-def move_to_fn(*els):
-    """
-    Returns a function which successively moves through a series of elements.
-
-    Args:
-        els: An iterable of elements:
-    Returns: The move function
-    """
-    def f(_):
-        for el in els:
-            move_to_element(el)
-    return f
-
-
-def click_fn(*els):
-    """
-    Returns a function which successively clicks on a series of elements.
-
-    Args:
-       els: An iterable of elements:
-    Returns: The click function
-    """
-    def f(_):
-        for el in els:
-            click(el)
-    return f
-
-
-def first_from(*locs, **kwargs):
-    """ Goes through locators and first valid element received is returned.
-
-    Useful for things that could be located different way
-
-    Args:
-        *locs: Locators to pass through
-        **kwargs: Keyword arguments to pass to element()
-
-    Raises:
-        NoSuchElementException: When none of the locator could find the element.
-
-    Returns: :py:class:`WebElement`
-
-    """
-    assert len(locs) > 0, "You must provide at least one locator to look for!"
-    for locator in locs:
-        try:
-            return element(locator, **kwargs)
-        except NoSuchElementException:
-            pass
-    # To make nice error
-    msg = locs[0] if len(locs) == 1 else ("%s or %s" % (", ".join(locs[:-1]), locs[-1]))
-    raise NoSuchElementException("Could not find element with possible locators %s." % msg)
 
 # Begin CFME specific stuff, should eventually factor
 # out everything above into a lib
@@ -1291,7 +1219,6 @@ def detect_observed_field(loc):
     wait_for_ajax()
 
 
-@singledispatch
 def set_text(loc, text):
     """
     Clears the element and then sends the supplied keys.
