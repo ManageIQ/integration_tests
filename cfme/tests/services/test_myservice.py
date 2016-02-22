@@ -14,7 +14,8 @@ from datetime import datetime
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
-from utils import version
+from utils import version, browser
+from utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name"),
@@ -22,6 +23,16 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.ignore_stream("5.2")
 ]
+
+
+@pytest.fixture
+def needs_firefox():
+    """ Fixture which skips the test if not run under firefox.
+
+    I recommend putting it in the first place.
+    """
+    if browser.browser().name != "firefox":
+        pytest.skip(msg="This test needs firefox to run")
 
 
 def pytest_generate_tests(metafunc):
@@ -113,6 +124,7 @@ def myservice(setup_provider, provider, catalog_item, request):
     return MyService(catalog_item.name, vm_name)
 
 
+@pytest.mark.meta(blockers=[BZ(1310842, forced_streams=["5.4", "5.5", "upstream"])])
 def test_retire_service(provider, myservice, register_event):
     """Tests my service
 
@@ -125,6 +137,7 @@ def test_retire_service(provider, myservice, register_event):
         "service", myservice.service_name, ["service_retired"])
 
 
+@pytest.mark.meta(blockers=[BZ(1310842, forced_streams=["5.4", "5.5", "upstream"])])
 def test_retire_service_on_date(myservice):
     """Tests my service retirement
 
@@ -135,30 +148,26 @@ def test_retire_service_on_date(myservice):
     myservice.retire_on_date(dt)
 
 
-def test_myservice_crud(myservice):
-    """Tests my service crud
-
-    Metadata:
-        test_flag: provision
-    """
-    myservice.update("edited", "edited_desc")
-    edited_name = myservice.service_name + "_" + "edited"
-    myservice.delete(edited_name)
-
-
-def test_set_ownership(myservice):
-    """Tests my service ownership
+@pytest.mark.meta(blockers=[BZ(1310842, forced_streams=["5.4", "5.5", "upstream"])])
+def test_crud_set_ownership_and_edit_tags(myservice):
+    """Tests my service crud , edit tags and ownership
 
     Metadata:
         test_flag: provision
     """
     myservice.set_ownership("Administrator", "EvmGroup-administrator")
+    myservice.edit_tags("Cost Center *", "Cost Center 001")
+    myservice.update("edited", "edited_desc")
+    edited_name = myservice.service_name + "_" + "edited"
+    myservice.delete(edited_name)
 
 
-def test_edit_tags(myservice):
-    """Tests my service edit tags
+@pytest.mark.meta(blockers=[BZ(1310842, forced_streams=["5.4", "5.5", "upstream"])])
+@pytest.mark.parametrize("filetype", ["Text", "CSV", "PDF"])
+def test_download_file(needs_firefox, myservice, filetype):
+    """Tests my service download files
 
     Metadata:
         test_flag: provision
     """
-    myservice.edit_tags("Cost Center *", "Cost Center 001")
+    myservice.download_file(filetype)
