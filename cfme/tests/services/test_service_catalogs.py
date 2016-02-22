@@ -218,3 +218,28 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
     catalog_item.update({'description': 'my edited description'})
     flash.assert_success_message('Service Catalog Item "%s" was saved' %
                                  catalog_item.name)
+
+
+# @pytest.mark.meta(blockers=[1210541])
+def test_request_with_orphaned_template(provider_crud, provider_key, provider_mgmt,
+                                        provider_init, catalog_item):
+    """Tests edit catalog item after deleting provider
+
+    Metadata:
+        test_flag: provision
+    """
+    catalog_item.create()
+    service_catalogs = ServiceCatalogs("service_name")
+    service_catalogs.order(catalog_item.catalog, catalog_item)
+    flash.assert_no_errors()
+    logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
+    row_description = 'Provisioning Service [{}] from [{}]'.format(catalog_item.name,
+                                                                   catalog_item.name)
+    # row_description = catalog_item.name
+    cells = {'Description': row_description}
+    # row, __ = wait_for(requests.wait_for_request, [cells, True],
+    #  fail_func=requests.reload, num_sec=1400, delay=20)
+    # assert row.last_message.text == 'Request complete'
+    provider_crud.delete(cancel=False)
+    wait_for(lambda: requests.go_to_request(cells), num_sec=80, delay=5)
+    requests.approve_request(cells, "Approved")
