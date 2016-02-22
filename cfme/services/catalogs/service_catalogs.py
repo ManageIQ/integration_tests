@@ -2,7 +2,7 @@
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import accordion, flash, menu, form_buttons, Form, Input, Select
+from cfme.web_ui import accordion, fill, flash, menu, form_buttons, Form, Input, Select
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils import version
@@ -68,3 +68,14 @@ class ServiceCatalogs(Updateable, Pretty):
         stack_form.fill(self.stack_data)
         sel.click(form_buttons.submit)
         flash.assert_success_message("Order Request was Submitted")
+
+
+def order_catalog_item(catalog_item, data={}):  # {} won't get mutated here
+    sel.force_navigate(
+        "order_service_catalog",
+        context={"catalog": catalog_item.catalog, "catalog_item": catalog_item})
+    for loc, val in data.iteritems():
+        fill(loc, val)
+    sel.click(form_buttons.submit)
+    flash.assert_message_match("Order Request was Submitted")
+    flash.assert_no_errors()
