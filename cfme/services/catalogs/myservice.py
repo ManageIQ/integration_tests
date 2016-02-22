@@ -13,6 +13,7 @@ my_service_tree = partial(accordion.tree, "Services")
 details_page = Region(infoblock_type='detail')
 cfg_btn = partial(tb.select, "Configuration")
 policy_btn = partial(tb.select, "Policy")
+download_btn = partial(tb.select, "download_choice")
 
 
 retirement_form = Form(
@@ -44,15 +45,17 @@ edit_tags_form = Form(
 menu.nav.add_branch(
     'my_services',
     {
-        'service':
+        'all_service':
         [
-            lambda ctx: my_service_tree('All Services', ctx['service_name']),
+            lambda _: my_service_tree('All Services'),
             {
-                'retire_service_on_date': menu.nav.partial(lifecycle_btn, "Set Retirement Date"),
-                'edit_service': menu.nav.partial(cfg_btn, "Edit this Service"),
-                'service_set_ownership': menu.nav.partial(cfg_btn, "Set Ownership"),
-                'service_edit_tags': menu.nav.partial(policy_btn, "Edit Tags"),
-                'reconfigure_service': menu.nav.partial(cfg_btn, "Reconfigure this Service")
+                'service':
+                [lambda ctx: my_service_tree('All Services', ctx['service_name']),
+                {'retire_service_on_date': menu.nav.partial(lifecycle_btn, "Set Retirement Date"),
+                 'edit_service': menu.nav.partial(cfg_btn, "Edit this Service"),
+                 'service_set_ownership': menu.nav.partial(cfg_btn, "Set Ownership"),
+                 'service_edit_tags': menu.nav.partial(policy_btn, "Edit Tags"),
+                 'reconfigure_service': menu.nav.partial(cfg_btn, "Reconfigure this Service")}]
             }
         ]
     }
@@ -160,3 +163,7 @@ class MyService(Updateable):
     def reconfigure_service(self):
         sel.force_navigate('reconfigure_service',
                            context={'service_name': self.service_name})
+
+    def download_file(self, extension):
+        sel.force_navigate('all_service')
+        download_btn("Download as " + extension)
