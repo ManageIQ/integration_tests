@@ -82,6 +82,9 @@ class ByValue(Pretty):
     def __eq__(self, other):
         return self.value == other.value
 
+    def __str__(self):
+        return str(self.value)
+
 
 class ByText(Pretty):
     pretty_attrs = ['text']

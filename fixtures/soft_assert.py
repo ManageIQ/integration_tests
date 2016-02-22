@@ -216,6 +216,7 @@ def soft_assert(request):
             handle_assert_artifacts(request, fail_message=fail_message)
             caught_assert = _annotate_failure(fail_message)
             _thread_locals.caught_asserts.append(caught_assert)
+        return bool(expr)
     # stash helper functions on soft_assert for easy access
     soft_assert_func.catch_assert = partial(_catch_assert_cm, request)
     soft_assert_func.caught_asserts = _get_caught_asserts
