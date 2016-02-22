@@ -14,6 +14,7 @@ import requests
 from selenium import webdriver
 from selenium.common.exceptions import UnexpectedAlertPresentException, WebDriverException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
+from selenium.webdriver.remote.file_detector import UselessFileDetector
 
 from fixtures.pytest_store import store, write_line
 from utils import conf, tries
@@ -149,6 +150,7 @@ def start(webdriver_name=None, base_url=None, **kwargs):
 
     try:
         browser = tries(3, WebDriverException, webdriver_class, **browser_kwargs)
+        browser.file_detector = UselessFileDetector()
         browser.maximize_window()
         browser.get(base_url)
         thread_locals.browser = browser
