@@ -49,11 +49,15 @@ class SSHClient(paramiko.SSHClient):
             'hostname': parsed_url.hostname,
             'timeout': 10,
             'allow_agent': False,
+            'port': ports.SSH,
             'look_for_keys': False,
             'gss_auth': False
         }
+        if 'ssh' in conf.env and 'look_for_keys' in conf.env['ssh']:
+            default_connect_kwargs['look_for_keys'] = conf.env['ssh'].get('look_for_keys', False)
 
-        default_connect_kwargs["port"] = ports.SSH
+        if 'custom_ports' in conf.env and 'ssh' in conf.env['custom_ports']:
+            default_connect_kwargs['port'] = conf.env['custom_ports'].get('ssh', ports.SSH)
 
         # Overlay defaults with any passed-in kwargs and store
         default_connect_kwargs.update(connect_kwargs)
