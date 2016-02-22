@@ -242,3 +242,52 @@ def process_pytest_path(path):
             segment = path[:seg_end]
             rest = path[seg_end + 1:]
             return [segment] + process_pytest_path(rest)
+
+
+def process_shell_output(value):
+    """This function allows you to unify the behaviour when you putput some values to stdout.
+
+    You can check the code of the function how exactly does it behave for the particular types of
+    variables. If no output is expected, it returns None.
+
+    Args:
+        value: Value to be outputted.
+
+    Returns:
+        A tuple consisting of returncode and the output to be printed.
+    """
+    result_lines = []
+    exit = 0
+    if isinstance(value, (list, tuple, set)):
+        for entry in sorted(value):
+            result_lines.append(entry)
+    elif isinstance(value, dict):
+        for key, value in value.iteritems():
+            result_lines.append('{}={}'.format(key, value))
+    elif isinstance(value, str):
+        result_lines.append(value)
+    elif isinstance(value, bool):
+        # 'True' result becomes flipped exit 0, and vice versa for False
+        exit = int(not value)
+    else:
+        # Unknown type, print it
+        result_lines.append(str(value))
+
+    return exit, '\n'.join(result_lines) if result_lines else None
+
+
+def iterate_pairs(iterable):
+    """Iterates over iterable, always taking two items at time.
+
+    Eg. ``[1, 2, 3, 4, 5, 6]`` will yield ``(1, 2)``, then ``(3, 4)`` ...
+
+    Must have even number of items.
+
+    Args:
+        iterable: An iterable with even number of items to be iterated over.
+    """
+    if len(iterable) % 2 != 0:
+        raise ValueError('Iterable must have even number of items.')
+    it = iter(iterable)
+    for i in it:
+        yield i, next(it)

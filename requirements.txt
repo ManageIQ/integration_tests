@@ -14,7 +14,7 @@ jsmin
 kwargify
 # 15.8.1 breaks yaycl: https://github.com/mk-fg/layered-yaml-attrdict-config/commit/ea12fbf31b96abf15543c7b436272d8854b5d324
 layered-yaml-attrdict-config
-mgmtsystem
+mgmtsystem>0.0.15
 mock
 multimethods.py
 numpy
