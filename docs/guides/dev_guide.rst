@@ -167,6 +167,23 @@ We also do a few things that aren't explicitly called out in PEP 8:
     from os import environ
     from random import choice
 
+* We require ``print`` statements be written in Python 3.0 compatible format, that is
+  encased in parentheses::
+
+    print("Hello")
+
+* We also use the newer ``.format`` style for string formatting and will no longer be accepting
+  the older ``%s`` format. The new format offers many more enhancements::
+
+    a = "new"
+    b = 2
+    
+    "a {} string for {}".format(a, b)
+
+    "{name} is {emotion}".format(name="john", emotion="happy")
+
+    "{0} and another {0}".format("something")
+
 General Notes
 """""""""""""
 
