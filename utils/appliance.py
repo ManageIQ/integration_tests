@@ -519,6 +519,8 @@ class IPAppliance(object):
                 "mv /var/www/miq/vmdb/log/*.log /var/www/miq/vmdb/log/preconfigure-logs/")
             ssh_client.run_command(
                 "mv /var/www/miq/vmdb/log/*.gz /var/www/miq/vmdb/log/preconfigure-logs/")
+            # Reduce swapping, because it can do nasty things to our providers
+            ssh_client.run_command('echo "vm.swappiness = 1" >> /etc/sysctl.conf')
 
     @property
     def managed_providers(self):
