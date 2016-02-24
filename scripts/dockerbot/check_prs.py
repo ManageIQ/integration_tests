@@ -14,6 +14,7 @@ from utils.trackerbot import api
 from utils.log import create_logger
 from slumber.exceptions import HttpClientError
 
+
 token = docker_conf['gh_token']
 owner = docker_conf['gh_owner']
 repo = docker_conf['gh_repo']
@@ -292,7 +293,7 @@ def check_status(pr):
               'passed': 'success',
               'running': 'pending'}
 
-    failed_streams = []
+    task_states = {}
 
     try:
         tasks = tapi.task.get(run=run_id)['objects']
@@ -312,16 +313,18 @@ def check_status(pr):
                 logger.info('Setting task {} for pr {} to {}'
                             .format(task['stream'], pr['number'], states[task['result']]))
                 set_status(commit, states[task['result']], task['stream'])
-            if task['result'] == 'failed':
-                failed_streams.append(task['stream'])
+            task_states[task['stream']] = states[task['result']]
     except HttpClientError:
         pass
 
-    if len(failed_streams) > 0:
-        send_message_to_bot("Tests PR #{} failed on streams {}".format(
-            pr['number'], failed_streams))
-    else:
-        send_message_to_bot("Tests for PR #{} passed".format(pr['number']))
+    if not any(x in ['pending', 'invalid', 'running'] for x in task_states.values()):
+        # There are no pending, invalid or running states in the run_id
+        if 'failed' in task_states.values():
+            failed_streams = [x.key() for x in task_states if x.value() == 'failed']
+            send_message_to_bot("Tests PR #{} failed on streams {}".format(
+                pr['number'], failed_streams))
+        else:
+            send_message_to_bot("Tests for PR #{} passed".format(pr['number']))
 
 
 def check_pr(pr):
