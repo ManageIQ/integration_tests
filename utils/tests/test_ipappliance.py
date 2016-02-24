@@ -3,6 +3,7 @@ from urlparse import urlparse
 
 from fixtures.pytest_store import store
 from utils.appliance import IPAppliance
+from utils.providers import setup_a_provider
 
 
 def test_ipappliance_from_address():
@@ -26,3 +27,9 @@ def test_ipappliance_use_baseurl():
     env_parsed = urlparse(store.base_url)
     assert (ip_a_parsed.scheme, ip_a_parsed.netloc) == (env_parsed.scheme, env_parsed.netloc)
     assert ip_a.address in store.base_url
+
+
+def test_ipappliance_managed_providers():
+    ip_a = IPAppliance()
+    provider = setup_a_provider(prov_class='infra')
+    assert provider.key in ip_a.managed_providers
