@@ -391,16 +391,8 @@ def _scan_test(provider_crud, vm, os, fs_type, soft_assert, rest="using_ui", res
     "appliance_browser", "finish_appliance_setup", "delete_tasks_first")
 @pytest.mark.meta('by_vm_state')
 class TestVmAnalysisOfVmStates():
-
     def test_stopped_vm(
-            self,
-            provider,
-            vm,
-            vm_name,
-            verify_vm_stopped,
-            os,
-            fs_type,
-            soft_assert):  # , register_event):
+            self, provider, vm, vm_name, verify_vm_stopped, os, fs_type, soft_assert):
         """Tests stopped vm
 
         Metadata:
@@ -409,14 +401,7 @@ class TestVmAnalysisOfVmStates():
         _scan_test(provider, vm, os, fs_type, soft_assert)
 
     def test_suspended_vm(
-            self,
-            provider,
-            vm,
-            vm_name,
-            verify_vm_suspended,
-            os,
-            fs_type,
-            soft_assert):  # , register_event):
+            self, provider, vm, vm_name, verify_vm_suspended, os, fs_type, soft_assert):
         """Tests suspended vm
 
         Metadata:
@@ -437,16 +422,7 @@ class TestVmAnalysisOfVmStates():
     "appliance_browser", "finish_appliance_setup", "delete_tasks_first")
 @pytest.mark.meta('by_fs_type')
 class TestVmFileSystemsAnalysis():
-
-    def test_running_vm(
-            self,
-            provider,
-            vm,
-            vm_name,
-            verify_vm_running,
-            os,
-            fs_type,
-            soft_assert):  # , register_event):
+    def test_running_vm(self, provider, vm, vm_name, verify_vm_running, os, fs_type, soft_assert):
         """Tests running vm
 
         Metadata:
@@ -455,46 +431,32 @@ class TestVmFileSystemsAnalysis():
         _scan_test(provider, vm, os, fs_type, soft_assert)
 
 
-# REST (rest_detail, rest_collection)
 @pytest.mark.usefixtures(
     "appliance_browser", "finish_appliance_setup", "delete_tasks_first")
 @pytest.mark.meta('by_vm_state')
-@pytest.mark.ignore_stream("5.2", "5.3")
+@pytest.mark.parametrize(
+    "rest_type", ["rest_detail", "rest_collection"], ids=["from_detail", "from_collection"])
 class TestVmAnalysisOfVmStatesUsingREST(object):
     def test_stopped_vm(
-            self,
-            provider,
-            vm,
-            vm_name,
-            verify_vm_stopped,
-            os,
-            fs_type,
-            soft_assert):  # , register_event):
+            self, provider, vm, vm_name, verify_vm_stopped, os, fs_type, soft_assert, rest_type):
         """Tests stopped vm
 
         Metadata:
-            test_flag: vm_analysis
+            test_flag: vm_analysis, rest
         """
         _scan_test(
-            provider, vm, os, fs_type, soft_assert, "rest_detail",
+            provider, vm, os, fs_type, soft_assert, rest_type,
             pytest.store.current_appliance.rest_api)
 
     def test_suspended_vm(
-            self,
-            provider,
-            vm,
-            vm_name,
-            verify_vm_suspended,
-            os,
-            fs_type,
-            soft_assert):  # , register_event):
+            self, provider, vm, vm_name, verify_vm_suspended, os, fs_type, soft_assert, rest_type):
         """Tests suspended vm
 
         Metadata:
-            test_flag: vm_analysis, provision
+            test_flag: vm_analysis, provision, rest
         """
         _scan_test(
-            provider, vm, os, fs_type, soft_assert, "rest_detail",
+            provider, vm, os, fs_type, soft_assert, rest_type,
             pytest.store.current_appliance.rest_api)
 
 
@@ -508,24 +470,18 @@ class TestVmAnalysisOfVmStatesUsingREST(object):
 
 @pytest.mark.usefixtures(
     "appliance_browser", "finish_appliance_setup", "delete_tasks_first")
-@pytest.mark.ignore_stream("5.2", "5.3")
 @pytest.mark.meta('by_fs_type')
+@pytest.mark.parametrize(
+    "rest_type", ["rest_detail", "rest_collection"], ids=["from_detail", "from_collection"])
 class TestVmFileSystemsAnalysisUsingREST(object):
     def test_running_vm(
-            self,
-            provider,
-            vm,
-            vm_name,
-            verify_vm_running,
-            os,
-            fs_type,
-            soft_assert,
-            rest_api):  # , register_event):
+            self, provider, vm, vm_name, verify_vm_running, os, fs_type, soft_assert,
+            rest_api, rest_type):
         """Tests running vm
 
         Metadata:
             test_flag: vm_analysis, provision
         """
         _scan_test(
-            provider, vm, os, fs_type, soft_assert, "rest_detail",
+            provider, vm, os, fs_type, soft_assert, rest_type,
             pytest.store.current_appliance.rest_api)
