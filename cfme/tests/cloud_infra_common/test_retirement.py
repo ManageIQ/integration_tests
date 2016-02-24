@@ -9,37 +9,31 @@ from utils import testgen
 from utils.wait import wait_for
 
 
+pytestmark = [
+    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers')
+]
+
+
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, 'provisioning', template_location=["provisioning", "template"])
+    argnames, argvalues, idlist = testgen.all_providers(
+        metafunc, 'small_template', template_location=["small_template"])
 
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'template', 'host', 'datastore'}.issubset(args['provisioning'].viewkeys()):
-            # Need all three for template provisioning
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="function")
-def vm(request, setup_provider, provider, provisioning):
-    vm_name = 'test_retire_prov_%s' % fauxfactory.gen_alphanumeric()
-    myvm = VM.factory(vm_name, provider, template_name=provisioning['template'])
-    request.addfinalizer(myvm.delete_from_provider)
-    myvm.create_on_provider(find_in_cfme=True, allow_skip="default")
-    return myvm
+def vm(request, provider, setup_provider, small_template):
+    vm_obj = VM.factory(
+        'test_retire_prov_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
+        provider, template_name=small_template)
+
+    @request.addfinalizer
+    def _delete_vm():
+        if provider.mgmt.does_vm_exist(vm_obj.name):
+            provider.mgmt.delete_vm(vm_obj.name)
+    vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
+    return vm_obj
 
 
 def verify_retirement(vm):
@@ -54,7 +48,7 @@ def verify_retirement(vm):
     wait_for(retirement_date_present, delay=30, num_sec=600, message="retirement_date_present")
 
     # wait for the power state to go to 'off'
-    wait_for(lambda: get_state() == "off", delay=30, num_sec=360)
+    wait_for(lambda: get_state() in {'off', 'suspended'}, delay=30, num_sec=360)
 
     # make sure retirement date is today
     assert datetime.datetime.strptime(get_date(), "%m/%d/%y").date() == today
