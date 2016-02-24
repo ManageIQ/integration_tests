@@ -62,6 +62,36 @@ def make_ssh_client(rhevip, sshname, sshpass):
     return SSHClient(**connect_kwargs)
 
 
+def change_edomain_state(api, state, edomain):
+    try:
+        dcs = api.datacenters.list()
+        for dc in dcs:
+            export_domain = dc.storagedomains.get(edomain)
+            if export_domain:
+                if state == 'maintenance' and export_domain.get_status().state == 'active':
+                    dc.storagedomains.get(edomain).deactivate()
+                elif state == 'active' and export_domain.get_status().state != 'active':
+                    dc.storagedomains.get(edomain).activate()
+
+                wait_for(is_edomain_template_deleted,
+                        [api, state, edomain], fail_condition=False, delay=5)
+                print '{} successfully set to {} state'.format(edomain, state)
+                return True
+        return False
+    except Exception:
+        print "Exception occurred while changing {} state to {}".format(edomain, state)
+        return False
+
+
+def is_edomain_in_state(api, state, edomain):
+    dcs = api.datacenters.list()
+    for dc in dcs:
+        export_domain = dc.storagedomains.get(edomain)
+        if export_domain:
+            return export_domain.get_status().state == state
+    return False
+
+
 def get_ova_name(ovaurl):
     """Returns ova filename."""
     return ovaurl.split("/")[-1]
@@ -187,6 +217,11 @@ def check_edomain_template(api, edomain):
     return True
 
 
+# verify the template deletion
+def is_edomain_template_deleted(api, name, edomain):
+    return not api.storagedomains.get(edomain).templates.get(name)
+
+
 def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface):
     """Adds second disk to a temporary VM.
 
@@ -240,6 +275,34 @@ def templatize_vm(api, template_name, cluster):
         sys.exit(127)
 
 
+# get the domain edomain path on the rhevm
+def get_edomain_path(api, edomain):
+    edomain_id = api.storagedomains.get(edomain).get_id()
+    edomain_conn = api.storagedomains.get(edomain).storageconnections.list()[0]
+    return (edomain_conn.get_path() + '/' + edomain_id,
+            edomain_conn.get_address())
+
+
+def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass):
+    """Cleanup all the empty directories on the edomain/edomain_id/master/vms
+    else api calls will result in 400 Error with ovf not found,
+
+    Args:
+        api: API to chosen RHEVM provider.
+        edomain: Export domain of chosen RHEVM provider.
+        edomainip: edomainip to connect through ssh.
+        sshname: edomain ssh credentials.
+        sshpass: edomain ssh credentials.
+    """
+    print "RHEVM: Deleting the empty directories on edomain/vms file..."
+    ssh_client = make_ssh_client(edomainip, sshname, sshpass)
+    command = 'cd {}/master/vms && find . -maxdepth 1 -type d -empty -delete'.format(path)
+    exit_status, output = ssh_client.run_command(command)
+    if exit_status != 0:
+        print "RHEVM: Error while deleting the empty directories on path.."
+        print output
+
+
 def cleanup(api, edomain, ssh_client, ovaname):
     """Cleans up all the mess that the previous functions left behind.
 
@@ -247,23 +310,39 @@ def cleanup(api, edomain, ssh_client, ovaname):
         api: API to chosen RHEVM provider.
         edomain: Export domain of chosen RHEVM provider.
     """
-    command = 'rm %s' % ovaname
-    exit_status, output = ssh_client.run_command(command)
+    try:
+        print "RHEVM: Deleting the  .ova file..."
+        command = 'rm %s' % ovaname
+        exit_status, output = ssh_client.run_command(command)
 
-    temporary_vm = api.vms.get(TEMP_VM_NAME)
-    if temporary_vm is not None:
-        temporary_vm.delete()
+        print "RHEVM: Deleting the temp_vm on sdomain..."
+        temporary_vm = api.vms.get(TEMP_VM_NAME)
+        if temporary_vm:
+            temporary_vm.delete()
 
-    temporary_template = api.templates.get(TEMP_TMP_NAME)
-    if temporary_template is not None:
-        temporary_template.delete()
+        print "RHEVM: Deleting the temp_template on sdomain..."
+        temporary_template = api.templates.get(TEMP_TMP_NAME)
+        if temporary_template:
+            temporary_template.delete()
 
-    # waiting for template on export domain
-    wait_for(check_edomain_template, [api, edomain], fail_condition=False, delay=5)
+        # waiting for template on export domain
+        unimported_template = api.storagedomains.get(edomain).templates.get(
+            TEMP_TMP_NAME)
+        print "RHEVM: waiting for template on export domain..."
+        wait_for(check_edomain_template, [unimported_template],
+                 fail_condition=False, delay=5)
 
-    unimported_template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
-    if unimported_template is not None:
-        unimported_template.delete()
+        if unimported_template:
+            print "RHEVM: deleting the template on export domain..."
+            unimported_template.delete()
+
+        print "RHEVM: waiting for template delete on export domain..."
+        wait_for(is_edomain_template_deleted, [unimported_template],
+                 fail_condition=False, delay=5)
+
+    except Exception:
+        print "RHEVM: Exception occurred in cleanup method"
+        return False
 
 
 def api_params_resolution(item_list, item_name, item_param):
@@ -420,6 +499,8 @@ def run(**kwargs):
     if template_name is None:
         template_name = cfme_data['basic_info']['appliance_template']
 
+    path, edomain_ip = get_edomain_path(api, kwargs.get('edomain'))
+
     kwargs = update_params_api(api, **kwargs)
 
     check_kwargs(**kwargs)
@@ -445,7 +526,11 @@ def run(**kwargs):
             print "RHEVM: Templatizing VM..."
             templatize_vm(api, template_name, kwargs.get('cluster'))
         finally:
+            change_edomain_state(api, 'maintenance', kwargs.get('edomain'))
             cleanup(api, kwargs.get('edomain'), ssh_client, ovaname)
+            cleanup_empty_dir_on_edomain(path, edomain_ip,
+                                         sshname, sshpass)
+            change_edomain_state(api, 'active', kwargs.get('edomain'))
             ssh_client.close()
             api.disconnect()
 
