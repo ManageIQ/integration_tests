@@ -1,7 +1,7 @@
 import fauxfactory
-import pytest
 
 from cfme.automate.service_dialogs import ServiceDialog
+from cfme.exceptions import OptionNotAvailable
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
@@ -157,7 +157,7 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
         services = [_ for _ in rest_api.collections.services]
         services[0]
     except IndexError:
-        pytest.skip("There is no service to be taken")
+        raise Exception("No options are selected")
 
     @request.addfinalizer
     def _finished():
@@ -202,8 +202,6 @@ def a_provider():
 
 
 def vm(request, a_provider, rest_api):
-    if "refresh" not in rest_api.collections.providers.action.all:
-        pytest.skip("Refresh action is not implemented in this version")
     provider_rest = rest_api.collections.providers.get(name=a_provider.name)
     vm_name = deploy_template(
         a_provider.key,
@@ -234,7 +232,7 @@ def service_templates(request, rest_api, dialog):
         s_tpls = [_ for _ in rest_api.collections.service_templates]
         s_tpls[0]
     except IndexError:
-        pytest.skip("There is no service template to be taken")
+        raise Exception("There is no service template to be taken")
 
     @request.addfinalizer
     def _finished():
@@ -319,7 +317,8 @@ def users(request, rest_api, num=1):
 def _creating_skeleton(request, rest_api, col_name, col_data):
     collection = getattr(rest_api.collections, col_name)
     if "create" not in collection.action.all:
-        pytest.skip("Create action for {} is not implemented in this version".format(col_name))
+        raise OptionNotAvailable(
+            "Create action for {} is not implemented in this version".format(col_name))
     entities = collection.action.create(*col_data)
     for entity in col_data:
         if entity.get('name', None):
