@@ -9,9 +9,10 @@ from cfme.common.provider import cleanup_vm
 from cfme.configure import configuration
 from cfme.configure.tasks import is_vm_analysis_finished
 from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
+from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host, datastore
 from cfme.provisioning import do_vm_provisioning
-from cfme.web_ui import InfoBlock, DriftGrid, toolbar, tabstrip as tabs
+from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, ssh, safe_string, version, error
 from utils.browser import ensure_browser_open
@@ -282,31 +283,6 @@ def policy_profile(request, instance):
 
     instance.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: instance.unassign_policy_profiles(profile.description))
-
-
-def is_vm_analysis_finished(vm_name):
-    """ Check if analysis is finished - if not, reload page
-    """
-    el = None
-    try:
-        if not pytest.sel.is_displayed(tasks.tasks_table) or \
-           not tabs.is_tab_selected('All VM Analysis Tasks'):
-            pytest.sel.force_navigate('tasks_all_vm')
-        el = tasks.tasks_table.find_row_by_cells({
-            'task_name': "Scan from Vm {}".format(vm_name),
-            'state': 'finished'
-        })
-        if el is None:
-            return False
-    except:
-        return False
-    # throw exception if status is error
-    if 'Error' in sel.get_attribute(sel.element('.//td/img', root=el), 'title'):
-        raise Exception("Smart State Analysis errored")
-    # Remove all finished tasks so they wouldn't poison other tests
-    toolbar.select('Delete Tasks', 'Delete All', invokes_alert=True)
-    sel.handle_alert(cancel=False)
-    return True
 
 
 def detect_system_type(vm):
@@ -609,7 +585,7 @@ def test_drift_analysis(request, provider, instance, soft_assert):
         drift_num_orig = int(drift_orig)
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="8m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
     instance.load_details()
     wait_for(
         lambda: int(InfoBlock("Relationships", "Drift History").text) == drift_num_orig + 1,
@@ -627,7 +603,7 @@ def test_drift_analysis(request, provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="8m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
     instance.load_details()
     wait_for(
         lambda: int(InfoBlock("Relationships", "Drift History").text) == drift_new + 1,
