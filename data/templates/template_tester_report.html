@@ -23,6 +23,7 @@
     <table class="table table-sm">
         <tr>
             <th>{{upstream[0]}}</th>
+            <th> Result </th>
         </tr>
         {% for passed in upstream[1] %}
         <tr class="alert alert-success">
@@ -30,6 +31,7 @@
                           style="line-height: 1.66666667em; padding: 0px 8px;">
                     </span>{{passed}}
                 </td>
+                <td class="success"> passed </td>
         </tr>
         {% endfor %}
         {% for failed in upstream[2] %}
@@ -39,6 +41,7 @@
                           style="line-height: 1.66666667em; padding: 0px 8px">
                     </span>{{failed}}
                 </td>
+                <td class="danger"> failed </td>
         </tr>
         {% endfor %}
     </table>
