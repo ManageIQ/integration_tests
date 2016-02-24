@@ -96,7 +96,7 @@ def pytest_generate_tests(metafunc):
                     continue
 
             # Set VM name here
-            vm_name = 'test_ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), vm_analysis_key)
+            vm_name = 'ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), vm_analysis_key)
             vm_analysis_data['vm_name'] = vm_name
 
             new_idlist.append('{}-{}'.format(idlist[i], vm_analysis_key))
@@ -207,10 +207,19 @@ def instance(request, local_setup_provider, provider, vm_analysis_new):
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
         do_vm_provisioning(template, provider, vm_name, provisioning_data, request, None,
                            num_sec=6000)
-
     logger.info("VM {} provisioned, waiting for IP address to be assigned".format(vm_name))
-    connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], delay=10, num_sec=6000,
-                              handle_exception=False)
+
+    @pytest.wait_for(timeout="10m", delay=5)
+    def get_ip_address():
+        logger.info("Power state for {} vm: {}".format(vm_name, mgmt_system.vm_status(vm_name)))
+        if mgmt_system.is_vm_stopped(vm_name):
+            mgmt_system.start_vm(vm_name)
+
+        ip = mgmt_system.current_ip_address(vm_name)
+        logger.info("Fetched IP for {}: {}".format(vm_name, ip))
+        return ip is not None
+
+    connect_ip = mgmt_system.get_ip_address(vm_name)
     assert connect_ip is not None
 
     # Check that we can at least get the uptime via ssh this should only be possible
