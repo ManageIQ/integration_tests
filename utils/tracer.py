@@ -5,7 +5,7 @@ from utils.tracer import trace
 
 @trace(scope=3)
 def func():
-    print "something"
+    print("something")
 
 """
 import sys

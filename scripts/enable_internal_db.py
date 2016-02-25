@@ -26,16 +26,16 @@ def main():
         help='region to assign to the new DB')
     args = parser.parse_args()
 
-    print 'Initializing Appliance Internal DB'
+    print('Initializing Appliance Internal DB')
     ip_a = IPAppliance(args.address)
     status, out = ip_a.enable_internal_db(args.region)
 
     if status != 0:
-        print 'Enabling DB failed with error:'
-        print out
+        print('Enabling DB failed with error:')
+        print(out)
         sys.exit(1)
     else:
-        print 'DB Enabled, evm watchdog should start the UI shortly.'
+        print('DB Enabled, evm watchdog should start the UI shortly.')
 
 
 if __name__ == '__main__':

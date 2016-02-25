@@ -34,32 +34,32 @@ class DockerInstance(object):
         self.ports = []
         for bind in bindings:
             self.port_bindings[bindings[bind][0]] = bindings[bind][1]
-            print "  {}: {}".format(bind, bindings[bind][1])
+            print("  {}: {}".format(bind, bindings[bind][1]))
             self.ports.append(bindings[bind][1])
 
     def wait(self):
         if not self.dry_run:
             dc.wait(self.container_id)
         else:
-            print "Waiting for container"
+            print("Waiting for container")
 
     def stop(self):
         if not self.dry_run:
             dc.stop(self.container_id)
         else:
-            print "Stopping container"
+            print("Stopping container")
 
     def remove(self):
         if not self.dry_run:
             dc.remove_container(self.container_id, v=True)
         else:
-            print "Removing container"
+            print("Removing container")
 
     def kill(self):
         if not self.dry_run:
             dc.kill(self.container_id)
         else:
-            print "Killing container"
+            print("Killing container")
 
 
 class SeleniumDocker(DockerInstance):
@@ -79,7 +79,7 @@ class SeleniumDocker(DockerInstance):
         if not self.dry_run:
             dc.start(self.container_id, privileged=True, port_bindings=self.port_bindings)
         else:
-            print "Dry run running sel_ff_chrome"
+            print("Dry run running sel_ff_chrome")
 
 
 class PytestDocker(DockerInstance):
@@ -108,7 +108,7 @@ class PytestDocker(DockerInstance):
                      binds={self.log_path: {'bind': self.artifactor_dir, 'ro': False}},
                      port_bindings=self.port_bindings)
         else:
-            print "Dry run running pytest"
+            print("Dry run running pytest")
 
 
 class DockerBot(object):
@@ -135,8 +135,8 @@ class DockerBot(object):
 
         if self.args['dry_run']:
             for i in self.env_details:
-                print 'export {}="{}"'.format(i, self.env_details[i])
-            print self.env_details
+                print('export {}="{}"'.format(i, self.env_details[i]))
+            print(self.env_details)
 
         pytest = PytestDocker(name=self.pytest_name, bindings=self.pytest_bindings,
                               env=self.env_details, log_path=self.log_path,
@@ -155,7 +155,7 @@ class DockerBot(object):
             try:
                 pytest.wait()
             except KeyboardInterrupt:
-                print "  TEST INTERRUPTED....KILLING ALL THE THINGS"
+                print("  TEST INTERRUPTED....KILLING ALL THE THINGS")
                 pass
             pytest.kill()
             pytest.remove()
@@ -245,12 +245,12 @@ class DockerBot(object):
         if self.args['provision_appliance']:
             if not self.args['provision_template'] or not self.args['provision_provider'] or \
                not self.args['provision_vm_name']:
-                print "You don't have all the required options to provision an appliance"
+                print("You don't have all the required options to provision an appliance")
                 ec += 1
 
         self.check_arg('sprout_stream', None)
         if self.args['sprout'] and not self.args['sprout_stream']:
-            print "You need to supply a stream for sprout"
+            print("You need to supply a stream for sprout")
             ec += 1
 
         self.check_arg('appliance_name', None)
@@ -258,7 +258,7 @@ class DockerBot(object):
 
         if not self.args['appliance_name'] != self.args['appliance'] and \
            not self.args['provision_appliance'] and not self.args['sprout']:
-            print "You must supply either an appliance OR an appliance name from config"
+            print("You must supply either an appliance OR an appliance name from config")
             ec += 1
 
         self.check_arg('branch', 'origin/master')
@@ -270,11 +270,11 @@ class DockerBot(object):
         self.check_arg('cfme_cred_repo_dir', '/cfme-qe-yamls')
 
         if not self.args['cfme_repo']:
-            print "You must supply a CFME REPO"
+            print("You must supply a CFME REPO")
             ec += 1
 
         if not self.args['cfme_cred_repo']:
-            print "You must supply a CFME Credentials REPO"
+            print("You must supply a CFME Credentials REPO")
             ec += 1
 
         self.check_arg('selff', 'cfme/sel_ff_chrome')
@@ -289,7 +289,7 @@ class DockerBot(object):
         self.check_arg('pytest_con', 'py_test_base')
 
         if not self.args['pytest']:
-            print "You must specify a py.test command"
+            print("You must specify a py.test command")
             ec += 1
 
         self.check_arg('update_pip', False)
@@ -300,12 +300,12 @@ class DockerBot(object):
         self.check_arg('log_depot', None)
 
         if not self.args['log_depot']:
-            print "You must specify a log_depot"
+            print("You must specify a log_depot")
             ec += 1
 
         if self.args['pr'] and self.args['auto_gen_test'] and not \
            all([self.args['gh_token'], self.args['gh_owner'], self.args['gh_repo']]):
-            print "You chose to use Auto Test Gen, without supplying GitHub details"
+            print("You chose to use Auto Test Gen, without supplying GitHub details")
             ec += 1
 
         self.check_arg('capture', False)
@@ -333,12 +333,12 @@ class DockerBot(object):
            /_____/\____/\___/_/|_|\___/_/  /_____/\____/\__/
 ==================================================================
             """
-            print banner
+            print(banner)
 
     def process_appliance(self):
         self.appliance = self.args['appliance']
         self.app_name = self.args.get('appliance_name', "Unnamed")
-        print "  APPLIANCE: {} ({})".format(self.appliance, self.app_name)
+        print("  APPLIANCE: {} ({})".format(self.appliance, self.app_name))
 
     def create_pytest_command(self):
         if self.args['auto_gen_test'] and self.args['pr']:
@@ -360,7 +360,7 @@ class DockerBot(object):
             self.args['pytest'] += ' --sprout-desc {}'.format(self.args['sprout_description'])
         if not self.args['capture']:
             self.args['pytest'] += ' --capture=no'
-        print "  PYTEST Command: {}".format(self.args['pytest'])
+        print("  PYTEST Command: {}".format(self.args['pytest']))
 
     def enc_key(self):
         try:
@@ -382,27 +382,27 @@ class DockerBot(object):
                             'ARTIFACTOR_DIR': self.args['artifactor_dir'],
                             'CFME_TESTS_KEY': self.enc_key(),
                             'YAYCL_CRYPT_KEY': self.enc_key()}
-        print "  SERVER IP: {}".format(self.args['server_ip'])
+        print("  SERVER IP: {}".format(self.args['server_ip']))
         if self.args['use_wharf']:
             self.env_details['WHARF'] = self.args['wharf']
-            print "  WHARF: {}".format(self.args['wharf'])
+            print("  WHARF: {}".format(self.args['wharf']))
         if self.args['prtester']:
-            print "  PRTESTING: Enabled"
+            print("  PRTESTING: Enabled")
             self.env_details['POST_TASK'] = self.pytest_name
         self.env_details['TRACKERBOT'] = self.args['trackerbot']
-        print "  TRACKERBOT: {}".format(self.env_details['TRACKERBOT'])
-        print "  REPO: {}".format(self.args['cfme_repo'])
-        print "  BROWSER: {}".format(self.args['browser'])
+        print("  TRACKERBOT: {}".format(self.env_details['TRACKERBOT']))
+        print("  REPO: {}".format(self.args['cfme_repo']))
+        print("  BROWSER: {}".format(self.args['browser']))
         if self.args['update_pip']:
-            print "  PIP: will be updated!"
+            print("  PIP: will be updated!")
             self.env_details['UPDATE_PIP'] = 'True'
         if self.args['wheel_host_url'] and self.args['update_pip']:
             self.env_details['WHEEL_HOST_URL'] = self.args['wheel_host_url']
             self.env_details['WHEEL_HOST'] = urlparse.urlsplit(self.args['wheel_host_url']).netloc
-            print "  TRUSTED HOST: {}".format(self.env_details['WHEEL_HOST'])
-            print "  WHEEL URL: {}".format(self.env_details['WHEEL_HOST_URL'])
+            print("  TRUSTED HOST: {}".format(self.env_details['WHEEL_HOST']))
+            print("  WHEEL URL: {}".format(self.env_details['WHEEL_HOST_URL']))
         if self.args['provision_appliance']:
-            print "  APPLIANCE WILL BE PROVISIONED"
+            print("  APPLIANCE WILL BE PROVISIONED")
             self.env_details['PROVIDER'] = self.args['provision_provider']
             self.env_details['TEMPLATE'] = self.args['provision_template']
             self.env_details['VM_NAME'] = self.args['provision_vm_name']
@@ -418,9 +418,9 @@ class DockerBot(object):
     def handle_pr(self):
         if self.args['pr']:
             self.env_details['CFME_PR'] = self.args['pr']
-            print "  PR Number: {}".format(self.args['pr'])
+            print("  PR Number: {}".format(self.args['pr']))
         else:
-            print "  BRANCH: {}".format(self.args['branch'])
+            print("  BRANCH: {}".format(self.args['branch']))
 
     def create_log_path(self):
         log_path = os.path.join(self.args['log_depot'], self.pytest_name)
@@ -428,7 +428,7 @@ class DockerBot(object):
             os.mkdir(log_path)
         except OSError:
             pass
-        print "  LOG_ID: {}".format(self.pytest_name)
+        print("  LOG_ID: {}".format(self.pytest_name))
         return log_path
 
     def create_pytest_bindings(self):
@@ -442,23 +442,23 @@ class DockerBot(object):
     def handle_watch(self):
         if self.args['watch'] and not self.args['dry_run']:
             print
-            print "  Waiting for container for 10 seconds..."
+            print("  Waiting for container for 10 seconds...")
             import time
             time.sleep(10)
-            print "  Initiating VNC watching..."
+            print("  Initiating VNC watching...")
             ipport = "vnc://127.0.0.1:" + str(self.sel_vnc_port)
             cmd = ['xdg-open', ipport]
             subprocess.Popen(cmd)
         print
-        print "  Press Ctrl+C to kill tests + containers"
+        print("  Press Ctrl+C to kill tests + containers")
 
     def handle_output(self):
         if self.args['output']:
             print
-            print "======================== \/ OUTPUT \/ ============================"
+            print("======================== \/ OUTPUT \/ ============================")
             print
             f = open(os.path.join(self.log_path, 'setup.txt'))
-            print f.read()
+            print(f.read())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=None)

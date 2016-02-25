@@ -19,7 +19,7 @@ def ssh_client(uses_ssh):
             # so 0 means everything is OK.
             assert result.rc == 0
             # and the output is available, too
-            print result.output
+            print(result.output)
 
             # Run a task using the CFME rails runner CLI
             ssh_client.run_rails_command('do stuff')

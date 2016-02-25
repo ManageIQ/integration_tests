@@ -34,7 +34,7 @@ def parse_cmd_line():
 
 def check_template_exists(client, name):
     if name in client.list_template():
-        print "SCVMM: A Template with that name already exists in the SCVMMLibrary"
+        print("SCVMM: A Template with that name already exists in the SCVMMLibrary")
         return True
     else:
         return False
@@ -42,21 +42,21 @@ def check_template_exists(client, name):
 
 def upload_vhd(client, url, library, vhd):
 
-    print "SCVMM: DOwnloading VHD file, then updating Library"
+    print("SCVMM: DOwnloading VHD file, then updating Library")
 
-    script11 = "(New-Object System.Net.WebClient).DownloadFile( \
-        '" + url + "', '" + library + vhd + "');"
+    script11 = '(New-Object System.Net.WebClient).DownloadFile("{}", "{}{}");'.format(
+        url, library, vhd)
     script11 += "$lib = Get-SCLibraryShare;"
     script11 += "$lib01 = $lib[1];"
     script11 += "Read-SCLibraryShare $lib01;"
 
-    print "Invoke-Command -scriptblock {" + script11 + "}"
-    client.run_script("Invoke-Command -scriptblock {" + script11 + "}")
+    print("Invoke-Command -scriptblock {{{}}}".format(script11))
+    client.run_script("Invoke-Command -scriptblock {{{}}}".format(script11))
 
 
 def make_template(client, hostname, name, library, network, ostype, username_scvmm, cores, ram):
-    src_path = library + name + ".vhd"
-    print "SCVMM: Adding HW Resource File and Template to Library"
+    src_path = "{}{}.vhd".format(library, name)
+    print("SCVMM: Adding HW Resource File and Template to Library")
     script2 = "$JobGroupId01 = [Guid]::NewGuid().ToString();"
     script2 += "$LogNet = Get-SCLogicalNetwork -Name '" + network + "';"
     script2 += "New-SCVirtualNetworkAdapter -JobGroup $JobGroupID01 \
@@ -77,8 +77,8 @@ def make_template(client, hostname, name, library, network, ostype, username_scv
                 -HardwareProfile $HWProfile -JobGroup $JobGroupID02 -ComputerName '*' \
                 -JoinWorkgroup 'WORKGROUP' -OperatingSystem $OS -RunAsynchronously;"
     script2 += "Remove-HardwareProfile -HardwareProfile '" + name + "';"
-    print "Invoke-Command -scriptblock {" + script2 + "}"
-    client.run_script("Invoke-Command -scriptblock {" + script2 + "}")
+    print("Invoke-Command -scriptblock {{{}}}".format(script2))
+    client.run_script("Invoke-Command -scriptblock {{{}}}".format(script2))
 
 
 def check_kwargs(**kwargs):
@@ -86,13 +86,13 @@ def check_kwargs(**kwargs):
     # If we don't have an image url, we're done.
     url = kwargs.get('image_url', None)
     if url is None:
-        print "SCVMM - There is nothing we can do without an image url set.  See help."
+        print("SCVMM - There is nothing we can do without an image url set.  See help.")
         sys.exit(127)
 
     # If we don't have an provider, we're done.
     provider = kwargs.get('provider', None)
     if provider is None:
-        print "SCVMM - There is nothing we can do without a provider set.  See help."
+        print("SCVMM - There is nothing we can do without a provider set.  See help.")
         sys.exit(127)
 
 
@@ -146,14 +146,14 @@ def run(**kwargs):
     if new_template_name is None:
         new_template_name = os.path.basename(url)[:-4]
 
-    print "Make Template out of the VHD " + new_template_name
+    print("Make Template out of the VHD {}".format(new_template_name))
 
     # use_library is either user input or we use the cfme_data value
     use_library = kwargs.get('library', None)
     if use_library is None:
         use_library = provider['template_upload'].get('library', None) + "\\VHDS\\"
 
-    print "SCVMM: Template Library: %s" % use_library
+    print("SCVMM: Template Library: {}".format(use_library))
 
     #  For now, we'll leave the VHD name as it is, but perhaps we'll add an argument option.
     new_vhd_name = os.path.basename(url)
@@ -169,7 +169,7 @@ def run(**kwargs):
             upload_vhd(client, url, use_library, new_vhd_name)
 
         if kwargs.get('template'):
-            print "Make Template out of the VHD " + new_template_name
+            print("Make Template out of the VHD {}".format(new_template_name))
 
             make_template(
                 client,
@@ -183,13 +183,13 @@ def run(**kwargs):
                 ram
             )
 
-    print "SCVMM: Completed successfully"
+    print("SCVMM: Completed successfully")
 
 
 if __name__ == "__main__":
-    print "Start SCVMM Template upload"
+    print("Start SCVMM Template upload")
     args = parse_cmd_line()
-    print "Args: " + str(args)
+    print("Args: {}".format(str(args)))
     kwargs = cfme_data['template_upload']['template_upload_scvmm']
 
     final_kwargs = make_kwargs(args, **kwargs)

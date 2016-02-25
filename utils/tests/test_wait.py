@@ -25,7 +25,7 @@ def test_simple_wait():
     ec, tc = wait_for(incman.i_sleep_a_lot,
                       fail_condition=0,
                       delay=.05)
-    print "Function output %s in time %s " % (ec, tc)
+    print("Function output {} in time {} ".format(ec, tc))
     assert tc < 1, "Should take less than 1 seconds"
 
 
@@ -34,7 +34,7 @@ def test_lambda_wait():
     ec, tc = wait_for(lambda self: self.i_sleep_a_lot() > 10,
                       [incman],
                       delay=.05)
-    print "Function output %s in time %s " % (ec, tc)
+    print("Function output {} in time {} ".format(ec, tc))
     assert tc < 2, "Should take less than 2 seconds"
 
 
@@ -67,7 +67,7 @@ def test_wait_decorator():
     @pytest.wait_for(fail_condition=0, delay=.05)
     def a_test():
         incman.i_sleep_a_lot()
-    print "Function output %s in time %s " % (a_test.out, a_test.duration)
+    print("Function output {} in time {} ".format(a_test.out, a_test.duration))
     assert a_test.duration < 1, "Should take less than 1 seconds"
 
 
@@ -77,7 +77,7 @@ def test_wait_decorator_noparams():
     @pytest.wait_for
     def a_test():
         return incman.i_sleep_a_lot() != 0
-    print "Function output %s in time %s " % (a_test.out, a_test.duration)
+    print("Function output {} in time {} ".format(a_test.out, a_test.duration))
     assert a_test.duration < 1, "Should take less than 1 seconds"
 
 

@@ -57,8 +57,8 @@ def generate_html_report(api, stream, filename):
 
     stream_data = get_latest_tested_template_on_stream(api, stream)
     if stream_data and not get_untested_templates(api, stream_data['group_name']):
-        print "Found tested template for {}".format(stream)
-        print "Gathering tested template data for {}".format(stream)
+        print("Found tested template for {}".format(stream))
+        print("Gathering tested template data for {}".format(stream))
         stream_html = [stream_data['template_name'], stream_data['passed_on_providers'],
                        stream_data['failed_on_providers'], stream_data['group_name'],
                        stream_data['datestamp']]
@@ -66,9 +66,9 @@ def generate_html_report(api, stream, filename):
             upstream=stream_html)
         with open(filename, 'w') as report:
             report.write(data)
-        print "html file template_tester_results_test.html generated"
+        print("html file template_tester_results_test.html generated")
     else:
-        print "No Templates tested on: %s" % datetime.datetime.now()
+        print("No Templates tested on: {}".format(datetime.datetime.now()))
 
 
 if __name__ == '__main__':

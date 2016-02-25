@@ -22,4 +22,4 @@ def test_tenant(tenant, provider):
     Metadata:
         test_flag: tenant
     """
-    print tenant.name, tenant.description, provider.key
+    pass

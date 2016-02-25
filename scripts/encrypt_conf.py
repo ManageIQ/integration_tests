@@ -16,4 +16,4 @@ from utils import conf
 for conf_name in sys.argv[1:]:
     conf_name = conf_name.strip()
     yaycl_crypt.encrypt_yaml(conf, conf_name)
-    print '{} conf encrypted'.format(conf_name)
+    print('{} conf encrypted'.format(conf_name))

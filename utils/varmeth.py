@@ -10,19 +10,19 @@
 
         @variable
         def mymethod(self):
-            print "I am default!"
+            print("I am default!")
 
         @mymethod.variant("foo", "foo_too")
         def i_foo(self):
-            print "I foo!"
+            print("I foo!")
 
         @mymethod.variant("bar")
         def in_bar(self):
-            print "In bar!"
+            print("In bar!")
 
         @variable(alias="foo")
         def myfoo(self):
-            print "foo!"
+            print("foo!")
 
     s = SomeClass()
     s.mymethod()  # => I am default!

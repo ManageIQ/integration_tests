@@ -30,7 +30,7 @@ def main():
     args = parser.parse_args()
     ip_a = IPAppliance(args.address)
     ip_a.fix_ntp_clock()
-    print "Time was set"
+    print("Time was set")
 
 
 if __name__ == "__main__":

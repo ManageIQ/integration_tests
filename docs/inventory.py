@@ -19,7 +19,7 @@ class App(object):
         self.name = package_name
 
     def warn(self, msg):
-        print msg
+        print(msg)
 
 
 def main():
@@ -30,10 +30,9 @@ def main():
         app = App(package_name)
         inventory = intersphinx.fetch_inventory(app, '', inv_uri)
         for k in inventory.keys():
-            print "%s %s" % (app.name, k)
+            print("{} {}".format(app.name, k))
             for name, value in inventory[k].items():
-                print "%s %s is <%s:%s>" % (
-                    k, value[2], app.name, name)
+                print("{} {} is <{}:{}>".format(k, value[2], app.name, name))
 
 if __name__ == "__main__":
     sys.exit(main())

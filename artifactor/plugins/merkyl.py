@@ -50,7 +50,7 @@ class Merkyl(ArtifactorBasePlugin):
         test_ident = "{}/{}".format(test_location, test_name)
         if test_ident in self.tests:
             if self.tests[test_ident].in_progress:
-                print "Test already running, can't start another"
+                print("Test already running, can't start another")
                 return None
         else:
             self.tests[test_ident] = self.Test(test_ident, ip, self.port)

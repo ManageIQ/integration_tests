@@ -83,6 +83,6 @@ def merkyl_inspector(request):
             merkyl_inspector.add_log('/path/to/log/file')
             # Do something
             if merkyl_inspector.search_log('needle', '/path/to/log/file'):
-                print merkyl_inspector.get_log('/path/to/log/file')
+                print(merkyl_inspector.get_log('/path/to/log/file'))
     """
     return MerkylInspector(request)

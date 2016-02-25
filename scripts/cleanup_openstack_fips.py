@@ -15,19 +15,19 @@ from utils.providers import list_providers, get_mgmt
 
 def main(*providers):
     for provider_key in list_providers('openstack'):
-        print 'Checking {}'.format(provider_key)
+        print('Checking {}'.format(provider_key))
         api = get_mgmt(provider_key).api
         try:
             fips = api.floating_ips.findall(fixed_ip=None)
         except Exception:
-            print 'Unable to get fips for {}:'.format(provider_key)
-            print format_exc().splitlines()[-1]
+            print('Unable to get fips for {}:'.format(provider_key))
+            print(format_exc().splitlines()[-1])
             continue
 
         for fip in fips:
-            print 'Deleting {} on {}'.format(fip.ip, provider_key)
+            print('Deleting {} on {}'.format(fip.ip, provider_key))
             fip.delete()
-            print fip.ip, 'deleted'
+            print('{} deleted'.format(fip.ip))
 
 if __name__ == "__main__":
     provs = sys.argv[1:]

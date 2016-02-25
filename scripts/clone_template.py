@@ -150,7 +150,7 @@ def main():
             outfile.write("appliance_ip_address=%s\n" % ip)
 
     # In addition to the outfile, drop the ip address on stdout for easy parsing
-    print ip
+    print(ip)
 
 if __name__ == "__main__":
     sys.exit(main())

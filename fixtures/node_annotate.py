@@ -130,4 +130,4 @@ def parse(path):
 
 if __name__ == '__main__':
     mapping_file = project_path.join(py.std.sys.argv[1])
-    print yaml.dump(parse(mapping_file), default_flow_style=False)
+    print(yaml.dump(parse(mapping_file), default_flow_style=False))

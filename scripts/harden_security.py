@@ -43,10 +43,10 @@ def main():
     parser.add_argument('-c', action='append', dest='children',
         help='hostname or ip address of child appliance')
     args = parser.parse_args()
-    print "Appliance: " + args.appliance
+    print("Appliance: {}".format(args.appliance))
     if args.children:
         for child in args.children:
-            print "Child: " + child
+            print("Child: {}".format(child))
 
     local_key_name = "v2_key_" + fauxfactory.gen_alphanumeric(8)
 
@@ -62,15 +62,15 @@ def main():
 
     def generate_key(address):
         with SSHClient(hostname=address, **ssh_creds) as client:
-            print 'Connecting to Appliance...'
+            print('Connecting to Appliance...')
             status, out = client.run_command(
                 'ruby /var/www/miq/vmdb/tools/fix_auth.rb --key --verbose')
             if status != 0:
-                print 'Creating new encryption key failed.'
-                print out
+                print('Creating new encryption key failed.')
+                print(out)
                 sys.exit(1)
             else:
-                print 'New encryption key created.'
+                print('New encryption key created.')
                 if args.children:
                     # Only copy locally if needed for child appliances
                     client.get_file('/var/www/miq/vmdb/certs/v2_key',
@@ -82,7 +82,7 @@ def main():
             status, out = client.run_rails_command(
                 '\'puts MiqPassword.encrypt("smartvm");\'')
             if status != 0:
-                print 'Retrieving encrypted db password failed on %s' % address
+                print('Retrieving encrypted db password failed on {}'.format(address))
                 sys.exit(1)
             else:
                 encrypted_pass = out
@@ -91,37 +91,37 @@ def main():
                      'sed -i.`date +%m-%d-%Y` "s/password:'
                      ' .*/password: {}/g" config/database.yml'.format(re.escape(encrypted_pass))))
                 if status != 0:
-                    print 'Updating database.yml failed on %s' % address
-                    print out
+                    print('Updating database.yml failed on {}'.format(address))
+                    print(out)
                     sys.exit(1)
                 else:
-                    print 'Updating database.yml succeeded on %s' % address
+                    print('Updating database.yml succeeded on {}'.format(address))
 
     def update_password(address):
         with SSHClient(hostname=address, **ssh_creds) as client:
             status, out = client.run_command(
                 'ruby /var/www/miq/vmdb/tools/fix_auth.rb --hostname localhost --password smartvm')
             if status != 0:
-                print 'Updating DB password failed on %s' % address
-                print out
+                print('Updating DB password failed on {}'.format(address))
+                print(out)
                 sys.exit(1)
             else:
-                print 'DB password updated on %s' % address
+                print('DB password updated on {}'.format(address))
 
     def put_key(address):
-        print 'copying key to %s' % address
+        print('copying key to {}'.format(address))
         with SSHClient(hostname=address, **ssh_creds) as client:
             client.put_file(local_key_name, '/var/www/miq/vmdb/certs/v2_key')
 
     def restart_appliance(address):
-        print 'Restarting evmserverd on %s' % address
+        print('Restarting evmserverd on {}'.format(address))
         with SSHClient(hostname=address, **ssh_creds) as client:
             status, out = client.run_command('service evmserverd restart')
             if status != 0:
-                print "Restarting evmserverd failed on %s" % address
+                print("Restarting evmserverd failed on {}".format(address))
                 sys.exit(1)
             else:
-                print "Restarting succeeded on %s" % address
+                print("Restarting succeeded on {}".format(address))
 
     # make sure ssh is ready on each appliance
     wait_for(func=is_ssh_running, func_args=[args.appliance], delay=10, num_sec=600)
@@ -142,7 +142,7 @@ def main():
     if args.children:
         for child in args.children:
             restart_appliance(child)
-    print "Appliance(s) restarted with new key in place."
+    print("Appliance(s) restarted with new key in place.")
 
     # update encrypted passwords in each database-owning appliance.
 
@@ -157,7 +157,7 @@ def main():
         for child in args.children:
             restart_appliance(child)
 
-    print "Done!"
+    print("Done!")
 
 
 if __name__ == '__main__':

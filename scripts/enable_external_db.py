@@ -39,17 +39,17 @@ def main():
         help='password for external database')
     args = parser.parse_args()
 
-    print 'Initializing Appliance External DB'
+    print('Initializing Appliance External DB')
     ip_a = IPAppliance(args.address)
     status, out = ip_a.enable_external_db(args.db_address, args.region, args.database,
         args.username, args.password)
 
     if status != 0:
-        print 'Enabling DB failed with error:'
-        print out
+        print('Enabling DB failed with error:')
+        print(out)
         sys.exit(1)
     else:
-        print 'DB Enabled, evm watchdog should start the UI shortly.'
+        print('DB Enabled, evm watchdog should start the UI shortly.')
 
 
 if __name__ == '__main__':

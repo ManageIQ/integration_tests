@@ -5,8 +5,8 @@ Usage:
 
     import cfme.web_ui.tabstrip as tabs
     tabs.select_tab("Authentication")
-    print is_tab_selected("Authentication")
-    print get_selected_tab()
+    print(is_tab_selected("Authentication"))
+    print(get_selected_tab())
 
 """
 from collections import Mapping

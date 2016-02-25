@@ -53,7 +53,7 @@ def parse_cmd_line():
 
 def check_template_exists(client, name):
     if name in client.list_template():
-        print "VSPHERE: A Machine with that name already exists"
+        print("VSPHERE: A Machine with that name already exists")
         return True
     else:
         return False
@@ -71,7 +71,7 @@ def upload_ova(hostname, username, password, name, datastore,
     cmd_args.append(url)
     cmd_args.append("vi://%s@%s/%s/host/%s" % (username, hostname, datacenter, cluster))
 
-    print "VSPHERE: Running OVFTool..."
+    print("VSPHERE: Running OVFTool...")
 
     proc = subprocess.Popen(cmd_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
@@ -82,13 +82,13 @@ def upload_ova(hostname, username, password, name, datastore,
         out_string += proc.stdout.read(1)
         # on error jump out of the while loop to prevent infinite cycling
         if "error" in out_string.lower():
-            print "VSPHERE: Upload did not complete"
+            print("VSPHERE: Upload did not complete")
             return -1, out_string
 
     if "'yes' or 'no'" in out_string:
         proc.stdin.write("yes\n")
         proc.stdin.flush()
-        print "VSPHERE: Added host to SSL hosts"
+        print("VSPHERE: Added host to SSL hosts")
         out_string = ""
         while "Password:" not in out_string:
             out_string += proc.stdout.read(1)
@@ -98,18 +98,18 @@ def upload_ova(hostname, username, password, name, datastore,
     error = proc.stderr.read()
 
     if "successfully" in output:
-        print " VSPHERE: Upload completed"
+        print(" VSPHERE: Upload completed")
         return 0, output
     else:
-        print "VSPHERE: Upload did not complete"
+        print("VSPHERE: Upload did not complete")
         return -1, "\n".join([output, error])
-        print output
-        print error
+        print(output)
+        print(error)
         sys.exit(127)
 
 
 def add_disk(client, name):
-    print "VSPHERE: Beginning disk add..."
+    print("VSPHERE: Beginning disk add...")
 
     backing = client.api.create("VirtualDiskFlatVer2BackingInfo")
     backing.datastore = None
@@ -146,49 +146,49 @@ def add_disk(client, name):
     wait_for(check_task, [task], fail_condition="running")
 
     if task.info.state == "success":
-        print " VSPHERE: Successfully added new disk"
+        print(" VSPHERE: Successfully added new disk")
         # client.api.logout()
     else:
         client.api.logout()
-        print " VSPHERE: Failed to add disk"
+        print(" VSPHERE: Failed to add disk")
         sys.exit(127)
 
 
 def make_template(client, name):
-    print "VSPHERE: Marking as Template"
+    print("VSPHERE: Marking as Template")
     vm = VirtualMachine.get(client.api, name=name)
     try:
         vm.MarkAsTemplate()
-        print " VSPHERE: Successfully templatized machine"
+        print(" VSPHERE: Successfully templatized machine")
     except:
-        print " VSPHERE: Failed to templatize machine"
+        print(" VSPHERE: Failed to templatize machine")
         sys.exit(127)
 
 
 def api_params_resolution(item_list, item_name, item_param):
     if len(item_list) == 0:
-        print "VSPHERE: Cannot find %s (%s) automatically." % (item_name, item_param)
-        print "Please specify it by cmd-line parameter '--%s' or in cfme_data." % item_param
+        print("VSPHERE: Cannot find {} ({}) automatically.".format(item_name, item_param))
+        print("Please specify it by cmd-line parameter '--{}' or in cfme_data.".format(item_param))
         return None
     elif len(item_list) > 0:
         if len(item_list) > 1:
-            print "VSPHERE: Found multiple instances of %s." % item_name
+            print("VSPHERE: Found multiple instances of {}.".format(item_name))
         for item in item_list:
             if hasattr(item, 'summary'):
                 if hasattr(item.summary, 'overallStatus'):
                     if item.summary.overallStatus != 'red':
-                        print "Picking %s : '%s'." % (item_name, item.name)
+                        print("Picking {} : '{}'.".format(item_name, item.name))
                         return item
                 elif hasattr(item.summary, 'accessible'):
                     if item.summary.accessible is True:
-                        print "Picking %s : '%s'." % (item_name, item.name)
+                        print("Picking {} : '{}'.".format(item_name, item.name))
                         return item
             elif hasattr(item, 'overallStatus'):
                 if item.overallStatus != 'red':
-                    print "Picking %s : '%s'." % (item_name, item.name)
+                    print("Picking {} : '{}'.".format(item_name, item.name))
                     return item
-        print "VSPHERE: Found instances of %s, but all have status 'red'." % item_name
-        print "Please specify %s manually." % item_name
+        print("VSPHERE: Found instances of {}, but all have status 'red'.".format(item_name))
+        print("Please specify {} manually.".format(item_name))
         return None
 
 
@@ -205,7 +205,7 @@ def get_host(client, name):
         for host in hosts:
             if host.name == name:
                 return host
-        print "VSPHERE: Could not find specified host '%s'" % name
+        print("VSPHERE: Could not find specified host '{}'".format(name))
 
 
 def get_datastore(client, host):
@@ -221,7 +221,7 @@ def get_datacenter(client):
 def check_kwargs(**kwargs):
     for key, val in kwargs.iteritems():
         if val is None:
-            print "VSPHERE: please supply required parameter '%s'." % key
+            print("VSPHERE: please supply required parameter '{}'.".format(key))
             sys.exit(127)
 
 
@@ -284,7 +284,7 @@ def run(**kwargs):
     if name is None:
         name = cfme_data['basic_info']['appliance_template']
 
-    print "VSPHERE: Template Name: %s" % name
+    print("VSPHERE: Template Name: {}".format(name))
 
     check_kwargs(**kwargs)
 
@@ -294,7 +294,7 @@ def run(**kwargs):
         if kwargs.get('upload'):
             # Wrapper for ovftool - sometimes it just won't work
             for i in range(0, NUM_OF_TRIES_OVFTOOL):
-                print "VSPHERE: Trying ovftool %s..." % i
+                print("VSPHERE: Trying ovftool {}...".format(i))
                 ova_ret, ova_out = upload_ova(hostname,
                                               username,
                                               password,
@@ -308,8 +308,8 @@ def run(**kwargs):
                 if ova_ret is 0:
                     break
             if ova_ret is -1:
-                print "VSPHERE: Ovftool failed to upload file."
-                print ova_out
+                print("VSPHERE: Ovftool failed to upload file.")
+                print(ova_out)
                 return
 
         if kwargs.get('disk'):
@@ -318,7 +318,7 @@ def run(**kwargs):
             # make_template(client, name, hostname, username, password)
             make_template(client, name)
         client.api.logout()
-    print "VSPHERE: Completed successfully"
+    print("VSPHERE: Completed successfully")
 
 
 if __name__ == "__main__":

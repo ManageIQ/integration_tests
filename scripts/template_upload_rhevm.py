@@ -77,8 +77,8 @@ def download_ova(ssh_client, ovaurl):
     command = 'curl -O %s' % ovaurl
     exit_status, output = ssh_client.run_command(command)
     if exit_status != 0:
-        print "RHEVM: There was an error while downloading ova file:"
-        print output
+        print("RHEVM: There was an error while downloading ova file:")
+        print(output)
         sys.exit(127)
 
 
@@ -95,8 +95,8 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_cli
         ssh_client: :py:class:`utils.ssh.SSHClient` instance
     """
     if api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME) is not None:
-        print "RHEVM: Warning: found another template with this name."
-        print "RHEVM: Skipping this step. Attempting to continue..."
+        print("RHEVM: Warning: found another template with this name.")
+        print("RHEVM: Skipping this step. Attempting to continue...")
         return
     command = ['rhevm-image-uploader']
     command.append("-u %s" % username)
@@ -108,8 +108,8 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_cli
     command.append("-m --insecure")
     exit_status, output = ssh_client.run_command(' '.join(command))
     if exit_status != 0:
-        print "RHEVM: There was an error while making template from ova file:"
-        print output
+        print("RHEVM: There was an error while making template from ova file:")
+        print(output)
         sys.exit(127)
 
 
@@ -123,8 +123,8 @@ def import_template(api, edomain, sdomain, cluster):
         cluster: Cluster to save imported template on.
     """
     if api.templates.get(TEMP_TMP_NAME) is not None:
-        print "RHEVM: Warning: found another template with this name."
-        print "RHEVM: Skipping this step, attempting to continue..."
+        print("RHEVM: Warning: found another template with this name.")
+        print("RHEVM: Skipping this step, attempting to continue...")
         return
     actual_template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
     actual_storage_domain = api.storagedomains.get(sdomain)
@@ -134,7 +134,7 @@ def import_template(api, edomain, sdomain, cluster):
     actual_template.import_template(action=import_action)
     # Check if the template is really there
     if not api.templates.get(TEMP_TMP_NAME):
-        print "RHEVM: The template failed to import"
+        print("RHEVM: The template failed to import")
         sys.exit(127)
 
 
@@ -147,8 +147,8 @@ def make_vm_from_template(api, cluster):
         cluster: Cluster to save the temporary VM on.
     """
     if api.vms.get(TEMP_VM_NAME) is not None:
-        print "RHEVM: Warning: found another VM with this name."
-        print "RHEVM: Skipping this step, attempting to continue..."
+        print("RHEVM: Warning: found another VM with this name.")
+        print("RHEVM: Skipping this step, attempting to continue...")
         return
     actual_template = api.templates.get(TEMP_TMP_NAME)
     actual_cluster = api.clusters.get(cluster)
@@ -166,7 +166,7 @@ def make_vm_from_template(api, cluster):
 
     # check, if the vm is really there
     if not api.vms.get(TEMP_VM_NAME):
-        print "RHEVM: VM could not be provisioned"
+        print("RHEVM: VM could not be provisioned")
         sys.exit(127)
 
 
@@ -198,8 +198,8 @@ def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface):
         disk_interface: Interface of the new disk.
     """
     if len(api.vms.get(TEMP_VM_NAME).disks.list()) > 1:
-        print "RHEVM: Warning: found more than one disk in existing VM."
-        print "RHEVM: Skipping this step, attempting to continue..."
+        print("RHEVM: Warning: found more than one disk in existing VM.")
+        print("RHEVM: Skipping this step, attempting to continue...")
         return
     actual_sdomain = api.storagedomains.get(sdomain)
     temp_vm = api.vms.get(TEMP_VM_NAME)
@@ -211,7 +211,7 @@ def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface):
 
     # check, if there are two disks
     if len(api.vms.get(TEMP_VM_NAME).disks.list()) < 2:
-        print "RHEVM: Disk failed to add"
+        print("RHEVM: Disk failed to add")
         sys.exit(127)
 
 
@@ -224,8 +224,8 @@ def templatize_vm(api, template_name, cluster):
         cluster: Cluster to save the final template onto.
     """
     if api.templates.get(template_name) is not None:
-        print "RHEVM: Warning: found finished template with this name."
-        print "RHEVM: Skipping this step, attempting to continue..."
+        print("RHEVM: Warning: found finished template with this name.")
+        print("RHEVM: Skipping this step, attempting to continue...")
         return
     temporary_vm = api.vms.get(TEMP_VM_NAME)
     actual_cluster = api.clusters.get(cluster)
@@ -236,7 +236,7 @@ def templatize_vm(api, template_name, cluster):
 
     # check, if template is really there
     if not api.templates.get(template_name):
-        print "RHEVM: VM failed to templatize"
+        print("RHEVM: VM failed to templatize")
         sys.exit(127)
 
 
@@ -275,13 +275,14 @@ def api_params_resolution(item_list, item_name, item_param):
         item_param: Name of parameter representing data in the script.
     """
     if len(item_list) == 0:
-        print "RHEVM: Cannot find %s (%s) automatically." % (item_name, item_param)
-        print "Please specify it by cmd-line parameter '--%s' or in cfme_data." % item_param
+        print("RHEVM: Cannot find {} ({}) automatically.".format(item_name, item_param))
+        print("Please specify it by cmd-line parameter '--{}' or in cfme_data.".format(item_param))
         return None
     elif len(item_list) > 1:
-        print "RHEVM: Found multiple instances of %s. Picking '%s'." % (item_name, item_list[0])
+        print("RHEVM: Found multiple instances of {}. Picking '{}'.".format(
+            item_name, item_list[0]))
     else:
-        print "RHEVM: Found %s '%s'." % (item_name, item_list[0])
+        print("RHEVM: Found {} '{}'.".format(item_name, item_list[0]))
 
     return item_list[0]
 
@@ -335,7 +336,7 @@ def get_cluster(api):
 def check_kwargs(**kwargs):
     for key, val in kwargs.iteritems():
         if val is None:
-            print "RHEVM: please supply required parameter '%s'." % key
+            print("RHEVM: please supply required parameter '{}'.".format(key))
             sys.exit(127)
 
 
@@ -425,31 +426,31 @@ def run(**kwargs):
     check_kwargs(**kwargs)
 
     if api.templates.get(template_name) is not None:
-        print "RHEVM: Found finished template with this name."
-        print "RHEVM: The script will now end."
+        print("RHEVM: Found finished template with this name.")
+        print("RHEVM: The script will now end.")
     else:
-        print "RHEVM: Downloading .ova file..."
+        print("RHEVM: Downloading .ova file...")
         download_ova(ssh_client, kwargs.get('image_url'))
         try:
-            print "RHEVM: Templatizing .ova file..."
+            print("RHEVM: Templatizing .ova file...")
             template_from_ova(api, username, password, rhevip, kwargs.get('edomain'),
                               ovaname, ssh_client)
-            print "RHEVM: Importing new template..."
+            print("RHEVM: Importing new template...")
             import_template(api, kwargs.get('edomain'), kwargs.get('sdomain'),
                             kwargs.get('cluster'))
-            print "RHEVM: Making a temporary VM from new template..."
+            print("RHEVM: Making a temporary VM from new template...")
             make_vm_from_template(api, kwargs.get('cluster'))
-            print "RHEVM: Adding disk to created VM..."
+            print("RHEVM: Adding disk to created VM...")
             add_disk_to_vm(api, kwargs.get('sdomain'), kwargs.get('disk_size'),
                            kwargs.get('disk_format'), kwargs.get('disk_interface'))
-            print "RHEVM: Templatizing VM..."
+            print("RHEVM: Templatizing VM...")
             templatize_vm(api, template_name, kwargs.get('cluster'))
         finally:
             cleanup(api, kwargs.get('edomain'), ssh_client, ovaname)
             ssh_client.close()
             api.disconnect()
 
-    print "RHEVM: Done."
+    print("RHEVM: Done.")
 
 
 if __name__ == "__main__":

@@ -70,7 +70,8 @@ class Db(Mapping):
 
         # Usually used to query the DB for info, here's a common query
         for vm in db.session.query(db['vms']).all():
-            print vm.name, vm.guid
+            print(vm.name)
+            print(vm.guid)
 
         # List comprehension to get all templates
         [(vm.name, vm.guid) for vm in session.query(db['vms']).all() if vm.template is True]

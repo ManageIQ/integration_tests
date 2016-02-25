@@ -13,7 +13,7 @@ To define plugin, do like this:
 
    @plugin("plugin_name")
    def someaction(plugin_name):
-       print plugin_name  # Will contain value of `plugin_name` key of metadict
+       print(plugin_name)  # Will contain value of `plugin_name` key of metadict
 
 This is the simplest usage, where it is supposed that the plugin checks only one key with the
 same name s the plugin's name. I won't use this one in the latter examples, I will use the
@@ -23,8 +23,8 @@ more verbose one.
 
    @plugin("plugin_name", keys=["plugin_name", "another_key"])
    def someaction(plugin_name, another_key):
-       print plugin_name  # Will contain value of `plugin_name` key of metadict
-       print another_key  # Similarly this one
+       print(plugin_name)  # Will contain value of `plugin_name` key of metadict
+       print(another_key)  # Similarly this one
 
 This one reacts when the two keys are present. You can make even more complex setups:
 
@@ -33,8 +33,8 @@ This one reacts when the two keys are present. You can make even more complex se
    @plugin("plugin_name", keys=["plugin_name"])
    @plugin("plugin_name", ["plugin_name", "another_key"])  # You don't have to write keys=
    def someaction(plugin_name, another_key=None):
-       print plugin_name  # Will contain value of `plugin_name` key of metadict
-       print another_key  # Similarly this one if specified, otherwise None
+       print(plugin_name)  # Will contain value of `plugin_name` key of metadict
+       print(another_key)  # Similarly this one if specified, otherwise None
 
 This created a nonrequired parameter for the action.
 
