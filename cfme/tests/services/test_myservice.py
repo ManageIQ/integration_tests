@@ -15,7 +15,7 @@ from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version, browser
-from utils.blockers import BZ
+from utils.version import current_version
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name"),
@@ -124,7 +124,6 @@ def myservice(setup_provider, provider, catalog_item, request):
     return MyService(catalog_item.name, vm_name)
 
 
-@pytest.mark.meta(blockers=[BZ(1310842, forced_streams=["5.4", "5.5", "upstream"])])
 def test_retire_service(provider, myservice, register_event):
     """Tests my service
 
@@ -137,7 +136,6 @@ def test_retire_service(provider, myservice, register_event):
         "service", myservice.service_name, ["service_retired"])
 
 
-@pytest.mark.meta(blockers=[BZ(1310842, forced_streams=["5.4", "5.5", "upstream"])])
 def test_retire_service_on_date(myservice):
     """Tests my service retirement
 
@@ -148,7 +146,6 @@ def test_retire_service_on_date(myservice):
     myservice.retire_on_date(dt)
 
 
-@pytest.mark.meta(blockers=[BZ(1310842, forced_streams=["5.4", "5.5", "upstream"])])
 def test_crud_set_ownership_and_edit_tags(myservice):
     """Tests my service crud , edit tags and ownership
 
@@ -162,7 +159,7 @@ def test_crud_set_ownership_and_edit_tags(myservice):
     myservice.delete(edited_name)
 
 
-@pytest.mark.meta(blockers=[BZ(1310842, forced_streams=["5.4", "5.5", "upstream"])])
+@pytest.mark.uncollectif(lambda: current_version() < "5.5")
 @pytest.mark.parametrize("filetype", ["Text", "CSV", "PDF"])
 def test_download_file(needs_firefox, myservice, filetype):
     """Tests my service download files
