@@ -5,7 +5,7 @@ import pytest
 from cfme.control import import_export
 from utils.path import data_path
 from cfme.web_ui import flash
-from cfme.exceptions import CFMEException, FlashMessageException
+from utils import error
 
 
 @pytest.fixture(scope="module")
@@ -27,9 +27,5 @@ def test_import_policies(import_policy_file):
 
 @pytest.sel.go_to('control_import_export')
 def test_control_import_invalid_yaml_file(import_invalid_yaml_file):
-    try:
+    with error.expected("Error during 'Policy Import': Invalid YAML file"):
         import_export.import_file(import_invalid_yaml_file)
-    except FlashMessageException:
-        pass
-    else:
-        raise CFMEException
