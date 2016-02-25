@@ -20,7 +20,7 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils.blockers import GH
 
-pytestmark = [pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:6859"],
+pytestmark = [pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:6939"],
                                unblock=lambda provider: provider.type != 'rhevm')]
 
 WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows'}
