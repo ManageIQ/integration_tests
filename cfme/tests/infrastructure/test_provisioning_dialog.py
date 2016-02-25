@@ -56,9 +56,6 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def prov_data(provisioning, provider):
-    if provider.type == "scvmm":
-        pytest.skip("SCVMM does not support provisioning yet!")  # TODO: After fixing - remove
-
     return {
         "first_name": fauxfactory.gen_alphanumeric(),
         "last_name": fauxfactory.gen_alphanumeric(),
