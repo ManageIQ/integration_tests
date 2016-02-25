@@ -1,6 +1,15 @@
 Getting Started
 ===============
 
+Before you start copypasting ...
+--------------------------------
+Welcome to the Getting Started Guide. The CFME QE team is glad that you have decided to read this
+page that will help you understand how ``cfme_tests`` interacts with the appliances. There are some
+important informations contained within this text, so we would like you to spend some time to
+carefully read this page from beginning to the end. That will make you familiarize with the process
+and will minimize the chance of doing it wrong. Then you can proceed the shortest way using the
+setup script.
+
 Setup
 -----
 You can use this shortcut to install the system and python dependencies which will leave you only
@@ -38,20 +47,30 @@ Detailed steps (manual environment setup):
     * ``yum install python-virtualenv``
 
   * Create a virtualenv: ``virtualenv <name>``
-  * To activate the virtualenv later: ``source <name>/bin/activate``
+  * To activate the virtualenv later: ``source <name>/bin/activate``, but do not do it yet, it still
+    needs finishing touches.
 
-* Fork and Clone this repository into the new virtualenv
+* Fork and Clone this repository.
 * Set the ``PYTHONPATH`` to include ``cfme_tests``. Edit your virtualenv's ``bin/activate`` script,
   created with the virtualenv. At the end of the file, export a PYTHONPATH variable with the path to
   the repository clone by adding this line (altered to match your repository locations):
 
-  * ``export PYTHONPATH='/path/to/virtualenv/cfme_tests'``
+  * ``export PYTHONPATH='/path/to/cfme_tests_repo'``
 
 * Also add this line at the end of your virtualenv to prevent .pyc files polluting your folders:
 
   * ``export PYTHONDONTWRITEBYTECODE="yes"``
 
-* Get the shared encryption key for credentials. Ask in CFME QE.
+* If you forgot to do that and you have ``pyc`` files polluting your folders, this is a cure, placed
+  in ``~/.bashrc`` and usable everywhere:
+
+  .. code-block:: bash
+
+    alias rmpyc='find . -name \*.pyc -delete; find . -name __pycache__ -delete'
+
+  Reload your ``.bashrc`` and issue ``rmpyc`` command.
+
+* Get the shared encryption key (``.yaml_key``) for credentials. Ask in CFME QE.
 * Make sure you set the shared secret for the credentials files encryption. There are two ways:
 
   * add ``export CFME_TESTS_KEY="our shared key"`` into the activate script
@@ -68,12 +87,19 @@ Detailed steps (manual environment setup):
   * ``libcurl-devel``
   * ``redhat-rpm-config`` if you use some kind of really stripped system.
   * Fedora (possibly RHEL-like systems) users:
+
     * ``hash dnf 2>/dev/null && { YUM=dnf; } || { YUM=yum; }``
+
     * ``sudo $YUM install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config``
+
+    * On RHEL and derived systems, it will say the zeromq package is not available but that is ok.
 
 * Install python dependencies:
 
   * ``PYCURL_SSL_LIBRARY=nss pip install -Ur /path/to/virtualenv/cfme_tests/requirements.txt``
+  * If you get error from pycurl and you used this command, you might like to remove pycurl and try
+    installing it again with different SSL library set. The error message should give you an idea
+    what to try. For reinstallation, you will need to use the command mentioned in next bullet.
   * If you forget to use the ``PYCURL_SSL_LIBRARY`` env variable and you get a pycurl error, you
     have to run it like this to fix it:
 
@@ -81,34 +107,28 @@ Detailed steps (manual environment setup):
       happen)
     * Run ``PYCURL_SSL_LIBRARY=nss pip install -U -r requirements.txt --no-cache-dir``
 
-* Copy template files in cfme_tests to the same file name without the ``.template`` extension
-
-  * Example: ``cp file.name.template file.name``
-  * Bash script example: ``for file in *.template; do cp -n $file ${file/.template}; done``
-  * Edit these files as needed to reflect your environment.
-
-* Do the same for the config yamls in the conf directory, using Configuration YAMLs
-
-  * Example: ``cd conf/; cp env.local.template env.local``
-  * Then edit ``conf/env.local.yaml`` to override ``base_url``
-
+* You copy/symlink the required YAML files into ``conf/`` if you have access to team's internal YAML
+  repository. Required YAML files are ``env``, ``cfme_data``, ``credentials``. If the file's
+  extension is ``.yaml`` it is loaded normally, if its extension is ``.eyaml`` then it is encrypted
+  and you need to have the decryption key in the ``cfme_tests/`` directory. You can also start them
+  from scratch by copying the templates in ``conf/`` and editing them to suit the environment you
+  use.
 * Set up a local selenium server that opens browser windows somewhere other than your
-  desktop by running :doc:`guides/vnc_selenium`
+  desktop. There is a Docker based solution for the browser, look at the script
+  ``scripts/dockerbot/sel_container.py``. That ensures you have the proper versions of browsers. You
+  can also set everything up in your system using Xvnc - :doc:`guides/vnc_selenium` .
 * Test! Run py.test. (This takes a long time, Ctrl-C will stop it)
-
-.. note::
-   In the past, the pytest_mozwebqa package was used to help manage the web browser and
-   selenium session. We've recently done away with it, so you can safely
-   ``pip uninstall pytest_mozwebqa``. pytest_mozwebqa provided many commandline options
-   (for example: ``--driver``, ``--baseurl``, ``--credentials``, ``--untrusted``). These
-   will all need to be removed from the py.test invocation (or addopts line in pytest.ini)
-   if mozwebqa is uninstalled.
+* When py.test ends or you Ctrl-C it, it will look stuck in the phase "collecting artifacts". You
+  can either wait about 30 seconds, or you can Ctrl-C it again.
+* In either case, check your processes sometimes, the artifactor process likes to hang when forced
+  to quit, but it can also happen when it ends normally, though it is not too common.
 
 Activating the virtualenv
 -------------------------
 
-The virtualenv is activated on creation. To reactivate the virtualenv in subsequent sessions,
-the ``bin/activate`` script must be sourced.
+To activate the virtualenv, the ``bin/activate`` script must be sourced. Bear in mind that you
+should have the two options added in the ``bin/activate`` script BEFORE you source it, otherwise it
+will not work.
 
 .. code-block:: bash
 
@@ -127,20 +147,28 @@ Our team relies on a lot of internal tools that simplify life to the QEs. If eg.
 like to run ``cfme_tests`` on his/her system, here are some tools and tips that should get you
 started as quickly as possible:
 
-* ``cfme_tests`` expects an appliance, with an IP visible to machine with ``cfme_tests`` running
-  
-  * If this is not the case (eg. CFME behind NAT, a container, whatever), you have to specify the
-    ``base_url`` in configuration with a port, which is quite obvious, but people tend to forget
-    ``cfme_tests`` also uses SSH and Postgres extensively, therefore you need to have those services
-    accessible and ideally on the expected ports. If you don't have them running on the expected
-    ports, you have to specify them manually using ``--port-ssh`` and ``--port-db`` command-line
-    parameters.
+* ``cfme_tests`` expects an appliance, with an IP visible to the machine that runs ``cfme_tests``
 
-* ``cfme_tests`` also expects that the appliance it is running against is configured. By
-  'configured', we mean the database is set up and seeded (therefore UI running), database
-  permissions loosened so ``cfme_tests`` can access it and a couple of other fixes. Check out
-  :py:meth:`utils.appliance.IPAppliance.configure`, and subsequent method calls.
-  
+  * If this is not the case (eg. CFME behind NAT, a container, whatever), you MUST specify the
+    ``base_url`` in configuration with a port, which is quite obvious, but people tend to forget
+    ``cfme_tests`` also uses SSH and Postgres extensively, therefore you MUST have those services
+    accessible and ideally on the expected ports. If you don't have them running on the expected
+    ports, you MUST specify them manually using ``--port-ssh`` and ``--port-db`` command-line
+    parameters. If you run your code outside of ``py.test`` run, you MUST use ``utils.ports``
+    to override the ports (that is what the command-line parameters do anyway). The approach using
+    ``utils.ports`` will be most likely discontinued in the future in favour of merging that
+    functionality inside :py:class:`utils.appliance.IPAppliance` class. Everything in the repository
+    touching this functionality will get converted with the merging of the functionality when that
+    happens.
+
+* ``cfme_tests`` also expects that the appliance it is running against is configured. Without it it
+  won't work at all! By configured, we mean the database is set up and seeded (therefore UI
+  running), database permissions loosened so ``cfme_tests`` can access it and a couple of other
+  fixes. Check out :py:meth:`utils.appliance.IPAppliance.configure`, and subsequent method calls.
+  The most common error is that a person tries to execute ``cfme_tests`` code against an appliance
+  that does not have the DB permissions loosened. The second place is SSH unavailable, meaning that
+  the appliance is NAT-ed
+
   * Framework contains code that can be used to configure the appliance exactly as ``cfme_tests``
     desires. There are two ways of using it:
 
@@ -157,8 +185,8 @@ started as quickly as possible:
 
       Which enables you to configure multiple appliances in parallel.
 
-* Using :py:class:`utils.appliance.Appliance` only makes sense for appliances on providers that
-  are specified in ``cfme_data.yaml``.
+    * Unfortunately, these scripts do not work with non-default ports as of now, so you have to do
+      the steps manually if setting up such appliance.
 
 * Previous bullet mentioned the ``scripts/ipappliance.py`` script. This script can call any method
   or read any property located in the :py:class:`utils.appliance.IPAppliance`. Check the script's
@@ -170,6 +198,9 @@ started as quickly as possible:
 * Similarly, you can use  ``scripts/appliance.py`` script for interacting with the
   :py:class:`utils.appliance.Appliance` methods. It is a bit older and has slightly different usage.
   And lacks threading.
+
+* Using :py:class:`utils.appliance.Appliance` only makes sense for appliances on providers that
+  are specified in ``cfme_data.yaml``.
 
 * If you want to test a single appliance, set the ``base_url`` in the ``conf/env.yaml``
 
