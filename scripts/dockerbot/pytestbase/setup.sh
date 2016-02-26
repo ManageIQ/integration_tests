@@ -116,8 +116,6 @@ git config --global user.email "me@dockerbot"
 git config --global user.name "DockerBot"
 
 # Get the GPG-Keys
-# It's not a mistake to run this twice ;)
-do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1"
 do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1"
 
 # die on errors
