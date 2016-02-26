@@ -174,6 +174,14 @@ Working with file paths
 -----------------------
 For any path in the project root, there are several helper functions that can be used.  Look at the :py:mod:`utils.path` module for the complete list of pre-configured directories and available functions.
 
+Expecting Errors
+----------------
+When working with the UI, we can actually run a process and expect to have a certain flash error message. This is built into a context manager so that all you need to do is supply the operation you want to try, and the emssage you expect to get. This means as a test developer, you don't need to worrk about how to get the flash message, or how to handle the resulting error from the operation failing::
+
+    provider.credentials['default'] = get_credentials_from_config('bad_credentials')
+    with error.expected('Login failed due to a bad username or password.'):
+        provider.create(validate_credentials=True)
+
 Appliance object SSH gremlins
 -----------------------------
 If you get seemingly random SSH errors coming from :py:mod:`utils.appliance`, you might be facing the problem that some of the methods inside of the class does some version picking, or database connection outside of the object scope or whatever that is supposed to touch the target appliance but does not go through the object that you are in, but the :py:class:`utils.appliance.IPAppliance` object itself is not pushed to the appliance stack in :py:mod:`fixtures.pytest_store`. So instead of using the IP address of the appliance the object is pointed to, it uses whatever was set before, either the ``base_url`` one or something that was pushed before. The solution is to wrap that in a ``with`` block, like this (presuming we call this code inside :py:class:`utils.appliance.Appliance`)::
