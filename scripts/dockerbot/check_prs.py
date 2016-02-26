@@ -37,7 +37,7 @@ def send_message_to_bot(msg):
         logger.warn("Skipping - docker.yaml doesn't have {}".format(required_fields))
         return
 
-    logger.warn("Github PR bot: about to send '{}'".format(msg))
+    logger.info("Github PR bot: about to send '{}'".format(msg))
     url = docker_conf['rabbitmq_url']
     queue = docker_conf['gh_queue']
     irc_channel = docker_conf['gh_channel']
@@ -294,7 +294,7 @@ def check_status(pr):
               'passed': 'success',
               'running': 'pending'}
 
-    task_states = {}
+    task_updated_states = {}
 
     try:
         tasks = tapi.task.get(run=run_id)['objects']
@@ -307,21 +307,21 @@ def check_status(pr):
                     else:
                         logger.info('Setting task {} for pr {} to {}'
                                     .format(task['stream'], pr['number'], states[task['result']]))
-
+                        task_updated_states[task['stream']] = states[task['result']]
                         set_status(commit, states[task['result']], task['stream'])
                         break
             else:
                 logger.info('Setting task {} for pr {} to {}'
                             .format(task['stream'], pr['number'], states[task['result']]))
                 set_status(commit, states[task['result']], task['stream'])
-            task_states[task['stream']] = states[task['result']]
     except HttpClientError:
         pass
 
-    if not any(x in ['pending', 'invalid', 'running'] for x in task_states.values()):
+    failed_states = ['pending', 'invalid', 'running']
+    if task_updated_states and not any(x in failed_states for x in task_updated_states.values()):
         # There are no pending, invalid or running states in the run_id
-        if 'failed' in task_states.values():
-            failed_streams = [x.key() for x in task_states if x.value() == 'failed']
+        if 'failed' in task_updated_states.values():
+            failed_streams = [x.key() for x in task_updated_states if x.value() == 'failed']
             send_message_to_bot("Tests PR #{} failed on streams {}".format(
                 pr['number'], failed_streams))
         else:
