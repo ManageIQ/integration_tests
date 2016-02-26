@@ -129,7 +129,8 @@ def check_prs():
     numbers = []
     for pr in json_data:
         numbers.append(pr['number'])
-        check_pr(pr)
+        if pr['state'] == 'open':
+            check_pr(pr)
 
     prs = tapi.pr.get(closed=False, limit=0)['objects']
     for pr in prs:
