@@ -41,14 +41,13 @@ def send_message_to_bot(msg):
     url = docker_conf['rabbitmq_url']
     queue = docker_conf['gh_queue']
     irc_channel = docker_conf['gh_channel']
-    message_type = docker_conf['gh_message_type']
+#    message_type = docker_conf['gh_message_type']
     params = pika.URLParameters(url)
     params.socket_timeout = 5
     connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
     try:
         channel = connection.channel()
-        channel.queue_declare(queue=queue)
-        message = {"channel": irc_channel, "message_type": message_type, "body": msg}
+        message = {"channel": irc_channel, "body": msg}
         channel.basic_publish(exchange='', routing_key=queue,
                               body=json.dumps(message, ensure_ascii=True))
     except Exception:
