@@ -40,7 +40,7 @@ def send_message_to_bot(msg):
     logger.warn("Github PR bot: about to send '{}'".format(msg))
     url = docker_conf['rabbitmq_url']
     queue = docker_conf['gh_queue']
-    channel = docker_conf['gh_channel']
+    irc_channel = docker_conf['gh_channel']
     message_type = docker_conf['gh_message_type']
     params = pika.URLParameters(url)
     params.socket_timeout = 5
@@ -48,7 +48,7 @@ def send_message_to_bot(msg):
     try:
         channel = connection.channel()
         channel.queue_declare(queue=queue)
-        message = {"channel": channel, "message_type": message_type, "body": msg}
+        message = {"channel": irc_channel, "message_type": message_type, "body": msg}
         channel.basic_publish(exchange='', routing_key=queue,
                               body=json.dumps(message, ensure_ascii=True))
     except Exception:
