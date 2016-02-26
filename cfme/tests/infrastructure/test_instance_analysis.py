@@ -12,7 +12,7 @@ from cfme.configure.configuration import VMAnalysisProfile
 from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
 from cfme.infrastructure import host
 from cfme.provisioning import do_vm_provisioning
-from cfme.web_ui import InfoBlock, Table, SplitTable, paginator, tabstrip as tabs, toolbar as tb
+from cfme.web_ui import InfoBlock, tabstrip as tabs, toolbar as tb
 from fixtures.pytest_store import store
 from utils import testgen, ssh, safe_string, version
 from utils.conf import cfme_data
@@ -431,20 +431,10 @@ def test_ssa_users(provider, instance, soft_assert):
         assert current == expected
 
     # Make sure created user is in the list
-    sel.click(InfoBlock("Security", "Users"))
-    template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
-    users = version.pick({
-        version.LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
-                                   body_data=(template.format("objbox"), 0)),
-        "5.5": Table('//table'),
-    })
-
-    for page in paginator.pages():
-        sel.wait_for_element(users)
-        if users.find_row('Name', username):
-            return
+    instance.open_details(("Security", "Users"))
     if instance.system_type != WINDOWS:
-        pytest.fail("User {0} was not found".format(username))
+        if not instance.paged_table.find_row_on_all_pages('Name', username):
+            pytest.fail("User {0} was not found".format(username))
 
 
 @pytest.mark.long_running
@@ -472,20 +462,10 @@ def test_ssa_groups(provider, instance, soft_assert):
         assert current == expected
 
     # Make sure created group is in the list
-    sel.click(InfoBlock("Security", "Groups"))
-    template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
-    groups = version.pick({
-        version.LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
-                                   body_data=(template.format("objbox"), 0)),
-        "5.5": Table('//table'),
-    })
-
-    for page in paginator.pages():
-        sel.wait_for_element(groups)
-        if groups.find_row('Name', group):
-            return
+    instance.open_details(("Security", "Groups"))
     if instance.system_type != WINDOWS:
-        pytest.fail("Group {0} was not found".format(group))
+        if not instance.paged_table.find_row_on_all_pages('Name', group):
+            pytest.fail("Group {0} was not found".format(group))
 
 
 @pytest.mark.long_running
@@ -522,18 +502,9 @@ def test_ssa_packages(provider, instance, soft_assert):
     assert current == expected
 
     # Make sure new package is listed
-    sel.click(InfoBlock("Configuration", "Packages"))
-    template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
-    packages = version.pick({
-        version.LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
-                                   body_data=(template.format("objbox"), 0)),
-        "5.5": Table('//table'),
-    })
-
-    for page in paginator.pages():
-        if packages.find_row('Name', package_name):
-            return
-    pytest.fail("Package {0} was not found".format(package_name))
+    instance.open_details(("Configuration", "Packages"))
+    if not instance.paged_table.find_row_on_all_pages('Name', package_name):
+        pytest.fail("Package {0} was not found".format(package_name))
 
 
 @pytest.mark.long_running
@@ -551,16 +522,6 @@ def test_ssa_files(provider, instance, policy_profile, soft_assert):
     current = instance.get_detail(properties=('Configuration', 'Files'))
     assert current != '0', "No files were scanned"
 
-    sel.click(InfoBlock("Configuration", "Files"))
-    template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
-    files = version.pick({
-        version.LOWEST: SplitTable(header_data=(template.format("xhdr"), 1),
-                                   body_data=(template.format("objbox"), 0)),
-        "5.5": Table('//table'),
-    })
-
-    for page in paginator.pages():
-        sel.wait_for_element(files)
-        if files.find_row('Name', ssa_expect_file):
-            return
-    pytest.fail("File {0} was not found".format(ssa_expect_file))
+    instance.open_details(("Configuration", "Files"))
+    if not instance.paged_table.find_row_on_all_pages('Name', ssa_expect_file):
+        pytest.fail("File {0} was not found".format(ssa_expect_file))

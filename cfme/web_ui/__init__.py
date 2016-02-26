@@ -987,6 +987,40 @@ class SplitCheckboxTable(SplitTable, CheckboxTable):
             self._checkbox_loc = body_checkbox_locator
 
 
+class PagedTable(Table):
+    """:py:class:`Table` with support for paginator
+
+    Args:
+        table_locator: See :py:class:`cfme.web_ui.Table`
+        header_checkbox_locator: Locator of header checkbox (default `None`)
+                                 Specify in case the header checkbox is not part of the header row
+        body_checkbox_locator: Locator for checkboxes in body rows
+        header_offset: See :py:class:`cfme.web_ui.Table`
+        body_offset: See :py:class:`cfme.web_ui.Table`
+    """
+    def find_row_on_all_pages(self, header, value):
+        from cfme.web_ui import paginator
+        for page in paginator.pages():
+            sel.wait_for_element(self)
+            row = self.find_row(header, value)
+            if row is not None:
+                return row
+
+
+class SplitPagedTable(SplitTable, PagedTable):
+    """:py:class:`SplitTable` with support for paginator
+
+    Args:
+        header_data: See :py:class:`cfme.web_ui.SplitTable`
+        body_data: See :py:class:`cfme.web_ui.SplitTable`
+        header_offset: See :py:class:`cfme.web_ui.Table`
+        body_offset: See :py:class:`cfme.web_ui.Table`
+    """
+    def __init__(self, header_data, body_data):
+        # To limit multiple inheritance surprises, explicitly call out to SplitTable's __init__
+        SplitTable.__init__(self, header_data, body_data)
+
+
 def table_in_object(table_title):
     """If you want to point to tables inside object view, this is what you want to use.
 
