@@ -47,10 +47,9 @@ def send_message_to_bot(msg):
     connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
     try:
         channel = connection.channel()
-        channel.queue_declare(queue=queue)
         message = {"channel": irc_channel, "message_type": message_type, "body": msg}
-        channel.basic_publish(exchange='', routing_key=queue,
-                              body=json.dumps(message, ensure_ascii=True))
+        message_string = json.dumps(message, ensure_ascii=True)
+        channel.basic_publish(exchange='', routing_key=queue, body=message_string)
     except Exception:
         output = traceback.format_exc()
         logger.warn("Exception while sending a message to the bot: {}".format(output))
