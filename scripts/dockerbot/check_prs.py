@@ -6,11 +6,14 @@ import traceback
 import dockerbot
 import json
 import requests
+import pika
+import logging
 from utils.conf import docker as docker_conf
 from utils.appliance import Appliance
 from utils.trackerbot import api
 from utils.log import create_logger
 from slumber.exceptions import HttpClientError
+
 
 token = docker_conf['gh_token']
 owner = docker_conf['gh_owner']
@@ -22,6 +25,37 @@ CONT_LIMIT = docker_conf['workers']
 DEBUG = docker_conf.get('debug', False)
 
 logger = create_logger('check_prs', 'prt.log')
+
+# Disable pika logs
+logging.getLogger("pika").propagate = False
+
+
+def send_message_to_bot(msg):
+
+    required_fields = set(['rabbitmq_url', 'gh_queue', 'gh_channel', 'gh_message_type'])
+    if not required_fields.issubset(docker_conf.viewkeys()):
+        logger.warn("Skipping - docker.yaml doesn't have {}".format(required_fields))
+        return
+
+    logger.warn("Github PR bot: about to send '{}'".format(msg))
+    url = docker_conf['rabbitmq_url']
+    queue = docker_conf['gh_queue']
+    channel = docker_conf['gh_channel']
+    message_type = docker_conf['gh_message_type']
+    params = pika.URLParameters(url)
+    params.socket_timeout = 5
+    connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
+    try:
+        channel = connection.channel()
+        channel.queue_declare(queue=queue)
+        message = {"channel": channel, "message_type": message_type, "body": msg}
+        channel.basic_publish(exchange='', routing_key=queue,
+                              body=json.dumps(message, ensure_ascii=True))
+    except Exception:
+        output = traceback.format_exc()
+        logger.warn("Exception while sending a message to the bot: {}".format(output))
+    finally:
+        connection.close()
 
 
 def perform_request(url):
@@ -259,6 +293,8 @@ def check_status(pr):
               'passed': 'success',
               'running': 'pending'}
 
+    task_states = {}
+
     try:
         tasks = tapi.task.get(run=run_id)['objects']
         statuses = perform_request("commits/{}/statuses".format(commit))
@@ -277,8 +313,18 @@ def check_status(pr):
                 logger.info('Setting task {} for pr {} to {}'
                             .format(task['stream'], pr['number'], states[task['result']]))
                 set_status(commit, states[task['result']], task['stream'])
+            task_states[task['stream']] = states[task['result']]
     except HttpClientError:
         pass
+
+    if not any(x in ['pending', 'invalid', 'running'] for x in task_states.values()):
+        # There are no pending, invalid or running states in the run_id
+        if 'failed' in task_states.values():
+            failed_streams = [x.key() for x in task_states if x.value() == 'failed']
+            send_message_to_bot("Tests PR #{} failed on streams {}".format(
+                pr['number'], failed_streams))
+        else:
+            send_message_to_bot("Tests for PR #{} passed".format(pr['number']))
 
 
 def check_pr(pr):
@@ -323,6 +369,7 @@ def check_pr(pr):
                                    'description': pr['body']})
     except HttpClientError:
         logger.info('PR {} not found in database, creating...'.format(pr['number']))
+
         new_pr = {'number': pr['number'],
                   'description': pr['body'],
                   'current_commit_head': commit,
@@ -333,6 +380,7 @@ def check_pr(pr):
         elif "[WIP]" in pr['title']:
             new_pr['wip'] = True
         tapi.pr(pr['number']).put(new_pr)
+        send_message_to_bot("New PR: #{} {}".format(pr['number'], pr['title']))
 
     check_status(pr)
 
