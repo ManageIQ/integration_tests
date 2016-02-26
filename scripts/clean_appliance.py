@@ -43,12 +43,12 @@ def main():
 
     # `service evmserverd stop` is a little slow, and we're destroying the
     # db, so rudely killing ruby speeds things up significantly
-    print 'Stopping ruby processes...'
+    print('Stopping ruby processes...')
     client.run_command('killall ruby')
     client.run_rake_command('evm:db:reset')
     client.run_command('service evmserverd start')
 
-    print 'Waiting for appliance UI...'
+    print('Waiting for appliance UI...')
     args = [
         scripts_path.join('wait_for_appliance_ui.py').strpath,
         # SSHClient has the smarts to get our hostname if none was provided

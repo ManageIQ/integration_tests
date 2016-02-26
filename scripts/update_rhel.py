@@ -24,9 +24,9 @@ def main():
 
     if res.rc == 0:
         if args.reboot:
-            print 'Rebooting'
+            print('Rebooting')
             ip_a.reboot()
-        print 'Appliance update complete'
+        print('Appliance update complete')
 
     return res.rc
 

@@ -51,7 +51,7 @@ def main(trackerbot_url, mark_usable=None):
 
         # Don't want sprout templates
         if group_name in ('sprout', 'rhevm-internal'):
-            print 'Ignoring %s from group %s' % (template_name, group_name)
+            print('Ignoring {} from group {}'.format(template_name, group_name))
             continue
 
         seen_templates.add(template_name)
@@ -62,15 +62,16 @@ def main(trackerbot_url, mark_usable=None):
             provider = trackerbot.Provider(provider_key)
 
             if '{}_{}'.format(template_name, provider_key) in existing_provider_templates:
-                print 'Template %s already tracked for provider %s' % (template_name, provider_key)
+                print('Template {} already tracked for provider {}'.format(
+                    template_name, provider_key))
                 continue
 
             try:
                 trackerbot.mark_provider_template(api, provider, template, **usable)
-                print 'Added %s template %s on provider %s (datestamp: %s)' % (
-                    group_name, template_name, provider_key, datestamp)
+                print('Added {} template {} on provider {} (datestamp: {})'.format(
+                    group_name, template_name, provider_key, datestamp))
             except SlumberHttpBaseException as ex:
-                print ex.response.status_code, ex.content
+                print("{}\t{}".format(ex.response.status_code, ex.content))
 
     # Remove provider relationships where they no longer exist, skipping unresponsive providers,
     # and providers not known to this environment
@@ -79,16 +80,16 @@ def main(trackerbot_url, mark_usable=None):
         if provider_key not in template_providers[template_name] \
                 and provider_key not in unresponsive_providers:
             if provider_key in all_providers:
-                print "Cleaning up template %s on %s" % (template_name, provider_key)
+                print("Cleaning up template {} on {}".format(template_name, provider_key))
                 trackerbot.delete_provider_template(api, provider_key, template_name)
             else:
-                print "Skipping template cleanup %s on unknown provider %s" % (
-                    template_name, provider_key)
+                print("Skipping template cleanup {} on unknown provider {}".format(
+                    template_name, provider_key))
 
     # Remove templates that aren't on any providers anymore
     for template in trackerbot.depaginate(api, api.template.get())['objects']:
         if not template['providers']:
-            print "Deleting template %s (no providers)" % template['name']
+            print("Deleting template {} (no providers)".format(template['name']))
             api.template(template['name']).delete()
 
     # This is included in case we ever want it, but for now I think it's better to handle this
@@ -119,7 +120,7 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
             templates = map(lambda i: i.name or i.id, templates)
         else:
             templates = provider_mgmt.list_template()
-        print provider_key, 'returned %d templates' % len(templates)
+        print(provider_key, 'returned {} templates'.format(len(templates)))
         with thread_lock:
             for template in templates:
                 # If it ends with 'db', skip it, it's a largedb/nodb variant
@@ -127,7 +128,7 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
                     continue
                 template_providers[template].append(provider_key)
     except:
-        print provider_key, 'failed:', traceback.format_exc().splitlines()[-1]
+        print("{}\t{}\t{}".format(provider_key, 'failed:', traceback.format_exc().splitlines()[-1]))
         with thread_lock:
             unresponsive_providers.add(provider_key)
 

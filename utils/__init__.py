@@ -24,17 +24,17 @@ def lazycache(wrapped_method):
         ...
         >>> ex = Example()
         >>> value = ex.lazyprop
-        >>> print value
+        >>> print(value)
         42
-        >>> print value is ex.lazyprop
+        >>> print(value is ex.lazyprop)
         # lazyprop guarantees this to be True, normal properties do not.
         True
         >>> ex.lazyprop = '99'
-        >>> print ex.lazyprop
+        >>> print(ex.lazyprop)
         # setting works!
         99
         >>> del(ex.lazyprop)
-        >>> print ex.lazyprop
+        >>> print(ex.lazyprop)
         # deleting clears the cache, so the value is recomputed on the next call
         42
 
@@ -101,7 +101,7 @@ def classproperty(f):
         ...     def bar(cls):
         ...         return "bar"
         ...
-        >>> print Foo.bar
+        >>> print(Foo.bar)
         baz
     """
     return _classproperty(classmethod(f))

@@ -39,10 +39,10 @@ def main():
         if isinstance(result, list):
             exit = 0
             for entry in result:
-                print entry
+                print(entry)
         elif isinstance(result, (basestring, int)):
             exit = 0
-            print result
+            print(result)
         elif isinstance(result, bool):
             # 'True' result becomes flipped exit 0, and vice versa for False
             exit = int(not result)

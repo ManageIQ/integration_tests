@@ -11,7 +11,7 @@ from utils.conf import env
 
 
 def log(message):
-    print "[VDDK-INSTALL] {}".format(message)
+    print("[VDDK-INSTALL] {}".format(message))
 
 
 def main():

@@ -64,8 +64,8 @@ def upload_qc2_file(ssh_client, image_url, template_name, export):
     exit_status, output = ssh_client.run_command(res)
 
     if exit_status != 0:
-        print "RHOS: There was an error while uploading qc2 file."
-        print output
+        print("RHOS: There was an error while uploading qc2 file.")
+        print(output)
         sys.exit(127)
 
     return output
@@ -94,8 +94,8 @@ def check_image_status(image_id, export, ssh_client):
     exit_status, output = ssh_client.run_command('%s && %s' % (export, res))
 
     if exit_status != 0:
-        print "RHOS: There was an error while checking status of image."
-        print output
+        print("RHOS: There was an error while checking status of image.")
+        print(output)
         sys.exit(127)
 
     if get_image_status(output) != 'active':
@@ -142,7 +142,7 @@ def make_kwargs(args, **kwargs):
 
     for key, val in kwargs.iteritems():
         if val is None:
-            print "ERROR: please supply required parameter '%s'." % key
+            print("ERROR: please supply required parameter '{}'.".format(key))
             sys.exit(127)
 
     return kwargs
@@ -160,7 +160,7 @@ def run(**kwargs):
     sshname = default_host_creds['username']
     sshpass = default_host_creds['password']
 
-    print "RHOS: Starting rhos upload..."
+    print("RHOS: Starting rhos upload...")
 
     ssh_client = make_ssh_client(rhosip, sshname, sshpass)
 
@@ -178,10 +178,10 @@ def run(**kwargs):
         wait_for(check_image_status, [image_id, export, ssh_client],
                  fail_condition=False, delay=5, num_sec=300)
     else:
-        print "RHOS: Found image with same name. Exiting..."
+        print("RHOS: Found image with same name. Exiting...")
 
     ssh_client.close()
-    print "RHOS: Done."
+    print("RHOS: Done.")
 
 
 if __name__ == '__main__':

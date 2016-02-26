@@ -238,8 +238,8 @@ def post_jenkins_result(job_name, number, stream, date, template,
             'results': artifact_report,
         })
     except slumber.exceptions.HttpServerError as exc:
-        print exc.response
-        print exc.content
+        print(exc.response)
+        print(exc.content)
 
 
 def depaginate(api, result):
@@ -284,7 +284,7 @@ def composite_uncollect(build):
         resp = requests.get(url, timeout=10)
         return resp.json()
     except Exception as e:
-        print e
+        print(e)
         return {'tests': []}
 
 

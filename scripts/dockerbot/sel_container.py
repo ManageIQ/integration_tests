@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print "Starting container..."
+    print("Starting container...")
 
     dkb = SeleniumDocker(bindings={'VNC_PORT': (5999, args.vnc),
                                    'WEBDRIVER': (4444, args.webdriver)},
@@ -30,19 +30,19 @@ if __name__ == "__main__":
 
     if args.watch:
         print
-        print "  Waiting for container for 10 seconds..."
+        print("  Waiting for container for 10 seconds...")
         import time
         time.sleep(10)
-        print "  Initiating VNC watching..."
+        print("  Initiating VNC watching...")
         ipport = "vnc://127.0.0.1:" + str(args.vnc)
         cmd = ['xdg-open', ipport]
         subprocess.Popen(cmd)
 
-    print " Hit Ctrl+C to end container"
+    print(" Hit Ctrl+C to end container")
     try:
         dkb.wait()
     except KeyboardInterrupt:
-        print " Killing Container.....please wait..."
+        print(" Killing Container.....please wait...")
         pass
     dkb.kill()
     dkb.remove()

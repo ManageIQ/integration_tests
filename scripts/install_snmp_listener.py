@@ -30,23 +30,23 @@ def main():
     snmp_path = scripts_data_path.join("snmp")
 
     # Copy
-    print "Copying files"
+    print("Copying files")
     client.put_file(snmp_path.join("snmp_listen.rb").strpath, "/root/snmp_listen.rb")
     client.put_file(snmp_path.join("snmp_listen.sh").strpath, "/root/snmp_listen.sh")
 
     # Enable after startup
-    print "Enabling after startup"
+    print("Enabling after startup")
     status = client.run_command("grep 'snmp_listen[.]sh' /etc/rc.local")[0]
     if status != 0:
         client.run_command("echo 'cd /root/ && ./snmp_listen.sh start' >> /etc/rc.local")
     assert client.run_command("grep 'snmp_listen[.]sh' /etc/rc.local")[0] == 0, "Could not enable!"
 
     # Run!
-    print "Starting listener"
+    print("Starting listener")
     assert client.run_command("cd /root/ && ./snmp_listen.sh start")[0] == 0, "Could not start!"
 
     # Open the port if not opened
-    print "Opening the port in iptables"
+    print("Opening the port in iptables")
     status = client.run_command("grep '--dport 8765' /etc/sysconfig/iptables")[0]
     if status != 0:
         # append after the 5432 entry
@@ -59,7 +59,7 @@ def main():
         try:
             requests.get("http://{}:8765/".format(args.address))
         except requests.exceptions.ConnectionError:
-            print "Could not detect running listener!"
+            print("Could not detect running listener!")
             exit(2)
 
 

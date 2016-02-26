@@ -6,12 +6,12 @@ import sys
 import re
 
 if len(sys.argv) == 1:
-    print """
+    print("""
 Invoke either by supplying a path or a file and optionally a string to find in a test name
 
 e.g. list_test . provision
 e.g. list_test file.py
-"""
+""")
     sys.exit(1)
 
 
@@ -28,9 +28,9 @@ def parser(filename, exp=None):
     p = re.findall('\s*def\s*[a-zA-Z0-9_]*?(test_.*?{}.*?)\('.format(exp), data)
     for test in p:
         if isinstance(test, basestring):
-            print "{} :: {}".format(filename, test)
+            print("{} :: {}".format(filename, test))
         else:
-            print "{} :: {}".format(filename, test[0])
+            print("{} :: {}".format(filename, test[0]))
 
 exp = None
 if len(sys.argv) == 3:

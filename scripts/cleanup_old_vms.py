@@ -39,7 +39,7 @@ def match(matchers, vm_name):
 
 def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
     with lock:
-        print '{} processing'.format(provider_key)
+        print('{} processing'.format(provider_key))
     try:
         now = datetime.datetime.now()
         with lock:
@@ -61,39 +61,39 @@ def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
                 with lock:
                     vms_to_delete[provider_key].add((vm_name, vm_delta))
         with lock:
-            print '{} finished'.format(provider_key)
+            print('{} finished'.format(provider_key))
     except Exception as ex:
         with lock:
             # Print out the error message too because logs in the job get deleted
-            print '{} failed ({}: {})'.format(provider_key, type(ex).__name__, str(ex))
+            print('{} failed ({}: {})'.format(provider_key, type(ex).__name__, str(ex)))
         logger.error('failed to process vms from provider %s', provider_key)
         logger.exception(ex)
 
 
 def delete_provider_vms(provider_key, vm_names):
     with lock:
-        print 'Deleting VMs from {} ...'.format(provider_key)
+        print('Deleting VMs from {} ...'.format(provider_key))
 
     try:
         with lock:
             provider = get_mgmt(provider_key)
     except Exception as e:
         with lock:
-            print "Could not retrieve the provider {}'s mgmt system ({}: {})".format(
-                provider_key, type(e).__name__, str(e))
+            print("Could not retrieve the provider {}'s mgmt system ({}: {})".format(
+                provider_key, type(e).__name__, str(e)))
             logger.exception(e)
 
     for vm_name in vm_names:
         with lock:
-            print "Deleting {} from {}".format(vm_name, provider_key)
+            print("Deleting {} from {}".format(vm_name, provider_key))
         try:
             provider.delete_vm(vm_name)
         except Exception as e:
             with lock:
-                print 'Failed to delete {} on {}'.format(vm_name, provider_key)
+                print('Failed to delete {} on {}'.format(vm_name, provider_key))
                 logger.exception(e)
     with lock:
-        print "{} is done!".format(provider_key)
+        print("{} is done!".format(provider_key))
 
 
 def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
@@ -117,19 +117,19 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         thread.join()
 
     for provider_key, vm_set in vms_to_delete.items():
-        print '%s:' % provider_key
+        print('{}:'.format(provider_key))
         for vm_name, vm_delta in vm_set:
             days, hours = vm_delta.days, vm_delta.seconds / 3600
-            print ' %s is %d days, %s hours old' % (vm_name, days, hours)
+            print(' {} is {} days, {} hours old'.format(vm_name, days, hours))
 
     if vms_to_delete and prompt:
         yesno = raw_input('Delete these VMs? [y/N]: ')
         if str(yesno).lower() != 'y':
-            print 'Exiting.'
+            print('Exiting.')
             return 0
 
     if not vms_to_delete:
-        print 'No VMs to delete.'
+        print('No VMs to delete.')
 
     thread_queue = []
     for provider_key, vm_set in vms_to_delete.items():
@@ -143,7 +143,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     for thread in thread_queue:
         thread.join()
 
-    print "Deleting finished"
+    print("Deleting finished")
 
 if __name__ == "__main__":
     args = parse_cmd_line()

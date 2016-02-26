@@ -214,8 +214,8 @@ def browse_directory(dir_url):
         with closing(urlopen(dir_url)) as urlpath:
             string_from_url = urlpath.read()
     except HTTPError as e:
-        print str(e)
-        print "Skipping: %s" % dir_url
+        print(str(e))
+        print("Skipping: {}".format(dir_url))
         return None
 
     rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm|ovirt)[^"\'>]*)')
@@ -270,7 +270,7 @@ if __name__ == "__main__":
         try:
             o = urlopen(checksum_url)
         except Exception:
-            print "No valid checksum file for %s. Skipping..." % key
+            print("No valid checksum file for {}. Skipping...".format(key))
             continue
 
         kwargs = {}
@@ -317,13 +317,13 @@ if __name__ == "__main__":
                             get_version(url)
                         )
 
-                    print "---Start of %s: %s---" % (module, provider)
+                    print("---Start of {}: {}---".format(module, provider))
 
                     try:
                         getattr(__import__(module), "run")(**kwargs)
                     except Exception as woops:
-                        print "Exception: Module '%s' with provider '%s' exitted with error." \
-                            % (module, provider)
-                        print woops
+                        print("Exception: Module '{}' with provider '{}' exited with error.".format(
+                            module, provider))
+                        print(woops)
 
-                    print "---End of %s: %s---" % (module, provider)
+                    print("---End of {}: {}---".format(module, provider))

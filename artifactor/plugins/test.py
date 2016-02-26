@@ -17,7 +17,7 @@ class Test(ArtifactorBasePlugin):
             f.write(str(time.time()) + "\n")
         for i in range(2):
             time.sleep(2)
-            print "houh"
+            print("houh")
 
     def finish_test(self, test_name, artifact_path):
-        print "finished"
+        print("finished")

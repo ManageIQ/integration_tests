@@ -400,7 +400,7 @@ def _showwarning(message, category, filename, lineno, file=None, line=None):
             # In case we have both credentials.eyaml and credentials.yaml, it gets in an import loop
             # Therefore it would raise ImportError for art_client. Let's don't bother and just spit
             # it out. This should reduce number of repeated questions down by 99%.
-            print "[WARNING] {}".format(message)
+            print("[WARNING] {}".format(message))
 
 
 def format_marker(mstring, mark="-"):

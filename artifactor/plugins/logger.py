@@ -41,7 +41,7 @@ class Logger(ArtifactorBasePlugin):
         test_ident = "{}/{}".format(test_location, test_name)
         if slaveid in self.store:
             if self.store[slaveid].in_progress:
-                print "Test already running, can't start another, logger"
+                print("Test already running, can't start another, logger")
                 return None
         self.store[slaveid] = self.Test(test_ident)
         self.store[slaveid].in_progress = True

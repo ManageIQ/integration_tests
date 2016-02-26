@@ -4,7 +4,7 @@ import json
 import sys
 
 if len(sys.argv) == 1:
-    print (
+    print(
         """Usage: {} arg1 arg2 ... argN\narg is either a string or int, depending on whether """
         """digging in dict or a list""".format(sys.argv[0]))
     exit(0)
@@ -18,10 +18,10 @@ try:
         elif isinstance(result, list):
             result = result[int(arg)]
         else:
-            print "Cannot apply {} to {}".format(str(arg), str(result))
+            print("Cannot apply {} to {}".format(str(arg), str(result)))
             exit(1)
 except Exception as e:
-    print type(e).__name__, str(e)
+    print("{}\t{}".format(type(e).__name__, str(e)))
     exit(2)
 
-print result
+print(result)

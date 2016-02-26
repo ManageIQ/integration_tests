@@ -14,7 +14,7 @@ data = defaultdict(dict)
 
 
 def process_vm(vm, mgmt, user, prov):
-    print "Inspecting: {} on {}".format(vm, prov)
+    print("Inspecting: {} on {}".format(vm, prov))
     if mgmt.is_vm_stopped(vm):
         return
     ip = mgmt.get_ip_address(vm, timeout=1)
@@ -60,7 +60,7 @@ for prov in li:
     prov_key_db[ip] = prov
     if li[prov]['type'] not in ['ec2', 'scvmm']:
         mgmt = get_mgmt(prov)
-        print "DOING {}".format(prov)
+        print("DOING {}".format(prov))
         process_provider(mgmt, prov)
 
 with open('provider_usage.json', 'w') as f:

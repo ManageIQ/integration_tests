@@ -59,4 +59,4 @@ max_len = len(max(result_attrs, key=len)) + 1
 # now print all the attrs so we can see what we posted (and *that* we
 # posted) in the jenkins log
 for attr in result_attrs[:-1]:
-    print '{:>{width}}: {}'.format(attr, eval(attr), width=max_len)
+    print('{:>{width}}: {}'.format(attr, eval(attr), width=max_len))

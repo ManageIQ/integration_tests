@@ -17,7 +17,7 @@ output = proc.stderr.read()
 if re.findall('^gpg: Good signature', output, re.M):
     gpg = re.findall('fingerprint: ([A-F0-9 ]+)', output)[0].replace(' ', '')
     if gpg in key_list:
-        print "Good sig and match for {}".format(gpg)
+        print("Good sig and match for {}".format(gpg))
         sys.exit(0)
-print "Bad sig"
+print("Bad sig")
 sys.exit(127)

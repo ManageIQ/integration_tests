@@ -47,7 +47,7 @@ def close_logs():
                         try:
                             handler.close()
                         except Exception as e:
-                            print "Could not close handler:", type(e).__name__, str(e)
+                            print("Could not close handler:", type(e).__name__, str(e))
         logger_cache = {}
 
 
@@ -136,11 +136,11 @@ class LogRecordSocketReceiver(SocketServer.ThreadingTCPServer):
 
 def main():
     tcpserver = LogRecordSocketReceiver()
-    print "About to start TCP server..."
+    print("About to start TCP server...")
     try:
         tcpserver.serve_until_stopped()
     except KeyboardInterrupt:
-        print "Quitting"
+        print("Quitting")
 
 if __name__ == "__main__":
     main()

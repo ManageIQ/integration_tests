@@ -67,7 +67,7 @@ class ReportCompile(object):
             self.work_dir.ensure(dir=True)
         except KeyError:
             self.work_dir = local.mkdtemp()
-            print 'Writing composite report to {}'.format(self.work_dir.strpath)
+            print('Writing composite report to {}'.format(self.work_dir.strpath))
         self._progress = None
         self._queue = Queue()
         num_workers = 4
@@ -141,8 +141,8 @@ class ReportCompile(object):
                 if self.num_builds and len(build_numbers) == self.num_builds:
                     break
         if build_numbers:
-            print 'Pulling reports from builds {}'.format(
-                ', '.join([str(n) for n in build_numbers]))
+            print('Pulling reports from builds {}'.format(
+                ', '.join([str(n) for n in build_numbers])))
         return build_numbers
 
     def template_log_dirs(self):
@@ -153,7 +153,7 @@ class ReportCompile(object):
         return log_dirs
 
     def test_reports(self):
-        print 'Collecting test reports to determine best build nodes'
+        print('Collecting test reports to determine best build nodes')
         log_dirs = self.template_log_dirs()
         reports = {}
         c = self.ssh_client
@@ -230,7 +230,7 @@ class ReportCompile(object):
             'tests': OrderedDict()
         }
 
-        print 'Collecting artifacts from best build nodes'
+        print('Collecting artifacts from best build nodes')
         # tracking dict for file pull progress
         remotes_done = {}
         self._progress_update(None, remotes_done)
@@ -249,9 +249,9 @@ class ReportCompile(object):
         try:
             passing_percent = (100. * (test_counts['passed'] + test_counts['skipped']
                 + test_counts['xfailed'])) / sum(test_counts.values())
-            print 'Passing percent:', passing_percent
+            print('Passing percent:', passing_percent)
             # XXX: Terrible artifactor spoofing happens here.
-            print 'Running artifactor reports'
+            print('Running artifactor reports')
             r = reporter.ReporterBase()
             reports_done = {'composite': False, 'provider': False}
             self._progress_update(None, reports_done)
@@ -261,7 +261,7 @@ class ReportCompile(object):
             self._progress_update('provider', reports_done)
             self._progress_finish()
         except ZeroDivisionError:
-            print 'No tests collected from test reports (?!)'
+            print('No tests collected from test reports (?!)')
         return composite_report
 
     def _translate_artifacts_path(self, artifact_path, build_number):
@@ -273,8 +273,8 @@ class ReportCompile(object):
             assert artifact_remote.startswith(composite['remote_sw'])
             assert artifact_local.strpath.startswith(self.work_dir.strpath)
         except AssertionError:
-            print 'wat?'
-            print 'path', artifact_path
-            print 'remote', artifact_remote
-            print 'local', artifact_local.strpath
+            print('wat?')
+            print('path', artifact_path)
+            print('remote', artifact_remote)
+            print('local', artifact_local.strpath)
         return artifact_remote, artifact_local.strpath

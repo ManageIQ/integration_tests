@@ -154,10 +154,10 @@ class Artifactor(Rigger):
         self.logger = create_logger('artifactor', self.log_dir.join('artifactor.log').strpath)
         self.squash_exceptions = self.config.get('squash_exceptions', False)
         if not self.log_dir:
-            print "!!! Log dir must be specified in yaml"
+            print("!!! Log dir must be specified in yaml")
             sys.exit(127)
         if not self.artifact_dir:
-            print "!!! Artifact dir must be specified in yaml"
+            print("!!! Artifact dir must be specified in yaml")
             sys.exit(127)
         self.config['zmq_socket_address'] = 'tcp://127.0.0.1:{}'.format(random_port())
         self.setup_plugin_instances()
@@ -268,7 +268,7 @@ def setup_artifact_dir(root_dir=None, test_name=None, test_location=None,
             if overwrite:
                 pass
             else:
-                print "Directories already existed and overwrite is set to False"
+                print("Directories already existed and overwrite is set to False")
                 sys.exit(127)
         else:
             raise

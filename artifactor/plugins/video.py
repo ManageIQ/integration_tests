@@ -42,7 +42,7 @@ class Video(ArtifactorBasePlugin):
         test_ident = "{}/{}".format(test_location, test_name)
         if test_ident in self.tests:
             if self.tests[test_ident].in_progress:
-                print "Test already running, can't start another"
+                print("Test already running, can't start another")
                 return None
         else:
             self.tests[test_ident] = self.Test(test_ident)
@@ -58,7 +58,7 @@ class Video(ArtifactorBasePlugin):
                                                        quality=self.quality)
             self.tests[test_ident].recorder.start()
         except Exception as e:
-            print e
+            print(e)
         self.tests[test_ident].in_progress = True
         for filename in artifacts:
             self.fire_hook('filedump', test_location=test_location, test_name=test_name,
@@ -73,7 +73,7 @@ class Video(ArtifactorBasePlugin):
         try:
             self.tests[test_ident].recorder.stop()
         except Exception as e:
-            print e
+            print(e)
         del self.tests[test_ident]
 
     def finish_session(self):
@@ -81,4 +81,4 @@ class Video(ArtifactorBasePlugin):
             for test in self.tests:
                 test.recorder.stop()
         except Exception as e:
-            print e
+            print(e)
