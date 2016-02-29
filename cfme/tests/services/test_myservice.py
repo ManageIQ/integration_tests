@@ -16,6 +16,7 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils import version, browser
 from utils.version import current_version
+from utils.browser import ensure_browser_open
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name"),
@@ -31,6 +32,7 @@ def needs_firefox():
 
     I recommend putting it in the first place.
     """
+    ensure_browser_open()
     if browser.browser().name != "firefox":
         pytest.skip(msg="This test needs firefox to run")
 
