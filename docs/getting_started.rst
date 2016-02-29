@@ -142,7 +142,7 @@ Testing Framework
 The testing framework being used is `py.test <http://pytest.org/latest>`_
 
 Using the testing framework (for newbies or non-CFMEQE core people)
---------------------------------------------------------------
+-------------------------------------------------------------------
 Our team relies on a lot of internal tools that simplify life to the QEs. If eg. a developer would
 like to run ``cfme_tests`` on his/her system, here are some tools and tips that should get you
 started as quickly as possible:

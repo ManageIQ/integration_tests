@@ -15,10 +15,12 @@ details_page = Region(infoblock_type='detail')
 cfg_btn = partial(tb.select, "Configuration")
 pol_btn = partial(tb.select, 'Policy')
 lifecycle_btn = partial(tb.select, 'Lifecycle')
-output_table = version.pick({'5.5': Table('//div[@id="list_grid"]/table'),
-                             '5.4': SplitTable(
-                            ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
-                            ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1))})
+output_table = lambda: version.pick(
+    {'5.5': Table('//div[@id="list_grid"]/table'),
+    '5.4': SplitTable(
+        ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
+        ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1))}
+)
 
 edit_tags_form = Form(
     fields=[
@@ -79,7 +81,7 @@ class Stack(Pretty):
         sel.force_navigate('clouds_stack', context={'stack': self})
         sel.click(details_page.infoblock.element("Relationships", "Outputs"))
         cells = {'Key': "WebsiteURL"}
-        output_table.click_rows_by_cells(cells, "Key", True)
+        output_table().click_rows_by_cells(cells, "Key", True)
 
     def nav_to_resources_link(self):
         sel.force_navigate('clouds_stack', context={'stack': self})

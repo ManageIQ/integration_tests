@@ -824,8 +824,7 @@ class SMTPSettings(Updateable):
         )
         smtp.update()
 
-    Todo:
-        * send a test-email, if that will be needed.
+    Note: TODO: send a test-email, if that will be needed.
 
     """
     smtp_settings = Form(
@@ -1140,7 +1139,6 @@ class Schedule(Pretty):
     """ Configure/Configuration/Region/Schedules functionality
 
     CReate, Update, Delete functionality.
-    Todo: Maybe the row handling might go into Table class?
 
     Args:
         name: Schedule's name.
@@ -1175,6 +1173,9 @@ class Schedule(Pretty):
         # Or
         Schedule.enable_by_names("One schedule", "Other schedule")
         # And so.
+
+    Note: TODO: Maybe the row handling might go into Table class?
+
     """
     tab = {"Hourly": "timer_hours",
            "Daily": "timer_days",

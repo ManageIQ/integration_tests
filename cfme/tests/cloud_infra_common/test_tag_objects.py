@@ -76,7 +76,7 @@ def test_tag_item_through_selecting(request, location, tag):
     """
     pytest.sel.force_navigate(location)
     tb.select('Grid View')
-    if not Quadicon.any_present:
+    if not Quadicon.any_present():
         pytest.skip("No Quadicon present, cannot test.")
     Quadicon.select_first_quad()
 
@@ -108,7 +108,7 @@ def test_tag_item_through_details(request, location, tag):
     """
     pytest.sel.force_navigate(location)
     tb.select('Grid View')
-    if not Quadicon.any_present:
+    if not Quadicon.any_present():
         pytest.skip("No Quadicon present, cannot test.")
     pytest.sel.click(Quadicon.first())
     request.addfinalizer(lambda: diaper(lambda: mixins.remove_tag(tag)))

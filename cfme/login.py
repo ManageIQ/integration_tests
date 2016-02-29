@@ -22,6 +22,7 @@ from fixtures.pytest_store import store
 
 
 page = Region(
+    # TODO: Make title defer it's resolution
     title={version.LOWEST: "Dashboard", '5.5': "Login"},
     locators={
         'username': Input("user_name"),

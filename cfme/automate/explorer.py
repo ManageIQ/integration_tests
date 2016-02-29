@@ -11,7 +11,7 @@ from cfme.web_ui import Form, Table, Tree, UpDownSelect, fill, Select, ScriptBox
     Region, form_buttons, accordion, Input, AngularSelect
 import cfme.exceptions as exceptions
 from utils.update import Updateable
-from utils import error, version
+from utils import error, version, on_rtd
 from collections import Mapping
 import re
 from utils.log import logger
@@ -296,12 +296,15 @@ class Domain(TreeNode, Updateable):
 
     @classproperty
     def default(cls):
-        if not hasattr(cls, "_default_domain"):
-            cls._default_domain = version.pick({
-                version.LOWEST: None,
-                '5.3': cls('Default')
-            })
-        return cls._default_domain
+        if on_rtd:
+            return cls('Default')
+        else:
+            if not hasattr(cls, "_default_domain"):
+                cls._default_domain = version.pick({
+                    version.LOWEST: None,
+                    '5.3': cls('Default')
+                })
+            return cls._default_domain
 
 
 domain_order_selector = UpDownSelect(

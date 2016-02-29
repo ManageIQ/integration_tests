@@ -11,7 +11,7 @@ from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSe
     CheckboxSelect, Input, AngularSelect
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
-from utils import version
+from utils import version, deferred_verpick
 from utils.db import cfmedb
 from utils.log import logger
 from utils.update import Updateable
@@ -295,6 +295,7 @@ nav.add_branch(
         [
             lambda ctx: accordion_func(
                 "Conditions", "All Conditions",
+                # TODO: This needs to be replace with a deferred call
                 version.pick({
                     version.LOWEST: "VM Conditions",
                     "5.4": "All VM and Instance Conditions"}),
@@ -525,13 +526,10 @@ class VMCondition(BaseCondition, VMObject):
 
 class HostCondition(BaseCondition, HostObject):
     PREFIX = "host_"
-
-    @property
-    def DELETE_STRING(self):
-        if version.current_version() >= "5.4":
-            return "Delete this Host / Node Condition"
-        else:
-            return "Delete this Host Condition"
+    DELETE_STRING = deferred_verpick({
+        version.LOWEST: "Delete this Host Condition",
+        '5.4': "Delete this Host / Node Condition"
+    })
 
 
 class BasePolicy(Updateable, Pretty):

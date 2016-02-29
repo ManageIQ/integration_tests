@@ -1,11 +1,11 @@
 """
 To use the function tracer, simply import the trace object and wrap a function with it
 
-from utils.tracer import trace
+from utils.tracer import trace::
 
-@trace(scope=3)
-def func():
-    print("something")
+  @trace(scope=3)
+  def func():
+      print("something")
 
 """
 import sys

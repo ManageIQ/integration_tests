@@ -65,8 +65,7 @@ class MiqInfraObject(object):
 
         Accesses network.
 
-        Todo:
-            * cache?
+        Note: TODO: cache?
         """
         return getattr(get_client().service, self.GETTER_FUNC)(self.id)
 
