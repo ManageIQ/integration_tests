@@ -2,7 +2,7 @@ Getting Started
 ===============
 
 Before you start copypasting ...
---------------------------------
+----------------------------
 Welcome to the Getting Started Guide. The CFME QE team is glad that you have decided to read this
 page that will help you understand how ``cfme_tests`` interacts with the appliances. There are some
 important informations contained within this text, so we would like you to spend some time to
