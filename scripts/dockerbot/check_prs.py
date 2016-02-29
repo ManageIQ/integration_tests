@@ -293,7 +293,7 @@ def check_status(pr):
               'passed': 'success',
               'running': 'pending'}
 
-    task_updated_states = {}
+    task_updated_state = None
 
     try:
         tasks = tapi.task.get(run=run_id)['objects']
@@ -306,8 +306,8 @@ def check_status(pr):
                     else:
                         logger.info('Setting task {} for pr {} to {}'
                                     .format(task['stream'], pr['number'], states[task['result']]))
-                        task_updated_states[task['stream']] = states[task['result']]
                         set_status(commit, states[task['result']], task['stream'])
+                        task_updated_state = states[task['result']]
                         break
             else:
                 logger.info('Setting task {} for pr {} to {}'
@@ -317,14 +317,10 @@ def check_status(pr):
         pass
 
     failed_states = ['pending', 'invalid', 'running']
-    if task_updated_states and not any(x in failed_states for x in task_updated_states.values()):
+    if task_updated_state and task_updated_state not in failed_states:
         # There are no pending, invalid or running states in the run_id
-        if 'failed' in task_updated_states.values():
-            failed_streams = [x.key() for x in task_updated_states if x.value() == 'failed']
-            send_message_to_bot("Tests PR #{} failed on streams {}".format(
-                pr['number'], failed_streams))
-        else:
-            send_message_to_bot("Tests for PR #{} passed".format(pr['number']))
+        send_message_to_bot("PR: #{} {} - {} - {}".format(
+            pr['number'], pr['title'], task['stream'], task_updated_state))
 
 
 def check_pr(pr):
@@ -380,7 +376,7 @@ def check_pr(pr):
         elif "[WIP]" in pr['title']:
             new_pr['wip'] = True
         tapi.pr(pr['number']).put(new_pr)
-        send_message_to_bot("New PR: #{} {}".format(pr['number'], pr['title']))
+        send_message_to_bot("PR: #{} {} - New".format(pr['number'], pr['title']))
 
     check_status(pr)
 
