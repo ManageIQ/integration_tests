@@ -37,9 +37,11 @@ on_exit () {
 # Args:
 #   $1 cmd - Command to run
 #   $2 max_retry - Maximum num of attempts to run the command; defaults to 5
+#   $3 sleep_duration - duration to sleep between attempts; defaults to 0
 do_or_die () {
     cmd=$1
     max_retry=${2:-5}
+    sleep_duration=${3:-0}
     try=0
     ret_val=1
     while [ "$ret_val" -ne "0" ]; do
@@ -48,6 +50,7 @@ do_or_die () {
             log "Running the command - try $try of $max_retry..."
             eval "$cmd"
             let ret_val="$?";
+            sleep "$sleep_duration"
         else
             log "Failed to run the command $try times - exiting now..."
             exit
@@ -116,9 +119,7 @@ git config --global user.email "me@dockerbot"
 git config --global user.name "DockerBot"
 
 # Get the GPG-Keys
-# It's not a mistake to run this twice ;)
-do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1"
-do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+do_or_die "/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1" 5 1
 
 # die on errors
 set -e

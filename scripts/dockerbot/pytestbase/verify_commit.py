@@ -6,10 +6,7 @@ import re
 
 commit = sys.argv[1]
 
-key_list = []
-for key in conf['gpg']['allowed_keys']:
-    key_list.append(key.replace(' ', ''))
-
+key_list = [key.replace(' ', '') for key in conf['gpg']['allowed_keys']]
 proc = subprocess.Popen(['git', 'verify-commit', commit], stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE)
 proc.wait()
