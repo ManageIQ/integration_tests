@@ -2436,6 +2436,10 @@ class UpDownSelect(Region):
             sel.click(self.down)
 
 
+import ipdb; ipdb.set_trace()
+
+
+
 @fill.method((UpDownSelect, Sequence))
 def _fill_uds_seq(uds, seq):
     seq = map(str, seq)

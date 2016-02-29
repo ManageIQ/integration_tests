@@ -198,6 +198,9 @@ class Host(Updateable, Pretty):
         fill(credential_form, self.ipmi_credentials, validate=validate_credentials)
         self._submit(cancel, host_add_btn)
 
+
+
+
     def update(self, updates, cancel=False, validate_credentials=False):
         """
         Updates a host in the UI.  Better to use utils.update.update context
