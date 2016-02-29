@@ -285,6 +285,7 @@ class EC2Instance(Instance):
     STATE_ON = "on"
     STATE_OFF = "off"
     STATE_SUSPENDED = "suspended"
+    STATE_TERMINATED = "terminated"
     STATE_UNKNOWN = "unknown"
 
     def create(self, email=None, first_name=None, last_name=None, availability_zone=None,
