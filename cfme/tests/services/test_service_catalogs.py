@@ -6,10 +6,12 @@ from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.automate.service_dialogs import ServiceDialog
+from cfme.exceptions import FlashMessageException
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
+from utils.providers import setup_provider
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
@@ -204,10 +206,15 @@ def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catal
                   description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
     catalog_item.create()
     flash.assert_message_match("'Catalog/Name' is required")
+    if not provider.exists:
+        try:
+            setup_provider(provider.key)
+        except FlashMessageException as e:
+            e.skip_and_log("Provider failed to set up")
 
 
 @pytest.mark.meta(blockers=[1210541])
-def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
+def test_edit_catalog_after_deleting_provider(provider, catalog_item):
     """Tests edit catalog item after deleting provider
 
     Metadata:
@@ -218,3 +225,33 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
     catalog_item.update({'description': 'my edited description'})
     flash.assert_success_message('Service Catalog Item "%s" was saved' %
                                  catalog_item.name)
+    if not provider.exists:
+        try:
+            setup_provider(provider.key)
+        except FlashMessageException as e:
+            e.skip_and_log("Provider failed to set up")
+
+
+def test_request_with_orphaned_template(provider, catalog_item):
+    """Tests edit catalog item after deleting provider
+
+    Metadata:
+        test_flag: provision
+    """
+    catalog_item.create()
+    service_catalogs = ServiceCatalogs("service_name")
+    service_catalogs.order(catalog_item.catalog, catalog_item)
+    logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
+    row_description = catalog_item.name
+    cells = {'Description': row_description}
+    provider.delete(cancel=False)
+    provider.wait_for_delete()
+    requests.go_to_request(cells)
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+        fail_func=requests.reload, num_sec=1800, delay=20)
+    assert row.status.text == 'Error'
+    if not provider.exists:
+        try:
+            setup_provider(provider.key)
+        except FlashMessageException as e:
+            e.skip_and_log("Provider failed to set up")
