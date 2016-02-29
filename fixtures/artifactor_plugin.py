@@ -42,7 +42,13 @@ for cred in credentials:
 
 
 def get_test_idents(item):
-    return item.location[2], item.location[0]
+    try:
+        return item.location[2], item.location[0]
+    except AttributeError:
+        try:
+            return item.fspath.strpath, None
+        except AttributeError:
+            return (None, None)
 
 
 class DummyClient(object):
