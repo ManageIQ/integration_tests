@@ -78,8 +78,9 @@ def change_edomain_state(api, state, edomain):
                 print '{} successfully set to {} state'.format(edomain, state)
                 return True
         return False
-    except Exception:
-        print "Exception occurred while changing {} state to {}".format(edomain, state)
+    except Exception as e:
+        print(e)
+        print("Exception occurred while changing {} state to {}".format(edomain, state))
         return False
 
 
@@ -211,10 +212,21 @@ def check_disks(api):
 # sometimes, rhevm is just not cooperative. This is function used to wait for template on
 # export domain to become unlocked
 def check_edomain_template(api, edomain):
-    template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
-    if template.get_status().state != "ok":
+    '''
+    checks for the edomain templates status, and returns True, if template state is ok
+    otherwise returns False. try, except block returns the False in case of Exception,
+    as wait_for handles the timeout Exceptions.
+    :param api: API to chosen RHEVM provider.
+    :param edomain: export domain.
+    :return: True or False based on the template status.
+    '''
+    try:
+        template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
+        if template.get_status().state != "ok":
+            return False
+        return True
+    except Exception:
         return False
-    return True
 
 
 # verify the template deletion
@@ -294,13 +306,16 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass):
         sshname: edomain ssh credentials.
         sshpass: edomain ssh credentials.
     """
-    print "RHEVM: Deleting the empty directories on edomain/vms file..."
-    ssh_client = make_ssh_client(edomainip, sshname, sshpass)
-    command = 'cd {}/master/vms && find . -maxdepth 1 -type d -empty -delete'.format(path)
-    exit_status, output = ssh_client.run_command(command)
-    if exit_status != 0:
-        print "RHEVM: Error while deleting the empty directories on path.."
-        print output
+    try:
+        print("RHEVM: Deleting the empty directories on edomain/vms file...")
+        ssh_client = make_ssh_client(edomainip, sshname, sshpass)
+        command = 'cd {}/master/vms && find . -maxdepth 1 -type d -empty -delete'.format(path)
+        exit_status, output = ssh_client.run_command(command)
+        if exit_status != 0:
+            print("RHEVM: Error while deleting the empty directories on path..")
+            print(output)
+    except Exception:
+        return False
 
 
 def cleanup(api, edomain, ssh_client, ovaname):
@@ -527,8 +542,8 @@ def run(**kwargs):
             print("RHEVM: Templatizing VM...")
             templatize_vm(api, template_name, kwargs.get('cluster'))
         finally:
-            change_edomain_state(api, 'maintenance', kwargs.get('edomain'))
             cleanup(api, kwargs.get('edomain'), ssh_client, ovaname)
+            change_edomain_state(api, 'maintenance', kwargs.get('edomain'))
             cleanup_empty_dir_on_edomain(path, edomain_ip,
                                          sshname, sshpass)
             change_edomain_state(api, 'active', kwargs.get('edomain'))

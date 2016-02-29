@@ -11,6 +11,7 @@ import datetime
 import pytz
 from threading import Lock, Thread
 
+from utils import net
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.ssh import SSHClient
@@ -61,12 +62,12 @@ def change_edomain_state(api, state, edomain):
                     dc.storagedomains.get(edomain).activate()
 
                 wait_for(is_edomain_template_deleted,
-                        [api, state, edomain], fail_condition=False, delay=5)
-                print '{} successfully set to {} state'.format(edomain, state)
+                         [api, state, edomain], fail_condition=False, delay=5)
+                print('{} successfully set to {} state'.format(edomain, state))
                 return True
         return False
     except Exception:
-        print "Exception occurred while changing {} state to {}".format(edomain, state)
+        print("Exception occurred while changing {} state to {}".format(edomain, state))
         return False
 
 
@@ -98,13 +99,13 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass):
         sshname: edomain ssh credentials.
         sshpass: edomain ssh credentials.
     """
-    print "RHEVM: Deleting the empty directories on edomain/vms file..."
+    print("RHEVM: Deleting the empty directories on edomain/vms file...")
     ssh_client = make_ssh_client(edomainip, sshname, sshpass)
     command = 'cd {}/master/vms && find . -maxdepth 1 -type d -empty -delete'.format(path)
     exit_status, output = ssh_client.run_command(command)
     if exit_status != 0:
-        print "RHEVM: Error while deleting the empty directories on path.."
-        print output
+        print("RHEVM: Error while deleting the empty directories on path..")
+        print(output)
 
 
 def is_edomain_template_deleted(api, name, edomain):
@@ -129,16 +130,16 @@ def delete_edomain_templates(api, template, edomain):
     with lock:
         creation_time = template.get_creation_time().strftime("%d %B-%Y")
         name = template.get_name()
-        print 'Deleting {} created on {} ...'.format(name, creation_time)
+        print('Deleting {} created on {} ...'.format(name, creation_time))
     try:
         template.delete()
-        print 'waiting for {} to be deleted..'.format(name)
+        print('waiting for {} to be deleted..'.format(name))
         wait_for(is_edomain_template_deleted,
                  [api, name, edomain], fail_condition=False, delay=5)
-        print "RHEVM: successfully deleted the template {}".format(name)
+        print("RHEVM: successfully deleted the template {}".format(name))
     except Exception as e:
         with lock:
-            print "RHEVM: Exception occurred while deleting the template {}".format(name)
+            print("RHEVM: Exception occurred while deleting the template {}".format(name))
             logger.exception(e)
 
 
@@ -156,7 +157,7 @@ def cleanup_templates(api, edomain, days, max_templates):
                 delete_templates.append(template)
 
     if not delete_templates:
-        print "RHEVM: No old templates to delete in {}".format(edomain)
+        print("RHEVM: No old templates to delete in {}".format(edomain))
 
     for delete_template in delete_templates[:max_templates]:
         thread = Thread(target=delete_edomain_templates,
@@ -178,13 +179,14 @@ def api_params_resolution(item_list, item_name, item_param):
         item_param: Name of parameter representing data in the script.
     """
     if len(item_list) == 0:
-        print "RHEVM: Cannot find {} ({}) automatically.".format(item_name, item_param)
-        print "Please specify it by cmd-line parameter '--{}' or in cfme_data.".format(item_param)
+        print("RHEVM: Cannot find {} ({}) automatically.".format(item_name, item_param))
+        print("Please specify it by cmd-line parameter '--{}' or in cfme_data.".format(item_param))
         return None
     elif len(item_list) > 1:
-        print "RHEVM: Found multiple instances of {}. Picking '{}'.".format(item_name, item_list[0])
+        print("RHEVM: Found multiple instances of {}. Picking '{}'.".format(
+            item_name, item_list[0]))
     else:
-        print "RHEVM: Found {} '{}'.".format(item_name, item_list[0])
+        print("RHEVM: Found {} '{}'.".format(item_name, item_list[0]))
 
     return item_list[0]
 
@@ -254,24 +256,30 @@ def run(**kwargs):
         if args.provider:
             if args.provider != provider:
                 continue
+        if not net.is_pingable(cfme_data['management_systems'][provider]['ipaddress']):
+            continue
         mgmt_sys = cfme_data['management_systems'][provider]
         ssh_rhevm_creds = mgmt_sys['hosts'][0]['credentials']
         sshname = credentials[ssh_rhevm_creds]['username']
         sshpass = credentials[ssh_rhevm_creds]['password']
 
-        api = get_mgmt(provider)
-        edomain = get_edomain(api)
-        if args.edomain:
-            edomain = args.edomain
-        path, edomain_ip = get_edomain_path(api, edomain)
         try:
-            print "\n--------Start of {}--------".format(provider)
-            change_edomain_state(api, 'maintenance', edomain)
+            api = get_mgmt(provider).api
+            edomain = get_edomain(api)
+            if args.edomain:
+                edomain = args.edomain
+            path, edomain_ip = get_edomain_path(api, edomain)
+        except Exception:
+            continue
+
+        try:
+            print("\n--------Start of {}--------".format(provider))
             cleanup_templates(api, edomain, args.days_old, args.max_templates)
         finally:
+            change_edomain_state(api, 'maintenance', edomain)
             cleanup_empty_dir_on_edomain(path, edomain_ip, sshname, sshpass)
             change_edomain_state(api, 'active', edomain)
-            print "--------End of {}--------\n".format(provider)
+            print("--------End of {}--------\n".format(provider))
 
 
 if __name__ == "__main__":
