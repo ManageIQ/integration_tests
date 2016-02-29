@@ -7,7 +7,7 @@ from cfme.web_ui import (
     accordion, fill, flash, paginator, toolbar, CheckboxTree, Region, Tree, Quadicon)
 from cfme.web_ui.menu import extend_nav
 from functools import partial
-from utils import deferred_verpick, version
+from utils.api import rest_api
 from utils.wait import wait_for
 
 
@@ -151,6 +151,14 @@ class Instance(VM):
             else:
                 return True
 
+    def get_vm_via_rest(self):
+        # Try except block, because instances collection isn't available on 5.4
+        try:
+            instance = rest_api().collections.instances.get(name=self.name)
+        except AttributeError:
+            raise Exception("Collection instances isn't available")
+        return instance
+
 
 @VM.register_for_provider_type("openstack")
 class OpenStackInstance(Instance):
@@ -171,14 +179,8 @@ class OpenStackInstance(Instance):
     STATE_ON = "on"
     STATE_OFF = "off"
     STATE_ERROR = "non-operational"
-    STATE_PAUSED = deferred_verpick({
-        version.LOWEST: "off",
-        "5.4": "paused",
-    })
-    STATE_SUSPENDED = deferred_verpick({
-        version.LOWEST: "off",
-        "5.4": "suspended",
-    })
+    STATE_PAUSED = "paused"
+    STATE_SUSPENDED = "suspended"
     STATE_UNKNOWN = "unknown"
 
     def create(self, email=None, first_name=None, last_name=None, cloud_network=None,

@@ -15,6 +15,7 @@ from cfme.web_ui import (
 from cfme.web_ui.menu import extend_nav
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
+from utils.api import rest_api
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
@@ -379,6 +380,9 @@ class Vm(BaseVM, Common):
             "//td[@class='key' and normalize-space(.)='Description']/.."
             "/td[not(contains(@class, 'key'))]"])
         return sel.text(l).strip()
+
+    def get_vm_via_rest(self):
+        return rest_api().collections.vms.get(name=self.name)
 
     class CfmeRelationship(object):
 
