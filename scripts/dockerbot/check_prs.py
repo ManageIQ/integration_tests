@@ -294,6 +294,7 @@ def check_status(pr):
               'running': 'pending'}
 
     task_updated_state = None
+    task_stream = None
 
     try:
         tasks = tapi.task.get(run=run_id)['objects']
@@ -308,6 +309,7 @@ def check_status(pr):
                                     .format(task['stream'], pr['number'], states[task['result']]))
                         set_status(commit, states[task['result']], task['stream'])
                         task_updated_state = states[task['result']]
+                        task_stream = task['stream']
                         break
             else:
                 logger.info('Setting task {} for pr {} to {}'
@@ -317,10 +319,10 @@ def check_status(pr):
         pass
 
     failed_states = ['pending', 'invalid', 'running']
-    if task_updated_state and task_updated_state not in failed_states:
+    if task_updated_state and task_stream and task_updated_state not in failed_states:
         # There are no pending, invalid or running states in the run_id
         send_message_to_bot("PR: #{} {} - {} - {}".format(
-            pr['number'], pr['title'], task['stream'], task_updated_state))
+            pr['number'], pr['title'], task_stream, task_updated_state))
 
 
 def check_pr(pr):
