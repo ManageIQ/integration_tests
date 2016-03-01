@@ -313,6 +313,7 @@ def test_ssa_vm(provider, instance, soft_assert):
     logger.info("Icons: {}, {}".format(details_os_icon, quadicon_os_icon))
 
     # We shouldn't use get_detail anymore - it takes too much time
+    c_lastanalyzed = InfoBlock.text('Lifecycle', 'Last Analyzed')
     c_users = InfoBlock.text('Security', 'Users')
     c_groups = InfoBlock.text('Security', 'Groups')
     c_packages = 0
@@ -322,6 +323,7 @@ def test_ssa_vm(provider, instance, soft_assert):
     logger.info("SSA shows {} users, {} groups and {} packages".format(
         c_users, c_groups, c_packages))
 
+    soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
     soft_assert(e_icon_part in details_os_icon,
                 "details icon: '{}' not in '{}'".format(e_icon_part, details_os_icon))
     soft_assert(e_icon_part in quadicon_os_icon,
