@@ -54,9 +54,9 @@ def _ap_single_branch(ugly, nice):
 def _ap_multi_branch(ugly, nice):
     """Generates branch for listing and adding the profiles"""
     return [
-        accordion_func(
+        lambda ctx: accordion_func(
             "Alert Profiles", "All Alert Profiles", "{} Alert Profiles".format(
-                version.pick(nice) if isinstance(nice, dict) else nice)),
+                version.pick(nice) if isinstance(nice, dict) else nice))(),
         {
             "{}_alert_profile_new".format(ugly):
             lambda _: cfg_btn("Add a New {} Alert Profile".format(
@@ -74,7 +74,7 @@ def accordion_func(accordion_title, *nodes):
         accordion_title: Text on accordion.
         *nodes: Nodes to click through.
     """
-    def f(_):
+    def f(_=None):
         try:
             accordion.tree(accordion_title, *nodes)
         except NoSuchElementException:
@@ -317,10 +317,10 @@ nav.add_branch(
 
         "vm_conditions":
         [
-            accordion_func("Conditions", "All Conditions",
+            lambda ctx: accordion_func("Conditions", "All Conditions",
                 version.pick({
                     version.LOWEST: "VM Conditions",
-                    "5.4": "All VM and Instance Conditions"})),
+                    "5.4": "All VM and Instance Conditions"}))(None),
             {
                 "vm_condition_new":
                 lambda _: cfg_btn(version.pick({
@@ -819,19 +819,15 @@ class BaseControlPolicy(BasePolicy):
 class HostCompliancePolicy(BasePolicy, HostObject):
     PREFIX = "host_compliance_"
 
-    @property
-    def DELETE_STRING(self):
-        if version.current_version() >= "5.4":
-            return "Delete this Host / Node Policy"
-        else:
-            return "Delete this Host Policy"
+    DELETE_STRING = deferred_verpick({
+        version.LOWEST: "Delete this Host Policy",
+        "5.4": "Delete this Host / Node Policy"
+    })
 
-    @property
-    def COPY_STRING(self):
-        if version.current_version() >= "5.4":
-            return "Copy this Host / Node Policy"
-        else:
-            return "Copy this Host Policy"
+    COPY_STRING = deferred_verpick({
+        version.LOWEST: "Copy this Host Policy",
+        "5.4": "Copy this Host / Node Policy"
+    })
 
     def __str__(self):
         if version.current_version() >= "5.4":
@@ -852,19 +848,15 @@ class VMCompliancePolicy(BasePolicy, VMObject):
 class HostControlPolicy(BaseControlPolicy, HostObject):
     PREFIX = "host_control_"
 
-    @property
-    def DELETE_STRING(self):
-        if version.current_version() >= "5.4":
-            return "Delete this Host / Node Policy"
-        else:
-            return "Delete this Host Policy"
+    DELETE_STRING = deferred_verpick({
+        version.LOWEST: "Delete this Host Policy",
+        "5.4": "Delete this Host / Node Policy"
+    })
 
-    @property
-    def COPY_STRING(self):
-        if version.current_version() >= "5.4":
-            return "Copy this Host / Node Policy"
-        else:
-            return "Copy this Host Policy"
+    COPY_STRING = deferred_verpick({
+        version.LOWEST: "Copy this Host Policy",
+        "5.4": "Copy this Host / Node Policy"
+    })
 
     def __str__(self):
         if version.current_version() >= "5.4":
