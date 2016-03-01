@@ -251,7 +251,7 @@ class ConfigManager(Updateable, Pretty):
     def exists(self):
         """Returns whether the manager exists in the UI or not"""
         sel.force_navigate('infrastructure_config_managers')
-        if (Quadicon.any_present and
+        if (Quadicon.any_present() and
                 Quadicon('{} Configuration Manager'.format(self.name), None).exists):
             return True
         return False

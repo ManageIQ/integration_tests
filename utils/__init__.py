@@ -2,9 +2,13 @@
 import atexit
 import re
 import subprocess
+import os
 
 # import diaper for backward compatibility
 import diaper
+
+
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 
 def lazycache(wrapped_method):
@@ -181,11 +185,17 @@ def deferred_verpick(version_d):
 
     Useful for verpicked constants.
     """
-    from utils.version import pick as _version_pick
+    from utils.version import Version, pick as _version_pick
 
     @classproperty
     def getter(self):
-        return _version_pick(version_d)
+        if on_rtd:
+            if version_d:
+                return version_d[sorted(version_d.keys(), key=Version)[-1]]
+            else:
+                raise Exception("Nothing to pick from")
+        else:
+            return _version_pick(version_d)
     return getter
 
 

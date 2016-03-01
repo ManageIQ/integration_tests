@@ -4,8 +4,7 @@
 Whether we can create/update/delete/assign/... these objects. Nothing with deep meaning.
 Can be also used as a unit-test for page model coverage.
 
-Todo:
-    * Multiple expression types entering. (extend the update tests)
+TODO: * Multiple expression types entering. (extend the update tests)
 """
 import fauxfactory
 import pytest

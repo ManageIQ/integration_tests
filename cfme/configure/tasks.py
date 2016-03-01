@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 """ Module dealing with Configure/Tasks section.
-
-Todo: Finish the rest of the things.
 """
 
 from cfme import web_ui as ui
@@ -12,7 +10,7 @@ from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
-from utils.version import pick, LOWEST
+from utils.version import LOWEST
 
 
 nav.add_branch("tasks",
@@ -26,12 +24,12 @@ nav.add_branch("tasks",
 
 buttons = Region(
     locators=dict(
-        default=pick({LOWEST: "//*[@id='buttons_off']/li[3]/a/img",
-                 '5.4': "//*[@id='buttons_off']/a"}),
-        apply=pick({LOWEST: "//*[@id='buttons_on']/li[1]/a/img",
-               '5.4': "//*[@id='buttons_on']/a[1]"}),
-        reset=pick({LOWEST: "//*[@id='buttons_on']/li[2]/a/img",
-               '5.4': "//*[@id='buttons_on']/a[2]"})
+        default={LOWEST: "//*[@id='buttons_off']/li[3]/a/img",
+                 '5.4': "//*[@id='buttons_off']/a"},
+        apply={LOWEST: "//*[@id='buttons_on']/li[1]/a/img",
+               '5.4': "//*[@id='buttons_on']/a[1]"},
+        reset={LOWEST: "//*[@id='buttons_on']/li[2]/a/img",
+               '5.4': "//*[@id='buttons_on']/a[2]"}
     )
 )
 

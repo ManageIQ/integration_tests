@@ -37,9 +37,10 @@ def test_server_roles_changing(request, roles):
     """ Test that sets and verifies the server roles in configuration.
 
     If there is no forced interrupt, it cleans after, so the roles are intact after the testing.
-    Todo:
-        - Use for parametrization on more roles set?
-        - Change the yaml role list to dict.
+    Note:
+      TODO:
+      - Use for parametrization on more roles set?
+      - Change the yaml role list to dict.
     """
     request.addfinalizer(partial(configuration.set_server_roles,
                                  **configuration.get_server_roles()))   # For reverting back
