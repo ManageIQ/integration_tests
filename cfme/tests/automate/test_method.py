@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 from cfme.automate.explorer import Namespace, Class, Method, Domain
-from utils import version
 from utils.update import update
 import utils.error as error
 

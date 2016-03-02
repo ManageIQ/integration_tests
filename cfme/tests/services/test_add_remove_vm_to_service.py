@@ -15,7 +15,6 @@ from cfme.web_ui import flash
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
-from utils import version
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),

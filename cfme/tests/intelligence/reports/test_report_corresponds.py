@@ -5,7 +5,6 @@ from random import sample
 
 import utils
 from cfme.intelligence.reports.reports import CustomReport
-from utils import version
 from utils.providers import get_mgmt_by_name, setup_a_provider
 from utils.version import since_date_or_version
 
@@ -22,21 +21,12 @@ def report_vms(setup_first_provider):
         title=fauxfactory.gen_alphanumeric(),
         base_report_on="Virtual Machines",
         report_fields=[
-            version.pick({
-                version.LOWEST: "Provider : Name",
-                "5.3": "Cloud/Infrastructure Provider : Name",
-            }),
-            version.pick({
-                version.LOWEST: "Cluster : Name",
-                "5.4.0.0.24": "Cluster / Deployment Role : Name",
-            }),
+            "Cloud/Infrastructure Provider : Name",
+            "Cluster / Deployment Role : Name",
             "Datastore : Name",
             "Hardware : Number of CPUs",
             "Hardware : RAM",
-            version.pick({
-                version.LOWEST: "Host : Name",
-                "5.4.0.0.24": "Host / Node : Name",
-            }),
+            "Host / Node : Name",
             "Name",
         ]
     )
@@ -44,12 +34,7 @@ def report_vms(setup_first_provider):
     report.queue(wait_for_finish=True)
     yield sample(
         filter(
-            lambda i: len(i[
-                version.pick({
-                    version.LOWEST: "Provider : Name",
-                    "5.3": "Cloud/Infrastructure Provider Name",
-                })
-            ].strip()) > 0,
+            lambda i: len(i["Cloud/Infrastructure Provider Name"].strip()) > 0,
             list(report.get_saved_reports()[0].data.rows)), 2)
     report.delete()
 
@@ -65,10 +50,7 @@ def test_custom_vm_report(soft_assert, report_vms):
     for row in report_vms:
         if row["Name"].startswith("test_"):
             continue  # Might disappear meanwhile
-        provider_name = row[version.pick({
-            version.LOWEST: "Provider : Name",
-            "5.3": "Cloud/Infrastructure Provider Name",
-        })]
+        provider_name = row["Cloud/Infrastructure Provider Name"]
         provider = get_mgmt_by_name(provider_name)
         provider_hosts_and_ips = utils.net.resolve_ips(provider.list_host())
         provider_datastores = provider.list_datastore()

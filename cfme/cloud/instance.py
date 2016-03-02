@@ -26,12 +26,7 @@ policy_page = Region(
         'policy_tree': Tree('//div[@class="containerTableStyle"]/table')
     })
 
-manage_policies_tree = CheckboxTree(
-    {
-        version.LOWEST: "//div[@id='treebox']/div/table",
-        "5.3": "//div[@id='protect_treebox']/ul"
-    }
-)
+manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
 
 @extend_nav
@@ -236,9 +231,7 @@ class OpenStackInstance(Instance):
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=600, delay=20)
-        assert row.last_message.text == version.pick(
-            {version.LOWEST: 'VM Provisioned Successfully',
-             "5.3": 'Vm Provisioned Successfully', })
+        assert row.last_message.text == 'Vm Provisioned Successfully'
 
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
@@ -340,9 +333,7 @@ class EC2Instance(Instance):
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=900, delay=20)
-        assert row.last_message.text == version.pick(
-            {version.LOWEST: 'VM Provisioned Successfully',
-             "5.3": 'Vm Provisioned Successfully', })
+        assert row.last_message.text == 'Vm Provisioned Successfully'
 
     def power_control_from_provider(self, option):
         """Power control the instance from the provider

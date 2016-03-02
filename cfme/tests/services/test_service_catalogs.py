@@ -12,7 +12,7 @@ from cfme.web_ui import flash
 from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
-from utils import version, testgen
+from utils import testgen
 from utils.blockers import BZ
 
 pytestmark = [
@@ -46,65 +46,8 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="function")
-def dialog():
-    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
-    element_data = dict(
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name=fauxfactory.gen_alphanumeric(),
-        ele_desc="my ele desc",
-        choose_type="Text Box",
-        default_text_box="default value"
-    )
-    service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                     submit=True, cancel=True,
-                     tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
-                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
-    service_dialog.create(element_data)
-    flash.assert_success_message('Dialog "%s" was added' % dialog)
-    return dialog
-
-
-@pytest.yield_fixture(scope="function")
-def catalog():
-    catalog = "cat_" + fauxfactory.gen_alphanumeric()
-    cat = Catalog(name=catalog,
-                  description="my catalog")
-    try:
-        cat.create()
-        yield catalog
-    finally:
-        cat.delete()
-
-
-@pytest.fixture(scope="function")
-def catalog_item(provider, provisioning, vm_name, dialog, catalog):
-    template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
-        ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
-
-    provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]}
-    }
-
-    if provider.type == 'rhevm':
-        provisioning_data['provision_type'] = 'Native Clone'
-        provisioning_data['vlan'] = provisioning['vlan']
-        catalog_item_type = "RHEV"
-    elif provider.type == 'virtualcenter':
-        provisioning_data['provision_type'] = 'VMware'
-    item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog, catalog_name=template,
-                  provider=provider.name, prov_data=provisioning_data)
-    return catalog_item
-
-
 def test_order_catalog_item(provider, setup_provider, catalog_item, request, register_event):
     """Tests order catalog item
-
     Metadata:
         test_flag: provision
     """
@@ -127,7 +70,6 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
 def test_order_catalog_item_via_rest(
         request, rest_api, provider, setup_provider, catalog_item, catalog):
     """Same as :py:func:`test_order_catalog_item`, but using REST.
-
     Metadata:
         test_flag: provision, rest
     """
@@ -153,7 +95,6 @@ def test_order_catalog_item_via_rest(
 
 def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     """Tests ordering a catalog bundle
-
     Metadata:
         test_flag: provision
     """
@@ -179,7 +120,6 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catalog):
     """Tests no template catalog item
-
     Metadata:
         test_flag: provision
     """
@@ -202,7 +142,6 @@ def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catal
 @pytest.mark.meta(blockers=[BZ(1210541, forced_streams=["5.4", "5.5", "upstream"])])
 def test_edit_catalog_after_deleting_provider(provider, catalog_item):
     """Tests edit catalog item after deleting provider
-
     Metadata:
         test_flag: provision
     """
@@ -221,7 +160,6 @@ def test_edit_catalog_after_deleting_provider(provider, catalog_item):
 @pytest.mark.usefixtures('setup_provider')
 def test_request_with_orphaned_template(provider, catalog_item):
     """Tests edit catalog item after deleting provider
-
     Metadata:
         test_flag: provision
     """

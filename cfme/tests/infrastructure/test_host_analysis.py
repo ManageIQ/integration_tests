@@ -9,7 +9,6 @@ from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as 
 from utils import conf
 from utils import testgen
 from utils import version
-from utils.blockers import BZ
 from utils.update import update
 from utils.wait import wait_for
 
@@ -110,10 +109,7 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
     drift_history = test_host.get_detail('Relationships', 'Drift History')
     soft_assert(drift_history != '0', 'No drift history change found')
 
-    # This is done on purpose; we cannot use the "bug" fixture here as
-    # the bug doesnt block streams other than 5.3
-    services_bug = BZ(1156028, forced_streams=["5.3", "5.4", "5.5", "upstream"])
-    if provider.type == "rhevm" and (not services_bug.blocks):
+    if provider.type == "rhevm":
         soft_assert(test_host.get_detail('Configuration', 'Services') != '0',
             'No services found in host detail')
 
@@ -128,17 +124,14 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
             'No packages found in host detail')
         soft_assert(InfoBlock.text('Configuration', 'Files') != '0',
             'No files found in host detail')
-
-        if not BZ(1055657, forced_streams=["5.4", "5.5", "upstream"]).blocks:
-            soft_assert(InfoBlock.text('Security', 'Firewall Rules') != '0',
-                        'No firewall rules found in host detail')
+        soft_assert(InfoBlock.text('Security', 'Firewall Rules') != '0',
+            'No firewall rules found in host detail')
 
     elif host_type in ('esx', 'esxi'):
         soft_assert(InfoBlock.text('Configuration', 'Advanced Settings') != '0',
             'No advanced settings found in host detail')
 
-        fw_bug = bug(1055657)
-        if not (fw_bug is not None and provider.type == "virtualcenter" and provider.version < "5"):
+        if not(provider.type == "virtualcenter" and provider.version < "5"):
             # If the Firewall Rules are 0, the element can't be found (it's not a link)
             try:
                 # This fails for vsphere4...  https://bugzilla.redhat.com/show_bug.cgi?id=1055657

@@ -32,12 +32,7 @@ pwr_btn = partial(toolbar.select, 'Power')
 
 create_button = form_buttons.FormButton("Create")
 
-manage_policies_tree = CheckboxTree(
-    {
-        version.LOWEST: "//div[@id='treebox']/div/table",
-        "5.3": "//div[@id='protect_treebox']/ul"
-    }
-)
+manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
 
 manage_policies_page = Region(
@@ -46,12 +41,7 @@ manage_policies_page = Region(
     })
 
 
-snapshot_tree = Tree(
-    {
-        version.LOWEST: "//div[@id='treebox']/div/table",
-        "5.3": "//div[@id='snapshots_treebox']/ul"
-    }
-)
+snapshot_tree = Tree("//div[@id='snapshots_treebox']/ul")
 
 snapshot_form = Form(
     fields=[
@@ -450,10 +440,7 @@ class Genealogy(object):
     Args:
         o: The :py:class:`Vm` or :py:class:`Template` object.
     """
-    genealogy_tree = CheckboxTree({
-        version.LOWEST: "//div[@id='treebox']/div/table",
-        "5.3": "//div[@id='genealogy_treebox']/ul",
-    })
+    genealogy_tree = CheckboxTree("//div[@id='genealogy_treebox']/ul")
 
     section_comparison_tree = CheckboxTree("//div[@id='all_sections_treebox']/div/table")
     apply_button = form_buttons.FormButton("Apply sections")

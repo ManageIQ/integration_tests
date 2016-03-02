@@ -14,7 +14,7 @@ from datetime import datetime
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
-from utils import version, browser
+from utils import browser
 from utils.version import current_version
 from utils.browser import ensure_browser_open
 

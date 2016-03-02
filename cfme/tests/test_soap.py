@@ -5,7 +5,6 @@ import pytest
 from random import choice
 
 from utils import testgen
-from utils.blockers import BZ
 from utils.miq_soap import MiqVM, set_client
 from utils.providers import setup_a_provider as _setup_a_provider
 

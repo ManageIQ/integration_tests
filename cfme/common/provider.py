@@ -20,19 +20,13 @@ from utils.signals import fire
 from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
-from utils import version
 from utils.varmeth import variable
 
 from . import PolicyProfileAssignable, Taggable
 
 cfg_btn = partial(tb.select, 'Configuration')
 
-manage_policies_tree = CheckboxTree(
-    {
-        version.LOWEST: "//div[@id='treebox']/div/table",
-        "5.3": "//div[@id='protect_treebox']/ul"
-    }
-)
+manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
 details_page = Region(infoblock_type='detail')
 

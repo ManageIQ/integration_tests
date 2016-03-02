@@ -12,12 +12,7 @@ class PolicyProfileAssignable(object):
     """This class can be inherited by anything that provider load_details method.
 
     It provides functionality to assign and unassign Policy Profiles"""
-    manage_policies_tree = CheckboxTree(
-        {
-            version.LOWEST: "//div[@id='treebox']/div/table",
-            "5.3": "//div[@id='protect_treebox']/ul"
-        }
-    )
+    manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
     @property
     def assigned_policy_profiles(self):

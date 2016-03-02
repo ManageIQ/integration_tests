@@ -21,7 +21,6 @@ from utils.wait import wait_for, TimedOutError
 from utils import version, conf
 from utils.pretty import Pretty
 from utils.signals import fire, on_signal
-from utils.version import current_version
 
 
 @on_signal("server_details_changed")
@@ -124,9 +123,7 @@ tag_form = Form(
         ('name', Input("entry[name]")),
         ('display_name', Input("entry[description]")),
         ('add', Input("accept")),
-        ('new', {
-            version.LOWEST: "//img[@alt='New']",
-            '5.3': "//span[@class='glyphicon glyphicon-plus']"})
+        ('new', "//span[@class='glyphicon glyphicon-plus']")
     ])
 
 zone_form = Form(
@@ -145,12 +142,8 @@ zone_form = Form(
 
 
 records_table = Table("//div[@id='records_div']/table")
-category_table = Table({
-    version.LOWEST: "//div[@id='settings_co_categories']/fieldset/table",
-    "5.3": "//div[@id='settings_co_categories']/table"})
-classification_table = Table({
-    version.LOWEST: "//div[@id='classification_entries_div']/fieldset/table",
-    "5.3": "//div[@id='classification_entries_div']/table"})
+category_table = Table("//div[@id='settings_co_categories']/table")
+classification_table = Table("//div[@id='classification_entries_div']/table")
 zones_table = Table("//div[@id='settings_list']/table")
 
 
@@ -609,11 +602,6 @@ class ServerLogDepot(Pretty):
         def p_types(self):
             return version.pick({
                 version.LOWEST: dict(
-                    ftp="File Transfer Protocol",
-                    nfs="Network File System",
-                    smb="Samba"
-                ),
-                "5.3": dict(
                     anon_ftp="Anonymous FTP",
                     ftp="FTP",
                     nfs="NFS",
@@ -797,11 +785,6 @@ class BasicInformation(Updateable, Pretty):
         """
         sel.force_navigate("cfg_settings_currentserver_server")
         fill(self.basic_information, self.details)
-        # Workaround for issue with form_button staying dimmed.
-        if self.details["appliance_zone"] is not None and current_version() < "5.3":
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/ops/settings_form_field_changed/server',"
-                " data: {'server_zone':'%s'}})" % (self.details["appliance_zone"]))
         sel.click(form_buttons.save)
         # TODO: Maybe make a cascaded delete on lazycache?
         fire('server_details_changed')
@@ -1216,9 +1199,7 @@ class Schedule(Pretty):
         ("time_zone", {
             version.LOWEST: Select("select#time_zone"),
             '5.5': AngularSelect('time_zone')}),
-        ("start_date", {
-            "5.3": Calendar("miq_date_1"),
-            "5.4": Calendar("miq_angular_date_1")}),
+        ("start_date", Calendar("miq_angular_date_1")),
         ("start_hour", {
             version.LOWEST: Select("select#start_hour"),
             '5.5': AngularSelect('start_hour')}),
@@ -1448,9 +1429,7 @@ class DatabaseBackupSchedule(Schedule):
         ("log_protocol", {
             version.LOWEST: Select("select#log_protocol"),
             '5.5': AngularSelect('log_protocol')}),
-        ("depot_name", {
-            "5.3": None,
-            "5.4": Input("depot_name")}),
+        ("depot_name", Input("depot_name")),
         ("uri", Input("uri")),
         ("log_userid", Input("log_userid")),
         ("log_password", Input("log_password")),
@@ -1466,9 +1445,7 @@ class DatabaseBackupSchedule(Schedule):
         ("time_zone", {
             version.LOWEST: Select("select#time_zone"),
             '5.5': AngularSelect('time_zone')}),
-        ("start_date", {
-            "5.3": Calendar("miq_date_1"),
-            "5.4": Calendar("miq_angular_date_1")}),
+        ("start_date", Calendar("miq_angular_date_1")),
         ("start_hour", {
             version.LOWEST: Select("select#start_hour"),
             '5.5': AngularSelect('start_hour')}),

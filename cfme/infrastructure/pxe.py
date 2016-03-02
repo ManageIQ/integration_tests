@@ -19,7 +19,6 @@ from utils.log import logger
 from utils.path import project_path
 from utils.update import Updateable
 from utils.wait import wait_for
-from utils import version
 from utils.pretty import Pretty
 from utils.db import cfmedb
 from utils.varmeth import variable
@@ -346,11 +345,7 @@ class CustomizationTemplate(Updateable, Pretty):
         fill(template_properties_form, self._form_mapping(True, **self.__dict__))
         self._submit(cancel, form_buttons.add)
         if not cancel:
-            flash.assert_message_match(
-                version.pick({
-                    version.LOWEST: 'Customization Template "{}" was added'.format(self.name),
-                    '5.3': 'Customization Template "{}" was saved'.format(self.name)
-                }))
+            flash.assert_message_match('Customization Template "{}" was saved'.format(self.name))
         else:
             flash.assert_message_match(
                 'Add of new Customization Template was cancelled by the user')

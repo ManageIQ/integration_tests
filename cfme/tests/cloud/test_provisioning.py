@@ -10,7 +10,7 @@ from cfme.automate import explorer as automate
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
-from utils import testgen, version
+from utils import testgen
 from utils.update import update
 from utils.wait import wait_for
 

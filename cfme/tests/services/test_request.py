@@ -11,7 +11,6 @@ from cfme.services import requests
 from cfme.web_ui import flash
 from utils import testgen
 from utils.wait import wait_for
-from utils import version
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),

@@ -9,7 +9,6 @@ from cfme.services import requests
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils import version
 
 
 def service_catalogs(request, rest_api):
