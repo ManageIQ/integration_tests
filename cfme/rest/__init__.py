@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import fauxfactory
 
 from cfme.automate.service_dialogs import ServiceDialog
@@ -338,3 +339,21 @@ def _creating_skeleton(request, rest_api, col_name, col_data):
             collection.action.delete(*delete_entities)
 
     return entities
+
+
+def mark_vm_as_template(rest_api, provider, vm_name):
+    """
+        Function marks vm as template via mgmt and returns template Entity
+        Usage:
+            mark_vm_as_template(rest_api, provider, vm_name)
+    """
+    t_vm = rest_api.collections.vms.get(name=vm_name)
+    t_vm.action.stop()
+    provider.mgmt.wait_vm_stopped(vm_name=vm_name, num_sec=600)
+
+    provider.mgmt.mark_as_template(vm_name, delete=False)
+
+    wait_for(
+        lambda: rest_api.collections.templates.find_by(name=vm_name).subcount != 0,
+        num_sec=700, delay=15)
+    return rest_api.collections.templates.get(name=vm_name)
