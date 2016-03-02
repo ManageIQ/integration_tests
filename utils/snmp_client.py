@@ -7,7 +7,6 @@ automatically.
 import requests
 from subprocess import Popen, PIPE
 
-from cached_property import cached_property
 
 class SNMPClient(object):
     """Class for accessing the SNMP traps stored in the appliance listener
