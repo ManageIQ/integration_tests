@@ -116,13 +116,17 @@ def templates_uploaded(api, stream):
     return False
 
 
-def get_untested_templates(api, stream_group):
-    return api.untestedtemplate.get(template__group__name=stream_group).get('objects', [])
+def get_untested_templates(api, stream_group, appliance_template=None):
+    return api.untestedtemplate.get(
+        template__group__name=stream_group, template=appliance_template).get('objects', [])
 
 
 def generate_html_report(api, stream, filename, appliance_template):
 
     number_of_images_before = len(images_uploaded(stream))
+    if get_untested_templates(api, stream, appliance_template):
+        print('report will not be generated, proceed with the next untested provider')
+        sys.exit()
     stream_data = get_latest_tested_template_on_stream(api, stream)
 
     if len(images_uploaded(stream)) > number_of_images_before:
