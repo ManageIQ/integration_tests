@@ -167,7 +167,7 @@ def test_provision_stack(setup_provider, provider, provisioning, dialog, catalog
     assert row.last_message.text == 'Service Provisioned Successfully'
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+@pytest.mark.uncollectif(lambda: version.current_version() <= '5.4')
 def test_reconfigure_service(setup_provider, provider, provisioning, dialog, catalog, request):
     """Tests stack provisioning
 
