@@ -22,7 +22,6 @@ pytestmark = [
     pytest.mark.usefixtures("vm_name"),
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.long_running,
-    pytest.mark.ignore_stream("5.2"),
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles="+automate")
 ]
@@ -77,11 +76,7 @@ def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     if provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = provisioning['vlan']
-        catalog_item_type = version.pick({
-            version.LATEST: "RHEV",
-            '5.3': "RHEV",
-            '5.2': "Redhat"
-        })
+        catalog_item_type = "RHEV"
     elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
 

@@ -10,11 +10,8 @@ from utils.wait import wait_for
 import pytest
 
 DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
-# rhevm supported in 5.3+
-PROVIDER_TYPES = {
-    version.LOWEST: ('virtualcenter',),
-    '5.3': ('virtualcenter', 'rhevm')
-}
+PROVIDER_TYPES = ('virtualcenter', 'rhevm')
+
 
 # Rows to check in the datastore detail Content infoblock; after smartstate analysis
 CONTENT_ROWS_TO_CHECK = (

@@ -238,7 +238,6 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, template_name, 
     )
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.3')
 def test_tag(provisioner, prov_data, template_name, provider):
     """ Tests tagging VMs using provisioning dialogs.
 

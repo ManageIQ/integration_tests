@@ -46,6 +46,62 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
+@pytest.fixture(scope="function")
+def dialog():
+    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
+    element_data = dict(
+        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
+        ele_name=fauxfactory.gen_alphanumeric(),
+        ele_desc="my ele desc",
+        choose_type="Text Box",
+        default_text_box="default value"
+    )
+    service_dialog = ServiceDialog(label=dialog, description="my dialog",
+                     submit=True, cancel=True,
+                     tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
+                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
+    service_dialog.create(element_data)
+    flash.assert_success_message('Dialog "%s" was added' % dialog)
+    return dialog
+
+
+@pytest.yield_fixture(scope="function")
+def catalog():
+    catalog = "cat_" + fauxfactory.gen_alphanumeric()
+    cat = Catalog(name=catalog,
+                  description="my catalog")
+    try:
+        cat.create()
+        yield catalog
+    finally:
+        cat.delete()
+
+
+@pytest.fixture(scope="function")
+def catalog_item(provider, provisioning, vm_name, dialog, catalog):
+    template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
+        ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
+
+    provisioning_data = {
+        'vm_name': vm_name,
+        'host_name': {'name': [host]},
+        'datastore_name': {'name': [datastore]}
+    }
+
+    if provider.type == 'rhevm':
+        provisioning_data['provision_type'] = 'Native Clone'
+        provisioning_data['vlan'] = provisioning['vlan']
+        catalog_item_type = "RHEV"
+    elif provider.type == 'virtualcenter':
+        provisioning_data['provision_type'] = 'VMware'
+    item_name = fauxfactory.gen_alphanumeric()
+    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
+                  description="my catalog", display_in=True, catalog=catalog,
+                  dialog=dialog, catalog_name=template,
+                  provider=provider.name, prov_data=provisioning_data)
+    return catalog_item
+
+
 def test_order_catalog_item(provider, setup_provider, catalog_item, request, register_event):
     """Tests order catalog item
 

@@ -162,8 +162,6 @@ ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
 
 @pytest.fixture(scope="module")
 def domain(request):
-    if version.current_version() < "5.3":
-        return None
     domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)

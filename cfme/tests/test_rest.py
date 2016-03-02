@@ -18,8 +18,6 @@ pytest_generate_tests = testgen.generate(
     scope="module"
 )
 
-pytestmark = [pytest.mark.ignore_stream("5.3")]
-
 
 @pytest.fixture(scope="module")
 def a_provider():
@@ -36,6 +34,7 @@ def user():
     return user
 
 
+# This test should be deleted when we get new build > 5.5.2.4
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_edit_user_password(rest_api, user):
     if "edit" not in rest_api.collections.users.action.all:

@@ -11,10 +11,6 @@ from utils.log import logger
 from utils.version import current_version
 from utils.wait import wait_for
 
-pytestmark = [pytest.mark.ignore_stream("5.2")]
-# bz1127960 = pytest.mark.bugzilla(
-#    1127960, unskip={1127960: lambda appliance_version: appliance_version >= "5.3"})
-
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
 
