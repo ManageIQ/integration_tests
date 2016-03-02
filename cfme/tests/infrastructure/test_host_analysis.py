@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.configure import tasks
+from cfme.configure.tasks import is_host_analysis_finished
 from cfme.exceptions import ListAccordionLinkNotFound
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
-from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as tb, InfoBlock
+from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
 from utils import conf
 from utils import testgen
 from utils import version
@@ -84,26 +83,8 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
     # Initiate analysis
     test_host.run_smartstate_analysis()
 
-    # Wait for the task to finish
-    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
-    def is_host_analysis_finished():
-        """ Check if analysis is finished - if not, reload page
-        """
-        if not sel.is_displayed(tasks.tasks_table) or not tabs.is_tab_selected('All Other Tasks'):
-            sel.force_navigate('tasks_all_other')
-        host_analysis_finished = tasks.tasks_table.find_row_by_cells({
-            'task_name': "SmartState Analysis for '{}'".format(host_name),
-            'state': 'Finished'
-        })
-        return host_analysis_finished is not None
-
-    # Delete the task
-    tasks.tasks_table.select_row_by_cells({
-        'task_name': "SmartState Analysis for '{}'".format(host_name),
-        'state': 'Finished'
-    })
-    tb.select('Delete Tasks', 'Delete', invokes_alert=True)
-    sel.handle_alert()
+    wait_for(lambda: is_host_analysis_finished(host_name),
+             delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check results of the analysis
     drift_history = test_host.get_detail('Relationships', 'Drift History')

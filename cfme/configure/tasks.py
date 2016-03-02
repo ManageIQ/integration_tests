@@ -6,7 +6,7 @@
 from cfme import web_ui as ui
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
-from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator
+from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator, toolbar
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
@@ -160,3 +160,71 @@ def all_other_tasks(**filter_kwargs):
     Returns: List of dicts.
     """
     return _get_tasks("tasks_all_other", **filter_kwargs)
+
+
+def is_vm_analysis_finished(name, **kwargs):
+    return is_analysis_finished(name=name, task_type='vm', **kwargs)
+
+
+def is_host_analysis_finished(name, **kwargs):
+    return is_analysis_finished(name=name, task_type='host', **kwargs)
+
+
+def is_datastore_analysis_finished(name, **kwargs):
+    return is_analysis_finished(name=name, task_type='datastore', **kwargs)
+
+
+def is_task_finished(tab, page, task_name, expected_status, clear_tasks_after_success=True):
+    el = None
+    try:
+        if not sel.is_displayed(tasks_table) or not tabs.is_tab_selected(tab):
+            sel.force_navigate(page)
+        el = tasks_table.find_row_by_cells({
+            'task_name': task_name,
+            'state': expected_status
+        })
+        if el is None:
+            return False
+    except Exception:
+        return False
+
+    # throw exception if status is error
+    if 'Error' in sel.get_attribute(sel.element('.//td/img', root=el), 'title'):
+        raise Exception("Task {} errored".format(task_name))
+
+    if clear_tasks_after_success:
+        # Remove all finished tasks so they wouldn't poison other tests
+        toolbar.select('Delete Tasks', 'Delete All', invokes_alert=True)
+        sel.handle_alert(cancel=False)
+
+    return True
+
+
+def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
+    """ Check if analysis is finished - if not, reload page"""
+
+    tabs_data = {
+        'vm': {
+            'tab': 'All VM Analysis Tasks',
+            'page': 'tasks_all_vm',
+            'task': 'Scan from Vm {}',
+            'state': 'finished'
+        },
+        'host': {
+            'tab': 'My Other UI Tasks',
+            'page': 'tasks_my_other_ui',
+            'task': 'SmartState Analysis for {}',
+            'state': 'Finished'
+        },
+        'datastore': {
+            'tab': 'My Other UI Tasks',
+            'page': 'tasks_my_other_ui',
+            'task': 'SmartState Analysis for [{}]',
+            'state': "Finished"}
+    }[task_type]
+
+    return is_task_finished(tab=tabs_data['tab'],
+                            page=tabs_data['page'],
+                            task_name=tabs_data['task'].format(name),
+                            expected_status=tabs_data['state'],
+                            clear_tasks_after_success=clear_tasks_after_success)

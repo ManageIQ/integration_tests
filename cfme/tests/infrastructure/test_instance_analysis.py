@@ -3,18 +3,18 @@
 # in selenium (the group is selected then immediately reset)
 import fauxfactory
 import pytest
-import cfme.fixtures.pytest_selenium as sel
 
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
-from cfme.configure import configuration, tasks
-from cfme.configure.configuration import VMAnalysisProfile
+from cfme.configure import configuration
+from cfme.configure.tasks import is_vm_analysis_finished
 from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
 from cfme.infrastructure import host, datastore
 from cfme.provisioning import do_vm_provisioning
-from cfme.web_ui import InfoBlock, tabstrip as tabs, toolbar as tb
+from cfme.web_ui import InfoBlock, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, ssh, safe_string, version
+from utils.browser import ensure_browser_open
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
@@ -114,14 +114,8 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
         pytest.skip("Upstream provisioning is blocked by" +
                     "https://github.com/ManageIQ/manageiq/issues/6506")
     if provider.type == 'virtualcenter':
-        store.current_appliance.install_vddk(reboot=True)
-        store.current_appliance.wait_for_web_ui()
-        try:
-            sel.refresh()
-        except AttributeError:
-            # In case no browser is started
-            pass
-
+        store.current_appliance.install_vddk(reboot=True, wait_for_web_ui_after_reboot=True)
+        ensure_browser_open()
         set_host_credentials(request, vm_analysis_new, provider)
 
     # Make sure all roles are set
@@ -158,8 +152,7 @@ def set_host_credentials(request, vm_analysis_new, provider):
 
 @pytest.fixture(scope="module")
 def instance(request, local_setup_provider, provider, vm_analysis_new):
-    """ Fixture to provision instance on the provider
-    """
+    """ Fixture to provision instance on the provider """
     vm_name = vm_analysis_new.get('vm_name')
     template = vm_analysis_new.get('image', None)
     host, datastore = map(vm_analysis_new.get, ('host', 'datastore'))
@@ -201,7 +194,6 @@ def instance(request, local_setup_provider, provider, vm_analysis_new):
             'cloud_network': vm_analysis_new['cloud_network'],
             'public_ip_address': connect_ip,
         }
-        sel.force_navigate("clouds_instances_by_provider")
         vm.create(**inst_args)
     else:
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
@@ -209,9 +201,10 @@ def instance(request, local_setup_provider, provider, vm_analysis_new):
                            num_sec=6000)
     logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
-    @pytest.wait_for(timeout="10m", delay=5)
+    @pytest.wait_for(timeout="20m", delay=5)
     def get_ip_address():
-        logger.info("Power state for %s vm: %s", vm_name, mgmt_system.vm_status(vm_name))
+        logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
+            vm_name, mgmt_system.vm_status(vm_name), mgmt_system.is_vm_stopped(vm_name)))
         if mgmt_system.is_vm_stopped(vm_name):
             mgmt_system.start_vm(vm_name)
 
@@ -253,9 +246,9 @@ def policy_profile(request, instance):
     ]
 
     analysis_profile_name = 'ssa_analysis_{}'.format(fauxfactory.gen_alphanumeric())
-    analysis_profile = VMAnalysisProfile(analysis_profile_name, analysis_profile_name,
-                                         categories=["check_system"],
-                                         files=collected_files)
+    analysis_profile = configuration.VMAnalysisProfile(analysis_profile_name, analysis_profile_name,
+                                                       categories=["check_system"],
+                                                       files=collected_files)
     if analysis_profile.exists:
         analysis_profile.delete()
     analysis_profile.create()
@@ -289,31 +282,6 @@ def policy_profile(request, instance):
 
     instance.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: instance.unassign_policy_profiles(profile.description))
-
-
-def is_vm_analysis_finished(vm_name):
-    """ Check if analysis is finished - if not, reload page
-    """
-    el = None
-    try:
-        if not pytest.sel.is_displayed(tasks.tasks_table) or \
-           not tabs.is_tab_selected('All VM Analysis Tasks'):
-            pytest.sel.force_navigate('tasks_all_vm')
-        el = tasks.tasks_table.find_row_by_cells({
-            'task_name': "Scan from Vm {}".format(vm_name),
-            'state': 'finished'
-        })
-        if el is None:
-            return False
-    except:
-        return False
-    # throw exception if status is error
-    if 'Error' in sel.get_attribute(sel.element('.//td/img', root=el), 'title'):
-        raise Exception("Smart State Analysis errored")
-    # Remove all finished tasks so they wouldn't poison other tests
-    tb.select('Delete Tasks', 'Delete All', invokes_alert=True)
-    sel.handle_alert(cancel=False)
-    return True
 
 
 def detect_system_type(vm):
@@ -365,7 +333,7 @@ def test_ssa_template(request, local_setup_provider, provider, vm_analysis_new, 
 
     template.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(template_name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check release and quadricon
     quadicon_os_icon = template.find_quadicon().os
@@ -426,7 +394,7 @@ def test_ssa_vm(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check release and quadricon
     quadicon_os_icon = instance.find_quadicon().os
@@ -497,7 +465,7 @@ def test_ssa_users(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Users'))
@@ -528,7 +496,7 @@ def test_ssa_groups(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Groups'))
@@ -569,7 +537,7 @@ def test_ssa_packages(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Configuration', 'Packages'))
@@ -590,7 +558,7 @@ def test_ssa_files(provider, instance, policy_profile, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Configuration', 'Files'))
