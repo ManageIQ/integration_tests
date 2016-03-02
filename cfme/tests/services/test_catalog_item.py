@@ -10,8 +10,7 @@ from utils.update import update
 from utils.blockers import BZ
 import cfme.tests.configure.test_access_control as tac
 
-pytestmark = [pytest.mark.usefixtures("logged_in"),
-              pytest.mark.ignore_stream("5.2")]
+pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
 @pytest.yield_fixture(scope="function")
@@ -87,7 +86,7 @@ def test_edit_tags(catalog_item):
     catalog_item.edit_tags("Cost Center *", "Cost Center 001")
 
 
-@pytest.mark.meta(blockers=[BZ(1092651, forced_streams=["5.3", "5.4", "5.5", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1092651, forced_streams=["5.4", "5.5", "upstream"])])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):

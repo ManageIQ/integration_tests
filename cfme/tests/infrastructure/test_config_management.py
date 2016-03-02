@@ -7,8 +7,6 @@ from cfme.infrastructure.config_management import ConfigManager
 from utils import error
 from utils.update import update
 
-pytestmark = [pytest.mark.ignore_stream("5.2", "5.3")]
-
 
 @pytest.fixture
 def config_manager_obj(cfme_data):

@@ -172,14 +172,13 @@ def test_db_connection(db):
     assert len(databases) > 0
 
 
-@pytest.mark.ignore_stream("5.2")
 @pytest.mark.meta(blockers=[1121202, 'GH#ManageIQ/manageiq:1823'])
 def test_asset_precompiled(ssh_client):
     file_exists = ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets").rc == 0
     assert file_exists, "Assets not precompiled"
 
 
-@pytest.mark.ignore_stream("upstream", "5.3")
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1200424])
 def test_keys_included(ssh_client, soft_assert):
     keys = ['v0_key', 'v1_key', 'v2_key']

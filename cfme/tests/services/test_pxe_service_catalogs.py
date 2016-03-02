@@ -17,7 +17,6 @@ from utils.conf import cfme_data
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('logged_in', 'vm_name', 'uses_infra_providers'),
-    pytest.mark.ignore_stream("5.2")
 ]
 
 

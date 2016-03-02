@@ -29,7 +29,6 @@ def vmware_vm(request, vmware_provider):
 
 
 @pytest.mark.meta(blockers=[1155284])
-@pytest.mark.ignore_stream("5.2")
 def test_scope_windows_registry_stuck(request, setup_a_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
     policy = VMCompliancePolicy(

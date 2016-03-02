@@ -11,6 +11,7 @@ def use_storage(uses_ssh):
     appliance = store.current_appliance
     if appliance.has_netapp:
         return
+    # TODO: Should this now say is greater than 5.2?
     if not current_version().is_in_series("5.2"):
         pytest.skip("Storage tests run only on .2 so far")
 
