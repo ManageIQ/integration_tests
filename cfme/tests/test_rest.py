@@ -55,24 +55,6 @@ def test_edit_user_password(rest_api, user):
     login(new_user)
 
 
-@pytest.mark.parametrize(
-    "from_detail", [True, False],
-    ids=["from_detail", "from_collection"])
-def test_vm_scan(rest_api, vm, from_detail):
-    rest_vm = rest_api.collections.vms.get(name=vm)
-    if from_detail:
-        response = rest_vm.action.scan()
-    else:
-        response, = rest_api.collections.vms.action.scan(rest_vm)
-
-    @pytest.wait_for(timeout="5m", delay=5, message="REST running scanning vm finishes")
-    def _finished():
-        response.task.reload()
-        if response.task.status.lower() in {"error"}:
-            pytest.fail("Error when running report: `{}`".format(response.task.message))
-        return response.task.state.lower() == 'finished'
-
-
 COLLECTIONS_IGNORED_53 = {
     "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
     "tags", "tasks",
