@@ -14,7 +14,6 @@ def setup_first_provider():
     setup_a_provider(validate=True, check_existing=True)
 
 
-@pytest.mark.ignore_stream("5.2")  # Old version can't do IPA
 def test_external_auth_ipa(request, setup_first_provider, configure_external_auth_ipa_module):
     try:
         data = cfme_data.get("ipa_test", {})

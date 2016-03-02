@@ -8,8 +8,6 @@ from utils.update import update
 
 cli_path = data_path.join("cli")
 
-pytestmark = [pytest.mark.ignore_stream("5.2")]
-
 
 @pytest.yield_fixture(scope="function")
 def rake(ssh_client):

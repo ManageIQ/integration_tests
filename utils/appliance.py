@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
-import atexit
 import fauxfactory
 import hashlib
 import os
 import random
 import re
-import shutil
 import socket
-import subprocess
 import yaml
 from datetime import datetime
-from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
@@ -211,7 +207,7 @@ class Appliance(object):
                 roles["smartproxy"] = True
                 set_server_roles(**roles)
                 # web ui crashes
-                if str(self.version).startswith("5.2.5") or str(self.version).startswith("5.5"):
+                if str(self.version).startswith("5.5"):
                     try:
                         self.ipapp.wait_for_web_ui(timeout=300, running=False)
                     except:
@@ -797,12 +793,7 @@ class IPAppliance(object):
     def precompile_assets(self, log_callback=None):
         """Precompile the static assets (images, css, etc) on an appliance
 
-        Not required on 5.2 appliances
-
         """
-        # compile assets if required (not required on 5.2)
-        if self.version.is_in_series("5.2"):
-            return
         log_callback('Precompiling assets')
 
         client = self.ssh_client
@@ -886,13 +877,7 @@ class IPAppliance(object):
             src: Source domain name.
             dst: Destination domain name.
 
-        Note:
-            Not required (and does not do anything) on 5.2 appliances
-
         """
-        if self.version.is_in_series("5.2"):
-            return
-
         client = self.ssh_client
 
         # Make sure the database is ready
@@ -1099,11 +1084,6 @@ class IPAppliance(object):
                 if updates_url:
                     urls.append(updates_url)
 
-                if self.version.is_in_series("5.3"):
-                    rhscl_url = basic_info.get('rhscl_updates_url')
-                    if rhscl_url:
-                        urls.append(rhscl_url)
-
         if streaming:
             client = self.ssh_client(stream_output=True)
         else:
@@ -1145,60 +1125,9 @@ class IPAppliance(object):
         else:
             raise Exception("Couldn't get datetime: {}".format(output))
 
-    @logger_wrap("Patch ajax wait: {}")
-    def patch_ajax_wait(self, reverse=False, log_callback=None):
-        """Patches ajax wait code
-
-        Args:
-            reverse: Will reverse the ajax wait code patch if set to ``True``
-
-        Note:
-            Does nothing for versions including and above 5.3
-
-        """
-        if self.version >= '5.3':
-            return
-
-        log_callback('Starting')
-
-        # Find the patch file
-        patch_file_name = datafile.data_path_for_filename('ajax_wait.diff', scripts_path.strpath)
-
-        # Set up temp dir
-        tmpdir = mkdtemp()
-        atexit.register(shutil.rmtree, tmpdir)
-        source = '/var/www/miq/vmdb/public/javascripts/application.js'
-        target = os.path.join(tmpdir, 'application.js')
-
-        client = self.ssh_client
-        log_callback('Retrieving appliance.js from appliance')
-        client.get_file(source, target)
-
-        os.chdir(tmpdir)
-        # patch, level 4, patch direction (default forward), ignore whitespace, don't output rejects
-        direction = '-N -R' if reverse else '-N'
-        exitcode = subprocess.call('patch -p4 %s -l -r- < %s' % (direction, patch_file_name),
-            shell=True)
-
-        if exitcode == 0:
-            # Put it back after successful patching.
-            log_callback('Replacing appliance.js on appliance')
-            client.put_file(target, source)
-        else:
-            log_callback('Patch failed, not changing appliance')
-
-        return exitcode
-
     @logger_wrap("Loosen pgssl: {}")
     def loosen_pgssl(self, with_ssl=False, log_callback=None):
-        """Loosens postgres connections
-
-        Note:
-            Not required (and does not do anything) on 5.2 appliances
-
-        """
-        if self.version.is_in_series("5.2"):
-            return
+        """Loosens postgres connections"""
 
         log_callback('Loosening postgres permissions')
 
@@ -1545,17 +1474,6 @@ class IPAppliance(object):
                         Exception,
                         "Potential installation issue, libraries not detected\n{}".format(out))
 
-                # 5.2 workaround
-                if self.version.is_in_series("5.2"):
-                    # find the vixdisk libs and add it to cfme 5.2 lib path which was hard coded for
-                    #    vddk v2.1 and v5.1
-                    log_callback('WARN: Adding 5.2 workaround')
-                    status, out = client.run_command(
-                        "find /usr/lib/vmware-vix-disklib/lib64 -maxdepth 1 -type f -exec ls"
-                        " -d {} + | grep libvixDiskLib")
-                    for file in str(out).split("\n"):
-                        client.run_command("cd /var/www/miq/lib/VixDiskLib/vddklib; ln -s " + file)
-
                 # reboot
                 if reboot:
                     self.reboot(log_callback=log_callback, wait_for_web_ui=False)
@@ -1614,9 +1532,9 @@ class IPAppliance(object):
             ssh.run_command('ldconfig')
 
             log_callback('Modifying YAML configuration')
-            yaml = self.get_yaml_config('vmdb')
-            yaml['product']['storage'] = True
-            self.set_yaml_config('vmdb', yaml)
+            cyaml = self.get_yaml_config('vmdb')
+            cyaml['product']['storage'] = True
+            self.set_yaml_config('vmdb', cyaml)
 
             # To mark that we installed netapp
             ssh.run_command("touch /var/www/miq/vmdb/HAS_NETAPP")
@@ -1867,7 +1785,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         in ``cfme_data.yaml``.
         If no matching template for given version is found, and trackerbot is set up,
         the latest available template of the same stream will be used.
-        E.g.: if there is no template for 5.2.5.1 but there is 5.2.5.3, it will be used instead.
+        E.g.: if there is no template for 5.5.5.1 but there is 5.5.5.3, it will be used instead.
         If both template name and version are specified, template name takes priority.
 
     Args:
@@ -1877,12 +1795,12 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     Returns: Unconfigured appliance; instance of :py:class:`Appliance`
 
     Usage:
-        my_appliance = provision_appliance('5.2.1.8', 'my_tests')
+        my_appliance = provision_appliance('5.5.1.8', 'my_tests')
         my_appliance.fix_ntp_clock()
         my_appliance.enable_internal_db()
         my_appliance.wait_for_web_ui()
         or
-        my_appliance = provision_appliance('5.2.1.8', 'my_tests')
+        my_appliance = provision_appliance('5.5.1.8', 'my_tests')
         my_appliance.configure(patch_ajax_wait=False)
         (identical outcome)
     """

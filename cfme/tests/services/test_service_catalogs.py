@@ -21,7 +21,6 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('logged_in', 'vm_name', 'uses_infra_providers'),
     pytest.mark.long_running,
-    pytest.mark.ignore_stream("5.2")
 ]
 
 
@@ -94,11 +93,7 @@ def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     if provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = provisioning['vlan']
-        catalog_item_type = version.pick({
-            version.LATEST: "RHEV",
-            '5.3': "RHEV",
-            '5.2': "Redhat"
-        })
+        catalog_item_type = "RHEV"
     elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
     item_name = fauxfactory.gen_alphanumeric()
@@ -132,7 +127,6 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
         "service", catalog_item.name, ["service_provision_complete"])
 
 
-@pytest.mark.ignore_stream("5.2", "5.3")
 def test_order_catalog_item_via_rest(
         request, rest_api, provider, setup_provider, catalog_item, catalog):
     """Same as :py:func:`test_order_catalog_item`, but using REST.
@@ -196,11 +190,7 @@ def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catal
     template, catalog_item_type = map(provisioning.get,
         ('template', 'catalog_item_type'))
     if provider.type == 'rhevm':
-        catalog_item_type = version.pick({
-            version.LATEST: "RHEV",
-            '5.3': "RHEV",
-            '5.2': "Redhat"
-        })
+        catalog_item_type = "RHEV"
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog, dialog=dialog)

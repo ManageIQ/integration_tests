@@ -311,9 +311,6 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                 continue
 
         try:
-            if prov_obj.type == "scvmm" and version.current_version() < "5.3":
-                # Ignore SCVMM on 5.2
-                continue
             if "since_version" in data:
                 # Ignore providers that are not supported in this version yet
                 if version.current_version() < data["since_version"]:

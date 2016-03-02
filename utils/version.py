@@ -222,7 +222,7 @@ class Version(object):
         """Enables to use ``in`` expression for :py:meth:`Version.is_in_series`.
 
         Example:
-            ``"5.2.5.2" in Version("5.2") returns ``True``
+            ``"5.5.5.2" in Version("5.5") returns ``True``
 
         Args:
             ver: Version that should be checked if it is in series of this version. If
@@ -236,7 +236,7 @@ class Version(object):
     def is_in_series(self, series):
         """This method checks whether the version belongs to another version's series.
 
-        Eg.: ``Version("5.2.5.2").is_in_series("5.2")`` returns ``True``
+        Eg.: ``Version("5.5.5.2").is_in_series("5.5")`` returns ``True``
 
         Args:
             series: Another :py:class:`Version` to check against. If string provided, will be
