@@ -282,8 +282,11 @@ class BaseProvider(Taggable, Updateable):
     @variable(alias='rest')
     def refresh_provider_relationships(self, from_list_view=False):
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
-        col = rest_api().collections.providers.find_by(name=self.name)[0]
-        col.action.refresh()
+        col = rest_api().collections.providers.find_by(name=self.name)
+        try:
+            col[0].action.refresh()
+        except IndexError:
+            raise Exception("Provider collection empty")
 
     @refresh_provider_relationships.variant('ui')
     def refresh_provider_relationships_ui(self, from_list_view=False):
