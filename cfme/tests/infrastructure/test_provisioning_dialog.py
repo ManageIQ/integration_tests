@@ -56,7 +56,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def prov_data(provisioning, provider):
-    return {
+    data = {
         "first_name": fauxfactory.gen_alphanumeric(),
         "last_name": fauxfactory.gen_alphanumeric(),
         "email": "{}@{}.test".format(
@@ -68,8 +68,15 @@ def prov_data(provisioning, provider):
         "datastore_name": {"name": provisioning["datastore"]},
         "host_name": {"name": provisioning["host"]},
         # "catalog_name": provisioning["catalog_item_type"],
-        "provision_type": "Native Clone" if provider.type == "rhevm" else "VMware"
     }
+
+    if provider.type == 'rhevm':
+        data['provision_type'] = 'Native Clone'
+    elif provider.type == 'virtualcenter':
+        data['provision_type'] = 'VMware'
+    # Otherwise just leave it alone
+
+    return data
 
 
 @pytest.fixture(scope="function")
