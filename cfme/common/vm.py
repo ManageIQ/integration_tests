@@ -10,7 +10,7 @@ from cfme.exceptions import (
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
-    form_buttons, paginator, toolbar)
+    form_buttons, paginator, toolbar, PagedTable, SplitPagedTable)
 from utils import version
 from utils.log import logger
 from utils.mgmt_system import exceptions
@@ -173,6 +173,15 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
     def quadicon_type(self):
         return self.QUADICON_TYPE
 
+    @property
+    def paged_table(self):
+        _paged_table_template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
+        return version.pick({
+            version.LOWEST: SplitPagedTable(header_data=(_paged_table_template.format("xhdr"), 1),
+                                            body_data=(_paged_table_template.format("objbox"), 0)),
+            "5.5": PagedTable('//table'),
+        })
+
     ###
     # Methods
     #
@@ -310,6 +319,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
             return InfoBlock.icon_href(*properties)
         else:
             return InfoBlock.text(*properties)
+
+    def open_details(self, properties=None):
+        """Clicks on details infoblock"""
+        self.load_details(refresh=True)
+        sel.click(InfoBlock(*properties))
 
     @classmethod
     def get_first_vm_title(cls, do_not_navigate=False, provider=None):
