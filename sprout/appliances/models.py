@@ -511,8 +511,26 @@ class Appliance(MetadataMixin):
         LOCKED = "locked"
         UNKNOWN = "unknown"
         ORPHANED = "orphaned"
+        CREATION_FAILED = 'creation_failed'
+        CUSTOMIZATION_FAILED = 'customization_failed'
+        ERROR = 'error'
 
-    BAD_POWER_STATES = {Power.UNKNOWN, Power.ORPHANED}
+    POWER_ICON_MAPPING = {
+        Power.ON: 'play',
+        Power.OFF: 'stop',
+        Power.SUSPENDED: 'pause',
+        Power.REBOOTING: 'repeat',
+        Power.LOCKED: 'lock',
+        Power.UNKNOWN: 'exclamation-sign',
+        Power.ORPHANED: 'exclamation-sign',
+        Power.CREATION_FAILED: 'remove',
+        Power.CUSTOMIZATION_FAILED: 'remove',
+        Power.ERROR: 'remove',
+    }
+
+    BAD_POWER_STATES = {
+        Power.UNKNOWN, Power.ORPHANED, Power.CREATION_FAILED, Power.CUSTOMIZATION_FAILED,
+        Power.ERROR}
 
     POWER_STATES_MAPPING = {
         # vSphere
@@ -528,11 +546,16 @@ class Appliance(MetadataMixin):
         "ACTIVE": Power.ON,
         "SHUTOFF": Power.OFF,
         "SUSPENDED": Power.SUSPENDED,
+        "ERROR": Power.ERROR,
         # SCVMM
         "Running": Power.ON,
         "PoweredOff": Power.OFF,
         "Stopped": Power.OFF,
         "Paused": Power.SUSPENDED,
+        "Saved State": Power.SUSPENDED,
+        "Creation Failed": Power.CREATION_FAILED,
+        "Customization Failed": Power.CUSTOMIZATION_FAILED,
+        "Missing": Power.ORPHANED,  # When SCVMM says it is missing ...
         # EC2 (for VM manager)
         "stopped": Power.OFF,
         "running": Power.ON,
