@@ -3,13 +3,7 @@
 import time
 from mgmtsystem.base import VMInfo, MgmtSystemAPIBase, ContainerMgmtSystemAPIBase, Logger  # NOQA
 from mgmtsystem import exceptions  # NOQA
-from mgmtsystem.ec2 import EC2System  # NOQA
-from mgmtsystem.openstack import OpenstackSystem  # NOQA
 from mgmtsystem.rhevm import RHEVMSystem as RHEVMSystemBase  # NOQA
-from mgmtsystem.scvmm import SCVMMSystem  # NOQA
-from mgmtsystem.virtualcenter import VMWareSystem  # NOQA
-from mgmtsystem.kubernetes import Kubernetes  # NOQA
-from mgmtsystem.openshift import Openshift  # NOQA
 
 from utils import conf
 from utils.log import logger
@@ -19,7 +13,6 @@ from utils.ssh import SSHClient
 from openstack_infra import OpenstackInfraSystem  # NOQA
 
 # Overrides
-
 from ovirtsdk.xml import params
 
 

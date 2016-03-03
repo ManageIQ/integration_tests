@@ -21,13 +21,15 @@ import dateutil.parser
 import requests
 import traceback
 
+from utils.mgmt_system import RHEVMSystem
+from mgmtsystem.virtualcenter import VMWareSystem
+
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_name, server_id
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
 from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
 from utils.log import logger, create_sublogger, logger_wrap
-from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
 from utils.providers import get_mgmt, get_crud

@@ -3,11 +3,12 @@ import diaper
 import fauxfactory
 import pytest
 
+from mgmtsystem import exceptions
+
 from cfme.common.vm import VM
 from cfme.configure.configuration import VMAnalysisProfile
 from cfme.control.explorer import (
     VMCompliancePolicy, VMCondition, PolicyProfile)
-from utils.mgmt_system import exceptions
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version

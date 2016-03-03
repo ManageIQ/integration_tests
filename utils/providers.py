@@ -10,6 +10,13 @@ from collections import Mapping
 from functools import partial
 from operator import methodcaller
 
+from mgmtsystem.virtualcenter import VMWareSystem
+from mgmtsystem.scvmm import SCVMMSystem
+from mgmtsystem.ec2 import EC2System
+from mgmtsystem.openstack import OpenstackSystem
+from mgmtsystem.kubernetes import Kubernetes
+from mgmtsystem.openshift import Openshift
+
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 from cfme.web_ui import Quadicon, paginator, toolbar
@@ -19,31 +26,32 @@ from cfme.containers.provider import KubernetesProvider, OpenshiftProvider
 from cfme.infrastructure.provider import (
     OpenstackInfraProvider, RHEVMProvider, VMwareProvider, SCVMMProvider)
 from fixtures.prov_filter import filtered
-from utils import conf, mgmt_system, version
+from utils import conf, version
+from utils.mgmt_system import RHEVMSystem, OpenstackInfraSystem
 from utils.log import logger, perflog
 from utils.wait import wait_for
 
-#: mapping of infra provider type names to :py:mod:`utils.mgmt_system` classes
+#: mapping of infra provider type names to ``mgmtsystem`` classes
 infra_provider_type_map = {
-    'virtualcenter': mgmt_system.VMWareSystem,
-    'rhevm': mgmt_system.RHEVMSystem,
-    'scvmm': mgmt_system.SCVMMSystem,
-    'openstack-infra': mgmt_system.OpenstackInfraSystem,
+    'virtualcenter': VMWareSystem,
+    'rhevm': RHEVMSystem,
+    'scvmm': SCVMMSystem,
+    'openstack-infra': OpenstackInfraSystem,
 }
 
-#: mapping of cloud provider type names to :py:mod:`utils.mgmt_system` classes
+#: mapping of cloud provider type names to ``mgmtsystem`` classes
 cloud_provider_type_map = {
-    'ec2': mgmt_system.EC2System,
-    'openstack': mgmt_system.OpenstackSystem,
+    'ec2': EC2System,
+    'openstack': OpenstackSystem,
 }
 
-#: mapping of container provider type names to :py:mod:`utils.mgmt_system` classes
+#: mapping of container provider type names to ``mgmtsystem`` classes
 container_provider_type_map = {
-    'kubernetes': mgmt_system.Kubernetes,
-    'openshift': mgmt_system.Openshift
+    'kubernetes': Kubernetes,
+    'openshift': Openshift
 }
 
-#: mapping of all provider type names to :py:mod:`utils.mgmt_system` classes
+#: mapping of all provider type names to ``mgmtsystem`` classes
 provider_type_map = dict(
     infra_provider_type_map.items()
     + cloud_provider_type_map.items()
@@ -99,7 +107,7 @@ def is_container_provider(provider_key):
 
 def get_mgmt(provider_key, providers=None, credentials=None):
     """
-    Provides a :py:mod:`utils.mgmt_system` object, based on the request.
+    Provides a ``mgmtsystem`` object, based on the request.
 
     Args:
         provider_key: The name of a provider, as supplied in the yaml configuration files.
@@ -109,7 +117,7 @@ def get_mgmt(provider_key, providers=None, credentials=None):
             locations. Expects a dict.
         credentials: A set of credentials in the same format as the ``credentials`` yamls files.
             If ``None`` then credentials are loaded from the default locations. Expects a dict.
-    Return: A provider instance of the appropriate :py:class:`utils.mgmt_system.MgmtSystemAPIBase`
+    Return: A provider instance of the appropriate ``mgmtsystem.MgmtSystemAPIBase``
         subclass
     """
     if providers is None:
@@ -142,14 +150,14 @@ def get_provider_key(provider_name):
 
 
 def get_mgmt_by_name(provider_name, *args, **kwargs):
-    """Provides a :py:mod:`utils.mgmt_system` object, based on the request.
+    """Provides a ``mgmtsystem`` object, based on the request.
 
     For detailed parameter description, refer to the :py:func:`get_mgmt` (except its
     `provider_key` parameter)
 
     Args:
         provider_name: 'Nice' provider name (name field from provider's YAML entry)
-    Return: A provider instance of the appropriate :py:class:`utils.mgmt_system.MgmtSystemAPIBase`
+    Return: A provider instance of the appropriate ``mgmtsystem``
         subclass
     """
     return get_mgmt(get_provider_key(provider_name), *args, **kwargs)

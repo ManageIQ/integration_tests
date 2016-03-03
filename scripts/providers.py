@@ -4,8 +4,7 @@ Given the name of a provider from cfme_data and using credentials from
 the credentials stash, call the corresponding action on that provider, along
 with any additional action arguments.
 
-See cfme_pages/common/mgmt_system.py for documentation on the callable methods
-themselves.
+See mgmtsystem for documentation on the callable methods themselves.
 
 Example usage:
 
