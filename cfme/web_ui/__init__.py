@@ -55,6 +55,7 @@ from datetime import date
 from collections import Sequence, Mapping, Callable
 from xml.sax.saxutils import quoteattr
 
+from cached_property import cached_property
 from selenium.common import exceptions as sel_exceptions
 from selenium.common.exceptions import NoSuchElementException, MoveTargetOutOfBoundsException
 from multimethods import multimethod, multidispatch, Anything
@@ -62,7 +63,7 @@ from multimethods import multimethod, multidispatch, Anything
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions, js
 from cfme.fixtures.pytest_selenium import browser
-from utils import lazycache, version
+from utils import version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
@@ -181,6 +182,35 @@ def get_context_current_page():
     return stripped[stripped.find('/'):stripped.rfind('?')]
 
 
+class CachedTableHeaders(object):
+    """the internal cache of headers
+
+    This allows columns to be moved and the Table updated. The :py:attr:`headers` stores
+    the header cache element and the list of headers are stored in _headers. The
+    attribute header_indexes is then created, before finally creating the items
+    attribute.
+    """
+    def __init__(self, table):
+        self.headers = sel.elements('td | th', root=table.header_row)
+        self.indexes = {
+            self._convert_header(cell.text): index
+            for index, cell in enumerate(self.headers)}
+
+    @staticmethod
+    def _convert_header(header):
+        """Convers header cell text into something usable as an identifier.
+
+        Static method which replaces spaces in headers with underscores and strips out
+        all other characters to give an identifier.
+
+        Args:
+            header: A header name to be converted.
+
+        Returns: A string holding the converted header.
+        """
+        return re.sub('[^0-9a-zA-Z_]+', '', header.replace(' ', '_')).lower()
+
+
 class Table(Pretty):
     """
     Helper class for Table/List objects
@@ -288,14 +318,16 @@ class Table(Pretty):
         # tbody containing body rows
         return sel.element('tbody', root=sel.element(self))
 
+    @cached_property
+    def _headers_cache(self):
+        return CachedTableHeaders(self)
+
     @property
     def headers(self):
         """List of ``<td>`` or ``<th>`` elements in :py:attr:`header_row`
 
          """
-        if self._headers is None:
-            self._update_cache()
-        return self._headers
+        return self._headers_cache.headers
 
     @property
     def header_indexes(self):
@@ -304,42 +336,14 @@ class Table(Pretty):
         Derived from :py:attr:`headers`
 
         """
-        if self._header_indexes is None:
-            self._update_cache()
-        return self._header_indexes
+        return self._headers_cache.indexes
 
     def locate(self):
         return sel.move_to_element(self._loc)
 
-    @staticmethod
-    def _convert_header(header):
-        """Convers header cell text into something usable as an identifier.
-
-        Static method which replaces spaces in headers with underscores and strips out
-        all other characters to give an identifier.
-
-        Args:
-            header: A header name to be converted.
-
-        Returns: A string holding the converted header.
-        """
-        return re.sub('[^0-9a-zA-Z_]+', '', header.replace(' ', '_')).lower()
-
     @property
     def _root_loc(self):
         return self.locate()
-
-    def _update_cache(self):
-        """Updates the internal cache of headers
-
-        This allows columns to be moved and the Table updated. The :py:attr:`headers` stores
-        the header cache element and the list of headers are stored in _headers. The
-        attribute header_indexes is then created, before finally creating the items
-        attribute.
-        """
-        self._headers = sel.elements('td | th', root=self.header_row)
-        self._header_indexes = {
-            self._convert_header(cell.text): self.headers.index(cell) for cell in self.headers}
 
     def rows(self):
         """A generator method holding the Row objects
@@ -665,8 +669,6 @@ class SplitTable(Table):
 
     """
     def __init__(self, header_data, body_data):
-        self._headers = None
-        self._header_indexes = None
 
         self._header_loc, header_offset = header_data
         self._body_loc, body_offset = body_data
@@ -1487,7 +1489,7 @@ class Tree(Pretty):
     def __init__(self, locator):
         self.locator = locator
 
-    @lazycache
+    @cached_property
     def tree_id(self):
         if isinstance(self.locator, basestring) and re.match(r"^[a-zA-Z0-9_-]+$", self.locator):
             return self.locator
@@ -3044,7 +3046,7 @@ class DynamicTable(Pretty):
     def rows(self):
         return map(lambda r_el: self.Row(self, r_el), sel.elements(self.ROWS, root=self.root_loc))
 
-    @lazycache
+    @cached_property
     def header_names(self):
         return map(sel.text, sel.elements(".//thead/tr/th", root=self.root_loc))
 

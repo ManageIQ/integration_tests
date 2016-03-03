@@ -143,7 +143,8 @@ from traceback import extract_tb, format_tb
 
 import psphere
 
-from utils import conf, lazycache, safe_string
+from cached_property import cached_property
+from utils import conf, safe_string
 from utils.path import get_rel_path, log_path
 
 MARKER_LEN = 80
@@ -459,12 +460,12 @@ def nth_frame_info(n):
 
 class ArtifactorLoggerAdapter(logging.LoggerAdapter):
     """Logger Adapter that hands messages off to the artifactor before logging"""
-    @lazycache
+    @cached_property
     def artifactor(self):
         from fixtures.artifactor_plugin import art_client
         return art_client
 
-    @lazycache
+    @cached_property
     def slaveid(self):
         from fixtures.artifactor_plugin import SLAVEID
         return SLAVEID or ""

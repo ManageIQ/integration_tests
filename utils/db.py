@@ -4,6 +4,7 @@ from itertools import izip
 from tempfile import NamedTemporaryFile
 
 import yaml
+from cached_property import cached_property
 from sqlalchemy import MetaData, create_engine, event, inspect
 from sqlalchemy.exc import ArgumentError, DisconnectionError, InvalidRequestError
 from sqlalchemy.ext.declarative import declarative_base
@@ -11,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
 from fixtures.pytest_store import store
-from utils import conf, lazycache, ports, version
+from utils import conf, ports, version
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.path import data_path
@@ -167,7 +168,7 @@ class Db(Mapping):
         """Check if this db is not equal to another db"""
         return not self == other
 
-    @lazycache
+    @cached_property
     def engine(self):
         """The :py:class:`Engine <sqlalchemy:sqlalchemy.engine.Engine>` for this database
 
@@ -177,7 +178,7 @@ class Db(Mapping):
         """
         return create_engine(self.db_url, echo_pool=True)
 
-    @lazycache
+    @cached_property
     def sessionmaker(self):
         """A :py:class:`sessionmaker <sqlalchemy:sqlalchemy.orm.session.sessionmaker>`
 
@@ -186,7 +187,7 @@ class Db(Mapping):
         """
         return sessionmaker(bind=self.engine)
 
-    @lazycache
+    @cached_property
     def table_base(self):
         """Base class for all tables returned by this database
 
@@ -195,7 +196,7 @@ class Db(Mapping):
         """
         return declarative_base(metadata=self.metadata)
 
-    @lazycache
+    @cached_property
     def metadata(self):
         """:py:class:`MetaData <sqlalchemy:sqlalchemy.schema.MetaData>` for this database
 
@@ -209,7 +210,7 @@ class Db(Mapping):
         """
         return MetaData(bind=self.engine)
 
-    @lazycache
+    @cached_property
     def db_url(self):
         """The connection URL for this database, including credentials"""
         template = "postgresql://{username}:{password}@{host}:{port}/vmdb_production"
@@ -217,13 +218,13 @@ class Db(Mapping):
         logger.info("[DB] db_url is {}".format(result))
         return result
 
-    @lazycache
+    @cached_property
     def table_names(self):
         """A sorted list of table names available in this database."""
         # rails table names follow similar rules as pep8 identifiers; expose them as such
         return sorted(inspect(self.engine).get_table_names())
 
-    @lazycache
+    @cached_property
     def session(self):
         """Returns a :py:class:`Session <sqlalchemy:sqlalchemy.orm.session.Session>`
 

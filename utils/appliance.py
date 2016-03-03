@@ -15,6 +15,8 @@ from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
 
+from cached_property import cached_property
+
 import dateutil.parser
 import requests
 import traceback
@@ -23,7 +25,7 @@ from cfme.common.vm import VM
 from cfme.configure.configuration import server_name, server_id
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
-from utils import api, conf, datafile, db, lazycache, trackerbot, db_queries, ssh, ports
+from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
@@ -74,15 +76,15 @@ class Appliance(object):
     def __hash__(self):
         return int(hashlib.md5("{}@{}".format(self.vmname, self._provider_name)).hexdigest(), 16)
 
-    @lazycache
+    @cached_property
     def ipapp(self):
         return IPAppliance(self.address)
 
-    @lazycache
+    @cached_property
     def rest_api(self):
         return self.ipapp.rest_api
 
-    @lazycache
+    @cached_property
     def provider(self):
         """
         Note:
@@ -95,7 +97,7 @@ class Appliance(object):
         """ VM's name of the appliance on the provider """
         return self.vmname
 
-    @lazycache
+    @cached_property
     def address(self):
         def is_ip_available():
             try:
@@ -112,18 +114,18 @@ class Appliance(object):
                           num_sec=600)
         return str(ec)
 
-    @lazycache
+    @cached_property
     def db_address(self):
         # returns the appliance address by default, methods that set up the internal
         # db should set db_address to something else when they do that
         return self.ipapp.db_address
 
-    @lazycache
+    @cached_property
     def db(self):
         # slightly crappy: anything that changes self.db_address should also del(self.db)
         return self.ipapp.db
 
-    @lazycache
+    @cached_property
     def version(self):
         return self.ipapp.version
 
@@ -591,13 +593,13 @@ class IPAppliance(object):
     def from_url(cls, url):
         return cls(urlparse(url))
 
-    @lazycache
+    @cached_property
     def rest_api(self):
         return api.API(
             "{}://{}:{}/api".format(self.scheme, self.address, self.ui_port),
             auth=("admin", "smartvm"))
 
-    @lazycache
+    @cached_property
     def address(self):
         # If address wasn't set in __init__, use the hostname from base_url
         if getattr(self, "_url", None) is not None:
@@ -607,7 +609,7 @@ class IPAppliance(object):
             parsed_url = urlparse(store.base_url)
             return parsed_url.netloc
 
-    @lazycache
+    @cached_property
     def hostname(self):
         parsed_url = urlparse(self.url)
         return parsed_url.hostname
@@ -624,22 +626,22 @@ class IPAppliance(object):
         else:
             raise Exception("Unknown scheme {} for {}".format(parsed_url.scheme, store.base_url))
 
-    @lazycache
+    @cached_property
     def scheme(self):
         return "https"  # By default
 
-    @lazycache
+    @cached_property
     def url(self):
         return "{}://{}/".format(self.scheme, self.address)
 
-    @lazycache
+    @cached_property
     def version(self):
         res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
         if res.rc != 0:
             raise RuntimeError('Unable to retrieve appliance VMDB version')
         return Version(res.output)
 
-    @lazycache
+    @cached_property
     def build(self):
         if self.ssh_client.is_appliance_downstream():
             res = self.ssh_client.run_command('cat /var/www/miq/vmdb/BUILD')
@@ -649,7 +651,7 @@ class IPAppliance(object):
         else:
             return "master"
 
-    @lazycache
+    @cached_property
     def os_version(self):
         # Currently parses the os version out of redhat release file to allow for
         # rhel and centos appliances
@@ -659,15 +661,15 @@ class IPAppliance(object):
             raise RuntimeError('Unable to retrieve appliance OS version')
         return Version(res.output)
 
-    @lazycache
+    @cached_property
     def log(self):
         return create_sublogger(self.address)
 
-    @lazycache
+    @cached_property
     def coverage(self):
         return ui_coverage.CoverageManager(self)
 
-    @lazycache
+    @cached_property
     def ssh_client(self):
         """Creates an ssh client connected to this appliance
 
@@ -1649,7 +1651,7 @@ class IPAppliance(object):
                  delay=5,
                  num_sec=timeout)
 
-    @lazycache
+    @cached_property
     def db_address(self):
         # pulls the db address from the appliance by default, falling back to the appliance
         # ip address (and issuing a warning) if that fails. methods that set up the internal
@@ -1668,7 +1670,7 @@ class IPAppliance(object):
             self.log.exception(exc)
             return self.address
 
-    @lazycache
+    @cached_property
     def db(self):
         # slightly crappy: anything that changes self.db_address should also del(self.db)
         return db.Db(self.db_address)
@@ -1722,29 +1724,29 @@ class IPAppliance(object):
         else:
             return False
 
-    @lazycache
+    @cached_property
     def build_datetime(self):
         datetime = self.ssh_client.get_build_datetime()
         return datetime
 
-    @lazycache
+    @cached_property
     def build_date(self):
         date = self.ssh_client.get_build_date()
         return date
 
-    @lazycache
+    @cached_property
     def is_downstream(self):
         return self.ssh_client.is_appliance_downstream()
 
     def has_netapp(self):
         return self.ssh_client.appliance_has_netapp()
 
-    @lazycache
+    @cached_property
     def guid(self):
         result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
         return result.output
 
-    @lazycache
+    @cached_property
     def configuration_details(self):
         """Return details that are necessary to navigate through Configuration accordions.
 
@@ -1783,15 +1785,15 @@ class IPAppliance(object):
         except TypeError:
             return None
 
-    @lazycache
+    @cached_property
     def zone_description(self):
         return db_queries.get_zone_description(self.server_zone_id(), db=self.db)
 
-    @lazycache
+    @cached_property
     def host_id(self, hostname):
         return db_queries.get_host_id(hostname, db=self.db)
 
-    @lazycache
+    @cached_property
     def db_yamls(self):
         return db.db_yamls(self.db, self.guid)
 

@@ -4,6 +4,8 @@ from xml.sax.saxutils import quoteattr
 
 from collections import Sequence, Mapping, Callable
 from contextlib import contextmanager
+
+from cached_property import cached_property
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -11,7 +13,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import AngularSelect, Calendar, Form, Region, Table, Select, fill
-from utils import deferred_verpick, lazycache, version
+from utils import deferred_verpick, version
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -399,7 +401,7 @@ class MenuShortcuts(Pretty):
     def set_text_of(self, id, text):
         sel.set_text("//input[@id='shortcut_desc_{}']".format(id), text)
 
-    @lazycache
+    @cached_property
     def mapping(self):
         """Determine mapping Menu item => menu item id.
 

@@ -1,3 +1,4 @@
+cached-property
 boto
 bottle
 bottle-sqlite

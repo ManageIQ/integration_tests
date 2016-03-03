@@ -32,10 +32,10 @@ import time
 from datetime import datetime
 
 import pytest
+from cached_property import cached_property
 
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.terminalreporter import reporter
-from utils import lazycache
 from utils import providers
 from utils.conf import env
 from utils.db import cfmedb
@@ -138,7 +138,7 @@ class EventListener(object):
         self.expectations = []
         self.listener = None
 
-    @lazycache
+    @cached_property
     def listener_port(self):
         return env.get("event_listener", {}).get("port", None) or random_port()
 

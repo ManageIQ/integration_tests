@@ -5,6 +5,8 @@ Extensively uses :py:mod:`cfme.intelligence.reports.ui_elements`
 """
 from functools import partial
 
+from cached_property import cached_property
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import (ColumnHeaderFormatTable, ColumnStyleTable,
     RecordGrouper)
@@ -14,7 +16,7 @@ from cfme.web_ui.expression_editor import Expression
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from cfme.web_ui.multibox import MultiBoxSelect
-from utils import db, lazycache
+from utils import db
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
@@ -325,7 +327,7 @@ class CustomSavedReport(Updateable, Pretty):
             )
         )
 
-    @lazycache
+    @cached_property
     def data(self):
         """Retrieves data from the saved report.
 

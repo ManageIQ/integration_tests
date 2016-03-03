@@ -1,4 +1,5 @@
 from functools import partial
+from cached_property import cached_property
 
 import ui_navigate as nav
 
@@ -11,7 +12,7 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     accordion, Quadicon, Form, Input, fill, form_buttons, SplitTable, mixins
 )
-from utils import lazycache, version, conf
+from utils import version, conf
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
@@ -158,7 +159,7 @@ class ConfigManager(Updateable, Pretty):
         """Navigates to the manager's detail page"""
         sel.force_navigate('infrastructure_config_manager_detail', context={'manager': self})
 
-    @lazycache
+    @cached_property
     def type(self):
         """Returns presumed type of the manager based on CFME version
 
