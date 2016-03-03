@@ -50,7 +50,7 @@ def test_shuffle_first_level(group, on_finish_default):
     folders = Tree.browse(tree, "All Reports")
     # Select some folder that has at least 3 children
     folders = map(lambda item: item[0],
-                filter(lambda item: isinstance(item, tuple) and len(item[1]) >= 3, folders))
+                filter(lambda item: isinstance(item[1], list) and len(item[1]) >= 3, folders))
     selected_folder = random.choice(folders)
     # Shuffle the order
     with menus.manage_folder(group, selected_folder) as folder:
