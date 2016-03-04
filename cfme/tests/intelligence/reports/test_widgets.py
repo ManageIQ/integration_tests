@@ -7,7 +7,6 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.dashboard import Widget
 from cfme.intelligence.reports.widgets import MenuWidget, ReportWidget, RSSFeedWidget, ChartWidget
 from cfme.intelligence.reports.dashboards import DefaultDashboard
-from cfme.web_ui import toolbar
 from utils.update import update
 
 
@@ -72,9 +71,7 @@ def test_widgets_on_dashboard(request, dashboard, default_widgets, custom_widget
         with update(dashboard):
             dashboard.widgets = default_widgets
     request.addfinalizer(_finalize)
-    sel.force_navigate("dashboard")
-    toolbar.select("Reset Dashboard Widgets to the defaults", invokes_alert=True)
-    sel.handle_alert(False)
+    dashboard.reset_widgets()
     soft_assert(len(Widget.all()) == len(custom_widgets), "Count of the widgets differ")
     for custom_w in custom_widgets:
         try:
