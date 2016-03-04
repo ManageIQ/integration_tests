@@ -182,6 +182,20 @@ def get_context_current_page():
     return stripped[stripped.find('/'):stripped.rfind('?')]
 
 
+def _convert_header(header):
+    """Convers header cell text into something usable as an identifier.
+
+    Static method which replaces spaces in headers with underscores and strips out
+    all other characters to give an identifier.
+
+    Args:
+        header: A header name to be converted.
+
+    Returns: A string holding the converted header.
+    """
+    return re.sub('[^0-9a-zA-Z_]+', '', header.replace(' ', '_')).lower()
+
+
 class CachedTableHeaders(object):
     """the internal cache of headers
 
@@ -193,22 +207,8 @@ class CachedTableHeaders(object):
     def __init__(self, table):
         self.headers = sel.elements('td | th', root=table.header_row)
         self.indexes = {
-            self._convert_header(cell.text): index
+            _convert_header(cell.text): index
             for index, cell in enumerate(self.headers)}
-
-    @staticmethod
-    def _convert_header(header):
-        """Convers header cell text into something usable as an identifier.
-
-        Static method which replaces spaces in headers with underscores and strips out
-        all other characters to give an identifier.
-
-        Args:
-            header: A header name to be converted.
-
-        Returns: A string holding the converted header.
-        """
-        return re.sub('[^0-9a-zA-Z_]+', '', header.replace(' ', '_')).lower()
 
 
 class Table(Pretty):
@@ -595,7 +595,7 @@ class Table(Pretty):
                 return self.columns[index]
             except TypeError:
                 # Index isn't an int, assume it's a string
-                return getattr(self, self.table._convert_header(index))
+                return getattr(self, _convert_header(index))
             # Let IndexError raise
 
         def __str__(self):
