@@ -2,8 +2,9 @@
 import fauxfactory
 import pytest
 from utils.update import update
-from utils import error, version
+from utils import error
 from cfme.automate.service_dialogs import ServiceDialog
+from utils.blockers import BZ
 
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
@@ -78,11 +79,7 @@ def test_service_dialog_duplicate_name():
                            box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
     dialog.create(element_data)
-    error_msg = version.pick({
-        version.LOWEST: "Dialog Label has already been taken",
-        '5.3': "Label has already been taken"
-    })
-    with error.expected(error_msg):
+    with error.expected("Label has already been taken"):
         dialog.create(element_data)
 
 
@@ -212,3 +209,31 @@ def test_reorder_elements():
                            box_desc="my box desc")
     dialog.create(element_1_data, element_2_data)
     dialog.reorder_elements(dialog.tab_label, dialog.box_label, element_1_data, element_2_data)
+
+
+@pytest.mark.meta(blockers=[BZ(1238721, forced_streams=["5.4", "5.5", "upstream"])])
+def test_reorder_unsaved_elements():
+    # Automate BZ - https://bugzilla.redhat.com/show_bug.cgi?id=1238721
+    element_1_data = {
+        'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
+        'ele_name': fauxfactory.gen_alphanumeric(),
+        'ele_desc': fauxfactory.gen_alphanumeric(),
+        'choose_type': "Text Box",
+        'default_text_box': "Default text"
+    }
+    element_2_data = {
+        'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
+        'ele_name': fauxfactory.gen_alphanumeric(),
+        'ele_desc': fauxfactory.gen_alphanumeric(),
+        'choose_type': "Check Box",
+        'default_text_box': True,
+        'field_required': True
+    }
+    dialog = ServiceDialog(label=fauxfactory.gen_alphanumeric(),
+                           description="my dialog", submit=True, cancel=True,
+                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
+                           tab_desc="my tab desc",
+                           box_label="box_" + fauxfactory.gen_alphanumeric(),
+                           box_desc="my box desc")
+    dialog.create(element_1_data)
+    dialog.update_element(element_2_data, element_1_data)
