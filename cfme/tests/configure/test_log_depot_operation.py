@@ -83,7 +83,8 @@ def pytest_generate_tests(metafunc):
     methods = [
         "ftp",
         "smb",
-        "nfs"
+        "nfs",
+        "anon_ftp"
     ]
 
     # FTP credentials for machines
