@@ -322,6 +322,12 @@ class Table(Pretty):
     def _headers_cache(self):
         return CachedTableHeaders(self)
 
+    #  @deprecated("removed, delete the _headers_cache attribute instead")
+    def _update_cache(self):
+        """legacy method to refresh the cache"""
+        del self._headers_cache
+        self._headers_cache
+
     @property
     def headers(self):
         """List of ``<td>`` or ``<th>`` elements in :py:attr:`header_row`
