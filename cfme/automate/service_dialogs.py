@@ -116,28 +116,9 @@ class ServiceDialog(Updateable, Pretty):
         self.box_label = box_label
         self.box_desc = box_desc
 
-    def create(self, *element_data):
-        sel.force_navigate('service_dialog_new')
-        fill(label_form, {'label': self.label,
-                          'description_text': self.description,
-                          'submit_button': self.submit,
-                          'cancel_button': self.cancel})
-        plus_btn({
-            version.LOWEST: "Add a New Tab to this Dialog",
-            "5.3": "Add a new Tab to this Dialog"})
-        sel.wait_for_element(tab_form.tab_label)
-        fill(tab_form, {'tab_label': self.tab_label,
-                        'tab_desc': self.tab_desc})
-        plus_btn({
-            version.LOWEST: "Add a New Box to this Tab",
-            "5.3": "Add a new Box to this Tab"})
-        sel.wait_for_element(box_form.box_label)
-        fill(box_form, {'box_label': self.box_label,
-                        'box_desc': self.box_desc})
+    def add_element(self, *element_data):
         for each_element in element_data:
-            plus_btn({
-                version.LOWEST: "Add a New Element to this Box",
-                "5.3": "Add a new Element to this Box"})
+            plus_btn("Add a new Element to this Box")
             sel.wait_for_element(element_form.ele_label)
             # Workaround to refresh the fields, select other values (text area box and checkbox)and
             # then select "text box"
@@ -145,6 +126,22 @@ class ServiceDialog(Updateable, Pretty):
             fill(element_form, {'choose_type': "Check Box"})
             fill(element_form, each_element)
             self.element_type(each_element)
+
+    def create(self, *element_data):
+        sel.force_navigate('service_dialog_new')
+        fill(label_form, {'label': self.label,
+                          'description_text': self.description,
+                          'submit_button': self.submit,
+                          'cancel_button': self.cancel})
+        plus_btn("Add a new Tab to this Dialog")
+        sel.wait_for_element(tab_form.tab_label)
+        fill(tab_form, {'tab_label': self.tab_label,
+                        'tab_desc': self.tab_desc})
+        plus_btn("Add a new Box to this Tab")
+        sel.wait_for_element(box_form.box_label)
+        fill(box_form, {'box_label': self.box_label,
+                        'box_desc': self.box_desc})
+        self.add_element(*element_data)
         sel.click(form_buttons.add)
         flash.assert_no_errors()
 
@@ -152,6 +149,24 @@ class ServiceDialog(Updateable, Pretty):
         sel.force_navigate('service_dialog_edit', context={'dialog': self})
         fill(label_form, {'name_text': updates.get('name', None),
                           'description_text': updates.get('description', None)})
+        sel.click(form_buttons.save)
+        flash.assert_no_errors()
+
+    def update_element(self, second_element, element_data):
+        sel.force_navigate('service_dialog_edit', context={'dialog': self})
+        if version.current_version() > "5.5":
+            tree = accordion.tree("Dialog")
+        else:
+            tree = Tree("dialog_edit_treebox")
+        tree.click_path(self.label, self.tab_label, self.box_label)
+        self.add_element(second_element)
+        list_ele = []
+        list_ele.append(element_data.get("ele_label"))
+        list_ele.append(second_element.get("ele_label"))
+        tree.click_path(self.label, self.tab_label, self.box_label)
+        ele_1 = self.element(list_ele[0])
+        ele_2 = self.element(list_ele[1])
+        sel.drag_and_drop(ele_1, ele_2)
         sel.click(form_buttons.save)
         flash.assert_no_errors()
 
