@@ -32,17 +32,19 @@
   * :py:class:`ShowingInputs`
   * :py:class:`SplitCheckboxTable`
   * :py:class:`SplitTable`
-  * :py:class:`Timelines`
   * :py:class:`Table`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
   * :py:mod:`cfme.web_ui.cfme_exception`
+  * :py:mod:`cfme.web_ui.expression_editor`
   * :py:mod:`cfme.web_ui.flash`
   * :py:mod:`cfme.web_ui.form_buttons`
+  * :py:mod:`cfme.web_ui.jstimelines`
   * :py:mod:`cfme.web_ui.listaccordion`
   * :py:mod:`cfme.web_ui.menu`
+  * :py:mod:`cfme.web_ui.mixins`
   * :py:mod:`cfme.web_ui.paginator`
-  * :py:mod:`cfme.web_ui.snmp_form`
+  * :py:mod:`cfme.web_ui.search`
   * :py:mod:`cfme.web_ui.tabstrip`
   * :py:mod:`cfme.web_ui.toolbar`
 
@@ -57,7 +59,7 @@ from xml.sax.saxutils import quoteattr
 
 from cached_property import cached_property
 from selenium.common import exceptions as sel_exceptions
-from selenium.common.exceptions import NoSuchElementException, MoveTargetOutOfBoundsException
+from selenium.common.exceptions import NoSuchElementException
 from multimethods import multimethod, multidispatch, Anything
 
 import cfme.fixtures.pytest_selenium as sel
@@ -2691,141 +2693,6 @@ def _fill_showing_inputs_seq(si, i):
 @fill.method((ShowingInputs, basestring))
 def _fill_showing_inputs_str(si, s):
     fill(si, [s])
-
-
-class Timelines(Pretty):
-    """
-    A Timelines object represents the Timelines widget in CFME
-
-    Args:
-        loc: A locator for the Timelines element, usually the div with
-            id miq_timeline.
-    """
-    pretty_attrs = ['element']
-
-    class Object(Pretty):
-        """
-        A generic timelines object.
-
-        Args:
-            element: A WebElement for the event.
-        """
-        pretty_attrs = ['element']
-
-        def __init__(self, element):
-            self.element = element
-            self.pos = self.element.value_of_css_property('left')
-            self.text = self.element.text
-
-        def locate(self):
-            return self.element
-
-    class Event(Object):
-        """
-        An event object.
-        """
-        window_loc = '//div[@class="timeline-event-bubble-title"]/../..'
-        close_button = "{}/div[contains(@style, 'close-button')]".format(window_loc)
-        data_block = '{}//div[@class="timeline-event-bubble-body"]'.format(window_loc)
-
-        @property
-        def image(self):
-            """ Returns the image name of an event. """
-            el = sel.element('.//img', root=self.element)
-            if el:
-                return os.path.split(sel.get_attribute(el, 'src'))[1]
-                return False
-
-        def open_block(self):
-            """ Opens the events info block. """
-            self.close_block()
-            sel.click(self.element)
-
-        def close_block(self):
-            """ Closes the events info block. """
-            try:
-                sel.click(self.close_button)
-            except (NoSuchElementException, MoveTargetOutOfBoundsException):
-                pass
-
-        def block_info(self):
-            """ Attempts to return a dict with the information from the popup. """
-            self.open_block()
-            data = {}
-            elem = sel.element(self.data_block)
-            text_elements = elem.text.split("\n")
-            for line in text_elements:
-                line += " "
-                kv = line.split(": ")
-                if len(kv) == 1:
-                    if ':' not in kv[0]:
-                        data['title'] = kv[0].strip()
-                    else:
-                        data[kv[0]] = None
-                else:
-                    data[kv[0]] = kv[1].strip()
-            return data
-
-    class Marker(Object):
-        """ A proxied object in case it needs more methods further down the line."""
-        pass
-
-    def __init__(self, loc):
-        self.loc = loc
-
-    def _list_events(self):
-        ele = sel.elements('.//div[@name="events"]/div', root=self.loc)
-        return ele
-
-    def _list_markers(self):
-        ele = sel.elements('.//div[@name="ether-markers"]/div', root=self.loc)
-        return ele
-
-    def find_first_marker_in_range(self):
-        """ Finds the first marker on screen. """
-        for marker in self.markers():
-            if sel.is_displayed(marker.element):
-                return marker
-
-    def find_first_event_in_range(self):
-        """ Finds the first event on screen. """
-        marker = self.find_first_marker_in_range()
-        pos = marker.pos
-        for event in self.events():
-            if event.pos > pos:
-                return event
-
-    def visible_events(self):
-        """ A generator giving all visible events. """
-        marker = self.find_first_marker_in_range()
-        pos = marker.pos
-        for event in self.events():
-            if event.pos > pos:
-                yield event
-
-    def find_visible_events_for_vm(self, vm_name):
-        """ Finds all events for a given vm.
-
-        Args:
-            vm_name: The vm name.
-        """
-        events = []
-        for event in self.visible_events():
-            info = event.block_info()
-            if info.get('title', None) == vm_name:
-                events.append(event)
-                event.close_block()
-                return events
-
-    def events(self):
-        """ A generator yielding all events. """
-        for el in self._list_events():
-            yield self.Event(el)
-
-    def markers(self):
-        """ A generator yielding all markers. """
-        for el in self._list_markers():
-            yield self.Marker(el)
 
 
 class MultiFill(object):
