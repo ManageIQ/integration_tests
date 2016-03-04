@@ -322,11 +322,14 @@ class Table(Pretty):
     def _headers_cache(self):
         return CachedTableHeaders(self)
 
-    #  @deprecated("removed, delete the _headers_cache attribute instead")
     def _update_cache(self):
-        """legacy method to refresh the cache"""
-        del self._headers_cache
-        self._headers_cache
+        """refresh the cache in case we know its stale"""
+        try:
+            del self._headers_cache
+        except AttributeError:
+            pass  # it's not cached, dont try to be eager
+        else:
+            self._headers_cache
 
     @property
     def headers(self):
