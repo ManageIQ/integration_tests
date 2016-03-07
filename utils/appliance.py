@@ -1264,7 +1264,11 @@ class IPAppliance(object):
         """
         log_callback('Enabling internal DB (region {}) on {}.'.format(region, self.address))
         self.db_address = self.address
-        del(self.db)
+        try:
+            del self.db
+        except AttributeError:
+            # Not set yet, so we don't care here.
+            pass
 
         client = self.ssh_client
 
