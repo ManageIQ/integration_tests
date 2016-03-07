@@ -7,6 +7,8 @@ from appliances import api, views
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
+    url(r'^check_appliance/(?P<provider_id>[^/]+)/(?P<appliance_name>[^/]+)$',
+        views.check_appliance, name="check_appliance"),
     url(r'^api$', csrf_exempt(api.jsonapi)),
     url(r'^api.html$', api.jsonapi_doc, name="jsonapi_doc"),
     url(r'^provider_usage$', views.provider_usage, name="provider_usage"),
