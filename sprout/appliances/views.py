@@ -626,3 +626,21 @@ def provider_enable_disable(request, provider_id, disabled=None):
     messages.success(
         request, 'Provider {}, {}.'.format(provider_id, "disabled" if disabled else "enabled"))
     return go_back_or_home(request)
+
+
+def check_appliance(request, provider_id, appliance_name):
+    try:
+        appliance = Appliance.objects.get(name=appliance_name, template__provider=provider_id)
+    except ObjectDoesNotExist:
+        return json_response(None)
+    owner = appliance.owner
+    if owner is not None:
+        owner = owner.username
+    data = {
+        'stream': appliance.template.template_group.id,
+        'version': appliance.template.version,
+        'date': appliance.template.date.strftime('%Y-%m-%d'),
+        'preconfigured': appliance.template.preconfigured,
+        'owner': owner,
+    }
+    return json_response(data)
