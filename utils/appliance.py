@@ -48,300 +48,6 @@ class ApplianceException(Exception):
     pass
 
 
-class Appliance(object):
-    """Appliance represents an already provisioned cfme appliance vm
-
-    Args:
-        provider_name: Name of the provider this appliance is running under
-        vm_name: Name of the VM this appliance is running as
-    """
-
-    _default_name = 'EVM'
-
-    def __init__(self, provider_name, vm_name):
-        """Initializes a deployed appliance VM
-        """
-        self.name = Appliance._default_name
-
-        self._provider_name = provider_name
-        self.vmname = vm_name
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and (
-            self.vmname == other.vmname and self._provider_name == other._provider_name)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return int(hashlib.md5("{}@{}".format(self.vmname, self._provider_name)).hexdigest(), 16)
-
-    @cached_property
-    def ipapp(self):
-        return IPAppliance(self.address)
-
-    @cached_property
-    def rest_api(self):
-        return self.ipapp.rest_api
-
-    @cached_property
-    def provider(self):
-        """
-        Note:
-            Cannot be cached because provider object is unpickable.
-        """
-        return get_mgmt(self._provider_name)
-
-    @property
-    def vm_name(self):
-        """ VM's name of the appliance on the provider """
-        return self.vmname
-
-    @cached_property
-    def address(self):
-        def is_ip_available():
-            try:
-                ip = self.provider.get_ip_address(self.vm_name)
-                if ip is None:
-                    return False
-                else:
-                    return ip
-            except AttributeError:
-                return False
-
-        ec, tc = wait_for(is_ip_available,
-                          delay=5,
-                          num_sec=600)
-        return str(ec)
-
-    @cached_property
-    def db_address(self):
-        # returns the appliance address by default, methods that set up the internal
-        # db should set db_address to something else when they do that
-        return self.ipapp.db_address
-
-    @cached_property
-    def db(self):
-        # slightly crappy: anything that changes self.db_address should also del(self.db)
-        return self.ipapp.db
-
-    @cached_property
-    def version(self):
-        return self.ipapp.version
-
-    def _custom_configure(self, **kwargs):
-        log_callback = kwargs.pop(
-            "log_callback",
-            lambda msg: logger.info("Custom configure {}: {}".format(self.vmname, msg)))
-        region = kwargs.get('region', 0)
-        db_address = kwargs.get('db_address', None)
-        key_address = kwargs.get('key_address', None)
-        db_username = kwargs.get('db_username', None)
-        db_password = kwargs.get('ssh_password', None)
-        ssh_password = kwargs.get('ssh_password', None)
-        db_name = kwargs.get('db_name', None)
-
-        if kwargs.get('fix_ntp_clock', True) is True:
-            self.ipapp.fix_ntp_clock(log_callback=log_callback)
-        if kwargs.get('patch_ajax_wait', True) is True:
-            self.ipapp.patch_ajax_wait(log_callback=log_callback)
-        if kwargs.get('db_address', None) is None:
-            self.ipapp.enable_internal_db(
-                region, key_address, db_password, ssh_password, log_callback=log_callback)
-        else:
-            self.ipapp.enable_external_db(
-                db_address, region, db_name, db_username, db_password,
-                log_callback=log_callback)
-        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-        if kwargs.get('loosen_pgssl', True) is True:
-            self.ipapp.loosen_pgssl(log_callback=log_callback)
-
-        name_to_set = kwargs.get('name_to_set', None)
-        if name_to_set is not None and name_to_set != self.name:
-            self.rename(name_to_set)
-            self.ipapp.restart_evm_service(log_callback=log_callback)
-            self.ipapp.wait_for_web_ui(log_callback=log_callback)
-
-    @logger_wrap("Configure Appliance: {}")
-    def configure(self, setup_fleece=False, log_callback=None, **kwargs):
-        """Configures appliance - database setup, rename, ntp sync, ajax wait patch
-
-        Utility method to make things easier.
-
-        Args:
-            db_address: Address of external database if set, internal database if ``None``
-                        (default ``None``)
-            name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
-            region: Number to assign to region (default ``0``)
-            fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
-            patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
-            loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
-            key_address: Fetch encryption key from this address if set, generate a new key if
-                         ``None`` (default ``None``)
-
-        """
-        log_callback("Configuring appliance {}".format(self.vmname))
-        if kwargs:
-            with self.ipapp:
-                self._custom_configure(**kwargs)
-        else:
-            # Defer to the IPAppliance.
-            self.ipapp.configure(log_callback=log_callback)
-        # And do configure the fleecing if requested
-        if setup_fleece:
-            self.configure_fleecing(log_callback=log_callback)
-
-    def configure_fleecing(self, log_callback=None):
-        if log_callback is None:
-            log_callback = lambda message: logger.info("Configure fleecing: {}".format(message))
-        else:
-            cb = log_callback
-            log_callback = lambda message: cb("Configure fleecing: {}".format(message))
-
-        self.ipapp.browser_steal = True
-        with self.ipapp:
-            if self.is_on_vsphere:
-                self.ipapp.install_vddk(reboot=True, log_callback=log_callback)
-                self.ipapp.wait_for_web_ui(log_callback=log_callback)
-
-            if self.is_on_rhev:
-                self.add_rhev_direct_lun_disk()
-
-            log_callback('Enabling smart proxy role...')
-            roles = get_server_roles()
-            if not roles["smartproxy"]:
-                roles["smartproxy"] = True
-                set_server_roles(**roles)
-                # web ui crashes
-                if str(self.version).startswith("5.2.5") or str(self.version).startswith("5.5"):
-                    try:
-                        self.ipapp.wait_for_web_ui(timeout=300, running=False)
-                    except:
-                        pass
-                    self.ipapp.wait_for_web_ui(running=True)
-
-            # add provider
-            log_callback('Setting up provider...')
-            setup_provider(self._provider_name)
-
-            # credential hosts
-            log_callback('Credentialing hosts...')
-            setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
-
-            # if rhev, set relationship
-            if self.is_on_rhev:
-                from cfme.infrastructure.virtual_machines import Vm  # For Vm.CfmeRelationship
-                log_callback('Setting up CFME VM relationship...')
-                vm = VM.factory(self.vm_name, get_crud(self._provider_name))
-                cfme_rel = Vm.CfmeRelationship(vm)
-                cfme_rel.set_relationship(str(server_name()), server_id())
-
-    def does_vm_exist(self):
-        return self.provider.does_vm_exist(self.vm_name)
-
-    def rename(self, new_name):
-        """Changes appliance name
-
-        Args:
-            new_name: Name to set
-
-        Note:
-            Database must be up and running and evm service must be (re)started afterwards
-            for the name change to take effect.
-        """
-        vmdb_config = db.get_yaml_config('vmdb', self.db)
-        vmdb_config['server']['name'] = new_name
-        db.set_yaml_config('vmdb', vmdb_config, self.address)
-        self.name = new_name
-
-    def destroy(self):
-        """Destroys the VM this appliance is running as
-        """
-        if isinstance(self.provider, RHEVMSystem):
-            # if rhev, try to remove direct_lun just in case it is detach
-            self.remove_rhev_direct_lun_disk()
-        self.provider.delete_vm(self.vm_name)
-
-    def stop(self):
-        """Stops the VM this appliance is running as
-        """
-        self.provider.stop_vm(self.vm_name)
-        self.provider.wait_vm_stopped(self.vm_name)
-
-    def start(self):
-        """Starts the VM this appliance is running as
-        """
-        self.provider.start_vm(self.vm_name)
-        self.provider.wait_vm_running(self.vm_name)
-
-    def templatize(self, seal=True):
-        """Marks the appliance as a template. Destroys the original VM in the process.
-
-        By default it runs the sealing process. If you have done it differently, you can opt out.
-
-        Args:
-            seal: Whether to run the sealing process (making the VM 'universal').
-        """
-        if seal:
-            if not self.is_running:
-                self.start()
-            self.ipapp.seal_for_templatizing()
-            self.stop()
-        else:
-            if self.is_running:
-                self.stop()
-        self.provider.mark_as_template(self.vm_name)
-
-    @property
-    def is_running(self):
-        return self.provider.is_vm_running(self.vm_name)
-
-    def browser_session(self):
-        return self.ipapp.browser_session()
-
-    @property
-    def is_on_rhev(self):
-        return isinstance(self.provider, RHEVMSystem)
-
-    @property
-    def is_on_vsphere(self):
-        return isinstance(self.provider, VMWareSystem)
-
-    def add_rhev_direct_lun_disk(self, log_callback=None):
-        if log_callback is None:
-            log_callback = logger.info
-        if not self.is_on_rhev:
-            log_callback("appliance NOT on rhev, unable to connect direct_lun")
-            raise ApplianceException("appliance NOT on rhev, unable to connect direct_lun")
-        log_callback('Adding RHEV direct_lun hook...')
-        self.ipapp.wait_for_ssh()
-        try:
-            self.provider.connect_direct_lun_to_appliance(self.vm_name, False)
-        except Exception as e:
-            log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
-            log_callback(str(e))
-            raise
-
-    @logger_wrap("Remove RHEV LUN: {}")
-    def remove_rhev_direct_lun_disk(self, log_callback=None):
-        if not self.is_on_rhev:
-            msg = "appliance {} NOT on rhev, unable to disconnect direct_lun".format(self.vmname)
-            log_callback(msg)
-            raise ApplianceException(msg)
-        log_callback('Removing RHEV direct_lun hook...')
-        self.ipapp.wait_for_ssh()
-        try:
-            self.provider.connect_direct_lun_to_appliance(self.vm_name, True)
-        except Exception as e:
-            log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
-            log_callback(str(e))
-            raise
-
-    def reset_automate_model(self):
-        with self.ipapp.ssh_client as ssh_client:
-            ssh_client.run_rake_command("evm:automate:reset")
-
-
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
@@ -1616,9 +1322,9 @@ class IPAppliance(object):
             ssh.run_command('ldconfig')
 
             log_callback('Modifying YAML configuration')
-            yaml = self.get_yaml_config('vmdb')
-            yaml['product']['storage'] = True
-            self.set_yaml_config('vmdb', yaml)
+            c_yaml = self.get_yaml_config('vmdb')
+            c_yaml['product']['storage'] = True
+            self.set_yaml_config('vmdb', c_yaml)
 
             # To mark that we installed netapp
             ssh.run_command("touch /var/www/miq/vmdb/HAS_NETAPP")
@@ -1834,6 +1540,279 @@ class IPAppliance(object):
     def delete_all_providers(self):
         for prov in self.rest_api.collections.providers:
             prov.action.delete()
+
+    def reset_automate_model(self):
+        with self.ssh_client as ssh_client:
+            ssh_client.run_rake_command("evm:automate:reset")
+
+
+class Appliance(IPAppliance):
+    """Appliance represents an already provisioned cfme appliance vm
+
+    Args:
+        provider_name: Name of the provider this appliance is running under
+        vm_name: Name of the VM this appliance is running as
+    """
+
+    _default_name = 'EVM'
+
+    def __init__(self, provider_name, vm_name):
+        """Initializes a deployed appliance VM
+        """
+        self.name = Appliance._default_name
+
+        self._provider_name = provider_name
+        self.vmname = vm_name
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and (
+            self.vmname == other.vmname and self._provider_name == other._provider_name)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return int(hashlib.md5("{}@{}".format(self.vmname, self._provider_name)).hexdigest(), 16)
+
+    @property
+    def ipapp(self):
+        # For backwards compat
+        return self
+
+    @cached_property
+    def provider(self):
+        """
+        Note:
+            Cannot be cached because provider object is unpickable.
+        """
+        return get_mgmt(self._provider_name)
+
+    @property
+    def vm_name(self):
+        """ VM's name of the appliance on the provider """
+        return self.vmname
+
+    @cached_property
+    def address(self):
+        def is_ip_available():
+            try:
+                ip = self.provider.get_ip_address(self.vm_name)
+                if ip is None:
+                    return False
+                else:
+                    return ip
+            except AttributeError:
+                return False
+
+        ec, tc = wait_for(is_ip_available,
+                          delay=5,
+                          num_sec=600)
+        return str(ec)
+
+    def _custom_configure(self, **kwargs):
+        log_callback = kwargs.pop(
+            "log_callback",
+            lambda msg: logger.info("Custom configure {}: {}".format(self.vmname, msg)))
+        region = kwargs.get('region', 0)
+        db_address = kwargs.get('db_address', None)
+        key_address = kwargs.get('key_address', None)
+        db_username = kwargs.get('db_username', None)
+        db_password = kwargs.get('ssh_password', None)
+        ssh_password = kwargs.get('ssh_password', None)
+        db_name = kwargs.get('db_name', None)
+
+        if kwargs.get('fix_ntp_clock', True) is True:
+            self.fix_ntp_clock(log_callback=log_callback)
+        if kwargs.get('patch_ajax_wait', True) is True:
+            self.patch_ajax_wait(log_callback=log_callback)
+        if kwargs.get('db_address', None) is None:
+            self.enable_internal_db(
+                region, key_address, db_password, ssh_password, log_callback=log_callback)
+        else:
+            self.enable_external_db(
+                db_address, region, db_name, db_username, db_password,
+                log_callback=log_callback)
+        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+        if kwargs.get('loosen_pgssl', True) is True:
+            self.loosen_pgssl(log_callback=log_callback)
+
+        name_to_set = kwargs.get('name_to_set', None)
+        if name_to_set is not None and name_to_set != self.name:
+            self.rename(name_to_set)
+            self.restart_evm_service(log_callback=log_callback)
+            self.wait_for_web_ui(log_callback=log_callback)
+
+    @logger_wrap("Configure Appliance: {}")
+    def configure(self, setup_fleece=False, log_callback=None, **kwargs):
+        """Configures appliance - database setup, rename, ntp sync, ajax wait patch
+
+        Utility method to make things easier.
+
+        Args:
+            db_address: Address of external database if set, internal database if ``None``
+                        (default ``None``)
+            name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
+            region: Number to assign to region (default ``0``)
+            fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
+            patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
+            loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
+            key_address: Fetch encryption key from this address if set, generate a new key if
+                         ``None`` (default ``None``)
+
+        """
+        log_callback("Configuring appliance {}".format(self.vmname))
+        if kwargs:
+            with self:
+                self._custom_configure(**kwargs)
+        else:
+            # Defer to the IPAppliance.
+            self.configure(log_callback=log_callback)
+        # And do configure the fleecing if requested
+        if setup_fleece:
+            self.configure_fleecing(log_callback=log_callback)
+
+    def configure_fleecing(self, log_callback=None):
+        if log_callback is None:
+            log_callback = lambda message: logger.info("Configure fleecing: {}".format(message))
+        else:
+            cb = log_callback
+            log_callback = lambda message: cb("Configure fleecing: {}".format(message))
+
+        self.browser_steal = True
+        with self:
+            if self.is_on_vsphere:
+                self.install_vddk(reboot=True, log_callback=log_callback)
+                self.wait_for_web_ui(log_callback=log_callback)
+
+            if self.is_on_rhev:
+                self.add_rhev_direct_lun_disk()
+
+            log_callback('Enabling smart proxy role...')
+            roles = get_server_roles()
+            if not roles["smartproxy"]:
+                roles["smartproxy"] = True
+                set_server_roles(**roles)
+                # web ui crashes
+                if str(self.version).startswith("5.2.5") or str(self.version).startswith("5.5"):
+                    try:
+                        self.wait_for_web_ui(timeout=300, running=False)
+                    except:
+                        pass
+                    self.wait_for_web_ui(running=True)
+
+            # add provider
+            log_callback('Setting up provider...')
+            setup_provider(self._provider_name)
+
+            # credential hosts
+            log_callback('Credentialing hosts...')
+            setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
+
+            # if rhev, set relationship
+            if self.is_on_rhev:
+                from cfme.infrastructure.virtual_machines import Vm  # For Vm.CfmeRelationship
+                log_callback('Setting up CFME VM relationship...')
+                vm = VM.factory(self.vm_name, get_crud(self._provider_name))
+                cfme_rel = Vm.CfmeRelationship(vm)
+                cfme_rel.set_relationship(str(server_name()), server_id())
+
+    def does_vm_exist(self):
+        return self.provider.does_vm_exist(self.vm_name)
+
+    def rename(self, new_name):
+        """Changes appliance name
+
+        Args:
+            new_name: Name to set
+
+        Note:
+            Database must be up and running and evm service must be (re)started afterwards
+            for the name change to take effect.
+        """
+        vmdb_config = db.get_yaml_config('vmdb', self.db)
+        vmdb_config['server']['name'] = new_name
+        db.set_yaml_config('vmdb', vmdb_config, self.address)
+        self.name = new_name
+
+    def destroy(self):
+        """Destroys the VM this appliance is running as
+        """
+        if isinstance(self.provider, RHEVMSystem):
+            # if rhev, try to remove direct_lun just in case it is detach
+            self.remove_rhev_direct_lun_disk()
+        self.provider.delete_vm(self.vm_name)
+
+    def stop(self):
+        """Stops the VM this appliance is running as
+        """
+        self.provider.stop_vm(self.vm_name)
+        self.provider.wait_vm_stopped(self.vm_name)
+
+    def start(self):
+        """Starts the VM this appliance is running as
+        """
+        self.provider.start_vm(self.vm_name)
+        self.provider.wait_vm_running(self.vm_name)
+
+    def templatize(self, seal=True):
+        """Marks the appliance as a template. Destroys the original VM in the process.
+
+        By default it runs the sealing process. If you have done it differently, you can opt out.
+
+        Args:
+            seal: Whether to run the sealing process (making the VM 'universal').
+        """
+        if seal:
+            if not self.is_running:
+                self.start()
+            self.seal_for_templatizing()
+            self.stop()
+        else:
+            if self.is_running:
+                self.stop()
+        self.provider.mark_as_template(self.vm_name)
+
+    @property
+    def is_running(self):
+        return self.provider.is_vm_running(self.vm_name)
+
+    @property
+    def is_on_rhev(self):
+        return isinstance(self.provider, RHEVMSystem)
+
+    @property
+    def is_on_vsphere(self):
+        return isinstance(self.provider, VMWareSystem)
+
+    def add_rhev_direct_lun_disk(self, log_callback=None):
+        if log_callback is None:
+            log_callback = logger.info
+        if not self.is_on_rhev:
+            log_callback("appliance NOT on rhev, unable to connect direct_lun")
+            raise ApplianceException("appliance NOT on rhev, unable to connect direct_lun")
+        log_callback('Adding RHEV direct_lun hook...')
+        self.wait_for_ssh()
+        try:
+            self.provider.connect_direct_lun_to_appliance(self.vm_name, False)
+        except Exception as e:
+            log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
+            log_callback(str(e))
+            raise
+
+    @logger_wrap("Remove RHEV LUN: {}")
+    def remove_rhev_direct_lun_disk(self, log_callback=None):
+        if not self.is_on_rhev:
+            msg = "appliance {} NOT on rhev, unable to disconnect direct_lun".format(self.vmname)
+            log_callback(msg)
+            raise ApplianceException(msg)
+        log_callback('Removing RHEV direct_lun hook...')
+        self.wait_for_ssh()
+        try:
+            self.provider.connect_direct_lun_to_appliance(self.vm_name, True)
+        except Exception as e:
+            log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
+            log_callback(str(e))
+            raise
 
 
 class ApplianceSet(object):
