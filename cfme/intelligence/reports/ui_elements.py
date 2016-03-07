@@ -581,8 +581,11 @@ class DashboardWidgetSelector(Pretty):
 
 class NewerDashboardWidgetSelector(DashboardWidgetSelector):
     """Dashboard widget selector from 5.5 onwards."""
+    _button_open_close = ".//div[contains(@class, 'dropdown-menu open')]"
+    _combo_list = "//div[contains(@class, 'dropdown-menu open')]/ul"
+
     _remove_button = ".//a[../../h3[normalize-space(.)='{}']]"
-    _selected = ".//div[@id='modules']//h3"
+    _selected = "./div[@id='modules']/div/div/div/h3"
     _select = AngularSelect("widget")
 
     def select(self, *items):
