@@ -109,6 +109,7 @@ class Provider(Pretty, CloudInfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
     page_name = "infrastructure"
+    instances_page_name = "infra_vm_and_templates"
     quad_name = "infra_prov"
     properties_form = properties_form
     add_provider_button = form_buttons.FormButton("Add this Infrastructure Provider")

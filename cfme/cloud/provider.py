@@ -101,6 +101,7 @@ class Provider(Pretty, CloudInfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
     page_name = "clouds"
+    instances_page_name = "clouds_instances_by_provider"
     quad_name = "cloud_prov"
     vm_name = "Instances"
     template_name = "Images"
