@@ -658,3 +658,37 @@ def check_template(request, provider_id, template_name):
         'preconfigured': template.preconfigured,
     }
     return json_response(data)
+
+
+def check_pool(request, pool_id):
+    try:
+        pool = AppliancePool.objects.get(id=pool_id)
+    except ObjectDoesNotExist:
+        return json_response(None)
+    data = {
+        'description': pool.description,
+        'stream': pool.group.id,
+        'version': pool.version,
+        'date': pool.date.strftime('%Y-%m-%d'),
+        'preconfigured': pool.preconfigured,
+        'finished': pool.finished,
+        'owner': pool.owner.username,
+        'appliances': [[a.name, a.template.provider.id] for a in pool.appliances]
+    }
+    return json_response(data)
+
+
+def check_pools(request):
+    data = []
+    for pool in AppliancePool.objects.all():
+        pool_data = {
+            'description': pool.description,
+            'stream': pool.group.id,
+            'version': pool.version,
+            'date': pool.date.strftime('%Y-%m-%d'),
+            'preconfigured': pool.preconfigured,
+            'finished': pool.finished,
+            'appliances': [[a.name, a.template.provider.id] for a in pool.appliances]
+        }
+        data.append(pool_data)
+    return json_response(data)
