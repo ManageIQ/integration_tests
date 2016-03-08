@@ -683,6 +683,7 @@ def check_pools(request):
     for pool in AppliancePool.objects.all():
         pool_data = {
             'description': pool.description,
+            'id': pool.id,
             'stream': pool.group.id,
             'version': pool.version,
             'date': pool.date.strftime('%Y-%m-%d'),
