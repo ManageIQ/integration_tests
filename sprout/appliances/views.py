@@ -644,3 +644,17 @@ def check_appliance(request, provider_id, appliance_name):
         'owner': owner,
     }
     return json_response(data)
+
+
+def check_template(request, provider_id, template_name):
+    try:
+        template = Template.objects.get(name=template_name, provider=provider_id)
+    except ObjectDoesNotExist:
+        return json_response(None)
+    data = {
+        'stream': template.template_group.id,
+        'version': template.version,
+        'date': template.date.strftime('%Y-%m-%d'),
+        'preconfigured': template.preconfigured,
+    }
+    return json_response(data)
