@@ -689,6 +689,7 @@ def check_pools(request):
             'date': pool.date.strftime('%Y-%m-%d'),
             'preconfigured': pool.preconfigured,
             'finished': pool.finished,
+            'owner': pool.owner.username,
             'appliances': [[a.name, a.template.provider.id] for a in pool.appliances]
         }
         data.append(pool_data)
