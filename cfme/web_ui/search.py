@@ -114,6 +114,10 @@ def _answering_function(answers_dict, text, element):
         return False
 
 
+def has_quick_search_box():
+    return sel.is_displayed(search_box.quick_search_box)
+
+
 def is_advanced_search_opened():
     """Checks whether the advanced search box is currently opened"""
     return sel.is_displayed(search_box.advanced_search_box)
@@ -268,7 +272,7 @@ def _process_user_filling(fill_callback, cancel_on_user_filling=False):
     Args:
         fill_callback: The function to be called on each user input.
     """
-    if sel.is_displayed(search_box.quick_search_box):  # That is the one with user inputs
+    if has_quick_search_box():  # That is the one with user inputs
         if fill_callback is None:
             raise Exception("User should have provided a callback function!")
         if isinstance(fill_callback, dict):
