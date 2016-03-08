@@ -10,7 +10,7 @@ from cfme.exceptions import (
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
-    form_buttons, paginator, toolbar, PagedTable, SplitPagedTable)
+    form_buttons, paginator, toolbar, PagedTable, SplitPagedTable, search)
 from utils import version
 from utils.log import logger
 from utils.mgmt_system import exceptions
@@ -266,7 +266,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
             return False
 
     def find_quadicon(
-            self, do_not_navigate=False, mark=False, refresh=True, from_any_provider=False):
+            self, do_not_navigate=False, mark=False, refresh=True, from_any_provider=False,
+            use_search=True):
         """Find and return a quadicon belonging to a specific vm
 
         Args:
@@ -295,6 +296,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
 
         # this is causing some issues in 5.5.0.9, commenting out for a bit
         # paginator.results_per_page(1000)
+        if use_search:
+            if not search.has_quick_search_box():
+                sel.force_navigate('vm_templates_provider_branch',
+                                   context={'provider_name': self.provider.name})
+            search.normal_search(self.name)
         for page in paginator.pages():
             if sel.is_displayed(quadicon, move_to=True):
                 if mark:
