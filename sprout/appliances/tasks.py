@@ -40,10 +40,10 @@ VERSION_REGEXPS = [
     r"cfme-(\d)(\d)(\d)[.](\d{2})-",         # cfme-524.02-    -> 5.2.4.2
     r"cfme-(\d)(\d)(\d)[.](\d{2})[.](\d)-",  # cfme-524.02.1-    -> 5.2.4.2.1
     # 4 digits
-    r"cfme-(\d)(\d)(\d)(\d)-",      # cfme-5242-    -> 5.2.4.2
+    r"cfme-(?:nightly-)?(\d)(\d)(\d)(\d)-",      # cfme-5242-    -> 5.2.4.2
     r"cfme-(\d)(\d)(\d)-(\d)-",     # cfme-520-1-   -> 5.2.0.1
     # 5 digits  (not very intelligent but no better solution so far)
-    r"cfme-(\d)(\d)(\d)(\d{2})-",   # cfme-53111-   -> 5.3.1.11, cfme-53101 -> 5.3.1.1
+    r"cfme-(?:nightly-)?(\d)(\d)(\d)(\d{2})-",   # cfme-53111-   -> 5.3.1.11, cfme-53101 -> 5.3.1.1
 ]
 VERSION_REGEXPS = map(re.compile, VERSION_REGEXPS)
 TRACKERBOT_PAGINATE = 20
