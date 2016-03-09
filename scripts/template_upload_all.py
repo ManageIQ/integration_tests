@@ -53,15 +53,24 @@ def template_name(image_link, image_ts, checksum_link, version=None):
     image_dt = get_last_modified(checksum_link)
     # CFME brew builds
     if CFME_BREW_ID in image_name:
-        if version:
+        if 'nightly' in image_name:
+            # 5.6+ nightly
+            # cfme-rhevm-5.6.0.0-nightly-20160308112121-1.x86_64.rhevm.ova
+            # => cfme-nightly-5600-201603081121 (YYYYMMDDHHmm)
+            pattern = re.compile(r'.*-nightly-(\d+).*')
+            result = pattern.findall(image_name)
+            return "cfme-nightly-{}-{}".format(version, result[0][:-2])
+        elif version:
+            # proper build
             if len(version) == 4:
                 version = version[:-1] + '0' + version[-1:]
-            return "cfme-%s-%s%s%s" % (version, image_ts, image_dt.hour, image_dt.minute)
+            return "cfme-{}-{}{}{}".format(version, image_ts, image_dt.hour, image_dt.minute)
         else:
+            # other nightly; leaving it in in case this template-naming comes back
             pattern = re.compile(r'[^\d]*?-(\d).(\d)-(\d).*')
             result = pattern.findall(image_name)
             # cfme-pppp-x.y-z.arch.[pppp].ova => cfme-nightly-x.y-z
-            return "cfme-nightly-%s.%s-%s" % (result[0][0], result[0][1], result[0][2])
+            return "cfme-nightly-{}.{}-{}".format(result[0][0], result[0][1], result[0][2])
     # nightly builds MIQ
     elif NIGHTLY_MIQ_ID in image_name:
         if "master" in image_name:
@@ -71,12 +80,12 @@ def template_name(image_link, image_ts, checksum_link, version=None):
         result = pattern.findall(image_name)
         if version:
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-vvvv-yyyymmddhhmm
-            return "miq-nightly-%s-%s" % (version, result[0])
+            return "miq-nightly-{}-{}".format(version, result[0])
         elif "stable" in image_link:
-            return "miq-stable-%s-%s" % (result[0][0], result[0][2])
+            return "miq-stable-{}-{}".format(result[0][0], result[0][2])
         else:
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
-            return "miq-nightly-%s" % result[0]
+            return "miq-nightly-{}".format(result[0])
     # z-stream
     else:
         pattern = re.compile(r'[.-](\d+(?:\d+)?)')
@@ -86,12 +95,12 @@ def template_name(image_link, image_ts, checksum_link, version=None):
             # If build number < 10, pad it with a 0.
             if len(version) == 4:
                 version = version[:-1] + '0' + version[-1:]
-            return "cfme-%s-%s%s%s%s" % (version, result[3], result[4],
+            return "cfme-{}-{}{}{}{}".format(version, result[3], result[4],
                                          image_dt.hour, image_dt.minute)
         else:
             # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-xy-yyyymmddi
             str_res = ''.join(result)
-            return "cfme-%s-%s" % (str_res[0:2], str_res[2:])
+            return "cfme-{}-{}".format(str_res[0:2], str_res[2:])
 
 
 def get_version(dir_url):
