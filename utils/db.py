@@ -22,7 +22,10 @@ from utils.ssh import SSHClient
 
 @on_signal("server_config_changed")
 def invalidate_server_config():
-    del store.current_appliance.db_yamls
+    try:
+        del store.current_appliance.db_yamls
+    except AttributeError:
+        pass  # cache is not populated, ignore
 
 
 @event.listens_for(Pool, "checkout")
