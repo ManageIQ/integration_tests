@@ -1,8 +1,11 @@
 from collections import defaultdict
 import socket
+import os
 import re
 import urlparse
 from fixtures.pytest_store import store
+
+from utils.log import logger
 
 _ports = defaultdict(dict)
 _dns_cache = {}
@@ -133,3 +136,22 @@ def resolve_ips(host_iterable, force_dns=False):
             if ip is not None:
                 result.add(ip)
     return result
+
+
+def is_pingable(ip_addr):
+    """verifies the specified ip_address is reachable or not.
+
+    Args:
+        ip_addr: ip_address to verify the PING.
+    returns: return True is ip_address is pinging else returns False.
+    """
+    try:
+        status = os.system("ping -c1 -w2 {}".format(ip_addr))
+        if status == 0:
+            logger.info('IP: {} is UP !'.format(ip_addr))
+            return True
+        logger.info('IP: {} is DOWN !'.format(ip_addr))
+        return False
+    except Exception as e:
+        logger.exception(e)
+        return False
