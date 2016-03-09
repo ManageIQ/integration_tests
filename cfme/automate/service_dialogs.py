@@ -132,7 +132,8 @@ class ServiceDialog(Updateable, Pretty):
         fill(label_form, {'label': self.label,
                           'description_text': self.description,
                           'submit_button': self.submit,
-                          'cancel_button': self.cancel})
+                          'cancel_button': self.cancel,
+                          'label': self.label})
         plus_btn("Add a new Tab to this Dialog")
         sel.wait_for_element(tab_form.tab_label)
         fill(tab_form, {'tab_label': self.tab_label,
@@ -143,7 +144,7 @@ class ServiceDialog(Updateable, Pretty):
                         'box_desc': self.box_desc})
         self.add_element(*element_data)
         sel.click(form_buttons.add)
-        flash.assert_no_errors()
+        flash.assert_success_message('Dialog "{}" was added'.format(self.label))
 
     def update(self, updates):
         sel.force_navigate('service_dialog_edit', context={'dialog': self})
