@@ -13,14 +13,16 @@ structure like so:
         prov_1:
             name: test
             ip: 10.0.0.1
+            test_vm: abc1
         prov_2:
             name: test2
             ip: 10.0.0.2
+            test_vm: abc2
 
-Our test requires that we have a Provider Object and a management system object. Let's
-assume a test prototype like so::
+Our test requires that we have a Provider Object and as an example, the 'test_vm' field of the
+object. Let's assume a test prototype like so::
 
-    test_provider_add(provider_obj, provider_mgmt_sys):
+    test_provider_add(provider_obj, test_vm):
 
 In this case we require the test to be run twice, once for prov_1 and then again for prov_2.
 We are going to use the generate function to help us provide parameters to pass to
@@ -35,10 +37,10 @@ that a provider object is obtained via the ``Provider`` class, and the ``mgmt_sy
 is obtained via a ``MgmtSystem`` class.
 
 ===== =============== =================
-~     provider_obj    provider_mgmt_sys
+~     provider_obj    test_vm
 ===== =============== =================
-prov1 Provider(prov1) MgmtSystem(prov1)
-prov2 Provider(prov2) MgmtSystem(prov2)
+prov1 Provider(prov1) abc1
+prov2 Provider(prov2) abc2
 ===== =============== =================
 
 This is analogous to the following layout:
@@ -56,7 +58,7 @@ This could be generated like so:
 
     def gen_providers:
 
-        argnames = ['provider_obj', 'provider_mgmt_sys']
+        argnames = ['provider_obj', 'test_vm']
         argvalues = []
         idlist = []
 
@@ -64,7 +66,7 @@ This could be generated like so:
             idlist.append(provider)
             argvalues.append([
                 Provider(yaml['providers'][provider]['name']),
-                MgmtSystem(yaml['providers'][provider]['ip']))
+                yaml['providers'][provider]['test_vm'])
             ])
 
         return argnames, argvalues, idlist
