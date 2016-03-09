@@ -194,7 +194,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
 
     The ``**options`` available are defined below:
 
-    * ``required_fields``: when fields passed are not present, skip them
+    * ``require_fields``: when fields passed are not present, skip them, boolean
     * ``choose_random``: choose a single provider from the list
     * ``template_location``: Specification where a required tempalte lies in the yaml, If not
       found in the provider, warning is printed and the test not collected. The spec
