@@ -26,8 +26,17 @@ from utils.version import current_version
 
 @on_signal("server_details_changed")
 def invalidate_server_details():
-    del store.current_appliance.configuration_details
-    del store.current_appliance.zone_description
+    # TODO: simplify after idempotent cached property is availiable
+    # https://github.com/pydanny/cached-property/issues/31
+    try:
+        del store.current_appliance.configuration_details
+    except AttributeError:
+        pass
+    try:
+        del store.current_appliance.zone_description
+    except AttributeError:
+        pass
+
 
 access_tree = partial(accordion.tree, "Access Control")
 database_tree = partial(accordion.tree, "Database")
