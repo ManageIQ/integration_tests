@@ -9,7 +9,6 @@ import diaper
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 
-
 def property_or_none(wrapped, *args, **kwargs):
     """property_or_none([fget[, fset[, fdel[, doc]]]])
     Property decorator that turns AttributeErrors into None returns
@@ -121,23 +120,27 @@ def read_env(file):
     return env_vars
 
 
-def deferred_verpick(version_d):
-    """This turns a dictionary for verpick to a class property.
+class deferred_verpick(object):
+    """descriptor that version-picks on Access
 
-    Useful for verpicked constants.
+    Useful for verpicked constants in classes
     """
-    from utils.version import Version, pick as _version_pick
 
-    @classproperty
-    def getter(self):
+    def __init__(self, version_pick):
+        self.version_pick = version_pick
+
+    def __get__(self, obj, cls):
+        # TODO: remove the need to trigger for classes
+        #       so we can use the class level for documentation of version picks
+        from utils.version import Version, pick as _version_pick
         if on_rtd:
-            if version_d:
-                return version_d[sorted(version_d.keys(), key=Version)[-1]]
+            if self.version_pick:
+                latest = max(self.version_pick, key=Version)
+                return self.version_pick[latest]
             else:
-                raise Exception("Nothing to pick from")
+                raise LookupError("Nothing to pick from")
         else:
-            return _version_pick(version_d)
-    return getter
+            return _version_pick(self.version_pick)
 
 
 def safe_string(o):
