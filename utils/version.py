@@ -157,7 +157,9 @@ def pick(v_dict):
 
 class Version(object):
     """Version class based on distutil.version.LooseVersion"""
-    component_re = re.compile(r'(\d+ | [a-z]+ | \.)', re.VERBOSE)
+    SUFFIXES = ('nightly', 'pre', 'alpha', 'beta')
+    SUFFIXES_STR = "|".join(SUFFIXES)
+    component_re = re.compile(r'(?:\s*(\d+|[a-z]+|\.|-(?:{})$))'.format(SUFFIXES_STR))
 
     def __init__(self, vstring):
         self.parse(vstring)
@@ -173,7 +175,13 @@ class Version(object):
             vstring = 'master'
 
         components = filter(lambda x: x and x != '.',
-                            self.component_re.split(vstring))
+                            self.component_re.findall(vstring))
+        # Check if we have a version suffix which denotes pre-release
+        if components and components[-1].startswith('-'):
+            self.suffix = components[-1][1:]    # Chop off the -
+            components = components[:-1]
+        else:
+            self.suffix = None
         for i in range(len(components)):
             try:
                 components[i] = int(components[i])
@@ -199,7 +207,8 @@ class Version(object):
 
     def __cmp__(self, other):
         try:
-            other = Version(other)
+            if not isinstance(other, type(self)):
+                other = Version(other)
         except:
             raise ValueError('Cannot compare Version to {}'.format(type(other).__name__))
 
@@ -210,11 +219,30 @@ class Version(object):
         elif self == self.lowest() or other == self.latest():
             return -1
         else:
-            return cmp(self.version, other.version)
+            result = cmp(self.version, other.version)
+            if result != 0:
+                return result
+            # Use suffixes to decide
+            if self.suffix is None and other.suffix is None:
+                # No suffix, the same
+                return 0
+            elif self.suffix is None:
+                # This does not have suffix but the other does so this is "newer"
+                return 1
+            elif other.suffix is None:
+                # This one does have suffix and the other does not so this one is older
+                return -1
+            else:
+                # Both have suffixes, so do some math
+                self_suffix = self.SUFFIXES.index(self.suffix)
+                other_suffix = self.SUFFIXES.index(other.suffix)
+                return cmp(self_suffix, other_suffix)
 
     def __eq__(self, other):
         try:
-            return self.version == Version(other).version
+            if not isinstance(other, type(self)):
+                other = Version(other)
+            return self.version == other.version and self.suffix == other.suffix
         except:
             return False
 
