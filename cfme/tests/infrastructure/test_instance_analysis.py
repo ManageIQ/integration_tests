@@ -433,7 +433,8 @@ def test_ssa_vm(provider, instance, soft_assert):
     if instance.system_type != WINDOWS:
         soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
         soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
-        soft_assert(c_packages == e_packages, "groups: '{}' != '{}'".format(c_groups, e_groups))
+        soft_assert(c_packages == e_packages,
+            "packages: '{}' != '{}'".format(c_packages, e_packages))
         if not BZ("1312971").blocks:
             soft_assert(c_services == e_services,
                         "services: '{}' != '{}'".format(c_services, e_services))
