@@ -36,9 +36,8 @@ def parse_cmd_line():
 def get_latest_tested_template_on_stream(api, template_stream_name):
     stream = {}
     try:
-        print("wait until all the provider images are uploaded to latest directory")
-        wait_for(templates_uploaded,
-                 [api, template_stream_name], fail_condition=False, delay=5, timeout='1h')
+        wait_for_images_on_web_repo(template_stream_name)
+        wait_for_templates_on_providers(api, template_stream_name)
     except Exception as e:
         print(e)
         print("less than three provider images are uploaded to latest directory")
@@ -65,12 +64,17 @@ def get_latest_tested_template_on_stream(api, template_stream_name):
 
 
 def images_uploaded(stream):
-    if 'upstream' in stream:
-        stream = 'upstream'
-    elif '55z' in stream:
-        stream = 'downstream_55'
-    elif '54z' in stream:
-        stream = 'downstream_54'
+    """Checks for the uploaded build images at the latest directory.
+       the stream name in the weburl for latest directory is formatted
+       differently on trackerbot. This method formats the 'stream' before
+       browsing the web url.
+    Args:
+        stream: stream name in trackerbot stream name format
+                e.g. downstream-55z, downstream-nightly, upstream etc..
+    returns: dictionary with key/value 'provider type and image names uploaded'.
+    """
+    # stream name is formatted to browse the latest directory.
+    stream = stream.replace('-', '_').replace('z', '')
     dir_url = \
         'http://file.cloudforms.lab.eng.rdu2.redhat.com/builds/cfme/' + stream + '/latest/'
     name_dict = {}
@@ -102,18 +106,47 @@ def images_uploaded(stream):
     return name_dict
 
 
-def templates_uploaded(api, stream):
-    if len(images_uploaded(stream)) > 2:
-        for temp in api.template.get(
-                limit=1, tested=False, group__name=stream).get('objects', []):
-            if not filter(lambda x: 'rhos' in x, temp['providers']):
-                return False
+def all_images_uploaded(stream):
+    if 'template_rhevm' not in images_uploaded(stream):
+        return False
+    if 'template_rhos' not in images_uploaded(stream):
+        return False
+    if 'template_vsphere' not in images_uploaded(stream):
+        return False
+    return True
+
+
+def wait_for_images_on_web_repo(stream):
+    try:
+        print('wait for images upload to latest directory')
+        wait_for(all_images_uploaded, [stream, ], fail_condition=False, delay=5, timeout='2h')
+        return True
+    except Exception:
+        return False
+
+
+def templates_uploaded_on_providers(api, stream):
+    for temp in api.template.get(
+            limit=1, tested=False, group__name=stream).get('objects', []):
+        if 'template_rhevm' in images_uploaded(stream):
             if not filter(lambda x: 'rhevm' in x, temp['providers']):
                 return False
+        if 'template_rhos' in images_uploaded(stream):
+            if not filter(lambda x: 'rhos' in x, temp['providers']):
+                return False
+        if 'template_vsphere' in images_uploaded(stream):
             if not filter(lambda x: 'vsphere' in x, temp['providers']):
                 return False
-        return True
-    return False
+    return True
+
+
+def wait_for_templates_on_providers(api, stream):
+    try:
+        print('wait for templates upload to providers')
+        wait_for(templates_uploaded_on_providers,
+                 [api, stream], fail_condition=False, delay=5, timeout='2h')
+    except Exception:
+        return False
 
 
 def get_untested_templates(api, stream_group, appliance_template=None):
@@ -130,9 +163,9 @@ def generate_html_report(api, stream, filename, appliance_template):
     stream_data = get_latest_tested_template_on_stream(api, stream)
 
     if len(images_uploaded(stream)) > number_of_images_before:
-        print("new images are uploaded, new Jenkins job will generate the report")
-        sys.exit()
-    elif appliance_template and appliance_template != stream_data['template_name']:
+        print("new images are uploaded on latest directory, wait for upload on providers")
+        wait_for_templates_on_providers(api, stream)
+    if appliance_template and appliance_template != stream_data['template_name']:
         print("the report will be generated only for the latest templates")
         sys.exit()
 
@@ -151,41 +184,61 @@ def generate_html_report(api, stream, filename, appliance_template):
             with open(filename, 'a+') as report:
 
                 if 'template_rhos' not in images_uploaded(stream):
-                    report.write('\nMISSING: Image for OpenStack')
+                    print('\nMISSING: Image for OpenStack in latest directory')
+                    report.write('\nMISSING: Image for OpenStack in latest directory')
                 elif filter(lambda x: 'rhos' in x, stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(images_uploaded(stream)['template_rhos']))
                     map(lambda(x): report.write('\n{}: Passed'.format(x)) if 'rhos' in x else '',
                         stream_data['passed_on_providers'])
-                else:
+                elif filter(lambda x: 'rhos' in x, stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(images_uploaded(stream)['template_rhos']))
                     map(lambda(x): report.write('\n{}: Failed'.format(x)) if 'rhos' in x else '',
                         stream_data['failed_on_providers'])
+                else:
+                    print('\nMISSING: OpenStack template is not available on any '
+                          'rhos providers yet')
+                    report.write('\nMISSING: OpenStack template is not available on any '
+                                 'rhos providers yet')
 
                 if 'template_rhevm' not in images_uploaded(stream):
-                    report.write('\nMISSING: Image for RHEVM')
+                    print('\nMISSING: Image for RHEVM in latest directory')
+                    report.write('\nMISSING: Image for RHEVM in latest directory')
                 elif filter(lambda x: 'rhevm' in x, stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_rhevm']))
                     map(lambda(x): report.write('\n{}: Passed'.format(x)) if 'rhevm' in x else '',
                         stream_data['passed_on_providers'])
-                else:
+                elif filter(lambda x: 'rhevm' in x, stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_rhevm']))
                     map(lambda(x): report.write('\n{}: Failed'.format(x)) if 'rhevm' in x else '',
                         stream_data['failed_on_providers'])
+                else:
+                    print('\nMISSING: RHEVM template is not available on any '
+                          'rhevm providers yet')
+                    report.write('\nMISSING: RHEVM template is not available on any '
+                                 'rhevm providers yet')
 
                 if 'template_vsphere' not in images_uploaded(stream):
-                    report.write('\nMISSING: Image for VIRTUALCENTER')
+                    print('\nMISSING: Image for VIRTUALCENTER in latest directory')
+                    report.write('\nMISSING: Image for VIRTUALCENTER in latest directory')
                 elif filter(lambda x: 'vsphere' in x, stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_vsphere']))
-                    map(lambda(x): report.write('\n{}: Passed'.format(x)) if 'vsphere' in x else '',
+                    map(lambda(x): report.write(
+                        '\n{}: Passed'.format(x)) if 'vsphere' in x else '',
                         stream_data['passed_on_providers'])
-                else:
+                elif filter(lambda x: 'vsphere' in x, stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_vsphere']))
-                    map(lambda(x): report.write('\n{}: Failed'.format(x)) if 'vsphere' in x else '',
+                    map(lambda(x): report.write(
+                        '\n{}: Failed'.format(x)) if 'vsphere' in x else '',
                         stream_data['failed_on_providers'])
+                else:
+                    print('\nMISSING: VIRTUALCENTER template is not available on any '
+                          'vmware providers yet')
+                    report.write('\nMISSING: VIRTUALCENTER template is not available on any '
+                                 'vmware providers yet')
         print("template_tester_results report generated")
     else:
         print("No Templates tested on: {}".format(datetime.datetime.now()))
