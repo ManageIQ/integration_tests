@@ -157,7 +157,7 @@ def pick(v_dict):
 
 class Version(object):
     """Version class based on distutil.version.LooseVersion"""
-    SUFFIXES = ('nightly', 'pre', 'alpha', 'beta')
+    SUFFIXES = ('nightly', 'pre-nightly', 'pre', 'alpha', 'beta')
     SUFFIXES_STR = "|".join(SUFFIXES)
     component_re = re.compile(r'(?:\s*(\d+|[a-z]+|\.|-(?:{})$))'.format(SUFFIXES_STR))
 
