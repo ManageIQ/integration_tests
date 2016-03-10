@@ -408,7 +408,7 @@ class Template(MetadataMixin):
         related_name="provider_templates")
     template_group = models.ForeignKey(
         Group, on_delete=models.CASCADE, help_text="Which group the template belongs to.")
-    version = models.CharField(max_length=16, null=True, help_text="Downstream version.")
+    version = models.CharField(max_length=32, null=True, help_text="Downstream version.")
     date = models.DateField(help_text="Template build date (original).")
 
     original_name = models.CharField(max_length=64, help_text="Template's original name.")
