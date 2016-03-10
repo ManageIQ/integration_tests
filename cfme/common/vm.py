@@ -286,8 +286,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
             else:
                 self.provider.load_all_provider_templates()
             toolbar.select('Grid View')
-        elif refresh:
-            sel.refresh()
+        else:
+            # Search requires navigation, we shouldn't use it then
+            use_search = False
+            if refresh:
+                sel.refresh()
         if not paginator.page_controls_exist():
             if self.is_vm:
                 raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
@@ -297,10 +300,15 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         # this is causing some issues in 5.5.0.9, commenting out for a bit
         # paginator.results_per_page(1000)
         if use_search:
-            if not search.has_quick_search_box():
-                sel.force_navigate('vm_templates_provider_branch',
-                                   context={'provider_name': self.provider.name})
-            search.normal_search(self.name)
+            try:
+                if not search.has_quick_search_box() and self.provider.instances_page_name:
+                    # We don't use provider-specific page (vm_templates_provider_branch) here
+                    # as those don't list archived/orphaned VMs
+                    sel.force_navigate(self.provider.instances_page_name)
+                search.normal_search(self.name)
+            except Exception as e:
+                logger.warn("Failed to use search: {}".format(str(e)))
+
         for page in paginator.pages():
             if sel.is_displayed(quadicon, move_to=True):
                 if mark:
