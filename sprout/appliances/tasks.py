@@ -30,6 +30,7 @@ from utils.path import project_path
 from utils.providers import get_mgmt
 from utils.timeutil import parsetime
 from utils.trackerbot import api, depaginate, parse_template
+from utils.version import Version
 from utils.wait import wait_for
 
 
@@ -398,13 +399,20 @@ def prepare_template_verify_version(self, template_id):
     appliance = CFMEAppliance(template.provider_name, template.name)
     appliance.ipapp.wait_for_ssh()
     try:
-        # Remove the suffix (1.2.3.4-alpha1 -> 1.2.3.4)
-        true_version = re.sub(r"-[^-]*$", "", str(appliance.version).strip())
+        true_version = appliance.version
     except Exception as e:
         template.set_status("Some SSH error happened during appliance version check.")
         self.retry(args=(template_id,), exc=e, countdown=20, max_retries=5)
-    supposed_version = template.version
-    if true_version not in {"master", None} and true_version != supposed_version:
+    supposed_version = Version(template.version)
+    if true_version is None or true_version.vstring == 'master':
+        return
+    if true_version != supposed_version:
+        # Check if the difference is not just in the suffixes, which can be the case ...
+        if supposed_version.version == true_version.version:
+            # The two have same version but different suffixes, apply the suffix to the template obj
+            template.version = str(true_version)
+            template.save()
+            return  # no need to continue with spamming process
         # SPAM SPAM SPAM!
         with transaction.atomic():
             mismatch_in_db = MismatchVersionMailer.objects.filter(
