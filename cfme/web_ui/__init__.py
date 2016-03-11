@@ -713,13 +713,7 @@ class SortTable(Table):
     @property
     def _sort_by_cell(self):
         try:
-            return sel.element(
-                version.pick({
-                    "default": "./th/a/img[contains(@src, 'sort')]/..",
-                    "5.3.0.0": "./th[contains(@class, 'sorting_')]"
-                }),
-                root=self.header_row
-            )
+            return sel.element("./th/a/img[contains(@src, 'sort')]/..", root=self.header_row)
         except NoSuchElementException:
             return None
 
@@ -2733,11 +2727,7 @@ class DriftGrid(Pretty):
             Selenium element of the cell.
         """
         self.expand_all_sections()
-        cell_loc = {
-            '5.3': ".//div/div[1][contains(., '{}')]/../div[{}]".format(row_text, col_index + 2),
-            version.LOWEST: ".//tr/td[1][contains(., '{}')]/../td[{}]"
-                            .format(row_text, col_index + 2)
-        }
+        cell_loc = ".//div/div[1][contains(., '{}')]/../div[{}]".format(row_text, col_index + 2)
         cell = sel.element(cell_loc, root=self.loc)
         return cell
 
@@ -2779,9 +2769,8 @@ class DriftGrid(Pretty):
         while True:
             # We need to do this one by one because the DOM changes on every expansion
             try:
-                el = sel.element({
-                    '5.3': './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
-                    version.LOWEST: './/div/img[contains(@src, "plus")]'},
+                el = sel.element(
+                    './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
                     root=self.loc)
                 sel.click(el)
             except NoSuchElementException:

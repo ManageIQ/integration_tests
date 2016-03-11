@@ -18,63 +18,36 @@ search_box = Region(
 
         # The icon buttons for searching
         search_icon={
-            "5.3": "//div[@id='searchbox']//*[@id='searchicon']",
             "5.4":
             "//div[@id='searchbox']//div[contains(@class, 'form-group')]"
             "/*[self::a or (self::button and @type='submit')]"},
 
         # The arrow opening/closing the advanced search box
-        toggle_advanced={
-            "5.3": "//img[@id='adv_search_img']",
-            "5.4": "(//button | //a)[@id='adv_search']"},
+        toggle_advanced="(//button | //a)[@id='adv_search']",
 
         # Container for the advanced search box
-        advanced_search_box={
-            "5.3": "//div[@id='advsearchbox']",
-            "5.4": "//div[@id='advsearchModal']//div[@class='modal-content']"},
+        advanced_search_box="//div[@id='advsearchModal']//div[@class='modal-content']",
 
         # Buttons on main view
-        apply_filter_button={
-            "5.3": "//a[@title='Apply the current filter']",
-            "5.4": FormButton("Apply the current filter")},
-        load_filter_button={
-            "5.3": "//a[@title='Load a filter']",
-            "5.4": FormButton("Load a filter")},
-        delete_filter_button={
-            "5.3": "//a[contains(@title, 'Delete the filter named')]",
-            "5.4": FormButton("Delete the filter named", partial_alt=True)},
-        save_filter_button={
-            "5.3": "//a[@title='Save the current filter']",
-            "5.4": FormButton("Save the current filter")},
-        reset_filter_button={
-            "5.3": "//a[@title='Reset the filter']",
-            "5.4": FormButton("Reset the filter")},
+        apply_filter_button=FormButton("Apply the current filter"),
+        load_filter_button=FormButton("Load a filter"),
+        delete_filter_button=FormButton("Delete the filter named", partial_alt=True),
+        save_filter_button=FormButton("Save the current filter"),
+        reset_filter_button=FormButton("Reset the filter"),
         close_button="//div[@id='advsearchModal']/div//button/span[normalize-space(.)='×']",
 
         # Buttons in the "next step"
-        load_filter_dialog_button={
-            "5.3": "//a[@title='Load the filter shown above']",
-            "5.4": FormButton("Load the filter shown above")},
-        cancel_load_filter_dialog_button={
-            "5.3": "//a[@title='Cancel the load']",
-            "5.4": FormButton("Cancel the load")},
-        save_filter_dialog_button={
-            "5.3": "//a[@title='Save the current search']",
-            "5.4": FormButton("Save the current search")},
-        cancel_save_filter_dialog_button={
-            "5.3": "//a[@title='Cancel the save']",
-            "5.4": FormButton("Cancel the save")},
+        load_filter_dialog_button=FormButton("Load the filter shown above"),
+        cancel_load_filter_dialog_button=FormButton("Cancel the load"),
+        save_filter_dialog_button=FormButton("Save the current search"),
+        cancel_save_filter_dialog_button=FormButton("Cancel the save"),
 
         # If user input requested, this window appears
         quick_search_box="//div[@id='quicksearchbox']",
 
         # With these buttons
-        userinput_apply_filter_button={
-            "5.3": "//a[@id='apply_button']",
-            "5.4": FormButton("Apply the current filter (Enter)")},
-        userinput_cancel_button={
-            "5.3": "//a[@title='Cancel (Esc)']",
-            "5.4": FormButton("Cancel (Esc)")},
+        userinput_apply_filter_button=FormButton("Apply the current filter (Enter)"),
+        userinput_cancel_button=FormButton("Cancel (Esc)"),
 
         # Selects for selecting the filter
         saved_filter=Select("select#chosen_search"),
@@ -279,7 +252,6 @@ def _process_user_filling(fill_callback, cancel_on_user_filling=False):
             fill_callback = partial(_answering_function, fill_callback)
         for input in sel.elements(
                 {
-                    "5.3": "//fieldset/*[contains(@id, 'value_')]",
                     "5.4": "//div[@id='user_input_filter']//*[contains(@id, 'value_')]"
                 },
                 root=sel.element(search_box.quick_search_box)):

@@ -18,9 +18,7 @@ from utils.log import logger
 from utils import classproperty, pretty
 from utils.wait import wait_for
 
-tree = Tree({
-    version.LOWEST: '//table//tr[@title="Datastore"]/../..',
-    '5.3': '//ul//a[@title="Datastore"]/../../..'})
+tree = Tree('//ul//a[@title="Datastore"]/../../..')
 
 datastore_tree = partial(accordion.tree, "Datastore", "Datastore")
 cfg_btn = partial(tb.select, 'Configuration')
@@ -121,13 +119,11 @@ class TreeNode(pretty.Pretty):
         return tree.click_path(*self.nav_path)
 
     def nav_edit(self):
-        dp_length = version.pick({version.LOWEST: 1,
-                                  '5.3': 2})
+        dp_length = 2
         if len(self.nav_path) > dp_length:
             cfg_btn('Edit Selected Item')
         else:
-            cfg_btn(version.pick({version.LOWEST: 'Edit Selected Namespaces',
-                                  '5.3': 'Edit Selected Namespace'}))
+            cfg_btn('Edit Selected Namespace')
 
 
 class CopiableTreeNode(TreeNode):
@@ -300,10 +296,7 @@ class Domain(TreeNode, Updateable):
             return cls('Default')
         else:
             if not hasattr(cls, "_default_domain"):
-                cls._default_domain = version.pick({
-                    version.LOWEST: None,
-                    '5.3': cls('Default')
-                })
+                cls._default_domain = cls('Default')
             return cls._default_domain
 
 
@@ -390,17 +383,13 @@ class Namespace(TreeNode, Updateable):
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_table_select", context={'tree_item': self.parent,
                                                                       'table_item': self})
-        dp_length = version.pick({version.LOWEST: 1,
-                                  '5.3': 2})
+        dp_length = 2
         if len(self.path) > dp_length:
             cfg_btn('Remove selected Items', invokes_alert=True)
         else:
             cfg_btn('Remove Namespaces', invokes_alert=True)
         sel.handle_alert(cancel)
-        del_msg = version.pick({
-            version.LOWEST: 'The selected Automate Namespaces were deleted',
-            '5.3': 'Automate Namespace "{}": Delete successful'.format(self.description)
-        })
+        del_msg = 'Automate Namespace "{}": Delete successful'.format(self.description)
         flash.assert_success_message(del_msg)
 
     def __repr__(self):

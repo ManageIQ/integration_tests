@@ -12,7 +12,7 @@ from cfme.web_ui import flash
 from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
-from utils import version, testgen
+from utils import testgen
 from utils.blockers import BZ
 
 pytestmark = [
@@ -48,7 +48,6 @@ def pytest_generate_tests(metafunc):
 
 def test_order_catalog_item(provider, setup_provider, catalog_item, request, register_event):
     """Tests order catalog item
-
     Metadata:
         test_flag: provision
     """
@@ -71,7 +70,6 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
 def test_order_catalog_item_via_rest(
         request, rest_api, provider, setup_provider, catalog_item, catalog):
     """Same as :py:func:`test_order_catalog_item`, but using REST.
-
     Metadata:
         test_flag: provision, rest
     """
@@ -97,7 +95,6 @@ def test_order_catalog_item_via_rest(
 
 def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     """Tests ordering a catalog bundle
-
     Metadata:
         test_flag: provision
     """
@@ -123,18 +120,13 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catalog):
     """Tests no template catalog item
-
     Metadata:
         test_flag: provision
     """
     template, catalog_item_type = map(provisioning.get,
         ('template', 'catalog_item_type'))
     if provider.type == 'rhevm':
-        catalog_item_type = version.pick({
-            version.LATEST: "RHEV",
-            '5.3': "RHEV",
-            '5.2': "Redhat"
-        })
+        catalog_item_type = "RHEV"
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
@@ -150,7 +142,6 @@ def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catal
 @pytest.mark.meta(blockers=[BZ(1210541, forced_streams=["5.4", "5.5", "upstream"])])
 def test_edit_catalog_after_deleting_provider(provider, catalog_item):
     """Tests edit catalog item after deleting provider
-
     Metadata:
         test_flag: provision
     """
@@ -169,7 +160,6 @@ def test_edit_catalog_after_deleting_provider(provider, catalog_item):
 @pytest.mark.usefixtures('setup_provider')
 def test_request_with_orphaned_template(provider, catalog_item):
     """Tests edit catalog item after deleting provider
-
     Metadata:
         test_flag: provision
     """

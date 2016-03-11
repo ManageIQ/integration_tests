@@ -9,10 +9,6 @@ from cfme.automate.simulation import simulate
 from utils.update import update
 from utils.wait import wait_for
 
-pytestmark = [
-    pytest.mark.ignore_stream("5.2")
-]
-
 
 FILE_LOCATION = "/var/www/miq/vmdb/test_ae_{}".format(fauxfactory.gen_alphanumeric(16))
 

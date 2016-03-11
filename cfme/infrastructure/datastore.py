@@ -138,9 +138,7 @@ class Datastore(Pretty):
         if not self._on_vms_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
             try:
-                path = version.pick({
-                    version.LOWEST: "Show all registered VMs",
-                    "5.3": "Show registered VMs"})
+                path = "Show registered VMs"
                 list_acc.select('Relationships', path)
             except (sel.NoSuchElementException, ListAccordionLinkNotFound):
                 return []

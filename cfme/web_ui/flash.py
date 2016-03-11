@@ -14,19 +14,9 @@ from utils.pretty import Pretty
 
 area = Region(
     locators={
-        'message': {
-            version.LOWEST: ' | '.join([
-                ('//div[starts-with(@id, "flash_") and '
-                    'not(ancestor::*[contains(@style,"display: none")])]//li'),
-                '//div[@id="flash_div"]',  # login screen
-            ]),
-            '5.3': ' | '.join([
-                ('//div[starts-with(@id, "flash_") and '
-                    'not(ancestor::*[contains(@style,"display: none")])]'
-                    '//div[contains(@class,"alert")]'),
-                '//div[@id="flash_div"]',  # login screen
-            ])
-        }
+        'message': ' | '.join([('//div[starts-with(@id, "flash_") and '
+                'not(ancestor::*[contains(@style,"display: none")])]'
+                '//div[contains(@class,"alert")]'), '//div[@id="flash_div"]', ])  # login screen
     }
 )
 

@@ -69,12 +69,7 @@ credential_form = Form(
             '5.5': AngularSelect('validate_id')}),
     ])
 
-manage_policies_tree = CheckboxTree(
-    {
-        version.LOWEST: "//div[@id='treebox']/div/table",
-        "5.3": "//div[@id='protect_treebox']/ul"
-    }
-)
+manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
 drift_table = CheckboxTable({
     version.LOWEST: "//table[@class='style3']",
@@ -345,8 +340,7 @@ class Host(Updateable, Pretty):
     def get_datastores(self):
         """ Gets list of all datastores used by this host"""
         sel.force_navigate('infrastructure_host', context={'host': self})
-        list_acc.select('Relationships', version.pick({version.LOWEST: 'Show Datastores',
-                                                       '5.3': 'Show all Datastores'}))
+        list_acc.select('Relationships', 'Show all Datastores')
 
         datastores = set([])
         for page in paginator.pages():

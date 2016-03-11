@@ -10,7 +10,7 @@ from cfme.automate import explorer as automate
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
-from utils import testgen, version
+from utils import testgen
 from utils.update import update
 from utils.wait import wait_for
 
@@ -78,7 +78,6 @@ def test_provision_from_template(request, setup_provider, provider, provisioning
     instance.create(**inst_args)
 
 
-@pytest.mark.ignore_stream("5.2")
 def test_provision_from_template_using_rest(
         request, setup_provider, provider, provisioning, vm_name, rest_api):
     """ Tests provisioning from a template using the REST API.
@@ -162,8 +161,6 @@ ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
 
 @pytest.fixture(scope="module")
 def domain(request):
-    if version.current_version() < "5.3":
-        return None
     domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
@@ -197,7 +194,6 @@ def copy_domains(domain):
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-@pytest.mark.ignore_stream("5.2")
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider, provisioning, vm_name,
         disks, soft_assert, domain, cls, copy_domains):
@@ -267,7 +263,6 @@ def test_provision_from_template_with_attached_disks(
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1160342])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-@pytest.mark.ignore_stream("5.2")
 def test_provision_with_boot_volume(request, setup_provider, provider, provisioning, vm_name,
         soft_assert, domain, copy_domains):
     """ Tests provisioning from a template and attaching one booting volume.
@@ -338,7 +333,6 @@ def test_provision_with_boot_volume(request, setup_provider, provider, provision
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1186413])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-@pytest.mark.ignore_stream("5.2")
 def test_provision_with_additional_volume(request, setup_provider, provisioning, provider,
                                           vm_name, soft_assert, copy_domains, domain):
     """ Tests provisioning with setting specific image from AE and then also making it create and

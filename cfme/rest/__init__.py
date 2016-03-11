@@ -9,7 +9,6 @@ from cfme.services import requests
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils import version
 
 
 def service_catalogs(request, rest_api):
@@ -129,11 +128,7 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
     if a_provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = vlan
-        catalog_item_type = version.pick({
-            version.LATEST: "RHEV",
-            '5.3': "RHEV",
-            '5.2': "Redhat"
-        })
+        catalog_item_type = "RHEV"
     elif a_provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
     catalog = service_catalogs[0].name

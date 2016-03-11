@@ -4,17 +4,14 @@ from cfme.configure import tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
 from cfme.web_ui import flash, tabstrip as tabs, toolbar as tb, Quadicon, InfoBlock
-from utils import conf, testgen, version
+from utils import conf, testgen
 from utils.blockers import BZ
 from utils.wait import wait_for
 import pytest
 
 DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
-# rhevm supported in 5.3+
-PROVIDER_TYPES = {
-    version.LOWEST: ('virtualcenter',),
-    '5.3': ('virtualcenter', 'rhevm')
-}
+PROVIDER_TYPES = ('virtualcenter', 'rhevm')
+
 
 # Rows to check in the datastore detail Content infoblock; after smartstate analysis
 CONTENT_ROWS_TO_CHECK = (
@@ -28,13 +25,11 @@ CONTENT_ROWS_TO_CHECK = (
 
 
 def pytest_generate_tests(metafunc):
-    verpicked_prov_types = version.pick(PROVIDER_TYPES)
-
     new_idlist = []
     new_argvalues = []
 
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, verpicked_prov_types, 'datastores')
+        metafunc, PROVIDER_TYPES, 'datastores')
     argnames += ['datastore_type', 'datastore_name']
 
     for i, argvalue_tuple in enumerate(argvalues):

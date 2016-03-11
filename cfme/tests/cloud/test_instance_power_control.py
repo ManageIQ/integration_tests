@@ -179,8 +179,6 @@ def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert,
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(
-    lambda provider: version.current_version < "5.3" and provider.type != 'ec2')
 def test_start(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_stopped):
     """ Tests instance start
@@ -271,7 +269,6 @@ def test_suspend(
 
 
 @pytest.mark.long_running
-@pytest.mark.ignore_stream("5.3")
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_unpause(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_paused):

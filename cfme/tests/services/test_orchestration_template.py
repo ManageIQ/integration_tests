@@ -6,8 +6,7 @@ from utils import testgen
 from utils.update import update
 
 
-pytestmark = [pytest.mark.usefixtures("logged_in"),
-              pytest.mark.ignore_stream("5.3")]
+pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 METHOD_TORSO = """
 {  "AWSTemplateFormatVersion" : "2010-09-09",

@@ -13,7 +13,6 @@ from cfme.infrastructure import virtual_machines
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
-from utils.blockers import BZ
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
@@ -125,11 +124,6 @@ def test_user_password_required_error_validation():
         user.create()
 
 
-@pytest.mark.meta(
-    blockers=[
-        BZ(1118040, unblock=lambda appliance_version: appliance_version < "5.3")
-    ]
-)
 def test_user_group_error_validation():
     user = ac.User(
         name='user' + fauxfactory.gen_alphanumeric(),

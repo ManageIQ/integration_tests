@@ -304,9 +304,7 @@ visual = Visual()
 class DefaultFilter(Updateable, Pretty):
     filter_form = Form(
         fields=[
-            ("filter_tree", {
-                version.LOWEST: CheckboxTree("//div[@id='all_views_treebox']/div/table"),
-                "5.3": CheckboxTree("//div[@id='all_views_treebox']/ul")}),
+            ("filter_tree", CheckboxTree("//div[@id='all_views_treebox']/ul")),
         ]
     )
 

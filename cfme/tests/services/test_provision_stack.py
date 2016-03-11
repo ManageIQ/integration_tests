@@ -17,7 +17,7 @@ from utils.wait import wait_for
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.ignore_stream("5.2", "5.3", "upstream")
+    pytest.mark.ignore_stream("upstream")
 ]
 
 METHOD_TORSO = """
@@ -167,7 +167,7 @@ def test_provision_stack(setup_provider, provider, provisioning, dialog, catalog
     assert row.last_message.text == 'Service Provisioned Successfully'
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+@pytest.mark.uncollectif(lambda: version.current_version() <= '5.4')
 def test_reconfigure_service(setup_provider, provider, provisioning, dialog, catalog, request):
     """Tests stack provisioning
 
