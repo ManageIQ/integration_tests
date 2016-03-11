@@ -78,13 +78,6 @@ sections = {
         ('infrastructure_requests', 'Requests'),
         ('infrastructure_config_management', 'Configuration Management')
     ),
-    ('storage', 'Storage'): (
-        ('filers', 'Filers'),
-        ('volumes', 'Volumes'),
-        ('luns', 'LUNs'),
-        ('file_shares', 'File Shares'),
-        ('storage_managers', 'Storage Managers')
-    ),
     ('control', 'Control'): (
         ('control_explorer', 'Explorer'),
         ('control_simulation', 'Simulation'),
