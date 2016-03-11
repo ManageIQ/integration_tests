@@ -16,6 +16,7 @@ from mgmtsystem.ec2 import EC2System
 from mgmtsystem.openstack import OpenstackSystem
 from mgmtsystem.kubernetes import Kubernetes
 from mgmtsystem.openshift import Openshift
+from mgmtsystem.openstack_infra import OpenstackInfraSystem
 
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
@@ -27,7 +28,7 @@ from cfme.infrastructure.provider import (
     OpenstackInfraProvider, RHEVMProvider, VMwareProvider, SCVMMProvider)
 from fixtures.prov_filter import filtered
 from utils import conf, version
-from utils.mgmt_system import RHEVMSystem, OpenstackInfraSystem
+from utils.mgmt_system import RHEVMSystem
 from utils.log import logger, perflog
 from utils.wait import wait_for
 
