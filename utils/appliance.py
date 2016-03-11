@@ -778,6 +778,7 @@ class IPAppliance(object):
         skip_broken = kwargs.pop("skip_broken", False)
         reboot = kwargs.pop("reboot", True)
         streaming = kwargs.pop("streaming", False)
+        cleanup = kwargs.pop('cleanup', False)
         log_callback('updating appliance')
         if not urls:
             basic_info = conf.cfme_data.get('basic_info', {})
@@ -798,6 +799,11 @@ class IPAppliance(object):
             client = self.ssh_client(stream_output=True)
         else:
             client = self.ssh_client
+
+        if cleanup:
+            client.run_command(
+                "cd /etc/yum.repos.d && find . -not -name 'redhat.repo' "
+                "-not -name 'rhel-source.repo' -not -name . -exec rm {} \;")
 
         for url in urls:
             self.add_product_repo(url)

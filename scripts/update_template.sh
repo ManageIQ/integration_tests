@@ -48,7 +48,7 @@ then
 fi
 
 echo "Running update ..."
-$UPDATE_SCRIPT $UPDATE_PARAMS --reboot $APPLIANCE_IP
+$UPDATE_SCRIPT $UPDATE_PARAMS --cleanup --reboot --no_wait_ui $APPLIANCE_IP
 if [ $? -ne 0 ];
 then
     echo "Failed to update"
