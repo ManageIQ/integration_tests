@@ -813,7 +813,7 @@ class AppliancePool(MetadataMixin):
     provider = models.ForeignKey(
         Provider, help_text="If requested, appliances can be on single provider.", null=True,
         blank=True, on_delete=models.CASCADE)
-    version = models.CharField(max_length=16, null=True, help_text="Appliance version")
+    version = models.CharField(max_length=32, null=True, help_text="Appliance version")
     date = models.DateField(null=True, help_text="Appliance date.")
     owner = models.ForeignKey(
         User, on_delete=models.CASCADE, help_text="User who owns the appliance pool")
