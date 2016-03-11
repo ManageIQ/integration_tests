@@ -326,7 +326,7 @@ def db_yamls(db=None, guid=None):
         return {name: yaml.load(settings) for name, settings in configs}
 
 
-def get_yaml_config(config_name, db=None):
+def get_yaml_config(config_name, db=None, guid=None):
     """Return a specific yaml from the db configuration table as a dict
 
     Usage:
@@ -335,7 +335,7 @@ def get_yaml_config(config_name, db=None):
         vmdb_config = get_yaml_config('vmdb')
 
     """
-    return db_yamls(db)[config_name]
+    return db_yamls(db, guid)[config_name]
 
 
 def set_yaml_config(config_name, data_dict, hostname=None):

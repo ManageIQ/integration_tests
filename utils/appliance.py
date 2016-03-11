@@ -251,9 +251,9 @@ class Appliance(object):
             Database must be up and running and evm service must be (re)started afterwards
             for the name change to take effect.
         """
-        vmdb_config = db.get_yaml_config('vmdb', self.db)
+        vmdb_config = self.ipapp.get_yaml_config('vmdb')
         vmdb_config['server']['name'] = new_name
-        db.set_yaml_config('vmdb', vmdb_config, self.address)
+        self.ipapp.set_yaml_config('vmdb', vmdb_config)
         self.name = new_name
 
     def destroy(self):
@@ -1365,7 +1365,7 @@ class IPAppliance(object):
             }
 
             # Find and load our rb template with replacements
-            rbt = datafile.data_path_for_filename('enable-internal-db.rbt', scripts_path.strpath)
+            rbt = datafile.data_path_for_filename('enable-external-db.rbt', scripts_path.strpath)
             rb = datafile.load_data_file(rbt, rbt_repl)
 
             # Init SSH client and sent rb file over to /tmp
@@ -1804,7 +1804,7 @@ class IPAppliance(object):
         return db.db_yamls(self.db, self.guid)
 
     def get_yaml_config(self, config_name):
-        return db.get_yaml_config(config_name, self.db)
+        return db.get_yaml_config(config_name, self.db, self.guid)
 
     def set_yaml_config(self, config_name, data_dict):
         return db.set_yaml_config(config_name, data_dict, self.address)
