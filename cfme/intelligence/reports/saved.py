@@ -2,8 +2,9 @@
 from functools import partial
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, accordion, toolbar
+from cfme.web_ui import accordion, toolbar
 from cfme.web_ui.menu import nav
+from cfme.web_ui.tables import Table
 
 
 nav.add_branch(
@@ -23,7 +24,7 @@ nav.add_branch(
     }
 )
 
-reports_table = CheckboxTable("//div[@id='records_div']//table[thead]")
+reports_table = Table.create("//div[@id='records_div']//table[thead]", {'checkbox'})
 cfg_btn = partial(toolbar.select, "Configuration")
 
 

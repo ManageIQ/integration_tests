@@ -7,8 +7,9 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.form_buttons import change_stored_password
 from cfme.web_ui import AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash, \
-    form_buttons, Input, Table, UpDownSelect
+    form_buttons, Input, UpDownSelect
 from cfme.web_ui.menu import extend_nav, nav
+from cfme.web_ui.tables import Table
 from utils.log import logger
 from utils.update import Updateable
 from utils import version

@@ -6,8 +6,9 @@
 from cfme import web_ui as ui
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
-from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator
+from cfme.web_ui import Form, Region, fill, paginator
 from cfme.web_ui.menu import nav
+from cfme.web_ui.tables import Table
 from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
 from utils.version import LOWEST
@@ -47,12 +48,12 @@ filter_form = Form(
     ]
 )
 
-tasks_table = CheckboxTable(
-    table_locator={
+tasks_table = Table.create(
+    {
         LOWEST: '//div[@id="records_div"]/table[@class="style3"]',
         "5.4": '//div[@id="records_div"]/table[thead]'},
-    header_checkbox_locator="//div[@id='records_div']//input[@id='masterToggle']"
-)
+    {'checkbox'},
+    {'header_checkbox_locator': "//div[@id='records_div']//input[@id='masterToggle']"})
 
 
 def _filter(

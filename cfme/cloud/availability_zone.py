@@ -5,14 +5,17 @@
 :var details_page: A :py:class:`cfme.web_ui.Region` object describing elements on the detail page.
 """
 
-from cfme.web_ui import Region, SplitTable
+from cfme.web_ui import Region
+from cfme.web_ui.tables import Table, Split
 
 
 # Page specific locators
 list_page = Region(
     locators={
-        'zone_table': SplitTable(header_data=('//div[@class="xhdr"]/table/tbody', 1),
-            body_data=('//div[@class="objbox"]/table/tbody', 1))
+        'zone_table': Table.create(Split(
+            '//div[@class="xhdr"]/table/tbody',
+            '//div[@class="objbox"]/table/tbody',
+            1, 1))
     },
     title='Availability Zones')
 

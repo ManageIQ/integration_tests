@@ -10,8 +10,9 @@ from cfme import login
 from cfme.configure.access_control import set_group_order
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
-from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
+from cfme.web_ui import flash, InfoBlock, toolbar as tb
 from cfme.web_ui.menu import nav
+from cfme.web_ui.tables import Table
 from cfme.configure import tasks
 from utils.log import logger
 from utils.providers import setup_a_provider

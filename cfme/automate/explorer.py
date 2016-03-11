@@ -7,8 +7,9 @@ from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
-from cfme.web_ui import Form, Table, Tree, UpDownSelect, fill, Select, ScriptBox, DHTMLSelect,\
+from cfme.web_ui import Form, Tree, UpDownSelect, fill, Select, ScriptBox, DHTMLSelect,\
     Region, form_buttons, accordion, Input, AngularSelect
+from cfme.web_ui.tables import Table
 import cfme.exceptions as exceptions
 from utils.update import Updateable
 from utils import error, version, on_rtd

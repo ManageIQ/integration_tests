@@ -2,7 +2,8 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, Form, Input, Region, Select, fill, flash, form_buttons
+from cfme.web_ui import Form, Input, Region, Select, fill, flash, form_buttons
+from cfme.web_ui.tables import Table
 from cfme.configure.configuration import nav  # noqa
 from utils import version
 
@@ -88,10 +89,10 @@ service_types = {
 }
 
 
-appliances_table = lambda: version.pick({
-    version.LOWEST: CheckboxTable("//div[@id='form_div']/table[@class='style3']"),
-    '5.4': CheckboxTable("//div[@id='form_div']/table")
-})
+appliances_table = Table.create({
+    version.LOWEST: "//div[@id='form_div']/table[@class='style3']",
+    '5.4': "//div[@id='form_div']/table"},
+    {'checkbox'})
 
 
 def update_registration(service,
@@ -338,10 +339,10 @@ def select_appliances(*appliance_names):
         sel.force_navigate("cfg_settings_region_red_hat_updates")
     if appliance_names:
         cells = {'appliance': [name for name in appliance_names]}
-        appliances_table().deselect_all()
-        appliances_table().select_rows(cells)
+        appliances_table.deselect_all()
+        appliances_table.select_rows(cells)
     else:
-        appliances_table().select_all()
+        appliances_table.select_all()
 
 
 def get_appliance_rows(*appliance_names):
@@ -354,9 +355,9 @@ def get_appliance_rows(*appliance_names):
         sel.force_navigate("cfg_settings_region_red_hat_updates")
     if appliance_names:
         rows = list()
-        for row in appliances_table().rows():
+        for row in appliances_table.rows():
             if row.appliance.text in appliance_names:
                 rows.append(row)
     else:
-        rows = appliances_table().rows()
+        rows = appliances_table.rows()
     return rows

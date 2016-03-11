@@ -6,9 +6,10 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons, flash, Table,
+from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons, flash,
     ButtonGroup, Quadicon, CheckboxTree, Input)
 from cfme.web_ui.menu import nav
+from cfme.web_ui.tables import Table
 from utils import version
 from utils.pretty import Pretty
 from utils.update import Updateable

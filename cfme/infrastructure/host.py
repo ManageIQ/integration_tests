@@ -19,11 +19,12 @@ import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
-    AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
+    AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, DriftGrid, fill,
     form_buttons, paginator, Input, mixins
 )
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
+from cfme.web_ui.tables import Table
 from utils.db_queries import get_host_id
 from utils.ipmi import IPMI
 from utils.log import logger
@@ -71,10 +72,10 @@ credential_form = Form(
 
 manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
-drift_table = CheckboxTable({
+drift_table = Table.create({
     version.LOWEST: "//table[@class='style3']",
-    "5.4": "//th[normalize-space(.)='Timestamp']/ancestor::table[1]"
-})
+    "5.4": "//th[normalize-space(.)='Timestamp']/ancestor::table[1]"},
+    {'checkbox'})
 
 host_add_btn = {
     version.LOWEST: FormButton('Add this Host'),

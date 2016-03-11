@@ -2,7 +2,8 @@
 from contextlib import contextmanager
 from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Input, Region, SplitTable, Table, fill, flash, paginator, toolbar
+from cfme.web_ui import Input, Region, fill, flash, paginator, toolbar
+from cfme.web_ui.tables import Table, Split
 from utils import version
 from utils.log import logger
 
@@ -20,15 +21,16 @@ buttons = Region(
     )
 )
 
-
 fields = Region(
     locators=dict(
         reason=Input("reason"),
         request_list={
-            version.LOWEST: SplitTable(
-                ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
-                ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1)),
-            "5.5.0.8": Table('//*[@id="list_grid"]/table'),
+            version.LOWEST: Table.create(
+                Split(
+                    '//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody',
+                    '//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody',
+                    1, 1)),
+            "5.5.0.8": Table.create('//*[@id="list_grid"]/table'),
         }
     )
 )
@@ -135,8 +137,8 @@ def wait_for_request(cells, partial_check=False):
 
     Args:
         cells: A dict of cells use to identify the request row to inspect in the
-            :py:attr:`request_list` Table. See :py:meth:`cfme.web_ui.Table.find_rows_by_cells`
-            for more.
+            :py:attr:`request_list` Table. See
+            :py:meth:`cfme.web_ui.tables.Table.find_rows_by_cells` for more.
 
     Usage:
 
@@ -158,7 +160,7 @@ def wait_for_request(cells, partial_check=False):
         RequestException: if multiple matching requests were found
 
     Returns:
-         The matching :py:class:`cfme.web_ui.Table.Row` if found, ``False`` otherwise.
+         The matching :py:class:`cfme.web_ui.tables.Table.Row` if found, ``False`` otherwise.
     """
     for page in paginator.pages():
         # We check only for the SplitTable. Can't think of better detection.

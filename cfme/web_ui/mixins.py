@@ -2,7 +2,8 @@
 import re
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import fill, Form, Select, Table, toolbar, form_buttons, flash
+from cfme.web_ui import fill, Form, Select, toolbar, form_buttons, flash
+from cfme.web_ui.tables import Table
 from xml.sax.saxutils import quoteattr
 
 tag_form = Form(

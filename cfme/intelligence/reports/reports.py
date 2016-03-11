@@ -10,12 +10,13 @@ from cached_property import cached_property
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import (ColumnHeaderFormatTable, ColumnStyleTable,
     RecordGrouper)
-from cfme.web_ui import (Form, Table, Select, ShowingInputs, accordion, fill, flash, form_buttons,
-    paginator, table_in_object, tabstrip, toolbar)
+from cfme.web_ui import (Form, Select, ShowingInputs, accordion, fill, flash, form_buttons,
+    paginator, tabstrip, toolbar)
 from cfme.web_ui.expression_editor import Expression
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from cfme.web_ui.multibox import MultiBoxSelect
+from cfme.web_ui.tables import InObject, Table
 from utils import db
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -148,12 +149,12 @@ report_form = TabStripForm(
                 select(id="chosen_pivot3"),
             )),
             ("calculations_grouped", RecordGrouper(
-                table_in_object("Specify Calculations of Numeric Values for Grouped Records"))),
+                InObject("Specify Calculations of Numeric Values for Grouped Records"))),
         ],
         "Formatting": [
             ("page_size", select(id="pdf_page_size")),
             ("headers",
-                ColumnHeaderFormatTable(table_in_object("Specify Column Headers and Formats"))),
+                ColumnHeaderFormatTable(InObject("Specify Column Headers and Formats"))),
         ],
         "Styling": [
             ("column_styles", ColumnStyleTable("styling_div")),

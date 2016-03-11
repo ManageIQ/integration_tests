@@ -2,9 +2,10 @@
 from functools import partial
 from collections import OrderedDict
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
+from cfme.web_ui import Form, Radio, Select, accordion, fill,\
     flash, form_buttons, menu, tabstrip, DHTMLSelect, Input, Tree, AngularSelect
 from cfme.web_ui import toolbar as tb
+from cfme.web_ui.tables import Table
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.version import current_version

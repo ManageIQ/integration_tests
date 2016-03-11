@@ -10,8 +10,9 @@ import cfme.web_ui.menu
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
-    accordion, Quadicon, Form, Input, fill, form_buttons, SplitTable, mixins
+    accordion, Quadicon, Form, Input, fill, form_buttons, mixins
 )
+from cfme.web_ui.tables import Table, Split
 from utils import version, conf
 from utils.log import logger
 from utils.pretty import Pretty
@@ -34,10 +35,11 @@ credential_form = Form(
         ('validate_btn', form_buttons.validate)
     ])
 
-list_table = SplitTable(
-    header_data=("//div[@id='list_grid']/div[@class='xhdr']/table/tbody", 1),
-    body_data=("//div[@id='list_grid']/div[@class='objbox']/table/tbody", 1),
-)
+list_table = Table.create(
+    Split(
+        "//div[@id='list_grid']/div[@class='xhdr']/table/tbody",
+        "//div[@id='list_grid']/div[@class='objbox']/table/tbody",
+        1, 1))
 
 add_manager_btn = form_buttons.FormButton('Add')
 edit_manager_btn = form_buttons.FormButton('Save changes')

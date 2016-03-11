@@ -8,18 +8,21 @@ from cfme.web_ui import menu
 import cfme.web_ui.toolbar as tb
 
 
-from cfme.web_ui import Region, Form, Input, SplitCheckboxTable, fill, form_buttons, Quadicon
+from cfme.web_ui import Region, Form, Input, fill, form_buttons, Quadicon
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.paginator import pages
+from cfme.web_ui.tables import Table, Split
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.version import LOWEST, current_version
 
-repo_list = SplitCheckboxTable(
-    ("//div[@id='list_grid']/div[1]//tbody", 1),
-    ("//div[@id='list_grid']/div[2]//tbody", 1),
-    header_checkbox_locator="#masterToggle"
-)
+repo_list = Table.create(
+    Split(
+        "//div[@id='list_grid']/div[1]//tbody",
+        "//div[@id='list_grid']/div[2]//tbody",
+        1, 1),
+    {'checkbox'},
+    {'header_checkbox_locator': '#masterToggle'})
 
 details_page = Region(infoblock_type='detail')
 

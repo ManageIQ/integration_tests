@@ -10,9 +10,10 @@ import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound, CandidateNotFound
 from cfme.web_ui import (
     AngularSelect, Calendar, CheckboxSelect, DynamicTable, Form, InfoBlock, Input, MultiFill,
-    Region, Select, Table, accordion, fill, flash, form_buttons)
+    Region, Select, accordion, fill, flash, form_buttons)
 from cfme.web_ui.menu import nav
 from cfme.web_ui.form_buttons import change_stored_password
+from cfme.web_ui.tables import Table
 from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
@@ -1687,10 +1688,9 @@ class Zone(Pretty):
     @property
     def exists(self):
         sel.force_navigate("cfg_settings_zones")
-        table = Table(zones_table)
-        if table.find_cell(1, "Zone: %s" % self.description):
+        if zones_table.find_cell(1, "Zone: %s" % self.description):
             return True
-        elif table.find_cell(1, "Zone : %s" % self.description):  # Another possibility
+        elif zones_table.find_cell(1, "Zone : %s" % self.description):  # Another possibility
             return True
         else:
             return False

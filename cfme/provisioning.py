@@ -2,6 +2,7 @@
 from collections import OrderedDict
 
 from cfme import web_ui as ui
+from cfme.web_ui.tables import Table
 from cfme.exceptions import TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
@@ -22,7 +23,7 @@ submit_button = form_buttons.FormButton("Submit")
 
 template_select_form = ui.Form(
     fields=[
-        ('template_table', ui.Table('//div[@id="pre_prov_div"]//table')),
+        ('template_table', Table('//div[@id="pre_prov_div"]//table')),
         ('cancel_button', form_buttons.cancel)
     ]
 )
@@ -79,12 +80,12 @@ provisioning_form = tabstrip.TabStripForm(
             ('num_vms', ui.Select('select#service__number_of_vms')),
             ('vm_name', '//input[@name="service__vm_name"]'),
             ('vm_description', ui.Input('service__vm_description')),
-            ('catalog_name', ui.Table('//div[@id="prov_vm_div"]/table')),
+            ('catalog_name', Table('//div[@id="prov_vm_div"]/table')),
             ('provision_type', ui.Select('select#service__provision_type')),
             ('linked_clone', ui.Input('service__linked_clone')),
             ('pxe_server', ui.Select('select#service__pxe_server_id')),
-            ('pxe_image', ui.Table('//div[@id="prov_pxe_img_div"]/table')),
-            ('iso_file', ui.Table('//div[@id="prov_iso_img_div"]/table'))
+            ('pxe_image', Table('//div[@id="prov_pxe_img_div"]/table')),
+            ('iso_file', Table('//div[@id="prov_iso_img_div"]/table'))
         ]),
 
         ('Environment', [
@@ -105,10 +106,10 @@ provisioning_form = tabstrip.TabStripForm(
             ('resource_pool', ui.Select('select#environment__placement_rp_name')),
             ('folder', ui.Select('select#environment__placement_folder_name')),
             ('host_filter', ui.Select('select#environment__host_filter')),
-            ('host_name', ui.Table('//div[@id="prov_host_div"]/table')),
+            ('host_name', Table('//div[@id="prov_host_div"]/table')),
             ('datastore_create', '#environment__new_datastore_create'),
             ('datastore_filter', ui.Select('select#environment__ds_filter')),
-            ('datastore_name', ui.Table('//div[@id="prov_ds_div"]/table')),
+            ('datastore_name', Table('//div[@id="prov_ds_div"]/table')),
         ]),
         ('Hardware', [
             ('num_sockets', ui.Select('select#hardware__number_of_sockets')),
@@ -142,20 +143,20 @@ provisioning_form = tabstrip.TabStripForm(
 
             # Cloud
             ('specification', ui.Select('select#customize__sysprep_enabled')),
-            ('specification_name', ui.Table('//div[@id="prov_vc_div"]/table')),
+            ('specification_name', Table('//div[@id="prov_vc_div"]/table')),
             ('computer_name', ui.Input('customize__linux_host_name')),
             ('domain_name', ui.Input('customize__linux_domain_name')),
 
             # Infra
             ('customize_type', ui.Select('select#customize__sysprep_enabled')),
-            ('specification_name', ui.Table('//div[@id="prov_vc_div"]/table')),
+            ('specification_name', Table('//div[@id="prov_vc_div"]/table')),
             ('linux_host_name', ui.Input('customize__linux_host_name')),
             ('linux_domain_name', ui.Input('customize__linux_domain_name')),
             ('prov_host_name', ui.Input('customize__hostname')),
             ('ip_address', ui.Input('customize__ip_addr')),
             ('subnet_mask', ui.Input('customize__subnet_mask')),
             ('gateway', ui.Input('customize__gateway')),
-            ('custom_template', ui.Table('//div[@id="prov_template_div"]/table')),
+            ('custom_template', Table('//div[@id="prov_template_div"]/table')),
             ('root_password', ui.Input('customize__root_password')),
             ('vm_host_name', ui.Input('customize__hostname')),
         ]),

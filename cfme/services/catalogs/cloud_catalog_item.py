@@ -9,8 +9,9 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from cfme.provisioning import provisioning_form as request_form
-from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill,\
+from cfme.web_ui import accordion, tabstrip, Form, Select, fill,\
     flash, form_buttons, Input, Tree
+from cfme.web_ui.tables import Table
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty

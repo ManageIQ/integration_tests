@@ -4,9 +4,10 @@ from functools import partial
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import Timer
-from cfme.web_ui import (EmailSelectForm, Form, CheckboxTable, Select, ShowingInputs, accordion,
+from cfme.web_ui import (EmailSelectForm, Form, Select, ShowingInputs, accordion,
     fill, flash, toolbar, form_buttons, Input)
 from cfme.web_ui.menu import nav
+from cfme.web_ui.tables import Table
 from utils.db import cfmedb
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -17,7 +18,7 @@ from utils import version
 cfg_btn = partial(toolbar.select, "Configuration")
 
 
-schedules_table = CheckboxTable("//div[@id='records_div']//table[thead]")
+schedules_table = Table.create("//div[@id='records_div']//table[thead]", {'checkbox'})
 
 
 def get_sch_name(sch):

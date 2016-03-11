@@ -5,7 +5,8 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Region, Table, tabstrip, toolbar
+from cfme.web_ui import Region, tabstrip, toolbar
+from cfme.web_ui.tables import Table
 from utils import deferred_verpick, version
 from utils.timeutil import parsetime
 from utils.pretty import Pretty

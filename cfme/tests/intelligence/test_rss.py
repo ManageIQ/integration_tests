@@ -2,10 +2,10 @@
 import pytest
 import requests
 
-from cfme.web_ui import Table
+from cfme.web_ui.tables import Table, Ordinary
 
 
-rss_table = Table("//div[@id='tab_div']/table", header_offset=1)
+rss_table = Table(Ordinary("//div[@id='tab_div']/table", header_offset=1))
 
 
 def test_verify_rss_links():

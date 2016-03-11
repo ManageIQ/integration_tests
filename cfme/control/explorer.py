@@ -6,10 +6,11 @@ from cfme.web_ui.menu import nav
 
 from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
-from cfme.web_ui import fill, flash, form_buttons, table_in_object
-from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSelectForm, \
+from cfme.web_ui import fill, flash, form_buttons
+from cfme.web_ui import Region, Form, Tree, CheckboxTree, Select, EmailSelectForm, \
     CheckboxSelect, Input, AngularSelect
 from cfme.web_ui.multibox import MultiBoxSelect
+from cfme.web_ui.tables import InObject, Table
 from selenium.common.exceptions import NoSuchElementException
 from utils import version, deferred_verpick
 from utils.db import cfmedb
@@ -23,13 +24,9 @@ import cfme.web_ui.toolbar as tb
 from utils.pretty import Pretty
 
 
-events_policies_table = Table(
-    table_locator=table_in_object("Assigned to Policies")
-)
+events_policies_table = Table(InObject('Assigned to Policies'))
 
-events_in_policy_table = Table(
-    table_locator=table_in_object("Events")
-)
+events_in_policy_table = Table(InObject("Events"))
 
 cfg_btn = partial(tb.select, "Configuration")
 
@@ -536,13 +533,9 @@ class BasePolicy(Updateable, Pretty):
     PREFIX = None
     DELETE_STRING = None
 
-    assigned_conditions = Table(
-        table_locator=table_in_object("Conditions")
-    )
+    assigned_conditions = Table(InObject("Conditions"))
 
-    assigned_events = Table(
-        table_locator=table_in_object("Events")
-    )
+    assigned_events = Table(InObject("Events"))
 
     form = Form(
         fields=[

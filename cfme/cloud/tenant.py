@@ -7,14 +7,16 @@
 
 from utils.conf import cfme_data
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Region, SplitTable
-
+from cfme.web_ui import Region
+from cfme.web_ui.tables import Table, Split
 
 # Page specific locators
 list_page = Region(
     locators={
-        'tenant_table': SplitTable(header_data=('//div[@class="xhdr"]/table/tbody', 1),
-            body_data=('//div[@class="objbox"]/table/tbody', 1))
+        'tenant_table': Table.create(Split(
+            '//div[@class="xhdr"]/table/tbody',
+            '//div[@class="objbox"]/table/tbody',
+            1, 1))
     },
     title='Cloud Tenants')
 

@@ -10,8 +10,9 @@ import cfme.web_ui.accordion as acc
 import cfme.web_ui.flash as flash
 from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table, form_buttons, Input
+from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, form_buttons, Input
 from cfme.web_ui import paginator as pg
+from fme.web_ui.tables import Table
 from selenium.common.exceptions import NoSuchElementException
 import utils.conf as conf
 from utils.datafile import load_data_file

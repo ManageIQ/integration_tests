@@ -12,7 +12,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import AngularSelect, Calendar, Form, Region, Table, Select, fill
+from cfme.web_ui import AngularSelect, Calendar, Form, Region, Select, fill
+from cfme.web_ui.tables import Table
 from utils import deferred_verpick, version
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError

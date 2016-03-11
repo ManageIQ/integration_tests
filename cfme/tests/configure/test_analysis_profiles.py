@@ -4,7 +4,8 @@ import pytest
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme.configure.configuration import HostAnalysisProfile, VMAnalysisProfile
-from cfme.web_ui import Table, flash, toolbar as tb
+from cfme.web_ui import flash, toolbar as tb
+from cfme.web_ui.tables import Table
 from utils.blockers import BZ
 from utils.update import update
 
