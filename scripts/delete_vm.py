@@ -9,8 +9,8 @@ import sys
 from ovirtsdk.api import API
 
 # VSPHERE
-# from psphere.client import Client
 from psphere.managedobjects import VirtualMachine
+from mgmtsystem.virtualcenter import VMWareSystem
 
 # RHOS
 from novaclient.v1_1 import client as novaclient
@@ -19,7 +19,6 @@ from novaclient.v1_1 import client as novaclient
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.wait import wait_for
-from utils.mgmt_system import VMWareSystem
 
 
 TIME_NOW = datetime.datetime.now()

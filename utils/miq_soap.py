@@ -230,10 +230,10 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
             from utils.mgmt_system import RHEVMSystem
             return RHEVMSystem(self.host_name, credentials["username"], credentials["password"])
         elif ptype == "emsvmware":
-            from utils.mgmt_system import VMWareSystem
+            from mgmtsystem.virtualcenter import VMWareSystem
             return VMWareSystem(self.host_name, credentials["username"], credentials["password"])
         elif ptype == "emsmicrosoft":
-            from utils.mgmt_system import SCVMMSystem
+            from mgmtsystem.scvmm import SCVMMSystem
             return SCVMMSystem(
                 hostname=self.host_name,
                 username=credentials["username"],
@@ -241,10 +241,10 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
                 domain=credentials["domain"]
             )
         elif ptype == "emsamazon":
-            from utils.mgmt_system import EC2System
+            from mgmtsystem.ec2 import EC2System
             return EC2System(**credentials)
         elif ptype == "emsopenstack":
-            from utils.mgmt_system import OpenstackSystem
+            from mgmtsystem.openstack import OpenstackSystem
             credentials.update(
                 {"auth_url": cfme_data.get("management_systems", {})[provider_id]["auth_url"]}
             )

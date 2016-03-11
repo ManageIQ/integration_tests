@@ -16,6 +16,8 @@ Required YAML keys:
 import fauxfactory
 import pytest
 
+import mgmtsystem
+
 from cfme.common.vm import VM
 from cfme.control import explorer
 from cfme.configure import tasks
@@ -24,7 +26,7 @@ from cfme.web_ui import tabstrip as tabs, toolbar as tb
 from datetime import datetime
 from fixtures.pytest_store import store
 from functools import partial
-from utils import mgmt_system, testgen
+from utils import testgen
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.db import cfmedb
@@ -93,7 +95,7 @@ pytestmark = [
     pytest.mark.meta(blockers=[
         BZ(
             1149128,
-            unblock=lambda provider: not isinstance(provider.mgmt, mgmt_system.SCVMMSystem))
+            unblock=lambda provider: not isinstance(provider.mgmt, mgmtsystem.scvmm.SCVMMSystem))
     ])
 ]
 
@@ -609,7 +611,7 @@ def test_action_initiate_smartstate_analysis(
         test_flag: actions, provision
     """
     # Set host credentials for VMWare
-    if isinstance(vm.provider, mgmt_system.VMWareSystem):
+    if isinstance(vm.provider, mgmtsystem.virtualcenter.VMWareSystem):
         set_host_credentials(request, vm.provider, vm)
 
     # Set up the policy and prepare finalizer
