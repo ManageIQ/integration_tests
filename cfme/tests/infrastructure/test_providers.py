@@ -165,7 +165,7 @@ def test_provider_crud(provider):
     Metadata:
         test_flag: crud
     """
-    provider.create()
+    provider.create(method="ui")
     # Fails on upstream, all provider types - BZ1087476
     provider.validate_stats(ui=True)
 
@@ -177,4 +177,4 @@ def test_provider_crud(provider):
         provider.name = old_name  # old name
 
     provider.delete(cancel=False)
-    provider.wait_for_delete()
+    provider.wait_for_delete(method="ui")

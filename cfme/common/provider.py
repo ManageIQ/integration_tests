@@ -1,3 +1,4 @@
+from collections import Mapping
 from functools import partial
 import datetime
 
@@ -21,6 +22,8 @@ from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
+from utils import version
+
 
 from . import PolicyProfileAssignable, Taggable
 
@@ -62,6 +65,13 @@ credential_form = TabStripForm(
         ('validate_btn', form_buttons.validate),
     ])
 
+credential_type_map = {
+    'default': 'default',
+    'candu': 'metrics',
+    'amqp': 'amqp',
+    'ssh': 'ssh_keypair'
+}
+
 
 class BaseProvider(Taggable, Updateable):
     # List of constants that every non-abstract subclass must have defined
@@ -102,6 +112,13 @@ class BaseProvider(Taggable, Updateable):
     @property
     def type(self):
         return self.data['type']
+
+    @property
+    def rest_type(self):
+        if isinstance(self.REST_TYPE, Mapping):
+            return version.pick(self.REST_TYPE)
+        else:
+            return self.REST_TYPE
 
     @property
     def version(self):
@@ -152,7 +169,34 @@ class BaseProvider(Taggable, Updateable):
             submit_button()
             flash.assert_no_errors()
 
+    @variable(alias='rest')
     def create(self, cancel=False, validate_credentials=False):
+        """
+        Creates a provider via the REST API
+        """
+        if cancel:
+            return
+        creds = []
+        for k, cred in self.credentials.iteritems():
+            if not cred:
+                logger.info('The credential {} has no type'.format(k))
+                continue
+            c_type = cred.type or 'default'
+            if cred.domain:
+                principal = r'{}\{}'.format(cred.domain, cred.principal)
+            else:
+                principal = cred.principal
+            creds.append({'auth_type': credential_type_map[c_type],
+                          'userid': principal,
+                          'password': cred.secret})
+
+        rest_dict = self._rest_mapping(True, **self.__dict__)
+        rest_dict['credentials'] = creds
+        rest_api().collections.providers.action.create(rest_dict)
+        self.refresh_provider_relationships()
+
+    @create.variant('ui')
+    def create_ui(self, cancel=False, validate_credentials=False):
         """
         Creates a provider in the UI
 
@@ -192,7 +236,15 @@ class BaseProvider(Taggable, Updateable):
         if not cancel:
             flash.assert_message_match('{} Provider "{}" was saved'.format(self.string_name, name))
 
+    @variable(alias='rest')
     def delete(self, cancel=True):
+        if cancel:
+            return
+        col = rest_api().collections.providers.find_by(name=self.name)[0]
+        col.action.delete()
+
+    @delete.variant('ui')
+    def delete_ui(self, cancel=True):
         """
         Deletes a provider from CFME
 
@@ -235,10 +287,10 @@ class BaseProvider(Taggable, Updateable):
         refresh_timer = RefreshTimer(time_for_refresh=300)
         try:
             wait_for(self.is_refreshed,
-                     [refresh_timer],
-                     message="is_refreshed",
-                     num_sec=1000,
-                     delay=60)
+                [refresh_timer],
+                message="is_refreshed",
+                num_sec=1000,
+                delay=20)
         except Exception:
             # To see the possible error.
             self.load_details(refresh=True)

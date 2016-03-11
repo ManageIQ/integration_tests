@@ -19,10 +19,12 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect
 from cfme.web_ui import Input
+from utils.api import rest_api
 from utils.log import logger
 from utils.providers import setup_provider_by_name
 from utils.wait import wait_for
 from utils import version, deferred_verpick
+from utils.varmeth import variable
 from utils.pretty import Pretty
 
 
@@ -126,6 +128,9 @@ class Provider(Pretty, CloudInfraProvider):
 
 
 class EC2Provider(Provider):
+    REST_TYPE = {'5.5': "ManageIQ::Providers::Amazon::CloudManager",
+                 version.LOWEST: "EmsAmazon"}
+
     def __init__(self, name=None, credentials=None, zone=None, key=None, region=None):
         super(EC2Provider, self).__init__(name=name, credentials=credentials,
                                           zone=zone, key=key)
@@ -136,8 +141,16 @@ class EC2Provider(Provider):
                 'type_select': create and 'Amazon EC2',
                 'amazon_region_select': sel.ByValue(kwargs.get('region'))}
 
+    def _rest_mapping(self, create=None, **kwargs):
+        return {'name': kwargs.get('name'),
+                'type': self.rest_type,
+                'provider_region': kwargs.get('region')}
+
 
 class OpenStackProvider(Provider):
+    REST_TYPE = {'5.5': "ManageIQ::Providers::Openstack::CloudManager",
+                 version.LOWEST: "EmsOpenstack"}
+
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, sec_protocol=None, infra_provider=None):
         super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
@@ -147,9 +160,9 @@ class OpenStackProvider(Provider):
         self.api_port = api_port
         self.infra_provider = infra_provider
         self.sec_protocol = sec_protocol
+        self.rest_infra_provider = None
 
-    def create(self, *args, **kwargs):
-        # Override the standard behaviour to actually create the underlying infra first.
+    def _check_infra(self):
         if self.infra_provider is not None:
             if isinstance(self.infra_provider, OpenstackInfraProvider):
                 infra_provider_name = self.infra_provider.name
@@ -157,6 +170,27 @@ class OpenStackProvider(Provider):
                 infra_provider_name = str(self.infra_provider)
             setup_provider_by_name(
                 infra_provider_name, validate=True, check_existing=True)
+
+    @variable(alias='rest')
+    def create(self, *args, **kwargs):
+        self._check_infra()
+        if self.infra_provider:
+            # Do REST lookup for ID
+            # Run the super create
+            if isinstance(self.infra_provider, OpenstackInfraProvider):
+                infra_provider_name = self.infra_provider.name
+            else:
+                infra_provider_name = str(self.infra_provider)
+            provider_sr = rest_api().collections.providers.find_by(name=infra_provider_name)
+            if provider_sr.count > 0:
+                p_id = provider_sr[0].provider_id
+            self.rest_infra_provider = p_id
+        return super(OpenStackProvider, self).create(*args, **kwargs)
+
+    @create.variant('ui')
+    def create_(self, *args, **kwargs):
+        # Override the standard behaviour to actually create the underlying infra first.
+        self._check_infra()
         return super(OpenStackProvider, self).create(*args, **kwargs)
 
     def _form_mapping(self, create=None, **kwargs):
@@ -170,6 +204,18 @@ class OpenStackProvider(Provider):
                 'ipaddress_text': kwargs.get('ip_address'),
                 'sec_protocol': kwargs.get('sec_protocol'),
                 'infra_provider': "---" if infra_provider is False else infra_provider}
+
+    def _rest_mapping(self, create=None, **kwargs):
+        rest_dict = {
+            'name': kwargs.get('name'),
+            'type': self.rest_type,
+            'hostname': kwargs.get('hostname'),
+            'port': kwargs.get('api_port'),
+            'ipaddress': kwargs.get('ip_address')
+        }
+        if self.rest_infra_provider:
+            rest_dict['infra_provider'] = self.rest_infra_provider
+        return rest_dict
 
 
 def get_all_providers(do_not_navigate=False):

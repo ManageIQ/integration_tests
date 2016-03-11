@@ -223,6 +223,9 @@ class Provider(Pretty, CloudInfraProvider):
 
 
 class VMwareProvider(Provider):
+    REST_TYPE = {'5.5': "ManageIQ::Providers::Vmware::InfraManager",
+                 version.LOWEST: "EmsVmware"}
+
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None):
         super(VMwareProvider, self).__init__(name=name, credentials=credentials,
@@ -239,9 +242,17 @@ class VMwareProvider(Provider):
                 'hostname_text': kwargs.get('hostname'),
                 'ipaddress_text': kwargs.get('ip_address')}
 
+    def _rest_mapping(self, create=None, **kwargs):
+        return {'name': kwargs.get('name'),
+                'type': self.rest_type,
+                'hostname': kwargs.get('hostname'),
+                'ipaddress': kwargs.get('ip_address')}
+
 
 class OpenstackInfraProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_host']
+    REST_TYPE = {'5.5': "ManageIQ::Providers::Openstack::InfraManager",
+                 version.LOWEST: "EmsOpenstackInfra"}
 
     def __init__(self, name=None, credentials=None, key=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None,
@@ -262,9 +273,18 @@ class OpenstackInfraProvider(Provider):
                 'ipaddress_text': kwargs.get('ip_address'),
                 'sec_protocol': kwargs.get('sec_protocol')}
 
+    def _rest_mapping(self, create=None, **kwargs):
+        return {'name': kwargs.get('name'),
+                'type': self.rest_type,
+                'hostname': kwargs.get('hostname'),
+                'ipaddress': kwargs.get('ip_address')}
+
 
 class SCVMMProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
+    REST_TYPE = {'5.5': "ManageIQ::Providers::Microsoft::InfraManager",
+                 version.LOWEST: "EmsMicrosoft"}
+    sec_protocol_map = {'Basic (SSL)': 'ssl'}
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None,
@@ -286,16 +306,31 @@ class SCVMMProvider(Provider):
             'type_select': create and 'Microsoft System Center VMM',
             'hostname_text': kwargs.get('hostname'),
             'ipaddress_text': kwargs.get('ip_address'),
-            'sec_protocol': kwargs.get('sec_protocol')
+            'sec_protocol': kwargs.get('sec_protocol'),
         }
 
-        if 'sec_protocol' in values and values['sec_protocol'] is 'Kerberos':
+        if values['sec_protocol'] is 'Kerberos':
             values['sec_realm'] = kwargs.get('sec_realm')
+        return values
 
+    def _rest_mapping(self, create=None, **kwargs):
+        values = {
+            'name': kwargs.get('name'),
+            'type': self.rest_type,
+            'hostname': kwargs.get('hostname'),
+            'ipaddress': kwargs.get('ip_address'),
+            'security_protocol': self.sec_protocol_map[kwargs.get('sec_protocol')],
+        }
+
+        if values['security_protocol'] is 'Kerberos':
+            values['sec_realm'] = kwargs.get('sec_realm')
         return values
 
 
 class RHEVMProvider(Provider):
+    REST_TYPE = {'5.5': "ManageIQ::Providers::Redhat::InfraManager",
+                 version.LOWEST: "EmsRedhat"}
+
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, start_ip=None, end_ip=None,
                  provider_data=None):
@@ -314,6 +349,13 @@ class RHEVMProvider(Provider):
                 'hostname_text': kwargs.get('hostname'),
                 'api_port': kwargs.get('api_port'),
                 'ipaddress_text': kwargs.get('ip_address')}
+
+    def _rest_mapping(self, create=None, **kwargs):
+        return {'name': kwargs.get('name'),
+                'type': self.rest_type,
+                'hostname': kwargs.get('hostname'),
+                'port': kwargs.get('api_port'),
+                'ipaddress': kwargs.get('ip_address')}
 
 
 def get_all_providers(do_not_navigate=False):

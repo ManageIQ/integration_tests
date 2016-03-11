@@ -206,6 +206,10 @@ class KubernetesProvider(Provider):
             name=name, credentials=credentials, key=key, zone=zone, hostname=hostname, port=port,
             provider_data=provider_data)
 
+    def create(self, *args, **kwargs):
+        # REST is not supported by containers yet
+        super(Provider, self).create(method="ui", *args, **kwargs)
+
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Kubernetes',
@@ -216,6 +220,7 @@ class KubernetesProvider(Provider):
 
 class OpenshiftProvider(Provider):
     STATS_TO_MATCH = Provider.STATS_TO_MATCH + ['num_route']
+    REST_TYPE = "ManageIQ::Providers::Openshift::ContainerManager"
 
     def __init__(self, name=None, credentials=None, key=None,
                  zone=None, hostname=None, port=None, provider_data=None):
@@ -223,10 +228,9 @@ class OpenshiftProvider(Provider):
             name=name, credentials=credentials, key=key, zone=zone, hostname=hostname, port=port,
             provider_data=provider_data)
 
-    def create(self, validate_credentials=True, **kwargs):
-        # Workaround - randomly fails on 5.5.0.8 with no validation
-        # probably a js wait issue, not reproducible manually
-        super(OpenshiftProvider, self).create(validate_credentials=validate_credentials, **kwargs)
+    def create(self, *args, **kwargs):
+        # REST is not supported by containers yet
+        super(Provider, self).create(method="ui", *args, **kwargs)
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -234,6 +238,16 @@ class OpenshiftProvider(Provider):
                 'hostname_text': kwargs.get('hostname'),
                 'port_text': kwargs.get('port'),
                 'zone_select': kwargs.get('zone')}
+
+    def _rest_mapping(self, create=None, **kwargs):
+        rest_dict = {
+            'name': kwargs.get('name'),
+            'type': self.rest_type,
+            'hostname': kwargs.get('hostname'),
+            'port': kwargs.get('port'),
+            'zone': kwargs.get('zone')
+        }
+        return rest_dict
 
     @variable(alias='db')
     def num_route(self):
