@@ -1,46 +1,49 @@
 #!/usr/bin/env bash
-# Script used when a new release comes only in the form of RPMs. Point it to a fresh appliance and
-# it will turn it to a template with updated CFME. The name keeps the same so you should name
-# the appliance as you want the template to be named.
+# Script used when a new release comes only in the form of RPMs. Point it to an existing template and
+# it will turn it to a template with updated CFME. 
 #
-# Usage: $SCRIPT_NAME provider_key appliance_name <params-for-update_rhel-script>
+# Usage: $SCRIPT_NAME provider_key template_name new_template_name <params-for-update_rhel-script>
 
 D=`dirname $0`
 APPLIANCE_SCRIPT="${D}/appliance.py"
+IPAPPLIANCE_SCRIPT="${D}/ipappliance.py"
+CLONE_TEMPLATE_SCRIPT="${D}/clone_template.py"
 UPDATE_SCRIPT="${D}/update_rhel.py"
 WAIT_UI_SCRIPT="${D}/wait_for_appliance_ui.py"
 
+
 if [ $# -lt 2 ];
 then
-    echo "Usage: ${0} provider_key appliance_name <params for update>"
+    echo "Usage: ${0} provider_key template_name new_template_name <params for update>"
     exit 1
 fi
 
 PROVIDER_KEY=$1
 shift
-APPLIANCE_NAME=$1
+TEMPLATE_NAME=$1
+shift
+APPLIANCE_NAME=$1  # Also the new template name, but the name stays on ...
 shift
 UPDATE_PARAMS=$@
 
 echo "Provider key: $PROVIDER_KEY"
-echo "Appliance name: $APPLIANCE_NAME"
+echo "Template name: $TEMPLATE_NAME"
 echo "Update params: $UPDATE_PARAMS"
 
-APPLIANCE_IP=`$APPLIANCE_SCRIPT $PROVIDER_KEY $APPLIANCE_NAME address`
+echo "Deploying the template $TEMPLATE_NAME in $PROVIDER_KEY as $APPLIANCE_NAME"
+
+APPLIANCE_IP=`$CLONE_TEMPLATE_SCRIPT --provider $PROVIDER_KEY --template $TEMPLATE_NAME --vm_name $APPLIANCE_NAME`
 if [ $? -ne 0 ];
 then
-    echo $APPLIANCE_IP
-    echo "An error happened when getting appliance IP"
+    echo "An error happened when deploying $TEMPLATE_NAME in $PROVIDER_KEY"
     exit 2
 fi
 
-echo "Appliance IP: $APPLIANCE_IP"
-echo "Waiting for UI ..."
-$WAIT_UI_SCRIPT "https://$APPLIANCE_IP/"
-
+echo "Appliance IP: $APPLIANCE_IP, waiting for SSH"
+$IPAPPLIANCE_SCRIPT wait_for_ssh $APPLIANCE_IP
 if [ $? -ne 0 ];
 then
-    echo "Failed to wait for web UI"
+    echo "Failed to wait for SSH"
     exit 3
 fi
 
@@ -52,22 +55,12 @@ then
     exit 4
 fi
 
-echo "Waiting for UI ..."
-$WAIT_UI_SCRIPT "https://$APPLIANCE_IP/"
-
+echo "Waiting for SSH again"
+$IPAPPLIANCE_SCRIPT wait_for_ssh $APPLIANCE_IP
 if [ $? -ne 0 ];
 then
-    echo "Failed to wait for web UI"
+    echo "Failed to wait for SSH"
     exit 5
-fi
-
-echo "Resetting automate model"
-$APPLIANCE_SCRIPT $PROVIDER_KEY $APPLIANCE_NAME reset_automate_model
-if [ $? -ne 0 ];
-then
-    echo $APPLIANCE_IP
-    echo "An error happened when resetting the automate model"
-    exit 6
 fi
 
 echo "Templatizing ..."
@@ -76,5 +69,5 @@ if [ $? -ne 0 ];
 then
     echo $APPLIANCE_IP
     echo "An error happened when templatizing."
-    exit 7
+    exit 6
 fi
