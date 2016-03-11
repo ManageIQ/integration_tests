@@ -50,6 +50,18 @@ def make_ssh_client(rhevip, sshname, sshpass):
     return SSHClient(**connect_kwargs)
 
 
+def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
+    try:
+        ssh_client = make_ssh_client(rhevm_ip, sshname, sshpass)
+        stdout = ssh_client.run_command('service ovirt-engine status')[1]
+        if 'running' not in stdout:
+            return False
+        return True
+    except Exception as e:
+        logger.exception(e)
+        return False
+
+
 def change_edomain_state(api, state, edomain):
     try:
         dcs = api.datacenters.list()
@@ -99,13 +111,17 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass):
         sshname: edomain ssh credentials.
         sshpass: edomain ssh credentials.
     """
-    print("RHEVM: Deleting the empty directories on edomain/vms file...")
-    ssh_client = make_ssh_client(edomainip, sshname, sshpass)
-    command = 'cd {}/master/vms && find . -maxdepth 1 -type d -empty -delete'.format(path)
-    exit_status, output = ssh_client.run_command(command)
-    if exit_status != 0:
-        print("RHEVM: Error while deleting the empty directories on path..")
-        print(output)
+    try:
+        print("RHEVM: Deleting the empty directories on edomain/vms file...")
+        ssh_client = make_ssh_client(edomainip, sshname, sshpass)
+        command = 'cd {}/master/vms && find . -maxdepth 1 -type d -empty -delete'.format(path)
+        exit_status, output = ssh_client.run_command(command)
+        if exit_status != 0:
+            print("RHEVM: Error while deleting the empty directories on path..")
+            print(output)
+    except Exception as e:
+        print(e)
+        return False
 
 
 def is_edomain_template_deleted(api, name, edomain):
@@ -144,30 +160,34 @@ def delete_edomain_templates(api, template, edomain):
 
 
 def cleanup_templates(api, edomain, days, max_templates):
-    templates = api.storagedomains.get(edomain).templates.list()
-    thread_queue = []
-    delete_templates = []
-    for template in templates:
-        delta = datetime.timedelta(days=days)
-        now = datetime.datetime.now(pytz.utc)
-        template_creation_time = template.get_creation_time().astimezone(pytz.utc)
+    try:
+        templates = api.storagedomains.get(edomain).templates.list()
+        thread_queue = []
+        delete_templates = []
+        for template in templates:
+            delta = datetime.timedelta(days=days)
+            now = datetime.datetime.now(pytz.utc)
+            template_creation_time = template.get_creation_time().astimezone(pytz.utc)
 
-        if template.get_name().startswith('auto-tmp'):
-            if now > (template_creation_time + delta):
-                delete_templates.append(template)
+            if template.get_name().startswith('auto-tmp'):
+                if now > (template_creation_time + delta):
+                    delete_templates.append(template)
 
-    if not delete_templates:
-        print("RHEVM: No old templates to delete in {}".format(edomain))
+        if not delete_templates:
+            print("RHEVM: No old templates to delete in {}".format(edomain))
 
-    for delete_template in delete_templates[:max_templates]:
-        thread = Thread(target=delete_edomain_templates,
-                        args=(api, delete_template, edomain))
-        thread.daemon = True
-        thread_queue.append(thread)
-        thread.start()
+        for delete_template in delete_templates[:max_templates]:
+            thread = Thread(target=delete_edomain_templates,
+                            args=(api, delete_template, edomain))
+            thread.daemon = True
+            thread_queue.append(thread)
+            thread.start()
 
-    for thread in thread_queue:
-        thread.join()
+        for thread in thread_queue:
+            thread.join()
+    except Exception as e:
+        logger.exception(e)
+        return False
 
 
 def api_params_resolution(item_list, item_name, item_param):
@@ -251,25 +271,34 @@ def run(**kwargs):
     """
     providers = cfme_data['management_systems']
     for provider in providers:
+
         if cfme_data['management_systems'][provider]['type'] != 'rhevm':
             continue
         if args.provider:
             if args.provider != provider:
                 continue
-        if not net.is_pingable(cfme_data['management_systems'][provider]['ipaddress']):
-            continue
+
         mgmt_sys = cfme_data['management_systems'][provider]
         ssh_rhevm_creds = mgmt_sys['hosts'][0]['credentials']
         sshname = credentials[ssh_rhevm_creds]['username']
         sshpass = credentials[ssh_rhevm_creds]['password']
 
+        if not net.is_pingable(cfme_data['management_systems'][provider]['ipaddress']):
+            continue
+        elif not is_ovirt_engine_running(cfme_data['management_systems'][provider]['ipaddress'],
+                                         sshname, sshpass):
+            print('ovirt-engine service not running..')
+            continue
+
         try:
+            print('connecting to provider, to establish api handler')
             api = get_mgmt(provider).api
             edomain = get_edomain(api)
             if args.edomain:
                 edomain = args.edomain
             path, edomain_ip = get_edomain_path(api, edomain)
-        except Exception:
+        except Exception as e:
+            logger.exception(e)
             continue
 
         try:
@@ -281,6 +310,7 @@ def run(**kwargs):
             change_edomain_state(api, 'active', edomain)
             print("--------End of {}--------\n".format(provider))
 
+    print("Provider Execution completed")
 
 if __name__ == "__main__":
     args = parse_cmd_line()
