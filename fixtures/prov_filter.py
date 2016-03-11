@@ -55,6 +55,7 @@ def parse_filter(cmd_filter):
     for provider in provider_keys():
         data = cfme_data['management_systems'][provider]
         tags = data.get('tags', [])
-        if provider not in cmd_filter and not set(tags) & set(cmd_filter):
+        if ('disabled' in tags) or \
+           ((provider not in cmd_filter) and not (set(tags) & set(cmd_filter))):
             filtered_providers.remove(provider)
     return filtered_providers
