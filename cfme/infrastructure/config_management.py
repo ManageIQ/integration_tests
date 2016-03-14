@@ -1,8 +1,6 @@
 from functools import partial
 from cached_property import cached_property
-
 import ui_navigate as nav
-
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
@@ -10,7 +8,8 @@ import cfme.web_ui.menu
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
-    accordion, Quadicon, Form, Input, fill, form_buttons, SplitTable, mixins
+    accordion, Quadicon, Form, Input, fill, form_buttons, mixins, SplitTable, Table, Region,
+    AngularSelect, Select
 )
 from utils import version, conf
 from utils.log import logger
@@ -22,6 +21,9 @@ from utils.wait import wait_for
 properties_form = Form(
     fields=[
         ('name_text', Input('name')),
+        ('type_select', {
+            version.LOWEST: Select("select#provtype"),
+            '5.6': AngularSelect("provtype")}),
         ('url_text', Input('url')),
         ('ssl_checkbox', Input('verify_ssl'))
     ])
@@ -34,10 +36,21 @@ credential_form = Form(
         ('validate_btn', form_buttons.validate)
     ])
 
-list_table = SplitTable(
+
+CfgMgrSplitTable = lambda: SplitTable(
     header_data=("//div[@id='list_grid']/div[@class='xhdr']/table/tbody", 1),
-    body_data=("//div[@id='list_grid']/div[@class='objbox']/table/tbody", 1),
-)
+    body_data=("//div[@id='list_grid']/div[@class='objbox']/table/tbody", 1),)
+
+CfgMgrTable = lambda: Table("//div[@id='main_div']//div[@id='list_grid']/table")
+
+
+page = Region(locators={
+    'list_table_config_profiles': {
+        version.LOWEST: CfgMgrSplitTable(),
+        "5.5": CfgMgrTable()},
+    'list_table_config_systems': {
+        version.LOWEST: CfgMgrSplitTable(),
+        "5.5": CfgMgrTable()}})
 
 add_manager_btn = form_buttons.FormButton('Add')
 edit_manager_btn = form_buttons.FormButton('Save changes')
@@ -50,7 +63,7 @@ nav.add_branch(
         [
             lambda _: (accordion.tree('Providers',
                 version.pick({version.LOWEST: 'All Red Hat Satellite Providers',
-                              version.UPSTREAM: 'All Foreman Providers'})),
+                              '5.6': 'All Configuration Manager Providers'})),
                 tb.select('Grid View')),
             {
                 'infrastructure_config_manager_new':
@@ -60,7 +73,7 @@ nav.add_branch(
                     lambda ctx: sel.check(
                         Quadicon(
                             '{} Configuration Manager'
-                            .format(ctx['manager'].name), None).checkbox),
+                            .format(ctx['manager'].name), None).checkbox()),
                     {
                         'infrastructure_config_manager_edit':
                         lambda _: cfg_btn('Edit Selected item'),
@@ -84,7 +97,9 @@ nav.add_branch(
                         'infrastructure_config_manager_remove_detail':
                         lambda _: cfg_btn('Remove this Provider from the VMDB', invokes_alert=True),
                         'infrastructure_config_manager_config_profile':
-                        lambda ctx: list_table.click_cell('Description', ctx['profile'].name)
+                        lambda ctx: (tb.select('List View'),
+                               page.list_table_config_profiles.click_cell(
+                            'Description', ctx['profile'].name))
                     }
                 ]
             }
@@ -93,7 +108,7 @@ nav.add_branch(
         [
             lambda _: accordion.tree('Configured Systems',
                 version.pick({version.LOWEST: 'All Red Hat Satellite Configured Systems',
-                              version.UPSTREAM: 'All Foreman Configured Systems'})),
+                              '5.6': 'All Configured Systems'})),
             {
                 'infrastructure_config_system':
                 [
@@ -114,7 +129,7 @@ nav.add_branch(
 
 class ConfigManager(Updateable, Pretty):
     """
-    Configuration manager object (Foreman, RH Satellite)
+    This is base class for Configuration manager objects (Red Hat Satellite, Foreman, Ansible Tower)
 
     Args:
         name: Name of the config. manager
@@ -124,26 +139,31 @@ class ConfigManager(Updateable, Pretty):
         key: Key to access the cfme_data yaml data (same as `name` if not specified)
 
     Usage:
-        .. code-block:: python
-
-            cfg_mgr = ConfigManager('my_foreman', 'my-foreman.example.com', False,
-                                ConfigManager.Credential(principal='admin', secret='testing'))
-            cfg_mgr.create()
+        Use Satellite or AnsibleTower classes instead.
     """
 
     pretty_attr = ['name', 'url']
+    type = None
 
-    def __init__(self, name, url, ssl, credentials, key=None):
+    def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None):
         self.name = name
         self.url = url
         self.ssl = ssl
         self.credentials = credentials
         self.key = key or name
 
-    def _form_mapping(self, **kwargs):
-        return {'name_text': kwargs.get('name'),
+    def _form_mapping(self, create=None, **kwargs):
+        return version.pick({
+            version.LOWEST: {
+                'name_text': kwargs.get('name'),
+                'url_text': kwargs.get('url'),
+                'ssl_checkbox': kwargs.get('ssl')},
+            '5.6': {
+                'name_text': kwargs.get('name'),
+                'type_select': create and self.type,
                 'url_text': kwargs.get('url'),
                 'ssl_checkbox': kwargs.get('ssl')}
+        })
 
     class Credential(cfme.Credential, Updateable):
         pass
@@ -159,16 +179,6 @@ class ConfigManager(Updateable, Pretty):
         """Navigates to the manager's detail page"""
         sel.force_navigate('infrastructure_config_manager_detail', context={'manager': self})
 
-    @cached_property
-    def type(self):
-        """Returns presumed type of the manager based on CFME version
-
-        Note:
-            We cannot actually know the type of the provider from the UI.
-            This represents the supported type by CFME version and is to be used in navigation.
-        """
-        return version.pick({version.LOWEST: 'Red Hat Satellite', version.LATEST: 'Foreman'})
-
     def create(self, cancel=False, validate_credentials=True, validate=True, force=False):
         """Creates the manager through UI
 
@@ -183,6 +193,7 @@ class ConfigManager(Updateable, Pretty):
                 True will try anyway; False will check for its existence and leave, if present.
         """
         def config_profiles_loaded():
+            # Workaround - without this, validation of provider failed
             config_profiles_names = [prof.name for prof in self.config_profiles]
             logger.info(
                 "UI: %s\nYAML: %s",
@@ -193,13 +204,18 @@ class ConfigManager(Updateable, Pretty):
         if not force and self.exists:
             return
         sel.force_navigate('infrastructure_config_manager_new')
-        fill(properties_form, self._form_mapping(**self.__dict__))
+        fill(properties_form, self._form_mapping(create=True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, add_manager_btn)
         if not cancel:
-            flash_msg = '{} Provider "{}" was added'.format(self.type, self.name)
-            flash.assert_message_match(flash_msg)
+            flash.assert_message_match(self._refresh_flash_msg)
             if validate:
+                try:
+                    self.yaml_data['config_profiles']
+                except KeyError as e:
+                    logger.exception(e)
+                    raise
+
                 wait_for(
                     func=config_profiles_loaded,
                     fail_func=self.refresh_relationships,
@@ -220,6 +236,10 @@ class ConfigManager(Updateable, Pretty):
             utils.update use is recommended over use of this method.
         """
         sel.force_navigate('infrastructure_config_manager_edit', context={'manager': self})
+        # Workaround - without this, update was failing on downstream appliance
+        sel.wait_for_ajax()
+        sel.wait_for_element(properties_form.name_text)
+
         fill(properties_form, self._form_mapping(**updates))
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
         self._submit(cancel, edit_manager_btn)
@@ -243,10 +263,21 @@ class ConfigManager(Updateable, Pretty):
         sel.force_navigate('infrastructure_config_manager_remove', context={'manager': self})
         sel.handle_alert(cancel)
         if not cancel:
-            flash.assert_message_match(
-                'Delete initiated for 1 Provider from the CFME Database')
+            flash_msg = version.pick({
+                version.LOWEST: 'Delete initiated for 1 Provider from the CFME Database',
+                '5.6': 'Delete initiated for 1 provider'
+            })
+            flash.assert_message_match(flash_msg)
             if wait_deleted:
                 wait_for(func=lambda: self.exists, fail_condition=True, delay=15, num_sec=60)
+
+    @property
+    def _refresh_flash_msg(self):
+        return version.pick({
+            version.LOWEST: 'Refresh {0} initiated for 1 Provider ({0}) from the CFME Database'
+            .format(self.type),
+            '5.6': 'Refresh Provider initiated for 1 provider ({})'.format(self.type)
+        })
 
     @property
     def exists(self):
@@ -262,15 +293,15 @@ class ConfigManager(Updateable, Pretty):
         sel.force_navigate('infrastructure_config_manager_refresh', context={'manager': self})
         sel.handle_alert(cancel)
         if not cancel:
-            flash.assert_message_match(
-                'Refresh {0} initiated for 1 Provider ({0}) from the CFME Database'
-                .format(self.type))
+            flash.assert_message_match(self._refresh_flash_msg)
 
     @property
     def config_profiles(self):
         """Returns 'ConfigProfile' configuration profiles (hostgroups) available on this manager"""
         self.navigate()
-        return [ConfigProfile(row['description'].text, self) for row in list_table.rows()]
+        tb.select('List View')
+        return [ConfigProfile(row['description'].text, self) for row in
+                page.list_table_config_profiles.rows()]
 
     @property
     def systems(self):
@@ -296,6 +327,16 @@ class ConfigManager(Updateable, Pretty):
             key=key)
 
 
+def get_config_manager_from_config(cfg_mgr_key):
+    cfg_mgr = conf.cfme_data.get('configuration_managers', {})[cfg_mgr_key]
+    if cfg_mgr['type'] == 'satellite':
+        return Satellite.load_from_yaml(cfg_mgr_key)
+    elif cfg_mgr['type'] == 'ansible':
+        return AnsibleTower.load_from_yaml(cfg_mgr_key)
+    else:
+        raise Exception("Unknown configuration manager key")
+
+
 @fill.method((Form, ConfigManager.Credential))
 def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in."""
@@ -314,7 +355,7 @@ class ConfigProfile(Pretty):
         name: Name of the profile
         manager: ConfigManager object which this profile is bound to
     """
-    pretty_attr = ['name', 'manager']
+    pretty_attrs = ['name', 'manager']
 
     def __init__(self, name, manager):
         self.name = name
@@ -330,20 +371,27 @@ class ConfigProfile(Pretty):
         """Returns 'ConfigSystem' objects that are active under this profile"""
         self.navigate()
         # ajax wait doesn't work here
-        _header_loc = "//div[contains(@class, 'dhtmlxInfoBarLabel')"\
-                      " and contains(normalize-space(text()), 'Configured Systems')]"
-        sel.wait_for_element(_header_loc)
+        _title_loc = version.pick({'5.4':
+                        "//div[contains(@class, 'dhtmlxInfoBarLabel')"
+                        " and contains(normalize-space(text()), 'Configured Systems')]",
+                    '5.5': "//span[contains(@id, 'explorer_title_text')"
+                            " and contains(normalize-space(text()), 'Configured Systems')]"})
+        sel.wait_for_element(_title_loc)
+
         # Unassigned config profile has no tabstrip
         if "unassigned" not in self.name.lower():
             tabs.select_tab("Configured Systems")
-        if sel.is_displayed(list_table):
-            return [ConfigSystem(row['description'].text, self) for row in list_table.rows()]
+
+        if sel.is_displayed(page.list_table_config_systems):
+            row_key = version.pick({version.LOWEST: 'host name', '5.5': 'hostname'})
+            return [ConfigSystem(row[row_key].text, self) for row in
+                    page.list_table_config_systems.rows()]
         return list()
 
 
 class ConfigSystem(Pretty):
 
-    pretty_attr = ['name', 'manager_key']
+    pretty_attrs = ['name', 'manager_key']
 
     def __init__(self, name, profile):
         self.name = name
@@ -373,3 +421,99 @@ class ConfigSystem(Pretty):
         """Returns a list of this system's active tags"""
         self.navigate()
         return mixins.get_tags()
+
+
+class Satellite(ConfigManager):
+    """
+    Configuration manager object (Red Hat Satellite, Foreman)
+
+    Args:
+        name: Name of the Satellite/Foreman configuration manager
+        url: URL, hostname or IP of the configuration manager
+        ssl: Boolean value; `True` if SSL certificate validity should be checked, `False` otherwise
+        credentials: Credentials to access the config. manager
+        key: Key to access the cfme_data yaml data (same as `name` if not specified)
+
+    Usage:
+        Create provider:
+        .. code-block:: python
+
+            satellite_cfg_mgr = Satellite('my_satellite', 'my-satellite.example.com',
+                                ssl=False, ConfigManager.Credential(principal='admin',
+                                secret='testing'), key='satellite_yaml_key')
+            satellite_cfg_mgr.create()
+
+        Update provider:
+        .. code-block:: python
+
+            with update(satellite_cfg_mgr):
+                satellite_cfg_mgr.name = 'new_satellite_name'
+
+        Delete provider:
+        .. code-block:: python
+
+            satellite_cfg_mgr.delete()
+    """
+
+    def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None):
+        super(Satellite, self).__init__(name=name, url=url, ssl=ssl, credentials=credentials,
+                                        key=key)
+        self.name = name
+        self.url = url
+        self.ssl = ssl
+        self.credentials = credentials
+        self.key = key or name
+
+    @cached_property
+    def type(self):
+        """Returns presumed type of the manager based on CFME version
+
+        Note:
+            We cannot actually know the type of the provider from the UI.
+            This represents the supported type by CFME version and is to be used in navigation.
+            """
+        return version.pick({version.LOWEST: 'Red Hat Satellite', version.LATEST: 'Foreman'})
+
+
+class AnsibleTower(ConfigManager):
+    """
+    Configuration manager object (Ansible Tower)
+
+    Args:
+        name: Name of the Ansible Tower configuration manager
+        url: URL, hostname or IP of the configuration manager
+        ssl: Boolean value; `True` if SSL certificate validity should be checked, `False` otherwise
+        credentials: Credentials to access the config. manager
+        key: Key to access the cfme_data yaml data (same as `name` if not specified)
+
+    Usage:
+        Create provider:
+        .. code-block:: python
+
+            tower_cfg_mgr = AnsibleTower('my_tower', 'https://my-tower.example.com/api/v1',
+                                ssl=False, ConfigManager.Credential(principal='admin',
+                                secret='testing'), key='tower_yaml_key')
+            tower_cfg_mgr.create()
+
+        Update provider:
+        .. code-block:: python
+
+            with update(tower_cfg_mgr):
+                tower_cfg_mgr.name = 'new_tower_name'
+
+        Delete provider:
+        .. code-block:: python
+
+            tower_cfg_mgr.delete()
+    """
+
+    type = 'Ansible Tower'
+
+    def __init__(self, name=None, url=None, ssl=None, credentials=None, key=None):
+        super(AnsibleTower, self).__init__(name=name, url=url, ssl=ssl, credentials=credentials,
+                                           key=key)
+        self.name = name
+        self.url = url
+        self.ssl = ssl
+        self.credentials = credentials
+        self.key = key or name

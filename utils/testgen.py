@@ -97,7 +97,7 @@ from utils.log import logger
 from utils.providers import (
     cloud_provider_type_map, infra_provider_type_map, container_provider_type_map,
     middleware_provider_type_map, provider_type_map, get_crud)
-
+from cfme.infrastructure.config_management import get_config_manager_from_config
 
 _version_operator_map = OrderedDict([('>=', lambda o, v: o >= v),
                                     ('<=', lambda o, v: o <= v),
@@ -439,6 +439,21 @@ def auth_groups(metafunc, auth_mode):
         for group in gdata:
             argvalues.append([group, sorted(gdata[group])])
             idlist.append(group)
+    return argnames, argvalues, idlist
+
+
+def config_managers(metafunc):
+    """Provides config managers
+    """
+    argnames = ['config_manager_obj']
+    argvalues = []
+    idlist = []
+
+    data = cfme_data.get('configuration_managers', {})
+
+    for cfg_mgr_key in data:
+        argvalues.append([get_config_manager_from_config(cfg_mgr_key)])
+        idlist.append(cfg_mgr_key)
     return argnames, argvalues, idlist
 
 
