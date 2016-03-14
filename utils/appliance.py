@@ -142,7 +142,7 @@ class IPAppliance(object):
         return int(hashlib.md5(self.address).hexdigest(), 16)
 
     # Configuration methods
-    @logger_wrap("Configure Appliance: {}")
+    @logger_wrap("Configure IPAppliance: {}")
     def configure(self, log_callback=None, **kwargs):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
 
@@ -1482,13 +1482,15 @@ class Appliance(IPAppliance):
     Args:
         provider_name: Name of the provider this appliance is running under
         vm_name: Name of the VM this appliance is running as
+        browser_steal: Setting of the browser_steal attribute.
     """
 
     _default_name = 'EVM'
 
-    def __init__(self, provider_name, vm_name):
+    def __init__(self, provider_name, vm_name, browser_steal=False):
         """Initializes a deployed appliance VM
         """
+        super(Appliance, self).__init__(browser_steal=browser_steal)
         self.name = Appliance._default_name
 
         self._provider_name = provider_name
@@ -1590,26 +1592,20 @@ class Appliance(IPAppliance):
                          ``None`` (default ``None``)
 
         """
-        log_callback("Configuring appliance {}".format(self.vmname))
+        log_callback("Configuring appliance {} on {}".format(self.vmname, self._provider_name))
         if kwargs:
             with self:
                 self._custom_configure(**kwargs)
         else:
             # Defer to the IPAppliance.
-            self.configure(log_callback=log_callback)
+            super(Appliance, self).configure(log_callback=log_callback)
         # And do configure the fleecing if requested
         if setup_fleece:
             self.configure_fleecing(log_callback=log_callback)
 
+    @logger_wrap("Configure fleecing: {}")
     def configure_fleecing(self, log_callback=None):
-        if log_callback is None:
-            log_callback = lambda message: logger.info("Configure fleecing: {}".format(message))
-        else:
-            cb = log_callback
-            log_callback = lambda message: cb("Configure fleecing: {}".format(message))
-
-        self.browser_steal = True
-        with self:
+        with self(browser_steal=True):
             if self.is_on_vsphere:
                 self.install_vddk(reboot=True, log_callback=log_callback)
                 self.wait_for_web_ui(log_callback=log_callback)
