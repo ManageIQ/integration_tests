@@ -15,7 +15,7 @@ from cached_property import cached_property
 from celery import chain
 from contextlib import contextmanager
 from datetime import timedelta, date
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group as DjangoGroup
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import Q
@@ -127,6 +127,11 @@ class Provider(MetadataMixin):
     disabled = models.BooleanField(default=False, help_text="We can disable providers if we want.")
     hidden = models.BooleanField(
         default=False, help_text='We can hide providers if that is required.')
+    user_groups = models.ManyToManyField(
+        DjangoGroup, blank=True,
+        help_text='We can specify the providers that are tied to a specific user group.')
+    allow_renaming = models.BooleanField(
+        default=False, help_text="Whether this provider can rename appliances.")
 
     @property
     def is_working(self):
@@ -280,9 +285,13 @@ class Provider(MetadataMixin):
             template__provider=self, appliance_pool=None, marked_for_deletion=False, ready=True)
 
     @classmethod
-    def complete_user_usage(cls):
+    def complete_user_usage(cls, user_perspective=None):
         result = {}
-        for provider in cls.objects.filter(hidden=False):
+        if user_perspective is None or user_perspective.is_superuser or user_perspective.is_staff:
+            perspective_filter = {}
+        else:
+            perspective_filter = {'user_groups__in': user_perspective.groups.all()}
+        for provider in cls.objects.filter(hidden=False, **perspective_filter):
             for user, count in provider.user_usage:
                 if user not in result:
                     result[user] = 0
@@ -315,6 +324,13 @@ class Provider(MetadataMixin):
         else:
             return None
 
+    def user_can_use(self, user):
+        groups = self.user_groups.all()
+        return any(user_group in groups for user_group in user.groups.all())
+
+    def user_can_see(self, user):
+        return user.is_staff or user.is_superuser or self.user_can_use(user)
+
     def __unicode__(self):
         return "{} {}".format(type(self).__name__, self.id)
 
@@ -328,10 +344,6 @@ def disable_if_hidden(sender, instance, **kwargs):
 class Group(MetadataMixin):
     id = models.CharField(max_length=32, primary_key=True,
         help_text="Group name as trackerbot says. (eg. upstream, downstream-53z, ...)")
-    template_pool_size = models.IntegerField(default=0,
-        help_text="How many appliances to keep spinned for quick taking.")
-    unconfigured_template_pool_size = models.IntegerField(default=0,
-        help_text="How many appliances to keep spinned for quick taking - unconfigured ones.")
     template_obsolete_days = models.IntegerField(
         null=True, blank=True, help_text="Templates older than X days won't be loaded into sprout")
     template_obsolete_days_delete = models.BooleanField(
@@ -371,19 +383,6 @@ class Group(MetadataMixin):
     def appliances(self):
         return Appliance.objects.filter(template__template_group=self)
 
-    def shepherd_appliances(self, preconfigured=True):
-        return self.appliances.filter(
-            appliance_pool=None, ready=True, marked_for_deletion=False,
-            template__preconfigured=preconfigured)
-
-    @property
-    def configured_shepherd_appliances(self):
-        return self.shepherd_appliances(True)
-
-    @property
-    def unconfigured_shepherd_appliances(self):
-        return self.shepherd_appliances(False)
-
     @property
     def zstreams_versions(self):
         """Returns a dict with structure ``{zstream: [version1, version2, ...]``"""
@@ -404,6 +403,25 @@ class Group(MetadataMixin):
                 to_delete[zstream] = versions[1:]
         return to_delete
 
+    def __unicode__(self):
+        return "{} {}".format(
+            type(self).__name__, self.id)
+
+
+class GroupShepherd(MetadataMixin):
+    template_group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    user_group = models.ForeignKey(DjangoGroup, on_delete=models.CASCADE)
+    template_pool_size = models.IntegerField(default=0,
+        help_text="How many appliances to keep spinned for quick taking.")
+    unconfigured_template_pool_size = models.IntegerField(default=0,
+        help_text="How many appliances to keep spinned for quick taking - unconfigured ones.")
+
+    @property
+    def appliances(self):
+        return Appliance.objects.filter(
+            template__template_group=self.template_group,
+            template__provider__user_groups=self.user_group)
+
     def get_fulfillment_percentage(self, preconfigured):
         """Return percentage of fulfillment of the group shepherd.
 
@@ -422,10 +440,23 @@ class Group(MetadataMixin):
             return 100
         return int(round((float(appliances_in_shepherd) / float(wanted_pool_size)) * 100.0))
 
+    def shepherd_appliances(self, preconfigured=True):
+        return self.appliances.filter(
+            appliance_pool=None, ready=True, marked_for_deletion=False,
+            template__preconfigured=preconfigured)
+
+    @property
+    def configured_shepherd_appliances(self):
+        return self.shepherd_appliances(True)
+
+    @property
+    def unconfigured_shepherd_appliances(self):
+        return self.shepherd_appliances(False)
+
     def __unicode__(self):
-        return "{} {} (pool size={}/{})".format(
-            type(self).__name__, self.id, self.template_pool_size,
-            self.unconfigured_template_pool_size)
+        return "{} {}/{} (pool size={}/{})".format(
+            type(self).__name__, self.template_group.id, self.user_group.name,
+            self.template_pool_size, self.unconfigured_template_pool_size)
 
 
 class Template(MetadataMixin):
@@ -469,6 +500,12 @@ class Template(MetadataMixin):
     @property
     def exists_and_ready(self):
         return self.exists and self.ready
+
+    def user_can_use(self, user):
+        return self.provider.user_can_use(user)
+
+    def user_can_see(self, user):
+        return self.provider.user_can_see(user)
 
     def set_status(self, status):
         with transaction.atomic():
@@ -712,6 +749,19 @@ class Appliance(MetadataMixin):
     def ipapp(self):
         return IPAppliance(self.ip_address)
 
+    def user_can_use(self, user):
+        return self.provider.user_can_use(user)
+
+    def user_can_see(self, user):
+        return self.provider.user_can_see(user)
+
+    @property
+    def visible_in_groups(self):
+        return self.provider.user_groups.all()
+
+    def is_visible_only_in_group(self, group):
+        return len(self.visible_in_groups) == 1 and self.visible_in_groups[0] == group
+
     def set_status(self, status):
         with transaction.atomic():
             appliance = Appliance.objects.get(id=self.id)
@@ -920,23 +970,26 @@ class AppliancePool(MetadataMixin):
                 if num_appliances > owner.quotas.per_pool_quota:
                     raise ValueError("You are limited to {} VMs per pool, requested {}".format(
                         owner.quotas.per_pool_quota, num_appliances))
+        user_filter = {'provider__user_groups__in': owner.groups.all()}
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
             versions = Template.get_versions(
                 template_group=group, ready=True, usable=True, exists=True,
-                preconfigured=preconfigured, provider__working=True, provider__disabled=False)
+                preconfigured=preconfigured, provider__working=True, provider__disabled=False,
+                **user_filter)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
                 dates = Template.get_dates(template_group=group, version=version, ready=True,
                     usable=True, exists=True, preconfigured=preconfigured, provider__working=True,
-                    provider__disabled=False)
+                    provider__disabled=False, **user_filter)
             else:
                 dates = Template.get_dates(
                     template_group=group, ready=True, usable=True, exists=True,
-                    preconfigured=preconfigured, provider__working=True, provider__disabled=False)
+                    preconfigured=preconfigured, provider__working=True, provider__disabled=False,
+                    **user_filter)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):
@@ -946,6 +999,9 @@ class AppliancePool(MetadataMixin):
         if not (version or date):
             raise Exception(
                 "Could not find proper combination of group, date, version and a working provider!")
+        if provider and not provider.user_can_use(owner):
+            raise Exception(
+                'The user does not have the right to use provider {}'.format(provider.id))
         req_params = dict(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured, yum_update=yum_update)
@@ -970,6 +1026,7 @@ class AppliancePool(MetadataMixin):
         filter_params = {
             "template_group": self.group,
             "preconfigured": self.preconfigured,
+            'provider__user_groups__in': self.owner.groups.all(),
         }
         if self.version is not None:
             filter_params["version"] = self.version
@@ -991,7 +1048,7 @@ class AppliancePool(MetadataMixin):
     def possible_templates(self):
         return Template.objects.filter(
             ready=True, exists=True, usable=True,
-            **self.filter_params).all()
+            **self.filter_params).all().distinct()
 
     @property
     def possible_provisioning_templates(self):
@@ -1135,7 +1192,9 @@ class AppliancePool(MetadataMixin):
 
     @property
     def num_shepherd_appliances(self):
-        return len(Appliance.objects.filter(appliance_pool=None, **self.appliance_filter_params))
+        return len(
+            Appliance.objects.filter(
+                appliance_pool=None, **self.appliance_filter_params).distinct())
 
     def __repr__(self):
         return "<AppliancePool id: {}, group: {}, total_count: {}>".format(

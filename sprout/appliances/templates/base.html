@@ -92,10 +92,19 @@
             {% endif %}
             {% if user.is_authenticated %}
                 <li>
+                  <a href='#' style="color: #333;">
+                  {% for user_group in user.groups.all %}
+                    {{ user_group.name }}{% if not forloop.last %} | {% endif %}
+                  {% empty %}
+                    No groups assigned.
+                  {% endfor %}
+                  </a>
+                </li>
+                <li>
                     <a href="{% url 'password_change' %}?next={{request.path}}" title="Change password" style="color: #333;">Change password</a>
                 </li>
                 <li>
-                    <a href="{% url 'logout' %}" title="Logout" style="color: #333;">Logout{% if user.first_name %}, {{ user.first_name }}{% endif %}</a>
+                    <a href="{% url 'logout' %}" title="Logout" style="color: #333;">Logout{% if user.first_name %}, {{ user.first_name }}{% if user.last_name %} {{ user.last_name }}{% endif %}{% else %}, {{ user.username }}{% endif %}</a>
                 </li>
             {% else %}
                 <li>
