@@ -47,9 +47,12 @@ class API(object):
         if not isinstance(result, dict):
             return result
         if "error" in result:
-            # raise
-            raise APIException(
-                "{}: {}".format(result["error"]["klass"], result["error"]["message"]))
+            if isinstance(result['error'], dict):
+                # raise
+                raise APIException(
+                    "{}: {}".format(result["error"]["klass"], result["error"]["message"]))
+            else:
+                raise APIException('{}: {}'.format(result.get('status', None), result['error']))
         else:
             return result
 
