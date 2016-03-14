@@ -54,8 +54,7 @@ def providers(request, provider_id=None):
         except ObjectDoesNotExist:
             messages.warning(request, "Provider '{}' does not exist.".format(provider_id))
             return redirect("providers")
-    providers = Provider.objects.order_by("id")
-    complete_usage = Provider.complete_user_usage()
+    providers = Provider.objects.filter(hidden=False).order_by("id")
     return render(request, 'appliances/providers.html', locals())
 
 
@@ -533,9 +532,12 @@ def vms(request, current_provider=None):
 def vms_table(request, current_provider=None):
     if not request.user.is_authenticated():
         return go_home(request)
-    manager = get_mgmt(current_provider)
-    vms = sorted(manager.list_vm())
-    return render(request, 'appliances/vms/_list.html', locals())
+    try:
+        manager = get_mgmt(current_provider)
+        vms = sorted(manager.list_vm())
+        return render(request, 'appliances/vms/_list.html', locals())
+    except Exception as e:
+        return HttpResponse('{}: {}'.format(type(e).__name__, str(e)), content_type="text/plain")
 
 
 def power_state(request, current_provider):

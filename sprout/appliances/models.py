@@ -9,6 +9,8 @@ from datetime import timedelta, date
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils import timezone
 
 from sprout import critical_section
@@ -269,7 +271,7 @@ class Provider(MetadataMixin):
     @classmethod
     def complete_user_usage(cls):
         result = {}
-        for provider in cls.objects.all():
+        for provider in cls.objects.filter(hidden=False):
             for user, count in provider.user_usage:
                 if user not in result:
                     result[user] = 0
@@ -304,6 +306,12 @@ class Provider(MetadataMixin):
 
     def __unicode__(self):
         return "{} {}".format(self.__class__.__name__, self.id)
+
+
+@receiver(pre_save, sender=Provider)
+def disable_if_hidden(sender, instance, **kwargs):
+    if instance.hidden:
+        instance.disabled = True
 
 
 class Group(MetadataMixin):
