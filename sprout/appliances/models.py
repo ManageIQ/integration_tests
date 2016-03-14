@@ -112,6 +112,8 @@ class Provider(MetadataMixin):
     appliance_limit = models.IntegerField(
         null=True, help_text="Hard limit of how many appliances can run on this provider")
     disabled = models.BooleanField(default=False, help_text="We can disable providers if we want.")
+    hidden = models.BooleanField(
+        default=False, help_text='We can hide providers if that is required.')
 
     @property
     def is_working(self):
