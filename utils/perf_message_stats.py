@@ -97,11 +97,11 @@ def evm_to_messages(evm_file, filters):
                     messages[msg_id].puttime = ts
                     msg_args = get_msg_args(evm_log_line)
                     if msg_args is False:
-                        logger.debug('Could not obtain message args line #: {}'.format(line_count))
+                        logger.debug('Could not obtain message args line #: %s', line_count)
                     else:
                         messages[msg_id].msg_args = msg_args
                 else:
-                    logger.error('Could not obtain message id, line #: {}'.format(line_count))
+                    logger.error('Could not obtain message id, line #: %s', line_count)
 
             elif (miqmsg_result.group(1) == 'MiqQueue.get_via_drb'):
                 msg_id = get_msg_id(evm_log_line)
@@ -113,9 +113,9 @@ def evm_to_messages(evm_file, filters):
                         messages[msg_id].gettime = ts
                         messages[msg_id].deq_time = get_msg_deq(evm_log_line)
                     else:
-                        logger.error('Message ID not in dictionary: {}'.format(msg_id))
+                        logger.error('Message ID not in dictionary: %s', msg_id)
                 else:
-                    logger.error('Could not obtain message id, line #: {}'.format(line_count))
+                    logger.error('Could not obtain message id, line #: %s', line_count)
 
             elif (miqmsg_result.group(1) == 'MiqQueue.delivered'):
                 msg_id = get_msg_id(evm_log_line)
@@ -127,14 +127,14 @@ def evm_to_messages(evm_file, filters):
                         messages[msg_id].total_time = messages[msg_id].deq_time + \
                             messages[msg_id].del_time
                     else:
-                        logger.error('Message ID not in dictionary: {}'.format(msg_id))
+                        logger.error('Message ID not in dictionary: %s', msg_id)
                 else:
-                    logger.error('Could not obtain message id, line #: {}'.format(line_count))
+                    logger.error('Could not obtain message id, line #: %s', line_count)
 
         if (line_count % 100000) == 0:
             timediff = time() - runningtime
             runningtime = time()
-            logger.info('Count {} : Parsed 100000 lines in {}'.format(line_count, timediff))
+            logger.info('Count {} : Parsed 100000 lines in %s', line_count, timediff)
 
         evm_log_line = evmlogfile.readline()
 
@@ -294,7 +294,7 @@ def generate_hourly_charts_and_csvs(hourly_buckets, charts_dir):
         current_csv = 'hourly_' + cmd + '.csv'
         csv_rawdata_path = log_path.join('csv_output', current_csv)
 
-        logger.info('Writing {} csvs/charts'.format(cmd))
+        logger.info('Writing %s csvs/charts', cmd)
         output_file = csv_rawdata_path.open('w', ensure=True)
         csvwriter = csv.DictWriter(output_file, fieldnames=MiqMsgBucket().headers,
             delimiter=',', quotechar='\'', quoting=csv.QUOTE_MINIMAL)
@@ -363,7 +363,7 @@ def generate_raw_data_csv(rawdata_dict, csv_file_name):
 
 def generate_total_time_charts(msg_cmds, charts_dir):
     for cmd in sorted(msg_cmds):
-        logger.info('Generating Total Time Chart for {}'.format(cmd))
+        logger.info('Generating Total Time Chart for %s', cmd)
         lines = {}
         lines['Total Time'] = msg_cmds[cmd]['total']
         lines['Queue'] = msg_cmds[cmd]['queue']
@@ -374,8 +374,8 @@ def generate_total_time_charts(msg_cmds, charts_dir):
 
 def generate_worker_charts(workers, top_workers, charts_dir):
     for worker in top_workers:
-        logger.info('Generating Charts for Worker: {} Type: {}'.format(worker,
-            workers[worker].worker_type))
+        logger.info('Generating Charts for Worker: %s Type: %s',
+            worker, workers[worker].worker_type)
         worker_name = '{}-{}'.format(worker, workers[worker].worker_type)
 
         lines = {}
@@ -565,12 +565,12 @@ def messages_to_statistics_csv(messages, statistics_file_name):
         # Contents of CSV
         for msg_statistics in sorted(all_statistics, key=lambda x: x.cmd):
             if msg_statistics.gets > 1:
-                logger.debug('Samples/Avg/90th/Std: {} : {} : {} : {},Cmd: {}'.format(
+                logger.debug('Samples/Avg/90th/Std: %s: %s : %s : %s,Cmd: %s',
                     str(len(msg_statistics.totaltimes)).rjust(7),
                     str(round(numpy.average(msg_statistics.totaltimes), 3)).rjust(7),
                     str(round(numpy.percentile(msg_statistics.totaltimes, 90), 3)).rjust(7),
                     str(round(numpy.std(msg_statistics.totaltimes), 3)).rjust(7),
-                    msg_statistics.cmd))
+                    msg_statistics.cmd)
             stats = [msg_statistics.cmd, msg_statistics.puts, msg_statistics.gets]
             stats.extend(generate_statistics(msg_statistics.dequeuetimes, 3))
             stats.extend(generate_statistics(msg_statistics.delivertimes, 3))
@@ -623,7 +623,7 @@ def top_to_appliance(top_file):
     p = subprocess.Popen(['grep', grep_pattern, top_file], stdout=subprocess.PIPE)
     greppedtop, err = p.communicate()
     timediff = time() - runningtime
-    logger.info('Grepped top_output for CPU/Mem/Swap & time data in {}'.format(timediff))
+    logger.info('Grepped top_output for CPU/Mem/Swap & time data in %s', timediff)
 
     top_lines = greppedtop.strip().split('\n')
     line_count = 0
@@ -677,7 +677,7 @@ def top_to_appliance(top_file):
                 top_app['cpusi'].append(float(miq_cpu_result.group(7).strip()))
                 top_app['cpust'].append(float(miq_cpu_result.group(8).strip()))
             else:
-                logger.error('Issue with miq_cpu regex: {}'.format(top_line))
+                logger.error('Issue with miq_cpu regex: %s', top_line)
         elif 'Mem: ' in top_line:
             miq_mem_result = miq_mem.search(top_line)
             if miq_mem_result:
@@ -686,7 +686,7 @@ def top_to_appliance(top_file):
                 top_app['memfre'].append(round(float(miq_mem_result.group(3).strip()) / 1024, 2))
                 top_app['buffer'].append(round(float(miq_mem_result.group(4).strip()) / 1024, 2))
             else:
-                logger.error('Issue with miq_mem regex: {}'.format(top_line))
+                logger.error('Issue with miq_mem regex: %s', top_line)
         elif 'Swap: ' in top_line:
             miq_swap_result = miq_swap.search(top_line)
             if miq_swap_result:
@@ -695,13 +695,13 @@ def top_to_appliance(top_file):
                 top_app['swafre'].append(round(float(miq_swap_result.group(3).strip()) / 1024, 2))
                 top_app['cached'].append(round(float(miq_swap_result.group(4).strip()) / 1024, 2))
             else:
-                logger.error('Issue with miq_swap regex: {}'.format(top_line))
+                logger.error('Issue with miq_swap regex: %s', top_line)
         else:
-            logger.error('Issue with grepping of top file:{}'.format(top_line))
+            logger.error('Issue with grepping of top file:%s', top_line)
         if (line_count % 20000) == 0:
             timediff = time() - runningtime
             runningtime = time()
-            logger.info('Count {} : Parsed 20000 lines in {}'.format(line_count, timediff))
+            logger.info('Count {} : Parsed 20000 lines in %s', line_count, timediff)
     return top_app, len(top_lines)
 
 
@@ -718,7 +718,7 @@ def top_to_workers(workers, top_file):
     p = subprocess.Popen(['grep', grep_pattern, top_file], stdout=subprocess.PIPE)
     greppedtop, err = p.communicate()
     timediff = time() - runningtime
-    logger.info('Grepped top_output for pids & time data in {}'.format(timediff))
+    logger.info('Grepped top_output for pids & time data in %s', timediff)
 
     # This is very ugly because miqtop does include the date but top does not
     # Also pids can be duplicated, so careful attention to detail on when a pid starts and ends
@@ -787,11 +787,11 @@ def top_to_workers(workers, top_file):
                             top_workers[w_id]['mem_per'].append(top_mem_per)
                             break
             else:
-                logger.error('Issue with miq_top regex or grepping of top file:{}'.format(top_line))
+                logger.error('Issue with miq_top regex or grepping of top file:%s', top_line)
         if (line_count % 20000) == 0:
             timediff = time() - runningtime
             runningtime = time()
-            logger.info('Count {} : Parsed 20000 lines in {}'.format(line_count, timediff))
+            logger.info('Count %s : Parsed 20000 lines in %s', line_count, timediff)
     return top_workers, len(top_lines)
 
 
@@ -812,39 +812,39 @@ def perf_process_evm(evm_file, top_file):
     messages, msg_cmds, test_start, test_end, msg_lc = evm_to_messages(evm_file, msg_filters)
     timediff = time() - starttime
     logger.info('----------- Completed Parsing evm log file -----------')
-    logger.info('Parsed {} lines of evm log file for messages in {}'.format(msg_lc, timediff))
-    logger.info('Total # of Messages: {}'.format(len(messages)))
-    logger.info('Total # of Commands: {}'.format(len(msg_cmds)))
-    logger.info('Start Time: {}'.format(test_start))
-    logger.info('End Time: {}'.format(test_end))
+    logger.info('Parsed %s lines of evm log file for messages in %s', msg_lc, timediff)
+    logger.info('Total # of Messages: %d', len(messages))
+    logger.info('Total # of Commands: %d', len(msg_cmds))
+    logger.info('Start Time: %s', test_start)
+    logger.info('End Time: %s', test_end)
 
     logger.info('----------- Parsing evm log file for workers -----------')
     starttime = time()
     workers, wkr_mem_exc, wkr_upt_exc, wkr_stp, wkr_int, wkr_ext, wkr_lc = evm_to_workers(evm_file)
     timediff = time() - starttime
     logger.info('----------- Completed Parsing evm log for workers -----------')
-    logger.info('Parsed {} lines of evm log file for workers in {}'.format(wkr_lc, timediff))
-    logger.info('Total # of Workers: {}'.format(len(workers)))
-    logger.info('# Workers Memory Exceeded: {}'.format(wkr_mem_exc))
-    logger.info('# Workers Uptime Exceeded: {}'.format(wkr_upt_exc))
-    logger.info('# Workers Exited: {}'.format(wkr_ext))
-    logger.info('# Workers Stopped: {}'.format(wkr_stp))
-    logger.info('# Workers Interrupted: {}'.format(wkr_int))
+    logger.info('Parsed %s lines of evm log file for workers in %s', wkr_lc, timediff)
+    logger.info('Total # of Workers: %d', len(workers))
+    logger.info('# Workers Memory Exceeded: %s', wkr_mem_exc)
+    logger.info('# Workers Uptime Exceeded: %s', wkr_upt_exc)
+    logger.info('# Workers Exited: %s', wkr_ext)
+    logger.info('# Workers Stopped: %s', wkr_stp)
+    logger.info('# Workers Interrupted: %s', wkr_int)
 
     logger.info('----------- Parsing top_output log file for Appliance Metrics -----------')
     starttime = time()
     top_appliance, tp_lc = top_to_appliance(top_file)
     timediff = time() - starttime
     logger.info('----------- Completed Parsing top_output log -----------')
-    logger.info('Parsed {} lines of top_output file for Appliance Metrics in {}'.format(tp_lc,
-        timediff))
+    logger.info('Parsed %s lines of top_output file for Appliance Metrics in %s', tp_lc,
+        timediff)
 
     logger.info('----------- Parsing top_output log file for worker CPU/Mem -----------')
     starttime = time()
     top_workers, tp_lc = top_to_workers(workers, top_file)
     timediff = time() - starttime
     logger.info('----------- Completed Parsing top_output log -----------')
-    logger.info('Parsed {} lines of top_output file for workers in {}'.format(tp_lc, timediff))
+    logger.info('Parsed %s lines of top_output file for workers in %s', tp_lc, timediff)
 
     charts_dir = log_path.join('charts')
     if not os.path.exists(str(charts_dir)):
@@ -855,43 +855,43 @@ def perf_process_evm(evm_file, top_file):
     generate_raw_data_csv(messages, 'queue-rawdata.csv')
     generate_raw_data_csv(workers, 'workers-rawdata.csv')
     timediff = time() - starttime
-    logger.info('Generated Raw Data csv files in: {}'.format(timediff))
+    logger.info('Generated Raw Data csv files in: %s', timediff)
 
     logger.info('----------- Generating Hourly Buckets -----------')
     starttime = time()
     hr_bkt = messages_to_hourly_buckets(messages, test_start, test_end)
     timediff = time() - starttime
-    logger.info('Generated Hourly Buckets in: {}'.format(timediff))
+    logger.info('Generated Hourly Buckets in: %s', timediff)
 
     logger.info('----------- Generating Hourly Charts and csvs -----------')
     starttime = time()
     generate_hourly_charts_and_csvs(hr_bkt, charts_dir)
     timediff = time() - starttime
-    logger.info('Generated Hourly Charts and csvs in: {}'.format(timediff))
+    logger.info('Generated Hourly Charts and csvs in: %s', timediff)
 
     logger.info('----------- Generating Total Time Charts -----------')
     starttime = time()
     generate_total_time_charts(msg_cmds, charts_dir)
     timediff = time() - starttime
-    logger.info('Generated Total Time Charts in: {}'.format(timediff))
+    logger.info('Generated Total Time Charts in: %s', timediff)
 
     logger.info('----------- Generating Appliance Charts -----------')
     starttime = time()
     app_chart_files = split_appliance_charts(top_appliance, charts_dir)
     timediff = time() - starttime
-    logger.info('Generated Appliance Charts in: {}'.format(timediff))
+    logger.info('Generated Appliance Charts in: %s', timediff)
 
     logger.info('----------- Generating Worker Charts -----------')
     starttime = time()
     generate_worker_charts(workers, top_workers, charts_dir)
     timediff = time() - starttime
-    logger.info('Generated Worker Charts in: {}'.format(timediff))
+    logger.info('Generated Worker Charts in: %s', timediff)
 
     logger.info('----------- Generating Message Statistics -----------')
     starttime = time()
     messages_to_statistics_csv(messages, 'queue-statistics.csv')
     timediff = time() - starttime
-    logger.info('Generated Message Statistics in: {}'.format(timediff))
+    logger.info('Generated Message Statistics in: %s', timediff)
 
     logger.info('----------- Writing html files for report -----------')
     # Write an index.html file for fast switching between graphs:
@@ -1025,7 +1025,7 @@ def perf_process_evm(evm_file, top_file):
 
     timediff = time() - initialtime
     logger.info('----------- Finished -----------')
-    logger.info('Total time processing evm log file and generating report: {}'.format(timediff))
+    logger.info('Total time processing evm log file and generating report: %s', timediff)
 
 
 class MiqMsgStat(object):

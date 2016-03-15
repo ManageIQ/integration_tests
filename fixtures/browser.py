@@ -32,7 +32,8 @@ def pytest_exception_interact(node, call, report):
     from fixtures.artifactor_plugin import SLAVEID
     name, location = get_test_idents(node)
     val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
-    short_tb = '%s\n%s' % (call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
+    short_tb = '{}\n{}'.format(
+        call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
     art_client.fire_hook('filedump', test_location=location, test_name=name,
         description="Traceback", contents=str(report.longrepr), file_type="traceback",
         display_type="danger", display_glyph="align-justify", group_id="pytest-exception",

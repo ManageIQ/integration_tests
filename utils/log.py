@@ -227,7 +227,7 @@ class SyslogMsecFormatter(logging.Formatter):
 class NamedLoggerAdapter(TraceLoggerAdapter):
     """An adapter that injects a name into log messages"""
     def process(self, message, kwargs):
-        return '(%s) %s' % (self.extra, message), kwargs
+        return '({}) {}'.format(self.extra, message), kwargs
 
 
 def _load_conf(logger_name=None):
@@ -276,7 +276,7 @@ class _RelpathFilter(logging.Filter):
             relpath = get_rel_path(record.pathname)
             lineno = record.lineno
         if lineno:
-            record.source = "%s:%d" % (relpath, lineno)
+            record.source = "{}:{}".format(relpath, lineno)
         else:
             record.source = relpath
 
@@ -350,7 +350,7 @@ def create_logger(logger_name, filename=None, max_file_size=None, max_backups=No
     if filename:
         log_file = filename
     else:
-        log_file = str(log_path.join('%s.log' % logger_name))
+        log_file = str(log_path.join('{}.log'.format(logger_name)))
 
     # log_file is dynamic, so we can't used logging.config.dictConfig here without creating
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
@@ -394,7 +394,7 @@ def _showwarning(message, category, filename, lineno, file=None, line=None):
     relpath = get_rel_path(filename)
     if relpath:
         # Only show warnings from inside this project
-        message = "%s from %s:%d: %s" % (category.__name__, relpath, lineno, message)
+        message = "{} from {}:{}: {}".format(category.__name__, relpath, lineno, message)
         try:
             logger.warning(message)
         except ImportError:
@@ -432,7 +432,7 @@ def format_marker(mstring, mark="-"):
 def _custom_excepthook(type, value, traceback):
     file, lineno, function, __ = extract_tb(traceback)[-1]
     text = ''.join(format_tb(traceback)).strip()
-    logger.error('Unhandled {}'.format(type.__name__))
+    logger.error('Unhandled %s', type.__name__)
     logger.error(text, extra={'source_file': file, 'source_lineno': lineno})
     _original_excepthook(type, value, traceback)
 
@@ -556,6 +556,6 @@ sys.excepthook = _custom_excepthook
 
 # Suppress psphere's really annoying "No handler found" messages.
 # module[1] is the name from a (module_loader, name, ispkg) tuple
-for psphere_mod in ('psphere.%s' % module[1] for module in iter_modules(psphere.__path__)):
+for psphere_mod in ('psphere.{}'.format(module[1]) for module in iter_modules(psphere.__path__)):
     # Add a logger with a NullHandler for ever psphere module
     logging.getLogger(psphere_mod).addHandler(logging.NullHandler())

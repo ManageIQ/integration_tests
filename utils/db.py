@@ -115,7 +115,7 @@ class Db(Mapping):
         try:
             return self._table(table_name)
         except InvalidRequestError:
-            raise KeyError('Table %s could not be found' % table_name)
+            raise KeyError('Table {} could not be found'.format(table_name))
 
     def __iter__(self):
         """Iterator of table names in this db"""
@@ -218,7 +218,7 @@ class Db(Mapping):
         """The connection URL for this database, including credentials"""
         template = "postgresql://{username}:{password}@{host}:{port}/vmdb_production"
         result = template.format(host=self.hostname, port=ports.DB, **self.credentials)
-        logger.info("[DB] db_url is {}".format(result))
+        logger.info("[DB] db_url is %s", result)
         return result
 
     @cached_property

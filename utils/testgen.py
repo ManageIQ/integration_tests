@@ -260,7 +260,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
             continue
 
         if not prov_obj:
-            logger.debug("Whilst trying to create an object for {} we failed".format(provider))
+            logger.debug("Whilst trying to create an object for %s we failed", provider)
             continue
 
         skip = False
@@ -303,13 +303,11 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
             allowed_flags = set(defined_flags) - set(excluded_flags)
 
             if set(test_flags) - allowed_flags:
-                logger.info("Skipping Provider {} for test {} in module {} because "
+                logger.info("Skipping Provider %s for test %s in module %s because "
                     "it does not have the right flags, "
-                    "{} does not contain {}".format(provider,
-                                                    metafunc.function.func_name,
-                                                    metafunc.function.__module__,
-                                                    list(allowed_flags),
-                                                    list(set(test_flags) - allowed_flags)))
+                    "%s does not contain %s",
+                    provider, metafunc.function.func_name, metafunc.function.__module__,
+                    list(allowed_flags), list(set(test_flags) - allowed_flags))
                 continue
 
         try:
@@ -348,8 +346,8 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                 for field in template_location:
                     o = o[field]
             except (IndexError, KeyError):
-                logger.info("Cannot apply {} to {} in the template specification, ignoring.".format(
-                    repr(field), repr(o)))
+                logger.info("Cannot apply %s to %s in the template specification, ignoring.",
+                    repr(field), repr(o))
             else:
                 if not isinstance(o, basestring):
                     raise ValueError("{} is not a string! (for template)".format(repr(o)))
@@ -357,7 +355,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                 if templates is not None:
                     if o not in templates:
                         logger.info(
-                            "Wanted template {} on {} but it is not there!\n".format(o, provider))
+                            "Wanted template %s on %s but it is not there!\n", o, provider)
                         # Skip collection of this one
                         continue
 
@@ -504,7 +502,8 @@ def param_check(metafunc, argnames, argvalues):
         funcname = metafunc.function.__name__
 
         test_name = '.'.join(filter(None, (modname, classname, funcname)))
-        skip_msg = 'Parametrization for %s yielded no values, marked for uncollection' % test_name
+        skip_msg = 'Parametrization for {} yielded no values,'\
+            ' marked for uncollection'.format(test_name)
         logger.warning(skip_msg)
 
         # apply the mark

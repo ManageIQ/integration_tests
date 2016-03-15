@@ -43,10 +43,10 @@ def test_scp_client_can_put_a_file(ssh_client, tmpdir):
     tmpfile = tmpdir.mkdir("sub").join("temp.txt")
     tmpfile.write("content")
     ssh_client.put_file(str(tmpfile), '/tmp')
-    exit_status, output = ssh_client.run_command("ls /tmp/%s" % tmpfile.basename)
+    exit_status, output = ssh_client.run_command("ls /tmp/{}".format(tmpfile.basename))
     assert exit_status == 0
     assert tmpfile.basename in output
-    ssh_client.get_file("/tmp/%s" % tmpfile.basename, str(tmpdir))
+    ssh_client.get_file("/tmp/{}".format(tmpfile.basename), str(tmpdir))
     assert "content" in tmpfile.read()
     # Clean up the server
-    ssh_client.run_command("rm -f /tmp/%s" % tmpfile.basename)
+    ssh_client.run_command("rm -f /tmp/{}".format(tmpfile.basename))

@@ -26,8 +26,8 @@ def pytest_runtest_setup(item):
 def pytest_collection_modifyitems(session, config, items):
     logger().info(log.format_marker('Starting new test run', mark="="))
     expression = config.getvalue('keyword') or False
-    expr_string = ', will filter with "%s"' % expression if expression else ''
-    logger().info('Collected %i items%s' % (len(items), expr_string))
+    expr_string = ', will filter with "{}"'.format(expression) if expression else ''
+    logger().info('Collected {} items{}'.format(len(items), expr_string))
 
 
 @pytest.mark.hookwrapper
@@ -44,7 +44,7 @@ def pytest_runtest_logreport(report):
             logger().info(
                 "Managed providers: {}".format(
                     ", ".join(pytest.store.current_appliance.managed_providers)))
-        logger().info(log.format_marker('%s result: %s' % (_format_nodeid(report.nodeid),
+        logger().info(log.format_marker('{} result: {}'.format(_format_nodeid(report.nodeid),
                 test_status)),
             extra={'source_file': path, 'source_lineno': lineno})
     if report.outcome == "skipped":
@@ -73,7 +73,8 @@ def pytest_sessionfinish(session, exitstatus):
     for test in test_tracking:
         c[_test_status(test)] += 1
     # Prepend a total to the summary list
-    results = ['total: %d' % sum(c.values())] + map(lambda n: '%s: %d' % (n[0], n[1]), c.items())
+    results = ['total: {}'.format(sum(c.values()))] + map(
+        lambda n: '{}: {}'.format(n[0], n[1]), c.items())
     # Then join it with commas
     summary = ', '.join(results)
     logger().info(log.format_marker('Finished test run', mark='='))

@@ -143,8 +143,8 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         # Wharf is configured, make sure to use its command_executor
         wharf_config = thread_locals.wharf.config
         browser_kwargs['command_executor'] = wharf_config['webdriver_url']
-        view_msg = 'tests can be viewed via vnc on display %s' % wharf_config['vnc_display']
-        logger.info('webdriver command executor set to %s' % wharf_config['webdriver_url'])
+        view_msg = 'tests can be viewed via vnc on display {}'.format(wharf_config['vnc_display'])
+        logger.info('webdriver command executor set to %s', wharf_config['webdriver_url'])
         logger.info(view_msg)
         write_line(view_msg, cyan=True)
 
@@ -247,13 +247,13 @@ class Wharf(object):
         self.docker_id = checkout.keys()[0]
         self.config = checkout[self.docker_id]
         self._reset_renewal_timer()
-        logger.info('Checked out webdriver container %s' % self.docker_id)
+        logger.info('Checked out webdriver container %s', self.docker_id)
         return self.docker_id
 
     def checkin(self):
         if self.docker_id:
             requests.get(os.path.join(self.wharf_url, 'checkin', self.docker_id))
-            logger.info('Checked in webdriver container %s' % self.docker_id)
+            logger.info('Checked in webdriver container %s', self.docker_id)
             self.docker_id = None
 
     def renew(self):
@@ -268,7 +268,7 @@ class Wharf(object):
                 raise ValueError("JSON could not be decoded:\n{}".format(response.content))
             self.config.update(expiry_info)
             self._reset_renewal_timer()
-            logger.info('Renewed webdriver container %s' % self.docker_id)
+            logger.info('Renewed webdriver container %s', self.docker_id)
 
     def _reset_renewal_timer(self):
         if self.docker_id:

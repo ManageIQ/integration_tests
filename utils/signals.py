@@ -126,7 +126,7 @@ def fire(signal):
         signal: Name of signal to be invoked.
     """
 
-    logger.info('Invoking callback for signal [{}]'.format(signal))
+    logger.info('Invoking callback for signal [%s]', signal)
     for cb_obj in _callback_library.get(signal, set()):
         try:
             cb_obj()

@@ -17,10 +17,10 @@ class RHEVMSystem(RHEVMSystemBase):
 
     def start_vm(self, vm_name=None, **kwargs):
         self.wait_vm_steady(vm_name)
-        self.logger.info(' Starting RHEV VM %s' % vm_name)
+        self.logger.info(' Starting RHEV VM %s', vm_name)
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'up':
-            self.logger.info(' RHEV VM %s os already running.' % vm_name)
+            self.logger.info(' RHEV VM %s os already running.', vm_name)
             return True
         else:
             if 'initialization' in kwargs:
@@ -31,7 +31,8 @@ class RHEVMSystem(RHEVMSystemBase):
             return True
 
     def deploy_template(self, template, *args, **kwargs):
-        self.logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
+        self.logger.debug(' Deploying RHEV template %s to VM %s',
+            template, kwargs["vm_name"])
         timeout = kwargs.pop('timeout', 900)
         power_on = kwargs.pop('power_on', True)
         vm_kwargs = {
@@ -141,7 +142,7 @@ class RHEVMSystem(RHEVMSystemBase):
                     added_lun = vm.disks.add(direct_lun)
                     added_lun.activate()
                 except Exception as e:
-                    logger.error("Exception caught: %s" % str(e))
+                    logger.error("Exception caught: %s", str(e))
                     if retries == 3:
                         logger.error("exhausted retries and giving up")
                         raise

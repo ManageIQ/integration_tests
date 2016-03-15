@@ -65,7 +65,7 @@ class FTPDirectory(object):
             return self.name
 
     def __repr__(self):
-        return "<FTPDirectory %s>" % self.path
+        return "<FTPDirectory {}>".format(self.path)
 
     def cd(self, path):
         """ Change to a directory
@@ -102,7 +102,7 @@ class FTPDirectory(object):
                     return item.cd("/".join(remainder))
                 else:
                     return item
-        raise FTPException("Directory %s%s does not exist!" % (self.path, enter))
+        raise FTPException("Directory {}{} does not exist!".format(self.path, enter))
 
     def search(self, by, files=True, directories=True):
         """ Recursive search by string or regexp.
@@ -182,7 +182,7 @@ class FTPFile(object):
         return self.client.dt + self.time
 
     def __repr__(self):
-        return "<FTPFile %s>" % self.path
+        return "<FTPFile {}>".format(self.path)
 
     def retr(self, callback):
         """ Retrieve file
@@ -203,11 +203,11 @@ class FTPFile(object):
         dirs = dirs.lstrip("/").split("/")
         # Dive in
         for d in dirs:
-            assert self.client.cwd(d), "Could not change into the directory %s!" % d
+            assert self.client.cwd(d), "Could not change into the directory {}!".format(d)
         self.client.retrbinary(f, callback)
         # Dive out
         for d in dirs:
-            assert self.client.cdup(), "Could not get out of directory %s!" % d
+            assert self.client.cdup(), "Could not get out of directory {}!".format(d)
 
     def download(self, target=None):
         """ Download file into this machine
@@ -296,7 +296,7 @@ class FTPClient(object):
         void_file = StringIO(fauxfactory.gen_alpha())
         self.cwd(self.upload_dir)
         assert "Transfer complete" in self.storbinary(TIMECHECK_FILE_NAME, void_file),\
-            "Could not upload a file for time checking with name %s!" % TIMECHECK_FILE_NAME
+            "Could not upload a file for time checking with name {}!".format(TIMECHECK_FILE_NAME)
         void_file.close()
         now = datetime.now()
         for d, name, time in self.ls():
@@ -365,7 +365,7 @@ class FTPClient(object):
 
         """
         try:
-            return self.ftp.sendcmd("MKD %s" % d).startswith("250")
+            return self.ftp.sendcmd("MKD {}".format(d)).startswith("250")
         except ftplib.error_perm:
             return False
 
@@ -380,7 +380,7 @@ class FTPClient(object):
 
         """
         try:
-            return self.ftp.sendcmd("RMD %s" % d).startswith("250")
+            return self.ftp.sendcmd("RMD {}".format(d)).startswith("250")
         except ftplib.error_perm:
             return False
 
@@ -395,7 +395,7 @@ class FTPClient(object):
 
         """
         try:
-            return self.ftp.sendcmd("DELE %s" % f).startswith("250")
+            return self.ftp.sendcmd("DELE {}".format(f)).startswith("250")
         except ftplib.error_perm:
             return False
 
@@ -410,7 +410,7 @@ class FTPClient(object):
 
         """
         try:
-            return self.ftp.sendcmd("CWD %s" % d).startswith("250")
+            return self.ftp.sendcmd("CWD {}".format(d)).startswith("250")
         except ftplib.error_perm:
             return False
 
@@ -432,7 +432,7 @@ class FTPClient(object):
             f: Requested file name
             callback: Callable with one parameter accepting the data
         """
-        return self.ftp.retrbinary("RETR %s" % f, callback)
+        return self.ftp.retrbinary("RETR {}".format(f), callback)
 
     def storbinary(self, f, file_obj):
         """ Store file
@@ -443,7 +443,7 @@ class FTPClient(object):
             f: Requested file name
             file_obj: File object to be stored
         """
-        return self.ftp.storbinary("STOR %s" % f, file_obj)
+        return self.ftp.storbinary("STOR {}".format(f), file_obj)
 
     def recursively_delete(self, d=None):
         """ Recursively deletes content of pwd
@@ -459,19 +459,19 @@ class FTPClient(object):
         """
         # Enter the directory
         if d:
-            assert self.cwd(d), "Could not enter directory %s" % d
+            assert self.cwd(d), "Could not enter directory {}".format(d)
         # Work in it
         for isdir, name, time in self.ls():
             if isdir:
                 self.recursively_delete(name)
             else:
-                assert self.dele(name), "Could not delete %s!" % name
+                assert self.dele(name), "Could not delete {}!".format(name)
         # Go out of it
         if d:
             # Go to parent directory
-            assert self.cdup(), "Could not go to parent directory of %s!" % d
+            assert self.cdup(), "Could not go to parent directory of {}!".format(d)
             # And delete it
-            assert self.rmd(d), "Could not remove directory %s!" % d
+            assert self.rmd(d), "Could not remove directory {}!".format(d)
 
     def tree(self, d=None):
         """ Walks the tree recursively and creates a tree
@@ -496,7 +496,7 @@ class FTPClient(object):
         # Enter the directory
         items = []
         if d:
-            assert self.cwd(d), "Could not enter directory %s" % d
+            assert self.cwd(d), "Could not enter directory {}".format(d)
         # Work in it
         for isdir, name, time in self.ls():
             if isdir:
@@ -506,7 +506,7 @@ class FTPClient(object):
         # Go out of it
         if d:
             # Go to parent directory
-            assert self.cdup(), "Could not go to parent directory of %s!" % d
+            assert self.cdup(), "Could not go to parent directory of {}!".format(d)
         return items
 
     @property

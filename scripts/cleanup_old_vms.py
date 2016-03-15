@@ -52,7 +52,7 @@ def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
             try:
                 vm_creation_time = provider.vm_creation_time(vm_name)
             except:
-                logger.error('Failed to get creation/boot time for %s on %s' % (
+                logger.error('Failed to get creation/boot time for {} on {}'.format(
                     vm_name, provider_key))
                 continue
 
@@ -66,7 +66,7 @@ def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
         with lock:
             # Print out the error message too because logs in the job get deleted
             print('{} failed ({}: {})'.format(provider_key, type(ex).__name__, str(ex)))
-        logger.error('failed to process vms from provider %s', provider_key)
+        logger.error('failed to process vms from provider {}'.format(provider_key))
         logger.exception(ex)
 
 

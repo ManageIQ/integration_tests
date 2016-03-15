@@ -278,7 +278,7 @@ class ParallelSession(object):
         zmq_endpoint = 'tcp://127.0.0.1:{}'.format(random_port())
         ctx = zmq.Context.instance()
         self.sock = ctx.socket(zmq.ROUTER)
-        self.sock.bind('%s' % zmq_endpoint)
+        self.sock.bind('{}'.format(zmq_endpoint))
 
         # clean out old slave config if it exists
         slave_config = conf_path.join('slave_config.yaml')
@@ -425,7 +425,7 @@ class ParallelSession(object):
 
     def ack(self, slaveid, event_name):
         """Acknowledge a slave's message"""
-        self.send(slaveid, 'ack %s' % event_name)
+        self.send(slaveid, 'ack {}'.format(event_name))
 
     def monitor_shutdown(self, slaveid, respawn=False):
         # non-daemon so slaves get every opportunity to shut down cleanly
@@ -694,7 +694,7 @@ class ParallelSession(object):
         for id, tests in parametrized_ids.items():
             if id is None:
                 id = 'no params'
-            self.log.info('sent tests with param %s %r' % (id, tests))
+            self.log.info('sent tests with param {} {!r}'.format(id, tests))
             yield tests
 
     def get(self, slave):
@@ -874,7 +874,7 @@ class TerminalDistReporter(object):
 
     def runtest_logstart(self, slaveid, nodeid, location):
         test = self.tr._locationline(nodeid, *location)
-        prefix = '(%s) %s' % (slaveid, test)
+        prefix = '({}) {}'.format(slaveid, test)
         self.tr.write_ensure_prefix(prefix, 'running', blue=True)
         self.config.hook.pytest_runtest_logstart(nodeid=nodeid, location=location)
 
@@ -889,7 +889,7 @@ class TerminalDistReporter(object):
         self.tr.stats.setdefault(outcome, []).append(report)
         test = self.tr._locationline(report.nodeid, *report.location)
 
-        prefix = '(%s) %s' % (slaveid, test)
+        prefix = '({}) {}'.format(slaveid, test)
         try:
             # for some reason, pytest_report_teststatus returns a word, markup tuple
             # when the word would be 'XPASS', so unpack it here if that's the case

@@ -66,9 +66,9 @@ def main():
         exit = 1
         exc_type = type(e).__name__
         if e.message:
-            sys.stderr.write('%s: %s\n' % (exc_type, e.message))
+            sys.stderr.write('{}: {}\n'.format(exc_type, e.message))
         else:
-            sys.stderr.write('%s\n' % exc_type)
+            sys.stderr.write('{}\n'.format(exc_type))
     else:
         if output is not None:
             print(output)

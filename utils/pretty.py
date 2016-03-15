@@ -1,6 +1,6 @@
 def _name(o):
     cls = o.__class__
-    return "%s.%s" % (getattr(cls, '__module__', "module"),
+    return "{}.{}".format(getattr(cls, '__module__', "module"),
                       getattr(cls, '__name__', "name"))
 
 
@@ -14,8 +14,8 @@ def attr_repr(o, attr):
 
 def pretty_repr(attrs, o):
     pairs = zip(attrs, [attr_repr(o, attr) for attr in attrs])
-    return "<%s %s>" % (_name(o),
-                        ", ".join(["%s=%s" % (i[0], i[1]) for i in pairs]))
+    return "<{} {}>".format(_name(o),
+                        ", ".join(["{}={}".format(i[0], i[1]) for i in pairs]))
 
 
 def pr_obj(attrs):

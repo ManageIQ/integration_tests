@@ -69,7 +69,7 @@ def config_cu_vm(ssh_client):
 
 def vm_running(provider, vm_name):
     if provider.is_vm_running(vm_name):
-        logger.info("VM %s is running" % vm_name)
+        logger.info("VM {} is running".format(vm_name))
     else:
         logger.error("VM is not running")
         return 10

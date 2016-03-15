@@ -203,7 +203,7 @@ class Version(object):
         return self.vstring
 
     def __repr__(self):
-        return "Version ('%s')" % str(self)
+        return "Version ('{}')".format(str(self))
 
     def __cmp__(self, other):
         try:

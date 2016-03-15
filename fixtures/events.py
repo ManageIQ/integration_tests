@@ -143,18 +143,18 @@ class EventListener(object):
         return env.get("event_listener", {}).get("port", None) or random_port()
 
     def listener_host(self):
-        return "http://%s" % my_ip_address()
+        return "http://{}".format(my_ip_address())
 
     def _get(self, route):
         """ Query event listener
         """
         assert not self.finished, "Listener dead!"
-        listener_url = "%s:%d" % (self.listener_host(), self.listener_port)
-        logger.info("checking api: %s%s" % (listener_url, route))
+        listener_url = "{}:{}".format(self.listener_host(), self.listener_port)
+        logger.info("checking api: %s%s", listener_url, route)
         r = requests.get(listener_url + route)
         r.raise_for_status()
         response = r.json()
-        logger.debug("Response: %s" % response)
+        logger.debug("Response: %s", response)
         return response
 
     def _delete_database(self):
@@ -166,7 +166,7 @@ class EventListener(object):
             Boolean signalizing success.
         """
         assert not self.finished, "Listener dead!"
-        listener_url = "%s:%d" % (self.listener_host(), self.listener_port)
+        listener_url = "{}:{}".format(self.listener_host(), self.listener_port)
         r = requests.delete(listener_url + "/events")
         r.raise_for_status()
         return r.json().get("result") == "success"
@@ -200,12 +200,12 @@ class EventListener(object):
         """
         max_attempts = 10
         sleep_interval = 2
-        req = "/events/%s/%s?event=%s" % (self.mgmt_sys_type(sys_type, obj_type), obj, event)
+        req = "/events/{}/{}?event={}".format(self.mgmt_sys_type(sys_type, obj_type), obj, event)
         # Timespan limits
         if after:
-            req += "&from_time=%s" % datetime.strftime(after, self.TIME_FORMAT)
+            req += "&from_time={}".format(datetime.strftime(after, self.TIME_FORMAT))
         if before:
-            req += "&to_time=%s" % datetime.strftime(before, self.TIME_FORMAT)
+            req += "&to_time={}".format(datetime.strftime(before, self.TIME_FORMAT))
 
         for attempt in range(1, max_attempts + 1):
             data = self._get(req)
@@ -213,16 +213,16 @@ class EventListener(object):
                 assert len(data) > 0
             except AssertionError as e:
                 if attempt < max_attempts:
-                    logger.debug("Waiting for DB (%s/%s): %s" % (attempt, max_attempts, e))
+                    logger.debug("Waiting for DB (%s/%s): %s", attempt, max_attempts, e)
                     time.sleep(sleep_interval)
                     pass
                 # Enough sleeping, something went wrong
                 else:
-                    logger.exception("Check DB failed. Max attempts: '%s'." % (max_attempts))
+                    logger.exception("Check DB failed. Max attempts: %s.", max_attempts)
                     return False
             else:
                 # No exceptions raised
-                logger.info("DB row found for '%s'" % req)
+                logger.info("DB row found for %s", req)
                 return datetime.strptime(data[0]["event_time"], "%Y-%m-%d %H:%M:%S")
         return False
 
@@ -280,7 +280,7 @@ class EventListener(object):
         if not isinstance(events, list):
             events = [events]
         for event in events:
-            logger.info("Event registration: %s" % str(locals()))
+            logger.info("Event registration: %s", str(locals()))
             self.add_expectation(sys_type, obj_type, obj, event)
 
     @pytest.fixture(scope="session")
@@ -308,20 +308,20 @@ class EventListener(object):
 
     def start(self):
         assert not self.listener, "Listener can't be running in order to start it!"
-        logger.info("Starting listener %s" % self.listener_script)
-        logger.info("In order to run the event testing, port %d must be enabled." %
+        logger.info("Starting listener %s", self.listener_script)
+        logger.info("In order to run the event testing, port %d must be enabled.",
             self.listener_port)
-        logger.info("sudo firewall-cmd --add-port %d/tcp --permanent" % self.listener_port)
+        logger.info("sudo firewall-cmd --add-port %d/tcp --permanent", self.listener_port)
         self.listener = subprocess.Popen(self.listener_script,
                                          shell=True)
-        logger.info("Listener pid %d" % self.listener.pid)
+        logger.info("Listener pid %d", self.listener.pid)
         time.sleep(3)
         assert not self.finished, "Listener has died. Something must be blocking selected port"
         logger.info("Listener alive")
 
     def stop(self):
         assert self.listener, "Listener must be running in order to stop it!"
-        logger.info("Killing listener %d" % (self.listener.pid))
+        logger.info("Killing listener %d", (self.listener.pid))
         self.listener.send_signal(signal.SIGINT)
         self.listener.wait()
         self.listener = None

@@ -75,7 +75,7 @@ class IPAppliance(object):
         self._db_ssh_client = None
 
     def __repr__(self):
-        return '%s(%s)' % (type(self).__name__, repr(self.address))
+        return '{}({})'.format(type(self).__name__, repr(self.address))
 
     def push(self):
         _push_appliance(self)
@@ -713,7 +713,7 @@ class IPAppliance(object):
         if "enabled" not in kwargs:
             kwargs["enabled"] = 1
         sftp = self.ssh_client.open_sftp()
-        logger.info("Writing a new repofile {} {}".format(repo_id, repo_url))
+        logger.info("Writing a new repofile %s %s", repo_id, repo_url)
         with sftp.open("/etc/yum.repos.d/{}.repo".format(repo_id), "w") as f:
             f.write("[update-{}]\n".format(repo_id))
             f.write("name=update-url-{}\n".format(repo_id))
@@ -744,12 +744,12 @@ class IPAppliance(object):
         repos = self.find_product_repos()
         if product in repos:
             for v, i in repos[product].iteritems():
-                logger.info("Deleting {} repo with version {} ({})".format(product, v, i))
+                logger.info("Deleting %s repo with version %s (%s)", product, v, i)
                 self.ssh_client.run_command("rm -f /etc/yum.repos.d/{}.repo".format(i))
         return self.write_repofile(fauxfactory.gen_alpha(), repo_url, **kwargs)
 
     def enable_disable_repo(self, repo_id, enable):
-        logger.info("{} repository {}".format("Enabling" if enable else "Disabling", repo_id))
+        logger.info("%s repository %s", "Enabling" if enable else "Disabling", repo_id)
         return self.ssh_client.run_command(
             "sed -i 's/^enabled=./enabled={}/' /etc/yum.repos.d/{}.repo".format(
                 1 if enable else 0, repo_id)).rc == 0
@@ -944,12 +944,12 @@ class IPAppliance(object):
             rb = datafile.load_data_file(rbt, rbt_repl)
 
             # sent rb file over to /tmp
-            remote_file = '/tmp/%s' % fauxfactory.gen_alphanumeric()
+            remote_file = '/tmp/{}'.format(fauxfactory.gen_alphanumeric())
             client.put_file(rb.name, remote_file)
 
             # Run the rb script, clean it up when done
-            status, out = client.run_command('ruby %s' % remote_file)
-            client.run_command('rm %s' % remote_file)
+            status, out = client.run_command('ruby {}'.format(remote_file))
+            client.run_command('rm {}'.format(remote_file))
 
         return status, out
 
@@ -1010,12 +1010,12 @@ class IPAppliance(object):
             rb = datafile.load_data_file(rbt, rbt_repl)
 
             # Init SSH client and sent rb file over to /tmp
-            remote_file = '/tmp/%s' % fauxfactory.gen_alphanumeric()
+            remote_file = '/tmp/{}'.format(fauxfactory.gen_alphanumeric())
             client.put_file(rb.name, remote_file)
 
             # Run the rb script, clean it up when done
-            status, out = client.run_command('ruby %s' % remote_file)
-            client.run_command('rm %s' % remote_file)
+            status, out = client.run_command('ruby {}'.format(remote_file))
+            client.run_command('rm {}'.format(remote_file))
 
         if status != 0:
             self.log.error('error enabling external db')
@@ -1035,14 +1035,14 @@ class IPAppliance(object):
                 self.log.info("Appliance online")
                 return True
             else:
-                self.log.debug('Appliance online, status code %d' % response.status_code)
+                self.log.debug('Appliance online, status code %s', response.status_code)
         except requests.exceptions.Timeout:
             self.log.debug('Appliance offline, connection timed out')
         except ValueError:
             # requests exposes invalid URLs as ValueErrors, which is excellent
             raise
         except Exception as ex:
-            self.log.debug('Appliance online, but connection failed: %s' % ex.message)
+            self.log.debug('Appliance online, but connection failed: %s', ex.message)
         return False
 
     def is_web_ui_running(self, unsure=False):
@@ -1544,7 +1544,7 @@ class Appliance(IPAppliance):
     def _custom_configure(self, **kwargs):
         log_callback = kwargs.pop(
             "log_callback",
-            lambda msg: logger.info("Custom configure {}: {}".format(self.vmname, msg)))
+            lambda msg: logger.info("Custom configure %s: %s", self.vmname, msg))
         region = kwargs.get('region', 0)
         db_address = kwargs.get('db_address', None)
         key_address = kwargs.get('key_address', None)
@@ -1824,8 +1824,8 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
                 if not template_name:
                     raise ApplianceException('No template found for stream {} on provider {}'
                         .format(get_stream(version), provider_name))
-                logger.warning('No template found matching version {}, using {} instead.'
-                               .format(version, template_name))
+                logger.warning('No template found matching version %s, using %s instead.',
+                    version, template_name)
             else:
                 raise ApplianceException('No template found matching version {}'.format(version))
     else:

@@ -148,9 +148,9 @@ def is_pingable(ip_addr):
     try:
         status = os.system("ping -c1 -w2 {}".format(ip_addr))
         if status == 0:
-            logger.info('IP: {} is UP !'.format(ip_addr))
+            logger.info('IP: %s is UP !', ip_addr)
             return True
-        logger.info('IP: {} is DOWN !'.format(ip_addr))
+        logger.info('IP: %s is DOWN !', ip_addr)
         return False
     except Exception as e:
         logger.exception(e)

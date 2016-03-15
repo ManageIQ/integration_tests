@@ -48,7 +48,7 @@ def rhevm_create_api(url, username, password):
         username: username used to log in into rhevm
         password: password used to log in into rhevm
     """
-    apiurl = 'https://%s:443/api' % url
+    apiurl = 'https://{}:443/api'.format(url)
     return API(url=apiurl, username=username, password=password, insecure=True,
                persistent_auth=False)
 
@@ -157,7 +157,7 @@ def rhevm_delete_vm(api, vm_name):
     vm_status = rhevm_vm_status(api, vm_name)
     if vm_status != 'up' and vm_status != 'down':
         # something is wrong, locked image etc
-        exc_msg = "VM status: %s" % vm_status
+        exc_msg = "VM status: {}".format(vm_status)
         raise Exception(exc_msg)
     if vm_status == "up":
         print("Powering down: {}".format(vm.get_name()))
