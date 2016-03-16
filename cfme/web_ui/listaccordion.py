@@ -80,7 +80,7 @@ def is_active(name):
     return sel.is_displayed(_content_element(name))
 
 
-def select(name, link_title):
+def select(name, link_title_or_text, by_title=True):
     """ Clicks an active link in accordion section
 
     Args:
@@ -90,7 +90,7 @@ def select(name, link_title):
     if not is_active(name):
         click(name)
     link_root = _content_element(name)
-    link = ListAccordionLink(link_title, link_root)
+    link = ListAccordionLink(link_title_or_text, link_root, by_title)
     link.click()
 
 
@@ -115,17 +115,24 @@ class ListAccordionLink(Pretty):
     """
     pretty_attrs = ['title', 'root']
 
-    def __init__(self, title, root=None):
+    def __init__(self, title, root=None, by_title=True):
         self.root = root
         self.title = title
+        self.by_title = by_title
 
     def locate(self):
         """ Locates an active link.
 
         Returns: An XPATH locator for the element."""
-        locator = './/div[@class="panecontent"]//a[@title="{title}" and not(child::img)]|'\
-                  './li[not(contains(@class, "disabled"))]/a[@title="{title}"]'\
-                  .format(title=self.title)
+        if self.by_title:
+            locator = './/div[@class="panecontent"]//a[@title={title} and not(child::img)]|'\
+                      './li[not(contains(@class, "disabled"))]/a[@title={title}]'\
+                      .format(title=quoteattr(self.title))
+        else:
+            locator = (
+                './/div[@class="panecontent"]//a[normalize-space(.)={title} and not(child::img)]|'
+                './li[not(contains(@class, "disabled"))]/a[normalize-space(.)={title}]'
+                .format(title=quoteattr(self.title)))
         return locator
 
     def _check_exists(self):
