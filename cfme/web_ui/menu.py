@@ -78,6 +78,12 @@ sections = {
         ('infrastructure_requests', 'Requests'),
         ('infrastructure_config_management', 'Configuration Management')
     ),
+    ('middleware', 'Middleware'): (
+        ('middleware_providers', 'Providers'),
+        ('middleware_servers', "Middleware Servers"),
+        ('middleware_deployments', "Middleware Deployments"),
+        ('middleware_topology', "Topology"),
+    ),
     ('control', 'Control'): (
         ('control_explorer', 'Explorer'),
         ('control_simulation', 'Simulation'),
