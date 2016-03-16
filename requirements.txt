@@ -53,6 +53,7 @@ ui-navigate
 wait_for
 yaycl
 yaycl-crypt
+shyaml
 
 # docs requirements
 # When Sphinx 1.3 is released and on RTD, we can upgrade and use
