@@ -34,9 +34,10 @@ def catalog():
                   description="my catalog")
     try:
         cat.create()
-        yield catalog
+        yield cat
     finally:
-        cat.delete()
+        if cat.exists:
+            cat.delete()
 
 
 @pytest.fixture(scope="function")
