@@ -7,6 +7,7 @@ import pytest
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
+# TODO: we should not call out to utils here, but maybe rather have an infra setup provider fixture
 from utils.providers import setup_a_provider
 from cfme.web_ui import search
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,

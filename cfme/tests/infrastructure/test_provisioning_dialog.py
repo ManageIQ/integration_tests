@@ -7,14 +7,12 @@ from datetime import datetime, timedelta
 
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
-from cfme.exceptions import FlashMessageException
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import InfoBlock, fill, flash
 from utils import mgmt_system, testgen
 from utils.blockers import BZ
 from utils.log import logger
-from utils.providers import setup_provider
 from utils.wait import wait_for, TimedOutError
 
 
@@ -85,12 +83,7 @@ def template_name(provisioning):
 
 
 @pytest.fixture(scope="function")
-def provisioner(request, provider):
-    if not provider.exists:
-        try:
-            setup_provider(provider.key)
-        except FlashMessageException as e:
-            e.skip_and_log("Provider failed to set up")
+def provisioner(request, setup_provider, provider):
 
     def _provisioner(template, provisioning_data, delayed=None):
         pytest.sel.force_navigate('infrastructure_provision_vms', context={

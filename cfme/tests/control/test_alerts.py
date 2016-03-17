@@ -116,6 +116,7 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         request.addfinalizer(lambda: provider.unassign_policy_profiles(policy_profile.description))
 
 
+# TODO: When we get rest, just nuke all providers, and add our one, no need to target delete
 @pytest.yield_fixture(scope="module")
 def initialize_provider(provider, setup_provider_modscope):
     # Remove other providers
