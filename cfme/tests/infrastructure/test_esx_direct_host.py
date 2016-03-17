@@ -6,24 +6,28 @@ not be difficult to extend the parametrizer.
 import pytest
 
 from cfme.infrastructure.provider import VMwareProvider
-from utils.conf import cfme_data, credentials
+from utils.conf import credentials
 from utils.net import resolve_hostname
-from utils.providers import get_crud
+from utils import testgen
 from utils.version import Version
 
 
 def pytest_generate_tests(metafunc):
-    arg_names = "_provider", "original_provider_key"
-    arg_values = []
-    arg_ids = []
-    for provider_key, provider in cfme_data.get("management_systems", {}).iteritems():
-        if provider["type"] != "virtualcenter":
+    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter'])
+    argnames = argnames + ["_host_provider"]
+
+    new_idlist = []
+    new_argvalues = []
+
+    for i, argvalue_tuple in enumerate(argvalues):
+        args = dict(zip(argnames, argvalue_tuple))
+        if args['provider'].type != "virtualcenter":
             continue
-        hosts = provider.get("hosts", [])
+        hosts = args['provider'].data.get("hosts", [])
         if not hosts:
             continue
 
-        version = provider.get("version", None)
+        version = args['provider'].data.get("version", None)
         if version is None:
             # No version, no test
             continue
@@ -41,7 +45,7 @@ def pytest_generate_tests(metafunc):
         )
         # Mock provider data
         provider_data = {}
-        provider_data.update(provider)
+        provider_data.update(args['provider'].data)
         provider_data["name"] = host["name"]
         provider_data["hostname"] = host["name"]
         provider_data["ipaddress"] = ip_address
@@ -58,31 +62,33 @@ def pytest_generate_tests(metafunc):
             credentials={'default': cred},
             provider_data=provider_data,
         )
-        arg_values.append([host_provider, provider_key])
-        arg_ids.append("{}/{}".format(provider_key, host["name"]))
-    metafunc.parametrize(arg_names, arg_values, ids=arg_ids, scope="module")
+        argvalues[i].append(host_provider)
+        idlist[i] = "{}/{}".format(args['provider'].key, host["name"])
+        new_idlist.append(idlist[i])
+        new_argvalues.append(argvalues[i])
+
+    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 @pytest.yield_fixture(scope="module")
-def provider(_provider, original_provider_key):
-    original_provider = get_crud(original_provider_key)
-    if original_provider.exists:
+def host_provider(_host_provider, provider):
+    if provider.exists:
         # Delete original provider's hosts first
-        for host in original_provider.hosts:
+        for host in provider.hosts:
             if host.exists:
                 host.delete(cancel=False)
         # Get rid of the original provider, it would make a mess.
-        original_provider.delete(cancel=False)
-        original_provider.wait_for_delete()
-    yield _provider
-    for host in _provider.hosts:
+        provider.delete(cancel=False)
+        provider.wait_for_delete()
+    yield _host_provider
+    for host in _host_provider.hosts:
         if host.exists:
             host.delete(cancel=False)
-    _provider.delete(cancel=False)
-    _provider.wait_for_delete()
+    _host_provider.delete(cancel=False)
+    _host_provider.wait_for_delete()
 
 
-def test_validate(provider):
+def test_validate(host_provider):
     """Tests that the CFME can manage also just the hosts of VMware.
 
     Prerequisities:
@@ -94,6 +100,6 @@ def test_validate(provider):
         * Refresh the provider
         * The provider should refresh without problems.
     """
-    provider.create()
-    provider.refresh_provider_relationships()
-    provider.validate()
+    host_provider.create()
+    host_provider.refresh_provider_relationships()
+    host_provider.validate()
