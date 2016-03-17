@@ -308,7 +308,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
                     sel.force_navigate(self.provider.instances_page_name)
                 search.normal_search(self.name)
             except Exception as e:
-                logger.warn("Failed to use search: {}".format(str(e)))
+                logger.warning("Failed to use search: {}".format(str(e)))
 
         for page in paginator.pages():
             if sel.is_displayed(quadicon, move_to=True):
