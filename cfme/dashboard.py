@@ -213,6 +213,7 @@ class Widget(Pretty):
     @classmethod
     def all(cls):
         """Returns objects with all Widgets currently present."""
+        sel.force_navigate('dashboard')
         result = []
         for el in sel.elements(cls._all):
             result.append(cls(sel.get_attribute(el, "id")))
@@ -237,6 +238,14 @@ class Widget(Pretty):
     def is_dropdown_menu_opened(self):
         return sel.is_displayed(self._menu_container.format(self._div_id))
 
+    @property
+    def drag_element(self):
+        return sel.element(self._name.format(self._div_id))
+
+    @property
+    def drop_element(self):
+        return sel.element(self._footer.format(self._div_id))
+
     def open_dropdown_menu(self):
         if not sel.is_displayed(self._menu_opener.format(self._div_id)):
             return  # Not a 5.5+
@@ -254,6 +263,9 @@ class Widget(Pretty):
             wait_for(
                 lambda: not self.is_dropdown_menu_opened,
                 num_sec=10, delay=0.2, message="widget dropdown menu closed")
+
+    def drag_and_drop(self, widget):
+        sel.drag_and_drop(self.drag_element, widget.drop_element)
 
 
 class BaseWidgetContent(Pretty):
