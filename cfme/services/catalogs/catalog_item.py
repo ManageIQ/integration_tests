@@ -208,8 +208,8 @@ class CatalogItem(Updateable, Pretty):
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
-                               'select_catalog': self.catalog,
-                               'select_dialog': self.dialog,
+                               'select_catalog': str(self.catalog),
+                               'select_dialog': str(self.dialog),
                                'select_orch_template': self.orch_template,
                                'select_provider': self.provider_type})
         if self.item_type != "Orchestration":

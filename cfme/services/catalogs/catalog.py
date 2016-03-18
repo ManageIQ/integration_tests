@@ -72,6 +72,9 @@ class Catalog(Updateable, Pretty):
         self.description = description
         self.items = items
 
+    def __str__(self):
+        return self.name
+
     def create(self):
         sel.force_navigate('catalog_new')
         sel.wait_for_element(form.name_text)
