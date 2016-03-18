@@ -5,7 +5,7 @@ import subprocess
 import os
 # import diaper for backward compatibility
 import diaper
-
+from cached_property import cached_property
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 
@@ -27,6 +27,15 @@ def property_or_none(wrapped, *args, **kwargs):
         except AttributeError:
             pass
     return property(wrapper, *args, **kwargs)
+
+
+def clear_property_cache(obj, *names):
+    """
+    clear a cached property regardess of if it was cached priority
+    """
+    for name in names:
+        assert isinstance(getattr(type(obj), name), cached_property)
+        obj.__dict__.pop(name, None)
 
 
 class _classproperty(property):

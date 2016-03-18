@@ -34,6 +34,7 @@ from utils.providers import get_mgmt, get_crud
 from utils.version import Version, get_stream, pick, LATEST
 from utils.signals import fire
 from utils.wait import wait_for
+from utils import clear_property_cache
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # Do not import the whole stuff around
@@ -958,11 +959,7 @@ class IPAppliance(object):
         """
         log_callback('Enabling internal DB (region {}) on {}.'.format(region, self.address))
         self.db_address = self.address
-        try:
-            del self.db
-        except AttributeError:
-            # Not set yet, so we don't care here.
-            pass
+        clear_property_cache(self, 'db')
 
         client = self.ssh_client
 
@@ -1022,10 +1019,7 @@ class IPAppliance(object):
             .format(db_address, region, self.address))
         # reset the db address and clear the cached db object if we have one
         self.db_address = db_address
-        try:
-            del self.db
-        except AttributeError:
-            pass  # it's not cached, dont try to be eager
+        clear_property_cache(self, 'db')
 
         # default
         db_name = db_name or 'vmdb_production'

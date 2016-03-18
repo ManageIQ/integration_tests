@@ -21,20 +21,13 @@ from utils.wait import wait_for, TimedOutError
 from utils import version, conf
 from utils.pretty import Pretty
 from utils.signals import fire, on_signal
+from utils import clear_property_cache
 
 
 @on_signal("server_details_changed")
 def invalidate_server_details():
-    # TODO: simplify after idempotent cached property is availiable
-    # https://github.com/pydanny/cached-property/issues/31
-    try:
-        del store.current_appliance.configuration_details
-    except AttributeError:
-        pass
-    try:
-        del store.current_appliance.zone_description
-    except AttributeError:
-        pass
+    clear_property_cache(store.current_appliance,
+                        'configuration_details', 'zone_description')
 
 
 access_tree = partial(accordion.tree, "Access Control")
