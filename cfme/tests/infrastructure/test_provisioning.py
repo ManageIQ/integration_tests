@@ -9,7 +9,7 @@ from cfme.web_ui import fill
 from utils import normalize_text, testgen
 from utils.blockers import BZ
 from utils.log import logger
-from utils.mgnt_system import RHEVMSystem
+from utils.mgmt_system import RHEVMSystem
 from utils.wait import wait_for
 
 pytestmark = [
