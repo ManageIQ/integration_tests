@@ -3,6 +3,7 @@ import fauxfactory
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 import pytest
 from utils import testgen
+from utils import error
 from utils.update import update
 
 
@@ -80,3 +81,39 @@ def test_copy_template(provisioning):
     template.create(METHOD_TORSO)
     template.copy_template(template.template_name + "_copied", METHOD_TORSO_copied)
     template.delete()
+
+
+def test_name_required_error_validation(provisioning):
+    flash_msg = \
+        "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"
+    template_type = provisioning['stack_provisioning']['template_type']
+    template = OrchestrationTemplate(template_type=template_type,
+                                     template_name=None,
+                                     description="my template")
+
+    with error.expected(flash_msg):
+        template.create(METHOD_TORSO)
+
+
+def test_all_fields_required_error_validation(provisioning):
+    flash_msg = \
+        "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"
+    template_type = provisioning['stack_provisioning']['template_type']
+    template = OrchestrationTemplate(template_type=template_type,
+                                     template_name=None,
+                                     description=None)
+
+    with error.expected(flash_msg):
+        template.create(METHOD_TORSO)
+
+
+def test_new_template_required_error_validation(provisioning):
+    flash_msg = \
+        'Error during Orchestration Template creation: new template content cannot be empty'
+    template_type = provisioning['stack_provisioning']['template_type']
+    template = OrchestrationTemplate(template_type=template_type,
+                                     template_name=fauxfactory.gen_alphanumeric(),
+                                     description="my template")
+
+    with error.expected(flash_msg):
+        template.create('')
