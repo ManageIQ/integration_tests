@@ -971,7 +971,10 @@ class IPAppliance(object):
             .format(db_address, region, self.address))
         # reset the db address and clear the cached db object if we have one
         self.db_address = db_address
-        del(self.db)
+        try:
+            del self.db
+        except AttributeError:
+            pass  # it's not cached, dont try to be eager
 
         # default
         db_name = db_name or 'vmdb_production'
