@@ -29,7 +29,6 @@ from functools import partial
 from utils import testgen
 from utils.blockers import BZ
 from utils.conf import cfme_data
-from utils.db import cfmedb
 from utils.log import logger
 from utils.miq_soap import MiqVM
 from utils.version import current_version
@@ -110,8 +109,8 @@ def get_vm_object(vm_name):
         If not, `None`
     """
     if current_version() < "5.5":
-        vm_table = cfmedb()['vms']
-        for vm in cfmedb().session.query(vm_table.name, vm_table.guid)\
+        vm_table = store.current_appliance.db['vms']
+        for vm in store.current_appliance.db.session.query(vm_table.name, vm_table.guid)\
                 .filter(vm_table.template == False):  # NOQA
             # Previous line is ok, if you change it to `is`, it won't work!
             if vm.name == vm_name:

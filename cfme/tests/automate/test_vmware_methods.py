@@ -13,7 +13,6 @@ from cfme.web_ui import fill, flash, form_buttons, toolbar, Input
 from utils import testgen
 from utils.blockers import BZ
 from utils.log import logger
-from utils.providers import setup_provider
 from utils.wait import wait_for
 
 submit = form_buttons.FormButton("Submit")
@@ -59,8 +58,7 @@ def testing_group(request):
 
 
 @pytest.yield_fixture(scope="function")
-def testing_vm(request, provisioning, provider):
-    setup_provider(provider.key)
+def testing_vm(request, provisioning, setup_provider, provider):
     vm = VM.factory(
         "test_ae_hd_{}".format(fauxfactory.gen_alphanumeric()),
         provider,

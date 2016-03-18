@@ -5,7 +5,6 @@ from utils import providers
 from utils import testgen
 from utils import conf
 from utils.log import logger
-from utils.providers import cloud_provider_type_map, infra_provider_type_map
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.exceptions import FlashMessageException
 
@@ -80,10 +79,10 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
             vm_rising = True
 
         # only vms are collected for cloud
-        if provider.type in cloud_provider_type_map and vm_rising:
+        if provider.category == "cloud" and vm_rising:
             return
         # both vms and hosts must be collected for infra
-        elif provider.type in infra_provider_type_map and vm_rising and host_rising:
+        elif provider.category == "infra" and vm_rising and host_rising:
             return
         else:
             time.sleep(15)

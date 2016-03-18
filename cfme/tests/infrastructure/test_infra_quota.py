@@ -5,13 +5,11 @@ import pytest
 import cfme.configure.access_control as ac
 from cfme.fixtures import pytest_selenium as sel
 from cfme.automate import explorer as automate
-from cfme.exceptions import FlashMessageException
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import fill, flash
 from utils import testgen, version
 from utils.wait import wait_for
-from utils.providers import setup_provider
 
 
 pytestmark = [
@@ -108,13 +106,7 @@ def template_name(provisioning):
 
 
 @pytest.fixture(scope="function")
-def provisioner(request, provider):
-    if not provider.exists:
-        try:
-            setup_provider(provider.key)
-        except FlashMessageException as e:
-            e.skip_and_log("Provider failed to set up")
-
+def provisioner(request, setup_provider, provider):
     def _provisioner(template, provisioning_data, delayed=None):
         sel.force_navigate('infrastructure_provision_vms', context={
             'provider': provider,

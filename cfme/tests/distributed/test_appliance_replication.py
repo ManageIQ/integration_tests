@@ -63,6 +63,8 @@ def get_ssh_client(hostname):
     return SSHClient(**connect_kwargs)
 
 
+# TODO: These calls here should not be separate functions, the functions should be on the appliance
+# and we should be using the with context manager, they are being used incorrectly below
 def stop_db_process(address):
     with get_ssh_client(address) as ssh:
         assert ssh.run_command('service {}-postgresql stop'.format(db.scl_name()))[0] == 0,\
