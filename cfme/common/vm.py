@@ -311,7 +311,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
                         sel.force_navigate(self.provider.templates_page_name)
                 search.normal_search(self.name)
             except Exception as e:
-                logger.warning("Failed to use search: {}".format(str(e)))
+                logger.warning("Failed to use search: %s", str(e))
 
         for page in paginator.pages():
             if sel.is_displayed(quadicon, move_to=True):
@@ -501,7 +501,7 @@ def date_retire_element(fill_data):
     the subsequent callbacks from the server"""
     # TODO: Move the code in the Calendar itself? I did not check other calendars
     if isinstance(fill_data, date):
-        date_str = '%s/%s/%s' % (fill_data.month, fill_data.day, fill_data.year)
+        date_str = '{}/{}/{}'.format(fill_data.month, fill_data.day, fill_data.year)
     else:
         date_str = str(fill_data)
     sel.execute_script(
@@ -548,8 +548,8 @@ class VM(BaseVM):
                 pwr_btn(option, invokes_alert=True)
                 sel.handle_alert(cancel=cancel)
                 logger.info(
-                    "Power control action of VM/instance %s, option %s, cancel %s executed" %
-                    (self.name, option, str(cancel)))
+                    "Power control action of VM/instance %s, option %s, cancel %s executed",
+                    self.name, option, str(cancel))
         else:
             raise OptionNotAvailable(option + " is not visible or enabled")
 
@@ -617,8 +617,8 @@ class VM(BaseVM):
         if self.provider.mgmt.does_vm_exist(self.name):
             try:
                 if self.provider.mgmt.is_vm_suspended(self.name):
-                    logger.debug("Powering up VM %s to shut it down correctly on %s." %
-                                 (self.name, self.provider.key))
+                    logger.debug("Powering up VM %s to shut it down correctly on %s.",
+                                self.name, self.provider.key)
                     self.provider.mgmt.start_vm(self.name)
                     self.provider.mgmt.wait_vm_steady(self.name)
                     self.provider.mgmt.stop_vm(self.name)

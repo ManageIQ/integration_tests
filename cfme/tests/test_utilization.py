@@ -46,7 +46,7 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
     metrics_tbl = db.cfmedb()['metrics']
     mgmt_systems_tbl = db.cfmedb()['ext_management_systems']
 
-    logger.info("Fetching provider ID for {}".format(provider.key))
+    logger.info("Fetching provider ID for %s", provider.key)
     mgmt_system_id = db.cfmedb().session.query(mgmt_systems_tbl).filter(
         mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
@@ -61,8 +61,8 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
     while time.time() < start_time + timeout:
         last_host_count = host_count
         last_vm_count = vm_count
-        logger.info("name: {}, id: {}, vms: {}, hosts: {}".format(
-            provider.key, mgmt_system_id, vm_count, host_count))
+        logger.info("name: %s, id: %s, vms: %s, hosts: %s",
+            provider.key, mgmt_system_id, vm_count, host_count)
         # count host and vm metrics for the provider we're testing
         host_count = db.cfmedb().session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(

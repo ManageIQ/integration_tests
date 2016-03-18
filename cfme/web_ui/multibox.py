@@ -225,7 +225,7 @@ def _fill_multibox_list(multi, values):
 
     Returns: :py:class:`bool` with success.
     """
-    logger.debug('  Filling in {} with values {}'.format(str(multi), str(values)))
+    logger.debug('  Filling in %s with values %s', str(multi), str(values))
     if multi._async:
         sync = []
         async = []
@@ -250,7 +250,7 @@ def _fill_multibox_str(multi, string):
 
     Returns: :py:class:`bool` with success.
     """
-    logger.debug('  Filling in {} with value {}'.format(str(multi), string))
+    logger.debug('  Filling in %s with value %s', str(multi), string)
     return multi.add(string)
 
 
@@ -275,8 +275,8 @@ def _fill_multibox_dict(multi, d):
             enable_list.append(key)
         else:
             disable_list.append(key)
-    logger.debug('  Disabling values {} in {}'.format(str(disable_list), str(multi)))
-    logger.debug('  Enabling values {} in {}'.format(str(enable_list), str(multi)))
+    logger.debug('  Disabling values %s in %s', str(disable_list), str(multi))
+    logger.debug('  Enabling values %s in %s', str(enable_list), str(multi))
     multi.remove(*disable_list)
     if multi._async:
         sync, async, dont_care = [], [], []

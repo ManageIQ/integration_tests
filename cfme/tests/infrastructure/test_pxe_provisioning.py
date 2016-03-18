@@ -67,7 +67,7 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_pxe_prov_%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_pxe_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 

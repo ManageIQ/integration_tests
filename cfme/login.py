@@ -105,7 +105,7 @@ def login(user, submit_method=_js_auth_fn):
         # as soon as we click something on the dashboard
         sel.sleep(1.0)
 
-        logger.debug('Logging in as user %s' % user.credential.principal)
+        logger.debug('Logging in as user %s', user.credential.principal)
         try:
             fill(form, {'username': user.credential.principal, 'password': user.credential.secret})
         except sel.InvalidElementStateException as e:

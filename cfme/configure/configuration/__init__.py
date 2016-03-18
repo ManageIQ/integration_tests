@@ -894,7 +894,7 @@ class AuthSetting(Updateable, Pretty):
         """Sets the session timeout of the appliance."""
         sel.force_navigate("cfg_settings_currentserver_auth")
         logger.info(
-            "Setting authentication timeout to {} hours and {} minutes.".format(hours, minutes))
+            "Setting authentication timeout to %s hours and %s minutes.", hours, minutes)
         fill(cls.form, {"timeout_h": hours, "timeout_m": minutes}, action=form_buttons.save)
         flash.assert_no_errors()
         flash.assert_message_contain("Authentication settings saved")
@@ -1343,7 +1343,7 @@ class Schedule(Pretty):
                     break
             else:
                 raise ScheduleNotFound(
-                    "Schedule '%s' could not be found for selection!" % name
+                    "Schedule '{}' could not be found for selection!".format(name)
                 )
 
         sel.force_navigate("cfg_settings_schedules")
@@ -1630,7 +1630,7 @@ class Zone(Pretty):
             form_buttons.cancel()
         else:
             form_buttons.add()
-            flash.assert_message_match('Zone "%s" was added' % self.name)
+            flash.assert_message_match('Zone "{}" was added'.format(self.name))
 
     def update(self, updates, cancel=False):
         """ Modify an existing zone with information from this instance.
@@ -1649,7 +1649,7 @@ class Zone(Pretty):
             form_buttons.cancel()
         else:
             form_buttons.save()
-            flash.assert_message_match('Zone "%s" was saved' % self.name)
+            flash.assert_message_match('Zone "{}" was saved'.format(self.name))
 
     def delete(self, cancel=False):
         """ Delete the Zone represented by this object.
@@ -1661,7 +1661,7 @@ class Zone(Pretty):
         tb.select("Configuration", "Delete this Zone", invokes_alert=True)
         sel.handle_alert(cancel)
         if not cancel:
-            flash.assert_message_match('Zone "%s": Delete successful' % self.name)
+            flash.assert_message_match('Zone "{}": Delete successful'.format(self.name))
 
     @classmethod
     def go_to_by_description(cls, description):
@@ -1682,15 +1682,15 @@ class Zone(Pretty):
         try:
             zones_table.click_row_by_cells({1: description}, partial_check=True)
         except:
-            raise ZoneNotFound("No unique Zones with the description '%s'" % description)
+            raise ZoneNotFound("No unique Zones with the description '{}'".format(description))
 
     @property
     def exists(self):
         sel.force_navigate("cfg_settings_zones")
         table = Table(zones_table)
-        if table.find_cell(1, "Zone: %s" % self.description):
+        if table.find_cell(1, "Zone: {}".format(self.description)):
             return True
-        elif table.find_cell(1, "Zone : %s" % self.description):  # Another possibility
+        elif table.find_cell(1, "Zone : {}".format(self.description)):  # Another possibility
             return True
         else:
             return False
@@ -1844,7 +1844,7 @@ def get_server_roles(navigate=True, db=True):
             try:
                 role_list[name] = sel.element(locator).is_selected()
             except:
-                logger.warning("role not found, skipping, netapp storage role?  (" + name + ")")
+                logger.warning("role not found, skipping, netapp storage role?  (%s)", name)
         return role_list
 
 
@@ -1894,7 +1894,7 @@ def set_ntp_servers(*servers):
     fill(ntp_servers, fields, action=form_buttons.save)
     if servers:
         flash.assert_message_match(
-            "Configuration settings saved for CFME Server \"%s [%s]\" in Zone \"%s\"" % (
+            "Configuration settings saved for CFME Server \"{} [{}]\" in Zone \"{}\"".format(
                 server_name(),
                 server_id(),
                 server_zone_description().partition(' ')[0].lower()))

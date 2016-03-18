@@ -49,7 +49,7 @@ def _rpms_present_packages():
 @pytest.mark.parametrize(('package'), _rpms_present_packages())
 def test_rpms_present(ssh_client, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations"""
-    exit, stdout = ssh_client.run_command('rpm -q %s' % package)
+    exit, stdout = ssh_client.run_command('rpm -q {}'.format(package))
     assert 'is not installed' not in stdout
     assert exit == 0
 

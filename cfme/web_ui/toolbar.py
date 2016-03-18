@@ -205,8 +205,8 @@ def is_greyed(root, sub=None):
     class_att = sel.get_attribute(el, 'class').split(" ")
     if sub:
         if {"tr_btn_disabled", "disabled"}.intersection(set(class_att)):
-            logger.debug("{} option greyed out, mouseover reason: {}".format(
-                sub, sel.get_attribute(el, 'title')))
+            logger.debug("%s option greyed out, mouseover reason: %s",
+                sub, sel.get_attribute(el, 'title'))
             return True
     else:
         if {"disabled", "dis"}.intersection(set(class_att)):

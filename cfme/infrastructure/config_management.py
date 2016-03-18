@@ -185,8 +185,8 @@ class ConfigManager(Updateable, Pretty):
         def config_profiles_loaded():
             config_profiles_names = [prof.name for prof in self.config_profiles]
             logger.info(
-                "UI: {}\nYAML: {}"
-                .format(set(config_profiles_names), set(self.yaml_data['config_profiles'])))
+                "UI: %s\nYAML: %s",
+                set(config_profiles_names), set(self.yaml_data['config_profiles']))
             return all(
                 [cp in config_profiles_names for cp in self.yaml_data['config_profiles']])
 

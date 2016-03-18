@@ -111,8 +111,8 @@ class Datastore(Pretty):
     def _on_detail_page(self):
         """ Returns ``True`` if on the datastore detail page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
-            % (self.name, "Summary")
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
+                self.name, "Summary")
         )
 
     def get_hosts(self):
@@ -131,8 +131,8 @@ class Datastore(Pretty):
     def _on_hosts_page(self):
         """ Returns ``True`` if on the datastore hosts page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
-            % (self.name, "All Registered Hosts")
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}}")]'.format(
+                self.name, "All Registered Hosts")
         )
 
     def get_vms(self):
@@ -152,8 +152,8 @@ class Datastore(Pretty):
     def _on_vms_page(self):
         """ Returns ``True`` if on the datastore vms page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
-            % (self.name, "All Registered vms")
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}}")]'.format(
+                self.name, "All Registered vms")
         )
 
     def delete_all_attached_vms(self):

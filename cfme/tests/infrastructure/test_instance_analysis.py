@@ -207,16 +207,16 @@ def instance(request, local_setup_provider, provider, vm_analysis_new):
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
         do_vm_provisioning(template, provider, vm_name, provisioning_data, request, None,
                            num_sec=6000)
-    logger.info("VM {} provisioned, waiting for IP address to be assigned".format(vm_name))
+    logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
     @pytest.wait_for(timeout="10m", delay=5)
     def get_ip_address():
-        logger.info("Power state for {} vm: {}".format(vm_name, mgmt_system.vm_status(vm_name)))
+        logger.info("Power state for %s vm: %s", vm_name, mgmt_system.vm_status(vm_name))
         if mgmt_system.is_vm_stopped(vm_name):
             mgmt_system.start_vm(vm_name)
 
         ip = mgmt_system.current_ip_address(vm_name)
-        logger.info("Fetched IP for {}: {}".format(vm_name, ip))
+        logger.info("Fetched IP for %s: %s", vm_name, ip)
         return ip is not None
 
     connect_ip = mgmt_system.get_ip_address(vm_name)
@@ -226,14 +226,14 @@ def instance(request, local_setup_provider, provider, vm_analysis_new):
     # if the username and password have been set via the cloud-init script so
     # is a valid check
     if vm_analysis_new['fs-type'] not in ['ntfs', 'fat32']:
-        logger.info("Waiting for {} to be available via SSH".format(connect_ip))
+        logger.info("Waiting for %s to be available via SSH", connect_ip)
         ssh_client = ssh.SSHClient(hostname=connect_ip, username=vm_analysis_new['username'],
                                    password=vm_analysis_new['password'], port=22)
         wait_for(ssh_client.uptime, num_sec=3600, handle_exception=False)
         vm.ssh = ssh_client
 
     vm.system_type = detect_system_type(vm)
-    logger.info("Detected system type: {}".format(vm.system_type))
+    logger.info("Detected system type: %s", vm.system_type)
     vm.image = vm_analysis_new['image']
     vm.connect_ip = connect_ip
 
@@ -421,8 +421,8 @@ def test_ssa_vm(provider, instance, soft_assert):
         e_packages = instance.ssh.run_command(
             instance.system_type['package-number']).output.strip('\n')
 
-    logger.info("Expecting to have {} users, {} groups and {} packages".format(
-        e_users, e_groups, e_packages))
+    logger.info(
+        "Expecting to have %s users, %s groups and %s packages", e_users, e_groups, e_packages)
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
@@ -432,7 +432,7 @@ def test_ssa_vm(provider, instance, soft_assert):
     quadicon_os_icon = instance.find_quadicon().os
     details_os_icon = instance.get_detail(
         properties=('Properties', 'Operating System'), icon_href=True)
-    logger.info("Icons: {}, {}".format(details_os_icon, quadicon_os_icon))
+    logger.info("Icons: %s, %s", details_os_icon, quadicon_os_icon)
 
     # We shouldn't use get_detail anymore - it takes too much time
     c_lastanalyzed = InfoBlock.text('Lifecycle', 'Last Analyzed')
@@ -442,8 +442,7 @@ def test_ssa_vm(provider, instance, soft_assert):
     if instance.system_type != WINDOWS:
         c_packages = InfoBlock.text('Configuration', 'Packages')
 
-    logger.info("SSA shows {} users, {} groups and {} packages".format(
-        c_users, c_groups, c_packages))
+    logger.info("SSA shows %s users, %s groups and %s packages", c_users, c_groups, c_packages)
 
     soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
     soft_assert(e_icon_part in details_os_icon,
@@ -564,7 +563,7 @@ def test_ssa_packages(provider, instance, soft_assert):
 
     cmd = package_command.format(package_name)
     output = instance.ssh.run_command(cmd.format(package_name)).output
-    logger.info("{0} output:\n{1}".format(cmd, output))
+    logger.info("%s output:\n%s", cmd, output)
 
     expected = instance.ssh.run_command(package_number_command).output.strip('\n')
 

@@ -38,7 +38,7 @@ def test_group_roles(configure_ldap_auth_mode, group_name, group_data, setup_fir
         username = credentials[group_name]['username']
         password = credentials[group_name]['password']
     except KeyError:
-        pytest.fail('No match in credentials file for group "%s"' % group_name)
+        pytest.fail('No match in credentials file for group "{}"'.format(group_name))
 
     login(simple_user(username, password))
     assert set(menu.visible_pages()) == set(group_data)

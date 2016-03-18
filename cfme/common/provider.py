@@ -129,7 +129,8 @@ class BaseProvider(Taggable, Updateable):
         elif self.key is not None:
             return conf.cfme_data['management_systems'][self.key]
         else:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data', self.name)
+            raise ProviderHasNoKey(
+                'Provider {} has no key, so cannot get yaml data'.format(self.name))
 
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
@@ -142,7 +143,8 @@ class BaseProvider(Taggable, Updateable):
         elif getattr(self, 'provider_data', None):
             return get_mgmt(self.provider_data)
         else:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
+            raise ProviderHasNoKey(
+                'Provider {} has no key, so cannot get mgmt system'.format(self.name))
 
     def _submit(self, cancel, submit_button):
         if cancel:
@@ -341,15 +343,15 @@ class BaseProvider(Taggable, Updateable):
                                            cfme_stat,
                                            min_error=0.05,
                                            low_val_correction=2)
-                logger.info(' Matching stat [{}], Host({}), CFME({}), '
-                    'with tolerance {} is {}'.format(stat, host_stats[stat], cfme_stat,
-                                                     value, success))
+                logger.info(' Matching stat [%s], Host(%s), CFME(%s), '
+                    'with tolerance %s is %s', stat, host_stats[stat], cfme_stat, value, success)
                 if not success:
                     return False
             except KeyError:
-                raise HostStatsNotContains("Host stats information does not contain '%s'" % stat)
+                raise HostStatsNotContains(
+                    "Host stats information does not contain '{}'".format(stat))
             except AttributeError:
-                raise ProviderHasNoProperty("Provider does not know how to get '%s'" % stat)
+                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
         else:
             return True
 
@@ -373,7 +375,7 @@ class BaseProvider(Taggable, Updateable):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
         ensure_browser_open()
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{} (Summary)")]'.format(self.name))
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
@@ -567,8 +569,8 @@ def _fill_credential(form, cred, validate=None):
 
 def cleanup_vm(vm_name, provider):
     try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider.key))
+        logger.info('Cleaning up VM %s on provider %s', vm_name, provider.key)
         provider.mgmt.delete_vm(vm_name)
     except:
         # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider.key))
+        logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)

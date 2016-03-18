@@ -16,7 +16,7 @@ def test_about_links():
     for link_key, link_loc in about.product_assistance.locators.items():
         # If its a dict to be ver-picked and the resulting loc is None
         if isinstance(link_loc, dict) and version.pick(link_loc) is None:
-            logger.info("Skipping link '{}'; not present in this version".format(link_key))
+            logger.info("Skipping link %s; not present in this version", link_key)
             continue
         href = sel.get_attribute(link_loc, 'href')
         try:

@@ -134,7 +134,7 @@ def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
     # nav to requests page happens on successful provision
-    logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],

@@ -77,7 +77,7 @@ def test_ntp_server_check(request):
     request.addfinalizer(clear_ntp_settings)
     orig_date = appliance_date()
     past_date = orig_date - timedelta(days=10)
-    logger.info("dates: orig_date - {}, past_date - {}".format(orig_date, past_date))
+    logger.info("dates: orig_date - %s, past_date - %s", orig_date, past_date)
     status, result = store.current_appliance.ssh_client.run_command(
         "date +%Y%m%d -s \"{}\"".format(past_date.strftime('%Y%m%d')))
     new_date = appliance_date()

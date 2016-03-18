@@ -50,10 +50,10 @@ def test_timezone_setting(set_timezone):
         test_flag: visuals
     """
     locator = version.pick({
-        version.LOWEST: '//div[@id="time"][contains(., "%s")]' % ("HST"),
-        '5.4': '//div[@class="container-fluid"][contains(., "%s")]' % ("HST"),
+        version.LOWEST: '//div[@id="time"][contains(., "{}")]'.format("HST"),
+        '5.4': '//div[@class="container-fluid"][contains(., "{}")]'.format("HST"),
         '5.5': '//label[contains(@class,"control-label") and contains(., "Started On")]'
-               '/../div/p[contains(., "%s")]' % ("HST")
+               '/../div/p[contains(., "{}")]'.format("HST")
     })
 
     if version.current_version() > '5.5':

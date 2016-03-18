@@ -112,7 +112,7 @@ def manage_folder(group, folder=None):
     try:
         yield manager
     except FolderManager._BailOut:
-        logger.info("Discarding editation modifications on {}".format(str(repr(manager))))
+        logger.info("Discarding editation modifications on %s", str(repr(manager)))
         manager.discard()
     except:
         # In case of any exception, nothing will be saved
@@ -142,7 +142,7 @@ def manage_subfolder(group, folder, subfolder):
     try:
         yield report_select
     except FolderManager._BailOut:
-        logger.info("Discarding editation modifications on {}".format(str(repr(manager))))
+        logger.info("Discarding editation modifications on %s", str(repr(manager)))
         manager.discard()
     except:
         # In case of any exception, nothing will be saved

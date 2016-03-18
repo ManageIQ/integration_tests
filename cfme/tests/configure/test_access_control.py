@@ -200,7 +200,7 @@ def test_current_user_login_delete(request):
     request.addfinalizer(user.delete)
     request.addfinalizer(login.login_admin)
     with user:
-        with error.expected("Current EVM User \"%s\" cannot be deleted" % user.name):
+        with error.expected("Current EVM User \"{}\" cannot be deleted".format(user.name)):
             user.delete()
 
 
@@ -481,17 +481,17 @@ def test_permissions(role, allowed_actions, disallowed_actions):
                 try:
                     action_thunk()
                 except Exception:
-                    fails[name] = "%s: %s" % (name, traceback.format_exc())
+                    fails[name] = "{}: {}".format(name, traceback.format_exc())
             for name, action_thunk in disallowed_actions.items():
                 try:
                     with error.expected(Exception):
                         action_thunk()
                 except error.UnexpectedSuccessException:
-                    fails[name] = "%s: %s" % (name, traceback.format_exc())
+                    fails[name] = "{}: {}".format(name, traceback.format_exc())
             if fails:
                 message = ''
                 for failure in fails.values():
-                    message = "%s\n\n%s" % (message, failure)
+                    message = "{}\n\n{}".format(message, failure)
                 raise Exception(message)
     finally:
         login.login_admin()

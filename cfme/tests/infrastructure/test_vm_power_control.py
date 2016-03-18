@@ -58,7 +58,7 @@ def vm_name():
 def test_vm(request, provider, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
     vm = VM.factory(vm_name, provider)
-    logger.info("provider_key: {}".format(provider.key))
+    logger.info("provider_key: %s", provider.key)
 
     def _cleanup():
         vm.delete_from_provider()
@@ -67,10 +67,10 @@ def test_vm(request, provider, vm_name):
     request.addfinalizer(_cleanup)
 
     if not provider.mgmt.does_vm_exist(vm_name):
-        logger.info("deploying {} on provider {}".format(vm_name, provider.key))
+        logger.info("deploying %s on provider %s", vm_name, provider.key)
         vm.create_on_provider(allow_skip="default")
     else:
-        logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider.key))
+        logger.info("recycling deployed vm %s on provider %s", vm_name, provider.key)
     vm.provider.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm

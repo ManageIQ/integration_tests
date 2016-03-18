@@ -121,8 +121,8 @@ class Instance(VM):
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper instance details page.
         """
-        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Instance \"%s\"')]" %
-            self.name)
+        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Instance \"{}\"')]".format(
+            self.name))
 
         # If the locator isn't on the page, or if it _is_ on the page and contains
         # 'Timelines' we are on the wrong page and take the appropriate action
@@ -230,7 +230,7 @@ class OpenStackInstance(Instance):
             flash.assert_success_message(
                 "VM Provision Request was Submitted, you will be notified when your VMs are ready")
 
-        row_description = 'Provision from [%s] to [%s]' % (self.template_name, self.name)
+        row_description = 'Provision from [{}] to [{}]'.format(self.template_name, self.name)
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=600, delay=20)
@@ -332,7 +332,7 @@ class EC2Instance(Instance):
             flash.assert_success_message(
                 "VM Provision Request was Submitted, you will be notified when your VMs are ready")
 
-        row_description = 'Provision from [%s] to [%s]' % (self.template_name, self.name)
+        row_description = 'Provision from [{}] to [{}]'.format(self.template_name, self.name)
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=900, delay=20)
@@ -513,8 +513,8 @@ class Image(Template):
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper image details page.
         """
-        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Image \"%s\"')]" %
-            self.name)
+        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Image \"{}\"')]".format(
+            self.name))
 
         # If the locator isn't on the page, or if it _is_ on the page and contains
         # 'Timelines' we are on the wrong page and take the appropriate action

@@ -264,8 +264,8 @@ class Host(Updateable, Pretty):
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the hosts detail page, ``False`` if not."""
-        return sel.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
-                                % self.name)
+        return sel.is_displayed(
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}")]'.format(self.name))
 
     @property
     def exists(self):

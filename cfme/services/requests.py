@@ -178,7 +178,7 @@ def wait_for_request(cells, partial_check=False):
         else:
             # found the row!
             row = results[0]
-            logger.debug(' Request Message: %s' % row.last_message.text)
+            logger.debug(' Request Message: %s', row.last_message.text)
             break
     else:
         # Request not found at all, can't continue
@@ -194,7 +194,7 @@ def debug_requests():
     logger.debug('Outputting current requests')
     for page in paginator.pages():
         for row in fields.request_list.rows():
-            logger.debug(' {}'.format(row))
+            logger.debug(' %s', row)
 
 
 def find_request(cells):
