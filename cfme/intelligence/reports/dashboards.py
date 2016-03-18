@@ -127,8 +127,9 @@ class DefaultDashboard(Updateable, Pretty):
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
-    def reset_widgets(self, cancel=False):
+    @classmethod
+    def reset_widgets(cls, cancel=False):
         sel.force_navigate("dashboard")
-        sel.click(self.reset_button, wait_ajax=False)
+        sel.click(cls.reset_button, wait_ajax=False)
         sel.handle_alert(cancel)
         flash.assert_no_errors()

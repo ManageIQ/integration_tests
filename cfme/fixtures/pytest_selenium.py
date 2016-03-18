@@ -589,7 +589,7 @@ def drag_and_drop(source_element, dest_element):
         wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
             handy to not do that. (some toolbar clicks)
     """
-    ActionChains(browser()).drag_and_drop(dest_element, source_element).perform()
+    ActionChains(browser()).drag_and_drop(source_element, dest_element).perform()
 
 
 def drag_and_drop_by_offset(source_element, x=0, y=0):
