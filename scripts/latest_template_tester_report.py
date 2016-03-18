@@ -113,6 +113,8 @@ def all_images_uploaded(stream):
         return False
     if 'template_vsphere' not in images_uploaded(stream):
         return False
+    if 'template_scvmm' not in images_uploaded(stream):
+        return False
     return True
 
 
@@ -136,6 +138,9 @@ def templates_uploaded_on_providers(api, stream):
                 return False
         if 'template_vsphere' in images_uploaded(stream):
             if not filter(lambda x: 'vsphere' in x, temp['providers']):
+                return False
+        if 'template_scvmm' in images_uploaded(stream):
+            if not filter(lambda x: 'scvmm' in x, temp['providers']):
                 return False
     return True
 
@@ -239,6 +244,27 @@ def generate_html_report(api, stream, filename, appliance_template):
                           'vmware providers yet')
                     report.write('\nMISSING: VIRTUALCENTER template is not available on any '
                                  'vmware providers yet')
+
+                if 'template_scvmm' not in images_uploaded(stream):
+                    print('\nMISSING: Image for SCVMM in latest directory')
+                    report.write('\nMISSING: Image for SCVMM in latest directory')
+                elif filter(lambda x: 'scvmm' in x, stream_data['passed_on_providers']):
+                    report.write('\n\nPASSED: {}'.format(
+                        images_uploaded(stream)['template_scvmm']))
+                    map(lambda(x): report.write(
+                        '\n{}: Passed'.format(x)) if 'scvmm' in x else '',
+                        stream_data['passed_on_providers'])
+                elif filter(lambda x: 'scvmm' in x, stream_data['failed_on_providers']):
+                    report.write('\n\nFAILED: {}'.format(
+                        images_uploaded(stream)['template_scvmm']))
+                    map(lambda(x): report.write(
+                        '\n{}: Failed'.format(x)) if 'scvmm' in x else '',
+                        stream_data['failed_on_providers'])
+                else:
+                    print('\nMISSING: SCVMM template is not available on any '
+                          'scvmm providers yet')
+                    report.write('\nMISSING: SCVMM template is not available on any '
+                                 'scvmm providers yet')
         print("template_tester_results report generated")
     else:
         print("No Templates tested on: {}".format(datetime.datetime.now()))
