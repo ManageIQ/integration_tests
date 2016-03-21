@@ -201,6 +201,9 @@ class CatalogItem(Updateable, Pretty):
         self.provisioning_data = prov_data
         self.domain = domain
 
+    def __str__(self):
+        return self.name
+
     def create(self):
         sel.force_navigate('catalog_item_new',
                            context={'provider_type': self.item_type})
@@ -302,14 +305,17 @@ class CatalogBundle(Updateable, Pretty):
         self.catalog = catalog
         self.dialog = dialog
 
+    def __str__(self):
+        return self.name
+
     def create(self, cat_items):
         sel.force_navigate('catalog_bundle_new')
         domain = "ManageIQ (Locked)"
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
-                               'select_catalog': self.catalog,
-                               'select_dialog': self.dialog})
+                               'select_catalog': str(self.catalog),
+                               'select_dialog': str(self.dialog)})
         if current_version().is_in_series("5.3"):
             sel.click(basic_info_form.field_entry_point)
             dynamic_tree.click_path("Datastore", domain, "Service", "Provisioning",
