@@ -16,7 +16,7 @@ Setup
 * clone/check out the cfme_tests repository
 * prepare your systemand a working virtualenv
 
-  we provide the script under :raw:`../scripts/quickstart.sh`
+  we provide the script under :code:`../scripts/quickstart.sh`
 
 
   .. literal-include: ../scripts/quickstart.sh
