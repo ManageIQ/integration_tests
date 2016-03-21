@@ -6,6 +6,7 @@ import pytest
 from cfme import Credential
 from cfme.configure.access_control import User, Group
 from cfme.login import login
+from cfme.rest import vm as _vm
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 from utils import testgen, conf, version
@@ -54,6 +55,11 @@ def test_edit_user_password(rest_api, user):
     login(new_user)
 
 
+@pytest.fixture(scope="fixture")
+def vm(request, a_provider, rest_api):
+    return _vm(request, a_provider, rest_api)
+
+
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
@@ -68,7 +74,7 @@ def test_vm_scan(rest_api, vm, from_detail):
     def _finished():
         response.task.reload()
         if response.task.status.lower() in {"error"}:
-            pytest.fail("Error when running report: `{}`".format(response.task.message))
+            pytest.fail("Error when running scan vm method: `{}`".format(response.task.message))
         return response.task.state.lower() == 'finished'
 
 
