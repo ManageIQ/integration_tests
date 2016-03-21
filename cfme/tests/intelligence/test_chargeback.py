@@ -7,7 +7,7 @@ from cfme.rest import rates as _rates
 from utils.update import update
 from utils.wait import wait_for
 import utils.error as error
-from utils import version
+
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
@@ -95,7 +95,6 @@ class TestRatesViaREST(object):
     def rates(self, request, rest_api):
         return _rates(request, rest_api)
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     @pytest.mark.parametrize(
         "multiple", [False, True],
         ids=["one_request", "multiple_requests"])
@@ -128,7 +127,6 @@ class TestRatesViaREST(object):
                 delay=10,
             )
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     @pytest.mark.parametrize(
         "multiple", [False, True],
         ids=["one_request", "multiple_requests"])
