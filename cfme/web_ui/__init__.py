@@ -713,7 +713,7 @@ class SortTable(Table):
     @property
     def _sort_by_cell(self):
         try:
-            return sel.element("./th/a/img[contains(@src, 'sort')]/..", root=self.header_row)
+            return sel.element("./th[contains(@class, 'sorting_')]", root=self.header_row)
         except NoSuchElementException:
             return None
 
@@ -736,28 +736,13 @@ class SortTable(Table):
         if cell is None:
             return None
 
-        def _downstream():
-            src = sel.get_attribute(sel.element("./img", root=cell), "src")
-            if "sort_up" in src:
-                return "ascending"
-            elif "sort_down" in src:
-                return "descending"
-            else:
-                return None
-
-        def _upstream():
-            cls = sel.get_attribute(cell, "class")
-            if "sorting_asc" in cls:
-                return "ascending"
-            elif "sorting_desc" in cls:
-                return "descending"
-            else:
-                return None
-
-        return version.pick({
-            "default": _downstream,
-            "5.3.0.0": _upstream
-        })()
+        cls = sel.get_attribute(cell, "class")
+        if "sorting_asc" in cls:
+            return "ascending"
+        elif "sorting_desc" in cls:
+            return "descending"
+        else:
+            return None
 
     def click_header_cell(self, text):
         """Clicks on the header to change sorting conditions.
@@ -778,11 +763,16 @@ class SortTable(Table):
         if header != self.sorted_by:
             # Change column to order by
             self.click_header_cell(header)
-            assert self.sorted_by == header, "Detected malfunction in table ordering"
+            if self.sorted_by != header:
+                raise Exception(
+                    "Detected malfunction in table ordering (wanted {}, got {})".format(
+                        header, self.sorted_by))
         if order != self.sort_order:
             # Change direction
             self.click_header_cell(header)
-            assert self.sort_order == order, "Detected malfunction in table ordering"
+            if self.sort_order != order:
+                raise Exception("Detected malfunction in table ordering (wanted {}, got {})".format(
+                    order, self.sort_order))
 
 
 class CheckboxTable(Table):
