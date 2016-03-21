@@ -248,7 +248,7 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
     except Exception as e:
         requests.debug_requests()
         raise e
-    assert row.last_message.text == version.pick('Vm Provisioned Successfully')
+    assert row.last_message.text == 'Vm Provisioned Successfully'
 
     if smtp_test:
         # Wait for e-mails to appear
