@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Core functionality for starting, restarting, and stopping a selenium browser."""
 import atexit
 import json
@@ -26,7 +27,6 @@ if 'thread_locals' not in globals():
     # New threads get their own browser instances
     thread_locals = threading.local()
     thread_locals.browser = None
-    thread_locals.wharf = None
 
 
 #: After starting a firefox browser, this will be set to the temporary
@@ -48,7 +48,10 @@ def browser():
 
 
 def wharf():
-    return thread_locals.wharf
+    if thread_locals.browser is not None:
+        return thread_locals.browser.wharf
+    else:
+        return None
 
 
 def ensure_browser_open():
@@ -72,8 +75,8 @@ def ensure_browser_open():
     except:
         # If we couldn't poke the browser for any other reason, start a new one
         start()
-    if thread_locals.wharf:
-        thread_locals.wharf.renew()
+    if thread_locals.browser.wharf:
+        thread_locals.browser.wharf.renew()
     return browser()
 
 
@@ -93,6 +96,11 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         quit()
 
     browser_conf = conf.env.get('browser', {})
+    # Reuse Wharf instance if present
+    if thread_locals.browser is not None and thread_locals.browser.wharf is not None:
+        wharf = thread_locals.browser.wharf
+    else:
+        wharf = None
 
     if webdriver_name is None:
         # If unset, look to the config for the webdriver type
@@ -120,13 +128,12 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         # desired_capabilities is only for Remote driver, but can sneak in
         del(browser_kwargs['desired_capabilities'])
 
-    if webdriver_name == 'Remote' and 'webdriver_wharf' in browser_conf and not thread_locals.wharf:
+    if webdriver_name == 'Remote' and 'webdriver_wharf' in browser_conf and wharf is None:
         # Configured to use wharf, but it isn't configured yet; check out a webdriver container
         wharf = Wharf(browser_conf['webdriver_wharf'])
         # TODO: Error handling! :D
         wharf.checkout()
         atexit.register(wharf.checkin)
-        thread_locals.wharf = wharf
 
         if browser_kwargs['desired_capabilities']['browserName'] == 'chrome':
             # chrome uses containers to sandbox the browser, and we use containers to
@@ -139,12 +146,14 @@ def start(webdriver_name=None, base_url=None, **kwargs):
                 co['args'].append(arg)
             browser_kwargs['desired_capabilities']['chromeOptions'] = co
 
-    if thread_locals.wharf:
+    # Wharf is None by default. When you have wharf configured in env.yaml and create a new browser
+    # it should not be one. The same case is when Wharf was already created, then it reuses it.
+    if wharf is not None:
         # Wharf is configured, make sure to use its command_executor
-        wharf_config = thread_locals.wharf.config
+        wharf_config = wharf.config
         browser_kwargs['command_executor'] = wharf_config['webdriver_url']
-        view_msg = 'tests can be viewed via vnc on display %s' % wharf_config['vnc_display']
-        logger.info('webdriver command executor set to %s' % wharf_config['webdriver_url'])
+        view_msg = 'tests can be viewed via vnc on display {}'.format(wharf_config['vnc_display'])
+        logger.info('webdriver command executor set to {}'.format(wharf_config['webdriver_url']))
         logger.info(view_msg)
         write_line(view_msg, cyan=True)
 
@@ -153,18 +162,19 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         browser.file_detector = UselessFileDetector()
         browser.maximize_window()
         browser.get(base_url)
+        browser.wharf = wharf
         thread_locals.browser = browser
     except urllib2.URLError as ex:
         # connection to selenium was refused for unknown reasons
-        if thread_locals.wharf:
+        if wharf is not None:
             # If we're running wharf, try again with a new container
             logger.error('URLError connecting to selenium; recycling container. URLError:')
             # Plus, since this is a really weird thing that we need to figure out,
             # throw a message out to the terminal for visibility
             write_line('URLError caused container recycle, see log for details', red=True)
             logger.exception(ex)
-            thread_locals.wharf.checkin()
-            thread_locals.wharf = None
+            wharf.checkin()
+            wharf = None
             start(webdriver_name, base_url, **kwargs)
         else:
             # If we aren't running wharf, raise it
@@ -247,13 +257,13 @@ class Wharf(object):
         self.docker_id = checkout.keys()[0]
         self.config = checkout[self.docker_id]
         self._reset_renewal_timer()
-        logger.info('Checked out webdriver container %s' % self.docker_id)
+        logger.info('Checked out webdriver container {}'.format(self.docker_id))
         return self.docker_id
 
     def checkin(self):
         if self.docker_id:
             requests.get(os.path.join(self.wharf_url, 'checkin', self.docker_id))
-            logger.info('Checked in webdriver container %s' % self.docker_id)
+            logger.info('Checked in webdriver container {}'.format(self.docker_id))
             self.docker_id = None
 
     def renew(self):
@@ -268,7 +278,7 @@ class Wharf(object):
                 raise ValueError("JSON could not be decoded:\n{}".format(response.content))
             self.config.update(expiry_info)
             self._reset_renewal_timer()
-            logger.info('Renewed webdriver container %s' % self.docker_id)
+            logger.info('Renewed webdriver container {}'.format(self.docker_id))
 
     def _reset_renewal_timer(self):
         if self.docker_id:
