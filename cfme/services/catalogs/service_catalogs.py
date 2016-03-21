@@ -56,15 +56,15 @@ class ServiceCatalogs(Updateable, Pretty):
 
     def order(self, catalog, catalog_item):
         sel.force_navigate('order_service_catalog',
-                           context={'catalog': catalog,
-                                    'catalog_item': catalog_item})
+                           context={'catalog': str(catalog),
+                                    'catalog_item': str(catalog_item)})
         sel.click(form_buttons.submit)
         flash.assert_success_message("Order Request was Submitted")
 
     def order_stack_item(self, catalog, catalog_item):
         sel.force_navigate('order_service_catalog',
-                           context={'catalog': catalog,
-                                    'catalog_item': catalog_item})
+                           context={'catalog': str(catalog),
+                                    'catalog_item': str(catalog_item)})
         stack_form.fill(self.stack_data)
         sel.click(form_buttons.submit)
         flash.assert_success_message("Order Request was Submitted")
