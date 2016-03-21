@@ -43,24 +43,24 @@ def make_ssh_client(rhosip, sshname, sshpass):
 
 def make_export(username, password, tenant_id, auth_url):
     export = ['export']
-    export.append("OS_USERNAME=%s" % username)
-    export.append("OS_PASSWORD=%s" % password)
-    export.append("OS_TENANT_ID=%s" % tenant_id)
-    export.append("OS_AUTH_URL=%s" % auth_url)
+    export.append("OS_USERNAME={}".format(username))
+    export.append("OS_PASSWORD={}".format(password))
+    export.append("OS_TENANT_ID={}".format(tenant_id))
+    export.append("OS_AUTH_URL={}".format(auth_url))
     return ' '.join(export)
 
 
 def upload_qc2_file(ssh_client, image_url, template_name, export):
     command = ['glance']
     command.append("image-create")
-    command.append("--copy-from %s" % image_url)
-    command.append("--name %s" % template_name)
+    command.append("--copy-from {}".format(image_url))
+    command.append("--name {}".format(template_name))
     command.append("--is-public true")
     command.append("--container-format bare")
     command.append("--disk-format qcow2")
 
     res_command = ' '.join(command)
-    res = '%s && %s' % (export, res_command)
+    res = '{} && {}'.format(export, res_command)
     exit_status, output = ssh_client.run_command(res)
 
     if exit_status != 0:
@@ -87,11 +87,11 @@ def get_image_status(glance_output):
 
 def check_image_status(image_id, export, ssh_client):
     command = ['glance']
-    command.append('image-show %s' % image_id)
+    command.append('image-show {}'.format(image_id))
 
     res = ' '.join(command)
 
-    exit_status, output = ssh_client.run_command('%s && %s' % (export, res))
+    exit_status, output = ssh_client.run_command('{} && {}'.format(export, res))
 
     if exit_status != 0:
         print("RHOS: There was an error while checking status of image.")
@@ -107,10 +107,10 @@ def check_image_exists(image_name, export, ssh_client):
     command = ['glance']
     command.append('image-list')
     command.append('|')
-    command.append('grep %s' % image_name)
+    command.append('grep {}'.format(image_name))
 
     res_command = ' '.join(command)
-    res = '%s && %s' % (export, res_command)
+    res = '{} && {}'.format(export, res_command)
     exit_status, output = ssh_client.run_command(res)
 
     if output:

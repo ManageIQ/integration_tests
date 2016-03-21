@@ -23,9 +23,9 @@ from utils.wait import wait_for
 
 
 # temporary vm name (this vm will be deleted)
-TEMP_VM_NAME = 'auto-vm-%s' % fauxfactory.gen_alphanumeric(8)
+TEMP_VM_NAME = 'auto-vm-{}'.format(fauxfactory.gen_alphanumeric(8))
 # temporary template name (this template will be deleted)
-TEMP_TMP_NAME = 'auto-tmp-%s' % fauxfactory.gen_alphanumeric(8)
+TEMP_TMP_NAME = 'auto-tmp-{}'.format(fauxfactory.gen_alphanumeric(8))
 
 
 def parse_cmd_line():
@@ -105,7 +105,7 @@ def download_ova(ssh_client, ovaurl):
         ssh_client: :py:class:`utils.ssh.SSHClient` instance
         ovaurl: URL of ova file
     """
-    command = 'curl -O %s' % ovaurl
+    command = 'curl -O {}'.format(ovaurl)
     exit_status, output = ssh_client.run_command(command)
     if exit_status != 0:
         print("RHEVM: There was an error while downloading ova file:")
@@ -129,15 +129,9 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_cli
         print("RHEVM: Warning: found another template with this name.")
         print("RHEVM: Skipping this step. Attempting to continue...")
         return
-    command = ['rhevm-image-uploader']
-    command.append("-u %s" % username)
-    command.append("-p %s" % password)
-    command.append("-r %s:443" % rhevip)
-    command.append("-N %s" % TEMP_TMP_NAME)
-    command.append("-e %s" % edomain)
-    command.append("upload %s" % ovaname)
-    command.append("-m --insecure")
-    exit_status, output = ssh_client.run_command(' '.join(command))
+    command = 'rhevm-image-uploader -u {} -p {} -r {} -N {} -e {} upload {} -m --insecure'.format(
+        username, password, rhevip, TEMP_TMP_NAME, edomain, ovaname)
+    exit_status, output = ssh_client.run_command(command)
     if exit_status != 0:
         print("RHEVM: There was an error while making template from ova file:")
         print(output)
@@ -327,7 +321,7 @@ def cleanup(api, edomain, ssh_client, ovaname):
     """
     try:
         print "RHEVM: Deleting the  .ova file..."
-        command = 'rm %s' % ovaname
+        command = 'rm {}'.format(ovaname)
         exit_status, output = ssh_client.run_command(command)
 
         print "RHEVM: Deleting the temp_vm on sdomain..."
@@ -505,7 +499,7 @@ def run(**kwargs):
     sshpass = credentials[ssh_rhevm_creds]['password']
     rhevip = mgmt_sys['ipaddress']
 
-    apiurl = 'https://%s:443/api' % rhevurl
+    apiurl = 'https://{}:443/api'.format(rhevurl)
 
     ssh_client = make_ssh_client(rhevip, sshname, sshpass)
     api = API(url=apiurl, username=username, password=password,

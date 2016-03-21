@@ -76,7 +76,7 @@ def list_providers(allowed_types):
         provider_type = data.get("type", None)
         if provider not in filtered:
             continue
-        assert provider_type is not None, "Provider %s has no type specified!" % provider
+        assert provider_type is not None, "Provider {} has no type specified!".format(provider)
         if provider_type in allowed_types:
             providers.append(provider)
     return providers
@@ -304,7 +304,7 @@ def setup_provider(provider_key, validate=True, check_existing=True):
         # pass so we don't skip the validate step
         pass
     else:
-        logger.info('Setting up provider: %s' % provider.key)
+        logger.info('Setting up provider: %s', provider.key)
         provider.create(validate_credentials=True)
 
     if validate:
@@ -392,7 +392,7 @@ def _setup_providers(prov_class, validate, check_existing):
             quad = Quadicon(provider_name, options_map[prov_class]['quad'])
             for page in paginator.pages():
                 if sel.is_displayed(quad):
-                    logger.debug('Provider "%s" exists, skipping' % provider_key)
+                    logger.debug('Provider %s exists, skipping', provider_key)
                     break
             else:
                 add_providers.append(provider_key)
@@ -401,7 +401,7 @@ def _setup_providers(prov_class, validate, check_existing):
         add_providers = options_map[prov_class]['list']()
 
     if add_providers:
-        logger.info('Providers to be added: %s' % ', '.join(add_providers))
+        logger.info('Providers to be added: %s', ', '.join(add_providers))
 
     # Save the provider objects for validation and return
     added_providers = []
@@ -704,4 +704,4 @@ class UnknownProvider(Exception):
         self.provider_key = provider_key
 
     def __str__(self):
-        return ('Unknown provider: "%s"' % self.provider_key)
+        return ('Unknown provider: "{}"'.format(self.provider_key))

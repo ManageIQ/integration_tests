@@ -28,10 +28,10 @@ def analyze_page_stat(pages, soft_assert):
         if page.completedintime > perf_tests['ui']['threshold']['page_render']:
             soft_assert(False, 'Render Time Threshold ({} ms) exceeded: {}'.format(
                 perf_tests['ui']['threshold']['page_render'], page))
-            logger.warning('Slow Render, Slow Query(>{}ms) Count: {}'.format(
-                perf_tests['ui']['threshold']['query_time'], len(page.slowselects)))
+            logger.warning('Slow Render, Slow Query(>%sms) Count: %s',
+                perf_tests['ui']['threshold']['query_time'], len(page.slowselects))
             for slow in page.slowselects:
-                logger.warning('Slow Query Log Line: {}'.format(slow))
+                logger.warning('Slow Query Log Line: %s', slow)
         if page.seleniumtime > perf_tests['ui']['threshold']['selenium']:
             soft_assert(False, 'Selenium Transaction Time Threshold ({} ms) exceeded: {}'.format(
                 perf_tests['ui']['threshold']['selenium'], page))
@@ -70,9 +70,9 @@ def navigate_accordions(accordions, page_name, ui_bench_pg_limit, ui_worker_pid,
         pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, accordion.click,
             acc_tree), soft_assert))
 
-        logger.info('Starting to read tree: {}'.format(acc_tree))
+        logger.info('Starting to read tree: %s', acc_tree)
         tree_contents, sel_time = perf_bench_read_tree(accordion.tree(acc_tree))
-        logger.info('{} tree read in {}ms'.format(acc_tree, sel_time))
+        logger.info('%s tree read in %sms', acc_tree, sel_time)
 
         pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, False, None),
             soft_assert))
@@ -85,9 +85,9 @@ def navigate_accordions(accordions, page_name, ui_bench_pg_limit, ui_worker_pid,
 
         paths = []
         generate_tree_paths(tree_contents, [], paths)
-        logger.info('Found {} tree paths'.format(len(paths)))
+        logger.info('Found %s tree paths', len(paths))
         for path in paths:
-            logger.info('Navigating to: {}, {}'.format(acc_tree, path[-1]))
+            logger.info('Navigating to: %s, %s', acc_tree, path[-1])
             try:
                 pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True,
                     accordion.tree(acc_tree).click_path, *path), soft_assert))
@@ -99,10 +99,10 @@ def navigate_accordions(accordions, page_name, ui_bench_pg_limit, ui_worker_pid,
                     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, False,
                         sel.force_navigate, page_name), soft_assert))
             except CandidateNotFound:
-                logger.info('Could not navigate to: {}'.format(path[-1]))
+                logger.info('Could not navigate to: %s', path[-1])
             except UnexpectedAlertPresentException:
-                logger.warning('UnexpectedAlertPresentException - page_name: {}, accordion: {},'
-                    ' path: {}'.format(page_name, acc_tree, path[-1]))
+                logger.warning('UnexpectedAlertPresentException - page_name: %s, accordion: %s,'
+                    ' path: %s', page_name, acc_tree, path[-1])
                 browser().switch_to_alert().dismiss()
             if not nav_limit == 0 and count >= nav_limit:
                 break
@@ -139,14 +139,14 @@ def navigate_quadicons(q_names, q_type, page_name, nav_limit, ui_worker_pid, pro
                                         'Show tree of all VMs by Resource Pool in this Cluster',
                                         'Show host drift history', 'Show VMs']
                                     if any_in(dnn, links[link].title):
-                                        logger.debug('DNN Skipping: {}'.format(links[link].title))
+                                        logger.debug('DNN Skipping: %s', links[link].title)
                                     else:
                                         pages.extend(analyze_page_stat(perf_click(ui_worker_pid,
                                             prod_tail, True, links[link].click), soft_assert))
 
                         except NoSuchElementException:
-                            logger.warning('NoSuchElementException - page_name:{}, Quadicon:{},'
-                                ' topbar:{}'.format(page_name, q, topbar))
+                            logger.warning('NoSuchElementException - page_name:%s, Quadicon:%s,'
+                                ' topbar:%s', page_name, q, topbar)
                             soft_assert(False, 'NoSuchElementException - page_name:{}, Quadicon:{},'
                                 ' topbar:{}'.format(page_name, q, topbar))
                             break
@@ -176,13 +176,13 @@ def navigate_split_table(table, page_name, nav_limit, ui_worker_pid, prod_tail, 
         rows = table.rows()
         for row in rows:
             item_names.append(row.columns[2].text)
-    logger.info('Discovered {} Split Table items.'.format(len(item_names)))
+    logger.info('Discovered %d Split Table items.', len(item_names))
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         page_name), soft_assert))
 
     for item_name in item_names:
-        logger.info('Navigating to Split Table Item: {}'.format(item_name))
+        logger.info('Navigating to Split Table Item: %s'. item_name)
         page_found = False
         for page in paginator.pages():
             cell_found = table.find_cell('name', item_name)
@@ -195,8 +195,8 @@ def navigate_split_table(table, page_name, nav_limit, ui_worker_pid, prod_tail, 
                     sel.force_navigate, page_name), soft_assert))
                 break
         if not page_found:
-            logger.error('Split Table Page was never found: page_name: {}, item: {}'.format(
-                page_name, item_name))
+            logger.error('Split Table Page was never found: page_name: %s, item: %s',
+                page_name, item_name)
         # If nav_limit == 0 every item is navigated to
         if not nav_limit == 0 and count >= nav_limit:
             break
@@ -267,11 +267,11 @@ def pages_to_statistics_csv(pages, filters, report_file_name):
 
     csvdata_path = log_path.join('csv_output', report_file_name)
     if csvdata_path.isfile():
-        logger.info('Appending to: {}'.format(report_file_name))
+        logger.info('Appending to: %s', report_file_name)
         outputfile = csvdata_path.open('a', ensure=True)
         appending = True
     else:
-        logger.info('Writing to: {}'.format(report_file_name))
+        logger.info('Writing to: %s', report_file_name)
         outputfile = csvdata_path.open('w', ensure=True)
         appending = False
 
@@ -290,12 +290,12 @@ def pages_to_statistics_csv(pages, filters, report_file_name):
         # Contents of CSV
         for page_statistics in all_statistics:
             if len(page_statistics.completedintimes) > 1:
-                logger.debug('Samples/Avg/90th/Std: {} : {} : {} : {} Pattern: {}'.format(
+                logger.debug('Samples/Avg/90th/Std: %s : %s : %s : %s Pattern: %s',
                     str(len(page_statistics.completedintimes)).rjust(7),
                     str(round(numpy.average(page_statistics.completedintimes), 2)).rjust(7),
                     str(round(numpy.percentile(page_statistics.completedintimes, 90), 2)).rjust(7),
                     str(round(numpy.std(page_statistics.completedintimes), 2)).rjust(7),
-                    page_statistics.request))
+                    page_statistics.request)
             stats = [page_statistics.request]
             stats.extend(generate_statistics(page_statistics.seleniumtimes))
             stats.extend(generate_statistics(page_statistics.completedintimes))
@@ -308,7 +308,7 @@ def pages_to_statistics_csv(pages, filters, report_file_name):
     finally:
         outputfile.close()
 
-    logger.debug('Size of Aggregated list of pages: {}'.format(len(all_statistics)))
+    logger.debug('Size of Aggregated list of pages: %d', len(all_statistics))
 
 
 def perf_bench_read_tree(tree):
@@ -375,7 +375,7 @@ def perf_click(uiworker_pid, tailer, measure_sel_time, clickable, *args):
         if measure_sel_time:
             pgstats[-1].seleniumtime = seleniumtime
     timediff = time() - starttime
-    logger.debug('Parsed ({}) lines in {}'.format(line_count, timediff))
+    logger.debug('Parsed (%s) lines in %s', line_count, timediff)
     return pgstats
 
 

@@ -164,10 +164,9 @@ class Bugzilla(object):
                     filtered.add(variant)
                 else:
                     logger.info(
-                        "Ignoring bug #{}, appliance version not in bug release flag"
-                        .format(variant.id))
+                        "Ignoring bug #%s, appliance version not in bug release flag", variant.id)
             else:
-                logger.info("No release flags, wrong versions, ignoring {}".format(variant.id))
+                logger.info("No release flags, wrong versions, ignoring %s", variant.id)
         if not filtered:
             # No appropriate bug was found
             for forced_stream in force_block_streams:

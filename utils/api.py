@@ -57,7 +57,7 @@ class API(object):
             return result
 
     def get(self, url, **get_params):
-        logger.info("[RESTAPI] GET {} {}".format(url, repr(get_params)))
+        logger.info("[RESTAPI] GET %s %s", url, repr(get_params))
         data = requests.get(url, auth=self._auth, params=get_params, verify=False)
         try:
             data = data.json()
@@ -66,9 +66,9 @@ class API(object):
         return self._result_processor(data)
 
     def post(self, url, **payload):
-        logger.info("[RESTAPI] POST {} {}".format(url, repr(payload)))
+        logger.info("[RESTAPI] POST %s %s", url, repr(payload))
         data = requests.post(url, auth=self._auth, data=json.dumps(payload), verify=False)
-        logger.info("[RESTAPI] RESPONSE {}".format(data))
+        logger.info("[RESTAPI] RESPONSE %s", data)
         try:
             data = data.json()
         except simplejson.scanner.JSONDecodeError:
@@ -79,9 +79,9 @@ class API(object):
         return self._result_processor(data)
 
     def delete(self, url, **payload):
-        logger.info("[RESTAPI] DELETE {} {}".format(url, repr(payload)))
+        logger.info("[RESTAPI] DELETE %s %s", url, repr(payload))
         data = requests.delete(url, auth=self._auth, data=json.dumps(payload), verify=False)
-        logger.info("[RESTAPI] RESPONSE {}".format(data))
+        logger.info("[RESTAPI] RESPONSE %s", data)
         try:
             data = data.json()
         except simplejson.scanner.JSONDecodeError:

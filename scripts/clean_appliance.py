@@ -54,7 +54,7 @@ def main():
         # SSHClient has the smarts to get our hostname if none was provided
         # Soon, utils.appliance.Appliance will be able to do all of this
         # and this will be made good
-        'http://%s' % client._connect_kwargs['hostname']
+        'http://{}'.format(client._connect_kwargs['hostname'])
     ]
     return subprocess.call(args)
 

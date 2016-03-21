@@ -97,7 +97,7 @@ class SSHClient(paramiko.SSHClient):
     def _progress_callback(self, filename, size, sent):
         sent_percent = (sent * 100.) / size
         if sent_percent > 0:
-            logger.debug('{} scp progress: {:.2f}% '.format(filename, sent_percent))
+            logger.debug('%s scp progress: %f% ', filename, sent_percent)
 
     def close(self):
         with diaper:
@@ -135,9 +135,9 @@ class SSHClient(paramiko.SSHClient):
     def run_command(self, command, timeout=RUNCMD_TIMEOUT):
         if isinstance(command, dict):
             command = version.pick(command)
-        logger.info("Running command `{}`".format(command))
-        template = '%s\n'
-        command = template % command
+        logger.info("Running command `%s`", command)
+        template = '{}\n'
+        command = template.format(command)
 
         output = ''
         try:
@@ -167,9 +167,9 @@ class SSHClient(paramiko.SSHClient):
         except paramiko.SSHException as exc:
             logger.exception(exc)
         except socket.timeout as e:
-            logger.error("Command `{}` timed out.".format(command))
+            logger.error("Command `%s` timed out.", command)
             logger.exception(e)
-            logger.error("Output of the command before it failed was:\n{}".format(output))
+            logger.error("Output of the command before it failed was:\n%s", output)
             raise
 
         # Returning two things so tuple unpacking the return works even if the ssh client fails
@@ -191,22 +191,22 @@ class SSHClient(paramiko.SSHClient):
             "do :; done & done".format(seconds, cpus), **kwargs)
 
     def run_rails_command(self, command, timeout=RUNCMD_TIMEOUT):
-        logger.info("Running rails command `{}`".format(command))
+        logger.info("Running rails command `%s`", command)
         return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {}'.format(command),
             timeout=timeout)
 
     def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT):
-        logger.info("Running rake command `{}`".format(command))
+        logger.info("Running rake command `%s`", command)
         return self.run_command('cd /var/www/miq/vmdb; bin/rake {}'.format(command),
             timeout=timeout)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
-        logger.info("Transferring local file {} to remote {}".format(local_file, remote_file))
+        logger.info("Transferring local file %s to remote %s", local_file, remote_file)
         return SCPClient(self.get_transport(), progress=self._progress_callback).put(
             local_file, remote_file, **kwargs)
 
     def get_file(self, remote_file, local_path='', **kwargs):
-        logger.info("Transferring remote file {} to local {}".format(remote_file, local_path))
+        logger.info("Transferring remote file %s to local %s", remote_file, local_path)
         return SCPClient(self.get_transport(), progress=self._progress_callback).get(
             remote_file, local_path, **kwargs)
 

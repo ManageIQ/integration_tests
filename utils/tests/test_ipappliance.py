@@ -10,12 +10,12 @@ def test_ipappliance_from_address():
     address = '1.2.3.4'
     ip_a = IPAppliance(address)
     assert ip_a.address == address
-    assert ip_a.url == 'https://%s/' % address
+    assert ip_a.url == 'https://{}/'.format(address)
 
 
 def test_ipappliance_from_url():
     address = '1.2.3.4'
-    url = 'http://%s/' % address
+    url = 'http://{}/'.format(address)
     ip_a = IPAppliance.from_url(url)
     assert ip_a.url == url
     assert ip_a.address == address

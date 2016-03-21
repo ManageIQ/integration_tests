@@ -23,7 +23,7 @@ def setup_host_creds(provider_key, host_name, ignore_errors=False):
         host_data = get_host_data_by_name(provider_key, host_name)
         test_host = host.Host(name=host_name)
         if not test_host.has_valid_credentials:
-            logger.info("Setting up creds for host:" + host_name)
+            logger.info("Setting up creds for host: %s", host_name)
 
             # double check ip address (issue around added ipv6 to the test
             #    beds for upcoming support)

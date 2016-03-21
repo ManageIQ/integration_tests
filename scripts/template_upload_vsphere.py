@@ -62,14 +62,14 @@ def check_template_exists(client, name):
 def upload_ova(hostname, username, password, name, datastore,
                cluster, datacenter, url, host, proxy):
     cmd_args = ['ovftool']
-    cmd_args.append("--datastore=%s" % datastore)
-    cmd_args.append("--name=%s" % name)
+    cmd_args.append("--datastore={}".format(datastore))
+    cmd_args.append("--name={}".format(name))
     cmd_args.append("--vCloudTemplate=True")
     cmd_args.append("--overwrite")  # require when failures happen and it retries
     if proxy:
-        cmd_args.append("--proxy=%s" % proxy)
+        cmd_args.append("--proxy={}".format(proxy))
     cmd_args.append(url)
-    cmd_args.append("vi://%s@%s/%s/host/%s" % (username, hostname, datacenter, cluster))
+    cmd_args.append("vi://{}@{}/{}/host/{}".format(username, hostname, datacenter, cluster))
 
     print("VSPHERE: Running OVFTool...")
 
