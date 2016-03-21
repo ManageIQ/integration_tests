@@ -11,11 +11,16 @@ normally be placed in main function, are located in function run(**kwargs).
 
 import argparse
 import sys
+from threading import Lock, Thread
 
+from utils import net, ports
 from utils.conf import cfme_data
 from utils.conf import credentials
+from utils.providers import list_providers
 from utils.ssh import SSHClient
 from utils.wait import wait_for
+
+lock = Lock()
 
 
 def parse_cmd_line():
@@ -50,25 +55,28 @@ def make_export(username, password, tenant_id, auth_url):
     return ' '.join(export)
 
 
-def upload_qc2_file(ssh_client, image_url, template_name, export):
-    command = ['glance']
-    command.append("image-create")
-    command.append("--copy-from {}".format(image_url))
-    command.append("--name {}".format(template_name))
-    command.append("--is-public true")
-    command.append("--container-format bare")
-    command.append("--disk-format qcow2")
+def upload_qc2_file(ssh_client, image_url, template_name, export, provider):
+    try:
+        command = ['glance']
+        command.append("image-create")
+        command.append("--copy-from {}".format(image_url))
+        command.append("--name {}".format(template_name))
+        command.append("--is-public true")
+        command.append("--container-format bare")
+        command.append("--disk-format qcow2")
 
-    res_command = ' '.join(command)
-    res = '{} && {}'.format(export, res_command)
-    exit_status, output = ssh_client.run_command(res)
+        res_command = ' '.join(command)
+        res = '{} && {}'.format(export, res_command)
+        exit_status, output = ssh_client.run_command(res)
 
-    if exit_status != 0:
-        print("RHOS: There was an error while uploading qc2 file.")
-        print(output)
-        sys.exit(127)
-
-    return output
+        if exit_status != 0:
+            print("RHOS:{} There was an error while uploading qc2 file.".format(provider))
+            print(output)
+            return False
+        return output
+    except Exception as e:
+        print(e)
+        return False
 
 
 def get_image_id(glance_output):
@@ -86,36 +94,44 @@ def get_image_status(glance_output):
 
 
 def check_image_status(image_id, export, ssh_client):
-    command = ['glance']
-    command.append('image-show {}'.format(image_id))
+    try:
+        command = ['glance']
+        command.append('image-show {}'.format(image_id))
 
-    res = ' '.join(command)
+        res = ' '.join(command)
 
-    exit_status, output = ssh_client.run_command('{} && {}'.format(export, res))
+        exit_status, output = ssh_client.run_command('{} && {}'.format(export, res))
 
-    if exit_status != 0:
-        print("RHOS: There was an error while checking status of image.")
-        print(output)
-        sys.exit(127)
+        if exit_status != 0:
+            print("RHOS: There was an error while checking status of image.")
+            print(output)
+            return False
 
-    if get_image_status(output) != 'active':
+        if get_image_status(output) != 'active':
+            return False
+        return True
+    except Exception as e:
+        print(e)
         return False
-    return True
 
 
 def check_image_exists(image_name, export, ssh_client):
-    command = ['glance']
-    command.append('image-list')
-    command.append('|')
-    command.append('grep {}'.format(image_name))
+    try:
+        command = ['glance']
+        command.append('image-list')
+        command.append('|')
+        command.append('grep {}'.format(image_name))
 
-    res_command = ' '.join(command)
-    res = '{} && {}'.format(export, res_command)
-    exit_status, output = ssh_client.run_command(res)
+        res_command = ' '.join(command)
+        res = '{} && {}'.format(export, res_command)
+        exit_status, output = ssh_client.run_command(res)
 
-    if output:
-        return True
-    return False
+        if output:
+            return True
+        return False
+    except Exception as e:
+        print(e)
+        return False
 
 
 def make_kwargs(args, **kwargs):
@@ -148,40 +164,81 @@ def make_kwargs(args, **kwargs):
     return kwargs
 
 
-def run(**kwargs):
-    mgmt_sys = cfme_data['management_systems'][kwargs.get('provider')]
-    rhos_credentials = credentials[mgmt_sys['credentials']]
-    default_host_creds = credentials['host_default']
+def make_kwargs_rhos(cfme_data, provider):
+    data = cfme_data['management_systems'][provider]
 
-    username = rhos_credentials['username']
-    password = rhos_credentials['password']
-    auth_url = mgmt_sys['auth_url']
-    rhosip = mgmt_sys['ipaddress']
-    sshname = default_host_creds['username']
-    sshpass = default_host_creds['password']
-
-    print("RHOS: Starting rhos upload...")
-
-    ssh_client = make_ssh_client(rhosip, sshname, sshpass)
-
-    template_name = kwargs.get('template_name', None)
-    if template_name is None:
-        template_name = cfme_data['basic_info']['appliance_template']
-
-    export = make_export(username, password, kwargs.get('tenant_id'), auth_url)
-
-    if not check_image_exists(template_name, export, ssh_client):
-        output = upload_qc2_file(ssh_client, kwargs.get('image_url'), template_name, export)
-
-        image_id = get_image_id(output)
-
-        wait_for(check_image_status, [image_id, export, ssh_client],
-                 fail_condition=False, delay=5, num_sec=300)
+    if data.get('template_upload'):
+        tenant_id = data['template_upload'].get('tenant_id', None)
     else:
-        print("RHOS: Found image with same name. Exiting...")
+        tenant_id = None
 
-    ssh_client.close()
-    print("RHOS: Done.")
+    kwargs = {'provider': provider}
+    if tenant_id:
+        kwargs['tenant_id'] = tenant_id
+    return kwargs
+
+
+def upload_template(rhosip, sshname, sshpass, username, password, auth_url, provider, image_url,
+                    template_name):
+    try:
+        print("RHOS:{} Starting template {} upload...".format(provider, template_name))
+
+        kwargs = make_kwargs_rhos(cfme_data, provider)
+        ssh_client = make_ssh_client(rhosip, sshname, sshpass)
+
+        kwargs['image_url'] = image_url
+        if template_name is None:
+            template_name = cfme_data['basic_info']['appliance_template']
+
+        export = make_export(username, password, kwargs.get('tenant_id'), auth_url)
+
+        if not check_image_exists(template_name, export, ssh_client):
+            output = upload_qc2_file(ssh_client, kwargs.get('image_url'), template_name, export,
+                                     provider)
+
+            image_id = get_image_id(output)
+
+            wait_for(check_image_status, [image_id, export, ssh_client],
+                     fail_condition=False, delay=5, num_sec=300)
+        else:
+            print("RHOS:{} Found image with name {}. Exiting...".format(provider, template_name))
+        ssh_client.close()
+    except Exception as e:
+        print(e)
+        return False
+    finally:
+        print("RHOS:{} End template {} upload...".format(provider, template_name))
+
+
+def run(**kwargs):
+
+    thread_queue = []
+    for provider in list_providers("openstack"):
+        mgmt_sys = cfme_data['management_systems'][provider]
+        rhos_credentials = credentials[mgmt_sys['credentials']]
+        default_host_creds = credentials['host_default']
+
+        username = rhos_credentials['username']
+        password = rhos_credentials['password']
+        auth_url = mgmt_sys['auth_url']
+        rhosip = mgmt_sys['ipaddress']
+        sshname = default_host_creds['username']
+        sshpass = default_host_creds['password']
+        if not net.is_pingable(rhosip):
+            continue
+        if not net.net_check(ports.SSH, rhosip):
+            print("SSH connection to {}:{} failed, port unavailable".format(
+                provider, ports.SSH))
+            continue
+        thread = Thread(target=upload_template,
+                        args=(rhosip, sshname, sshpass, username, password, auth_url, provider,
+                              kwargs.get('image_url'), kwargs.get('template_name')))
+        thread.daemon = True
+        thread_queue.append(thread)
+        thread.start()
+
+    for thread in thread_queue:
+        thread.join()
 
 
 if __name__ == '__main__':

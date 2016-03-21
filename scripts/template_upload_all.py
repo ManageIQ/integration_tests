@@ -283,56 +283,39 @@ if __name__ == "__main__":
             continue
 
         kwargs = {}
+        if provider_type == 'openstack':
+            module = 'template_upload_rhos'
+            if module not in dir_files.iterkeys():
+                continue
+        elif provider_type == 'rhevm':
+            module = 'template_upload_rhevm'
+            if module not in dir_files.iterkeys():
+                continue
+        elif provider_type == 'virtualcenter':
+            module = 'template_upload_vsphere'
+            if module not in dir_files.iterkeys():
+                continue
+        elif provider_type == 'scvmm':
+            module = 'template_upload_scvmm'
+            if module not in dir_files.iterkeys():
+                continue
+        kwargs['image_url'] = dir_files[module]
 
-        for provider in mgmt_sys:
-            if provider_type is not None:
-                if mgmt_sys[provider]['type'] != provider_type:
-                    continue
-                if provider_version is not None:
-                    if str(mgmt_sys[provider]['version']) != str(provider_version):
-                        continue
-            if mgmt_sys[provider].get('template_upload', None):
-                if 'rhevm' in mgmt_sys[provider]['type']:
-                    module = 'template_upload_rhevm'
-                    if module not in dir_files.iterkeys():
-                        continue
-                    kwargs = make_kwargs_rhevm(cfme_data, provider)
-                if 'openstack' in mgmt_sys[provider]['type']:
-                    module = 'template_upload_rhos'
-                    if module not in dir_files.iterkeys():
-                        continue
-                    kwargs = make_kwargs_rhos(cfme_data, provider)
-                if 'scvmm' in mgmt_sys[provider]['type']:
-                    module = 'template_upload_scvmm'
-                    if module not in dir_files.iterkeys():
-                        continue
-                    kwargs = make_kwargs_scvmm(cfme_data, provider)
-                if 'virtualcenter' in mgmt_sys[provider]['type']:
-                    module = 'template_upload_vsphere'
-                    if module not in dir_files.iterkeys():
-                        continue
-                    if provider == "vsphere4":
-                        continue
-                    kwargs = make_kwargs_vsphere(cfme_data, provider)
+        if cfme_data['template_upload']['automatic_name_strategy']:
+            kwargs['template_name'] = template_name(
+                dir_files[module],
+                dir_files[module + "_date"],
+                checksum_url,
+                get_version(url)
+            )
+        print("TEMPLATE_UPLOAD_ALL:-----Start of {} upload on: {}--------".format(
+            kwargs['template_name'], provider_type))
 
-                if kwargs:
-                    kwargs['image_url'] = dir_files[module]
-
-                    if cfme_data['template_upload']['automatic_name_strategy']:
-                        kwargs['template_name'] = template_name(
-                            dir_files[module],
-                            dir_files[module + "_date"],
-                            checksum_url,
-                            get_version(url)
-                        )
-
-                    print("---Start of {}: {}---".format(module, provider))
-
-                    try:
-                        getattr(__import__(module), "run")(**kwargs)
-                    except Exception as woops:
-                        print("Exception: Module '{}' with provider '{}' exited with error.".format(
-                            module, provider))
-                        print(woops)
-
-                    print("---End of {}: {}---".format(module, provider))
+        try:
+            getattr(__import__(module), "run")(**kwargs)
+        except Exception as woops:
+            print("Exception: Module '{}' with provider '{}' exited with error.".format(
+                module, provider_type))
+            print(woops)
+        print("TEMPLATE_UPLOAD_ALL:------End of {} upload on: {}--------".format(
+            kwargs['template_name'], provider_type))
