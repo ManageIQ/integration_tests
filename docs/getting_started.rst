@@ -12,89 +12,18 @@ setup and execution scripts.
 
 Setup
 -----
-You can use this shortcut to install the system and python dependencies which will leave you only
-with the need to copy the yamls and putting the ``.yaml_key`` in place. Copy this to an executable
-file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
 
-.. code-block:: bash
+* clone/check out the cfme_tests repository
+* prepare your systemand a working virtualenv
 
-  #!/usr/bin/env bash
-
-  if hash dnf;
-  then
-    YUM=dnf
-  else
-    YUM=yum
-  fi
-
-  sudo $YUM install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config
-  virtualenv .cfme_tests
-  echo "export PYTHONPATH='`pwd`'" | tee -a ./.cfme_tests/bin/activate
-  echo "export PYTHONDONTWRITEBYTECODE=yes" | tee -a ./.cfme_tests/bin/activate
-
-  . ./.cfme_tests/bin/activate
-  PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt
-  echo "Run '. ./.cfme_tests/bin/activate' to load the virtualenv"
-
-Detailed steps (manual environment setup):
-
-* Create a virtualenv from which to run tests
-
-  * Execute one of the following commands:
-
-    * ``pip install virtualenv``
-    * ``easy_install virtualenv``
-    * ``yum install python-virtualenv``
-
-  * Create a virtualenv: ``virtualenv <name>``
-  * To activate the virtualenv later: ``source <name>/bin/activate``, but do not do it yet, it still
-    needs finishing touches.
-
-* Fork and Clone this repository.
-* Set the ``PYTHONPATH`` to include ``cfme_tests``. Edit your virtualenv's ``bin/activate`` script,
-  created with the virtualenv. At the end of the file, export a PYTHONPATH variable with the path to
-  the repository clone by adding this line (altered to match your repository locations):
-
-  * ``export PYTHONPATH='/path/to/cfme_tests_repo'``
-
-* Also add this line at the end of your virtualenv to prevent .pyc files polluting your folders:
-
-  * ``export PYTHONDONTWRITEBYTECODE="yes"``
-
-* If you forgot to do that and you have ``pyc`` files polluting your folders, this is a cure, placed
-  in ``~/.bashrc`` and usable everywhere:
-
-  .. code-block:: bash
-
-    alias rmpyc='find . -name \*.pyc -delete; find . -name __pycache__ -delete'
-
-  Reload your ``.bashrc`` and issue ``rmpyc`` command.
-
-* Get the shared encryption key (``.yaml_key``) for credentials. Ask in CFME QE.
-* Make sure you set the shared secret for the credentials files encryption. There are two ways:
-
-  * add ``export CFME_TESTS_KEY="our shared key"`` into the activate script
-  * create ``.yaml_key`` file in project root containing the key
+  we provide the script under :raw:`../scripts/quickstart.sh`
 
 
-* Ensure the following devel packages are installed (for building python dependencies):
-
-  * ``gcc``
-  * ``postgresql-devel``
-  * ``libxml2-devel``
-  * ``libxslt-devel``
-  * ``zeromq3-devel``
-  * ``libcurl-devel``
-  * ``redhat-rpm-config`` if you use some kind of really stripped system.
-  * Fedora (possibly RHEL-like systems) users:
-
-    * ``hash dnf 2>/dev/null && { YUM=dnf; } || { YUM=yum; }``
-
-    * ``sudo $YUM install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config``
-
-    * On RHEL and derived systems, it will say the zeromq package is not available but that is ok.
+  .. literal-include: ../scripts/quickstart.sh
+    :language: bash
 
 * Activate the virtual environment:
+* You copy/symlink the required YAML files into ``conf/``
 
 To activate the virtualenv, the ``bin/activate`` script must be sourced. Bear in mind that you
 should have the two options added in the ``bin/activate`` script BEFORE you source it, otherwise it
@@ -106,50 +35,51 @@ will not work.
    `cd /path/to/virtualenv'
    source bin/activate or . bin/activate
 
-* Install python dependencies:
 
-  * ``PYCURL_SSL_LIBRARY=nss pip install -Ur /path/to/virtualenv/cfme_tests/requirements.txt``
-  * If you get error from pycurl and you used this command, you might like to remove pycurl and try
-    installing it again with different SSL library set. The error message should give you an idea
-    what to try. For reinstallation, you will need to use the command mentioned in next bullet.
-  * If you forget to use the ``PYCURL_SSL_LIBRARY`` env variable and you get a pycurl error, you
-    have to run it like this to fix it:
+  * if you have access to team's internal YAML
 
-    * Ensure you have ``libcurl-devel`` installed (this was not a prerequisite before so it can
-      happen)
-    * Run ``PYCURL_SSL_LIBRARY=nss pip install -U -r requirements.txt --no-cache-dir``
+    * ``env``
+    * ``cfme_data``
+    * ``credentials``
 
-* You copy/symlink the required YAML files into ``conf/`` if you have access to team's internal YAML
-  repository. Required YAML files are ``env``, ``cfme_data``, ``credentials``. If the file's
-  extension is ``.yaml`` it is loaded normally, if its extension is ``.eyaml`` then it is encrypted
-  and you need to have the decryption key in the ``cfme_tests/`` directory. You can also start them
-  from scratch by copying the templates in ``conf/`` and editing them to suit the environment you
-  use.
-* Set up a local selenium server that opens browser windows somewhere other than your
-  desktop. There is a Docker based solution for the browser, look at the script
-  ``scripts/dockerbot/sel_container.py``. That ensures you have the proper versions of browsers. You
-  can also set everything up in your system using Xvnc - :doc:`guides/vnc_selenium` .
+  If the file's extension is ``.yaml`` it is loaded normally,
+  if its extension is ``.eyaml`` then it is encrypted and
+  you need to have the decryption key in the ``cfme_tests/`` directory.
+  You can also start them from scratch by copying the templates in ``conf/`` and
+  editing them to suit the environment you use.
+* Set up a local selenium server that opens browser windows
+  somewhere other than your desktop.
+  There is a Docker based solution for the browser,
+  look at the script ``scripts/dockerbot/sel_container.py``.
+  That ensures you have the proper versions of browsers.
+  You can also set everything up in your system using Xvnc_ .
 * Test! Run py.test. (This takes a long time, Ctrl-C will stop it)
 * When py.test ends or you Ctrl-C it, it will look stuck in the phase "collecting artifacts". You
   can either wait about 30 seconds, or you can Ctrl-C it again.
 * In either case, check your processes sometimes, the artifactor process likes to hang when forced
   to quit, but it can also happen when it ends normally, though it is not too common.
 
+.. _Xvnc:: :doc:`guides/vnc_selenium`
+
+
+
 Testing Framework
 -----------------
 
 The testing framework being used is `py.test <http://pytest.org/latest>`_
 
-Execution script
------------------
-An execution script (cfme_test.sh) is provided. This script handles orchestration of
-docker, virtualenv, and cfme_test.
+
+Container Execution script
+--------------------------
+
+An execution script (:raw:`cfme_test_via_docker.sh`) is provided.
+This script handles orchestration of docker, virtualenv, and cfme_test.
 
 .. code-block:: bash
 
    #Bash example:
    cd /path/to/cfme_test
-   ./cfme_test.sh
+   ./cfme_test_via_docker.sh
 
 Navigating within the console:
 
