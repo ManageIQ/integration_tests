@@ -96,7 +96,7 @@ def pytest_generate_tests(metafunc):
                     continue
 
             # Set VM name here
-            vm_name = 'ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), vm_analysis_key)
+            vm_name = 'test_ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), vm_analysis_key)
             vm_analysis_data['vm_name'] = vm_name
 
             new_idlist.append('{}-{}'.format(idlist[i], vm_analysis_key))
