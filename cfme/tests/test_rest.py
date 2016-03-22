@@ -55,7 +55,7 @@ def test_edit_user_password(rest_api, user):
     login(new_user)
 
 
-@pytest.fixture(scope="fixture")
+@pytest.fixture(scope="function")
 def vm(request, a_provider, rest_api):
     return _vm(request, a_provider, rest_api)
 
