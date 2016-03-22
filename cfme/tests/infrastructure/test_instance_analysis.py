@@ -333,7 +333,8 @@ def detect_system_type(vm):
 @pytest.mark.meta(blockers=[
     BZ(1311134, unblock=lambda provider: provider.type != 'rhevm'),
     BZ(1311218, unblock=lambda provider:
-        provider.type != 'virtualcenter' or provider.version < "6")])
+        provider.type != 'virtualcenter' or provider.version < "6"),
+    BZ(1320248, unblock=lambda provider: version.current_version() >= "5.5")])
 def test_ssa_template(request, local_setup_provider, provider, vm_analysis_new, soft_assert):
     """ Tests SSA can be performed on a template
 
