@@ -477,7 +477,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         else:
             action = form_buttons.save
             msg_assert = lambda: flash.assert_success_message(
-                'Ownership saved for selected Virtual Machine')
+                'Ownership saved for selected {}'.format(self.VM_TYPE))
         fill(set_ownership_form, {'user_name': user, 'group_name': group},
              action=action)
         msg_assert()
@@ -487,9 +487,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         # choose the vm code comes here
         sel.click(self.find_quadicon(False, False, False))
         cfg_btn('Set Ownership')
-        fill(set_ownership_form, {'user_name': '<No Owner>', 'group_name': '<No Group>'},
+        fill(set_ownership_form, {'user_name': '<No Owner>',
+            'group_name': 'EvmGroup-administrator'},
             action=form_buttons.save)
-        flash.assert_success_message('Ownership saved for selected Virtual Machine')
+        flash.assert_success_message('Ownership saved for selected {}'.format(self.VM_TYPE))
 
 
 def date_retire_element(fill_data):
