@@ -5,12 +5,12 @@ import fauxfactory
 import pytest
 import cfme.fixtures.pytest_selenium as sel
 
-from cfme.common.vm import VM
+from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
 from cfme.configure import configuration, tasks
 from cfme.configure.configuration import VMAnalysisProfile
 from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
-from cfme.infrastructure import host
+from cfme.infrastructure import host, datastore
 from cfme.provisioning import do_vm_provisioning
 from cfme.web_ui import InfoBlock, tabstrip as tabs, toolbar as tb
 from fixtures.pytest_store import store
@@ -18,7 +18,7 @@ from utils import testgen, ssh, safe_string, version
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
-from utils.blockers import GH
+from utils.blockers import GH, BZ
 
 pytestmark = [pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:6939"],
                                unblock=lambda provider: provider.type != 'rhevm')]
@@ -327,6 +327,77 @@ def detect_system_type(vm):
                 return x
     else:
         return WINDOWS
+
+
+@pytest.mark.long_running
+@pytest.mark.meta(blockers=[
+    BZ(1311134, unblock=lambda provider: provider.type != 'rhevm'),
+    BZ(1311218, unblock=lambda provider:
+        provider.type != 'virtualcenter' or provider.version < "6")])
+def test_ssa_template(request, local_setup_provider, provider, vm_analysis_new, soft_assert):
+    """ Tests SSA can be performed on a template
+
+    Metadata:
+        test_flag: vm_analysis
+    """
+    template_name = vm_analysis_new['image']
+    template = Template.factory(template_name, provider, template=True)
+
+    # Set credentials to all hosts set for this datastore
+    datastore_name = vm_analysis_new['datastore']
+    test_datastore = datastore.Datastore(datastore_name, provider.key)
+    host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
+    host_names = test_datastore.get_hosts()
+    for host_name in host_names:
+        test_host = host.Host(name=host_name)
+        hosts_data = [x for x in host_list if x.name == host_name]
+        if len(hosts_data) > 0:
+            host_data = hosts_data[0]
+
+            if not test_host.has_valid_credentials:
+                creds = host.get_credentials_from_config(host_data['credentials'])
+                test_host.update(
+                    updates={'credentials': creds},
+                    validate_credentials=True
+                )
+
+    template.smartstate_scan()
+    wait_for(lambda: is_vm_analysis_finished(template_name),
+             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+
+    # Check release and quadricon
+    quadicon_os_icon = template.find_quadicon().os
+    details_os_icon = template.get_detail(
+        properties=('Properties', 'Operating System'), icon_href=True)
+    logger.info("Icons: {}, {}".format(details_os_icon, quadicon_os_icon))
+
+    # We shouldn't use get_detail anymore - it takes too much time
+    c_users = InfoBlock.text('Security', 'Users')
+    c_groups = InfoBlock.text('Security', 'Groups')
+    c_packages = 0
+    if vm_analysis_new['fs-type'] not in ['ntfs', 'fat32']:
+        c_packages = InfoBlock.text('Configuration', 'Packages')
+
+    logger.info("SSA shows {} users, {} groups and {} packages".format(
+        c_users, c_groups, c_packages))
+
+    if vm_analysis_new['fs-type'] not in ['ntfs', 'fat32']:
+        soft_assert(c_users != '0', "users: '{}' != '0'".format(c_users))
+        soft_assert(c_groups != '0', "groups: '{}' != '0'".format(c_groups))
+        soft_assert(c_packages != '0', "packages: '{}' != '0'".format(c_packages))
+    else:
+        # Make sure windows-specific data is not empty
+        c_patches = InfoBlock.text('Security', 'Patches')
+        c_applications = InfoBlock.text('Configuration', 'Applications')
+        c_win32_services = InfoBlock.text('Configuration', 'Win32 Services')
+        c_kernel_drivers = InfoBlock.text('Configuration', 'Kernel Drivers')
+        c_fs_drivers = InfoBlock.text('Configuration', 'File System Drivers')
+
+        soft_assert(c_patches != '0', "patches: '{}' != '0'".format(c_patches))
+        soft_assert(c_applications != '0', "applications: '{}' != '0'".format(c_applications))
+        soft_assert(c_win32_services != '0', "win32 services: '{}' != '0'".format(c_win32_services))
+        soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
+        soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
 
 @pytest.mark.long_running
