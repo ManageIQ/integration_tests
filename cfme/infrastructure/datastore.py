@@ -12,6 +12,7 @@ import cfme.web_ui.menu  # noqa
 from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg
+from cfme.web_ui.form_buttons import FormButton
 from functools import partial
 from utils.pretty import Pretty
 from utils.providers import get_crud
@@ -20,6 +21,10 @@ from utils import version
 
 
 details_page = Region(infoblock_type='detail')
+
+page_title_loc = '//div[@id="center_div" or @id="main-content"]//h1'
+
+default_datastore_filter_btn = FormButton('Set the current filter as my default')
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
