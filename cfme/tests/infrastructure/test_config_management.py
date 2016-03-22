@@ -66,6 +66,7 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
         config_manager_obj.create()
 
 
+@pytest.mark.meta(blockers=["BZ#1319751"])
 def test_config_manager_add_invalid_creds(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.credentials.principal = 'invalid_user'
