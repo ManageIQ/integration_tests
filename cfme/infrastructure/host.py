@@ -36,6 +36,8 @@ from utils.pretty import Pretty
 # Page specific locators
 details_page = Region(infoblock_type='detail')
 
+page_title_loc = '//div[@id="center_div" or @id="main-content"]//h1'
+
 properties_form = Form(
     fields=[
         ('name_text', Input("name")),
@@ -80,6 +82,7 @@ host_add_btn = {
     version.LOWEST: FormButton('Add this Host'),
     "5.5": FormButton("Add")
 }
+default_host_filter_btn = FormButton('Set the current filter as my default')
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 pow_btn = partial(tb.select, 'Power')
