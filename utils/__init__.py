@@ -242,3 +242,37 @@ def iterate_pairs(iterable):
     it = iter(iterable)
     for i in it:
         yield i, next(it)
+
+
+def icastmap(t, i, *args, **kwargs):
+    """Works like the map() but is made specially to map classes on iterables. A generator version.
+
+    This function only applies the ``t`` to the item of ``i`` if it is not of that type.
+
+    Args:
+        t: The class that you want all the yielded items to be type of.
+        i: Iterable with items to be cast.
+
+    Returns:
+        A generator.
+    """
+    for item in i:
+        if isinstance(item, t):
+            yield item
+        else:
+            yield t(item, *args, **kwargs)
+
+
+def castmap(t, i, *args, **kwargs):
+    """Works like the map() but is made specially to map classes on iterables.
+
+    This function only applies the ``t`` to the item of ``i`` if it is not of that type.
+
+    Args:
+        t: The class that you want all theitems in the list to be type of.
+        i: Iterable with items to be cast.
+
+    Returns:
+        A list.
+    """
+    return list(icastmap(t, i, *args, **kwargs))

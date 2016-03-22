@@ -65,7 +65,7 @@ from multimethods import multimethod, multidispatch, Anything
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions, js
 from cfme.fixtures.pytest_selenium import browser
-from utils import version
+from utils import castmap, version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
@@ -1546,6 +1546,10 @@ class Tree(Pretty):
         by_id = kwargs.pop("by_id", False)
         result = False
 
+        # Ensure we pass str to the javascript. This handles objects that represent themselves
+        # using __str__ and generally, you should only pass str because that is what makes sense
+        path = castmap(str, path)
+
         # We sometimes have to wait for ajax. In that case, JS function returns false
         # Then we repeat and wait. It does not seem completely possible to wait for the data in JS
         # as it runs on one thread it appears. So this way it will try to drill multiple times
@@ -1589,8 +1593,12 @@ class Tree(Pretty):
         Returns: The leaf web element.
 
         """
+        # Ensure we pass str to the javascript. This handles objects that represent themselves
+        # using __str__ and generally, you should only pass str because that is what makes sense
+        path = castmap(str, path)
+
         leaf = self.expand_path(*path, **kwargs)
-        logger.info("Path {} yielded menuitem {}".format(repr(path), repr(sel.text(leaf))))
+        logger.info("Path %r yielded menuitem %r", path, sel.text(leaf))
         if leaf is not None:
             sel.wait_for_ajax()
             sel.click(leaf)
@@ -1608,6 +1616,10 @@ class Tree(Pretty):
             tree: List with tree.
             *path: Path to browse.
         """
+        # Ensure we pass str to the javascript. This handles objects that represent themselves
+        # using __str__ and generally, you should only pass str because that is what makes sense
+        path = castmap(str, path)
+
         current = tree
         for i, step in enumerate(path, start=1):
             for node in current:
@@ -1642,7 +1654,7 @@ class Tree(Pretty):
         """
         return map(lambda item: item[0] if isinstance(item, list) else item, tree)
 
-    def find_path_to(self, target):
+    def find_path_to(self, target, exact=False):
         """ Method used to look up the exact path to an item we know only by its regexp or partial
         description.
 
@@ -1652,10 +1664,15 @@ class Tree(Pretty):
             target: Item searched for. Can be regexp made by
                 :py:func:`re.compile <python:re.compile>`,
                 otherwise it is taken as a string for `in` matching.
+            exact: Useful in string matching. If set to True, it matches the exact string.
+                Default is False.
         Returns: :py:class:`list` with path to that item.
         """
         if not isinstance(target, re._pattern_type):
-            target = re.compile(r".*?{}.*?".format(re.escape(str(target))))
+            if exact:
+                target = re.compile(r"^{}$".format(re.escape(str(target))))
+            else:
+                target = re.compile(r".*?{}.*?".format(re.escape(str(target))))
 
         def _find_in_tree(t, p=None):
             if p is None:
