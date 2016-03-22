@@ -104,3 +104,11 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.fixture(scope='session')
 def browser():
     return utils.browser.browser
+
+
+@pytest.yield_fixture(scope="function")
+def nuke_browser_after_test():
+    """Some more disruptive tests have to take this measure."""
+    yield
+    pytest.sel.quit()
+    pytest.sel.ensure_browser_open()
