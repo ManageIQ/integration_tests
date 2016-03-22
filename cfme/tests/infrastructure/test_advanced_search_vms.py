@@ -209,7 +209,7 @@ def test_quick_search_with_filter(request, vms, subset_of_vms, expression_for_vm
     assert len(all_vms_visible) == 1 and chosen_vm in all_vms_visible
 
 
-@pytest.mark.meta(blockers=[1273032])
+@pytest.mark.meta(blockers=[1273032, 1320244])
 def test_can_delete_filter():
     pytest.sel.force_navigate("infra_vms")
     filter_name = fauxfactory.gen_alphanumeric()
@@ -224,7 +224,7 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1097150, 1273032])
+@pytest.mark.meta(blockers=[1097150, 1273032, 1320244])
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     pytest.sel.force_navigate("infra_vms")
@@ -241,7 +241,7 @@ def test_delete_button_should_appear_after_save(request):
         pytest.fail("Could not delete filter right after saving!")
 
 
-@pytest.mark.meta(blockers=[1097150, 1273032])
+@pytest.mark.meta(blockers=[1097150, 1273032, 1320244])
 def test_cannot_delete_more_than_once(request, nuke_browser_after_test):
     """When Delete button appars, it does not want to go away"""
     pytest.sel.force_navigate("infra_vms")

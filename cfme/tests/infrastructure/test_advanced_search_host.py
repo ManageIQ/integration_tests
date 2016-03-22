@@ -124,7 +124,7 @@ def test_filter_save_cancel(hosts, hosts_with_vm_count, host_with_median_vm):
         search.load_filter(filter_name)  # does not exist
 
 
-@pytest.mark.meta(blockers=[1283554])
+@pytest.mark.meta(blockers=[1283554, 1320244])
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_and_load(request, hosts, hosts_with_vm_count, host_with_median_vm):
     pytest.sel.force_navigate("infrastructure_hosts")
@@ -144,7 +144,7 @@ def test_filter_save_and_load(request, hosts, hosts_with_vm_count, host_with_med
     assert len(more_than_median_hosts) == len(host.get_all_hosts(do_not_navigate=True))
 
 
-@pytest.mark.meta(blockers=[1283554])
+@pytest.mark.meta(blockers=[1283554, 1320244])
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_and_cancel_load(request, hosts, hosts_with_vm_count, host_with_median_vm):
     pytest.sel.force_navigate("infrastructure_hosts")
@@ -167,7 +167,7 @@ def test_filter_save_and_cancel_load(request, hosts, hosts_with_vm_count, host_w
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1283554])
+@pytest.mark.meta(blockers=[1283554, 1320244])
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_and_load_cancel(request, hosts, hosts_with_vm_count, host_with_median_vm):
     pytest.sel.force_navigate("infrastructure_hosts")
@@ -226,7 +226,7 @@ def test_quick_search_with_filter(request, hosts, hosts_with_vm_count, host_with
     assert len(all_hosts_visible) == 1 and median_host in all_hosts_visible
 
 
-@pytest.mark.meta(blockers=[1283554])
+@pytest.mark.meta(blockers=[1283554, 1320244])
 def test_can_delete_filter():
     pytest.sel.force_navigate("infrastructure_hosts")
     filter_name = fauxfactory.gen_alphanumeric()
@@ -241,7 +241,7 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1097150, 1283554])
+@pytest.mark.meta(blockers=[1097150, 1283554, 1320244])
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     pytest.sel.force_navigate("infrastructure_hosts")
@@ -258,7 +258,7 @@ def test_delete_button_should_appear_after_save(request):
         pytest.fail("Could not delete filter right after saving!")
 
 
-@pytest.mark.meta(blockers=[1097150, 1283554])
+@pytest.mark.meta(blockers=[1097150, 1283554, 1320244])
 def test_cannot_delete_more_than_once(request, nuke_browser_after_test):
     """When Delete button appars, it does not want to go away"""
     pytest.sel.force_navigate("infrastructure_hosts")
