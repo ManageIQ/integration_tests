@@ -33,11 +33,11 @@ def parse_cmd_line():
     return args
 
 
-def get_latest_tested_template_on_stream(api, template_stream_name):
+def get_latest_tested_template_on_stream(api, template_stream_name, template_name):
     stream = {}
     try:
-        wait_for_images_on_web_repo(template_stream_name)
-        wait_for_templates_on_providers(api, template_stream_name)
+        wait_for_images_on_web_repo(template_stream_name, template_name)
+        wait_for_templates_on_providers(api, template_stream_name, template_name)
     except Exception as e:
         print(e)
         print("less than three provider images are uploaded to latest directory")
@@ -106,7 +106,10 @@ def images_uploaded(stream):
     return name_dict
 
 
-def all_images_uploaded(stream):
+def all_images_uploaded(stream, template=None):
+    if get_untested_templates(api, stream, template):
+        print('report will not be generated, proceed with the next untested provider')
+        sys.exit()
     if 'template_rhevm' not in images_uploaded(stream):
         return False
     if 'template_rhos' not in images_uploaded(stream):
@@ -118,16 +121,21 @@ def all_images_uploaded(stream):
     return True
 
 
-def wait_for_images_on_web_repo(stream):
+def wait_for_images_on_web_repo(stream, template):
     try:
         print('wait for images upload to latest directory')
-        wait_for(all_images_uploaded, [stream, ], fail_condition=False, delay=5, timeout='2h')
+        wait_for(all_images_uploaded, [stream, template],
+                 fail_condition=False, delay=5, timeout='30m')
         return True
-    except Exception:
+    except Exception as e:
+        print(e)
         return False
 
 
-def templates_uploaded_on_providers(api, stream):
+def templates_uploaded_on_providers(api, stream, template):
+    if get_untested_templates(api, stream, template):
+        print('report will not be generated, proceed with the next untested provider')
+        sys.exit()
     for temp in api.template.get(
             limit=1, tested=False, group__name=stream).get('objects', []):
         if 'template_rhevm' in images_uploaded(stream):
@@ -145,11 +153,11 @@ def templates_uploaded_on_providers(api, stream):
     return True
 
 
-def wait_for_templates_on_providers(api, stream):
+def wait_for_templates_on_providers(api, stream, template):
     try:
         print('wait for templates upload to providers')
         wait_for(templates_uploaded_on_providers,
-                 [api, stream], fail_condition=False, delay=5, timeout='2h')
+                 [api, stream, template], fail_condition=False, delay=5, timeout='40m')
     except Exception:
         return False
 
@@ -165,7 +173,7 @@ def generate_html_report(api, stream, filename, appliance_template):
     if get_untested_templates(api, stream, appliance_template):
         print('report will not be generated, proceed with the next untested provider')
         sys.exit()
-    stream_data = get_latest_tested_template_on_stream(api, stream)
+    stream_data = get_latest_tested_template_on_stream(api, stream, appliance_template)
 
     if len(images_uploaded(stream)) > number_of_images_before:
         print("new images are uploaded on latest directory, wait for upload on providers")
