@@ -209,7 +209,7 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1097150, 1168336])
+@pytest.mark.meta(blockers=[1097150, 1168336, 1320244])
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     pytest.sel.force_navigate("infrastructure_providers")
@@ -226,7 +226,7 @@ def test_delete_button_should_appear_after_save(request):
         pytest.fail("Could not delete filter right after saving!")
 
 
-@pytest.mark.meta(blockers=[1097150])
+@pytest.mark.meta(blockers=[1097150, 1320244])
 def test_cannot_delete_more_than_once(request, nuke_browser_after_test):
     """When Delete button appars, it does not want to go away"""
     pytest.sel.force_navigate("infrastructure_providers")
