@@ -31,6 +31,12 @@ doc_data.yaml
 # Unit test / coverage reports
 .coverage
 .tox
+
+# pytest cache
+.cache/
+# quickstart virtualenv
+.cfme_tests/
+
 nosetests.xml
 chromedriver.log
 pytest.ini
