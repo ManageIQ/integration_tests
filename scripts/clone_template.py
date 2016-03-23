@@ -117,6 +117,8 @@ def main():
     elif provider_type == "virtualcenter":
         if "allowed_datastores" in provider_dict:
             deploy_args["allowed_datastores"] = provider_dict["allowed_datastores"]
+    elif provider_type == 'scvmm':
+        deploy_args["host_group"] = provider_dict["provisioning"]['host_group']
 
     # Do it!
     try:
