@@ -210,27 +210,8 @@ class Host(Updateable, Pretty):
         change_stored_password()
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
 
-        # Workaround for issue with form_button staying dimmed.
-        try:
-            logger.debug("Trying to save update for host with id: " + str(self.get_db_id))
-            self._submit(cancel, self.forced_saved)
-            logger.debug("save worked, no exception")
-        except Exception as e:
-            logger.debug("exception detected: " + str(e))
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/host/form_field_changed/%s',"
-                " data: {'default_userid':'%s'}})" %
-                (str(sel.current_url().split('/')[5]), updates.get('credentials', None).principal))
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/host/form_field_changed/%s',"
-                " data: {'default_password':'%s'}})" %
-                (str(sel.current_url().split('/')[5]), updates.get('credentials', None).secret))
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/host/form_field_changed/%s',"
-                " data: {'default_verify':'%s'}})" %
-                (str(sel.current_url().split('/')[5]),
-                    updates.get('credentials', None).verify_secret))
-            self._submit(cancel, self.forced_saved)
+        logger.debug("Trying to save update for host with id: " + str(self.get_db_id))
+        self._submit(cancel, self.forced_saved)
 
     def delete(self, cancel=True):
         """
