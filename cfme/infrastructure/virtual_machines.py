@@ -259,6 +259,7 @@ class Vm(BaseVM, Common):
     ALL_LIST_LOCATION = "infra_vms"
     TO_OPEN_EDIT = "Edit this VM"
     TO_RETIRE = "Retire this VM"
+    VM_TYPE = "Virtual Machine"
 
     def power_control_from_provider(self, option):
         """Power control a vm from the provider
