@@ -101,6 +101,7 @@ class Provider(Pretty, CloudInfraProvider):
     string_name = "Cloud"
     page_name = "clouds"
     instances_page_name = "clouds_instances_by_provider"
+    templates_page_name = "clouds_images_by_provider"
     quad_name = "cloud_prov"
     vm_name = "Instances"
     template_name = "Images"

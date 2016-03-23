@@ -302,10 +302,13 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         # paginator.results_per_page(1000)
         if use_search:
             try:
-                if not search.has_quick_search_box() and self.provider.instances_page_name:
+                if not search.has_quick_search_box():
                     # We don't use provider-specific page (vm_templates_provider_branch) here
                     # as those don't list archived/orphaned VMs
-                    sel.force_navigate(self.provider.instances_page_name)
+                    if self.is_vm:
+                        sel.force_navigate(self.provider.instances_page_name)
+                    else:
+                        sel.force_navigate(self.provider.templates_page_name)
                 search.normal_search(self.name)
             except Exception as e:
                 logger.warning("Failed to use search: {}".format(str(e)))
