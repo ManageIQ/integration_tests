@@ -35,5 +35,5 @@ def test_permissions_catalog_add(setup_cloud_providers):
     cat = Catalog(name=fauxfactory.gen_alphanumeric(),
                   description="my catalog")
 
-    tac.single_task_permission_test([['Services', 'Catalogs Explorer', 'Catalogs']],
+    tac.single_task_permission_test([['Everything', 'Services', 'Catalogs Explorer', 'Catalogs']],
                                     {'Add Catalog': cat.create})
