@@ -75,8 +75,8 @@ def make_template(client, hostname, name, library, network, ostype, username_scv
     script2 += "$OS = Get-SCOperatingSystem | where "
     script2 += "{$_.Name -eq 'Red Hat Enterprise Linux 7 (64 bit)'};"
     script2 += "New-SCVMTemplate -Name '" + name + "' -Owner '" + username_scvmm + "' \
-                -HardwareProfile $HWProfile -JobGroup $JobGroupID02 -ComputerName '*' \
-                -JoinWorkgroup 'WORKGROUP' -OperatingSystem $OS -RunAsynchronously;"
+                -HardwareProfile $HWProfile -JobGroup $JobGroupID02 \
+                -RunAsynchronously -Generation 1 -NoCustomization;"
     script2 += "Remove-HardwareProfile -HardwareProfile '" + name + "';"
     print("Invoke-Command -scriptblock {{{}}}".format(script2))
     client.run_script("Invoke-Command -scriptblock {{{}}}".format(script2))
