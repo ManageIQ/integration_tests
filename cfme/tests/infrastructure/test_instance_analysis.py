@@ -333,7 +333,8 @@ def detect_system_type(vm):
 @pytest.mark.meta(blockers=[
     BZ(1311134, unblock=lambda provider: provider.type != 'rhevm'),
     BZ(1311218, unblock=lambda provider:
-        provider.type != 'virtualcenter' or provider.version < "6")])
+        provider.type != 'virtualcenter' or provider.version < "6"),
+    BZ(1320248, unblock=lambda provider: version.current_version() >= "5.5")])
 def test_ssa_template(request, local_setup_provider, provider, vm_analysis_new, soft_assert):
     """ Tests SSA can be performed on a template
 
@@ -344,22 +345,23 @@ def test_ssa_template(request, local_setup_provider, provider, vm_analysis_new, 
     template = Template.factory(template_name, provider, template=True)
 
     # Set credentials to all hosts set for this datastore
-    datastore_name = vm_analysis_new['datastore']
-    test_datastore = datastore.Datastore(datastore_name, provider.key)
-    host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
-    host_names = test_datastore.get_hosts()
-    for host_name in host_names:
-        test_host = host.Host(name=host_name)
-        hosts_data = [x for x in host_list if x.name == host_name]
-        if len(hosts_data) > 0:
-            host_data = hosts_data[0]
+    if provider.type != 'openstack':
+        datastore_name = vm_analysis_new['datastore']
+        test_datastore = datastore.Datastore(datastore_name, provider.key)
+        host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
+        host_names = test_datastore.get_hosts()
+        for host_name in host_names:
+            test_host = host.Host(name=host_name)
+            hosts_data = [x for x in host_list if x.name == host_name]
+            if len(hosts_data) > 0:
+                host_data = hosts_data[0]
 
-            if not test_host.has_valid_credentials:
-                creds = host.get_credentials_from_config(host_data['credentials'])
-                test_host.update(
-                    updates={'credentials': creds},
-                    validate_credentials=True
-                )
+                if not test_host.has_valid_credentials:
+                    creds = host.get_credentials_from_config(host_data['credentials'])
+                    test_host.update(
+                        updates={'credentials': creds},
+                        validate_credentials=True
+                    )
 
     template.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(template_name),
