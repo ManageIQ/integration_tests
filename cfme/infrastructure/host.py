@@ -8,6 +8,7 @@
 """
 
 from functools import partial
+from xml.sax.saxutils import quoteattr
 
 import cfme
 import cfme.fixtures.pytest_selenium as sel
@@ -15,6 +16,7 @@ from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
+from cfme.common import Compliance
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
@@ -106,7 +108,7 @@ nav.add_branch('infrastructure_hosts',
                                                          '5.4': 'Provision this item'}))}]})
 
 
-class Host(Updateable, Pretty):
+class Host(Updateable, Pretty, Compliance):
     """
     Model of an infrastructure host in cfme.
 
@@ -247,23 +249,34 @@ class Host(Updateable, Pretty):
         return IPMI(hostname=self.ipmi_address, username=self.ipmi_credentials.principal,
                     password=self.ipmi_credentials.secret, interface_type=self.interface_type)
 
-    def get_detail(self, *ident):
+    def get_detail(self, *ident, **kwargs):
         """ Gets details from the details infoblock
 
         The function first ensures that we are on the detail page for the specific host.
 
         Args:
             *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+
+        Keywords:
+            refresh: Whether :py:meth:``load_details`` has to forcibly refresh or not
+
         Returns: A string representing the contents of the InfoBlock's value.
         """
-        if not self._on_detail_page():
-            sel.force_navigate('infrastructure_host', context={'host': self})
+        refresh = kwargs.get('refresh', False)
+        self.load_details(refresh=refresh)
         return details_page.infoblock.text(*ident)
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the hosts detail page, ``False`` if not."""
+        # Locator 5.4 upwards
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}")]'.format(self.name))
+            '//div[@id="center_div"]//h1[contains(., "(Summary)")][contains(., {})]'.format(
+                quoteattr(self.name)))
+
+    def load_details(self, refresh=True):
+        # No reload button
+        if not self._on_detail_page() or refresh:
+            sel.force_navigate('infrastructure_host', context={'host': self})
 
     @property
     def exists(self):

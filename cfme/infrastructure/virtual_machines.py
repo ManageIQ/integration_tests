@@ -4,6 +4,8 @@ quadicon lists, and VM details page.
 """
 import fauxfactory
 import re
+from xml.sax.saxutils import quoteattr
+
 from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
 from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel
@@ -124,12 +126,18 @@ class infrastructure_virtual_machines:
 
 
 class Common(object):
-    """Stuff shared for bot hVM and Template."""
+    """Stuff shared for both VM and Template."""
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper vm details page.
         """
-        locator = "//div[@class='dhtmlxInfoBarLabel' and contains(. , '{} \"{}\"')]".format(
-            "VM and Instance" if self.is_vm else "VM Template and Image", self.name)
+        looked_up_text = '{} "{}"'.format(
+            'VM and Instance' if self.is_vm else 'VM Template and Image', self.name)
+        locator = {
+            version.LOWEST: "//div[@class='dhtmlxInfoBarLabel' and contains(. , {})]".format(
+                quoteattr(looked_up_text)),
+            '5.5': "//h1[@id='explorer_title' and contains(. , {})]".format(
+                quoteattr(looked_up_text))
+        }
         if not sel.is_displayed(locator):
             if not force:
                 return False
