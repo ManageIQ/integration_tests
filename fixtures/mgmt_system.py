@@ -86,3 +86,9 @@ def has_no_container_providers():
     the current appliance.
     """
     providers.clear_container_providers()
+
+
+@pytest.fixture
+def has_no_middleware_providers():
+    """Clear all middleware providers."""
+    providers.clear_middleware_providers()
