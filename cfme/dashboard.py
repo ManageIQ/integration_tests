@@ -60,15 +60,21 @@ class Widget(Pretty):
     _zoom = "//div[@id='{}']//a[@title='Zoom in on this chart']"
     _zoomed_name = deferred_verpick({
         version.LOWEST: "//div[@id='lightbox_div']//span[contains(@class, 'modtitle_text')]",
-        "5.5": "//div[@id='lightbox_div']//h3"})
+        "5.5": "//div[@id='lightbox_div']//h3"
+    })
     _zoomed_close = deferred_verpick({
         version.LOWEST: "//div[@id='lightbox_div']//a[@title='Close']",
-        "5.5": "//div[@id='lightbox_div']//a[@title='Close']/i"})
+        "5.5": "//div[@id='lightbox_div']//a[@title='Close']/i"
+    })
     _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
     _content = deferred_verpick({
         version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]",
-        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]"})
-    _content_type_54 = "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]"
+        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]/div"
+    })
+    _content_type = deferred_verpick({
+        version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]",
+        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]"
+    })
 
     # 5.5+ updated
     _menu_opener = "//div[@id='{}']//a[contains(@class, 'dropdown-toggle')]/i"
@@ -92,10 +98,11 @@ class Widget(Pretty):
 
     @property
     def content_type(self):
-        if version.current_version() < "5.4" or self.newer_version:
-            return sel.get_attribute(self._content.format(self._div_id), "class").rsplit(" ", 1)[-1]
+        if version.current_version() <= "5.4":
+            return sel.get_attribute(self._content_type.format(self._div_id), "class").strip()
         else:
-            return sel.get_attribute(self._content_type_54.format(self._div_id), "class").strip()
+            return sel.get_attribute(
+                self._content_type.format(self._div_id), "class").rsplit(" ", 1)[-1]
 
     @property
     def content(self):
