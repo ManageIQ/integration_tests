@@ -14,16 +14,11 @@ def setup_first_provider():
 
 
 def _cleanup_report(report):
-
-        try:
-
-            logger.info('Cleaning up report {}'.format(report.menu_name))
-            report.delete()
-
-        except:
-
-            logger.warning('Failed to clean up report {}'.
-                           format(report.menu_name))
+    try:
+        logger.info('Cleaning up report %s', report.menu_name)
+        report.delete()
+    except:
+        logger.warning('Failed to clean up report %s', report.menu_name)
 
 
 # These tests are meant to catch issues such as BZ 1203022

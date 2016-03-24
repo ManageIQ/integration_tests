@@ -52,7 +52,7 @@ def setup_ci_template(cloud_init_template):
 
 @pytest.fixture(scope="function")
 def vm_name(request):
-    vm_name = 'test_image_prov_%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_image_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
@@ -64,8 +64,8 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
         test_flag: cloud_init, provision
     """
     image = provisioning.get('ci-image', None) or provisioning['image']['name']
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider.key))
+    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
+        image, vm_name, provider.key))
 
     mgmt_system = provider.mgmt
 

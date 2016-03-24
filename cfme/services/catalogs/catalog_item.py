@@ -238,8 +238,7 @@ class CatalogItem(Updateable, Pretty):
                                'description_text':
                                updates.get('description', None)},
              action=basic_info_form.edit_button)
-        flash.assert_success_message('Service Catalog Item "%s" was saved' %
-                                     self.name)
+        flash.assert_success_message('Service Catalog Item "{}" was saved'.format(self.name))
 
     def delete(self):
         sel.force_navigate('catalog_item', context={'catalog': self.catalog,
@@ -325,8 +324,7 @@ class CatalogBundle(Updateable, Pretty):
         for cat_item in cat_items:
             fill(resources_form, {'choose_resource': cat_item})
         sel.click(resources_form.add_button)
-        flash.assert_success_message('Catalog Bundle "%s" was added' %
-                                     self.name)
+        flash.assert_success_message('Catalog Bundle "{}" was added'.format(self.name))
 
     def update(self, updates):
         sel.force_navigate('catalog_bundle_edit',
@@ -339,5 +337,4 @@ class CatalogBundle(Updateable, Pretty):
         fill(resources_form, {'choose_resource':
                               updates.get('cat_item', None)},
              action=resources_form.save_button)
-        flash.assert_success_message('Catalog Bundle "%s" was saved' %
-                                     self.name)
+        flash.assert_success_message('Catalog Bundle "{}" was saved'.format(self.name))

@@ -87,8 +87,8 @@ class OrchestrationTemplate(Updateable, Pretty):
     def create(self, content):
         self.create_form(content)
         try:
-            flash.assert_success_message('Orchestration Template "%s" was saved' %
-                                     self.template_name)
+            flash.assert_success_message('Orchestration Template "{}" was saved'.format(
+                self.template_name))
         except Exception as e:
             if error.match("Error during 'Orchestration Template creation': Validation failed: \
                             Md5 of content already exists (content must be unique)", e):
@@ -102,8 +102,8 @@ class OrchestrationTemplate(Updateable, Pretty):
         fill(create_template_form, {'template_name': updates.get('template_name', None),
                                     'description': updates.get('description', None)},
              action=create_template_form.edit_button)
-        flash.assert_success_message('Orchestration Template "%s" was saved' %
-                                     self.template_name)
+        flash.assert_success_message('Orchestration Template "{}" was saved'.format(
+            self.template_name))
 
     def delete(self):
         sel.force_navigate('select_template',
@@ -111,8 +111,8 @@ class OrchestrationTemplate(Updateable, Pretty):
                                     'template_name': self.template_name})
         cfg_btn("Remove this Orchestration Template", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Orchestration Template "%s" was deleted.' %
-                                     self.template_name)
+        flash.assert_success_message('Orchestration Template "{}" was deleted.'.format(
+            self.template_name))
 
     def delete_all_templates(self):
         sel.force_navigate('orch_template_type',
@@ -129,8 +129,8 @@ class OrchestrationTemplate(Updateable, Pretty):
         fill(create_template_form, {'template_name': template_name,
                                     'content': content},
              action=create_template_form.add_button)
-        flash.assert_success_message('Orchestration Template "%s" was saved' %
-                                     template_name)
+        flash.assert_success_message('Orchestration Template "{}" was saved'.format(
+            template_name))
 
     def create_service_dialog(self, dialog_name):
         sel.force_navigate('orch_template_type',
@@ -146,8 +146,8 @@ class OrchestrationTemplate(Updateable, Pretty):
                                     'template_name': template_name})
         fill(dialog_form, {'dialog_name': dialog_name},
              action=dialog_form.save_button)
-        flash.assert_success_message('Service Dialog "%s" was successfully created' %
-                                     dialog_name)
+        flash.assert_success_message('Service Dialog "{}" was successfully created'.format(
+            dialog_name))
         return template_name
 
     def create_service_dialog_from_template(self, dialog_name, template_name):
@@ -158,6 +158,6 @@ class OrchestrationTemplate(Updateable, Pretty):
                                     'template_name': template_name})
         fill(dialog_form, {'dialog_name': dialog_name},
              action=dialog_form.save_button)
-        flash.assert_success_message('Service Dialog "%s" was successfully created' %
-                                     dialog_name)
+        flash.assert_success_message('Service Dialog "{}" was successfully created'.format(
+            dialog_name))
         return template_name

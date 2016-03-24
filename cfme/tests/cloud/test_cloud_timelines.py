@@ -17,7 +17,7 @@ pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module"
 
 @pytest.fixture(scope="module")
 def delete_fx_provider_event(db, provider):
-    logger.info("Deleting timeline events for provider name {}".format(provider.name))
+    logger.info("Deleting timeline events for provider name %s", provider.name)
     ems = db['ext_management_systems']
     ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
     ems_events = db[ems_events_table_name]
@@ -88,7 +88,7 @@ def count_events(instance_name, nav_step):
 
 def db_event(db, provider):
     # Get event count from the DB
-    logger.info("Getting event count from the DB for provider name {}".format(provider.name))
+    logger.info("Getting event count from the DB for provider name %s", provider.name)
     ems = db['ext_management_systems']
     ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
     ems_events = db[ems_events_table_name]

@@ -50,6 +50,6 @@ def test_server_roles_changing(request, roles):
     # Get roles and check; use UI because the changes take a while to propagate to DB
     for role, is_enabled in configuration.get_server_roles(db=False).iteritems():
         if is_enabled:
-            assert roles[role], "Role '%s' is selected but should not be" % role
+            assert roles[role], "Role '{}' is selected but should not be".format(role)
         else:
-            assert not roles[role], "Role '%s' is not selected but should be" % role
+            assert not roles[role], "Role '{}' is not selected but should be".format(role)

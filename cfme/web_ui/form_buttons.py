@@ -108,7 +108,7 @@ class FormButton(Pretty):
     def _custom_click_handler(self, wait_ajax):
         """Handler called from pytest_selenium"""
         if self.is_dimmed and not self._force:
-            logger.info("Not clicking {} because it is dimmed".format(repr(self)))
+            logger.info("Not clicking %s because it is dimmed", repr(self))
             return
         sel.wait_for_element(self, timeout=5)
         return sel.click(self, no_custom_handler=True, wait_ajax=wait_ajax)

@@ -129,7 +129,7 @@ class PivotCalcSelect(Pretty):
 
 @fill.method((PivotCalcSelect, basestring))
 def _fill_pcs_str(o, s):
-    logger.info("  Filling {} with string {}".format(str(o), str(s)))
+    logger.info("  Filling %s with string %s", str(o), str(s))
     o.clear_selection()
     o.check(s)
     o.close_all_boxes()
@@ -137,7 +137,7 @@ def _fill_pcs_str(o, s):
 
 @fill.method((PivotCalcSelect, Sequence))
 def _fill_pcs_seq(o, l):
-    logger.info("  Filling {} with sequence {}".format(str(o), str(l)))
+    logger.info("  Filling %s with sequence %s", str(o), str(l))
     o.clear_selection()
     for name in l:
         o.check(name)
@@ -146,11 +146,11 @@ def _fill_pcs_seq(o, l):
 
 @fill.method((PivotCalcSelect, Callable))
 def _fill_pcs_callable(o, c):
-    logger.info("  Filling {} with callable {}".format(str(o), str(c)))
+    logger.info("  Filling %s with callable %s", str(o), str(c))
     for item in o.items():
-        logger.info("    Calling callable on item {}".format(item))
+        logger.info("    Calling callable on item %s", item)
         result = bool(c(item))
-        logger.info("      Setting item {} to {}".format(item, str(result)))
+        logger.info("      Setting item %s to %s", item, str(result))
         if result is True:
             o.check(item)
         else:

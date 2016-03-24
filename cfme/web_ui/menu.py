@@ -222,7 +222,7 @@ def reverse_lookup(toplevel_path, secondlevel_path=None):
 
     """
     if secondlevel_path:
-        menu_path = '%s/%s' % (toplevel_path, secondlevel_path)
+        menu_path = '{}/{}'.format(toplevel_path, secondlevel_path)
     else:
         menu_path = toplevel_path
 
@@ -243,7 +243,7 @@ def reverse_lookup(toplevel_path, secondlevel_path=None):
                 second_level = secondlevel()
             else:
                 second_level = secondlevel
-            if menu_path == '%s/%s' % (toplevel, second_level):
+            if menu_path == '{}/{}'.format(toplevel, second_level):
                 return secondlevel_dest
 
 

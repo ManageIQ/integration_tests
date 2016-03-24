@@ -59,7 +59,7 @@ def dialog():
                                    box_label="box_" + fauxfactory.gen_alphanumeric(),
                                    box_desc="my box desc")
     service_dialog.create(element_data)
-    flash.assert_success_message('Dialog "%s" was added' % dialog)
+    flash.assert_success_message('Dialog "{}" was added'.format(dialog))
     yield dialog
 
 
@@ -79,7 +79,7 @@ def test_cloud_catalog_item(setup_provider, provider, provisioning, dialog, cata
         test_flag: provision
     """
 
-    vm_name = 'test_servicecatalog-%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_servicecatalog-{}'.format(fauxfactory.gen_alphanumeric())
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     image = provisioning['image']['name']
     item_name = fauxfactory.gen_alphanumeric()
@@ -106,7 +106,7 @@ def test_cloud_catalog_item(setup_provider, provider, provisioning, dialog, cata
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog.name, cloud_catalog_item)
     flash.assert_no_errors()
-    logger.info('Waiting for cfme provision request for service %s' % item_name)
+    logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],

@@ -98,7 +98,7 @@ def provisioner(request, setup_provider, provider):
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
         if delayed is not None:
             total_seconds = (delayed - datetime.utcnow()).total_seconds()
-            row_description = 'Provision from [%s] to [%s]' % (template, vm_name)
+            row_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
             cells = {'Description': row_description}
             try:
                 row, __ = wait_for(requests.wait_for_request, [cells],
@@ -110,8 +110,8 @@ def provisioner(request, setup_provider, provider):
         wait_for(provider.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
 
         # nav to requests page happens on successful provision
-        logger.info('Waiting for cfme provision request for vm %s' % vm_name)
-        row_description = 'Provision from [%s] to [%s]' % (template, vm_name)
+        logger.info('Waiting for cfme provision request for vm %s', vm_name)
+        row_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=900, delay=20)

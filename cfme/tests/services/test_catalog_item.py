@@ -32,7 +32,7 @@ def dialog():
                                    box_label="box_" + fauxfactory.gen_alphanumeric(),
                                    box_desc="my box desc")
     service_dialog.create(element_data)
-    flash.assert_success_message('Dialog "%s" was added' % dialog)
+    flash.assert_success_message('Dialog "{}" was added'.format(dialog))
     yield dialog
 
 
@@ -56,8 +56,7 @@ def catalog_item(dialog, catalog):
 
 def test_create_catalog_item(catalog_item):
     catalog_item.create()
-    flash.assert_success_message('Service Catalog Item "%s" was added' %
-                                 catalog_item.name)
+    flash.assert_success_message('Service Catalog Item "{}" was added'.format(catalog_item.name))
 
 
 def test_update_catalog_item(catalog_item):

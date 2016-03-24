@@ -36,7 +36,7 @@ def select_security_group(sg):
 
     """
     val = sel.get_attribute(
-        "//select[@id='environment__security_groups']/option[normalize-space(.)='%s']" % sg,
+        "//select[@id='environment__security_groups']/option[normalize-space(.)='{}']".format(sg),
         'value')
     if current_version() < "5.4":
         sel.browser().execute_script(
@@ -219,8 +219,7 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
         'template_name': template_name,
     })
 
-    note = ('template %s to vm %s on provider %s' %
-        (template_name, vm_name, provider.key))
+    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     provisioning_data.update({
         'email': 'template_provisioner@example.com',
         'first_name': 'Template',
@@ -239,8 +238,8 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
     wait_for(provider.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
 
     # nav to requests page happens on successful provision
-    logger.info('Waiting for cfme provision request for vm %s' % vm_name)
-    row_description = 'Provision from [%s] to [%s]' % (template_name, vm_name)
+    logger.info('Waiting for cfme provision request for vm %s', vm_name)
+    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     cells = {'Description': row_description}
     try:
         row, __ = wait_for(requests.wait_for_request, [cells],
@@ -257,7 +256,7 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
                 approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
             else:
                 approval = dict(text_like="%%Your Virtual Machine Request was approved%%")
-            expected_text = "Your virtual machine request has Completed - VM:%%%s" % vm_name
+            expected_text = "Your virtual machine request has Completed - VM:%%{}".format(vm_name)
             return (
                 len(
                     smtp_test.get_emails(**approval)

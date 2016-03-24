@@ -22,10 +22,10 @@ def provision_vm(request, provider):
     request.addfinalizer(vm.delete_from_provider)
 
     if not provider.mgmt.does_vm_exist(vm_name):
-        logger.info("deploying {} on provider {}".format(vm_name, provider.key))
+        logger.info("deploying %s on provider %s", vm_name, provider.key)
         vm.create_on_provider(allow_skip="default")
     else:
-        logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider.key))
+        logger.info("recycling deployed vm %s on provider %s", vm_name, provider.key)
     vm.provider.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm
@@ -104,6 +104,6 @@ def test_db_restore(request, soft_assert):
         # Assert server roles on the second appliance
         for role, is_enabled in config.get_server_roles(db=False).iteritems():
             if is_enabled:
-                assert roles[role], "Role '%s' is selected but should not be" % role
+                assert roles[role], "Role '{}' is selected but should not be".format(role)
             else:
-                assert not roles[role], "Role '%s' is not selected but should be" % role
+                assert not roles[role], "Role '{}' is not selected but should be".format(role)

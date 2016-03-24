@@ -157,7 +157,7 @@ class Region(Pretty):
             if not self.title:
                 logger.info('Identifying locator for region not found')
             else:
-                logger.info('Identifying locator for region {} not found'.format(self.title))
+                logger.info('Identifying locator for region %s not found', self.title)
             ident_match = False
 
         if self.title is None:
@@ -167,8 +167,7 @@ class Region(Pretty):
         elif self.title and browser_title == self.title:
             title_match = True
         else:
-            logger.info("Title '%s' doesn't match expected title '%s'" %
-                (browser_title, self.title))
+            logger.info("Title %s doesn't match expected title %s", browser_title, self.title)
             title_match = False
         return title_match and ident_match
 
@@ -312,7 +311,7 @@ class Table(Pretty):
         """Property representing the ``<tr>`` element that contains header cells"""
         # thead/tr containing header data
         # xpath is 1-indexed, so we need to add 1 to the offset to get the correct row
-        return sel.element('thead/tr[%d]' % (self.header_offset + 1), root=sel.element(self))
+        return sel.element('thead/tr[{}]'.format(self.header_offset + 1), root=sel.element(self))
 
     @property
     def body(self):
@@ -421,11 +420,11 @@ class Table(Pretty):
         # accept dicts or supertuples
         cells = dict(cells)
         cell_text_loc = (
-            './/td/descendant-or-self::*[contains(normalize-space(text()), "%s")]/ancestor::tr[1]')
+            './/td/descendant-or-self::*[contains(normalize-space(text()), "{}")]/ancestor::tr[1]')
         matching_rows_list = list()
         for value in cells.values():
             # Get all td elements that contain the value text
-            matching_elements = sel.elements(cell_text_loc % value,
+            matching_elements = sel.elements(cell_text_loc.format(value),
                 root=sel.move_to_element(self._root_loc))
             if matching_elements:
                 matching_rows_list.append(set(matching_elements))
@@ -542,7 +541,7 @@ class Table(Pretty):
             for value in values:
                 res = self.click_cell(header, value)
                 if not res:
-                    failed_clicks.append("%s:%s" % (header, value))
+                    failed_clicks.append("{}:{}".format(header, value))
         if failed_clicks:
             raise exceptions.NotAllItemsClicked(failed_clicks)
 
@@ -610,7 +609,7 @@ class Table(Pretty):
             # Let IndexError raise
 
         def __str__(self):
-            return ", ".join(["'%s'" % el.text for el in self.columns])
+            return ", ".join(["'{}'".format(el.text) for el in self.columns])
 
         def __eq__(self, other):
             if isinstance(other, type(self)):
@@ -695,7 +694,8 @@ class SplitTable(Table):
         """Property representing the ``<tr>`` element that contains header cells"""
         # thead/tr containing header data
         # xpath is 1-indexed, so we need to add 1 to the offset to get the correct row
-        return sel.element('tr[%d]' % (self.header_offset + 1), root=sel.element(self._header_loc))
+        return sel.element(
+            'tr[{}]'.format(self.header_offset + 1), root=sel.element(self._header_loc))
 
     @property
     def body(self):
@@ -890,7 +890,7 @@ class CheckboxTable(Table):
             for value in values:
                 res = self._set_row(header, value, set_to)
                 if not res:
-                    failed_selects.append("%s:%s" % (header, value))
+                    failed_selects.append("{}:{}".format(header, value))
         if failed_selects:
             raise exceptions.NotAllCheckboxesFound(failed_selects)
 
@@ -1093,7 +1093,7 @@ def fill(loc, content, **kwargs):
         ident = loc.name
     else:
         ident = loc
-    logger.debug('  Filling in [%s], with value "%s"' % (ident, logval))
+    logger.debug('  Filling in [%s], with value %s', ident, logval)
     prev_state = action(loc, content)
     sel.detect_observed_field(loc)
     return prev_state
@@ -1170,7 +1170,7 @@ class Calendar(Pretty):
 def _sd_fill_date(calendar, value):
     input = sel.element(calendar)
     if isinstance(value, date):
-        date_str = '%s/%s/%s' % (value.month, value.day, value.year)
+        date_str = '{}/{}/{}'.format(value.month, value.day, value.year)
     else:
         date_str = str(value)
 
@@ -1182,14 +1182,14 @@ def _sd_fill_date(calendar, value):
         # Now when we set the value, we need to simulate a change event.
         if sel.get_attribute(input, "data-date-autoclose"):
             # New one
-            script = "$(\"#%s\").trigger('changeDate');"
+            script = "$(\"#{}\").trigger('changeDate');"
         else:
             # Old one
             script = (
                 "if(typeof $j == 'undefined') {var jq = $;} else {var jq = $j;} "
-                "jq(\"#%s\").change();")
+                "jq(\"#{}\").change();")
         try:
-            sel.execute_script(script % calendar.name)
+            sel.execute_script(script.format(calendar.name))
         except sel_exceptions.WebDriverException as e:
             logger.warning(
                 "An exception was raised during handling of the Cal #{}'s change event:\n{}"
@@ -1317,7 +1317,7 @@ def _fill_form_list(form, values, action=None, action_always=False):
     for field, value in values:
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
-            logger.trace(' Dispatching fill for "%s"' % field)
+            logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
         elif value is None and isinstance(form.locators[field], Select):
@@ -2265,8 +2265,8 @@ class DHTMLSelect(Select):
     @staticmethod
     def _log(meth, val=None):
         if val:
-            val_string = " with value %s" % val
-        logger.debug('Filling in DHTMLSelect using (%s)%s' % (meth, val_string))
+            val_string = " with value {}".format(val)
+        logger.debug('Filling in DHTMLSelect using (%s)%s', meth, val_string)
 
     def _get_select_name(self):
         """ Get's the name reference of the element from its hidden attribute.
@@ -2299,7 +2299,7 @@ class DHTMLSelect(Select):
         """
         name = self._get_select_name()
         return browser().execute_script(
-            'return %s.getOptionByIndex(%s.getSelectedIndex()).content' % (name, name))
+            'return {}.getOptionByIndex({}}.getSelectedIndex()).content'.format(name, name))
 
     @property
     def options(self):
@@ -2308,7 +2308,7 @@ class DHTMLSelect(Select):
         Returns: A list of Webelements.
         """
         name = self._get_select_name()
-        return browser().execute_script('return %s.DOMlist.children' % name)
+        return browser().execute_script('return {}.DOMlist.children'.format(name))
 
     def select_by_index(self, index, _cascade=None):
         """ Selects an option by index.
@@ -2320,7 +2320,7 @@ class DHTMLSelect(Select):
         if index is not None:
             if not _cascade:
                 self._log('index', index)
-            browser().execute_script('%s.selectOption(%s)' % (name, index))
+            browser().execute_script('{}.selectOption({})'.format(name, index))
 
     def select_by_visible_text(self, text):
         """ Selects an option by visible text.
@@ -2331,8 +2331,8 @@ class DHTMLSelect(Select):
         name = self._get_select_name()
         if text is not None:
             self._log('visible_text', text)
-            value = browser().execute_script('return %s.getOptionByLabel("%s").value'
-                                             % (name, text))
+            value = browser().execute_script(
+                'return {}.getOptionByLabel("{}").value'.format(name, text))
             self.select_by_value(value, _cascade=True)
 
     def select_by_value(self, value, _cascade=None):
@@ -2345,7 +2345,7 @@ class DHTMLSelect(Select):
         if value is not None:
             if not _cascade:
                 self._log('value', value)
-            index = browser().execute_script('return %s.getIndexByValue("%s")' % (name, value))
+            index = browser().execute_script('return {}.getIndexByValue("{}")'.format(name, value))
             self.select_by_index(index, _cascade=True)
 
     def locate(self):
@@ -2521,7 +2521,8 @@ class ScriptBox(Pretty):
 
     def workaround_save_issue(self):
         # We need to fire off the handlers manually in some cases ...
-        sel.execute_script("%s._handlers.change.map(function(handler) { handler() });" % self.name)
+        sel.execute_script(
+            "{}._handlers.change.map(function(handler) { handler() });".format(self.name))
         sel.wait_for_ajax()
 
 
@@ -2588,7 +2589,7 @@ class CheckboxSelect(Pretty):
     def checkbox_by_id(self, id):
         """Find checkbox's WebElement by id."""
         return sel.element(
-            ".//input[@type='checkbox' and @id='%s']" % id, root=sel.element(self._root)
+            ".//input[@type='checkbox' and @id='{}']".format(id), root=sel.element(self._root)
         )
 
     def select_all(self):
@@ -2609,11 +2610,11 @@ class CheckboxSelect(Pretty):
                 if txt == text:
                     return cb
             else:
-                raise NameError("Checkbox with text %s not found!" % text)
+                raise NameError("Checkbox with text {} not found!".format(text))
         else:
             # Has to be only single
             return sel.element(
-                ".//*[contains(., '%s')]/input[@type='checkbox']" % text,
+                ".//*[contains(., '{}')]/input[@type='checkbox']".format(text),
                 root=sel.element(self._root)
             )
 
@@ -3138,7 +3139,7 @@ class AngularCalendarInput(Pretty):
 
     def fill(self, value):
         if isinstance(value, date):
-            value = '%s/%s/%s' % (value.month, value.day, value.year)
+            value = '{}/{}/{}'.format(value.month, value.day, value.year)
         else:
             value = str(value)
         try:
@@ -3200,7 +3201,7 @@ class EmailSelectForm(Pretty):
             email: E-mail to remove
         """
         if email in self.to_emails:
-            sel.click("//a[contains(@href, 'remove_email')][normalize-space(.)='%s']" % email)
+            sel.click("//a[contains(@href, 'remove_email')][normalize-space(.)='{}']".format(email))
             return email not in self.to_emails
         else:
             return True
@@ -3218,7 +3219,7 @@ class EmailSelectForm(Pretty):
         # Delete e-mails that have nothing to do here
         for email in self.to_emails:
             if email not in emails:
-                assert self.remove_email(email), "Could not remove e-mail '%s'" % email
+                assert self.remove_email(email), "Could not remove e-mail '{}'".format(email)
         # Add new
         for email in emails:
             if email in self.to_emails:
@@ -3228,7 +3229,7 @@ class EmailSelectForm(Pretty):
             else:
                 fill(self.fields.manual_input, email)
                 sel.click(self.fields.add_email_manually)
-                assert email in self.to_emails, "Adding e-mail '%s' manually failed!" % email
+                assert email in self.to_emails, "Adding e-mail '{}' manually failed!".format(email)
 
 
 @fill.method((EmailSelectForm, basestring))

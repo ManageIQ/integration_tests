@@ -157,7 +157,7 @@ def test_vmware_vimapi_hotadd_disk(
         return int(testing_vm.get_detail(
             properties=("Datastore Allocation Summary", "Number of Disks")).strip())
     original_disk_count = _get_disk_count()
-    logger.info('Initial disk count: {}'.format(original_disk_count))
+    logger.info('Initial disk count: %s', original_disk_count)
     toolbar.select(testing_group.text, button.text)
     fill(Input("size"), '1')
     pytest.sel.click(submit)
@@ -166,4 +166,4 @@ def test_vmware_vimapi_hotadd_disk(
         wait_for(
             lambda: original_disk_count + 1 == _get_disk_count(), num_sec=180, delay=5)
     finally:
-        logger.info('End disk count: {}'.format(_get_disk_count()))
+        logger.info('End disk count: %s', _get_disk_count())

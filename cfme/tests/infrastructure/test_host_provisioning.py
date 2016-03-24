@@ -95,7 +95,7 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
 
     def cleanup_host():
         try:
-            logger.info('Cleaning up host %s on provider %s' % (prov_host_name, provider.key))
+            logger.info('Cleaning up host %s on provider %s', prov_host_name, provider.key)
             mgmt_system = provider.mgmt
             host_list = mgmt_system.list_host()
             if host_provisioning['ip_addr'] in host_list:
@@ -125,15 +125,15 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
                 host.wait_for_host_delete(host_renamed_obj2)
         except:
             # The mgmt_sys classes raise Exception :\
-            logger.warning('Failed to clean up host %s on provider %s' %
-                           (prov_host_name, provider.key))
+            logger.warning('Failed to clean up host %s on provider %s',
+                prov_host_name, provider.key)
 
     request.addfinalizer(cleanup_host)
 
     pytest.sel.force_navigate('infrastructure_provision_host', context={
         'host': test_host, })
 
-    note = ('Provisioning host %s on provider %s' % (prov_host_name, provider.key))
+    note = ('Provisioning host {} on provider {}'.format(prov_host_name, provider.key))
     provisioning_data = {
         'email': 'template_provisioner@example.com',
         'first_name': 'Template',
@@ -157,7 +157,7 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
     flash.assert_success_message(
         "Host Request was Submitted, you will be notified when your Hosts are ready")
 
-    row_description = 'PXE install on [%s] from image [%s]' % (prov_host_name, pxe_image)
+    row_description = 'PXE install on [{}] from image [{}]'.format(prov_host_name, pxe_image)
     cells = {'Description': row_description}
 
     row, __ = wait_for(requests.wait_for_request, [cells],
@@ -183,9 +183,8 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
     def verify():
         return len(
             smtp_test.get_emails(
-                subject_like="Your host provisioning request has Completed - Host:%%%s" %
-                prov_host_name
-            )
+                subject_like="Your host provisioning request has Completed - Host:%%".format(
+                    prov_host_name))
         ) > 0
 
     wait_for(verify, message="email receive check", delay=5)

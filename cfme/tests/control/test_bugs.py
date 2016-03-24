@@ -84,7 +84,7 @@ def test_folder_field_scope(request, vmware_provider, vmware_vm):
     for tag in tags:
         if "Parent Folder Path (VMs & Templates)" in tag:
             folder = tag.split(":", 1)[-1].strip()
-            logger.info("Detected folder: {}".format(folder))
+            logger.info("Detected folder: %s", folder)
             break
     else:
         pytest.fail("Could not read the folder from the tags:\n{}".format(repr(tags)))

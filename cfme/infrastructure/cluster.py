@@ -97,8 +97,8 @@ class Cluster(Pretty):
     def _on_detail_page(self):
         """ Returns ``True`` if on the cluster detail page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
-            % (self.name, "Summary")
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
+                self.name, "Summary")
         )
 
     @property

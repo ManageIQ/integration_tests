@@ -15,8 +15,7 @@ from utils.pretty import Pretty
 
 
 def _make_button(title):
-    return "//span[not(contains(@style,'none'))]//img[@alt='%s']"\
-        % title
+    return "//span[not(contains(@style,'none'))]//img[@alt='{}']".format(title)
 
 
 def _root():
@@ -101,7 +100,7 @@ def select_first_expression():
 def select_expression_by_text(text):
     sel.click(
         sel.element(
-            "//a[contains(@id,'exp_')][contains(normalize-space(text()),'%s')]" % text,
+            "//a[contains(@id,'exp_')][contains(normalize-space(text()),'{}')]".format(text),
             root=_expressions_root()
         )
     )
@@ -395,17 +394,17 @@ def get_func(name):
         name: Name of the variable containing the callable.
     Returns: Callable from this module
     """
-    assert name not in _banned_commands, "Command '%s' is not permitted!" % name
-    assert not name.startswith("_"), "Command '%s' is private!" % name
+    assert name not in _banned_commands, "Command '{}' is not permitted!".format(name)
+    assert not name.startswith("_"), "Command '{}' is private!".format(name)
     try:
         func = getattr(sys.modules[__name__], name)
     except AttributeError:
-        raise NameError("Could not find function %s to operate the editor!" % name)
+        raise NameError("Could not find function {} to operate the editor!".format(name))
     try:
         func.__call__
         return func
     except AttributeError:
-        raise NameError("%s is not callable!" % name)
+        raise NameError("{} is not callable!".format(name))
 
 
 def run_commands(command_list, clear_expression=True):
@@ -456,10 +455,10 @@ def run_commands(command_list, clear_expression=True):
                 elif isinstance(value, dict):
                     kwargs.update(value)
                 else:
-                    raise Exception("I use '%s' type here!" % type(value).__name__)
+                    raise Exception("I use '{}' type here!".format(type(value).__name__))
                 step_list.append(partial(func, *args, **kwargs))
         else:
-            raise Exception("I cannot process '%s' type here!" % type(command).__name__)
+            raise Exception("I cannot process '{}' type here!".format(type(command).__name__))
     if clear_expression:
         delete_whole_expression()
     for step in step_list:
@@ -509,7 +508,7 @@ def _create_program_from_dsl(dsl_program):
             continue
         args_match = re.match(ARGS_CALL, line)
         if not args_match:
-            raise SyntaxError("Could not resolve statement `%s' on line %d" % (line, i))
+            raise SyntaxError("Could not resolve statement `{}' on line {}".format(line, i))
         fname = args_match.groupdict()["name"]
         args = [x.strip() for x in args_match.groupdict()["args"].split(",")]
         if len(args) > 0 and len(args[0]) > 0:

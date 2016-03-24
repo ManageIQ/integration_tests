@@ -26,7 +26,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_quota_prov_%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_quota_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
@@ -138,8 +138,7 @@ def test_group_quota_max_memory_check_by_tagging(
     Metadata:
         test_flag: provision
     """
-    note = ('template %s to vm %s on provider %s' %
-        (template_name, vm_name, provider.key))
+    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     prov_data["vm_name"] = vm_name
     prov_data["memory"] = "4096"
     prov_data["notes"] = note
@@ -147,7 +146,7 @@ def test_group_quota_max_memory_check_by_tagging(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [%s] to [%s]' % (template_name, vm_name)
+    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                     fail_func=requests.reload, num_sec=300, delay=20)
@@ -178,8 +177,7 @@ def test_group_quota_max_cpu_check_by_tagging(
     Metadata:
         test_flag: provision
     """
-    note = ('template %s to vm %s on provider %s' %
-        (template_name, vm_name, provider.key))
+    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     prov_data["vm_name"] = vm_name
     prov_data["num_sockets"] = "8"
     prov_data["notes"] = note
@@ -187,7 +185,7 @@ def test_group_quota_max_cpu_check_by_tagging(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [%s] to [%s]' % (template_name, vm_name)
+    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
                     fail_func=sel.refresh, num_sec=300, delay=20)

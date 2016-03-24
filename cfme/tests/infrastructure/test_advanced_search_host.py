@@ -42,13 +42,13 @@ def close_search():
 
 def get_expression(user_input=False, op=">"):
     if current_version() >= "5.4":
-        expression = "fill_count(Host / Node.VMs, %s" % op
+        expression = "fill_count(Host / Node.VMs, {}".format(op)
     else:
-        expression = "fill_count(Host.VMs, %s" % op
+        expression = "fill_count(Host.VMs, {}".format(op)
     if user_input:
         return expression + ")"
     else:
-        return expression + ", %d)"
+        return expression + ", {})"
 
 
 pytestmark = [pytest.mark.usefixtures("close_search")]
@@ -78,7 +78,7 @@ def test_filter_without_user_input(hosts, hosts_with_vm_count, host_with_median_
     # We will filter out hosts with less than median VMs
     more_than_median_hosts = list(dropwhile(lambda h: h[1] <= median_vm_count, hosts_with_vm_count))
     # Set up the filter
-    search.fill_and_apply_filter(get_expression(False) % median_vm_count)
+    search.fill_and_apply_filter(get_expression(False).format(median_vm_count))
     assert_no_cfme_exception()
     assert len(more_than_median_hosts) == len(host.get_all_hosts(do_not_navigate=True))
 
@@ -212,9 +212,7 @@ def test_quick_search_without_filter(request, hosts, hosts_with_vm_count, host_w
 def test_quick_search_with_filter(request, hosts, hosts_with_vm_count, host_with_median_vm):
     pytest.sel.force_navigate("infrastructure_hosts")
     median_host, median_vm_count = host_with_median_vm
-    search.fill_and_apply_filter(
-        get_expression(False, ">=") % median_vm_count
-    )
+    search.fill_and_apply_filter(get_expression(False, ">=").format(median_vm_count))
     assert_no_cfme_exception()
     # Make sure that we empty the regular search field after the test
     request.addfinalizer(search.ensure_normal_search_empty)
@@ -230,7 +228,7 @@ def test_quick_search_with_filter(request, hosts, hosts_with_vm_count, host_with
 def test_can_delete_filter():
     pytest.sel.force_navigate("infrastructure_hosts")
     filter_name = fauxfactory.gen_alphanumeric()
-    search.save_filter(get_expression(False) % 0, filter_name)
+    search.save_filter(get_expression(False).format(0), filter_name)
     assert_no_cfme_exception()
     search.reset_filter()
     assert_no_cfme_exception()
@@ -246,7 +244,7 @@ def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     pytest.sel.force_navigate("infrastructure_hosts")
     filter_name = fauxfactory.gen_alphanumeric()
-    search.save_filter(get_expression(False) % 0, filter_name)
+    search.save_filter(get_expression(False).format(0), filter_name)
 
     @request.addfinalizer
     def cleanup():
@@ -263,7 +261,7 @@ def test_cannot_delete_more_than_once(request, nuke_browser_after_test):
     """When Delete button appars, it does not want to go away"""
     pytest.sel.force_navigate("infrastructure_hosts")
     filter_name = fauxfactory.gen_alphanumeric()
-    search.save_filter(get_expression(False) % 0, filter_name)
+    search.save_filter(get_expression(False).format(0), filter_name)
 
     search.load_filter(filter_name)  # circumvent the thing happening in previous test
     # Delete once

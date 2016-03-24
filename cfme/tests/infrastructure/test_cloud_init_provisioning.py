@@ -57,7 +57,7 @@ def setup_ci_template(cloud_init_template):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_tmpl_prov_%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_tmpl_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 

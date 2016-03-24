@@ -134,4 +134,4 @@ class Instance(Updateable, Pretty):
                                                          # just take first value
         })
         sel.click(template_select_form.add_button)
-        flash.assert_success_message('Service Catalog Item "%s" was added' % self.name)
+        flash.assert_success_message('Service Catalog Item "{}" was added'.format(self.name))

@@ -15,7 +15,7 @@ from utils.wait import wait_for
 
 @pytest.fixture(scope="module")
 def delete_fx_provider_event(db, provider):
-    logger.debug("Deleting timeline events for provider name {}".format(provider.name))
+    logger.debug("Deleting timeline events for provider name %s", provider.name)
     ems = db['ext_management_systems']
     ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
     ems_events = db[ems_events_table_name]

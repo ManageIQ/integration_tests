@@ -53,7 +53,7 @@ def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
         additional_checks: Additional checks to perform on the mails. Keys are names of the mail
             sections, values the values to look for.
     """
-    logger.info("Waiting for informative e-mail of alert '{}' to come".format(alert.description))
+    logger.info("Waiting for informative e-mail of alert %s to come", alert.description)
     additional_checks = additional_checks or {}
 
     def _mail_arrived():
@@ -86,7 +86,7 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         provider: funcarg provider
     """
     alert_profile = explorer.VMInstanceAlertProfile(
-        "Alert profile for %s" % vm_name,
+        "Alert profile for {}".format(vm_name),
         alerts
     )
     alert_profile.create()
@@ -94,20 +94,20 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
     alert_profile.assign_to("The Enterprise")
     if event is not None:
         action = explorer.Action(
-            "Evaluate Alerts for %s" % vm_name,
+            "Evaluate Alerts for {}".format(vm_name),
             "Evaluate Alerts",
             alerts
         )
         action.create()
         request.addfinalizer(action.delete)
         policy = explorer.VMControlPolicy(
-            "Evaluate Alerts policy for %s" % vm_name,
-            scope="fill_field(VM and Instance : Name, INCLUDES, %s)" % vm_name
+            "Evaluate Alerts policy for {}".format(vm_name),
+            scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
         )
         policy.create()
         request.addfinalizer(policy.delete)
         policy_profile = explorer.PolicyProfile(
-            "Policy profile for %s" % vm_name, [policy]
+            "Policy profile for {}".format(vm_name), [policy]
         )
         policy_profile.create()
         request.addfinalizer(policy_profile.delete)

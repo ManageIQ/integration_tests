@@ -34,7 +34,7 @@ def smtp_test(request):
     mail_server_port = ports.get("smtp", None) or random_port()
     mail_query_port = ports.get("json", None) or random_port()
     my_ip = my_ip_address()
-    logger.info("Mind that it needs ports {} and {} open".format(mail_query_port, mail_server_port))
+    logger.info("Mind that it needs ports %s and %s open", mail_query_port, mail_server_port)
     smtp_conf = configuration.SMTPSettings(
         host=my_ip,
         port=mail_server_port,
@@ -46,7 +46,7 @@ def smtp_test(request):
         mail_server_port,
         mail_query_port
     )
-    logger.info("Starting mail collector {}".format(server_command))
+    logger.info("Starting mail collector %s", server_command)
     collector = None
 
     def _finalize():
@@ -72,7 +72,7 @@ def smtp_test(request):
         logger.info("Collector finished")
     collector = subprocess.Popen(server_command, shell=True)
     request.addfinalizer(_finalize)
-    logger.info("Collector pid {}".format(collector.pid))
+    logger.info("Collector pid %s", collector.pid)
     logger.info("Waiting for collector to become alive.")
     time.sleep(3)
     assert collector.poll() is None, "Collector has died. Something must be blocking selected ports"

@@ -161,7 +161,7 @@ def test_provision_stack(setup_provider, provider, provisioning, dialog, catalog
 
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
-    logger.info('Waiting for cfme provision request for service %s' % item_name)
+    logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -200,7 +200,7 @@ def test_reconfigure_service(setup_provider, provider, provisioning, dialog, cat
 
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
-    logger.info('Waiting for cfme provision request for service %s' % item_name)
+    logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -270,7 +270,7 @@ def test_retire_stack(setup_provider, provider, provisioning,
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
     request.addfinalizer(lambda: template.delete_all_templates())
-    logger.info('Waiting for cfme provision request for service %s' % item_name)
+    logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],

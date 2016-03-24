@@ -49,7 +49,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_tmpl_prov_%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_tmpl_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
@@ -199,9 +199,7 @@ def test_provision_approval(
         num_sec=120, delay=5)
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
-    logger.info(
-        'Waiting for vms "{}" to appear on provider {}'.format(
-            ", ".join(vm_names), provider.key))
+    logger.info('Waiting for vms %s to appear on provider %s', ", ".join(vm_names), provider.key)
     wait_for(
         lambda: all(map(provider.mgmt.does_vm_exist, vm_names)),
         handle_exception=True, num_sec=600)

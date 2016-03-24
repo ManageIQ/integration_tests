@@ -167,8 +167,8 @@ class Vm(BaseVM, Common):
             self.vm = parent_vm
 
         def _nav_to_snapshot_mgmt(self):
-            locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
-                       "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"') ]" % self.name)
+            locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , " +
+                       "'\"Snapshots\" for Virtual Machine \"{}\"') ]".format(self.name))
             if not sel.is_displayed(locator):
                 self.vm.load_details()
                 sel.click(InfoBlock.element("Properties", "Snapshots"))
@@ -347,7 +347,7 @@ class Vm(BaseVM, Common):
         }
         from cfme.provisioning import provisioning_form
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
-        cells = {'Description': 'Publish from [%s] to [%s]' % (self.name, template_name)}
+        cells = {'Description': 'Publish from [{}] to [{}]'.format(self.name, template_name)}
         row, __ = wait_for(
             requests.wait_for_request, [cells], fail_func=requests.reload, num_sec=900, delay=20)
         return Template(template_name, self.provider)
@@ -413,7 +413,7 @@ class Vm(BaseVM, Common):
 
         def set_relationship(self, server_name, server_id, click_cancel=False):
             self.navigate()
-            option = "%s (%d)" % (server_name, server_id)
+            option = "{} ({})".format(server_name, server_id)
 
             if click_cancel:
                 fill(self.relationship_form, {'server_select': option},
@@ -698,5 +698,5 @@ def get_number_of_vms(do_not_navigate=False):
         logger.debug("No page controls")
         return 0
     total = paginator.rec_total()
-    logger.debug("Number of VMs: {}".format(total))
+    logger.debug("Number of VMs: %s", total)
     return int(total)

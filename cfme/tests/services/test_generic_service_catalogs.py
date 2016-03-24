@@ -73,7 +73,7 @@ def test_service_generic_catalog_bundle(catalog_item):
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_bundle)
     flash.assert_no_errors()
-    logger.info('Waiting for cfme provision request for service {}'.format(bundle_name))
+    logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = bundle_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -97,7 +97,7 @@ def test_bundles_in_bundle(catalog_item):
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, third_catalog_bundle)
     flash.assert_no_errors()
-    logger.info('Waiting for cfme provision request for service {}'.format(bundle_name))
+    logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = third_bundle_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],

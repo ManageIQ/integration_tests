@@ -44,8 +44,7 @@ def myservice(setup_provider, provider, catalog_item, request):
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
-    logger.info('Waiting for cfme provision request for service {}'
-        .format(catalog_item.name))
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -63,7 +62,7 @@ def test_add_vm_to_service(myservice, request, copy_domain):
     method_torso = """
     def add_to_service
         vm      = $evm.root['vm']
-        service = $evm.vmdb('service').find_by_name('%s')
+        service = $evm.vmdb('service').find_by_name('{}')
         user    = $evm.root['user']
 
     if service && vm
@@ -78,7 +77,7 @@ def test_add_vm_to_service(myservice, request, copy_domain):
     $evm.log("info", "===========================================")
 
     add_to_service
-    """ % myservice.service_name
+    """.format(myservice.service_name)
 
     method = Method(
         name="InspectMe",

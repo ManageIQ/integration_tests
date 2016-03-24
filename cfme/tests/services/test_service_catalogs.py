@@ -54,7 +54,7 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
-    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -86,8 +86,8 @@ def test_order_catalog_item_via_rest(
     @pytest.wait_for(timeout="15m", delay=5)
     def request_finished():
         req.reload()
-        logger.info("Request status: {}, Request state: {}, Request message: {}".format(
-            req.status, req.request_state, req.message))
+        logger.info("Request status: %s, Request state: %s, Request message: %s",
+            req.status, req.request_state, req.message)
         return req.status.lower() == "ok" and req.request_state.lower() == "finished"
 
 
@@ -106,7 +106,7 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     catalog_bundle.create([catalog_item.name])
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_bundle)
-    logger.info('Waiting for cfme provision request for service {}'.format(bundle_name))
+    logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = bundle_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -154,7 +154,7 @@ def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
-    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     provider.delete(cancel=False)

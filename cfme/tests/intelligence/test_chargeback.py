@@ -33,7 +33,7 @@ def new_storage_rate():
 def test_add_new_compute_chargeback():
     ccb = new_compute_rate()
     ccb.create()
-    flash.assert_message_match('Chargeback Rate "%s" was added' % ccb.description)
+    flash.assert_message_match('Chargeback Rate "{}" was added'.format(ccb.description))
 
 
 @pytest.mark.meta(blockers=[1073366])
@@ -47,7 +47,7 @@ def test_compute_chargeback_duplicate_disallowed():
 def test_add_new_storage_chargeback():
     scb = new_storage_rate()
     scb.create()
-    flash.assert_message_match('Chargeback Rate "%s" was added' % scb.description)
+    flash.assert_message_match('Chargeback Rate "{}" was added'.format(scb.description))
 
 
 def test_edit_compute_chargeback():
@@ -62,7 +62,7 @@ def test_edit_compute_chargeback():
         ccb.mem_alloc = (1, cb.HOURLY)
         ccb.mem_used = (2000, cb.WEEKLY)
         ccb.net_io = (4000, cb.DAILY)
-    flash.assert_message_match('Chargeback Rate "%s" was saved' % ccb.description)
+    flash.assert_message_match('Chargeback Rate "{}" was saved'.format(ccb.description))
 
 
 def test_edit_storage_chargeback():
@@ -73,7 +73,7 @@ def test_edit_storage_chargeback():
         scb.storage_fixed_2 = (2000, cb.MONTHLY)
         scb.storage_alloc = (3000, cb.WEEKLY)
         scb.storage_used = (6000, cb.MONTHLY)
-    flash.assert_message_match('Chargeback Rate "%s" was saved' % scb.description)
+    flash.assert_message_match('Chargeback Rate "{}" was saved'.format(scb.description))
 
 
 def test_delete_compute_chargeback():

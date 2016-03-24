@@ -38,7 +38,7 @@ def wait_for_vm_state_changes(vm, timeout=600):
     while count < timeout:
         try:
             quadicon = vm.find_quadicon(refresh=True, from_any_provider=True)
-            logger.info("Quadicon state for {} is {}".format(vm.name, repr(quadicon.state)))
+            logger.info("Quadicon state for %s is %s", vm.name, repr(quadicon.state))
             if "archived" in quadicon.state.lower():
                 return True
             elif "orphaned" in quadicon.state.lower():

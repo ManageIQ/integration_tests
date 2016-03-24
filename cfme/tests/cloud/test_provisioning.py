@@ -42,7 +42,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm_name(request):
-    vm_name = 'test_image_prov_%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_image_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
@@ -53,8 +53,8 @@ def test_provision_from_template(request, setup_provider, provider, provisioning
         test_flag: provision
     """
     image = provisioning['image']['name']
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider.key))
+    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
+        image, vm_name, provider.key))
 
     instance = Instance.factory(vm_name, provider, image)
 
@@ -153,10 +153,10 @@ VOLUME_METHOD = ("""
 prov = $evm.root["miq_provision"]
 prov.set_option(
     :clone_options,
-    {:block_device_mapping => [%s]})
+    {:block_device_mapping => [{}]})
 """)
 
-ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
+ONE_FIELD = """{:volume_id => "{}", :device_name => "{}"}"""
 
 
 @pytest.fixture(scope="module")
@@ -204,8 +204,8 @@ def test_provision_from_template_with_attached_disks(
     """
 
     image = provisioning['image']['name']
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider.key))
+    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
+        image, vm_name, provider.key))
 
     DEVICE_NAME = "/dev/sd{}"
     device_mapping = []
@@ -226,8 +226,8 @@ def test_provision_from_template_with_attached_disks(
         with update(method):
             disk_mapping = []
             for mapping in device_mapping:
-                disk_mapping.append(ONE_FIELD % mapping)
-            method.data = VOLUME_METHOD % ", ".join(disk_mapping)
+                disk_mapping.append(ONE_FIELD.format(mapping))
+            method.data = VOLUME_METHOD.format(", ".join(disk_mapping))
 
         def _finish_method():
             with update(method):
@@ -272,8 +272,8 @@ def test_provision_with_boot_volume(request, setup_provider, provider, provision
     """
 
     image = provisioning['image']['name']
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider.key))
+    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
+        image, vm_name, provider.key))
 
     with provider.mgmt.with_volume(1, imageRef=provider.mgmt.get_template_id(image)) as volume:
         # Set up automate
@@ -291,7 +291,7 @@ def test_provision_with_boot_volume(request, setup_provider, provider, provision
                         :image_ref => nil,
                         :block_device_mapping_v2 => [{
                             :boot_index => 0,
-                            :uuid => "%s",
+                            :uuid => "{}",
                             :device_name => "vda",
                             :source_type => "volume",
                             :destination_type => "volume",
@@ -299,7 +299,7 @@ def test_provision_with_boot_volume(request, setup_provider, provider, provision
                         }]
                     }
                 )
-            ''' % (volume, ))
+            '''.format(volume))
 
         def _finish_method():
             with update(method):
@@ -343,8 +343,8 @@ def test_provision_with_additional_volume(request, setup_provider, provisioning,
     """
 
     image = provisioning['image']['name']
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider.key))
+    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
+        image, vm_name, provider.key))
 
     # Set up automate
     cls = automate.Class(
@@ -365,7 +365,7 @@ def test_provision_with_additional_volume(request, setup_provider, provisioning,
                 :image_ref => nil,
                 :block_device_mapping_v2 => [{
                   :boot_index => 0,
-                  :uuid => "%s",
+                  :uuid => "{}",
                   :device_name => "vda",
                   :source_type => "image",
                   :destination_type => "volume",
@@ -374,7 +374,7 @@ def test_provision_with_additional_volume(request, setup_provider, provisioning,
                 }]
               }
         )
-        ''' % (image_id, ))
+        '''.format(image_id))
 
     def _finish_method():
         with update(method):

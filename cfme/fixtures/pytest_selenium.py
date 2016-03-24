@@ -182,7 +182,7 @@ def _t(t, root=None):
                 result += root_element.find_elements(*t)
                 break
             except Exception as e:
-                logger.info('Exception detected: ' + str(e))
+                logger.info('Exception detected: %s', str(e))
                 sleep(0.25)
                 if count == 8:
                     result += root_element.find_elements(*t)
@@ -329,7 +329,7 @@ def wait_for_ajax():
         # Log the message only if it's different from the last one
         if prev_log_msg != log_msg:
             _thread_local.ajax_log_msg = log_msg
-            logger.trace('Ajax running: {}'.format(log_msg))
+            logger.trace('Ajax running: %s', log_msg)
         if (not anything_in_flight) and prev_log_msg:
             logger.trace('Ajax done')
 
@@ -348,7 +348,7 @@ def wait_for_ajax():
     url = url.replace(base_url(), '')
     url = url.replace("/", '_')
     if url not in urls:
-        logger.info('Taking picture of page: {}'.format(url))
+        logger.info('Taking picture of page: %s', url)
         ss, sse = take_screenshot()
         if ss:
             ss_path = log_path.join('page_screenshots')
@@ -467,7 +467,7 @@ def dismiss_any_alerts():
     try:
         while is_alert_present():
             alert = get_alert()
-            logger.warning("Dismissing additional alert with text: {}".format(alert.text))
+            logger.warning("Dismissing additional alert with text: %s", alert.text)
             alert.dismiss()
     except NoAlertPresentException:  # Just in case. is_alert_present should be reliable, but still.
         pass
@@ -503,9 +503,9 @@ def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
         popup = get_alert()
         answer = 'cancel' if cancel else 'ok'
         t = "alert" if prompt is None else "prompt"
-        logger.info('Handling {} "{}", clicking {}'.format(t, popup.text, answer))
+        logger.info('Handling %s %s, clicking %s', t, popup.text, answer)
         if prompt is not None:
-            logger.info("Typing in: {}".format(prompt))
+            logger.info("Typing in: %s", prompt)
             popup.send_keys(prompt)
         popup.dismiss() if cancel else popup.accept()
         # Should any problematic "double" alerts appear here, we don't care, just blow'em away.
@@ -722,7 +722,7 @@ def set_attribute(loc, attr, value):
         value: Value to set.
     """
     logger.info(
-        "!!! ATTENTION! SETTING READ-ONLY ATTRIBUTE {} OF {} TO {}!!!".format(attr, loc, value))
+        "!!! ATTENTION! SETTING READ-ONLY ATTRIBUTE %s OF %s TO %s!!!", attr, loc, value)
     return execute_script(
         "arguments[0].setAttribute(arguments[1], arguments[2]);", element(loc), attr, value)
 
@@ -736,7 +736,7 @@ def unset_attribute(loc, attr):
         loc: A locator, expects either a string, WebElement, tuple.
         attr: Attribute name.
     """
-    logger.info("!!! ATTENTION! REMOVING READ-ONLY ATTRIBUTE {} OF {}!!!".format(attr, loc))
+    logger.info("!!! ATTENTION! REMOVING READ-ONLY ATTRIBUTE %s OF %s!!!", attr, loc)
     return execute_script("arguments[0].removeAttribute(arguments[1]);", element(loc), attr)
 
 
@@ -747,7 +747,7 @@ def set_angularjs_value(loc, value):
         loc: A locator, expects either a string, WebElement, tuple.
         value: Value to set.
     """
-    logger.info("Setting value of an angularjs element {} to {}".format(loc, value))
+    logger.info("Setting value of an angularjs element %s to %s", loc, value)
     return execute_script(js.set_angularjs_value_script, element(loc), value)
 
 
@@ -803,7 +803,7 @@ def checkbox(loc, set_to=False):
             selected = el.is_selected()
 
         if selected is not set_to:
-            logger.debug("Setting checkbox %s to %s" % (str(loc), str(set_to)))
+            logger.debug("Setting checkbox %s to %s", str(loc), str(set_to))
             click(el)
         return selected
 
@@ -951,7 +951,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     _tries += 1
 
-    logger.debug('force_navigate to %s, try %d' % (page_name, _tries))
+    logger.debug('force_navigate to %s, try %d', page_name, _tries)
     # circular import prevention: cfme.login uses functions in this module
     from cfme import login
     # Import the top-level nav menus for convenience
@@ -1063,9 +1063,9 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
         ctx = kwargs.get("context", False)
         if ctx:
-            logger.info('Navigating to {} with context: {}'.format(page_name, ctx))
+            logger.info('Navigating to %s with context: %s', page_name, ctx)
         else:
-            logger.info('Navigating to {}'.format(page_name))
+            logger.info('Navigating to %s', page_name)
         menu.nav.go_to(page_name, *args, **kwargs)
     except (KeyboardInterrupt, ValueError):
         # KeyboardInterrupt: Don't block this while navigating
@@ -1091,7 +1091,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         recycle = True
     except exceptions.CannotContinueWithNavigation as e:
         # The some of the navigation steps cannot succeed
-        logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
+        logger.info('Cannot continue with navigation due to: %s; Recycling browser', str(e))
         recycle = True
     except (NoSuchElementException, InvalidElementStateException, WebDriverException,
             StaleElementReferenceException) as e:
@@ -1110,9 +1110,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             logger.warning("Page was blocked with blocker div, recycling.")
             recycle = True
         elif cfme_exc.is_cfme_exception():
-            logger.exception("CFME Exception before force_navigate started!: `{}`".format(
-                cfme_exc.cfme_exception_text()
-            ))
+            logger.exception("CFME Exception before force_navigate started!: `%s`",
+                cfme_exc.cfme_exception_text())
             recycle = True
         elif is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
             # 502
@@ -1121,22 +1120,22 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             req = text(req[0]) if req else "No request stated"
             reason = elements("/html/body/p[2]/strong")
             reason = text(reason[0]) if reason else "No reason stated"
-            logger.info("Proxy error: {} / {}".format(req, reason))
+            logger.info("Proxy error: %s / %s", req, reason)
             restart_evmserverd = True
         elif is_displayed("//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
             # 503 and similar sort of errors
             title = text("//body/h1")
             body = text("//body/p")
-            logger.exception("Application error '{}': {}".format(title, body))
+            logger.exception("Application error %s: %s", title, body)
             sleep(5)  # Give it a little bit of rest
             recycle = True
         elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]", _no_deeper=True):
             # Rails exception detection
-            logger.exception("Rails exception before force_navigate started!: {}:{} at {}".format(
+            logger.exception("Rails exception before force_navigate started!: %s:%s at %s",
                 text("//body/div[@class='dialog']/h1").encode("utf-8"),
                 text("//body/div[@class='dialog']/p").encode("utf-8"),
                 current_url()
-            ))
+            )
             recycle = True
         elif elements("//ul[@id='maintab']/li[@class='inactive']") and not\
                 elements("//ul[@id='maintab']/li[@class='active']/ul/li"):
@@ -1149,7 +1148,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             recycle = True
         else:
             logger.error("Could not determine the reason for failing the navigation. " +
-                " Reraising.  Exception: %s" % str(e))
+                " Reraising.  Exception: %s", str(e))
             logger.debug(store.current_appliance.ssh_client.run_command(
                 'service evmserverd status').output)
             raise
@@ -1161,7 +1160,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     if recycle or restart_evmserverd:
         browser().quit()  # login.current_user() will be retained for next login
-        logger.debug('browser killed on try %d' % _tries)
+        logger.debug('browser killed on try %d', _tries)
         # If given a "start" nav destination, it won't be valid after quitting the browser
         kwargs.pop("start", None)
         force_navigate(page_name, _tries, *args, **kwargs)
@@ -1217,7 +1216,7 @@ def detect_observed_field(loc):
         # In either case, we've detected an observed text field and should wait
         interval = default_wait
 
-    logger.trace('  Observed field detected, pausing %.1f seconds' % interval)
+    logger.trace('  Observed field detected, pausing %.1f seconds', interval)
     sleep(interval)
     wait_for_ajax()
 
@@ -1542,7 +1541,7 @@ def take_screenshot():
         # If this fails for any other reason,
         # leave out the screenshot but record the reason
         if ex.message:
-            screenshot_error = '%s: %s' % (type(ex).__name__, ex.message)
+            screenshot_error = '{}: {}'.format(type(ex).__name__, ex.message)
         else:
             screenshot_error = type(ex).__name__
     return ScreenShot(screenshot, screenshot_error)
