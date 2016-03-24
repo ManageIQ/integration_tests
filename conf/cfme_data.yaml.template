@@ -119,6 +119,13 @@ management_systems:
         network: defaultnetwork
         test_vm_power_control:
             - pwr-ctl-vm-1-dnd
+     hawkular:
+        name: hawkular-01
+        hostname: livingontheedge.hawkular.org
+        port: 80
+        credentials: hawkular
+
+
 configuration_managers:
     sat6:
         name: Satellite 6
