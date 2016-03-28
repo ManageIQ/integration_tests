@@ -4,7 +4,7 @@ import pytest
 
 from cfme.configure.configuration import DatabaseBackupSchedule
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import flash, InfoBlock
+from cfme.web_ui import flash
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from urlparse import urlparse
@@ -196,10 +196,9 @@ def test_db_backup_schedule(request, db_backup_data):
     # ----
 
     # ---- Wait for schedule to run
-    sel.force_navigate('cfg_settings_schedule',
-                       context={'schedule_name': db_backup_data.schedule_name})
+    # check last date at schedule's table
     wait_for(
-        lambda: InfoBlock('Schedule Info', 'Last Run Time').text != '',
+        lambda: sched.last_date != '',
         num_sec=600,
         delay=30,
         fail_func=sel.refresh,
