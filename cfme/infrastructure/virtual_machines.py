@@ -391,6 +391,9 @@ class Vm(BaseVM, Common):
     def get_vm_via_rest(self):
         return rest_api().collections.vms.get(name=self.name)
 
+    def get_collection_via_rest(self):
+        return rest_api().collections.vms
+
     def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text
 

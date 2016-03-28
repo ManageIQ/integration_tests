@@ -160,6 +160,8 @@ class Instance(VM):
             raise Exception("Collection instances isn't available")
         return instance
 
+    def get_collection_via_rest(self):
+        return rest_api().collections.instances
 
 @VM.register_for_provider_type("openstack")
 class OpenStackInstance(Instance):
