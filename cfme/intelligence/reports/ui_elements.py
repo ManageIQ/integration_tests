@@ -121,7 +121,7 @@ class PivotCalcSelect(Pretty):
         return sel.uncheck(self._get_checkbox_of(item))
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self._id)))
+        return "{}({})".format(type(self).__name__, str(repr(self._id)))
 
     def __str__(self):
         return repr(self)
@@ -193,7 +193,7 @@ class RecordGrouper(Pretty):
         self.table = Table(table_loc)
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self._table_loc)))
+        return "{}({})".format(type(self).__name__, str(repr(self._table_loc)))
 
 
 @fill.method((RecordGrouper, Mapping))
@@ -245,7 +245,7 @@ class ColumnStyleTable(Pretty):
         self._div_id = div_id
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self._div_id)))
+        return "{}({})".format(type(self).__name__, str(repr(self._div_id)))
 
     def get_style_select(self, name, id=0):
         """Return Select element with selected style.
@@ -655,7 +655,7 @@ class FolderManager(Pretty):
         self.root = lambda: sel.element(root)
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self.root)))
+        return "{}({})".format(type(self).__name__, str(repr(self.root)))
 
     @classmethod
     def bail_out(cls):

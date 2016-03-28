@@ -150,7 +150,7 @@ class CopiableTreeNode(TreeNode):
         try:
             return self._class_name
         except AttributeError:
-            return self.__class__.__name__
+            return type(self).__name__
 
     @class_name.setter
     def class_name(self, value):
@@ -393,7 +393,7 @@ class Namespace(TreeNode, Updateable):
         flash.assert_success_message(del_msg)
 
     def __repr__(self):
-        return "<{}.{} name={}, path={}>".format(__name__, self.__class__.__name__,
+        return "<{}.{} name={}, path={}>".format(__name__, type(self).__name__,
                                             self.name, self.path)
 
 

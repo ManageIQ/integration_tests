@@ -471,7 +471,7 @@ class BaseCondition(Updateable, Pretty):
                  expression=None):
         if not self.PREFIX:
             raise NotImplementedError("You must use an inherited class from {}".format(
-                self.__class__.__name__))
+                type(self).__name__))
         self.description = description
         self.notes = notes
         self.scope = scope
@@ -597,7 +597,7 @@ class BasePolicy(Updateable, Pretty):
                  scope=None):
         if not self.PREFIX:
             raise NotImplementedError("You must use an inherited class from {}".format(
-                self.__class__.__name__))
+                type(self).__name__))
         self.description = description
         self.notes = notes
         self.active = active

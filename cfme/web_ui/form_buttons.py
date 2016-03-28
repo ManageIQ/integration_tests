@@ -117,7 +117,7 @@ class FormButton(Pretty):
         return self.locate()
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self._alt)))
+        return "{}({})".format(type(self).__name__, str(repr(self._alt)))
 
 add = FormButton("Add")
 save = FormButton("Save Changes", dimmed_alt="Save", ng_click="saveClicked()")
