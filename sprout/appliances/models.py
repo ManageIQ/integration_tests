@@ -52,13 +52,13 @@ class MetadataMixin(models.Model):
     object_meta_data = models.TextField(default=yaml.dump({}))
 
     def reload(self):
-        new_self = self.__class__.objects.get(pk=self.pk)
+        new_self = type(self).objects.get(pk=self.pk)
         self.__dict__.update(new_self.__dict__)
 
     @property
     @contextmanager
     def metadata_lock(self):
-        with critical_section("metadata-({})[{}]".format(self.__class__.__name__, str(self.pk))):
+        with critical_section("metadata-({})[{}]".format(type(self).__name__, str(self.pk))):
             yield
 
     @property
@@ -305,7 +305,7 @@ class Provider(MetadataMixin):
             return None
 
     def __unicode__(self):
-        return "{} {}".format(self.__class__.__name__, self.id)
+        return "{} {}".format(type(self).__name__, self.id)
 
 
 @receiver(pre_save, sender=Provider)
@@ -409,7 +409,7 @@ class Group(MetadataMixin):
 
     def __unicode__(self):
         return "{} {} (pool size={}/{})".format(
-            self.__class__.__name__, self.id, self.template_pool_size,
+            type(self).__name__, self.id, self.template_pool_size,
             self.unconfigured_template_pool_size)
 
 
@@ -510,7 +510,7 @@ class Template(MetadataMixin):
 
     def __unicode__(self):
         return "{} {}:{} @ {}".format(
-            self.__class__.__name__, self.version, self.name, self.provider.id)
+            type(self).__name__, self.version, self.name, self.provider.id)
 
 
 class Appliance(MetadataMixin):
@@ -626,7 +626,7 @@ class Appliance(MetadataMixin):
     @property
     @contextmanager
     def kill_lock(self):
-        with critical_section("kill-({})[{}]".format(self.__class__.__name__, str(self.pk))):
+        with critical_section("kill-({})[{}]".format(type(self).__name__, str(self.pk))):
             yield
 
     @property
@@ -669,7 +669,7 @@ class Appliance(MetadataMixin):
             self.power_state_changed = timezone.now()
 
     def __unicode__(self):
-        return "{} {} @ {}".format(self.__class__.__name__, self.name, self.template.provider.id)
+        return "{} {} @ {}".format(type(self).__name__, self.name, self.template.provider.id)
 
     @classmethod
     def unassigned(cls):

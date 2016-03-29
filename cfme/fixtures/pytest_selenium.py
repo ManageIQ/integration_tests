@@ -1400,7 +1400,7 @@ class Select(SeleniumSelect, Pretty):
 
     def __repr__(self):
         return "{}({}, multi={})".format(
-            self.__class__.__name__, repr(self._loc), repr(self.is_multiple))
+            type(self).__name__, repr(self._loc), repr(self.is_multiple))
 
 
 @multidispatch

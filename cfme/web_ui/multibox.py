@@ -47,7 +47,7 @@ class MultiBoxSelect(Pretty):
 
     def __str__(self):
         return "{}({}, {})".format(
-            self.__class__.__name__, str(self._unselected), str(self._selected))
+            type(self).__name__, str(self._unselected), str(self._selected))
 
     def _move_to_unselected(self):
         """ Clicks the button for moving items from selected to unselected.
