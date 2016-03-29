@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
-from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 import pytest
-from utils import testgen
-from utils import error
+from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
+from utils import testgen, error
 from utils.update import update
+from cfme.web_ui import mixins
+from cfme.fixtures import pytest_selenium as sel
 
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
@@ -117,3 +118,17 @@ def test_new_template_required_error_validation(provisioning):
 
     with error.expected(flash_msg):
         template.create('')
+
+
+def test_tag_orchestration_template(provisioning, tag):
+    template_type = provisioning['stack_provisioning']['template_type']
+    template = OrchestrationTemplate(template_type=template_type,
+                                    template_name=fauxfactory.gen_alphanumeric(),
+                                    description="my template")
+    template.create(METHOD_TORSO)
+    sel.force_navigate('select_template', context={
+        'template_type': template.template_type,
+        'template_name': template.template_name})
+    mixins.add_tag(tag)
+    mixins.remove_tag(tag)
+    template.delete()
