@@ -5,10 +5,10 @@ set -e
 
 # Load from YAML
 PYTHON_ENV_PATH=\
-$(eval readlink -f $(cat ./conf/env.local.yaml | shyaml get-value tmux.PYTHON_ENV_PATH))
+$(eval readlink -f "$(cat ./conf/env.local.yaml | shyaml get-value tmux.PYTHON_ENV_PATH)")
 
 CFME_TEST_PATH=\
-$(eval readlink -f $(cat ./conf/env.local.yaml | shyaml get-value tmux.CFME_TEST_PATH))
+$(eval readlink -f "$(cat ./conf/env.local.yaml | shyaml get-value tmux.CFME_TEST_PATH)")
 
 if [ ! -z "$PYTHON_ENV_PATH" ] && [ -d "$PYTHON_ENV_PATH" ] \
   && [ ! -z "$CFME_TEST_PATH" ] && [ -d "$CFME_TEST_PATH" ]
@@ -23,15 +23,16 @@ fi
 
 # More information on DockerBot can be found
 # https://github.com/RedHatQE/cfme_tests/blob/master/scripts/dockerbot/README.md
-if [ `systemctl is-active docker` != "active" ]
+DOCKER_STATUS=$(systemctl is-active docker)
+if [ $DOCKER_STATUS != "active" ]
   then
   echo "Starting Docker..."
   systemctl start docker
-  Exit_Code=`echo $?`
 else
   echo "Docker already running"
 fi
 
+# shellcheck source=/dev/null
 source "$PYTHON_ENV_PATH/activate"
 
 # check for latest

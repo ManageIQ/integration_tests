@@ -8,7 +8,7 @@ prefix=$2
 
 rm -rf ${logdir}${prefix}.perf.log.gz
 
-cd $logdir
+cd $logdir || exit
 for file in `ls ${prefix}.log-* | sort -V`
 do
   echo "Processing $file"

@@ -1,7 +1,9 @@
+#!/bin/bash
+
 RES=16
 # Append messages to setup.txt
 log () {
-    echo $@ >> $ARTIFACTOR_DIR/setup.txt
+    echo "$@" >> $ARTIFACTOR_DIR/setup.txt
 }
 
 # Runs given command and appends the stdout and stderr output to setup.txt
