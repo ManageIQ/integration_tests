@@ -1445,7 +1445,9 @@ class DatabaseBackupSchedule(Schedule):
         ("time_zone", {
             version.LOWEST: Select("select#time_zone"),
             '5.5': AngularSelect('time_zone')}),
-        ("start_date", Calendar("miq_angular_date_1")),
+        ("start_date", {
+            '5.4': Calendar("miq_angular_date_1"),
+            '5.5': Calendar("start_date")}),
         ("start_hour", {
             version.LOWEST: Select("select#start_hour"),
             '5.5': AngularSelect('start_hour')}),
@@ -1554,6 +1556,13 @@ class DatabaseBackupSchedule(Schedule):
             form_buttons.cancel()
         else:
             form_buttons.save()
+
+    @property
+    def last_date(self):
+        sel.force_navigate("cfg_settings_schedules")
+        name = self.details["name"]
+        row = records_table.find_row("Name", name)
+        return row[6].text
 
 
 class Zone(Pretty):
