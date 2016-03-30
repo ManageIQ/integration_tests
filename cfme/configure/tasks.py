@@ -160,3 +160,7 @@ def all_other_tasks(**filter_kwargs):
     Returns: List of dicts.
     """
     return _get_tasks("tasks_all_other", **filter_kwargs)
+
+
+def sort_by_header(header, order):
+    tasks_table.sort_by(header, order)
