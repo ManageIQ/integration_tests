@@ -5,6 +5,7 @@ from utils import providers
 login.login_admin()
 
 
+<<<<<<< HEAD
 @pytest.fixture(scope='function')
 def hawkular_provider():
     return providers.get_crud('hawkular')
@@ -18,3 +19,6 @@ def test_hawkular_crud(hawkular_provider):
     added providers between test runs
     """
     hawkular_provider.create(cancel=False, validate_credentials=False)
+=======
+hawkular.create(cancel=False, validate_credentials=False)
+>>>>>>> W292
