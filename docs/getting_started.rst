@@ -94,6 +94,18 @@ Detailed steps (manual environment setup):
 
     * On RHEL and derived systems, it will say the zeromq package is not available but that is ok.
 
+* Activate the virtual environment:
+
+To activate the virtualenv, the ``bin/activate`` script must be sourced. Bear in mind that you
+should have the two options added in the ``bin/activate`` script BEFORE you source it, otherwise it
+will not work.
+
+.. code-block:: bash
+
+   #Bash example:
+   `cd /path/to/virtualenv'
+   source bin/activate or . bin/activate
+
 * Install python dependencies:
 
   * ``PYCURL_SSL_LIBRARY=nss pip install -Ur /path/to/virtualenv/cfme_tests/requirements.txt``
@@ -122,19 +134,6 @@ Detailed steps (manual environment setup):
   can either wait about 30 seconds, or you can Ctrl-C it again.
 * In either case, check your processes sometimes, the artifactor process likes to hang when forced
   to quit, but it can also happen when it ends normally, though it is not too common.
-
-Activating the virtualenv
--------------------------
-
-To activate the virtualenv, the ``bin/activate`` script must be sourced. Bear in mind that you
-should have the two options added in the ``bin/activate`` script BEFORE you source it, otherwise it
-will not work.
-
-.. code-block:: bash
-
-   #Bash example:
-   `cd /path/to/virtualenv'
-   source bin/activate or . bin/activate
 
 Testing Framework
 -----------------
