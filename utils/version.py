@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+from cached_property import cached_property
 from collections import namedtuple
 from datetime import date, datetime
 
@@ -157,9 +158,10 @@ def pick(v_dict):
 
 class Version(object):
     """Version class based on distutil.version.LooseVersion"""
-    SUFFIXES = ('nightly', 'pre-nightly', 'pre', 'alpha', 'beta', 'beta1')
-    SUFFIXES_STR = "|".join(SUFFIXES)
-    component_re = re.compile(r'(?:\s*(\d+|[a-z]+|\.|-(?:{})$))'.format(SUFFIXES_STR))
+    SUFFIXES = ('nightly', 'pre', 'alpha', 'beta', 'rc')
+    SUFFIXES_STR = "|".join('-{}\d*'.format(suff) for suff in SUFFIXES)
+    component_re = re.compile(r'(?:\s*(\d+|[a-z]+|\.|(?:{})+$))'.format(SUFFIXES_STR))
+    suffix_item_re = re.compile(r'^([^0-9]+)(\d*)$')
 
     def __init__(self, vstring):
         self.parse(vstring)
@@ -178,7 +180,7 @@ class Version(object):
                             self.component_re.findall(vstring))
         # Check if we have a version suffix which denotes pre-release
         if components and components[-1].startswith('-'):
-            self.suffix = components[-1][1:]    # Chop off the -
+            self.suffix = components[-1][1:].split('-')    # Chop off the -
             components = components[:-1]
         else:
             self.suffix = None
@@ -191,19 +193,49 @@ class Version(object):
         self.vstring = vstring
         self.version = components
 
+    @cached_property
+    def normalized_suffix(self):
+        """Turns the string suffixes to numbers. Creates a list of tuples.
+
+        The list of tuples is consisting of 2-tuples, the first value says the position of the
+        suffix in the list and the second number the numeric value of an eventual numeric suffix.
+
+        If the numeric suffix is not present in a field, then the value is 0
+        """
+        numberized = []
+        if self.suffix is None:
+            return numberized
+        for item in self.suffix:
+            suff_t, suff_ver = self.suffix_item_re.match(item).groups()
+            if len(suff_ver) == 0:
+                suff_ver = 0
+            else:
+                suff_ver = int(suff_ver)
+            suff_t = self.SUFFIXES.index(suff_t)
+            numberized.append((suff_t, suff_ver))
+        return numberized
+
     @classmethod
     def latest(cls):
-        return cls('latest')
+        try:
+            return cls._latest
+        except AttributeError:
+            cls._latest = cls('latest')
+            return cls._latest
 
     @classmethod
     def lowest(cls):
-        return cls('lowest')
+        try:
+            return cls._lowest
+        except AttributeError:
+            cls._lowest = cls('lowest')
+            return cls._lowest
 
     def __str__(self):
         return self.vstring
 
     def __repr__(self):
-        return "Version ('{}')".format(str(self))
+        return '{}({})'.format(type(self).__name__, repr(self.vstring))
 
     def __cmp__(self, other):
         try:
@@ -234,15 +266,14 @@ class Version(object):
                 return -1
             else:
                 # Both have suffixes, so do some math
-                self_suffix = self.SUFFIXES.index(self.suffix)
-                other_suffix = self.SUFFIXES.index(other.suffix)
-                return cmp(self_suffix, other_suffix)
+                return cmp(self.normalized_suffix, other.normalized_suffix)
 
     def __eq__(self, other):
         try:
             if not isinstance(other, type(self)):
                 other = Version(other)
-            return self.version == other.version and self.suffix == other.suffix
+            return (
+                self.version == other.version and self.normalized_suffix == other.normalized_suffix)
         except:
             return False
 
@@ -273,7 +304,7 @@ class Version(object):
 
         if not isinstance(series, Version):
             series = get_version(series)
-        if self in (self.lowest(), self.latest()):
+        if self in {self.lowest(), self.latest()}:
             if series == self:
                 return True
             else:
