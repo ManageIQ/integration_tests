@@ -300,9 +300,8 @@ class BugWrapper(object):
 
     @property
     def is_opened(self):
-        if self.upstream_bug and not appliance_is_downstream():
-            states = self._bugzilla.open_states
-        else:
+        states = self._bugzilla.open_states
+        if not self.upstream_bug and appliance_is_downstream():
             states = self._bugzilla.open_states + ["POST", "MODIFIED"]
         return self.status in states
 

@@ -30,19 +30,23 @@ RPM_BASED = {
     'rhel': {
         'id': "Red Hat", 'release-file': '/etc/redhat-release', 'icon': 'linux_redhat',
         'package': "kernel", 'install-command': "",  # We don't install stuff on RHEL
-        'package-number': 'rpm -qa | wc -l'},
+        'package-number': 'rpm -qa | wc -l',
+        'services-number': 'systemctl -a --type service -o cat --no-legend --no-pager | wc -l'},
     'centos': {
         'id': "CentOS", 'release-file': '/etc/centos-release', 'icon': 'linux_centos',
         'package': 'iso-codes', 'install-command': 'yum install -y {}',
-        'package-number': 'rpm -qa | wc -l'},
+        'package-number': 'rpm -qa | wc -l',
+        'services-number': 'systemctl -a --type service -o cat --no-legend --no-pager | wc -l'},
     'fedora': {
         'id': 'Fedora', 'release-file': '/etc/fedora-release', 'icon': 'linux_fedora',
         'package': 'iso-codes', 'install-command': 'dnf install -y {}',
-        'package-number': 'rpm -qa | wc -l'},
+        'package-number': 'rpm -qa | wc -l',
+        'services-number': 'systemctl -a --type service -o cat --no-legend --no-pager | wc -l'},
     'suse': {
         'id': 'Suse', 'release-file': '/etc/SuSE-release', 'icon': 'linux_suse',
         'package': 'iso-codes', 'install-command': 'zypper install -y {}',
-        'package-number': 'rpm -qa | wc -l'},
+        'package-number': 'rpm -qa | wc -l',
+        'services-number': 'systemctl -a --type service -o cat --no-legend --no-pager | wc -l'},
 }
 
 DEB_BASED = {
@@ -50,12 +54,14 @@ DEB_BASED = {
         'id': 'Ubuntu 14.04', 'release-file': '/etc/issue.net', 'icon': 'linux_ubuntu',
         'package': 'iso-codes',
         'install-command': 'env DEBIAN_FRONTEND=noninteractive apt-get -y install {}',
-        'package-number': "dpkg --get-selections | wc -l"},
+        'package-number': "dpkg --get-selections | wc -l",
+        'services-number': 'chkconfig --list | wc -l'},
     'debian': {
         'id': 'Debian ', 'release-file': '/etc/issue.net', 'icon': 'linux_debian',
         'package': 'iso-codes',
         'install-command': 'env DEBIAN_FRONTEND=noninteractive apt-get -y install {}',
-        'package-number': 'dpkg --get-selections | wc -l'},
+        'package-number': 'dpkg --get-selections | wc -l',
+        'services-number': 'chkconfig --list | wc -l'},
 }
 
 ssa_expect_file = "/etc/hosts"
@@ -382,6 +388,7 @@ def test_ssa_vm(provider, instance, soft_assert):
     e_users = None
     e_groups = None
     e_packages = None
+    e_services = None
     e_icon_part = instance.system_type['icon']
 
     if instance.system_type != WINDOWS:
@@ -389,9 +396,11 @@ def test_ssa_vm(provider, instance, soft_assert):
         e_groups = instance.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
         e_packages = instance.ssh.run_command(
             instance.system_type['package-number']).output.strip('\n')
+        e_services = instance.ssh.run_command(
+            instance.system_type['services-number']).output.strip('\n')
 
-    logger.info(
-        "Expecting to have %s users, %s groups and %s packages", e_users, e_groups, e_packages)
+    logger.info("Expecting to have {} users, {} groups, {} packages and {} services".format(
+        e_users, e_groups, e_packages, e_services))
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
@@ -408,10 +417,13 @@ def test_ssa_vm(provider, instance, soft_assert):
     c_users = InfoBlock.text('Security', 'Users')
     c_groups = InfoBlock.text('Security', 'Groups')
     c_packages = 0
+    c_services = 0
     if instance.system_type != WINDOWS:
         c_packages = InfoBlock.text('Configuration', 'Packages')
+        c_services = InfoBlock.text('Configuration', 'Init Processes')
 
-    logger.info("SSA shows %s users, %s groups and %s packages", c_users, c_groups, c_packages)
+    logger.info("SSA shows {} users, {} groups {} packages and {} services".format(
+        c_users, c_groups, c_packages, c_services))
 
     soft_assert(c_lastanalyzed != 'Never', "Last Analyzed is set to Never")
     soft_assert(e_icon_part in details_os_icon,
@@ -422,7 +434,11 @@ def test_ssa_vm(provider, instance, soft_assert):
     if instance.system_type != WINDOWS:
         soft_assert(c_users == e_users, "users: '{}' != '{}'".format(c_users, e_users))
         soft_assert(c_groups == e_groups, "groups: '{}' != '{}'".format(c_groups, e_groups))
-        soft_assert(c_packages == e_packages, "groups: '{}' != '{}'".format(c_groups, e_groups))
+        soft_assert(c_packages == e_packages,
+            "packages: '{}' != '{}'".format(c_packages, e_packages))
+        if not BZ("1312971").blocks:
+            soft_assert(c_services == e_services,
+                        "services: '{}' != '{}'".format(c_services, e_services))
     else:
         # Make sure windows-specific data is not empty
         c_patches = InfoBlock.text('Security', 'Patches')
