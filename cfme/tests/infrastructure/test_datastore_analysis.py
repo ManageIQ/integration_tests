@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from cfme.configure import tasks
+from cfme.configure.tasks import is_datastore_analysis_finished
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
-from cfme.web_ui import flash, tabstrip as tabs, toolbar as tb, Quadicon, InfoBlock
+from cfme.web_ui import toolbar, Quadicon, InfoBlock
 from utils import conf, testgen
 from utils.blockers import BZ
 from utils.wait import wait_for
@@ -134,40 +134,9 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore_typ
     # )
 
     # Initiate analysis
-    sel.force_navigate('infrastructure_datastore', context={
-        'datastore': test_datastore,
-        'provider': test_datastore.provider
-    })
-    tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
-    sel.handle_alert()
-    flash.assert_message_contain('"{}": scan successfully initiated'.format(datastore_name))
-
-    # Wait for the task to finish
-    def is_datastore_analysis_finished():
-        """ Check if analysis is finished - if not, reload page
-        """
-        if not sel.is_displayed(tasks.tasks_table) or not tabs.is_tab_selected('All Other Tasks'):
-            sel.force_navigate('tasks_all_other')
-        host_analysis_finished = tasks.tasks_table.find_row_by_cells({
-            'task_name': "SmartState Analysis for [{}]".format(datastore_name),
-            'state': 'Finished'
-        })
-        return host_analysis_finished is not None
-
-    wait_for(
-        is_datastore_analysis_finished,
-        delay=10,
-        num_sec=300,
-        fail_func=lambda: tb.select('Reload')
-    )
-
-    # Delete the task
-    tasks.tasks_table.select_row_by_cells({
-        'task_name': "SmartState Analysis for [{}]".format(datastore_name),
-        'state': 'Finished'
-    })
-    tb.select('Delete Tasks', 'Delete', invokes_alert=True)
-    sel.handle_alert()
+    test_datastore.run_smartstate_analysis()
+    wait_for(lambda: is_datastore_analysis_finished(datastore_name),
+             delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
 
     c_datastore = test_datastore.get_detail('Properties', 'Datastore Type')
     # Check results of the analysis and the datastore type

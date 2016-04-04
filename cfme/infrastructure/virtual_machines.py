@@ -10,7 +10,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
-    paginator, toolbar, Calendar, Select, Input
+    paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid
 )
 from cfme.web_ui.menu import extend_nav
 from functools import partial
@@ -20,6 +20,7 @@ from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version
+import cfme.web_ui.toolbar as tb
 
 
 QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
@@ -64,6 +65,11 @@ retire_remove_button = "//span[@id='remove_button']/a/img"
 vm_templates_tree = partial(accordion.tree, "VMs & Templates")
 vms_tree = partial(accordion.tree, "VMs")
 templates_tree = partial(accordion.tree, "Templates")
+
+drift_table = CheckboxTable({
+    version.LOWEST: "//table[@class='style3']",
+    "5.4": "//th[normalize-space(.)='Timestamp']/ancestor::table[1]"
+})
 
 
 @extend_nav
@@ -384,6 +390,68 @@ class Vm(BaseVM, Common):
 
     def get_vm_via_rest(self):
         return rest_api().collections.vms.get(name=self.name)
+
+    def equal_drift_results(self, row_text, section, *indexes):
+        """ Compares drift analysis results of a row specified by it's title text
+
+        Args:
+            row_text: Title text of the row to compare
+            section: Accordion section where the change happened; this section must be activated
+            indexes: Indexes of results to compare starting with 0 for first row (latest result).
+                     Compares all available drifts, if left empty (default).
+
+        Note:
+            There have to be at least 2 drift results available for this to work.
+
+        Returns:
+            ``True`` if equal, ``False`` otherwise.
+        """
+        # mark by indexes or mark all
+        self.load_details(refresh=True)
+        sel.click(InfoBlock("Properties", "Drift History"))
+        if indexes:
+            drift_table.select_rows_by_indexes(*indexes)
+        else:
+            # We can't compare more than 10 drift results at once
+            # so when selecting all, we have to limit it to the latest 10
+            if len(list(drift_table.rows())) > 10:
+                drift_table.select_rows_by_indexes(*range(0, min(10, len)))
+            else:
+                drift_table.select_all()
+        tb.select("Select up to 10 timestamps for Drift Analysis")
+
+        # Make sure the section we need is active/open
+        sec_loc_map = {
+            'Properties': 'Properties',
+            'Security': 'Security',
+            'Configuration': 'Configuration',
+            'My Company Tags': 'Categories'}
+        sec_loc_template = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
+            "//span[contains(@class, 'dynatree-checkbox')]"
+        sec_checkbox_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
+            "//span[contains(@class, 'dynatree-checkbox')]".format(sec_loc_map[section])
+        sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
+
+        # Deselect other sections
+        for other_section in sec_loc_map.keys():
+            other_section_loc = sec_loc_template.format(sec_loc_map[other_section])
+            other_section_classes = sel.get_attribute(other_section_loc + '/..', "class")
+            if other_section != section and 'dynatree-partsel' in other_section_classes:
+                # Element needs to be checked out if it has no dynatree-selected
+                if 'dynatree-selected' not in other_section_classes:
+                    sel.click(other_section_loc)
+                sel.click(other_section_loc)
+
+        # Activate the required section
+        sel.click(sec_checkbox_loc)
+        sel.click(sec_apply_btn)
+
+        if not tb.is_active("All attributes"):
+            tb.select("All attributes")
+        d_grid = DriftGrid()
+        if any(d_grid.cell_indicates_change(row_text, i) for i in range(0, len(indexes))):
+            return False
+        return True
 
     class CfmeRelationship(object):
 

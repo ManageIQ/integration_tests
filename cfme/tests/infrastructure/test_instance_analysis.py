@@ -3,18 +3,19 @@
 # in selenium (the group is selected then immediately reset)
 import fauxfactory
 import pytest
-import cfme.fixtures.pytest_selenium as sel
 
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
-from cfme.configure import configuration, tasks
-from cfme.configure.configuration import VMAnalysisProfile
+from cfme.configure import configuration
+from cfme.configure.tasks import is_vm_analysis_finished
 from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
+from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host, datastore
 from cfme.provisioning import do_vm_provisioning
-from cfme.web_ui import InfoBlock, tabstrip as tabs, toolbar as tb
+from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from fixtures.pytest_store import store
-from utils import testgen, ssh, safe_string, version
+from utils import testgen, ssh, safe_string, version, error
+from utils.browser import ensure_browser_open
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
@@ -96,7 +97,7 @@ def pytest_generate_tests(metafunc):
                     continue
 
             # Set VM name here
-            vm_name = 'ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), vm_analysis_key)
+            vm_name = 'test_ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), vm_analysis_key)
             vm_analysis_data['vm_name'] = vm_name
 
             new_idlist.append('{}-{}'.format(idlist[i], vm_analysis_key))
@@ -114,14 +115,8 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
         pytest.skip("Upstream provisioning is blocked by" +
                     "https://github.com/ManageIQ/manageiq/issues/6506")
     if provider.type == 'virtualcenter':
-        store.current_appliance.install_vddk(reboot=True)
-        store.current_appliance.wait_for_web_ui()
-        try:
-            sel.refresh()
-        except AttributeError:
-            # In case no browser is started
-            pass
-
+        store.current_appliance.install_vddk(reboot=True, wait_for_web_ui_after_reboot=True)
+        ensure_browser_open()
         set_host_credentials(request, vm_analysis_new, provider)
 
     # Make sure all roles are set
@@ -158,8 +153,7 @@ def set_host_credentials(request, vm_analysis_new, provider):
 
 @pytest.fixture(scope="module")
 def instance(request, local_setup_provider, provider, vm_analysis_new):
-    """ Fixture to provision instance on the provider
-    """
+    """ Fixture to provision instance on the provider """
     vm_name = vm_analysis_new.get('vm_name')
     template = vm_analysis_new.get('image', None)
     host, datastore = map(vm_analysis_new.get, ('host', 'datastore'))
@@ -201,7 +195,6 @@ def instance(request, local_setup_provider, provider, vm_analysis_new):
             'cloud_network': vm_analysis_new['cloud_network'],
             'public_ip_address': connect_ip,
         }
-        sel.force_navigate("clouds_instances_by_provider")
         vm.create(**inst_args)
     else:
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
@@ -209,9 +202,10 @@ def instance(request, local_setup_provider, provider, vm_analysis_new):
                            num_sec=6000)
     logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
-    @pytest.wait_for(timeout="10m", delay=5)
+    @pytest.wait_for(timeout="20m", delay=5)
     def get_ip_address():
-        logger.info("Power state for %s vm: %s", vm_name, mgmt_system.vm_status(vm_name))
+        logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
+            vm_name, mgmt_system.vm_status(vm_name), mgmt_system.is_vm_stopped(vm_name)))
         if mgmt_system.is_vm_stopped(vm_name):
             mgmt_system.start_vm(vm_name)
 
@@ -253,9 +247,9 @@ def policy_profile(request, instance):
     ]
 
     analysis_profile_name = 'ssa_analysis_{}'.format(fauxfactory.gen_alphanumeric())
-    analysis_profile = VMAnalysisProfile(analysis_profile_name, analysis_profile_name,
-                                         categories=["check_system"],
-                                         files=collected_files)
+    analysis_profile = configuration.VMAnalysisProfile(analysis_profile_name, analysis_profile_name,
+                                                       categories=["check_system"],
+                                                       files=collected_files)
     if analysis_profile.exists:
         analysis_profile.delete()
     analysis_profile.create()
@@ -289,31 +283,6 @@ def policy_profile(request, instance):
 
     instance.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: instance.unassign_policy_profiles(profile.description))
-
-
-def is_vm_analysis_finished(vm_name):
-    """ Check if analysis is finished - if not, reload page
-    """
-    el = None
-    try:
-        if not pytest.sel.is_displayed(tasks.tasks_table) or \
-           not tabs.is_tab_selected('All VM Analysis Tasks'):
-            pytest.sel.force_navigate('tasks_all_vm')
-        el = tasks.tasks_table.find_row_by_cells({
-            'task_name': "Scan from Vm {}".format(vm_name),
-            'state': 'finished'
-        })
-        if el is None:
-            return False
-    except:
-        return False
-    # throw exception if status is error
-    if 'Error' in sel.get_attribute(sel.element('.//td/img', root=el), 'title'):
-        raise Exception("Smart State Analysis errored")
-    # Remove all finished tasks so they wouldn't poison other tests
-    tb.select('Delete Tasks', 'Delete All', invokes_alert=True)
-    sel.handle_alert(cancel=False)
-    return True
 
 
 def detect_system_type(vm):
@@ -365,7 +334,7 @@ def test_ssa_template(request, local_setup_provider, provider, vm_analysis_new, 
 
     template.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(template_name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check release and quadricon
     quadicon_os_icon = template.find_quadicon().os
@@ -426,7 +395,7 @@ def test_ssa_vm(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check release and quadricon
     quadicon_os_icon = instance.find_quadicon().os
@@ -497,7 +466,7 @@ def test_ssa_users(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Users'))
@@ -528,7 +497,7 @@ def test_ssa_groups(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Groups'))
@@ -569,7 +538,7 @@ def test_ssa_packages(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Configuration', 'Packages'))
@@ -590,7 +559,7 @@ def test_ssa_files(provider, instance, policy_profile, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="10m", fail_func=lambda: tb.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Configuration', 'Files'))
@@ -599,3 +568,63 @@ def test_ssa_files(provider, instance, policy_profile, soft_assert):
     instance.open_details(("Configuration", "Files"))
     if not instance.paged_table.find_row_on_all_pages('Name', ssa_expect_file):
         pytest.fail("File {0} was not found".format(ssa_expect_file))
+
+
+@pytest.mark.long_running
+def test_drift_analysis(request, provider, instance, soft_assert):
+    """ Tests drift analysis is correct
+
+    Metadata:
+        test_flag: vm_analysis
+    """
+
+    instance.load_details()
+    drift_num_orig = 0
+    drift_orig = InfoBlock("Relationships", "Drift History").text
+    if drift_orig != 'None':
+        drift_num_orig = int(drift_orig)
+    instance.smartstate_scan()
+    wait_for(lambda: is_vm_analysis_finished(instance.name),
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
+    instance.load_details()
+    wait_for(
+        lambda: int(InfoBlock("Relationships", "Drift History").text) == drift_num_orig + 1,
+        delay=20,
+        num_sec=120,
+        message="Waiting for Drift History count to increase",
+        fail_func=sel.refresh
+    )
+    drift_new = int(InfoBlock("Relationships", "Drift History").text)
+
+    # add a tag and a finalizer to remove it
+    tag = ('Department', 'Accounting')
+    instance.add_tag(tag, single_value=False)
+    request.addfinalizer(lambda: instance.remove_tag(tag))
+
+    instance.smartstate_scan()
+    wait_for(lambda: is_vm_analysis_finished(instance.name),
+             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
+    instance.load_details()
+    wait_for(
+        lambda: int(InfoBlock("Relationships", "Drift History").text) == drift_new + 1,
+        delay=20,
+        num_sec=120,
+        message="Waiting for Drift History count to increase",
+        fail_func=sel.refresh
+    )
+
+    # check drift difference
+    soft_assert(not instance.equal_drift_results('Department (1)', 'My Company Tags', 0, 1),
+                "Drift analysis results are equal when they shouldn't be")
+
+    # Test UI features that modify the drift grid
+    d_grid = DriftGrid()
+
+    # Accounting tag should not be displayed, because it was changed to True
+    toolbar.select("Attributes with same values")
+    with error.expected(sel.NoSuchElementException):
+        d_grid.get_cell('Accounting', 0)
+
+    # Accounting tag should be displayed now
+    toolbar.select("Attributes with different values")
+    d_grid.get_cell('Accounting', 0)

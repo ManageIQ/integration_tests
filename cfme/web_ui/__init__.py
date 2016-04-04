@@ -997,7 +997,7 @@ class PagedTable(Table):
     """
     def find_row_on_all_pages(self, header, value):
         from cfme.web_ui import paginator
-        for page in paginator.pages():
+        for _ in paginator.pages():
             sel.wait_for_element(self)
             row = self.find_row(header, value)
             if row is not None:
