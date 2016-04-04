@@ -14,10 +14,9 @@ Setup
 -----
 
 * clone/check out the cfme_tests repository
-* prepare your systemand a working virtualenv
+* prepare your system and a working virtualenv
 
-  we provide the script under :code:`../scripts/quickstart.sh`
-
+  we provide the script under ``../scripts/quickstart.sh``
 
   .. literal-include: ../scripts/quickstart.sh
     :language: bash
@@ -36,7 +35,7 @@ will not work.
    source bin/activate or . bin/activate
 
 
-  * if you have access to team's internal YAML
+* if you have access to team's internal YAML
 
     * ``env``
     * ``cfme_data``
