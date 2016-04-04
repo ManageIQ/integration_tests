@@ -5,7 +5,7 @@ from cfme.rest import categories as _categories
 import pytest
 from utils.update import update
 from utils.wait import wait_for
-from utils import error, version
+from utils import error
 
 
 @pytest.mark.sauce
@@ -25,7 +25,6 @@ class TestCategoriesViaREST(object):
     def categories(self, request, rest_api):
         return _categories(request, rest_api, num=5)
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     @pytest.mark.parametrize(
         "multiple", [False, True],
         ids=["one_request", "multiple_requests"])
@@ -61,7 +60,6 @@ class TestCategoriesViaREST(object):
                 delay=10,
             )
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     @pytest.mark.parametrize(
         "multiple", [False, True],
         ids=["one_request", "multiple_requests"])

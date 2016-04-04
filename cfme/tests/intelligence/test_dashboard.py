@@ -134,7 +134,7 @@ def test_widgets_reorder(widgets, soft_assert):
     soft_assert(old_widgets_ids_list == new_widgets_ids_list, "Drag and drop failed.")
 
 
-@pytest.mark.meta(blockers=[BZ(1316134, forced_streams=['5.4'])])
+@pytest.mark.meta(blockers=[BZ(1316134)])
 def test_drag_and_drop_widget_to_the_bottom_of_another_column(widgets, soft_assert):
     """In this test we try to drag and drop a left upper widget to
        the bottom of the middle column.

@@ -33,7 +33,6 @@ def test_pull_splitter(location):
         "Splitter fail!")
 
 
-@pytest.mark.uncollectif(lambda: current_version() < "5.5.0.7")
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1274665])
 def test_broken_angular_select(request):

@@ -12,7 +12,7 @@ from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, EC2Provider, wait_for_a_provider,
     Provider, OpenStackProvider, prop_region)
 from cfme.web_ui import fill, flash
-from utils import testgen, version
+from utils import testgen
 from utils.providers import get_credentials_from_config
 from utils.update import update
 
@@ -22,17 +22,14 @@ pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="functio
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None, d_type="Amazon")
-    ident = version.pick({version.LOWEST: 'User ID',
-                          '5.4': 'Username'})
+    ident = 'Username'
     flash.assert_message_match('{} is required'.format(ident))
 
 
 def test_discovery_cancelled_validation():
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, cancel=True, d_type="Amazon")
-    msg = version.pick(
-        {version.LOWEST: 'Amazon Cloud Providers Discovery was cancelled by the user',
-         '5.5': 'Cloud Providers Discovery was cancelled by the user'})
+    msg = 'Cloud Providers Discovery was cancelled by the user'
     flash.assert_message_match(msg)
 
 
@@ -41,9 +38,7 @@ def test_add_cancelled_validation(request):
     prov = EC2Provider()
     request.addfinalizer(prov.delete_if_exists)
     prov.create(cancel=True)
-    flash.assert_message_match({
-        version.LOWEST: 'Add of new Cloud Provider was cancelled by the user',
-        '5.5': 'Add of Cloud Provider was cancelled by the user'})
+    flash.assert_message_match('Add of Cloud Provider was cancelled by the user')
 
 
 def test_password_mismatch_validation():
@@ -103,14 +98,10 @@ def test_type_required_validation(request, soft_assert):
     prov = Provider()
 
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
-        with error.expected('Type is required'):
-            prov.create()
-    else:
-        pytest.sel.force_navigate("clouds_provider_new")
-        fill(prov.properties_form.name_text, "foo")
-        soft_assert("ng-invalid-required" in prov.properties_form.type_select.classes)
-        soft_assert(not prov.add_provider_button.can_be_clicked)
+    pytest.sel.force_navigate("clouds_provider_new")
+    fill(prop_region.name_text, "foo")
+    soft_assert("ng-invalid-required" in prop_region.type_select.classes)
+    soft_assert(not prov.add_provider_button.can_be_clicked)
 
 
 def test_name_required_validation(request):
@@ -120,14 +111,10 @@ def test_name_required_validation(request):
         region='us-east-1')
 
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
-        with error.expected("Name can't be blank"):
-            prov.create()
-    else:
-        # It must raise an exception because it keeps on the form
-        with error.expected(FlashMessageException):
-            prov.create()
-        assert prov.properties_form.name_text.angular_help_block == "Required"
+    # It must raise an exception because it keeps on the form
+    with error.expected(FlashMessageException):
+        prov.create()
+    assert prop_region.name_text.angular_help_block == "Required"
 
 
 def test_region_required_validation(request, soft_assert):
@@ -137,14 +124,9 @@ def test_region_required_validation(request, soft_assert):
         region=None)
 
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
-        with error.expected('Region is not included in the list'):
-            prov.create()
-    else:
-        with error.expected(FlashMessageException):
-            prov.create()
-        soft_assert(
-            "ng-invalid-required" in prov.properties_form.amazon_region_select.classes)
+    with error.expected(FlashMessageException):
+        prov.create()
+    soft_assert("ng-invalid-required" in prop_region.amazon_region_select.classes)
 
 
 def test_host_name_required_validation(request):
@@ -155,17 +137,12 @@ def test_host_name_required_validation(request):
         ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
 
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
-        with error.expected("Host Name can't be blank"):
-            prov.create()
-    else:
-        # It must raise an exception because it keeps on the form
-        with error.expected(FlashMessageException):
-            prov.create()
-        assert prov.properties_form.hostname_text.angular_help_block == "Required"
+    # It must raise an exception because it keeps on the form
+    with error.expected(FlashMessageException):
+        prov.create()
+    assert prov.prop_region.hostname_text.angular_help_block == "Required"
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() > '5.4')
 def test_ip_address_required_validation(request):
     """Test to validate the ip address while adding a provider"""
     prov = OpenStackProvider(
@@ -176,6 +153,7 @@ def test_ip_address_required_validation(request):
     request.addfinalizer(prov.delete_if_exists)
     with error.expected("IP Address can't be blank"):
         prov.create()
+    assert prop_region.hostname_text.angular_help_block == "Required"
 
 
 def test_api_port_blank_validation(request):
@@ -187,13 +165,10 @@ def test_api_port_blank_validation(request):
         api_port='')
 
     request.addfinalizer(prov.delete_if_exists)
-    if version.current_version() < "5.5":
+    # It must raise an exception because it keeps on the form
+    with error.expected(FlashMessageException):
         prov.create()
-    else:
-        # It must raise an exception because it keeps on the form
-        with error.expected(FlashMessageException):
-            prov.create()
-        assert prov.properties_form.api_port.angular_help_block == "Required"
+    assert prop_region.api_port.angular_help_block == "Required"
 
 
 def test_user_id_max_character_validation():
@@ -265,13 +240,12 @@ def test_api_port_max_character_validation(request):
     prov.create()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 @pytest.mark.meta(blockers=[1278036])
 def test_openstack_provider_has_api_version():
     """Check whether the Keystone API version field is present for Openstack."""
     prov = Provider()
     pytest.sel.force_navigate("clouds_provider_new")
-    fill(prop_region.properties_form, {"type_select": "OpenStack"})
+    fill(prop_region.prop_region, {"type_select": "OpenStack"})
     pytest.sel.wait_for_ajax()
     assert pytest.sel.is_displayed(
-        prov.properties_form.api_version), "API version select is not visible"
+        prov.prop_region.api_version), "API version select is not visible"

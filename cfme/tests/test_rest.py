@@ -8,7 +8,6 @@ from cfme.configure.access_control import User, Group
 from cfme.login import login
 from cfme.rest import vm as _vm
 from utils.providers import setup_a_provider as _setup_a_provider
-from utils.version import current_version
 from utils import testgen, conf, version
 
 
@@ -77,16 +76,6 @@ def test_vm_scan(rest_api, vm, from_detail):
         return response.task.state.lower() == 'finished'
 
 
-COLLECTIONS_IGNORED_53 = {
-    "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
-    "tags", "tasks",
-}
-
-COLLECTIONS_IGNORED_54 = {
-    "features", "pictures", "provision_dialogs", "rates", "results", "service_dialogs",
-}
-
-
 @pytest.mark.parametrize(
     "collection_name",
     ["availability_zones", "chargebacks", "clusters", "conditions", "data_stores", "events",
@@ -94,10 +83,6 @@ COLLECTIONS_IGNORED_54 = {
     "policy_profiles", "provision_dialogs", "rates", "request_tasks", "requests", "resource_pools",
     "results", "roles", "security_groups", "servers", "service_dialogs", "service_requests",
     "tags", "tasks", "templates", "users", "vms", "zones"])
-@pytest.mark.uncollectif(
-    lambda collection_name: (
-        collection_name in COLLECTIONS_IGNORED_53 and current_version() < "5.4") or (
-            collection_name in COLLECTIONS_IGNORED_54 and current_version() < "5.5"))
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
     have no usable actions that we could try to run

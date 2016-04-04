@@ -7,7 +7,6 @@ from cfme.infrastructure.provider import Provider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.net import ip_address, resolve_hostname
 from utils.providers import get_mgmt_by_name, setup_a_provider as _setup_a_provider
-from utils import version
 
 provider_props = partial(details_page.infoblock.text, "Properties")
 
@@ -27,18 +26,10 @@ def test_providers_summary(soft_assert, setup_a_provider):
             continue
         provider_fake_obj = Provider(name=provider["Name"])
         sel.force_navigate("infrastructure_provider", context={"provider": provider_fake_obj})
-        hostname = version.pick({
-            version.LOWEST: ("Hostname", "Hostname"),
-            "5.5": ("Host Name", "Hostname")})
+        hostname = ("Host Name", "Hostname")
         soft_assert(
             provider_props(hostname[0]) == provider[hostname[1]],
             "Hostname does not match at {}".format(provider["Name"]))
-
-        if version.current_version() < "5.4":
-            # In 5.4, hostname and IP address are shared under Hostname (above)
-            soft_assert(
-                provider_props("IP Address") == provider["IP Address"],
-                "IP Address does not match at {}".format(provider["Name"]))
 
         soft_assert(
             provider_props("Aggregate Host CPU Cores") == provider["Total Number of Logical CPUs"],

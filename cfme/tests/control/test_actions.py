@@ -30,7 +30,6 @@ from utils import testgen
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.miq_soap import MiqVM
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
@@ -104,25 +103,15 @@ def get_vm_object(vm_name):
     Args:
         vm_name: VM name
     Returns:
-        If found, :py:class:`utils.miq_soap.MiqVM` for 5.4 and :py:class:`utils.api.Entity` for 5.5
+        If found, :py:class:`utils.api.Entity` for 5.5
         If not, `None`
     """
-    if current_version() < "5.5":
-        vm_table = store.current_appliance.db['vms']
-        for vm in store.current_appliance.db.session.query(vm_table.name, vm_table.guid)\
-                .filter(vm_table.template == False):  # NOQA
-            # Previous line is ok, if you change it to `is`, it won't work!
-            if vm.name == vm_name:
-                return MiqVM(vm.guid)
-        else:
-            return None
+    rest_api = pytest.store.current_appliance.rest_api
+    results = rest_api.collections.vms.find_by(name=vm_name)
+    if len(results) > 0:
+        return results[0]
     else:
-        rest_api = pytest.store.current_appliance.rest_api
-        results = rest_api.collections.vms.find_by(name=vm_name)
-        if len(results) > 0:
-            return results[0]
-        else:
-            return None
+        return None
 
 
 @pytest.fixture(scope="module")
@@ -620,8 +609,7 @@ def test_action_initiate_smartstate_analysis(
 
     # Wait for VM being tried analysed by CFME
     def wait_analysis_tried():
-        if current_version() > "5.5":
-            vm.api.reload()
+        vm.api.reload()
         try:
             return vm.api.last_scan_attempt_on.replace(tzinfo=None) >= switched_on
         except AttributeError:
@@ -648,8 +636,7 @@ def test_action_initiate_smartstate_analysis(
 
     # Wait for VM analysis to finish
     def wait_analysis_finished():
-        if current_version() > "5.5":
-            vm.api.reload()
+        vm.api.reload()
         try:
             return vm.api.last_scan_on.replace(tzinfo=None) >= switched_on
         except AttributeError:
@@ -662,7 +649,7 @@ def test_action_initiate_smartstate_analysis(
 
 
 # TODO: Get the id other way than from SOAP.
-@pytest.mark.uncollectif(lambda: current_version() >= "5.4")  # Need to get the id somehow different
+@pytest.mark.uncollectif(lambda: current_version() >= "5.5")  # Need to get the id somehow different
 def test_action_raise_automation_event(
         request, assign_policy_for_testing, vm, vm_on, ssh_client, vm_crud_refresh):
     """ This test tests actions 'Raise Automation Event'.

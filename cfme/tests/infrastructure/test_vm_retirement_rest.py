@@ -4,7 +4,6 @@ import pytest
 import fauxfactory
 
 from cfme.rest import a_provider as _a_provider
-from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 
@@ -28,7 +27,6 @@ def vm(request, a_provider, rest_api):
     return vm_name
 
 
-@pytest.mark.uncollectif(lambda: current_version() <= "5.5.2.4")
 @pytest.mark.parametrize(
     "multiple", [True, False],
     ids=["from_collection", "from_detail"])
@@ -69,7 +67,6 @@ def test_retire_vm_now(rest_api, vm, multiple):
     wait_for(_finished, num_sec=600, delay=10, message="REST vm retire now")
 
 
-@pytest.mark.uncollectif(lambda: current_version() <= "5.5.2.4")
 @pytest.mark.parametrize(
     "multiple", [True, False],
     ids=["from_collection", "from_detail"])

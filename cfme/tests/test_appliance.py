@@ -11,38 +11,19 @@ pytestmark = pytest.mark.smoke
 def _rpms_present_packages():
     # autogenerate the rpms to test based on the current appliance version
     # and the list of possible packages that can be installed
-    current_version = version.current_version()
     possible_packages = [
         'cfme',
         'cfme-appliance',
-        'cfme-lib',
         'nfs-utils',
-        'nfs-utils-lib',
         'libnfsidmap',
-        'mingw32-cfme-host',
         'ipmitool',
         'prince',
-        'netapp-manageability-sdk',
         'rhn-client-tools',
         'rhn-check',
         'rhnlib'
     ]
 
-    def package_filter(package):
-        package_tests = [
-            # stopped shipping this with 5.4
-            package == 'mingw32-cfme-host' and current_version >= '5.4',
-            # stopped shipping these with 5.5
-            package in ('cfme-lib', 'netapp-manageability-sdk') and current_version >= 5.5,
-            # nfs-utils-lib was superseded by libnfsidmap in el7/cfme 5.5
-            # so filter out nfs-utils-lib on 5.5 and up, and libnfsidmap below 5.5
-            package == 'nfs-utils-lib' and current_version >= '5.5',
-            package == 'libnfsidmap' and current_version < '5.5',
-        ]
-        # If any of the package tests eval'd to true, filter this package out
-        return not any(package_tests)
-
-    return filter(package_filter, possible_packages)
+    return possible_packages
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -93,8 +74,8 @@ def test_evm_running(ssh_client):
         assert 'active (running)' in stdout
 
 
-@pytest.mark.uncollectif(lambda service: version.current_version() >= '5.5'
-    and service == 'iptables')
+@pytest.mark.uncollectif(
+    lambda service: version.current_version() >= '5.5' and service == 'iptables')
 @pytest.mark.parametrize(('service'), [
     'evmserverd',
     'evminit',

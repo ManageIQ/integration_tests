@@ -10,7 +10,6 @@ from cfme.intelligence.reports.schedules import Schedule
 from cfme.intelligence.reports.widgets import ChartWidget, MenuWidget, ReportWidget, RSSFeedWidget
 from utils.path import data_path
 from utils.update import update
-from utils import version
 
 
 report_crud_dir = data_path.join("reports_crud")
@@ -168,7 +167,6 @@ def test_dashboard_crud():
     d.delete()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_run_report(rest_api):
     report = rest_api.collections.reports.get(name='VM Disk Usage')
     response = report.action.run()
@@ -184,7 +182,6 @@ def test_run_report(rest_api):
     assert result.name == report.name
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_import_report(rest_api):
     menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
     data = {

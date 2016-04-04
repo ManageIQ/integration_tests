@@ -96,10 +96,7 @@ def random_vm_condition():
 
 @pytest.yield_fixture
 def random_host_condition():
-    if current_version() >= "5.4":
-        expression = "fill_count(Host / Node.Files, >, 150)"
-    else:
-        expression = "fill_count(Host.Files, >, 150)"
+    expression = "fill_count(Host / Node.Files, >, 150)"
     cond = explorer.HostCondition(
         fauxfactory.gen_alphanumeric(),
         expression=expression,
@@ -174,10 +171,7 @@ def test_vm_condition_crud(soft_assert):
 
 
 def test_host_condition_crud(soft_assert):
-    if current_version() >= "5.4":
-        expression = "fill_count(Host / Node.Files, >, 150)"
-    else:
-        expression = "fill_count(Host.Files, >, 150)"
+    expression = "fill_count(Host / Node.Files, >, 150)"
     condition = explorer.HostCondition(
         fauxfactory.gen_alphanumeric(),
         expression=expression

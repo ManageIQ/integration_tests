@@ -115,7 +115,7 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
     yield catalog_item
 
 
-@pytest.mark.meta(blockers=[BZ(1246686, forced_streams=["5.4", "5.5", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1246686, forced_streams=["5.5", "upstream"])])
 @pytest.mark.usefixtures('setup_iso_datastore')
 def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request):
     """Tests RHEV ISO service catalog

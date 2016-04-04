@@ -4,7 +4,6 @@ import pytest
 from cfme.configure.configuration import server_roles_disabled
 from cfme.rest import a_provider as _a_provider
 from utils.virtual_machines import deploy_template
-from utils.version import current_version
 from utils.wait import wait_for
 
 
@@ -101,10 +100,7 @@ def test_provider_crud(request, rest_api, from_detail):
     if "create" not in rest_api.collections.providers.action.all:
         pytest.skip("Create action is not implemented in this version")
 
-    if current_version() < "5.5":
-        provider_type = "EmsVmware"
-    else:
-        provider_type = "ManageIQ::Providers::Vmware::InfraManager"
+    provider_type = "ManageIQ::Providers::Vmware::InfraManager"
     provider = rest_api.collections.providers.action.create(
         hostname=fauxfactory.gen_alphanumeric(),
         name=fauxfactory.gen_alphanumeric(),

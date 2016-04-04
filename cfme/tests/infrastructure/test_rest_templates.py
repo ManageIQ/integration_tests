@@ -6,8 +6,6 @@ from cfme.rest import mark_vm_as_template
 from cfme.rest import vm as _vm
 from utils import error
 
-pytestmark = [pytest.mark.ignore_stream("5.4")]
-
 
 @pytest.fixture(scope="module")
 def a_provider():

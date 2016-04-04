@@ -8,7 +8,6 @@ from utils import testgen
 from utils import version
 from utils.blockers import BZ
 from utils.log import logger
-from utils.version import current_version
 from utils.wait import wait_for
 
 
@@ -107,8 +106,6 @@ def db_event(db, provider):
     blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2', forced_streams=["5.5"]),
     1265404, 1281746]
 )
-@pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.4" and provider.type != 'openstack')
 def test_provider_event(setup_provider, provider, gen_events, test_instance):
     """ Tests provider events on timelines
 
@@ -126,8 +123,6 @@ def test_provider_event(setup_provider, provider, gen_events, test_instance):
     blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2', forced_streams=["5.5"]),
     1281746]
 )
-@pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.4" and provider.type != 'openstack')
 def test_azone_event(setup_provider, provider, gen_events, test_instance):
     """ Tests availablility zone events on timelines
 
@@ -145,8 +140,6 @@ def test_azone_event(setup_provider, provider, gen_events, test_instance):
 @pytest.mark.meta(
     blockers=BZ(1281746, unblock=lambda provider: provider.type != 'openstack'),
 )
-@pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.4" and provider.type != 'openstack')
 def test_vm_event(setup_provider, provider, db, gen_events, test_instance, bug):
     """ Tests vm events on timelines
 

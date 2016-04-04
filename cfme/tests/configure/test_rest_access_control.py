@@ -12,8 +12,6 @@ from cfme.rest import users as _users
 from utils.wait import wait_for
 from utils import error
 
-pytestmark = [pytest.mark.ignore_stream("5.4")]
-
 
 class TestTenantsViaREST(object):
     @pytest.fixture(scope="function")

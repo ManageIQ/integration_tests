@@ -5,7 +5,6 @@ import pytest
 
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
 from utils import providers
-from utils.version import current_version
 
 
 @pytest.fixture(scope="module")
@@ -36,8 +35,6 @@ pytestmark = [
 ]
 
 
-@pytest.mark.uncollectif(
-    lambda location: location in {"clouds_tenants"} and current_version() < "5.4")
 def test_tag_item_through_selecting(request, location, tag):
     """Add a tag to an item with going through the details page.
 
@@ -68,8 +65,6 @@ def test_tag_item_through_selecting(request, location, tag):
     _delete()
 
 
-@pytest.mark.uncollectif(
-    lambda location: location in {"clouds_tenants"} and current_version() < "5.4")
 def test_tag_item_through_details(request, location, tag):
     """Add a tag to an item with going through the details page.
 

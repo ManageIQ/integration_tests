@@ -16,7 +16,7 @@ from utils.api import APIException
 from utils.blockers import BZ
 from utils.update import update
 from utils.wait import wait_for
-from utils import error, version
+from utils import error
 
 
 @pytest.yield_fixture
@@ -39,7 +39,6 @@ def test_tag_crud(category):
     tag.delete(cancel=False)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 class TestTagsViaREST(object):
 
     @pytest.fixture(scope="function")

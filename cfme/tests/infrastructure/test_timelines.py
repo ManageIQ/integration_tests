@@ -8,7 +8,6 @@ from cfme.rest import vm as _vm
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from utils import testgen
-from utils import version
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -17,7 +16,7 @@ from utils.wait import wait_for
 def delete_fx_provider_event(db, provider):
     logger.debug("Deleting timeline events for provider name %s", provider.name)
     ems = db['ext_management_systems']
-    ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
+    ems_events_table_name = 'event_streams'
     ems_events = db[ems_events_table_name]
     with db.transaction:
         providers = (
@@ -160,9 +159,6 @@ class TestVmEventRESTAPI(object):
             response = rest_api.collections.vms.action.add_event(rest_vm, **event)
             assert (len(response) > 0, "Could not add event")
 
-        # DB check, doesn't work on 5.4
-        if version.current_version() < '5.5':
-            return True
         events = db["event_streams"]
         events_list = list(db.session.query(events).filter(
             events.vm_name == vm,
