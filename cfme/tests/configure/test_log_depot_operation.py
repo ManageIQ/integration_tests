@@ -200,14 +200,8 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
 
 @pytest.mark.nondestructive
 @pytest.mark.meta(blockers=[1335824], forced_streams=['5.6', 'upstream'])
-@pytest.sel.go_to('dashboard')
-def test_collect_log_depot(depot_type,
-                           depot_machine,
-                           depot_credentials,
-                           depot_ftp,
-                           depot_configured,
-                           soft_assert,
-                           request):
+def test_collect_log_depot(depot_type, depot_machine, depot_credentials, depot_ftp,
+                           depot_configured, soft_assert, request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.

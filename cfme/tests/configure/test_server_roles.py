@@ -31,7 +31,6 @@ def roles(request, all_possible_roles):
 
 
 @pytest.mark.sauce
-@pytest.sel.go_to('dashboard')
 @pytest.mark.uncollectif(lambda: not server_roles_conf["all"])
 def test_server_roles_changing(request, roles):
     """ Test that sets and verifies the server roles in configuration.

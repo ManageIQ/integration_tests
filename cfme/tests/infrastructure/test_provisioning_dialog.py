@@ -19,7 +19,6 @@ from utils.wait import wait_for, TimedOutError
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers'),
-    pytest.sel.go_to("dashboard"),
     pytest.mark.long_running,
     pytest.mark.meta(blockers=[
         BZ(

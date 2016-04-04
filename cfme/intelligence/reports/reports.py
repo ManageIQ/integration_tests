@@ -37,6 +37,7 @@ def reload_view():
 
 
 cfg_btn = partial(toolbar.select, "Configuration")
+download_btn = partial(toolbar.select, "Download")
 
 nav.add_branch(
     "reports",
@@ -349,11 +350,11 @@ class CustomSavedReport(Updateable, Pretty):
 
     def download(self, extension):
         self.navigate()
-        toolbar.select("Download")
-        sel.click(
-            "//table[contains(@class, 'buttons_cont')]"
-            "//img[contains(@class, 'btn_sel_img') and contains(@src, '{}.png')]".format(extension)
-        )
+        extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
+        try:
+            download_btn("Download as {}".format(extensions_mapping[extension]))
+        except:
+            raise ValueError("Unknown extention. check the extentions_mapping")
 
 
 class CannedSavedReport(CustomSavedReport):

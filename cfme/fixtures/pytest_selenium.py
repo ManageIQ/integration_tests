@@ -33,7 +33,6 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import singledispatch, multidispatch
 
-import pytest
 import base64
 from cfme import exceptions, js
 from fixtures.pytest_store import store
@@ -871,45 +870,6 @@ def base_url():
     Returns: `base_url` from env config yaml
     """
     return store.base_url
-
-
-def go_to(page_name):
-    """go_to task mark, used to ensure tests start on the named page, logged in as Administrator.
-
-    Args:
-        page_name: Name a page from the current :py:data:`ui_navigate.nav_tree` tree to navigate to.
-
-    Usage:
-        @pytest.sel.go_to('page_name')
-        def test_something_on_page_name():
-            # ...
-
-    """
-    def go_to_wrapper(test_callable):
-        # Optional, but cool. Marks a test with the page_name, so you can
-        # py.test -k page_name
-        test_callable = getattr(pytest.mark, page_name)(test_callable)
-        # Use fixtureconf to mark the test with destination page_name
-        test_callable = pytest.mark.fixtureconf(page_name=page_name)(test_callable)
-        # Use the 'go_to' fixture, which looks for the page_name fixtureconf
-        test_callable = pytest.mark.usefixtures('go_to_fixture')(test_callable)
-        return test_callable
-    return go_to_wrapper
-
-
-@pytest.fixture
-def go_to_fixture(fixtureconf, browser):
-    """"Private" implementation of go_to in fixture form.
-
-    Used by the :py:func:`go_to` decorator, this is the actual fixture that does
-    the work set up by the go_to decorator. py.test fixtures themselves can't have
-    underscores in their name, so we can't imply privacy with that convention.
-
-    Don't use this fixture directly, use the go_to decorator instead.
-
-    """
-    page_name = fixtureconf['page_name']
-    force_navigate(page_name)
 
 
 class ContextWrapper(dict):
