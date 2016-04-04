@@ -7,7 +7,6 @@ from functools import partial
 from cfme.common.vm import VM
 from utils import testgen
 from utils.wait import wait_for
-from utils.version import current_version
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers')
@@ -33,38 +32,16 @@ def vm(request, provider, setup_provider, small_template):
     return vm_obj
 
 
-def verify_retirement(vm):
-    # add condition because of differ behaviour between 5.5 and 5.6
-    if current_version() < "5.6":
-        wait_for(lambda: vm.exists is False, delay=30, num_sec=360,
-                 message="Wait for VM {} removed from provider".format(vm.name))
-    else:
-        today = datetime.date.today()
-        get_date = partial(vm.get_detail, ["Lifecycle", "Retirement Date"])
-        get_state = partial(vm.get_detail, ["Power Management", "Power State"])
-
-        # wait for the info block showing a date as retired date
-        def retirement_date_present():
-            return get_date() != "Never"
-
-        wait_for(retirement_date_present, delay=30, num_sec=600, message="retirement_date_present")
-
-        # wait for the power state to go to 'off'
-        wait_for(lambda: get_state() in {'off', 'suspended'}, delay=30, num_sec=360)
-
-        # make sure retirement date is today
-        assert datetime.datetime.strptime(get_date(), "%m/%d/%y").date() == today
-
-
 @pytest.mark.meta(blockers=[1337697])
-def test_retirement_now(vm):
+def test_retirement_now(rest_api, vm):
     """Tests retirement
 
     Metadata:
         test_flag: retire, provision
     """
     vm.retire()
-    verify_retirement(vm)
+    wait_for(lambda: not rest_api.collections.vms.find_by(name=vm.name),
+        num_sec=600, delay=10, message="VM retire now")
 
 
 def test_set_retirement_date(vm):
@@ -74,7 +51,18 @@ def test_set_retirement_date(vm):
         test_flag: retire, provision
     """
     vm.set_retirement_date(datetime.date.today())
-    verify_retirement(vm)
+
+    today = datetime.date.today()
+    get_date = partial(vm.get_detail, ["Lifecycle", "Retirement Date"])
+
+    # wait for the info block showing a date as retired date
+    def retirement_date_present():
+        return get_date() != "Never"
+
+    wait_for(retirement_date_present, delay=30, num_sec=600, message="retirement_date_present")
+
+    # make sure retirement date is today
+    assert datetime.datetime.strptime(get_date(), "%m/%d/%y").date() == today
 
 
 def test_unset_retirement_date(vm):
