@@ -133,7 +133,7 @@ class Datastore(Pretty):
     def _on_hosts_page(self):
         """ Returns ``True`` if on the datastore hosts page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}}")]'.format(
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
                 self.name, "All Registered Hosts")
         )
 
@@ -154,7 +154,7 @@ class Datastore(Pretty):
     def _on_vms_page(self):
         """ Returns ``True`` if on the datastore vms page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}}")]'.format(
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
                 self.name, "All Registered vms")
         )
 
