@@ -97,7 +97,7 @@ class SSHClient(paramiko.SSHClient):
     def _progress_callback(self, filename, size, sent):
         sent_percent = (sent * 100.) / size
         if sent_percent > 0:
-            logger.debug('%s scp progress: %f% ', filename, sent_percent)
+            logger.debug('%s scp progress: %f%% ', filename, sent_percent)
 
     def close(self):
         with diaper:
