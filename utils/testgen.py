@@ -85,7 +85,6 @@ More information on ``parametrize`` can be found in pytest's documentation:
 
 """
 import pytest
-import random
 
 from collections import OrderedDict
 from cfme.exceptions import UnknownProviderType
@@ -195,7 +194,6 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
     The ``**options`` available are defined below:
 
     * ``require_fields``: when fields passed are not present, skip them, boolean
-    * ``choose_random``: choose a single provider from the list
     * ``template_location``: Specification where a required tempalte lies in the yaml, If not
       found in the provider, warning is printed and the test not collected. The spec
       is a tuple or list where each item is a key to the next field (str or int).
@@ -372,16 +370,6 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
 
         # Use the provider name for idlist, helps with readable parametrized test output
         idlist.append(provider)
-
-    # pick a single provider if option['choose_random'] == True
-    if 'choose_random' not in options:
-        options['choose_random'] = False
-    if idlist and options['choose_random']:
-        single_index = idlist.index(random.choice(idlist))
-        new_idlist = ['random_provider']
-        new_argvalues = [argvalues[single_index]]
-        logger.debug('Choosing random provider, "%s" selected, ' % (provider))
-        return argnames, new_argvalues, new_idlist
 
     return argnames, argvalues, idlist
 
