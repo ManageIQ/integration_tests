@@ -506,6 +506,12 @@ def clear_container_providers(validate=True):
         if validate:
             wait_for_no_container_providers()
 
+def clear_middleware_providers(validate=True):
+    sel.force_navigate('middleware_providers')
+    total = paginator.rec_total()
+    if total > 0:
+        logger.info(' Providers exist, so removing all middleware providers')
+        #TODO: remove providers
 
 def clear_middleware_providers(validate=True):
     sel.force_navigate('middleware_providers')
