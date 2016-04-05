@@ -26,6 +26,7 @@ from cfme.exceptions import UnknownProviderType
 from cfme.containers.provider import KubernetesProvider, OpenshiftProvider
 from cfme.infrastructure.provider import (
     OpenstackInfraProvider, RHEVMProvider, VMwareProvider, SCVMMProvider)
+from cfme.middleware.provider import HawkularProvider
 from fixtures.prov_filter import filtered
 from utils import conf, version
 from utils.mgmt_system import RHEVMSystem
@@ -505,6 +506,12 @@ def clear_container_providers(validate=True):
         if validate:
             wait_for_no_container_providers()
 
+def clear_middleware_providers(validate=True):
+    sel.force_navigate('middleware_providers')
+    total = paginator.rec_total()
+    if total > 0:
+        logger.info(' Providers exist, so removing all middleware providers')
+        #TODO: remove providers
 
 def get_paginator_value():
     return paginator.rec_total()
@@ -694,6 +701,9 @@ def get_crud(provider_config_name):
             hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
             port=prov_config['port'],
             provider_data=prov_config)
+    elif prov_type == 'hawkular':
+        return HawkularProvider(provider_config=prov_config,
+                                credentials={'default': credentials})
     else:
         raise UnknownProviderType('{} is not a known provider type'.format(prov_type))
 

@@ -4,7 +4,6 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.menu import nav
 
-
 from . import cfg_btn
 
 nav.add_branch(
@@ -25,14 +24,15 @@ properties_form = Form(
 
 
 class HawkularProvider(BaseProvider):
-    page_name = "middleware"
+    page_name = 'middleware'
+    string_name = 'Middleware'
     properties_form = properties_form
     add_provider_button = form_buttons.FormButton("Add this Middleware Manager")
 
-    def __init__(self, name=None, hostname=None, port=None, credentials=None):
-        self.name = name
-        self.hostname = hostname
-        self.port = port
+    def __init__(self, provider_config=None, credentials=None):
+        self.name = provider_config.name
+        self.hostname = provider_config.hostname
+        self.port = provider_config.port
         if not credentials:
             credentials = {}
         self.credentials = credentials
