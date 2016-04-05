@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """This module tests tagging of objects in different locations."""
 import diaper
-import fauxfactory
 import pytest
 
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
-from cfme.configure.configuration import Category, Tag
 from utils import providers
 from utils.version import current_version
 
@@ -36,26 +34,6 @@ pytestmark = [
     ]),
     pytest.mark.usefixtures("setup_first_provider")
 ]
-
-
-@pytest.yield_fixture(scope="module")
-def category():
-    cg = Category(name=fauxfactory.gen_alpha(8).lower(),
-                  description=fauxfactory.gen_alphanumeric(length=32),
-                  display_name=fauxfactory.gen_alphanumeric(length=32))
-    cg.create()
-    yield cg
-    cg.delete()
-
-
-@pytest.yield_fixture(scope="module")
-def tag(category):
-    tag = Tag(name=fauxfactory.gen_alpha(8).lower(),
-              display_name=fauxfactory.gen_alphanumeric(length=32),
-              category=category)
-    tag.create()
-    yield tag
-    tag.delete()
 
 
 @pytest.mark.uncollectif(
