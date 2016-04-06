@@ -53,12 +53,18 @@ container_provider_type_map = {
     'openshift': Openshift
 }
 
+#: mapping of middleware provider type names to ``mgmtsystem`` classes
+middleware_provider_type_map = {
+    'hawkular': HawkularProvider,
+}
+
+
 #: mapping of all provider type names to ``mgmtsystem`` classes
-provider_type_map = dict(
-    infra_provider_type_map.items()
-    + cloud_provider_type_map.items()
-    + container_provider_type_map.items()
-)
+provider_type_map = {}
+provider_type_map.update(infra_provider_type_map)
+provider_type_map.update(cloud_provider_type_map)
+provider_type_map.update(container_provider_type_map)
+provider_type_map.update(middleware_provider_type_map)
 
 providers_data = conf.cfme_data.get("management_systems", {})
 
@@ -91,6 +97,9 @@ list_cloud_providers = partial(list_providers, cloud_provider_type_map.keys())
 #: function that returns a list of container provider keys in cfme_data
 list_container_providers = partial(list_providers, container_provider_type_map.keys())
 
+#: function that returns a list of middleware provider keys in cfme_data
+list_middleware_providers = partial(list_providers, middleware_provider_type_map.keys())
+
 #: function that returns a list of all provider keys in cfme_data
 list_all_providers = partial(list_providers, provider_type_map.keys())
 
@@ -105,6 +114,10 @@ def is_infra_provider(provider_key):
 
 def is_container_provider(provider_key):
     return provider_key in list_container_providers()
+
+
+def is_middleware_provider(provider_key):
+    return provider_key in list_middleware_providers()
 
 
 def get_mgmt(provider_key, providers=None, credentials=None):
@@ -172,7 +185,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     Does some counter-badness measures.
 
     Args:
-        prov_class: "infra", "cloud" or "container"
+        prov_class: "infra", "cloud", "container" or "middleware"
         prov_type: "ec2", "virtualcenter" or any other valid type
         validate: Whether to validate the provider.
         check_existing: Whether to check if the provider already exists.
@@ -180,13 +193,16 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     """
     if not required_keys:
         required_keys = []
-    if prov_class in ("infra", "cloud", "container"):
+    if prov_class in {'infra', 'cloud', 'container', 'middleware'}:
         if prov_class == "infra":
             potential_providers = list_infra_providers()
         elif prov_class == "cloud":
             potential_providers = list_cloud_providers()
-        else:
+        elif prov_class == 'container':
             potential_providers = list_container_providers()
+        elif prov_class == 'middleware':
+            potential_providers = list_middleware_providers()
+        # else not required because guarded by if
         if prov_type:
             providers = []
             for provider in potential_providers:
@@ -342,6 +358,8 @@ def setup_providers(prov_classes=('cloud', 'infra'), validate=True, check_existi
         added_providers.extend(setup_infrastructure_providers(**setup_kwargs))
     if 'container' in prov_classes:
         added_providers.extend(setup_container_providers(**setup_kwargs))
+    if 'middleware' in prov_classes:
+        added_providers.extend(setup_middleware_providers(**setup_kwargs))
 
     if validate:
         map(methodcaller('validate'), added_providers)
@@ -355,7 +373,7 @@ def _setup_providers(prov_class, validate, check_existing):
     """Helper to set up all cloud, infra or container providers, and then validate them
 
     Args:
-        prov_class: Provider class - 'cloud, 'infra' or 'container' (a string)
+        prov_class: Provider class - 'cloud, 'infra', 'container' or 'middleware' (a string)
         validate: see description in :py:func:`setup_provider`
         check_existing: see description in :py:func:`setup_provider`
 
@@ -379,7 +397,12 @@ def _setup_providers(prov_class, validate, check_existing):
             'navigate': 'containers_providers',
             'quad': None,
             'list': list_container_providers
-        }
+        },
+        'middleware': {
+            'navigate': 'middleware_providers',
+            'quad': None,
+            'list': list_middleware_providers
+        },
     }
     # Check for existing providers all at once, to prevent reloading
     # the providers page for every provider in cfme_data
@@ -462,6 +485,21 @@ def setup_container_providers(validate=True, check_existing=True):
     return _setup_providers('container', validate, check_existing)
 
 
+def setup_middleware_providers(validate=True, check_existing=True):
+    """Run :py:func:`setup_middleware_provider` for every middleware provider
+
+    Args:
+        validate: see description in :py:func:`setup_provider`
+        check_existing: see description in :py:func:`setup_provider`
+
+
+    Returns:
+        An list of :py:class:`cfme.middleware.provider.HawkularProvider` instances.
+
+    """
+    return _setup_providers('middleware', validate, check_existing)
+
+
 def clear_cloud_providers(validate=True):
     sel.force_navigate('clouds_providers')
     logger.debug('Checking for existing cloud providers...')
@@ -540,6 +578,13 @@ def wait_for_no_container_providers():
              num_sec=1000, fail_func=sel.refresh)
 
 
+def wait_for_no_middleware_providers():
+    sel.force_navigate('middleware_providers')
+    logger.debug('Waiting for all middleware providers to disappear...')
+    wait_for(lambda: get_paginator_value() == 0, message="Delete all middleware providers",
+             num_sec=1000, fail_func=sel.refresh)
+
+
 def clear_providers():
     """Rudely clear all providers on an appliance
 
@@ -552,10 +597,14 @@ def clear_providers():
     clear_infra_providers(validate=False)
     if version.current_version() > '5.5':
         clear_container_providers(validate=False)
+    if version.current_version() >= '5.6':
+        clear_middleware_providers(validate=False)
     wait_for_no_cloud_providers()
     wait_for_no_infra_providers()
     if version.current_version() > '5.5':
         wait_for_no_container_providers()
+    if version.current_version() >= '5.6':
+        wait_for_no_middleware_providers()
     perflog.stop('utils.providers.clear_providers')
 
 
