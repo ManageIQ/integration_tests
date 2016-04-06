@@ -197,8 +197,8 @@ def generate_html_report(api, stream, filename, appliance_template):
             with open(filename, 'a+') as report:
 
                 if 'template_rhos' not in images_uploaded(stream):
-                    print('\nMISSING: Image for OpenStack in latest directory')
-                    report.write('\nMISSING: Image for OpenStack in latest directory')
+                    print('\n\nMISSING: Image for OpenStack in latest directory')
+                    report.write('\n\nMISSING: Image for OpenStack in latest directory')
                 elif filter(lambda x: 'rhos' in x, stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(images_uploaded(stream)['template_rhos']))
                     map(lambda(x): report.write('\n{}: Passed'.format(x)) if 'rhos' in x else '',
@@ -208,14 +208,14 @@ def generate_html_report(api, stream, filename, appliance_template):
                     map(lambda(x): report.write('\n{}: Failed'.format(x)) if 'rhos' in x else '',
                         stream_data['failed_on_providers'])
                 else:
-                    print('\nMISSING: OpenStack template is not available on any '
+                    print('\n\nMISSING: OpenStack template is not available on any '
                           'rhos providers yet')
-                    report.write('\nMISSING: OpenStack template is not available on any '
+                    report.write('\n\nMISSING: OpenStack template is not available on any '
                                  'rhos providers yet')
 
                 if 'template_rhevm' not in images_uploaded(stream):
-                    print('\nMISSING: Image for RHEVM in latest directory')
-                    report.write('\nMISSING: Image for RHEVM in latest directory')
+                    print('\n\nMISSING: Image for RHEVM in latest directory')
+                    report.write('\n\nMISSING: Image for RHEVM in latest directory')
                 elif filter(lambda x: 'rhevm' in x, stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_rhevm']))
@@ -227,14 +227,14 @@ def generate_html_report(api, stream, filename, appliance_template):
                     map(lambda(x): report.write('\n{}: Failed'.format(x)) if 'rhevm' in x else '',
                         stream_data['failed_on_providers'])
                 else:
-                    print('\nMISSING: RHEVM template is not available on any '
+                    print('\n\nMISSING: RHEVM template is not available on any '
                           'rhevm providers yet')
-                    report.write('\nMISSING: RHEVM template is not available on any '
+                    report.write('\n\nMISSING: RHEVM template is not available on any '
                                  'rhevm providers yet')
 
                 if 'template_vsphere' not in images_uploaded(stream):
-                    print('\nMISSING: Image for VIRTUALCENTER in latest directory')
-                    report.write('\nMISSING: Image for VIRTUALCENTER in latest directory')
+                    print('\n\nMISSING: Image for VIRTUALCENTER in latest directory')
+                    report.write('\n\nMISSING: Image for VIRTUALCENTER in latest directory')
                 elif filter(lambda x: 'vsphere' in x, stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_vsphere']))
@@ -248,14 +248,14 @@ def generate_html_report(api, stream, filename, appliance_template):
                         '\n{}: Failed'.format(x)) if 'vsphere' in x else '',
                         stream_data['failed_on_providers'])
                 else:
-                    print('\nMISSING: VIRTUALCENTER template is not available on any '
+                    print('\n\nMISSING: VIRTUALCENTER template is not available on any '
                           'vmware providers yet')
-                    report.write('\nMISSING: VIRTUALCENTER template is not available on any '
+                    report.write('\n\nMISSING: VIRTUALCENTER template is not available on any '
                                  'vmware providers yet')
 
                 if 'template_scvmm' not in images_uploaded(stream):
-                    print('\nMISSING: Image for SCVMM in latest directory')
-                    report.write('\nMISSING: Image for SCVMM in latest directory')
+                    print('\n\nMISSING: Image for SCVMM in latest directory')
+                    report.write('\n\nMISSING: Image for SCVMM in latest directory')
                 elif filter(lambda x: 'scvmm' in x, stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_scvmm']))
@@ -269,9 +269,9 @@ def generate_html_report(api, stream, filename, appliance_template):
                         '\n{}: Failed'.format(x)) if 'scvmm' in x else '',
                         stream_data['failed_on_providers'])
                 else:
-                    print('\nMISSING: SCVMM template is not available on any '
+                    print('\n\nMISSING: SCVMM template is not available on any '
                           'scvmm providers yet')
-                    report.write('\nMISSING: SCVMM template is not available on any '
+                    report.write('\n\nMISSING: SCVMM template is not available on any '
                                  'scvmm providers yet')
         print("template_tester_results report generated")
     else:
