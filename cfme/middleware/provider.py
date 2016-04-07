@@ -29,13 +29,14 @@ class HawkularProvider(BaseProvider):
     properties_form = properties_form
     add_provider_button = form_buttons.FormButton("Add this Middleware Manager")
 
-    def __init__(self, provider_config=None, credentials=None):
-        self.name = provider_config.name
-        self.hostname = provider_config.hostname
-        self.port = provider_config.port
+    def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None):
+        self.name = name
+        self.hostname = hostname
+        self.port = port
         if not credentials:
             credentials = {}
         self.credentials = credentials
+        self.key = key
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
