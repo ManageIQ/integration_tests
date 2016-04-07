@@ -17,6 +17,7 @@ from mgmtsystem.openstack import OpenstackSystem
 from mgmtsystem.kubernetes import Kubernetes
 from mgmtsystem.openshift import Openshift
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
+from mgmtsystem.hawkular import Hawkular
 
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
@@ -55,7 +56,7 @@ container_provider_type_map = {
 
 #: mapping of middleware provider type names to ``mgmtsystem`` classes
 middleware_provider_type_map = {
-    'hawkular': HawkularProvider,
+    'hawkular': Hawkular,
 }
 
 
@@ -753,8 +754,12 @@ def get_crud(provider_config_name):
             port=prov_config['port'],
             provider_data=prov_config)
     elif prov_type == 'hawkular':
-        return HawkularProvider(provider_config=prov_config,
-                                credentials={'default': credentials})
+        return HawkularProvider(
+            name=prov_config['name'],
+            key=provider_config_name,
+            hostname=prov_config['hostname'],
+            port=prov_config['port'],
+            credentials={'default': credentials})
     else:
         raise UnknownProviderType('{} is not a known provider type'.format(prov_type))
 
