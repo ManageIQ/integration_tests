@@ -566,13 +566,6 @@ class IPAppliance(object):
 
         log_callback('Starting upstream db setup')
 
-        # wait for the db config to appear
-        # this happens after migrations are run, which takes a few minutes
-        wait_for(func=lambda: self.ssh_client.run_command(
-            'test -f /var/www/miq/vmdb/config/vmdb.yml.db').rc == 0,
-            message='appliance db config exists',
-            delay=20, num_sec=1200)
-
         # Make sure the database is ready
         wait_for(func=lambda: self.is_db_ready,
             message='appliance db ready', delay=20, num_sec=1200)
