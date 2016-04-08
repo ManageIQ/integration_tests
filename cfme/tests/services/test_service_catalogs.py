@@ -145,6 +145,7 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
                                  catalog_item.name))
 
 
+@pytest.mark.meta(blockers=[BZ(1210541, forced_streams=["5.4", "5.5", "upstream"])])
 @pytest.mark.usefixtures('setup_provider')
 def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
