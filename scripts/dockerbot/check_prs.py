@@ -105,18 +105,17 @@ def create_run(db_pr, pr):
     new_run = dict(pr="/api/pr/{}/".format(db_pr['number']),
                    datestamp=str(datetime.now()),
                    commit=pr['head']['sha'])
-    tasks = []
+    run_record = tapi.run.post(new_run)
     for group in tapi.group.get(stream=True)['objects']:
         stream = group['name']
         logger.info('  Adding task stream {}...'.format(stream))
-        tasks.append(dict(output="",
-                          tid=fauxfactory.gen_alphanumeric(8),
-                          result="pending",
-                          stream=stream,
-                          datestamp=str(datetime.now())))
-    new_run['tasks'] = tasks
-    if tasks:
-        tapi.run.post(new_run)
+        task_data = dict(output="",
+            tid=fauxfactory.gen_alphanumeric(8),
+            result="pending",
+            stream=stream,
+            datestamp=str(datetime.now()),
+            run="/api/run/{}/".format(run_record['id']))
+        tapi.task.post(task_data)
 
 
 def check_prs():
@@ -391,7 +390,8 @@ if __name__ == "__main__":
         check_prs()
 
         # Next we run any tasks that are pending up to the queue limit
-        run_tasks()
+        if not DEBUG:
+            run_tasks()
 
         # Finally we clean up any leftover artifacts
         if not DEBUG:
