@@ -24,7 +24,7 @@ from cfme.common.vm import VM
 from cfme.configure.configuration import server_name, server_id
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
-from utils import api, conf, datafile, db, trackerbot, db_queries, ssh
+from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
@@ -57,7 +57,7 @@ class IPAppliance(object):
             is used to generate a new session.
     """
 
-    def __init__(self, address=None, browser_steal=False, ssh_port=22):
+    def __init__(self, address=None, browser_steal=False, ssh_port=None, db_port=None):
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -71,7 +71,8 @@ class IPAppliance(object):
                 self.address = address.netloc
                 self.scheme = address.scheme
                 self._url = address.geturl()
-        self.ssh_port = ssh_port
+        self.ssh_port = ssh_port or ports.SSH
+        self.db_port = db_port or ports.DB
         self.browser_steal = browser_steal
         self._db_ssh_client = None
 
