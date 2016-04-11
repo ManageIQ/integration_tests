@@ -3,7 +3,7 @@
 from utils.db import cfmedb, Db
 
 
-def get_configuration_details(db=None, ip_address=None):
+def get_configuration_details(db=None, ip_address=None, db_port=None):
     """Return details that are necessary to navigate through Configuration accordions.
 
     Args:
@@ -18,7 +18,7 @@ def get_configuration_details(db=None, ip_address=None):
         ip_address = cfmedb().hostname
 
     if db is None:
-        db = Db(hostname=ip_address)
+        db = Db(hostname=ip_address, db_port=db_port)
 
     SEQ_FACT = 1e12
     miq_servers = db['miq_servers']
@@ -50,12 +50,12 @@ def get_configuration_details(db=None, ip_address=None):
         return None
 
 
-def get_zone_description(zone_id, ip_address=None, db=None):
+def get_zone_description(zone_id, ip_address=None, db=None, db_port=None):
     if ip_address is None:
         ip_address = cfmedb().hostname
 
     if db is None:
-        db = Db(hostname=ip_address)
+        db = Db(hostname=ip_address, db_port=db_port)
 
     zones = list(
         db.session.query(db["zones"]).filter(
@@ -68,12 +68,12 @@ def get_zone_description(zone_id, ip_address=None, db=None):
         return None
 
 
-def get_host_id(hostname, ip_address=None, db=None):
+def get_host_id(hostname, ip_address=None, db=None, db_port=None):
     if ip_address is None:
         ip_address = cfmedb().hostname
 
     if db is None:
-        db = Db(hostname=ip_address)
+        db = Db(hostname=ip_address, db_port=db_port)
 
     hosts = list(
         db.session.query(db["hosts"]).filter(
@@ -86,12 +86,12 @@ def get_host_id(hostname, ip_address=None, db=None):
         return None
 
 
-def check_domain_enabled(domain, ip_address=None, db=None):
+def check_domain_enabled(domain, ip_address=None, db=None, db_port=None):
     if ip_address is None:
         ip_address = cfmedb().hostname
 
     if db is None:
-        db = Db(hostname=ip_address)
+        db = Db(hostname=ip_address, db_port=db_port)
 
     namespaces = db["miq_ae_namespaces"]
     q = db.session.query(namespaces).filter(

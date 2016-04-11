@@ -52,11 +52,11 @@ class IPAppliance(object):
     it knows both the provider, vm_name and can there for derive the IP address.
 
     Args:
-        address: The IP address of the provider
+        address: The IP address of the appliance.
         browser_steal: If True then then current browser is killed and the new appliance
             is used to generate a new session.
-        ssh_port: ssh port of the provider
-        db_port: database port of the provider
+        ssh_port: ssh port of the appliance.
+        db_port: database port of the appliance.
     """
 
     def __init__(self, address=None, browser_steal=False, ssh_port=None, db_port=None):
@@ -1318,7 +1318,7 @@ class IPAppliance(object):
     @cached_property
     def db(self):
         # slightly crappy: anything that changes self.db_address should also del(self.db)
-        return db.Db(self.db_address)
+        return db.Db(self.db_address, db_port=self.db_port)
 
     @property
     def is_db_enabled(self):
