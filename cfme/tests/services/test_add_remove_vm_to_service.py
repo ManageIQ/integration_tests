@@ -66,7 +66,7 @@ def test_add_vm_to_service(myservice, request, copy_domain):
         user    = $evm.root['user']
 
     if service && vm
-        $evm.log('info', "XXXXXXXX Attaching Service to VM: [#{service.name}][#{vm.name}]")
+        $evm.log('info', "XXXXXXXX Attaching Service to VM: [#{{service.name}}][#{{vm.name}}]")
         vm.add_to_service(service)
         vm.owner = user if user
         vm.group = user.miq_group if user
