@@ -153,10 +153,10 @@ VOLUME_METHOD = ("""
 prov = $evm.root["miq_provision"]
 prov.set_option(
     :clone_options,
-    {:block_device_mapping => [{}]})
+    {{ :block_device_mapping => [{}] }})
 """)
 
-ONE_FIELD = """{:volume_id => "{}", :device_name => "{}"}"""
+ONE_FIELD = """{{:volume_id => "{}", :device_name => "{}"}}"""
 
 
 @pytest.fixture(scope="module")
@@ -287,17 +287,17 @@ def test_provision_with_boot_volume(request, setup_provider, provider, provision
         with update(method):
             method.data = dedent('''\
                 $evm.root["miq_provision"].set_option(
-                    :clone_options, {
+                    :clone_options, {{
                         :image_ref => nil,
-                        :block_device_mapping_v2 => [{
+                        :block_device_mapping_v2 => [{{
                             :boot_index => 0,
                             :uuid => "{}",
                             :device_name => "vda",
                             :source_type => "volume",
                             :destination_type => "volume",
                             :delete_on_termination => false
-                        }]
-                    }
+                        }}]
+                    }}
                 )
             '''.format(volume))
 
@@ -361,9 +361,9 @@ def test_provision_with_additional_volume(request, setup_provider, provisioning,
     with update(method):
         method.data = dedent('''\
             $evm.root["miq_provision"].set_option(
-              :clone_options, {
+              :clone_options, {{
                 :image_ref => nil,
-                :block_device_mapping_v2 => [{
+                :block_device_mapping_v2 => [{{
                   :boot_index => 0,
                   :uuid => "{}",
                   :device_name => "vda",
@@ -371,8 +371,8 @@ def test_provision_with_additional_volume(request, setup_provider, provisioning,
                   :destination_type => "volume",
                   :volume_size => 3,
                   :delete_on_termination => false
-                }]
-              }
+                }}]
+              }}
         )
         '''.format(image_id))
 
