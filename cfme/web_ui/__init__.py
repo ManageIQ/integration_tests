@@ -2522,7 +2522,7 @@ class ScriptBox(Pretty):
     def workaround_save_issue(self):
         # We need to fire off the handlers manually in some cases ...
         sel.execute_script(
-            "{}._handlers.change.map(function(handler) { handler() });".format(self.name))
+            "{}._handlers.change.map(function(handler) {{ handler() }});".format(self.name))
         sel.wait_for_ajax()
 
 
