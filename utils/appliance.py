@@ -55,6 +55,8 @@ class IPAppliance(object):
         address: The IP address of the provider
         browser_steal: If True then then current browser is killed and the new appliance
             is used to generate a new session.
+        ssh_port: ssh port of the provider
+        db_port: database port of the provider
     """
 
     def __init__(self, address=None, browser_steal=False, ssh_port=None, db_port=None):

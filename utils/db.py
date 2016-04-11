@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
 from fixtures.pytest_store import store
-from utils import conf, ports, version
+from utils import conf, version
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.path import data_path
@@ -61,6 +61,7 @@ class Db(Mapping):
         hostname: base url to be used (default is from current_appliance)
         credentials: name of credentials to use from :py:attr:`utils.conf.credentials`
             (default ``database``)
+        db_port: database port (default is from current_appliance)
 
     Provides convient attributes to common sqlalchemy objects related to this DB,
     as well as a Mapping interface to access and reflect database tables. Where possible,
@@ -92,13 +93,10 @@ class Db(Mapping):
         tables, like the mapping interface or :py:meth:`values`.
 
     """
-    def __init__(self, hostname=None, credentials=None):
+    def __init__(self, hostname=None, credentials=None, db_port=None):
         self._table_cache = {}
-        if hostname is None:
-            self.hostname = store.current_appliance.db_address
-        else:
-            self.hostname = hostname
-
+        self.hostname = hostname or store.current_appliance.db_address
+        self.db_port = db_port or store.current_appliance.db_port
         self.credentials = credentials or conf.credentials['database']
 
     def __getitem__(self, table_name):
@@ -217,7 +215,7 @@ class Db(Mapping):
     def db_url(self):
         """The connection URL for this database, including credentials"""
         template = "postgresql://{username}:{password}@{host}:{port}/vmdb_production"
-        result = template.format(host=self.hostname, port=ports.DB, **self.credentials)
+        result = template.format(host=self.hostname, port=self.db_port, **self.credentials)
         logger.info("[DB] db_url is %s", result)
         return result
 

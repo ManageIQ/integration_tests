@@ -16,7 +16,6 @@ import metaplugins
 from fixtures.artifactor_plugin import art_client, appliance_ip_address
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
-from utils import ports
 from utils.conf import rdb
 from utils.log import logger
 from utils.path import data_path
@@ -81,9 +80,9 @@ def appliance_police():
         return
     try:
         port_numbers = {
-            'ssh': ports.SSH,
+            'ssh': store.current_appliance.ssh_port,
             'https': store.current_appliance.ui_port,
-            'postgres': ports.DB}
+            'postgres': store.current_appliance.db_port}
         port_results = {pn: net_check(pp, force=True) for pn, pp in port_numbers.items()}
         for port, result in port_results.items():
             if not result:
