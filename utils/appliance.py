@@ -1492,14 +1492,17 @@ class Appliance(IPAppliance):
         provider_name: Name of the provider this appliance is running under
         vm_name: Name of the VM this appliance is running as
         browser_steal: Setting of the browser_steal attribute.
+        ssh_port: ssh port of the appliance
+        db_port: database port of the appliance
     """
 
     _default_name = 'EVM'
 
-    def __init__(self, provider_name, vm_name, browser_steal=False):
+    def __init__(self, provider_name, vm_name, browser_steal=False, ssh_port=None, db_port=None):
         """Initializes a deployed appliance VM
         """
-        super(Appliance, self).__init__(browser_steal=browser_steal)
+        super(Appliance, self).__init__(browser_steal=browser_steal, ssh_port=ssh_port,
+            db_port=db_port)
         self.name = Appliance._default_name
 
         self._provider_name = provider_name
