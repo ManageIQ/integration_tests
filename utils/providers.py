@@ -570,16 +570,58 @@ def destroy_vm(provider_mgmt, vm_name):
         logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, e.message)
 
 
-def get_credentials_from_config(credential_config_name, cred_type=None):
-    creds = conf.credentials[credential_config_name]
-    domain = creds.get('domain', None)
-    token = creds.get('token', None)
+def get_credentials(credential_dict, cred_type=None):
+    """Processes a credential dictionary into a credential object.
+
+    Args:
+        credential_dict: A credential dictionary.
+        cred_type: Type of credential (None, token, ssh, amqp, ...)
+
+    Returns:
+        A :py:class:`BaseProvider.Credential` instance.
+    """
+    domain = credential_dict.get('domain', None)
+    token = credential_dict.get('token', None)
     return BaseProvider.Credential(
-        principal=creds['username'],
-        secret=creds['password'],
+        principal=credential_dict['username'],
+        secret=credential_dict['password'],
         cred_type=cred_type,
         domain=domain,
         token=token)
+
+
+def get_credentials_from_config(credential_config_name, cred_type=None):
+    """Retrieves the credential by its name from the credentials yaml.
+
+    Args:
+        credential_config_name: The name of the credential in the credentials yaml.
+        cred_type: Type of credential (None, token, ssh, amqp, ...)
+
+    Returns:
+        A :py:class:`BaseProvider.Credential` instance.
+    """
+    creds = conf.credentials[credential_config_name]
+    return get_credentials(creds, cred_type=cred_type)
+
+
+def process_credential_yaml_key(cred_yaml_key, cred_type=None):
+    """Function that detects if it needs to look up credentials in the credential yaml and acts
+    as expected.
+
+    If you pass a dictionary, it assumes it does not need to look up in the credentials yaml file.
+    If anything else is passed, it continues with looking up the credentials in the yaml file.
+
+    Args:
+        cred_yaml_key: Either a string pointing to the credentials.yaml or a dictionary which is
+            considered as the credentials.
+
+    Returns:
+        :py:class:`BaseProvider.Credentials` instance
+    """
+    if isinstance(cred_yaml_key, dict):
+        return get_credentials(cred_yaml_key, cred_type=cred_type)
+    else:
+        return get_credentials_from_config(cred_yaml_key, cred_type=cred_type)
 
 
 def get_crud(provider_config_name):
@@ -593,7 +635,8 @@ def get_crud(provider_config_name):
     """
 
     prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
-    credentials = get_credentials_from_config(prov_config['credentials'])
+    credentials_key = prov_config['credentials']
+    credentials = process_credential_yaml_key(credentials_key)
     prov_type = prov_config.get('type')
 
     if prov_type != 'ec2':
@@ -643,7 +686,7 @@ def get_crud(provider_config_name):
             sec_realm=prov_config['sec_realm'])
     elif prov_type == 'rhevm':
         if prov_config.get('candu_credentials', None):
-            candu_credentials = get_credentials_from_config(
+            candu_credentials = process_credential_yaml_key(
                 prov_config['candu_credentials'], cred_type='candu')
         else:
             candu_credentials = None
@@ -660,10 +703,10 @@ def get_crud(provider_config_name):
     elif prov_type == "openstack-infra":
         credential_dict = {'default': credentials}
         if 'ssh_credentials' in prov_config:
-            credential_dict['ssh'] = get_credentials_from_config(
+            credential_dict['ssh'] = process_credential_yaml_key(
                 prov_config['ssh_credentials'], cred_type='ssh')
         if 'amqp_credentials' in prov_config:
-            credential_dict['amqp'] = get_credentials_from_config(
+            credential_dict['amqp'] = process_credential_yaml_key(
                 prov_config['amqp_credentials'], cred_type='amqp')
         return OpenstackInfraProvider(
             name=prov_config['name'],
@@ -675,7 +718,7 @@ def get_crud(provider_config_name):
             start_ip=start_ip,
             end_ip=end_ip)
     elif prov_type == 'kubernetes':
-        token_creds = get_credentials_from_config(prov_config['credentials'], cred_type='token')
+        token_creds = process_credential_yaml_key(prov_config['credentials'], cred_type='token')
         return KubernetesProvider(
             name=prov_config['name'],
             credentials={'token': token_creds},
@@ -685,7 +728,7 @@ def get_crud(provider_config_name):
             port=prov_config['port'],
             provider_data=prov_config)
     elif prov_type == 'openshift':
-        token_creds = get_credentials_from_config(prov_config['credentials'], cred_type='token')
+        token_creds = process_credential_yaml_key(prov_config['credentials'], cred_type='token')
         return OpenshiftProvider(
             name=prov_config['name'],
             credentials={'token': token_creds},
