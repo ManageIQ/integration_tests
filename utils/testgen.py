@@ -181,6 +181,91 @@ def fixture_filter(metafunc, argnames, argvalues):
     return argnames, argvalues
 
 
+def _skip_restricted_version(data, metafunc, required_fields):
+    restricted_version = data.get('restricted_version', None)
+    if restricted_version:
+        logger.info('we found a restricted version')
+        for op, comparator in _version_operator_map.items():
+            # split string by op; if the split works, version won't be empty
+            head, op, ver = restricted_version.partition(op)
+            if not ver:  # This means that the operator was not found
+                continue
+            if not comparator(version.current_version(), ver):
+                return True
+            break
+        else:
+            raise Exception('Operator not found in {}'.format(restricted_version))
+    return False
+
+
+def _check_required_fields(data, metafunc, required_fields):
+    if required_fields:
+        for field_or_fields in required_fields:
+            if isinstance(field_or_fields, tuple):
+                field_ident, field_value = field_or_fields
+            else:
+                field_ident, field_value = field_or_fields, None
+            if isinstance(field_ident, basestring):
+                if field_ident not in data:
+                    return True
+                else:
+                    if field_value:
+                        if data[field_ident] != field_value:
+                            return True
+            else:
+                o = data
+                try:
+                    for field in field_ident:
+                        o = o[field]
+                    if field_value:
+                        if o != field_value:
+                            return True
+                except (IndexError, KeyError):
+                    return True
+    return False
+
+
+def _skip_test_flags(data, metafunc, required_fields):
+    # Test to see the test has meta data, if it does and that metadata contains
+    # a test_flag kwarg, then check to make sure the provider contains that test_flag
+    # if not, do not collect the provider for this particular test.
+
+    # Obtain the tests flags
+    meta = getattr(metafunc.function, 'meta', None)
+    test_flags = getattr(meta, 'kwargs', {}) \
+        .get('from_docs', {}).get('test_flag', '').split(',')
+    if test_flags != ['']:
+        test_flags = [flag.strip() for flag in test_flags]
+
+        defined_flags = cfme_data.get('test_flags', '').split(',')
+        defined_flags = [flag.strip() for flag in defined_flags]
+
+        excluded_flags = data.get('excluded_test_flags', '').split(',')
+        excluded_flags = [flag.strip() for flag in excluded_flags]
+
+        allowed_flags = set(defined_flags) - set(excluded_flags)
+
+        if set(test_flags) - allowed_flags:
+            logger.info("Skipping Provider %s for test %s in module %s because "
+                "it does not have the right flags, "
+                "%s does not contain %s",
+                data['name'], metafunc.function.func_name, metafunc.function.__module__,
+                list(allowed_flags), list(set(test_flags) - allowed_flags))
+            return True
+    return False
+
+
+def _skip_since_version(data, metafunc, required_fields):
+    try:
+        if "since_version" in data:
+            # Ignore providers that are not supported in this version yet
+            if version.current_version() < data["since_version"]:
+                return True
+    except Exception:  # No SSH connection
+        return True
+    return False
+
+
 def provider_by_type(metafunc, provider_types, required_fields=None):
     """Get the values of the named field keys from ``cfme_data.get('management_systems', {})``
 
@@ -252,7 +337,7 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
     if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
         argnames.append('provider')
 
-    for provider, data in cfme_data.get('management_systems', {}).iteritems():
+    for provider in cfme_data.get('management_systems', {}):
 
         # Check provider hasn't been filtered out with --use-provider
         if provider not in filtered:
@@ -267,89 +352,18 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
             logger.debug("Whilst trying to create an object for %s we failed", provider)
             continue
 
-        skip = False
         if provider_types is not None and prov_obj.type not in provider_types:
-            # Skip unwanted types
             continue
 
-        restricted_version = data.get('restricted_version', None)
-        if restricted_version:
-            logger.info('we found a restricted version')
-            for op, comparator in _version_operator_map.items():
-                # split string by op; if the split works, version won't be empty
-                head, op, ver = restricted_version.partition(op)
-                if not ver:  # This means that the operator was not found
-                    continue
-                if not comparator(version.current_version(), ver):
-                    skip = True
+        # Run through all the testgen skip fns
+        skip = False
+        skip_fns = [_skip_restricted_version, _check_required_fields, _skip_test_flags,
+            _skip_since_version]
+        for fn in skip_fns:
+            if fn(prov_obj.data, metafunc, required_fields):
+                skip = True
                 break
-            else:
-                raise Exception('Operator not found in {}'.format(restricted_version))
-
-        if required_fields:
-            for field_or_fields in required_fields:
-                if isinstance(field_or_fields, tuple):
-                    field_ident, field_value = field_or_fields
-                else:
-                    field_ident, field_value = field_or_fields, None
-                if isinstance(field_ident, basestring):
-                    if field_ident not in prov_obj.data:
-                        skip = True
-                        break
-                    else:
-                        if field_value:
-                            if prov_obj.data[field_ident] != field_value:
-                                skip = True
-                                break
-                else:
-                    o = prov_obj.data
-                    try:
-                        for field in field_ident:
-                            o = o[field]
-                        if field_value:
-                            if o != field_value:
-                                skip = True
-                    except (IndexError, KeyError):
-                        skip = True
-                        break
-
         if skip:
-            continue
-
-        # Test to see the test has meta data, if it does and that metadata contains
-        # a test_flag kwarg, then check to make sure the provider contains that test_flag
-        # if not, do not collect the provider for this particular test.
-
-        # Obtain the tests flags
-        meta = getattr(metafunc.function, 'meta', None)
-
-        test_flags = getattr(meta, 'kwargs', {}) \
-            .get('from_docs', {}).get('test_flag', '').split(',')
-        if test_flags != ['']:
-            test_flags = [flag.strip() for flag in test_flags]
-
-            defined_flags = cfme_data.get('test_flags', '').split(',')
-            defined_flags = [flag.strip() for flag in defined_flags]
-
-            excluded_flags = data.get('excluded_test_flags', '').split(',')
-            excluded_flags = [flag.strip() for flag in excluded_flags]
-
-            allowed_flags = set(defined_flags) - set(excluded_flags)
-
-            if set(test_flags) - allowed_flags:
-                logger.info("Skipping Provider %s for test %s in module %s because "
-                    "it does not have the right flags, "
-                    "%s does not contain %s",
-                    provider, metafunc.function.func_name, metafunc.function.__module__,
-                    list(allowed_flags), list(set(test_flags) - allowed_flags))
-                continue
-
-        try:
-            if "since_version" in data:
-                # Ignore providers that are not supported in this version yet
-                if version.current_version() < data["since_version"]:
-                    continue
-        except Exception:  # No SSH connection
             continue
 
         # skip when required field is not present and option['require_field'] == True
