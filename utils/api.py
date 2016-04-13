@@ -64,7 +64,7 @@ class API(object):
         while retries:
             try:
                 return func()
-            except requests.ConnectionException as e:
+            except requests.ConnectionError as e:
                 last_connection_exception = e
                 retries -= 1
         raise last_connection_exception
