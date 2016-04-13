@@ -410,8 +410,15 @@ def prepare_template_verify_version(self, template_id):
         # Check if the difference is not just in the suffixes, which can be the case ...
         if supposed_version.version == true_version.version:
             # The two have same version but different suffixes, apply the suffix to the template obj
-            template.version = str(true_version)
-            template.save()
+            with transaction.atomic():
+                template.version = str(true_version)
+                template.save()
+                if template.parent_template is not None:
+                    # In case we have a parent template, update the version there too.
+                    if template.version != template.parent_template.version:
+                        pt = template.parent_template
+                        pt.version = template.version
+                        pt.save()
             return  # no need to continue with spamming process
         # SPAM SPAM SPAM!
         with transaction.atomic():
