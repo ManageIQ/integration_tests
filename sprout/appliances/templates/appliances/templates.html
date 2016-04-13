@@ -90,7 +90,7 @@ $(document).ready(function() {
             addAlert("info", "Deletion of the template " + template + " from provider initiated");
             waitForDeletionFinish(template, data);
         }).fail(function(xhr, textStatus, errorThrown){
-            addAlert("danger", "Error during tempalte delete request " + template + ": '" + xhr.responseText + "'.");
+            addAlert("danger", "Error during template delete request " + template + ": '" + xhr.responseText + "'.");
             $("#spinner-" + template).hide();
             $("#button-" + template).show();
         })

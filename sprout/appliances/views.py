@@ -451,7 +451,7 @@ def set_pool_description(request):
 
 
 def delete_template_provider(request):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated() or not request.user.is_superuser:
         return HttpResponseForbidden("Only authenticated superusers can operate this action.")
     template_id = request.POST["template_id"]
     try:
