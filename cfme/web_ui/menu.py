@@ -65,6 +65,10 @@ sections = {
         ('containers_image_registries', 'Image Registries'),
         ('containers_topology', 'Topology')
     ),
+    ('middleware', 'Middleware'): (
+        ('middleware_providers', 'Providers'),
+        ('middleware_servers', 'Middleware Servers')
+    ),
     ('infrastructure', 'Infrastructure'): (
         ('infrastructure_providers', 'Providers', lambda: toolbar.select('Grid View')),
         ('infrastructure_clusters', "/ems_cluster"),

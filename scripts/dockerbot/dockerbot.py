@@ -23,9 +23,15 @@ def _dgci(d, key):
 def _name(docker_info):
     return _dgci(docker_info, 'name').strip('/')
 
-dc = docker.Client(base_url='unix://var/run/docker.sock',
-                   version='1.12',
-                   timeout=10)
+if os.getenv("DOCKER_MACHINE_NAME", "None") == "None":
+    dc = docker.Client(base_url='unix://var/run/docker.sock',
+                       version='1.12',
+                       timeout=10)
+else:
+    from docker.utils import kwargs_from_env
+    dc = docker.Client(version='1.12',
+                       timeout=10,
+                       **kwargs_from_env(assert_hostname=False))
 
 
 class DockerInstance(object):
