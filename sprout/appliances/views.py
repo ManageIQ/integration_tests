@@ -90,28 +90,38 @@ def templates(request, group_id=None, prov_id=None):
     prepared_table = []
     zstream_rowspans = {}
     version_rowspans = {}
+    date_version_rowspans = {}
     items = group.zstreams_versions.items()
     items.sort(key=lambda pair: Version(pair[0]), reverse=True)
     for zstream, versions in items:
         for version in versions:
-            for provider in Provider.objects.all():
-                for template in Template.objects.filter(
-                        provider=provider, template_group=group, version=version, exists=True,
-                        ready=True):
-                    if zstream in zstream_rowspans:
-                        zstream_rowspans[zstream] += 1
-                        zstream_append = None
-                    else:
-                        zstream_rowspans[zstream] = 1
-                        zstream_append = zstream
+            for template in Template.objects.filter(
+                    template_group=group, version=version, exists=True,
+                    ready=True).order_by('-date', 'provider'):
+                if zstream in zstream_rowspans:
+                    zstream_rowspans[zstream] += 1
+                    zstream_append = None
+                else:
+                    zstream_rowspans[zstream] = 1
+                    zstream_append = zstream
 
-                    if version in version_rowspans:
-                        version_rowspans[version] += 1
-                        version_append = None
-                    else:
-                        version_rowspans[version] = 1
-                        version_append = version
-                    prepared_table.append((zstream_append, version_append, provider, template))
+                if version in version_rowspans:
+                    version_rowspans[version] += 1
+                    version_append = None
+                else:
+                    version_rowspans[version] = 1
+                    version_append = version
+
+                datetuple = (template.date, version)
+                if datetuple in date_version_rowspans:
+                    date_version_rowspans[datetuple] += 1
+                    date_append = None
+                else:
+                    date_version_rowspans[datetuple] = 1
+                    date_append = template.date
+                prepared_table.append((
+                    zstream_append, version_append, date_append, datetuple, template.provider,
+                    template))
     return render(request, 'appliances/templates.html', locals())
 
 
