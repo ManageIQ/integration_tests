@@ -8,24 +8,11 @@ from utils import error, testgen, version
 from utils.blockers import GH
 from utils.wait import wait_for, TimedOutError
 
-pytestmark = [pytest.mark.usefixtures('test_power_control')]
-
 
 def pytest_generate_tests(metafunc):
-    final_argv, final_ids = [], []
-
-    # Get all providers and pick those, that have power control test enabled
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['ec2', 'openstack'], 'test_power_control')
-
-    for argn, argv, single_id in zip(argnames, argvalues, idlist):
-        test_pwr_ctl_i = argnames.index('test_power_control')
-        provider = argnames.index('provider')
-        if argv[test_pwr_ctl_i] is True:
-            final_argv.append(argv)
-            final_ids.append(argv[provider].key)
-
-    testgen.parametrize(metafunc, argnames, final_argv, ids=final_ids, scope="function")
+        metafunc, ['ec2', 'openstack'], required_fields=[('test_power_control', True)])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
 
 
 @pytest.fixture(scope="function")

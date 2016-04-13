@@ -93,24 +93,10 @@ METHOD_TORSO = """
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
-    new_argvalues = []
-    new_idlist = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # Don't know what type of instance to provision, move on
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'stack_provisioning'}.issubset(args['provisioning'].viewkeys()):
-            # Need image for image -> instance provisioning
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append([args[argname] for argname in argnames])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, required_fields=[
+        ['provisioning', 'stack_provisioning']
+    ])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="function")
@@ -130,7 +116,7 @@ def catalog():
     yield catalog
 
 
-def test_provision_stack(setup_provider, provider, provisioning, dialog, catalog, request):
+def test_provision_stack(setup_provider, provider, dialog, catalog, request):
     """Tests stack provisioning
 
     Metadata:
@@ -170,7 +156,7 @@ def test_provision_stack(setup_provider, provider, provisioning, dialog, catalog
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() <= '5.5')
-def test_reconfigure_service(setup_provider, provider, provisioning, dialog, catalog, request):
+def test_reconfigure_service(setup_provider, provider, dialog, catalog, request):
     """Tests stack provisioning
 
     Metadata:
@@ -210,8 +196,7 @@ def test_reconfigure_service(setup_provider, provider, provisioning, dialog, cat
     myservice.reconfigure_service()
 
 
-def test_remove_template_provisioning(setup_provider, provider, provisioning,
-                                      dialog, catalog, request):
+def test_remove_template_provisioning(setup_provider, provider, dialog, catalog, request):
     """Tests stack provisioning
 
     Metadata:
@@ -244,8 +229,7 @@ def test_remove_template_provisioning(setup_provider, provider, provisioning,
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_retire_stack(setup_provider, provider, provisioning,
-                      dialog, catalog, request):
+def test_retire_stack(setup_provider, provider, dialog, catalog, request):
     """Tests stack provisioning
 
     Metadata:

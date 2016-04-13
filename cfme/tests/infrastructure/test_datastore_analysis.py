@@ -29,26 +29,25 @@ def pytest_generate_tests(metafunc):
     new_argvalues = []
 
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, PROVIDER_TYPES, 'datastores')
-    argnames += ['datastore_type', 'datastore_name']
+        metafunc, PROVIDER_TYPES, required_fields=['datastores'])
+    argnames += ['datastore']
 
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
-
-        if not args['datastores']:
+        datastores = args['provider'].data.get('datastores', {})
+        if not datastores:
             continue
-        for ds in args['datastores']:
+        for ds in datastores:
             if not ds.get('test_fleece', False):
                 continue
             assert ds.get('type', None) in DATASTORE_TYPES,\
                 'datastore type must be set to [{}] for smartstate analysis tests'\
                 .format('|'.join(DATASTORE_TYPES))
             argvs = argvalues[i][:]
-            argvs.pop(argnames.index('datastores'))
-            new_argvalues.append(argvs + [ds['type'], ds['name']])
-            test_id = '{}-{}-{}'.format(args['provider'].key, ds['type'], ds['name'])
+            new_argvalues.append(argvs + [datastore.Datastore(ds['name'], args['provider'].key,
+                ds['type'])])
+            test_id = '{}-{}'.format(args['provider'].key, ds['type'])
             new_idlist.append(test_id)
-    argnames.remove('datastores')
     metafunc.parametrize(argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
@@ -62,21 +61,19 @@ def get_host_data_by_name(provider_key, host_name):
 # TODO add support for events
 @pytest.mark.meta(
     blockers=[
-        BZ(1091033, unblock=lambda datastore_type: datastore_type != 'iscsi'),
+        BZ(1091033, unblock=lambda datastore: datastore.type != 'iscsi'),
         BZ(1180467, unblock=lambda provider: provider.type != 'rhevm'),
     ]
 )
-def test_run_datastore_analysis(request, setup_provider, provider, datastore_type, datastore_name,
-                                soft_assert):
+def test_run_datastore_analysis(request, setup_provider, provider, datastore, soft_assert):
     """Tests smarthost analysis
 
     Metadata:
         test_flag: datastore_analysis
     """
-    test_datastore = datastore.Datastore(datastore_name, provider.key)
 
     # Check if there is a host with valid credentials
-    host_names = test_datastore.get_hosts()
+    host_names = datastore.get_hosts()
     assert len(host_names) != 0, "No hosts attached to this datastore found"
     for host_name in host_names:
         host_qi = Quadicon(host_name, 'host')
@@ -123,7 +120,7 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore_typ
 
         assert found_host,\
             "No credentials found for any of the hosts attached to datastore {}"\
-            .format(datastore_name)
+            .format(datastore.name)
 
     # TODO add support for events
     # register_event(
@@ -134,15 +131,15 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore_typ
     # )
 
     # Initiate analysis
-    test_datastore.run_smartstate_analysis()
-    wait_for(lambda: is_datastore_analysis_finished(datastore_name),
+    datastore.run_smartstate_analysis()
+    wait_for(lambda: is_datastore_analysis_finished(datastore.name),
              delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
 
-    c_datastore = test_datastore.get_detail('Properties', 'Datastore Type')
+    c_datastore = datastore.get_detail('Properties', 'Datastore Type')
     # Check results of the analysis and the datastore type
-    soft_assert(c_datastore == datastore_type.upper(),
+    soft_assert(c_datastore == datastore.type.upper(),
                 'Datastore type does not match the type defined in yaml:' +
-                'expected "{}" but was "{}"'.format(datastore_type.upper(), c_datastore))
+                'expected "{}" but was "{}"'.format(datastore.type.upper(), c_datastore))
     for row_name in CONTENT_ROWS_TO_CHECK:
         value = InfoBlock('Content', row_name).text
         soft_assert(value != '0',

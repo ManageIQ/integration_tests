@@ -19,7 +19,21 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without host provisioning data defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'host_provisioning')
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
+        ['host_provisioning', 'pxe_server'],
+        ['host_provisioning', 'pxe_image'],
+        ['host_provisioning', 'pxe_image_type'],
+        ['host_provisioning', 'pxe_kickstart'],
+        ['host_provisioning', 'datacenter'],
+        ['host_provisioning', 'cluster'],
+        ['host_provisioning', 'datastores'],
+        ['host_provisioning', 'hostname'],
+        ['host_provisioning', 'root_password'],
+        ['host_provisioning', 'ip_addr'],
+        ['host_provisioning', 'subnet_mask'],
+        ['host_provisioning', 'gateway'],
+        ['host_provisioning', 'dns'],
+    ])
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]
@@ -29,21 +43,13 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
         try:
-            prov_data = args['host_provisioning']
+            prov_data = args['provider'].data['host_provisioning']
         except KeyError:
             # No host provisioning data available
             continue
 
         stream = prov_data.get('runs_on_stream', '')
         if not version.current_version().is_in_series(str(stream)):
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'pxe_server', 'pxe_image', 'pxe_image_type', 'pxe_kickstart',
-                'datacenter', 'cluster', 'datastores',
-                'hostname', 'root_password', 'ip_addr',
-                'subnet_mask', 'gateway', 'dns'}.issubset(prov_data.viewkeys()):
-            # Need all  for host provisioning
             continue
 
         pxe_server_name = prov_data.get('pxe_server', '')

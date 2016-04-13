@@ -20,7 +20,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter'], 'provisioning')
+        metafunc, ['virtualcenter'])
     metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
 
 
@@ -85,7 +85,7 @@ def set_group_cpu():
 
 
 @pytest.fixture(scope="function")
-def prov_data(provisioning, provider):
+def prov_data(provider, provisioning):
     return {
         "first_name": fauxfactory.gen_alphanumeric(),
         "last_name": fauxfactory.gen_alphanumeric(),

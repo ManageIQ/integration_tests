@@ -13,8 +13,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.all_providers(
-        metafunc, 'small_template', template_location=["small_template"])
+    argnames, argvalues, idlist = testgen.all_providers(metafunc)
 
     new_idlist = []
     new_argvalues = []

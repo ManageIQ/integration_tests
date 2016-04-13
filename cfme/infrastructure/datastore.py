@@ -60,8 +60,9 @@ class Datastore(Pretty):
     """
     pretty_attrs = ['name', 'provider_key']
 
-    def __init__(self, name=None, provider_key=None):
+    def __init__(self, name=None, provider_key=None, type=None):
         self.name = name
+        self.type = type
         if provider_key:
             self.provider = get_crud(provider_key)
         else:

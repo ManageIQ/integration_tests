@@ -30,7 +30,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, "vm_analysis", require_fields=True)
+        metafunc, required_fields=["vm_analysis"])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
@@ -97,8 +97,7 @@ def analysis_profile(compliance_vm):
 
 @pytest.fixture(scope="module")
 def fleecing_vm(
-        request, compliance_vm, vm_analysis, provider,
-        analysis_profile):
+        request, compliance_vm, provider, analysis_profile):
     logger.info("Provisioning an appliance for fleecing on %s", provider.key)
     # TODO: When we get something smaller, use it!
     appliance = provision_appliance(
@@ -138,7 +137,7 @@ def do_scan(vm, additional_item_check=None):
     logger.info("Scan finished")
 
 
-def test_check_package_presence(request, fleecing_vm, ssh_client, vm_analysis, analysis_profile):
+def test_check_package_presence(request, fleecing_vm, ssh_client, analysis_profile):
     """This test checks compliance by presence of a certain cfme-appliance package which is expected
     to be present on an appliance."""
     # TODO: If we step out from provisioning a full appliance for fleecing, this might need revisit

@@ -7,7 +7,6 @@ import pytest
 from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.pxe import get_template_from_config
-from utils.conf import cfme_data
 from utils import testgen, ssh
 from utils.wait import wait_for
 
@@ -16,36 +15,21 @@ pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
-    argnames = argnames + ['cloud_init_template']
+    argnames, argvalues, idlist = testgen.cloud_providers(metafunc,
+        required_fields=[
+            ['provisioning', 'ci-template'],
+            ['provisioning', 'ci-username'],
+            ['provisioning', 'ci-pass'],
+            ['provisioning', 'image']
+        ])
 
-    new_argvalues = []
-    new_idlist = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # Don't know what type of instance to provision, move on
-            continue
-
-        if not {'ci-template', 'ci-username', 'ci-pass', 'image'}.issubset(
-                args['provisioning'].viewkeys()):
-            # Need all for template provisioning
-            continue
-
-        cloud_init_template = args['provisioning']['ci-template']
-        if cloud_init_template not in cfme_data.get('customization_templates', {}).keys():
-            continue
-
-        argvalues[i].append(get_template_from_config(cloud_init_template))
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="module")
-def setup_ci_template(cloud_init_template):
+def setup_ci_template(provider):
+    cloud_init_template_name = provider.data['provisioning']['ci-template']
+    cloud_init_template = get_template_from_config(cloud_init_template_name)
     if not cloud_init_template.exists():
         cloud_init_template.create()
 

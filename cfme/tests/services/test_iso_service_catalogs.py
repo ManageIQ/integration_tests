@@ -23,36 +23,30 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
+        'iso_datastore',
+        ['provisioning', 'host'],
+        ['provisioning', 'datastore'],
+        ['provisioning', 'iso_template'],
+        ['provisioning', 'iso_file'],
+        ['provisioning', 'iso_kickstart'],
+        ['provisioning', 'iso_root_password'],
+        ['provisioning', 'iso_image_type'],
+        ['provisioning', 'vlan'],
+    ])
     argnames = argnames + ['iso_cust_template', 'iso_datastore']
 
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
 
-        provider_data = cfme_data.get('management_systems', {})[
-            argvalue_tuple[argnames.index('provider')].key]
-        if not provider_data.get('iso_datastore', False):
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'iso_template', 'host', 'datastore',
-                'iso_file', 'iso_kickstart',
-                'iso_root_password',
-                'iso_image_type', 'vlan'}.issubset(args['provisioning'].viewkeys()):
-            # Need all  for template provisioning
-            continue
-
-        iso_cust_template = args['provisioning']['iso_kickstart']
+        iso_cust_template = args['provider'].data['provisioning']['iso_kickstart']
         if iso_cust_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
         argvalues[i].append(get_template_from_config(iso_cust_template))
-        argvalues[i].append(ISODatastore(provider_data['name']))
+        argvalues[i].append(ISODatastore(args['provider'].name))
         new_idlist.append(idlist[i])
         new_argvalues.append(argvalues[i])
 
@@ -60,7 +54,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def setup_iso_datastore(setup_provider_modscope, iso_cust_template, provisioning, iso_datastore):
+def setup_iso_datastore(setup_provider_modscope, iso_cust_template, iso_datastore, provisioning):
     if not iso_datastore.exists():
         iso_datastore.create()
     iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
@@ -96,7 +90,7 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(setup_provider, provider, provisioning, vm_name, dialog, catalog):
+def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisioning):
     iso_template, host, datastore, iso_file, iso_kickstart,\
         iso_root_password, iso_image_type, vlan = map(provisioning.get, ('pxe_template', 'host',
                                 'datastore', 'iso_file', 'iso_kickstart',

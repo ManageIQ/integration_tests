@@ -23,10 +23,8 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter'], 'provisioning')
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter'],
+    scope="module")
 
 
 @pytest.fixture(scope="function")

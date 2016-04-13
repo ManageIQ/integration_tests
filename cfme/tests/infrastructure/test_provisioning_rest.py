@@ -5,23 +5,19 @@ from utils.wait import wait_for
 from utils import mgmt_system, testgen
 
 
-pytest_generate_tests = testgen.generate(
-    testgen.provider_by_type,
-    ['virtualcenter', 'rhevm'],
-    "small_template",
-    scope="module"
-)
+pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter', 'rhevm'],
+    scope="module")
 
 
 @pytest.fixture(scope="module")
-def provision_data(rest_api_modscope, provider, small_template):
-    templates = rest_api_modscope.collections.templates.find_by(name=small_template)
+def provision_data(rest_api_modscope, provider, small_template_modscope):
+    templates = rest_api_modscope.collections.templates.find_by(name=small_template_modscope)
     for template in templates:
         if template.ems.name == provider.data["name"]:
             guid = template.guid
             break
     else:
-        raise Exception("No such template {} on provider!".format(small_template))
+        raise Exception("No such template {} on provider!".format(small_template_modscope))
     result = {
         "version": "1.1",
         "template_fields": {
