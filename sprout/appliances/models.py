@@ -334,15 +334,19 @@ class Group(MetadataMixin):
         the means of days."""
         if self.template_obsolete_days is None:
             return None
-        latest_template_date = Template.objects.filter(
-            exists=True, template_group=self).order_by("-date")[0].date
-        latest_template_ids = [
+        # Preconfigured because we presume that if the preconfigured works, so does unconfigured one
+        latest_working_template_date = Template.objects.filter(
+            exists=True, usable=True, ready=True, preconfigured=True,
+            template_group=self).order_by("-date")[0].date
+        latest_working_template_ids = [
             tpl.id
             for tpl
-            in Template.objects.filter(exists=True, template_group=self, date=latest_template_date)]
+            in Template.objects.filter(
+                exists=True, usable=True, ready=True, template_group=self,
+                date=latest_working_template_date)]
         return Template.objects.filter(
             exists=True, date__lt=date.today() - timedelta(days=self.template_obsolete_days),
-            template_group=self).exclude(id__in=latest_template_ids).order_by("date")
+            template_group=self).exclude(id__in=latest_working_template_ids).order_by("date")
 
     @property
     def templates(self):
@@ -469,7 +473,7 @@ class Template(MetadataMixin):
 
     @property
     def can_be_deleted(self):
-        return self.exists and self.preconfigured and len(self.appliances) == 0
+        return self.exists and len(self.appliances) == 0
 
     @property
     def appliances(self):

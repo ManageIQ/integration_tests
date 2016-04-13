@@ -91,8 +91,8 @@ function addAlert(type, text) {
     var rand_id = Math.round(Math.random() * 1000);
     result = $("#alerts").append("<div class='alert alert-" + type + " alert-dismissible fade in' role='alert' id='alert-" + rand_id + "'><button class='close' data-dismiss='alert'>×</button> " + text + " " + icon + "</div>");
     // Scroll to the alert
-    location.href = "#";
-    location.href = "#alert-" + rand_id;
+    //location.href = "#";
+    //location.href = "#alert-" + rand_id;
     return result;
 }
 
