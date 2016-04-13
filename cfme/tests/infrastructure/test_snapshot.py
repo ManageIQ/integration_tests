@@ -17,7 +17,7 @@ from utils.wait import wait_for
 pytestmark = [pytest.mark.long_running]
 
 
-pytest_generate_tests = testgen.generate(testgen.infra_providers, 'full_template', scope="module")
+pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
 
 
 @pytest.fixture(scope="module")

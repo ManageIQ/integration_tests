@@ -6,10 +6,8 @@ from cfme.common.vm import VM
 from utils import testgen
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['scvmm'], 'small_template')
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
+pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['scvmm'],
+    scope="module")
 
 
 @pytest.mark.meta(blockers=[1178961])

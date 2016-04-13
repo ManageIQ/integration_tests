@@ -11,19 +11,8 @@ import pytest
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'remove_test')
-    new_argvalues = []
-    new_idlist = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['remove_test']:
-            # Don't know what type of instance to provision, move on
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, required_fields=['remove_test'])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -48,13 +37,13 @@ def reset_grid_stack():
     toolbar.select('List View')
 
 
-def test_delete_instance(setup_provider, provider, remove_test):
+def test_delete_instance(setup_provider, provider):
     """ Tests delete instance
 
     Metadata:
         test_flag: delete_object
     """
-    instance_name = remove_test['instance']
+    instance_name = provider.data['remove_test']['instance']
     test_instance = VM.factory(instance_name, provider)
     test_instance.delete()
     test_instance.wait_for_delete()
@@ -62,13 +51,13 @@ def test_delete_instance(setup_provider, provider, remove_test):
     test_instance.wait_to_appear()
 
 
-def test_delete_image(setup_provider, provider, remove_test, set_grid, request):
+def test_delete_image(setup_provider, provider, set_grid, request):
     """ Tests delete image
 
     Metadata:
         test_flag: delete_object
     """
-    image_name = remove_test['image']
+    image_name = provider.data['remove_test']['image']
     test_image = VM.factory(image_name, provider, template=True)
     test_image.delete()
     test_image.wait_for_delete()
@@ -78,13 +67,13 @@ def test_delete_image(setup_provider, provider, remove_test, set_grid, request):
 
 
 @pytest.mark.uncollectif(lambda: current_version() < "5.4")
-def test_delete_stack(setup_provider, provider, remove_test, set_grid_stack, request):
+def test_delete_stack(setup_provider, provider, set_grid_stack, request):
     """ Tests delete stack
 
     Metadata:
         test_flag: delete_object
     """
-    stack_name = remove_test['stack']
+    stack_name = provider.data['remove_test']['stack']
     test_stack = stack.Stack(stack_name)
     test_stack.delete()
     test_stack.wait_for_delete()

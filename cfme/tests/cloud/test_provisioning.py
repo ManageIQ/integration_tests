@@ -18,26 +18,9 @@ pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
 def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
-
-    new_argvalues = []
-    new_idlist = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # Don't know what type of instance to provision, move on
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'image'}.issubset(args['provisioning'].viewkeys()):
-            # Need image for image -> instance provisioning
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append([args[argname] for argname in argnames])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="function")
+    argnames, argvalues, idlist = testgen.cloud_providers(metafunc,
+        required_fields=[['provisioning', 'image']])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
 
 
 @pytest.fixture(scope="function")
@@ -46,7 +29,7 @@ def vm_name(request):
     return vm_name
 
 
-def test_provision_from_template(request, setup_provider, provider, provisioning, vm_name):
+def test_provision_from_template(request, setup_provider, provider, vm_name, provisioning):
     """ Tests instance provision from template
 
     Metadata:
@@ -79,7 +62,7 @@ def test_provision_from_template(request, setup_provider, provider, provisioning
 
 
 def test_provision_from_template_using_rest(
-        request, setup_provider, provider, provisioning, vm_name, rest_api):
+        request, setup_provider, provider, vm_name, rest_api, provisioning):
     """ Tests provisioning from a template using the REST API.
 
     Metadata:
@@ -195,14 +178,13 @@ def copy_domains(domain):
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_provision_from_template_with_attached_disks(
-        request, setup_provider, provider, provisioning, vm_name,
+        request, setup_provider, provider, vm_name, provisioning,
         disks, soft_assert, domain, cls, copy_domains):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:
         test_flag: provision
     """
-
     image = provisioning['image']['name']
     note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
         image, vm_name, provider.key))
@@ -263,14 +245,13 @@ def test_provision_from_template_with_attached_disks(
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1160342])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-def test_provision_with_boot_volume(request, setup_provider, provider, provisioning, vm_name,
-        soft_assert, domain, copy_domains):
+def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
+        soft_assert, domain, copy_domains, provisioning):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
         test_flag: provision, volumes
     """
-
     image = provisioning['image']['name']
     note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
         image, vm_name, provider.key))
@@ -333,15 +314,14 @@ def test_provision_with_boot_volume(request, setup_provider, provider, provision
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1186413])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-def test_provision_with_additional_volume(request, setup_provider, provisioning, provider,
-                                          vm_name, soft_assert, copy_domains, domain):
+def test_provision_with_additional_volume(request, setup_provider, provider, vm_name,
+        soft_assert, copy_domains, domain, provisioning):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
     Metadata:
         test_flag: provision, volumes
     """
-
     image = provisioning['image']['name']
     note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
         image, vm_name, provider.key))

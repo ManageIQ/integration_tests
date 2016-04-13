@@ -69,7 +69,7 @@ ssa_expect_file = "/etc/hosts"
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.all_providers(metafunc, "vm_analysis_new")
+    argnames, argvalues, idlist = testgen.all_providers(metafunc)
 
     new_idlist = []
     new_argvalues = []
@@ -113,7 +113,8 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis_new):
+def local_setup_provider(request, setup_provider_modscope, provider):
+    vm_analysis_new = provider.data['vm_analysis_new']
     if provider.type == 'rhevm' and version.current_version() < "5.5":
         # See https://bugzilla.redhat.com/show_bug.cgi?id=1300030
         pytest.skip("SSA is not supported on RHEVM for appliances earlier than 5.5 and upstream")
@@ -133,8 +134,9 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
     configuration.set_server_roles(**roles)
 
 
-def set_host_credentials(request, vm_analysis_new, provider):
+def set_host_credentials(request, provider):
     # Add credentials to host
+    vm_analysis_new = provider.data['vm_analysis_new']
     test_host = host.Host(name=vm_analysis_new['host'])
     wait_for(lambda: test_host.exists, delay=10, num_sec=120)
 
@@ -158,18 +160,19 @@ def set_host_credentials(request, vm_analysis_new, provider):
 
 
 @pytest.fixture(scope="module")
-def instance(request, local_setup_provider, provider, vm_analysis_new):
+def instance(request, local_setup_provider, provider):
     """ Fixture to provision instance on the provider """
+    vm_analysis_new = provider.data['vm_analysis_new']
     vm_name = vm_analysis_new.get('vm_name')
     template = vm_analysis_new.get('image', None)
-    host, datastore = map(vm_analysis_new.get, ('host', 'datastore'))
+    host_name, datastore_name = map(vm_analysis_new.get, ('host', 'datastore'))
 
     mgmt_system = provider.get_mgmt_system()
 
     provisioning_data = {
         'vm_name': vm_name,
-        'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]},
+        'host_name': {'name': [host_name]},
+        'datastore_name': {'name': [datastore_name]},
     }
 
     try:
@@ -310,12 +313,13 @@ def detect_system_type(vm):
     BZ(1311218, unblock=lambda provider:
         provider.type != 'virtualcenter' or provider.version < "6"),
     BZ(1320248, unblock=lambda provider: version.current_version() >= "5.5")])
-def test_ssa_template(request, local_setup_provider, provider, vm_analysis_new, soft_assert):
+def test_ssa_template(request, local_setup_provider, provider, soft_assert):
     """ Tests SSA can be performed on a template
 
     Metadata:
         test_flag: vm_analysis
     """
+    vm_analysis_new = provider.data['vm_analysis_new']
     template_name = vm_analysis_new['image']
     template = Template.factory(template_name, provider, template=True)
 

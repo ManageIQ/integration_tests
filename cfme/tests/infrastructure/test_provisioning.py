@@ -25,26 +25,13 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, 'provisioning', template_location=["provisioning", "template"])
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'template', 'host', 'datastore'}.issubset(args['provisioning'].viewkeys()):
-            # Need all three for template provisioning
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
+        required_fields=[
+            ['provisioning', 'template'],
+            ['provisioning', 'host'],
+            ['provisioning', 'datastore']
+        ])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="function")
@@ -54,7 +41,7 @@ def vm_name():
 
 
 def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_provider, provider,
-                                 provisioning, vm_name, smtp_test, request):
+        vm_name, smtp_test, request, provisioning):
     """ Tests provisioning from a template
 
     Metadata:
@@ -99,7 +86,7 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_prov
 
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
 def test_provision_approval(
-        setup_provider, provider, provisioning, vm_name, smtp_test, request, edit):
+        setup_provider, provider, vm_name, smtp_test, request, edit, provisioning):
     """ Tests provisioning approval. Tests couple of things.
 
     * Approve manually

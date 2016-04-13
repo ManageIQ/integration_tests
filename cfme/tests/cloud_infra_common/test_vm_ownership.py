@@ -7,8 +7,7 @@ from utils import testgen
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.all_providers(
-        metafunc, 'ownership_vm', require_fields=True)
+    argnames, argvalues, idlist = testgen.all_providers(metafunc, required_fields=['ownership_vm'])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
@@ -93,7 +92,8 @@ def new_user(group_only_user_owned):
     return user
 
 
-def test_form_button_validation(request, user1, setup_provider, provider, ownership_vm):
+def test_form_button_validation(request, user1, setup_provider, provider):
+    ownership_vm = provider.data['ownership_vm']
     user_ownership_vm = VM.factory(ownership_vm, provider)
     # Reset button test
     user_ownership_vm.set_ownership(user=user1.name, click_reset=True)
@@ -105,7 +105,8 @@ def test_form_button_validation(request, user1, setup_provider, provider, owners
     user_ownership_vm.unset_ownership()
 
 
-def test_user_ownership_crud(request, user1, setup_provider, provider, ownership_vm):
+def test_user_ownership_crud(request, user1, setup_provider, provider):
+    ownership_vm = provider.data['ownership_vm']
     user_ownership_vm = VM.factory(ownership_vm, provider)
     # Set the ownership and checking it
     user_ownership_vm.set_ownership(user=user1.name)
@@ -116,7 +117,8 @@ def test_user_ownership_crud(request, user1, setup_provider, provider, ownership
         assert (not user_ownership_vm.exists, "vm exists")
 
 
-def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider, ownership_vm):
+def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider):
+    ownership_vm = provider.data['ownership_vm']
     group_ownership_vm = VM.factory(ownership_vm, provider)
     group_ownership_vm.set_ownership(group=user2.group.description)
     with user2:
@@ -127,7 +129,8 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
 
 
 def test_group_ownership_on_user_or_group_role(
-        request, user3, setup_provider, provider, ownership_vm):
+        request, user3, setup_provider, provider):
+    ownership_vm = provider.data['ownership_vm']
     group_ownership_vm = VM.factory(ownership_vm, provider)
     group_ownership_vm.set_ownership(group=user3.group.description)
     with user3:

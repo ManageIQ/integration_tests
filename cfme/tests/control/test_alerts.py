@@ -27,8 +27,7 @@ CANDU_PROVIDER_TYPES = {"virtualcenter"}  # TODO: rhevm
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        'full_template', scope="module", template_location=["full_template", "name"])
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):

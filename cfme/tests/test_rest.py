@@ -15,7 +15,6 @@ from utils import testgen, conf, version
 pytest_generate_tests = testgen.generate(
     testgen.provider_by_type,
     ['virtualcenter', 'rhevm'],
-    "small_template",
     scope="module"
 )
 

@@ -31,25 +31,13 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, 'provisioning', template_location=["provisioning", "template"])
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'template', 'host', 'datastore'}.issubset(args['provisioning'].viewkeys()):
-            # Need all three for template provisioning
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
+        required_fields=[
+            ['provisioning', 'template'],
+            ['provisioning', 'host'],
+            ['provisioning', 'datastore']
+        ])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="function")
@@ -75,11 +63,6 @@ def prov_data(provisioning, provider):
     # Otherwise just leave it alone
 
     return data
-
-
-@pytest.fixture(scope="function")
-def template_name(provisioning):
-    return provisioning["template"]
 
 
 @pytest.fixture(scope="function")
@@ -121,7 +104,7 @@ def provisioner(request, setup_provider, provider):
     return _provisioner
 
 
-def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
+def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data):
     """ Tests change RAM and CPU in provisioning dialog.
 
     Prerequisities:
@@ -140,6 +123,7 @@ def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
     prov_data["num_sockets"] = "4"
     prov_data["cores_per_socket"] = "1"
     prov_data["memory"] = "4096"
+    template_name = provider.data['provisioning']['template']
 
     vm = provisioner(template_name, prov_data)
 
@@ -168,7 +152,7 @@ def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
                          (provider.type != "rhevm" and disk_format == "preallocated") or
                          # Temporarily, our storage domain cannot handle preallocated disks
                          (provider.type == "rhevm" and disk_format == "preallocated"))
-def test_disk_format_select(provisioner, prov_data, template_name, disk_format, provider):
+def test_disk_format_select(provisioner, disk_format, provider, prov_data):
     """ Tests disk format selection in provisioning dialog.
 
     Prerequisities:
@@ -186,6 +170,7 @@ def test_disk_format_select(provisioner, prov_data, template_name, disk_format, 
     """
     prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["disk_format"] = disk_format
+    template_name = provider.data['provisioning']['template']
 
     vm = provisioner(template_name, prov_data)
 
@@ -200,7 +185,7 @@ def test_disk_format_select(provisioner, prov_data, template_name, disk_format, 
 
 
 @pytest.mark.parametrize("started", [True, False])
-def test_power_on_or_off_after_provision(provisioner, prov_data, template_name, provider, started):
+def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started):
     """ Tests setting the desired power state after provisioning.
 
     Prerequisities:
@@ -219,6 +204,7 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, template_name, 
     vm_name = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["vm_name"] = vm_name
     prov_data["power_on"] = started
+    template_name = provider.data['provisioning']['template']
 
     provisioner(template_name, prov_data)
 
@@ -229,7 +215,7 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, template_name, 
     )
 
 
-def test_tag(provisioner, prov_data, template_name, provider):
+def test_tag(provisioner, prov_data, provider):
     """ Tests tagging VMs using provisioning dialogs.
 
     Prerequisities:
@@ -247,6 +233,7 @@ def test_tag(provisioner, prov_data, template_name, provider):
     """
     prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["apply_tags"] = [(["Service Level *", "Gold"], True)]
+    template_name = provider.data['provisioning']['template']
 
     vm = provisioner(template_name, prov_data)
 
@@ -255,7 +242,7 @@ def test_tag(provisioner, prov_data, template_name, provider):
 
 
 @pytest.mark.meta(blockers=[1204115])
-def test_provisioning_schedule(provisioner, prov_data, template_name):
+def test_provisioning_schedule(provisioner, provider, prov_data):
     """ Tests provision scheduling.
 
     Prerequisities:
@@ -269,9 +256,9 @@ def test_provisioning_schedule(provisioner, prov_data, template_name):
     Metadata:
         test_flag: provision
     """
+    now = datetime.utcnow()
     prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["schedule_type"] = "schedule"
-    now = datetime.utcnow()
     prov_data["provision_date"] = now.strftime("%m/%d/%Y")
     STEP = 5
     minutes_diff = (STEP - (now.minute % STEP))
@@ -281,5 +268,7 @@ def test_provisioning_schedule(provisioner, prov_data, template_name):
     provision_time = timedelta(minutes=minutes_diff) + now
     prov_data["provision_start_hour"] = str(provision_time.hour)
     prov_data["provision_start_min"] = str(provision_time.minute)
+
+    template_name = provider.data['provisioning']['template']
 
     provisioner(template_name, prov_data, delayed=provision_time)

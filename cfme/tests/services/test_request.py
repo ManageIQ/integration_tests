@@ -19,10 +19,8 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter'], 'provisioning')
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter'],
+    scope="module")
 
 
 @pytest.yield_fixture(scope="function")
@@ -54,7 +52,7 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(provider, provisioning, vm_name, dialog, catalog):
+def catalog_item(provider, vm_name, dialog, catalog, provisioning):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
 

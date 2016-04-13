@@ -8,8 +8,7 @@ from utils import testgen
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.all_providers(
-        metafunc, 'ownership_vm', require_fields=True)
+    argnames, argvalues, idlist = testgen.all_providers(metafunc, required_fields=['ownership_vm'])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
@@ -69,7 +68,8 @@ def new_user(new_group):
 
 
 @pytest.yield_fixture(scope="module")
-def tagged_vm(new_tag, setup_provider, provider, ownership_vm):
+def tagged_vm(new_tag, setup_provider, provider):
+    ownership_vm = provider.data['ownership_vm']
     tag_vm = VM.factory(ownership_vm, provider)
     tag_vm.add_tag(new_tag)
     yield tag_vm

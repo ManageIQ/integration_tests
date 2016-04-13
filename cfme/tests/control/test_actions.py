@@ -66,8 +66,7 @@ class VMWrapper(Pretty):
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.all_providers(metafunc,
-        'small_template', scope="module", template_location=["small_template"])
+    argnames, argvalues, idlist = testgen.all_providers(metafunc)
 
     new_idlist = []
     new_argvalues = []
@@ -168,7 +167,7 @@ def local_setup_provider(request, setup_provider_modscope, provider):
 
 
 @pytest.fixture(scope="module")
-def vm(request, provider, local_setup_provider, small_template, vm_name):
+def vm(request, provider, local_setup_provider, small_template_modscope, vm_name):
     if provider.type == "rhevm":
         kwargs = {"cluster": provider.data["default_cluster"]}
     elif provider.type == "virtualcenter":
@@ -187,7 +186,7 @@ def vm(request, provider, local_setup_provider, small_template, vm_name):
         deploy_template(
             provider.key,
             vm_name,
-            template_name=small_template,
+            template_name=small_template_modscope,
             allow_skip="default",
             power_on=True,
             **kwargs

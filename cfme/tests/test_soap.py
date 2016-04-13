@@ -10,7 +10,6 @@ from utils.providers import setup_a_provider as _setup_a_provider
 
 pytest_generate_tests = testgen.generate(
     testgen.infra_providers,
-    "small_template",
     scope="class"
 )
 

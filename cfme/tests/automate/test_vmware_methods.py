@@ -23,7 +23,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter'], 'provisioning')
+        metafunc, ['virtualcenter'], required_fields=[['provisioning', 'template']])
     metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
 
 
@@ -58,11 +58,11 @@ def testing_group(request):
 
 
 @pytest.yield_fixture(scope="function")
-def testing_vm(request, provisioning, setup_provider, provider):
+def testing_vm(request, setup_provider, provider):
     vm = VM.factory(
         "test_ae_hd_{}".format(fauxfactory.gen_alphanumeric()),
         provider,
-        template_name=provisioning["template"]
+        template_name=provider.data['provisioning']['template']
     )
     try:
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
