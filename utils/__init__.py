@@ -9,7 +9,6 @@ import diaper
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 
-
 def property_or_none(wrapped, *args, **kwargs):
     """property_or_none([fget[, fset[, fdel[, doc]]]])
     Property decorator that turns AttributeErrors into None returns
@@ -89,34 +88,44 @@ def tries(num_tries, exceptions, f, *args, **kwargs):
         raise e
 
 
+# There are some environment variables that get smuggled in anyway.
+# If there is yet another one that will be possibly smuggled in, update this entry.
+READ_ENV_UNWANTED = {'SHLVL', '_', 'PWD'}
+
+
 def read_env(file):
-    """Given a py.path.Local file name, return a dict of exported shell vars and their values
+    """Given a :py:class:`py.path.Local` file name, return a dict of exported shell vars and their
+    values.
+
+    Args:
+        file: A :py:class:`py.path.Local` instance.
 
     Note:
-
         This will only include shell variables that are exported from the file being parsed
 
-    Returns a dict of varname: value pairs. If the file does not exist or bash could not parse
-    the file, this dict will be empty.
-
+    Returns:
+        A :py:class:`dict` of ``varname: value`` pairs. If the file does not exist or bash could not
+        parse the file, this dict will be empty.
     """
     env_vars = {}
     if file.check():
-        with file.open() as f:
-            content = f.read()
-
         # parse the file with bash, since it's pretty good at it, and dump the env
-        command = ['bash', '-c', 'source {} && env'.format(file.strpath)]
+        # Use env -i to clean up the env (except the very few variables provider by bash itself)
+        command = ['env', '-i', 'bash', '-c', 'source {} && env'.format(file.strpath)]
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1)
 
-        # filter out vars not defined
+        # filter out the remaining unwanted things
         for line in iter(proc.stdout.readline, b''):
             try:
                 key, value = line.split("=", 1)
             except ValueError:
                 continue
-            if '{}='.format(key) in content:
-                env_vars[key] = value.strip()
+            if key not in READ_ENV_UNWANTED:
+                try:
+                    value = int(value.strip())
+                except (ValueError, TypeError):
+                    value = value.strip()
+                env_vars[key] = value
         stdout, stderr = proc.communicate()
     return env_vars
 
