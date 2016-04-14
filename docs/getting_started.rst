@@ -58,7 +58,7 @@ will not work.
 * In either case, check your processes sometimes, the artifactor process likes to hang when forced
   to quit, but it can also happen when it ends normally, though it is not too common.
 
-.. _Xvnc:: :doc:`guides/vnc_selenium`
+.. _Xvnc: :doc:`guides/vnc_selenium`
 
 
 
