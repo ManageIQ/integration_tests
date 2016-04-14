@@ -71,7 +71,7 @@ The testing framework being used is `py.test <http://pytest.org/latest>`_
 Container Execution script
 --------------------------
 
-An execution script (:raw:`cfme_test_via_docker.sh`) is provided.
+An execution script (``cfme_test_via_docker.sh``) is provided.
 This script handles orchestration of docker, virtualenv, and cfme_test.
 
 .. code-block:: bash
