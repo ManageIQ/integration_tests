@@ -1318,7 +1318,7 @@ class IPAppliance(object):
     @cached_property
     def db(self):
         # slightly crappy: anything that changes self.db_address should also del(self.db)
-        return db.Db(self.db_address, db_port=self.db_port)
+        return db.Db(self)
 
     @property
     def is_db_enabled(self):

@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from utils.db import cfmedb, Db
+from utils.db import Db
+from fixtures.pytest_store import store
 
 
-def get_configuration_details(db=None, ip_address=None, db_port=None):
+def get_configuration_details(db=None, appliance=None):
     """Return details that are necessary to navigate through Configuration accordions.
 
     Args:
-        ip_address: IP address of the server to match. If None, uses hostname from
-            ``conf.env['base_url']``
+        db: database object
+        appliance: appliance object
 
     Returns:
         If the data weren't found in the DB, :py:class:`NoneType`
         If the data were found, it returns tuple `(region, server name, server id, server zone id)`
     """
-    if ip_address is None:
-        ip_address = cfmedb().hostname
+    if db is None and appliance is None:
+        db = Db(store.current_appliance)
+    elif db is None:
+        db = appliance.db
 
-    if db is None:
-        db = Db(hostname=ip_address, db_port=db_port)
+    ip_address = db.hostname
 
     SEQ_FACT = 1e12
     miq_servers = db['miq_servers']
@@ -50,12 +52,11 @@ def get_configuration_details(db=None, ip_address=None, db_port=None):
         return None
 
 
-def get_zone_description(zone_id, ip_address=None, db=None, db_port=None):
-    if ip_address is None:
-        ip_address = cfmedb().hostname
-
-    if db is None:
-        db = Db(hostname=ip_address, db_port=db_port)
+def get_zone_description(zone_id, db=None, appliance=None):
+    if db is None and appliance is None:
+        db = Db(store.current_appliance)
+    elif db is None:
+        db = appliance.db
 
     zones = list(
         db.session.query(db["zones"]).filter(
@@ -68,12 +69,11 @@ def get_zone_description(zone_id, ip_address=None, db=None, db_port=None):
         return None
 
 
-def get_host_id(hostname, ip_address=None, db=None, db_port=None):
-    if ip_address is None:
-        ip_address = cfmedb().hostname
-
-    if db is None:
-        db = Db(hostname=ip_address, db_port=db_port)
+def get_host_id(hostname, db=None, appliance=None):
+    if db is None and appliance is None:
+        db = Db(store.current_appliance)
+    elif db is None:
+        db = appliance.db
 
     hosts = list(
         db.session.query(db["hosts"]).filter(
@@ -86,12 +86,11 @@ def get_host_id(hostname, ip_address=None, db=None, db_port=None):
         return None
 
 
-def check_domain_enabled(domain, ip_address=None, db=None, db_port=None):
-    if ip_address is None:
-        ip_address = cfmedb().hostname
-
-    if db is None:
-        db = Db(hostname=ip_address, db_port=db_port)
+def check_domain_enabled(domain, db=None, appliance=None):
+    if db is None and appliance is None:
+        db = Db(store.current_appliance)
+    elif db is None:
+        db = appliance.db
 
     namespaces = db["miq_ae_namespaces"]
     q = db.session.query(namespaces).filter(

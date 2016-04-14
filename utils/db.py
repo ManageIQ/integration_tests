@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
 from fixtures.pytest_store import store
-from utils import conf, ports, version
+from utils import conf, version
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.path import data_path
@@ -58,10 +58,9 @@ class Db(Mapping):
     """Helper class for interacting with a CFME database using SQLAlchemy
 
     Args:
-        hostname: base url to be used (default is from current_appliance)
+        appliance: appliance object
         credentials: name of credentials to use from :py:attr:`utils.conf.credentials`
             (default ``database``)
-        db_port: database port
 
     Provides convient attributes to common sqlalchemy objects related to this DB,
     as well as a Mapping interface to access and reflect database tables. Where possible,
@@ -93,14 +92,14 @@ class Db(Mapping):
         tables, like the mapping interface or :py:meth:`values`.
 
     """
-    def __init__(self, hostname=None, credentials=None, db_port=None):
+    def __init__(self, appliance=None, credentials=None):
         self._table_cache = {}
-        if hostname is None and db_port is None:
+        if appliance is None:
             self.hostname = store.current_appliance.db_address
             self.db_port = store.current_appliance.db_port
-        elif hostname is not None:
-            self.hostname = hostname
-            self.db_port = db_port or ports.DB
+        else:
+            self.hostname = appliance.db_address
+            self.db_port = appliance.db_port
 
         self.credentials = credentials or conf.credentials['database']
 
@@ -402,8 +401,8 @@ def set_yaml_config(config_name, data_dict, hostname=None):
 
 
 @contextmanager
-def database_on_server(hostname, **kwargs):
-    db_obj = Db(hostname=hostname, **kwargs)
+def database_on_server(appliance, **kwargs):
+    db_obj = Db(appliance, **kwargs)
     yield db_obj
 
 
