@@ -94,13 +94,7 @@ class Db(Mapping):
     """
     def __init__(self, appliance=None, credentials=None):
         self._table_cache = {}
-        if appliance is None:
-            self.hostname = store.current_appliance.db_address
-            self.db_port = store.current_appliance.db_port
-        else:
-            self.hostname = appliance.db_address
-            self.db_port = appliance.db_port
-
+        self.appliance = appliance or store.current_appliance
         self.credentials = credentials or conf.credentials['database']
 
     def __getitem__(self, table_name):
@@ -265,6 +259,14 @@ class Db(Mapping):
         """
         with self.session.begin():
             yield
+
+    @property
+    def db_port(self):
+        return self.appliance.db_port
+
+    @property
+    def hostname(self):
+        return self.appliance.hostname
 
     def reflect_table(self, table_name):
         """Populate :py:attr:`metadata` with information on a table
