@@ -24,3 +24,6 @@ class Servers(HawkularProvider):
 
     def nav_to_detailed_view(self):
         self.load_details()
+
+    def validate_server_details(self):
+        print("Server Detail Validation TBD")

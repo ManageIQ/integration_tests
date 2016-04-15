@@ -22,6 +22,7 @@ def test_hawkular_crud(provider):
     hawkServers = Servers(provider.name)
     hawkServers.nav_to_servers_view()
     hawkServers.nav_to_detailed_view()
+    hawkServers.validate_server_details()
 
     hawkDeployments = Deployments(provider.name)
     hawkDeployments.nav_to_deployments_view()
