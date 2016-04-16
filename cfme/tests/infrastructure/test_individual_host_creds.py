@@ -9,6 +9,8 @@ from utils import testgen
 from utils.blockers import BZ
 from utils.update import update
 
+pytestmark = [pytest.mark.tier(3)]
+
 msgs = {
     'virtualcenter': 'Cannot complete login due to an incorrect user name or password.',
     'rhevm': 'Login failed due to a bad username or password.'
