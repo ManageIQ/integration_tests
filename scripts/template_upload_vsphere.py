@@ -92,6 +92,7 @@ def upload_ova(hostname, username, password, name, datastore,
     sshclient = make_ssh_client(ovf_tool_client, default_user, default_pass)
     command = ' '.join(cmd_args)
     output = sshclient.run_command(command)[1]
+    sshclient.close()
 
     if "successfully" in output:
         print(" VSPHERE:{} Upload completed".format(provider))

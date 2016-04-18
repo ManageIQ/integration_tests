@@ -20,6 +20,7 @@ The scripts for respective providers are:
 import argparse
 import re
 import datetime
+import sys
 
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
@@ -258,10 +259,7 @@ def browse_directory(dir_url):
     return name_dict
 
 
-if __name__ == "__main__":
-
-    args = parse_cmd_line()
-
+def main():
     urls = cfme_data['basic_info']['cfme_images_url']
     stream = args.stream or cfme_data['template_upload']['stream']
     mgmt_sys = cfme_data['management_systems']
@@ -319,3 +317,9 @@ if __name__ == "__main__":
             print(woops)
         print("TEMPLATE_UPLOAD_ALL:------End of {} upload on: {}--------".format(
             kwargs['template_name'], provider_type))
+
+
+if __name__ == "__main__":
+
+    args = parse_cmd_line()
+    sys.exit(main())

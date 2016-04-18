@@ -16,9 +16,12 @@ from threading import Lock, Thread
 
 from ovirtsdk.xml import params
 
+from scripts.cleanup_edomain_templates import CleanupRhevm
+
 from utils import net
 from utils.conf import cfme_data
 from utils.conf import credentials
+from utils.log import logger
 from utils.providers import get_mgmt, list_providers
 from utils.ssh import SSHClient
 from utils.wait import wait_for
@@ -69,44 +72,13 @@ def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
     try:
         ssh_client = make_ssh_client(rhevm_ip, sshname, sshpass)
         stdout = ssh_client.run_command('service ovirt-engine status')[1]
+        ssh_client.close()
         if 'running' not in stdout:
             return False
         return True
     except Exception as e:
         print(e)
         return False
-
-
-def change_edomain_state(api, state, edomain, provider):
-    try:
-        dcs = api.datacenters.list()
-        for dc in dcs:
-            export_domain = dc.storagedomains.get(edomain)
-            if export_domain:
-                if state == 'maintenance' and export_domain.get_status().state == 'active':
-                    dc.storagedomains.get(edomain).deactivate()
-                elif state == 'active' and export_domain.get_status().state != 'active':
-                    dc.storagedomains.get(edomain).activate()
-
-                wait_for(is_edomain_template_deleted,
-                        [api, state, edomain], fail_condition=False, delay=5)
-                print('RHEVM:{} {} successfully set to {} state'.format(provider, edomain, state))
-                return True
-        return False
-    except Exception as e:
-        print(e)
-        print("RHEVM:{} Exception occurred while changing {} state to {}".format(
-            provider, edomain, state))
-        return False
-
-
-def is_edomain_in_state(api, state, edomain):
-    dcs = api.datacenters.list()
-    for dc in dcs:
-        export_domain = dc.storagedomains.get(edomain)
-        if export_domain:
-            return export_domain.get_status().state == state
-    return False
 
 
 def get_ova_name(ovaurl):
@@ -225,31 +197,6 @@ def check_disks(api):
     return True
 
 
-# sometimes, rhevm is just not cooperative. This is function used to wait for template on
-# export domain to become unlocked
-def check_edomain_template(api, edomain):
-    '''
-    checks for the edomain templates status, and returns True, if template state is ok
-    otherwise returns False. try, except block returns the False in case of Exception,
-    as wait_for handles the timeout Exceptions.
-    :param api: API to chosen RHEVM provider.
-    :param edomain: export domain.
-    :return: True or False based on the template status.
-    '''
-    try:
-        template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
-        if template.get_status().state != "ok":
-            return False
-        return True
-    except Exception:
-        return False
-
-
-# verify the template deletion
-def is_edomain_template_deleted(api, name, edomain):
-    return not api.storagedomains.get(edomain).templates.get(name)
-
-
 def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface):
     """Adds second disk to a temporary VM.
 
@@ -301,79 +248,6 @@ def templatize_vm(api, template_name, cluster):
     if not api.templates.get(template_name):
         print("RHEVM: VM failed to templatize")
         sys.exit(127)
-
-
-# get the domain edomain path on the rhevm
-def get_edomain_path(api, edomain):
-    edomain_id = api.storagedomains.get(edomain).get_id()
-    edomain_conn = api.storagedomains.get(edomain).storageconnections.list()[0]
-    return (edomain_conn.get_path() + '/' + edomain_id,
-            edomain_conn.get_address())
-
-
-def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider):
-    """Cleanup all the empty directories on the edomain/edomain_id/master/vms
-    else api calls will result in 400 Error with ovf not found,
-
-    Args:
-        api: API to chosen RHEVM provider.
-        edomain: Export domain of chosen RHEVM provider.
-        edomainip: edomainip to connect through ssh.
-        sshname: edomain ssh credentials.
-        sshpass: edomain ssh credentials.
-    """
-    try:
-        print("RHEVM:{} Deleting the empty directories on edomain/vms file...".format(provider))
-        ssh_client = make_ssh_client(edomainip, sshname, sshpass)
-        command = 'cd {}/master/vms && find . -maxdepth 1 -type d -empty -delete'.format(path)
-        exit_status, output = ssh_client.run_command(command)
-        if exit_status != 0:
-            print("RHEVM:{} Error while deleting the empty directories on path..".format(provider))
-            print(output)
-    except Exception:
-        return False
-
-
-def cleanup(api, edomain, ssh_client, ovaname, provider):
-    """Cleans up all the mess that the previous functions left behind.
-
-    Args:
-        api: API to chosen RHEVM provider.
-        edomain: Export domain of chosen RHEVM provider.
-    """
-    try:
-        print("RHEVM:{} Deleting the  .ova file...".format(provider))
-        command = 'rm {}'.format(ovaname)
-        exit_status, output = ssh_client.run_command(command)
-
-        print("RHEVM:{} Deleting the temp_vm on sdomain...".format(provider))
-        temporary_vm = api.vms.get(TEMP_VM_NAME)
-        if temporary_vm:
-            temporary_vm.delete()
-
-        print("RHEVM: Deleting the temp_template on sdomain...".format(provider))
-        temporary_template = api.templates.get(TEMP_TMP_NAME)
-        if temporary_template:
-            temporary_template.delete()
-
-        # waiting for template on export domain
-        unimported_template = api.storagedomains.get(edomain).templates.get(
-            TEMP_TMP_NAME)
-        print("RHEVM:{} waiting for template on export domain...".format(provider))
-        wait_for(check_edomain_template, [unimported_template],
-                 fail_condition=False, delay=5)
-
-        if unimported_template:
-            print("RHEVM: deleting the template on export domain...".format(provider))
-            unimported_template.delete()
-
-        print("RHEVM: waiting for template delete on export domain...".format(provider))
-        wait_for(is_edomain_template_deleted, [unimported_template],
-                 fail_condition=False, delay=5)
-
-    except Exception:
-        print("RHEVM: Exception occurred in cleanup method".format(provider))
-        return False
 
 
 def api_params_resolution(item_list, item_name, item_param):
@@ -540,16 +414,18 @@ def upload_template(rhevip, sshname, sshpass, username, password,
         ssh_client = make_ssh_client(rhevip, sshname, sshpass)
         api = get_mgmt(kwargs.get('provider')).api
 
+        cleanuprhevm = CleanupRhevm(api)
+
         if template_name is None:
             template_name = cfme_data['basic_info']['appliance_template']
 
-        path, edomain_ip = get_edomain_path(api, kwargs.get('edomain'))
+        path, edomain_ip = cleanuprhevm.get_edomain_path(kwargs.get('edomain'))
 
         kwargs = update_params_api(api, **kwargs)
 
         check_kwargs(**kwargs)
 
-        if api.templates.get(template_name) is not None:
+        if api.templates.get(template_name) is None:
             print("RHEVM:{} Found finished template with name {}.".format(provider, template_name))
             print("RHEVM:{} The script will now end.".format(provider))
         else:
@@ -569,16 +445,18 @@ def upload_template(rhevip, sshname, sshpass, username, password,
                                kwargs.get('disk_format'), kwargs.get('disk_interface'))
                 print("RHEVM:{} Templatizing VM...".format(provider))
                 templatize_vm(api, template_name, kwargs.get('cluster'))
+            except Exception as e:
+                logger.exception(e)
             finally:
-                cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider)
-                change_edomain_state(api, 'maintenance', kwargs.get('edomain'), provider)
-                cleanup_empty_dir_on_edomain(path, edomain_ip,
-                                sshname, sshpass, provider)
-                change_edomain_state(api, 'active', kwargs.get('edomain'), provider)
+                cleanuprhevm.cleanuptmp(kwargs.get('edomain'), ssh_client, ovaname, provider,
+                                        TEMP_TMP_NAME, TEMP_VM_NAME)
+                cleanuprhevm.change_edomain_state(provider, 'maintenance', kwargs.get('edomain'))
+                cleanuprhevm.cleanup_empty_dir_on_edomain(path, provider, edomain_ip,
+                                                          rhevip, sshname, sshpass)
+                cleanuprhevm.change_edomain_state(provider, 'active', kwargs.get('edomain'))
                 ssh_client.close()
                 api.disconnect()
                 print("RHEVM:{} Template {} upload Ended".format(provider, template_name))
-        print("RHEVM: Done.")
     except Exception as e:
         print(e)
         return False
@@ -598,11 +476,11 @@ def run(**kwargs):
         ssh_rhevm_creds = mgmt_sys[provider]['hosts'][0]['credentials']
         sshname = credentials[ssh_rhevm_creds]['username']
         sshpass = credentials[ssh_rhevm_creds]['password']
+        rhevip = mgmt_sys[provider]['ipaddress']
         print("RHEVM:{} verifying provider's state before template upload".format(provider))
-        if not net.is_pingable(cfme_data['management_systems'][provider]['ipaddress']):
+        if not net.is_pingable(rhevip):
             continue
-        elif not is_ovirt_engine_running(cfme_data['management_systems'][provider]['ipaddress'],
-                                         sshname, sshpass):
+        elif not is_ovirt_engine_running(rhevip, sshname, sshpass):
             print('RHEVM:{} ovirt-engine service not running..'.format(provider))
             continue
         valid_providers.append(provider)
