@@ -3,6 +3,7 @@ import pytest
 
 from utils import testgen
 
+from cfme.middleware.providers import Providers
 from cfme.middleware.servers import Servers
 from cfme.middleware.deployments import Deployments
 from cfme.middleware.topology import Topology
@@ -18,6 +19,10 @@ def pytest_generate_tests(metafunc):
 
 @pytest.mark.usefixtures('has_no_middleware_providers')
 def test_hawkular_crud(provider):
+
+    hawkProviders = Providers(provider.name)
+    hawkProviders.nav_to_providers_view()
+    hawkProviders.nav_to_provider_detailed_view()
 
     hawkServers = Servers(provider.name)
     hawkServers.nav_to_servers_view()
