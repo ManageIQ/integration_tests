@@ -10,6 +10,7 @@ from datetime import datetime
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
+from tempfile import NamedTemporaryFile
 
 from cached_property import cached_property
 
@@ -25,6 +26,7 @@ from cfme.configure.configuration import server_name, server_id
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
 from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
+from utils.datafile import load_data_file
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
@@ -1432,10 +1434,45 @@ class IPAppliance(object):
         return db.db_yamls(self.db, self.guid)
 
     def get_yaml_config(self, config_name):
-        return db.get_yaml_config(config_name, self.db)
+        if self.version >= '5.6':
+            if config_name == 'vmdb':
+                base_data = store.current_appliance.ssh_client.run_rails_command(
+                    'puts\(Settings.to_hash.deep_stringify_keys.to_yaml\)')
+                yaml_data = base_data.output[:base_data.output.find('DEPRE')]
+                return yaml.load(yaml_data)
+            else:
+                raise Exception('Only [vmdb] config is allowed from 5.6+')
+        else:
+            return db.get_yaml_config(config_name, self.db)
 
     def set_yaml_config(self, config_name, data_dict):
-        return db.set_yaml_config(config_name, data_dict, self.address)
+        if self.version >= '5.6':
+            if config_name == 'vmdb':
+                temp_yaml = NamedTemporaryFile()
+                dest_yaml = '/tmp/conf.yaml'
+                yaml.dump(data_dict, temp_yaml, default_flow_style=False)
+                self.ssh_client.put_file(temp_yaml.name, dest_yaml)
+                # Build and send ruby script
+                dest_ruby = '/tmp/set_conf.rb'
+
+                ruby_template = data_path.join('utils', 'cfmedb_set_config.rbt')
+                ruby_replacements = {
+                    'config_file': dest_yaml
+                }
+                temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
+                self.ssh_client.put_file(temp_ruby.name, dest_ruby)
+
+                # Run it
+                result = self.ssh_client.run_rails_command(dest_ruby)
+                if not result.rc:
+                    fire('server_details_changed')
+                    fire('server_config_changed')
+                else:
+                    raise Exception('Unable to set config')
+            else:
+                raise Exception('Only [vmdb] config is allowed from 5.6+')
+        else:
+            return db.set_yaml_config(config_name, data_dict, self.address)
 
     def get_yaml_file(self, yaml_path):
         """Get (and parse) a yaml file from the appliance, returning a python data structure"""
