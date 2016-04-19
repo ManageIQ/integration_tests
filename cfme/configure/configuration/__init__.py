@@ -9,8 +9,8 @@ import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound, CandidateNotFound
 from cfme.web_ui import (
-    AngularSelect, Calendar, CheckboxSelect, DynamicTable, Form, InfoBlock, Input, MultiFill,
-    Region, Select, Table, accordion, fill, flash, form_buttons)
+    AngularSelect, Calendar, CheckboxSelect, CFMECheckbox, DynamicTable, Form, InfoBlock, Input,
+    MultiFill, Region, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.menu import nav
 from cfme.web_ui.form_buttons import change_stored_password
 from utils.db import cfmedb
@@ -60,29 +60,29 @@ replication_process = Region(locators={
 
 server_roles = Form(
     fields=[
-        ('ems_metrics_coordinator', Input("server_roles_ems_metrics_coordinator")),
-        ('ems_operations', Input("server_roles_ems_operations")),
-        ('ems_metrics_collector', Input("server_roles_ems_metrics_collector")),
-        ('reporting', Input("server_roles_reporting")),
-        ('ems_metrics_processor', Input("server_roles_ems_metrics_processor")),
-        ('scheduler', Input("server_roles_scheduler")),
-        ('smartproxy', Input("server_roles_smartproxy")),
-        ('database_operations', Input("server_roles_database_operations")),
-        ('smartstate', Input("server_roles_smartstate")),
-        ('event', Input("server_roles_event")),
-        ('user_interface', Input("server_roles_user_interface")),
-        ('web_services', Input("server_roles_web_services")),
-        ('ems_inventory', Input("server_roles_ems_inventory")),
-        ('notifier', Input("server_roles_notifier")),
-        ('automate', Input("server_roles_automate")),
-        ('rhn_mirror', Input("server_roles_rhn_mirror")),
-        ('database_synchronization', Input("server_roles_database_synchronization")),
+        ('ems_metrics_coordinator', CFMECheckbox("server_roles_ems_metrics_coordinator")),
+        ('ems_operations', CFMECheckbox("server_roles_ems_operations")),
+        ('ems_metrics_collector', CFMECheckbox("server_roles_ems_metrics_collector")),
+        ('reporting', CFMECheckbox("server_roles_reporting")),
+        ('ems_metrics_processor', CFMECheckbox("server_roles_ems_metrics_processor")),
+        ('scheduler', CFMECheckbox("server_roles_scheduler")),
+        ('smartproxy', CFMECheckbox("server_roles_smartproxy")),
+        ('database_operations', CFMECheckbox("server_roles_database_operations")),
+        ('smartstate', CFMECheckbox("server_roles_smartstate")),
+        ('event', CFMECheckbox("server_roles_event")),
+        ('user_interface', CFMECheckbox("server_roles_user_interface")),
+        ('web_services', CFMECheckbox("server_roles_web_services")),
+        ('ems_inventory', CFMECheckbox("server_roles_ems_inventory")),
+        ('notifier', CFMECheckbox("server_roles_notifier")),
+        ('automate', CFMECheckbox("server_roles_automate")),
+        ('rhn_mirror', CFMECheckbox("server_roles_rhn_mirror")),
+        ('database_synchronization', CFMECheckbox("server_roles_database_synchronization")),
         # STORAGE OPTIONS
-        ("storage_metrics_processor", Input("server_roles_storage_metrics_processor")),
-        ("storage_metrics_collector", Input("server_roles_storage_metrics_collector")),
-        ("storage_metrics_coordinator", Input("server_roles_storage_metrics_coordinator")),
-        ("storage_inventory", Input("server_roles_storage_inventory")),
-        ("vmdb_storage_bridge", Input("server_roles_vmdb_storage_bridge")),
+        ("storage_metrics_processor", CFMECheckbox("server_roles_storage_metrics_processor")),
+        ("storage_metrics_collector", CFMECheckbox("server_roles_storage_metrics_collector")),
+        ("storage_metrics_coordinator", CFMECheckbox("server_roles_storage_metrics_coordinator")),
+        ("storage_inventory", CFMECheckbox("server_roles_storage_inventory")),
+        ("vmdb_storage_bridge", CFMECheckbox("server_roles_vmdb_storage_bridge")),
 
     ]
 )
@@ -1798,15 +1798,6 @@ def set_server_roles(**roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
-    cfg = store.current_appliance.get_yaml_config('vmdb')
-    # If we don't have storage enabled, ignore it.
-    if 'storage' not in cfg.get('product', {}):
-        delete_keys = set([])
-        for key in roles:
-            if key.startswith("storage"):
-                delete_keys.add(key)
-        for key in delete_keys:
-            roles.pop(key)
     if get_server_roles() == roles:
         logger.debug(' Roles already match, returning...')
         return
@@ -1851,7 +1842,7 @@ def get_server_roles(navigate=True, db=True):
         role_list = {}
         for (name, locator) in server_roles.fields:
             try:
-                role_list[name] = sel.element(locator).is_selected()
+                role_list[name] = locator.is_selected()
             except:
                 logger.warning("role not found, skipping, netapp storage role?  (%s)", name)
         return role_list
