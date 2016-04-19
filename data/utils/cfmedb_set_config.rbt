@@ -1,0 +1,6 @@
+new_conf = YAML::load(File.open('$config_file'))
+new_conf_symbol = new_conf.deep_symbolize_keys.to_yaml
+result = VMDB::Config.save_file(new_conf_symbol)  # Save the config file
+if result != true
+  exit 255
+end
