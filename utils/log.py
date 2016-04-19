@@ -471,11 +471,17 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         return SLAVEID or ""
 
     def art_log(self, level_name, message, args, kwargs):
-        try:
-            formatted_message = message % args
-        except TypeError:
+        if args:
+            # Try the string formatting only if args passed
+            try:
+                formatted_message = message % args
+            except (TypeError, ValueError) as e:
+                formatted_message = message
+                self.logger.error(
+                    'Could not format the string %r with %r because of %r', message, args, e)
+        else:
+            # No args passed, do not care.
             formatted_message = message
-            self.logger.error('Could not format the string %r with %r', message, args)
 
         art_log_record = {
             'level': level_name,
