@@ -144,7 +144,7 @@ from traceback import extract_tb, format_tb
 import psphere
 
 from cached_property import cached_property
-from utils import conf, safe_string
+from utils import conf
 from utils.path import get_rel_path, log_path
 
 MARKER_LEN = 80
@@ -470,10 +470,16 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         from fixtures.artifactor_plugin import SLAVEID
         return SLAVEID or ""
 
-    def art_log(self, level_name, message, kwargs):
+    def art_log(self, level_name, message, args, kwargs):
+        try:
+            formatted_message = message % args
+        except TypeError:
+            formatted_message = message
+            self.logger.error('Could not format the string %r with %r', message, args)
+
         art_log_record = {
             'level': level_name,
-            'message': safe_string(message),
+            'message': formatted_message,
             'extra': kwargs.get('extra', '')
         }
         self.artifactor.fire_hook('log_message', log_record=art_log_record, slaveid=self.slaveid)
@@ -481,43 +487,43 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
     def log(self, lvl, msg, *args, **kwargs):
         level_name = logging.getLevelName(lvl).lower()
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log(level_name, msg, kwargs)
+        self.art_log(level_name, msg, args, kwargs)
         return self.logger.log(lvl, msg, *args, **kwargs)
 
     def trace(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('trace', msg, kwargs)
+        self.art_log('trace', msg, args, kwargs)
         return self.logger.trace(msg, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('debug', msg, kwargs)
+        self.art_log('debug', msg, args, kwargs)
         return self.logger.debug(msg, *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('info', msg, kwargs)
+        self.art_log('info', msg, args, kwargs)
         return self.logger.info(msg, *args, **kwargs)
 
     def warning(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('warning', msg, kwargs)
+        self.art_log('warning', msg, args, kwargs)
         return self.logger.warning(msg, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('error', msg, kwargs)
+        self.art_log('error', msg, args, kwargs)
         return self.logger.error(msg, *args, **kwargs)
 
     def critical(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('critical', msg, kwargs)
+        self.art_log('critical', msg, args, kwargs)
         return self.logger.critical(msg, *args, **kwargs)
 
     def exception(self, msg, *args, **kwargs):
         kwargs['exc_info'] = 1
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('error', msg, kwargs)
+        self.art_log('error', msg, args, kwargs)
         return self.logger.error(msg, *args, **kwargs)
 
     def process(self, msg, kwargs):
