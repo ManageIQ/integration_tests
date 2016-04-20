@@ -88,6 +88,7 @@ def original_instance(request, original_method, original_domain, original_class)
 
 
 @pytest.mark.meta(blockers=[1254055], server_roles=["+automate"])
+@pytest.mark.tier(2)
 def test_priority(
         request, ssh_client, original_method, original_instance, original_domain, copy_domain,
         original_method_write_data, copy_method_write_data):

@@ -45,6 +45,7 @@ def a_method(a_class):
                   cls=a_class)
 
 
+@pytest.mark.tier(2)
 def test_method_crud(a_method):
     a_method.create()
     origname = a_method.name
@@ -57,6 +58,7 @@ def test_method_crud(a_method):
     assert not a_method.exists()
 
 
+@pytest.mark.tier(2)
 def test_duplicate_method_disallowed(a_method):
     a_method.create()
     with error.expected("Name has already been taken"):

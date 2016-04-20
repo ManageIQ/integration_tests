@@ -18,7 +18,8 @@ from utils.wait import wait_for
 submit = form_buttons.FormButton("Submit")
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.ignore_stream("upstream")]
+    pytest.mark.ignore_stream("upstream"),
+    pytest.mark.tier(3)]
 
 
 def pytest_generate_tests(metafunc):

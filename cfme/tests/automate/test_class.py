@@ -20,6 +20,7 @@ def a_class(make_namespace):
     return ta.a_class(make_namespace)
 
 
+@pytest.mark.tier(2)
 def test_class_crud(a_class):
     a_class.create()
     orig = a_class.description
@@ -31,6 +32,7 @@ def test_class_crud(a_class):
     assert not a_class.exists()
 
 
+@pytest.mark.tier(2)
 def test_schema_crud(a_class):
     a_class.create()
     f1 = Class.SchemaField(name='foo')
@@ -52,12 +54,14 @@ def test_schema_crud(a_class):
 #     subclass.create()
 
 
+@pytest.mark.tier(2)
 def test_duplicate_class_disallowed(a_class):
     a_class.create()
     with error.expected("Name has already been taken"):
         a_class.create(allow_duplicate=True)
 
 
+@pytest.mark.tier(2)
 def test_same_class_name_different_namespace(make_namespace):
     other_namespace = ta.make_namespace()
     name = fauxfactory.gen_alphanumeric(8)
@@ -71,6 +75,7 @@ def test_same_class_name_different_namespace(make_namespace):
 
 
 @pytest.mark.meta(blockers=[1148541])
+@pytest.mark.tier(3)
 def test_display_name_unset_from_ui(request, a_class):
     a_class.create()
     request.addfinalizer(a_class.delete)
