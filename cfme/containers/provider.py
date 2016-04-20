@@ -56,7 +56,8 @@ class Provider(BaseProvider, Pretty):
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = [
         'num_project', 'num_service', 'num_replication_controller', 'num_pod', 'num_node',
-        'num_container', 'num_image', 'num_image_registry']
+        'num_container', 'num_image']
+    # TODO add 'num_image_registry' and 'num_volume'
     string_name = "Containers"
     page_name = "containers"
     detail_page_suffix = 'provider_detail'
