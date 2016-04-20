@@ -46,13 +46,13 @@ properties_form = Form(
 class HawkularProvider(BaseProvider):
     page_name = 'middleware'
     string_name = 'Middleware'
-    provider_suffix = 'Manager'
+    provider_suffix = 'Provider'
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
     quad_name = None
     properties_form = properties_form
-    add_provider_button = form_buttons.FormButton("Add this Middleware Manager")
+    add_provider_button = form_buttons.FormButton("Add this Middleware Provider")
     save_button = form_buttons.FormButton("Save Changes")
 
     def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None):
