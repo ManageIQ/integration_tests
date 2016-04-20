@@ -9,6 +9,8 @@ from cfme.web_ui import DriftGrid, toolbar as tb, tabstrip as tabs
 from utils import error, testgen
 from utils.wait import wait_for
 
+pytestmark = [pytest.mark.tier(3)]
+
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=['hosts'])
