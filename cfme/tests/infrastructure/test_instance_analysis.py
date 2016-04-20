@@ -22,7 +22,8 @@ from utils.wait import wait_for
 from utils.blockers import GH, BZ
 
 pytestmark = [pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:6939"],
-                               unblock=lambda provider: provider.type != 'rhevm')]
+                               unblock=lambda provider: provider.type != 'rhevm'),
+              pytest.mark.tier(3)]
 
 WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows'}
 

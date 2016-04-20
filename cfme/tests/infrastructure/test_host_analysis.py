@@ -11,7 +11,7 @@ from utils import version
 from utils.update import update
 from utils.wait import wait_for
 
-
+pytestmark = [pytest.mark.tier(3)]
 HOST_TYPES = ('rhev', 'rhel', 'esx', 'esxi')
 
 
