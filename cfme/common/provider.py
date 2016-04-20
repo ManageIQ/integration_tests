@@ -68,7 +68,6 @@ class BaseProvider(Taggable, Updateable):
     STATS_TO_MATCH = []
     string_name = ""
     page_name = ""
-    provider_suffix = "Provider"
     edit_page_suffix = ""
     detail_page_suffix = ""
     refresh_text = ""
@@ -193,8 +192,7 @@ class BaseProvider(Taggable, Updateable):
         self._submit(cancel, self.save_button)
         name = updates.get('name', self.name)
         if not cancel:
-            flash.assert_message_match('{} {} "{}" was saved'.format(
-                self.string_name, self.provider_suffix, name))
+            flash.assert_message_match('{} Provider "{}" was saved'.format(self.string_name, name))
 
     def delete(self, cancel=True):
         """
