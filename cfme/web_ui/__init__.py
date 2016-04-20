@@ -72,6 +72,40 @@ from utils.log import logger
 from utils.pretty import Pretty
 
 
+class Selector(object):
+    """
+    Special Selector object allowing object resolution on attr access
+
+    The Selector is a simple class which allows a 'super' widget to support multiple
+    implementations. This is achieved by the use of a ``decide`` method which accesses
+    attrs of the object set by the ``__init__`` of the child class. These attributes
+    are then used to decide which type of object is on a page. In some cases, this can
+    avoid a version pick if the information used to instantiate both old and new implementations
+    can be identical. This is most noteably if using an "id" which remains constant from
+    implementation to implementation.
+
+    As an example, imagine the normal "checkbox" is replaced wit ha fancy new web 2.0
+    checkbox. Both have an "input" element, and give it the same "id". When the decide method is
+    invoked, the "id" is inspected and used to determine if it is an old or a new style widget.
+    We then set a hidden attribute of the super widget and proxy all further attr requests to
+    that object.
+
+    This means that in order for things to behave as expect ALL implementations must also expose
+    the same "public" API.
+    """
+
+    def __init__(self):
+        self._obj = None
+
+    def __getattr__(self, name):
+        if not self._obj:
+            self._obj = self.decide()
+        return getattr(self._obj, name)
+
+    def decide(self):
+        raise Exception('This widget does not have a "decide" method which is mandatory')
+
+
 class Region(Pretty):
     """
     Base class for all UI regions/pages
@@ -3238,3 +3272,112 @@ class EmailSelectForm(Pretty):
 @fill.method((EmailSelectForm, tuple))
 def fill_email_select_form(form, emails):
     form.to_emails = emails
+
+
+class BootstrapSwitch(object):
+    def __init__(self, input_id):
+        """A Bootstrap On/Off switch
+
+        Args:
+            input_id: The HTML ID of the input element associated with the checkbox
+        """
+        self.input_id = input_id
+        self.loc_container = "//input[@id={}]/..".format(quoteattr(self.input_id))
+        self.on_off = "{}/span[contains(@class, 'bootstrap-switch-handle-{}')]".format(
+            self.loc_container, '{}')
+
+    def fill(self, val):
+        """Convenience function"""
+        if val:
+            self.check()
+        else:
+            self.uncheck()
+
+    def check(self):
+        """Checks the bootstrap box"""
+        el = sel.element(self.on_off.format("off"))
+        sel.click(el)
+
+    def uncheck(self):
+        """Unchecks the bootstrap box"""
+        el = sel.element(self.on_off.format("on"))
+        sel.click(el)
+
+    def is_selected(self):
+        if sel.is_displayed("//div[contains(@class, 'bootstrap-switch-on')]{}"
+                .format(self.loc_container)):
+            return True
+        else:
+            return False
+
+
+@fill.method((BootstrapSwitch, bool))
+def fill_bootstrap_switch(bs, val):
+    bs.fill(val)
+
+
+class OldCheckbox(object):
+    def __init__(self, input_id):
+        """An original HTML checkbox element
+
+        Args:
+            input_id: The HTML ID of the input element associated with the checkbox
+        """
+        self.input_id = input_id
+        self.locator = "//input[@id={}]".format(quoteattr(input_id))
+
+    def fill(self, val):
+        """
+        Checks or unchecks
+
+        Args:
+            value: The value the checkbox should represent as a bool (or None to do nothing)
+
+        Returns: Previous state of the checkbox
+        """
+
+        if val is not None:
+            selected = self.is_selected()
+
+            if selected is not val:
+                logger.debug("Setting checkbox {} to {}".format(str(self.locator), str(val)))
+                sel.click(self._el)
+            return selected
+
+    def check(self):
+        """Convenience function"""
+        self.fill(True)
+
+    def uncheck(self):
+        """Convenience function"""
+        self.fill(False)
+
+    def _el(self):
+        return sel.move_to_element(self.locator)
+
+    def is_selected(self):
+        return self._el().is_selected()
+
+
+@fill.method((OldCheckbox, bool))
+def fill_oldcheckbox_switch(ob, val):
+    ob.fill(val)
+
+
+class CFMECheckbox(Selector):
+    def __init__(self, input_id):
+        self.input_id = input_id
+        super(CFMECheckbox, self).__init__()
+
+    def decide(self):
+        ref_loc = "//input[@id={}]/../span" \
+            "[contains(@class, 'bootstrap-switch-label')]".format(quoteattr(self.input_id))
+        if sel.is_displayed(ref_loc):
+            return BootstrapSwitch(self.input_id)
+        else:
+            return OldCheckbox(self.input_id)
+
+
+@fill.method((CFMECheckbox, bool))
+def fill_cfmecheckbox_switch(ob, val):
+    ob.fill(val)
