@@ -11,9 +11,11 @@ pytestmark = pytest.mark.uncollectif(lambda: current_version() < "5.5")
 pytest_generate_tests = testgen.generate(testgen.container_providers, scope="function")
 
 
-@pytest.fixture(scope="function")
+@pytest.yield_fixture(scope="function")
 def a_container_provider():
-    return _setup_a_provider("container")
+    prov = _setup_a_provider("container")
+    yield prov
+    prov.delete_if_exists(cancel=False)
 
 
 @pytest.mark.usefixtures('has_no_container_providers')
