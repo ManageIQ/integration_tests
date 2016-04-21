@@ -9,4 +9,5 @@ class Topology(HawkularProvider):
         self.provider = self.string_name
 
     def nav_to_topology_view(self):
-        sel.force_navigate('middleware_topology', context={'topology': self, 'provider': self.provider})
+        sel.force_navigate('middleware_topology', context={
+            'topology': self, 'provider': self.provider})

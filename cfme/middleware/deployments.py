@@ -9,4 +9,5 @@ class Deployments(HawkularProvider):
         self.provider = self.string_name
 
     def nav_to_deployments_view(self):
-        sel.force_navigate('middleware_deployments', context={'deployments': self, 'provider': self.provider})
+        sel.force_navigate('middleware_deployments', context={
+            'deployments': self, 'provider': self.provider})

@@ -12,6 +12,7 @@ nav.add_branch(
     }
 )
 
+
 class Providers(HawkularProvider):
 
     def __init__(self, name):
@@ -20,7 +21,8 @@ class Providers(HawkularProvider):
         self.detail_page_suffix = 'provider_detail'
 
     def nav_to_providers_view(self):
-        sel.force_navigate('middleware_providers', context={'providers': self, 'provider': self.provider})
+        sel.force_navigate('middleware_providers', context={
+            'providers': self, 'provider': self.provider})
 
     def nav_to_provider_detailed_view(self):
         self.load_details()

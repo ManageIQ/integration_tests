@@ -20,7 +20,8 @@ class Servers(HawkularProvider):
         self.detail_page_suffix = 'servers_detail'
 
     def nav_to_servers_view(self):
-        sel.force_navigate('middleware_servers', context={'servers': self, 'provider': self.provider})
+        sel.force_navigate('middleware_servers', context={
+            'servers': self, 'provider': self.provider})
 
     def nav_to_detailed_view(self):
         self.load_details()
