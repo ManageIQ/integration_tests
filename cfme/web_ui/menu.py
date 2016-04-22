@@ -4,6 +4,7 @@ import ui_navigate as nav
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, toolbar
+from fixtures.pytest_store import store
 from lya import AttrDict
 from selenium.common.exceptions import NoSuchElementException
 
@@ -305,8 +306,18 @@ def branch_convert(input_set):
         _branches[toplevel_dest] = [nav_to_fn(toplevel, None), {}]
     return _branches
 
+
+def setmd(mode):
+    store.current_appliance.mode = mode
+
+
 _branches = branch_convert(sections)
-nav.add_branch('toplevel', _branches)
+nav_base = {
+    'cfme': [lambda _: setmd("default"), _branches],
+    'ssui': [lambda _: setmd("ssui"), {}]
+}
+
+nav.add_branch('toplevel', nav_base)
 
 
 ##
