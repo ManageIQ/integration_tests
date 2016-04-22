@@ -1,10 +1,9 @@
 from functools import partial
 from cached_property import cached_property
-import ui_navigate as nav
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
-import cfme.web_ui.menu
+from cfme.web_ui.menu import nav
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (

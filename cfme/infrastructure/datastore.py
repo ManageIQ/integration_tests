@@ -5,9 +5,7 @@
            Datastores pages.
 """
 
-import ui_navigate as nav
-# needed before grafting
-import cfme.web_ui.menu  # noqa
+from cfme.web_ui.menu import nav
 
 from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel

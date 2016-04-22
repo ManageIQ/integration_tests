@@ -56,12 +56,12 @@ To begin with we have the imports, we have added comments after each to specify 
 
   from functools import partial                   # Standard library
   from selenium.webdriver.common.by import By     # Convenience functions for locators, ID etc.
-  import ui_navigate as nav                       # Navigation library
+  from cfme.web_ui.menu import nav                # Navigation library
   import cfme                                     # Core cfme module
   import cfme.web_ui.menu                         # Standard menu for grafting additional menus onto
   from cfme.web_ui import Region, Quadicon, Form  # Loads the Region, Quadicon and Form UI elements
   import cfme.web_ui.flash as flash               # Flash message handler
-  import cfme.fixtures.pytest_selenium as browser # The selenium zero-level functions
+  import cfme.fixtures.pytest_selenium as sel     # The selenium zero-level functions
   import utils.conf as conf                       # Loads all configuration from the yamls
   from utils.update import Updateable             # Updatable class to give update capabilities
   import cfme.web_ui.toolbar as tb                # Toolbar UI element for clicking Center Toolbar
@@ -101,7 +101,7 @@ Locators are usually supplied as a Python dict. The key is a name which should c
 These elements can then be used to perform actions as shown later in the file by::
 
           if cancel:
-              browser.click(page.cancel_button)
+              sel.click(page.cancel_button)
 
 Forms
 ^^^^^
@@ -123,7 +123,7 @@ automatically, without worrying about field type. We begin by defining a Form::
 
 Notice that a Form is very similar to a Region. In fact, a Form inherits a Region so as above
 when we clicked on the cancel button by referencing it as an attribute of the page object. We
-can do the same here. ``browser.set_text(form.api_port, "6000")``, for example, would set the text
+can do the same here. ``sel.set_text(form.api_port, "6000")``, for example, would set the text
 of the locator described by key value ``api_port`` to ``6000``.
 
 The details to fill in the form are loaded into a variable inside the management object
@@ -172,9 +172,9 @@ In our provider page we are going to hook in the toolbar button presses to the n
 This means we are able to do something the code below and have the page execute the toolbar button
 clicks to navigate to the page in question. We could simply use the
 :py:func:`cfme.web_ui.toolbar.select` function, but to make it clearer that we expect to navigate
-away from the current page, using the ``nav.goto`` function is better::
+away from the current page, using the ``sel.force_navigate`` function is better::
 
-  nav.go_to('cloud_provider_new')
+  sel.force_navigate('cloud_provider_new')
 
 We need to add a few buttons to the center menu to handle "Add a New Cloud Provider", "Discover
 Cloud Providers" and a special case.
@@ -186,7 +186,7 @@ more elements onto the tree::
   nav.add_branch('clouds_providers',
                  {'cloud_provider_new': lambda: cfg_btn('Add a New Cloud Provider'),
                   'cloud_provider_discover': lambda: cfg_btn('Discover Cloud Providers'),
-                  'cloud_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name)),
+                  'cloud_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name)),
                                      {'cloud_provider_edit':
                                       lambda: cfg_btn('Edit Selected Cloud Provider')}]})
 

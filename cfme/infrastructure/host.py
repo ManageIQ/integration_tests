@@ -9,12 +9,10 @@
 
 from functools import partial
 
-import ui_navigate as nav
-
 import cfme
 import cfme.fixtures.pytest_selenium as sel
+from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostNotFound
@@ -89,23 +87,23 @@ pow_btn = partial(tb.select, 'Power')
 lif_btn = partial(tb.select, 'Lifecycle')
 
 nav.add_branch('infrastructure_hosts',
-               {'infrastructure_host_new': lambda _: cfg_btn(
-                   version.pick({version.LOWEST: 'Add a New Host',
-                                 '5.4': 'Add a New item'})),
-                'infrastructure_host_discover': lambda _: cfg_btn(
-                    'Discover Hosts'),
-                'infrastructure_host': [lambda ctx: sel.click(Quadicon(ctx['host'].name,
-                                                                      'host')),
-                                   {'infrastructure_host_edit':
-                                    lambda _: cfg_btn(
-                                        version.pick({version.LOWEST: 'Edit this Host',
-                                                      '5.4': 'Edit this item'})),
-                                    'infrastructure_host_policy_assignment':
-                                    lambda _: pol_btn('Manage Policies'),
-                                    'infrastructure_provision_host':
-                                    lambda _: lif_btn(
-                                        version.pick({version.LOWEST: 'Provision this Host',
-                                                      '5.4': 'Provision this item'}))}]})
+             {'infrastructure_host_new': lambda _: cfg_btn(
+                 version.pick({version.LOWEST: 'Add a New Host',
+                               '5.4': 'Add a New item'})),
+              'infrastructure_host_discover': lambda _: cfg_btn(
+                  'Discover Hosts'),
+              'infrastructure_host': [lambda ctx: sel.click(Quadicon(ctx['host'].name,
+                                                                     'host')),
+                                      {'infrastructure_host_edit':
+                                       lambda _: cfg_btn(
+                                           version.pick({version.LOWEST: 'Edit this Host',
+                                                         '5.4': 'Edit this item'})),
+                                       'infrastructure_host_policy_assignment':
+                                       lambda _: pol_btn('Manage Policies'),
+                                       'infrastructure_provision_host':
+                                       lambda _: lif_btn(
+                                           version.pick({version.LOWEST: 'Provision this Host',
+                                                         '5.4': 'Provision this item'}))}]})
 
 
 class Host(Updateable, Pretty):

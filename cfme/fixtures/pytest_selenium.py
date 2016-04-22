@@ -956,6 +956,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     from cfme import login
     # Import the top-level nav menus for convenience
     from cfme.web_ui import menu
+    # Collapse the stack
+    menu.nav.initialize()
 
     # browser fixture should do this, but it's needed for subsequent calls
     ensure_browser_open()

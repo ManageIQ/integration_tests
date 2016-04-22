@@ -5,7 +5,7 @@
            Resource pool pages.
 """
 
-import ui_navigate as nav
+from cfme.web_ui.menu import nav
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, toolbar as tb
 from functools import partial
