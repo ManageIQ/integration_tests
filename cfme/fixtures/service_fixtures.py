@@ -32,12 +32,8 @@ def catalog():
     catalog = "cat_" + fauxfactory.gen_alphanumeric()
     cat = Catalog(name=catalog,
                   description="my catalog")
-    try:
-        cat.create()
-        yield cat
-    finally:
-        if cat.exists:
-            cat.delete()
+    cat.create()
+    yield cat
 
 
 @pytest.fixture(scope="function")

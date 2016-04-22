@@ -929,6 +929,41 @@ class ContextWrapper(dict):
                     repr(item), repr(self.keys())))
 
 
+def ssui_force_navigate(page_name, _tries=0, *args, **kwargs):
+    if _tries > 2:
+        # Need at least three tries:
+        # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
+        # 2: Everything should work. If not, NavigationError.
+        raise exceptions.NavigationError(page_name)
+
+    if "context" in kwargs:
+        if not isinstance(kwargs["context"], ContextWrapper) and isinstance(
+                kwargs["context"], dict):
+            kwargs["context"] = ContextWrapper(kwargs["context"])
+
+    _tries += 1
+
+    logger.debug('force_navigate to %s, try %d' % (page_name, _tries))
+    # circular import prevention: cfme.login uses functions in this module
+    from cfme import login
+    # Import the top-level nav menus for convenience
+    from cfme.ssui import ssui_links
+
+    # browser fixture should do this, but it's needed for subsequent calls
+    ensure_browser_open()
+
+    # Clear any running "spinnies"
+    try:
+        execute_script('miqSparkleOff();')
+    except:  # Diaper OK (mfalesni)
+        pass
+
+    if(store.current_appliance.mode == "ssui"):
+        login.ssui_login()
+        sleep(5)
+    ssui_links.go_to(page_name)
+
+
 def force_navigate(page_name, _tries=0, *args, **kwargs):
     """force_navigate(page_name)
 
