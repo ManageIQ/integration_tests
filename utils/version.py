@@ -159,9 +159,9 @@ def pick(v_dict):
 class Version(object):
     """Version class based on distutil.version.LooseVersion"""
     SUFFIXES = ('nightly', 'pre', 'alpha', 'beta', 'rc')
-    SUFFIXES_STR = "|".join('-{}\d*'.format(suff) for suff in SUFFIXES)
+    SUFFIXES_STR = "|".join(r'-{}(?:\d+(?:\.\d+)?)?'.format(suff) for suff in SUFFIXES)
     component_re = re.compile(r'(?:\s*(\d+|[a-z]+|\.|(?:{})+$))'.format(SUFFIXES_STR))
-    suffix_item_re = re.compile(r'^([^0-9]+)(\d*)$')
+    suffix_item_re = re.compile(r'^([^0-9]+)(\d+(?:\.\d+)?)?$')
 
     def __init__(self, vstring):
         self.parse(vstring)
@@ -207,10 +207,10 @@ class Version(object):
             return numberized
         for item in self.suffix:
             suff_t, suff_ver = self.suffix_item_re.match(item).groups()
-            if len(suff_ver) == 0:
-                suff_ver = 0
+            if suff_ver is None or len(suff_ver) == 0:
+                suff_ver = 0.0
             else:
-                suff_ver = int(suff_ver)
+                suff_ver = float(suff_ver)
             suff_t = self.SUFFIXES.index(suff_t)
             numberized.append((suff_t, suff_ver))
         return numberized
