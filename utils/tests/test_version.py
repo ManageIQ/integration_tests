@@ -17,6 +17,7 @@ EQ = '=='
     # (1, EQ, '1'),
     ('1.2.3.4-beta', LT, '1.2.3.4'),
     ('1.2.3.4-beta1', GT, '1.2.3.4-beta'),
+    ('1.2.3.4-beta1.1', GT, '1.2.3.4-beta1'),
     ('1.2.3.4-alpha-nightly', GT, '1.2.3.4-alpha'),     # TODO: This one might be discussed
 ])
 def test_version(v1, op, v2):
