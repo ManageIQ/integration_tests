@@ -3,9 +3,9 @@ catalog item of type "Amazon
 
 """
 import functools
-import ui_navigate as nav
 
 import cfme.fixtures.pytest_selenium as sel
+from cfme.web_ui.menu import nav
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from cfme.provisioning import provisioning_form as request_form

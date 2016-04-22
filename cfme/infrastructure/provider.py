@@ -67,18 +67,18 @@ pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
 
 nav.add_branch('infrastructure_providers',
-               {'infrastructure_provider_new': lambda _: cfg_btn(
-                   'Add a New Infrastructure Provider'),
-                'infrastructure_provider_discover': lambda _: cfg_btn(
-                    'Discover Infrastructure Providers'),
-                'infrastructure_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
-                                                                      'infra_prov')),
-                                   {'infrastructure_provider_edit':
-                                    lambda _: cfg_btn('Edit this Infrastructure Provider'),
-                                    'infrastructure_provider_policy_assignment':
-                                    lambda _: pol_btn('Manage Policies'),
-                                    'infrastructure_provider_timelines':
-                                    lambda _: mon_btn('Timelines')}]})
+             {'infrastructure_provider_new': lambda _: cfg_btn(
+                 'Add a New Infrastructure Provider'),
+              'infrastructure_provider_discover': lambda _: cfg_btn(
+                  'Discover Infrastructure Providers'),
+              'infrastructure_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
+                                                                         'infra_prov')),
+                                          {'infrastructure_provider_edit':
+                                           lambda _: cfg_btn('Edit this Infrastructure Provider'),
+                                           'infrastructure_provider_policy_assignment':
+                                           lambda _: pol_btn('Manage Policies'),
+                                           'infrastructure_provider_timelines':
+                                           lambda _: mon_btn('Timelines')}]})
 
 
 class Provider(Pretty, CloudInfraProvider):

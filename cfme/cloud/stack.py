@@ -1,9 +1,9 @@
-import ui_navigate as nav
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, SplitTable, flash, Form, fill, form_buttons, Table
 from utils.pretty import Pretty
 from functools import partial
 from cfme.web_ui import toolbar as tb
+from cfme.web_ui.menu import nav
 from cfme import web_ui as ui
 from xml.sax.saxutils import quoteattr
 from cfme.exceptions import CFMEException
