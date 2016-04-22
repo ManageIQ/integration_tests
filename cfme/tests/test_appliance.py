@@ -61,10 +61,18 @@ def test_selinux_enabled(ssh_client):
     assert 'Enforcing' in stdout
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.6')
 def test_iptables_running(ssh_client):
     """Verifies iptables service is running on the appliance"""
     stdout = ssh_client.run_command('service iptables status')[1]
     assert 'is not running' not in stdout
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.6')
+def test_firewalld_running(ssh_client):
+    """Verifies iptables service is running on the appliance"""
+    stdout = ssh_client.run_command('service firewalld status')[1]
+    assert 'active (running)' in stdout
 
 
 # In versions using systemd, httpd is disabled, and started by evmserverd
@@ -77,8 +85,12 @@ def test_httpd_running(ssh_client):
 
 def test_evm_running(ssh_client):
     """Verifies overall evm service is running on the appliance"""
-    stdout = ssh_client.run_command('service evmserverd status | grep EVM')[1]
-    assert 'started' in stdout.lower()
+    if version.current_version() < '5.6':
+        stdout = ssh_client.run_command('service evmserverd status | grep EVM')[1]
+        assert 'started' in stdout.lower()
+    else:
+        stdout = ssh_client.run_command('service evmserverd status')[1]
+        assert 'active (running)' in stdout
 
 
 @pytest.mark.uncollectif(lambda service: version.current_version() >= '5.5'

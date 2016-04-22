@@ -144,7 +144,7 @@ from traceback import extract_tb, format_tb
 import psphere
 
 from cached_property import cached_property
-from utils import conf
+from utils import conf, safe_string
 from utils.path import get_rel_path, log_path
 
 MARKER_LEN = 80
@@ -538,6 +538,7 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         # 1: adapter process method (this method)
         # 2: adapter logging method
         # 3: original logging call
+        msg = safe_string(msg)
         frameinfo = nth_frame_info(3)
         extra = kwargs.get('extra', {})
         # add extra data if needed
