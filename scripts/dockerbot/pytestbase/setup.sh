@@ -151,7 +151,7 @@ if [ -n "$PROVIDER" ]; then
     IP_ADDRESS=$(cat /appliance_ip | cut -d= -f2)
     APPLIANCE=https://$IP_ADDRESS
 fi
-$APPLIANCE=${APPLIANCE-"None"}
+export APPLIANCE=${APPLIANCE-"None"}
 log $APPLIANCE
 
 # Now fill out the env yaml with ALL THE THINGS
