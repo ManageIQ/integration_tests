@@ -192,6 +192,9 @@ EOF
 
 run_n_log "cat $CFME_REPO_DIR/conf/env.local.yaml"
 
+# Remove .pyc files
+run_n_log "find $CFME_REPO_DIR -name \"*.pyc\" -exec rm -rf {} \;"
+
 set +e
 
 # Finally, run the py.test
