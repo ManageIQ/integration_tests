@@ -70,6 +70,7 @@ def retire_extend_button(request):
     return lambda: toolbar.select(grp.text, button.text)
 
 
+@pytest.mark.tier(3)
 def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button):
     """ Tests extending a retirement using an AE method.
 

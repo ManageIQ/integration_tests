@@ -18,6 +18,7 @@ def an_instance(request, make_class):
     return ta.an_instance(make_class, request=request)
 
 
+@pytest.mark.tier(2)
 def test_instance_crud(an_instance):
     an_instance.create()
     origname = an_instance.name
@@ -30,6 +31,7 @@ def test_instance_crud(an_instance):
     assert not an_instance.exists()
 
 
+@pytest.mark.tier(2)
 def test_duplicate_disallowed(an_instance):
     an_instance.create()
     with error.expected("Name has already been taken"):
@@ -37,6 +39,7 @@ def test_duplicate_disallowed(an_instance):
 
 
 @pytest.mark.meta(blockers=[1148541])
+@pytest.mark.tier(3)
 def test_display_name_unset_from_ui(request, an_instance):
     an_instance.create()
     request.addfinalizer(an_instance.delete)
