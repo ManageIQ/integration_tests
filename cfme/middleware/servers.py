@@ -1,6 +1,5 @@
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui.menu import nav
-from cfme.middleware.provider import HawkularProvider
 from . import list_tbl
 
 nav.add_branch(
@@ -12,11 +11,11 @@ nav.add_branch(
 )
 
 
-class Servers(HawkularProvider):
+class Servers(object):
 
     def __init__(self, name):
         self.name = name
-        self.provider = self.string_name
+        self.provider = 'Middleware'
         self.detail_page_suffix = 'servers_detail'
 
     def nav_to_servers_view(self):
@@ -24,7 +23,8 @@ class Servers(HawkularProvider):
             'servers': self, 'provider': self.provider})
 
     def nav_to_detailed_view(self):
-        self.load_details()
+        sel.force_navigate('middleware_servers_detail', context={
+            'provider': self})
 
     def validate_server_details(self):
         print("Server Detail Validation TBD")

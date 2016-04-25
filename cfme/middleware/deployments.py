@@ -1,12 +1,11 @@
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware.provider import HawkularProvider
 
 
-class Deployments(HawkularProvider):
+class Deployments(object):
 
     def __init__(self, name):
         self.name = name
-        self.provider = self.string_name
+        self.provider = 'Middleware'
 
     def nav_to_deployments_view(self):
         sel.force_navigate('middleware_deployments', context={
