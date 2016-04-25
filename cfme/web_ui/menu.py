@@ -184,7 +184,7 @@ class Menu(UINavigate):
             }
         else:
             sections = {
-                ('cloud_intelligence', 'Cloud Intelligence'): (
+                ('cloud_intelligence', 'Cloud Intel'): (
                     ('dashboard', 'Dashboard'),
                     ('reports', 'Reports'),
                     ('chargeback', 'Chargeback'),
