@@ -77,6 +77,8 @@ server_roles = Form(
         ('automate', CFMECheckbox("server_roles_automate")),
         ('rhn_mirror', CFMECheckbox("server_roles_rhn_mirror")),
         ('database_synchronization', CFMECheckbox("server_roles_database_synchronization")),
+        ('git_owner', CFMECheckbox("server_roles_git_owner")),
+        ('websocket', CFMECheckbox("server_roles_websocket")),
         # STORAGE OPTIONS
         ("storage_metrics_processor", CFMECheckbox("server_roles_storage_metrics_processor")),
         ("storage_metrics_collector", CFMECheckbox("server_roles_storage_metrics_collector")),
