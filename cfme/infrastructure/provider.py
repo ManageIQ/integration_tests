@@ -175,7 +175,12 @@ class Provider(Pretty, CloudInfraProvider):
 
     @num_host.variant('ui')
     def num_host_ui(self):
-        return int(self.get_detail("Relationships", "host.png", use_icon=True))
+        try:
+            num = int(self.get_detail("Relationships", "Hosts", use_icon=True))
+        except:
+            logger.log("Couldn't find number of hosts using key [Hosts] trying Nodes")
+            num = int(self.get_detail("Relationships", "Nodes", use_icon=True))
+        return num
 
     @variable(alias='rest')
     def num_cluster(self):
@@ -199,7 +204,7 @@ class Provider(Pretty, CloudInfraProvider):
 
     @num_cluster.variant('ui')
     def num_cluster_ui(self):
-        return int(self.get_detail("Relationships", "cluster.png", use_icon=True))
+        return int(self.get_detail("Relationships", "Clusters", use_icon=True))
 
     def discover(self):
         """
