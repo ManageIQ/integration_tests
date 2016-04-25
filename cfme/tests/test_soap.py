@@ -4,7 +4,7 @@ import fauxfactory
 import pytest
 from random import choice
 
-from utils import testgen
+from utils import testgen, version
 from utils.miq_soap import MiqVM, set_client
 from utils.providers import setup_a_provider as _setup_a_provider
 
@@ -13,7 +13,10 @@ pytest_generate_tests = testgen.generate(
     scope="class"
 )
 
-pytestmark = [pytest.mark.ignore_stream("5.5", "upstream")]
+pytestmark = [
+    pytest.mark.ignore_stream("5.5", "upstream"),
+    pytest.mark.uncollectif(lambda: version.current_version() >= "5.6")
+]
 
 
 @pytest.fixture(scope="class")
