@@ -25,7 +25,7 @@ from cfme.web_ui.form_buttons import FormButton
 from utils.api import rest_api
 from utils.log import logger
 from utils.wait import wait_for
-from utils import version
+from utils import version, deferred_verpick
 from utils.pretty import Pretty
 from utils.varmeth import variable
 
@@ -48,14 +48,19 @@ discover_form = Form(
 
 properties_form = Form(
     fields=[
-        ('type_select', {version.LOWEST: Select('select#server_emstype'),
-                         '5.5': AngularSelect("server_emstype")}),
+        ('type_select', {
+            version.LOWEST: Select('select#server_emstype'),
+            '5.5': AngularSelect("server_emstype"),
+            '5.6': AngularSelect("emstype")}),
         ('name_text', Input("name")),
-        ('hostname_text', Input("hostname")),
+        ('hostname_text', {
+            version.LOWEST: Input("hostname"),
+            '5.6': Input("default_hostname"),
+        }),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('api_port', Input("port")),
         ('sec_protocol', {version.LOWEST: Select("select#security_protocol"),
-                         '5.5': AngularSelect("security_protocol")}),
+            '5.5': AngularSelect("security_protocol")}),
         ('sec_realm', Input("realm"))
     ])
 
@@ -108,7 +113,10 @@ class Provider(Pretty, CloudInfraProvider):
     templates_page_name = "infra_vm_and_templates"
     quad_name = "infra_prov"
     properties_form = properties_form
-    add_provider_button = form_buttons.FormButton("Add this Infrastructure Provider")
+    add_provider_button = deferred_verpick({
+        version.LOWEST: form_buttons.FormButton("Add this Infrastructure Provider"),
+        '5.6': form_buttons.add
+    })
     save_button = form_buttons.FormButton("Save Changes")
 
     def __init__(
