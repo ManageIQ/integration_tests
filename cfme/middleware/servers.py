@@ -5,7 +5,7 @@ from . import list_tbl
 nav.add_branch(
     'middleware_servers',
     {
-        'middleware_servers_detail':
+        'middleware_server_details':
             lambda ctx: list_tbl.click_cell('Provider', ctx['provider'].name)
     }
 )
@@ -23,8 +23,12 @@ class Servers(object):
             'servers': self, 'provider': self.provider})
 
     def nav_to_detailed_view(self):
-        sel.force_navigate('middleware_servers_detail', context={
-            'provider': self})
+        if not self._on_server_details_page():
+            sel.force_navigate('middleware_server_details', context={
+                'provider': self})
+
+    def _on_server_details_page(self):
+        return sel.is_displayed_text('Local (Summary)')
 
     def validate_server_details(self):
         print("Server Detail Validation TBD")
