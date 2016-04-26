@@ -10,6 +10,8 @@ from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
 
+pytestmark = [pytest.mark.tier(3)]
+
 try:
     grid_pages = cfme_data.grid_pages.infra
 except KeyError:

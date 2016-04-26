@@ -9,6 +9,8 @@ from cfme.cloud import instance  # NOQA
 from cfme.infrastructure import virtual_machines  # NOQA
 from cfme.services import workloads  # NOQA
 
+pytestmark = [pytest.mark.tier(3)]
+
 
 @pytest.fixture(scope="module")
 def setup_first_provider():

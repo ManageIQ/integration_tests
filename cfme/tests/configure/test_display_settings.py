@@ -8,6 +8,8 @@ from utils.conf import cfme_data
 from utils import version
 from cfme.configure import settings  # NOQA
 
+pytestmark = [pytest.mark.tier(3)]
+
 try:
     displaysettings = cfme_data.displaysettings.color
 except KeyError:

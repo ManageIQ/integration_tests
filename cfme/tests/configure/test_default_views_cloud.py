@@ -11,6 +11,8 @@ from utils import version
 from cfme.configure import settings  # NOQA
 from cfme.cloud import instance  # NOQA
 
+pytestmark = [pytest.mark.tier(3)]
+
 
 def minimise_dict(item):
     if isinstance(item, dict):

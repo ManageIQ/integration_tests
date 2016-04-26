@@ -11,6 +11,8 @@ from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 
+pytestmark = [pytest.mark.tier(3)]
+
 try:
     grid_pages = cfme_data.grid_pages.cloud
 except KeyError:

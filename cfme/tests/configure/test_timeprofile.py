@@ -5,6 +5,8 @@ import pytest
 import utils.error as error
 from utils.update import update
 
+pytestmark = [pytest.mark.tier(3)]
+
 
 def new_timeprofile():
     return st.Timeprofile(description='time_profile' + fauxfactory.gen_alphanumeric(),

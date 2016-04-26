@@ -13,6 +13,8 @@ from cfme.services.catalogs import catalog_item  # NOQA
 from cfme.services import workloads  # NOQA
 from cfme.intelligence.reports.reports import CannedSavedReport
 
+pytestmark = [pytest.mark.tier(3)]
+
 
 def minimise_dict(item):
     if isinstance(item, dict):
