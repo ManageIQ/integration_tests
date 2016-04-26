@@ -119,6 +119,10 @@ class _TabStripField(Pretty):
         select_tab(self.ident_string)
         return self.arg
 
+    def __getattr__(self, name):
+        self.locate()
+        return getattr(self.arg, name)
+
 
 @web_ui.fill.method((_TabStripField, object))
 def _fill_tabstrip(tabstrip_field, value):

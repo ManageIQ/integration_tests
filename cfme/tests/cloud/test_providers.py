@@ -10,7 +10,7 @@ import utils.error as error
 from cfme import Credential
 from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, EC2Provider, wait_for_a_provider,
-    Provider, OpenStackProvider, properties_form)
+    Provider, OpenStackProvider, prop_region)
 from cfme.web_ui import fill, flash
 from utils import testgen, version
 from utils.providers import get_credentials_from_config
@@ -108,8 +108,8 @@ def test_type_required_validation(request, soft_assert):
             prov.create()
     else:
         pytest.sel.force_navigate("clouds_provider_new")
-        fill(properties_form.name_text, "foo")
-        soft_assert("ng-invalid-required" in properties_form.type_select.classes)
+        fill(prov.properties_form.name_text, "foo")
+        soft_assert("ng-invalid-required" in prov.properties_form.type_select.classes)
         soft_assert(not prov.add_provider_button.can_be_clicked)
 
 
@@ -127,7 +127,7 @@ def test_name_required_validation(request):
         # It must raise an exception because it keeps on the form
         with error.expected(FlashMessageException):
             prov.create()
-        assert properties_form.name_text.angular_help_block == "Required"
+        assert prov.properties_form.name_text.angular_help_block == "Required"
 
 
 def test_region_required_validation(request, soft_assert):
@@ -143,7 +143,8 @@ def test_region_required_validation(request, soft_assert):
     else:
         with error.expected(FlashMessageException):
             prov.create()
-        soft_assert("ng-invalid-required" in properties_form.amazon_region_select.classes)
+        soft_assert(
+            "ng-invalid-required" in prov.properties_form.amazon_region_select.classes)
 
 
 def test_host_name_required_validation(request):
@@ -161,7 +162,7 @@ def test_host_name_required_validation(request):
         # It must raise an exception because it keeps on the form
         with error.expected(FlashMessageException):
             prov.create()
-        assert properties_form.hostname_text.angular_help_block == "Required"
+        assert prov.properties_form.hostname_text.angular_help_block == "Required"
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() > '5.4')
@@ -192,7 +193,7 @@ def test_api_port_blank_validation(request):
         # It must raise an exception because it keeps on the form
         with error.expected(FlashMessageException):
             prov.create()
-        assert properties_form.api_port.angular_help_block == "Required"
+        assert prov.properties_form.api_port.angular_help_block == "Required"
 
 
 def test_user_id_max_character_validation():
@@ -268,7 +269,9 @@ def test_api_port_max_character_validation(request):
 @pytest.mark.meta(blockers=[1278036])
 def test_openstack_provider_has_api_version():
     """Check whether the Keystone API version field is present for Openstack."""
+    prov = Provider()
     pytest.sel.force_navigate("clouds_provider_new")
-    fill(properties_form, {"type_select": "OpenStack"})
+    fill(prop_region.properties_form, {"type_select": "OpenStack"})
     pytest.sel.wait_for_ajax()
-    assert pytest.sel.is_displayed(properties_form.api_version), "API version select is not visible"
+    assert pytest.sel.is_displayed(
+        prov.properties_form.api_version), "API version select is not visible"
