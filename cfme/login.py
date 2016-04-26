@@ -46,6 +46,11 @@ form = Form(
         if loc[0] in _form_fields],
     identifying_loc='username')
 
+ssui_form = Form(
+    fields=[('username', '//div[@class="form-group"]//input[@id="inputUsername"]'),
+            ('password', '//div[@class="form-group"]//input[@id="inputPassword"]'),
+            ('submit_button', '//button[normalize-space(.)="Log In"]')])
+
 
 def click_on_login():
     """
@@ -130,6 +135,15 @@ def login(user, submit_method=_js_auth_fn):
         flash.assert_no_errors()
         user.full_name = _full_name()
         store.user = user
+
+
+def ssui_login(**kwargs):
+    username = conf.credentials['default']['username']
+    password = conf.credentials['default']['password']
+    cred = Credential(principal=username, secret=password)
+    user = User(credential=cred)
+    fill(ssui_form, {'username': user.credential.principal, 'password': user.credential.secret})
+    sel.click(ssui_form.submit_button)
 
 
 def login_admin(**kwargs):
