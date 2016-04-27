@@ -14,7 +14,8 @@ from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.long_running]
+pytestmark = [pytest.mark.long_running,
+              pytest.mark.tier(2)]
 
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
