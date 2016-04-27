@@ -28,6 +28,8 @@ def parse_cmd_line():
                         help="stream to generate the template test result")
     parser.add_argument("--template", dest="appliance_template",
                         help="appliance/latest template name")
+    parser.add_argument("--provider", dest="provider",
+                        help="provider under test")
     parser.add_argument("--output", dest="output", help="target file name",
                         default=log_path.join('template_tester_results.log').strpath)
     args = parser.parse_args()
@@ -178,32 +180,41 @@ def get_untested_templates(api, stream_group, appliance_template=None):
         template__group__name=stream_group, template=appliance_template).get('objects', [])
 
 
-def update_template_log(appliance_template, action):
+def update_template_log(appliance_template, action, provider=None, failed_providers=None):
     try:
         trackerbot_ip = re.findall(r'[0-9]+(?:\.[0-9]+){3}', args.trackerbot_url)[0]
         creds = credentials['host_default']
         sshclient = make_ssh_client(trackerbot_ip, creds['username'], creds['password'])
         template_resultlog = log_path.join('template_result.log').strpath
-        if action == 'update':
-            with open(template_resultlog, 'r') as report:
-                for line in report.readlines():
-                    command = 'echo "{}" >> ~/{}.log'.format(line.rstrip('\n'), appliance_template)
-                    status, output = sshclient.run_command(command)
-                report.close()
+        if action == 'create':
+            command = 'mkdir -p /home/amavinag/{}'.format(appliance_template)
+            sshclient.run_command(command)
+            sshclient.put_file(template_resultlog, remote_file='/home/amavinag/{}/{}'.format(
+                appliance_template, provider))
+        if action == 'merge':
             with open(template_resultlog, 'w') as report:
-                status, output = sshclient.run_command('cat ~/{}.log'.format(appliance_template))
+                command = 'cd /home/amavinag/{}/&&cat {}'.format(appliance_template,
+                                                                 ' '.join(failed_providers))
+                status, output = sshclient.run_command(command)
+                if 'No such file or directory' in output:
+                    command = 'cd /home/amavinag/{}/&&cat *'.format(appliance_template)
+                    status, output = sshclient.run_command(command)
                 report.write(output)
                 report.close()
         elif action == 'remove':
-            sshclient.run_command('rm -f {}.log'.format(appliance_template))
+            sshclient.run_command('cd /home/amavinag/&&rm -rf {}'.format(
+                appliance_template))
+        sshclient.close()
     except Exception as e:
         print(e)
         return False
 
 
-def generate_html_report(api, stream, filename, appliance_template):
+def generate_html_report(api, stream, filename, appliance_template, provider):
 
+    status = 'PASSED'
     number_of_images_before = len(images_uploaded(stream))
+    update_template_log(appliance_template, action='create', provider=provider)
     if get_untested_templates(api, stream, appliance_template):
         print('report will not be generated, proceed with the next untested provider')
         sys.exit()
@@ -220,7 +231,8 @@ def generate_html_report(api, stream, filename, appliance_template):
         print("Found tested template for {}".format(stream))
         print("Gathering tested template data for {}".format(stream))
         print("Updating the template log")
-        update_template_log(appliance_template, action='update')
+        update_template_log(appliance_template, action='merge',
+                            failed_providers=stream_data['failed_on_providers'])
         stream_html = [stream_data['template_name'], stream_data['passed_on_providers'],
                        stream_data['failed_on_providers'], stream_data['group_name'],
                        stream_data['datestamp']]
@@ -309,8 +321,12 @@ def generate_html_report(api, stream, filename, appliance_template):
                           'scvmm providers yet')
                     report.write('\n\nMISSING: SCVMM template is not available on any '
                                  'scvmm providers yet')
+                report.seek(0, 0)
+                if "FAILED" in report.read():
+                    status = "FAILED"
+                report.close()
         update_template_log(appliance_template, action='remove')
-        print("template_tester_results report generated")
+        print("template_tester_results report generated:{}".format(status))
     else:
         print("No Templates tested on: {}".format(datetime.datetime.now()))
 
@@ -322,4 +338,4 @@ if __name__ == '__main__':
         sys.exit("stream and appliance_template "
                  "cannot be None, specify the stream as --stream <stream-name>"
                  "and template as --template <template-name>")
-    generate_html_report(api, args.stream, args.output, args.appliance_template)
+    generate_html_report(api, args.stream, args.output, args.appliance_template, args.provider)
