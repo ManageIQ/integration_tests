@@ -950,48 +950,48 @@ class CheckboxTable(Table):
         """
         self._set_rows(cell_map, False)
 
-    def _set_row_by_cells(self, cells, set_to=False):
-        row = self.find_row_by_cells(cells)
+    def _set_row_by_cells(self, cells, set_to=False, partial_check=False):
+        row = self.find_row_by_cells(cells, partial_check=partial_check)
         self._set_row_checkbox(row, set_to)
 
-    def select_row_by_cells(self, cells):
+    def select_row_by_cells(self, cells, partial_check=False):
         """Select the first row matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
 
         """
-        self._set_row_by_cells(cells, True)
+        self._set_row_by_cells(cells, True, partial_check)
 
-    def deselect_row_by_cells(self, cells):
+    def deselect_row_by_cells(self, cells, partial_check=False):
         """Deselect the first row matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
 
         """
-        self._set_row_by_cells(cells, False)
+        self._set_row_by_cells(cells, False, partial_check)
 
-    def _set_rows_by_cells(self, cells, set_to=False):
+    def _set_rows_by_cells(self, cells, set_to=False, partial_check=False):
         rows = self.find_rows_by_cells(cells)
         for row in rows:
             self._set_row_checkbox(row, set_to)
 
-    def select_rows_by_cells(self, cells):
+    def select_rows_by_cells(self, cells, partial_check=False):
         """Select the rows matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
         """
-        self._set_rows_by_cells(cells, True)
+        self._set_rows_by_cells(cells, True, partial_check)
 
-    def deselect_rows_by_cells(self, cells):
+    def deselect_rows_by_cells(self, cells, partial_check=False):
         """Deselect the rows matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
         """
-        self._set_rows_by_cells(cells, False)
+        self._set_rows_by_cells(cells, False, partial_check)
 
 
 class SplitCheckboxTable(SplitTable, CheckboxTable):
