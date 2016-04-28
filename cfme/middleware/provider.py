@@ -5,6 +5,7 @@ from cfme.web_ui import (
 from cfme.web_ui.menu import nav
 
 from . import cfg_btn, mon_btn, pol_btn, list_tbl
+from utils.varmeth import variable
 
 nav.add_branch(
     'middleware_providers',
@@ -44,6 +45,8 @@ properties_form = Form(
 
 
 class HawkularProvider(BaseProvider):
+    STATS_TO_MATCH = ['num_server', 'num_deployment']
+
     page_name = 'middleware'
     string_name = 'Middleware'
     detail_page_suffix = 'provider_detail'
@@ -68,3 +71,19 @@ class HawkularProvider(BaseProvider):
                 'type_select': create and 'Hawkular',
                 'hostname_text': kwargs.get('hostname'),
                 'port_text': kwargs.get('port')}
+
+    @variable(alias='db')
+    def num_deployment(self):
+        return self._num_db_generic('middleware_deployments')
+
+    @num_deployment.variant('ui')
+    def num_deployment_ui(self):
+        return int(self.get_detail("Relationships", "Middleware Deployments"))
+
+    @variable(alias='db')
+    def num_server(self):
+        return self._num_db_generic('middleware_servers')
+
+    @num_server.variant('ui')
+    def num_server_ui(self):
+        return int(self.get_detail("Relationships", "Middleware Servers"))
