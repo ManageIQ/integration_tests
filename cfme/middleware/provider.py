@@ -3,6 +3,7 @@ from cfme.web_ui import (
     Form, AngularSelect, form_buttons, Input
 )
 from cfme.web_ui.menu import nav
+from cfme.fixtures import pytest_selenium as sel
 
 from . import cfg_btn, mon_btn, pol_btn, list_tbl
 
@@ -52,10 +53,12 @@ class HawkularProvider(BaseProvider):
     refresh_text = "Refresh items and relationships"
     quad_name = None
     properties_form = properties_form
-    add_provider_button = form_buttons.FormButton("Add this Middleware Manager")
+    add_provider_button = form_buttons.FormButton(
+        "Add this Middleware Manager")
     save_button = form_buttons.FormButton("Save Changes")
 
-    def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None):
+    def __init__(self, name=None, hostname=None, port=None,
+                 credentials=None, key=None):
         self.name = name
         self.hostname = hostname
         self.port = port
@@ -69,3 +72,14 @@ class HawkularProvider(BaseProvider):
                 'type_select': create and 'Hawkular',
                 'hostname_text': kwargs.get('hostname'),
                 'port_text': kwargs.get('port')}
+
+    def nav_to_provider_view(self):
+        self.load_details(self)
+
+    def nav_to_provider_detailed_view(self):
+        if not self._on_detail_page():
+            sel.force_navigate('middleware_provider_detail', context={
+                'provider': self})
+
+    def _on_detail_page(self):
+        return sel.is_displayed_text("{} (Summary)".format(self.name))
