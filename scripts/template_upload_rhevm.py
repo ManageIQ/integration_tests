@@ -25,11 +25,6 @@ from utils.wait import wait_for
 
 lock = Lock()
 
-# temporary vm name (this vm will be deleted)
-TEMP_VM_NAME = 'auto-vm-{}'.format(fauxfactory.gen_alphanumeric(8))
-# temporary template name (this template will be deleted)
-TEMP_TMP_NAME = 'auto-tmp-{}'.format(fauxfactory.gen_alphanumeric(8))
-
 
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
@@ -130,8 +125,8 @@ def download_ova(ssh_client, ovaurl):
         sys.exit(127)
 
 
-def template_from_ova(api, username, password, rhevip, edomain, ovaname,
-                      ssh_client, provider):
+def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_client,
+                      temp_template_name, provider):
     """Uses rhevm-image-uploader to make a template from ova file.
 
     Args:
@@ -142,8 +137,9 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname,
         edomain: Export domain of selected RHEVM provider.
         ovaname: Name of ova file.
         ssh_client: :py:class:`utils.ssh.SSHClient` instance
+        temp_template_name: temporary template name (this template will be deleted)
     """
-    if api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME) is not None:
+    if api.storagedomains.get(edomain).templates.get(temp_template_name) is not None:
         print("RHEVM:{} Warning: found another template with this name.".format(provider))
         print("RHEVM:{} Skipping this step. Attempting to continue...".format(provider))
         return
@@ -151,7 +147,7 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname,
     command.append("-u {}".format(username))
     command.append("-p {}".format(password))
     command.append("-r {}:443".format(rhevip))
-    command.append("-N {}".format(TEMP_TMP_NAME))
+    command.append("-N {}".format(temp_template_name))
     command.append("-e {}".format(edomain))
     command.append("upload {}".format(ovaname))
     command.append("-m --insecure")
@@ -163,7 +159,7 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname,
     print("RHEVM:{} successfully created template from ova file:".format(provider))
 
 
-def import_template(api, edomain, sdomain, cluster, provider):
+def import_template(api, edomain, sdomain, cluster, temp_template_name, provider):
     """Imports template from export domain to storage domain.
 
     Args:
@@ -172,24 +168,24 @@ def import_template(api, edomain, sdomain, cluster, provider):
         sdomain: Storage domain of selected RHEVM provider.
         cluster: Cluster to save imported template on.
     """
-    if api.templates.get(TEMP_TMP_NAME) is not None:
+    if api.templates.get(temp_template_name) is not None:
         print("RHEVM:{} Warning: found another template with this name.".format(provider))
         print("RHEVM:{} Skipping this step, attempting to continue...".format(provider))
         return
-    actual_template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
+    actual_template = api.storagedomains.get(edomain).templates.get(temp_template_name)
     actual_storage_domain = api.storagedomains.get(sdomain)
     actual_cluster = api.clusters.get(cluster)
     import_action = params.Action(async=False, cluster=actual_cluster,
                                   storage_domain=actual_storage_domain)
     actual_template.import_template(action=import_action)
     # Check if the template is really there
-    if not api.templates.get(TEMP_TMP_NAME):
+    if not api.templates.get(temp_template_name):
         print("RHEVM:{} The template failed to import on data domain".format(provider))
         sys.exit(127)
     print("RHEVM:{} successfully imported template on data domain".format(provider))
 
 
-def make_vm_from_template(api, cluster, provider):
+def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provider):
     """Makes temporary VM from imported template. This template will be later deleted.
        It's used to add a new disk and to convert back to template.
 
@@ -197,18 +193,18 @@ def make_vm_from_template(api, cluster, provider):
         api: API to chosen RHEVM provider.
         cluster: Cluster to save the temporary VM on.
     """
-    if api.vms.get(TEMP_VM_NAME) is not None:
+    if api.vms.get(temp_vm_name) is not None:
         print("RHEVM:{} Warning: found another VM with this name.".format(provider))
         print("RHEVM:{} Skipping this step, attempting to continue...".format(provider))
         return
-    actual_template = api.templates.get(TEMP_TMP_NAME)
+    actual_template = api.templates.get(temp_template_name)
     actual_cluster = api.clusters.get(cluster)
-    params_vm = params.VM(name=TEMP_VM_NAME, template=actual_template, cluster=actual_cluster)
+    params_vm = params.VM(name=temp_vm_name, template=actual_template, cluster=actual_cluster)
     api.vms.add(params_vm)
 
     # we must wait for the vm do become available
     def check_status():
-        status = api.vms.get(TEMP_VM_NAME).get_status()
+        status = api.vms.get(temp_vm_name).get_status()
         if status.state != 'down':
             return False
         return True
@@ -216,14 +212,14 @@ def make_vm_from_template(api, cluster, provider):
     wait_for(check_status, fail_condition=False, delay=5)
 
     # check, if the vm is really there
-    if not api.vms.get(TEMP_VM_NAME):
+    if not api.vms.get(temp_vm_name):
         print("RHEVM:{} temp VM could not be provisioned".format(provider))
         sys.exit(127)
     print("RHEVM:{} successfully provisioned temp vm".format(provider))
 
 
-def check_disks(api):
-    disks = api.vms.get(TEMP_VM_NAME).disks.list()
+def check_disks(api, temp_vm_name):
+    disks = api.vms.get(temp_vm_name).disks.list()
     for disk in disks:
         if disk.get_status().state != "ok":
             return False
@@ -232,7 +228,7 @@ def check_disks(api):
 
 # sometimes, rhevm is just not cooperative. This is function used to wait for template on
 # export domain to become unlocked
-def check_edomain_template(api, edomain):
+def check_edomain_template(api, edomain, temp_template_name):
     '''
     checks for the edomain templates status, and returns True, if template state is ok
     otherwise returns False. try, except block returns the False in case of Exception,
@@ -242,7 +238,7 @@ def check_edomain_template(api, edomain):
     :return: True or False based on the template status.
     '''
     try:
-        template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
+        template = api.storagedomains.get(edomain).templates.get(temp_template_name)
         if template.get_status().state != "ok":
             return False
         return True
@@ -255,7 +251,8 @@ def is_edomain_template_deleted(api, name, edomain):
     return not api.storagedomains.get(edomain).templates.get(name)
 
 
-def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface, provider):
+def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface, temp_vm_name,
+                   provider):
     """Adds second disk to a temporary VM.
 
     Args:
@@ -265,26 +262,26 @@ def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface, provide
         disk_format: Format of the new disk.
         disk_interface: Interface of the new disk.
     """
-    if len(api.vms.get(TEMP_VM_NAME).disks.list()) > 1:
+    if len(api.vms.get(temp_vm_name).disks.list()) > 1:
         print("RHEVM:{} Warning: found more than one disk in existing VM.".format(provider))
         print("RHEVM:{} Skipping this step, attempting to continue...".format(provider))
         return
     actual_sdomain = api.storagedomains.get(sdomain)
-    temp_vm = api.vms.get(TEMP_VM_NAME)
+    temp_vm = api.vms.get(temp_vm_name)
     params_disk = params.Disk(storage_domain=actual_sdomain, size=disk_size,
                               interface=disk_interface, format=disk_format)
     temp_vm.disks.add(params_disk)
 
-    wait_for(check_disks, [api], fail_condition=False, delay=5, num_sec=900)
+    wait_for(check_disks, [api, temp_vm_name], fail_condition=False, delay=5, num_sec=900)
 
     # check, if there are two disks
-    if len(api.vms.get(TEMP_VM_NAME).disks.list()) < 2:
+    if len(api.vms.get(temp_vm_name).disks.list()) < 2:
         print("RHEVM:{} Disk failed to add".format(provider))
         sys.exit(127)
     print("RHEVM:{} Successfully added Disk".format(provider))
 
 
-def templatize_vm(api, template_name, cluster, provider):
+def templatize_vm(api, template_name, cluster, temp_vm_name, provider):
     """Templatizes temporary VM. Result is template with two disks.
 
     Args:
@@ -296,12 +293,12 @@ def templatize_vm(api, template_name, cluster, provider):
         print("RHEVM:{} Warning: found finished template with this name.".format(provider))
         print("RHEVM:{} Skipping this step, attempting to continue...".format(provider))
         return
-    temporary_vm = api.vms.get(TEMP_VM_NAME)
+    temporary_vm = api.vms.get(temp_vm_name)
     actual_cluster = api.clusters.get(cluster)
     new_template = params.Template(name=template_name, vm=temporary_vm, cluster=actual_cluster)
     api.templates.add(new_template)
 
-    wait_for(check_disks, [api], fail_condition=False, delay=5, num_sec=900)
+    wait_for(check_disks, [api, temp_vm_name], fail_condition=False, delay=5, num_sec=900)
 
     # check, if template is really there
     if not api.templates.get(template_name):
@@ -346,12 +343,13 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip,
             print("RHEVM:{} Error while deleting the empty directories on path..".format(
                 provider))
             print(output)
+        print("RHEVM:{} successfully deleted the empty directories on path..".format(provider))
     except Exception as e:
         print(e)
         return False
 
 
-def cleanup(api, edomain, ssh_client, ovaname, provider):
+def cleanup(api, edomain, ssh_client, ovaname, provider, temp_template_name, temp_vm_name):
     """Cleans up all the mess that the previous functions left behind.
 
     Args:
@@ -364,34 +362,34 @@ def cleanup(api, edomain, ssh_client, ovaname, provider):
         exit_status, output = ssh_client.run_command(command)
 
         print("RHEVM:{} Deleting the temp_vm on sdomain...".format(provider))
-        temporary_vm = api.vms.get(TEMP_VM_NAME)
+        temporary_vm = api.vms.get(temp_vm_name)
         if temporary_vm:
             temporary_vm.delete()
 
-        print("RHEVM: Deleting the temp_template on sdomain...".format(provider))
-        temporary_template = api.templates.get(TEMP_TMP_NAME)
+        print("RHEVM:{} Deleting the temp_template on sdomain...".format(provider))
+        temporary_template = api.templates.get(temp_template_name)
         if temporary_template:
             temporary_template.delete()
 
         # waiting for template on export domain
         unimported_template = api.storagedomains.get(edomain).templates.get(
-            TEMP_TMP_NAME)
+            temp_template_name)
         print("RHEVM:{} waiting for template on export domain...".format(provider))
-        wait_for(check_edomain_template, [api, edomain],
+        wait_for(check_edomain_template, [api, edomain, temp_template_name],
                  fail_condition=False, delay=5)
 
         if unimported_template:
-            print("RHEVM: deleting the template on export domain...".format(provider))
+            print("RHEVM:{} deleting the template on export domain...".format(provider))
             unimported_template.delete()
 
-        print("RHEVM: waiting for template delete on export domain...".format(provider))
-        wait_for(is_edomain_template_deleted, [api, TEMP_TMP_NAME, edomain],
+        print("RHEVM:{} waiting for template delete on export domain...".format(provider))
+        wait_for(is_edomain_template_deleted, [api, temp_template_name, edomain],
                  fail_condition=False, delay=5)
         print("RHEVM:{} successfully deleted template on export domain...".format(provider))
 
     except Exception as e:
         print(e)
-        print("RHEVM: Exception occurred in cleanup method".format(provider))
+        print("RHEVM:{} Exception occurred in cleanup method".format(provider))
         return False
 
 
@@ -564,6 +562,10 @@ def upload_template(rhevip, sshname, sshpass, username, password,
         ovaname = get_ova_name(image_url)
         ssh_client = make_ssh_client(rhevip, sshname, sshpass)
 
+        temp_template_name = ('auto-tmp-{}-'.format(
+            fauxfactory.gen_alphanumeric(8))) + template_name
+        temp_vm_name = ('auto-vm-{}-'.format(
+            fauxfactory.gen_alphanumeric(8))) + template_name
         if template_name is None:
             template_name = cfme_data['basic_info']['appliance_template']
 
@@ -583,25 +585,29 @@ def upload_template(rhevip, sshname, sshpass, username, password,
             try:
                 print("RHEVM:{} Templatizing .ova file...".format(provider))
                 template_from_ova(api, username, password, rhevip, kwargs.get('edomain'),
-                                  ovaname, ssh_client, provider)
-                print("RHEVM:{} Importing new template...".format(provider))
+                                  ovaname, ssh_client, temp_template_name, provider)
+                print("RHEVM:{} Importing new template to data domain...".format(provider))
                 import_template(api, kwargs.get('edomain'), kwargs.get('sdomain'),
-                                kwargs.get('cluster'), provider)
+                                kwargs.get('cluster'), temp_template_name, provider)
                 print("RHEVM:{} Making a temporary VM from new template...".format(provider))
-                make_vm_from_template(api, kwargs.get('cluster'), provider)
+                make_vm_from_template(api, kwargs.get('cluster'), temp_template_name, temp_vm_name,
+                                      provider)
                 print("RHEVM:{} Adding disk to created VM...".format(provider))
                 add_disk_to_vm(api, kwargs.get('sdomain'), kwargs.get('disk_size'),
-                               kwargs.get('disk_format'), kwargs.get('disk_interface'), provider)
+                               kwargs.get('disk_format'), kwargs.get('disk_interface'),
+                               temp_vm_name, provider)
                 print("RHEVM:{} Templatizing VM...".format(provider))
-                templatize_vm(api, template_name, kwargs.get('cluster'), provider)
+                templatize_vm(api, template_name, kwargs.get('cluster'), temp_vm_name, provider)
             finally:
-                cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider)
+                cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider,
+                        temp_template_name, temp_vm_name)
                 change_edomain_state(api, 'maintenance', kwargs.get('edomain'), provider)
                 cleanup_empty_dir_on_edomain(path, edomain_ip,
                                              sshname, sshpass, rhevip, provider)
                 change_edomain_state(api, 'active', kwargs.get('edomain'), provider)
                 ssh_client.close()
                 api.disconnect()
+                print("RHEVM:{} Template {} upload Ended".format(provider, template_name))
         if provider_data and api.templates.get(template_name):
             print("RHEVM:{} Deploying Template {}....".format(provider, template_name))
             vm_name = 'test_{}_{}'.format(template_name, fauxfactory.gen_alphanumeric(8))
