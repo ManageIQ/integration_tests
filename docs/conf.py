@@ -58,7 +58,7 @@ intersphinx_mapping = {
     'boto': ('http://boto.readthedocs.org/en/latest/', None),
     'python': ('http://docs.python.org/2.7', None),
     'pytest': ('http://pytest.org/latest/', None),
-    'selenium': ('http://selenium-python.readthedocs.org/en/latest/', None),
+    'selenium': ('http://selenium-python.readthedocs.org/', None),
     'sqlalchemy': ('http://docs.sqlalchemy.org/en/latest/', None),
 }
 
@@ -281,6 +281,7 @@ MOCK_MODULES = ['pycurl', 'mgmtsystem', 'ovirt-engine-sdk-python',
                 'mgmtsystem.base', 'mgmtsystem.exceptions',
                 'mgmtsystem.ec2', 'mgmtsystem.openstack', 'mgmtsystem.rhevm',
                 'mgmtsystem.scvmm', 'mgmtsystem.virtualcenter', 'mgmtsystem.kubernetes',
-                'mgmtsystem.openshift', 'mgmtsystem.rest_client',
+                'mgmtsystem.openshift', 'mgmtsystem.rest_client', 'mgmtsystem.openstack_infra',
+                'mgmtsystem.hawkular',
                 'ovirtsdk.xml']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
