@@ -84,7 +84,7 @@ def test_provider_crud(provider):
     Metadata:
         test_flag: crud
     """
-    provider.create()
+    provider.create(method="ui")
     provider.validate_stats(ui=True)
 
     old_name = provider.name
@@ -94,7 +94,7 @@ def test_provider_crud(provider):
     with update(provider):
         provider.name = old_name  # old name
 
-    provider.delete(cancel=False)
+    provider.delete(method="ui", cancel=False)
     provider.wait_for_delete()
 
 
