@@ -1293,6 +1293,8 @@ class IPAppliance(object):
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
         try:
+            if not self.is_downstream:
+                return self.address
             db = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db')['server']['host']
             db = db.strip()
             ip_addr = self.ssh_client.run_command('ip address show')
