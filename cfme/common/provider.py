@@ -72,7 +72,8 @@ class BaseProvider(Taggable, Updateable):
     detail_page_suffix = ""
     refresh_text = ""
     quad_name = None
-    properties_form = None
+    _properties_form = None
+    _properties_region = None
     add_provider_button = None
     save_button = None
 
@@ -90,6 +91,13 @@ class BaseProvider(Taggable, Updateable):
             self.domain = kwargs.get('domain', None)
             if self.type == 'token':
                 self.token = kwargs['token']
+
+    @property
+    def properties_form(self):
+        if self._properties_region:
+            return self._properties_region.properties_form
+        else:
+            return self._properties_form
 
     @property
     def data(self):

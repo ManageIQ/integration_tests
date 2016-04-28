@@ -714,11 +714,15 @@ def get_crud(provider_config_name):
             key=provider_config_name)
     elif prov_type == 'openstack':
         from cfme.cloud.provider import OpenStackProvider
+        amqp_credentials = process_credential_yaml_key(
+            prov_config['amqp_credentials'], cred_type='amqp')
         return OpenStackProvider(name=prov_config['name'],
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
             api_port=prov_config['port'],
-            credentials={'default': credentials},
+            credentials={
+                'default': credentials,
+                'amqp': amqp_credentials},
             zone=prov_config['server_zone'],
             key=provider_config_name,
             sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),

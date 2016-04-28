@@ -53,7 +53,7 @@ class HawkularProvider(BaseProvider):
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
     quad_name = None
-    properties_form = properties_form
+    _properties_form = properties_form
     add_provider_button = form_buttons.FormButton("Add this Middleware Provider")
     save_button = form_buttons.FormButton("Save Changes")
 

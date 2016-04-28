@@ -112,7 +112,7 @@ class Provider(Pretty, CloudInfraProvider):
     instances_page_name = "infra_vm_and_templates"
     templates_page_name = "infra_vm_and_templates"
     quad_name = "infra_prov"
-    properties_form = properties_form
+    _properties_form = properties_form
     add_provider_button = deferred_verpick({
         version.LOWEST: form_buttons.FormButton("Add this Infrastructure Provider"),
         '5.6': form_buttons.add

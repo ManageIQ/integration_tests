@@ -19,6 +19,7 @@ from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect
 from cfme.web_ui import Input
+from cfme.web_ui.tabstrip import TabStripForm
 from utils.log import logger
 from utils.providers import setup_provider_by_name
 from utils.wait import wait_for
@@ -36,7 +37,7 @@ discover_form = Form(
         ('start_button', form_buttons.FormButton("Start the Host Discovery"))
     ])
 
-properties_form = Form(
+properties_form_55 = Form(
     fields=[
         ('type_select', {version.LOWEST: Select('select#server_emstype'),
             '5.5': AngularSelect("emstype")}),
@@ -58,6 +59,38 @@ properties_form = Form(
             "5.4": Select("select#provider_id"),
             "5.5": AngularSelect("provider_id")}),
     ])
+
+properties_form_56 = TabStripForm(
+    fields=[
+        ('type_select', {version.LOWEST: Select('select#server_emstype'),
+            '5.5': AngularSelect("emstype")}),
+        ('name_text', Input("name")),
+        ('amazon_region_select', {version.LOWEST: Select("select#provider_region"),
+            "5.5": AngularSelect("provider_region")}),
+        ("api_version", AngularSelect("api_version")),
+        ('infra_provider', AngularSelect("provider_id")),
+    ],
+    tab_fields={
+        "Default": [
+            ('hostname_text', Input("default_hostname")),
+            ('api_port', Input("default_api_port")),
+            ('sec_protocol', AngularSelect("default_security_protocol")),
+        ],
+        "AMQP": [
+            ('amqp_hostname_text', Input("amqp_hostname")),
+            ('amqp_api_port', Input("amqp_api_port")),
+            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol")),
+        ]
+    })
+
+prop_region = Region(
+    locators={
+        'properties_form': {
+            version.LOWEST: properties_form_55,
+            '5.6': properties_form_56,
+        }
+    }
+)
 
 details_page = Region(infoblock_type='detail')
 
@@ -105,7 +138,7 @@ class Provider(Pretty, CloudInfraProvider):
     quad_name = "cloud_prov"
     vm_name = "Instances"
     template_name = "Images"
-    properties_form = properties_form
+    _properties_region = prop_region  # This will get resolved in common to a real form
     # Specific Add button
     add_provider_button = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton("Add this Cloud Provider"),
@@ -170,7 +203,10 @@ class OpenStackProvider(Provider):
                 'api_port': kwargs.get('api_port'),
                 'ipaddress_text': kwargs.get('ip_address'),
                 'sec_protocol': kwargs.get('sec_protocol'),
-                'infra_provider': "---" if infra_provider is False else infra_provider}
+                'infra_provider': "---" if infra_provider is False else infra_provider,
+                'amqp_hostname_text': kwargs.get('hostname'),
+                'amqp_api_port': kwargs.get('api_port'),
+                'amqp_sec_protocol': kwargs.get('sec_protocol')}
 
 
 def get_all_providers(do_not_navigate=False):
