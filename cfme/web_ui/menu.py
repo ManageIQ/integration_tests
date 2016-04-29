@@ -10,20 +10,33 @@ from utils import version
 
 
 class Menu(UINavigate):
+    """ Menu class for navigation
+
+    The Menu() class uses the UINavigate() class to supply an instance of a menu. This menu is a
+    navigatable system that uses destination endpoints and traverses each endpoint in a path and
+    run the function associated with that destination, toreach the final destination.
+
+    In CFME, an example would be navigating to the form to add a new provider. We have a
+    ``clouds_providers`` destination which will ensure we are logged in
+    and sitting at the Clouds / Providers page. Then there will be a ``add_new_cloud_provider``
+    destination, which will have the ``clouds_provider`` as it's parent. When navigating to
+    ``add_new_cloud_provider``, we will first run the function associated with the parent
+    ``clouds_provider`` and then run the next function which is associated with the final endpoint.
+
+    The Menu() system is used extensively in CFME-QE and is often grafted onto at module import.
+    To accomplish this, the Menu uses a deferral system to stack up graft requests until the menu
+    is ready to be initialized. This is necessary because Menu now needs to know what *version* of
+    the product it is dealing with.
+
+    :py:meth:`Menu.initialize` is used to initialize the object and collapse the stacked tree
+    grafts. It is currently called inside :py:func:`cfme.fixtures.pytest_selenium.force_navigate`
+    so it is set up *just* before the navigation is requested.
+    """
+
+    # 5.5- locators
     toplevel_tabs_loc = '//nav[contains(@class, "navbar")]/div/ul[@id="maintab"]'
     toplevel_loc = toplevel_tabs_loc + ('/li/a[normalize-space(.)="{}"'
         'and (contains(@class, "visible-lg"))]')
-
-    # Upstream
-    ROOT = '//ul[@id="maintab"]/..'
-    NAMED_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
-        '/a[normalize-space(.)="{}"]')
-    ACTIVE_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"active")]'
-        '/a')
-    ANY_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
-        '/a')
-
-    # 5.5
     TOP_LEV_ACTIVE = '//ul[@id="maintab"]/li[contains(@class,"active")]/a[normalize-space(.)="{}"]'
     TOP_LEV_INACTIVE = ('//ul[@id="maintab"]/li[contains(@class,"dropdown")]'
         '/a[normalize-space(.)="{}"]')
@@ -32,14 +45,24 @@ class Menu(UINavigate):
     SECOND_LEV_ACTIVE_HREF = '/../ul[contains(@class,"nav")]/li/a[@href="{}"]'
     SECOND_LEV_INACTIVE_HREF = '/../ul[contains(@class,"dropdown-menu")]/li/a[@href="{}"]'
 
+    # Upstream locators
+    ROOT = '//ul[@id="maintab"]/..'
+    NAMED_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
+        '/a[normalize-space(.)="{}"]')
+    ACTIVE_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"active")]'
+        '/a')
+    ANY_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
+        '/a')
+
     def __init__(self):
         self._branches = None
         self._branch_stack = []
         super(Menu, self).__init__()
 
     def initialize(self):
+        """Initializes the menu object by collapsing the grafted tree items onto the tree"""
         if not self._branches:
-            self._branches = self.branch_convert(self.sections)
+            self._branches = self._branch_convert(self.sections)
             self.add_branch('toplevel', self._branches)
             while self._branch_stack:
                 name, branches = self._branch_stack.pop(0)
@@ -50,6 +73,17 @@ class Menu(UINavigate):
                 self.CURRENT_TOP_MENU = "{}{}".format(self.ROOT, self.ACTIVE_LEV)
 
     def add_branch(self, name, branches):
+        """Adds a branch to the tree at a given destination
+
+        This method will either:
+
+        * Add the tree item to a stack to be precessed in the :py:meth:`Menu.initialize` method
+        * Directly add the tree item to the UINavigate class
+
+        This decision is based on whether the :py:meth:`Menu.initialize` method has already been
+        called. As there are a default set of navigation endpoints that are always present in the
+        tree, the :py:meth:`Menu.initialize` method is only ever able to be run once.
+        """
         if self._branches:
             super(Menu, self).add_branch(name, branches)
         else:
@@ -60,6 +94,13 @@ class Menu(UINavigate):
         return self.get_current_menu_state()[0]
 
     def get_current_menu_state(self):
+        """Returns the current menu state
+
+        This function returns what each level of the menu is pointing to, or None, if that level
+        of menu is unused. Future work could possibly see this method using recursion to allow
+        unlimited levels of menu to be used, however it is unlikely that more than 3 will ever be
+        used.
+        """
         lev = [None, None, None]
         lev[0] = (sel.text(self.CURRENT_TOP_MENU).encode("utf-8").strip())
         if version.current_version() < "5.6.0.1" or version.current_version() == version.LATEST:
@@ -89,10 +130,22 @@ class Menu(UINavigate):
 
     @property
     def sections(self):
-        # Dictionary of (nav destination name, section title) section tuples
-        # Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel
-        # sections
-        # You can also add a resetting callable that is called after clicking the second level.
+        """Dictionary of navigation elements.
+
+        These can be either (nav destination name, section title) section tuples, or dictionary
+        objects containing more section tuples.
+        Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel
+        sections, or thirdlevel sections.
+        You can also add a resetting callable that is called after clicking the second or third
+        level.
+
+        The main tab destination is usually the first secondlevel page in that tab
+        Since this is redundant, it's arguable that the toplevel tabs should be
+        nav destination at all; they're included here "just in case". The toplevel
+        and secondlevel destinations exist at the same level of nav_tree because the
+        secondlevel destinations don't depend on the toplevel nav taking place to reach
+        their destination.
+        """
         if version.current_version() < "5.6.0.1" or version.current_version() == version.LATEST:
             sections = {
                 ('cloud_intelligence', 'Cloud Intelligence'): (
@@ -278,6 +331,13 @@ class Menu(UINavigate):
         return sections
 
     def is_page_active(self, toplevel, secondlevel=None, thirdlevel=None):
+        """ Checks three levels of menu to return if the menu is active
+
+        Usage:
+
+          menu.is_page_active('Compute', 'Clouds', 'Providers')
+          menu.is_page_active('Compute', 'Clouds')
+        """
         present = self.get_current_menu_state()
         required = toplevel, secondlevel, thirdlevel
         for present, required in zip(present, required):
@@ -310,8 +370,14 @@ class Menu(UINavigate):
                     nav_fn()
 
     @classmethod
-    def nav_to_fn(cls, toplevel, secondlevel=None, thirdlevel=None, reset_action=None,
+    def _nav_to_fn(cls, toplevel, secondlevel=None, thirdlevel=None, reset_action=None,
             _final=False):
+        """ Returns a navigation function
+
+        This is a helper function that returns another function that knows how to navigate to
+        a particular destination. It is used internally in the menu system.
+        """
+
         def f(_):
             # Can't do this currently because silly menu traps us
             # if is_page_active(toplevel, secondlevel):
@@ -346,7 +412,7 @@ class Menu(UINavigate):
                 el = "{} | {}".format(active_loc, inactive_loc)
                 cls._try_nav(el)
 
-            nav_fn = lambda: cls.nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
+            nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
             cls._try_reset_action(reset_action, _final, nav_fn)
             # todo move to element on the active tab to clear the menubox
             sel.wait_for_ajax()
@@ -361,7 +427,7 @@ class Menu(UINavigate):
                     break
             cls._try_nav(loc)
 
-            nav_fn = lambda: cls.nav_to_fn(toplevel, secondlevel, thirdlevel, reset_action,
+            nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, thirdlevel, reset_action,
                 _final=True)
             cls._try_reset_action(reset_action, _final, nav_fn)
 
@@ -438,6 +504,7 @@ class Menu(UINavigate):
         return process_level(self.sections)
 
     def _old_visible_toplevel_tabs(self):
+        """Method returning the visible toplevel_tabs in 5.4"""
         menu_names = []
         ele = 'li/a[2]'
 
@@ -446,7 +513,7 @@ class Menu(UINavigate):
         return menu_names
 
     def _old_visible_pages(self):
-        # Gather up all the visible toplevel tabs
+        """Method returning the visible pages in 5.4"""
         menu_names = self._old_visible_toplevel_tabs()
 
         # Now go from tab to tab and pull the secondlevel names from the visible links
@@ -461,7 +528,7 @@ class Menu(UINavigate):
         # Do reverse lookups so we can compare to the list of nav destinations for this group
 
     def _new_visible_pages(self):
-
+        """Method returning the visible toplevel_tabs in 5.6+"""
         nodes = []
 
         def proc_node(loc, c=0, prev_node=None):
@@ -492,16 +559,8 @@ class Menu(UINavigate):
         return sorted(
             [self.reverse_lookup(*displayed) for displayed in displayed_menus if displayed])
 
-    # Construct the nav tree based on sections
-
-    # The main tab destination is usually the first secondlevel page in that tab
-    # Since this is redundant, it's arguable that the toplevel tabs should be
-    # nav destination at all; they're included here "just in case". The toplevel
-    # and secondlevel destinations exist at the same level of nav_tree because the
-    # secondlevel destinations don't depend on the toplevel nav taking place to reach
-    # their destination.
-
-    def branch_convert(self, input_set):
+    def _branch_convert(self, input_set):
+        """Converts a set of nav points into the graftable tree nodes for the UINavigate module"""
         _branches = dict()
         for (toplevel_dest, toplevel), secondlevels in input_set.items():
             if isinstance(secondlevels, dict):
@@ -515,9 +574,9 @@ class Menu(UINavigate):
                         else:
                             raise Exception(
                                 "Wrong length of menu navigation tuple! ({})".format(len(level)))
-                        _branches[thirdlevel_dest] = self.nav_to_fn(
+                        _branches[thirdlevel_dest] = self._nav_to_fn(
                             toplevel, secondlevel, thirdlevel, reset_action)
-                    _branches[secondlevel_dest] = self.nav_to_fn(
+                    _branches[secondlevel_dest] = self._nav_to_fn(
                         toplevel, secondlevel, reset_action)
             else:
                 for level in secondlevels:
@@ -529,9 +588,9 @@ class Menu(UINavigate):
                     else:
                         raise Exception(
                             "Wrong length of menu navigation tuple! ({})".format(len(level)))
-                    _branches[secondlevel_dest] = self.nav_to_fn(
+                    _branches[secondlevel_dest] = self._nav_to_fn(
                         toplevel, secondlevel, reset_action)
-            _branches[toplevel_dest] = [self.nav_to_fn(toplevel, None), {}]
+            _branches[toplevel_dest] = [self._nav_to_fn(toplevel, None), {}]
         return _branches
 
 
@@ -609,6 +668,10 @@ def extend_nav(cls):
 
     Args:
         cls: Class to be decorated.
+
+    Note:
+        This class currently is incompatible with a multiple menu object system. It relies on
+        the ``nav`` attribute of this module. It needs to be fixed before FW3.0.
     """
     nav.add_branch(cls.__name__, _scavenge_class(cls, ignore_navigate=True))
     return cls
