@@ -41,9 +41,25 @@ def verify_vm_power_state(vm, state, minutes=10, action=None):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud' and current_version() <= "5.5.2.4")
+    lambda provider: provider.category == 'cloud' and current_version() < "5.6.0")
 @pytest.mark.parametrize("from_detail", [True, False], ids=["cfrom_detail", "from_collection"])
 def test_stop(rest_api, vm_obj, from_detail):
+    """Test stop of vm
+
+    Prerequisities:
+
+        * An appliance with ``/api`` available.
+        * VM
+
+    Steps:
+
+        * POST /api/vms/<id> (method ``stop``)
+        OR
+        * POST /api/vms (method ``stop``) with ``href`` of the vm or vms
+
+    Metadata:
+        test_flag: rest
+    """
     vm = vm_obj.get_vm_via_rest()
     assert "stop" in vm.action
     verify_vm_power_state(vm, state=vm_obj.STATE_ON)
@@ -51,33 +67,103 @@ def test_stop(rest_api, vm_obj, from_detail):
         vm.action.stop()
     else:
         rest_api.collections.vms.action.stop(vm)
-    wait_for(lambda: vm .power_state == vm_obj.STATE_OFF,
+    wait_for(lambda: vm.power_state == vm_obj.STATE_OFF,
         num_sec=1000, delay=20, fail_func=vm.reload,
         message='Wait for VM to stop (current state: {})'.format(vm.power_state))
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud' and current_version() <= "5.5.2.4")
+    lambda provider: provider.category == 'cloud' and current_version() < "5.6.0")
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_start(rest_api, vm_obj, from_detail):
+    """Test start vm
+
+    Prerequisities:
+
+        * An appliance with ``/api`` available.
+        * VM
+
+    Steps:
+
+        * POST /api/vms/<id> (method ``start``)
+        OR
+        * POST /api/vms (method ``start``) with ``href`` of the vm or vms
+
+    Metadata:
+        test_flag: rest
+    """
     vm = vm_obj.get_vm_via_rest()
     assert "start" in vm.action
     verify_vm_power_state(vm, state=vm_obj.STATE_SUSPENDED,
         action=rest_api.collections.vms.action.suspend)
-    vm.action.start()
-    wait_for(lambda: vm .power_state == vm_obj.STATE_ON,
+    if from_detail:
+        vm.action.start()
+    else:
+        rest_api.collections.vms.action.start(vm)
+    wait_for(lambda: vm.power_state == vm_obj.STATE_ON,
         num_sec=1000, delay=20, fail_func=vm.reload,
         message='Wait for VM to stop (current state: {})'.format(vm.power_state))
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud' and current_version() <= "5.5.2.4")
+    lambda provider: provider.category == 'cloud' and current_version() < "5.6.0")
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_suspend(rest_api, vm_obj, from_detail):
+    """Test suspend vm
+
+    Prerequisities:
+
+        * An appliance with ``/api`` available.
+        * VM
+
+    Steps:
+
+        * POST /api/vms/<id> (method ``suspend``)
+        OR
+        * POST /api/vms (method ``suspend``) with ``href`` of the vm or vms
+
+    Metadata:
+        test_flag: rest
+    """
     vm = vm_obj.get_vm_via_rest()
     assert "suspend" in vm.action
     verify_vm_power_state(vm, state=vm_obj.STATE_ON)
-    vm.action.suspend()
-    wait_for(lambda: vm .power_state == vm_obj.STATE_SUSPENDED,
+    if from_detail:
+        vm.action.suspend()
+    else:
+        rest_api.collections.vms.action.suspend(vm)
+    wait_for(lambda: vm.power_state == vm_obj.STATE_SUSPENDED,
         num_sec=1000, delay=20, fail_func=vm.reload,
         message='Wait for VM to stop (current state: {})'.format(vm.power_state))
+
+
+@pytest.mark.uncollectif(lambda: current_version() < "5.6.0")
+@pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
+def test_reset_vm(rest_api, vm_obj, from_detail):
+    """
+    Test reset vm
+
+    Prerequisities:
+
+        * An appliance with ``/api`` available.
+        * VM
+
+    Steps:
+
+        * POST /api/vms/<id> (method ``reset``)
+        OR
+        * POST /api/vms (method ``reset``) with ``href`` of the vm or vms
+
+    Metadata:
+        test_flag: rest
+    """
+    vm = vm_obj.get_vm_via_rest()
+    assert "reset" in vm.action
+    verify_vm_power_state(vm, state=vm_obj.STATE_ON)
+    old_date = vm.updated_on
+    if from_detail:
+        vm.action.reset()
+    else:
+        vm_obj.get_collection_via_rest().action.reset(vm)
+    wait_for(lambda: vm.updated_on >= old_date,
+        num_sec=600, delay=20, fail_func=vm.reload, message='Wait for VM to reset')

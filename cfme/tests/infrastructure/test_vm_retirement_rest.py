@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 import pytest
 import fauxfactory
@@ -33,11 +34,18 @@ def vm(request, a_provider, rest_api):
     ids=["from_collection", "from_detail"])
 def test_retire_vm_now(rest_api, vm, multiple):
     """Test retirement of vm
+
     Prerequisities:
+
         * An appliance with ``/api`` available.
         * VM
+
     Steps:
-        * POST /api/vm/<id> (method ``retire``)
+
+        * POST /api/vms/<id> (method ``retire``)
+        OR
+        * POST /api/vms (method ``retire``) with ``href`` of vm vm or vms
+
     Metadata:
         test_flag: rest
     """
@@ -67,11 +75,18 @@ def test_retire_vm_now(rest_api, vm, multiple):
     ids=["from_collection", "from_detail"])
 def test_retire_vm_future(rest_api, vm, multiple):
     """Test retirement of vm
+
     Prerequisities:
+
         * An appliance with ``/api`` available.
         * VM
+
     Steps:
-        * POST /api/vm/<id> (method ``retire``) with the ``retire_date``
+
+        * POST /api/vms/<id> (method ``retire``) with the ``retire_date``
+        OR
+        * POST /api/vms (method ``retire``) with the ``retire_date`` and ``href`` of the vm or vms
+
     Metadata:
         test_flag: rest
     """
@@ -79,7 +94,7 @@ def test_retire_vm_future(rest_api, vm, multiple):
     assert "retire" in rest_api.collections.vms.action.all
 
     retire_vm = rest_api.collections.vms.get(name=vm)
-    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime('%m/%d/%y')
+    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime('%m/%d/%Y')
     future = {
         "date": date,
         "warn": "4",
