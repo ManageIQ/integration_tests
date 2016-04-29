@@ -443,9 +443,12 @@ class Table(Pretty):
     def find_rows_by_cells(self, cells, partial_check=False):
         """A fast row finder, based on cell content.
 
+        If you pass a regexp as a value, then it will be used with its ``.match()`` method.
+
         Args:
             cells: A dict of ``header: value`` pairs or a sequence of
                 nested ``(header, value)`` pairs.
+            partial_check: If to use the ``in`` operator rather than ``==``.
 
         Returns: A list of containing :py:class:`Table.Row` objects whose contents
             match all of the header: value pairs in ``cells``
@@ -479,10 +482,15 @@ class Table(Pretty):
 
         # Only include rows where the expected values are in the right columns
         matching_rows = list()
-        if partial_check:
-            matching_row_filter = lambda heading, value: value in row[heading].text
-        else:
-            matching_row_filter = lambda heading, value: row[heading].text == value
+
+        def matching_row_filter(heading, value):
+            if isinstance(value, re._pattern_type):
+                return value.match(row[heading].text) is not None
+            elif partial_check:
+                return row[heading].text in value
+            else:
+                return row[heading].text == value
+
         for row in rows:
             if all(matching_row_filter(*cell) for cell in cells.items()):
                 matching_rows.append(row)
@@ -950,48 +958,48 @@ class CheckboxTable(Table):
         """
         self._set_rows(cell_map, False)
 
-    def _set_row_by_cells(self, cells, set_to=False):
-        row = self.find_row_by_cells(cells)
+    def _set_row_by_cells(self, cells, set_to=False, partial_check=False):
+        row = self.find_row_by_cells(cells, partial_check=partial_check)
         self._set_row_checkbox(row, set_to)
 
-    def select_row_by_cells(self, cells):
+    def select_row_by_cells(self, cells, partial_check=False):
         """Select the first row matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
 
         """
-        self._set_row_by_cells(cells, True)
+        self._set_row_by_cells(cells, True, partial_check)
 
-    def deselect_row_by_cells(self, cells):
+    def deselect_row_by_cells(self, cells, partial_check=False):
         """Deselect the first row matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
 
         """
-        self._set_row_by_cells(cells, False)
+        self._set_row_by_cells(cells, False, partial_check)
 
-    def _set_rows_by_cells(self, cells, set_to=False):
+    def _set_rows_by_cells(self, cells, set_to=False, partial_check=False):
         rows = self.find_rows_by_cells(cells)
         for row in rows:
             self._set_row_checkbox(row, set_to)
 
-    def select_rows_by_cells(self, cells):
+    def select_rows_by_cells(self, cells, partial_check=False):
         """Select the rows matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
         """
-        self._set_rows_by_cells(cells, True)
+        self._set_rows_by_cells(cells, True, partial_check)
 
-    def deselect_rows_by_cells(self, cells):
+    def deselect_rows_by_cells(self, cells, partial_check=False):
         """Deselect the rows matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
         """
-        self._set_rows_by_cells(cells, False)
+        self._set_rows_by_cells(cells, False, partial_check)
 
 
 class SplitCheckboxTable(SplitTable, CheckboxTable):
