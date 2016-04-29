@@ -27,7 +27,7 @@ file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
     YUM=yum
   fi
 
-  sudo $YUM install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config
+  sudo $YUM install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++
   virtualenv .cfme_tests
   echo "export PYTHONPATH='`pwd`'" | tee -a ./.cfme_tests/bin/activate
   echo "export PYTHONDONTWRITEBYTECODE=yes" | tee -a ./.cfme_tests/bin/activate
