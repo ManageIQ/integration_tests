@@ -6,6 +6,7 @@ from cfme.web_ui.menu import nav
 
 from . import cfg_btn, mon_btn, pol_btn, list_tbl
 from utils.varmeth import variable
+from cfme.fixtures import pytest_selenium as sel
 
 nav.add_branch(
     'middleware_providers',
@@ -54,10 +55,12 @@ class HawkularProvider(BaseProvider):
     refresh_text = "Refresh items and relationships"
     quad_name = None
     _properties_form = properties_form
-    add_provider_button = form_buttons.FormButton("Add this Middleware Provider")
+    add_provider_button = form_buttons.FormButton(
+        "Add this Middleware Provider")
     save_button = form_buttons.FormButton("Save Changes")
 
-    def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None):
+    def __init__(self, name=None, hostname=None,
+                 port=None, credentials=None, key=None):
         self.name = name
         self.hostname = hostname
         self.port = port
@@ -87,3 +90,17 @@ class HawkularProvider(BaseProvider):
     @num_server.variant('ui')
     def num_server_ui(self):
         return int(self.get_detail("Relationships", "Middleware Servers"))
+
+    def nav_to_provider_view(self):
+        sel.force_navigate('middleware_providers', context={
+            'provider': self})
+
+    def nav_to_provider_detailed_view(self):
+        if not self._on_detail_page():
+            self.load_details()
+#            sel.force_navigate('middleware_provider_detail', context={
+#               'provider': self})
+
+    def _on_detail_page(self):
+        sel.ensure_browser_open()
+        return sel.is_displayed_text("{} (Summary)".format(self.name))
