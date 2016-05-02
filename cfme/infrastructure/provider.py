@@ -10,24 +10,22 @@
 """
 from functools import partial
 
-from utils.db import cfmedb
-import cfme.fixtures.pytest_selenium as sel
-from cfme.infrastructure.host import Host
-from cfme.web_ui.menu import nav
-import cfme.web_ui.toolbar as tb
 from cfme.common.provider import CloudInfraProvider
-import utils.conf as conf
+from cfme.fixtures import pytest_selenium as sel
+from cfme.infrastructure.host import Host
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect
+    AngularSelect, toolbar as tb
 )
 from cfme.web_ui.form_buttons import FormButton
+from cfme.web_ui.menu import nav
+from utils import conf, deferred_verpick, version
 from utils.api import rest_api
+from utils.db import cfmedb
 from utils.log import logger
-from utils.wait import wait_for
-from utils import version, deferred_verpick
 from utils.pretty import Pretty
 from utils.varmeth import variable
+from utils.wait import wait_for
 
 
 details_page = Region(infoblock_type='detail')
