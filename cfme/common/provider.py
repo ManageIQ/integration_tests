@@ -316,6 +316,19 @@ class BaseProvider(Taggable, Updateable):
         except AttributeError:
             return None
 
+    def _num_db_generic(self, table_str):
+        """ Fetch number of rows related to this provider in a given table
+
+        Args:
+            table_str: Name of the table; e.g. 'vms' or 'hosts'
+        """
+        res = cfmedb().engine.execute(
+            "SELECT count(*) "
+            "FROM ext_management_systems, {0} "
+            "WHERE {0}.ems_id=ext_management_systems.id "
+            "AND ext_management_systems.name='{1}'".format(table_str, self.name))
+        return int(res.first()[0])
+
     def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None, ui=False):
         """ A private function to match a set of statistics, with a Provider.
 
