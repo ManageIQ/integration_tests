@@ -108,14 +108,6 @@ class Provider(BaseProvider, Pretty):
         self.navigate(detail=True)
         return details_page.infoblock.text(*ident)
 
-    def _num_db_generic(self, table_str):
-        res = cfmedb().engine.execute(
-            "SELECT count(*) "
-            "FROM ext_management_systems, {0} "
-            "WHERE {0}.ems_id=ext_management_systems.id "
-            "AND ext_management_systems.name='{1}'".format(table_str, self.name))
-        return int(res.first()[0])
-
     @variable(alias='db')
     def num_project(self):
         return self._num_db_generic('container_projects')
