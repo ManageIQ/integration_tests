@@ -487,7 +487,7 @@ class Table(Pretty):
             if isinstance(value, re._pattern_type):
                 return value.match(row[heading].text) is not None
             elif partial_check:
-                return row[heading].text in value
+                return value in row[heading].text
             else:
                 return row[heading].text == value
 
