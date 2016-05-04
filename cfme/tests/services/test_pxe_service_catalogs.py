@@ -61,7 +61,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
     if not pxe_server.exists():
         pxe_server.create()
