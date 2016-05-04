@@ -637,7 +637,7 @@ class Table(Pretty):
             """
             Returns Row element by header name
             """
-            return self.columns[self.table.header_indexes[name.lower()]]
+            return self.columns[self.table.header_indexes[_convert_header(name)]]
 
         def __getitem__(self, index):
             """
