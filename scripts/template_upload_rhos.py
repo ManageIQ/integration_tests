@@ -179,11 +179,14 @@ def make_kwargs_rhos(cfme_data, provider):
 
 
 def upload_template(rhosip, sshname, sshpass, username, password, auth_url, provider, image_url,
-                    template_name):
+                    template_name, provider_data):
     try:
         print("RHOS:{} Starting template {} upload...".format(provider, template_name))
 
-        kwargs = make_kwargs_rhos(cfme_data, provider)
+        if provider_data:
+            kwargs = make_kwargs_rhos(provider_data, provider)
+        else:
+            kwargs = make_kwargs_rhos(cfme_data, provider)
         ssh_client = make_ssh_client(rhosip, sshname, sshpass)
 
         kwargs['image_url'] = image_url
@@ -195,16 +198,19 @@ def upload_template(rhosip, sshname, sshpass, username, password, auth_url, prov
         if not check_image_exists(template_name, export, ssh_client):
             output = upload_qc2_file(ssh_client, kwargs.get('image_url'), template_name, export,
                                      provider)
-
-            image_id = get_image_id(output)
-
-            wait_for(check_image_status, [image_id, export, ssh_client],
-                     fail_condition=False, delay=5, num_sec=300)
+            if not output:
+                print("RHOS:{} Error occurred in upload_qc2_file".format(provider, template_name))
+            else:
+                image_id = get_image_id(output)
+                wait_for(check_image_status, [image_id, export, ssh_client],
+                         fail_condition=False, delay=5, num_sec=300)
+                print("RHOS:{} Successfully uploaded the template.".format(provider))
         else:
             print("RHOS:{} Found image with name {}. Exiting...".format(provider, template_name))
         ssh_client.close()
     except Exception as e:
         print(e)
+        print("RHOS:{} Error occurred in upload_qc2_file".format(provider, template_name))
         return False
     finally:
         print("RHOS:{} End template {} upload...".format(provider, template_name))
@@ -213,17 +219,28 @@ def upload_template(rhosip, sshname, sshpass, username, password, auth_url, prov
 def run(**kwargs):
 
     thread_queue = []
-    for provider in list_providers("openstack"):
-        mgmt_sys = cfme_data['management_systems'][provider]
-        rhos_credentials = credentials[mgmt_sys['credentials']]
-        default_host_creds = credentials['host_default']
-
-        username = rhos_credentials['username']
-        password = rhos_credentials['password']
-        auth_url = mgmt_sys['auth_url']
-        rhosip = mgmt_sys['ipaddress']
-        sshname = default_host_creds['username']
-        sshpass = default_host_creds['password']
+    providers = list_providers("openstack")
+    if kwargs['provider_data']:
+        provider_data = kwargs['provider_data']
+        mgmt_sys = providers = provider_data['management_systems']
+    for provider in providers:
+        if kwargs['provider_data']:
+            if mgmt_sys[provider]['type'] != 'openstack':
+                continue
+            username = mgmt_sys[provider]['username']
+            password = mgmt_sys[provider]['password']
+            sshname = mgmt_sys[provider]['sshname']
+            sshpass = mgmt_sys[provider]['sshpass']
+        else:
+            mgmt_sys = cfme_data['management_systems']
+            rhos_credentials = credentials[mgmt_sys[provider]['credentials']]
+            default_host_creds = credentials['host_default']
+            username = rhos_credentials['username']
+            password = rhos_credentials['password']
+            sshname = default_host_creds['username']
+            sshpass = default_host_creds['password']
+        rhosip = mgmt_sys[provider]['ipaddress']
+        auth_url = mgmt_sys[provider]['auth_url']
         if not net.is_pingable(rhosip):
             continue
         if not net.net_check(ports.SSH, rhosip):
@@ -232,7 +249,8 @@ def run(**kwargs):
             continue
         thread = Thread(target=upload_template,
                         args=(rhosip, sshname, sshpass, username, password, auth_url, provider,
-                              kwargs.get('image_url'), kwargs.get('template_name')))
+                              kwargs.get('image_url'), kwargs.get('template_name'),
+                              kwargs['provider_data']))
         thread.daemon = True
         thread_queue.append(thread)
         thread.start()

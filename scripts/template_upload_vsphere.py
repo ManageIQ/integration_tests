@@ -56,9 +56,9 @@ def parse_cmd_line():
     return args
 
 
-def check_template_exists(client, name):
+def check_template_exists(client, name, provider):
     if name in client.list_template():
-        print("VSPHERE: A Machine with that name already exists")
+        print("VSPHERE:{} template {} already exists".format(provider, name))
         return True
     else:
         return False
@@ -92,6 +92,7 @@ def upload_ova(hostname, username, password, name, datastore,
     sshclient = make_ssh_client(ovf_tool_client, default_user, default_pass)
     command = ' '.join(cmd_args)
     output = sshclient.run_command(command)[1]
+    sshclient.close()
 
     if "successfully" in output:
         print(" VSPHERE:{} Upload completed".format(provider))
@@ -286,6 +287,8 @@ def make_kwargs_vsphere(cfme_data, provider):
     disk = temp_up.get('disk', None)
     template = temp_up.get('template', None)
     kwargs['ovf_tool_client'] = temp_up.get('ovf_tool_client', None)
+    kwargs['ovf_tool_username'] = temp_up.get('ovf_tool_username', None)
+    kwargs['ovf_tool_password'] = temp_up.get('ovf_tool_password', None)
 
     if template:
         kwargs['template'] = template
@@ -298,11 +301,17 @@ def make_kwargs_vsphere(cfme_data, provider):
 
 
 def upload_template(client, hostname, username, password,
-                    provider, url, name, default_username,
-                    default_password):
+                    provider, url, name, provider_data):
 
     try:
-        kwargs = make_kwargs_vsphere(cfme_data, provider)
+        if provider_data:
+            kwargs = make_kwargs_vsphere(provider_data, provider)
+            ovftool_username = kwargs['ovf_tool_username']
+            ovftool_password = kwargs['ovf_tool_password']
+        else:
+            kwargs = make_kwargs_vsphere(cfme_data, provider)
+            ovftool_username = credentials['host_default']['username']
+            ovftool_password = credentials['host_default']['password']
 
         if name is None:
             name = cfme_data['basic_info']['appliance_template']
@@ -310,7 +319,7 @@ def upload_template(client, hostname, username, password,
         print("VSPHERE:{} Start uploading Template: {}".format(provider, name))
         if not check_kwargs(**kwargs):
             return False
-        if not check_template_exists(client, name):
+        if not check_template_exists(client, name, provider):
             if kwargs.get('upload'):
                 # Wrapper for ovftool - sometimes it just won't work
                 ova_ret, ova_out = (1, 'no output yet')
@@ -327,7 +336,7 @@ def upload_template(client, hostname, username, password,
                                                   provider,
                                                   kwargs.get('proxy'),
                                                   kwargs.get('ovf_tool_client'),
-                                                  default_username, default_password)
+                                                  ovftool_username, ovftool_password)
                     if ova_ret is 0:
                         break
                 if ova_ret is -1:
@@ -352,17 +361,22 @@ def run(**kwargs):
 
     try:
         thread_queue = []
-        for provider in list_providers("virtualcenter"):
-
-            mgmt_sys = cfme_data['management_systems'][provider]
-            creds = credentials[mgmt_sys['credentials']]
-
-            hostname = mgmt_sys['hostname']
-            username = creds['username']
-            password = creds['password']
-            default_name = credentials['host_default']['username']
-            default_password = credentials['host_default']['password']
-            host_ip = mgmt_sys['ipaddress']
+        providers = list_providers("virtualcenter")
+        if kwargs['provider_data']:
+            mgmt_sys = providers = kwargs['provider_data']['management_systems']
+        for provider in providers:
+            if kwargs['provider_data']:
+                if mgmt_sys[provider]['type'] != 'virtualcenter':
+                    continue
+                username = mgmt_sys[provider]['username']
+                password = mgmt_sys[provider]['password']
+            else:
+                mgmt_sys = cfme_data['management_systems']
+                creds = credentials[mgmt_sys[provider]['credentials']]
+                username = creds['username']
+                password = creds['password']
+            host_ip = mgmt_sys[provider]['ipaddress']
+            hostname = mgmt_sys[provider]['hostname']
             client = VMWareSystem(hostname, username, password)
 
             if not net.is_pingable(host_ip):
@@ -370,7 +384,7 @@ def run(**kwargs):
             thread = Thread(target=upload_template,
                             args=(client, hostname, username, password, provider,
                                   kwargs.get('image_url'), kwargs.get('template_name'),
-                                  default_name, default_password))
+                                  kwargs['provider_data']))
             thread.daemon = True
             thread_queue.append(thread)
             thread.start()
