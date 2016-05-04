@@ -13,7 +13,10 @@ from cfme.web_ui import Quadicon, fill
 from utils import testgen
 from utils import version
 
-pytestmark = [pytest.mark.meta(blockers=[1296258])]
+pytestmark = [
+    pytest.mark.meta(blockers=[1296258]),
+    pytest.mark.tier(3),
+]
 
 
 def config_option():
