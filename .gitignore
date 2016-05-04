@@ -58,8 +58,7 @@ docs/_build
 docs/modules
 
 # Ipython notebooks need to be explicitly added
-notebooks/*.ipynb
-notebooks/.ipynb_checkpoints
+notebooks/*
 
 # automation artifacts
 .generated_ssh_key*
