@@ -1,3 +1,4 @@
+from cfme.common import Validatable
 from cfme.common.provider import BaseProvider
 from cfme.web_ui import (
     Form, AngularSelect, form_buttons, Input
@@ -47,8 +48,10 @@ properties_form = Form(
     ])
 
 
-class HawkularProvider(BaseProvider):
+class HawkularProvider(BaseProvider, Validatable):
     STATS_TO_MATCH = ['num_server', 'num_deployment']
+    property_tuples = [('name', 'Name'), ('hostname', 'Host Name'), ('port', 'Port'),
+                       ('provider_type', 'Type')]
 
     page_name = 'middleware'
     string_name = 'Middleware'
@@ -64,6 +67,7 @@ class HawkularProvider(BaseProvider):
         self.name = name
         self.hostname = hostname
         self.port = port
+        self.provider_type = 'Hawkular'
         if not credentials:
             credentials = {}
         self.credentials = credentials
