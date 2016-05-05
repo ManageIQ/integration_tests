@@ -551,7 +551,13 @@ def clear_middleware_providers(validate=True):
     total = paginator.rec_total()
     if total > 0:
         logger.info(' Providers exist, so removing all middleware providers')
-        # TODO: remove providers
+        paginator.results_per_page('100')
+        sel.click(paginator.check_all())
+        toolbar.select('Configuration', 'Remove Middleware Providers from the VMDB',
+                       invokes_alert=True)
+        sel.handle_alert()
+        if validate:
+            wait_for_no_middleware_providers()
 
 
 def get_paginator_value():

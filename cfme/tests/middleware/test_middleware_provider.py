@@ -19,7 +19,10 @@ def test_hawkular_crud(provider):
     added providers between test runs
     """
     provider.create(cancel=False, validate_credentials=False)
-
+    # UI validation, checks whether data provided from Hawkular provider matches data in UI
+    provider.validate_stats(ui=True)
+    # DB validation, checks whether data provided from Hawkular provider matches data in DB
+    provider.validate_stats()
     # TODO validate provider details via mgmt_system
 
     old_name = provider.name
