@@ -8,6 +8,8 @@ import random
 from utils.providers import setup_a_provider
 from utils import version
 
+pytestmark = [pytest.mark.tier(3)]
+
 
 @pytest.fixture(scope="module")
 def provider():
