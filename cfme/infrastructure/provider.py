@@ -10,24 +10,23 @@
 """
 from functools import partial
 
-from utils.db import cfmedb
-import cfme.fixtures.pytest_selenium as sel
-from cfme.infrastructure.host import Host
-from cfme.web_ui.menu import nav
-import cfme.web_ui.toolbar as tb
 from cfme.common.provider import CloudInfraProvider
-import utils.conf as conf
+from cfme.fixtures import pytest_selenium as sel
+from cfme.infrastructure.host import Host
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect
+    AngularSelect, toolbar as tb
 )
 from cfme.web_ui.form_buttons import FormButton
+from cfme.web_ui.menu import nav
+from cfme.web_ui.tabstrip import TabStripForm
+from utils import conf, deferred_verpick, version
 from utils.api import rest_api
+from utils.db import cfmedb
 from utils.log import logger
-from utils.wait import wait_for
-from utils import version, deferred_verpick
 from utils.pretty import Pretty
 from utils.varmeth import variable
+from utils.wait import wait_for
 
 
 details_page = Region(infoblock_type='detail')
@@ -64,6 +63,42 @@ properties_form = Form(
         ('sec_realm', Input("realm"))
     ])
 
+
+tabbed_properties_form = TabStripForm(
+    fields=[
+        ('type_select', {
+            version.LOWEST: Select('select#server_emstype'),
+            '5.5': AngularSelect("server_emstype"),
+            '5.6': AngularSelect("emstype")}),
+        ('name_text', Input("name")),
+        ('api_version', AngularSelect("api_version")),
+    ],
+    tab_fields={
+        "Default": [
+            ('hostname_text', Input("default_hostname")),
+            ('api_port', Input("default_api_port")),
+            ('sec_protocol', AngularSelect("default_security_protocol")),
+        ],
+        "AMQP": [
+            ('amqp_hostname_text', Input("amqp_hostname")),
+            ('amqp_api_port', Input("amqp_api_port")),
+            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol")),
+        ],
+        "C & U Database": [
+            ('candu_hostname_text', Input("metrics_hostname")),
+            ('acandu_api_port', Input("metrics_api_port")),
+        ]
+    })
+
+
+prop_region = Region(
+    locators={
+        'properties_form': {
+            version.LOWEST: properties_form,
+            '5.6': tabbed_properties_form,
+        }
+    }
+)
 
 manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
@@ -178,7 +213,7 @@ class Provider(Pretty, CloudInfraProvider):
         try:
             num = int(self.get_detail("Relationships", "Hosts", use_icon=True))
         except:
-            logger.log("Couldn't find number of hosts using key [Hosts] trying Nodes")
+            logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
             num = int(self.get_detail("Relationships", "Nodes", use_icon=True))
         return num
 
@@ -256,6 +291,7 @@ class VMwareProvider(Provider):
 
 class OpenstackInfraProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_host']
+    _properties_region = prop_region
 
     def __init__(self, name=None, credentials=None, key=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None,
@@ -310,6 +346,8 @@ class SCVMMProvider(Provider):
 
 
 class RHEVMProvider(Provider):
+    _properties_region = prop_region
+
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, start_ip=None, end_ip=None,
                  provider_data=None):
