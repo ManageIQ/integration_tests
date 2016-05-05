@@ -71,6 +71,8 @@ ssa_expect_file = "/etc/hosts"
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
     argnames, argvalues, idlist = testgen.all_providers(metafunc)
+    # if metafunc.function is not test_ssa_template:
+    argnames.append('analysis_type')
 
     new_idlist = []
     new_argvalues = []
@@ -78,12 +80,18 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
 
+        # if metafunc.function is test_ssa_template:
+        #    new_idlist.append(args['provider'].key)
+        #    new_argvalues.append([args["provider"]])
+        #    continue
+
         vms = []
         provisioning_data = []
 
         try:
-            vms = argvalue_tuple[0].get("vms")
-            provisioning_data = argvalue_tuple[0].get("provisioning")
+            vma_data = args['provider'].data.get('vm_analysis_new', {})
+            vms = vma_data.get("vms", {})
+            provisioning_data = vma_data.get("provisioning", {})
         except AttributeError:
             # Provider has no provisioning and/or vms list set
             continue
@@ -104,18 +112,13 @@ def pytest_generate_tests(metafunc):
                     continue
 
             # Set VM name here
-            vm_name = 'test_ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), vm_analysis_key)
-            vm_analysis_data['vm_name'] = vm_name
-
             new_idlist.append('{}-{}'.format(idlist[i], vm_analysis_key))
-            new_argvalues.append([vm_analysis_data, args["provider"]])
-
+            new_argvalues.append([args["provider"], vm_analysis_key])
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 @pytest.fixture(scope="module")
-def local_setup_provider(request, setup_provider_modscope, provider):
-    vm_analysis_new = provider.data['vm_analysis_new']
+def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis_data):
     if provider.type == 'rhevm' and version.current_version() < "5.5":
         # See https://bugzilla.redhat.com/show_bug.cgi?id=1300030
         pytest.skip("SSA is not supported on RHEVM for appliances earlier than 5.5 and upstream")
@@ -125,7 +128,7 @@ def local_setup_provider(request, setup_provider_modscope, provider):
     if provider.type == 'virtualcenter':
         store.current_appliance.install_vddk(reboot=True, wait_for_web_ui_after_reboot=True)
         ensure_browser_open()
-        set_host_credentials(request, vm_analysis_new, provider)
+        set_host_credentials(request, provider, vm_analysis_data)
 
     # Make sure all roles are set
     roles = configuration.get_server_roles(db=False)
@@ -135,14 +138,13 @@ def local_setup_provider(request, setup_provider_modscope, provider):
     configuration.set_server_roles(**roles)
 
 
-def set_host_credentials(request, provider):
+def set_host_credentials(request, provider, vm_analysis_data):
     # Add credentials to host
-    vm_analysis_new = provider.data['vm_analysis_new']
-    test_host = host.Host(name=vm_analysis_new['host'])
+    test_host = host.Host(name=vm_analysis_data['host'])
     wait_for(lambda: test_host.exists, delay=10, num_sec=120)
 
     host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
-    host_data = [x for x in host_list if x.name == vm_analysis_new['host']][0]
+    host_data = [x for x in host_list if x.name == vm_analysis_data['host']][0]
 
     if not test_host.has_valid_credentials:
         test_host.update(
@@ -161,12 +163,24 @@ def set_host_credentials(request, provider):
 
 
 @pytest.fixture(scope="module")
-def instance(request, local_setup_provider, provider):
+def vm_name(provider, analysis_type):
+    vm_name = 'test_ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
+    return vm_name
+
+
+@pytest.fixture(scope="module")
+def vm_analysis_data(provider, analysis_type):
+    base_data = provider.data.get('vm_analysis_new', {}).get('provisioning', {})
+    base_data.update(provider.data.get('vm_analysis_new', {}).get('vms', {}).get(analysis_type, {}))
+    return base_data
+
+
+@pytest.fixture(scope="module")
+def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data):
     """ Fixture to provision instance on the provider """
-    vm_analysis_new = provider.data['vm_analysis_new']
-    vm_name = vm_analysis_new.get('vm_name')
-    template = vm_analysis_new.get('image', None)
-    host_name, datastore_name = map(vm_analysis_new.get, ('host', 'datastore'))
+
+    template = vm_analysis_data.get('image', None)
+    host_name, datastore_name = map(vm_analysis_data.get, ('host', 'datastore'))
 
     mgmt_system = provider.get_mgmt_system()
 
@@ -177,7 +191,7 @@ def instance(request, local_setup_provider, provider):
     }
 
     try:
-        provisioning_data['vlan'] = vm_analysis_new['vlan']
+        provisioning_data['vlan'] = vm_analysis_data['vlan']
     except KeyError:
         # provisioning['vlan'] is required for rhevm provisioning
         if provider.type == 'rhevm':
@@ -187,7 +201,7 @@ def instance(request, local_setup_provider, provider):
 
     connect_ip = None
     if provider.type == "openstack":
-        image = vm_analysis_new['image']
+        image = vm_analysis_data['image']
         vm = VM.factory(vm_name, provider, image)
         request.addfinalizer(vm.delete_from_provider)
         connect_ip = mgmt_system.get_first_floating_ip()
@@ -199,10 +213,10 @@ def instance(request, local_setup_provider, provider):
             'template_name': image,
             'notes': ('Testing provisioning from image {} to vm {} on provider {}'.format(
                 image, vm_name, provider.key)),
-            'instance_type': vm_analysis_new['instance_type'],
-            'availability_zone': vm_analysis_new['availability_zone'],
-            'security_groups': [vm_analysis_new['security_group']],
-            'cloud_network': vm_analysis_new['cloud_network'],
+            'instance_type': vm_analysis_data['instance_type'],
+            'availability_zone': vm_analysis_data['availability_zone'],
+            'security_groups': [vm_analysis_data['security_group']],
+            'cloud_network': vm_analysis_data['cloud_network'],
             'public_ip_address': connect_ip,
         }
         vm.create(**inst_args)
@@ -229,16 +243,16 @@ def instance(request, local_setup_provider, provider):
     # Check that we can at least get the uptime via ssh this should only be possible
     # if the username and password have been set via the cloud-init script so
     # is a valid check
-    if vm_analysis_new['fs-type'] not in ['ntfs', 'fat32']:
+    if vm_analysis_data['fs-type'] not in ['ntfs', 'fat32']:
         logger.info("Waiting for %s to be available via SSH", connect_ip)
-        ssh_client = ssh.SSHClient(hostname=connect_ip, username=vm_analysis_new['username'],
-                                   password=vm_analysis_new['password'], port=22)
+        ssh_client = ssh.SSHClient(hostname=connect_ip, username=vm_analysis_data['username'],
+                                   password=vm_analysis_data['password'], port=22)
         wait_for(ssh_client.uptime, num_sec=3600, handle_exception=False)
         vm.ssh = ssh_client
 
     vm.system_type = detect_system_type(vm)
     logger.info("Detected system type: %s", vm.system_type)
-    vm.image = vm_analysis_new['image']
+    vm.image = vm_analysis_data['image']
     vm.connect_ip = connect_ip
 
     if provider.type == 'rhevm':
@@ -314,19 +328,19 @@ def detect_system_type(vm):
     BZ(1311218, unblock=lambda provider:
         provider.type != 'virtualcenter' or provider.version < "6"),
     BZ(1320248, unblock=lambda provider: version.current_version() >= "5.5")])
-def test_ssa_template(request, local_setup_provider, provider, soft_assert):
+def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_analysis_data):
     """ Tests SSA can be performed on a template
 
     Metadata:
         test_flag: vm_analysis
     """
-    vm_analysis_new = provider.data['vm_analysis_new']
-    template_name = vm_analysis_new['image']
+
+    template_name = vm_analysis_data['image']
     template = Template.factory(template_name, provider, template=True)
 
     # Set credentials to all hosts set for this datastore
     if provider.type != 'openstack':
-        datastore_name = vm_analysis_new['datastore']
+        datastore_name = vm_analysis_data['datastore']
         test_datastore = datastore.Datastore(datastore_name, provider.key)
         host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
         host_names = test_datastore.get_hosts()
@@ -357,13 +371,13 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert):
     c_users = InfoBlock.text('Security', 'Users')
     c_groups = InfoBlock.text('Security', 'Groups')
     c_packages = 0
-    if vm_analysis_new['fs-type'] not in ['ntfs', 'fat32']:
+    if vm_analysis_data['fs-type'] not in ['ntfs', 'fat32']:
         c_packages = InfoBlock.text('Configuration', 'Packages')
 
     logger.info("SSA shows {} users, {} groups and {} packages".format(
         c_users, c_groups, c_packages))
 
-    if vm_analysis_new['fs-type'] not in ['ntfs', 'fat32']:
+    if vm_analysis_data['fs-type'] not in ['ntfs', 'fat32']:
         soft_assert(c_users != '0', "users: '{}' != '0'".format(c_users))
         soft_assert(c_groups != '0', "groups: '{}' != '0'".format(c_groups))
         soft_assert(c_packages != '0', "packages: '{}' != '0'".format(c_packages))
