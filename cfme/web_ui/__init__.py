@@ -2838,6 +2838,20 @@ class ButtonGroup(object):
         self.key = key
 
     @property
+    def _icon_tag(self):
+        if version.current_version() >= 5.6:
+            return 'i'
+        else:
+            return 'img'
+
+    @property
+    def _state_attr(self):
+        if version.current_version() >= 5.6:
+            return 'title'
+        else:
+            return 'alt'
+
+    @property
     def locator(self):
         attr = re.sub(r"&amp;", "&", quoteattr(self.key))  # We don't need it in xpath
         if version.current_version() < "5.5":
@@ -2862,18 +2876,19 @@ class ButtonGroup(object):
     @property
     def active(self):
         """ Returns the alt tag text of the active button in thr group. """
-        loc = sel.element(self.locator_base + '/ul/li[@class="active"]/img')
-        return loc.get_attribute('alt')
+        loc = sel.element(self.locator_base + '/ul/li[@class="active"]/{}'.format(self._icon_tag))
+        return loc.get_attribute(self._state_attr)
 
     def status(self, alt):
         """ Returns the status of the button identified by the Alt Text of the image. """
-        active_loc = self.locator_base + '/ul/li/img[@alt="{}"]'.format(alt)
+        active_loc = self.locator_base + '/ul/li/{}[@{}="{}"]'.format(
+            self._icon_tag, self._state_attr, alt)
         try:
             sel.element(active_loc)
             return True
         except NoSuchElementException:
             pass
-        inactive_loc = self.locator_base + '/ul/li/a/img[@alt="{}"]'.format(alt)
+        inactive_loc = self.locator_base + '/ul/li/a/{}[@alt="{}"]'.format(self._icon_tag, alt)
         try:
             sel.element(inactive_loc)
             return False
@@ -2883,7 +2898,7 @@ class ButtonGroup(object):
     def choose(self, alt):
         """ Sets the ButtonGroup to select the button identified by the alt text. """
         if not self.status(alt):
-            inactive_loc = self.locator_base + '/ul/li/a/img[@alt="{}"]'.format(alt)
+            inactive_loc = self.locator_base + '/ul/li/a/{}[@alt="{}"]'.format(self._icon_tag, alt)
             sel.click(inactive_loc)
 
 
