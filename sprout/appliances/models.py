@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
+import re
 import yaml
 
 import mgmtsystem
 
+from cached_property import cached_property
 from celery import chain
 from contextlib import contextmanager
 from datetime import timedelta, date
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
+from django.db.models import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -17,6 +20,7 @@ from sprout import critical_section
 from sprout.log import create_logger
 
 from utils.appliance import Appliance as CFMEAppliance, IPAppliance
+from utils.bz import Bugzilla
 from utils.conf import cfme_data
 from utils.providers import get_mgmt
 from utils.timeutil import nice_seconds
@@ -1100,3 +1104,46 @@ class UserApplianceQuota(models.Model):
     per_pool_quota = models.IntegerField(null=True, blank=True)
     total_pool_quota = models.IntegerField(null=True, blank=True)
     total_vm_quota = models.IntegerField(null=True, blank=True)
+
+
+class BugQuery(models.Model):
+    EMAIL_PLACEHOLDER = re.compile(r'\{\{EMAIL\}\}')
+    name = models.CharField(max_length=64)
+    url = models.TextField()
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+
+    @property
+    def is_global(self):
+        return self.owner is None
+
+    @property
+    def is_parametrized(self):
+        return self.EMAIL_PLACEHOLDER.search(self.url) is not None
+
+    @cached_property
+    def bugzilla(self):
+        # Returns the original bugzilla object
+        return Bugzilla.from_config().bugzilla
+
+    def query_for_user(self, user):
+        if self.is_parametrized:
+            if not user.email:
+                return None
+            url = self.EMAIL_PLACEHOLDER.sub(user.email, self.url)
+        else:
+            url = self.url
+        return self.bugzilla.url_to_query(url)
+
+    def list_bugs(self, user):
+        query = self.query_for_user(user)
+        if query is None:
+            return []
+        else:
+            return self.bugzilla.query(query)
+
+    @classmethod
+    def visible_for_user(cls, user):
+        return [
+            bq for bq in
+            cls.objects.filter(Q(owner=None) | Q(owner=user)).order_by('owner', 'id')
+            if not (bq.is_parametrized and not user.email)]

@@ -44,6 +44,9 @@
           <a href="{% url 'jsonapi_doc' %}">API Reference</a>
         </li>
         {% if user.is_authenticated %}
+            <li id="bugs">
+              <a href="{% url 'view_bug_queries' %}">Bugs</a>
+            </li>
             <li id="providers">
               <a href="{% url 'providers' %}">Providers</a>
             </li>
