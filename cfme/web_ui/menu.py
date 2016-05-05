@@ -49,6 +49,9 @@ class Menu(UINavigate):
     ROOT = '//ul[@id="maintab"]/..'
     NAMED_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
         '/a[normalize-space(.)="{}"]')
+    NAMED_LEV_HREF = (
+        '/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
+        '/a[@href="{}"]')
     ACTIVE_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"active")]'
         '/a')
     ANY_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
@@ -422,7 +425,11 @@ class Menu(UINavigate):
             loc = cls.ROOT
             for arg in args:
                 if arg:
-                    loc = "{}{}".format(loc, cls.NAMED_LEV).format(arg)
+                    if arg.startswith("/"):
+                        loc_to_use = cls.NAMED_LEV_HREF
+                    else:
+                        loc_to_use = cls.NAMED_LEV
+                    loc = "{}{}".format(loc, loc_to_use).format(arg)
                 else:
                     break
             cls._try_nav(loc)
