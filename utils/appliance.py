@@ -192,6 +192,7 @@ class IPAppliance(object):
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def _configure_upstream(self, log_callback=None):
+        self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
         self.deploy_merkyl(start=True, log_callback=log_callback)
         self.fix_ntp_clock(log_callback=log_callback)
         self.setup_upstream_db(log_callback=log_callback)
@@ -854,7 +855,7 @@ class IPAppliance(object):
         # back up pg_hba.conf
         scl = db.scl_name()
         client.run_command('mv /opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf '
-            '/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf.sav'.format(scl=scl))
+                           '/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf.sav'.format(scl=scl))
 
         if with_ssl:
             ssl = 'hostssl all all all cert map=sslmap'
@@ -1065,6 +1066,18 @@ class IPAppliance(object):
         else:
             return unsure
 
+    def is_evm_service_running(self):
+        """checks the ``evmserverd`` service status on this appliance
+        """
+        with self.ssh_client as ssh:
+            status, output = ssh.run_command('service evmserverd status')
+
+            if status == 0:
+                msg = 'evmserverd is active(running)'.format(self.address, output)
+                self.log.info(msg)
+                return True
+            return False
+
     @logger_wrap("Restart EVM Service: {}")
     def restart_evm_service(self, rude=False, log_callback=None):
         """Restarts the ``evmserverd`` service on this appliance
@@ -1074,7 +1087,7 @@ class IPAppliance(object):
             if rude:
                 status, msg = ssh.run_command('killall -9 ruby; service evmserverd start')
             else:
-                status, msg = ssh.run_command('service evmserverd restart')
+                status, msg = ssh.run_command('systemctl restart evmserverd')
 
             if status != 0:
                 msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
@@ -1109,6 +1122,18 @@ class IPAppliance(object):
                 msg = 'Failed to start evmserverd on {}\nError: {}'.format(self.address, output)
                 log_callback(msg)
                 raise ApplianceException(msg)
+
+    @logger_wrap("Waiting for evmserverd: {}")
+    def wait_for_evm_service(self, timeout=900, log_callback=None):
+        """Waits for the evemserverd service to be running
+
+        Args:
+            timeout: Number of seconds to wait until timeout (default ``600``)
+        """
+        (log_callback or self.log.info)('Waiting for evmserverd to be active')
+        result, wait = wait_for(self.is_evm_service_running, num_sec=timeout,
+                                fail_condition=False, delay=10)
+        return result
 
     @logger_wrap("Rebooting Appliance: {}")
     def reboot(self, wait_for_web_ui=True, log_callback=None):
