@@ -377,9 +377,8 @@ def test_alert_crud(soft_assert):
         alert.notification_frequency = "2 Hours"
     sel.force_navigate("control_explorer_alert_edit", context={"alert_name": alert.description})
     soft_assert(
-        sel.text(
-            alert.form.notification_frequency.first_selected_option
-        ).strip() == "2 Hours", "Modification failed!"
+        (alert.form.notification_frequency.first_selected_option[0]
+         .strip()) == "2 Hours", "Modification failed!"
     )
     # D
     alert.delete()
