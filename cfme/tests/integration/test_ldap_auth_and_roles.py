@@ -41,4 +41,4 @@ def test_group_roles(configure_ldap_auth_mode, group_name, group_data, setup_fir
         pytest.fail('No match in credentials file for group "{}"'.format(group_name))
 
     login(simple_user(username, password))
-    assert set(menu.visible_pages()) == set(group_data)
+    assert set(menu.nav.visible_pages()) == set(group_data)
