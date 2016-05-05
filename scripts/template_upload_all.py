@@ -20,12 +20,11 @@ The scripts for respective providers are:
 import argparse
 import re
 import datetime
-
+import sys
+import utils
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
-
 from utils.conf import cfme_data
-
 
 CFME_BREW_ID = "cfme"
 NIGHTLY_MIQ_ID = "manageiq"
@@ -34,7 +33,10 @@ NIGHTLY_MIQ_ID = "manageiq"
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--stream', dest='stream',
-                        help='Stream to work with (downstream, upstream, upstream_stable)',
+                        help='Stream to work with (downstream, upstream, upstream_stable)'
+                             'please check the cfme_data file for current streams. old streams'
+                             'can be specified as e.g downstream_542, downstream_532,'
+                             'downstream56_beta1',
                         default=None)
     parser.add_argument('--provider-type', dest='provider_type',
                         help='Type of provider to upload to (virtualcenter, rhevm, openstack)',
@@ -42,6 +44,9 @@ def parse_cmd_line():
     parser.add_argument('--provider-version', dest='provider_version',
                         help='Version of chosen provider',
                         default=None)
+    parser.add_argument('--provider-data', dest='provider_data',
+                        help='Version of chosen provider',
+                        default=False)
     args = parser.parse_args()
     return args
 
@@ -258,15 +263,24 @@ def browse_directory(dir_url):
     return name_dict
 
 
-if __name__ == "__main__":
-
-    args = parse_cmd_line()
+def main():
 
     urls = cfme_data['basic_info']['cfme_images_url']
     stream = args.stream or cfme_data['template_upload']['stream']
-    mgmt_sys = cfme_data['management_systems']
     provider_type = args.provider_type or cfme_data['template_upload']['provider_type']
-    provider_version = args.provider_version or cfme_data['template_upload']['provider_version']
+
+    if stream:
+        urls = {}
+        image_url = cfme_data['basic_info']['cfme_images_url']
+        urls[stream] = image_url.get(stream, None)
+        if not urls[stream]:
+            image_url = cfme_data['basic_info']['cfme_old_images_url']
+            urls[stream] = image_url.get(stream, None)
+        if not urls[stream]:
+            base_url = cfme_data['basic_info']['cfme_old_images_url']['base_url']
+            version = ''.join(re.findall(r'(\d+)', stream))
+            urls[stream] = \
+                base_url + '.'.join(version[:2]) + '/' + '.'.join(version) + '/'
 
     for key, url in urls.iteritems():
         if stream is not None:
@@ -283,6 +297,8 @@ if __name__ == "__main__":
             continue
 
         kwargs = {}
+        if not provider_type:
+            sys.exit('specify the provider_type')
         if provider_type == 'openstack':
             module = 'template_upload_rhos'
             if module not in dir_files.iterkeys():
@@ -300,6 +316,11 @@ if __name__ == "__main__":
             if module not in dir_files.iterkeys():
                 continue
         kwargs['image_url'] = dir_files[module]
+        if args.provider_data is True:
+            provider_data = utils.conf.provider_data
+            kwargs['provider_data'] = provider_data
+        else:
+            kwargs['provider_data'] = None
 
         if cfme_data['template_upload']['automatic_name_strategy']:
             kwargs['template_name'] = template_name(
@@ -319,3 +340,9 @@ if __name__ == "__main__":
             print(woops)
         print("TEMPLATE_UPLOAD_ALL:------End of {} upload on: {}--------".format(
             kwargs['template_name'], provider_type))
+
+
+if __name__ == "__main__":
+
+    args = parse_cmd_line()
+    sys.exit(main())
