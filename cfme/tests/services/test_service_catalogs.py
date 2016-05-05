@@ -31,6 +31,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
+@pytest.mark.tier(2)
 def test_order_catalog_item(provider, setup_provider, catalog_item, request, register_event):
     """Tests order catalog item
     Metadata:
@@ -52,6 +53,7 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
         "service", catalog_item.name, ["service_provision_complete"])
 
 
+@pytest.mark.tier(2)
 def test_order_catalog_item_via_rest(
         request, rest_api, provider, setup_provider, catalog_item, catalog):
     """Same as :py:func:`test_order_catalog_item`, but using REST.
@@ -78,6 +80,7 @@ def test_order_catalog_item_via_rest(
         return req.status.lower() == "ok" and req.request_state.lower() == "finished"
 
 
+@pytest.mark.tier(2)
 def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     """Tests ordering a catalog bundle
     Metadata:
@@ -103,6 +106,7 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
 
 # Note here this needs to be reduced, doesn't need to test against all providers
 @pytest.mark.usefixtures('has_no_infra_providers')
+@pytest.mark.tier(3)
 def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_name, dialog, catalog):
     """Tests no template catalog item
     Metadata:
@@ -120,6 +124,7 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
 
 
 @pytest.mark.meta(blockers=[BZ(1210541, forced_streams=["5.4", "5.5", "upstream"])])
+@pytest.mark.tier(3)
 def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
@@ -133,6 +138,7 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
 
 
 @pytest.mark.meta(blockers=[BZ(1210541, forced_streams=["5.4", "5.5", "upstream"])])
+@pytest.mark.tier(3)
 @pytest.mark.usefixtures('setup_provider')
 def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
