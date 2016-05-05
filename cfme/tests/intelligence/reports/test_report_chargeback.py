@@ -7,6 +7,8 @@ from cfme.intelligence.reports.reports import CustomReport
 from utils.providers import setup_a_provider
 from utils.log import logger
 
+pytestmark = [pytest.mark.tier(3)]
+
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
