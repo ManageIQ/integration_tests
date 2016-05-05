@@ -77,6 +77,7 @@ def test_delete_all_snapshots(test_vm, provider):
     snapshot2.delete_all()
 
 
+@pytest.mark.meta(blockers=[1333566])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
 def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
