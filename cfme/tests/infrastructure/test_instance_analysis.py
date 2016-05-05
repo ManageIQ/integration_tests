@@ -116,9 +116,6 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope="module")
 def local_setup_provider(request, setup_provider_modscope, provider):
     vm_analysis_new = provider.data['vm_analysis_new']
-    if provider.type == 'rhevm' and version.current_version() < "5.5":
-        # See https://bugzilla.redhat.com/show_bug.cgi?id=1300030
-        pytest.skip("SSA is not supported on RHEVM for appliances earlier than 5.5 and upstream")
     if GH("ManageIQ/manageiq:6506").blocks:
         pytest.skip("Upstream provisioning is blocked by" +
                     "https://github.com/ManageIQ/manageiq/issues/6506")
@@ -461,8 +458,7 @@ def test_ssa_vm(provider, instance, soft_assert):
     image_label = 'Parent VM'
     if provider.type == 'openstack':
         image_label = 'VM Template'
-    # 5.4 doesn't have Parent VM field
-    if version.current_version() > "5.5" and provider.type != 'openstack':
+    if provider.type != 'openstack':
         c_image = InfoBlock.text('Relationships', image_label)
         soft_assert(c_image == instance.image,
                     "image: '{}' != '{}'".format(c_image, instance.image))

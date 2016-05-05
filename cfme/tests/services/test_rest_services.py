@@ -9,7 +9,7 @@ from cfme.rest import service_catalogs as _service_catalogs
 from cfme.rest import service_templates as _service_templates
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
-from utils import error, version
+from utils import error
 
 
 class TestServiceRESTAPI(object):
@@ -136,7 +136,6 @@ class TestServiceRESTAPI(object):
 
         wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
 
-        @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
         def test_set_service_owner(self, rest_api, services):
             if "set_ownership" not in rest_api.collections.services.action.all:
                 pytest.skip("Set owner action for service is not implemented in this version")
@@ -150,7 +149,6 @@ class TestServiceRESTAPI(object):
             assert hasattr(service, "evm_owner")
             assert service.evm_owner.userid == user.userid
 
-        @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
         def test_set_services_owner(self, rest_api, services):
             if "set_ownership" not in rest_api.collections.services.action.all:
                 pytest.skip("Set owner action for service is not implemented in this version")
@@ -214,7 +212,6 @@ class TestServiceTemplateRESTAPI(object):
         with error.expected("ActiveRecord::RecordNotFound"):
             s_tpl.action.delete()
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     def test_assign_unassign_service_template_to_service_catalog(self, rest_api, service_catalogs,
             service_templates):
         """Tests assigning and unassigning the service templates to service catalog.

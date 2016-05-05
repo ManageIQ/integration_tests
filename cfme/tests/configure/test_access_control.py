@@ -16,7 +16,6 @@ from cfme.configure import tasks
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
-from utils import version
 
 records_table = Table("//div[@id='main_div']//table")
 usergrp = ac.Group(description='EvmGroup-user')
@@ -116,10 +115,7 @@ def test_user_password_required_error_validation():
         credential=Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret=None),
         email='xyz@redhat.com',
         group=group_user)
-    if version.current_version() < "5.5":
-        check = "Password_digest can't be blank"
-    else:
-        check = "Password can't be blank"
+    check = "Password can't be blank"
     with error.expected(check):
         user.create()
 
@@ -171,8 +167,7 @@ def test_delete_default_user():
     """
     user = ac.User(name='Administrator')
     sel.force_navigate("cfg_accesscontrol_users")
-    column = version.pick({version.LOWEST: "Name",
-        "5.4": "Full Name"})
+    column = "Full Name"
     row = records_table.find_row_by_cells({column: user.name})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
     tb.select('Configuration', 'Delete selected Users', invokes_alert=True)
@@ -383,18 +378,13 @@ def _test_vm_removal():
 @pytest.mark.parametrize(
     'product_features, action',
     [(
-        {version.LOWEST: [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'VM Access Rules',
-             'Modify', 'Provision VMs']],
-         '5.5': [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-             'Provision VMs']]},
-        _test_vm_provision)])
+        [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+         ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+          'Provision VMs']], _test_vm_provision)])
 def test_permission_edit(request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
     """
-    product_features = version.pick(product_features)
     request.addfinalizer(login.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
     role = ac.Role(name=role_name,
@@ -520,17 +510,9 @@ def test_permissions_role_crud():
 
 
 def test_permissions_vm_provisioning():
-    features = version.pick({
-        version.LOWEST: [
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify',
-                'Provision VMs']
-        ],
-        '5.5': [
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
-                'Provision VMs']
-        ]})
+    features = [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+                ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+                 'Provision VMs']]
     single_task_permission_test(
         features,
         {'Provision VM': _test_vm_provision}
@@ -617,7 +599,6 @@ def test_user_change_password(request):
 
 
 # Tenant/Project test cases
-@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 def test_superadmin_tenant_crud(request):
     """Test suppose to verify CRUD operations for CFME tenants
 
@@ -647,7 +628,6 @@ def test_superadmin_tenant_crud(request):
     tenant.delete()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 def test_superadmin_tenant_project_crud(request):
     """Test suppose to verify CRUD operations for CFME projects
 
@@ -686,7 +666,6 @@ def test_superadmin_tenant_project_crud(request):
     tenant.delete()
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 @pytest.mark.parametrize('number_of_childrens', [5])
 def test_superadmin_child_tenant_crud(request, number_of_childrens):
     """Test CRUD operations for CFME child tenants, where several levels of tenants are created.

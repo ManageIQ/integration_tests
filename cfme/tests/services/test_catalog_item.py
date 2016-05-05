@@ -85,7 +85,7 @@ def test_edit_tags(catalog_item):
     catalog_item.edit_tags("Cost Center *", "Cost Center 001")
 
 
-@pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.4", "5.5", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.5", "upstream"])])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):

@@ -4,9 +4,6 @@ import pytest
 from utils import testgen
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.update import update
-from utils.version import current_version
-
-pytestmark = pytest.mark.uncollectif(lambda: current_version() < "5.5")
 
 pytest_generate_tests = testgen.generate(testgen.container_providers, scope="function")
 

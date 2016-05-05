@@ -5,7 +5,6 @@ from cfme.cloud import stack
 from cfme.common.vm import VM
 from cfme.web_ui import toolbar
 from utils import testgen
-from utils.version import current_version
 import pytest
 
 
@@ -66,8 +65,7 @@ def test_delete_image(setup_provider, provider, set_grid, request):
     request.addfinalizer(reset)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < "5.4")
-def test_delete_stack(setup_provider, provider, set_grid_stack, request):
+def test_delete_stack(setup_provider, provider, remove_test, set_grid_stack, request):
     """ Tests delete stack
 
     Metadata:

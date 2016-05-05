@@ -6,7 +6,6 @@ import pytest
 import random
 
 from utils.providers import setup_a_provider
-from utils import version
 
 pytestmark = [pytest.mark.tier(3)]
 
@@ -48,8 +47,7 @@ def test_assign_compute_cluster(provider):
     cluster_name = random.choice(provider.get_yaml_data()["clusters"])
 
     cluster = cb.Assign(
-        assign_to=version.pick({version.LOWEST: 'Selected Clusters',
-                            '5.4': 'Selected Cluster / Deployment Roles'}),
+        assign_to='Selected Cluster / Deployment Roles',
         selections={
             cluster_name: "Default"
         })

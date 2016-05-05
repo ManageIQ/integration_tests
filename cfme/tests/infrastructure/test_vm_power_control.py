@@ -10,9 +10,6 @@ from cfme.web_ui import toolbar
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
-from utils.version import appliance_is_downstream, current_version
-
-appliance_is_downstream  # To shut up lint, will be used in string expression then
 
 
 pytestmark = [pytest.mark.long_running]
@@ -395,7 +392,6 @@ def test_no_template_power_control(provider, setup_provider_funcscope, soft_asse
 
 @pytest.mark.usefixtures("test_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
-@pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
 class TestPowerControlRESTAPI(object):
     @pytest.fixture(scope="function")
     def vm(self, rest_api, vm_name):
@@ -421,7 +417,6 @@ class TestPowerControlRESTAPI(object):
 
 @pytest.mark.usefixtures("test_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
-@pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
 class TestDeleteViaREST(object):
     # TODO: Put it somewhere else?
     @pytest.fixture(scope="function")

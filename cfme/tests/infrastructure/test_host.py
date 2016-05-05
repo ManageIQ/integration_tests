@@ -11,7 +11,6 @@ from cfme.infrastructure.host import credential_form
 from cfme.infrastructure.provider import details_page
 from cfme.web_ui import Quadicon, fill
 from utils import testgen
-from utils import version
 
 pytestmark = [
     pytest.mark.meta(blockers=[1296258]),
@@ -20,7 +19,7 @@ pytestmark = [
 
 
 def config_option():
-    return version.pick({version.LOWEST: 'Edit Selected Hosts', '5.4': 'Edit Selected items'})
+    return 'Edit Selected items'
 
 
 def pytest_generate_tests(metafunc):

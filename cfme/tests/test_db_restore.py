@@ -48,7 +48,7 @@ def get_appliances():
 
 @pytest.mark.uncollectif(
     lambda: not (store.current_appliance.is_downstream and
-        store.current_appliance.version >= '5.4'))
+        store.current_appliance.version >= '5.5'))
 def test_db_restore(request, soft_assert):
 
     appl1, appl2 = get_appliances()

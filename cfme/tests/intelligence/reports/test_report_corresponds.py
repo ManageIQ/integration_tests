@@ -6,7 +6,6 @@ from random import sample
 import utils
 from cfme.intelligence.reports.reports import CustomReport
 from utils.providers import get_mgmt_by_name, setup_a_provider
-from utils.version import since_date_or_version
 
 
 @pytest.fixture(scope="module")
@@ -41,12 +40,8 @@ def report_vms(setup_first_provider):
 
 @pytest.mark.meta(blockers=[1244715])
 def test_custom_vm_report(soft_assert, report_vms):
-    if since_date_or_version(version="5.4.0.0.25"):
-        cluster = "Cluster / Deployment Role Name"
-        host = "Host / Node Name"
-    else:
-        cluster = "Cluster Name"
-        host = "Host Name"
+    cluster = "Cluster / Deployment Role Name"
+    host = "Host / Node Name"
     for row in report_vms:
         if row["Name"].startswith("test_"):
             continue  # Might disappear meanwhile

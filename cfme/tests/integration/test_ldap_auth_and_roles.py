@@ -5,7 +5,6 @@ from cfme.login import login
 from cfme.web_ui import menu
 from utils.conf import credentials
 from utils.testgen import auth_groups, generate
-from utils import version
 from utils.providers import setup_a_provider
 
 pytest_generate_tests = generate(auth_groups, auth_mode='ldap')
@@ -25,13 +24,13 @@ def test_group_roles(configure_ldap_auth_mode, group_name, group_data, setup_fir
     """
 
     # This should be removed but currently these roles are subject to a bug
-    if version.current_version() >= '5.4' and group_name in ['evmgroup-administrator',
-                                                             'evmgroup-approver',
-                                                             'evmgroup-auditor',
-                                                             'evmgroup-operator',
-                                                             'evmgroup-security',
-                                                             'evmgroup-support',
-                                                             'evmgroup-user']:
+    if group_name in ['evmgroup-administrator',
+                     'evmgroup-approver',
+                     'evmgroup-auditor',
+                     'evmgroup-operator',
+                     'evmgroup-security',
+                     'evmgroup-support',
+                     'evmgroup-user']:
         pytest.skip("This role currently fails this test")
 
     try:

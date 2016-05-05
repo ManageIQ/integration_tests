@@ -228,7 +228,6 @@ def test_remove_template_provisioning(setup_provider, provider, dialog, catalog,
     assert row.last_message.text == 'Service_Template_Provisioning failed'
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_retire_stack(setup_provider, provider, dialog, catalog, request):
     """Tests stack provisioning
 

@@ -119,7 +119,7 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
     flash.assert_message_match("'Catalog/Name' is required")
 
 
-@pytest.mark.meta(blockers=[BZ(1210541, forced_streams=["5.4", "5.5", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1210541, forced_streams=["5.5", "upstream"])])
 def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
     Metadata:
