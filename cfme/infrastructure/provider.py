@@ -213,7 +213,7 @@ class Provider(Pretty, CloudInfraProvider):
         try:
             num = int(self.get_detail("Relationships", "Hosts", use_icon=True))
         except:
-            logger.log("Couldn't find number of hosts using key [Hosts] trying Nodes")
+            logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
             num = int(self.get_detail("Relationships", "Nodes", use_icon=True))
         return num
 
