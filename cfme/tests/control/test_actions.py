@@ -499,6 +499,7 @@ def test_action_power_on_audit(
     wait_for(search_logs, num_sec=180, message="log search")
 
 
+@pytest.mark.meta(blockers=[1333566])
 def test_action_create_snapshot_and_delete_last(
         request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
@@ -543,6 +544,7 @@ def test_action_create_snapshot_and_delete_last(
              message="wait for snapshot deleted", delay=5)
 
 
+@pytest.mark.meta(blockers=[1333566])
 def test_action_create_snapshots_and_delete_them(
         request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
