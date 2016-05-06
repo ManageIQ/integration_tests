@@ -31,7 +31,7 @@ from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.miq_soap import MiqVM
-from utils.version import current_version
+from utils.version import current_version, pick, LOWEST
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -637,8 +637,12 @@ def test_action_initiate_smartstate_analysis(
     def is_vm_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
+        tab_name = pick({
+            LOWEST: "All VM Analysis Tasks",
+            '5.6': "All VM and Container Analysis Tasks",
+        })
         if not pytest.sel.is_displayed(tasks.tasks_table) or \
-           not tabs.is_tab_selected('All VM Analysis Tasks'):
+           not tabs.is_tab_selected(tab_name):
             pytest.sel.force_navigate('tasks_all_vm')
         vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
             'task_name': "Scan from Vm {}".format(vm.name),
