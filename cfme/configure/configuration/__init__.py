@@ -114,9 +114,9 @@ category_form = Form(
         ('name', Input("name")),
         ('display_name', Input("description")),
         ('description', Input("example_text")),
-        ('show_in_console', Input("show")),
-        ('single_value', Input("single_value")),
-        ('capture_candu', Input("perf_by_tag"))
+        ('show_in_console', CFMECheckbox("show")),
+        ('single_value', CFMECheckbox("single_value")),
+        ('capture_candu', CFMECheckbox("perf_by_tag"))
     ])
 
 tag_form = Form(
@@ -124,8 +124,14 @@ tag_form = Form(
         ('category', Select("select#classification_name")),
         ('name', Input("entry[name]")),
         ('display_name', Input("entry[description]")),
-        ('add', Input("accept")),
-        ('new', "//span[@class='glyphicon glyphicon-plus']")
+        ('add', {
+            version.LOWEST: Input("accept"),
+            '5.6': '//button[normalize-space(.)="Add"]'
+        }),
+        ('new', {
+            version.LOWEST: "//span[@class='glyphicon glyphicon-plus']",
+            '5.6': '//button[normalize-space(.)="Add"]'
+        })
     ])
 
 zone_form = Form(
