@@ -70,7 +70,7 @@ class Menu(UINavigate):
             while self._branch_stack:
                 name, branches = self._branch_stack.pop(0)
                 self.add_branch(name, branches)
-            if version.current_version() < "5.6.0.1" or version.current_version() == version.LATEST:
+            if version.current_version() < "5.6.0.1":
                 self.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
             else:
                 self.CURRENT_TOP_MENU = "{}{}".format(self.ROOT, self.ACTIVE_LEV)
@@ -106,7 +106,7 @@ class Menu(UINavigate):
         """
         lev = [None, None, None]
         lev[0] = (sel.text(self.CURRENT_TOP_MENU).encode("utf-8").strip())
-        if version.current_version() < "5.6.0.1" or version.current_version() == version.LATEST:
+        if version.current_version() < "5.6.0.1":
             try:
                 lev[1] = sel.text("//nav[contains(@class, 'navbar')]//ul/li[@class='active']/a") \
                     .encode("utf-8").strip()
@@ -149,7 +149,7 @@ class Menu(UINavigate):
         secondlevel destinations don't depend on the toplevel nav taking place to reach
         their destination.
         """
-        if version.current_version() < "5.6.0.1" or version.current_version() == version.LATEST:
+        if version.current_version() < "5.6.0.1":
             sections = {
                 ('cloud_intelligence', 'Cloud Intelligence'): (
                     ('dashboard', 'Dashboard'),
@@ -438,7 +438,7 @@ class Menu(UINavigate):
                 _final=True)
             cls._try_reset_action(reset_action, _final, nav_fn)
 
-        if version.current_version() < "5.6.0.1" or version.current_version() == version.LATEST:
+        if version.current_version() < "5.6.0.1":
             return f
         else:
             return f2
@@ -559,7 +559,7 @@ class Menu(UINavigate):
         Mainly useful for RBAC testing
 
         """
-        if version.current_version() < "5.6.0.1" or version.current_version() == version.LATEST:
+        if version.current_version() < "5.6.0.1":
             displayed_menus = self._old_visible_pages()
         else:
             displayed_menus = self._new_visible_pages()

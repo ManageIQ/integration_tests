@@ -24,8 +24,6 @@ page = Region(
             '5.4': '//nav//ul[contains(@class, "navbar-utility")]'
                    '/li[contains(@class, "dropdown")]/a',
             '5.6.0.1': '//nav//a[@id="dropdownMenu2"]',
-            version.LATEST: '//nav//ul[contains(@class, "navbar-utility")]'
-                   '/li[contains(@class, "dropdown")]/a',
         }
     },
     identifying_loc='reset_widgets_button')
