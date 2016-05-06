@@ -5,6 +5,7 @@ Where possible, defaults will come from cfme_data"""
 import argparse
 import sys
 
+import utils
 from utils.appliance import Appliance
 from utils.conf import cfme_data
 from utils.log import logger
@@ -12,7 +13,7 @@ from utils.providers import destroy_vm, get_mgmt
 from utils.wait import wait_for
 
 
-def main():
+def main(**kwargs):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
@@ -22,6 +23,11 @@ def main():
     parser.add_argument('--vm_name', help='the name of the VM to create')
 
     # generic options
+    parser.add_argument('--deploy', dest='deploy',
+                        help='deploy True/False, this option to be used only to deploy template'
+                             'this option force the script to use local provider_data,'
+                             'and not cfme_data on non-cfmeqe providers from jenkins job',
+                        default=None)
     parser.add_argument('--destroy', dest='destroy', action='store_true',
                         help='Destroy the destination VM')
     parser.add_argument('--configure', default=False, action='store_true',
@@ -52,12 +58,34 @@ def main():
     args = parser.parse_args()
 
     # get_mgmt validates, since it will explode without an existing key or type
-    provider = get_mgmt(args.provider)
-    provider_dict = cfme_data['management_systems'][args.provider]
-    provider_type = provider_dict['type']
+    if kwargs.get('deploy', None):
+        provider_data = utils.conf.provider_data
+        providers = provider_data['management_systems']
+        provider_dict = provider_data['management_systems'][kwargs['provider']]
+        credentials =\
+            {'username': provider_dict['username'],
+             'password': provider_dict['password'],
+             'tenant': provider_dict['template_upload'].get('tenant_admin', None),
+             'auth_url': provider_dict.get('auth_url', None),
+             }
+        provider = get_mgmt(kwargs['provider'], providers=providers, credentials=credentials)
+        flavors = provider_dict['template_upload'].get('flavors', [])
+        provider_type = provider_data['management_systems'][kwargs['provider']]['type']
+        deploy_args = {
+            'vm_name': kwargs['vm_name'],
+            'template': kwargs['template'],
+        }
+        args.provider = kwargs['provider']
 
-    # Used by the cloud provs
-    flavors = cfme_data['appliance_provisioning']['default_flavors'].get(provider_type, [])
+    else:
+        provider = get_mgmt(args.provider)
+        provider_dict = cfme_data['management_systems'][args.provider]
+        provider_type = provider_dict['type']
+        flavors = cfme_data['appliance_provisioning']['default_flavors'].get(provider_type, [])
+        deploy_args = {
+            'vm_name': args.vm_name,
+            'template': args.template,
+        }
 
     logger.info('Connecting to {}'.format(args.provider))
 
@@ -65,12 +93,7 @@ def main():
         # TODO: destroy should be its own script
         # but it's easy enough to just hijack the parser here
         # This returns True if destroy fails to give POSIXy exit codes (0 is good, False is 0, etc)
-        return not destroy_vm(provider, args.vm_name)
-
-    deploy_args = {
-        'vm_name': args.vm_name,
-        'template': args.template,
-    }
+        return not destroy_vm(provider, deploy_args['vm_name'])
 
     # Try to snag defaults from cfme_data here for each provider type
     if provider_type == 'rhevm':
@@ -122,29 +145,30 @@ def main():
 
     # Do it!
     try:
-        logger.info('Cloning {} to {} on {}'.format(args.template, args.vm_name, args.provider))
+        logger.info('Cloning {} to {} on {}'.format(deploy_args['template'], deploy_args['vm_name'],
+                                                    args.provider))
         provider.deploy_template(**deploy_args)
     except Exception as e:
         logger.exception(e)
         logger.error('Clone failed')
         if args.cleanup:
-            logger.info('attempting to destroy {}'.format(args.vm_name))
-            destroy_vm(provider, args.vm_name)
+            logger.info('attempting to destroy {}'.format(deploy_args['vm_name']))
+            destroy_vm(provider, deploy_args['vm_name'])
             return 12
 
-    if provider.is_vm_running(args.vm_name):
-        logger.info("VM {} is running".format(args.vm_name))
+    if provider.is_vm_running(deploy_args['vm_name']):
+        logger.info("VM {} is running".format(deploy_args['vm_name']))
     else:
         logger.error("VM is not running")
         return 10
 
-    ip, time_taken = wait_for(provider.get_ip_address, [args.vm_name], num_sec=1200,
+    ip, time_taken = wait_for(provider.get_ip_address, [deploy_args['vm_name']], num_sec=1200,
                               fail_condition=None)
     logger.info('IP Address returned is {}'.format(ip))
 
     if args.configure:
         logger.info('Configuring appliance, this can take a while.')
-        app = Appliance(args.provider, args.vm_name)
+        app = Appliance(args.provider, deploy_args['vm_name'])
         app.configure()
 
     if args.outfile:

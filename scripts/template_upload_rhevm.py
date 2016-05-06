@@ -333,7 +333,7 @@ def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass, provider_ip,
     try:
         ssh_client = make_ssh_client(provider_ip, sshname, sshpass)
         edomain_path = edomainip + ':' + path
-        command = 'mkdir ~/tmp_filemount && mount -O tcp {} ~/tmp_filemount &&'.format(
+        command = 'mkdir -p ~/tmp_filemount && mount -O tcp {} ~/tmp_filemount &&'.format(
             edomain_path)
         command += 'cd ~/tmp_filemount/master/vms &&'
         command += 'find . -maxdepth 1 -type d -empty -delete &&'
@@ -520,8 +520,8 @@ def make_kwargs(args, cfme_data, **kwargs):
     return kwargs
 
 
-def make_kwargs_rhevm(cfme_data, provider):
-    data = cfme_data['management_systems'][provider]
+def make_kwargs_rhevm(cfmeqe_data, provider):
+    data = cfmeqe_data['management_systems'][provider]
     temp_up = cfme_data['template_upload']['template_upload_rhevm']
 
     edomain = data['template_upload'].get('edomain', None)
@@ -602,6 +602,12 @@ def upload_template(rhevip, sshname, sshpass, username, password,
                 change_edomain_state(api, 'active', kwargs.get('edomain'), provider)
                 ssh_client.close()
                 api.disconnect()
+        if provider_data and api.templates.get(template_name):
+            print("RHEVM:{} Deploying Template {}....".format(provider, template_name))
+            vm_name = 'test_{}_{}'.format(template_name, fauxfactory.gen_alphanumeric(8))
+            deploy_args = {'provider': provider, 'vm_name': vm_name,
+                           'template': template_name, 'deploy': True}
+            getattr(__import__('clone_template'), "main")(**deploy_args)
         print("RHEVM:{} Template {} upload Ended".format(provider, template_name))
     except Exception as e:
         print(e)

@@ -33,10 +33,10 @@ NIGHTLY_MIQ_ID = "manageiq"
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--stream', dest='stream',
-                        help='Stream to work with (downstream, upstream, upstream_stable)'
+                        help='cfme Stream template to deploy(downstream, upstream, upstream_stable)'
                              'please check the cfme_data file for current streams. old streams'
                              'can be specified as e.g downstream_542, downstream_532,'
-                             'downstream56_beta1',
+                             'upstream',
                         default=None)
     parser.add_argument('--provider-type', dest='provider_type',
                         help='Type of provider to upload to (virtualcenter, rhevm, openstack)',
@@ -45,8 +45,9 @@ def parse_cmd_line():
                         help='Version of chosen provider',
                         default=None)
     parser.add_argument('--provider-data', dest='provider_data',
-                        help='Version of chosen provider',
-                        default=False)
+                        help='options to use local provider_data and not conf/cfme_data'
+                             'to be useful for template upload/deploy by non cfmeqe',
+                        default=None)
     args = parser.parse_args()
     return args
 
@@ -316,7 +317,7 @@ def main():
             if module not in dir_files.iterkeys():
                 continue
         kwargs['image_url'] = dir_files[module]
-        if args.provider_data is True:
+        if args.provider_data is not None:
             provider_data = utils.conf.provider_data
             kwargs['provider_data'] = provider_data
         else:
