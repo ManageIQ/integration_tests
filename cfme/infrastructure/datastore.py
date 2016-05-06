@@ -32,7 +32,7 @@ pol_btn = partial(tb.select, 'Policy')
 
 def nav_to_datastore_through_provider(context):
     sel.force_navigate('infrastructure_provider', context=context)
-    list_acc.select('Relationships', 'Show all managed Datastores')
+    list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
     sel.click(Quadicon(context['datastore'].name, 'datastore'))
 
 
@@ -124,7 +124,7 @@ class Datastore(Pretty):
         if not self._on_hosts_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
             try:
-                list_acc.select('Relationships', 'Show all registered Hosts')
+                list_acc.select('Relationships', 'Hosts', by_title=False, partial=True)
             except sel.NoSuchElementException:
                 return []
         return [q.name for q in Quadicon.all("host")]
@@ -144,8 +144,7 @@ class Datastore(Pretty):
         if not self._on_vms_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
             try:
-                path = "Show registered VMs"
-                list_acc.select('Relationships', path)
+                list_acc.select('Relationships', "VMs", by_title=False, partial=True)
             except (sel.NoSuchElementException, ListAccordionLinkNotFound):
                 return []
         return [q.name for q in Quadicon.all("vm")]

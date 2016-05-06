@@ -322,7 +322,7 @@ class Host(Updateable, Pretty):
     def get_datastores(self):
         """ Gets list of all datastores used by this host"""
         sel.force_navigate('infrastructure_host', context={'host': self})
-        list_acc.select('Relationships', 'Show all Datastores')
+        list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
 
         datastores = set([])
         for page in paginator.pages():

@@ -21,7 +21,7 @@ pol_btn = partial(tb.select, 'Policy')
 
 def nav_to_cluster_through_provider(context):
     sel.force_navigate('infrastructure_provider', context=context)
-    list_acc.select('Relationships', 'Show all managed Clusters')
+    list_acc.select('Relationships', 'Clusters', by_title=False, partial=True)
     sel.click(Quadicon(context['cluster'].name, 'cluster'))
 
 

@@ -80,7 +80,7 @@ def is_active(name):
     return sel.is_displayed(_content_element(name))
 
 
-def _get_link(name, link_title_or_text, by_title=True):
+def _get_link(name, link_title_or_text, by_title=True, partial=False):
     """Retrieves the ListAccordionLink object for given accordion name and title
 
     Args:
@@ -91,10 +91,10 @@ def _get_link(name, link_title_or_text, by_title=True):
     if not is_active(name):
         click(name)
     link_root = _content_element(name)
-    return ListAccordionLink(link_title_or_text, link_root, by_title)
+    return ListAccordionLink(link_title_or_text, link_root, by_title, partial=partial)
 
 
-def select(name, link_title_or_text, by_title=True):
+def select(name, link_title_or_text, by_title=True, partial=False):
     """ Clicks an active link in accordion section
 
     Args:
@@ -102,10 +102,10 @@ def select(name, link_title_or_text, by_title=True):
         link_title_or_text: Title or text of link in expanded accordion section.
         by_title: Whether to search by title or by text.
     """
-    return _get_link(name, link_title_or_text, by_title).click()
+    return _get_link(name, link_title_or_text, by_title, partial).click()
 
 
-def is_selected(name, link_title_or_text, by_title=True):
+def is_selected(name, link_title_or_text, by_title=True, partial=False):
     """ Checks if the link in accordion section is selected
 
     Args:
@@ -113,11 +113,13 @@ def is_selected(name, link_title_or_text, by_title=True):
         link_title_or_text: Title or text of link in expanded accordion section.
         by_title: Whether to search by title or by text.
     """
-    return _get_link(name, link_title_or_text, by_title).is_selected()
+    return _get_link(name, link_title_or_text, by_title, partial=partial).is_selected()
 
 
 def get_active_links(name):
     """ Returns all active links in a section specified by name
+
+    This is only used in pagestats and is likely to be deprecated
 
     Args:
         name: Name of the section
@@ -137,24 +139,29 @@ class ListAccordionLink(Pretty):
     """
     pretty_attrs = ['title', 'root']
 
-    def __init__(self, title, root=None, by_title=True):
+    def __init__(self, title, root=None, by_title=True, partial=False):
         self.root = root
         self.title = title
+        self.partial = partial
         self.by_title = by_title
 
     def locate(self):
         """ Locates an active link.
 
         Returns: An XPATH locator for the element."""
-        if self.by_title:
-            locator = './/div[@class="panecontent"]//a[@title={title} and not(child::img)]|'\
-                      './li[not(contains(@class, "disabled"))]/a[@title={title}]'\
-                      .format(title=quoteattr(self.title))
+        if self.partial:
+            matcher = "contains({}, {})"
         else:
-            locator = (
-                './/div[@class="panecontent"]//a[normalize-space(.)={title} and not(child::img)]|'
-                './li[not(contains(@class, "disabled"))]/a[normalize-space(.)={title}]'
-                .format(title=quoteattr(self.title)))
+            matcher = "{}={}"
+        matcher = matcher.format("{}", quoteattr(self.title))
+        if self.by_title:
+            matcher = matcher.format("@title")
+        else:
+            matcher = matcher.format("normalize-space(.)")
+
+        locator = './/div[@class="panecontent"]//a[{} and not(child::img)]|'\
+            './li[not(contains(@class, "disabled"))]/a[{}]'\
+            .format(matcher, matcher)
         return locator
 
     def _check_exists(self):
