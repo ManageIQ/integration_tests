@@ -10,14 +10,25 @@ from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator, toolbar
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
-from utils.version import LOWEST
+from utils.version import LOWEST, pick
+
+
+get_tab_my = lambda: pick({
+    LOWEST: "My VM Analysis Tasks",
+    '5.6': "My VM and Container Analysis Tasks",
+})
+
+get_tab_all = lambda: pick({
+    LOWEST: "All VM Analysis Tasks",
+    '5.6': "All VM and Container Analysis Tasks",
+})
 
 
 nav.add_branch("tasks",
     dict(
-        tasks_my_vm=lambda _: tabs.select_tab("My VM Analysis Tasks"),
+        tasks_my_vm=lambda _: tabs.select_tab(get_tab_my()),
         tasks_my_other_ui=lambda _: tabs.select_tab("My Other UI Tasks"),
-        tasks_all_vm=lambda _: tabs.select_tab("All VM Analysis Tasks"),
+        tasks_all_vm=lambda _: tabs.select_tab(get_tab_all()),
         tasks_all_other=lambda _: tabs.select_tab("All Other Tasks"),
     )
 )
