@@ -35,7 +35,11 @@ def test_add_cancelled_validation():
     """Tests that the flash message is correct when add is cancelled."""
     prov = VMwareProvider()
     prov.create(cancel=True)
-    flash.assert_message_match('Add of new Infrastructure Provider was cancelled by the user')
+    if version.current_version() >= 5.6:
+        msg = 'Add of Infrastructure Provider was cancelled by the user'
+    else:
+        msg = 'Add of new Infrastructure Provider was cancelled by the user'
+    flash.assert_message_match(msg)
 
 
 @pytest.mark.sauce
