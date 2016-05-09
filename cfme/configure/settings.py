@@ -10,6 +10,7 @@ from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons
     ButtonGroup, Quadicon, CheckboxTree, Input, CFMECheckbox)
 from cfme.web_ui.menu import nav
 from utils import version
+from utils.blockers import BZ
 from utils.pretty import Pretty
 from utils.update import Updateable
 
@@ -76,7 +77,9 @@ class Timeprofile(Updateable):
                                      'timezone': self.timezone,
                                      },
              action=self.save_button)
-        flash.assert_success_message('Time Profile "{}" was added'.format(self.description))
+        tp_ui_bug = BZ(1334440, forced_streams=["5.6"])
+        if not tp_ui_bug.blocks:
+            flash.assert_success_message('Time Profile "{}" was added'.format(self.description))
 
     def update(self, updates):
         sel.force_navigate("timeprofile_edit", context={"timeprofile": self})
