@@ -7,7 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons, flash, Table,
-    ButtonGroup, Quadicon, CheckboxTree, Input)
+    ButtonGroup, Quadicon, CheckboxTree, Input, CFMECheckbox)
 from cfme.web_ui.menu import nav
 from utils import version
 from utils.pretty import Pretty
@@ -139,14 +139,14 @@ class Visual(Updateable):
 
     quadicons_form = Form(
         fields=[
-            ('infra_provider_quad', Input("quadicons_ems")),
-            ('cloud_provider_quad', Input("quadicons_ems_cloud")),
-            ('host_quad', Input("quadicons_host")),
-            ('datastore_quad', Input("quadicons_storage")),
+            ('infra_provider_quad', CFMECheckbox("quadicons_ems")),
+            ('cloud_provider_quad', CFMECheckbox("quadicons_ems_cloud")),
+            ('host_quad', CFMECheckbox("quadicons_host")),
+            ('datastore_quad', CFMECheckbox("quadicons_storage")),
             ('datastoreitem_quad', Input("quadicons_storageitem")),
-            ('vm_quad', Input("quadicons_vm")),
+            ('vm_quad', CFMECheckbox("quadicons_vm")),
             ('vmitem_quad', Input("quadicons_vmitem")),
-            ('template_quad', Input("quadicons_miq_template")),
+            ('template_quad', CFMECheckbox("quadicons_miq_template")),
         ])
 
     display_form = Form(
@@ -224,7 +224,7 @@ class Visual(Updateable):
     @infra_provider_quad.setter
     def infra_provider_quad(self, value):
         sel.force_navigate("my_settings_visual")
-        fill(self.quadicons_form.infra_provider_quad, str(value))
+        fill(self.quadicons_form.infra_provider_quad, value)
         sel.click(form_buttons.save)
 
     @property
@@ -235,7 +235,7 @@ class Visual(Updateable):
     @host_quad.setter
     def host_quad(self, value):
         sel.force_navigate("my_settings_visual")
-        fill(self.quadicons_form.host_quad, str(value))
+        fill(self.quadicons_form.host_quad, value)
         sel.click(form_buttons.save)
 
     @property
@@ -246,7 +246,7 @@ class Visual(Updateable):
     @datastore_quad.setter
     def datastore_quad(self, value):
         sel.force_navigate("my_settings_visual")
-        fill(self.quadicons_form.datastore_quad, str(value))
+        fill(self.quadicons_form.datastore_quad, value)
         sel.click(form_buttons.save)
 
     @property
@@ -257,7 +257,7 @@ class Visual(Updateable):
     @vm_quad.setter
     def vm_quad(self, value):
         sel.force_navigate("my_settings_visual")
-        fill(self.quadicons_form.vm_quad, str(value))
+        fill(self.quadicons_form.vm_quad, value)
         sel.click(form_buttons.save)
 
     @property
@@ -268,7 +268,7 @@ class Visual(Updateable):
     @template_quad.setter
     def template_quad(self, value):
         sel.force_navigate("my_settings_visual")
-        fill(self.quadicons_form.template_quad, str(value))
+        fill(self.quadicons_form.template_quad, value)
         sel.click(form_buttons.save)
 
     def check_image_exists(self):
@@ -284,7 +284,7 @@ class Visual(Updateable):
     @cloud_provider_quad.setter
     def cloud_provider_quad(self, value):
         sel.force_navigate("my_settings_visual")
-        fill(self.quadicons_form.cloud_provider_quad, str(value))
+        fill(self.quadicons_form.cloud_provider_quad, value)
         sel.click(form_buttons.save)
 
     @property
