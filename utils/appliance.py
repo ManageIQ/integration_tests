@@ -146,7 +146,7 @@ class IPAppliance(object):
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
     def configure(self, log_callback=None, **kwargs):
-        """Configures appliance - database setup, rename, ntp sync, ajax wait patch
+        """Configures appliance - database setup, rename, ntp sync
 
         Utility method to make things easier.
 
@@ -156,7 +156,6 @@ class IPAppliance(object):
             name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
             region: Number to assign to region (default ``0``)
             fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
-            patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
             loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
             key_address: Fetch encryption key from this address if set, generate a new key if
                          ``None`` (default ``None``)
@@ -508,16 +507,19 @@ class IPAppliance(object):
 
         """
         log_callback('Precompiling assets')
-
         client = self.ssh_client
-        status, out = client.run_rake_command("assets:precompile")
 
+        status, out = client.run_rake_command("assets:clobber")
+        if status != 0:
+            msg = 'Appliance {} failed to nuke old assets'.format(self.address)
+            log_callback(msg)
+            raise ApplianceException(msg)
+
+        status, out = client.run_rake_command("assets:precompile")
         if status != 0:
             msg = 'Appliance {} failed to precompile assets'.format(self.address)
             log_callback(msg)
             raise ApplianceException(msg)
-        else:
-            self.restart_evm_service()
 
         return status
 
@@ -1615,8 +1617,6 @@ class Appliance(IPAppliance):
 
         if kwargs.get('fix_ntp_clock', True) is True:
             self.fix_ntp_clock(log_callback=log_callback)
-        if kwargs.get('patch_ajax_wait', True) is True:
-            self.patch_ajax_wait(log_callback=log_callback)
         if kwargs.get('db_address', None) is None:
             self.enable_internal_db(
                 region, key_address, db_password, ssh_password, log_callback=log_callback)
@@ -1636,7 +1636,7 @@ class Appliance(IPAppliance):
 
     @logger_wrap("Configure Appliance: {}")
     def configure(self, setup_fleece=False, log_callback=None, **kwargs):
-        """Configures appliance - database setup, rename, ntp sync, ajax wait patch
+        """Configures appliance - database setup, rename, ntp sync
 
         Utility method to make things easier.
 
@@ -1646,7 +1646,6 @@ class Appliance(IPAppliance):
             name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
             region: Number to assign to region (default ``0``)
             fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
-            patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
             loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
             key_address: Fetch encryption key from this address if set, generate a new key if
                          ``None`` (default ``None``)
@@ -1846,12 +1845,12 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     Usage:
         my_appliance = provision_appliance('5.5.1.8', 'my_tests')
         my_appliance.fix_ntp_clock()
+        ...other configuration...
         my_appliance.enable_internal_db()
         my_appliance.wait_for_web_ui()
         or
         my_appliance = provision_appliance('5.5.1.8', 'my_tests')
-        my_appliance.configure(patch_ajax_wait=False)
-        (identical outcome)
+        my_appliance.configure()
     """
 
     def _generate_vm_name():

@@ -3100,8 +3100,7 @@ class AngularSelect(object):
         return el.get_attribute('aria-expanded') == "true"
 
     def open(self):
-        el = sel.element(self._loc)
-        el.click()
+        sel.click(self._loc)
 
     def select_by_visible_text(self, text):
         if not self.is_open:

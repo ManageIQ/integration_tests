@@ -16,12 +16,12 @@ import metaplugins
 from fixtures.artifactor_plugin import art_client, appliance_ip_address
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
-from utils import ports
+from utils import ports, version
 from utils.conf import rdb
 from utils.log import logger
-from utils.path import data_path
+from utils.path import data_path, patches_path
 from utils.net import net_check
-from utils.wait import TimedOutError
+from utils.wait import wait_for, TimedOutError
 
 
 class _AppliancePoliceException(Exception):
@@ -73,6 +73,40 @@ def fix_missing_hostname():
             logger.info("Hostname added")
         else:
             logger.error("Failed to add hostname")
+
+
+@pytest.fixture(scope="session", autouse=True)
+@pytest.mark.uncollectif(lambda: version.current_version() < "5.6")
+def patch_appliance():
+    """ Patch appliance over SSH"""
+    logger.info('Patching appliance')
+    # (local_path, remote_path, md5/None) trio
+    patch_args = (
+        (str(patches_path.join('miq_application.js.diff')),
+         '/var/www/miq/vmdb/app/assets/javascripts/miq_application.js',
+         None),
+        (str(patches_path.join('autofocus.js.diff')),
+         '/var/www/miq/vmdb/app/assets/javascripts/directives/autofocus.js',
+         'f5ce9fa129d1662e6fe6f7c213458227'),
+    )
+    patched_anything = False
+    ssh_client = store.current_appliance.ssh_client
+    for local_path, remote_path, md5 in patch_args:
+        res = ssh_client.patch_file(local_path, remote_path, md5)
+        patched_anything = patched_anything or res
+
+    if patched_anything:
+        logger.info("Cleaning and precompiling assets")
+        store.current_appliance.precompile_assets()
+        logger.info("Restarting evm service")
+        store.current_appliance.restart_evm_service()
+        logger.info("Waiting for Web UI to start")
+        wait_for(
+            func=store.current_appliance.is_web_ui_running,
+            message='appliance.is_web_ui_running',
+            delay=20,
+            timeout=300)
+        logger.info("Web UI is up and running")
 
 
 @pytest.fixture(autouse=True, scope="function")

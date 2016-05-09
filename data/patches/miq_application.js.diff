@@ -1,0 +1,39 @@
+--- miq_application.js	2016-05-09 15:44:20.785132210 -0400
++++ miq_application.js.new	2016-05-10 02:12:20.945132210 -0400
+@@ -1,5 +1,37 @@
+ // MIQ specific JS functions
+
++// MiqQE section
++// ---------------
++
++// Initialize MiqQE
++var MiqQE = {};
++
++function setMiqQE(key, value) {
++  MiqQE[key] = value;
++}
++
++function getMiqQE(key) {
++  // Returns undefined if key is undefined, otherwise value of key
++  return MiqQE[key];
++}
++
++function checkMiqQE(key) {
++  // Returns 0 if key is undefined or set to 'complete', otherwise 1
++  var v = getMiqQE(key);
++  return (v === undefined || v === 'complete') ? 0 : 1;
++}
++
++function checkAllMiqQE() {
++  // Return 0 if all keys are undefined or set to 'complete', otherwise > 0
++  var v_incomplete = 0;
++  for (var k in MiqQE) {
++    v_incomplete += checkMiqQE(k);
++  }
++  return v_incomplete;
++}
++// --------------
++
++
+ // Things to be done on page loads
+ function miqOnLoad() {

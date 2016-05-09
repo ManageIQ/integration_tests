@@ -325,6 +325,8 @@ def wait_for_ajax():
         anything_in_flight |= running["prototype"] > 0
         anything_in_flight |= running["spinner"]
         anything_in_flight |= running["document"] != "complete"
+        anything_in_flight |= running["autofocus"] > 0
+        anything_in_flight |= running["miqQE"] > 0
         log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
         # Log the message only if it's different from the last one
         if prev_log_msg != log_msg:

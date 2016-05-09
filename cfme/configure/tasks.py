@@ -224,7 +224,10 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
         'host': {
             'tab': 'My Other UI Tasks',
             'page': 'tasks_my_other_ui',
-            'task': 'SmartState Analysis for {}',
+            'task': pick({
+                LOWEST: "SmartState Analysis for {}",
+                "5.5": "SmartState Analysis for '{}'",
+            }),
             'state': 'Finished'
         },
         'datastore': {
