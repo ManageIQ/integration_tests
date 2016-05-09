@@ -125,6 +125,14 @@ def random_host_control_policy():
     policy.delete()
 
 
+@pytest.yield_fixture
+def random_container_image_control_policy():
+    policy = explorer.ContainerImageControlPolicy(fauxfactory.gen_alphanumeric())
+    policy.create()
+    yield policy
+    policy.delete()
+
+
 @pytest.yield_fixture(params=[explorer.ClusterAlertProfile,
                               explorer.DatastoreAlertProfile,
                               explorer.HostAlertProfile,
@@ -293,6 +301,49 @@ def test_host_compliance_policy_crud(soft_assert):
     with update(policy):
         policy.notes = "Modified!"
     sel.force_navigate("host_compliance_policy_edit", context={"policy_name": policy.description})
+    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
+    # D
+    policy.delete()
+    soft_assert(not policy.exists, "The policy {} exists!".format(
+        policy.description
+    ))
+
+
+def test_container_image_control_policy_crud(soft_assert):
+    policy = explorer.ContainerImageControlPolicy(fauxfactory.gen_alphanumeric())
+    # CR
+    policy.create()
+    soft_assert(policy.exists, "The policy {} does not exist!".format(
+        policy.description
+    ))
+    # U
+    with update(policy):
+        policy.notes = "Modified!"
+    sel.force_navigate(
+        "container_image_control_policy_edit",
+        context={"policy_name": policy.description}
+    )
+    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
+    # D
+    policy.delete()
+    soft_assert(not policy.exists, "The policy {} exists!".format(
+        policy.description
+    ))
+
+
+def test_container_image_compliance_policy_crud(soft_assert):
+    policy = explorer.ContainerImageCompliancePolicy(fauxfactory.gen_alphanumeric())
+    # CR
+    policy.create()
+    soft_assert(policy.exists, "The policy {} does not exist!".format(
+        policy.description
+    ))
+    # U
+    with update(policy):
+        policy.notes = "Modified!"
+    sel.force_navigate(
+        "container_image_compliance_policy_edit",
+        context={"policy_name": policy.description})
     soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
     # D
     policy.delete()
