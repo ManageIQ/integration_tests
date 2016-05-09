@@ -604,7 +604,7 @@ def clear_providers():
     clear_infra_providers(validate=False)
     if version.current_version() > '5.5':
         clear_container_providers(validate=False)
-    if version.current_version() >= '5.6':
+    if version.current_version() == version.LATEST:
         clear_middleware_providers(validate=False)
     wait_for_no_cloud_providers()
     wait_for_no_infra_providers()
