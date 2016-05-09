@@ -1,0 +1,17 @@
+diff --git a/app/assets/javascripts/directives/autofocus.js b/app/assets/javascripts/directives/autofocus.js
+index 29ce595..19d87f2 100644
+--- a/app/assets/javascripts/directives/autofocus.js
++++ b/app/assets/javascripts/directives/autofocus.js
+@@ -10,6 +10,12 @@ ManageIQ.angular.app.directive('autoFocus', ['$timeout', function($timeout) {
+           if (!angular.element(scope['form_focus_' + ctrl.$name]).is(":focus")) {
+             $timeout(function () {
+               angular.element(scope['form_focus_' + ctrl.$name]).focus();
++              if (typeof(MiqQE) == 'undefined') {
++                MiqQE = {'autofocus': 'complete'}
++              }
++              else {
++                MiqQE['autofocus'] = 'complete'
++              }
+             }, 1000);
+           }
+         }

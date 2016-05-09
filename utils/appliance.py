@@ -143,6 +143,14 @@ class IPAppliance(object):
     def __hash__(self):
         return int(hashlib.md5(self.address).hexdigest(), 16)
 
+    @logger_wrap("Patch ajax wait: {}")
+    def patch_appliance_miqqe(self, log_callback=None):
+        """Patches with miqqe"""
+        self.ssh_client.put_file(str(data_path.join('miqqe.patch')), "/var/www/miq/vmdb/")
+        self.ssh_client.run_command(
+            'patch /var/www/miq/vmdb/app/assets/javascripts/directives/autofocus.js'
+            '/var/www/miq/vmdb/miqqe.patch')
+
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
     def configure(self, log_callback=None, **kwargs):
