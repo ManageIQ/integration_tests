@@ -1463,6 +1463,10 @@ class IPAppliance(object):
             if config_name == 'vmdb':
                 base_data = store.current_appliance.ssh_client.run_rails_command(
                     'puts\(Settings.to_hash.deep_stringify_keys.to_yaml\)')
+                if base_data.rc:
+                    logger.error("Config couldn't be found")
+                    logger.error(base_data.output)
+                    raise Exception('Error obtaining config')
                 yaml_data = base_data.output[:base_data.output.find('DEPRE')]
                 return yaml.load(yaml_data)
             else:
