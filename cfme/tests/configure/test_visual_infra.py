@@ -186,7 +186,7 @@ def test_start_page(request, setup_a_provider, start_page):
     login.logout()
     login.login_admin()
     level = re.split(r"\/", start_page)
-    assert menu.is_page_active(level[0].strip(), level[1].strip()), "Landing Page Failed"
+    assert menu.nav.is_page_active(level[0].strip(), level[1].strip()), "Landing Page Failed"
 
 
 def test_infraprovider_noquads(request, setup_a_provider, set_infra_provider_quad):
