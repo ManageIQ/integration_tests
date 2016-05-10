@@ -168,6 +168,39 @@ nav.add_branch(
             }
         ],
 
+        "container_image_compliance_policy":
+        [
+            lambda ctx: accordion_func(
+                "Policies", "All Policies", "Compliance Policies",
+                "Container Image Compliance Policies", ctx["policy_name"])(None),
+            {
+                "container_image_compliance_policy_edit":
+                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
+
+                "container_image_compliance_policy_events":
+                lambda _: cfg_btn("Edit this Policy's Event assignments"),
+
+                "container_image_compliance_policy_conditions":
+                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
+
+                "container_image_compliance_policy_condition_new":
+                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
+
+                "container_image_compliance_policy_event":
+                [
+                    lambda ctx: events_in_policy_table.click_cell(
+                        1, ctx["event_name"]
+                    ),
+                    {
+                        "container_image_compliance_policy_event_actions":
+                        lambda _: cfg_btn(
+                            "Edit Actions for this Policy Event"
+                        ),
+                    }
+                ],
+            }
+        ],
+
         "host_compliance_policies":
         [
             accordion_func(
@@ -187,6 +220,18 @@ nav.add_branch(
             {
                 "vm_compliance_policy_new":
                 lambda _: cfg_btn("Add a New Vm Compliance Policy")
+            }
+        ],
+
+        "container_image_compliance_policies":
+        [
+            accordion_func(
+                "Policies", "All Policies", "Compliance Policies",
+                "Container Image Compliance Policies"
+            ),
+            {
+                "container_image_compliance_policy_new":
+                lambda _: cfg_btn("Add a New Container Image Compliance Policy")
             }
         ],
 
@@ -254,6 +299,37 @@ nav.add_branch(
             }
         ],
 
+        "container_image_control_policy":
+        [
+            lambda ctx: accordion_func(
+                "Policies", "All Policies", "Control Policies",
+                "Container Image Control Policies", ctx["policy_name"])(None),
+            {
+                "container_image_control_policy_edit":
+                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
+
+                "container_image_control_policy_events":
+                lambda _: cfg_btn("Edit this Policy's Event assignments"),
+
+                "container_image_control_policy_conditions":
+                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
+
+                "container_image_control_policy_condition_new":
+                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
+
+                "container_image_control_policy_event":
+                [
+                    lambda ctx: events_in_policy_table.click_cell("description", ctx["event_name"]),
+                    {
+                        "container_image_control_policy_event_actions":
+                        lambda _: cfg_btn(
+                            "Edit Actions for this Policy Event"
+                        ),
+                    }
+                ],
+            }
+        ],
+
         "host_control_policies":
         [
             accordion_func(
@@ -273,6 +349,18 @@ nav.add_branch(
             {
                 "vm_control_policy_new":
                 lambda _: cfg_btn("Add a New Vm Control Policy")
+            }
+        ],
+
+        "container_image_control_policies":
+        [
+            accordion_func(
+                "Policies", "All Policies", "Control Policies",
+                "Container Image Control Policies"
+            ),
+            {
+                "container_image_control_policy_new":
+                lambda _: cfg_btn("Add a New Container Image Control Policy")
             }
         ],
 
@@ -416,6 +504,10 @@ class VMObject(_type_check_object):
 
 
 class HostObject(_type_check_object):
+    pass
+
+
+class ContainerImageObject(_type_check_object):
     pass
 
 
@@ -844,6 +936,15 @@ class VMCompliancePolicy(BasePolicy, VMObject):
         return "VM and Instance Compliance: {}".format(self.description)
 
 
+class ContainerImageCompliancePolicy(BasePolicy, ContainerImageObject):
+    PREFIX = "container_image_compliance_"
+    DELETE_STRING = "Delete this Image Policy"
+    COPY_STRING = "Copy this Image Policy"
+
+    def __str__(self):
+        return "Container Image Compliance: {}".format(self.description)
+
+
 class HostControlPolicy(BaseControlPolicy, HostObject):
     PREFIX = "host_control_"
 
@@ -871,6 +972,15 @@ class VMControlPolicy(BaseControlPolicy, VMObject):
 
     def __str__(self):
         return "VM and Instance Control: {}".format(self.description)
+
+
+class ContainerImageControlPolicy(BaseControlPolicy, ContainerImageObject):
+    PREFIX = "container_image_control_"
+    DELETE_STRING = "Delete this Image Policy"
+    COPY_STRING = "Copy this Image Policy"
+
+    def __str__(self):
+        return "Container Image Control: {}".format(self.description)
 
 
 class Alert(Updateable, Pretty):
