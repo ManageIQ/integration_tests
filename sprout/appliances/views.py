@@ -12,12 +12,13 @@ from django.shortcuts import render, redirect
 
 from appliances.api import json_response
 from appliances.models import (
-    Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer, User)
+    Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer, User, BugQuery)
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
     anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
     appliance_rename, wait_appliance_ready, mark_appliance_ready, appliance_reboot)
 
 from sprout.log import create_logger
+from utils.bz import Bugzilla
 from utils.providers import get_mgmt
 from utils.version import Version
 
@@ -706,3 +707,85 @@ def check_pools(request):
         }
         data.append(pool_data)
     return json_response(data)
+
+
+def view_bug_query(request, query_id):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    queries = BugQuery.visible_for_user(request.user)
+    query = BugQuery.objects.get(id=query_id)
+    if query.owner is not None and query.owner != request.user:
+        if not request.user.is_superuser:
+            messages.info(request, "You cannot view BugQuery {}.".format(query.id))
+            return go_home(request)
+    bugs = query.list_bugs(request.user)
+    return render(request, 'bugs/list_query.html', locals())
+
+
+def view_bug_queries(request):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    try:
+        first_query = BugQuery.visible_for_user(request.user)[0]
+    except IndexError:
+        first_query = None
+    if first_query is not None:
+        return redirect('view_bug_query', first_query.id)
+    else:
+        # No Group
+        messages.info(request, "No query present, redirected to the homepage.")
+        return go_home(request)
+
+
+def new_bug_query(request):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    queries = BugQuery.visible_for_user(request.user)
+    query = None
+    if request.method == 'GET':
+        return render(request, 'bugs/new_query.html', locals())
+    elif request.method != 'POST':
+        messages.error(request, "Invalid request.")
+        return go_home(request)
+    # Create a new one
+    name = request.POST['name']
+    url = request.POST['url']
+    global_ = request.POST.get('global', 'false') == 'true'
+    if not request.user.is_superuser:
+        global_ = False
+    if global_:
+        owner = None
+    else:
+        owner = request.user
+    bug_query = BugQuery(name=name, url=url, owner=owner)
+    bug_query.save()
+    messages.info(request, "Query with name {} added.".format(name))
+    return redirect('view_bug_query', bug_query.id)
+
+
+def delete_bug_query(request, query_id):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    query = BugQuery.objects.get(id=query_id)
+    if query.owner == request.user or request.user.is_superuser:
+        query.delete()
+        messages.info(request, "Query with name {} deleted.".format(query.name))
+        return redirect('view_bug_queries')
+    else:
+        messages.error(request, "You cannot delete query with name {}.".format(query.name))
+        return redirect('view_bug_queries')
+
+
+def check_query(request):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    if request.method != 'POST':
+        return HttpResponseForbidden('Only POST allowed')
+    bz = Bugzilla.from_config().bugzilla
+    try:
+        parsed = bz.url_to_query(request.POST['url'])
+        if not parsed:
+            parsed = None
+    except:
+        parsed = None
+    return json_response(parsed)
