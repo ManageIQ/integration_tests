@@ -317,6 +317,7 @@ def test_host_compliance_policy_crud(soft_assert):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
 def test_container_image_control_policy_crud(soft_assert):
     policy = explorer.ContainerImageControlPolicy(fauxfactory.gen_alphanumeric())
     # CR
@@ -340,6 +341,7 @@ def test_container_image_control_policy_crud(soft_assert):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
 def test_container_image_compliance_policy_crud(soft_assert):
     policy = explorer.ContainerImageCompliancePolicy(fauxfactory.gen_alphanumeric())
     # CR
