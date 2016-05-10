@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import xmlrpclib
 
 from celery import chain
 from celery.result import AsyncResult
@@ -718,7 +719,11 @@ def view_bug_query(request, query_id):
         if not request.user.is_superuser:
             messages.info(request, "You cannot view BugQuery {}.".format(query.id))
             return go_home(request)
-    bugs = query.list_bugs(request.user)
+    try:
+        bugs = query.list_bugs(request.user)
+    except xmlrpclib.Fault as e:
+        messages.error(request, 'Bugzilla query error {}: {}'.format(e.faultCode, e.faultString))
+        return go_home(request)
     return render(request, 'bugs/list_query.html', locals())
 
 
@@ -787,5 +792,8 @@ def check_query(request):
         if not parsed:
             parsed = None
     except:
+        parsed = None
+    if 'cmdtype' in parsed:
+        # It is a command and that is not supported within .query()
         parsed = None
     return json_response(parsed)

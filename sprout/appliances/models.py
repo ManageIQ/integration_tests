@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
+import base64
 import re
 import yaml
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle   # NOQA
 
 import mgmtsystem
 
@@ -16,7 +22,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 
-from sprout import critical_section
+from sprout import critical_section, redis
 from sprout.log import create_logger
 
 from utils.appliance import Appliance as CFMEAppliance, IPAppliance
@@ -1108,6 +1114,7 @@ class UserApplianceQuota(models.Model):
 
 class BugQuery(models.Model):
     EMAIL_PLACEHOLDER = re.compile(r'\{\{EMAIL\}\}')
+    CACHE_TIMEOUT = 180
     name = models.CharField(max_length=64)
     url = models.TextField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -1135,11 +1142,30 @@ class BugQuery(models.Model):
         return self.bugzilla.url_to_query(url)
 
     def list_bugs(self, user):
+        cache_id = 'bq-{}-{}'.format(self.id, user.id)
+        cached = redis.get(cache_id)
+        if cached is not None:
+            return pickle.loads(base64.b64decode(cached))
         query = self.query_for_user(user)
         if query is None:
-            return []
+            result = []
         else:
-            return self.bugzilla.query(query)
+            def process_bug(bug):
+                return {
+                    'id': bug.id,
+                    'summary': bug.summary,
+                    'severity': bug.severity,
+                    'status': bug.status,
+                    'component': bug.component,
+                    'version': bug.version,
+                    'fixed_in': bug.fixed_in,
+                    'whiteboard': bug.whiteboard,
+                    'flags': ['{}{}'.format(flag['name'], flag['status']) for flag in bug.flags],
+                }
+
+            result = [process_bug(bug) for bug in self.bugzilla.query(query)]
+        redis.set(cache_id, base64.b64encode(pickle.dumps(result)), ex=self.CACHE_TIMEOUT)
+        return result
 
     @classmethod
     def visible_for_user(cls, user):

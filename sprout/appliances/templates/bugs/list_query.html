@@ -26,7 +26,7 @@
             <td>{{bug.whiteboard}}</td>
             <td>
                 {% for flag in bug.flags %}
-                    {{flag.name}}{{flag.status}}{% if not forloop.last %}<br>{% endif %}
+                    {{flag}}{% if not forloop.last %}<br>{% endif %}
                 {% endfor %}
             </td>
         </tr>
