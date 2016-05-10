@@ -248,7 +248,8 @@ class BaseProvider(Taggable, Updateable):
                      [refresh_timer],
                      message="is_refreshed",
                      num_sec=1000,
-                     delay=60)
+                     delay=60,
+                     handle_exception=True)
         except Exception:
             # To see the possible error.
             self.load_details(refresh=True)
