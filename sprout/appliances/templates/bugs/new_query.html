@@ -2,6 +2,7 @@
 {% block title %}Entering new query{% endblock %}
 {% block bugs_body %}
 <h1>Enter a new bug query</h1>
+<h4>URLS with <pre>cmdtype=</pre> in them are unsupported.</h4>
 <form action={% url 'new_bug_query' %} method="POST" class="form-horizontal">
     {% csrf_token %}
     <div class="form-group">
