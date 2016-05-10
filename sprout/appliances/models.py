@@ -1153,6 +1153,7 @@ class BugQuery(models.Model):
             def process_bug(bug):
                 return {
                     'id': bug.id,
+                    'weburl': bug.weburl,
                     'summary': bug.summary,
                     'severity': bug.severity,
                     'status': bug.status,
