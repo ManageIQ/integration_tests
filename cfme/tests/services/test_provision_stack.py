@@ -2,6 +2,7 @@ import pytest
 import fauxfactory
 
 from cfme.configure.settings import set_default_view
+from cfme.exceptions import FlashMessageException
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
@@ -123,10 +124,15 @@ def test_provision_stack(setup_provider, provider, dialog, catalog, request):
         test_flag: provision
     """
     dialog_name, template = dialog
-    template.delete_all_templates()
     method = METHOD_TORSO.replace('"Description" : "AWS',
                                   '"Description" : "Amazon')
-    template.create(method)
+    try:
+        template.create(method)
+    except FlashMessageException:
+        method = METHOD_TORSO.replace('"Description" : "AWS',
+                                  '"Description" : "Amazon edit')
+        template.create(method)
+
     template.create_service_dialog_from_template(dialog_name, template.template_name)
 
     item_name = fauxfactory.gen_alphanumeric()
@@ -165,7 +171,13 @@ def test_reconfigure_service(setup_provider, provider, dialog, catalog, request)
     dialog_name, template = dialog
     method = METHOD_TORSO.replace('"Description" : "AWS',
                                   '"Description" : "Amzn Web')
-    template.create(method)
+    # template.create(method)
+    try:
+        template.create(method)
+    except FlashMessageException:
+        method = METHOD_TORSO.replace('"Description" : "AWS',
+                                  '"Description" : "Amazon Web')
+        template.create(method)
     template.create_service_dialog_from_template(dialog_name, template.template_name)
 
     item_name = fauxfactory.gen_alphanumeric()
@@ -205,7 +217,12 @@ def test_remove_template_provisioning(setup_provider, provider, dialog, catalog,
     dialog_name, template = dialog
     method = METHOD_TORSO.replace('"Description" : "AWS',
                                   '"Description" : "Amzn Web Services')
-    template.create(method)
+    try:
+        template.create(method)
+    except FlashMessageException:
+        method = METHOD_TORSO.replace('"Description" : "AWS',
+                                  '"Description" : "Amazon Web Services')
+        template.create(method)
     template.create_service_dialog_from_template(dialog_name, template.template_name)
 
     item_name = fauxfactory.gen_alphanumeric()
@@ -239,7 +256,12 @@ def test_retire_stack(setup_provider, provider, dialog, catalog, request):
     dialog_name, template = dialog
     method = METHOD_TORSO.replace('"Description" : "AWS',
                                   '"Description" : "Amzn Web Services desc')
-    template.create(method)
+    try:
+        template.create(method)
+    except FlashMessageException:
+        method = METHOD_TORSO.replace('"Description" : "AWS',
+                                  '"Description" : "Amazon Web Services desc')
+        template.create(method)
     template.create_service_dialog_from_template(dialog_name, template.template_name)
 
     item_name = fauxfactory.gen_alphanumeric()
