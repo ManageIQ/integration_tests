@@ -6,6 +6,7 @@ from cfme.web_ui.menu import nav
 
 from . import cfg_btn, mon_btn, pol_btn, list_tbl
 from utils.varmeth import variable
+import cfme.web_ui.toolbar as tb
 
 nav.add_branch(
     'middleware_providers',
@@ -14,7 +15,8 @@ nav.add_branch(
             lambda _: cfg_btn('Add a New Middleware Provider'),
         'middleware_provider':
         [
-            lambda ctx: list_tbl.select_row('name', ctx['provider'].name),
+            lambda ctx: (tb.select('List View'),
+                        list_tbl.select_row('name', ctx['provider'].name)),
             {
                 'middleware_provider_edit':
                 lambda _: cfg_btn('Edit Selected Middleware Provider'),
@@ -23,7 +25,8 @@ nav.add_branch(
             }],
         'middleware_provider_detail':
         [
-            lambda ctx: list_tbl.click_cells({'name': ctx['provider'].name}),
+            lambda ctx: (tb.select('List View'),
+                        list_tbl.click_cells({'name': ctx['provider'].name})),
             {
                 'middleware_provider_edit_detail':
                 lambda _: cfg_btn('Edit this Middleware Provider'),
