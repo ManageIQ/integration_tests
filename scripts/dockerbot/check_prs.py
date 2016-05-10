@@ -106,7 +106,7 @@ def create_run(db_pr, pr):
                    datestamp=str(datetime.now()),
                    commit=pr['head']['sha'])
     run_record = tapi.run.post(new_run)
-    for group in tapi.group.get(stream=True)['objects']:
+    for group in tapi.group.get(stream=True, use_for_prt=True)['objects']:
         stream = group['name']
         logger.info('  Adding task stream {}...'.format(stream))
         task_data = dict(output="",
