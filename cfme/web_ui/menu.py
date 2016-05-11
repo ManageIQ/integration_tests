@@ -188,10 +188,6 @@ class Menu(UINavigate):
                     ('containers_image_registries', 'Image Registries'),
                     ('containers_topology', 'Topology')
                 ),
-                ('middleware', 'Middleware'): (
-                    ('middleware_providers', 'Providers'),
-                    ('middleware_servers', 'Middleware Servers')
-                ),
                 ('infrastructure', 'Infrastructure'): (
                     ('infrastructure_providers', 'Providers', lambda: toolbar.select('Grid View')),
                     ('infrastructure_clusters', "/ems_cluster"),
@@ -209,6 +205,7 @@ class Menu(UINavigate):
                     ('middleware_providers', 'Providers'),
                     ('middleware_servers', "Middleware Servers"),
                     ('middleware_deployments', "Middleware Deployments"),
+                    ('middleware_deployments', "Middleware Datasources"),
                     ('middleware_topology', "Topology"),
                 ),
                 ('control', 'Control'): (
