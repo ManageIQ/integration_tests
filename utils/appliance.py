@@ -413,6 +413,25 @@ class IPAppliance(object):
                 self._db_ssh_client = self.ssh_client(hostname=self.db_address)
             return self._db_ssh_client
 
+    @property
+    def swap(self):
+        """Retrieves the value of swap for the appliance. Might raise an exception if SSH fails.
+
+        Return:
+            An integer value of swap in the VM in megabytes. If ``None`` is returned, it means it
+            was not possible to parse the command output.
+
+        Raises:
+            :py:class:`paramiko.ssh_exception.SSHException` or :py:class:`socket.error`
+        """
+        value = self.ssh_client.run_command(
+            'free -m | tr -s " " " " | cut -f 3 -d " " | tail -n 1', reraise=True, timeout=15)
+        try:
+            value = int(value.output.strip())
+        except (TypeError, ValueError):
+            value = None
+        return value
+
     def diagnose_evm_failure(self):
         """Go through various EVM processes, trying to figure out what fails
 

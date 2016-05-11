@@ -8,6 +8,7 @@ from dateutil import parser
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render, redirect
 
@@ -797,3 +798,10 @@ def check_query(request):
         # It is a command and that is not supported within .query()
         parsed = None
     return json_response(parsed)
+
+
+def swap_offenders(request):
+    appliances = Appliance.objects.exclude(Q(swap=None) | Q(swap=0)).order_by('-swap')[:15]
+    failed_ssh = Appliance.objects.filter(ssh_failed=True).order_by(
+        'appliance_pool__owner__username', 'name')
+    return render(request, 'appliances/swap_offenders.html', locals())

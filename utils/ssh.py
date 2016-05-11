@@ -132,7 +132,7 @@ class SSHClient(paramiko.SSHClient):
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
-    def run_command(self, command, timeout=RUNCMD_TIMEOUT):
+    def run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False):
         if isinstance(command, dict):
             command = version.pick(command)
         logger.info("Running command `%s`", command)
@@ -165,7 +165,10 @@ class SSHClient(paramiko.SSHClient):
             exit_status = session.recv_exit_status()
             return SSHResult(exit_status, output)
         except paramiko.SSHException as exc:
-            logger.exception(exc)
+            if reraise:
+                raise
+            else:
+                logger.exception(exc)
         except socket.timeout as e:
             logger.error("Command `%s` timed out.", command)
             logger.exception(e)

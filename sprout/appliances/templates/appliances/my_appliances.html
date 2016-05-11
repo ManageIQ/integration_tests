@@ -64,6 +64,7 @@
                     <th>Name:</th>
                     <th>Provider:</th>
                     <th>Address:</th>
+                    <th>Swap</th>
                     <th style="width: 10%;">Manages:</th>
                     <th style="width: 10%;">Ready?</th>
                     <th>Power state:</th>
@@ -95,6 +96,15 @@
                             <a href="https://{{ appliance.ip_address }}/" target="_blank">{{ appliance.ip_address }}</a>
                         {% else %}
                             ---
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if appliance.ssh_failed %}
+                            <strong style="color: red;">SSH FAIL!</strong>
+                        {% elif appliance.swap > 0 %}
+                            <span style='color: red;'>{{ appliance.swap }} MB</span>
+                        {% else %}
+                            OK
                         {% endif %}
                     </td>
                     <td>

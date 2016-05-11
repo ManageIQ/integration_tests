@@ -225,6 +225,11 @@ CELERYBEAT_SCHEDULE = {
         'task': 'appliances.tasks.obsolete_template_deleter',
         'schedule': timedelta(days=1),
     },
+
+    'check-swap-in-appliances': {
+        'task': 'appliances.tasks.check_swap_in_appliances',
+        'schedule': timedelta(minutes=60),
+    },
 }
 
 try:
