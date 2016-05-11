@@ -6,3 +6,4 @@ python-memcached
 flower
 gunicorn
 Command
+pika

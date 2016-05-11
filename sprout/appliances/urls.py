@@ -70,4 +70,6 @@ urlpatterns = [
     url(r'^bq/check_query$', views.check_query, name='check_query'),
     url(r'^bq/(\d+)$', views.view_bug_query, name='view_bug_query'),
     url(r'^bq/(\d+)/delete$', views.delete_bug_query, name='delete_bug_query'),
+    # Swap
+    url(r'^swap$', views.swap_offenders, name='swap_offenders'),
 ]

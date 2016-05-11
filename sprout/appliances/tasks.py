@@ -17,11 +17,14 @@ from celery.exceptions import MaxRetriesExceededError
 from datetime import timedelta
 from functools import wraps
 from novaclient.exceptions import OverLimit as OSOverLimit
+from paramiko import SSHException
+import socket
 
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask,
     MismatchVersionMailer, User)
 from sprout import settings, redis
+from sprout.irc_bot import send_message
 from sprout.log import create_logger
 
 from utils import conf
@@ -1497,4 +1500,102 @@ Sprout.
             email_body,
             "sprout-template-deletion-suggest@example.com",
             user_mails,
+        )
+
+
+@singleton_task()
+def check_swap_in_appliances(self):
+    chord_tasks = []
+    for appliance in Appliance.objects.filter(ready=True).exclude(
+            power_state=Appliance.Power.ORPHANED):
+        chord_tasks.append(check_swap_in_appliance.si(appliance.id))
+    chord(chord_tasks)(notify_owners.s())
+
+
+@singleton_task()
+def check_swap_in_appliance(self, appliance_id):
+    appliance = Appliance.objects.get(id=appliance_id)
+
+    try:
+        swap_amount = appliance.ipapp.swap
+    except (SSHException, socket.error, Exception) as e:
+        if type(e) is Exception and 'SSH is unavailable' not in str(e):
+            # Because otherwise it might not be an SSH error
+            raise
+        ssh_failed = True
+        swap_amount = None
+    else:
+        ssh_failed = False
+
+    went_up = (
+        (appliance.swap is not None and swap_amount > appliance.swap) or
+        (appliance.swap is None and swap_amount is not None and swap_amount > 0))
+
+    ssh_failed_changed = ssh_failed and not appliance.ssh_failed
+
+    appliance.swap = swap_amount
+    appliance.ssh_failed = ssh_failed
+    appliance.save()
+
+    # Returns a tuple - (appliance_id, went_up?, current_amount, ssh_failed?)
+    return appliance.id, went_up, swap_amount, ssh_failed_changed
+
+
+@singleton_task()
+def notify_owners(self, results):
+    # Filter out any errors
+    results = [x for x in results if isinstance(x, (list, tuple)) and len(x) == 4]
+    per_user = {}
+    for appliance_id, went_up, current_swap, ssh_failed_changed in results:
+        if not went_up and not ssh_failed_changed:
+            # Not interested
+            continue
+        appliance = Appliance.objects.get(id=appliance_id)
+        if appliance.appliance_pool is not None:
+            username = appliance.appliance_pool.owner.username
+            user = appliance.appliance_pool.owner
+        else:
+            username = 'SHEPHERD'
+            user = None
+        issues = []
+        if went_up:
+            issues.append('swap++ {}M'.format(current_swap))
+        if ssh_failed_changed:
+            issues.append('ssh unreachable')
+
+        message = '{}/{} {}'.format(
+            appliance.name, appliance.ip_address, ', '.join(issues))
+
+        send_message('{}: {}'.format(username, message))
+
+        if user is None:
+            # No email
+            continue
+
+        if not user.email:
+            # Same here
+            continue
+
+        # Add the message to be sent
+        if user not in per_user:
+            per_user[user] = []
+        per_user[user].append(message)
+
+    # Send out the e-mails
+    for user, messages in per_user.iteritems():
+        appliance_list = '\n'.join('* {}'.format(message) for message in messages)
+        email_body = """\
+Hello,
+
+I discovered that some of your appliances are behaving badly. Please check them out:
+{}
+
+Best regards,
+The Sprout™
+""".format(appliance_list)
+        send_mail(
+            "[Sprout] Appliance swap report",
+            email_body,
+            "sprout-appliance-swap@example.com",
+            [user.email],
         )

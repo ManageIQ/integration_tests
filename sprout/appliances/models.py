@@ -611,6 +611,9 @@ class Appliance(MetadataMixin):
     lun_disk_connected = models.BooleanField(
         default=False,
         help_text="Whether the Direct LUN disk is connected. (RHEV Only)")
+    swap = models.IntegerField(
+        help_text="How many MB is the appliance in swap.", null=True, blank=True)
+    ssh_failed = models.BooleanField(default=False, help_text="If last swap check failed on SSH.")
 
     @property
     def serialized(self):

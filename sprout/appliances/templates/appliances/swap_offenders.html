@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Swap offenders{% endblock %}
+{% block body %}
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <strong>15 greatest offenders</strong>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <th>Swap amount</th>
+            <th>Appliance name</th>
+            <th>IP address</th>
+            <th>Owner</th>
+        </thead>
+        <tbody>
+            {% for appliance in appliances %}
+            <tr>
+                <td>{{appliance.swap}} MB</td>
+                <td>{{appliance.name}}</td>
+                <td>{{appliance.ip_address}}</td>
+                <td>
+                    {% if appliance.owner %}
+                    <a href="{% url 'user_appliances' appliance.owner.username %}">{{appliance.owner.username}}</a>
+                    {% else %}
+                    <em>Shepherd</em>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <strong>Broken SSH</strong>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <th>Appliance name</th>
+            <th>IP address</th>
+            <th>Owner</th>
+        </thead>
+        <tbody>
+            {% for appliance in failed_ssh %}
+            <tr>
+                <td>{{appliance.name}}</td>
+                <td>{{appliance.ip_address}}</td>
+                <td>
+                    {% if appliance.owner %}
+                    <a href="{% url 'user_appliances' appliance.owner.username %}">{{appliance.owner.username}}</a>
+                    {% else %}
+                    <em>Shepherd</em>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
