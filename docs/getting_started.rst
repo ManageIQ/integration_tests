@@ -10,6 +10,27 @@ carefully read this page from beginning to the end. That will make you familiari
 and will minimize the chance of doing it wrong. Then you can proceed the shortest way using the
 setup and execution scripts.
 
+
+opinionated quick.start script
+--------------------------------
+
+The opinionated quick-start script builds expects a certain base setup
+and leaves you with a usable enabled virtualenv.
+
+* you are in a checkout of ``cfme_tests``
+* you have a checkout of the RedHat internal repository
+  with the encrypted credentials
+* you already put ``.yaml_key`` in place
+* you are fine with symlinks instead of copies of the yaml data
+* you run RHEL/Fedora or installed the build requirements on your own
+* you use bash as shell
+
+::
+  $ . ./scripts/quickstart.sh
+  ...
+  (.cfme_tests)$
+
+
 Setup
 -----
 You can use this shortcut to install the system and python dependencies which will leave you only
