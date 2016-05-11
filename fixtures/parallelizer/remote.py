@@ -1,5 +1,4 @@
 import signal
-from collections import deque
 from urlparse import urlparse
 
 import zmq
@@ -118,42 +117,22 @@ class SlaveManager(object):
         self.quit_signaled = True
 
     def _test_generator(self):
-        # Pull the first batch of tests, stash in a deque
-        tests = self._get_tests()
+        node_iter = self._iter_nodes()
+        run_node = next(node_iter)
+
+        for next_node in node_iter:
+            yield run_node, next_node
+            run_node = next_node
+        yield run_node, None
+
+    def _iter_nodes(self):
         while True:
-            # pop the first test, try to get the next
-            try:
-                test_id = tests.popleft()
-            except IndexError:
-                tests.extend(self._get_tests())
-                if not tests:
-                    # If tests is empty at this point, no tests were received;
-                    # there's nothing to do, and the runtest loop is done
-                    break
-
-            try:
-                next_test_id = tests[0]
-            except IndexError:
-                # pytest_runtest_protocol needs an item and a nextitem, so we need to
-                # pull new tests before running the last test in the previous test group
-                tests.extend(self._get_tests())
-                if tests:
-                    # We got a new batch of tests, so we can get the next item
-                    next_test_id = tests[0]
-                else:
-                    # no more tests, next test is None
-                    next_test_id = None
-
-            test_item = self.collection[test_id]
-            if next_test_id:
-                next_test_item = self.collection[next_test_id]
-            else:
-                next_test_item = None
-            yield test_item, next_test_item
-
-    def _get_tests(self):
-        tests = self.send_event('need_tests')
-        return deque(tests)
+            node_ids = self.send_event('need_tests')
+            if not node_ids:
+                break
+            for nodeid in node_ids:
+                # TODO: take non-unique node ids into account
+                yield self.collection[nodeid]
 
 
 def serialize_report(rep):
