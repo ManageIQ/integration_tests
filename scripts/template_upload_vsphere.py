@@ -10,6 +10,7 @@ normally be placed in main function, are located in function run(**kwargs).
 """
 
 import argparse
+import fauxfactory
 import sys
 from threading import Lock, Thread
 
@@ -215,7 +216,8 @@ def get_datacenter(client):
 def check_kwargs(**kwargs):
     for key, val in kwargs.iteritems():
         if val is None:
-            print("VSPHERE: please supply required parameter '{}'.".format(key))
+            print("VSPHERE:{} please supply required parameter '{}'.".format(
+                kwargs['provider'], key))
             return False
     return True
 
@@ -263,8 +265,8 @@ def make_kwargs(args, **kwargs):
     return kwargs
 
 
-def make_kwargs_vsphere(cfme_data, provider):
-    data = cfme_data['management_systems'][provider]
+def make_kwargs_vsphere(cfmeqe_data, provider):
+    data = cfmeqe_data['management_systems'][provider]
     temp_up = cfme_data['template_upload']['template_upload_vsphere']
 
     kwargs = {'provider': provider}
@@ -287,8 +289,6 @@ def make_kwargs_vsphere(cfme_data, provider):
     disk = temp_up.get('disk', None)
     template = temp_up.get('template', None)
     kwargs['ovf_tool_client'] = temp_up.get('ovf_tool_client', None)
-    kwargs['ovf_tool_username'] = temp_up.get('ovf_tool_username', None)
-    kwargs['ovf_tool_password'] = temp_up.get('ovf_tool_password', None)
 
     if template:
         kwargs['template'] = template
@@ -306,12 +306,10 @@ def upload_template(client, hostname, username, password,
     try:
         if provider_data:
             kwargs = make_kwargs_vsphere(provider_data, provider)
-            ovftool_username = kwargs['ovf_tool_username']
-            ovftool_password = kwargs['ovf_tool_password']
         else:
             kwargs = make_kwargs_vsphere(cfme_data, provider)
-            ovftool_username = credentials['host_default']['username']
-            ovftool_password = credentials['host_default']['password']
+        kwargs['ovf_tool_username'] = credentials['host_default']['username']
+        kwargs['ovf_tool_password'] = credentials['host_default']['password']
 
         if name is None:
             name = cfme_data['basic_info']['appliance_template']
@@ -336,7 +334,8 @@ def upload_template(client, hostname, username, password,
                                                   provider,
                                                   kwargs.get('proxy'),
                                                   kwargs.get('ovf_tool_client'),
-                                                  ovftool_username, ovftool_password)
+                                                  kwargs['ovf_tool_username'],
+                                                  kwargs['ovf_tool_password'])
                     if ova_ret is 0:
                         break
                 if ova_ret is -1:
@@ -350,6 +349,13 @@ def upload_template(client, hostname, username, password,
                 # make_template(client, name, hostname, username, password)
                 make_template(client, name, provider)
             client.api.logout()
+        if provider_data and check_template_exists(client, name, provider):
+            print("VSPHERE:{} Deploying {}....".format(provider, name))
+            vm_name = 'test_{}_{}'.format(name, fauxfactory.gen_alphanumeric(8))
+            deploy_args = {'provider': provider, 'vm_name': vm_name,
+                           'template': name, 'deploy': True}
+            getattr(__import__('clone_template'), "main")(**deploy_args)
+
     except Exception as e:
         print(e)
         return False

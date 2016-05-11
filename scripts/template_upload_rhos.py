@@ -10,6 +10,7 @@ normally be placed in main function, are located in function run(**kwargs).
 """
 
 import argparse
+import fauxfactory
 import sys
 from threading import Lock, Thread
 
@@ -207,6 +208,12 @@ def upload_template(rhosip, sshname, sshpass, username, password, auth_url, prov
                 print("RHOS:{} Successfully uploaded the template.".format(provider))
         else:
             print("RHOS:{} Found image with name {}. Exiting...".format(provider, template_name))
+        if provider_data and check_image_exists(template_name, export, ssh_client):
+            print("RHOS:{} Deploying Template {}....".format(provider, template_name))
+            vm_name = 'test_{}_{}'.format(template_name, fauxfactory.gen_alphanumeric(8))
+            deploy_args = {'provider': provider, 'vm_name': vm_name,
+                           'template': template_name, 'deploy': True}
+            getattr(__import__('clone_template'), "main")(**deploy_args)
         ssh_client.close()
     except Exception as e:
         print(e)
