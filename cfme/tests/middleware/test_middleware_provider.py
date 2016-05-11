@@ -15,15 +15,14 @@ def pytest_generate_tests(metafunc):
 def test_hawkular_crud(provider):
     """Test provider add with good credentials.
 
-    has_no_middleware_providers fixture is not yet implemented.  You must manually remove
-    added providers between test runs
     """
     provider.create(cancel=False, validate_credentials=False)
     # UI validation, checks whether data provided from Hawkular provider matches data in UI
     provider.validate_stats(ui=True)
     # DB validation, checks whether data provided from Hawkular provider matches data in DB
     provider.validate_stats()
-    # TODO validate provider details via mgmt_system
+    # validates Properties section of provider's summary page
+    provider.validate_properties()
 
     old_name = provider.name
     with update(provider):
