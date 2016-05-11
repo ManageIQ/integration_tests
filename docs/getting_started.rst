@@ -27,7 +27,7 @@ file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
     YUM=yum
   fi
 
-  sudo $YUM install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++
+  sudo $YUM install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel
   virtualenv .cfme_tests
   echo "export PYTHONPATH='`pwd`'" | tee -a ./.cfme_tests/bin/activate
   echo "export PYTHONDONTWRITEBYTECODE=yes" | tee -a ./.cfme_tests/bin/activate
@@ -86,11 +86,14 @@ Detailed steps (manual environment setup):
   * ``zeromq3-devel``
   * ``libcurl-devel``
   * ``redhat-rpm-config`` if you use some kind of really stripped system.
+  * ``gcc-c++``
+  * ``openssl-devel``
+  * ``libffi-devel``
   * Fedora (possibly RHEL-like systems) users:
 
     * ``hash dnf 2>/dev/null && { YUM=dnf; } || { YUM=yum; }``
 
-    * ``sudo $YUM install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config``
+    * ``sudo $YUM install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel``
 
     * On RHEL and derived systems, it will say the zeromq package is not available but that is ok.
 
@@ -144,6 +147,15 @@ Execution script
 -----------------
 An execution script (cfme_test.sh) is provided. This script handles orchestration of
 docker, virtualenv, and cfme_test.
+
+Configure path to your virtualenv and your ``cfme_test`` repository in the ``cfme_tests/conf/env.local.yaml``.
+
+.. code-block:: YAML
+  tmux:
+      PYTHON_ENV_PATH: 'path/to/virtualenv/bin'
+      CFME_TEST_PATH: 'path/to/cfme_tests_repo'
+
+The script requires shyaml (`pip install shyaml`) and tmux (`yum install tmux`) commands.
 
 .. code-block:: bash
 
