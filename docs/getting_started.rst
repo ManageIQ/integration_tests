@@ -25,7 +25,8 @@ and leaves you with a usable enabled virtualenv.
 * you run RHEL/Fedora or installed the build requirements on your own
 * you use bash as shell
 
-::
+.. code:: bash
+
   $ . ./scripts/quickstart.sh
   ...
   (.cfme_tests)$
