@@ -8,6 +8,7 @@ import cfme.web_ui.flash as flash
 import utils.error as error
 from cfme.infrastructure.provider import (discover, Provider, VMwareProvider, RHEVMProvider,
     wait_for_a_provider)
+from cfme.fixtures import pytest_selenium as sel
 from utils import testgen, providers, version
 from utils.providers import get_credentials_from_config
 from utils.update import update
@@ -15,7 +16,27 @@ from utils.update import update
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
 
+MANAGE_INFRA_PROVIDER = [
+    ['Everything', 'Infrastructure', 'Providers'],
+    ['Everything', 'Infrastructure', 'Providers', 'Create'],
+    ['Everything', 'Infrastructure', 'Providers', 'Modify'],
+    ['Everything', 'Infrastructure', 'Providers', 'View'],
+]
 
+MANAGE_CLOUD_PROVIDER = [
+    ['Everything', 'Infrastructure', 'Providers'],
+    ['Everything', 'Infrastructure', 'Providers', 'Create'],
+    ['Everything', 'Infrastructure', 'Providers', 'Modify'],
+    ['Everything', 'Infrastructure', 'Providers', 'View'],  # <------ infra_view
+]
+
+
+@pytest.mark.posneg([['Everything', 'Infrastructure', 'Providers']])
+def test_navigate_infra():
+    sel.force_navigate('infrastructure_providers')
+
+
+@pytest.mark.posneg([MANAGE_INFRA_PROVIDER, MANAGE_CLOUD_PROVIDER])
 @pytest.mark.sauce
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
