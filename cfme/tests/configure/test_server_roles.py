@@ -3,7 +3,7 @@
 import pytest
 from cfme.configure import configuration
 from cfme.web_ui import flash
-from utils import conf
+from utils import conf, version
 from functools import partial
 
 try:
@@ -17,7 +17,11 @@ except KeyError:
 
 @pytest.fixture(scope="session")
 def all_possible_roles():
-    return server_roles_conf['all']
+    roles = server_roles_conf['all']
+    if version.current_version() < 5.6:
+        roles.remove('git_owner')
+        roles.remove('websocket')
+    return roles
 
 
 @pytest.fixture(scope="module", params=server_roles_conf['sets'].keys())
