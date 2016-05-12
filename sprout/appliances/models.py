@@ -585,6 +585,9 @@ class Appliance(MetadataMixin):
         "stopped": Power.OFF,
         "running": Power.ON,
     }
+
+    RESET_SWAP_STATES = {Power.OFF, Power.REBOOTING, Power.ORPHANED}
+
     template = models.ForeignKey(
         Template, on_delete=models.CASCADE, help_text="Appliance's source template.")
     appliance_pool = models.ForeignKey("AppliancePool", null=True, on_delete=models.CASCADE,
@@ -684,6 +687,10 @@ class Appliance(MetadataMixin):
             self.logger.info("Changed power state to {}".format(power_state))
             self.power_state = power_state
             self.power_state_changed = timezone.now()
+            if power_state in self.RESET_SWAP_STATES:
+                # Reset some values
+                self.swap = 0
+                self.ssh_failed = False
 
     def __unicode__(self):
         return "{} {} @ {}".format(type(self).__name__, self.name, self.template.provider.id)
