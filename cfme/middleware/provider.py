@@ -49,7 +49,7 @@ properties_form = Form(
 
 
 class HawkularProvider(BaseProvider, Validatable):
-    STATS_TO_MATCH = ['num_server', 'num_deployment']
+    STATS_TO_MATCH = ['num_server', 'num_deployment', 'num_datasource']
     property_tuples = [('name', 'Name'), ('hostname', 'Host Name'), ('port', 'Port'),
                        ('provider_type', 'Type')]
 
@@ -94,3 +94,11 @@ class HawkularProvider(BaseProvider, Validatable):
     @num_server.variant('ui')
     def num_server_ui(self):
         return int(self.get_detail("Relationships", "Middleware Servers"))
+
+    @variable(alias='db')
+    def num_datasource(self):
+        return self._num_db_generic('middleware_datasources')
+
+    @num_datasource.variant('ui')
+    def num_datasource_ui(self):
+        return int(self.get_detail("Relationships", "Middleware Datasources"))
