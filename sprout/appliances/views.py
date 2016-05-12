@@ -801,7 +801,8 @@ def check_query(request):
 
 
 def swap_offenders(request):
-    appliances = Appliance.objects.exclude(Q(swap=None) | Q(swap=0)).order_by('-swap')[:15]
-    failed_ssh = Appliance.objects.filter(ssh_failed=True).order_by(
+    appliances = Appliance.objects.filter(
+        power_state=Appliance.Power.ON).exclude(Q(swap=None) | Q(swap=0)).order_by('-swap')[:15]
+    failed_ssh = Appliance.objects.filter(ssh_failed=True, power_state=Appliance.Power.ON).order_by(
         'appliance_pool__owner__username', 'name')
     return render(request, 'appliances/swap_offenders.html', locals())

@@ -1506,7 +1506,7 @@ Sprout.
 @singleton_task()
 def check_swap_in_appliances(self):
     chord_tasks = []
-    for appliance in Appliance.objects.filter(ready=True).exclude(
+    for appliance in Appliance.objects.filter(ready=True, power_state=Appliance.Power.ON).exclude(
             power_state=Appliance.Power.ORPHANED):
         chord_tasks.append(check_swap_in_appliance.si(appliance.id))
     chord(chord_tasks)(notify_owners.s())
@@ -1566,8 +1566,6 @@ def notify_owners(self, results):
         message = '{}/{} {}'.format(
             appliance.name, appliance.ip_address, ', '.join(issues))
 
-        send_message('{}: {}'.format(username, message))
-
         if user is None:
             # No email
             continue
@@ -1575,6 +1573,10 @@ def notify_owners(self, results):
         if not user.email:
             # Same here
             continue
+
+        # We assume that "living" users have an e-mail set therefore we will not nag about bots'
+        # appliances.
+        send_message('{}: {}'.format(username, message))
 
         # Add the message to be sent
         if user not in per_user:
