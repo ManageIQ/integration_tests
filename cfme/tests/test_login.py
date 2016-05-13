@@ -42,7 +42,7 @@ def test_bad_password():
     user = User(credential=creds)
 
     with error.expected(version.pick({version.LOWEST:
-        "Sorry, the username or password you entered is incorrect.",
-        "5.6": "Incorrect username or password"})):
+            "Sorry, the username or password you entered is incorrect.",
+            "5.6": "Incorrect username or password"})):
         login.login(user)
         assert login.page.is_displayed()
