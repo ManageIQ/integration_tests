@@ -29,7 +29,7 @@ from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
-from utils.path import data_path, scripts_path
+from utils.path import data_path, patches_path, scripts_path
 from utils.providers import get_mgmt, get_crud
 from utils.version import Version, get_stream, pick, LATEST
 from utils.signals import fire
@@ -477,6 +477,40 @@ class IPAppliance(object):
             msg = 'Setting the time failed on appliance'
             log_callback(msg)
             raise Exception(msg)
+
+    @logger_wrap("Patch appliance with MiqQE js: {}")
+    def patch_with_miqqe(self, log_callback=None):
+        if self.version < "5.6":
+            return
+
+        # (local_path, remote_path, md5/None) trio
+        patch_args = (
+            (str(patches_path.join('miq_application.js.diff')),
+             '/var/www/miq/vmdb/app/assets/javascripts/miq_application.js',
+             None),
+            (str(patches_path.join('autofocus.js.diff')),
+             '/var/www/miq/vmdb/app/assets/javascripts/directives/autofocus.js',
+             'f5ce9fa129d1662e6fe6f7c213458227'),
+        )
+
+        patched_anything = False
+        ssh_client = self.ssh_client
+        for local_path, remote_path, md5 in patch_args:
+            res = ssh_client.patch_file(local_path, remote_path, md5)
+            patched_anything = patched_anything or res
+
+        if patched_anything:
+            logger.info("Cleaning and precompiling assets")
+            store.current_appliance.precompile_assets()
+            logger.info("Restarting evm service")
+            store.current_appliance.restart_evm_service()
+            logger.info("Waiting for Web UI to start")
+            wait_for(
+                func=store.current_appliance.is_web_ui_running,
+                message='appliance.is_web_ui_running',
+                delay=20,
+                timeout=300)
+            logger.info("Web UI is up and running")
 
     @logger_wrap("Work around missing Gem file: {}")
     def workaround_missing_gemfile(self, log_callback=None):

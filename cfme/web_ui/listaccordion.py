@@ -104,6 +104,7 @@ def select(name, link_title_or_text, by_title=True, partial=False):
     """
     return _get_link(name, link_title_or_text, by_title, partial).click()
 
+
 def is_selected(name, link_title_or_text, by_title=True, partial=False):
     """ Checks if the link in accordion section is selected
 

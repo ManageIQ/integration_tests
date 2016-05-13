@@ -964,6 +964,21 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # browser fixture should do this, but it's needed for subsequent calls
     ensure_browser_open()
 
+    # check for MiqQE javascript patch in 5.6 and above
+    # note: no wait_for_ajax() before this check!
+    if store.current_appliance.version >= "5.6":
+        try:
+            execute_script("checkAllMiqQE()")
+        except WebDriverException as ex:
+            if 'checkAllMiqQE is not defined' in ex.msg:
+                logger.info("MiqQE javascript not defined; patching appliance")
+                # patch, recycle and retry
+                store.current_appliance.patch_with_miqqe()
+                browser().quit()
+                force_navigate(page_name, _tries, *args, **kwargs)
+            else:
+                raise
+
     # Clear any running "spinnies"
     try:
         execute_script('miqSparkleOff();')
