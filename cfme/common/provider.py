@@ -446,7 +446,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
             sel.force_navigate("{}_providers".format(self.page_name))
             q = Quadicon(self.name, self.quad_name)
             creds = q.creds
-            return creds == "checkmark"
+            return "checkmark" in creds
 
         wait_for(_wait_f, num_sec=300, delay=5, message="credentials of {} ok!".format(self.name))
 

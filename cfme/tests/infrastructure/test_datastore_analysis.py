@@ -77,7 +77,7 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore, so
     assert len(host_names) != 0, "No hosts attached to this datastore found"
     for host_name in host_names:
         host_qi = Quadicon(host_name, 'host')
-        if host_qi.creds == 'checkmark':
+        if 'checkmark' in host_qi.creds:
             break
     else:
         # If not, get credentials for one of the present hosts

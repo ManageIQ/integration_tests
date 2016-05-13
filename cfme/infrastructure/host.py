@@ -282,7 +282,7 @@ class Host(Updateable, Pretty):
         """
         sel.force_navigate('infrastructure_hosts')
         quad = Quadicon(self.name, 'host')
-        return quad.creds == 'checkmark'
+        return 'checkmark' in quad.creds
 
     def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
         """DRY function for managing policy profiles.

@@ -65,10 +65,10 @@ def get_replication_appliances():
     ver_to_prov = str(version.current_version())
     appl1 = provision_appliance(ver_to_prov, 'long-test_repl_A')
     appl2 = provision_appliance(ver_to_prov, 'long-test_repl_B')
-    appl1.configure(region=1, patch_ajax_wait=False)
+    appl1.configure(region=1)
     appl1.ipapp.wait_for_web_ui()
     update_appliance_uuid(appl2.address)
-    appl2.configure(region=2, patch_ajax_wait=False, key_address=appl1.address)
+    appl2.configure(region=2, key_address=appl1.address)
     appl2.ipapp.wait_for_web_ui()
     return (appl1, appl2)
 

@@ -325,6 +325,8 @@ def wait_for_ajax():
         anything_in_flight |= running["prototype"] > 0
         anything_in_flight |= running["spinner"]
         anything_in_flight |= running["document"] != "complete"
+        anything_in_flight |= running["autofocus"] > 0
+        anything_in_flight |= running["miqQE"] > 0
         log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
         # Log the message only if it's different from the last one
         if prev_log_msg != log_msg:
@@ -961,6 +963,21 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     # browser fixture should do this, but it's needed for subsequent calls
     ensure_browser_open()
+
+    # check for MiqQE javascript patch in 5.6 and above
+    # note: no wait_for_ajax() before this check!
+    if store.current_appliance.version >= "5.6":
+        try:
+            execute_script("checkAllMiqQE()")
+        except WebDriverException as ex:
+            if 'checkAllMiqQE is not defined' in ex.msg:
+                logger.info("MiqQE javascript not defined; patching appliance")
+                # patch, recycle and retry
+                store.current_appliance.patch_with_miqqe()
+                browser().quit()
+                force_navigate(page_name, _tries, *args, **kwargs)
+            else:
+                raise
 
     # Clear any running "spinnies"
     try:

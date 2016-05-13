@@ -39,9 +39,9 @@ def get_appliances():
     ver_to_prov = str(version.current_version())
     appl1 = provision_appliance(ver_to_prov, 'test_back')
     appl2 = provision_appliance(ver_to_prov, 'test_rest')
-    appl1.configure(region=0, patch_ajax_wait=False)
+    appl1.configure(region=0)
     appl1.ipapp.wait_for_web_ui()
-    appl2.configure(region=0, patch_ajax_wait=False)
+    appl2.configure(region=0)
     appl2.ipapp.wait_for_web_ui()
     return (appl1, appl2)
 

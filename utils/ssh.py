@@ -4,6 +4,7 @@ import re
 import socket
 import sys
 from collections import namedtuple
+from os import path as os_path
 from urlparse import urlparse
 
 import paramiko
@@ -212,6 +213,49 @@ class SSHClient(paramiko.SSHClient):
         logger.info("Transferring remote file %s to local %s", remote_file, local_path)
         return SCPClient(self.get_transport(), progress=self._progress_callback).get(
             remote_file, local_path, **kwargs)
+
+    def patch_file(self, local_path, remote_path, md5=None):
+        """ Patches a single file on the appliance
+
+        Args:
+            local_path: Path to patch (diff) file
+            remote_path: Path to file to be patched (on the appliance)
+            md5: MD5 checksum of the original file to check if it has changed
+
+        Returns:
+            True if changes were applied, False if patching was not necessary
+
+        Note:
+            Running rake assets:precompile and restarting evm service (or UI workers)
+            might be necessary for changes to apply.
+        """
+        logger.info('Patching %s', remote_path)
+
+        # Upload diff to the appliance
+        diff_remote_path = os_path.join('/tmp/', os_path.basename(remote_path))
+        self.put_file(local_path, diff_remote_path)
+
+        # If already patched, exit
+        logger.info('Checking if already patched')
+        rc, out = self.run_command(
+            'patch {} {} -f --dry-run -R'.format(remote_path, diff_remote_path))
+        if rc == 0:
+            return False
+
+        # If not patched and there's MD5 checksum available, check it first
+        if md5:
+            logger.info("MD5 sum check in progress for %s", remote_path)
+            rc, out = self.run_command('md5sum -c - <<< "{} {}"'.format(md5, remote_path))
+            if rc == 0:
+                logger.info('MD5 sum check result: file not changed')
+            else:
+                logger.warning('MD5 sum check result: file has been changed!')
+
+        # Patch the file
+        rc, out = self.run_command('patch {} {} -f'.format(remote_path, diff_remote_path))
+        if rc != 0:
+            raise paramiko.SSHException("Unable to patch file {}: {}".format(remote_path, out))
+        return True
 
     def get_build_datetime(self):
         command = "stat --printf=%Y /var/www/miq/vmdb/VERSION"
