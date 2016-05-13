@@ -150,7 +150,8 @@ docker, virtualenv, and cfme_test.
 
 Configure path to your virtualenv and your ``cfme_test`` repository in the ``cfme_tests/conf/env.local.yaml``.
 
-.. code-block:: YAML
+.. code-block:: yaml
+
   tmux:
       PYTHON_ENV_PATH: 'path/to/virtualenv/bin'
       CFME_TEST_PATH: 'path/to/cfme_tests_repo'
