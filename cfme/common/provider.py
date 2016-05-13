@@ -22,7 +22,7 @@ from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
 
-from . import PolicyProfileAssignable, Taggable
+from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(tb.select, 'Configuration')
 
@@ -63,7 +63,7 @@ credential_form = TabStripForm(
     ])
 
 
-class BaseProvider(Taggable, Updateable):
+class BaseProvider(Taggable, Updateable, SummaryMixin):
     # List of constants that every non-abstract subclass must have defined
     STATS_TO_MATCH = []
     string_name = ""

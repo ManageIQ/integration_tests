@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+from cached_property import cached_property
 from functools import partial
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTree, Table, flash, form_buttons, mixins, toolbar
-from utils import version
+from utils import attributize_string, version
+from urlparse import urlparse
 
 pol_btn = partial(toolbar.select, "Policy")
 
@@ -126,3 +128,208 @@ class Validatable(object):
             assert(expected_value == shown_value,
                    'Property {} has wrong value, expected {} but was {}'
                    .format(property_tuple[1], expected_value, shown_value))
+
+
+class SummaryMixin(object):
+    """Use this mixin to have simple access to the Summary informations of an object.
+
+    Requires that the class has ``load_details(refresh)`` method defined.
+
+    All the names from the UI are "attributized".
+
+    Sample usage:
+
+    .. code-block:: python
+
+        # You can retrieve the text value as it is in the UI
+        provider.summary.properties.host_name.text_value  # => 'hostname'
+        # Or let it guess if it is a number and return float or int
+        provider.summary.properties.aggregate_host_cpus.value  # => 12
+        # You can get the image address
+        provider.summary.foo.bar.img  # => value parsed by urlparse()
+        # Or the onclick link
+        provider.summary.foo.bar.link  # => 'http://foo/bar'
+        # Check if it is clickable
+        assert provider.summary.xyz.qwer.clickable
+
+        # You can iterate like it was a dictionary
+        for table_name, table in provider.summary:
+            # table_name contains title of the table
+            for key, value in table:
+                # key contains the left cell text, value contains the value holder
+                print('{}: {}'.format(key, value.text_value))
+
+
+    """
+    @cached_property
+    def summary(self):
+        return Summary(self)
+
+
+class Summary(object):
+    """Summary container class. An entry point to the summary listing"""
+    HEADERS = '//th[@align="left"]'
+
+    def __init__(self, o):
+        self._object = o
+        self._keys = []
+        self.reload()
+
+    def __repr__(self):
+        return "<Summary {}>".format(" ".join(self._keys))
+
+    def reload(self):
+        for key in self._keys:
+            try:
+                delattr(self, key)
+            except AttributeError:
+                pass
+        self._keys = []
+        self._object.load_details(refresh=True)
+        for header in sel.elements(self.HEADERS):
+            header_text = sel.text_sane(header)
+            header_id = attributize_string(header_text)
+            table_object = SummaryTable(self._object, header_text, header)
+            setattr(self, header_id, table_object)
+            self._keys.append(header_id)
+
+    def __iter__(self):
+        """This enables you to iterate through like it was a dictionary, just without .iteritems"""
+        for key in self._keys:
+            yield (key, getattr(self, key))
+
+    def groups(self):
+        """Returns a dictionary of keys (table titles) and table objects."""
+        return dict(iter(self))
+
+    @property
+    def group_names(self):
+        """Returns names of the tables."""
+        return self._keys
+
+
+class SummaryTable(object):
+    ROWS = '../../../tbody/tr'
+
+    def __init__(self, o, text, entry):
+        self._object = o
+        self._text = text
+        self._entry = entry
+        self._keys = []
+        self.load()
+
+    def __repr__(self):
+        return "<SummaryTable {} {}>".format(
+            repr(self._text),
+            " ".join("{}={}".format(key, repr(getattr(self, key))) for key in self._keys))
+
+    def load(self):
+        self._keys = []
+        key_values = []
+        for row in sel.elements(self.ROWS, root=self._entry):
+            tds = sel.elements('./td', root=row)
+            key = tds[0]
+            klass = sel.get_attribute(key, 'class')
+            if klass and 'label' in klass:
+                # Ordinary field
+                key_id = attributize_string(sel.text_sane(key))
+                value = tuple(tds[1:])
+                try:
+                    rowspan = int(sel.get_attribute(key, 'rowspan'))
+                except (ValueError, TypeError):
+                    rowspan = None
+                if rowspan:
+                    key_values.append((key, key_id, [value]))
+                else:
+                    key_values.append((key, key_id, value))
+            else:
+                # value of last key_values should be extended
+                key_values[-1][2].append(tuple(tds))
+        for key, key_id, value in key_values:
+            value_object = process_field(value)
+            setattr(self, key_id, value_object)
+            self._keys.append(key_id)
+
+    def reload(self):
+        self._object.load_details(refresh=True)
+        for key in self._keys:
+            try:
+                delattr(self, key)
+            except AttributeError:
+                pass
+        return self.load()
+
+    @property
+    def keys(self):
+        return self._keys
+
+    def __iter__(self):
+        for key in self._keys:
+            yield (key, getattr(self, key))
+
+    def items(self):
+        return dict(iter(self))
+
+
+class SummaryValue(object):
+    def __init__(self, el):
+        self._el = el
+
+    def __repr__(self):
+        return repr(self.text_value)
+
+    @cached_property
+    def img(self):
+        try:
+            img_o = sel.element('./img', root=self._el)
+            return urlparse(sel.get_attribute(img_o, 'src').strip())
+        except sel.NoSuchElementException:
+            return None
+
+    @cached_property
+    def text_value(self):
+        return sel.text_sane(self._el)
+
+    @cached_property
+    def value(self):
+        # Try parsing a number
+        try:
+            return int(self.text_value)
+        except (ValueError, TypeError):
+            try:
+                return float(self.text_value)
+            except (ValueError, TypeError):
+                return self.text_value
+
+    @cached_property
+    def link(self):
+        if sel.get_attribute(sel.element('..', root=self._el), 'onclick'):
+            return self._el
+        else:
+            return None
+
+    @property
+    def clickable(self):
+        return self.link is not None
+
+    def click(self):
+        """A convenience function to click the summary item."""
+        return sel.click(self)
+
+    def _custom_click_handler(self, wait_ajax):
+        if not self.clickable:
+            raise ValueError("Cannot click on {} because it is not clickable".format(repr(self)))
+        try:
+            return sel.click(self.link, wait_ajax, no_custom_handler=True)
+        except self.sel.StaleElementReferenceException:
+            raise RuntimeError('Couldnt click on {} because the page was left.'.format(repr(self)))
+
+
+def process_field(values):
+    if isinstance(values, list):
+        return map(process_field, values)
+    else:
+        if len(values) == 1:
+            return SummaryValue(values[0])
+        else:
+            return map(SummaryValue, values)

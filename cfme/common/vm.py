@@ -21,7 +21,7 @@ from utils.update import Updateable
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 
-from . import PolicyProfileAssignable, Taggable
+from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(toolbar.select, "Configuration")
 lcl_btn = partial(toolbar.select, "Lifecycle")
@@ -44,7 +44,7 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
+class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 

@@ -56,9 +56,31 @@ def at_exit(f, *args, **kwargs):
     return atexit.register(lambda: diaper(f, *args, **kwargs))
 
 
+def _prenormalize_text(text):
+    """Makes the text lowercase and removes all characters that are not digits, alphas, or spaces"""
+    return re.sub(r"[^a-z0-9 ]", "", text.strip().lower())
+
+
+def _replace_spaces_with(text, delim):
+    """Contracts spaces into one character and replaces it with a custom character."""
+    return re.sub(r"\s+", delim, text)
+
+
 def normalize_text(text):
-    text = re.sub(r"[^a-z0-9 ]", "", text.strip().lower())
-    return re.sub(r"\s+", " ", text)
+    """Converts a string to a lowercase string containing only letters, digits and spaces.
+
+    The space is always one character long if it is present.
+    """
+    return _replace_spaces_with(_prenormalize_text(text), ' ')
+
+
+def attributize_string(text):
+    """Converts a string to a lowercase string containing only letters, digits and underscores.
+
+    Usable for eg. generating object key names.
+    The underscore is always one character long if it is present.
+    """
+    return _replace_spaces_with(_prenormalize_text(text), '_')
 
 
 def tries(num_tries, exceptions, f, *args, **kwargs):
