@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from utils.db import Db
 from fixtures.pytest_store import store
 
 
@@ -16,7 +15,7 @@ def get_configuration_details(db=None, appliance=None):
         If the data were found, it returns tuple `(region, server name, server id, server zone id)`
     """
     if db is None and appliance is None:
-        db = Db(store.current_appliance)
+        db = store.current_appliance.db
     elif db is None:
         db = appliance.db
 
@@ -54,7 +53,7 @@ def get_configuration_details(db=None, appliance=None):
 
 def get_zone_description(zone_id, db=None, appliance=None):
     if db is None and appliance is None:
-        db = Db(store.current_appliance)
+        db = store.current_appliance.db
     elif db is None:
         db = appliance.db
 
@@ -71,7 +70,7 @@ def get_zone_description(zone_id, db=None, appliance=None):
 
 def get_host_id(hostname, db=None, appliance=None):
     if db is None and appliance is None:
-        db = Db(store.current_appliance)
+        db = store.current_appliance.db
     elif db is None:
         db = appliance.db
 
@@ -88,7 +87,7 @@ def get_host_id(hostname, db=None, appliance=None):
 
 def check_domain_enabled(domain, db=None, appliance=None):
     if db is None and appliance is None:
-        db = Db(store.current_appliance)
+        db = store.current_appliance.db
     elif db is None:
         db = appliance.db
 
