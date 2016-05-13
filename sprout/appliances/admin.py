@@ -10,7 +10,7 @@ from django_object_actions import DjangoObjectActions
 # Register your models here.
 from appliances.models import (
     Provider, Template, Appliance, Group, AppliancePool, DelayedProvisionTask,
-    MismatchVersionMailer, UserApplianceQuota, User, BugQuery, GroupShepherd)
+    MismatchVersionMailer, UserApplianceQuota, User, BugQuery, GroupShepherd, HWProfile)
 from appliances import tasks
 from sprout.log import create_logger
 
@@ -51,6 +51,11 @@ class DelayedProvisionTaskAdmin(Admin):
 
 @register_for(GroupShepherd)
 class GroupShepherdAdmin(Admin):
+    pass
+
+
+@register_for(HWProfile)
+class HWProfileAdmin(Admin):
     pass
 
 

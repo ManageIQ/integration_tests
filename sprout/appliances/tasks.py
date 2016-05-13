@@ -402,6 +402,7 @@ def create_appliance_template(self, provider_id, group_id, template_name, source
 @singleton_task()
 def prepare_template_deploy(self, template_id):
     template = Template.objects.get(id=template_id)
+    hw_profiles = template.template_group.hardware_profiles.filter(provider=template.provider)
     try:
         if not template.exists_in_provider:
             template.set_status("Deploying the template.")
@@ -410,6 +411,13 @@ def prepare_template_deploy(self, template_id):
             kwargs["power_on"] = True
             if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
                 kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
+            if hw_profiles:
+                hw_profile = hw_profiles[0]
+                hw_profile_params = hw_profile.additional_deploy_params
+                if 'flavour_id' in hw_profile_params and 'flavour_name' in kwargs:
+                    # Override openstack flavour setting
+                    del kwargs['flavour_name']
+                kwargs.update(hw_profile_params)
             self.logger.info("Deployment kwargs: {}".format(repr(kwargs)))
             template.provider_api.deploy_template(
                 template.original_name, vm_name=template.name, **kwargs)
@@ -775,6 +783,15 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             kwargs["power_on"] = False
             if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
                 kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
+            hw_profiles = appliance.template.template_group.hardware_profiles.filter(
+                provider=appliance.template.provider)
+            if hw_profiles:
+                hw_profile = hw_profiles[0]
+                hw_profile_params = hw_profile.additional_deploy_params
+                if 'flavour_id' in hw_profile_params and 'flavour_name' in kwargs:
+                    # Override openstack flavour setting
+                    del kwargs['flavour_name']
+                kwargs.update(hw_profile_params)
             self.logger.info("Deployment kwargs: {}".format(repr(kwargs)))
             appliance.provider_api.deploy_template(
                 appliance.template.name, vm_name=appliance.name,
@@ -821,7 +838,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             self.retry(args=(appliance_id, lease_time_minutes), exc=e, countdown=60, max_retries=5)
     else:
         appliance.set_status("Template cloning finished. Refreshing provider VMs to get UUID.")
-        refresh_appliances_provider.delay(appliance.provider.id)
+        refresh_provider.delay(appliance.provider.id)
 
 
 @singleton_task()
@@ -1013,53 +1030,19 @@ def retrieve_appliance_ip(self, appliance_id):
 
 
 @singleton_task()
-def refresh_appliances(self):
+def refresh_providers(self):
     """Dispatches the appliance refresh process among the providers"""
-    self.logger.info("Initiating regular appliance provider refresh")
+    self.logger.info("Initiating regular provider refresh")
     for provider in Provider.objects.filter(working=True, disabled=False):
-        refresh_appliances_provider.delay(provider.id)
+        refresh_provider.delay(provider.id)
 
 
 @singleton_task(soft_time_limit=180)
-def refresh_appliances_provider(self, provider_id):
+def refresh_provider(self, provider_id):
     """Downloads the list of VMs from the provider, then matches them by name or UUID with
     appliances stored in database.
     """
-    self.logger.info("Refreshing appliances in {}".format(provider_id))
-    provider = Provider.objects.get(id=provider_id)
-    if not hasattr(provider.api, "all_vms"):
-        # Ignore this provider
-        return
-    vms = provider.api.all_vms()
-    dict_vms = {}
-    uuid_vms = {}
-    for vm in vms:
-        dict_vms[vm.name] = vm
-        if vm.uuid:
-            uuid_vms[vm.uuid] = vm
-    for appliance in Appliance.objects.filter(template__provider=provider):
-        if appliance.uuid is not None and appliance.uuid in uuid_vms:
-            vm = uuid_vms[appliance.uuid]
-            # Using the UUID and change the name if it changed
-            appliance.name = vm.name
-            appliance.ip_address = vm.ip
-            appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
-                vm.power_state, Appliance.Power.UNKNOWN))
-            appliance.save()
-        elif appliance.name in dict_vms:
-            vm = dict_vms[appliance.name]
-            # Using the name, and then retrieve uuid
-            appliance.uuid = vm.uuid
-            appliance.ip_address = vm.ip
-            appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
-                vm.power_state, Appliance.Power.UNKNOWN))
-            appliance.save()
-            self.logger.info("Retrieved UUID for appliance {}/{}: {}".format(
-                appliance.id, appliance.name, appliance.uuid))
-        else:
-            # Orphaned :(
-            appliance.set_power_state(Appliance.Power.ORPHANED)
-            appliance.save()
+    Provider.objects.get(id=provider_id).refresh()
 
 
 @singleton_task()

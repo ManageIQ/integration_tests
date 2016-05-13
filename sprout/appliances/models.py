@@ -15,7 +15,7 @@ from celery import chain
 from contextlib import contextmanager
 from datetime import timedelta, date
 from django.contrib.auth.models import User, Group as DjangoGroup
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_save
@@ -229,6 +229,10 @@ class Provider(MetadataMixin):
         return cfme_data.get("management_systems", {}).get(self.id, {})
 
     @property
+    def type(self):
+        return self.provider_data.get('type', None)
+
+    @property
     def ip_address(self):
         return self.provider_data.get("ipaddress")
 
@@ -336,6 +340,78 @@ class Provider(MetadataMixin):
 
     def __unicode__(self):
         return "{} {}".format(type(self).__name__, self.id)
+
+    # Refreshers
+    def refresh(self):
+        self.refresh_appliances()
+        self.refresh_hardware_profiles()
+
+    def refresh_appliances(self):
+        """Downloads the list of VMs from the provider, then matches them by name or UUID with
+        appliances stored in database.
+        """
+        self.logger.info("Refreshing appliances")
+        if not hasattr(self.api, "all_vms"):
+            # Ignore this provider
+            return
+        vms = self.api.all_vms()
+        dict_vms = {}
+        uuid_vms = {}
+        for vm in vms:
+            dict_vms[vm.name] = vm
+            if vm.uuid:
+                uuid_vms[vm.uuid] = vm
+        for appliance in Appliance.objects.filter(template__provider=self):
+            if appliance.uuid is not None and appliance.uuid in uuid_vms:
+                vm = uuid_vms[appliance.uuid]
+                # Using the UUID and change the name if it changed
+                appliance.name = vm.name
+                appliance.ip_address = vm.ip
+                appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
+                    vm.power_state, Appliance.Power.UNKNOWN))
+                appliance.save()
+            elif appliance.name in dict_vms:
+                vm = dict_vms[appliance.name]
+                # Using the name, and then retrieve uuid
+                appliance.uuid = vm.uuid
+                appliance.ip_address = vm.ip
+                appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
+                    vm.power_state, Appliance.Power.UNKNOWN))
+                appliance.save()
+                self.logger.info("Retrieved UUID for appliance {}/{}: {}".format(
+                    appliance.id, appliance.name, appliance.uuid))
+            else:
+                # Orphaned :(
+                appliance.set_power_state(Appliance.Power.ORPHANED)
+                appliance.save()
+
+    def refresh_hardware_profiles(self):
+        if self.type != 'openstack':
+            return
+        # Openstack flavours
+        for flavour in self.api.api.flavors.list():
+            try:
+                hw_profile = HWProfile.objects.get(provider=self, remote_uuid=flavour.id)
+                save = False
+                if hw_profile.cpu != flavour.vcpus:
+                    hw_profile.cpu = flavour.vcpus
+                    save = True
+                if hw_profile.ram != flavour.ram:
+                    hw_profile.ram = flavour.ram
+                    save = True
+
+                if save:
+                    hw_profile.save()
+                    self.logger.info(
+                        'Updated HW Profile {}/{} with cpu: {} ram: {}'.format(
+                            hw_profile.id, hw_profile.remote_uuid, hw_profile.cpu, hw_profile.ram))
+            except ObjectDoesNotExist:
+                hw_profile = HWProfile.objects.create(
+                    provider=self, name=flavour.name, remote_uuid=flavour.id, cpu=flavour.vcpus,
+                    ram=flavour.ram)
+                self.logger.info(
+                    'Created a HW Profile {}/{} with cpu: {} ram: {}'.format(
+                        hw_profile.id, hw_profile.remote_uuid, hw_profile.cpu, hw_profile.ram))
 
 
 @receiver(pre_save, sender=Provider)
@@ -1349,3 +1425,40 @@ class BugQuery(models.Model):
             bq for bq in
             cls.objects.filter(Q(owner=None) | Q(owner=user)).order_by('owner', 'id')
             if not (bq.is_parametrized and not user.email)]
+
+
+class HWProfile(models.Model):
+    """Represents flavours in case of Openstack, otherwise it is a configuration override for
+    the deployment.
+    """
+    provider = models.ForeignKey(
+        Provider, related_name='hardware_profiles', on_delete=models.CASCADE)
+    group = models.ManyToManyField(Group, related_name='hardware_profiles')
+    name = models.CharField(max_length=64)
+    remote_uuid = models.CharField(
+        null=True, blank=True, max_length=36,
+        help_text='If a HW profile is remote, it is not possible to edit it. Like a RHOS Flavour.')
+
+    cpu = models.IntegerField(null=True, blank=True, help_text='CPU count')
+    ram = models.IntegerField(null=True, blank=True, help_text='RAM amount')
+
+    def save(self, *args, **kwargs):
+        if self.provider.type == 'openstack' and self.remote_uuid is None:
+            raise ValidationError('Openstack HWProfile must be remote! (flavour)')
+        return super(HWProfile, self).save(*args, **kwargs)
+
+    @property
+    def additional_deploy_params(self):
+        if self.provider.type == 'openstack':
+            return {'flavour_id': self.remote_uuid}
+        else:
+            params = {}
+            if self.cpu is not None:
+                params['cpu'] = self.cpu
+            if self.ram is not None:
+                params['ram'] = self.ram
+            return params
+
+    def __unicode__(self):
+        return u'HWProfile {}@{} (cpu: {}, ram: {})'.format(
+            self.name, self.provider.id, self.cpu, self.ram)

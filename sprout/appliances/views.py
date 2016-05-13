@@ -18,7 +18,7 @@ from django.shortcuts import render, redirect
 from appliances.api import json_response
 from appliances.models import (
     Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer, User, BugQuery,
-    GroupShepherd)
+    GroupShepherd, HWProfile)
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
     anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
     appliance_rename, wait_appliance_ready, mark_appliance_ready, appliance_reboot)
@@ -97,7 +97,9 @@ def providers(request, provider_id=None):
         except ObjectDoesNotExist:
             messages.warning(request, "Provider '{}' does not exist.".format(provider_id))
             return redirect("providers")
-    providers = Provider.objects.filter(hidden=False, **user_filter).order_by("id").distinct()
+    providers = Provider.objects.filter(hidden=False, **user_filter).order_by("id")
+    hw_profiles = HWProfile.objects.filter(provider=provider).order_by(
+        'cpu', 'ram', 'name', 'remote_uuid')
     return render(request, 'appliances/providers.html', locals())
 
 
