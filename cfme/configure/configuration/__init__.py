@@ -592,9 +592,11 @@ class ServerLogDepot(Pretty):
         )
 
         validate = form_buttons.FormButton("Validate the credentials by logging into the Server")
+        # add FormButton because of inconsistency in attributes for Save buttons in cfme
         save_button = {
             version.LOWEST: form_buttons.save,
             "5.4": form_buttons.angular_save,
+            "5.6": form_buttons.FormButton("Save Changes", ng_click="btnClick()")
         }
 
         def __init__(self, p_type, name, uri, username=None, password=None):

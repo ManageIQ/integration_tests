@@ -11,7 +11,6 @@ import re
 from utils.timeutil import parsetime
 from utils import conf
 from utils.ftp import FTPClient
-from utils.blockers import BZ
 from utils.path import log_path
 from cfme.configure import configuration as configure
 
@@ -200,15 +199,7 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
 
 
 @pytest.mark.nondestructive
-@pytest.mark.meta(
-    blockers=[
-        1018578,
-        1108087,
-        1221716,
-        BZ(1151173, unblock=lambda depot_type: depot_type != "ftp"),
-        BZ(1184465, unblock=lambda depot_type: depot_type != "ftp"),
-    ]
-)
+@pytest.mark.meta(blockers=[1335824], forced_streams=['5.6', 'upstream'])
 @pytest.sel.go_to('dashboard')
 def test_collect_log_depot(depot_type,
                            depot_machine,
