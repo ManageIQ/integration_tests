@@ -1,13 +1,12 @@
-from cfme.common import Validatable
 from cfme.common.provider import BaseProvider
 from cfme.web_ui import (
-    Form, AngularSelect, form_buttons, Input
+    Form, AngularSelect, form_buttons, Input, CheckboxTable
 )
 from cfme.web_ui.menu import nav
-
-from . import cfg_btn, mon_btn, pol_btn, list_tbl
 from utils.varmeth import variable
-import cfme.web_ui.toolbar as tb
+from . import cfg_btn, mon_btn, pol_btn, LIST_TABLE_LOCATOR, MiddlewareBase
+
+list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 nav.add_branch(
     'middleware_providers',
@@ -16,8 +15,7 @@ nav.add_branch(
             lambda _: cfg_btn('Add a New Middleware Provider'),
         'middleware_provider':
         [
-            lambda ctx: (tb.select('List View'),
-                        list_tbl.select_row('name', ctx['provider'].name)),
+            lambda ctx: list_tbl.select_row('name', ctx['provider'].name),
             {
                 'middleware_provider_edit':
                 lambda _: cfg_btn('Edit Selected Middleware Provider'),
@@ -26,8 +24,7 @@ nav.add_branch(
             }],
         'middleware_provider_detail':
         [
-            lambda ctx: (tb.select('List View'),
-                        list_tbl.click_cells({'name': ctx['provider'].name})),
+            lambda ctx: list_tbl.click_cells({'name': ctx['provider'].name}),
             {
                 'middleware_provider_edit_detail':
                 lambda _: cfg_btn('Edit this Middleware Provider'),
@@ -48,10 +45,29 @@ properties_form = Form(
     ])
 
 
-class HawkularProvider(BaseProvider, Validatable):
+class HawkularProvider(MiddlewareBase, BaseProvider):
+    """
+    HawkularProvider class holds provider data. Used to perform actions on hawkular provider page
+
+    Args:
+        name: Name of the provider
+        hostname: Hostname/IP of the provider
+        port: http/https port of hawkular provider
+        credentials: see Credential inner class.
+        key: The CFME key of the provider in the yaml.
+
+    Usage:
+
+        myprov = HawkularProvider(name='foo',
+                            hostname='localhost',
+                            port=8080,
+                            credentials=Provider.Credential(principal='admin', secret='foobar')))
+        myprov.create()
+        myprov.num_deployment(method="ui")
+    """
     STATS_TO_MATCH = ['num_server', 'num_deployment', 'num_datasource']
-    property_tuples = [('name', 'Name'), ('hostname', 'Host Name'), ('port', 'Port'),
-                       ('provider_type', 'Type')]
+    property_tuples = [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'),
+                       ('provider_type', 'type')]
 
     page_name = 'middleware'
     string_name = 'Middleware'
