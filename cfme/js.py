@@ -20,8 +20,8 @@ return {
     spinner: (!isHidden(document.getElementById("spinner_div")))
         && isHidden(document.getElementById("lightbox_div")),
     document: document.readyState,
-    autofocus: checkMiqQE('autofocus'),
-    miqQE: checkAllMiqQE()
+    autofocus: (typeof checkMiqQE === "undefined") ? 0 : checkMiqQE('autofocus'),
+    miqQE: (typeof checkAllMiqQE === "undefined") ? 0 : checkAllMiqQE()
 };
 """
 
