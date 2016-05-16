@@ -1,6 +1,6 @@
 --- miq_application.js	2016-05-09 15:44:20.785132210 -0400
 +++ miq_application.js.new	2016-05-10 02:12:20.945132210 -0400
-@@ -1,5 +1,37 @@
+@@ -1,5 +1,48 @@
  // MIQ specific JS functions
 
 +// MiqQE section
@@ -21,7 +21,7 @@
 +function checkMiqQE(key) {
 +  // Returns 0 if key is undefined or set to 'complete', otherwise 1
 +  var v = getMiqQE(key);
-+  return (v === undefined || v === 'complete') ? 0 : 1;
++  return (v === undefined || v === 'complete' || v === 0 ) ? 0 : 1;
 +}
 +
 +function checkAllMiqQE() {
@@ -32,8 +32,19 @@
 +  }
 +  return v_incomplete;
 +}
++
 +// --------------
 +
++$(document).ajaxSend(function() {
++  val = getMiqQE('ajaxTimers') ? getMiqQE('ajaxTimers') : 0
++  setMiqQE('ajaxTimers', val + 1)
++})
++$(document).ajaxComplete(function() {
++  val = getMiqQE('ajaxTimers') ? getMiqQE('ajaxTimers') : 0
++  if (val > 0){
++    setMiqQE('ajaxTimers', val - 1)
++  }
++})
 +
  // Things to be done on page loads
  function miqOnLoad() {

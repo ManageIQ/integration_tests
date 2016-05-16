@@ -1390,6 +1390,7 @@ class Select(SeleniumSelect, Pretty):
                 "$(arguments[0]).selectpicker('val', arguments[1]);"
                 "$(arguments[0]).trigger('change');",
                 element(self, check_visibility=not self.is_patternfly), value)
+            wait_for_ajax()
             return None
 
     def select_by_visible_text(self, text):
