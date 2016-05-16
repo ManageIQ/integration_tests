@@ -965,7 +965,6 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     ensure_browser_open()
 
     # check for MiqQE javascript patch in 5.6 and above
-    # note: no wait_for_ajax() before this check!
     if store.current_appliance.version >= "5.6":
         try:
             execute_script("checkAllMiqQE()")
