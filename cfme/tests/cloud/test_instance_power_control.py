@@ -2,7 +2,8 @@
 import fauxfactory
 import cfme.web_ui.flash as flash
 import pytest
-from cfme.cloud.instance import EC2Instance, Instance, OpenStackInstance, get_all_instances
+from cfme.cloud.instance import (EC2Instance, Instance, OpenStackInstance,
+                                 AzureInstance, get_all_instances)
 from cfme.fixtures import pytest_selenium as sel
 from utils import error, testgen, version
 from utils.blockers import GH
@@ -57,6 +58,10 @@ def check_power_options(soft_assert, instance, power_state):
     """ Checks if power options match given power state ('on', 'off')
     """
     must_be_available = {
+        AzureInstance: {
+            'on': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.TERMINATE],
+            'off': [AzureInstance.START, AzureInstance.TERMINATE]
+        },
         EC2Instance: {
             'on': [EC2Instance.STOP, EC2Instance.SOFT_REBOOT, EC2Instance.TERMINATE],
             'off': [EC2Instance.START, EC2Instance.TERMINATE]
@@ -72,6 +77,10 @@ def check_power_options(soft_assert, instance, power_state):
         }
     }
     mustnt_be_available = {
+        AzureInstance: {
+            'on': [AzureInstance.START],
+            'off': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.SOFT_REBOOT]
+        },
         EC2Instance: {
             'on': [EC2Instance.START],
             'off': [EC2Instance.STOP, EC2Instance.SOFT_REBOOT]

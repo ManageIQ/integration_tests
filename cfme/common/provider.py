@@ -583,6 +583,10 @@ def _fill_credential(form, cred, validate=None):
             'candu_secret': cred.secret,
             'candu_verify_secret': cred.verify_secret,
             'validate_btn': validate})
+    elif cred.type == 'azure':
+        fill(cred.form, {'default_username': cred.principal,
+                         'default_password': cred.secret,
+                         'default_verify': cred.secret})
     elif cred.type == 'ssh':
         fill(cred.form, {'ssh_user': cred.principal, 'ssh_key': cred.secret})
     elif cred.type == 'token':

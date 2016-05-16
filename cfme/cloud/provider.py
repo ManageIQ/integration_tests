@@ -41,7 +41,9 @@ properties_form_55 = Form(
     fields=[
         ('type_select', {version.LOWEST: Select('select#server_emstype'),
             '5.5': AngularSelect("emstype")}),
+        ('tenant_id', Input("azure_tenant_id")),
         ('name_text', Input("name")),
+        ('azure_region_select', AngularSelect("provider_region")),
         ('hostname_text', Input("hostname")),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('region_select', {version.LOWEST: Select("select#provider_region"),
@@ -52,6 +54,8 @@ properties_form_55 = Form(
                 "5.5": "api_port",
             }
         )),
+        ('infra_provider', Input("provider_id")),
+        ('subscription', Input("subscription")),
         ("api_version", AngularSelect("api_version"), {"appeared_in": "5.5"}),
         ('sec_protocol', AngularSelect("security_protocol"), {"appeared_in": "5.5"}),
         ('infra_provider', {
@@ -69,6 +73,12 @@ properties_form_56 = TabStripForm(
         ("api_version", AngularSelect("ems_api_version")),
         ('infra_provider', AngularSelect("ems_infra_provider_id")),
         ('google_project_text', Input("project")),
+        ('azure_tenant_id', Input("azure_tenant_id")),
+        ('azure_subscription_id', Input("subscription")),
+        ('azure_region_select', AngularSelect("provider_region")),
+        ('amazon_region_select', {version.LOWEST: Select("select#provider_region"),
+            "5.5": AngularSelect("provider_region")}),
+        ("api_version", AngularSelect("api_version")),
     ],
     tab_fields={
         "Default": [
@@ -158,6 +168,23 @@ class Provider(Pretty, CloudInfraProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
+
+
+class AzureProvider(Provider):
+    def __init__(self, name=None, credentials=None, zone=None, key=None, region=None,
+                 tenant_id=None, subscription_id=None):
+        super(AzureProvider, self).__init__(name=name, credentials=credentials,
+                                            zone=zone, key=key)
+        self.region = region
+        self.tenant_id = tenant_id
+        self.subscription_id = subscription_id
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name'),
+                'type_select': create and 'Azure',
+                'azure_region_select': kwargs.get('region'),
+                'azure_tenant_id': kwargs.get('tenant_id'),
+                'azure_subscription_id': kwargs.get('subscription_id')}
 
 
 class EC2Provider(Provider):
