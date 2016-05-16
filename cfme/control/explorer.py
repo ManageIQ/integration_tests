@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
+from time import sleep
 from functools import partial
 
 from cfme.web_ui.menu import nav
@@ -1429,6 +1430,8 @@ class Action(Updateable, Pretty):
         of forms."""
         fill(self.form, dict(description=self.description, action_type=self.action_type))
         if self.sub_forms[self.action_type] is not None:
+            # Waiting for tree loading
+            sleep(2)
             fill(self.sub_forms[self.action_type], self.action_values)
             action()
             flash.assert_no_errors()
