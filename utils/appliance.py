@@ -1228,8 +1228,8 @@ class IPAppliance(object):
             log_callback(message)
             raise exception_class(message)
 
-        if vddk_url is None:
-            vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", None)
+        if vddk_url is None:  # fallback to VDDK 5.5
+            vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", None).get("5_5", None)
         if vddk_url is None:
             raise Exception("vddk_url not specified!")
 
@@ -1249,21 +1249,13 @@ class IPAppliance(object):
                 if result.rc != 0:
                     log_raise(Exception, "Could not download VDDK")
 
-                # extract
-                log_callback('Extracting vddk')
-                status, out = client.run_command('tar xvf {}'.format(filename))
-                if status != 0:
-                    log_raise(Exception, "Error: Unknown format of the file:\n{}".format(out))
-
                 # install
                 log_callback('Installing vddk')
                 status, out = client.run_command(
-                    'vmware-vix-disklib-distrib/vmware-install.pl --default EULA_AGREED=yes')
+                    'yum -y install {}'.format(filename))
                 if status != 0:
                     log_raise(
                         Exception, 'VDDK installation failure (rc: {})\n{}'.format(out, status))
-                else:
-                    client.run_command('ldconfig')
 
                 # verify
                 log_callback('Verifying vddk')
