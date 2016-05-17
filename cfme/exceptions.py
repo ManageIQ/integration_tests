@@ -292,3 +292,7 @@ class MiddlewareServerNotFound(CFMEException):
     Raised if a specific Middleware Server cannot be found.
     """
     pass
+
+
+class UsingSharedTables(CFMEException):
+    """Raised if the :py:class:`cfme.web_ui.Table` suspects there is a use of shared tables."""
