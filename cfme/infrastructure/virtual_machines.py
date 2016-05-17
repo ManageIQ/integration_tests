@@ -10,7 +10,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
-    paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid
+    paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, summary_title
 )
 from cfme.web_ui.menu import extend_nav
 from functools import partial
@@ -128,18 +128,18 @@ class Common(object):
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper vm details page.
         """
-        locator = "//div[@class='dhtmlxInfoBarLabel' and contains(. , '{} \"{}\"')]".format(
+        title = '{} "{}"'.format(
             "VM and Instance" if self.is_vm else "VM Template and Image", self.name)
-        if not sel.is_displayed(locator):
+        present_title = summary_title()
+        if present_title is None or title not in present_title:
             if not force:
                 return False
             else:
                 self.load_details()
                 return True
 
-        text = sel.text(locator).encode("utf-8")
         pattern = r'("[A-Za-z0-9_\./\\-]*")'
-        m = re.search(pattern, text)
+        m = re.search(pattern, present_title)
 
         if not force:
             return self.name == m.group().replace('"', '')
@@ -656,7 +656,8 @@ def wait_for_vm_state_change(vm_name, desired_state, timeout=300, provider_crud=
     """
     def _looking_for_state_change():
         toolbar.refresh()
-        find_quadicon(vm_name, do_not_navigate=False).state == 'currentstate-' + desired_state
+        return 'currentstate-' + desired_state in find_quadicon(
+            vm_name, do_not_navigate=False).state
 
     _method_setup(vm_name, provider_crud)
     return wait_for(_looking_for_state_change, num_sec=timeout)

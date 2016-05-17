@@ -475,7 +475,7 @@ def dismiss_any_alerts():
         pass
 
 
-def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
+def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None, check_present=False):
     """Handles an alert popup.
 
     Args:
@@ -485,12 +485,15 @@ def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
             Default 30 seconds, can be set to 0 to disable waiting.
         squash: Whether or not to squash errors during alert handling.
             Default False
+        prompt: If the alert is a prompt, specify the keys to type in here
+        check_present: Does not squash
+            :py:class:`selenium.common.exceptions.NoAlertPresentException`
 
     Returns:
         True if the alert was handled, False if exceptions were
         squashed, None if there was no alert.
 
-    No exceptions will be raised if ``squash`` is True.
+    No exceptions will be raised if ``squash`` is True and ``check_present`` is False.
 
     Raises:
         utils.wait.TimedOutError: If the alert popup does not appear
@@ -515,7 +518,10 @@ def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
         wait_for_ajax()
         return True
     except NoAlertPresentException:
-        return None
+        if check_present:
+            raise
+        else:
+            return None
     except Exception as e:
         logger.exception(e)
         if squash:
@@ -668,7 +674,8 @@ def text_sane(loc, **kwargs):
 
     Returns: A string containing the text of the element, decoded and stripped.
     """
-    return text(loc).encode("utf-8").strip()
+    # TODO: normalize_space() when the PR comes in.
+    return re.sub(r'\s+', ' ', text(loc).strip().encode("utf-8"))
 
 
 def value(loc):

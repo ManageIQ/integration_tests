@@ -546,7 +546,7 @@ class VM(BaseVM):
         """
         if (self.is_pwr_option_available_in_cfme(option=option, from_details=from_details)):
                 pwr_btn(option, invokes_alert=True)
-                sel.handle_alert(cancel=cancel)
+                sel.handle_alert(cancel=cancel, check_present=True)
                 logger.info(
                     "Power control action of VM/instance %s, option %s, cancel %s executed",
                     self.name, option, str(cancel))
@@ -588,7 +588,7 @@ class VM(BaseVM):
                 self.load_details(refresh=True)
                 return self.get_detail(properties=detail_t) == desired_state
             else:
-                return self.find_quadicon().state == 'currentstate-' + desired_state
+                return 'currentstate-' + desired_state in self.find_quadicon().state
 
         return wait_for(
             _looking_for_state_change,

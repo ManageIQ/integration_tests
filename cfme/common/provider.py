@@ -6,6 +6,7 @@ from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
 )
 import cfme
+from cfme.web_ui import breadcrumbs, summary_title
 from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form, Input, Radio
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons
@@ -408,9 +409,17 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
+        if not self.string_name:
+            # No point in doing that since it is probably being called from badly configured class
+            # And since it is badly configured, let's notify the user.
+            logger.warning(
+                'Hey, _on_details_page called from {} class which does not have string_name set'
+                .format(type(self).__name__))
+            return False
         ensure_browser_open()
-        return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{} (Summary)")]'.format(self.name))
+        collection = '{} Providers'.format(self.string_name)
+        title = '{} (Summary)'.format(self.name)
+        return breadcrumbs() == [collection, title] and summary_title() == title
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins."""

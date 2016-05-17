@@ -27,6 +27,7 @@ from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
 from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
 from utils.datafile import load_data_file
+from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path
@@ -431,6 +432,11 @@ class IPAppliance(object):
         except (TypeError, ValueError):
             value = None
         return value
+
+    @cached_property
+    def events(self):
+        """Returns an instance of the event capturing class pointed to this appliance."""
+        return EventTool(self)
 
     def diagnose_evm_failure(self):
         """Go through various EVM processes, trying to figure out what fails
