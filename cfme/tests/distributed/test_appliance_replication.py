@@ -348,9 +348,7 @@ def test_distributed_vm_power_control(request, test_vm, vmware_provider, verify_
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
-        register_event(
-            test_vm.provider.type,
-            "vm", test_vm.name, ["vm_power_off_req", "vm_power_off"])
+        register_event('VmOrTemplate', test_vm.name, ['request_vm_poweroff', 'vm_poweroff'])
         test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
         flash.assert_message_contain("Stop initiated")
         pytest.sel.force_navigate(

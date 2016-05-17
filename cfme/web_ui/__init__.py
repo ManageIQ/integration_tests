@@ -3495,3 +3495,32 @@ class CFMECheckbox(Selector):
 @fill.method((CFMECheckbox, bool))
 def fill_cfmecheckbox_switch(ob, val):
     ob.fill(val)
+
+
+def breadcrumbs():
+    """Returns a list of breadcrumbs.
+
+    Returns:
+        :py:class:`list` of breadcrumbs if they are present, :py:class:`NoneType` otherwise.
+    """
+    result = map(sel.text_sane, sel.elements('//ol[contains(@class, "breadcrumb")]/li'))
+    return result if result else None
+
+
+SUMMARY_TITLE_LOCATORS = [
+    '//h1'
+]
+
+SUMMARY_TITLE_LOCATORS = '|'.join(SUMMARY_TITLE_LOCATORS)
+
+
+def summary_title():
+    """Returns a title of the page.
+
+    Returns:
+        :py:class:`str` if present, :py:class:`NoneType` otherwise.
+    """
+    try:
+        return sel.text_sane(SUMMARY_TITLE_LOCATORS)
+    except sel.NoSuchElementException:
+        return None
