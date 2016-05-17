@@ -1,35 +1,27 @@
-from cfme.common import Taggable
+# -*- coding: utf-8 -*-
+from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb
+from cfme.web_ui import CheckboxTable, toolbar as tb
 from cfme.web_ui.menu import nav
-from . import list_tbl, pol_btn, details_page
+from . import details_page
+
+list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
 nav.add_branch(
     'containers_containers',
     {
         'containers_container':
-        [
-            lambda ctx: list_tbl.select_row_by_cells(
-                {'Name': ctx['container'].name, 'Pod Name': ctx['pod'].name}),
-            {
-                'containers_container_edit_tags':
-                lambda _: pol_btn('Edit Tags'),
-            }
-        ],
+        lambda ctx: list_tbl.select_row_by_cells(
+            {'Name': ctx['container'].name, 'Pod Name': ctx['container'].pod.name}),
+
         'containers_container_detail':
-        [
-            lambda ctx: list_tbl.click_row_by_cells(
-                {'Name': ctx['container'].name, 'Pod Name': ctx['pod'].name}),
-            {
-                'containers_container_edit_tags_detail':
-                lambda _: pol_btn('Edit Tags'),
-            }
-        ]
+        lambda ctx: list_tbl.click_row_by_cells(
+            {'Name': ctx['container'].name, 'Pod Name': ctx['container'].pod.name}),
     }
 )
 
 
-class Container(Taggable):
+class Container(Taggable, SummaryMixin):
 
     def __init__(self, name, pod):
         self.name = name
@@ -52,8 +44,7 @@ class Container(Taggable):
                     'containers_container_detail', context={
                         'container': self, 'pod': self.pod})
         else:
-            sel.force_navigate('containers_container',
-                               context={'container': self, 'pod': self.pod})
+            sel.force_navigate('containers_container', context={'container': self})
 
     def click_element(self, *ident):
         self.load_details(refresh=True)

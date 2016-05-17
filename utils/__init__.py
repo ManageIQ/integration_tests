@@ -96,6 +96,18 @@ def attributize_string(text):
     return _replace_spaces_with(_prenormalize_text(text), '_')
 
 
+def normalize_space(text):
+    """Works in accordance with the XPath's normalize-space() operator.
+
+    `Description <https://developer.mozilla.org/en-US/docs/Web/XPath/Functions/normalize-space>`_:
+
+        *The normalize-space function strips leading and trailing white-space from a string,
+        replaces sequences of whitespace characters by a single space, and returns the resulting
+        string.*
+    """
+    return _replace_spaces_with(text.strip(), ' ')
+
+
 def tries(num_tries, exceptions, f, *args, **kwargs):
     """ Tries to call the function multiple times if specific exceptions occur.
 
