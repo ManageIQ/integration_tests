@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
-from time import sleep
 from functools import partial
 
 from cfme.web_ui.menu import nav
@@ -1399,6 +1398,8 @@ class Action(Updateable, Pretty):
 
     pretty_attrs = ['description', 'action_type', 'action_values']
 
+    waiting_element = "//div[@id='action_options_div']/div[@class='form-horizontal']"
+
     def __init__(self, description, action_type, action_values=None):
         assert action_type in self.sub_forms.keys(), "Unrecognized Action Type ({})".format(
             action_type)
@@ -1430,8 +1431,8 @@ class Action(Updateable, Pretty):
         of forms."""
         fill(self.form, dict(description=self.description, action_type=self.action_type))
         if self.sub_forms[self.action_type] is not None:
-            # Waiting for tree loading
-            sleep(2)
+            # Waiting for subform loading
+            sel.wait_for_element(self.waiting_element)
             fill(self.sub_forms[self.action_type], self.action_values)
             action()
             flash.assert_no_errors()
