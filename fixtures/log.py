@@ -41,9 +41,15 @@ def pytest_runtest_logreport(report):
         path, lineno, domaininfo = report.location
         test_status = _test_status(_format_nodeid(report.nodeid, False))
         if test_status == "failed":
-            logger().info(
-                "Managed providers: {}".format(
-                    ", ".join(pytest.store.current_appliance.managed_providers)))
+            try:
+                logger().info(
+                    "Managed providers: {}".format(
+                        ", ".join(pytest.store.current_appliance.managed_providers)))
+            except KeyError as ex:
+                if 'ext_management_systems' in ex.msg:
+                    logger().warning("Unable to query ext_management_systems table; DB issue")
+                else:
+                    raise
         logger().info(log.format_marker('{} result: {}'.format(_format_nodeid(report.nodeid),
                 test_status)),
             extra={'source_file': path, 'source_lineno': lineno})
