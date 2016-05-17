@@ -13,7 +13,7 @@ from utils.providers import destroy_vm, get_mgmt
 from utils.wait import wait_for
 
 
-def main(**kwargs):
+def parse_cmd_line():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
@@ -56,9 +56,13 @@ def main(**kwargs):
                                   help='openstack floating ip pool to use')
 
     args = parser.parse_args()
+    return args
 
+
+def main(**kwargs):
     # get_mgmt validates, since it will explode without an existing key or type
     if kwargs.get('deploy', None):
+        kwargs['configure'] = True
         provider_data = utils.conf.provider_data
         providers = provider_data['management_systems']
         provider_dict = provider_data['management_systems'][kwargs['provider']]
@@ -75,21 +79,19 @@ def main(**kwargs):
             'vm_name': kwargs['vm_name'],
             'template': kwargs['template'],
         }
-        args.provider = kwargs['provider']
-
     else:
-        provider = get_mgmt(args.provider)
-        provider_dict = cfme_data['management_systems'][args.provider]
+        provider = get_mgmt(kwargs['provider'])
+        provider_dict = cfme_data['management_systems'][kwargs['provider']]
         provider_type = provider_dict['type']
         flavors = cfme_data['appliance_provisioning']['default_flavors'].get(provider_type, [])
         deploy_args = {
-            'vm_name': args.vm_name,
-            'template': args.template,
+            'vm_name': kwargs['vm_name'],
+            'template': kwargs['template'],
         }
 
-    logger.info('Connecting to {}'.format(args.provider))
+    logger.info('Connecting to {}'.format(kwargs['provider']))
 
-    if args.destroy:
+    if kwargs.get('destroy', None):
         # TODO: destroy should be its own script
         # but it's easy enough to just hijack the parser here
         # This returns True if destroy fails to give POSIXy exit codes (0 is good, False is 0, etc)
@@ -97,18 +99,18 @@ def main(**kwargs):
 
     # Try to snag defaults from cfme_data here for each provider type
     if provider_type == 'rhevm':
-        cluster = provider_dict.get('default_cluster', args.cluster)
+        cluster = provider_dict.get('default_cluster', kwargs.get('cluster', None))
         if cluster is None:
             raise Exception('--cluster is required for rhev instances and default is not set')
         deploy_args['cluster'] = cluster
 
-        if args.place_policy_host and args.place_policy_aff:
-            deploy_args['placement_policy_host'] = args.place_policy_host
-            deploy_args['placement_policy_affinity'] = args.rhev_place_policy_aff
+        if kwargs.get('place_policy_host', None) and kwargs.get('place_policy_aff', None):
+            deploy_args['placement_policy_host'] = kwargs['place_policy_host']
+            deploy_args['placement_policy_affinity'] = kwargs['place_policy_aff']
     elif provider_type == 'ec2':
         # ec2 doesn't have an api to list available flavors, so the first flavor is the default
         try:
-            flavor = args.flavor or flavors[0]
+            flavor = kwargs.get('flavor', None) or flavors[0]
         except IndexError:
             raise Exception('--flavor is required for EC2 instances and default is not set')
         deploy_args['instance_type'] = flavor
@@ -117,7 +119,7 @@ def main(**kwargs):
         available_flavors = provider.list_flavor()
         flavors = filter(lambda f: f in available_flavors, flavors)
         try:
-            flavor = args.flavor or flavors[0]
+            flavor = kwargs.get('flavor', None) or flavors[0]
         except IndexError:
             raise Exception('--flavor is required for RHOS instances and '
                             'default is not set or unavailable on provider')
@@ -131,7 +133,7 @@ def main(**kwargs):
         provider_pools = [p.name for p in provider.api.floating_ip_pools.list()]
         try:
             # TODO: If there are multiple pools, have a provider default in cfme_data
-            floating_ip_pool = args.floating_ip_pool or provider_pools[0]
+            floating_ip_pool = kwargs.get('floating_ip_pool', None) or provider_pools[0]
         except IndexError:
             raise Exception('No floating IP pools available on provider')
 
@@ -146,12 +148,12 @@ def main(**kwargs):
     # Do it!
     try:
         logger.info('Cloning {} to {} on {}'.format(deploy_args['template'], deploy_args['vm_name'],
-                                                    args.provider))
+                                                    kwargs['provider']))
         provider.deploy_template(**deploy_args)
     except Exception as e:
         logger.exception(e)
         logger.error('Clone failed')
-        if args.cleanup:
+        if kwargs.get('cleanup', None):
             logger.info('attempting to destroy {}'.format(deploy_args['vm_name']))
             destroy_vm(provider, deploy_args['vm_name'])
             return 12
@@ -166,17 +168,19 @@ def main(**kwargs):
                               fail_condition=None)
     logger.info('IP Address returned is {}'.format(ip))
 
-    if args.configure:
+    if kwargs.get('configure', None):
         logger.info('Configuring appliance, this can take a while.')
-        app = Appliance(args.provider, deploy_args['vm_name'])
+        app = Appliance(kwargs['provider'], deploy_args['vm_name'])
         app.configure()
 
-    if args.outfile:
-        with open(args.outfile, 'w') as outfile:
+    if kwargs.get('outfile', None):
+        with open(kwargs['outfile'], 'w') as outfile:
             outfile.write("appliance_ip_address={}\n".format(ip))
 
     # In addition to the outfile, drop the ip address on stdout for easy parsing
     print(ip)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    args = parse_cmd_line()
+    kwargs = dict(args._get_kwargs())
+    sys.exit(main(**kwargs))

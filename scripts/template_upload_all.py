@@ -23,6 +23,8 @@ import datetime
 import sys
 import utils
 from contextlib import closing
+from utils import path
+
 from urllib2 import urlopen, HTTPError
 from utils.conf import cfme_data
 
@@ -45,7 +47,7 @@ def parse_cmd_line():
                         help='Version of chosen provider',
                         default=None)
     parser.add_argument('--provider-data', dest='provider_data',
-                        help='options to use local provider_data and not conf/cfme_data'
+                        help='local yaml file path, to use local provider_data & not conf/cfme_data'
                              'to be useful for template upload/deploy by non cfmeqe',
                         default=None)
     args = parser.parse_args()
@@ -318,6 +320,10 @@ def main():
                 continue
         kwargs['image_url'] = dir_files[module]
         if args.provider_data is not None:
+            local_datafile = open(args.provider_data, 'r').read()
+            create_datafile = open(path.conf_path.strpath + '/provider_data.yaml', 'w')
+            create_datafile.write(local_datafile)
+            create_datafile.close()
             provider_data = utils.conf.provider_data
             kwargs['provider_data'] = provider_data
         else:

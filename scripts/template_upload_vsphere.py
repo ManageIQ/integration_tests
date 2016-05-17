@@ -91,9 +91,15 @@ def upload_ova(hostname, username, password, name, datastore,
     print("VSPHERE:{} Running OVFTool...".format(provider))
 
     sshclient = make_ssh_client(ovf_tool_client, default_user, default_pass)
-    command = ' '.join(cmd_args)
-    output = sshclient.run_command(command)[1]
-    sshclient.close()
+    try:
+        command = ' '.join(cmd_args)
+        output = sshclient.run_command(command)[1]
+    except Exception as e:
+        print(e)
+        print("VSPHERE:{} Upload did not complete".format(provider))
+        return False
+    finally:
+        sshclient.close()
 
     if "successfully" in output:
         print(" VSPHERE:{} Upload completed".format(provider))
@@ -348,14 +354,14 @@ def upload_template(client, hostname, username, password,
             if kwargs.get('template'):
                 # make_template(client, name, hostname, username, password)
                 make_template(client, name, provider)
-            client.api.logout()
+
         if provider_data and check_template_exists(client, name, provider):
             print("VSPHERE:{} Deploying {}....".format(provider, name))
             vm_name = 'test_{}_{}'.format(name, fauxfactory.gen_alphanumeric(8))
             deploy_args = {'provider': provider, 'vm_name': vm_name,
                            'template': name, 'deploy': True}
             getattr(__import__('clone_template'), "main")(**deploy_args)
-
+        client.api.logout()
     except Exception as e:
         print(e)
         return False
