@@ -35,12 +35,12 @@ pxe_properties_form = Form(
     fields=[
         ('name_text', Input('name')),
         ('log_protocol', Select("//select[@id='log_protocol']")),
-        ('uri_text', Input('uri')),
         ('userid_text', Input('log_userid')),
         ('password_text', Input('log_password')),
         ('verify_text', Input('log_verify')),
         ('validate_btn', "//a[@id='val']"),
         ('access_url_text', Input('access_url')),
+        ('uri_text', Input('uri')),
         ('pxe_dir_text', Input('pxe_directory')),
         ('windows_dir_text', Input('windows_images_directory')),
         ('customize_dir_text', Input('customization_directory')),
