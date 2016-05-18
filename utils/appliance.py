@@ -1174,7 +1174,7 @@ class IPAppliance(object):
             raise exception_class(message)
 
         if vddk_url is None:  # fallback to VDDK 5.5
-            vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", None).get("5_5", None)
+            vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", None).get("v5_5", None)
         if vddk_url is None:
             raise Exception("vddk_url not specified!")
 
