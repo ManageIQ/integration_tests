@@ -111,10 +111,10 @@ def test_user_ownership_crud(request, user1, setup_provider, provider):
     # Set the ownership and checking it
     user_ownership_vm.set_ownership(user=user1.name)
     with user1:
-        assert (user_ownership_vm.exists, "vm not found")
+        assert user_ownership_vm.exists, "vm not found"
     user_ownership_vm.unset_ownership()
     with user1:
-        assert (not user_ownership_vm.exists, "vm exists")
+        assert not user_ownership_vm.exists, "vm exists"
 
 
 def test_group_ownership_on_user_only_role(request, user2, setup_provider, provider):
@@ -122,10 +122,10 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
     group_ownership_vm = VM.factory(ownership_vm, provider)
     group_ownership_vm.set_ownership(group=user2.group.description)
     with user2:
-        assert (group_ownership_vm.exists, "vm not found")
+        assert group_ownership_vm.exists, "vm not found"
     group_ownership_vm.unset_ownership()
     with user2:
-        assert (not group_ownership_vm.exists, "vm exists")
+        assert not group_ownership_vm.exists, "vm exists"
 
 
 def test_group_ownership_on_user_or_group_role(
@@ -134,10 +134,10 @@ def test_group_ownership_on_user_or_group_role(
     group_ownership_vm = VM.factory(ownership_vm, provider)
     group_ownership_vm.set_ownership(group=user3.group.description)
     with user3:
-        assert (group_ownership_vm.exists, "vm not found")
+        assert group_ownership_vm.exists, "vm not found"
     group_ownership_vm.unset_ownership()
     with user3:
-        assert (not group_ownership_vm.exists, "vm exists")
+        assert not group_ownership_vm.exists, "vm exists"
 
 
 # @pytest.mark.meta(blockers=[1202947])
@@ -146,11 +146,11 @@ def test_group_ownership_on_user_or_group_role(
 #    user_ownership_vm.set_ownership(user=user1.name)
 #    with user1:
 #        # Checking before and after the ownership transfer
-#        assert(user_ownership_vm.exists, "vm not found")
+#        assert user_ownership_vm.exists, "vm not found"
 #        user_ownership_vm.set_ownership(user=user3.name)
-#        assert(not user_ownership_vm.exists, "vm exists")
+#        assert not user_ownership_vm.exists, "vm exists"
 #    with user3:
-#        assert(user_ownership_vm.exists, "vm not found")
+#        assert user_ownership_vm.exists, "vm not found"
 #    user_ownership_vm.unset_ownership()
 #    with user3:
-#        assert(set_ownership_to_user.exists, "vm exists")
+#        assert set_ownership_to_user.exists, "vm exists"

@@ -30,8 +30,8 @@ def test_set_default_host_filter(provider, request):
     logout()
     login_admin()
     pytest.sel.force_navigate('infrastructure_hosts')
-    assert (list_acc.is_selected('Filters', 'Status / Running (Default)', by_title=False),
-        'Status / Running filter not set as default')
+    assert list_acc.is_selected('Filters', 'Status / Running (Default)', by_title=False),\
+        'Status / Running filter not set as default'
 
 
 def test_clear_host_filter_results(provider):
@@ -60,8 +60,8 @@ def test_set_default_datastore_filter(provider, request):
     logout()
     login_admin()
     pytest.sel.force_navigate('infrastructure_datastores')
-    assert (list_acc.is_selected('Filters', 'Store Type / NFS (Default)', by_title=False),
-        'Store Type / NFS not set as default')
+    assert list_acc.is_selected('Filters', 'Store Type / NFS (Default)', by_title=False),\
+        'Store Type / NFS not set as default'
 
 
 def test_clear_datastore_filter_results(provider):

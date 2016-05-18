@@ -132,8 +132,8 @@ def test_config_manager_edit(request, config_manager):
     with update(config_manager):
         config_manager.name = new_name
     request.addfinalizer(lambda: config_manager.update(updates={'name': old_name}))
-    assert (config_manager.name == new_name and config_manager.exists,
-        "Failed to update configuration manager's name")
+    assert (config_manager.name == new_name and config_manager.exists),\
+        "Failed to update configuration manager's name"
 
 
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
@@ -156,8 +156,8 @@ def test_config_manager_remove(config_manager):
 ])
 def test_config_system_tag(request, config_system, tag):
     config_system.tag(tag)
-    assert ('{}: {}'.format(tag.category.display_name, tag.display_name) in config_system.tags,
-        "Failed to setup a configuration system's tag")
+    assert '{}: {}'.format(tag.category.display_name, tag.display_name) in config_system.tags,\
+        "Failed to setup a configuration system's tag"
 
 
 # def test_config_system_reprovision(config_system):
