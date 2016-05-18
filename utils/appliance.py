@@ -1140,7 +1140,10 @@ class IPAppliance(object):
         log_callback('restarting evm service')
         with self.ssh_client as ssh:
             if rude:
-                status, msg = ssh.run_command('killall -9 ruby; service evmserverd start')
+                status, msg = ssh.run_command(
+                    'killall -9 ruby;'
+                    'service rh-postgresql94-postgresql stop;'
+                    'service evmserverd start')
             else:
                 status, msg = ssh.run_command('systemctl restart evmserverd')
 
