@@ -84,5 +84,5 @@ def test_vm_genealogy_detected(
         assert parent.startswith(small_template), "The parent template not detected!"
     else:
         vm_crud_ancestors = vm_crud.genealogy.ancestors
-        assert(small_template in vm_crud_ancestors, "{} is not in {}'s ancestors".format(
-            small_template, vm_crud.name))
+        assert small_template in vm_crud_ancestors, \
+            "{} is not in {}'s ancestors".format(small_template, vm_crud.name)

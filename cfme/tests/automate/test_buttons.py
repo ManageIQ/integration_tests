@@ -103,6 +103,6 @@ def test_button_avp_displayed(request):
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
     pytest.sel.force_navigate("new_button", context={'buttongroup': buttongroup})
-    assert (pytest.sel.is_displayed(
-        "//*[(self::h3 or self::p) and normalize-space(text())='Attribute/Value Pairs']"),
-        "The Attribute/Value Pairs part of the form is not displayed")
+    section_loc = "//*[(self::h3 or self::p) and normalize-space(text())='Attribute/Value Pairs']"
+    assert pytest.sel.is_displayed(section_loc),\
+        "The Attribute/Value Pairs part of the form is not displayed"

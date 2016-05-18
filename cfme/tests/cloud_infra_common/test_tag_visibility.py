@@ -79,4 +79,4 @@ def tagged_vm(new_tag, setup_provider, provider):
 
 def test_tag_vis_vm(request, setup_provider, provider, tagged_vm, new_user):
     with new_user:
-        assert (tagged_vm.exists, "vm not found")
+        assert tagged_vm.exists, "vm not found"

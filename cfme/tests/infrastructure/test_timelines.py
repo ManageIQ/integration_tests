@@ -158,7 +158,7 @@ class TestVmEventRESTAPI(object):
             assert rest_vm.action.add_event(event)["success"], "Could not add event"
         else:
             response = rest_api.collections.vms.action.add_event(rest_vm, **event)
-            assert (len(response) > 0, "Could not add event")
+            assert len(response) > 0, "Could not add event"
 
         # DB check, doesn't work on 5.4
         if version.current_version() < '5.5':
@@ -169,7 +169,7 @@ class TestVmEventRESTAPI(object):
             events.message == event["event_message"],
             events.event_type == event["event_type"],
         ))
-        assert(len(events_list) == 1, "Could not find the event in the database")
+        assert len(events_list) == 1, "Could not find the event in the database"
 
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_vm_add_lifecycle_event(self, request, rest_api, vm, from_detail, db):
@@ -199,9 +199,8 @@ class TestVmEventRESTAPI(object):
         if from_detail:
             assert rest_vm.action.add_lifecycle_event(**event)["success"], "Could not add event"
         else:
-            assert (
-                len(rest_api.collections.vms.action.add_lifecycle_event(rest_vm, **event)) > 0,
-                "Could not add event")
+            assert len(rest_api.collections.vms.action.add_lifecycle_event(rest_vm, **event)) > 0,\
+                "Could not add event"
         # DB check
         lifecycle_events = db["lifecycle_events"]
         assert len(list(db.session.query(lifecycle_events).filter(

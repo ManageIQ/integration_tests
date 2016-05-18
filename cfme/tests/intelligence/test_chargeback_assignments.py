@@ -27,8 +27,9 @@ def test_assign_compute_enterprise(provider):
 
     flash.assert_message_match('Rate Assignments saved')
     # Assert that the selection made is listed on the UI
-    assert (sel.text(cb.assign_form.selections.select_by_name("Enterprise").first_selected_option)
-        == "Default", 'Selection does not match')
+    selected_option = sel.text(
+        cb.assign_form.selections.select_by_name("Enterprise").first_selected_option)
+    assert selected_option == "Default", 'Selection does not match'
 
 
 def test_assign_compute_provider(provider):
@@ -40,8 +41,9 @@ def test_assign_compute_provider(provider):
     compute_provider.computeassign()
 
     flash.assert_message_match('Rate Assignments saved')
-    assert (sel.text(cb.assign_form.selections.select_by_name(provider.name).first_selected_option)
-        == "Default", 'Selection does not match')
+    selected_option = sel.text(
+        cb.assign_form.selections.select_by_name(provider.name).first_selected_option)
+    assert selected_option == "Default", 'Selection does not match'
 
 
 def test_assign_compute_cluster(provider):
@@ -56,8 +58,9 @@ def test_assign_compute_cluster(provider):
     cluster.computeassign()
 
     flash.assert_message_match('Rate Assignments saved')
-    assert (sel.text(cb.assign_form.selections.select_by_name(cluster_name).first_selected_option)
-        == "Default", 'Selection does not match')
+    selected_option = sel.text(
+        cb.assign_form.selections.select_by_name(cluster_name).first_selected_option)
+    assert selected_option == "Default", 'Selection does not match'
 
 
 def test_assign_compute_taggedvm(provider):
@@ -70,8 +73,9 @@ def test_assign_compute_taggedvm(provider):
     tagged_vm.computeassign()
 
     flash.assert_message_match('Rate Assignments saved')
-    assert (sel.text(cb.assign_form.selections.select_by_name("Chicago").first_selected_option)
-        == "Default", 'Selection does not match')
+    selected_option = sel.text(
+        cb.assign_form.selections.select_by_name("Chicago").first_selected_option)
+    assert selected_option == "Default", 'Selection does not match'
 
 
 @pytest.mark.meta(blockers=[1273654])
@@ -85,8 +89,9 @@ def test_assign_storage_enterprise(provider):
     enterprise.storageassign()
 
     flash.assert_message_match('Rate Assignments saved')
-    assert (sel.text(cb.assign_form.selections.select_by_name("Enterprise").first_selected_option)
-        == "Default", 'Selection does not match')
+    selected_option = sel.text(
+        cb.assign_form.selections.select_by_name("Enterprise").first_selected_option)
+    assert selected_option == "Default", 'Selection does not match'
 
 
 def test_assign_storage_datastores(provider):
@@ -100,8 +105,9 @@ def test_assign_storage_datastores(provider):
     sel_datastore.storageassign()
 
     flash.assert_message_match('Rate Assignments saved')
-    assert (sel.text(cb.assign_form.selections.select_by_name(datastore).first_selected_option)
-        == "Default", 'Selection does not match')
+    selected_option = sel.text(
+        cb.assign_form.selections.select_by_name(datastore).first_selected_option)
+    assert selected_option == "Default", 'Selection does not match'
 
 
 def test_assign_storage_tagged_datastores(provider):
@@ -113,6 +119,7 @@ def test_assign_storage_tagged_datastores(provider):
         })
     tagged_datastore.storageassign()
 
-    assert (sel.text(cb.assign_form.selections.select_by_name("Chicago").first_selected_option)
-        == "Default", 'Selection does not match')
+    selected_option = sel.text(
+        cb.assign_form.selections.select_by_name("Chicago").first_selected_option)
+    assert selected_option == "Default", 'Selection does not match'
     flash.assert_message_match('Rate Assignments saved')

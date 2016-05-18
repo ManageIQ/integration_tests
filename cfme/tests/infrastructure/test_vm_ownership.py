@@ -64,9 +64,8 @@ class TestVmOwnershipRESTAPI(object):
         if from_detail:
             assert rest_vm.action.set_owner(owner="admin")["success"], "Could not set owner"
         else:
-            assert (
-                len(rest_api.collections.vms.action.set_owner(rest_vm, owner="admin")) > 0,
-                "Could not set owner")
+            assert len(rest_api.collections.vms.action.set_owner(rest_vm, owner="admin")) > 0,\
+                "Could not set owner"
         rest_vm.reload()
         assert hasattr(rest_vm, "evm_owner")
         assert rest_vm.evm_owner.userid == "admin"

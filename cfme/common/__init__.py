@@ -125,9 +125,9 @@ class Validatable(object):
         for property_tuple in self.property_tuples:
             expected_value = str(getattr(self, property_tuple[0]))
             shown_value = str(properties[property_tuple[1]])
-            assert(expected_value == shown_value,
-                   'Property {} has wrong value, expected {} but was {}'
-                   .format(property_tuple[1], expected_value, shown_value))
+            assert expected_value == shown_value, \
+                'Property {} has wrong value, expected {} but was {}'.format(
+                    property_tuple[1], expected_value, shown_value)
 
 
 class SummaryMixin(object):

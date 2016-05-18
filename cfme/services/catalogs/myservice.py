@@ -101,7 +101,7 @@ class MyService(Updateable):
             num_sec=wait_time_min * 120,
             message="wait for service to retire"
         )
-        assert(self.get_detail(properties=detail_t) == "off")
+        assert self.get_detail(properties=detail_t) == "off"
 
     def retire_on_date(self, retirement_date):
         sel.force_navigate('retire_service_on_date',
@@ -118,7 +118,7 @@ class MyService(Updateable):
             num_sec=wait_time_min * 120,
             message="wait for service to retire"
         )
-        assert(self.get_detail(properties=detail_t) == "off")
+        assert self.get_detail(properties=detail_t) == "off"
 
     def update(self, name, description):
         sel.force_navigate('edit_service',
