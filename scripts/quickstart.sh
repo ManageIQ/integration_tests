@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# pass the cfme qe yamls repo as first argument
-QE_YAML_REPO=${1:-../cfme-qe-yamls}
 
 setup_redhat_based_system() {
 
@@ -10,50 +8,69 @@ setup_redhat_based_system() {
       python-pip gcc postgresql-devel \
       libxml2-devel libxslt-devel \
       zeromq3-devel libcurl-devel \
-      redhat-rpm-config  gcc-c++
+      redhat-rpm-config gcc-c++
 
   echo "user install of the latest pip/virtualenv to avoid old distro packages"
   pip install -U -q --user pip virtualenv
 }
 
 
-append() {
-  grep -q "$2" "$1" || (echo "$2" >> $1)
-}
-
-setup_virtualenv() {
-
-  echo "Creating Virtualenv"
-  virtualenv .cfme_tests
-
-  # make our virtualenv setup a bit nicer, bash only
-  echo "Patching ./.cfme_tests/bin/activate"
-  append ./.cfme_tests/bin/activate "export PYTHONPATH='`pwd`'"
-  append ./.cfme_tests/bin/activate "export PYTHONDONTWRITEBYTECODE=yes"
-
-  . ./.cfme_tests/bin/activate
-  PYCURL_SSL_LIBRARY=nss pip install -Uqr ./requirements.txt
-  echo "Run '. ./.cfme_tests/bin/activate' to load the virtualenv"
-}
-
-link_yamls() {
-  ln -s -t "$2" "$1"/*.yaml
-  ln -s -t "$2" "$1"/*.eyaml
-}
-
-setup_yaml_symlinks() {
-  if   [ -d "$QE_YAML_REPO" ]
+patch_activate() {
+  if grep -q  PYTHONDONTWRITEBYTECODE ./.cfme_tests/bin/activate
   then
-    echo "Linkin qe repo yaml files"
-    link_yamls "$QE_YAML_REPO/complete" conf
+    echo "Activate Script already patched"
   else
-    echo "No qe yamls found"
+    echo "Patching Activate Script"
+    cat >> ./.cfme_tests/bin/activate <<EOF;
+
+    export PYTHONDONTWRITEBYTECODE=yes
+    if [[ $PYTHONPATH ]]
+    then
+      PYTHONPATH+=":`pwd`"
+    else
+      PYTHONPATH="`pwd`"
+    fi
+EOF
   fi
 }
 
 
+setup_virtualenv() {
+
+  local PIP_ARGS=""
+  if [ ! -d .cfme_tests ]
+  then
+    echo "Creating Virtualenv"
+    virtualenv .cfme_tests
+  else
+    echo "Reusing Virtualenv"
+    # we think update is fast
+    PIP_ARGS=-q
+  fi
+
+  patch_activate
+
+  . ./.cfme_tests/bin/activate
+  PYCURL_SSL_LIBRARY=nss pip install -r ./requirements.txt $PIP_ARGS
+
+  echo "Run '. ./.cfme_tests/bin/activate' to load the virtualenv"
+}
+
+
+setup_yaml_symlinks() {
+
+  if  [ -d "$1" ]
+  then
+    echo "Linkin qe repo yaml files"
+    find conf/ -type l -delete
+    ln -s -t conf "$1"/complete/*.yaml
+    ln -s -t conf "$1"/complete/*.eyaml
+  else
+    echo "No qe yamls found in $1"
+  fi
+}
 
 
 [ -f /etc/redhat-release ] && setup_redhat_based_system
 setup_virtualenv
-setup_yaml_symlinks
+setup_yaml_symlinks $(realpath ${1:-../cfme-qe-yamls})
