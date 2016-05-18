@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from cached_property import cached_property
+from contextlib import contextmanager
 from functools import partial
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTree, Table, flash, form_buttons, mixins, toolbar
+from cfme.web_ui import CheckboxTree, InfoBlock, Table, flash, form_buttons, mixins, toolbar
 from utils import attributize_string, version
 from urlparse import urlparse
+from utils.wait import wait_for
 
 pol_btn = partial(toolbar.select, "Policy")
 
@@ -333,3 +335,65 @@ def process_field(values):
             return SummaryValue(values[0])
         else:
             return map(SummaryValue, values)
+
+
+class Compliance(object):
+    """This class can be inherited by anything that provider load_details method.
+
+    It provides functionality to invoke compliance check and get its result.
+    """
+    def check_compliance(self):
+        """Clicks the Check compliance button."""
+        self.load_details(refresh=True)
+        pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
+
+    @contextmanager
+    def check_compliance_wrapper(self, timeout=240):
+        """This wrapper takes care of waiting for the compliance status to change
+
+        Args:
+            timeout: Wait timeout in seconds.
+        """
+        self.load_details(refresh=True)
+        original_state = self.compliance_status
+        yield
+        wait_for(
+            lambda: self.compliance_status != original_state,
+            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name),
+            fail_func=lambda: toolbar.select("Reload"))
+
+    def check_compliance_and_wait(self, timeout=240):
+        """Initiates compliance check and waits for it to finish."""
+        with self.check_compliance_wrapper(timeout=timeout):
+            self.check_compliance()
+        return self.compliant
+
+    @property
+    def compliance_status(self):
+        """Returns the title of the compliance infoblock. The title contains datetime so it can be
+        compared.
+
+        Returns:
+            :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
+        """
+        self.load_details(refresh=True)
+        return InfoBlock("Compliance", "Status").title
+
+    @property
+    def compliant(self):
+        """Check if the VM is compliant
+
+        Returns:
+            :py:class:`NoneType` if the VM was never verified, otherwise :py:class:`bool`
+        """
+        text = self.get_detail(properties=("Compliance", "Status")).strip().lower()
+        if text == "never verified":
+            return None
+        elif text.startswith("non-compliant"):
+            return False
+        elif text.startswith("compliant"):
+            return True
+        else:
+            raise ValueError("{} is not a known state for compliance".format(text))

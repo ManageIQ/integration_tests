@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
-from contextlib import contextmanager
 from datetime import date
 from functools import partial
 
@@ -21,7 +20,7 @@ from utils.update import Updateable
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 
-from . import PolicyProfileAssignable, Taggable, SummaryMixin
+from . import PolicyProfileAssignable, Taggable, SummaryMixin, Compliance
 
 cfg_btn = partial(toolbar.select, "Configuration")
 lcl_btn = partial(toolbar.select, "Lifecycle")
@@ -44,7 +43,7 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin):
+class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin, Compliance):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 
@@ -186,62 +185,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     ###
     # Methods
     #
-    def check_compliance(self):
-        """Clicks the Check compliance button."""
-        self.load_details(refresh=True)
-        pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
-
-    @contextmanager
-    def check_compliance_wrapper(self, timeout=240):
-        """This wrapper takes care of waiting for the compliance status to change
-
-        Args:
-            timeout: Wait timeout in seconds.
-        """
-        self.load_details(refresh=True)
-        original_state = self.compliance_status
-        yield
-        wait_for(
-            lambda: self.compliance_status != original_state,
-            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name),
-            fail_func=lambda: toolbar.select("Reload"))
-
-    def check_compliance_and_wait(self, timeout=240):
-        """Initiates compliance check and waits for it to finish."""
-        with self.check_compliance_wrapper(timeout=timeout):
-            self.check_compliance()
-        return self.compliant
-
-    @property
-    def compliance_status(self):
-        """Returns the title of the compliance infoblock. The title contains datetime so it can be
-        compared.
-
-        Returns:
-            :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
-        """
-        self.load_details(refresh=True)
-        return InfoBlock("Compliance", "Status").title
-
-    @property
-    def compliant(self):
-        """Check if the VM is compliant
-
-        Returns:
-            :py:class:`NoneType` if the VM was never verified, otherwise :py:class:`bool`
-        """
-        text = self.get_detail(properties=("Compliance", "Status")).strip().lower()
-        if text == "never verified":
-            return None
-        elif text.startswith("non-compliant"):
-            return False
-        elif text.startswith("compliant"):
-            return True
-        else:
-            raise ValueError("{} is not a known state for compliance".format(text))
-
     def delete(self, cancel=False, from_details=False):
         """Deletes the VM/Instance from the VMDB.
 
