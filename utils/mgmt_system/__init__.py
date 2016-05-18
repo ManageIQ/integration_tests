@@ -31,24 +31,8 @@ class RHEVMSystem(RHEVMSystemBase):
             return True
 
     def deploy_template(self, template, *args, **kwargs):
-        self.logger.debug(' Deploying RHEV template %s to VM %s',
-            template, kwargs["vm_name"])
-        timeout = kwargs.pop('timeout', 900)
-        power_on = kwargs.pop('power_on', True)
-        vm_kwargs = {
-            'name': kwargs['vm_name'],
-            'cluster': self.api.clusters.get(kwargs['cluster']),
-            'template': self.api.templates.get(template)
-        }
-
-        if 'placement_policy_host' in kwargs and 'placement_policy_affinity' in kwargs:
-            host = params.Host(name=kwargs['placement_policy_host'])
-            policy = params.VmPlacementPolicy(host=host,
-                affinity=kwargs['placement_policy_affinity'])
-            vm_kwargs['placement_policy'] = policy
-        vm = params.VM(**vm_kwargs)
-        self.api.vms.add(vm)
-        self.wait_vm_stopped(kwargs['vm_name'], num_sec=timeout)
+        power_on = kwargs.get('power_on', True)
+        vm_name = super(RHEVMSystem, self).deploy_template(template, *args, **kwargs)
         if power_on:
             version = self.api.get_product_info().get_full_version()
             cfme_template = any(
@@ -57,12 +41,10 @@ class RHEVMSystem(RHEVMSystemBase):
                 action = params.Action(vm=params.VM(initialization=params.Initialization(
                     cloud_init=params.CloudInit(users=params.Users(
                         user=[params.User(user_name="root", password="smartvm")])))))
-                ciargs = {}
-                ciargs['initialization'] = action
-                self.start_vm(vm_name=kwargs['vm_name'], **ciargs)
+                self.start_vm(vm_name=vm_name, initialization=action)
             else:
-                self.start_vm(vm_name=kwargs['vm_name'])
-        return kwargs['vm_name']
+                self.start_vm(vm_name=vm_name)
+        return vm_name
 
     def connect_direct_lun_to_appliance(self, vm_name, disconnect):
         """Connects or disconnects the direct lun disk to an appliance.
