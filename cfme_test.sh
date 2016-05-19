@@ -41,6 +41,8 @@ docker pull $IMAGE > /dev/null
 
 # tmux the rest of the things
 VEN_ACTIVATE="source $PYTHON_ENV_PATH/activate"
+USER_SHELL="$(getent passwd "$(id -u)")"
+USER_SHELL="${USER_SHELL##*:}"
 
 if [ -z "$CID" ]
   then
@@ -49,19 +51,19 @@ if [ -z "$CID" ]
       "$VEN_ACTIVATE; \
       cd $CFME_TEST_PATH; \
       python scripts/dockerbot/sel_container.py --watch --webdriver 4444; \
-      exec bash"
+      exec $USER_SHELL"
     sleep 20s
-    tmux new-window -t cfme_tests "$VEN_ACTIVATE; exec bash"
+    tmux new-window -t cfme_tests "$VEN_ACTIVATE; exec $USER_SHELL"
     window=1
   else
-    tmux new-session -s cfme_tests -d "$VEN_ACTIVATE; exec bash"
+    tmux new-session -s cfme_tests -d "$VEN_ACTIVATE; exec $USER_SHELL"
     window=0
 fi
 
 tmux select-layout -t cfme_tests even-vertical
-tmux split-window -v -t cfme_tests -c "$CFME_TEST_PATH" "$VEN_ACTIVATE; exec bash"
+tmux split-window -v -t cfme_tests -c "$CFME_TEST_PATH" "$VEN_ACTIVATE; exec $USER_SHELL"
 tmux select-layout -t cfme_tests even-vertical
-tmux split-window -v -t cfme_tests "$VEN_ACTIVATE; exec bash"
+tmux split-window -v -t cfme_tests "$VEN_ACTIVATE; exec $USER_SHELL"
 
 # let the shells start before sending any input
 sleep 0.5
