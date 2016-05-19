@@ -383,7 +383,7 @@ class Table(Pretty):
         return self._headers_cache.indexes
 
     def locate(self):
-        return sel.move_to_element(self._loc)
+        return self._loc
 
     @property
     def _root_loc(self):
@@ -747,7 +747,7 @@ class SplitTable(Table):
 
     def locate(self):
         # Use the header locator as the overall table locator
-        return sel.move_to_element(self._header_loc)
+        return self._header_loc
 
 
 class SortTable(Table):
@@ -1205,7 +1205,7 @@ class Calendar(Pretty):
         self.name = name
 
     def locate(self):
-        return sel.move_to_element(Input(self.name))
+        return Input(self.name).locate()
 
 
 @fill.method((Calendar, object))
@@ -1320,7 +1320,10 @@ class Form(Region):
                     break
             else:
                 raise ValueError('The Form has no suitable element to locate on')
-        return sel.move_to_element(loc)
+        if hasattr(loc, 'locate'):
+            return loc.locate()
+        else:
+            return loc
 
     def field_valid(self, field_name):
         """Add the validity constraints here."""
@@ -1900,7 +1903,7 @@ class InfoBlock(Pretty):
         return root_el
 
     def locate(self):
-        return sel.move_to_element(self.root)
+        return self.root
 
     def member(self, name):
         if name not in self._member_cache:
@@ -1980,7 +1983,7 @@ class InfoBlock(Pretty):
                 return sel.element("./td[2]", root=self.pair)
 
         def locate(self):
-            return sel.move_to_element(self.container)
+            return self.container
 
         @property
         def elements(self):
@@ -2414,7 +2417,7 @@ class DHTMLSelect(Select):
             self.select_by_index(index, _cascade=True)
 
     def locate(self):
-        return sel.move_to_element(self._loc)
+        return self._loc
 
 
 @sel.select.method((DHTMLSelect, basestring))
@@ -2489,7 +2492,7 @@ class MultiSelect(Region):
         self.deselect_arrow = deselect_arrow
 
     def locate(self):
-        return sel.move_to_element(self.available_select)
+        return self.available_select.locate()
 
 
 @sel.select.method((MultiSelect, Sequence))
@@ -2519,7 +2522,7 @@ class UpDownSelect(Region):
         ))
 
     def locate(self):
-        return sel.move_to_element(self.select)
+        return self.select.locate()
 
     def get_items(self):
         return map(lambda el: el.text.encode("utf-8"), self.select.options)
@@ -2578,7 +2581,7 @@ class ScriptBox(Pretty):
         self.ta_loc = ta_locator
 
     def locate(self):
-        return sel.move_to_element(self.ta_loc)
+        return self.ta_loc
 
     @property
     def name(self):
@@ -2636,7 +2639,7 @@ class CheckboxSelect(Pretty):
         self._access_func = text_access_func
 
     def locate(self):
-        return sel.move_to_element(self._root)
+        return self._root
 
     @property
     def checkboxes(self):
@@ -2752,7 +2755,7 @@ class ShowingInputs(Pretty):
         self._min = kwargs.get("min_values", 0)
 
     def locate(self):
-        return sel.move_to_element(self._locators[0])
+        return self._locators[0].locate()
 
     def zip(self, with_values):
         if len(with_values) < self._min:
@@ -2791,7 +2794,7 @@ class MultiFill(object):
         self.fields = fields
 
     def locate(self):
-        return sel.move_to_element(self.fields[0])
+        return self.fields[0].locate()
 
 
 @fill.method((MultiFill, object))
@@ -2808,7 +2811,7 @@ class DriftGrid(Pretty):
         self.loc = loc
 
     def locate(self):
-        return sel.move_to_element(self.loc)
+        return sself.loc
 
     def get_cell(self, row_text, col_index):
         """ Finds cell element of the grid specified by column index and row text
@@ -2912,7 +2915,7 @@ class ButtonGroup(object):
     def locate(self):
         """ Moves to the element """
         # Use the header locator as the overall table locator
-        return sel.move_to_element(self.locator)
+        return self.locator
 
     @property
     def locator_base(self):
@@ -2970,7 +2973,7 @@ class ColorGroup(object):
     def locate(self):
         """ Moves to the element """
         # Use the header locator as the overall table locator
-        return sel.move_to_element(self.locator)
+        return self.locator
 
     @property
     def active(self):
@@ -3021,7 +3024,7 @@ class DynamicTable(Pretty):
         self.default_row_item = default_row_item
 
     def locate(self):
-        return sel.move_to_element(self.root_loc)
+        return self.root_loc
 
     @property
     def rows(self):
@@ -3134,7 +3137,7 @@ class AngularSelect(object):
         self.multi = multi
 
     def locate(self):
-        return sel.move_to_element(self._loc)
+        return self._loc
 
     @property
     def select(self):
@@ -3283,7 +3286,7 @@ class EmailSelectForm(Pretty):
     ))
 
     def locate(self):
-        return sel.move_to_element(self.fields.from_address)
+        return self.fields.from_address.locate()
 
     @property
     def to_emails(self):
@@ -3366,7 +3369,7 @@ class BootstrapSwitch(object):
             self.loc_container, '{}')
 
     def locate(self):
-        return self.move_to_element(self.loc_container)
+        return self.loc_container
 
     def fill(self, val):
         """Convenience function"""
@@ -3409,7 +3412,7 @@ class OldCheckbox(object):
         self.locator = "//input[@id={}]".format(quoteattr(input_id))
 
     def locate(self):
-        return sel.move_to_element(self.locator)
+        return self.locator
 
     def fill(self, val):
         """

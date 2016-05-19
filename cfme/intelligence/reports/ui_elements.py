@@ -38,7 +38,7 @@ class PivotCalcSelect(Pretty):
         self._close_box = True
 
     def locate(self):
-        return sel.move_to_element(self._get_entry_el())
+        return (By.ID, self._id)
 
     @property
     def id(self):
@@ -54,7 +54,7 @@ class PivotCalcSelect(Pretty):
         ]
 
     def _get_root_el(self):
-        return sel.element((By.ID, self._id))
+        return sel.element(self)
 
     def _get_entry_el(self):
         return sel.element(self._entry, root=self._get_root_el())
@@ -196,7 +196,7 @@ class RecordGrouper(Pretty):
         self.table = Table(table_loc)
 
     def locate(self):
-        return sel.move_to_element(self.table)
+        return self.table.locate()
 
     def __repr__(self):
         return "{}({})".format(type(self).__name__, str(repr(self._table_loc)))
@@ -251,7 +251,7 @@ class ColumnStyleTable(Pretty):
         self._div_id = div_id
 
     def locate(self):
-        return sel.move_to_element((By.ID, self._div_id))
+        return (By.ID, self._div_id)
 
     def __repr__(self):
         return "{}({})".format(type(self).__name__, str(repr(self._div_id)))
@@ -391,7 +391,7 @@ class MenuShortcuts(Pretty):
             "5.5": AngularSelect(self._select_name)})
 
     def locate(self):
-        return sel.move_to_element(self.select)
+        return self.select.locate()
 
     @property
     def opened_boxes_ids(self):
@@ -491,7 +491,7 @@ class Timer(object):
     ])
 
     def locate(self):
-        return sel.move_to_element(self.form.run)
+        return self.form.run.locate()
 
 
 @fill.method((Timer, Mapping))
@@ -513,7 +513,7 @@ class ExternalRSSFeed(object):
     ))
 
     def locate(self):
-        return sel.move_to_element(self.form.rss_url)
+        return self.form.rss_url.locate()
 
 
 @fill.method((ExternalRSSFeed, basestring))
@@ -547,7 +547,7 @@ class DashboardWidgetSelector(Pretty):
         self._root_loc = root_loc
 
     def locate(self):
-        return sel.move_to_element(self._root_loc)
+        return self._root_loc
 
     def _open_close_combo(self):
         sel.click(sel.element(self._button_open_close, root=sel.element(self._root_loc)))
@@ -676,6 +676,7 @@ class FolderManager(Pretty):
         self.root = lambda: sel.element(root)
 
     def locate(self):
+        # :( callable
         return sel.move_to_element(self.root)
 
     def __repr__(self):
