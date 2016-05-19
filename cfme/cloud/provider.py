@@ -64,9 +64,10 @@ properties_form_56 = TabStripForm(
     fields=[
         ('type_select', AngularSelect("emstype")),
         ('name_text', Input("name")),
-        ('amazon_region_select', AngularSelect("provider_region")),
+        ('region_select', AngularSelect("provider_region")),
         ("api_version", AngularSelect("api_version")),
         ('infra_provider', AngularSelect("provider_id")),
+        ('google_project_text', Input("project")),
     ],
     tab_fields={
         "Default": [
@@ -167,7 +168,20 @@ class EC2Provider(Provider):
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Amazon EC2',
-                'amazon_region_select': sel.ByValue(kwargs.get('region'))}
+                'region_select': sel.ByValue(kwargs.get('region'))}
+
+
+class GCEProvider(Provider):
+    def __init__(self, name=None, project=None, zone=None, region=None, credentials=None, key=None):
+        super(GCEProvider, self).__init__(name=name, zone=zone, key=key, credentials=credentials)
+        self.region = region
+        self.project = project
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name'),
+                'type_select': create and 'Google Compute Engine',
+                'region_select': sel.ByValue(kwargs.get('region')),
+                'google_project_text': kwargs.get('project')}
 
 
 class OpenStackProvider(Provider):

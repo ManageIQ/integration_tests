@@ -13,6 +13,7 @@ from operator import methodcaller
 from mgmtsystem.virtualcenter import VMWareSystem
 from mgmtsystem.scvmm import SCVMMSystem
 from mgmtsystem.ec2 import EC2System
+from mgmtsystem.google import GoogleCloudSystem
 from mgmtsystem.openstack import OpenstackSystem
 from mgmtsystem.kubernetes import Kubernetes
 from mgmtsystem.openshift import Openshift
@@ -46,6 +47,7 @@ infra_provider_type_map = {
 cloud_provider_type_map = {
     'ec2': EC2System,
     'openstack': OpenstackSystem,
+    'gce': GoogleCloudSystem,
 }
 
 #: mapping of container provider type names to ``mgmtsystem`` classes
@@ -647,12 +649,42 @@ def get_credentials(credential_dict, cred_type=None):
     """
     domain = credential_dict.get('domain', None)
     token = credential_dict.get('token', None)
+    service_account = credential_dict.get('service_account', None)
+    if service_account:
+        service_account = gce_service_account_formating(service_account)
     return BaseProvider.Credential(
         principal=credential_dict['username'],
         secret=credential_dict['password'],
         cred_type=cred_type,
         domain=domain,
-        token=token)
+        token=token,
+        service_account=service_account)
+
+
+def gce_service_account_formating(data):
+    service_data = '''
+      "type": "{type}",
+      "project_id": "{project}",
+      "private_key_id": "{private_key_id}",
+      "private_key": "{private_key}",
+      "client_email": "{email}",
+      "client_id": "{client}",
+      "auth_uri": "{auth}",
+      "token_uri": "{token}",
+      "auth_provider_x509_cert_url": "{auth_provider}",
+      "client_x509_cert_url": "{cert_url}"
+    '''.format(
+        type=data.get('type'),
+        project=data.get('project_id'),
+        private_key_id=data.get('private_key_id'),
+        private_key=data.get('private_key').replace('\n', '\\n'),
+        email=data.get('client_email'),
+        client=data.get('client_id'),
+        auth=data.get('auth_uri'),
+        token=data.get('token_uri'),
+        auth_provider=data.get('auth_provider_x509_cert_url'),
+        cert_url=data.get('client_x509_cert_url'))
+    return '{' + service_data + '}'
 
 
 def get_credentials_from_config(credential_config_name, cred_type=None):
@@ -717,6 +749,16 @@ def get_crud(provider_config_name):
             region=prov_config['region'],
             credentials={'default': credentials},
             zone=prov_config['server_zone'],
+            key=provider_config_name)
+    if prov_type == 'gce':
+        from cfme.cloud.provider import GCEProvider
+        ser_acc_creds = get_credentials_from_config(
+            prov_config['credentials'], cred_type='service_account')
+        return GCEProvider(name=prov_config['name'],
+            project=prov_config['project'],
+            zone=prov_config['zone'],
+            region=prov_config['region'],
+            credentials={'default': ser_acc_creds},
             key=provider_config_name)
     elif prov_type == 'openstack':
         from cfme.cloud.provider import OpenStackProvider

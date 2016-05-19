@@ -56,7 +56,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         @property
         def form(self):
             fields = [
-                ('token_secret', Input('bearer_token'))
+                ('token_secret', Input('bearer_token')),
+                ('google_service_account', Input('service_account')),
             ]
             tab_fields = {
                 "Default": [
@@ -99,6 +100,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             self.domain = kwargs.get('domain', None)
             if self.type == 'token':
                 self.token = kwargs['token']
+            if self.type == 'service_account':
+                self.service_account = kwargs['service_account']
 
     @property
     def properties_form(self):
@@ -579,11 +582,11 @@ def _fill_credential(form, cred, validate=None):
             'candu_verify_secret': cred.verify_secret,
             'validate_btn': validate})
     elif cred.type == 'ssh':
-        fill(cred.form, {'ssh_user': cred.principal,
-            'ssh_key': cred.secret})
+        fill(cred.form, {'ssh_user': cred.principal, 'ssh_key': cred.secret})
     elif cred.type == 'token':
-        fill(cred.form, {'token_secret': cred.token,
-            'validate_btn': validate})
+        fill(cred.form, {'token_secret': cred.token, 'validate_btn': validate})
+    elif cred.type == 'service_account':
+        fill(cred.form, {'google_service_account': cred.service_account, 'validate_btn': validate})
     else:
         if cred.domain:
             principal = r'{}\{}'.format(cred.domain, cred.principal)
