@@ -279,7 +279,6 @@ class ParallelSession(object):
                 url = "https://{}/".format(appliance["ip_address"])
                 self.appliances.append(url)
                 self.terminal.write("- {} is {}\n".format(url, appliance['name']))
-            map(lambda a: "https://{}/".format(a["ip_address"]), request["appliances"])
             self._reset_timer()
             # Set the base_url for collection purposes on the first appliance
             conf.runtime["env"]["base_url"] = self.appliances[0]
