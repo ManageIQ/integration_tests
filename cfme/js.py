@@ -21,7 +21,8 @@ return {
         && isHidden(document.getElementById("lightbox_div")),
     document: document.readyState,
     autofocus: (typeof checkMiqQE === "undefined") ? 0 : checkMiqQE('autofocus'),
-    miqQE: (typeof checkAllMiqQE === "undefined") ? 0 : checkAllMiqQE()
+    miqQE: (typeof checkAllMiqQE === "undefined") ? 0 : checkAllMiqQE(),
+    miqProcessing: ManageIQ.observe.processing || ManageIQ.observe.queue.length > 0
 };
 """
 
