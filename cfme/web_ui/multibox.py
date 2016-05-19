@@ -45,6 +45,9 @@ class MultiBoxSelect(Pretty):
         self._async = async
         self._sync = sync
 
+    def locate(self):
+        return sel.move_to_element(self._unselected)
+
     def __str__(self):
         return "{}({}, {})".format(
             type(self).__name__, str(self._unselected), str(self._selected))

@@ -552,6 +552,9 @@ class Expression(Pretty):
     def __init__(self, show_func=lambda: None):
         self.show_func = show_func
 
+    def locate(self):
+        return sel.move_to_element(_root())
+
 
 @fill.method((Expression, Anything))
 def _fill_expression(e, p):

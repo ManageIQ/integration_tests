@@ -1309,6 +1309,19 @@ class Form(Region):
         self.fields = fields
         self.identifying_loc = identifying_loc
 
+    def locate(self):
+        loc = self.identifying_loc
+        if not loc:
+            # Take the first valid locator
+            for field_tuple in self.fields:
+                name = field_tuple[0]
+                if self.field_valid(name):
+                    loc = self.locators[name]
+                    break
+            else:
+                raise ValueError('The Form has no suitable element to locate on')
+        return sel.move_to_element(loc)
+
     def field_valid(self, field_name):
         """Add the validity constraints here."""
         if field_name not in self.metadata:
@@ -1886,6 +1899,9 @@ class InfoBlock(Pretty):
             self._type = self.DETAIL
         return root_el
 
+    def locate(self):
+        return sel.move_to_element(self.root)
+
     def member(self, name):
         if name not in self._member_cache:
             self._member_cache[name] = self.Member(self, name)
@@ -1964,7 +1980,7 @@ class InfoBlock(Pretty):
                 return sel.element("./td[2]", root=self.pair)
 
         def locate(self):
-            return self.container
+            return sel.move_to_element(self.container)
 
         @property
         def elements(self):
@@ -2472,6 +2488,9 @@ class MultiSelect(Region):
         self.select_arrow = select_arrow
         self.deselect_arrow = deselect_arrow
 
+    def locate(self):
+        return sel.move_to_element(self.available_select)
+
 
 @sel.select.method((MultiSelect, Sequence))
 def select_multiselect(ms, values):
@@ -2498,6 +2517,9 @@ class UpDownSelect(Region):
             up=up_loc,
             down=down_loc,
         ))
+
+    def locate(self):
+        return sel.move_to_element(self.select)
 
     def get_items(self):
         return map(lambda el: el.text.encode("utf-8"), self.select.options)
@@ -2555,6 +2577,9 @@ class ScriptBox(Pretty):
         self._name = name
         self.ta_loc = ta_locator
 
+    def locate(self):
+        return sel.move_to_element(self.ta_loc)
+
     @property
     def name(self):
         if not self._name:
@@ -2609,6 +2634,9 @@ class CheckboxSelect(Pretty):
     def __init__(self, search_root, text_access_func=None):
         self._root = search_root
         self._access_func = text_access_func
+
+    def locate(self):
+        return sel.move_to_element(self._root)
 
     @property
     def checkboxes(self):
@@ -2718,8 +2746,13 @@ class ShowingInputs(Pretty):
     pretty_attrs = ['locators', 'min_values']
 
     def __init__(self, *locators, **kwargs):
+        if not locators:
+            raise ValueError('You must pass at least one locator to ShowingInputs!')
         self._locators = locators
         self._min = kwargs.get("min_values", 0)
+
+    def locate(self):
+        return sel.move_to_element(self._locators[0])
 
     def zip(self, with_values):
         if len(with_values) < self._min:
@@ -2753,7 +2786,12 @@ class MultiFill(object):
         *fields: The fields where the value will be mirrored
     """
     def __init__(self, *fields):
+        if not fields:
+            raise ValueError('You must pass at least one locator to MultiFill!')
         self.fields = fields
+
+    def locate(self):
+        return sel.move_to_element(self.fields[0])
 
 
 @fill.method((MultiFill, object))
@@ -2768,6 +2806,9 @@ class DriftGrid(Pretty):
 
     def __init__(self, loc="//div[@id='drift_grid_div']"):
         self.loc = loc
+
+    def locate(self):
+        return sel.move_to_element(self.loc)
 
     def get_cell(self, row_text, col_index):
         """ Finds cell element of the grid specified by column index and row text
@@ -2979,6 +3020,9 @@ class DynamicTable(Pretty):
         self.root_loc = root_loc
         self.default_row_item = default_row_item
 
+    def locate(self):
+        return sel.move_to_element(self.root_loc)
+
     @property
     def rows(self):
         return map(lambda r_el: self.Row(self, r_el), sel.elements(self.ROWS, root=self.root_loc))
@@ -3014,6 +3058,9 @@ class DynamicTable(Pretty):
         def __init__(self, table, root):
             self.table = table
             self.root = root
+
+        def locate(self):
+            return sel.move_to_element(self.root, root=self.table)
 
         @property
         def values(self):
@@ -3235,6 +3282,9 @@ class EmailSelectForm(Pretty):
             "5.5": "//div[@alt='Add']/i"}
     ))
 
+    def locate(self):
+        return sel.move_to_element(self.fields.from_address)
+
     @property
     def to_emails(self):
         """Returns list of e-mails that are selected"""
@@ -3315,6 +3365,9 @@ class BootstrapSwitch(object):
         self.on_off = "{}/span[contains(@class, 'bootstrap-switch-handle-{}')]".format(
             self.loc_container, '{}')
 
+    def locate(self):
+        return self.move_to_element(self.loc_container)
+
     def fill(self, val):
         """Convenience function"""
         if val:
@@ -3354,6 +3407,9 @@ class OldCheckbox(object):
         """
         self.input_id = input_id
         self.locator = "//input[@id={}]".format(quoteattr(input_id))
+
+    def locate(self):
+        return sel.move_to_element(self.locator)
 
     def fill(self, val):
         """
