@@ -2811,7 +2811,7 @@ class DriftGrid(Pretty):
         self.loc = loc
 
     def locate(self):
-        return sself.loc
+        return self.loc
 
     def get_cell(self, row_text, col_index):
         """ Finds cell element of the grid specified by column index and row text
