@@ -23,6 +23,7 @@ ovirt-engine-sdk-python
 paramiko
 parsedatetime
 pdfminer
+polib
 progress
 psphere
 py

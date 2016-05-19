@@ -33,6 +33,7 @@ from utils.path import data_path, patches_path, scripts_path
 from utils.providers import get_mgmt, get_crud
 from utils.version import Version, get_stream, pick, LATEST
 from utils.signals import fire
+from utils.translator import Translate
 from utils.wait import wait_for
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
@@ -366,6 +367,10 @@ class IPAppliance(object):
         if res.rc != 0:
             raise RuntimeError('Unable to retrieve appliance OS version')
         return Version(res.output)
+
+    @cached_property
+    def translate(self):
+        return Translate(self)
 
     @cached_property
     def log(self):

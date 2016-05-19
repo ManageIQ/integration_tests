@@ -94,6 +94,10 @@ class Store(object):
         return self._current_appliance[-1]
 
     @property
+    def ca(self):
+        return self.current_appliance
+
+    @property
     def any_appliance(self):
         return bool(self._current_appliance)
 

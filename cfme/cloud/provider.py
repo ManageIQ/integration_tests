@@ -10,8 +10,10 @@
 """
 
 from functools import partial
+import re
 
 import cfme.fixtures.pytest_selenium as sel
+from fixtures.pytest_store import store as st
 from cfme.infrastructure.provider import OpenstackInfraProvider
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
@@ -132,6 +134,7 @@ class Provider(Pretty, CloudInfraProvider):
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
+    object_name = "Cloud Provider"
     page_name = "clouds"
     instances_page_name = "clouds_instances_by_provider"
     templates_page_name = "clouds_images_by_provider"
@@ -146,6 +149,9 @@ class Provider(Pretty, CloudInfraProvider):
     save_button = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton("Save Changes"),
          '5.5': form_buttons.FormButton("Save changes")})
+
+    toolbar_add_button = lambda _: re.sub('#\{.*\}', _.object_name,
+        st.ca.translate['new_cloud_provider_toolbar'])
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
         if not credentials:
