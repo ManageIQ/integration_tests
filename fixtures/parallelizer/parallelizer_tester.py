@@ -12,18 +12,19 @@ from time import sleep
 import pytest
 from utils import testgen
 
-# add 'wait' to this to slow things down, if desired
-pytestmark = pytest.mark.usefixtures('param')
-# increase or decrease this to change the number of tests generated
+# uncommment this to slow things down, if desired
+# pytestmark= pytest.mark.usefixtures("wait")
+
 num_copies = 20
 
 
-def pytest_generate_tests(metafunc):
-    # Starts at 10 for vane reason: Artifactor report does a naive sort, so 10 comes before 1
-    ids = [i + 10 for i in xrange(num_copies)]
-    random.shuffle(ids)
-    argvalues = [[v] for v in ids]
-    testgen.parametrize(metafunc, ['param'], argvalues, ids=ids, scope='module')
+@pytest.fixture(
+    params=xrange(10, 10 * num_copies),
+    autouse=True,
+    scope='module',
+)
+def the_param():
+    pass
 
 
 @pytest.fixture
