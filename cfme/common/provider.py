@@ -6,7 +6,7 @@ from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
 )
 import cfme
-from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form, Input
+from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form, Input, Radio
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons
 from cfme.web_ui.tabstrip import TabStripForm
@@ -21,6 +21,7 @@ from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
+from utils import version
 
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
@@ -29,38 +30,6 @@ cfg_btn = partial(tb.select, 'Configuration')
 manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
 details_page = Region(infoblock_type='detail')
-
-credential_form = TabStripForm(
-    fields=[
-        ('token_secret', Input('bearer_token'))
-    ],
-    tab_fields={
-        "Default": [
-            ('default_principal', Input("default_userid")),
-            ('default_secret', Input("default_password")),
-            ('default_verify_secret', Input("default_verify")),
-        ],
-
-        "AMQP": [
-            ('amqp_principal', Input("amqp_userid")),
-            ('amqp_secret', Input("amqp_password")),
-            ('amqp_verify_secret', Input("amqp_verify")),
-        ],
-
-        "RSA key pair": [
-            ('ssh_user', Input("ssh_keypair_userid")),
-            ('ssh_key', Input("ssh_keypair_password")),
-        ],
-
-        "C & U Database": [
-            ('candu_principal', Input("metrics_userid")),
-            ('candu_secret', Input("metrics_password")),
-            ('candu_verify_secret', Input("metrics_verify")),
-        ],
-    },
-    fields_end=[
-        ('validate_btn', form_buttons.validate),
-    ])
 
 
 class BaseProvider(Taggable, Updateable, SummaryMixin):
@@ -84,6 +53,45 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
              type: One of [amqp, candu, ssh, token] (optional)
              domain: Domain for default credentials (optional)
         """
+        @property
+        def form(self):
+            fields = [
+                ('token_secret', Input('bearer_token'))
+            ]
+            tab_fields = {
+                "Default": [
+                    ('default_principal', Input("default_userid")),
+                    ('default_secret', Input("default_password")),
+                    ('default_verify_secret', Input("default_verify")),
+                ],
+
+                "RSA key pair": [
+                    ('ssh_user', Input("ssh_keypair_userid")),
+                    ('ssh_key', Input("ssh_keypair_password")),
+                ],
+
+                "C & U Database": [
+                    ('candu_principal', Input("metrics_userid")),
+                    ('candu_secret', Input("metrics_password")),
+                    ('candu_verify_secret', Input("metrics_verify")),
+                ],
+            }
+            fields_end = [
+                ('validate_btn', form_buttons.validate),
+            ]
+
+            if version.current_version() >= '5.6':
+                amevent = "Events"
+            else:
+                amevent = "AMQP"
+            tab_fields[amevent] = [
+                ('event_selection', Radio('event_stream_selection')),
+                ('amqp_principal', Input("amqp_userid")),
+                ('amqp_secret', Input("amqp_password")),
+                ('amqp_verify_secret', Input("amqp_verify")),
+            ]
+
+            return TabStripForm(fields, tab_fields, fields_end)
 
         def __init__(self, **kwargs):
             super(BaseProvider.Credential, self).__init__(**kwargs)
@@ -175,7 +183,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         sel.force_navigate('{}_provider_new'.format(self.page_name))
         fill(self.properties_form, self._form_mapping(True, **self.__dict__))
         for cred in self.credentials:
-            fill(credential_form, self.credentials[cred], validate=validate_credentials)
+            fill(self.credentials[cred].form, self.credentials[cred], validate=validate_credentials)
         self._submit(cancel, self.add_provider_button)
         fire("providers_changed")
         if not cancel:
@@ -195,7 +203,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             context={'provider': self})
         fill(self.properties_form, self._form_mapping(**updates))
         for cred in self.credentials:
-            fill(credential_form, updates.get('credentials', {}).get(cred, None),
+            fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
                  validate=validate_credentials)
         self._submit(cancel, self.save_button)
         name = updates.get('name', self.name)
@@ -561,30 +569,30 @@ def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
     if cred.type == 'amqp':
-        fill(credential_form, {'amqp_principal': cred.principal,
-                               'amqp_secret': cred.secret,
-                               'amqp_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
+        fill(cred.form, {'amqp_principal': cred.principal,
+            'amqp_secret': cred.secret,
+            'amqp_verify_secret': cred.verify_secret,
+            'validate_btn': validate})
     elif cred.type == 'candu':
-        fill(credential_form, {'candu_principal': cred.principal,
-                               'candu_secret': cred.secret,
-                               'candu_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
+        fill(cred.form, {'candu_principal': cred.principal,
+            'candu_secret': cred.secret,
+            'candu_verify_secret': cred.verify_secret,
+            'validate_btn': validate})
     elif cred.type == 'ssh':
-        fill(credential_form, {'ssh_user': cred.principal,
-                               'ssh_key': cred.secret})
+        fill(cred.form, {'ssh_user': cred.principal,
+            'ssh_key': cred.secret})
     elif cred.type == 'token':
-        fill(credential_form, {'token_secret': cred.token,
-                               'validate_btn': validate})
+        fill(cred.form, {'token_secret': cred.token,
+            'validate_btn': validate})
     else:
         if cred.domain:
             principal = r'{}\{}'.format(cred.domain, cred.principal)
         else:
             principal = cred.principal
-        fill(credential_form, {'default_principal': principal,
-                               'default_secret': cred.secret,
-                               'default_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
+        fill(cred.form, {'default_principal': principal,
+            'default_secret': cred.secret,
+            'default_verify_secret': cred.verify_secret,
+            'validate_btn': validate})
     if validate:
         flash.assert_no_errors()
 
