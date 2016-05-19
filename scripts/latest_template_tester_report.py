@@ -10,6 +10,7 @@ from urllib2 import urlopen, HTTPError
 
 from utils import trackerbot
 from utils.conf import credentials
+from utils.conf import cfme_data
 from utils.path import template_path, log_path
 from utils.ssh import SSHClient
 from utils.wait import wait_for
@@ -85,10 +86,7 @@ def images_uploaded(stream):
                 e.g. downstream-55z, downstream-nightly, upstream etc..
     returns: dictionary with key/value 'provider type and image names uploaded'.
     """
-    # stream name is formatted to browse the latest directory.
-    stream = stream.replace('-', '_').replace('z', '')
-    dir_url = \
-        'http://file.cloudforms.lab.eng.rdu2.redhat.com/builds/cfme/' + stream + '/latest/'
+    dir_url = cfme_data['basic_info']['cfme_images_url'][stream]
     name_dict = {}
     try:
         with closing(urlopen(dir_url)) as urlpath:
@@ -227,7 +225,8 @@ def generate_html_report(api, stream, filename, appliance_template, provider):
         print("the report will be generated only for the latest templates")
         sys.exit()
 
-    if stream_data and not get_untested_templates(api, stream_data['group_name']):
+    if stream_data and not get_untested_templates(api, stream_data['group_name'],
+                                                  appliance_template):
         print("Found tested template for {}".format(stream))
         print("Gathering tested template data for {}".format(stream))
         print("Updating the template log")
