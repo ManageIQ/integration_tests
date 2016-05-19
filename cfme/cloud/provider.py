@@ -17,7 +17,7 @@ from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
 from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui.menu import nav
-from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect
+from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
 from utils.log import logger
@@ -62,11 +62,9 @@ properties_form_55 = Form(
 
 properties_form_56 = TabStripForm(
     fields=[
-        ('type_select', {version.LOWEST: Select('select#server_emstype'),
-            '5.5': AngularSelect("emstype")}),
+        ('type_select', AngularSelect("emstype")),
         ('name_text', Input("name")),
-        ('amazon_region_select', {version.LOWEST: Select("select#provider_region"),
-            "5.5": AngularSelect("provider_region")}),
+        ('amazon_region_select', AngularSelect("provider_region")),
         ("api_version", AngularSelect("api_version")),
         ('infra_provider', AngularSelect("provider_id")),
     ],
@@ -76,7 +74,8 @@ properties_form_56 = TabStripForm(
             ('api_port', Input("default_api_port")),
             ('sec_protocol', AngularSelect("default_security_protocol")),
         ],
-        "AMQP": [
+        "Events": [
+            ('event_selection', Radio('event_stream_selection')),
             ('amqp_hostname_text', Input("amqp_hostname")),
             ('amqp_api_port', Input("amqp_api_port")),
             ('amqp_sec_protocol', AngularSelect("amqp_security_protocol")),
@@ -197,16 +196,22 @@ class OpenStackProvider(Provider):
         infra_provider = kwargs.get('infra_provider')
         if isinstance(infra_provider, OpenstackInfraProvider):
             infra_provider = infra_provider.name
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'OpenStack',
-                'hostname_text': kwargs.get('hostname'),
-                'api_port': kwargs.get('api_port'),
-                'ipaddress_text': kwargs.get('ip_address'),
-                'sec_protocol': kwargs.get('sec_protocol'),
-                'infra_provider': "---" if infra_provider is False else infra_provider,
+        data_dict = {
+            'name_text': kwargs.get('name'),
+            'type_select': create and 'OpenStack',
+            'hostname_text': kwargs.get('hostname'),
+            'api_port': kwargs.get('api_port'),
+            'ipaddress_text': kwargs.get('ip_address'),
+            'sec_protocol': kwargs.get('sec_protocol'),
+            'infra_provider': "---" if infra_provider is False else infra_provider}
+        if 'amqp' in self.credentials:
+            data_dict.update({
+                'event_selection': 'amqp',
                 'amqp_hostname_text': kwargs.get('hostname'),
-                'amqp_api_port': kwargs.get('api_port'),
-                'amqp_sec_protocol': kwargs.get('sec_protocol')}
+                'amqp_api_port': kwargs.get('amqp_api_port', '5672'),
+                'amqp_sec_protocol': kwargs.get('sec_protocol')
+            })
+        return data_dict
 
 
 def get_all_providers(do_not_navigate=False):
