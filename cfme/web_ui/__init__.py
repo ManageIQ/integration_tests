@@ -1353,17 +1353,20 @@ def _fill_form_list(form, values, action=None, action_always=False):
 
     """
     logger.info('Beginning to fill in form...')
-    sel.wait_for_ajax()
     values = list(val for key in form.fields for val in values if val[0] == key[0])
     res = []
     for field, value in values:
+        # Ensure that no ajax which might tamper with the form is running.
+        sel.wait_for_ajax()
+        loc = form.locators[field]
+        # Wait for the element to appear if ajax wait did not catch it which may happen sometimes.
+        sel.wait_for_element(loc, timeout=3)
         if value is not None and form.field_valid(field):
-            loc = form.locators[field]
             logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
         elif value is None and isinstance(form.locators[field], Select):
-            fill_prev = fill(form.locators[field], None)
+            fill_prev = fill(loc, None)
             res.append(fill_prev != value)
         else:
             res.append(False)
