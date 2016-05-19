@@ -378,7 +378,7 @@ class ParallelSession(object):
         # worker output redirected to null; useful info comes via messages and logs
         slave = subprocess.Popen(
             ['python', remote.__file__, slaveid, base_url],
-            stdout=devnull, stderr=devnull,
+            stdout=devnull,
         )
         self.slaves[slaveid] = slave
         self.slave_spawn_count += 1
