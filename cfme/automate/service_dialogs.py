@@ -13,7 +13,8 @@ from utils import version
 accordion_tree = functools.partial(accordion.tree, "Service Dialogs")
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
-entry_table = Table("//div[@id='field_values_div']/form/fieldset/table")
+entry_table = Table({'5.6': "//div[@id='field_values_div']/form/table",
+                    '5.5': "//div[@id='field_values_div']/form/fieldset/table"})
 text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table[@class='style1']")
 text_area_table = Table({version.LOWEST: "//div[@id='dialog_field_div']/fieldset/table"
                         "[@class='style1']",
@@ -44,12 +45,11 @@ box_form = Form(fields=[
 ])
 
 element_form = Form(fields=[
-    ('ele_label', Input("field_label")),
-    ('ele_name', Input("field_name")),
-    ('ele_desc', Input("field_description")),
     ('choose_type', {
         version.LOWEST: Select("//select[@id='field_typ']"),
         "5.5": AngularSelect("field_typ")}),
+    ('ele_label', Input("field_label")),
+    ('ele_desc', Input("field_description")),
     ('default_text_box', Input("field_default_value")),
     ('field_required', Input("field_required")),
     ('field_past_dates', Input("field_past_dates")),
@@ -64,7 +64,8 @@ element_form = Form(fields=[
         version.LOWEST: Input("field_default_value"),
         "5.5": AngularSelect("field_default_value")}),
     ('dynamic_chkbox', Input("field_dynamic")),
-    ('apply_btn', '//a[@title="Apply"]')
+    ('apply_btn', '//a[@title="Apply"]'),
+    ('ele_name', Input("field_name"))
 ])
 
 common = Region(locators={
@@ -122,8 +123,8 @@ class ServiceDialog(Updateable, Pretty):
             sel.wait_for_element(element_form.ele_label)
             # Workaround to refresh the fields, select other values (text area box and checkbox)and
             # then select "text box"
-            fill(element_form, {'choose_type': "Text Area Box"})
-            fill(element_form, {'choose_type': "Check Box"})
+            # fill(element_form, {'choose_type': "Text Area Box"})
+            # fill(element_form, {'choose_type': "Check Box"})
             fill(element_form, each_element)
             self.element_type(each_element)
 
@@ -196,6 +197,9 @@ class ServiceDialog(Updateable, Pretty):
 
     def element(self, element_data):
         return sel.element(version.pick({
+            '5.6': '//div[@class="panel-heading"]/h3'
+            '[@class="panel-title sortable-handle ui-sortable-handle"]'
+            '[contains(normalize-space(.), "{}")]/..'.format(element_data),
             '5.5': '//div[@class="panel-heading"]/h3[@class="panel-title"]'
             '[contains(normalize-space(.), "{}")]/..'.format(element_data),
             '5.4': '//div[@class="modbox"]/h2[@class="modtitle"]'
