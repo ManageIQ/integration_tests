@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from cached_property import cached_property
 from functools import partial
-
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTree, Table, flash, form_buttons, mixins, toolbar
-from utils import attributize_string, version
 from urlparse import urlparse
+
+from cached_property import cached_property
+from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import CheckboxTree, flash, form_buttons, mixins, toolbar
+from utils import attributize_string, version
 
 pol_btn = partial(toolbar.select, "Policy")
 
@@ -86,48 +86,6 @@ class Taggable(object):
     def get_tags(self, tag="My Company Tags"):
         self.load_details(refresh=True)
         return mixins.get_tags(tag=tag)
-
-
-class Validatable(object):
-    """
-    Class which Middleware provider and other middleware pages must extend
-    to be able to validate properties values shown in summary page.
-
-    """
-
-    """
-    Tuples which first value is the provider class's attribute name,
-    the second value is provider's UI summary page field key.
-
-    Should have values in child classes.
-
-    """
-    property_tuples = []
-
-    def properties_ui(self):
-        self.load_details(refresh=True)
-        property_ui = {}
-        for row in Table('//div[@id="main-content"]//table').rows():
-            property_ui[row[0].text] = row[1].text
-        return property_ui
-
-    def validate_properties(self):
-        """
-        Validation method which checks whether class attributes,
-        which were used during creation of provider,
-        is correctly displayed in Properties section of provider UI.
-        The maps between class attribute and UI property is done via 'property_tuples' variable.
-
-        Fails if some property does not match.
-        """
-        properties = self.properties_ui()
-        assert len(properties) > 0, 'No property was found in UI'
-        for property_tuple in self.property_tuples:
-            expected_value = str(getattr(self, property_tuple[0]))
-            shown_value = str(properties[property_tuple[1]])
-            assert expected_value == shown_value, \
-                'Property {} has wrong value, expected {} but was {}'.format(
-                    property_tuple[1], expected_value, shown_value)
 
 
 class SummaryMixin(object):
@@ -333,3 +291,38 @@ def process_field(values):
             return SummaryValue(values[0])
         else:
             return map(SummaryValue, values)
+
+
+class Validatable(SummaryMixin):
+    """
+    Class which Middleware provider and other middleware pages must extend
+    to be able to validate properties values shown in summary page.
+    """
+
+    """
+    Tuples which first value is the provider class's attribute name,
+    the second value is provider's UI summary page field key.
+
+    Should have values in child classes.
+
+    """
+    property_tuples = []
+
+    def validate_properties(self):
+        """
+        Validation method which checks whether class attributes,
+        which were used during creation of provider,
+        is correctly displayed in Properties section of provider UI.
+        The maps between class attribute and UI property is done via 'property_tuples' variable.
+
+        Fails if some property does not match.
+        """
+        self.summary.reload()
+        properties = self.summary.properties.items()
+        assert len(properties) > 0, 'No property was found in UI'
+        for property_tuple in self.property_tuples:
+            expected_value = str(getattr(self, property_tuple[0]))
+            shown_value = properties[property_tuple[1]].text_value
+            assert expected_value == shown_value,\
+                ("Property '{}' has wrong value, expected '{}' but was '{}'"
+                 .format(property_tuple, expected_value, shown_value))
