@@ -12,6 +12,9 @@ function xpath(root, xpath) {
 
 in_flight = """
 function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
+function angularGet() {
+    try { return (ManageIQ.angular.scope.afterGet === false); } catch(err) { return false; };
+}
 
 return {
     jquery: jQuery.active,
@@ -22,7 +25,8 @@ return {
     document: document.readyState,
     autofocus: (typeof checkMiqQE === "undefined") ? 0 : checkMiqQE('autofocus'),
     miqQE: (typeof checkAllMiqQE === "undefined") ? 0 : checkAllMiqQE(),
-    miqProcessing: ManageIQ.observe.processing || ManageIQ.observe.queue.length > 0
+    miqProcessing: ManageIQ.observe.processing || ManageIQ.observe.queue.length > 0,
+    angular: angularGet()
 };
 """
 
