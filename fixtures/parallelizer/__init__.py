@@ -642,9 +642,8 @@ class ParallelSession(object):
                 elif event_name == 'runtest_logreport':
                     self.ack(slaveid, event_name)
                     report = unserialize_report(event_data['report'])
-                    if (report.when in ('call', 'teardown')
-                            and report.nodeid in self.slave_tests[slaveid]):
-                        self.slave_tests[slaveid].remove(report.nodeid)
+                    if report.when in ('call', 'teardown'):
+                        self.slave_tests[slaveid].discard(report.nodeid)
                     self.trdist.runtest_logreport(slaveid, report)
                 elif event_name == 'internalerror':
                     self.ack(slaveid, event_name)
