@@ -1353,10 +1353,10 @@ def _fill_form_list(form, values, action=None, action_always=False):
 
     """
     logger.info('Beginning to fill in form...')
-    sel.wait_for_ajax()
     values = list(val for key in form.fields for val in values if val[0] == key[0])
     res = []
     for field, value in values:
+        sel.wait_for_ajax()
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
             logger.trace(' Dispatching fill for %s', field)
