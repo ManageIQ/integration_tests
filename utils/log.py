@@ -340,8 +340,8 @@ def create_logger(logger_name, filename=None, max_file_size=None, max_backups=No
 
     """
     # If the logger already exists, destroy it
-    if logger_name in logging.root.manager.loggerDict:
-        del(logging.root.manager.loggerDict[logger_name])
+    # TODO: remove the need to destroy the logger
+    logging.root.manager.loggerDict.pop(logger_name, None)
 
     # Grab the logging conf
     conf = _load_conf(logger_name)

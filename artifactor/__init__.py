@@ -284,8 +284,8 @@ def create_logger(logger_name, filename):
 
     """
     # If the logger already exists, destroy it
-    if logger_name in logging.root.manager.loggerDict:
-        del(logging.root.manager.loggerDict[logger_name])
+    # TODO: we should never need to poke into the logging internals
+    logging.root.manager.loggerDict.pop(logger_name, None)
 
     log_file = filename
 
