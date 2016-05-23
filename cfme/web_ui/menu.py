@@ -187,7 +187,6 @@ class Menu(UINavigate):
                 ('containers', 'Containers'): (
                     ('containers_providers', 'Providers'),
                     ('containers_projects', 'Projects'),
-                    ('containers_nodes', 'Nodes'),
                     ('containers_nodes', 'Container Nodes'),
                     ('containers_pods', 'Pods'),
                     ('containers_routes', 'Routes'),
@@ -303,7 +302,7 @@ class Menu(UINavigate):
                     ('containers', 'Containers'): (
                         ('containers_providers', 'Providers'),
                         ('containers_projects', 'Projects'),
-                        ('containers_nodes', 'Nodes'),
+                        ('containers_nodes', 'Container Nodes'),
                         ('containers_pods', 'Pods'),
                         ('containers_routes', 'Routes'),
                         ('containers_replicators', 'Replicators'),
@@ -316,9 +315,6 @@ class Menu(UINavigate):
                 },
                 ('n_configuration', 'Configuration'): (
                     ('infrastructure_config_management', 'Configuration Management'),
-                ),
-                ('containers', 'Containers'): (
-                    ('containers_providers', 'Providers'),
                 ),
                 ('control', 'Control'): (
                     ('control_explorer', 'Explorer'),
