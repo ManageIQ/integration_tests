@@ -33,15 +33,16 @@ return {
 get_events = """
 function timeoutsMaxId() {
     try {
-        var maxid = Object.keys(window.testing.timeouts)[Object.keys(window.testing.timeouts).length - 1];
+        var maxid = parseInt(Object.keys(window.testing.timeouts)[
+            Object.keys(window.testing.timeouts).length - 1], 10);
         return (maxid) ? maxid : 0;
     } catch(err) { return 0; }
 }
 
 function timeoutsMinId() {
     try {
-        var minid = Object.keys(window.testing.timeouts)[0];
-        return (min) ? minid : 0;
+        var minid = parseInt(Object.keys(window.testing.timeouts)[0], 10);
+        return (minid) ? minid : 0;
     } catch(err) { return 0; }
 }
 
