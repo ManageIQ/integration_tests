@@ -6,6 +6,7 @@ from fixtures.pytest_store import store
 from utils.log import logger
 from utils import clear_property_cache
 
+
 class Ports(object):
     def __init__(self):
         self.store = store
