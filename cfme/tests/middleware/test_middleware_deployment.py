@@ -7,7 +7,6 @@ from utils.version import current_version
 
 pytestmark = [
     pytest.mark.usefixtures('has_no_middleware_providers'),
-    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
@@ -22,6 +21,7 @@ def test_list_deployments(provider):
         * Get deployments list from Management system(Hawkular)
         * Compare size of all the list [UI, Database, Management system]
     """
+    provider.create(cancel=False, validate_credentials=False)
     ui_deps = _get_deployments_set(MiddlewareDeployment.deployments())
     db_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_db())
     mgmt_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_mgmt(provider=provider))
@@ -39,6 +39,7 @@ def test_list_provider_deployments(provider):
         * Get deployments list from Management system(Hawkular)
         * Compare size of all the list [UI, Database, Management system]
     """
+    provider.create(cancel=False, validate_credentials=False)
     ui_deps = _get_deployments_set(MiddlewareDeployment.deployments(provider=provider))
     db_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_db(provider=provider))
     mgmt_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_mgmt(provider=provider))
@@ -63,6 +64,7 @@ def test_deployment(provider):
         * Select up to 3 deployments randomly
         * Compare selected deployment details with CFME database
     """
+    provider.create(cancel=False, validate_credentials=False)
     ui_deps = MiddlewareDeployment.deployments()
     assert len(ui_deps) > 0, "There is no deployment(s) available in UI"
     # select random deployments

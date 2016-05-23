@@ -5,7 +5,6 @@ from utils.version import current_version
 
 pytestmark = [
     pytest.mark.usefixtures('has_no_middleware_providers'),
-    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
@@ -22,6 +21,7 @@ def test_list_servers(provider):
         * Compare headers from UI with expected headers list
         * Compare content of all the list [UI, Database, Management system]
     """
+    provider.create(cancel=False, validate_credentials=False)
     ui_servers = _get_servers_set(MiddlewareServer.servers())
     db_servers = _get_servers_set(MiddlewareServer.servers_in_db())
     mgmt_servers = _get_servers_set(MiddlewareServer.servers_in_mgmt(provider=provider))
@@ -42,6 +42,7 @@ def test_list_provider_servers(provider):
         * Get servers list from Management system(Hawkular)
         * Compare content of all the list [UI, Database, Management system]
     """
+    provider.create(cancel=False, validate_credentials=False)
     ui_servers = _get_servers_set(MiddlewareServer.servers(provider=provider))
     db_servers = _get_servers_set(MiddlewareServer.servers_in_db(provider=provider))
     mgmt_servers = _get_servers_set(MiddlewareServer.servers_in_mgmt(provider=provider))
