@@ -326,10 +326,9 @@ def wait_for_ajax():
 
     def _events_not_finished():
         events = get_events()
-        not_finished = False
-        not_finished |= orig_events["maxTimeoutId"] >= events['minTimeoutId'] > 0
 
-        return not_finished
+        return orig_events["maxTimeoutId"] >= events['minTimeoutId'] \
+            if events['minTimeoutId'] > 0 else False
 
     def _nothing_in_flight():
         """Checks if there is no ajax in flight and also logs current status
