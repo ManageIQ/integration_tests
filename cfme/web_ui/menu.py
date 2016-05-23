@@ -7,6 +7,15 @@ from cfme.web_ui import accordion, toolbar
 from lya import AttrDict
 from selenium.common.exceptions import NoSuchElementException
 from utils import version
+from utils.log import logger
+
+
+def _not_implemented(menu_name, version_appeared):
+    def f():
+        curr_ver = str(version.current_version())
+        raise NotImplementedError(
+            '{} is available since {}, this is {}'.format(menu_name, version_appeared, curr_ver))
+    return f
 
 
 class Menu(UINavigate):
@@ -227,6 +236,13 @@ class Menu(UINavigate):
                     ('configuration', 'Configuration'),
                     ('smartproxies', 'SmartProxies'),
                     ('about', 'About')
+                ),
+                ('__bogus', lambda: logger.error('Trying to enter an unsupported feature!')): (
+                    ('middleware_providers', _not_implemented('Middleware providers', '5.6')),
+                    ('middleware_servers', _not_implemented('Middleware servers', '5.6')),
+                    ('middleware_deployments', _not_implemented('Middleware deployments', '5.6')),
+                    ('middleware_datasources', _not_implemented('Middleware datasources', '5.6')),
+                    ('middleware_topology', _not_implemented('Middleware topology', '5.6')),
                 )
             }
         else:
