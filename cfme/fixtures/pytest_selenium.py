@@ -283,7 +283,8 @@ def in_flight():
 
     Returns:
         Dictionary of js-related keys and booleans as its values, depending on status.
-        The keys are: ``jquery, prototype, miq, spinner and document``.
+        The keys are: ``jquery, prototype, miq, spinner, document, autofocus, miqQE, miqProcessing
+                        and angular ``.
         The values are: ``True`` if running, ``False`` otherwise.
     """
     try:
@@ -293,6 +294,22 @@ def in_flight():
     except Exception:
         sleep(0.5)
         return execute_script(js.in_flight)
+
+
+def get_events():
+    """Get ids of events scheduled using setTimeout
+
+    Returns:
+        Dictionary of js-related keys and integers as its values.
+        The keys are: ``minTimeoutId, maxTimeoutId``.
+    """
+    try:
+        return execute_script(js.get_events)
+    except UnexpectedAlertPresentException:
+        raise
+    except Exception:
+        sleep(0.5)
+        return execute_script(js.get_events)
 
 
 def wait_for_ajax():
@@ -305,6 +322,14 @@ def wait_for_ajax():
     """
 
     _thread_local.ajax_log_msg = ''
+    orig_events = get_events()
+
+    def _events_not_finished():
+        events = get_events()
+        not_finished = False
+        not_finished |= orig_events["maxTimeoutId"] >= events['minTimeoutId'] > 0
+
+        return not_finished
 
     def _nothing_in_flight():
         """Checks if there is no ajax in flight and also logs current status
@@ -319,6 +344,8 @@ def wait_for_ajax():
             if "jquery" not in str(e).lower():
                 raise
             return True
+        running["events"] = _events_not_finished()
+
         anything_in_flight = False
         anything_in_flight |= running["jquery"] > 0
         anything_in_flight |= running["prototype"] > 0
@@ -328,6 +355,7 @@ def wait_for_ajax():
         anything_in_flight |= running["miqQE"] > 0
         anything_in_flight |= running["miqProcessing"]
         anything_in_flight |= running["angular"]
+        anything_in_flight |= running["events"]
         log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
         # Log the message only if it's different from the last one
         if prev_log_msg != log_msg:

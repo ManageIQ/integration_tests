@@ -30,6 +30,27 @@ return {
 };
 """
 
+get_events = """
+function timeoutsMaxId() {
+    try {
+        var maxid = Object.keys(window.testing.timeouts)[Object.keys(window.testing.timeouts).length - 1];
+        return (maxid) ? maxid : 0;
+    } catch(err) { return 0; }
+}
+
+function timeoutsMinId() {
+    try {
+        var minid = Object.keys(window.testing.timeouts)[0];
+        return (min) ? minid : 0;
+    } catch(err) { return 0; }
+}
+
+return {
+    minTimeoutId: timeoutsMinId(),
+    maxTimeoutId: timeoutsMaxId()
+};
+"""
+
 update_retirement_date_function_script = """\
 function updateDate(newValue) {
     if(typeof $j == "undefined") {
