@@ -8,7 +8,8 @@ setup_redhat_based_system() {
       python-pip gcc postgresql-devel \
       libxml2-devel libxslt-devel \
       zeromq3-devel libcurl-devel \
-      redhat-rpm-config gcc-c++
+      redhat-rpm-config gcc-c++ \
+      openssl-devel libffi-devel
 
   echo "user install of the latest pip/virtualenv to avoid old distro packages"
   pip install -U -q --user pip virtualenv
