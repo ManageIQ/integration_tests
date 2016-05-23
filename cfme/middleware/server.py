@@ -79,8 +79,6 @@ class MiddlewareServer(MiddlewareBase, Taggable):
 
     @classmethod
     def headers(cls):
-        sel.force_navigate('middleware_servers')
-        list_tbl._update_cache()
         headers = [sel.text(hdr).encode("utf-8") for hdr in list_tbl.headers if hdr.text]
         return headers
 
