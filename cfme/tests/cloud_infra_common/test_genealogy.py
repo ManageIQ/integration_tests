@@ -62,7 +62,7 @@ def test_vm_genealogy_detected(
         the only possibility available is to do the check via edit form.
 
     Metadata:
-        test_flag: geneaology, provision
+        test_flag: genealogy, provision
     """
     vm_crud.create_on_provider(find_in_cfme=True, allow_skip="default")
 
