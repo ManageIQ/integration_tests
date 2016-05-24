@@ -325,6 +325,7 @@ def wait_for_ajax():
         anything_in_flight |= running["spinner"]
         anything_in_flight |= running["document"] != "complete"
         anything_in_flight |= running["autofocus"] > 0
+        anything_in_flight |= running["debounce"] > 0
         anything_in_flight |= running["miqQE"] > 0
         log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
         # Log the message only if it's different from the last one
@@ -926,15 +927,20 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     # check for MiqQE javascript patch in 5.6 and above
     if store.current_appliance.version >= "5.6":
+        def _patch_recycle_retry():
+            store.current_appliance.patch_with_miqqe()
+            browser().quit()
+            force_navigate(page_name, _tries, *args, **kwargs)
         try:
-            execute_script("checkAllMiqQE()")
+            # latest js diff version always has to be placed here to keep this check current
+            ver = execute_script("return MiqQE_version")
+            if ver < 1:
+                logger.info("Old patch present on appliance; patching appliance")
+                _patch_recycle_retry()
         except WebDriverException as ex:
-            if 'checkAllMiqQE is not defined' in ex.msg:
+            if 'is not defined' in str(ex):
                 logger.info("MiqQE javascript not defined; patching appliance")
-                # patch, recycle and retry
-                store.current_appliance.patch_with_miqqe()
-                browser().quit()
-                force_navigate(page_name, _tries, *args, **kwargs)
+                _patch_recycle_retry()
             else:
                 raise
 

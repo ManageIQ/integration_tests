@@ -226,8 +226,9 @@ class SSHClient(paramiko.SSHClient):
             True if changes were applied, False if patching was not necessary
 
         Note:
-            Running rake assets:precompile and restarting evm service (or UI workers)
-            might be necessary for changes to apply.
+            If there is a .bak file present and the file-to-be-patched was
+            not patched by the current patch-file, it will be used to restore it first.
+            Recompiling assets and restarting appropriate services might be required.
         """
         logger.info('Patching %s', remote_path)
 
@@ -235,14 +236,28 @@ class SSHClient(paramiko.SSHClient):
         diff_remote_path = os_path.join('/tmp/', os_path.basename(remote_path))
         self.put_file(local_path, diff_remote_path)
 
-        # If already patched, exit
+        # If already patched with current file, exit
         logger.info('Checking if already patched')
         rc, out = self.run_command(
             'patch {} {} -f --dry-run -R'.format(remote_path, diff_remote_path))
         if rc == 0:
             return False
 
-        # If not patched and there's MD5 checksum available, check it first
+        # If we have a .bak file available, it means the file is already patched
+        # by some older patch; in that case, replace the file-to-be-patched by the .bak first
+        logger.info("Checking if {}.bak is available".format(remote_path))
+        rc, out = self.run_command('test -e {}.bak'.format(remote_path))
+        if rc == 0:
+            logger.info(
+                "{}.bak found; using it to replace {}".format(remote_path, remote_path))
+            rc, out = self.run_command('mv {}.bak {}'.format(remote_path, remote_path))
+            if rc != 0:
+                raise Exception(
+                    "Unable to replace {} with {}.bak".format(remote_path, remote_path))
+        else:
+            logger.info("{}.bak not found".format(remote_path))
+
+        # If not patched and there's MD5 checksum available, check it
         if md5:
             logger.info("MD5 sum check in progress for %s", remote_path)
             rc, out = self.run_command('md5sum -c - <<< "{} {}"'.format(md5, remote_path))
@@ -251,10 +266,11 @@ class SSHClient(paramiko.SSHClient):
             else:
                 logger.warning('MD5 sum check result: file has been changed!')
 
-        # Patch the file
-        rc, out = self.run_command('patch {} {} -f'.format(remote_path, diff_remote_path))
+        # Create the backup and patch
+        rc, out = self.run_command(
+            'patch {} {} -f -b -z .bak'.format(remote_path, diff_remote_path))
         if rc != 0:
-            raise paramiko.SSHException("Unable to patch file {}: {}".format(remote_path, out))
+            raise Exception("Unable to patch file {}: {}".format(remote_path, out))
         return True
 
     def get_build_datetime(self):
