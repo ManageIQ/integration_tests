@@ -10,7 +10,7 @@ function xpath(root, xpath) {
 }
 """
 
-in_flight = """
+in_flight = jsmin("""\
 function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
 function angularGet() {
     try { return (ManageIQ.angular.scope.afterGet === false); } catch(err) { return false; };
@@ -29,29 +29,29 @@ return {
         ManageIQ.observe.processing || ManageIQ.observe.queue.length > 0,
     angular: angularGet()
 };
-"""
+""")
 
-get_events = """
+get_events = jsmin("""\
 function timeoutsMaxId() {
     try {
         var maxid = parseInt(Object.keys(window.testing.timeouts)[
             Object.keys(window.testing.timeouts).length - 1], 10);
-        return (maxid) ? maxid : 0;
     } catch(err) { return 0; }
+    return (maxid) ? maxid : 0;
 }
 
 function timeoutsMinId() {
     try {
         var minid = parseInt(Object.keys(window.testing.timeouts)[0], 10);
-        return (minid) ? minid : 0;
     } catch(err) { return 0; }
+    return (minid) ? minid : 0;
 }
 
 return {
     minTimeoutId: timeoutsMinId(),
     maxTimeoutId: timeoutsMaxId()
 };
-"""
+""")
 
 update_retirement_date_function_script = """\
 function updateDate(newValue) {
