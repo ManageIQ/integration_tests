@@ -78,7 +78,14 @@ class Menu(UINavigate):
             self.add_branch('toplevel', self._branches)
             while self._branch_stack:
                 name, branches = self._branch_stack.pop(0)
-                self.add_branch(name, branches)
+                try:
+                    self.add_branch(name, branches)
+                except LookupError:
+                    logger.error(
+                        'Menu tried to graft onto [{}] which is not available'.format(name))
+                except Exception:
+                    logger.error('Something bad went wrong in menu initialization, see traceback')
+                    raise
             if version.current_version() < "5.6.0.1":
                 self.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
             else:
