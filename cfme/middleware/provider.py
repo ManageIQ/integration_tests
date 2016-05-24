@@ -1,12 +1,15 @@
 from cfme.common.provider import BaseProvider
 from cfme.web_ui import (
-    Form, AngularSelect, form_buttons, Input, CheckboxTable
+    Region, Form, AngularSelect, form_buttons, Input, CheckboxTable
 )
 from cfme.web_ui.menu import nav
+from cfme.fixtures import pytest_selenium as sel
 from utils.varmeth import variable
 from . import cfg_btn, mon_btn, pol_btn, LIST_TABLE_LOCATOR, MiddlewareBase
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
+
+details_page = Region(infoblock_type='detail')
 
 nav.add_branch(
     'middleware_providers',
@@ -71,6 +74,8 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
 
     page_name = 'middleware'
     string_name = 'Middleware'
+    mv_servers = "Middleware Servers"
+    mv_deployments = "Middleware Deployments"
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
@@ -101,7 +106,7 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
 
     @num_deployment.variant('ui')
     def num_deployment_ui(self):
-        return int(self.get_detail("Relationships", "Middleware Deployments"))
+        return int(self.get_detail("Relationships", self.mv_deployments))
 
     @variable(alias='db')
     def num_server(self):
@@ -109,7 +114,7 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
 
     @num_server.variant('ui')
     def num_server_ui(self):
-        return int(self.get_detail("Relationships", "Middleware Servers"))
+        return int(self.get_detail("Relationships", self.mv_servers))
 
     @variable(alias='db')
     def num_datasource(self):
@@ -118,3 +123,31 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
     @num_datasource.variant('ui')
     def num_datasource_ui(self):
         return int(self.get_detail("Relationships", "Middleware Datasources"))
+
+    @variable(alias='ui')
+    def load_all_provider_servers(self):
+        """ Loads the list of servers that are running under the provider.
+
+        If it could click through the link in infoblock, returns ``True``. If it sees that the
+        number of instances is 0, it returns ``False``.
+        """
+        self.load_details()
+        if self.num_server_ui() == 0:
+            return False
+        else:
+            sel.click(details_page.infoblock.element("Relationships", self.mv_servers))
+            return True
+
+    @variable(alias='ui')
+    def load_all_provider_deployments(self):
+        """ Loads the list of deployments that are running under the provider.
+
+        If it could click through the link in infoblock, returns ``True``. If it sees that the
+        number of instances is 0, it returns ``False``.
+        """
+        self.load_details()
+        if self.num_deployment_ui() == 0:
+            return False
+        else:
+            sel.click(details_page.infoblock.element("Relationships", self.mv_deployments))
+            return True

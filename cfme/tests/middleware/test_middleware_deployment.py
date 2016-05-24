@@ -6,14 +6,14 @@ from utils import testgen
 from utils.version import current_version
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('has_no_middleware_providers'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
 
 
 def test_list_deployments(provider):
-    """Tests deployments count between UI, DB and Management system
+    """Tests deployments list between UI, DB and Management system
 
     Steps:
         * Get deployments list from UI
@@ -21,12 +21,39 @@ def test_list_deployments(provider):
         * Get deployments list from Management system(Hawkular)
         * Compare size of all the list [UI, Database, Management system]
     """
-    ui_deps = MiddlewareDeployment.deployments(provider=provider)
-    db_deps = MiddlewareDeployment.deployments_in_db()
-    mgmt_deps = MiddlewareDeployment.deployments_in_mgmt(provider)
-    assert len(ui_deps) == len(db_deps) == len(mgmt_deps), \
-        ("Size of deployments mismatch! UI:{}, DB:{}, MGMT:{}"
-         .format(len(ui_deps), len(db_deps), len(mgmt_deps)))
+    provider.create(cancel=False, validate_credentials=False)
+    ui_deps = _get_deployments_set(MiddlewareDeployment.deployments())
+    db_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_db())
+    mgmt_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_mgmt(provider=provider))
+    assert ui_deps == db_deps == mgmt_deps, \
+        ("Lists of deployments mismatch! UI:{}, DB:{}, MGMT:{}"
+         .format(ui_deps, db_deps, mgmt_deps))
+
+
+def test_list_provider_deployments(provider):
+    """Tests deployments list  from current Provider between UI, DB and Management system
+
+    Steps:
+        * Get deployments list from UI of provider
+        * Get deployments list from Database of provider
+        * Get deployments list from Management system(Hawkular)
+        * Compare size of all the list [UI, Database, Management system]
+    """
+    provider.create(cancel=False, validate_credentials=False)
+    ui_deps = _get_deployments_set(MiddlewareDeployment.deployments(provider=provider))
+    db_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_db(provider=provider))
+    mgmt_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_mgmt(provider=provider))
+    assert ui_deps == db_deps == mgmt_deps, \
+        ("Lists of deployments mismatch! UI:{}, DB:{}, MGMT:{}"
+         .format(ui_deps, db_deps, mgmt_deps))
+
+
+def _get_deployments_set(deployments):
+    """
+    Return the set of deployments which contains only necessary fields,
+    such as 'name' and 'server'
+    """
+    return set((deployment.name, deployment.server) for deployment in deployments)
 
 
 def test_deployment(provider):
@@ -37,7 +64,8 @@ def test_deployment(provider):
         * Select up to 3 deployments randomly
         * Compare selected deployment details with CFME database
     """
-    ui_deps = MiddlewareDeployment.deployments(provider=provider)
+    provider.create(cancel=False, validate_credentials=False)
+    ui_deps = MiddlewareDeployment.deployments()
     assert len(ui_deps) > 0, "There is no deployment(s) available in UI"
     # select random deployments
     if len(ui_deps) > 3:
