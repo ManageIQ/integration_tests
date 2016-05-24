@@ -18,7 +18,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import Q
-from django.db.models.signals import pre_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -618,6 +618,44 @@ class Appliance(MetadataMixin):
         help_text="How many MB is the appliance in swap.", null=True, blank=True)
     ssh_failed = models.BooleanField(default=False, help_text="If last swap check failed on SSH.")
 
+    def synchronize_metadata(self):
+        """If possible, uploads some metadata to the provider VM object to be able to recover."""
+        self._set_meta('id', self.id)
+        self._set_meta('source_template_id', self.template.id)
+        if self.appliance_pool is not None:
+            self._set_meta('pool_id', self.appliance_pool.id)
+            self._set_meta('pool_total_count', self.appliance_pool.total_count)
+            self._set_meta('pool_group', self.appliance_pool.group.id)
+            if self.appliance_pool.provider is not None:
+                self._set_meta('pool_provider', self.appliance_pool.provider.id)
+            self._set_meta('pool_version', self.appliance_pool.version)
+            self._set_meta(
+                'pool_appliance_date', apply_if_not_none(self.appliance_pool.date, "isoformat"))
+            self._set_meta('pool_owner_id', self.appliance_pool.owner.id)
+            self._set_meta('pool_owner_username', self.appliance_pool.owner.username)
+            self._set_meta('pool_preconfigured', self.appliance_pool.preconfigured)
+            self._set_meta('pool_description', self.appliance_pool.description)
+            self._set_meta('pool_not_needed_anymore', self.appliance_pool.not_needed_anymore)
+            self._set_meta('pool_finished', self.appliance_pool.finished)
+            self._set_meta('pool_yum_update', self.appliance_pool.yum_update)
+        self._set_meta('datetime_leased', apply_if_not_none(self.datetime_leased, "isoformat"))
+        self._set_meta('leased_until', apply_if_not_none(self.leased_until, "isoformat"))
+        self._set_meta('status_changed', apply_if_not_none(self.status_changed, "isoformat"))
+        self._set_meta('ready', self.ready)
+        self._set_meta('description', self.description)
+        self._set_meta('lun_disk_connected', self.lun_disk_connected)
+        self._set_meta('swap', self.swap)
+        self._set_meta('ssh_failed', self.ssh_failed)
+
+    def _set_meta(self, key, value):
+        if self.power_state == self.Power.ORPHANED:
+            return
+        try:
+            self.provider_api.set_meta_value(self.name, 'sprout_{}'.format(key), value)
+            self.logger.info('Set metadata {}: {}'.format(key, repr(value)))
+        except NotImplementedError:
+            pass
+
     @property
     def serialized(self):
         return dict(
@@ -839,6 +877,13 @@ class Appliance(MetadataMixin):
             return self.provider.vnc_console_link_for(self)
         except KeyError:  # provider does not exist any more
             return None
+
+
+def on_appliance_save(sender, instance, **kwargs):
+    from appliances.tasks import appliance_synchronize_metadata
+    appliance_synchronize_metadata.delay(instance.id)
+
+post_save.connect(on_appliance_save, sender=Appliance)
 
 
 class AppliancePool(MetadataMixin):

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 import fauxfactory
 import hashlib
+import iso8601
 import random
 import re
 import command
@@ -96,6 +97,9 @@ def logged_task(*args, **kwargs):
 
 def singleton_task(*args, **kwargs):
     kwargs["bind"] = True
+    wait = kwargs.pop('wait', False)
+    wait_countdown = kwargs.pop('wait_countdown', 10)
+    wait_retries = kwargs.pop('wait_retries', 30)
 
     def f(task):
         @wraps(task)
@@ -117,6 +121,9 @@ def singleton_task(*args, **kwargs):
                 finally:
                     cache.delete(lock_id)
                     self.logger.info("Leaving")
+            elif wait:
+                self.logger.info("Waiting for another instance of the task to end.")
+                self.retry(args=args, countdown=wait_countdown, max_retries=wait_retries)
             else:
                 self.logger.info("Already running, ignoring.")
 
@@ -1602,3 +1609,129 @@ The Sprout™
             "sprout-appliance-swap@example.com",
             [user.email],
         )
+
+
+@singleton_task(wait=True)
+def appliance_synchronize_metadata(self, appliance_id):
+    try:
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist:
+        return
+    appliance.synchronize_metadata()
+
+
+@singleton_task()
+def synchronize_untracked_vms(self):
+    for provider in Provider.objects.filter(working=True, disabled=False):
+        synchronize_untracked_vms_in_provider.delay(provider.id)
+
+
+def parsedate(d):
+    if d is None:
+        return d
+    else:
+        return iso8601.parse_date(d)
+
+
+@singleton_task()
+def synchronize_untracked_vms_in_provider(self, provider_id):
+    """'re'-synchronizes any vms that might be lost during outages."""
+    provider = Provider.objects.get(id=provider_id)
+    provider_api = provider.api
+    for vm_name in sorted(map(str, provider_api.list_vm())):
+        if Appliance.objects.filter(name=vm_name, template__provider=provider).count() != 0:
+            continue
+        # We have an untracked VM. Let's investigate
+        try:
+            appliance_id = provider_api.get_meta_value(vm_name, 'sprout_id')
+        except KeyError:
+            continue
+        except NotImplementedError:
+            # Do not bother if not implemented in the API
+            return
+
+        # just check it again ...
+        if Appliance.objects.filter(id=appliance_id).count() == 1:
+            # For some reason it is already in
+            continue
+
+        # Now it appears that this is a VM that was in Sprout
+        construct = {'id': appliance_id}
+        # Retrieve appliance data
+        try:
+            self.logger.info('Trying to reconstruct appliance %d/%s', appliance_id, vm_name)
+            construct['name'] = vm_name
+            template_id = provider_api.get_meta_value(vm_name, 'sprout_source_template_id')
+            # Templates are not deleted from the DB so this should be OK.
+            construct['template'] = Template.objects.get(id=template_id)
+            construct['name'] = vm_name
+            construct['ready'] = provider_api.get_meta_value(vm_name, 'sprout_ready')
+            construct['description'] = provider_api.get_meta_value(vm_name, 'sprout_description')
+            construct['lun_disk_connected'] = provider_api.get_meta_value(
+                vm_name, 'sprout_lun_disk_connected')
+            construct['swap'] = provider_api.get_meta_value(vm_name, 'sprout_swap')
+            construct['ssh_failed'] = provider_api.get_meta_value(vm_name, 'sprout_ssh_failed')
+            # Time fields
+            construct['datetime_leased'] = parsedate(
+                provider_api.get_meta_value(vm_name, 'sprout_datetime_leased'))
+            construct['leased_until'] = parsedate(
+                provider_api.get_meta_value(vm_name, 'sprout_leased_until'))
+            construct['status_changed'] = parsedate(
+                provider_api.get_meta_value(vm_name, 'sprout_status_changed'))
+        except KeyError as e:
+            self.logger.error('Failed to reconstruct %d/%s', appliance_id, vm_name)
+            self.logger.exception(e)
+            continue
+        # Retrieve pool data if applicable
+        try:
+            pool_id = provider_api.get_meta_value(vm_name, 'sprout_pool_id')
+            pool_construct = {'id': pool_id}
+            pool_construct['total_count'] = provider_api.get_meta_value(
+                vm_name, 'sprout_pool_total_count')
+            group_id = provider_api.get_meta_value(
+                vm_name, 'sprout_pool_group')
+            pool_construct['group'] = Group.objects.get(id=group_id)
+            try:
+                pool_construct['provider'] = provider_api.get_meta_value(
+                    vm_name, 'sprout_pool_provider')
+            except KeyError:
+                # optional
+                pool_construct['provider'] = None
+            pool_construct['version'] = provider_api.get_meta_value(
+                vm_name, 'sprout_pool_version')
+            pool_construct['date'] = parsedate(provider_api.get_meta_value(
+                vm_name, 'sprout_pool_appliance_date'))
+            owner_id = provider_api.get_meta_value(
+                vm_name, 'sprout_pool_owner_id')
+            try:
+                owner = User.objects.get(id=owner_id)
+            except ObjectDoesNotExist:
+                owner_username = provider_api.get_meta_value(
+                    vm_name, 'sprout_pool_owner_username')
+                owner = User(id=owner_id, username=owner_username)
+                owner.save()
+            pool_construct['owner'] = owner
+            pool_construct['preconfigured'] = provider_api.get_meta_value(
+                vm_name, 'sprout_pool_preconfigured')
+            pool_construct['description'] = provider_api.get_meta_value(
+                vm_name, 'sprout_pool_description')
+            pool_construct['not_needed_anymore'] = provider_api.get_meta_value(
+                vm_name, 'sprout_pool_not_needed_anymore')
+            pool_construct['finished'] = provider_api.get_meta_value(
+                vm_name, 'sprout_pool_finished')
+            pool_construct['yum_update'] = provider_api.get_meta_value(
+                vm_name, 'sprout_pool_yum_update')
+            try:
+                construct['appliance_pool'] = AppliancePool.objects.get(id=pool_id)
+            except ObjectDoesNotExist:
+                pool = AppliancePool(**pool_construct)
+                pool.save()
+                construct['appliance_pool'] = pool
+        except KeyError as e:
+            pass
+
+        appliance = Appliance(**construct)
+        appliance.save()
+
+        # And now, refresh!
+        refresh_appliances_provider.delay(provider.id)
