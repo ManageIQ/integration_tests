@@ -1506,7 +1506,8 @@ Sprout.
 @singleton_task()
 def check_swap_in_appliances(self):
     chord_tasks = []
-    for appliance in Appliance.objects.filter(ready=True, power_state=Appliance.Power.ON).exclude(
+    for appliance in Appliance.objects.filter(
+            ready=True, power_state=Appliance.Power.ON, marked_for_deletion=False).exclude(
             power_state=Appliance.Power.ORPHANED):
         chord_tasks.append(check_swap_in_appliance.si(appliance.id))
     chord(chord_tasks)(notify_owners.s())
