@@ -234,6 +234,11 @@ CELERYBEAT_SCHEDULE = {
     'synchronize-untracked-vms': {
         'task': 'appliances.tasks.synchronize_untracked_vms',
         'schedule': timedelta(hours=1),
+    },
+
+    'synchronize-appliances-metadata': {
+        'task': 'appliances.tasks.appliances_synchronize_metadata',
+        'schedule': timedelta(minutes=45),
     }
 }
 

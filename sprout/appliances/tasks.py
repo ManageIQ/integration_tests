@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+import diaper
 import fauxfactory
 import hashlib
 import iso8601
@@ -821,6 +822,8 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
     else:
         appliance.set_status("Template was successfully cloned.")
+        with diaper:
+            appliance.synchronize_metadata()
 
 
 @singleton_task()
@@ -1224,6 +1227,8 @@ def wait_appliance_ready(self, appliance_id):
                 appliance.ready = True
                 appliance.save()
             appliance.set_status("The appliance is ready.")
+            with diaper:
+                appliance.synchronize_metadata()
         else:
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
@@ -1611,7 +1616,13 @@ The Sprout™
         )
 
 
-@singleton_task(wait=True)
+@singleton_task()
+def appliances_synchronize_metadata(self):
+    for appliance in Appliance.objects.all():
+        appliance_synchronize_metadata.delay(appliance.id)
+
+
+@singleton_task()
 def appliance_synchronize_metadata(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)

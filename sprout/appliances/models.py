@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import base64
+import diaper
 import re
 import yaml
 
@@ -18,7 +19,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import Q
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -877,13 +878,6 @@ class Appliance(MetadataMixin):
             return self.provider.vnc_console_link_for(self)
         except KeyError:  # provider does not exist any more
             return None
-
-
-def on_appliance_save(sender, instance, **kwargs):
-    from appliances.tasks import appliance_synchronize_metadata
-    appliance_synchronize_metadata.delay(instance.id)
-
-post_save.connect(on_appliance_save, sender=Appliance)
 
 
 class AppliancePool(MetadataMixin):
