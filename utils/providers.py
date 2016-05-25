@@ -41,25 +41,25 @@ infra_provider_type_map = {
     'rhevm': RHEVMSystem,
     'scvmm': SCVMMSystem,
     'openstack-infra': OpenstackInfraSystem,
-}
+    }
 
 #: mapping of cloud provider type names to ``mgmtsystem`` classes
 cloud_provider_type_map = {
     'ec2': EC2System,
     'openstack': OpenstackSystem,
     'gce': GoogleCloudSystem,
-}
+    }
 
 #: mapping of container provider type names to ``mgmtsystem`` classes
 container_provider_type_map = {
     'kubernetes': Kubernetes,
     'openshift': Openshift
-}
+    }
 
 #: mapping of middleware provider type names to ``mgmtsystem`` classes
 middleware_provider_type_map = {
     'hawkular': Hawkular,
-}
+    }
 
 
 #: mapping of all provider type names to ``mgmtsystem`` classes
@@ -390,23 +390,23 @@ def _setup_providers(prov_class, validate, check_existing):
             'navigate': 'clouds_providers',
             'quad': 'cloud_prov',
             'list': list_cloud_providers
-        },
+            },
         'infra': {
             'navigate': 'infrastructure_providers',
             'quad': 'infra_prov',
             'list': list_infra_providers
-        },
+            },
         'container': {
             'navigate': 'containers_providers',
             'quad': None,
             'list': list_container_providers
-        },
+            },
         'middleware': {
             'navigate': 'middleware_providers',
             'quad': None,
             'list': list_middleware_providers
-        },
-    }
+            },
+        }
     # Check for existing providers all at once, to prevent reloading
     # the providers page for every provider in cfme_data
     if not options_map[prov_class]['list']():
