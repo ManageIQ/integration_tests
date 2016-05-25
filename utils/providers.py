@@ -146,7 +146,12 @@ def get_mgmt(provider_key, providers=None, credentials=None):
         provider = providers[provider_key]
 
     if credentials is None:
-        credentials = conf.credentials[provider['credentials']]
+        # We need to handle the in-place credentials
+        credentials = provider['credentials']
+        # If it is not a mapping, it most likely points to a credentials yaml (as by default)
+        if not isinstance(credentials, Mapping):
+            credentials = conf.credentials[credentials]
+        # Otherwise it is a mapping and therefore we consider it credentials
 
     # Munge together provider dict and creds,
     # Let the provider do whatever they need with them
