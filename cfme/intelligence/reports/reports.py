@@ -342,9 +342,12 @@ class CustomSavedReport(Updateable, Pretty):
     def data(self):
         """Retrieves data from the saved report.
 
-        Returns: :py:class:`SavedReportData`
+        Returns: :py:class:`SavedReportData` if it is not a candu report. If it is, then it returns
+            a list of groups in the table.
         """
         self.navigate()
+        if isinstance(self._table, CAndUGroupTable):
+            return list(self._table.groups())
         try:
             headers = tuple([sel.text(hdr).encode("utf-8") for hdr in self._table.headers])
             body = []
