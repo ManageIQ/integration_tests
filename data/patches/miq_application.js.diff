@@ -1,6 +1,6 @@
---- miq_application.js	2016-05-09 15:44:20.785132210 -0400
-+++ miq_application.js.new	2016-05-10 02:12:20.945132210 -0400
-@@ -1,5 +1,37 @@
+--- miq_application.js	2016-05-23 15:46:51.571062620 +0200
++++ miq_application.js.new	2016-05-23 15:48:51.438832567 +0200
+@@ -1,5 +1,92 @@
  // MIQ specific JS functions
 
 +// MiqQE section
@@ -33,6 +33,61 @@
 +  return v_incomplete;
 +}
 +// --------------
++
++
++// setTimeout and clearTimeout monitoring
++// ---------------
++
++// Set up container to hold timeout and interval state
++window.testing = {
++  timeouts: {}
++};
++
++// Make a copy of the original setTimeout function
++window._setTimeout = window.setTimeout;
++window.setTimeout = function(callback, timeout) {
++  // We need a handle to store our timeout under, we can't just use the
++  // timeout ID because we don't know it until after we create the timeout
++  var handle = _.uniqueId();
++
++  // Call the old setTimeout function
++  var timeoutId = window._setTimeout(
++    function() {
++      // The callback is the function we were originally deferring
++      callback();
++
++      // Once a timeout completes, we need to remove our reference to it
++      delete window.testing.timeouts[handle];
++    },
++    timeout
++  );
++
++  // Store the id of the timeout we just created so it can be queried
++  window.testing.timeouts[handle] = timeoutId;
++  return timeoutId;
++};
++
++// Make a copy of the original clearTimeout function
++window._clearTimeout = window.clearTimeout;
++window.clearTimeout = function(timeoutId) {
++  // Call the original clearTimeout function to actually clear the timeout
++  var returnValue = window._clearTimeout(timeoutId);
++
++  var timeoutToClear;
++  // Look over all the timeouts we have stored and find the one with
++  // the timeoutID we just passed in
++  _.each(window.testing.timeouts, function(storedTimeoutID, handle) {
++    if(storedTimeoutID === timeoutId) {
++      timeoutToClear = handle;
++    }
++  });
++
++  // Delete our stored reference to the timeout
++  delete window.testing.timeouts[timeoutToClear];
++
++  return returnValue;
++};
++// ---------------
 +
 +
  // Things to be done on page loads
