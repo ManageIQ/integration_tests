@@ -51,6 +51,7 @@ def verify_retirement(vm):
     assert datetime.datetime.strptime(get_date(), "%m/%d/%y").date() == today
 
 
+@pytest.mark.meta(blockers=[1339248])
 def test_retirement_now(vm):
     """Tests retirement
 
