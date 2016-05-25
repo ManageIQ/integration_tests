@@ -65,7 +65,7 @@ from multimethods import multimethod, multidispatch, Anything
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions, js
 from cfme.fixtures.pytest_selenium import browser
-from utils import castmap, version
+from utils import attributize_string, castmap, version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
@@ -663,6 +663,94 @@ class Table(Pretty):
         def locate(self):
             # table.create_row_from_element(row_instance) might actually work...
             return sel.move_to_element(self.row_element)
+
+
+class CAndUGroupTable(Table):
+    """Type of tables used in C&U, not tested in others.
+
+    Provides ``.groups()`` generator which yields group objects. A group objects consists of the
+    rows that are located in the group plus the summary informations. THe main principle is that
+    all the rows inside group are stored in group object's ``.rows`` and when the script encounters
+    the end of the group, it will store the summary data after the data rows as attributes, so eg.
+    ``Totals:`` will become ``group.totals``. All the rows are represented as dictionaries.
+    """
+    class States:
+        NORMAL_ROWS = 0
+        GROUP_SUMMARY = 1
+
+    class Group(object):
+        def __init__(self, group_id, headers, rows, info_rows):
+            self.id = group_id
+            self.rows = [dict(zip(headers, row)) for row in rows]
+            info_headers = headers[1:]
+            for info_row in info_rows:
+                name = info_row[0]
+                rest = info_row[1:]
+                data = dict(zip(info_headers, rest))
+                group_attr = attributize_string(name)
+                setattr(self, group_attr, data)
+
+        def __repr__(self):
+            return '<CAndUGroupTable.Group {}'.format(repr(self.id))
+
+    def paginated_rows(self):
+        from cfme.web_ui import paginator
+        for page in paginator.pages():
+            for row in self.rows():
+                yield row
+
+    def find_group(self, group_id):
+        """Finds a group by its group ID (the string that is alone on the line)"""
+        for group in self.groups():
+            if group.id == group_id:
+                return group_id
+        else:
+            raise KeyError('Group {} not found'.format(group_id))
+
+    def groups(self):
+        headers = map(sel.text, self.headers)
+        headers_length = len(headers)
+        rows = self.paginated_rows()
+        current_group_rows = []
+        current_group_summary_rows = []
+        current_group_id = None
+        state = self.States.NORMAL_ROWS
+        while True:
+            try:
+                row = rows.next()
+            except StopIteration:
+                if state == self.States.GROUP_SUMMARY:
+                    row = None
+                else:
+                    break
+            if state == self.States.NORMAL_ROWS:
+                if len(row.columns) == headers_length:
+                    current_group_rows.append(tuple(map(sel.text, row.columns)))
+                else:
+                    # Transition to the group summary
+                    current_group_id = sel.text(row.columns[0]).strip()
+                    state = self.States.GROUP_SUMMARY
+            elif state == self.States.GROUP_SUMMARY:
+                # row is None == we are at the end of the table so a slightly different behaviour
+                if row is not None:
+                    fc_length = len(sel.text(row.columns[0]).strip())
+                if row is None or fc_length == 0:
+                    # Done with group
+                    yield self.Group(
+                        current_group_id, headers, current_group_rows, current_group_summary_rows)
+                    current_group_rows = []
+                    current_group_summary_rows = []
+                    current_group_id = None
+                    state = self.States.NORMAL_ROWS
+                else:
+                    current_group_summary_rows.append(tuple(map(sel.text, row.columns)))
+            else:
+                raise RuntimeError('This should never happen')
+
+        if current_group_id is not None or current_group_rows or current_group_summary_rows:
+            raise ValueError(
+                'GroupTable could not be parsed properly: {} {} {}'.format(
+                    current_group_id, repr(current_group_rows), repr(current_group_summary_rows)))
 
 
 class SplitTable(Table):
