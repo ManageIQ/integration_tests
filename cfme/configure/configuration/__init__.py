@@ -167,6 +167,7 @@ def server_id():
 
 def add_tag(cat_name):
     fill(tag_form, {'category': cat_name})
+    wait_for(sel.is_displayed, ['//div/h3[contains(., "{}")]'.format(cat_name)])
     sel.click(tag_form.new)
 
 
