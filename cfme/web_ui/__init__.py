@@ -52,6 +52,7 @@
 
 import os
 import re
+import time
 import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
@@ -1353,10 +1354,11 @@ def _fill_form_list(form, values, action=None, action_always=False):
 
     """
     logger.info('Beginning to fill in form...')
-    sel.wait_for_ajax()
     values = list(val for key in form.fields for val in values if val[0] == key[0])
     res = []
     for field, value in values:
+        time.sleep(2)
+        sel.wait_for_ajax()
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
             logger.trace(' Dispatching fill for %s', field)
@@ -1367,6 +1369,9 @@ def _fill_form_list(form, values, action=None, action_always=False):
             res.append(fill_prev != value)
         else:
             res.append(False)
+
+    time.sleep(2)
+    sel.wait_for_ajax()
 
     if action and (any(res) or action_always):  # only perform action if something changed
         logger.debug(' Invoking end of form action')
