@@ -15,7 +15,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb
+    AngularSelect, toolbar as tb, Radio
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
@@ -49,12 +49,11 @@ properties_form = Form(
     fields=[
         ('type_select', {
             version.LOWEST: Select('select#server_emstype'),
-            '5.5': AngularSelect("server_emstype"),
-            '5.6': AngularSelect("emstype")}),
+            '5.5': AngularSelect("server_emstype")
+        }),
         ('name_text', Input("name")),
         ('hostname_text', {
             version.LOWEST: Input("hostname"),
-            '5.6': Input("default_hostname"),
         }),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('api_port', Input("port")),
@@ -64,14 +63,11 @@ properties_form = Form(
     ])
 
 
-tabbed_properties_form = TabStripForm(
+properties_form_56 = TabStripForm(
     fields=[
-        ('type_select', {
-            version.LOWEST: Select('select#server_emstype'),
-            '5.5': AngularSelect("server_emstype"),
-            '5.6': AngularSelect("emstype")}),
+        ('type_select', AngularSelect("emstype")),
         ('name_text', Input("name")),
-        ('api_version', AngularSelect("api_version")),
+        ("api_version", AngularSelect("api_version")),
     ],
     tab_fields={
         "Default": [
@@ -79,7 +75,8 @@ tabbed_properties_form = TabStripForm(
             ('api_port', Input("default_api_port")),
             ('sec_protocol', AngularSelect("default_security_protocol")),
         ],
-        "AMQP": [
+        "Events": [
+            ('event_selection', Radio('event_stream_selection')),
             ('amqp_hostname_text', Input("amqp_hostname")),
             ('amqp_api_port', Input("amqp_api_port")),
             ('amqp_sec_protocol', AngularSelect("amqp_security_protocol")),
@@ -95,7 +92,7 @@ prop_region = Region(
     locators={
         'properties_form': {
             version.LOWEST: properties_form,
-            '5.6': tabbed_properties_form,
+            '5.6': properties_form_56,
         }
     }
 )
@@ -147,12 +144,15 @@ class Provider(Pretty, CloudInfraProvider):
     instances_page_name = "infra_vm_and_templates"
     templates_page_name = "infra_vm_and_templates"
     quad_name = "infra_prov"
-    _properties_form = properties_form
+    _properties_region = prop_region  # This will get resolved in common to a real form
     add_provider_button = deferred_verpick({
         version.LOWEST: form_buttons.FormButton("Add this Infrastructure Provider"),
         '5.6': form_buttons.add
     })
-    save_button = form_buttons.FormButton("Save Changes")
+    save_button = deferred_verpick({
+        version.LOWEST: form_buttons.save,
+        '5.6': form_buttons.angular_save
+    })
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None):
@@ -210,11 +210,18 @@ class Provider(Pretty, CloudInfraProvider):
 
     @num_host.variant('ui')
     def num_host_ui(self):
+        if version.current_version() < "5.6":
+            host_src = "host.png"
+            node_src = "node.png"
+        else:
+            host_src = "host-"
+            node_src = "node-"
+
         try:
-            num = int(self.get_detail("Relationships", "Hosts", use_icon=True))
-        except:
+            num = int(self.get_detail("Relationships", host_src, use_icon=True))
+        except sel.NoSuchElementException:
             logger.error("Couldn't find number of hosts using key [Hosts] trying Nodes")
-            num = int(self.get_detail("Relationships", "Nodes", use_icon=True))
+            num = int(self.get_detail("Relationships", node_src, use_icon=True))
         return num
 
     @variable(alias='rest')
@@ -239,7 +246,10 @@ class Provider(Pretty, CloudInfraProvider):
 
     @num_cluster.variant('ui')
     def num_cluster_ui(self):
-        return int(self.get_detail("Relationships", "Clusters", use_icon=True))
+        if version.current_version() < "5.6":
+            return int(self.get_detail("Relationships", "cluster.png", use_icon=True))
+        else:
+            return int(self.get_detail("Relationships", "cluster-", use_icon=True))
 
     def discover(self):
         """
@@ -306,11 +316,22 @@ class OpenstackInfraProvider(Provider):
         self.sec_protocol = sec_protocol
 
     def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'OpenStack Platform Director',
-                'hostname_text': kwargs.get('hostname'),
-                'ipaddress_text': kwargs.get('ip_address'),
-                'sec_protocol': kwargs.get('sec_protocol')}
+        data_dict = {
+            'name_text': kwargs.get('name'),
+            'type_select': create and 'OpenStack Platform Director',
+            'hostname_text': kwargs.get('hostname'),
+            'api_port': kwargs.get('api_port'),
+            'ipaddress_text': kwargs.get('ip_address'),
+            'sec_protocol': kwargs.get('sec_protocol'),
+            'amqp_sec_protocol': kwargs.get('amqp_sec_protocol')}
+        if 'amqp' in self.credentials:
+            data_dict.update({
+                'event_selection': 'amqp',
+                'amqp_hostname_text': kwargs.get('hostname'),
+                'amqp_api_port': kwargs.get('amqp_api_port', '5672'),
+                'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
+            })
+        return data_dict
 
 
 class SCVMMProvider(Provider):

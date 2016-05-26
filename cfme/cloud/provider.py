@@ -44,7 +44,7 @@ properties_form_55 = Form(
         ('name_text', Input("name")),
         ('hostname_text', Input("hostname")),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
-        ('amazon_region_select', {version.LOWEST: Select("select#provider_region"),
+        ('region_select', {version.LOWEST: Select("select#provider_region"),
             "5.5": AngularSelect("provider_region")}),
         ('api_port', Input(
             {
@@ -62,11 +62,12 @@ properties_form_55 = Form(
 
 properties_form_56 = TabStripForm(
     fields=[
-        ('type_select', AngularSelect("emstype")),
+        ('type_select', AngularSelect("ems_type")),
         ('name_text', Input("name")),
-        ('region_select', AngularSelect("provider_region")),
-        ("api_version", AngularSelect("api_version")),
-        ('infra_provider', AngularSelect("provider_id")),
+        ('region_select', AngularSelect("ems_region")),
+        ('google_region_select', AngularSelect("ems_preferred_region")),
+        ("api_version", AngularSelect("ems_api_version")),
+        ('infra_provider', AngularSelect("ems_infra_provider_id")),
         ('google_project_text', Input("project")),
     ],
     tab_fields={
@@ -142,10 +143,10 @@ class Provider(Pretty, CloudInfraProvider):
     # Specific Add button
     add_provider_button = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton("Add this Cloud Provider"),
-         '5.5': form_buttons.FormButton("Add")})
+         '5.5': form_buttons.add})
     save_button = deferred_verpick(
-        {version.LOWEST: form_buttons.FormButton("Save Changes"),
-         '5.5': form_buttons.FormButton("Save changes")})
+        {version.LOWEST: form_buttons.save,
+         '5.5': form_buttons.angular_save})
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
         if not credentials:
@@ -180,13 +181,14 @@ class GCEProvider(Provider):
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Google Compute Engine',
-                'region_select': sel.ByValue(kwargs.get('region')),
+                'google_region_select': sel.ByValue(kwargs.get('region')),
                 'google_project_text': kwargs.get('project')}
 
 
 class OpenStackProvider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, sec_protocol=None, infra_provider=None):
+                 ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,
+                 infra_provider=None):
         super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
                                                 zone=zone, key=key)
         self.hostname = hostname
@@ -194,6 +196,7 @@ class OpenStackProvider(Provider):
         self.api_port = api_port
         self.infra_provider = infra_provider
         self.sec_protocol = sec_protocol
+        self.amqp_sec_protocol = amqp_sec_protocol
 
     def create(self, *args, **kwargs):
         # Override the standard behaviour to actually create the underlying infra first.
@@ -223,7 +226,7 @@ class OpenStackProvider(Provider):
                 'event_selection': 'amqp',
                 'amqp_hostname_text': kwargs.get('hostname'),
                 'amqp_api_port': kwargs.get('amqp_api_port', '5672'),
-                'amqp_sec_protocol': kwargs.get('sec_protocol')
+                'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
             })
         return data_dict
 

@@ -24,5 +24,10 @@ class Credential(Pretty):
                 return object.__getattribute__(self, 'secret')
             else:
                 return vs
+        elif attr == "verify_token":
+            try:
+                vs = object.__getattribute__(self, 'verify_token')
+            except AttributeError:
+                return object.__getattribute__(self, 'token')
         else:
             return object.__getattribute__(self, attr)

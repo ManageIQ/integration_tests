@@ -260,6 +260,12 @@ class Menu(UINavigate):
                     ('timelines', 'Timelines'),
                     ('rss', 'RSS')
                 ),
+                ('services', 'Services'): (
+                    ('my_services', 'My Services'),
+                    ('services_catalogs', 'Catalogs'),
+                    ('services_workloads', 'Workloads'),
+                    ('services_requests', 'Requests')
+                ),
                 ('compute', 'Compute'): {
                     ('clouds', 'Clouds'): (
                         ('clouds_providers', 'Providers', lambda: toolbar.select('Grid View')),
@@ -271,12 +277,6 @@ class Menu(UINavigate):
                             self._tree_func_with_grid(
                                 "Instances by Provider", "Instances by Provider")),
                         ('clouds_stacks', 'Stacks')
-                    ),
-                    ('services', 'Services'): (
-                        ('my_services', 'My Services'),
-                        ('services_catalogs', 'Catalogs'),
-                        ('services_workloads', 'Workloads'),
-                        ('services_requests', 'Requests')
                     ),
                     ('infrastructure', 'Infrastructure'): (
                         ('infrastructure_providers',
