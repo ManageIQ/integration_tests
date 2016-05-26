@@ -3,7 +3,6 @@ from cfme.web_ui import (
     Region, Form, AngularSelect, form_buttons, Input, CheckboxTable
 )
 from cfme.web_ui.menu import nav
-from cfme.fixtures import pytest_selenium as sel
 from utils.varmeth import variable
 from . import cfg_btn, mon_btn, pol_btn, LIST_TABLE_LOCATOR, MiddlewareBase
 
@@ -103,60 +102,27 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
         return self._num_db_generic('middleware_deployments')
 
     @num_deployment.variant('ui')
-    def num_deployment_ui(self):
-        return int(self.summary.relationships.middleware_deployments.value)
+    def num_deployment_ui(self, reload_data=True):
+        if reload_data:
+            self.summary.reload()
+        return self.summary.relationships.middleware_deployments.value
 
     @variable(alias='db')
     def num_server(self):
         return self._num_db_generic('middleware_servers')
 
     @num_server.variant('ui')
-    def num_server_ui(self):
-        return int(self.summary.relationships.middleware_servers.value)
+    def num_server_ui(self, reload_data=True):
+        if reload_data:
+            self.summary.reload()
+        return self.summary.relationships.middleware_servers.value
 
     @variable(alias='db')
     def num_datasource(self):
         return self._num_db_generic('middleware_datasources')
 
     @num_datasource.variant('ui')
-    def num_datasource_ui(self):
-        return int(self.get_detail("Relationships", "Middleware Datasources"))
-
-    def load_all_provider_servers(self):
-        """ Loads the list of servers that are running under the provider.
-
-        If it could click through the link in infoblock, returns ``True``. If it sees that the
-        number of instances is 0, it returns ``False``.
-        """
-        self.load_details()
-        if getattr(self, 'num_server')(method='ui') == 0:
-            return False
-        else:
-            sel.click(self.summary.relationships.middleware_servers)
-            return True
-
-    def load_all_provider_deployments(self):
-        """ Loads the list of deployments that are running under the provider.
-
-        If it could click through the link in infoblock, returns ``True``. If it sees that the
-        number of instances is 0, it returns ``False``.
-        """
-        self.load_details()
-        if getattr(self, 'num_deployment')(method='ui') == 0:
-            return False
-        else:
-            sel.click(self.summary.relationships.middleware_deployments)
-            return True
-
-    def load_all_provider_datasources(self):
-        """ Loads the list of datasources that are running under the provider.
-
-        If it could click through the link in infoblock, returns ``True``. If it sees that the
-        number of instances is 0, it returns ``False``.
-        """
-        self.load_details()
-        if getattr(self, 'num_datasource')(method='ui') == 0:
-            return False
-        else:
-            sel.click(self.summary.relationships.middleware_datasources)
-            return True
+    def num_datasource_ui(self, reload_data=True):
+        if reload_data:
+            self.summary.reload()
+        return self.summary.relationships.middleware_datasources.value

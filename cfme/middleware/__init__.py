@@ -1,4 +1,5 @@
 from functools import partial
+from random import sample
 
 from cfme.common import Validatable
 from cfme.fixtures import pytest_selenium as sel
@@ -23,3 +24,12 @@ class MiddlewareBase(Validatable):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
         ensure_browser_open()
         return sel.is_displayed('//h1[contains(., "{} (Summary)")]'.format(self.name))
+
+
+def get_random_list(items, limit):
+    """In tests, when we have big list iterating through each element will take lot of time.
+    To avoid this, select random list with limited numbers"""
+    if len(items) > limit:
+        return sample(items, limit)
+    else:
+        return items

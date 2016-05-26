@@ -4,29 +4,40 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
 from utils.db import cfmedb
+from utils.providers import get_crud, get_provider_key, list_middleware_providers
 from . import LIST_TABLE_LOCATOR, mon_btn, pwr_btn, MiddlewareBase
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
-def _db_select_query(name=None, server=None, provider=None):
+def _db_select_query(name=None, feed=None, provider=None):
+    """column order: `name`, `hostname`, `feed`, `product`, `provider_name`"""
     t_ms = cfmedb()['middleware_servers']
     t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(t_ms.name, t_ms.feed,
-                                   t_ms.product, t_ems.name).join(t_ems, t_ms.ems_id == t_ems.id)
+    query = cfmedb().session.query(t_ms.name, t_ms.hostname, t_ms.feed, t_ms.product,
+                                   t_ems.name.label('provider_name'))\
+        .join(t_ems, t_ms.ems_id == t_ems.id)
     if name:
         query = query.filter(t_ms.name == name)
-    if server:
-        query = query.filter(t_ms.nativeid.like('%{}%'.format(server)))
+    if feed:
+        query = query.filter(t_ms.feed == feed)
     if provider:
-        query = query.filter(t_ems.name == provider)
+        query = query.filter(t_ems.name == provider.name)
     return query
+
+
+def _get_servers_page(provider):
+    if provider:  # if provider instance is provided navigate through provider's servers page
+        provider.summary.reload()
+        if provider.summary.relationships.middleware_servers.value == 0:
+            return
+        provider.summary.relationships.middleware_servers.click()
+    else:  # if None(provider) given navigate through all middleware servers page
+        sel.force_navigate('middleware_servers')
 
 nav.add_branch(
     'middleware_servers', {
         'middleware_server': lambda ctx: list_tbl.select_row('Server Name', ctx['name']),
-        'middleware_server_detail':
-            lambda ctx: list_tbl.click_row_by_cells({'Server Name': ctx['name']}),
     }
 )
 
@@ -38,9 +49,10 @@ class MiddlewareServer(MiddlewareBase, Taggable):
 
     Args:
         name: name of the server
+        hostname: Host name of the server
         provider: Provider object (HawkularProvider)
         product: Product type of the server
-        id: Native id(internal id) of the server
+        feed: feed of the server
 
     Usage:
 
@@ -58,26 +70,24 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         self.name = name
         self.provider = provider
         self.product = kwargs['product'] if 'product' in kwargs else None
-        self.id = kwargs['id'] if 'id' in kwargs else None
+        self.hostname = kwargs['hostname'] if 'hostname' in kwargs else None
+        self.feed = kwargs['feed'] if 'feed' in kwargs else None
 
     @classmethod
-    def servers(cls, provider=None):
+    def servers(cls, provider=None, strict=True):
         servers = []
-        if provider:
-            # if provider instance is provided try to navigate provider's servers page
-            # if no servers are registered in provider, returns empty list
-            if not provider.load_all_provider_servers():
-                return []
-        else:
-            # if provider instance is not provided then navigates  to all servers page
-            sel.force_navigate('middleware_servers')
+        _get_servers_page(provider=provider)
         if sel.is_displayed(list_tbl):
-            for page in paginator.pages():
+            _provider = provider
+            for _ in paginator.pages():
                 for row in list_tbl.rows():
+                    if strict:
+                        _provider = get_crud(get_provider_key(row.provider.text))
                     servers.append(MiddlewareServer(name=row.server_name.text,
-                                                    id=row.feed.text,
+                                                    hostname=row.host_name.text,
+                                                    feed=row.feed.text,
                                                     product=row.product.text,
-                                                    provider=row.provider.text))
+                                                    provider=_provider))
         return servers
 
     @classmethod
@@ -88,27 +98,53 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         return headers
 
     @classmethod
-    def servers_in_db(cls, server=None, provider=None):
+    def servers_in_db(cls, name=None, feed=None, provider=None, strict=True):
         servers = []
-        rows = _db_select_query(server=server, provider=(provider.name if provider else None)).all()
+        rows = _db_select_query(name=name, feed=feed, provider=provider).all()
         for server in rows:
-            servers.append(MiddlewareServer(name=server[0], id=server[1],
-                                            product=server[2], provider=server[3]))
+            if strict:
+                _provider = get_crud(get_provider_key(server.provider_name))
+            servers.append(MiddlewareServer(name=server.name, hostname=server.hostname,
+                                            feed=server.feed, product=server.product,
+                                            provider=_provider))
         return servers
 
     @classmethod
-    def servers_in_mgmt(cls, provider):
+    def _servers_in_mgmt(cls, provider):
         servers = []
         rows = provider.mgmt.list_server()
         for server in rows:
-            servers.append(MiddlewareServer(provider=provider.name,
-                    id=server.path.feed, name=re.sub(r'~~$', '', server.path.resource),
-                    product=server.data['Product Name']))
+            servers.append(MiddlewareServer(name=re.sub(r'~~$', '', server.path.resource),
+                                            hostname=server.data['Hostname'],
+                                            feed=server.path.feed,
+                                            product=server.data['Product Name'],
+                                            provider=provider))
         return servers
+
+    @classmethod
+    def servers_in_mgmt(cls, provider=None):
+        if provider is None:
+            deployments = []
+            for _provider in list_middleware_providers():
+                deployments.extend(cls._servers_in_mgmt(get_crud(_provider)))
+            return deployments
+        else:
+            return cls._servers_in_mgmt(provider)
+
+    def _on_detail_page(self):
+        """Override existing `_on_detail_page` and return `False` always.
+        There is no uniqueness on summary page of this resource.
+        Refer: https://github.com/ManageIQ/manageiq/issues/9046
+        """
+        return False
 
     def load_details(self, refresh=False):
         if not self._on_detail_page():
-            sel.force_navigate('middleware_server_detail', context={'name': self.name})
+            _get_servers_page(self.provider)
+            if self.feed:
+                list_tbl.click_row_by_cells({'Server Name': self.name, 'Feed': self.feed})
+            else:
+                list_tbl.click_row_by_cells({'Server Name': self.name})
         if refresh:
             tb.refresh()
 
