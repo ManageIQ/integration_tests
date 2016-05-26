@@ -10,8 +10,8 @@ from cached_property import cached_property
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import (ColumnHeaderFormatTable, ColumnStyleTable,
     RecordGrouper)
-from cfme.web_ui import (Form, Table, Select, ShowingInputs, accordion, fill, flash, form_buttons,
-    paginator, table_in_object, tabstrip, toolbar)
+from cfme.web_ui import (CAndUGroupTable, Form, Table, Select, ShowingInputs, accordion, fill,
+    flash, form_buttons, paginator, table_in_object, tabstrip, toolbar)
 from cfme.web_ui.expression_editor import Expression
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
@@ -237,10 +237,15 @@ class CustomReport(Updateable):
         # We will override the original dict
         self.__dict__ = dict(self._default_dict)
         self.__dict__.update(values)
+        # We need to pass the knowledge whether it is a candu report
+        try:
+            self.is_candu
+        except AttributeError:
+            self.is_candu = False
 
     def create(self, cancel=False):
         sel.force_navigate("report_add")
-        fill(report_form, self.__dict__, action=form_buttons.cancel if cancel else form_buttons.add)
+        fill(report_form, self, action=form_buttons.cancel if cancel else form_buttons.add)
         flash.assert_no_errors()
 
     def update(self, updates):
@@ -262,7 +267,7 @@ class CustomReport(Updateable):
                 sel.wait_for_element(records_table)
                 for row in records_table.rows():
                     results.append(
-                        CustomSavedReport(self, sel.text(row.run_at).encode("utf-8"))
+                        CustomSavedReport(self, sel.text(row.run_at).encode("utf-8"), self.is_candu)
                     )
         except sel.NoSuchElementException:
             pass
@@ -298,14 +303,16 @@ class CustomSavedReport(Updateable, Pretty):
         report: Report that we have data from.
         datetime: Datetime of "Run At" of the report. That's what :py:func:`queue_canned_report`
             returns.
+        candu: If it is a C&U report, in that case it uses a different table.
     """
     _table_loc = "//div[@id='report_html_div']/table[thead]"
 
     pretty_attrs = ['report', 'datetime']
 
-    def __init__(self, report, datetime):
+    def __init__(self, report, datetime, candu=False):
         self.report = report
         self.datetime = datetime
+        self.candu = candu
 
     def navigate(self):
         if not self._on_report_page:
@@ -318,7 +325,10 @@ class CustomSavedReport(Updateable, Pretty):
     @property
     def _table(self):
         """This is required to prevent the StaleElementReference for different instances"""
-        return Table(self._table_loc)
+        if self.candu:
+            return CAndUGroupTable(self._table_loc)
+        else:
+            return Table(self._table_loc)
 
     @property
     def _on_report_page(self):
@@ -332,9 +342,12 @@ class CustomSavedReport(Updateable, Pretty):
     def data(self):
         """Retrieves data from the saved report.
 
-        Returns: :py:class:`SavedReportData`
+        Returns: :py:class:`SavedReportData` if it is not a candu report. If it is, then it returns
+            a list of groups in the table.
         """
         self.navigate()
+        if isinstance(self._table, CAndUGroupTable):
+            return list(self._table.groups())
         try:
             headers = tuple([sel.text(hdr).encode("utf-8") for hdr in self._table.headers])
             body = []
@@ -366,9 +379,10 @@ class CannedSavedReport(CustomSavedReport):
         datetime: Datetime of "Run At" of the report. That's what :py:func:`queue_canned_report`
             returns.
     """
-    def __init__(self, path_to_report, datetime):
+    def __init__(self, path_to_report, datetime, candu=False):
         self.path = path_to_report
         self.datetime = datetime
+        self.candu = candu
 
     def navigate(self):
         return sel.force_navigate(
