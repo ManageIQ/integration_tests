@@ -1,5 +1,5 @@
 # Our custom docker image with app
-FROM base_cfme_tests
+FROM cfme_tests_base
 MAINTAINER <RH>
 
 LABEL company="Redhat" product="CFME" environment="dev" tier="test"
@@ -22,8 +22,7 @@ RUN virtualenv $CFMEENV
 
 WORKDIR $CFMEENV
 
-# RUN git clone https://github.com/patchkez/cfme_tests
-
+#1
 RUN echo "export PYTHONPATH=$WORK/:${PYTHONPATH}" >> ~/.bashrc
 
 RUN echo "source $WORK/bin/activate" >> ~/.bashrc
