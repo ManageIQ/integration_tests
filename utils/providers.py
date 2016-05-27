@@ -5,6 +5,7 @@ To quickly add all providers::
     setup_providers(validate=False)
 
 """
+import os
 import random
 from collections import Mapping
 from functools import partial
@@ -20,20 +21,25 @@ from mgmtsystem.openshift import Openshift
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
 from mgmtsystem.hawkular import Hawkular
 
-import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
-from cfme.web_ui import Quadicon, paginator, toolbar
-from cfme.common.provider import BaseProvider
 from cfme.exceptions import UnknownProviderType
-from cfme.containers.provider import KubernetesProvider, OpenshiftProvider
-from cfme.infrastructure.provider import (
-    OpenstackInfraProvider, RHEVMProvider, VMwareProvider, SCVMMProvider)
-from cfme.middleware.provider import HawkularProvider
 from fixtures.prov_filter import filtered
 from utils import conf, version
 from utils.mgmt_system import RHEVMSystem
 from utils.log import logger, perflog
 from utils.wait import wait_for
+
+
+RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
+# Do not import the whole stuff around
+if not RUNNING_UNDER_SPROUT:
+    import cfme.fixtures.pytest_selenium as sel
+    from cfme.common.provider import BaseProvider
+    from cfme.web_ui import Quadicon, paginator, toolbar
+    from cfme.containers.provider import KubernetesProvider, OpenshiftProvider
+    from cfme.infrastructure.provider import (
+        OpenstackInfraProvider, RHEVMProvider, VMwareProvider, SCVMMProvider)
+    from cfme.middleware.provider import HawkularProvider
 
 #: mapping of infra provider type names to ``mgmtsystem`` classes
 infra_provider_type_map = {

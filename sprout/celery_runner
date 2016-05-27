@@ -1,14 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-
-import re
-import sys
-
 import os
 os.environ["RUNNING_UNDER_SPROUT"] = "true"  # To prevent importing unnecessary UI stuff
 
-from celery.__main__ import main
+import re                           # noqa
+import sys                          # noqa
+
+from celery.__main__ import main    # noqa
+
+# Preload some used modules in advance
+# cfme_tests things
+from utils.providers import get_mgmt                # noqa
+from utils.appliance import Appliance, IPAppliance  # noqa
+from utils.version import Version                   # noqa
+from utils.timeutil import nice_seconds             # noqa
+from utils.conf import cfme_data, env, credentials  # noqa
+from utils.path import project_path                 # noqa
+from utils.wait import wait_for                     # noqa
+from utils.log import create_logger                 # noqa
+
 
 if __name__ == '__main__':
     sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])

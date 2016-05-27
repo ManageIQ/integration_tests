@@ -21,8 +21,6 @@ import traceback
 from utils.mgmt_system import RHEVMSystem
 from mgmtsystem.virtualcenter import VMWareSystem
 
-from cfme.common.vm import VM
-from cfme.configure.configuration import server_name, server_id
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
 from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
@@ -39,7 +37,9 @@ from utils import clear_property_cache
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # Do not import the whole stuff around
 if not RUNNING_UNDER_SPROUT:
-    from cfme.configure.configuration import set_server_roles, get_server_roles
+    from cfme.common.vm import VM
+    from cfme.configure.configuration import (
+        set_server_roles, get_server_roles, server_name, server_id)
     from utils.providers import setup_provider
     from utils.browser import browser_session
     from utils.hosts import setup_providers_hosts_credentials
