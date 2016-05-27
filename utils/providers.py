@@ -617,7 +617,7 @@ def clear_providers():
     wait_for_no_infra_providers()
     if version.current_version() > '5.5':
         wait_for_no_container_providers()
-    if version.current_version() >= '5.6':
+    if version.current_version() == version.LATEST:
         wait_for_no_middleware_providers()
     perflog.stop('utils.providers.clear_providers')
 
