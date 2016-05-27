@@ -147,3 +147,16 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
         else:
             sel.click(self.summary.relationships.middleware_deployments)
             return True
+
+    def load_all_provider_datasources(self):
+        """ Loads the list of datasources that are running under the provider.
+
+        If it could click through the link in infoblock, returns ``True``. If it sees that the
+        number of instances is 0, it returns ``False``.
+        """
+        self.load_details()
+        if getattr(self, 'num_datasource')(method='ui') == 0:
+            return False
+        else:
+            sel.click(self.summary.relationships.middleware_datasources)
+            return True
