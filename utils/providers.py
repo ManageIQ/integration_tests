@@ -802,17 +802,15 @@ def get_crud(provider_config_name):
             sec_protocol=prov_config['sec_protocol'],
             sec_realm=prov_config['sec_realm'])
     elif prov_type == 'rhevm':
+        credential_dict = {'default': credentials}
         if prov_config.get('candu_credentials', None):
-            candu_credentials = process_credential_yaml_key(
+            credential_dict['candu'] = process_credential_yaml_key(
                 prov_config['candu_credentials'], cred_type='candu')
-        else:
-            candu_credentials = None
         return RHEVMProvider(name=prov_config['name'],
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
             api_port='',
-            credentials={'default': credentials,
-                         'candu': candu_credentials},
+            credentials=credential_dict,
             zone=prov_config['server_zone'],
             key=provider_config_name,
             start_ip=start_ip,
