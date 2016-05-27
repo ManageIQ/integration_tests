@@ -383,7 +383,7 @@ class Table(Pretty):
         return self._headers_cache.indexes
 
     def locate(self):
-        return sel.move_to_element(self._loc)
+        return self._loc
 
     @property
     def _root_loc(self):
@@ -835,7 +835,7 @@ class SplitTable(Table):
 
     def locate(self):
         # Use the header locator as the overall table locator
-        return sel.move_to_element(self._header_loc)
+        return self._header_loc
 
 
 class SortTable(Table):
@@ -1293,7 +1293,7 @@ class Calendar(Pretty):
         self.name = name
 
     def locate(self):
-        return sel.move_to_element(Input(self.name))
+        return Input(self.name).locate()
 
 
 @fill.method((Calendar, object))
@@ -1397,6 +1397,22 @@ class Form(Region):
         self.fields = fields
         self.identifying_loc = identifying_loc
 
+    def locate(self):
+        loc = self.identifying_loc
+        if not loc:
+            # Take the first valid locator
+            for field_tuple in self.fields:
+                name = field_tuple[0]
+                if self.field_valid(name):
+                    loc = self.locators[name]
+                    break
+            else:
+                raise ValueError('The Form has no suitable element to locate on')
+        if hasattr(loc, 'locate'):
+            return loc.locate()
+        else:
+            return loc
+
     def field_valid(self, field_name):
         """Add the validity constraints here."""
         if field_name not in self.metadata:
@@ -1441,24 +1457,31 @@ def _fill_form_list(form, values, action=None, action_always=False):
 
     """
     logger.info('Beginning to fill in form...')
-    sel.wait_for_ajax()
     values = list(val for key in form.fields for val in values if val[0] == key[0])
     res = []
     for field, value in values:
+        # Ensure that no ajax which might tamper with the form is running.
+        sel.wait_for_ajax()
+        loc = form.locators[field]
+        # Wait for the element to appear if ajax wait did not catch it which may happen sometimes.
         if value is not None and form.field_valid(field):
-            loc = form.locators[field]
+            sel.wait_for_element(loc, timeout=3)
             logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
         elif value is None and isinstance(form.locators[field], Select):
-            fill_prev = fill(form.locators[field], None)
+            sel.wait_for_element(loc, timeout=3)
+            fill_prev = fill(loc, None)
             res.append(fill_prev != value)
         else:
             res.append(False)
 
+    sel.wait_for_ajax()  # Just to be sure
+
     if action and (any(res) or action_always):  # only perform action if something changed
         logger.debug(' Invoking end of form action')
         fill(action, True)  # re-dispatch with truthy value
+        sel.wait_for_ajax()  # Just to be sure
     logger.debug('Finished filling in form')
     return any(res) or action_always
 
@@ -1966,6 +1989,9 @@ class InfoBlock(Pretty):
         else:
             self._type = self.DETAIL
         return root_el
+
+    def locate(self):
+        return self.root
 
     def member(self, name):
         if name not in self._member_cache:
@@ -2479,7 +2505,7 @@ class DHTMLSelect(Select):
             self.select_by_index(index, _cascade=True)
 
     def locate(self):
-        return sel.move_to_element(self._loc)
+        return self._loc
 
 
 @sel.select.method((DHTMLSelect, basestring))
@@ -2553,6 +2579,9 @@ class MultiSelect(Region):
         self.select_arrow = select_arrow
         self.deselect_arrow = deselect_arrow
 
+    def locate(self):
+        return self.available_select.locate()
+
 
 @sel.select.method((MultiSelect, Sequence))
 def select_multiselect(ms, values):
@@ -2579,6 +2608,9 @@ class UpDownSelect(Region):
             up=up_loc,
             down=down_loc,
         ))
+
+    def locate(self):
+        return self.select.locate()
 
     def get_items(self):
         return map(lambda el: el.text.encode("utf-8"), self.select.options)
@@ -2636,6 +2668,9 @@ class ScriptBox(Pretty):
         self._name = name
         self.ta_loc = ta_locator
 
+    def locate(self):
+        return self.ta_loc
+
     @property
     def name(self):
         if not self._name:
@@ -2690,6 +2725,9 @@ class CheckboxSelect(Pretty):
     def __init__(self, search_root, text_access_func=None):
         self._root = search_root
         self._access_func = text_access_func
+
+    def locate(self):
+        return self._root
 
     @property
     def checkboxes(self):
@@ -2799,8 +2837,13 @@ class ShowingInputs(Pretty):
     pretty_attrs = ['locators', 'min_values']
 
     def __init__(self, *locators, **kwargs):
+        if not locators:
+            raise ValueError('You must pass at least one locator to ShowingInputs!')
         self._locators = locators
         self._min = kwargs.get("min_values", 0)
+
+    def locate(self):
+        return self._locators[0].locate()
 
     def zip(self, with_values):
         if len(with_values) < self._min:
@@ -2834,7 +2877,12 @@ class MultiFill(object):
         *fields: The fields where the value will be mirrored
     """
     def __init__(self, *fields):
+        if not fields:
+            raise ValueError('You must pass at least one locator to MultiFill!')
         self.fields = fields
+
+    def locate(self):
+        return self.fields[0].locate()
 
 
 @fill.method((MultiFill, object))
@@ -2849,6 +2897,9 @@ class DriftGrid(Pretty):
 
     def __init__(self, loc="//div[@id='drift_grid_div']"):
         self.loc = loc
+
+    def locate(self):
+        return self.loc
 
     def get_cell(self, row_text, col_index):
         """ Finds cell element of the grid specified by column index and row text
@@ -2952,7 +3003,7 @@ class ButtonGroup(object):
     def locate(self):
         """ Moves to the element """
         # Use the header locator as the overall table locator
-        return sel.move_to_element(self.locator)
+        return self.locator
 
     @property
     def locator_base(self):
@@ -3010,7 +3061,7 @@ class ColorGroup(object):
     def locate(self):
         """ Moves to the element """
         # Use the header locator as the overall table locator
-        return sel.move_to_element(self.locator)
+        return self.locator
 
     @property
     def active(self):
@@ -3060,6 +3111,9 @@ class DynamicTable(Pretty):
         self.root_loc = root_loc
         self.default_row_item = default_row_item
 
+    def locate(self):
+        return self.root_loc
+
     @property
     def rows(self):
         return map(lambda r_el: self.Row(self, r_el), sel.elements(self.ROWS, root=self.root_loc))
@@ -3095,6 +3149,9 @@ class DynamicTable(Pretty):
         def __init__(self, table, root):
             self.table = table
             self.root = root
+
+        def locate(self):
+            return sel.move_to_element(self.root, root=self.table)
 
         @property
         def values(self):
@@ -3168,7 +3225,7 @@ class AngularSelect(object):
         self.multi = multi
 
     def locate(self):
-        return sel.move_to_element(self._loc)
+        return self._loc
 
     @property
     def select(self):
@@ -3316,6 +3373,9 @@ class EmailSelectForm(Pretty):
             "5.5": "//div[@alt='Add']/i"}
     ))
 
+    def locate(self):
+        return self.fields.from_address.locate()
+
     @property
     def to_emails(self):
         """Returns list of e-mails that are selected"""
@@ -3396,6 +3456,9 @@ class BootstrapSwitch(object):
         self.on_off = "{}/span[contains(@class, 'bootstrap-switch-handle-{}')]".format(
             self.loc_container, '{}')
 
+    def locate(self):
+        return self.loc_container
+
     def fill(self, val):
         """Convenience function"""
         if val:
@@ -3435,6 +3498,9 @@ class OldCheckbox(object):
         """
         self.input_id = input_id
         self.locator = "//input[@id={}]".format(quoteattr(input_id))
+
+    def locate(self):
+        return self.locator
 
     def fill(self, val):
         """

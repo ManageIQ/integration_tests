@@ -13,13 +13,15 @@ import sys
 import types
 from utils.pretty import Pretty
 
+ROOT_LOC = "//div[@id='exp_editor_div']"
+
 
 def _make_button(title):
     return "//span[not(contains(@style,'none'))]//img[@alt='{}']".format(title)
 
 
 def _root():
-    return sel.element("//div[@id='exp_editor_div']")
+    return sel.element(ROOT_LOC)
 
 
 def _atom_root():
@@ -551,6 +553,9 @@ class Expression(Pretty):
 
     def __init__(self, show_func=lambda: None):
         self.show_func = show_func
+
+    def locate(self):
+        return ROOT_LOC
 
 
 @fill.method((Expression, Anything))
