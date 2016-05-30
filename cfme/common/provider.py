@@ -56,7 +56,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         @property
         def form(self):
             fields = [
-                ('token_secret', Input('bearer_token')),
+                ('token_secret_55', Input('bearer_token')),
                 ('google_service_account', Input('service_account')),
             ]
             tab_fields = {
@@ -64,6 +64,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                     ('default_principal', Input("default_userid")),
                     ('default_secret', Input("default_password")),
                     ('default_verify_secret', Input("default_verify")),
+                    ('token_secret', Input('bearer_password')),
+                    ('token_verify_secret', Input('bearer_verify')),
                 ],
 
                 "RSA key pair": [
@@ -584,7 +586,14 @@ def _fill_credential(form, cred, validate=None):
     elif cred.type == 'ssh':
         fill(cred.form, {'ssh_user': cred.principal, 'ssh_key': cred.secret})
     elif cred.type == 'token':
-        fill(cred.form, {'token_secret': cred.token, 'validate_btn': validate})
+        if version.current_version() < "5.6":
+            fill(cred.form, {'token_secret_55': cred.token, 'validate_btn': validate})
+        else:
+            fill(cred.form, {
+                'token_secret': cred.token,
+                'token_verify_secret': cred.verify_token,
+                'validate_btn': validate
+            })
     elif cred.type == 'service_account':
         fill(cred.form, {'google_service_account': cred.service_account, 'validate_btn': validate})
     else:
