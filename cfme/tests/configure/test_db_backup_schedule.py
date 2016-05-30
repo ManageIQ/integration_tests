@@ -8,7 +8,7 @@ from cfme.web_ui import flash
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from urlparse import urlparse
-from utils import conf
+from utils import conf, testgen
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 from utils.pretty import Pretty
@@ -100,7 +100,7 @@ def pytest_generate_tests(metafunc):
                 argvalues.append(db_backup_data)
                 ids.append(db_backup_data.id)
 
-        metafunc.parametrize(argnames, argvalues, ids=ids)
+        testgen.parametrize(metafunc, argnames, argvalues, ids=ids)
 
 
 def get_schedulable_datetime():
