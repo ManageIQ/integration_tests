@@ -1090,7 +1090,7 @@ class IPAppliance(object):
             # requests exposes invalid URLs as ValueErrors, which is excellent
             raise
         except Exception as ex:
-            self.log.debug('Appliance online, but connection failed: %s', ex.message)
+            self.log.debug('Appliance online, but connection failed: %s', str(ex))
         return False
 
     def is_web_ui_running(self, unsure=False):

@@ -393,7 +393,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
                 "1.1", template_fields, vm_fields, requester, "", ""
             ).id
         except WebFault as e:
-            if "'Network/vLan' is required" in e.message:
+            if "'Network/vLan' is required" in str(e):
                 raise TypeError("You have to specify `vlan` parameter for this function! (RHEV-M?)")
             else:
                 raise
