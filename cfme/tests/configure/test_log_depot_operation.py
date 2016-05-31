@@ -13,6 +13,7 @@ from utils import conf
 from utils.ftp import FTPClient
 from utils.path import log_path
 from cfme.configure import configuration as configure
+from cfme.web_ui import toolbar
 
 
 def pytest_generate_tests(metafunc):
@@ -277,3 +278,21 @@ def test_collect_log_depot(depot_type, depot_machine, depot_credentials, depot_f
                     dt.total_seconds() >= 0.0,
                     "Negative gap between log files ({}, {})".format(
                         datetimes[i][2], datetimes[i + 1][2]))
+
+
+def test_collect_unconfigured(request, soft_assert):
+    """ Test checking is collect button enable and disable after log depot was configured
+
+    """
+    request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
+    log_credentials = configure.ServerLogDepot.Credentials("smb",
+                                                           "testname",
+                                                           "testhost",
+                                                           username="testusername",
+                                                           password="testpassword")
+    log_credentials.update(validate=False)
+    # check button is enable after adding log depot
+    soft_assert(toolbar.is_greyed("Collect", "Collect all logs") is False)
+    configure.ServerLogDepot.Credentials.clear()
+    # check button is disable after removing log depot
+    soft_assert(toolbar.is_greyed("Collect", "Collect all logs") is True)
