@@ -22,7 +22,7 @@ properties_form = Form(
         ('name_text', Input('name')),
         ('type_select', {
             version.LOWEST: Select("select#provtype"),
-            '5.6': AngularSelect("provtype")}),
+            '5.6': AngularSelect("provider_type")}),
         ('url_text', Input('url')),
         ('ssl_checkbox', Input('verify_ssl'))
     ])
