@@ -1524,8 +1524,8 @@ def take_screenshot():
     except Exception as ex:
         # If this fails for any other reason,
         # leave out the screenshot but record the reason
-        if ex.message:
-            screenshot_error = '{}: {}'.format(type(ex).__name__, ex.message)
+        if str(ex):
+            screenshot_error = '{}: {}'.format(type(ex).__name__, str(ex))
         else:
             screenshot_error = type(ex).__name__
     return ScreenShot(screenshot, screenshot_error)

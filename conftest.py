@@ -30,6 +30,9 @@ class _AppliancePoliceException(Exception):
         self.message = message
         self.port = port
 
+    def __str__(self):
+        return "{} (port {})".format(self.message, self.port)
+
 
 @pytest.mark.hookwrapper
 def pytest_addoption(parser):
@@ -87,8 +90,7 @@ def appliance_police():
         port_results = {pn: net_check(pp, force=True) for pn, pp in port_numbers.items()}
         for port, result in port_results.items():
             if not result:
-                raise _AppliancePoliceException('Port {} was not contactable'.format(port),
-                    port_numbers[port])
+                raise _AppliancePoliceException('Unable to connect', port_numbers[port])
 
         try:
             status_code = requests.get(store.current_appliance.url, verify=False,
@@ -112,9 +114,9 @@ def appliance_police():
                 return
             except TimedOutError:
                 pass
-        e_message = e.message
+        e_message = str(e)
     except Exception as e:
-        e_message = e.args[0]
+        e_message = str(e)
 
     # Regardles of the exception raised, we didn't return anywhere above
     # time to call a human

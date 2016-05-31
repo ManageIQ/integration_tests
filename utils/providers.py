@@ -639,7 +639,7 @@ def destroy_vm(provider_mgmt, vm_name):
                 logger.error('Destroying VM %s failed for unknown reasons', vm_name)
             return vm_deleted
     except Exception as e:
-        logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, e.message)
+        logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, str(e))
 
 
 def get_credentials(credential_dict, cred_type=None):
