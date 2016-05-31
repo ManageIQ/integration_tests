@@ -82,6 +82,7 @@ class GH(Blocker):
         super(GH, self).__init__(**kwargs)
         self._repo = None
         self.issue = None
+        self.upstream_only = kwargs.get('upstream_only', True)
         if isinstance(description, (list, tuple)):
             try:
                 self.repo, self.issue = description
@@ -115,7 +116,7 @@ class GH(Blocker):
 
     @property
     def blocks(self):
-        if version.appliance_is_downstream():
+        if self.upstream_only and version.appliance_is_downstream():
             return False
         return self.data.state != "closed"
 
