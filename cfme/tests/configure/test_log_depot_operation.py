@@ -9,7 +9,7 @@ import fauxfactory
 import pytest
 import re
 from utils.timeutil import parsetime
-from utils import conf
+from utils import conf, testgen
 from utils.ftp import FTPClient
 from utils.path import log_path
 from cfme.configure import configuration as configure
@@ -166,7 +166,7 @@ def pytest_generate_tests(metafunc):
         param_tuple = (depot_type, hostname, credentials, get_ftp)
         if param_tuple not in new_parametrized:
             new_parametrized.append(param_tuple)
-    metafunc.parametrize(fixtures, new_parametrized, scope="function")
+    testgen.parametrize(metafunc, fixtures, new_parametrized, scope="function")
 
 
 @pytest.fixture(scope="function")
