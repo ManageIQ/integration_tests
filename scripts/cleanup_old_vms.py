@@ -44,22 +44,29 @@ def match(matchers, vm_name):
 
 
 def get_vm_config_modified_time(name, vm_name, datastore_url, provider_key):
-    providers_data = cfme_data.get("management_systems", {})
-    hosts = providers_data[provider_key]['hosts']
-    hostname = [host['name'] for host in hosts if name in host['name']]
-    connect_kwargs = {
-        'username': credentials['host_default']['username'],
-        'password': credentials['host_default']['password'],
-        'hostname': hostname[0]
-    }
-    datastore_path = re.findall(r'([^ds:`/*].*)', str(datastore_url))
-    ssh_client = SSHClient(**connect_kwargs)
-    command = 'find ~/{} -name {} | xargs  date -r'.format(
-        datastore_path[0] + str(vm_name), str(vm_name) + '.vmx')
-    exit_status, output = ssh_client.run_command(command)
-    modified_time = parser.parse(output.rstrip())
-    modified_time = modified_time.astimezone(pytz.timezone(str(get_localzone())))
-    return modified_time.replace(tzinfo=None)
+    try:
+        providers_data = cfme_data.get("management_systems", {})
+        hosts = providers_data[provider_key]['hosts']
+        hostname = [host['name'] for host in hosts if name in host['name']]
+        if not hostname:
+            hostname = re.findall(r'[0-9]+(?:\.[0-9]+){3}', name)
+        connect_kwargs = {
+            'username': credentials['host_default']['username'],
+            'password': credentials['host_default']['password'],
+            'hostname': hostname[0]
+        }
+        datastore_path = re.findall(r'([^ds:`/*].*)', str(datastore_url))
+        ssh_client = SSHClient(**connect_kwargs)
+        command = 'find ~/{}/{} -name {} | xargs  date -r'.format(
+            datastore_path[0], str(vm_name), str(vm_name) + '.vmx')
+        exit_status, output = ssh_client.run_command(command)
+        ssh_client.close()
+        modified_time = parser.parse(output.rstrip())
+        modified_time = modified_time.astimezone(pytz.timezone(str(get_localzone())))
+        return modified_time.replace(tzinfo=None)
+    except Exception as e:
+        logger.error(e)
+        return False
 
 
 def process_provider_vms(provider_key, provider_type, matchers, delta, vms_to_delete):
@@ -77,21 +84,23 @@ def process_provider_vms(provider_key, provider_type, matchers, delta, vms_to_de
             try:
                 if provider_type == 'virtualcenter' and provider.vm_status(vm_name) == 'poweredOff':
                     hostname = provider.get_vm_host_name(vm_name)
-                    datastore_url = provider.get_vm_datastore_path(vm_name)
+                    vm_config_datastore = provider.get_vm_config_files_path(vm_name)
+                    datastore_url = provider.get_vm_datastore_path(vm_name, vm_config_datastore)
                     vm_creation_time = get_vm_config_modified_time(hostname, vm_name,
                                                                    datastore_url, provider_key)
                 else:
                     vm_creation_time = provider.vm_creation_time(vm_name)
+
+                if vm_creation_time + delta < now:
+                    vm_delta = now - vm_creation_time
+                    with lock:
+                        vms_to_delete[provider_key].add((vm_name, vm_delta))
             except Exception as e:
                 logger.error(e)
                 logger.error('Failed to get creation/boot time for {} on {}'.format(
                     vm_name, provider_key))
                 continue
 
-            if vm_creation_time + delta < now:
-                vm_delta = now - vm_creation_time
-                with lock:
-                    vms_to_delete[provider_key].add((vm_name, vm_delta))
         with lock:
             print('{} finished'.format(provider_key))
     except Exception as ex:
