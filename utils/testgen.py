@@ -165,6 +165,9 @@ def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
     """
     if param_check(metafunc, argnames, argvalues):
         metafunc.parametrize(argnames, argvalues, *args, **kwargs)
+    # if param check failed and the test was supposed to be parametrized around a provider
+    elif 'provider' in metafunc.fixturenames:
+        pytest.mark.uncollect(metafunc.function)
 
 
 def fixture_filter(metafunc, argnames, argvalues):
