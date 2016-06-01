@@ -105,13 +105,8 @@ def pytest_collection_modifyitems(session, config, items):
 
     with open(os.path.join(log_path.strpath, 'uncollected.log'), 'w') as f:
         for item in items:
-            # Workaround for a known bug in pytest 2.7.0
-            # If a test has argnames but no argvalues, it should be ignored (uncollected)
-            values = extract_fixtures_values(item)
-            if values and all(type(v) is object for v in values.itervalues()):
-                continue
             # First filter out all items who have the uncollect mark
-            elif item.get_marker('uncollect') or not uncollectif(item):
+            if item.get_marker('uncollect') or not uncollectif(item):
                 marker = item.get_marker('uncollectif')
                 if marker:
                     reason = marker.kwargs.get('reason', "No reason given")
