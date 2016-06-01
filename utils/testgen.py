@@ -161,10 +161,22 @@ def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
     """parametrize wrapper that calls :py:func:`param_check`, and only parametrizes when needed
 
     This can be used in any place where conditional parametrization is used.
+    It will use metafunc.parametrize to parametrize the test unless a custom parametrization
+    function is passed into it.
+
+    If a parametrized function doesn't pass the param check, it is uncollected.
 
     """
+    if 'custom_parametrize_fn' in kwargs:
+        parametrize_fn = kwargs['custom_parametrize_fn']
+        del kwargs['custom_parametrize_fn']
+    else:
+        parametrize_fn = metafunc.parametrize
+
     if param_check(metafunc, argnames, argvalues):
-        metafunc.parametrize(argnames, argvalues, *args, **kwargs)
+        parametrize_fn(argnames, argvalues, *args, **kwargs)
+    else:
+        pytest.mark.uncollect(metafunc.function)
 
 
 def fixture_filter(metafunc, argnames, argvalues):
