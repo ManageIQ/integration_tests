@@ -9,6 +9,7 @@ import utils.error as error
 from cfme.infrastructure.provider import (discover, Provider, VMwareProvider, RHEVMProvider,
     wait_for_a_provider)
 from utils import testgen, providers, version
+from utils.blockers import GH
 from utils.providers import get_credentials_from_config
 from utils.update import update
 
@@ -61,6 +62,7 @@ def test_name_required_validation():
         prov.create()
 
 
+@pytest.mark.meta(blockers=[GH('RedHatQE/cfme_tests:3036', upstream_only=False, since='5.6')])
 def test_host_name_required_validation():
     """Test to validate the hostname while adding a provider"""
     prov = VMwareProvider(

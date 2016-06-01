@@ -82,6 +82,9 @@ class GH(Blocker):
         super(GH, self).__init__(**kwargs)
         self._repo = None
         self.issue = None
+        self.upstream_only = kwargs.get('upstream_only', True)
+        self.since = kwargs.get('since', None)
+        self.until = kwargs.get('until', None)
         if isinstance(description, (list, tuple)):
             try:
                 self.repo, self.issue = description
@@ -115,9 +118,24 @@ class GH(Blocker):
 
     @property
     def blocks(self):
-        if version.appliance_is_downstream():
+        if self.upstream_only and version.appliance_is_downstream():
             return False
-        return self.data.state != "closed"
+        if self.data.state == "closed":
+            return False
+        # Now let's check versions
+        if self.since is None and self.until is None:
+            # No version specifics
+            return True
+        elif self.since is not None and self.until is not None:
+            # since inclusive, until exclusive
+            return self.since <= version.current_version() < self.until
+        elif self.since is not None:
+            # Only since
+            return version.current_version() >= self.since
+        elif self.until is not None:
+            # Only until
+            return version.current_version() < self.until
+        # All branches covered
 
     @property
     def repo(self):
