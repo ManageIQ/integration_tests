@@ -2,7 +2,6 @@ import pytest
 import fauxfactory
 
 from cfme.configure.settings import set_default_view
-from cfme.exceptions import FlashMessageException
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
@@ -13,6 +12,7 @@ from cfme.cloud.stack import Stack
 from utils import testgen, version
 from utils.log import logger
 from utils.wait import wait_for
+from utils.blockers import BZ
 
 
 pytestmark = [
@@ -21,7 +21,7 @@ pytestmark = [
     pytest.mark.ignore_stream("upstream")
 ]
 
-METHOD_TORSO = """
+AWS_TEMPLATE = """
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
   "Description" : "AWS CloudFormation Sample Template DynamoDB_Table",
@@ -91,6 +91,45 @@ METHOD_TORSO = """
 }
 """
 
+HEAT_TEMPLATE = """
+heat_template_version: 2013-05-23
+description: Simple template to deploy a single compute instance
+parameters:
+  image:
+    type: string
+    label: Image name or ID
+    description: Image to be used for compute instance
+    default: cirros
+  flavor:
+    type: string
+    label: Flavor
+    description: Type of instance (flavor) to be used
+    default: m1.small
+  key:
+    type: string
+    label: Key name
+    description: Name of key-pair to be used for compute instance
+    default: psav
+  private_network:
+    type: string
+    label: Private network name or ID
+    description: Network to attach instance to.
+    default: c0f0db9c-846f-4d4e-b058-0db5bfb2cb90
+resources:
+  my_instance:
+    type: OS::Nova::Server
+    properties:
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key }
+      networks:
+        - uuid: { get_param: private_network }
+outputs:
+  instance_ip:
+    description: IP address of the instance
+    value: { get_attr: [my_instance, first_address]}
+"""
+
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
@@ -117,24 +156,31 @@ def catalog():
     yield catalog
 
 
-def test_provision_stack(setup_provider, provider, dialog, catalog, request):
+def random_desc():
+    return fauxfactory.gen_alphanumeric()
+
+
+@pytest.yield_fixture(scope="function")
+def create_template(setup_provider, provider, dialog):
+    dialog_name, template = dialog
+    if provider.type == "ec2":
+        method = AWS_TEMPLATE.replace('CloudFormation', random_desc())
+        template.create(method)
+    elif provider.type == "openstack":
+        method = HEAT_TEMPLATE.replace('Simple', random_desc())
+        template.create(method)
+    template.create_service_dialog_from_template(dialog_name, template.template_name)
+    yield dialog
+
+
+@pytest.mark.meta(blockers=[BZ(1340570, forced_streams=["5.6", "upstream"])])
+def test_provision_stack(provider, create_template, catalog, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
-    dialog_name, template = dialog
-    method = METHOD_TORSO.replace('"Description" : "AWS',
-                                  '"Description" : "Amazon')
-    try:
-        template.create(method)
-    except FlashMessageException:
-        method = METHOD_TORSO.replace('"Description" : "AWS',
-                                  '"Description" : "Amazon edit')
-        template.create(method)
-
-    template.create_service_dialog_from_template(dialog_name, template.template_name)
-
+    dialog_name, template = create_template
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
@@ -161,25 +207,15 @@ def test_provision_stack(setup_provider, provider, dialog, catalog, request):
     assert row.last_message.text == 'Service Provisioned Successfully'
 
 
+@pytest.mark.meta(blockers=[BZ(1340570, forced_streams=["5.6", "upstream"])])
 @pytest.mark.uncollectif(lambda: version.current_version() <= '5.5')
-def test_reconfigure_service(setup_provider, provider, dialog, catalog, request):
+def test_reconfigure_service(provider, create_template, catalog, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
-    dialog_name, template = dialog
-    method = METHOD_TORSO.replace('"Description" : "AWS',
-                                  '"Description" : "Amzn Web')
-    # template.create(method)
-    try:
-        template.create(method)
-    except FlashMessageException:
-        method = METHOD_TORSO.replace('"Description" : "AWS',
-                                  '"Description" : "Amazon Web')
-        template.create(method)
-    template.create_service_dialog_from_template(dialog_name, template.template_name)
-
+    dialog_name, template = create_template
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
@@ -208,23 +244,13 @@ def test_reconfigure_service(setup_provider, provider, dialog, catalog, request)
     myservice.reconfigure_service()
 
 
-def test_remove_template_provisioning(setup_provider, provider, dialog, catalog, request):
+def test_remove_template_provisioning(provider, create_template, catalog, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
-    dialog_name, template = dialog
-    method = METHOD_TORSO.replace('"Description" : "AWS',
-                                  '"Description" : "Amzn Web Services')
-    try:
-        template.create(method)
-    except FlashMessageException:
-        method = METHOD_TORSO.replace('"Description" : "AWS',
-                                  '"Description" : "Amazon Web Services')
-        template.create(method)
-    template.create_service_dialog_from_template(dialog_name, template.template_name)
-
+    dialog_name, template = create_template
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
@@ -245,25 +271,16 @@ def test_remove_template_provisioning(setup_provider, provider, dialog, catalog,
     assert row.last_message.text == 'Service_Template_Provisioning failed'
 
 
+@pytest.mark.meta(blockers=[BZ(1340570, forced_streams=["5.6", "upstream"])])
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_retire_stack(setup_provider, provider, dialog, catalog, request):
+def test_retire_stack(provider, create_template, catalog, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
     set_default_view("Stacks", "Grid View")
-    dialog_name, template = dialog
-    method = METHOD_TORSO.replace('"Description" : "AWS',
-                                  '"Description" : "Amzn Web Services desc')
-    try:
-        template.create(method)
-    except FlashMessageException:
-        method = METHOD_TORSO.replace('"Description" : "AWS',
-                                  '"Description" : "Amazon Web Services desc')
-        template.create(method)
-    template.create_service_dialog_from_template(dialog_name, template.template_name)
-
+    dialog_name, template = create_template
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
