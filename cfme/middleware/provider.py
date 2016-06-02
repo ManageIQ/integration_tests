@@ -1,9 +1,11 @@
+import re
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Region, Form, AngularSelect, form_buttons, Input, Quadicon
 )
 from cfme.web_ui.menu import nav
+from utils.db import cfmedb
 from utils.varmeth import variable
 from . import cfg_btn, mon_btn, pol_btn, MiddlewareBase
 
@@ -125,3 +127,19 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
         if reload_data:
             self.summary.reload()
         return self.summary.relationships.middleware_datasources.value
+
+    @variable(alias='ui')
+    def is_refreshed(self, reload_data=True):
+        if reload_data:
+            self.summary.reload()
+        if re.match('Success.*Minute.*Ago', self.summary.status.last_refresh.text_value):
+            return True
+        else:
+            return False
+
+    @is_refreshed.variant('db')
+    def is_refreshed_db(self):
+        ems = cfmedb()['ext_management_systems']
+        dates = cfmedb().session.query(ems.created_on,
+                                       ems.updated_on).filter(ems.name == self.name).first()
+        return dates.updated_on > dates.created_on

@@ -1,5 +1,4 @@
 import uuid
-
 import pytest
 from utils import testgen
 from utils.update import update
@@ -28,6 +27,9 @@ def test_hawkular_crud(provider):
     provider.validate_stats()
     # validates Properties section of provider's summary page
     provider.validate_properties()
+    # validates that provider is refreshed in DB and in UI
+    assert provider.is_refreshed(method='ui'), "Provider is not refreshed in UI"
+    assert provider.is_refreshed(method='db'), "Provider is not refreshed in DB"
 
     old_name = provider.name
     with update(provider):
