@@ -1,8 +1,13 @@
 import uuid
-import pytest
 
+import pytest
 from utils import testgen
 from utils.update import update
+from utils.version import current_version
+
+pytestmark = [
+    pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+]
 
 
 def pytest_generate_tests(metafunc):

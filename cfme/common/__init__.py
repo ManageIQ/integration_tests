@@ -279,7 +279,7 @@ class SummaryValue(object):
             raise ValueError("Cannot click on {} because it is not clickable".format(repr(self)))
         try:
             return sel.click(self.link, wait_ajax, no_custom_handler=True)
-        except self.sel.StaleElementReferenceException:
+        except sel.StaleElementReferenceException:
             raise RuntimeError('Couldnt click on {} because the page was left.'.format(repr(self)))
 
 

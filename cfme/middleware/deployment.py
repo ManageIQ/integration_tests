@@ -1,9 +1,10 @@
 import re
 from cfme.fixtures import pytest_selenium as sel
+from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
-from mgmtsystem.hawkular import Deployment, Path
 from utils.db import cfmedb
+from utils.providers import get_crud, get_provider_key, list_middleware_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase
 
@@ -11,26 +12,42 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, server=None, provider=None):
+    """Column order: `nativeid`, `name`, `server_name`, `feed`, `provider_name`"""
+    t_ems = cfmedb()['ext_management_systems']
     t_ms = cfmedb()['middleware_servers']
     t_md = cfmedb()['middleware_deployments']
-    t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(t_md.nativeid, t_md.name,
-                                   t_md.ems_ref, t_ms.name, t_ems.name).join(t_ms,
-                                            t_md.server_id == t_ms.id).join(t_ems,
-                                            t_md.ems_id == t_ems.id)
+    query = cfmedb().session.query(t_md.nativeid.label('nativeid'), t_md.name,
+                                   t_ms.name.label('server_name'), t_ms.feed.label('feed'),
+                                   t_ems.name.label('provider_name'))\
+        .join(t_ms, t_md.server_id == t_ms.id).join(t_ems, t_md.ems_id == t_ems.id)
     if name:
         query = query.filter(t_md.name == name)
     if server:
-        query = query.filter(t_md.nativeid.like('%{}%'.format(server)))
+        query = query.filter(t_ms.name == server.name)
+        if server.feed:
+            query = query.filter(t_ms.feed == server.feed)
     if provider:
-        query = query.filter(t_ems.name == provider)
+        query = query.filter(t_ems.name == provider.name)
     return query
+
+
+def _get_deployments_page(provider, server):
+    if server:  # if server instance is provided navigate through server page
+        server.summary.reload()
+        if server.summary.relationships.middleware_deployments.value == 0:
+            return
+        server.summary.relationships.middleware_deployments.click()
+    elif provider:  # if provider instance is provided navigate through provider page
+        provider.summary.reload()
+        if provider.summary.relationships.middleware_deployments.value == 0:
+            return
+        provider.summary.relationships.middleware_deployments.click()
+    else:  # if None(provider and server) given navigate through all middleware deployments page
+        sel.force_navigate('middleware_deployments')
 
 nav.add_branch(
     'middleware_deployments', {
         'middleware_deployment': lambda ctx: list_tbl.select_row('Deployment Name', ctx['name']),
-        'middleware_deployment_detail':
-            lambda ctx: list_tbl.click_row_by_cells({'Deployment Name': ctx['name']}),
     }
 )
 
@@ -43,78 +60,110 @@ class MiddlewareDeployment(MiddlewareBase):
     Args:
         name: Name of the deployment
         provider: Provider object (HawkularProvider)
-        id: Native id (internal id) of deployment
-        server: Server name of the deployment
+        server: Server object of the deployment (MiddlewareServer)
+        nativeid: Native id (internal id) of deployment
 
     Usage:
 
         mydeployment = MiddlewareDeployment(name='Foo.war',
-                                server='Bar-serv',
+                                server=ser_instance,
                                 provider=haw_provider)
 
-        deployments = MiddlewareDeployment.deployments()
+        deployments = MiddlewareDeployment.deployments() [or]
+        deployments = MiddlewareDeployment.deployments(provider=haw_provider) [or]
+        deployments = MiddlewareDeployment.deployments(provider=haw_provider,server=ser_instance)
 
     """
     property_tuples = [('name', 'name')]
 
-    def __init__(self, name, provider=None, **kwargs):
+    def __init__(self, name, server, provider=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
+        if not isinstance(server, MiddlewareServer):
+            raise KeyError("'server' should be an instance of MiddlewareServer")
         self.name = name
+        self.server = server
         self.provider = provider
-        self.id = kwargs['id'] if 'id' in kwargs else None
-        self.server = kwargs['server'] if 'server' in kwargs else None
+        self.nativeid = kwargs['nativeid'] if 'nativeid' in kwargs else None
 
     @classmethod
-    def deployments(cls, provider=None):
+    def deployments(cls, provider=None, server=None):
         deployments = []
-        if provider:
-            # if provider instance is provided try to navigate provider's deployments page
-            # if no deployments are registered in provider, returns empty list
-            if not provider.load_all_provider_deployments():
-                return []
-        else:
-            # if provider instance is not provided then navigates  to all deployments page
-            sel.force_navigate('middleware_deployments')
+        _get_deployments_page(provider=provider, server=server)
         if sel.is_displayed(list_tbl):
-            for page in paginator.pages():
+            _provider = provider  # In deployment UI, we cannot get provider name on list all page
+            for _ in paginator.pages():
                 for row in list_tbl.rows():
-                    deployments.append(MiddlewareDeployment(name=row.deployment_name.text,
-                                                            server=row.server.text))
+                    _server = MiddlewareServer(provider=provider, name=row.server.text)
+                    deployments.append(MiddlewareDeployment(provider=_provider, server=_server,
+                                                            name=row.deployment_name.text))
         return deployments
 
     @classmethod
-    def deployments_in_db(cls, server=None, provider=None):
+    def deployments_in_db(cls, server=None, provider=None, strict=True):
         deployments = []
-        rows = _db_select_query(server=server, provider=(provider.name if provider else None)).all()
+        rows = _db_select_query(server=server, provider=provider).all()
+        _provider = provider
         for deployment in rows:
-            deployments.append(MiddlewareDeployment(id=deployment[0], name=deployment[1],
-                                                    server=deployment[3], provider=deployment[4]))
+            if strict:
+                _provider = get_crud(get_provider_key(deployment.provider_name))
+            _server = MiddlewareServer(name=deployment.server_name, feed=deployment.feed,
+                                       provider=provider)
+            deployments.append(MiddlewareDeployment(nativeid=deployment.nativeid,
+                                                    name=deployment.name,
+                                                    server=_server, provider=_provider))
         return deployments
 
     @classmethod
-    def deployments_in_mgmt(cls, provider):
+    def _deployments_in_mgmt(cls, provider, server=None):
         deployments = []
         rows = provider.mgmt.list_server_deployment()
         for deployment in rows:
-            deployments.append(MiddlewareDeployment(provider=provider.name,
-                    id=deployment.id, name=deployment.name,
-                    server=re.sub(r'~~$', '', deployment.path.resource[0])))
+            _server = MiddlewareServer(name=re.sub(r'~~$', '', deployment.path.resource[0]),
+                                       feed=deployment.path.feed,
+                                       provider=provider)
+            _include = False
+            if server:
+                if server.name == _server.name:
+                    _include = True if not server.feed else server.feed == _server.feed
+            else:
+                _include = True
+            if _include:
+                deployments.append(MiddlewareDeployment(provider=provider, server=_server,
+                                                        nativeid=deployment.id,
+                                                        name=deployment.name))
+
         return deployments
+
+    @classmethod
+    def deployments_in_mgmt(cls, provider=None, server=None):
+        if provider is None:
+            deployments = []
+            for _provider in list_middleware_providers():
+                deployments.extend(cls._deployments_in_mgmt(get_crud(_provider), server))
+            return deployments
+        else:
+            return cls._deployments_in_mgmt(provider, server)
+
+    def _on_detail_page(self):
+        """Override existing `_on_detail_page` and return `False` always.
+        There is no uniqueness on summary page of this resource.
+        Refer: https://github.com/ManageIQ/manageiq/issues/9046
+        """
+        return False
 
     def load_details(self, refresh=False):
         if not self._on_detail_page():
-            sel.force_navigate('middleware_deployment_detail', context={'name': self.name})
+            _get_deployments_page(provider=self.provider, server=self.server)
+            list_tbl.click_row_by_cells({'Deployment Name': self.name, 'Server': self.server.name})
         if refresh:
             tb.refresh()
 
     @variable(alias='ui')
     def deployment(self):
         self.summary.reload()
-        if self.summary.properties:
-            return Deployment(name=self.summary.properties.name.text_value,
-                              id=self.summary.properties.nativeid.text_value, path=None)
-        return None
+        self.id = self.summary.properties.nativeid.text_value
+        return self
 
     @deployment.variant('mgmt')
     def deployment_in_mgmt(self):
@@ -122,12 +171,15 @@ class MiddlewareDeployment(MiddlewareBase):
 
     @deployment.variant('db')
     def deployment_in_db(self):
-        if self.name:
-            deployment = _db_select_query(self.name, self.server).first()
-            if deployment:
-                return Deployment(deployment[0], deployment[1], Path(deployment[2]))
-            return None
-        raise KeyError('Variable "name" not set!')
+        deployment = _db_select_query(name=self.name, server=self.server,
+                                      provider=self.provider).first()
+        if deployment:
+            _provider = get_crud(get_provider_key(deployment.provider_name))
+            _server = MiddlewareServer(name=deployment.server_name, feed=deployment.feed,
+                                       provider=_provider)
+            return MiddlewareDeployment(nativeid=deployment.nativeid, name=deployment.name,
+                                        server=_server, provider=_provider)
+        return None
 
     @deployment.variant('rest')
     def deployment_in_rest(self):

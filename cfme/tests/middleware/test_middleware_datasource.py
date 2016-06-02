@@ -4,13 +4,13 @@ from utils import testgen
 from utils.version import current_version
 
 pytestmark = [
-    pytest.mark.usefixtures('single_middleware_provider'),
+    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
 
 
-def test_list_datasources(provider):
+def test_list_datasources():
     """Tests datasources list between UI, DB and Management system
     This test requires that no any other provider should exist before.
 
@@ -22,7 +22,7 @@ def test_list_datasources(provider):
     """
     ui_dses = _get_datasources_set(MiddlewareDatasource.datasources())
     db_dses = _get_datasources_set(MiddlewareDatasource.datasources_in_db())
-    mgmt_dses = _get_datasources_set(MiddlewareDatasource.datasources_in_mgmt(provider=provider))
+    mgmt_dses = _get_datasources_set(MiddlewareDatasource.datasources_in_mgmt())
     assert ui_dses == db_dses == mgmt_dses, \
         ("Lists of datasources mismatch! UI:{}, DB:{}, MGMT:{}"
          .format(ui_dses, db_dses, mgmt_dses))
@@ -50,4 +50,4 @@ def _get_datasources_set(datasources):
     Return the set of datasources which contains only necessary fields,
     such as 'name' and 'server'
     """
-    return set((datasource.name, datasource.server) for datasource in datasources)
+    return set((datasource.name, datasource.server.name) for datasource in datasources)
