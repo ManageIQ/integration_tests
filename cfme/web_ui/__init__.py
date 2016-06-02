@@ -2220,6 +2220,7 @@ class Quadicon(Pretty):
             "vendor": ("c", 'img'),
             "no_snapshot": ("d", 'txt'),
         },
+        "middleware": {},   # Middleware quads have no fields
         None: {},  # If you just want to find the quad and not mess with data
     }
 
@@ -2261,9 +2262,9 @@ class Quadicon(Pretty):
         try:
             return sel.move_to_element(
                 'div/a',
-                root="//div[@id='quadicon' and ../../..//a[{}]]".format(self.a_cond))
+                root="//div[contains(@id, 'quadicon') and ../../..//a[{}]]".format(self.a_cond))
         except sel.NoSuchElementException:
-            quads = sel.elements("//div[@id='quadicon']/../../../tr/td/a")
+            quads = sel.elements("//div[contains(@id, 'quadicon')]/../../../tr/td/a")
             if not quads:
                 raise sel.NoSuchElementException("Quadicon {} not found. No quads present".format(
                     self._name))
@@ -2332,7 +2333,7 @@ class Quadicon(Pretty):
         else:
             pages = paginator.pages()
         for page in pages:
-            for href in sel.elements("//div[@id='quadicon']/../../../tr/td/a"):
+            for href in sel.elements("//div[contains(@id, 'quadicon')]/../../../tr/td/a"):
                 yield cls(cls._get_title(href), qtype)
 
     @classmethod
@@ -2341,11 +2342,11 @@ class Quadicon(Pretty):
 
     @staticmethod
     def select_first_quad():
-        fill("//div[@id='quadicon']/../..//input", True)
+        fill("//div[contains(@id, 'quadicon')]/../..//input", True)
 
     @staticmethod
     def get_first_quad_title():
-        first_quad = "//div[@id='quadicon']/../../../tr/td/a"
+        first_quad = "//div[contains(@id, 'quadicon')]/../../../tr/td/a"
         title = sel.get_attribute(first_quad, "title")
         if title:
             return title
