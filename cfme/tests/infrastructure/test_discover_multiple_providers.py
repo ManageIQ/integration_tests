@@ -76,7 +76,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, providers_final, ids=new_id_list, scope="module")
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.yield_fixture(scope='function')
 def delete_providers_after_test():
     yield
     clear_infra_providers()
