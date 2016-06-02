@@ -925,7 +925,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # browser fixture should do this, but it's needed for subsequent calls
     ensure_browser_open()
 
-    # check for MiqQE javascript patch in 5.6 and above
+    # check for MiqQE javascript patch in 5.6 on first try and patch the appliance if necessary
+    # raise an exception on subsequent unsuccessful attempts to access the MiqQE javascript funcs
     if store.current_appliance.version >= "5.6":
         def _patch_recycle_retry():
             store.current_appliance.patch_with_miqqe()
@@ -939,8 +940,13 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 _patch_recycle_retry()
         except WebDriverException as ex:
             if 'is not defined' in str(ex):
-                logger.info("MiqQE javascript not defined; patching appliance")
-                _patch_recycle_retry()
+                if _tries == 1:
+                    logger.info("MiqQE javascript not defined; patching appliance")
+                    _patch_recycle_retry()
+                else:
+                    raise exceptions.CFMEException(
+                        "Unable to navigate, patching the appliance's javascript failed: {}".format(
+                            str(ex)))
             else:
                 raise
 
@@ -1524,8 +1530,8 @@ def take_screenshot():
     except Exception as ex:
         # If this fails for any other reason,
         # leave out the screenshot but record the reason
-        if ex.message:
-            screenshot_error = '{}: {}'.format(type(ex).__name__, ex.message)
+        if str(ex):
+            screenshot_error = '{}: {}'.format(type(ex).__name__, str(ex))
         else:
             screenshot_error = type(ex).__name__
     return ScreenShot(screenshot, screenshot_error)

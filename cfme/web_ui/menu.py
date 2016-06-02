@@ -215,7 +215,6 @@ class Menu(UINavigate):
                     ('infrastructure_repositories', 'Repositories'),
                     ('infrastructure_pxe', 'PXE'),
                     ('infrastructure_requests', 'Requests'),
-                    ('infrastructure_config_management', 'Configuration Management')
                 ),
                 ('control', 'Control'): (
                     ('control_explorer', 'Explorer'),
@@ -290,7 +289,7 @@ class Menu(UINavigate):
                         ('infrastructure_repositories', 'Repositories'),
                         ('infrastructure_pxe', 'PXE'),
                         ('infrastructure_requests', 'Requests'),
-                        ('infrastructure_config_management', 'Configuration Management')
+                        # ('infrastructure_config_management', 'Configuration Management')
                     ),
                     ('middleware', 'Middleware'): (
                         ('middleware_providers', 'Providers', lambda: toolbar.select('List View')

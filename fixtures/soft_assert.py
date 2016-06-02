@@ -110,8 +110,8 @@ def handle_assert_artifacts(request, fail_message=None):
         ss_error = None
     except Exception as b_ex:
         ss = None
-        if b_ex.message:
-            ss_error = '{}: {}'.format(type(b_ex).__name__, b_ex.message)
+        if str(b_ex):
+            ss_error = '{}: {}'.format(type(b_ex).__name__, str(b_ex))
         else:
             ss_error = type(b_ex).__name__
     if ss_error:

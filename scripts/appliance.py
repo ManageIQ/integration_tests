@@ -54,8 +54,8 @@ def main():
     except Exception as e:
         exit = 1
         exc_type = type(e).__name__
-        if e.message:
-            sys.stderr.write('{}: {}\n'.format(exc_type, e.message))
+        if str(e):
+            sys.stderr.write('{}: {}\n'.format(exc_type, str(e)))
         else:
             sys.stderr.write('{}\n'.format(exc_type))
 

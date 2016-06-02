@@ -25,7 +25,7 @@ pytestmark = [
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
         metafunc, ['virtualcenter'], required_fields=[['provisioning', 'template']])
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 
 @pytest.yield_fixture(scope="module")

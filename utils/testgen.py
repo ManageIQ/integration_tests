@@ -165,6 +165,9 @@ def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
     """
     if param_check(metafunc, argnames, argvalues):
         metafunc.parametrize(argnames, argvalues, *args, **kwargs)
+    # if param check failed and the test was supposed to be parametrized around a provider
+    elif 'provider' in metafunc.fixturenames:
+        pytest.mark.uncollect(metafunc.function)
 
 
 def fixture_filter(metafunc, argnames, argvalues):
@@ -181,7 +184,7 @@ def fixture_filter(metafunc, argnames, argvalues):
     return argnames, argvalues
 
 
-def _skip_restricted_version(data, metafunc, required_fields):
+def _uncollect_restricted_version(data, metafunc, required_fields):
     restricted_version = data.get('restricted_version', None)
     if restricted_version:
         logger.info('we found a restricted version')
@@ -225,7 +228,7 @@ def _check_required_fields(data, metafunc, required_fields):
     return False
 
 
-def _skip_test_flags(data, metafunc, required_fields):
+def _uncollect_test_flags(data, metafunc, required_fields):
     # Test to see the test has meta data, if it does and that metadata contains
     # a test_flag kwarg, then check to make sure the provider contains that test_flag
     # if not, do not collect the provider for this particular test.
@@ -246,7 +249,7 @@ def _skip_test_flags(data, metafunc, required_fields):
         allowed_flags = set(defined_flags) - set(excluded_flags)
 
         if set(test_flags) - allowed_flags:
-            logger.info("Skipping Provider %s for test %s in module %s because "
+            logger.info("Uncollecting Provider %s for test %s in module %s because "
                 "it does not have the right flags, "
                 "%s does not contain %s",
                 data['name'], metafunc.function.func_name, metafunc.function.__module__,
@@ -255,7 +258,7 @@ def _skip_test_flags(data, metafunc, required_fields):
     return False
 
 
-def _skip_since_version(data, metafunc, required_fields):
+def _uncollect_since_version(data, metafunc, required_fields):
     try:
         if "since_version" in data:
             # Ignore providers that are not supported in this version yet
@@ -334,9 +337,6 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
     argvalues = []
     idlist = []
 
-    if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
-        argnames.append('provider')
-
     for provider in cfme_data.get('management_systems', {}):
 
         # Check provider hasn't been filtered out with --use-provider
@@ -355,18 +355,21 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
         if provider_types is not None and prov_obj.type not in provider_types:
             continue
 
-        # Run through all the testgen skip fns
-        skip = False
-        skip_fns = [_skip_restricted_version, _check_required_fields, _skip_test_flags,
-            _skip_since_version]
-        for fn in skip_fns:
+        # Run through all the testgen uncollect fns
+        uncollect = False
+        uncollect_fns = [_uncollect_restricted_version, _check_required_fields,
+            _uncollect_test_flags, _uncollect_since_version]
+        for fn in uncollect_fns:
             if fn(prov_obj.data, metafunc, required_fields):
-                skip = True
+                uncollect = True
                 break
-        if skip:
+        if uncollect:
             continue
 
-        # skip when required field is not present and option['require_field'] == True
+        if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
+            argnames.append('provider')
+
+        # uncollect when required field is not present and option['require_field'] == True
         argvalues.append([prov_obj])
 
         # Use the provider name for idlist, helps with readable parametrized test output
@@ -514,9 +517,9 @@ def param_check(metafunc, argnames, argvalues):
         funcname = metafunc.function.__name__
 
         test_name = '.'.join(filter(None, (modname, classname, funcname)))
-        skip_msg = 'Parametrization for {} yielded no values,'\
+        uncollect_msg = 'Parametrization for {} yielded no values,'\
             ' marked for uncollection'.format(test_name)
-        logger.warning(skip_msg)
+        logger.warning(uncollect_msg)
 
         # apply the mark
         pytest.mark.uncollect()(metafunc.function)

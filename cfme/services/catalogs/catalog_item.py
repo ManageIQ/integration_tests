@@ -33,6 +33,7 @@ basic_info_form = Form(
         ('select_dialog', Select("//select[@id='dialog_id']")),
         ('select_orch_template', Select("//select[@id='template_id']")),
         ('select_provider', Select("//select[@id='manager_id']")),
+        ('select_config_template', Select("//select[@id='template_id']")),
         ('field_entry_point', Input("fqname")),
         ('edit_button', form_buttons.save),
         ('apply_btn', {
@@ -187,7 +188,7 @@ class CatalogItem(Updateable, Pretty):
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None,
                  catalog_name=None, orch_template=None, provider_type=None,
-                 provider=None, prov_data=None, domain="ManageIQ (Locked)"):
+                 provider=None, config_template=None, prov_data=None, domain="ManageIQ (Locked)"):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -197,6 +198,7 @@ class CatalogItem(Updateable, Pretty):
         self.catalog_name = catalog_name
         self.orch_template = orch_template
         self.provider = provider
+        self.config_template = config_template
         self.provider_type = provider_type
         self.provisioning_data = prov_data
         self.domain = domain
@@ -214,7 +216,8 @@ class CatalogItem(Updateable, Pretty):
                                'select_catalog': str(self.catalog),
                                'select_dialog': str(self.dialog),
                                'select_orch_template': self.orch_template,
-                               'select_provider': self.provider_type})
+                               'select_provider': self.provider_type,
+                               'select_config_template': self.config_template})
         if self.item_type != "Orchestration":
             sel.click(basic_info_form.field_entry_point)
             dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",

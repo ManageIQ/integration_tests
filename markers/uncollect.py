@@ -77,6 +77,7 @@ def uncollectif(item):
         except TypeError:
             logger.debug(log_msg)
             return not bool(marker.args[0])
+
         try:
             values = extract_fixtures_values(item)
             args = [values[arg] for arg in arg_names]

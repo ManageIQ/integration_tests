@@ -48,7 +48,7 @@ def pytest_generate_tests(metafunc):
                 ds['type'])])
             test_id = '{}-{}'.format(args['provider'].key, ds['type'])
             new_idlist.append(test_id)
-    metafunc.parametrize(argnames, new_argvalues, ids=new_idlist, scope="module")
+    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 def get_host_data_by_name(provider_key, host_name):

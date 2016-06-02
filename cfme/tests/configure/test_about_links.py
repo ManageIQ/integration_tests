@@ -22,6 +22,6 @@ def test_about_links():
         try:
             resp = requests.head(href, verify=False, timeout=20)
         except (requests.Timeout, requests.ConnectionError) as ex:
-            pytest.fail(ex.message)
+            pytest.fail(str(ex))
 
         assert 200 <= resp.status_code < 400, "Unable to access '{}' ({})".format(link_key, href)
