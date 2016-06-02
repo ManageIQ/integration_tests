@@ -558,7 +558,10 @@ def clear_middleware_providers(validate=True):
     total = paginator.rec_total()
     if total > 0:
         logger.info(' Providers exist, so removing all middleware providers')
-        paginator.results_per_page('100')
+        # TODO: Fix.
+        # TEXT: "Items per page" hidden and failed to click paginator items drop down selection
+        # For the moment allow it go with default value 20
+        # paginator.results_per_page('100')
         sel.click(paginator.check_all())
         toolbar.select('Configuration', 'Remove Middleware Providers from the VMDB',
                        invokes_alert=True)
