@@ -34,17 +34,17 @@ def reset_timer(sprout, pool, timeout):
     timer.start()
 
 
+@pytest.mark.tryfirst
 @pytest.mark.hookwrapper
 def pytest_configure(config):
     global appliance
     global pool_id
     global sprout
-    yield
-    if not config.option.appliances and (config.option.use_sprout
-            and config.option.sprout_appliances == 1):
+    if not config.option.appliances and (config.option.use_sprout and
+            config.option.sprout_appliances == 1):
         terminal = reporter()
         sprout = SproutClient.from_config()
-        terminal.write("Requesting single appliance from sprout...\n")
+        terminal.write("Requesting a single appliance from sprout...\n")
         pool_id = sprout.request_appliances(
             config.option.sprout_group,
             count=config.option.sprout_appliances,
@@ -76,6 +76,7 @@ def pytest_configure(config):
         reset_timer(sprout, pool_id, config.option.sprout_timeout)
         terminal.write("Appliance lease timer is running ...\n")
         appliance = IPAppliance(address=ip_address)
+        appliance.push()
         # Retrieve and print the template_name for Jenkins to pick up
         template_name = request["appliances"][0]["template_name"]
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
@@ -87,13 +88,6 @@ def pytest_configure(config):
         provider = request["appliances"][0]["provider"]
         terminal.write("appliance_provider=\"{}\";\n".format(provider))
         conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider
-
-
-@pytest.mark.hookwrapper
-def pytest_sessionstart(session):
-    global appliance
-    if appliance is not None:
-        appliance.push()
     yield
 
 
