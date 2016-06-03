@@ -84,7 +84,6 @@ class MiddlewareServer(MiddlewareBase, Taggable):
                     if strict:
                         _provider = get_crud(get_provider_key(row.provider.text))
                     servers.append(MiddlewareServer(name=row.server_name.text,
-                                                    hostname=row.host_name.text,
                                                     feed=row.feed.text,
                                                     product=row.product.text,
                                                     provider=_provider))
