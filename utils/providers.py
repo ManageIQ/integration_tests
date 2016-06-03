@@ -771,6 +771,7 @@ def get_crud(provider_config_name):
         from cfme.cloud.provider import AzureProvider
         return AzureProvider(name=prov_config['name'],
             region=prov_config['region'],
+            tenant_id=prov_config['tenant_id'],
             credentials={'default': credentials},
             key=provider_config_name)
     elif prov_type == 'openstack':
