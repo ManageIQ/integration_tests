@@ -364,17 +364,17 @@ class TestPowerControlRESTAPI(object):
         assert result.name == test_vm.name
         return result
 
-    def test_power_off(self, verify_vm_running, vm):
+    def test_power_off(self, vm, verify_vm_running):
         assert "stop" in vm.action
         vm.action.stop()
         wait_for(lambda: vm.power_state == "off", num_sec=300, delay=5, fail_func=vm.reload)
 
-    def test_power_on(self, verify_vm_stopped, vm):
+    def test_power_on(self, vm, verify_vm_stopped):
         assert "start" in vm.action
         vm.action.start()
         wait_for(lambda: vm.power_state == "on", num_sec=300, delay=5, fail_func=vm.reload)
 
-    def test_suspend(self, verify_vm_running, vm):
+    def test_suspend(self, vm, verify_vm_running):
         assert "suspend" in vm.action
         vm.action.suspend()
         wait_for(lambda: vm.power_state == "suspended", num_sec=300, delay=5, fail_func=vm.reload)
