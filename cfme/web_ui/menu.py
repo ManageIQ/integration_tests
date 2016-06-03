@@ -291,20 +291,6 @@ class Menu(UINavigate):
                         ('infrastructure_requests', 'Requests'),
                         # ('infrastructure_config_management', 'Configuration Management')
                     ),
-                    ('middleware', 'Middleware'): (
-                        ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
-                            if not toolbar.is_active("Grid View") else None),
-                        ('middleware_servers', 'Middleware Servers',
-                         lambda: toolbar.select('List View')
-                            if not toolbar.is_active("List View") else None),
-                        ('middleware_deployments', 'Middleware Deployments',
-                         lambda: toolbar.select('List View')
-                            if not toolbar.is_active("List View") else None),
-                        ('middleware_datasources', 'Middleware Datasources',
-                         lambda: toolbar.select('List View')
-                            if not toolbar.is_active("List View") else None),
-                        ('middleware_topology', 'Topology'),
-                    ),
                     ('containers', 'Containers'): (
                         ('containers_providers', 'Providers'),
                         ('containers_projects', 'Projects'),
@@ -321,6 +307,20 @@ class Menu(UINavigate):
                 },
                 ('n_configuration', 'Configuration'): (
                     ('infrastructure_config_management', 'Configuration Management'),
+                ),
+                ('middleware', 'Middleware'): (
+                    ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
+                        if not toolbar.is_active("Grid View") else None),
+                    ('middleware_servers', 'Middleware Servers',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
+                    ('middleware_deployments', 'Middleware Deployments',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
+                    ('middleware_datasources', 'Middleware Datasources',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
+                    ('middleware_topology', 'Topology'),
                 ),
                 ('control', 'Control'): (
                     ('control_explorer', 'Explorer'),
@@ -599,9 +599,9 @@ class Menu(UINavigate):
                             raise Exception(
                                 "Wrong length of menu navigation tuple! ({})".format(len(level)))
                         _branches[thirdlevel_dest] = self._nav_to_fn(
-                            toplevel, secondlevel, thirdlevel, reset_action)
+                            toplevel, secondlevel, thirdlevel, reset_action=reset_action)
                     _branches[secondlevel_dest] = self._nav_to_fn(
-                        toplevel, secondlevel, reset_action)
+                        toplevel, secondlevel, reset_action=reset_action)
             else:
                 for level in secondlevels:
                     if len(level) == 2:
@@ -613,7 +613,7 @@ class Menu(UINavigate):
                         raise Exception(
                             "Wrong length of menu navigation tuple! ({})".format(len(level)))
                     _branches[secondlevel_dest] = self._nav_to_fn(
-                        toplevel, secondlevel, reset_action)
+                        toplevel, secondlevel, reset_action=reset_action)
             _branches[toplevel_dest] = [self._nav_to_fn(toplevel, None), {}]
         return _branches
 
