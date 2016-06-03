@@ -41,7 +41,7 @@ properties_form_55 = Form(
     fields=[
         ('type_select', {version.LOWEST: Select('select#server_emstype'),
             '5.5': AngularSelect("emstype")}),
-        ('tenant_id', Input("azure_tenant_id")),
+        ('azure_tenant_id', Input("azure_tenant_id")),
         ('name_text', Input("name")),
         ('azure_region_select', AngularSelect("provider_region")),
         ('hostname_text', Input("hostname")),
@@ -179,6 +179,7 @@ class AzureProvider(Provider):
         self.subscription_id = subscription_id
 
     def _form_mapping(self, create=None, **kwargs):
+        # Will still need to figure out where to put the tenant id.
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Azure',
                 'region_select': kwargs.get('region'),
