@@ -360,12 +360,15 @@ def pytest_addoption(parser):
                      help='Enabled access logging from the event listener')
 
 
+@pytest.mark.trylast
+@pytest.mark.hookwrapper
 def pytest_configure(config):
     """ Event testing setup.
 
     Sets up and registers the EventListener plugin for py.test.
     If the testing is enabled, listener is started.
     """
+    yield
     plugin = EventListener(config.getoption("event_testing_verbose_listener"))
     registration = config.pluginmanager.register(plugin, "event_testing")
     assert registration
