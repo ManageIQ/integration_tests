@@ -75,7 +75,6 @@ properties_form_56 = TabStripForm(
         ('google_project_text', Input("project")),
         ('azure_tenant_id', Input("azure_tenant_id")),
         ('azure_subscription_id', Input("subscription")),
-        ('azure_region_select', AngularSelect("provider_region")),
         ('amazon_region_select', {version.LOWEST: Select("select#provider_region"),
             "5.5": AngularSelect("provider_region")}),
         ("api_version", AngularSelect("api_version")),
@@ -182,7 +181,7 @@ class AzureProvider(Provider):
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Azure',
-                'azure_region_select': kwargs.get('region'),
+                'region_select': kwargs.get('region'),
                 'azure_tenant_id': kwargs.get('tenant_id'),
                 'azure_subscription_id': kwargs.get('subscription_id')}
 
