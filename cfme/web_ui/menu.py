@@ -292,8 +292,8 @@ class Menu(UINavigate):
                         # ('infrastructure_config_management', 'Configuration Management')
                     ),
                     ('middleware', 'Middleware'): (
-                        ('middleware_providers', 'Providers', lambda: toolbar.select('List View')
-                            if not toolbar.is_active("List View") else None),
+                        ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
+                            if not toolbar.is_active("Grid View") else None),
                         ('middleware_servers', 'Middleware Servers',
                          lambda: toolbar.select('List View')
                             if not toolbar.is_active("List View") else None),

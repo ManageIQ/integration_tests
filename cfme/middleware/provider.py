@@ -1,12 +1,11 @@
 from cfme.common.provider import BaseProvider
+from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Region, Form, AngularSelect, form_buttons, Input, CheckboxTable
+    Region, Form, AngularSelect, form_buttons, Input, Quadicon
 )
 from cfme.web_ui.menu import nav
 from utils.varmeth import variable
-from . import cfg_btn, mon_btn, pol_btn, LIST_TABLE_LOCATOR, MiddlewareBase
-
-list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
+from . import cfg_btn, mon_btn, pol_btn, MiddlewareBase
 
 details_page = Region(infoblock_type='detail')
 
@@ -17,7 +16,7 @@ nav.add_branch(
             lambda _: cfg_btn('Add a New Middleware Provider'),
         'middleware_provider':
         [
-            lambda ctx: list_tbl.select_row('name', ctx['provider'].name),
+            lambda ctx: sel.check(Quadicon(ctx['provider'].name).checkbox),
             {
                 'middleware_provider_edit':
                 lambda _: cfg_btn('Edit Selected Middleware Provider'),
@@ -26,7 +25,7 @@ nav.add_branch(
             }],
         'middleware_provider_detail':
         [
-            lambda ctx: list_tbl.click_cells({'name': ctx['provider'].name}),
+            lambda ctx: sel.click(Quadicon(ctx['provider'].name)),
             {
                 'middleware_provider_edit_detail':
                 lambda _: cfg_btn('Edit this Middleware Provider'),
