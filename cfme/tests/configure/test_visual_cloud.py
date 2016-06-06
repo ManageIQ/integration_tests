@@ -145,7 +145,11 @@ def test_start_page(request, setup_a_provider, start_page):
     login.logout()
     login.login_admin()
     level = re.split(r"\/", start_page)
-    assert menu.nav.is_page_active(level[0].strip(), level[1].strip()), "Landing Page Failed"
+    if current_version() >= 5.6:
+        levels = (None, level[0].strip(), level[1].strip())
+    else:
+        levels = (level[0].strip(), level[1].strip())
+    assert menu.nav.is_page_active(*levels), "Landing Page Failed"
 
 
 def test_cloudprovider_noquads(request, setup_a_provider, set_cloud_provider_quad):
