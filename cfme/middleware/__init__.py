@@ -33,3 +33,14 @@ def get_random_list(items, limit):
         return sample(items, limit)
     else:
         return items
+
+
+def parse_properties(props):
+    """Parses provided properties in string format into dictionary format.
+    It splits string into lines and splits each line into key and value."""
+    properties = {}
+    for line in props.splitlines():
+        pair = line.split(': ')
+        if len(pair) == 2:
+            properties.update({pair[0]: pair[1].replace('\'', '')})
+    return properties
