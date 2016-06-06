@@ -1,21 +1,27 @@
 import re
 from cfme.common import Taggable
+from mgmtsystem.hawkular import Path
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
+from cfme.middleware import parse_properties
+from utils import attributize_string
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_middleware_providers
+from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, mon_btn, pwr_btn, MiddlewareBase
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, feed=None, provider=None):
-    """column order: `name`, `hostname`, `feed`, `product`, `provider_name`"""
+    """column order: `name`, `hostname`, `feed`, `product`,
+    `provider_name`, `ems_ref`, `properties`"""
     t_ms = cfmedb()['middleware_servers']
     t_ems = cfmedb()['ext_management_systems']
     query = cfmedb().session.query(t_ms.name, t_ms.hostname, t_ms.feed, t_ms.product,
-                                   t_ems.name.label('provider_name'))\
+                                   t_ems.name.label('provider_name'),
+                                   t_ms.ems_ref, t_ms.properties)\
         .join(t_ems, t_ms.ems_id == t_ems.id)
     if name:
         query = query.filter(t_ms.name == name)
@@ -62,7 +68,9 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         myservers = MiddlewareServer.servers()
 
     """
-    property_tuples = [('name', 'name')]
+    property_tuples = [('name', 'name'), ('feed', 'feed'),
+                       ('hostname', 'hostname'), ('bound_address', 'bind_address'),
+                       ('product_name', 'product'), ('version', 'version')]
 
     def __init__(self, name, provider=None, **kwargs):
         if name is None:
@@ -72,6 +80,9 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         self.product = kwargs['product'] if 'product' in kwargs else None
         self.hostname = kwargs['hostname'] if 'hostname' in kwargs else None
         self.feed = kwargs['feed'] if 'feed' in kwargs else None
+        if 'properties' in kwargs:
+            for property in kwargs['properties']:
+                setattr(self, attributize_string(property), kwargs['properties'][property])
 
     @classmethod
     def servers(cls, provider=None, strict=True):
@@ -105,7 +116,8 @@ class MiddlewareServer(MiddlewareBase, Taggable):
                 _provider = get_crud(get_provider_key(server.provider_name))
             servers.append(MiddlewareServer(name=server.name, hostname=server.hostname,
                                             feed=server.feed, product=server.product,
-                                            provider=_provider))
+                                            provider=_provider,
+                                            properties=parse_properties(server.properties)))
         return servers
 
     @classmethod
@@ -146,6 +158,38 @@ class MiddlewareServer(MiddlewareBase, Taggable):
                 list_tbl.click_row_by_cells({'Server Name': self.name})
         if refresh:
             tb.refresh()
+
+    @variable(alias='ui')
+    def server(self):
+        self.summary.reload()
+        return self
+
+    @server.variant('mgmt')
+    def server_in_mgmt(self):
+        db_srv = _db_select_query(name=self.name, provider=self.provider,
+                                 feed=self.feed).first()
+        if db_srv:
+            path = Path(db_srv.ems_ref)
+            mgmt_srv = self.provider.mgmt.resource_data(feed_id=path.feed,
+                        resource_id=path.resource)
+            if mgmt_srv:
+                return MiddlewareServer(provider=self.provider,
+                                        name=db_srv.name, feed=db_srv.feed,
+                                        properties=mgmt_srv.value)
+        return None
+
+    @server.variant('db')
+    def server_in_db(self):
+        server = _db_select_query(name=self.name, provider=self.provider,
+                                 feed=self.feed).first()
+        if server:
+            return MiddlewareServer(provider=self.provider, feed=server.feed, name=server.name,
+                                    properties=parse_properties(server.properties))
+        return None
+
+    @server.variant('rest')
+    def server_in_rest(self):
+        raise NotImplementedError('This feature not implemented yet')
 
     def reload_server(self):
         self.load_details(refresh=True)

@@ -2,6 +2,7 @@ import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from mgmtsystem.hawkular import Path
+from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
@@ -126,7 +127,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
             datasources.append(MiddlewareDatasource(nativeid=datasource.nativeid,
                                             name=datasource.name,
                                             server=_server, provider=_provider,
-                                            properties=cls._parse_ds_props(datasource.properties)))
+                                            properties=parse_properties(datasource.properties)))
         return datasources
 
     @classmethod
@@ -205,18 +206,9 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
             _server = MiddlewareServer(name=datasource.server_name, provider=self.provider)
             return MiddlewareDatasource(provider=self.provider, server=_server,
                                     nativeid=datasource.nativeid, name=datasource.name,
-                                    properties=self._parse_ds_props(datasource.properties))
+                                    properties=parse_properties(datasource.properties))
         return None
 
     @datasource.variant('rest')
     def datasource_in_rest(self):
         raise NotImplementedError('This feature not implemented yet')
-
-    @classmethod
-    def _parse_ds_props(cls, dsprops):
-        properties = {}
-        for line in dsprops.splitlines():
-            pair = line.split(': ')
-            if len(pair) == 2:
-                properties.update({pair[0]: pair[1].replace('\'', '')})
-        return properties
