@@ -10,7 +10,7 @@ import utils.error as error
 from cfme import Credential
 from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, EC2Provider, wait_for_a_provider,
-    Provider, OpenStackProvider, prop_region)
+    Provider, OpenStackProvider, prop_region, AzureProvider)
 from cfme.web_ui import fill, flash
 from utils import testgen, version
 from utils.providers import get_credentials_from_config

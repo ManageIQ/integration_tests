@@ -11,6 +11,7 @@ from functools import partial
 from operator import methodcaller
 
 from mgmtsystem.virtualcenter import VMWareSystem
+from mgmtsystem.azure import AzureSystem
 from mgmtsystem.scvmm import SCVMMSystem
 from mgmtsystem.ec2 import EC2System
 from mgmtsystem.google import GoogleCloudSystem
@@ -45,6 +46,7 @@ infra_provider_type_map = {
 
 #: mapping of cloud provider type names to ``mgmtsystem`` classes
 cloud_provider_type_map = {
+    'azure': AzureSystem,
     'ec2': EC2System,
     'openstack': OpenstackSystem,
     'gce': GoogleCloudSystem,
@@ -767,6 +769,13 @@ def get_crud(provider_config_name):
             zone=prov_config['zone'],
             region=prov_config['region'],
             credentials={'default': ser_acc_creds},
+            key=provider_config_name)
+    elif prov_type == 'azure':
+        from cfme.cloud.provider import AzureProvider
+        return AzureProvider(name=prov_config['name'],
+            region=prov_config['region'],
+            tenant_id=prov_config['tenant_id'],
+            credentials={'default': credentials},
             key=provider_config_name)
     elif prov_type == 'openstack':
         from cfme.cloud.provider import OpenStackProvider

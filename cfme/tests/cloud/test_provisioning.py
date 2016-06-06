@@ -8,7 +8,7 @@ from textwrap import dedent
 
 from cfme.automate import explorer as automate
 from cfme.cloud.instance import Instance
-from cfme.cloud.provider import OpenStackProvider
+from cfme.cloud.provider import (OpenStackProvider, AzureProvider)
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.update import update
@@ -56,6 +56,13 @@ def test_provision_from_template(request, setup_provider, provider, vm_name, pro
 
     if isinstance(provider, OpenStackProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
+
+    if isinstance(provider, AzureProvider):
+        inst_args['environment__cloud_network'] = provisioning['cloud_network']
+        inst_args['environment__cloud_subnet'] = provisioning['cloud_subnet']
+        inst_args['environment__security_groups'] = provisioning['security_group']
+        inst_args['environment__resource_group'] = provisioning['resource_group']
+        inst_args['hardware__instance_type'] = provisioning['vm_size']
 
     sel.force_navigate("clouds_instances_by_provider")
     instance.create(**inst_args)
