@@ -1053,7 +1053,7 @@ class LDAPAuthSetting(AuthSetting):
             "5.5": AngularSelect("authentication_user_type")}),
         ("user_suffix", Input("authentication_user_suffix")),
         ("get_groups", Input("ldap_role")),
-        ("get_direct_groups", Input("get_direct_groups")),
+        ("get_roles", Input("get_direct_groups")),
         ("follow_referrals", Input("follow_referrals")),
         ("base_dn", Input("authentication_basedn")),
         ("bind_dn", Input("authentication_bind_dn")),
