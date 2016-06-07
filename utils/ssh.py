@@ -42,18 +42,20 @@ class SSHClient(paramiko.SSHClient):
         # deprecated/useless karg, included for backward-compat
         self._keystate = connect_kwargs.pop('keystate', None)
 
-        # Load credentials and destination from confs, set up sane defaults
-        parsed_url = urlparse(store.base_url)
+        # load the defaults for ssh
         default_connect_kwargs = {
-            'username': conf.credentials['ssh']['username'],
-            'password': conf.credentials['ssh']['password'],
-            'hostname': parsed_url.hostname,
             'timeout': 10,
             'allow_agent': False,
             'look_for_keys': False,
             'gss_auth': False
         }
-
+        # Load credentials and destination from confs, if connect_kwargs is empty
+        if not connect_kwargs.get('hostname', None):
+            parsed_url = urlparse(store.base_url)
+            default_connect_kwargs["port"] = ports.SSH
+            default_connect_kwargs['username'] = conf.credentials['ssh']['username'],
+            default_connect_kwargs['password'] = conf.credentials['ssh']['password'],
+            default_connect_kwargs['hostname'] = parsed_url.hostname,
         default_connect_kwargs["port"] = ports.SSH
 
         # Overlay defaults with any passed-in kwargs and store
