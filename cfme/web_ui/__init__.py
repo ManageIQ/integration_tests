@@ -3070,11 +3070,14 @@ class DynamicTable(Pretty):
         return map(sel.text, sel.elements(".//thead/tr/th", root=self.root_loc))
 
     def click_add(self):
-        sel.click(sel.element(".//tbody/tr[@id='new_tr']/td//img", root=self.root_loc))
+        sel.click(sel.element(
+            ".//tbody/tr[@id='new_tr']/td//img | .//tbody/tr[@id='new_tr']/td//i",
+            root=self.root_loc))
 
     def click_save(self):
-        sel.click(sel.element(
-            ".//tbody/tr[@id='new_tr']/td//input[@type='image']", root=self.root_loc))
+        if version.current_version() < "5.6":
+            sel.click(sel.element(
+                ".//tbody/tr[@id='new_tr']/td//input[@type='image']", root=self.root_loc))
 
     def delete_row(self, by):
         pass
