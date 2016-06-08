@@ -210,6 +210,34 @@ def test_host_condition_crud(soft_assert):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
+def test_container_image_condition_crud(soft_assert):
+    expression = "fill_field(Image : Tag, =, {})".format(fauxfactory.gen_alphanumeric())
+    condition = explorer.ContainerImageCondition(
+        fauxfactory.gen_alphanumeric(),
+        expression=expression
+    )
+    # CR
+    condition.create()
+    soft_assert(condition.exists, "The condition {} does not exist!".format(
+        condition.description
+    ))
+    # U
+    with update(condition):
+        condition.notes = "Modified!"
+    sel.force_navigate(
+        "container_image_condition_edit",
+        context={"condition_name": condition.description}
+    )
+    soft_assert(sel.text(condition.form.notes).strip() == "Modified!", "Modification failed!")
+    # D
+    condition.delete()
+    soft_assert(not condition.exists, "The condition {} exists!".format(
+        condition.description
+    ))
+
+
+@pytest.mark.tier(2)
 def test_action_crud(soft_assert):
     action = explorer.Action(
         fauxfactory.gen_alphanumeric(),
