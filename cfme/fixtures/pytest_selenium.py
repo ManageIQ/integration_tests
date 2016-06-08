@@ -1468,7 +1468,7 @@ def select_by_text(select_element, txt):
     def _getter(s):
         try:
             return s.first_selected_option.text
-        except NoSuchElementException:
+        except (NoSuchElementException, AttributeError):
             return None
     return _sel_desel(select_element, _getter,
                       'select_by_visible_text', txt)
