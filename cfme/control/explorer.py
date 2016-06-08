@@ -369,6 +369,17 @@ nav.add_branch(
         "control_explorer_event":
         lambda ctx: accordion_func("Events", "All Events", ctx["event_name"])(None),
 
+        "container_image_condition":
+        [
+            lambda ctx: accordion_func(
+                "Conditions", "All Conditions", "Container Image Conditions",
+                ctx["condition_name"])(None),
+            {
+                "container_image_condition_edit":
+                lambda _: cfg_btn("Edit this Condition")
+            }
+        ],
+
         "host_condition":
         [
             lambda ctx: accordion_func(
@@ -391,6 +402,15 @@ nav.add_branch(
             {
                 "vm_condition_edit":
                 lambda _: cfg_btn("Edit this Condition")
+            }
+        ],
+
+        "container_image_conditions":
+        [
+            accordion_func("Conditions", "All Conditions", "Container Image Conditions"),
+            {
+                "container_image_condition_new":
+                lambda _: cfg_btn("Add a New Container Image Condition")
             }
         ],
 
@@ -622,6 +642,11 @@ class HostCondition(BaseCondition, HostObject):
         version.LOWEST: "Delete this Host Condition",
         '5.4': "Delete this Host / Node Condition"
     })
+
+
+class ContainerImageCondition(BaseCondition, VMObject):
+    PREFIX = "container_image_"
+    DELETE_STRING = "Delete this Image Condition"
 
 
 class BasePolicy(Updateable, Pretty):
