@@ -169,6 +169,7 @@ def vm_name(provider, analysis_type):
 
 
 @pytest.fixture(scope="module")
+@pytest.mark.tier(1)
 def vm_analysis_data(provider, analysis_type):
     base_data = provider.data.get('vm_analysis_new', {}).get('provisioning', {})
     base_data.update(provider.data.get('vm_analysis_new', {}).get('vms', {}).get(analysis_type, {}))

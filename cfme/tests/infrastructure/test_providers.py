@@ -131,6 +131,7 @@ def test_api_port_max_character_validation():
 
 
 @pytest.mark.usefixtures('has_no_infra_providers')
+@pytest.mark.tier(1)
 def test_providers_discovery(request, provider):
     """Tests provider discovery
 
@@ -165,6 +166,7 @@ def test_provider_add_with_bad_credentials(provider):
 
 
 @pytest.mark.usefixtures('has_no_infra_providers')
+@pytest.mark.tier(1)
 def test_provider_crud(provider):
     """Tests provider add with good credentials
 
