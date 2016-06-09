@@ -12,6 +12,7 @@ from cfme.web_ui.menu import extend_nav, nav
 from utils.log import logger
 from utils.update import Updateable
 from utils import version
+from utils.varmeth import variable
 from utils.pretty import Pretty
 
 from configuration import server_region_string
@@ -312,6 +313,16 @@ def set_group_order(items):
     fill(group_order_selector, items)
     sel.click(form_buttons.save)
 
+    
+def build_tree(fid):
+    p_features = store.current_appliance.product_features
+    for feature in p_features:
+        if fid == feature.id:
+            tree = [feature.name]
+            if hasattr(feature, 'parent_id'):
+                tree = build_tree(feature.parent_id) + tree
+            return tree
+
 
 class Role(Updateable, Pretty):
     form = Form(
@@ -327,15 +338,54 @@ class Role(Updateable, Pretty):
         self.vm_restriction = vm_restriction
         self.product_features = product_features or []
 
+    @variable(alias='rest')
     def create(self):
+        features_to_add = []
+        for feature, enabler in self.product_features:
+            for p_feature in store.current_appliance.product_features:
+                if feature == p_feature.identifier:
+                    features_to_add.append({'href': p_feature.href})
+        rest_dict = {
+            'name': self.name,
+            'features': features_to_add
+        }
+        store.current_appliance.rest_api.collections.roles.action.create(rest_dict)
+
+    @create.variant('ui')
+    def create_ui(self):
+        feature_trees = []
+        for feature, enabler in self.product_features:
+            for p_feature in store.current_appliance.product_features:
+                if feature == p_feature.identifier:
+                    feature_trees.append((build_tree(p_feature.id), enabler))
+        print feature_trees
         sel.force_navigate('cfg_accesscontrol_role_add')
         fill(self.form, {'name_txt': self.name,
                          'vm_restriction_select': self.vm_restriction,
-                         'product_features_tree': self.product_features},
+                         'product_features_tree': feature_trees},
              action=form_buttons.add)
         flash.assert_success_message('Role "{}" was saved'.format(self.name))
 
+    @variable(alias='rest')
     def update(self, updates):
+        href = store.current_appliance.rest_api.collections.roles.find_by(name=self.name)[0].href
+        if not updates:
+            return
+        rest_dict = {'href': href}
+        for update in updates:
+            if update == 'product_features':
+                features_to_add = []
+                for feature, enabler in updates[update]:
+                    for p_feature in store.current_appliance.product_features:
+                        if feature == p_feature.identifier:
+                            features_to_add.append({'href': p_feature.href})
+                rest_dict['features'] = features_to_add
+            else:
+                rest_dict[update] = updates[update]
+        store.current_appliance.rest_api.collections.roles.action.edit(rest_dict)
+
+    @update.variant('ui')
+    def update_ui(self, updates):
         sel.force_navigate("cfg_accesscontrol_role_edit", context={"role": self})
         fill(self.form, {'name_txt': updates.get('name'),
                          'vm_restriction_select': updates.get('vm_restriction'),

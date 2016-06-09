@@ -945,6 +945,12 @@ class IPAppliance(object):
         """
         return browser_session(base_url=self.url)
 
+    @cached_property
+    def product_features(self):
+        self.rest_api.collections.features.reload(expand=True)
+        features = self.rest_api.collections.features.all
+        return features
+
     @logger_wrap("Enable internal DB: {}")
     def enable_internal_db(self, region=0, key_address=None, db_password=None,
                            ssh_password=None, log_callback=None):
