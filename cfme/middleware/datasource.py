@@ -11,7 +11,7 @@ from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key
 from utils.providers import list_middleware_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase
+from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -212,3 +212,8 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
     @datasource.variant('rest')
     def datasource_in_rest(self):
         raise NotImplementedError('This feature not implemented yet')
+
+    @classmethod
+    def download(cls, extension, provider=None, server=None):
+        _get_datasources_page(provider, server)
+        download(extension)

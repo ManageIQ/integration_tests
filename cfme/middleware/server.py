@@ -9,7 +9,7 @@ from utils import attributize_string
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_middleware_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, mon_btn, pwr_btn, MiddlewareBase
+from . import LIST_TABLE_LOCATOR, mon_btn, pwr_btn, MiddlewareBase, download
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -204,3 +204,8 @@ class MiddlewareServer(MiddlewareBase, Taggable):
     def open_utilization(self):
         self.load_details(refresh=True)
         mon_btn("Utilization")
+
+    @classmethod
+    def download(cls, extension, provider=None):
+        _get_servers_page(provider)
+        download(extension)

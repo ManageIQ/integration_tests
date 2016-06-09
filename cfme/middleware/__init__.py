@@ -10,6 +10,7 @@ cfg_btn = partial(tb.select, 'Configuration')
 mon_btn = partial(tb.select, 'Monitoring')
 pol_btn = partial(tb.select, 'Policy')
 pwr_btn = partial(tb.select, 'Power')
+download_btn = partial(tb.select, "Download")
 
 LIST_TABLE_LOCATOR = "//div[@id='list_grid']/table"
 
@@ -44,3 +45,11 @@ def parse_properties(props):
         if len(pair) == 2:
             properties.update({pair[0]: pair[1].replace('\'', '')})
     return properties
+
+
+def download(extension):
+    extensions_mapping = {'txt': 'Text', 'csv': 'CSV'}
+    try:
+        download_btn("Download as {}".format(extensions_mapping[extension]))
+    except:
+        raise ValueError("Unknown extention. check the extentions_mapping")
