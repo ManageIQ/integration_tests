@@ -134,6 +134,7 @@ class TestControlOnQuadicons(object):
         soft_assert(
             not test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm running")
 
+    @pytest.mark.tier(1)
     def test_power_on(self, test_vm, verify_vm_stopped, soft_assert, register_event):
         """Tests power on
 
