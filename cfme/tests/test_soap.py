@@ -15,7 +15,8 @@ pytest_generate_tests = testgen.generate(
 
 pytestmark = [
     pytest.mark.ignore_stream("5.5", "upstream"),
-    pytest.mark.uncollectif(lambda: version.current_version() >= "5.6")
+    pytest.mark.uncollectif(lambda: version.current_version() >= "5.6"),
+    pytest.mark.tier(3)
 ]
 
 

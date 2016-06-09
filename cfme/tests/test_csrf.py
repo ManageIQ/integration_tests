@@ -5,6 +5,7 @@ from cfme import dashboard, login
 from utils.wait import wait_for, TimedOutError
 
 
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1285778, 'GH#ManageIQ/manageiq:5657'])
 def test_csrf_post():
     """CSRF should prevent forged POST requests
