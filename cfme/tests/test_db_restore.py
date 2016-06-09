@@ -46,6 +46,7 @@ def get_appliances():
     return (appl1, appl2)
 
 
+@pytest.mark.tier(2)
 @pytest.mark.uncollectif(
     lambda: not (store.current_appliance.is_downstream and
         store.current_appliance.version >= '5.4'))
