@@ -7,9 +7,13 @@ from cfme.web_ui import (
 from cfme.web_ui.menu import nav
 from utils.db import cfmedb
 from utils.varmeth import variable
-from . import cfg_btn, mon_btn, pol_btn, MiddlewareBase
+from . import cfg_btn, mon_btn, pol_btn, download, MiddlewareBase
 
 details_page = Region(infoblock_type='detail')
+
+
+def _get_providers_page():
+    sel.force_navigate('middleware_providers')
 
 nav.add_branch(
     'middleware_providers',
@@ -143,3 +147,8 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
         dates = cfmedb().session.query(ems.created_on,
                                        ems.updated_on).filter(ems.name == self.name).first()
         return dates.updated_on > dates.created_on
+
+    @classmethod
+    def download(cls, extension):
+        _get_providers_page()
+        download(extension)

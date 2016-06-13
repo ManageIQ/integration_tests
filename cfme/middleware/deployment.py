@@ -6,7 +6,7 @@ from cfme.web_ui.menu import nav, toolbar as tb
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_middleware_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase
+from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -184,3 +184,8 @@ class MiddlewareDeployment(MiddlewareBase):
     @deployment.variant('rest')
     def deployment_in_rest(self):
         raise NotImplementedError('This feature not implemented yet')
+
+    @classmethod
+    def download(cls, extension, provider=None, server=None):
+        _get_deployments_page(provider, server)
+        download(extension)
