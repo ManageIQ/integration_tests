@@ -285,3 +285,10 @@ class PaginatorException(CFMEException):
     """Raised by functions in :py:mod:`cfme.web_ui.paginator`"""
 
     pass
+
+
+class MiddlewareServerNotFound(CFMEException):
+    """
+    Raised if a specific Middleware Server cannot be found.
+    """
+    pass
