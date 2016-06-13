@@ -110,7 +110,7 @@ def random_host_condition():
 
 
 @pytest.yield_fixture
-def random_container_image_condition():
+def container_image_condition():
     expression = "fill_field(Image : Tag, =, {})".format(fauxfactory.gen_alphanumeric())
     cond = explorer.ContainerImageCondition(
         fauxfactory.gen_alphanumeric(),
@@ -444,7 +444,7 @@ def test_assign_host_condition_to_host_policy(
 @pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
 def test_assign_events_to_container_image_control_policy(
         random_container_image_control_policy,
-        random_container_image_condition,
+        container_image_condition,
         soft_assert):
     """This test checks whether an event is assigned to container image control policy.
     Steps:
@@ -452,9 +452,9 @@ def test_assign_events_to_container_image_control_policy(
         * Assign an event to the created policy.
     """
     random_container_image_control_policy.assign_conditions(
-        random_container_image_condition)
+        container_image_condition)
     soft_assert(random_container_image_control_policy.is_condition_assigned(
-        random_container_image_condition))
+        container_image_condition))
     random_container_image_control_policy.assign_conditions()  # unassign
 
 
