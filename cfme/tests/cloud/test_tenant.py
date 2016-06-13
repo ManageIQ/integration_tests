@@ -16,6 +16,7 @@ def tenant(provider):
                   provider_key=provider.key)
 
 
+@pytest.mark.uncollect()
 def test_tenant(tenant, provider):
     """ Tests tenant (currently disabled)
 

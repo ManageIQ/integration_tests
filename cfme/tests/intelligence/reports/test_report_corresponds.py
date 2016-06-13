@@ -39,6 +39,7 @@ def report_vms(setup_first_provider):
     report.delete()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1244715])
 def test_custom_vm_report(soft_assert, report_vms):
     if since_date_or_version(version="5.4.0.0.25"):

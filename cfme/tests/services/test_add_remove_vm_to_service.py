@@ -19,7 +19,8 @@ pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
-    pytest.mark.meta(server_roles="+automate")
+    pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.tier(3)
 ]
 
 

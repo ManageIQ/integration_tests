@@ -40,7 +40,7 @@ def close_search():
     search.ensure_advanced_search_closed()
 
 
-pytestmark = [pytest.mark.usefixtures("close_search")]
+pytestmark = [pytest.mark.usefixtures("close_search"), pytest.mark.tier(3)]
 
 
 def test_can_do_advanced_search():

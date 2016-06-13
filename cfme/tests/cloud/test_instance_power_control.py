@@ -15,6 +15,8 @@ def pytest_generate_tests(metafunc):
         metafunc, ['ec2', 'openstack'], required_fields=[('test_power_control', True)])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
 
+pytestmark = [pytest.mark.tier(2)]
+
 
 @pytest.fixture(scope="function")
 def testing_instance(request, setup_provider, provider):

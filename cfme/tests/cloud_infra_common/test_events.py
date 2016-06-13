@@ -11,7 +11,8 @@ from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers',
-        "vm_crud_delete_on_module_finish")
+                            "vm_crud_delete_on_module_finish"),
+    pytest.mark.tier(2)
 ]
 
 

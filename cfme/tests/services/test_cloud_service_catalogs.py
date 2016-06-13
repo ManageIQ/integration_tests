@@ -17,6 +17,7 @@ from utils.wait import wait_for
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.meta(server_roles="+automate"),
+    pytest.mark.tier(2)
 ]
 
 

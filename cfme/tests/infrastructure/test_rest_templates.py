@@ -31,6 +31,7 @@ def template(request, rest_api, a_provider, vm):
     return template
 
 
+@pytest.mark.tier(3)
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_set_ownership(rest_api, template, from_detail):
     if "set_ownership" not in rest_api.collections.templates.action.all:
@@ -53,6 +54,7 @@ def test_set_ownership(rest_api, template, from_detail):
     assert template.miq_group_id == group.id
 
 
+@pytest.mark.tier(2)
 @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
 def test_delete_template(rest_api, template, multiple):
     if multiple:

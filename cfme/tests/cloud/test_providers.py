@@ -10,7 +10,7 @@ import utils.error as error
 from cfme import Credential
 from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, EC2Provider, wait_for_a_provider,
-    Provider, OpenStackProvider, prop_region, AzureProvider)
+    Provider, OpenStackProvider, prop_region)
 from cfme.web_ui import fill, flash
 from utils import testgen, version
 from utils.providers import get_credentials_from_config
@@ -19,6 +19,7 @@ from utils.update import update
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
 
 
+@pytest.mark.tier(3)
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None, d_type="Amazon")
@@ -27,6 +28,7 @@ def test_empty_discovery_form_validation():
     flash.assert_message_match('{} is required'.format(ident))
 
 
+@pytest.mark.tier(3)
 def test_discovery_cancelled_validation():
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, cancel=True, d_type="Amazon")
@@ -36,6 +38,7 @@ def test_discovery_cancelled_validation():
     flash.assert_message_match(msg)
 
 
+@pytest.mark.tier(3)
 def test_add_cancelled_validation(request):
     """Tests that the flash message is correct when add is cancelled."""
     prov = EC2Provider()
@@ -46,6 +49,7 @@ def test_add_cancelled_validation(request):
         '5.5': 'Add of Cloud Provider was cancelled by the user'})
 
 
+@pytest.mark.tier(3)
 def test_password_mismatch_validation():
     cred = Credential(
         principal=fauxfactory.gen_alphanumeric(5),
@@ -56,6 +60,7 @@ def test_password_mismatch_validation():
     flash.assert_message_match('Password/Verify Password do not match')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollect()
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_providers_discovery_amazon():
@@ -65,6 +70,7 @@ def test_providers_discovery_amazon():
     wait_for_a_provider()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_add_with_bad_credentials(provider):
     """ Tests provider add with bad credentials
@@ -77,6 +83,7 @@ def test_provider_add_with_bad_credentials(provider):
         provider.create(validate_credentials=True)
 
 
+@pytest.mark.tier(2)
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_crud(provider):
     """ Tests provider add with good credentials
@@ -98,6 +105,7 @@ def test_provider_crud(provider):
     provider.wait_for_delete()
 
 
+@pytest.mark.tier(3)
 def test_type_required_validation(request, soft_assert):
     """Test to validate type while adding a provider"""
     prov = Provider()
@@ -113,6 +121,7 @@ def test_type_required_validation(request, soft_assert):
         soft_assert(not prov.add_provider_button.can_be_clicked)
 
 
+@pytest.mark.tier(3)
 def test_name_required_validation(request):
     """Tests to validate the name while adding a provider"""
     prov = EC2Provider(
@@ -130,6 +139,7 @@ def test_name_required_validation(request):
         assert prov.properties_form.name_text.angular_help_block == "Required"
 
 
+@pytest.mark.tier(3)
 def test_region_required_validation(request, soft_assert):
     """Tests to validate the region while adding a provider"""
     prov = EC2Provider(
@@ -147,6 +157,7 @@ def test_region_required_validation(request, soft_assert):
             "ng-invalid-required" in prov.properties_form.amazon_region_select.classes)
 
 
+@pytest.mark.tier(3)
 def test_host_name_required_validation(request):
     """Test to validate the hostname while adding a provider"""
     prov = OpenStackProvider(
@@ -165,6 +176,7 @@ def test_host_name_required_validation(request):
         assert prov.properties_form.hostname_text.angular_help_block == "Required"
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: version.current_version() > '5.4')
 def test_ip_address_required_validation(request):
     """Test to validate the ip address while adding a provider"""
@@ -178,6 +190,7 @@ def test_ip_address_required_validation(request):
         prov.create()
 
 
+@pytest.mark.tier(3)
 def test_api_port_blank_validation(request):
     """Test to validate blank api port while adding a provider"""
     prov = OpenStackProvider(
@@ -196,11 +209,13 @@ def test_api_port_blank_validation(request):
         assert prov.properties_form.api_port.angular_help_block == "Required"
 
 
+@pytest.mark.tier(3)
 def test_user_id_max_character_validation():
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51))
     discover(cred, d_type="Amazon")
 
 
+@pytest.mark.tier(3)
 def test_password_max_character_validation():
     password = fauxfactory.gen_alphanumeric(51)
     cred = Credential(
@@ -210,6 +225,7 @@ def test_password_max_character_validation():
     discover(cred, d_type="Amazon")
 
 
+@pytest.mark.tier(3)
 def test_name_max_character_validation(request):
     """Test to validate max character for name field"""
     prov = EC2Provider(
@@ -220,6 +236,7 @@ def test_name_max_character_validation(request):
     prov.create()
 
 
+@pytest.mark.tier(3)
 def test_hostname_max_character_validation(request):
     """Test to validate max character for hostname field"""
     prov = OpenStackProvider(
@@ -231,6 +248,7 @@ def test_hostname_max_character_validation(request):
     prov.create()
 
 
+@pytest.mark.tier(3)
 def test_ip_max_valid_character_validation(request):
     """Test to validate max character for ip address field with valid ip address"""
     prov = OpenStackProvider(
@@ -242,6 +260,7 @@ def test_ip_max_valid_character_validation(request):
     prov.create()
 
 
+@pytest.mark.tier(3)
 def test_ip_max_invalid_character_validation(request):
     """Test to validate max character for ip address field using random string"""
     prov = OpenStackProvider(
@@ -253,6 +272,7 @@ def test_ip_max_invalid_character_validation(request):
     prov.create()
 
 
+@pytest.mark.tier(3)
 def test_api_port_max_character_validation(request):
     """Test to validate max character for api port field"""
     prov = OpenStackProvider(
@@ -265,6 +285,7 @@ def test_api_port_max_character_validation(request):
     prov.create()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 @pytest.mark.meta(blockers=[1278036])
 def test_openstack_provider_has_api_version():

@@ -25,6 +25,7 @@ def enable_candu():
     candu.enable_all()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.usefixtures("setup_infrastructure_providers")
 def test_queue_infrastructure(request, ssh_client, enable_candu):
     local_evm_gz = str(log_path.join('evm.perf.log.gz'))

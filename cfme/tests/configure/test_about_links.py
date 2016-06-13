@@ -8,6 +8,7 @@ import pytest
 import requests
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2246"])
 @pytest.mark.meta(blockers=[1272618])

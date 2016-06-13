@@ -59,6 +59,7 @@ def get_host_data_by_name(provider_key, host_name):
 
 
 # TODO add support for events
+@pytest.mark.tier(2)
 @pytest.mark.meta(
     blockers=[
         BZ(1091033, unblock=lambda datastore: datastore.type != 'iscsi'),

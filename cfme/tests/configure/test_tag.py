@@ -29,6 +29,7 @@ def category():
     cg.delete()
 
 
+@pytest.mark.tier(2)
 def test_tag_crud(category):
     tag = Tag(name=fauxfactory.gen_alphanumeric(8).lower(),
               display_name=fauxfactory.gen_alphanumeric(32),
@@ -89,6 +90,7 @@ class TestTagsViaREST(object):
     def vm(self, request, a_provider, rest_api):
         return _vm(request, a_provider, rest_api)
 
+    @pytest.mark.tier(2)
     def test_edit_tags(self, rest_api, tags):
         new_names = []
         tags_data_edited = []
@@ -108,6 +110,7 @@ class TestTagsViaREST(object):
                 delay=10,
             )
 
+    @pytest.mark.tier(2)
     def test_edit_tag(self, rest_api, tags):
         tag = rest_api.collections.tags.get(name=tags[0].name)
         new_name = 'test_tag_{}'.format(fauxfactory.gen_alphanumeric())
@@ -118,6 +121,7 @@ class TestTagsViaREST(object):
             delay=10,
         )
 
+    @pytest.mark.tier(3)
     @pytest.mark.meta(blockers=[BZ(1290783, forced_streams=["5.5"])])
     @pytest.mark.parametrize(
         "multiple", [False, True],
@@ -133,6 +137,7 @@ class TestTagsViaREST(object):
             with error.expected("ActiveRecord::RecordNotFound"):
                 tag.action.delete()
 
+    @pytest.mark.tier(3)
     def test_create_tag_with_wrong_arguments(self, rest_api):
         data = {
             'name': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
@@ -143,6 +148,7 @@ class TestTagsViaREST(object):
         except APIException as e:
             assert "Category id, href or name needs to be specified" in e.args[0]
 
+    @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         "collection_name", ['clusters', 'hosts', 'data_stores', 'providers', 'resource_pools',
         'services', 'service_templates', 'tenants', 'vms'])

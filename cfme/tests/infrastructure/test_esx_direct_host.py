@@ -88,6 +88,7 @@ def host_provider(_host_provider, provider):
     _host_provider.wait_for_delete()
 
 
+@pytest.mark.tier(2)
 def test_validate(host_provider):
     """Tests that the CFME can manage also just the hosts of VMware.
 

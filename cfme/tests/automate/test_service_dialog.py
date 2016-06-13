@@ -7,7 +7,7 @@ from cfme.automate.service_dialogs import ServiceDialog
 from utils.blockers import BZ
 
 
-pytestmark = [pytest.mark.usefixtures("logged_in")]
+pytestmark = [pytest.mark.usefixtures("logged_in"), pytest.mark.tier(3)]
 
 
 def test_create_service_dialog():

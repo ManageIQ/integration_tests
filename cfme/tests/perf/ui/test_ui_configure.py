@@ -18,6 +18,7 @@ configuration_filters = [
     re.compile(r'^POST \"\/ops\/tree_select\/\?id\=ti\-[0-9\-\_]*\"$')]
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_configure
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_configure_configuration(ui_worker_pid, soft_assert):

@@ -29,6 +29,7 @@ def vm_name(request):
     return vm_name
 
 
+@pytest.mark.tier(2)
 def test_provision_from_template(request, setup_provider, provider, vm_name, provisioning):
     """ Tests instance provision from template
 
@@ -68,6 +69,7 @@ def test_provision_from_template(request, setup_provider, provider, vm_name, pro
     instance.create(**inst_args)
 
 
+@pytest.mark.tier(2)
 def test_provision_from_template_using_rest(
         request, setup_provider, provider, vm_name, rest_api, provisioning):
     """ Tests provisioning from a template using the REST API.
@@ -181,6 +183,7 @@ def copy_domains(domain):
 
 
 # Not collected for EC2 in generate_tests above
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
@@ -250,6 +253,7 @@ def test_provision_from_template_with_attached_disks(
 
 
 # Not collected for EC2 in generate_tests above
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1160342])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
@@ -319,6 +323,7 @@ def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
 
 
 # Not collected for EC2 in generate_tests above
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1186413])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_provision_with_additional_volume(request, setup_provider, provider, vm_name,

@@ -135,6 +135,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
     return full_path
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1099341, 1205898])
 def test_db_backup_schedule(request, db_backup_data):
     """ Test scheduled one-type backup on given machines using smb/nfs

@@ -12,6 +12,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, None)
 
 pytestmark = [pytest.mark.tier(1)]
 
+
 @pytest.yield_fixture(scope="module")
 def enable_candu():
     try:

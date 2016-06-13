@@ -20,6 +20,7 @@ explorer_filters = [
     re.compile(r'^POST \"\/miq_policy\/tree_select\/\?id\=al\-[0-9]*\"$')]
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1182271])
 @pytest.mark.perf_ui_control
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")

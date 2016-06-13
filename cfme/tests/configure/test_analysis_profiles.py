@@ -12,6 +12,10 @@ from utils.update import update
 records_table = Table("//div[@id='records_div']/table")
 
 
+pytestmark = [pytest.mark.tier(3)]
+
+
+@pytest.mark.tier(2)
 def test_vm_analysis_profile_crud():
     """CRUD for VM analysis profiles."""
     p = VMAnalysisProfile(
@@ -24,6 +28,7 @@ def test_vm_analysis_profile_crud():
     p.delete()
 
 
+@pytest.mark.tier(2)
 def test_host_analysis_profile_crud():
     """CRUD for Host analysis profiles."""
     p = HostAnalysisProfile(

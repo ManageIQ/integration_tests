@@ -16,6 +16,7 @@ class TestVmOwnershipRESTAPI(object):
     def vm(self, request, a_provider, rest_api):
         return _vm(request, a_provider, rest_api)
 
+    @pytest.mark.tier(3)
     def test_vm_set_ownership(self, rest_api, vm):
         if "set_ownership" not in rest_api.collections.services.action.all:
             pytest.skip("Set owner action for service is not implemented in this version")
@@ -29,6 +30,7 @@ class TestVmOwnershipRESTAPI(object):
         assert hasattr(rest_vm, "evm_owner_id")
         assert rest_vm.evm_owner_id == user.id
 
+    @pytest.mark.tier(3)
     def test_vms_set_ownership(self, rest_api, vm):
         if "set_ownership" not in rest_api.collections.services.action.all:
             pytest.skip("Set owner action for service is not implemented in this version")
@@ -42,6 +44,7 @@ class TestVmOwnershipRESTAPI(object):
         assert hasattr(rest_vm, "miq_group_id")
         assert rest_vm.miq_group_id == group.id
 
+    @pytest.mark.tier(3)
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
     def test_set_vm_owner(self, request, rest_api, vm, from_detail):
         """Test whether set_owner action from the REST API works.

@@ -10,7 +10,8 @@ from utils import testgen
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('uses_infra_providers')
+    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.tier(2)
 ]
 
 
@@ -64,6 +65,7 @@ def vm_name():
     return vm_name
 
 
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1200783, 1207209])
 def test_iso_provision_from_template(provider, vm_name, smtp_test, datastore_init,
                                      request, setup_provider):

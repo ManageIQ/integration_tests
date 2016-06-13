@@ -19,6 +19,7 @@ chargeback_filters = [
     re.compile(r'^POST \"\/chargeback\/tree_select\/\?id\=[A-Za-z0-9\-\_]*\"$')]
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1174300])
 @pytest.mark.perf_ui_intelligence
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
@@ -40,6 +41,7 @@ def test_perf_ui_intelligence_reports(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, reports_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_intelligence
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_intelligence_chargeback(ui_worker_pid, soft_assert):

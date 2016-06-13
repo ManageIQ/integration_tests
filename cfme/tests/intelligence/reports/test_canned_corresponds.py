@@ -17,6 +17,7 @@ def setup_a_provider():
     _setup_a_provider("infra")
 
 
+@pytest.mark.tier(3)
 def test_providers_summary(soft_assert, setup_a_provider):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
@@ -49,6 +50,7 @@ def test_providers_summary(soft_assert, setup_a_provider):
             "Physical CPU count does not match at {}".format(provider["Name"]))
 
 
+@pytest.mark.tier(3)
 def test_cluster_relationships(soft_assert, setup_a_provider):
     path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
     report = CannedSavedReport.new(path)

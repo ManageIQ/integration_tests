@@ -10,7 +10,8 @@ from utils import testgen
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
-    pytest.mark.usefixtures('uses_infra_providers')
+    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.tier(2)
 ]
 
 

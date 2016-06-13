@@ -51,7 +51,7 @@ def get_expression(user_input=False, op=">"):
         return expression + ", {})"
 
 
-pytestmark = [pytest.mark.usefixtures("close_search")]
+pytestmark = [pytest.mark.usefixtures("close_search"), pytest.mark.tier(3)]
 
 
 @pytest.fixture(scope="module")

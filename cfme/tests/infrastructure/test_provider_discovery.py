@@ -82,6 +82,7 @@ def delete_providers_after_test():
     clear_infra_providers()
 
 
+@pytest.mark.tier(2)
 @pytest.mark.usefixtures('has_no_infra_providers', 'delete_providers_after_test')
 def test_discover_infra(providers_for_discover, start_ip, max_range):
     rhevm = False

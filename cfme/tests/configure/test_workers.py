@@ -4,6 +4,7 @@ import pytest
 from cfme.configure import configuration
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.nondestructive
 def test_restart_workers():

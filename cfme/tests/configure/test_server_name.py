@@ -7,6 +7,8 @@ from fixtures.pytest_store import store
 from cfme.web_ui import flash, InfoBlock
 from utils import clear_property_cache
 
+
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_server_name():
     """Tests that changing the server name updates the about page"""

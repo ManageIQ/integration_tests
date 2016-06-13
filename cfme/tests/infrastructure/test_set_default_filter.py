@@ -14,6 +14,9 @@ def provider():
     return setup_a_provider(prov_class="infra", prov_type="virtualcenter")
 
 
+pytestmark = [pytest.mark.tier(3)]
+
+
 def test_set_default_host_filter(provider, request):
     """ Test for setting default filter for hosts."""
 

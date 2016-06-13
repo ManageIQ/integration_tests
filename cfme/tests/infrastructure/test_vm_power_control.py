@@ -15,7 +15,7 @@ from utils.version import appliance_is_downstream, current_version
 appliance_is_downstream  # To shut up lint, will be used in string expression then
 
 
-pytestmark = [pytest.mark.long_running]
+pytestmark = [pytest.mark.long_running, pytest.mark.tier(2)]
 
 # GLOBAL vars
 random_vm_test = []    # use the same values(provider/vm) for all the quadicon tests

@@ -17,6 +17,7 @@ from utils.update import update
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
@@ -24,6 +25,7 @@ def test_empty_discovery_form_validation():
     flash.assert_message_match('At least 1 item must be selected for discovery')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_discovery_cancelled_validation():
     """ Tests that the flash message is correct when discovery is cancelled."""
@@ -31,6 +33,7 @@ def test_discovery_cancelled_validation():
     flash.assert_message_match('Infrastructure Providers Discovery was cancelled by the user')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_add_cancelled_validation():
     """Tests that the flash message is correct when add is cancelled."""
@@ -43,6 +46,7 @@ def test_add_cancelled_validation():
     flash.assert_message_match(msg)
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_type_required_validation():
     """Test to validate type while adding a provider"""
@@ -51,6 +55,7 @@ def test_type_required_validation():
         prov.create()
 
 
+@pytest.mark.tier(3)
 def test_name_required_validation():
     """Tests to validate the name while adding a provider"""
     prov = VMwareProvider(
@@ -62,6 +67,7 @@ def test_name_required_validation():
         prov.create()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[GH('RedHatQE/cfme_tests:3036', upstream_only=False, since='5.6')])
 def test_host_name_required_validation():
     """Test to validate the hostname while adding a provider"""
@@ -74,6 +80,7 @@ def test_host_name_required_validation():
         prov.create()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1209756])
 @pytest.mark.uncollectif(lambda: version.current_version() > "5.4.0.0.24")
 def test_ip_required_validation():
@@ -87,6 +94,7 @@ def test_ip_required_validation():
         prov.create()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.xfail(message='http://cfme-tests.readthedocs.org/guides/gotchas.html#'
     'selenium-is-not-clicking-on-the-element-it-says-it-is')
 def test_name_max_character_validation():
@@ -99,6 +107,7 @@ def test_name_max_character_validation():
     prov.delete(cancel=False)
 
 
+@pytest.mark.tier(3)
 def test_host_name_max_character_validation():
     """Test to validate max character for host name field"""
     prov = VMwareProvider(
@@ -109,6 +118,7 @@ def test_host_name_max_character_validation():
     prov.delete(cancel=False)
 
 
+@pytest.mark.tier(3)
 def test_ip_max_character_validation():
     """Test to validate max character for ip address field"""
     prov = VMwareProvider(
@@ -119,6 +129,7 @@ def test_ip_max_character_validation():
     prov.delete(cancel=False)
 
 
+@pytest.mark.tier(3)
 def test_api_port_max_character_validation():
     """Test to validate max character for api port field"""
     prov = RHEVMProvider(
@@ -144,6 +155,7 @@ def test_providers_discovery(request, provider):
     wait_for_a_provider()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_add_with_bad_credentials(provider):
     """Tests provider add with bad credentials

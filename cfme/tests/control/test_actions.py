@@ -36,8 +36,6 @@ from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
 
-pytestmark = [pytest.mark.meta(server_roles="+automate +smartproxy +smartstate")]
-
 
 class VMWrapper(Pretty):
     """This class binds a provider_mgmt object with VM name. Useful for on/off operation"""
@@ -94,7 +92,9 @@ pytestmark = [
         BZ(
             1149128,
             unblock=lambda provider: not isinstance(provider.mgmt, mgmtsystem.scvmm.SCVMMSystem))
-    ])
+    ]),
+    pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
+    pytest.mark.tier(2)
 ]
 
 

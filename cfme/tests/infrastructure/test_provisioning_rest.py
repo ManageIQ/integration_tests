@@ -53,6 +53,7 @@ def provision_data(rest_api_modscope, provider, small_template_modscope):
 
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
+@pytest.mark.tier(2)
 @pytest.mark.meta(server_roles="+automate")
 @pytest.mark.usefixtures("setup_provider")
 def test_provision(request, provision_data, provider, rest_api):

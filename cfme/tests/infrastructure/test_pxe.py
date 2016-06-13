@@ -13,6 +13,7 @@ def has_no_pxe_servers():
     pxe.remove_all_pxe_servers()
 
 
+@pytest.mark.tier(2)
 @pytest.mark.usefixtures('has_no_pxe_servers')
 def test_pxe_server_crud(pxe_name, pxe_server_crud):
     """

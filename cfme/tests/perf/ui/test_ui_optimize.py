@@ -21,6 +21,7 @@ bottlenecks_filters = [
     re.compile(r'^POST \"\/miq_capacity\/optimize_tree_select\/\?id\=h\-[0-9\-\_]*\"$')]
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_optimize
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_optimize_utilization(ui_worker_pid, soft_assert):
@@ -38,6 +39,7 @@ def test_perf_ui_optimize_utilization(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, explorer_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_optimize
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_optimize_bottlenecks(ui_worker_pid, soft_assert):

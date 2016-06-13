@@ -17,6 +17,7 @@ def policy_profile(request):
     return profile
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202229], automates=[1202229])
 def test_policy_profiles_listed(policy_profile):
     """This test verifies that policy profiles are displayed in the selector for export.

@@ -31,7 +31,7 @@ def close_search():
     search.ensure_advanced_search_closed()
 
 
-pytestmark = [pytest.mark.usefixtures("close_search")]
+pytestmark = [pytest.mark.usefixtures("close_search"), pytest.mark.tier(3)]
 
 
 @pytest.fixture(scope="module")

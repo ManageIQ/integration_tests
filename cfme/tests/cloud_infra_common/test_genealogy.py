@@ -7,7 +7,8 @@ from utils import testgen
 from utils.providers import is_cloud_provider
 
 pytestmark = [
-    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider')
+    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider'),
+    pytest.mark.tier(2)
 ]
 
 

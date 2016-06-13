@@ -6,6 +6,7 @@ from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
 import fauxfactory
+import pytest
 
 
 def appliance_date():
@@ -27,6 +28,7 @@ def clear_ntp_settings():
         "stat --format '%y' /etc/ntp.conf")[1], num_sec=60, delay=10)
 
 
+@pytest.mark.tier(2)
 def test_ntp_crud(request):
     # Adding finalizer
     request.addfinalizer(configuration.set_ntp_servers)
@@ -39,6 +41,7 @@ def test_ntp_crud(request):
     configuration.set_ntp_servers()
 
 
+@pytest.mark.tier(3)
 def test_ntp_server_max_character(request):
     request.addfinalizer(clear_ntp_settings)
     ntp_file_date_stamp = store.current_appliance.ssh_client.run_command(
@@ -48,6 +51,7 @@ def test_ntp_server_max_character(request):
         "stat --format '%y' /etc/ntp.conf")[1], num_sec=60, delay=10)
 
 
+@pytest.mark.tier(3)
 def test_ntp_conf_file_update_check(request):
     request.addfinalizer(configuration.set_ntp_servers)
     ntp_file_date_stamp = store.current_appliance.ssh_client.run_command(
@@ -73,6 +77,7 @@ def test_ntp_conf_file_update_check(request):
         assert status[0] is False, "Found clock record '{}' in /etc/ntp.conf file".format(clock)
 
 
+@pytest.mark.tier(3)
 def test_ntp_server_check(request):
     request.addfinalizer(clear_ntp_settings)
     orig_date = appliance_date()
@@ -107,5 +112,6 @@ def test_ntp_server_check(request):
     quit()
 
 
+@pytest.mark.tier(3)
 def test_clear_ntp_settings(request):
     request.addfinalizer(configuration.set_ntp_servers)

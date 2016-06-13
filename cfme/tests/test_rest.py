@@ -60,6 +60,7 @@ def vm(request, a_provider, rest_api):
     return _vm(request, a_provider, rest_api)
 
 
+@pytest.mark.tier(2)
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])

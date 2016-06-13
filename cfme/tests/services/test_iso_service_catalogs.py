@@ -18,6 +18,7 @@ from utils.blockers import BZ
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('logged_in', 'vm_name', 'uses_infra_providers'),
+    pytest.mark.tier(2)
 ]
 
 
