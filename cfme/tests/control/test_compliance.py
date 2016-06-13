@@ -25,7 +25,7 @@ pytestmark = [
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles=["+automate", "+smartstate", "+smartproxy"]),
     pytest.mark.uncollectif(lambda provider: provider.type in {"scvmm"}),
-    pytest.mark(3)
+    pytest.mark.tier(3)
 ]
 
 
