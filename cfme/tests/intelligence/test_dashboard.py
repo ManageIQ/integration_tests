@@ -32,6 +32,7 @@ def widgets():
     DefaultDashboard.reset_widgets()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202394])
 def test_widgets_operation(request):
     sel.force_navigate("dashboard")
@@ -51,6 +52,7 @@ def test_widgets_operation(request):
         widget.content
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(
     blockers=[
         BZ(1110171, unblock=lambda number_dashboards: number_dashboards != 1)
@@ -92,6 +94,7 @@ def test_custom_dashboards(request, soft_assert, number_dashboards):
         pytest.fail("No dashboard selection tabs present on dashboard!")
 
 
+@pytest.mark.tier(3)
 def test_verify_rss_links(widgets_generated):
     """This test verifies that RSS links on dashboard are working.
 
@@ -112,6 +115,7 @@ def test_verify_rss_links(widgets_generated):
             assert 200 <= req.status_code < 400, "The url {} seems malformed".format(repr(url))
 
 
+@pytest.mark.tier(3)
 def test_widgets_reorder(widgets, soft_assert):
     """In this test we try to reorder first two widgets in the first column of a
        default dashboard.
@@ -134,6 +138,7 @@ def test_widgets_reorder(widgets, soft_assert):
     soft_assert(old_widgets_ids_list == new_widgets_ids_list, "Drag and drop failed.")
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1316134, forced_streams=['5.4'])])
 def test_drag_and_drop_widget_to_the_bottom_of_another_column(widgets, soft_assert):
     """In this test we try to drag and drop a left upper widget to

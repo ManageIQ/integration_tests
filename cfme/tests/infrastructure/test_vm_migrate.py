@@ -17,6 +17,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1256903])
 def test_vm_migrate(setup_provider, provider, request):
     """Tests migration of a vm

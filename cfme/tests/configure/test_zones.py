@@ -8,6 +8,7 @@ from utils.update import update
 from utils import version
 
 
+@pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
 @pytest.mark.smoke
@@ -34,6 +35,7 @@ def test_zone_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_cancel_validation():
     zone = conf.Zone(
@@ -47,6 +49,7 @@ def test_zone_add_cancel_validation():
     flash.assert_message_match(msg)
 
 
+@pytest.mark.tier(2)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_change_appliance_zone(request):

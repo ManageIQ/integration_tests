@@ -16,6 +16,7 @@ def vm_name(request, a_provider, rest_api):
     return _vm(request, a_provider, rest_api)
 
 
+@pytest.mark.tier(3)
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_delete(vm_name, rest_api, from_detail):
     vm = rest_api.collections.vms.get(name=vm_name)

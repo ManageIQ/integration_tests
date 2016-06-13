@@ -16,7 +16,8 @@ from cfme.web_ui import InfoBlock
 pytestmark = [
     pytest.mark.uncollectif(
         lambda: current_version() < "5.5"),
-    pytest.mark.usefixtures('setup_provider')]
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.tier(2)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 

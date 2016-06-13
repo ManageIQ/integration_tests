@@ -15,6 +15,9 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
+pytestmark = [pytest.mark.tier(2)]
+
+
 @pytest.fixture(scope="module")
 def set_grid():
     sel.force_navigate("clouds_images")

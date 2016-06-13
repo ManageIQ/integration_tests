@@ -18,7 +18,8 @@ from utils.blockers import BZ
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.ignore_stream("upstream")
+    pytest.mark.ignore_stream("upstream"),
+    pytest.mark.tier(2)
 ]
 
 AWS_TEMPLATE = """

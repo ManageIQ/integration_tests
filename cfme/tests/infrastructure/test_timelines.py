@@ -13,6 +13,9 @@ from utils.log import logger
 from utils.wait import wait_for
 
 
+pytestmark = [pytest.mark.tier(2)]
+
+
 @pytest.fixture(scope="module")
 def delete_fx_provider_event(db, provider):
     logger.debug("Deleting timeline events for provider name %s", provider.name)

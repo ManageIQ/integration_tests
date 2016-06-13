@@ -20,6 +20,7 @@ def automation_requests_data(vm):
     return _automation_requests_data(vm)
 
 
+@pytest.mark.tier(3)
 @pytest.mark.parametrize(
     "multiple", [False, True],
     ids=["one_request", "multiple_requests"])

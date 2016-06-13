@@ -20,6 +20,7 @@ customization_filters = [
     re.compile(r'^POST \"\/miq_ae_customization\/tree_select\/\?id\=odg\-[A-Za-z0-9\-\_]*\"$')]
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_automate
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_automate_explorer(ui_worker_pid, soft_assert):
@@ -38,6 +39,7 @@ def test_perf_ui_automate_explorer(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, explorer_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_automate
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_automate_customization(ui_worker_pid, soft_assert):

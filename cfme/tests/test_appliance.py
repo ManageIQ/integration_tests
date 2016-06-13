@@ -6,7 +6,7 @@ import pytest
 from utils import db, version
 from utils.blockers import BZ
 
-pytestmark = pytest.mark.smoke
+pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 
 
 def _rpms_present_packages():

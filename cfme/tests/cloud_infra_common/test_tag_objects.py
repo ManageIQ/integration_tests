@@ -32,7 +32,8 @@ pytestmark = [
         "clouds_tenants",
         # "clouds_security_groups",  # Does not have grid view selector
     ]),
-    pytest.mark.usefixtures("setup_first_provider")
+    pytest.mark.usefixtures("setup_first_provider"),
+    pytest.mark.tier(3)
 ]
 
 

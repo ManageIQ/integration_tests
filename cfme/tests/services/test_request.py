@@ -18,6 +18,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcent
     scope="module")
 
 
+@pytest.mark.tier(3)
 def test_copy_request(setup_provider, provider, catalog_item, request):
     """Automate BZ 1194479"""
     vm_name = catalog_item.provisioning_data["vm_name"]

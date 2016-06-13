@@ -21,6 +21,7 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+notifier"]),
     pytest.mark.usefixtures("provider", "full_template"),
+    pytest.mark.tier(3)
 ]
 
 CANDU_PROVIDER_TYPES = {"virtualcenter"}  # TODO: rhevm

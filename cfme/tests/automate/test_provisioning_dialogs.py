@@ -18,6 +18,7 @@ def dialog():
         dlg.delete()
 
 
+@pytest.mark.tier(3)
 def test_provisioning_dialog_crud(dialog):
     dialog.create()
     assert dialog.exists
@@ -38,6 +39,7 @@ for nav_loc, name in provisioning_dialogs.ProvisioningDialog.ALLOWED_TYPES:
     sort_by_params.append((nav_loc, "Description", "descending"))
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1096388])
 @pytest.mark.parametrize(("nav_loc", "by", "order"), sort_by_params)
 def test_provisioning_dialogs_sorting(nav_loc, by, order):

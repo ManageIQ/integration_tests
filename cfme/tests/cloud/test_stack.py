@@ -34,25 +34,31 @@ def stack(setup_provider, provider, provisioning):
     return stack
 
 
+@pytest.mark.tier(3)
 def test_security_group_link(stack):
     stack.nav_to_security_group_link()
 
 
+@pytest.mark.tier(3)
 def test_parameters_link(stack):
     stack.nav_to_parameters_link()
 
 
+@pytest.mark.tier(3)
 def test_outputs_link(stack):
     stack.nav_to_output_link()
 
 
+@pytest.mark.tier(3)
 def test_resources_link(stack):
     stack.nav_to_resources_link()
 
 
+@pytest.mark.tier(3)
 def test_edit_tags(stack):
     stack.edit_tags("Cost Center *", "Cost Center 001")
 
 
+@pytest.mark.tier(3)
 def test_delete(stack):
     stack.delete()

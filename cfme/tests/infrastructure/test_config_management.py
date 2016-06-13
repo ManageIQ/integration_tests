@@ -53,6 +53,7 @@ def tag(category):
     tag.delete()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
     version.current_version() < "5.6")
 @pytest.mark.meta(blockers=[
@@ -66,6 +67,7 @@ def test_config_manager_detail_config_btn(request, config_manager):
         context={'manager': config_manager})
 
 
+@pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
     version.current_version() < "5.6")
 @pytest.mark.meta(blockers=[
@@ -81,6 +83,7 @@ def test_config_manager_add(request, config_manager_obj):
         config_manager_obj.create()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
     version.current_version() < "5.6")
 @pytest.mark.meta(blockers=[
@@ -106,6 +109,7 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
             config_manager_obj.create()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
     version.current_version() < "5.6")
 @pytest.mark.meta(blockers=[BZ(1319751, forced_streams=["5.5", "5.6"])])
@@ -119,6 +123,7 @@ def test_config_manager_add_invalid_creds(request, config_manager_obj):
             config_manager_obj.create()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
     version.current_version() < "5.6")
 @pytest.mark.meta(blockers=[
@@ -136,6 +141,7 @@ def test_config_manager_edit(request, config_manager):
         "Failed to update configuration manager's name"
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
     version.current_version() < "5.6")
 @pytest.mark.meta(blockers=[
@@ -148,6 +154,7 @@ def test_config_manager_remove(config_manager):
 
 
 # Disable this test for Tower, no Configuration profiles can be retrieved from Tower side yet
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
 @pytest.mark.meta(blockers=[
     BZ(

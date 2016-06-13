@@ -11,6 +11,11 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
+pytestmark = [
+    pytest.mark.tier(3)
+]
+
+
 @pytest.yield_fixture(scope="module")
 def role_only_user_owned():
     login.login_admin()

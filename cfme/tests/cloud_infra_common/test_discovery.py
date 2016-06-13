@@ -52,6 +52,7 @@ def wait_for_vm_state_changes(vm, timeout=600):
         raise CFMEException("VM should be Archived but it is Orphaned now.")
 
 
+@pytest.mark.tier(2)
 def test_vm_discovery(request, setup_provider, provider, vm_crud):
     """ Tests whether cfme will discover a vm change (add/delete) without being manually refreshed.
 

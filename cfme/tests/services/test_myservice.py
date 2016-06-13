@@ -17,6 +17,7 @@ pytestmark = [
     pytest.mark.usefixtures("vm_name", "catalog_item"),
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.long_running,
+    pytest.mark.tier(2)
 ]
 
 

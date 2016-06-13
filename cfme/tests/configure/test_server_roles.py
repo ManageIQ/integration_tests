@@ -30,6 +30,7 @@ def roles(request, all_possible_roles):
     return result
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.uncollectif(lambda: not server_roles_conf["all"])
 def test_server_roles_changing(request, roles):

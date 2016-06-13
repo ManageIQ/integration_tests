@@ -107,6 +107,7 @@ def copy_instance(request, copy_domain):
     instance.copy_to(copy_domain)
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=1219950)
 def test_dynamicdropdown_dialog(dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()

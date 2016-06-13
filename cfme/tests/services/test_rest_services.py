@@ -12,6 +12,9 @@ from utils.wait import wait_for
 from utils import error, version
 
 
+pytestmark = [pytest.mark.tier(2)]
+
+
 class TestServiceRESTAPI(object):
     @pytest.fixture(scope="module")
     def a_provider(self):

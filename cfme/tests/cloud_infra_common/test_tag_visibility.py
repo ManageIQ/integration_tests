@@ -77,6 +77,7 @@ def tagged_vm(new_tag, setup_provider, provider):
     tag_vm.remove_tag(new_tag)
 
 
+@pytest.mark.tier(3)
 def test_tag_vis_vm(request, setup_provider, provider, tagged_vm, new_user):
     with new_user:
         assert tagged_vm.exists, "vm not found"

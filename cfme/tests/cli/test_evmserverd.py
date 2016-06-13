@@ -17,6 +17,7 @@ def start_evmserverd_after_module(ssh_client_modscope):
 pytestmark = [pytest.mark.usefixtures("start_evmserverd_after_module")]
 
 
+@pytest.mark.tier(1)
 def test_evmserverd_stop(ssh_client):
     """Tests whether stopping the evmserverd really stops the CFME server processes.
 
@@ -46,6 +47,7 @@ def test_evmserverd_stop(ssh_client):
         assert "code=exited" in status.output
 
 
+@pytest.mark.tier(1)
 @pytest.mark.uncollectif(lambda: current_version() >= "5.5")
 def test_evmserverd_start_twice(ssh_client):
     """If evmserverd start is ran twice, it will then tell that it is already running.

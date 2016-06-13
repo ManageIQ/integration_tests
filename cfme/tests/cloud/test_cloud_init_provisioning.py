@@ -40,6 +40,7 @@ def vm_name(request):
     return vm_name
 
 
+@pytest.mark.tier(3)
 def test_provision_cloud_init(request, setup_provider, provider, provisioning,
                               setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init

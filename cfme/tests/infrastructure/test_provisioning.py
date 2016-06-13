@@ -19,7 +19,8 @@ pytestmark = [
         BZ(
             1265466,
             unblock=lambda provider: not isinstance(provider.mgmt, RHEVMSystem))
-    ])
+    ]),
+    pytest.mark.tier(2)
 ]
 
 

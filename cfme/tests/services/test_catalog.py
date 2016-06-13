@@ -9,6 +9,7 @@ import cfme.tests.configure.test_access_control as tac
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
+@pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_catalog_crud():
     cat = Catalog(name=fauxfactory.gen_alphanumeric(),
@@ -19,6 +20,7 @@ def test_catalog_crud():
     cat.delete()
 
 
+@pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_catalog_duplicate_name():
     cat = Catalog(name=fauxfactory.gen_alphanumeric(),
@@ -29,6 +31,7 @@ def test_catalog_duplicate_name():
     cat.delete()
 
 
+@pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_permissions_catalog_add(setup_cloud_providers):
     """ Tests that a catalog can be added only with the right permissions"""

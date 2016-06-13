@@ -63,6 +63,7 @@ def custom_widgets(request):
     return ws
 
 
+@pytest.mark.tier(3)
 def test_widgets_on_dashboard(request, dashboard, default_widgets, custom_widgets, soft_assert):
     with update(dashboard):
         dashboard.widgets = map(lambda w: w.title, custom_widgets)

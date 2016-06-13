@@ -22,6 +22,7 @@ workloads_filters = [
     re.compile(r'^POST \"\/vm_or_template\/tree_select\/\?id\=[A-Za-z0-9\-\_]*\"$')]
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_services_my_services(ui_worker_pid, soft_assert):
@@ -39,6 +40,7 @@ def test_perf_ui_services_my_services(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, my_services_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_services_catalogs(ui_worker_pid, soft_assert):
@@ -58,6 +60,7 @@ def test_perf_ui_services_catalogs(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, my_services_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1179478])
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")

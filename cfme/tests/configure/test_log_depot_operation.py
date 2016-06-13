@@ -199,6 +199,7 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
     return credentials
 
 
+@pytest.mark.tier(3)
 @pytest.mark.nondestructive
 @pytest.mark.meta(blockers=[1335824], forced_streams=['5.6', 'upstream'])
 def test_collect_log_depot(depot_type, depot_machine, depot_credentials, depot_ftp,
@@ -280,6 +281,7 @@ def test_collect_log_depot(depot_type, depot_machine, depot_credentials, depot_f
                         datetimes[i][2], datetimes[i + 1][2]))
 
 
+@pytest.mark.tier(3)
 def test_collect_unconfigured(request, soft_assert):
     """ Test checking is collect button enable and disable after log depot was configured
 

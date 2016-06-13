@@ -9,7 +9,8 @@ from utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers')
+    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
+    pytest.mark.tier(2)
 ]
 
 

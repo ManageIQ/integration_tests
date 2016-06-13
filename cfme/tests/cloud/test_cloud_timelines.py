@@ -14,6 +14,8 @@ from utils.wait import wait_for
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
 
+pytestmark = [pytest.mark.tier(2)]
+
 
 @pytest.fixture(scope="module")
 def delete_fx_provider_event(db, provider):

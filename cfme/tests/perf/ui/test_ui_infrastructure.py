@@ -71,6 +71,7 @@ infra_pxe_filters = [
     re.compile(r'^POST \"\/pxe\/tree_select\/\?id\=pit\-[0-9]*\"$')]
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_providers(ui_worker_pid, soft_assert):
@@ -87,6 +88,7 @@ def test_perf_ui_infra_providers(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, infra_provider_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_clusters(ui_worker_pid, soft_assert):
@@ -114,6 +116,7 @@ def test_perf_ui_infra_clusters(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, cluster_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_hosts(ui_worker_pid, soft_assert):
@@ -133,6 +136,7 @@ def test_perf_ui_infra_hosts(ui_worker_pid, soft_assert):
 
 
 # Currently unskip on 1175504 since a large environment is a requirement for this bug
+@pytest.mark.tier(3)
 @pytest.mark.meta(
     blockers=[
         1086386,
@@ -159,6 +163,7 @@ def test_perf_ui_infra_vm_explorer(ui_worker_pid, soft_assert):
 
 
 # Currently unskip 1129260 since a large environment is a requirement for this bug
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[BZ(1129260, unblock=True)])
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
@@ -188,6 +193,7 @@ def test_perf_ui_infra_resource_pools(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, resource_pool_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_datastores(ui_worker_pid, soft_assert):
@@ -206,6 +212,7 @@ def test_perf_ui_infra_datastores(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, storage_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_pxe(ui_worker_pid, soft_assert):

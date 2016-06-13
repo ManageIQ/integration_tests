@@ -5,6 +5,7 @@ from cfme.configure.about import product_assistance as about
 from utils.version import current_version
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_version():
     """Check version presented in UI against version retrieved directly from the machine.
