@@ -1,8 +1,11 @@
+# added new list_tbl definition
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb
+from cfme.web_ui import toolbar as tb, CheckboxTable
 from cfme.web_ui.menu import nav
-from . import list_tbl, pol_btn, details_page
+from . import pol_btn, details_page
+
+list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
 nav.add_branch(
     'containers_projects',
@@ -51,7 +54,6 @@ class Project(Taggable):
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
-
         Args:
             *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
         Returns: A string representing the contents of the InfoBlock's value.
@@ -67,7 +69,7 @@ class Project(Taggable):
                         'project': self, 'provider': self.provider})
         else:
             sel.force_navigate(
-                'containers_pod',
+                'containers_project',
                 context={
                     'project': self,
                     'provider': self.provider})
