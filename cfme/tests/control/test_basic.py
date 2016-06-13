@@ -445,7 +445,7 @@ def test_assign_host_condition_to_host_policy(
 def test_assign_events_to_container_image_control_policy(
         random_container_image_control_policy,
         container_image_condition,
-        soft_assert):
+        request):
     """This test checks whether an event is assigned to container image control policy.
     Steps:
         * Create a container image control policy.
@@ -453,9 +453,8 @@ def test_assign_events_to_container_image_control_policy(
     """
     random_container_image_control_policy.assign_conditions(
         container_image_condition)
-    soft_assert(random_container_image_control_policy.is_condition_assigned(
-        container_image_condition))
-    random_container_image_control_policy.assign_conditions()  # unassign
+    request.addfinalizer(random_container_image_control_policy.assign_conditions)
+    assert random_container_image_control_policy.is_condition_assigned(container_image_condition)
 
 
 @pytest.mark.tier(2)
