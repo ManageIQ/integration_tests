@@ -298,7 +298,7 @@ class Menu(UINavigate):
                         ('containers_pods', 'Pods'),
                         ('containers_routes', 'Routes'),
                         ('containers_replicators', 'Replicators'),
-                        ('containers_services', 'Services'),
+                        ('containers_services', 'Container Services'),
                         ('containers_containers', 'Containers'),
                         ('containers_images', 'Container Images'),
                         ('containers_image_registries', 'Image Registries'),
