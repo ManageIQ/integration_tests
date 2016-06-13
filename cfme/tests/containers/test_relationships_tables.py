@@ -26,10 +26,10 @@ pytest_generate_tests = testgen.generate(
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
                           'Project',
-                          'Replicator',
-                          'Node',
                           'Services',
-                          'Containers'])
+                          'Replicator',
+                          'Containers',
+                          'Node'])
 def test_pods_rel(provider, rel):
     sel.force_navigate('containers_pods')
     ui_pods = [r.name.text for r in list_tbl.rows()]
