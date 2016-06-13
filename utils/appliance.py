@@ -1362,7 +1362,10 @@ class IPAppliance(object):
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
         try:
-            db = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db')['server']['host']
+            if self.version >= '5.6':
+                db = self.get_yaml_config("vmdb")['server']['host']
+            else:
+                db = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db')['server']['host']
             db = db.strip()
             ip_addr = self.ssh_client.run_command('ip address show')
             if db in ip_addr.output or db.startswith('127') or 'localhost' in db:
