@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 import pytest
 from cfme.fixtures import pytest_selenium as sel
-from cfme.containers import list_tbl
+from cfme.containers import list_tbl as list_tbl_pods
+from cfme.containers import list_tbl as list_tbl_services
+from cfme.containers import list_tbl as list_tbl_nodes
+from cfme.containers import list_tbl as list_tbl_replicators
+from cfme.containers import list_tbl as list_tbl_images
 from cfme.containers.pod import Pod
 from cfme.containers.service import Service
 from cfme.containers.node import Node
@@ -31,7 +35,7 @@ pytest_generate_tests = testgen.generate(
                           'Node'])
 def test_pods_rel(provider, rel):
     sel.force_navigate('containers_pods')
-    ui_pods = [r.name.text for r in list_tbl.rows()]
+    ui_pods = [r.name.text for r in list_tbl_pods.rows()]
     mgmt_objs = provider.mgmt.list_container_group()  # run only if table is not empty
 
     if ui_pods:
@@ -49,7 +53,7 @@ def test_pods_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl.rows()]) == val
+            assert len([r for r in list_tbl_pods.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
@@ -59,7 +63,7 @@ def test_pods_rel(provider, rel):
     'rel', ['Containers Provider', 'Project', 'Routes', 'Pods', 'Nodes'])
 def test_services_rel(provider, rel):
     sel.force_navigate('containers_services')
-    ui_services = [r.name.text for r in list_tbl.rows()]
+    ui_services = [r.name.text for r in list_tbl_services.rows()]
     mgmt_objs = provider.mgmt.list_service()  # run only if table is not empty
 
     if ui_services:
@@ -77,7 +81,7 @@ def test_services_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl.rows()]) == val
+            assert len([r for r in list_tbl_services.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
@@ -92,7 +96,7 @@ def test_services_rel(provider, rel):
                           'Containers'])
 def test_nodes_rel(provider, rel):
     sel.force_navigate('containers_nodes')
-    ui_nodes = [r.name.text for r in list_tbl.rows()]
+    ui_nodes = [r.name.text for r in list_tbl_nodes.rows()]
     mgmt_objs = provider.mgmt.list_node()  # run only if table is not empty
 
     if ui_nodes:
@@ -110,7 +114,7 @@ def test_nodes_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl.rows()]) == val
+            assert len([r for r in list_tbl_nodes.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
@@ -120,7 +124,7 @@ def test_nodes_rel(provider, rel):
     'rel', ['Containers Provider', 'Project', 'Pods', 'Nodes'])
 def test_replicators_rel(provider, rel):
     sel.force_navigate('containers_replicators')
-    ui_replicators = [r.name.text for r in list_tbl.rows()]
+    ui_replicators = [r.name.text for r in list_tbl_replicators.rows()]
     # run only if table is not empty
     mgmt_objs = provider.mgmt.list_replication_controller()
 
@@ -139,7 +143,7 @@ def test_replicators_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl.rows()]) == val
+            assert len([r for r in list_tbl_replicators.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
@@ -154,7 +158,7 @@ def test_replicators_rel(provider, rel):
                           'Nodes'])
 def test_images_rel(provider, rel):
     sel.force_navigate('containers_images')
-    ui_images = [r.name.text for r in list_tbl.rows()]
+    ui_images = [r.name.text for r in list_tbl_images.rows()]
 
     for name in ui_images:
         obj = Image(name, provider)
@@ -166,6 +170,6 @@ def test_images_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl.rows()]) == val
+            assert len([r for r in list_tbl_images.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
