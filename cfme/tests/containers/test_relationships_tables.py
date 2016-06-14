@@ -4,7 +4,6 @@ import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers import list_tbl
 from cfme.containers.pod import Pod
-from cfme.containers.project import Project
 from cfme.containers.service import Service
 from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
@@ -42,39 +41,6 @@ def test_pods_rel(provider, rel):
 
     for name in ui_pods:
         obj = Pod(name, provider)
-
-        val = obj.get_detail('Relationships', rel)
-        if val == '0':
-            continue
-        obj.click_element('Relationships', rel)
-
-        try:
-            val = int(val)
-            assert len([r for r in list_tbl.rows()]) == val
-        except ValueError:
-            assert val == InfoBlock.text('Properties', 'Name')
-
-
-# container projects
-@pytest.mark.parametrize('rel',
-                         ['Containers Provider',
-                          'Routes',
-                          'Services',
-                          'Replicators',
-                          'Pods',
-                          'Nodes'])
-def test_projects_rel(provider, rel):
-    sel.force_navigate('containers_projects')
-    ui_projects = [r.name.text for r in list_tbl.rows()]
-    mgmt_objs = provider.mgmt.list_project()  # run only if table is not empty
-
-    if ui_projects:
-        # verify that mgmt pods exist in ui listed pods
-        assert set(ui_projects).issubset(
-            [obj.name for obj in mgmt_objs]), 'Missing objects'
-
-    for name in ui_projects:
-        obj = Project(name, provider)
 
         val = obj.get_detail('Relationships', rel)
         if val == '0':
