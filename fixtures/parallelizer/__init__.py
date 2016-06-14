@@ -35,6 +35,7 @@ import collections
 import difflib
 import json
 import os
+import re
 import signal
 import subprocess
 from collections import OrderedDict, defaultdict, deque, namedtuple
@@ -215,6 +216,25 @@ class ParallelSession(object):
         else:
             # Using sprout
             self.sprout_client = SproutClient.from_config()
+            try:
+                if self.config.option.sprout_desc is not None:
+                    jenkins_job = re.findall(r"Jenkins.*[^\d+$]", self.config.option.sprout_desc)
+                    if jenkins_job:
+                        self.terminal.write(
+                            "Check if pool already exists for this '{}' Jenkins job\n".format(
+                                jenkins_job[0]))
+                        jenkins_job_pools = self.sprout_client.find_pools_by_description(
+                            jenkins_job[0], partial=True)
+                        for pool in jenkins_job_pools:
+                            self.terminal.write("Destroying the old pool {} for '{}' job.\n".format(
+                                pool, jenkins_job[0]))
+                            self.sprout_client.destroy_pool(pool)
+            except Exception as e:
+                self.terminal.write(
+                    "Exception occurred during old pool deletion, this can be ignored"
+                    "proceeding to Request new pool")
+                self.terminal.write("> The exception was: {}".format(str(e)))
+
             self.terminal.write(
                 "Requesting {} appliances from Sprout at {}\n".format(
                     self.config.option.sprout_appliances, self.sprout_client.api_entry))
