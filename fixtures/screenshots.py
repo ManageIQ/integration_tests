@@ -4,6 +4,7 @@
 If you want to take a screenshot inside your test, just do it like this:
 
 .. code-block:: python
+
     def test_my_test(take_screenshot):
         # do something
         take_screenshot("Particular name for the screenshot")

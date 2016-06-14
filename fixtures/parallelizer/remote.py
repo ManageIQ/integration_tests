@@ -25,7 +25,7 @@ class SlaveManager(object):
         ctx = zmq.Context.instance()
         self.sock = ctx.socket(zmq.REQ)
         self.sock.set_hwm(1)
-        self.sock.setsockopt_string(zmq.IDENTITY, u'%s' % self.slaveid)
+        self.sock.setsockopt_string(zmq.IDENTITY, u'{}'.format(self.slaveid))
         self.sock.connect(zmq_endpoint)
 
         self.messages = {}
@@ -34,14 +34,14 @@ class SlaveManager(object):
 
     def send_event(self, name, **kwargs):
         kwargs['_event_name'] = name
-        self.log.trace("sending %s %r", name, kwargs)
+        self.log.trace("sending {} {!r}".format(name, kwargs))
         self.sock.send_json(kwargs)
         recv = self.sock.recv_json()
         if recv == 'die':
             self.log.info('Slave instructed to die by master; shutting down')
             raise SystemExit()
         else:
-            self.log.trace('received "%r" from master', recv)
+            self.log.trace('received "{!r}" from master'.format(recv))
             if recv != 'ack':
                 return recv
 
@@ -99,7 +99,7 @@ class SlaveManager(object):
         self.log.info("entering runtest loop")
         for item, nextitem in self._test_generator():
             if self.config.option.collectonly:
-                self.message('%s' % (item.nodeid))
+                self.message('{}'.format(item.nodeid))
                 pass
             else:
                 self.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)

@@ -21,14 +21,14 @@ pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+notifier"]),
     pytest.mark.usefixtures("provider", "full_template"),
+    pytest.mark.tier(3)
 ]
 
 CANDU_PROVIDER_TYPES = {"virtualcenter"}  # TODO: rhevm
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        'full_template', scope="module", template_location=["full_template", "name"])
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
@@ -53,7 +53,7 @@ def wait_for_alert(smtp, alert, delay=None, additional_checks=None):
         additional_checks: Additional checks to perform on the mails. Keys are names of the mail
             sections, values the values to look for.
     """
-    logger.info("Waiting for informative e-mail of alert '{}' to come".format(alert.description))
+    logger.info("Waiting for informative e-mail of alert %s to come", alert.description)
     additional_checks = additional_checks or {}
 
     def _mail_arrived():
@@ -86,7 +86,7 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         provider: funcarg provider
     """
     alert_profile = explorer.VMInstanceAlertProfile(
-        "Alert profile for %s" % vm_name,
+        "Alert profile for {}".format(vm_name),
         alerts
     )
     alert_profile.create()
@@ -94,20 +94,20 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
     alert_profile.assign_to("The Enterprise")
     if event is not None:
         action = explorer.Action(
-            "Evaluate Alerts for %s" % vm_name,
+            "Evaluate Alerts for {}".format(vm_name),
             "Evaluate Alerts",
             alerts
         )
         action.create()
         request.addfinalizer(action.delete)
         policy = explorer.VMControlPolicy(
-            "Evaluate Alerts policy for %s" % vm_name,
-            scope="fill_field(VM and Instance : Name, INCLUDES, %s)" % vm_name
+            "Evaluate Alerts policy for {}".format(vm_name),
+            scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
         )
         policy.create()
         request.addfinalizer(policy.delete)
         policy_profile = explorer.PolicyProfile(
-            "Policy profile for %s" % vm_name, [policy]
+            "Policy profile for {}".format(vm_name), [policy]
         )
         policy_profile.create()
         request.addfinalizer(policy_profile.delete)
@@ -116,6 +116,7 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         request.addfinalizer(lambda: provider.unassign_policy_profiles(policy_profile.description))
 
 
+# TODO: When we get rest, just nuke all providers, and add our one, no need to target delete
 @pytest.yield_fixture(scope="module")
 def initialize_provider(provider, setup_provider_modscope):
     # Remove other providers

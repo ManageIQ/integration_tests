@@ -10,6 +10,7 @@ import random
 from time import sleep
 
 import pytest
+from utils import testgen
 
 # add 'wait' to this to slow things down, if desired
 pytestmark = pytest.mark.usefixtures('param')
@@ -22,7 +23,7 @@ def pytest_generate_tests(metafunc):
     ids = [i + 10 for i in xrange(num_copies)]
     random.shuffle(ids)
     argvalues = [[v] for v in ids]
-    metafunc.parametrize(['param'], argvalues, ids=ids, scope='module')
+    testgen.parametrize(metafunc, ['param'], argvalues, ids=ids, scope='module')
 
 
 @pytest.fixture

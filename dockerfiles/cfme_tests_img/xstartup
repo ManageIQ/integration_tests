@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Set up the environment so selenium can find everything it might want
+# (namely chrome and chromedriver)
+#export PATH="/path/to/google/chrome/directory/:/path/to/chromdriver/directory:$PATH"
+
+# Start the window manager
+fluxbox &
+
+# Start the selenium server
+xterm -maximized -e java -jar $CFME_ENV/selenium/selenium_latest.jar -ensureCleanSession -trustAllSSLCertificates &

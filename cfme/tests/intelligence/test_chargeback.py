@@ -7,9 +7,9 @@ from cfme.rest import rates as _rates
 from utils.update import update
 from utils.wait import wait_for
 import utils.error as error
-from utils import version
 
-pytestmark = [pytest.mark.usefixtures("logged_in")]
+
+pytestmark = [pytest.mark.usefixtures("logged_in"), pytest.mark.tier(3)]
 
 
 def new_compute_rate():
@@ -33,9 +33,10 @@ def new_storage_rate():
 def test_add_new_compute_chargeback():
     ccb = new_compute_rate()
     ccb.create()
-    flash.assert_message_match('Chargeback Rate "%s" was added' % ccb.description)
+    flash.assert_message_match('Chargeback Rate "{}" was added'.format(ccb.description))
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1073366])
 def test_compute_chargeback_duplicate_disallowed():
     ccb = new_compute_rate()
@@ -44,12 +45,14 @@ def test_compute_chargeback_duplicate_disallowed():
         ccb.create()
 
 
+@pytest.mark.tier(3)
 def test_add_new_storage_chargeback():
     scb = new_storage_rate()
     scb.create()
-    flash.assert_message_match('Chargeback Rate "%s" was added' % scb.description)
+    flash.assert_message_match('Chargeback Rate "{}" was added'.format(scb.description))
 
 
+@pytest.mark.tier(3)
 def test_edit_compute_chargeback():
     ccb = new_compute_rate()
     ccb.create()
@@ -62,9 +65,10 @@ def test_edit_compute_chargeback():
         ccb.mem_alloc = (1, cb.HOURLY)
         ccb.mem_used = (2000, cb.WEEKLY)
         ccb.net_io = (4000, cb.DAILY)
-    flash.assert_message_match('Chargeback Rate "%s" was saved' % ccb.description)
+    flash.assert_message_match('Chargeback Rate "{}" was saved'.format(ccb.description))
 
 
+@pytest.mark.tier(3)
 def test_edit_storage_chargeback():
     scb = new_storage_rate()
     scb.create()
@@ -73,9 +77,10 @@ def test_edit_storage_chargeback():
         scb.storage_fixed_2 = (2000, cb.MONTHLY)
         scb.storage_alloc = (3000, cb.WEEKLY)
         scb.storage_used = (6000, cb.MONTHLY)
-    flash.assert_message_match('Chargeback Rate "%s" was saved' % scb.description)
+    flash.assert_message_match('Chargeback Rate "{}" was saved'.format(scb.description))
 
 
+@pytest.mark.tier(3)
 def test_delete_compute_chargeback():
     ccb = new_compute_rate()
     ccb.create()
@@ -83,6 +88,7 @@ def test_delete_compute_chargeback():
     flash.assert_message_match('The selected Chargeback Rate was deleted')
 
 
+@pytest.mark.tier(3)
 def test_delete_storage_chargeback():
     scb = new_storage_rate()
     scb.create()
@@ -95,10 +101,10 @@ class TestRatesViaREST(object):
     def rates(self, request, rest_api):
         return _rates(request, rest_api)
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     @pytest.mark.parametrize(
         "multiple", [False, True],
         ids=["one_request", "multiple_requests"])
+    @pytest.mark.tier(3)
     def test_edit_rates(self, rest_api, rates, multiple):
         if multiple:
             new_descriptions = []
@@ -128,7 +134,7 @@ class TestRatesViaREST(object):
                 delay=10,
             )
 
-    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    @pytest.mark.tier(3)
     @pytest.mark.parametrize(
         "multiple", [False, True],
         ids=["one_request", "multiple_requests"])

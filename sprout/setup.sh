@@ -19,6 +19,6 @@ rm -f db.sqlite3
 ./manage.py migrate
 ./manage.py createsuperuser
 
-cd ../..
+cd ../.. || exit
 python -m compileall -f .
-cd $OLDPWD
+cd $OLDPWD || exit

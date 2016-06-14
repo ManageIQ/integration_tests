@@ -104,6 +104,9 @@ class ProvisioningDialog(Updateable, Pretty):
         self.type = type
         self.content = content
 
+    def __str__(self):
+        return self.name
+
     @property
     def type_nav(self):
         return self.type[0]

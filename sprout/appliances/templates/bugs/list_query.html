@@ -1,0 +1,39 @@
+{% extends "bugs/bugs_base.html" %}
+{% block title %}Bug query '{{ query.name }}'{% endblock %}
+{% block bugs_body %}
+<table class="table">
+    <thead>
+        <th>BZ#</th>
+        <th>Summary</th>
+        <th>Severity</th>
+        <th>Status</th>
+        <th>Component</th>
+        <th>Version</th>
+        <th>Fixed in</th>
+        <th>Whiteboard</th>
+        <th>Flags</th>
+    </thead>
+    <tbody>
+    {% for bug in bugs %}
+        <tr>
+            <td><a href={{bug.weburl}} target="_blank">{{bug.id}}</a></td>
+            <td>{{bug.summary|truncatechars:100}}</td>
+            <td>{% if bug.severity == "unspecified" %}<span style="color: red;">{{bug.severity}}</span>{% else %}{{bug.severity}}{% endif %}</td>
+            <td>{{bug.status}}</td>
+            <td>{{bug.component}}</td>
+            <td>{{bug.version}}</td>
+            <td>{{bug.fixed_in}}</td>
+            <td>{{bug.whiteboard}}</td>
+            <td>
+                {% for flag in bug.flags %}
+                    {{flag}}{% if not forloop.last %}<br>{% endif %}
+                {% endfor %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% if request.user.is_superuser or query.owner == request.user %}
+<a href="{% url 'delete_bug_query' query.id %}">Delete this saved bug query</a>
+{% endif %}
+{% endblock %}

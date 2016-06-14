@@ -1,19 +1,33 @@
 # -*- coding: utf-8 -*-
+import base64
+import diaper
+import re
 import yaml
 
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle   # NOQA
+
+import mgmtsystem
+
+from cached_property import cached_property
 from celery import chain
 from contextlib import contextmanager
 from datetime import timedelta, date
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
+from django.db.models import Q
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils import timezone
 
-from sprout import critical_section
+from sprout import critical_section, redis
 from sprout.log import create_logger
 
-from utils import mgmt_system
 from utils.appliance import Appliance as CFMEAppliance, IPAppliance
+from utils.bz import Bugzilla
 from utils.conf import cfme_data
 from utils.providers import get_mgmt
 from utils.timeutil import nice_seconds
@@ -49,13 +63,13 @@ class MetadataMixin(models.Model):
     object_meta_data = models.TextField(default=yaml.dump({}))
 
     def reload(self):
-        new_self = self.__class__.objects.get(pk=self.pk)
+        new_self = type(self).objects.get(pk=self.pk)
         self.__dict__.update(new_self.__dict__)
 
     @property
     @contextmanager
     def metadata_lock(self):
-        with critical_section("metadata-({})[{}]".format(self.__class__.__name__, str(self.pk))):
+        with critical_section("metadata-({})[{}]".format(type(self).__name__, str(self.pk))):
             yield
 
     @property
@@ -111,6 +125,8 @@ class Provider(MetadataMixin):
     appliance_limit = models.IntegerField(
         null=True, help_text="Hard limit of how many appliances can run on this provider")
     disabled = models.BooleanField(default=False, help_text="We can disable providers if we want.")
+    hidden = models.BooleanField(
+        default=False, help_text='We can hide providers if that is required.')
 
     @property
     def is_working(self):
@@ -266,7 +282,7 @@ class Provider(MetadataMixin):
     @classmethod
     def complete_user_usage(cls):
         result = {}
-        for provider in cls.objects.all():
+        for provider in cls.objects.filter(hidden=False):
             for user, count in provider.user_usage:
                 if user not in result:
                     result[user] = 0
@@ -278,7 +294,7 @@ class Provider(MetadataMixin):
     def cleanup(self):
         """Put any cleanup tasks that might help the application stability here"""
         self.logger.info("Running cleanup on provider {}".format(self.id))
-        if isinstance(self.api, mgmt_system.OpenstackSystem):
+        if isinstance(self.api, mgmtsystem.openstack.OpenstackSystem):
             # Openstack cleanup
             # Clean up the floating IPs
             for floating_ip in self.api.api.floating_ips.findall(fixed_ip=None):
@@ -292,7 +308,7 @@ class Provider(MetadataMixin):
     def vnc_console_link_for(self, appliance):
         if appliance.uuid is None:
             return None
-        if isinstance(self.api, mgmt_system.OpenstackSystem):
+        if isinstance(self.api, mgmtsystem.openstack.OpenstackSystem):
             return "http://{}/dashboard/project/instances/{}/?tab=instance_details__console".format(
                 self.ip_address, appliance.uuid
             )
@@ -300,7 +316,13 @@ class Provider(MetadataMixin):
             return None
 
     def __unicode__(self):
-        return "{} {}".format(self.__class__.__name__, self.id)
+        return "{} {}".format(type(self).__name__, self.id)
+
+
+@receiver(pre_save, sender=Provider)
+def disable_if_hidden(sender, instance, **kwargs):
+    if instance.hidden:
+        instance.disabled = True
 
 
 class Group(MetadataMixin):
@@ -323,15 +345,19 @@ class Group(MetadataMixin):
         the means of days."""
         if self.template_obsolete_days is None:
             return None
-        latest_template_date = Template.objects.filter(
-            exists=True, template_group=self).order_by("-date")[0].date
-        latest_template_ids = [
+        # Preconfigured because we presume that if the preconfigured works, so does unconfigured one
+        latest_working_template_date = Template.objects.filter(
+            exists=True, usable=True, ready=True, preconfigured=True,
+            template_group=self).order_by("-date")[0].date
+        latest_working_template_ids = [
             tpl.id
             for tpl
-            in Template.objects.filter(exists=True, template_group=self, date=latest_template_date)]
+            in Template.objects.filter(
+                exists=True, usable=True, ready=True, template_group=self,
+                date=latest_working_template_date)]
         return Template.objects.filter(
             exists=True, date__lt=date.today() - timedelta(days=self.template_obsolete_days),
-            template_group=self).exclude(id__in=latest_template_ids).order_by("date")
+            template_group=self).exclude(id__in=latest_working_template_ids).order_by("date")
 
     @property
     def templates(self):
@@ -398,7 +424,7 @@ class Group(MetadataMixin):
 
     def __unicode__(self):
         return "{} {} (pool size={}/{})".format(
-            self.__class__.__name__, self.id, self.template_pool_size,
+            type(self).__name__, self.id, self.template_pool_size,
             self.unconfigured_template_pool_size)
 
 
@@ -408,7 +434,7 @@ class Template(MetadataMixin):
         related_name="provider_templates")
     template_group = models.ForeignKey(
         Group, on_delete=models.CASCADE, help_text="Which group the template belongs to.")
-    version = models.CharField(max_length=16, null=True, help_text="Downstream version.")
+    version = models.CharField(max_length=32, null=True, help_text="Downstream version.")
     date = models.DateField(help_text="Template build date (original).")
 
     original_name = models.CharField(max_length=64, help_text="Template's original name.")
@@ -458,7 +484,7 @@ class Template(MetadataMixin):
 
     @property
     def can_be_deleted(self):
-        return self.exists and self.preconfigured and len(self.appliances) == 0
+        return self.exists and len(self.appliances) == 0
 
     @property
     def appliances(self):
@@ -499,7 +525,7 @@ class Template(MetadataMixin):
 
     def __unicode__(self):
         return "{} {}:{} @ {}".format(
-            self.__class__.__name__, self.version, self.name, self.provider.id)
+            type(self).__name__, self.version, self.name, self.provider.id)
 
 
 class Appliance(MetadataMixin):
@@ -511,8 +537,26 @@ class Appliance(MetadataMixin):
         LOCKED = "locked"
         UNKNOWN = "unknown"
         ORPHANED = "orphaned"
+        CREATION_FAILED = 'creation_failed'
+        CUSTOMIZATION_FAILED = 'customization_failed'
+        ERROR = 'error'
 
-    BAD_POWER_STATES = {Power.UNKNOWN, Power.ORPHANED}
+    POWER_ICON_MAPPING = {
+        Power.ON: 'play',
+        Power.OFF: 'stop',
+        Power.SUSPENDED: 'pause',
+        Power.REBOOTING: 'repeat',
+        Power.LOCKED: 'lock',
+        Power.UNKNOWN: 'exclamation-sign',
+        Power.ORPHANED: 'exclamation-sign',
+        Power.CREATION_FAILED: 'remove',
+        Power.CUSTOMIZATION_FAILED: 'remove',
+        Power.ERROR: 'remove',
+    }
+
+    BAD_POWER_STATES = {
+        Power.UNKNOWN, Power.ORPHANED, Power.CREATION_FAILED, Power.CUSTOMIZATION_FAILED,
+        Power.ERROR}
 
     POWER_STATES_MAPPING = {
         # vSphere
@@ -528,15 +572,23 @@ class Appliance(MetadataMixin):
         "ACTIVE": Power.ON,
         "SHUTOFF": Power.OFF,
         "SUSPENDED": Power.SUSPENDED,
+        "ERROR": Power.ERROR,
         # SCVMM
         "Running": Power.ON,
         "PoweredOff": Power.OFF,
         "Stopped": Power.OFF,
         "Paused": Power.SUSPENDED,
+        "Saved State": Power.SUSPENDED,
+        "Creation Failed": Power.CREATION_FAILED,
+        "Customization Failed": Power.CUSTOMIZATION_FAILED,
+        "Missing": Power.ORPHANED,  # When SCVMM says it is missing ...
         # EC2 (for VM manager)
         "stopped": Power.OFF,
         "running": Power.ON,
     }
+
+    RESET_SWAP_STATES = {Power.OFF, Power.REBOOTING, Power.ORPHANED}
+
     template = models.ForeignKey(
         Template, on_delete=models.CASCADE, help_text="Appliance's source template.")
     appliance_pool = models.ForeignKey("AppliancePool", null=True, on_delete=models.CASCADE,
@@ -563,6 +615,47 @@ class Appliance(MetadataMixin):
     lun_disk_connected = models.BooleanField(
         default=False,
         help_text="Whether the Direct LUN disk is connected. (RHEV Only)")
+    swap = models.IntegerField(
+        help_text="How many MB is the appliance in swap.", null=True, blank=True)
+    ssh_failed = models.BooleanField(default=False, help_text="If last swap check failed on SSH.")
+
+    def synchronize_metadata(self):
+        """If possible, uploads some metadata to the provider VM object to be able to recover."""
+        self._set_meta('id', self.id)
+        self._set_meta('source_template_id', self.template.id)
+        if self.appliance_pool is not None:
+            self._set_meta('pool_id', self.appliance_pool.id)
+            self._set_meta('pool_total_count', self.appliance_pool.total_count)
+            self._set_meta('pool_group', self.appliance_pool.group.id)
+            if self.appliance_pool.provider is not None:
+                self._set_meta('pool_provider', self.appliance_pool.provider.id)
+            self._set_meta('pool_version', self.appliance_pool.version)
+            self._set_meta(
+                'pool_appliance_date', apply_if_not_none(self.appliance_pool.date, "isoformat"))
+            self._set_meta('pool_owner_id', self.appliance_pool.owner.id)
+            self._set_meta('pool_owner_username', self.appliance_pool.owner.username)
+            self._set_meta('pool_preconfigured', self.appliance_pool.preconfigured)
+            self._set_meta('pool_description', self.appliance_pool.description)
+            self._set_meta('pool_not_needed_anymore', self.appliance_pool.not_needed_anymore)
+            self._set_meta('pool_finished', self.appliance_pool.finished)
+            self._set_meta('pool_yum_update', self.appliance_pool.yum_update)
+        self._set_meta('datetime_leased', apply_if_not_none(self.datetime_leased, "isoformat"))
+        self._set_meta('leased_until', apply_if_not_none(self.leased_until, "isoformat"))
+        self._set_meta('status_changed', apply_if_not_none(self.status_changed, "isoformat"))
+        self._set_meta('ready', self.ready)
+        self._set_meta('description', self.description)
+        self._set_meta('lun_disk_connected', self.lun_disk_connected)
+        self._set_meta('swap', self.swap)
+        self._set_meta('ssh_failed', self.ssh_failed)
+
+    def _set_meta(self, key, value):
+        if self.power_state == self.Power.ORPHANED:
+            return
+        try:
+            self.provider_api.set_meta_value(self.name, 'sprout_{}'.format(key), value)
+            self.logger.info('Set metadata {}: {}'.format(key, repr(value)))
+        except NotImplementedError:
+            pass
 
     @property
     def serialized(self):
@@ -592,7 +685,7 @@ class Appliance(MetadataMixin):
     @property
     @contextmanager
     def kill_lock(self):
-        with critical_section("kill-({})[{}]".format(self.__class__.__name__, str(self.pk))):
+        with critical_section("kill-({})[{}]".format(type(self).__name__, str(self.pk))):
             yield
 
     @property
@@ -633,9 +726,13 @@ class Appliance(MetadataMixin):
             self.logger.info("Changed power state to {}".format(power_state))
             self.power_state = power_state
             self.power_state_changed = timezone.now()
+            if power_state in self.RESET_SWAP_STATES:
+                # Reset some values
+                self.swap = 0
+                self.ssh_failed = False
 
     def __unicode__(self):
-        return "{} {} @ {}".format(self.__class__.__name__, self.name, self.template.provider.id)
+        return "{} {} @ {}".format(type(self).__name__, self.name, self.template.provider.id)
 
     @classmethod
     def unassigned(cls):
@@ -790,7 +887,7 @@ class AppliancePool(MetadataMixin):
     provider = models.ForeignKey(
         Provider, help_text="If requested, appliances can be on single provider.", null=True,
         blank=True, on_delete=models.CASCADE)
-    version = models.CharField(max_length=16, null=True, help_text="Appliance version")
+    version = models.CharField(max_length=32, null=True, help_text="Appliance version")
     date = models.DateField(null=True, help_text="Appliance date.")
     owner = models.ForeignKey(
         User, on_delete=models.CASCADE, help_text="User who owns the appliance pool")
@@ -1062,3 +1159,67 @@ class UserApplianceQuota(models.Model):
     per_pool_quota = models.IntegerField(null=True, blank=True)
     total_pool_quota = models.IntegerField(null=True, blank=True)
     total_vm_quota = models.IntegerField(null=True, blank=True)
+
+
+class BugQuery(models.Model):
+    EMAIL_PLACEHOLDER = re.compile(r'\{\{EMAIL\}\}')
+    CACHE_TIMEOUT = 180
+    name = models.CharField(max_length=64)
+    url = models.TextField()
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+
+    @property
+    def is_global(self):
+        return self.owner is None
+
+    @property
+    def is_parametrized(self):
+        return self.EMAIL_PLACEHOLDER.search(self.url) is not None
+
+    @cached_property
+    def bugzilla(self):
+        # Returns the original bugzilla object
+        return Bugzilla.from_config().bugzilla
+
+    def query_for_user(self, user):
+        if self.is_parametrized:
+            if not user.email:
+                return None
+            url = self.EMAIL_PLACEHOLDER.sub(user.email, self.url)
+        else:
+            url = self.url
+        return self.bugzilla.url_to_query(url)
+
+    def list_bugs(self, user):
+        cache_id = 'bq-{}-{}'.format(self.id, user.id)
+        cached = redis.get(cache_id)
+        if cached is not None:
+            return pickle.loads(base64.b64decode(cached))
+        query = self.query_for_user(user)
+        if query is None:
+            result = []
+        else:
+            def process_bug(bug):
+                return {
+                    'id': bug.id,
+                    'weburl': bug.weburl,
+                    'summary': bug.summary,
+                    'severity': bug.severity,
+                    'status': bug.status,
+                    'component': bug.component,
+                    'version': bug.version,
+                    'fixed_in': bug.fixed_in,
+                    'whiteboard': bug.whiteboard,
+                    'flags': ['{}{}'.format(flag['name'], flag['status']) for flag in bug.flags],
+                }
+
+            result = [process_bug(bug) for bug in self.bugzilla.query(query)]
+        redis.set(cache_id, base64.b64encode(pickle.dumps(result)), ex=self.CACHE_TIMEOUT)
+        return result
+
+    @classmethod
+    def visible_for_user(cls, user):
+        return [
+            bq for bq in
+            cls.objects.filter(Q(owner=None) | Q(owner=user)).order_by('owner', 'id')
+            if not (bq.is_parametrized and not user.email)]

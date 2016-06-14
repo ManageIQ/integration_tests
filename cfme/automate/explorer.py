@@ -11,16 +11,14 @@ from cfme.web_ui import Form, Table, Tree, UpDownSelect, fill, Select, ScriptBox
     Region, form_buttons, accordion, Input, AngularSelect
 import cfme.exceptions as exceptions
 from utils.update import Updateable
-from utils import error, version
+from utils import error, version, on_rtd
 from collections import Mapping
 import re
 from utils.log import logger
 from utils import classproperty, pretty
 from utils.wait import wait_for
 
-tree = Tree({
-    version.LOWEST: '//table//tr[@title="Datastore"]/../..',
-    '5.3': '//ul//a[@title="Datastore"]/../../..'})
+tree = Tree('//ul//a[@title="Datastore"]/../../..')
 
 datastore_tree = partial(accordion.tree, "Datastore", "Datastore")
 cfg_btn = partial(tb.select, 'Configuration')
@@ -121,13 +119,11 @@ class TreeNode(pretty.Pretty):
         return tree.click_path(*self.nav_path)
 
     def nav_edit(self):
-        dp_length = version.pick({version.LOWEST: 1,
-                                  '5.3': 2})
+        dp_length = 2
         if len(self.nav_path) > dp_length:
             cfg_btn('Edit Selected Item')
         else:
-            cfg_btn(version.pick({version.LOWEST: 'Edit Selected Namespaces',
-                                  '5.3': 'Edit Selected Namespace'}))
+            cfg_btn('Edit Selected Namespace')
 
 
 class CopiableTreeNode(TreeNode):
@@ -154,7 +150,7 @@ class CopiableTreeNode(TreeNode):
         try:
             return self._class_name
         except AttributeError:
-            return self.__class__.__name__
+            return type(self).__name__
 
     @class_name.setter
     def class_name(self, value):
@@ -296,12 +292,12 @@ class Domain(TreeNode, Updateable):
 
     @classproperty
     def default(cls):
-        if not hasattr(cls, "_default_domain"):
-            cls._default_domain = version.pick({
-                version.LOWEST: None,
-                '5.3': cls('Default')
-            })
-        return cls._default_domain
+        if on_rtd:
+            return cls('Default')
+        else:
+            if not hasattr(cls, "_default_domain"):
+                cls._default_domain = cls('Default')
+            return cls._default_domain
 
 
 domain_order_selector = UpDownSelect(
@@ -369,7 +365,7 @@ class Namespace(TreeNode, Updateable):
                      'description': self.description}
         try:
             fill(self.form, form_data, action=form_buttons.cancel if cancel else form_buttons.add)
-            flash.assert_success_message('Automate Namespace "%s" was added' % self.name)
+            flash.assert_success_message('Automate Namespace "{}" was added'.format(self.name))
         finally:
             # if there was a validation error we need to cancel out
             if sel.is_displayed(form_buttons.cancel):
@@ -381,28 +377,24 @@ class Namespace(TreeNode, Updateable):
         form_data = {'name': updates.get('name') or None,
                      'description': updates.get('description') or None}
         fill(self.form, form_data, action=form_buttons.cancel if cancel else form_buttons.save)
-        flash.assert_success_message('Automate Namespace "%s" was saved' %
-                                     updates.get('name', self.name))
+        flash.assert_success_message('Automate Namespace "{}" was saved'.format(
+                                     updates.get('name', self.name)))
 
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_table_select", context={'tree_item': self.parent,
                                                                       'table_item': self})
-        dp_length = version.pick({version.LOWEST: 1,
-                                  '5.3': 2})
+        dp_length = 2
         if len(self.path) > dp_length:
             cfg_btn('Remove selected Items', invokes_alert=True)
         else:
             cfg_btn('Remove Namespaces', invokes_alert=True)
         sel.handle_alert(cancel)
-        del_msg = version.pick({
-            version.LOWEST: 'The selected Automate Namespaces were deleted',
-            '5.3': 'Automate Namespace "{}": Delete successful'.format(self.description)
-        })
+        del_msg = 'Automate Namespace "{}": Delete successful'.format(self.description)
         flash.assert_success_message(del_msg)
 
     def __repr__(self):
-        return "<%s.%s name=%s, path=%s>" % (__name__, self.__class__.__name__,
-                                             self.name, self.path)
+        return "<{}.{} name={}, path={}>".format(__name__, type(self).__name__,
+                                            self.name, self.path)
 
 
 class Class(CopiableTreeNode, Updateable):
@@ -472,7 +464,7 @@ class Class(CopiableTreeNode, Updateable):
                          'inherits_from_select':
                          self.inherits_from and self.inherits_from.path_str()},
              action=form_buttons.cancel if cancel else form_buttons.add)
-        flash.assert_success_message('Automate Class "%s" was added' % self.path_str())
+        flash.assert_success_message('Automate Class "{}" was added'.format(self.path_str()))
         if self.setup_schema:
             self.edit_schema(add_fields=self.setup_schema)
 
@@ -525,8 +517,9 @@ class Class(CopiableTreeNode, Updateable):
             if blank:
                 row_id = ""  # for new entries, id attribute has no trailing '_x'
             else:
-                idx = sel.get_attribute("//input[starts-with(@id, 'fields_name') and @value='%s']" %
-                                    self.name, 'id').split("_")[-1]
+                idx = sel.get_attribute(
+                    "//input[starts-with(@id, 'fields_name') and @value='{}']"
+                    .format(self.name), 'id').split("_")[-1]
                 row_id = "_" + idx
 
             def loc(fmt, underscore=True):
@@ -534,35 +527,35 @@ class Class(CopiableTreeNode, Updateable):
                     plural = ""
                 else:
                     plural = "s"
-                return fmt % (plural, row_id if underscore else row_id.lstrip("_"))
+                return fmt.format(plural, row_id if underscore else row_id.lstrip("_"))
 
             def remove(loc):
                 """Return a callable that clicks but still allows popup dismissal"""
                 return lambda _: sel.click(loc, wait_ajax=False)
 
             return Form(
-                fields=[('name_text', Input(loc('field%s_name%s'))),
+                fields=[('name_text', Input(loc('field{}_name{}'))),
                         ('type_select', {
-                            version.LOWEST: DHTMLSelect(loc("//div[@id='field%s_aetype_id%s']")),
-                            "5.5": AngularSelect(loc("field%s_aetype%s", underscore=False))}),
+                            version.LOWEST: DHTMLSelect(loc("//div[@id='field{}_aetype_id{}']")),
+                            "5.5": AngularSelect(loc("field{}_aetype{}", underscore=False))}),
                         ('data_type_select', {
-                            version.LOWEST: DHTMLSelect(loc("//div[@id='field%s_datatype_id%s']")),
-                            "5.5": AngularSelect(loc("field%s_datatype%s", underscore=False))}),
-                        ('default_value_text', Input(loc('field%s_default_value%s'))),
-                        ('display_name_text', Input(loc('field%s_display_name%s'))),
-                        ('description_text', Input(loc('field%s_description%s'))),
-                        ('sub_cb', Input(loc('field%s_substitution%s'))),
-                        ('collect_text', Input(loc('field%s_collect%s'))),
-                        ('message_text', Input(loc('field%s_message%s'))),
-                        ('on_entry_text', Input(loc('field%s_on_entry%s'))),
-                        ('on_exit_text', Input(loc('field%s_on_exit%s'))),
-                        ('max_retries_text', Input(loc('field%s_max_retries%s'))),
-                        ('max_time_text', Input(loc('field%s_max_time%s'))),
+                            version.LOWEST: DHTMLSelect(loc("//div[@id='field{}_datatype_id{}']")),
+                            "5.5": AngularSelect(loc("field{}_datatype{}", underscore=False))}),
+                        ('default_value_text', Input(loc('field{}_default_value{}'))),
+                        ('display_name_text', Input(loc('field{}_display_name{}'))),
+                        ('description_text', Input(loc('field{}_description{}'))),
+                        ('sub_cb', Input(loc('field{}_substitution{}'))),
+                        ('collect_text', Input(loc('field{}_collect{}'))),
+                        ('message_text', Input(loc('field{}_message{}'))),
+                        ('on_entry_text', Input(loc('field{}_on_entry{}'))),
+                        ('on_exit_text', Input(loc('field{}_on_exit{}'))),
+                        ('max_retries_text', Input(loc('field{}_max_retries{}'))),
+                        ('max_time_text', Input(loc('field{}_max_time{}'))),
                         ('add_entry_button', "//img[@alt='Add this entry']"),
                         ('remove_entry_button', remove(
                             "//a[(contains(@title, 'delete this') or "
                             "contains(@confirm, 'delete field')) and "
-                            "contains(@href, 'arr_id=%s')]/img" % idx))])
+                            "contains(@href, 'arr_id={}')]/img".format(idx)))])
 
     schema_edit_page = Region(locators={
         'add_field_btn': {
@@ -595,7 +588,7 @@ class Class(CopiableTreeNode, Updateable):
                  action=f.add_entry_button)
 
         sel.click(form_buttons.save)
-        flash.assert_success_message('Schema for Automate Class "%s" was saved' % self.name)
+        flash.assert_success_message('Schema for Automate Class "{}" was saved'.format(self.name))
 
 
 class Method(CopiableTreeNode, Updateable):
@@ -637,7 +630,7 @@ class Method(CopiableTreeNode, Updateable):
                          'data_text': self.data},
              action=form_buttons.cancel if cancel else form_buttons.add)
         try:
-            flash.assert_success_message('Automate Method "%s" was added' % self.name)
+            flash.assert_success_message('Automate Method "{}" was added'.format(self.name))
         except Exception as e:
             if error.match("Name has already been taken", e):
                 sel.click(form_buttons.cancel)
@@ -734,14 +727,14 @@ def _fill_ifields_obj(ifields, d):
 
 @fill.method((InstanceFieldsRow, Mapping))
 def _fill_ifr_map(ifr, d):
-    logger.info("   Filling row with data {}".format(str(d)))
+    logger.info("   Filling row with data %s", str(d))
     return fill(ifr.form, dict(zip(ifr.columns, (d.get(x, None) for x in ifr.columns))))
 
 
 @fill.method((InstanceFieldsRow, basestring))
 def _fill_ifr_str(ifr, s):
     """You don't have to specify full dict when filling just value ..."""
-    logger.info("   Filling row with value {}".format(s))
+    logger.info("   Filling row with value %s", s)
     return fill(ifr, {"value": s})
 
 
@@ -797,7 +790,7 @@ class Instance(CopiableTreeNode, Updateable):
                          'values': self.values},
              action=form_buttons.cancel if cancel else form_buttons.add)
         try:
-            flash.assert_success_message('Automate Instance "%s" was added' % self.name)
+            flash.assert_success_message('Automate Instance "{}" was added'.format(self.name))
         except Exception as e:
             if error.match("Name has already been taken", e):
                 sel.click(form_buttons.cancel)

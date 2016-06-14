@@ -13,7 +13,6 @@ from cfme.infrastructure import virtual_machines
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
-from utils.blockers import BZ
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
@@ -61,6 +60,7 @@ def get_tag():
 
 
 # User test cases
+@pytest.mark.tier(2)
 def test_user_crud():
     user = new_user()
     user.create()
@@ -72,6 +72,7 @@ def test_user_crud():
 
 
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
+@pytest.mark.tier(2)
 def test_user_login():
     user = new_user()
     user.create()
@@ -82,6 +83,7 @@ def test_user_login():
         login.login_admin()
 
 
+@pytest.mark.tier(3)
 def test_user_duplicate_name():
     nu = new_user()
     nu.create()
@@ -91,6 +93,7 @@ def test_user_duplicate_name():
 group_user = ac.Group("EvmGroup-user")
 
 
+@pytest.mark.tier(3)
 def test_username_required_error_validation():
     user = ac.User(
         name=None,
@@ -101,6 +104,7 @@ def test_username_required_error_validation():
         user.create()
 
 
+@pytest.mark.tier(3)
 def test_userid_required_error_validation():
     user = ac.User(
         name='user' + fauxfactory.gen_alphanumeric(),
@@ -111,6 +115,7 @@ def test_userid_required_error_validation():
         user.create()
 
 
+@pytest.mark.tier(3)
 def test_user_password_required_error_validation():
     user = ac.User(
         name='user' + fauxfactory.gen_alphanumeric(),
@@ -125,11 +130,7 @@ def test_user_password_required_error_validation():
         user.create()
 
 
-@pytest.mark.meta(
-    blockers=[
-        BZ(1118040, unblock=lambda appliance_version: appliance_version < "5.3")
-    ]
-)
+@pytest.mark.tier(3)
 def test_user_group_error_validation():
     user = ac.User(
         name='user' + fauxfactory.gen_alphanumeric(),
@@ -140,6 +141,7 @@ def test_user_group_error_validation():
         user.create()
 
 
+@pytest.mark.tier(3)
 def test_user_email_error_validation():
     user = ac.User(
         name='user' + fauxfactory.gen_alphanumeric(),
@@ -150,6 +152,7 @@ def test_user_email_error_validation():
         user.create()
 
 
+@pytest.mark.tier(2)
 def test_user_edit_tag():
     user = new_user()
     user.create()
@@ -158,6 +161,7 @@ def test_user_edit_tag():
     user.delete()
 
 
+@pytest.mark.tier(3)
 def test_user_remove_tag():
     user = new_user()
     user.create()
@@ -168,6 +172,7 @@ def test_user_remove_tag():
     user.delete()
 
 
+@pytest.mark.tier(3)
 def test_delete_default_user():
     """Test for deleting default user Administrator.
 
@@ -186,6 +191,7 @@ def test_delete_default_user():
     flash.assert_message_match('Default EVM User "{}" cannot be deleted' .format(user.name))
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(automates=[1090877])
 def test_current_user_login_delete(request):
     """Test for deleting current user login.
@@ -206,10 +212,11 @@ def test_current_user_login_delete(request):
     request.addfinalizer(user.delete)
     request.addfinalizer(login.login_admin)
     with user:
-        with error.expected("Current EVM User \"%s\" cannot be deleted" % user.name):
+        with error.expected("Current EVM User \"{}\" cannot be deleted".format(user.name)):
             user.delete()
 
 
+@pytest.mark.tier(2)
 # Group test cases
 def test_group_crud():
     group = new_group()
@@ -219,6 +226,7 @@ def test_group_crud():
     group.delete()
 
 
+@pytest.mark.tier(3)
 def test_group_duplicate_name():
     group = new_group()
     group.create()
@@ -226,6 +234,7 @@ def test_group_duplicate_name():
         group.create()
 
 
+@pytest.mark.tier(2)
 def test_group_edit_tag():
     group = new_group()
     group.create()
@@ -234,6 +243,7 @@ def test_group_edit_tag():
     group.delete()
 
 
+@pytest.mark.tier(2)
 def test_group_remove_tag():
     group = new_group()
     group.create()
@@ -244,12 +254,14 @@ def test_group_remove_tag():
     group.delete()
 
 
+@pytest.mark.tier(3)
 def test_description_required_error_validation():
     group = ac.Group(description=None, role='EvmRole-approver')
     with error.expected("Description can't be blank"):
         group.create()
 
 
+@pytest.mark.tier(3)
 def test_delete_default_group():
     flash_msg = \
         'EVM Group "{}": Error during \'destroy\': A read only group cannot be deleted.'
@@ -262,6 +274,7 @@ def test_delete_default_group():
     flash.assert_message_match(flash_msg.format(group.description))
 
 
+@pytest.mark.tier(3)
 def test_delete_group_with_assigned_user():
     flash_msg = \
         'EVM Group "{}": Error during \'destroy\': Still has users assigned'
@@ -273,6 +286,7 @@ def test_delete_group_with_assigned_user():
         group.delete()
 
 
+@pytest.mark.tier(3)
 def test_edit_default_group():
     flash_msg = 'Read Only EVM Group "{}" can not be edited'
     group = ac.Group(description='EvmGroup-approver')
@@ -283,6 +297,7 @@ def test_edit_default_group():
     flash.assert_message_match(flash_msg.format(group.description))
 
 
+@pytest.mark.tier(3)
 def test_edit_sequence_usergroups(request):
     """Test for editing the sequence of user groups for LDAP lookup.
 
@@ -305,6 +320,7 @@ def test_edit_sequence_usergroups(request):
 
 
 # Role test cases
+@pytest.mark.tier(2)
 def test_role_crud():
     role = new_role()
     role.create()
@@ -315,6 +331,7 @@ def test_role_crud():
     role.delete()
 
 
+@pytest.mark.tier(3)
 def test_rolename_required_error_validation():
     role = ac.Role(
         name=None,
@@ -323,6 +340,7 @@ def test_rolename_required_error_validation():
         role.create()
 
 
+@pytest.mark.tier(3)
 def test_rolename_duplicate_validation():
     role = new_role()
     role.create()
@@ -330,6 +348,7 @@ def test_rolename_duplicate_validation():
         role.create()
 
 
+@pytest.mark.tier(3)
 def test_delete_default_roles():
     flash_msg = \
         'Role "{}": Error during \'destroy\': Cannot delete record because of dependent miq_groups'
@@ -338,12 +357,14 @@ def test_delete_default_roles():
         role.delete()
 
 
+@pytest.mark.tier(3)
 def test_edit_default_roles():
     role = ac.Role(name='EvmRole-auditor')
     sel.force_navigate("cfg_accesscontrol_role_edit", context={"role": role})
     flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
 
 
+@pytest.mark.tier(3)
 def test_delete_roles_with_assigned_group():
     flash_msg = \
         'Role "{}": Error during \'destroy\': Cannot delete record because of dependent miq_groups'
@@ -355,6 +376,7 @@ def test_delete_roles_with_assigned_group():
         role.delete()
 
 
+@pytest.mark.tier(3)
 def test_assign_user_to_new_group():
     role = new_role()  # call function to get role
     role.create()
@@ -386,6 +408,7 @@ def _test_vm_removal():
     virtual_machines.remove(vm_name, cancel=True)
 
 
+@pytest.mark.tier(3)
 @pytest.mark.parametrize(
     'product_features, action',
     [(
@@ -448,6 +471,7 @@ def _go_to(dest):
 cat_name = "Configure"
 
 
+@pytest.mark.tier(3)
 @pytest.mark.parametrize(
     'role,allowed_actions,disallowed_actions',
     [[_mk_role(product_features=[[['Everything'], False],  # minimal permission
@@ -487,17 +511,17 @@ def test_permissions(role, allowed_actions, disallowed_actions):
                 try:
                     action_thunk()
                 except Exception:
-                    fails[name] = "%s: %s" % (name, traceback.format_exc())
+                    fails[name] = "{}: {}".format(name, traceback.format_exc())
             for name, action_thunk in disallowed_actions.items():
                 try:
                     with error.expected(Exception):
                         action_thunk()
                 except error.UnexpectedSuccessException:
-                    fails[name] = "%s: %s" % (name, traceback.format_exc())
+                    fails[name] = "{}: {}".format(name, traceback.format_exc())
             if fails:
                 message = ''
                 for failure in fails.values():
-                    message = "%s\n\n%s" % (message, failure)
+                    message = "{}\n\n{}".format(message, failure)
                 raise Exception(message)
     finally:
         login.login_admin()
@@ -518,6 +542,7 @@ def single_task_permission_test(product_features, actions):
                      actions)
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1136112, 1262764])
 def test_permissions_role_crud():
     single_task_permission_test([['Everything', cat_name, 'Configuration'],
@@ -525,6 +550,7 @@ def test_permissions_role_crud():
                                 {'Role CRUD': test_role_crud})
 
 
+@pytest.mark.tier(3)
 def test_permissions_vm_provisioning():
     features = version.pick({
         version.LOWEST: [
@@ -591,6 +617,7 @@ def test_permissions_vm_provisioning():
 #     assert not sel.is_displayed(form_buttons.add), "The Add button should not be displayed!"
 
 
+@pytest.mark.tier(2)
 def test_user_change_password(request):
     user = ac.User(
         name="user {}".format(fauxfactory.gen_alphanumeric()),
@@ -623,6 +650,7 @@ def test_user_change_password(request):
 
 
 # Tenant/Project test cases
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 def test_superadmin_tenant_crud(request):
     """Test suppose to verify CRUD operations for CFME tenants
@@ -653,6 +681,7 @@ def test_superadmin_tenant_crud(request):
     tenant.delete()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 def test_superadmin_tenant_project_crud(request):
     """Test suppose to verify CRUD operations for CFME projects
@@ -692,6 +721,7 @@ def test_superadmin_tenant_project_crud(request):
     tenant.delete()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 @pytest.mark.parametrize('number_of_childrens', [5])
 def test_superadmin_child_tenant_crud(request, number_of_childrens):

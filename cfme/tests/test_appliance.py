@@ -4,8 +4,9 @@
 import pytest
 
 from utils import db, version
+from utils.blockers import BZ
 
-pytestmark = pytest.mark.smoke
+pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 
 
 def _rpms_present_packages():
@@ -49,7 +50,7 @@ def _rpms_present_packages():
 @pytest.mark.parametrize(('package'), _rpms_present_packages())
 def test_rpms_present(ssh_client, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations"""
-    exit, stdout = ssh_client.run_command('rpm -q %s' % package)
+    exit, stdout = ssh_client.run_command('rpm -q {}'.format(package))
     assert 'is not installed' not in stdout
     assert exit == 0
 
@@ -61,10 +62,18 @@ def test_selinux_enabled(ssh_client):
     assert 'Enforcing' in stdout
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.6')
 def test_iptables_running(ssh_client):
     """Verifies iptables service is running on the appliance"""
     stdout = ssh_client.run_command('service iptables status')[1]
     assert 'is not running' not in stdout
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.6')
+def test_firewalld_running(ssh_client):
+    """Verifies iptables service is running on the appliance"""
+    stdout = ssh_client.run_command('service firewalld status')[1]
+    assert 'active (running)' in stdout
 
 
 # In versions using systemd, httpd is disabled, and started by evmserverd
@@ -75,10 +84,22 @@ def test_httpd_running(ssh_client):
     assert 'is running' in stdout
 
 
+@pytest.mark.meta(blockers=[BZ(1336742, forced_streams=["5.5"])])
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+def test_journald_running(ssh_client):
+    """Verifies systemd-journald service is running on the appliance"""
+    stdout = ssh_client.run_command('systemctl status systemd-journald').output
+    assert 'active (running)' in stdout
+
+
 def test_evm_running(ssh_client):
     """Verifies overall evm service is running on the appliance"""
-    stdout = ssh_client.run_command('service evmserverd status | grep EVM')[1]
-    assert 'started' in stdout.lower()
+    if version.current_version() < '5.5':
+        stdout = ssh_client.run_command('service evmserverd status | grep EVM')[1]
+        assert 'started' in stdout.lower()
+    else:
+        stdout = ssh_client.run_command('systemctl status evmserverd')[1]
+        assert 'active (running)' in stdout
 
 
 @pytest.mark.uncollectif(lambda service: version.current_version() >= '5.5'
@@ -144,7 +165,6 @@ def test_cpu_total(ssh_client):
     assert stdout >= 4
 
 
-@pytest.mark.meta(blockers=[1281883])
 @pytest.mark.ignore_stream("upstream")
 def test_certificates_present(ssh_client, soft_assert):
     """Test whether the required product certificates are present."""
@@ -172,15 +192,12 @@ def test_db_connection(db):
     assert len(databases) > 0
 
 
-@pytest.mark.ignore_stream("5.2")
-@pytest.mark.meta(blockers=[1121202, 'GH#ManageIQ/manageiq:1823'])
 def test_asset_precompiled(ssh_client):
     file_exists = ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets").rc == 0
     assert file_exists, "Assets not precompiled"
 
 
-@pytest.mark.ignore_stream("upstream", "5.3")
-@pytest.mark.meta(blockers=[1200424])
+@pytest.mark.ignore_stream("upstream")
 def test_keys_included(ssh_client, soft_assert):
     keys = ['v0_key', 'v1_key', 'v2_key']
     for k in keys:

@@ -33,7 +33,6 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import singledispatch, multidispatch
 
-import pytest
 import base64
 from cfme import exceptions, js
 from fixtures.pytest_store import store
@@ -182,7 +181,7 @@ def _t(t, root=None):
                 result += root_element.find_elements(*t)
                 break
             except Exception as e:
-                logger.info('Exception detected: ' + str(e))
+                logger.info('Exception detected: %s', str(e))
                 sleep(0.25)
                 if count == 8:
                     result += root_element.find_elements(*t)
@@ -325,11 +324,14 @@ def wait_for_ajax():
         anything_in_flight |= running["prototype"] > 0
         anything_in_flight |= running["spinner"]
         anything_in_flight |= running["document"] != "complete"
+        anything_in_flight |= running["autofocus"] > 0
+        anything_in_flight |= running["debounce"] > 0
+        anything_in_flight |= running["miqQE"] > 0
         log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
         # Log the message only if it's different from the last one
         if prev_log_msg != log_msg:
             _thread_local.ajax_log_msg = log_msg
-            logger.trace('Ajax running: {}'.format(log_msg))
+            logger.trace('Ajax running: %s', log_msg)
         if (not anything_in_flight) and prev_log_msg:
             logger.trace('Ajax done')
 
@@ -348,7 +350,7 @@ def wait_for_ajax():
     url = url.replace(base_url(), '')
     url = url.replace("/", '_')
     if url not in urls:
-        logger.info('Taking picture of page: {}'.format(url))
+        logger.info('Taking picture of page: %s', url)
         ss, sse = take_screenshot()
         if ss:
             ss_path = log_path.join('page_screenshots')
@@ -467,7 +469,7 @@ def dismiss_any_alerts():
     try:
         while is_alert_present():
             alert = get_alert()
-            logger.warning("Dismissing additional alert with text: {}".format(alert.text))
+            logger.warning("Dismissing additional alert with text: %s", alert.text)
             alert.dismiss()
     except NoAlertPresentException:  # Just in case. is_alert_present should be reliable, but still.
         pass
@@ -503,9 +505,9 @@ def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
         popup = get_alert()
         answer = 'cancel' if cancel else 'ok'
         t = "alert" if prompt is None else "prompt"
-        logger.info('Handling {} "{}", clicking {}'.format(t, popup.text, answer))
+        logger.info('Handling %s %s, clicking %s', t, popup.text, answer)
         if prompt is not None:
-            logger.info("Typing in: {}".format(prompt))
+            logger.info("Typing in: %s", prompt)
             popup.send_keys(prompt)
         popup.dismiss() if cancel else popup.accept()
         # Should any problematic "double" alerts appear here, we don't care, just blow'em away.
@@ -589,7 +591,7 @@ def drag_and_drop(source_element, dest_element):
         wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
             handy to not do that. (some toolbar clicks)
     """
-    ActionChains(browser()).drag_and_drop(dest_element, source_element).perform()
+    ActionChains(browser()).drag_and_drop(source_element, dest_element).perform()
 
 
 def drag_and_drop_by_offset(source_element, x=0, y=0):
@@ -722,7 +724,7 @@ def set_attribute(loc, attr, value):
         value: Value to set.
     """
     logger.info(
-        "!!! ATTENTION! SETTING READ-ONLY ATTRIBUTE {} OF {} TO {}!!!".format(attr, loc, value))
+        "!!! ATTENTION! SETTING READ-ONLY ATTRIBUTE %s OF %s TO %s!!!", attr, loc, value)
     return execute_script(
         "arguments[0].setAttribute(arguments[1], arguments[2]);", element(loc), attr, value)
 
@@ -736,7 +738,7 @@ def unset_attribute(loc, attr):
         loc: A locator, expects either a string, WebElement, tuple.
         attr: Attribute name.
     """
-    logger.info("!!! ATTENTION! REMOVING READ-ONLY ATTRIBUTE {} OF {}!!!".format(attr, loc))
+    logger.info("!!! ATTENTION! REMOVING READ-ONLY ATTRIBUTE %s OF %s!!!", attr, loc)
     return execute_script("arguments[0].removeAttribute(arguments[1]);", element(loc), attr)
 
 
@@ -747,7 +749,7 @@ def set_angularjs_value(loc, value):
         loc: A locator, expects either a string, WebElement, tuple.
         value: Value to set.
     """
-    logger.info("Setting value of an angularjs element {} to {}".format(loc, value))
+    logger.info("Setting value of an angularjs element %s to %s", loc, value)
     return execute_script(js.set_angularjs_value_script, element(loc), value)
 
 
@@ -803,7 +805,7 @@ def checkbox(loc, set_to=False):
             selected = el.is_selected()
 
         if selected is not set_to:
-            logger.debug("Setting checkbox %s to %s" % (str(loc), str(set_to)))
+            logger.debug("Setting checkbox %s to %s", str(loc), str(set_to))
             click(el)
         return selected
 
@@ -871,45 +873,6 @@ def base_url():
     return store.base_url
 
 
-def go_to(page_name):
-    """go_to task mark, used to ensure tests start on the named page, logged in as Administrator.
-
-    Args:
-        page_name: Name a page from the current :py:data:`ui_navigate.nav_tree` tree to navigate to.
-
-    Usage:
-        @pytest.sel.go_to('page_name')
-        def test_something_on_page_name():
-            # ...
-
-    """
-    def go_to_wrapper(test_callable):
-        # Optional, but cool. Marks a test with the page_name, so you can
-        # py.test -k page_name
-        test_callable = getattr(pytest.mark, page_name)(test_callable)
-        # Use fixtureconf to mark the test with destination page_name
-        test_callable = pytest.mark.fixtureconf(page_name=page_name)(test_callable)
-        # Use the 'go_to' fixture, which looks for the page_name fixtureconf
-        test_callable = pytest.mark.usefixtures('go_to_fixture')(test_callable)
-        return test_callable
-    return go_to_wrapper
-
-
-@pytest.fixture
-def go_to_fixture(fixtureconf, browser):
-    """"Private" implementation of go_to in fixture form.
-
-    Used by the :py:func:`go_to` decorator, this is the actual fixture that does
-    the work set up by the go_to decorator. py.test fixtures themselves can't have
-    underscores in their name, so we can't imply privacy with that convention.
-
-    Don't use this fixture directly, use the go_to decorator instead.
-
-    """
-    page_name = fixtureconf['page_name']
-    force_navigate(page_name)
-
-
 class ContextWrapper(dict):
     """Dict that provides .attribute access + dumps all keys when not found."""
     def __getattr__(self, attr):
@@ -951,14 +914,41 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     _tries += 1
 
-    logger.debug('force_navigate to %s, try %d' % (page_name, _tries))
+    logger.debug('force_navigate to %s, try %d', page_name, _tries)
     # circular import prevention: cfme.login uses functions in this module
     from cfme import login
     # Import the top-level nav menus for convenience
     from cfme.web_ui import menu
+    # Collapse the stack
+    menu.nav.initialize()
 
     # browser fixture should do this, but it's needed for subsequent calls
     ensure_browser_open()
+
+    # check for MiqQE javascript patch in 5.6 on first try and patch the appliance if necessary
+    # raise an exception on subsequent unsuccessful attempts to access the MiqQE javascript funcs
+    if store.current_appliance.version >= "5.6":
+        def _patch_recycle_retry():
+            store.current_appliance.patch_with_miqqe()
+            browser().quit()
+            force_navigate(page_name, _tries, *args, **kwargs)
+        try:
+            # latest js diff version always has to be placed here to keep this check current
+            ver = execute_script("return MiqQE_version")
+            if ver < 1:
+                logger.info("Old patch present on appliance; patching appliance")
+                _patch_recycle_retry()
+        except WebDriverException as ex:
+            if 'is not defined' in str(ex):
+                if _tries == 1:
+                    logger.info("MiqQE javascript not defined; patching appliance")
+                    _patch_recycle_retry()
+                else:
+                    raise exceptions.CFMEException(
+                        "Unable to navigate, patching the appliance's javascript failed: {}".format(
+                            str(ex)))
+            else:
+                raise
 
     # Clear any running "spinnies"
     try:
@@ -1063,9 +1053,9 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
         ctx = kwargs.get("context", False)
         if ctx:
-            logger.info('Navigating to {} with context: {}'.format(page_name, ctx))
+            logger.info('Navigating to %s with context: %s', page_name, ctx)
         else:
-            logger.info('Navigating to {}'.format(page_name))
+            logger.info('Navigating to %s', page_name)
         menu.nav.go_to(page_name, *args, **kwargs)
     except (KeyboardInterrupt, ValueError):
         # KeyboardInterrupt: Don't block this while navigating
@@ -1091,7 +1081,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         recycle = True
     except exceptions.CannotContinueWithNavigation as e:
         # The some of the navigation steps cannot succeed
-        logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
+        logger.info('Cannot continue with navigation due to: %s; Recycling browser', str(e))
         recycle = True
     except (NoSuchElementException, InvalidElementStateException, WebDriverException,
             StaleElementReferenceException) as e:
@@ -1110,9 +1100,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             logger.warning("Page was blocked with blocker div, recycling.")
             recycle = True
         elif cfme_exc.is_cfme_exception():
-            logger.exception("CFME Exception before force_navigate started!: `{}`".format(
-                cfme_exc.cfme_exception_text()
-            ))
+            logger.exception("CFME Exception before force_navigate started!: `%s`",
+                cfme_exc.cfme_exception_text())
             recycle = True
         elif is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
             # 502
@@ -1121,22 +1110,22 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             req = text(req[0]) if req else "No request stated"
             reason = elements("/html/body/p[2]/strong")
             reason = text(reason[0]) if reason else "No reason stated"
-            logger.info("Proxy error: {} / {}".format(req, reason))
+            logger.info("Proxy error: %s / %s", req, reason)
             restart_evmserverd = True
         elif is_displayed("//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
             # 503 and similar sort of errors
             title = text("//body/h1")
             body = text("//body/p")
-            logger.exception("Application error '{}': {}".format(title, body))
+            logger.exception("Application error %s: %s", title, body)
             sleep(5)  # Give it a little bit of rest
             recycle = True
         elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]", _no_deeper=True):
             # Rails exception detection
-            logger.exception("Rails exception before force_navigate started!: {}:{} at {}".format(
+            logger.exception("Rails exception before force_navigate started!: %s:%s at %s",
                 text("//body/div[@class='dialog']/h1").encode("utf-8"),
                 text("//body/div[@class='dialog']/p").encode("utf-8"),
                 current_url()
-            ))
+            )
             recycle = True
         elif elements("//ul[@id='maintab']/li[@class='inactive']") and not\
                 elements("//ul[@id='maintab']/li[@class='active']/ul/li"):
@@ -1149,7 +1138,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             recycle = True
         else:
             logger.error("Could not determine the reason for failing the navigation. " +
-                " Reraising.  Exception: %s" % str(e))
+                " Reraising.  Exception: %s", str(e))
             logger.debug(store.current_appliance.ssh_client.run_command(
                 'service evmserverd status').output)
             raise
@@ -1161,7 +1150,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     if recycle or restart_evmserverd:
         browser().quit()  # login.current_user() will be retained for next login
-        logger.debug('browser killed on try %d' % _tries)
+        logger.debug('browser killed on try %d', _tries)
         # If given a "start" nav destination, it won't be valid after quitting the browser
         kwargs.pop("start", None)
         force_navigate(page_name, _tries, *args, **kwargs)
@@ -1217,7 +1206,7 @@ def detect_observed_field(loc):
         # In either case, we've detected an observed text field and should wait
         interval = default_wait
 
-    logger.trace('  Observed field detected, pausing %.1f seconds' % interval)
+    logger.trace('  Observed field detected, pausing %.1f seconds', interval)
     sleep(interval)
     wait_for_ajax()
 
@@ -1401,7 +1390,7 @@ class Select(SeleniumSelect, Pretty):
 
     def __repr__(self):
         return "{}({}, multi={})".format(
-            self.__class__.__name__, repr(self._loc), repr(self.is_multiple))
+            type(self).__name__, repr(self._loc), repr(self.is_multiple))
 
 
 @multidispatch
@@ -1479,7 +1468,7 @@ def select_by_text(select_element, txt):
     def _getter(s):
         try:
             return s.first_selected_option.text
-        except NoSuchElementException:
+        except (NoSuchElementException, AttributeError):
             return None
     return _sel_desel(select_element, _getter,
                       'select_by_visible_text', txt)
@@ -1541,8 +1530,8 @@ def take_screenshot():
     except Exception as ex:
         # If this fails for any other reason,
         # leave out the screenshot but record the reason
-        if ex.message:
-            screenshot_error = '%s: %s' % (type(ex).__name__, ex.message)
+        if str(ex):
+            screenshot_error = '{}: {}'.format(type(ex).__name__, str(ex))
         else:
             screenshot_error = type(ex).__name__
     return ScreenShot(screenshot, screenshot_error)

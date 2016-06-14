@@ -11,6 +11,7 @@ using the provider.
 import pytest
 
 from fixtures.artifactor_plugin import art_client, get_test_idents
+from fixtures.templateloader import TEMPLATES
 from utils import providers
 from utils.log import logger
 
@@ -40,7 +41,7 @@ def _setup_provider(provider_key, request=None):
     try:
         providers.setup_provider(provider_key)
     except Exception as ex:
-        logger.error('Error setting up provider %s', provider_key)
+        logger.error('Error setting up provider {}'.format(provider_key))
         logger.exception(ex)
         _failed_providers.add(provider_key)
         skip(provider_key)
@@ -81,3 +82,65 @@ def setup_provider_funcscope(request, provider):
 def any_provider_session():
     providers.clear_providers()  # To make it clean
     providers.setup_a_provider(validate=True, check_existing=True)
+
+
+@pytest.fixture(scope="function")
+def template(template_location, provider):
+    if template_location is not None:
+        o = provider.data
+        try:
+            for field in template_location:
+                o = o[field]
+        except (IndexError, KeyError):
+            logger.info("Cannot apply %s to %s in the template specification, ignoring.",
+                repr(field), repr(o))
+        else:
+            if not isinstance(o, basestring):
+                raise ValueError("{} is not a string! (for template)".format(repr(o)))
+            templates = TEMPLATES.get(provider.key, None)
+            if templates is not None:
+                if o in templates:
+                    return o
+    logger.info(
+        "Wanted template {} on {} but it is not there!\n".format(o, provider.key))
+    pytest.skip('Template not available')
+
+
+def _small_template(provider):
+    template = provider.data.get('small_template', None)
+    if template:
+        templates = TEMPLATES.get(provider.key, None)
+        if templates is not None:
+            if template in templates:
+                return template
+    logger.info(
+        "Wanted template {} on {} but it is not there!\n".format(template, provider.key))
+    pytest.skip('Template not available')
+
+
+@pytest.fixture(scope="function")
+def small_template(provider):
+    return _small_template(provider)
+
+
+@pytest.fixture(scope="module")
+def small_template_modscope(provider):
+    return _small_template(provider)
+
+
+@pytest.fixture(scope="function")
+def full_template(provider):
+    template = provider.data.get('full_template', {})
+    if template:
+        templates = TEMPLATES.get(provider.key, None)
+        if templates is not None:
+            if template['name'] in templates:
+                return template
+    logger.info(
+        "Wanted template {} on {} but it is not there!\n".format(template, provider.key))
+    pytest.skip('Template not available')
+
+
+@pytest.fixture(scope="function")
+def provisioning(provider):
+    return provider.data['provisioning']

@@ -50,7 +50,7 @@ def call_appliance(order, result_dict, ip_address, action, args, kwargs):
     try:
         call = getattr(appliance, action)
     except AttributeError:
-        raise Exception('Action "%s" not found' % action)
+        raise Exception('Action "{}" not found'.format(action))
     if isinstance(getattr(type(appliance), action), property):
         result = call
     else:

@@ -3,9 +3,9 @@ catalog item of type "Amazon
 
 """
 import functools
-import ui_navigate as nav
 
 import cfme.fixtures.pytest_selenium as sel
+from cfme.web_ui.menu import nav
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from cfme.provisioning import provisioning_form as request_form
@@ -17,10 +17,7 @@ from utils.pretty import Pretty
 
 
 tb_select = functools.partial(tb.select, "Configuration")
-catalog_item_tree = web_ui.Tree({
-    version.LOWEST: '//div[@id="sandt_tree_box"]//table',
-    '5.3': '//div[@id="sandt_treebox"]//ul'
-})
+catalog_item_tree = web_ui.Tree('//div[@id="sandt_treebox"]//ul')
 dynamic_tree = Tree("//div[@id='basic_info_div']//ul[@class='dynatree-container']")
 
 template_select_form = Form(
@@ -121,6 +118,9 @@ class Instance(Updateable, Pretty):
                                     "StateMachines", "ServiceProvision_Template", "default")
             sel.click(basic_info_form.apply_btn)
         tabstrip.select_tab("Request Info")
+        # Address BZ1321631
+        tabstrip.select_tab("Environment")
+        tabstrip.select_tab("Catalog")
         template = template_select_form.template_table.find_row_by_cells({
             'Name': self.catalog_name,
             'Provider': self.provider
@@ -137,4 +137,4 @@ class Instance(Updateable, Pretty):
                                                          # just take first value
         })
         sel.click(template_select_form.add_button)
-        flash.assert_success_message('Service Catalog Item "%s" was added' % self.name)
+        flash.assert_success_message('Service Catalog Item "{}" was added'.format(self.name))

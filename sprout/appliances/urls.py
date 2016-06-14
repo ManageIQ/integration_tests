@@ -7,6 +7,14 @@ from appliances import api, views
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
+    url(r'^check_appliance/(?P<provider_id>[^/]+)/(?P<appliance_name>[^/]+)$',
+        views.check_appliance, name="check_appliance"),
+    url(r'^check_template/(?P<provider_id>[^/]+)/(?P<template_name>[^/]+)$',
+        views.check_template, name="check_template"),
+    url(r'^check_pool/(?P<pool_id>[^/]+)',
+        views.check_pool, name="check_pool"),
+    url(r'^check_pools',
+        views.check_pools, name="check_pools"),
     url(r'^api$', csrf_exempt(api.jsonapi)),
     url(r'^api.html$', api.jsonapi_doc, name="jsonapi_doc"),
     url(r'^provider_usage$', views.provider_usage, name="provider_usage"),
@@ -56,4 +64,12 @@ urlpatterns = [
     url(r'^ajax/vms/buttons/([a-z_A-Z0-9-]+)$', views.power_state_buttons,
         name="power_state_buttons"),
     url(r'^ajax/vms/action/([a-z_A-Z0-9-]+)$', views.vm_action, name="vm_action"),
+    # Bugs
+    url(r'^bq$', views.view_bug_queries, name='view_bug_queries'),
+    url(r'^bq/new$', views.new_bug_query, name='new_bug_query'),
+    url(r'^bq/check_query$', views.check_query, name='check_query'),
+    url(r'^bq/(\d+)$', views.view_bug_query, name='view_bug_query'),
+    url(r'^bq/(\d+)/delete$', views.delete_bug_query, name='delete_bug_query'),
+    # Swap
+    url(r'^swap$', views.swap_offenders, name='swap_offenders'),
 ]

@@ -145,12 +145,12 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
     qe_automate_namespace_xml = "qe_event_handler.xml"
     qe_automate_namespace_script = "qe_event_handler.rb"
     local_automate_script = local(__file__)\
-        .new(basename="../data/%s" % qe_automate_namespace_script)\
+        .new(basename="../data/{}".format(qe_automate_namespace_script))\
         .strpath
     local_automate_file = local(__file__)\
-        .new(basename="../data/%s" % qe_automate_namespace_xml)\
+        .new(basename="../data/{}".format(qe_automate_namespace_xml))\
         .strpath
-    tmp_automate_file = "/tmp/%s" % qe_automate_namespace_xml
+    tmp_automate_file = "/tmp/{}".format(qe_automate_namespace_xml)
 
     # Change the information
     with open(local_automate_file, "r") as input_xml, \
@@ -176,7 +176,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
 
     # copy xml file to appliance
     # but before that, let's check whether it's there because we may have already applied this file
-    if ssh_client.run_command("ls /root/%s" % qe_automate_namespace_xml)[0] != 0:
+    if ssh_client.run_command("ls /root/{}".format(qe_automate_namespace_xml))[0] != 0:
         ssh_client.put_file(tmp_automate_file, '/root/')
 
         # We have to convert it first for new version
@@ -195,7 +195,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
                 logger.error(stdout)
                 # We didn't successfully do that so remove the file to know
                 # that it's needed to do it again when run again
-                ssh_client.run_command("rm -f /root/%s*" % qe_automate_namespace_xml)
+                ssh_client.run_command("rm -f /root/{}*".format(qe_automate_namespace_xml))
                 raise AutomateImportError(stdout)
 
         # run rake cmd on appliance to import automate namespace
@@ -213,7 +213,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
             logger.error(stdout)
             # We didn't successfully do that so remove the file to know
             # that it's needed to do it again when run again
-            ssh_client.run_command("rm -f /root/%s*" % qe_automate_namespace_xml)
+            ssh_client.run_command("rm -f /root/{}*".format(qe_automate_namespace_xml))
             raise AutomateImportError(stdout)
 
     # CREATE AUTOMATE INSTANCE HOOK
@@ -241,7 +241,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
 
     # IMPORT POLICIES
     policy_yaml = "profile_relay_events.yaml"
-    policy_path = local(__file__).new(basename="../data/%s" % policy_yaml)
+    policy_path = local(__file__).new(basename="../data/{}".format(policy_yaml))
     if not is_imported("Automate event policies"):
         import_file(policy_path.strpath)
 

@@ -21,8 +21,6 @@ product_assistance = Region(
             '5.5': "//a[normalize-space(.)='Methods For Automation Guide']"
         },
         'integrate_guide': {
-            version.LOWEST: "//a[normalize-space(.)='Integrate Guide']",
-            '5.3': "//a[normalize-space(.)='Integration Services Guide']",
             '5.4': "//a[normalize-space(.)='REST API Guide']",
             '5.5': None
         },

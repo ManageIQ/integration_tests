@@ -14,10 +14,11 @@ from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.long_running]
+pytestmark = [pytest.mark.long_running,
+              pytest.mark.tier(2)]
 
 
-pytest_generate_tests = testgen.generate(testgen.infra_providers, 'full_template', scope="module")
+pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -76,6 +77,7 @@ def test_delete_all_snapshots(test_vm, provider):
     snapshot2.delete_all()
 
 
+@pytest.mark.meta(blockers=[1333566])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
 def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot

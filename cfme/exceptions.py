@@ -17,7 +17,7 @@ class FlashMessageException(CFMEException):
     """Raised by functions in :py:mod:`cfme.web_ui.flash`"""
 
     def skip_and_log(self, message="Skipping due to flash message"):
-        logger.error("Flash message error: {}".format(str(self)))
+        logger.error("Flash message error: %s", str(self))
         pytest.skip("{}: {}".format(message, str(self)))
 
 
@@ -101,7 +101,7 @@ class NavigationError(CFMEException):
         self.page_name = page_name
 
     def __str__(self):
-        return 'Unable to navigate to page "%s"' % self.page_name
+        return 'Unable to navigate to page "{}"'.format(self.page_name)
     pass
 
 
@@ -130,7 +130,8 @@ class NotAllItemsClicked(CFMEException):
         self.failed_clicks = failed_clicks
 
     def __str__(self):
-        return "Not all the required data elements were clicked [%s]" % ",".join(self.failed_clicks)
+        return "Not all the required data elements were clicked [{}]".format(
+            ",".join(self.failed_clicks))
 
 
 class NotAllCheckboxesFound(CFMEException):
@@ -142,8 +143,8 @@ class NotAllCheckboxesFound(CFMEException):
         self.failed_selects = failed_selects
 
     def __str__(self):
-        return "Not all the required data elements were selected/deselected [%s]" % ","\
-               .join(self.failed_selects)
+        return "Not all the required data elements were selected/deselected [{}]".format(
+            ",".join(self.failed_selects))
 
 
 class ProviderHasNoKey(CFMEException):
@@ -230,10 +231,6 @@ class HostNotFound(CFMEException):
     pass
 
 
-class HostNotRemoved(CFMEException):
-    """Raised when :py:mod:`utils.mgmt_system` fails to remove host from cluster"""
-
-
 class OptionNotAvailable(CFMEException):
     """
     Raised if a specified option is not available.
@@ -287,4 +284,11 @@ class CUCommandException(CFMEException):
 class PaginatorException(CFMEException):
     """Raised by functions in :py:mod:`cfme.web_ui.paginator`"""
 
+    pass
+
+
+class MiddlewareServerNotFound(CFMEException):
+    """
+    Raised if a specific Middleware Server cannot be found.
+    """
     pass

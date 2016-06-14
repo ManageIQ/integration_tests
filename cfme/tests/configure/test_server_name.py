@@ -5,8 +5,10 @@ from cfme.configure.configuration import BasicInformation
 from cfme.fixtures import pytest_selenium as sel
 from fixtures.pytest_store import store
 from cfme.web_ui import flash, InfoBlock
+from utils import clear_property_cache
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_server_name():
     """Tests that changing the server name updates the about page"""
@@ -23,10 +25,10 @@ def test_server_name():
     assert new_server_name == InfoBlock('Session Information', 'Server Name').text,\
         "Server name in About section does not match the new name"
 
-    del(store.current_appliance.configuration_details)
+    clear_property_cache(store.current_appliance, 'configuration_details')
 
     settings_pg = BasicInformation(appliance_name=old_server_name)
     settings_pg.update()
     flash.assert_message_contain(flash_msg.format(old_server_name))
 
-    del(store.current_appliance.configuration_details)
+    clear_property_cache(store.current_appliance, 'configuration_details')

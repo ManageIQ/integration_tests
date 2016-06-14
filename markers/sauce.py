@@ -15,6 +15,6 @@ def pytest_configure(config):
     config.addinivalue_line('markers', __doc__.splitlines()[0])
     if config.option.sauce:
         if config.option.markexpr:
-            config.option.markexpr = 'sauce and (%s)' % config.option.markexpr
+            config.option.markexpr = 'sauce and ({})'.format(config.option.markexpr)
         else:
             config.option.markexpr = 'sauce'

@@ -2,6 +2,7 @@
 from functools import partial
 
 from cfme import web_ui
+from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, flash, form_buttons, menu, Input
 from cfme.web_ui import toolbar as tb
@@ -71,6 +72,9 @@ class Catalog(Updateable, Pretty):
         self.description = description
         self.items = items
 
+    def __str__(self):
+        return self.name
+
     def create(self):
         sel.force_navigate('catalog_new')
         sel.wait_for_element(form.name_text)
@@ -95,3 +99,11 @@ class Catalog(Updateable, Pretty):
         sel.handle_alert()
         flash.assert_success_message(
             'Catalog "{}": Delete successful'.format(self.description or self.name))
+
+    @property
+    def exists(self):
+        try:
+            sel.force_navigate('catalog', context={'catalog': self})
+            return True
+        except CandidateNotFound:
+            return False

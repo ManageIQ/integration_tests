@@ -20,26 +20,13 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, 'provisioning', template_location=["provisioning", "template"])
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'template', 'host', 'datastore'}.issubset(args['provisioning'].viewkeys()):
-            # Need all three for template provisioning
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
+        required_fields=[
+            ['provisioning', 'template'],
+            ['provisioning', 'host'],
+            ['provisioning', 'datastore']
+        ])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="function")
@@ -83,6 +70,7 @@ def retire_extend_button(request):
     return lambda: toolbar.select(grp.text, button.text)
 
 
+@pytest.mark.tier(3)
 def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button):
     """ Tests extending a retirement using an AE method.
 

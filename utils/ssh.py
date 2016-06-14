@@ -4,6 +4,7 @@ import re
 import socket
 import sys
 from collections import namedtuple
+from os import path as os_path
 from urlparse import urlparse
 
 import paramiko
@@ -41,18 +42,20 @@ class SSHClient(paramiko.SSHClient):
         # deprecated/useless karg, included for backward-compat
         self._keystate = connect_kwargs.pop('keystate', None)
 
-        # Load credentials and destination from confs, set up sane defaults
-        parsed_url = urlparse(store.base_url)
+        # load the defaults for ssh
         default_connect_kwargs = {
-            'username': conf.credentials['ssh']['username'],
-            'password': conf.credentials['ssh']['password'],
-            'hostname': parsed_url.hostname,
             'timeout': 10,
             'allow_agent': False,
             'look_for_keys': False,
             'gss_auth': False
         }
-
+        # Load credentials and destination from confs, if connect_kwargs is empty
+        if not connect_kwargs.get('hostname', None):
+            parsed_url = urlparse(store.base_url)
+            default_connect_kwargs["port"] = ports.SSH
+            default_connect_kwargs['username'] = conf.credentials['ssh']['username'],
+            default_connect_kwargs['password'] = conf.credentials['ssh']['password'],
+            default_connect_kwargs['hostname'] = parsed_url.hostname,
         default_connect_kwargs["port"] = ports.SSH
 
         # Overlay defaults with any passed-in kwargs and store
@@ -97,7 +100,7 @@ class SSHClient(paramiko.SSHClient):
     def _progress_callback(self, filename, size, sent):
         sent_percent = (sent * 100.) / size
         if sent_percent > 0:
-            logger.debug('{} scp progress: {:.2f}% '.format(filename, sent_percent))
+            logger.debug('%s scp progress: %f%% ', filename, sent_percent)
 
     def close(self):
         with diaper:
@@ -132,12 +135,12 @@ class SSHClient(paramiko.SSHClient):
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
-    def run_command(self, command, timeout=RUNCMD_TIMEOUT):
+    def run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False):
         if isinstance(command, dict):
             command = version.pick(command)
-        logger.info("Running command `{}`".format(command))
-        template = '%s\n'
-        command = template % command
+        logger.info("Running command `%s`", command)
+        template = '{}\n'
+        command = template.format(command)
 
         output = ''
         try:
@@ -165,11 +168,14 @@ class SSHClient(paramiko.SSHClient):
             exit_status = session.recv_exit_status()
             return SSHResult(exit_status, output)
         except paramiko.SSHException as exc:
-            logger.exception(exc)
+            if reraise:
+                raise
+            else:
+                logger.exception(exc)
         except socket.timeout as e:
-            logger.error("Command `{}` timed out.".format(command))
+            logger.error("Command `%s` timed out.", command)
             logger.exception(e)
-            logger.error("Output of the command before it failed was:\n{}".format(output))
+            logger.error("Output of the command before it failed was:\n%s", output)
             raise
 
         # Returning two things so tuple unpacking the return works even if the ssh client fails
@@ -191,24 +197,83 @@ class SSHClient(paramiko.SSHClient):
             "do :; done & done".format(seconds, cpus), **kwargs)
 
     def run_rails_command(self, command, timeout=RUNCMD_TIMEOUT):
-        logger.info("Running rails command `{}`".format(command))
+        logger.info("Running rails command `%s`", command)
         return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {}'.format(command),
             timeout=timeout)
 
     def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT):
-        logger.info("Running rake command `{}`".format(command))
+        logger.info("Running rake command `%s`", command)
         return self.run_command('cd /var/www/miq/vmdb; bin/rake {}'.format(command),
             timeout=timeout)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
-        logger.info("Transferring local file {} to remote {}".format(local_file, remote_file))
+        logger.info("Transferring local file %s to remote %s", local_file, remote_file)
         return SCPClient(self.get_transport(), progress=self._progress_callback).put(
             local_file, remote_file, **kwargs)
 
     def get_file(self, remote_file, local_path='', **kwargs):
-        logger.info("Transferring remote file {} to local {}".format(remote_file, local_path))
+        logger.info("Transferring remote file %s to local %s", remote_file, local_path)
         return SCPClient(self.get_transport(), progress=self._progress_callback).get(
             remote_file, local_path, **kwargs)
+
+    def patch_file(self, local_path, remote_path, md5=None):
+        """ Patches a single file on the appliance
+
+        Args:
+            local_path: Path to patch (diff) file
+            remote_path: Path to file to be patched (on the appliance)
+            md5: MD5 checksum of the original file to check if it has changed
+
+        Returns:
+            True if changes were applied, False if patching was not necessary
+
+        Note:
+            If there is a .bak file present and the file-to-be-patched was
+            not patched by the current patch-file, it will be used to restore it first.
+            Recompiling assets and restarting appropriate services might be required.
+        """
+        logger.info('Patching %s', remote_path)
+
+        # Upload diff to the appliance
+        diff_remote_path = os_path.join('/tmp/', os_path.basename(remote_path))
+        self.put_file(local_path, diff_remote_path)
+
+        # If already patched with current file, exit
+        logger.info('Checking if already patched')
+        rc, out = self.run_command(
+            'patch {} {} -f --dry-run -R'.format(remote_path, diff_remote_path))
+        if rc == 0:
+            return False
+
+        # If we have a .bak file available, it means the file is already patched
+        # by some older patch; in that case, replace the file-to-be-patched by the .bak first
+        logger.info("Checking if {}.bak is available".format(remote_path))
+        rc, out = self.run_command('test -e {}.bak'.format(remote_path))
+        if rc == 0:
+            logger.info(
+                "{}.bak found; using it to replace {}".format(remote_path, remote_path))
+            rc, out = self.run_command('mv {}.bak {}'.format(remote_path, remote_path))
+            if rc != 0:
+                raise Exception(
+                    "Unable to replace {} with {}.bak".format(remote_path, remote_path))
+        else:
+            logger.info("{}.bak not found".format(remote_path))
+
+        # If not patched and there's MD5 checksum available, check it
+        if md5:
+            logger.info("MD5 sum check in progress for %s", remote_path)
+            rc, out = self.run_command('md5sum -c - <<< "{} {}"'.format(md5, remote_path))
+            if rc == 0:
+                logger.info('MD5 sum check result: file not changed')
+            else:
+                logger.warning('MD5 sum check result: file has been changed!')
+
+        # Create the backup and patch
+        rc, out = self.run_command(
+            'patch {} {} -f -b -z .bak'.format(remote_path, diff_remote_path))
+        if rc != 0:
+            raise Exception("Unable to patch file {}: {}".format(remote_path, out))
+        return True
 
     def get_build_datetime(self):
         command = "stat --printf=%Y /var/www/miq/vmdb/VERSION"

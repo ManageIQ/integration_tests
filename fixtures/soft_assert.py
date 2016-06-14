@@ -98,7 +98,7 @@ def handle_assert_artifacts(request, fail_message=None):
     test_location = request.node.location[0]
 
     if not fail_message:
-        short_tb = '%s' % (sys.exc_info()[1])
+        short_tb = '{}'.format(sys.exc_info()[1])
         full_tb = "".join(traceback.format_tb(sys.exc_info()[2]))
         full_tb = full_tb.encode('base64')
 
@@ -110,8 +110,8 @@ def handle_assert_artifacts(request, fail_message=None):
         ss_error = None
     except Exception as b_ex:
         ss = None
-        if b_ex.message:
-            ss_error = '%s: %s' % (type(b_ex).__name__, b_ex.message)
+        if str(b_ex):
+            ss_error = '{}: {}'.format(type(b_ex).__name__, str(b_ex))
         else:
             ss_error = type(b_ex).__name__
     if ss_error:
@@ -177,8 +177,8 @@ def _annotate_failure(fail_message=''):
         fail_message = str(frameinfo.code_context[0]).strip()
 
     filename = get_rel_path(frameinfo.filename)
-    path = '%s:%r' % (filename, frameinfo.lineno)
-    return '%s (%s)' % (fail_message, path)
+    path = '{}:{!r}'.format(filename, frameinfo.lineno)
+    return '{} ({})'.format(fail_message, path)
 
 
 @pytest.fixture

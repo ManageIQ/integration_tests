@@ -143,7 +143,8 @@ from traceback import extract_tb, format_tb
 
 import psphere
 
-from utils import conf, lazycache, safe_string
+from cached_property import cached_property
+from utils import conf, safe_string
 from utils.path import get_rel_path, log_path
 
 MARKER_LEN = 80
@@ -226,7 +227,7 @@ class SyslogMsecFormatter(logging.Formatter):
 class NamedLoggerAdapter(TraceLoggerAdapter):
     """An adapter that injects a name into log messages"""
     def process(self, message, kwargs):
-        return '(%s) %s' % (self.extra, message), kwargs
+        return '({}) {}'.format(self.extra, message), kwargs
 
 
 def _load_conf(logger_name=None):
@@ -275,7 +276,7 @@ class _RelpathFilter(logging.Filter):
             relpath = get_rel_path(record.pathname)
             lineno = record.lineno
         if lineno:
-            record.source = "%s:%d" % (relpath, lineno)
+            record.source = "{}:{}".format(relpath, lineno)
         else:
             record.source = relpath
 
@@ -339,8 +340,8 @@ def create_logger(logger_name, filename=None, max_file_size=None, max_backups=No
 
     """
     # If the logger already exists, destroy it
-    if logger_name in logging.root.manager.loggerDict:
-        del(logging.root.manager.loggerDict[logger_name])
+    # TODO: remove the need to destroy the logger
+    logging.root.manager.loggerDict.pop(logger_name, None)
 
     # Grab the logging conf
     conf = _load_conf(logger_name)
@@ -349,7 +350,7 @@ def create_logger(logger_name, filename=None, max_file_size=None, max_backups=No
     if filename:
         log_file = filename
     else:
-        log_file = str(log_path.join('%s.log' % logger_name))
+        log_file = str(log_path.join('{}.log'.format(logger_name)))
 
     # log_file is dynamic, so we can't used logging.config.dictConfig here without creating
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
@@ -393,7 +394,7 @@ def _showwarning(message, category, filename, lineno, file=None, line=None):
     relpath = get_rel_path(filename)
     if relpath:
         # Only show warnings from inside this project
-        message = "%s from %s:%d: %s" % (category.__name__, relpath, lineno, message)
+        message = "{} from {}:{}: {}".format(category.__name__, relpath, lineno, message)
         try:
             logger.warning(message)
         except ImportError:
@@ -431,7 +432,7 @@ def format_marker(mstring, mark="-"):
 def _custom_excepthook(type, value, traceback):
     file, lineno, function, __ = extract_tb(traceback)[-1]
     text = ''.join(format_tb(traceback)).strip()
-    logger.error('Unhandled {}'.format(type.__name__))
+    logger.error('Unhandled %s', type.__name__)
     logger.error(text, extra={'source_file': file, 'source_lineno': lineno})
     _original_excepthook(type, value, traceback)
 
@@ -459,20 +460,32 @@ def nth_frame_info(n):
 
 class ArtifactorLoggerAdapter(logging.LoggerAdapter):
     """Logger Adapter that hands messages off to the artifactor before logging"""
-    @lazycache
+    @cached_property
     def artifactor(self):
         from fixtures.artifactor_plugin import art_client
         return art_client
 
-    @lazycache
+    @cached_property
     def slaveid(self):
         from fixtures.artifactor_plugin import SLAVEID
         return SLAVEID or ""
 
-    def art_log(self, level_name, message, kwargs):
+    def art_log(self, level_name, message, args, kwargs):
+        if args:
+            # Try the string formatting only if args passed
+            try:
+                formatted_message = message % args
+            except (TypeError, ValueError) as e:
+                formatted_message = message
+                self.logger.error(
+                    'Could not format the string %r with %r because of %r', message, args, e)
+        else:
+            # No args passed, do not care.
+            formatted_message = message
+
         art_log_record = {
             'level': level_name,
-            'message': safe_string(message),
+            'message': formatted_message,
             'extra': kwargs.get('extra', '')
         }
         self.artifactor.fire_hook('log_message', log_record=art_log_record, slaveid=self.slaveid)
@@ -480,43 +493,43 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
     def log(self, lvl, msg, *args, **kwargs):
         level_name = logging.getLevelName(lvl).lower()
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log(level_name, msg, kwargs)
+        self.art_log(level_name, msg, args, kwargs)
         return self.logger.log(lvl, msg, *args, **kwargs)
 
     def trace(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('trace', msg, kwargs)
+        self.art_log('trace', msg, args, kwargs)
         return self.logger.trace(msg, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('debug', msg, kwargs)
+        self.art_log('debug', msg, args, kwargs)
         return self.logger.debug(msg, *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('info', msg, kwargs)
+        self.art_log('info', msg, args, kwargs)
         return self.logger.info(msg, *args, **kwargs)
 
     def warning(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('warning', msg, kwargs)
+        self.art_log('warning', msg, args, kwargs)
         return self.logger.warning(msg, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('error', msg, kwargs)
+        self.art_log('error', msg, args, kwargs)
         return self.logger.error(msg, *args, **kwargs)
 
     def critical(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('critical', msg, kwargs)
+        self.art_log('critical', msg, args, kwargs)
         return self.logger.critical(msg, *args, **kwargs)
 
     def exception(self, msg, *args, **kwargs):
         kwargs['exc_info'] = 1
         msg, kwargs = self.process(msg, kwargs)
-        self.art_log('error', msg, kwargs)
+        self.art_log('error', msg, args, kwargs)
         return self.logger.error(msg, *args, **kwargs)
 
     def process(self, msg, kwargs):
@@ -525,6 +538,7 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         # 1: adapter process method (this method)
         # 2: adapter logging method
         # 3: original logging call
+        msg = safe_string(msg)
         frameinfo = nth_frame_info(3)
         extra = kwargs.get('extra', {})
         # add extra data if needed
@@ -555,6 +569,6 @@ sys.excepthook = _custom_excepthook
 
 # Suppress psphere's really annoying "No handler found" messages.
 # module[1] is the name from a (module_loader, name, ispkg) tuple
-for psphere_mod in ('psphere.%s' % module[1] for module in iter_modules(psphere.__path__)):
+for psphere_mod in ('psphere.{}'.format(module[1]) for module in iter_modules(psphere.__path__)):
     # Add a logger with a NullHandler for ever psphere module
     logging.getLogger(psphere_mod).addHandler(logging.NullHandler())

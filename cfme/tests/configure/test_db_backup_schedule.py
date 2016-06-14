@@ -4,11 +4,11 @@ import pytest
 
 from cfme.configure.configuration import DatabaseBackupSchedule
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import flash, InfoBlock
+from cfme.web_ui import flash
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from urlparse import urlparse
-from utils import conf
+from utils import conf, testgen
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 from utils.pretty import Pretty
@@ -100,7 +100,7 @@ def pytest_generate_tests(metafunc):
                 argvalues.append(db_backup_data)
                 ids.append(db_backup_data.id)
 
-        metafunc.parametrize(argnames, argvalues, ids=ids)
+        testgen.parametrize(metafunc, argnames, argvalues, ids=ids)
 
 
 def get_schedulable_datetime():
@@ -135,6 +135,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
     return full_path
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1099341, 1205898])
 def test_db_backup_schedule(request, db_backup_data):
     """ Test scheduled one-type backup on given machines using smb/nfs
@@ -196,10 +197,9 @@ def test_db_backup_schedule(request, db_backup_data):
     # ----
 
     # ---- Wait for schedule to run
-    sel.force_navigate('cfg_settings_schedule',
-                       context={'schedule_name': db_backup_data.schedule_name})
+    # check last date at schedule's table
     wait_for(
-        lambda: InfoBlock('Schedule Info', 'Last Run Time').text != '',
+        lambda: sched.last_date != '',
         num_sec=600,
         delay=30,
         fail_func=sel.refresh,

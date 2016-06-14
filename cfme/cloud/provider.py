@@ -17,8 +17,9 @@ from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
 from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui.menu import nav
-from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect
+from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
+from cfme.web_ui.tabstrip import TabStripForm
 from utils.log import logger
 from utils.providers import setup_provider_by_name
 from utils.wait import wait_for
@@ -36,22 +37,25 @@ discover_form = Form(
         ('start_button', form_buttons.FormButton("Start the Host Discovery"))
     ])
 
-properties_form = Form(
+properties_form_55 = Form(
     fields=[
         ('type_select', {version.LOWEST: Select('select#server_emstype'),
-                         '5.5': AngularSelect("emstype")}),
+            '5.5': AngularSelect("emstype")}),
+        ('azure_tenant_id', Input("azure_tenant_id")),
         ('name_text', Input("name")),
+        ('azure_region_select', AngularSelect("provider_region")),
         ('hostname_text', Input("hostname")),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
-        ('amazon_region_select', {version.LOWEST: Select("select#hostname"),
-                                  "5.3.0.14": Select("select#provider_region"),
-                                  "5.5": AngularSelect("provider_region")}),
+        ('region_select', {version.LOWEST: Select("select#provider_region"),
+            "5.5": AngularSelect("provider_region")}),
         ('api_port', Input(
             {
                 version.LOWEST: "port",
                 "5.5": "api_port",
             }
         )),
+        ('infra_provider', Input("provider_id")),
+        ('subscription', Input("subscription")),
         ("api_version", AngularSelect("api_version"), {"appeared_in": "5.5"}),
         ('sec_protocol', AngularSelect("security_protocol"), {"appeared_in": "5.5"}),
         ('infra_provider', {
@@ -59,6 +63,44 @@ properties_form = Form(
             "5.4": Select("select#provider_id"),
             "5.5": AngularSelect("provider_id")}),
     ])
+
+properties_form_56 = TabStripForm(
+    fields=[
+        ('type_select', AngularSelect("ems_type")),
+        ('name_text', Input("name")),
+        ('region_select', AngularSelect("ems_region")),
+        ('google_region_select', AngularSelect("ems_preferred_region")),
+        ("api_version", AngularSelect("ems_api_version")),
+        ('infra_provider', AngularSelect("ems_infra_provider_id")),
+        ('google_project_text', Input("project")),
+        ('azure_tenant_id', Input("azure_tenant_id")),
+        ('azure_subscription_id', Input("subscription")),
+        ('amazon_region_select', {version.LOWEST: Select("select#provider_region"),
+            "5.5": AngularSelect("provider_region")}),
+        ("api_version", AngularSelect("api_version")),
+    ],
+    tab_fields={
+        "Default": [
+            ('hostname_text', Input("default_hostname")),
+            ('api_port', Input("default_api_port")),
+            ('sec_protocol', AngularSelect("default_security_protocol")),
+        ],
+        "Events": [
+            ('event_selection', Radio('event_stream_selection')),
+            ('amqp_hostname_text', Input("amqp_hostname")),
+            ('amqp_api_port', Input("amqp_api_port")),
+            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol")),
+        ]
+    })
+
+prop_region = Region(
+    locators={
+        'properties_form': {
+            version.LOWEST: properties_form_55,
+            '5.6': properties_form_56,
+        }
+    }
+)
 
 details_page = Region(infoblock_type='detail')
 
@@ -101,17 +143,19 @@ class Provider(Pretty, CloudInfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
     page_name = "clouds"
+    instances_page_name = "clouds_instances_by_provider"
+    templates_page_name = "clouds_images_by_provider"
     quad_name = "cloud_prov"
     vm_name = "Instances"
     template_name = "Images"
-    properties_form = properties_form
+    _properties_region = prop_region  # This will get resolved in common to a real form
     # Specific Add button
     add_provider_button = deferred_verpick(
         {version.LOWEST: form_buttons.FormButton("Add this Cloud Provider"),
-         '5.5': form_buttons.FormButton("Add")})
+         '5.5': form_buttons.add})
     save_button = deferred_verpick(
-        {version.LOWEST: form_buttons.FormButton("Save Changes"),
-         '5.5': form_buttons.FormButton("Save changes")})
+        {version.LOWEST: form_buttons.save,
+         '5.5': form_buttons.angular_save})
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
         if not credentials:
@@ -125,6 +169,24 @@ class Provider(Pretty, CloudInfraProvider):
         return {'name_text': kwargs.get('name')}
 
 
+class AzureProvider(Provider):
+    def __init__(self, name=None, credentials=None, zone=None, key=None, region=None,
+                 tenant_id=None, subscription_id=None):
+        super(AzureProvider, self).__init__(name=name, credentials=credentials,
+                                            zone=zone, key=key)
+        self.region = region
+        self.tenant_id = tenant_id
+        self.subscription_id = subscription_id
+
+    def _form_mapping(self, create=None, **kwargs):
+        # Will still need to figure out where to put the tenant id.
+        return {'name_text': kwargs.get('name'),
+                'type_select': create and 'Azure',
+                'region_select': kwargs.get('region'),
+                'azure_tenant_id': kwargs.get('tenant_id'),
+                'azure_subscription_id': kwargs.get('subscription_id')}
+
+
 class EC2Provider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, region=None):
         super(EC2Provider, self).__init__(name=name, credentials=credentials,
@@ -134,12 +196,26 @@ class EC2Provider(Provider):
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Amazon EC2',
-                'amazon_region_select': sel.ByValue(kwargs.get('region'))}
+                'region_select': sel.ByValue(kwargs.get('region'))}
+
+
+class GCEProvider(Provider):
+    def __init__(self, name=None, project=None, zone=None, region=None, credentials=None, key=None):
+        super(GCEProvider, self).__init__(name=name, zone=zone, key=key, credentials=credentials)
+        self.region = region
+        self.project = project
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name'),
+                'type_select': create and 'Google Compute Engine',
+                'google_region_select': sel.ByValue(kwargs.get('region')),
+                'google_project_text': kwargs.get('project')}
 
 
 class OpenStackProvider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, sec_protocol=None, infra_provider=None):
+                 ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,
+                 infra_provider=None):
         super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
                                                 zone=zone, key=key)
         self.hostname = hostname
@@ -147,6 +223,7 @@ class OpenStackProvider(Provider):
         self.api_port = api_port
         self.infra_provider = infra_provider
         self.sec_protocol = sec_protocol
+        self.amqp_sec_protocol = amqp_sec_protocol
 
     def create(self, *args, **kwargs):
         # Override the standard behaviour to actually create the underlying infra first.
@@ -163,13 +240,22 @@ class OpenStackProvider(Provider):
         infra_provider = kwargs.get('infra_provider')
         if isinstance(infra_provider, OpenstackInfraProvider):
             infra_provider = infra_provider.name
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'OpenStack',
-                'hostname_text': kwargs.get('hostname'),
-                'api_port': kwargs.get('api_port'),
-                'ipaddress_text': kwargs.get('ip_address'),
-                'sec_protocol': kwargs.get('sec_protocol'),
-                'infra_provider': "---" if infra_provider is False else infra_provider}
+        data_dict = {
+            'name_text': kwargs.get('name'),
+            'type_select': create and 'OpenStack',
+            'hostname_text': kwargs.get('hostname'),
+            'api_port': kwargs.get('api_port'),
+            'ipaddress_text': kwargs.get('ip_address'),
+            'sec_protocol': kwargs.get('sec_protocol'),
+            'infra_provider': "---" if infra_provider is False else infra_provider}
+        if 'amqp' in self.credentials:
+            data_dict.update({
+                'event_selection': 'amqp',
+                'amqp_hostname_text': kwargs.get('hostname'),
+                'amqp_api_port': kwargs.get('amqp_api_port', '5672'),
+                'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
+            })
+        return data_dict
 
 
 def get_all_providers(do_not_navigate=False):
@@ -177,10 +263,7 @@ def get_all_providers(do_not_navigate=False):
     if not do_not_navigate:
         sel.force_navigate('clouds_providers')
     providers = set([])
-    link_marker = version.pick({
-        version.LOWEST: "ext_management_system",
-        "5.2.5": "ems_cloud"
-    })
+    link_marker = "ems_cloud"
     for page in paginator.pages():
         for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
                 "'{}/show')]".format(link_marker)):

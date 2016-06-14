@@ -10,8 +10,7 @@ from utils.update import update
 from utils.blockers import BZ
 import cfme.tests.configure.test_access_control as tac
 
-pytestmark = [pytest.mark.usefixtures("logged_in"),
-              pytest.mark.ignore_stream("5.2")]
+pytestmark = [pytest.mark.usefixtures("logged_in"), pytest.mark.tier(3)]
 
 
 @pytest.yield_fixture(scope="function")
@@ -33,7 +32,7 @@ def dialog():
                                    box_label="box_" + fauxfactory.gen_alphanumeric(),
                                    box_desc="my box desc")
     service_dialog.create(element_data)
-    flash.assert_success_message('Dialog "%s" was added' % dialog)
+    flash.assert_success_message('Dialog "{}" was added'.format(dialog))
     yield dialog
 
 
@@ -57,8 +56,7 @@ def catalog_item(dialog, catalog):
 
 def test_create_catalog_item(catalog_item):
     catalog_item.create()
-    flash.assert_success_message('Service Catalog Item "%s" was added' %
-                                 catalog_item.name)
+    flash.assert_success_message('Service Catalog Item "{}" was added'.format(catalog_item.name))
 
 
 def test_update_catalog_item(catalog_item):
@@ -87,7 +85,7 @@ def test_edit_tags(catalog_item):
     catalog_item.edit_tags("Cost Center *", "Cost Center 001")
 
 
-@pytest.mark.meta(blockers=[BZ(1092651, forced_streams=["5.3", "5.4", "5.5", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1313510, forced_streams=["5.4", "5.5", "upstream"])])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):

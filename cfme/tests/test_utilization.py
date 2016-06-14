@@ -5,11 +5,12 @@ from utils import providers
 from utils import testgen
 from utils import conf
 from utils.log import logger
-from utils.providers import cloud_provider_type_map, infra_provider_type_map
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.exceptions import FlashMessageException
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, None)
+
+pytestmark = [pytest.mark.tier(1)]
 
 
 @pytest.yield_fixture(scope="module")
@@ -47,7 +48,7 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
     metrics_tbl = db.cfmedb()['metrics']
     mgmt_systems_tbl = db.cfmedb()['ext_management_systems']
 
-    logger.info("Fetching provider ID for {}".format(provider.key))
+    logger.info("Fetching provider ID for %s", provider.key)
     mgmt_system_id = db.cfmedb().session.query(mgmt_systems_tbl).filter(
         mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
@@ -62,8 +63,8 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
     while time.time() < start_time + timeout:
         last_host_count = host_count
         last_vm_count = vm_count
-        logger.info("name: {}, id: {}, vms: {}, hosts: {}".format(
-            provider.key, mgmt_system_id, vm_count, host_count))
+        logger.info("name: %s, id: %s, vms: %s, hosts: %s",
+            provider.key, mgmt_system_id, vm_count, host_count)
         # count host and vm metrics for the provider we're testing
         host_count = db.cfmedb().session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
@@ -80,10 +81,10 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
             vm_rising = True
 
         # only vms are collected for cloud
-        if provider.type in cloud_provider_type_map and vm_rising:
+        if provider.category == "cloud" and vm_rising:
             return
         # both vms and hosts must be collected for infra
-        elif provider.type in infra_provider_type_map and vm_rising and host_rising:
+        elif provider.category == "infra" and vm_rising and host_rising:
             return
         else:
             time.sleep(15)

@@ -4,6 +4,7 @@ import sys
 
 from fixtures.pytest_store import store
 from utils.log import logger
+from utils import clear_property_cache
 
 
 class Ports(object):
@@ -19,7 +20,7 @@ class Ports(object):
         super(self.__class__, self).__setattr__(attr, value)
         if self.store.any_appliance:
             self.logger.info("Invalidating lazy_cache ssh_client current_appliance object")
-            del(self.store.current_appliance.ssh_client)
+            clear_property_cache(self.store.current_appliance, 'ssh_client')
 
 
 sys.modules[__name__] = Ports()

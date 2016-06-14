@@ -7,7 +7,7 @@ from cfme.web_ui import (
     accordion, fill, flash, paginator, toolbar, CheckboxTree, Region, Tree, Quadicon)
 from cfme.web_ui.menu import extend_nav
 from functools import partial
-from utils import deferred_verpick, version
+from utils.api import rest_api
 from utils.wait import wait_for
 
 
@@ -26,12 +26,7 @@ policy_page = Region(
         'policy_tree': Tree('//div[@class="containerTableStyle"]/table')
     })
 
-manage_policies_tree = CheckboxTree(
-    {
-        version.LOWEST: "//div[@id='treebox']/div/table",
-        "5.3": "//div[@id='protect_treebox']/ul"
-    }
-)
+manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
 
 @extend_nav
@@ -116,6 +111,7 @@ class Instance(VM):
     TO_OPEN_EDIT = "Edit this Instance"
     TO_RETIRE = "Retire this Instance"
     QUADICON_TYPE = "instance"
+    VM_TYPE = "Instance"
 
     def create(self):
         """Provisions an instance with the given properties through CFME
@@ -125,8 +121,8 @@ class Instance(VM):
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper instance details page.
         """
-        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Instance \"%s\"')]" %
-            self.name)
+        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Instance \"{}\"')]".format(
+            self.name))
 
         # If the locator isn't on the page, or if it _is_ on the page and contains
         # 'Timelines' we are on the wrong page and take the appropriate action
@@ -156,6 +152,16 @@ class Instance(VM):
             else:
                 return True
 
+    def get_vm_via_rest(self):
+        # Try except block, because instances collection isn't available on 5.4
+        try:
+            instance = rest_api().collections.instances.get(name=self.name)
+        except AttributeError:
+            raise Exception("Collection instances isn't available")
+        return instance
+
+    def get_collection_via_rest(self):
+        return rest_api().collections.instances
 
 @VM.register_for_provider_type("openstack")
 class OpenStackInstance(Instance):
@@ -176,14 +182,8 @@ class OpenStackInstance(Instance):
     STATE_ON = "on"
     STATE_OFF = "off"
     STATE_ERROR = "non-operational"
-    STATE_PAUSED = deferred_verpick({
-        version.LOWEST: "off",
-        "5.4": "paused",
-    })
-    STATE_SUSPENDED = deferred_verpick({
-        version.LOWEST: "off",
-        "5.4": "suspended",
-    })
+    STATE_PAUSED = "paused"
+    STATE_SUSPENDED = "suspended"
     STATE_UNKNOWN = "unknown"
 
     def create(self, email=None, first_name=None, last_name=None, cloud_network=None,
@@ -232,13 +232,11 @@ class OpenStackInstance(Instance):
             flash.assert_success_message(
                 "VM Provision Request was Submitted, you will be notified when your VMs are ready")
 
-        row_description = 'Provision from [%s] to [%s]' % (self.template_name, self.name)
+        row_description = 'Provision from [{}] to [{}]'.format(self.template_name, self.name)
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=600, delay=20)
-        assert row.last_message.text == version.pick(
-            {version.LOWEST: 'VM Provisioned Successfully',
-             "5.3": 'Vm Provisioned Successfully', })
+        assert row.last_message.text == 'Vm Provisioned Successfully'
 
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
@@ -336,13 +334,11 @@ class EC2Instance(Instance):
             flash.assert_success_message(
                 "VM Provision Request was Submitted, you will be notified when your VMs are ready")
 
-        row_description = 'Provision from [%s] to [%s]' % (self.template_name, self.name)
+        row_description = 'Provision from [{}] to [{}]'.format(self.template_name, self.name)
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=900, delay=20)
-        assert row.last_message.text == version.pick(
-            {version.LOWEST: 'VM Provisioned Successfully',
-             "5.3": 'Vm Provisioned Successfully', })
+        assert row.last_message.text == 'Vm Provisioned Successfully'
 
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
@@ -360,6 +356,100 @@ class EC2Instance(Instance):
         elif option == EC2Instance.RESTART:
             self.provider.mgmt.restart_vm(self.name)
         elif option == EC2Instance.TERMINATE:
+            self.provider.mgmt.delete_vm(self.name)
+        else:
+            raise OptionNotAvailable(option + " is not a supported action")
+
+
+@VM.register_for_provider_type("azure")
+class AzureInstance(Instance):
+    # CFME & provider power control options Added by Jeff Teehan on 5-16-2016
+    START = "Start"
+    POWER_ON = START  # For compatibility with the infra objects.
+    STOP = "Stop"
+    TERMINATE = "Terminate"
+    # CFME-only power control options
+    SOFT_REBOOT = "Soft Reboot"
+    # Provider-only power control options
+    RESTART = "Restart"
+
+    # CFME power states
+    STATE_ON = "on"
+    STATE_OFF = "off"
+    STATE_SUSPENDED = "suspended"
+    STATE_TERMINATED = "terminated"
+    STATE_UNKNOWN = "unknown"
+
+    def create(self, email=None, first_name=None, last_name=None, availability_zone=None,
+               security_groups=None, instance_type=None, guest_keypair=None, cancel=False,
+               **prov_fill_kwargs):
+        """Provisions an Azure instance with the given properties through CFME
+
+        Args:
+            email: Email of the requester
+            first_name: Name of the requester
+            last_name: Surname of the requester
+            availability_zone: Name of the zone the instance should belong to
+            security_groups: List of security groups the instance should belong to
+                             (currently, only the first one will be used)
+            instance_type: Type of the instance
+            guest_keypair: Name of the key pair used to access the instance
+            cancel: Clicks the cancel button if `True`, otherwise clicks the submit button
+                    (Defaults to `False`)
+        Note:
+            For more optional keyword arguments, see
+            :py:data:`cfme.cloud.provisioning.provisioning_form`
+        """
+        from cfme.provisioning import provisioning_form
+        sel.force_navigate('clouds_provision_instances', context={
+            'provider': self.provider,
+            'template_name': self.template_name,
+        })
+
+        fill(provisioning_form, dict(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            instance_name=self.name,
+            availability_zone=availability_zone,
+            # not supporting multiselect now, just take first value
+            security_groups=security_groups[0],
+            instance_type=instance_type,
+            guest_keypair=guest_keypair,
+            **prov_fill_kwargs
+        ))
+
+        if cancel:
+            sel.click(provisioning_form.cancel_button)
+            flash.assert_success_message(
+                "Add of new VM Provision Request was cancelled by the user")
+        else:
+            sel.click(provisioning_form.submit_button)
+            flash.assert_success_message(
+                "VM Provision Request was Submitted, you will be notified when your VMs are ready")
+
+        row_description = 'Provision from [{}] to [{}]'.format(self.template_name, self.name)
+        cells = {'Description': row_description}
+        row, __ = wait_for(requests.wait_for_request, [cells],
+                           fail_func=requests.reload, num_sec=900, delay=20)
+        assert row.last_message.text == 'Vm Provisioned Successfully'
+
+    def power_control_from_provider(self, option):
+        """Power control the instance from the provider
+
+        Args:
+            option: power control action to take against instance
+
+        Raises:
+            OptionNotAvailable: option param must have proper value
+        """
+        if option == AzureInstance.START:
+            self.provider.mgmt.start_vm(self.name)
+        elif option == AzureInstance.STOP:
+            self.provider.mgmt.stop_vm(self.name)
+        elif option == AzureInstance.RESTART:
+            self.provider.mgmt.restart_vm(self.name)
+        elif option == AzureInstance.TERMINATE:
             self.provider.mgmt.delete_vm(self.name)
         else:
             raise OptionNotAvailable(option + " is not a supported action")
@@ -519,8 +609,8 @@ class Image(Template):
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper image details page.
         """
-        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Image \"%s\"')]" %
-            self.name)
+        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Image \"{}\"')]".format(
+            self.name))
 
         # If the locator isn't on the page, or if it _is_ on the page and contains
         # 'Timelines' we are on the wrong page and take the appropriate action

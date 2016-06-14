@@ -5,13 +5,14 @@
            Datastores pages.
 """
 
-import ui_navigate as nav
-# needed before grafting
-import cfme.web_ui.menu  # noqa
+from cfme.web_ui.menu import nav
 
 from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg
+from cfme.web_ui import (
+    Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg, flash
+)
+from cfme.web_ui.form_buttons import FormButton
 from functools import partial
 from utils.pretty import Pretty
 from utils.providers import get_crud
@@ -21,13 +22,17 @@ from utils import version
 
 details_page = Region(infoblock_type='detail')
 
+page_title_loc = '//div[@id="center_div" or @id="main-content"]//h1'
+
+default_datastore_filter_btn = FormButton('Set the current filter as my default')
+
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 
 
 def nav_to_datastore_through_provider(context):
     sel.force_navigate('infrastructure_provider', context=context)
-    list_acc.select('Relationships', 'Show all managed Datastores')
+    list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
     sel.click(Quadicon(context['datastore'].name, 'datastore'))
 
 
@@ -53,8 +58,9 @@ class Datastore(Pretty):
     """
     pretty_attrs = ['name', 'provider_key']
 
-    def __init__(self, name=None, provider_key=None):
+    def __init__(self, name=None, provider_key=None, type=None):
         self.name = name
+        self.type = type
         if provider_key:
             self.provider = get_crud(provider_key)
         else:
@@ -106,8 +112,8 @@ class Datastore(Pretty):
     def _on_detail_page(self):
         """ Returns ``True`` if on the datastore detail page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
-            % (self.name, "Summary")
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
+                self.name, "Summary")
         )
 
     def get_hosts(self):
@@ -118,7 +124,7 @@ class Datastore(Pretty):
         if not self._on_hosts_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
             try:
-                list_acc.select('Relationships', 'Show all registered Hosts')
+                list_acc.select('Relationships', 'Hosts', by_title=False, partial=True)
             except sel.NoSuchElementException:
                 return []
         return [q.name for q in Quadicon.all("host")]
@@ -126,8 +132,8 @@ class Datastore(Pretty):
     def _on_hosts_page(self):
         """ Returns ``True`` if on the datastore hosts page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
-            % (self.name, "All Registered Hosts")
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
+                self.name, "All Registered Hosts")
         )
 
     def get_vms(self):
@@ -138,10 +144,7 @@ class Datastore(Pretty):
         if not self._on_vms_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
             try:
-                path = version.pick({
-                    version.LOWEST: "Show all registered VMs",
-                    "5.3": "Show registered VMs"})
-                list_acc.select('Relationships', path)
+                list_acc.select('Relationships', "VMs", by_title=False, partial=True)
             except (sel.NoSuchElementException, ListAccordionLinkNotFound):
                 return []
         return [q.name for q in Quadicon.all("vm")]
@@ -149,8 +152,8 @@ class Datastore(Pretty):
     def _on_vms_page(self):
         """ Returns ``True`` if on the datastore vms page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
-            % (self.name, "All Registered vms")
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
+                self.name, "All Registered vms")
         )
 
     def delete_all_attached_vms(self):
@@ -187,6 +190,18 @@ class Datastore(Pretty):
                 return True
         except sel.NoSuchElementException:
             return False
+
+    def run_smartstate_analysis(self):
+        """ Runs smartstate analysis on this host
+
+        Note:
+            The host must have valid credentials already set up for this to work.
+        """
+        sel.force_navigate('infrastructure_datastore', context={
+            'datastore': self, 'provider': self.provider})
+        tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_message_contain('"{}": scan successfully initiated'.format(self.name))
 
 
 def get_all_datastores(do_not_navigate=False):

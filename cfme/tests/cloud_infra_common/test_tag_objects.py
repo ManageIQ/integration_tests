@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """This module tests tagging of objects in different locations."""
 import diaper
-import fauxfactory
 import pytest
 
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
-from cfme.configure.configuration import Category, Tag
 from utils import providers
 from utils.version import current_version
 
@@ -34,28 +32,9 @@ pytestmark = [
         "clouds_tenants",
         # "clouds_security_groups",  # Does not have grid view selector
     ]),
-    pytest.mark.usefixtures("setup_first_provider")
+    pytest.mark.usefixtures("setup_first_provider"),
+    pytest.mark.tier(3)
 ]
-
-
-@pytest.yield_fixture(scope="module")
-def category():
-    cg = Category(name=fauxfactory.gen_alpha(8).lower(),
-                  description=fauxfactory.gen_alphanumeric(length=32),
-                  display_name=fauxfactory.gen_alphanumeric(length=32))
-    cg.create()
-    yield cg
-    cg.delete()
-
-
-@pytest.yield_fixture(scope="module")
-def tag(category):
-    tag = Tag(name=fauxfactory.gen_alpha(8).lower(),
-              display_name=fauxfactory.gen_alphanumeric(length=32),
-              category=category)
-    tag.create()
-    yield tag
-    tag.delete()
 
 
 @pytest.mark.uncollectif(
@@ -76,7 +55,7 @@ def test_tag_item_through_selecting(request, location, tag):
     """
     pytest.sel.force_navigate(location)
     tb.select('Grid View')
-    if not Quadicon.any_present:
+    if not Quadicon.any_present():
         pytest.skip("No Quadicon present, cannot test.")
     Quadicon.select_first_quad()
 
@@ -108,7 +87,7 @@ def test_tag_item_through_details(request, location, tag):
     """
     pytest.sel.force_navigate(location)
     tb.select('Grid View')
-    if not Quadicon.any_present:
+    if not Quadicon.any_present():
         pytest.skip("No Quadicon present, cannot test.")
     pytest.sel.click(Quadicon.first())
     request.addfinalizer(lambda: diaper(lambda: mixins.remove_tag(tag)))

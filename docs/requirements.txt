@@ -1,6 +1,7 @@
 boto
 bottle
 bottle-sqlite
+cached-property
 diaper
 docker-py
 fauxfactory>=2.0.7

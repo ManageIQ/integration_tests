@@ -2,7 +2,6 @@
 import fauxfactory
 import pytest
 from cfme.automate.explorer import Namespace, Class, Method, Domain
-from utils import version
 from utils.update import update
 import utils.error as error
 
@@ -28,8 +27,6 @@ def _make_class(domain):
 
 @pytest.fixture(scope="module")
 def domain(request):
-    if version.current_version() < "5.3":
-        return None
     domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
@@ -48,6 +45,7 @@ def a_method(a_class):
                   cls=a_class)
 
 
+@pytest.mark.tier(2)
 def test_method_crud(a_method):
     a_method.create()
     origname = a_method.name
@@ -60,6 +58,7 @@ def test_method_crud(a_method):
     assert not a_method.exists()
 
 
+@pytest.mark.tier(2)
 def test_duplicate_method_disallowed(a_method):
     a_method.create()
     with error.expected("Name has already been taken"):

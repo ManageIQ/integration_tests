@@ -4,8 +4,7 @@
 Whether we can create/update/delete/assign/... these objects. Nothing with deep meaning.
 Can be also used as a unit-test for page model coverage.
 
-Todo:
-    * Multiple expression types entering. (extend the update tests)
+TODO: * Multiple expression types entering. (extend the update tests)
 """
 import fauxfactory
 import pytest
@@ -126,6 +125,14 @@ def random_host_control_policy():
     policy.delete()
 
 
+@pytest.yield_fixture
+def random_container_image_control_policy():
+    policy = explorer.ContainerImageControlPolicy(fauxfactory.gen_alphanumeric())
+    policy.create()
+    yield policy
+    policy.delete()
+
+
 @pytest.yield_fixture(params=[explorer.ClusterAlertProfile,
                               explorer.DatastoreAlertProfile,
                               explorer.HostAlertProfile,
@@ -151,6 +158,7 @@ def alert_profile(request):
     alert.delete()
 
 
+@pytest.mark.tier(2)
 def test_vm_condition_crud(soft_assert):
     condition = explorer.VMCondition(
         fauxfactory.gen_alphanumeric(),
@@ -174,6 +182,7 @@ def test_vm_condition_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(2)
 def test_host_condition_crud(soft_assert):
     if current_version() >= "5.4":
         expression = "fill_count(Host / Node.Files, >, 150)"
@@ -200,6 +209,35 @@ def test_host_condition_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(2)
+@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
+def test_container_image_condition_crud(soft_assert):
+    expression = "fill_field(Image : Tag, =, {})".format(fauxfactory.gen_alphanumeric())
+    condition = explorer.ContainerImageCondition(
+        fauxfactory.gen_alphanumeric(),
+        expression=expression
+    )
+    # CR
+    condition.create()
+    soft_assert(condition.exists, "The condition {} does not exist!".format(
+        condition.description
+    ))
+    # U
+    with update(condition):
+        condition.notes = "Modified!"
+    sel.force_navigate(
+        "container_image_condition_edit",
+        context={"condition_name": condition.description}
+    )
+    soft_assert(sel.text(condition.form.notes).strip() == "Modified!", "Modification failed!")
+    # D
+    condition.delete()
+    soft_assert(not condition.exists, "The condition {} exists!".format(
+        condition.description
+    ))
+
+
+@pytest.mark.tier(2)
 def test_action_crud(soft_assert):
     action = explorer.Action(
         fauxfactory.gen_alphanumeric(),
@@ -226,6 +264,7 @@ def test_action_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(2)
 def test_vm_control_policy_crud(soft_assert):
     policy = explorer.VMControlPolicy(fauxfactory.gen_alphanumeric())
     # CR
@@ -245,6 +284,7 @@ def test_vm_control_policy_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(2)
 def test_vm_compliance_policy_crud(soft_assert):
     policy = explorer.VMCompliancePolicy(fauxfactory.gen_alphanumeric())
     # CR
@@ -264,6 +304,7 @@ def test_vm_compliance_policy_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(2)
 def test_host_control_policy_crud(soft_assert):
     policy = explorer.HostControlPolicy(fauxfactory.gen_alphanumeric())
     # CR
@@ -283,6 +324,7 @@ def test_host_control_policy_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(2)
 def test_host_compliance_policy_crud(soft_assert):
     policy = explorer.HostCompliancePolicy(fauxfactory.gen_alphanumeric())
     # CR
@@ -302,24 +344,75 @@ def test_host_compliance_policy_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(2)
+@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
+def test_container_image_control_policy_crud(soft_assert):
+    policy = explorer.ContainerImageControlPolicy(fauxfactory.gen_alphanumeric())
+    # CR
+    policy.create()
+    soft_assert(policy.exists, "The policy {} does not exist!".format(
+        policy.description
+    ))
+    # U
+    with update(policy):
+        policy.notes = "Modified!"
+    sel.force_navigate(
+        "container_image_control_policy_edit",
+        context={"policy_name": policy.description}
+    )
+    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
+    # D
+    policy.delete()
+    soft_assert(not policy.exists, "The policy {} exists!".format(
+        policy.description
+    ))
+
+
+@pytest.mark.tier(2)
+@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
+def test_container_image_compliance_policy_crud(soft_assert):
+    policy = explorer.ContainerImageCompliancePolicy(fauxfactory.gen_alphanumeric())
+    # CR
+    policy.create()
+    soft_assert(policy.exists, "The policy {} does not exist!".format(
+        policy.description
+    ))
+    # U
+    with update(policy):
+        policy.notes = "Modified!"
+    sel.force_navigate(
+        "container_image_compliance_policy_edit",
+        context={"policy_name": policy.description})
+    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
+    # D
+    policy.delete()
+    soft_assert(not policy.exists, "The policy {} exists!".format(
+        policy.description
+    ))
+
+
+@pytest.mark.tier(3)
 def test_policies_copy(random_policy, soft_assert):
     random_policy_copy = random_policy.copy()
     soft_assert(random_policy_copy.exists, "The {} does not exist!".format(random_policy_copy))
     random_policy_copy.delete()
 
 
+@pytest.mark.tier(3)
 def test_assign_events_to_vm_control_policy(random_vm_control_policy, soft_assert):
     random_vm_control_policy.assign_events("VM Retired", "VM Clone Start")
     soft_assert(random_vm_control_policy.is_event_assigned("VM Retired"))
     soft_assert(random_vm_control_policy.is_event_assigned("VM Clone Start"))
 
 
+@pytest.mark.tier(3)
 def test_assign_events_to_host_control_policy(random_host_control_policy, soft_assert):
     random_host_control_policy.assign_events("Host Auth Error", "Host Compliance Passed")
     soft_assert(random_host_control_policy.is_event_assigned("Host Auth Error"))
     soft_assert(random_host_control_policy.is_event_assigned("Host Compliance Passed"))
 
 
+@pytest.mark.tier(3)
 def test_assign_vm_condition_to_vm_policy(
         random_vm_control_policy, random_vm_condition, soft_assert):
     random_vm_control_policy.assign_conditions(random_vm_condition)
@@ -327,6 +420,7 @@ def test_assign_vm_condition_to_vm_policy(
     random_vm_control_policy.assign_conditions()  # unassign
 
 
+@pytest.mark.tier(3)
 def test_assign_host_condition_to_host_policy(
         random_host_control_policy, random_host_condition, soft_assert):
     random_host_control_policy.assign_conditions(random_host_condition)
@@ -334,6 +428,7 @@ def test_assign_host_condition_to_host_policy(
     random_host_control_policy.assign_conditions()  # unassign
 
 
+@pytest.mark.tier(2)
 def test_policy_profile_crud(random_vm_control_policy, random_host_control_policy, soft_assert):
     profile = explorer.PolicyProfile(
         fauxfactory.gen_alphanumeric(),
@@ -349,6 +444,7 @@ def test_policy_profile_crud(random_vm_control_policy, random_host_control_polic
     soft_assert(not profile.exists, "The policy profile {} exists!".format(profile.description))
 
 
+@pytest.mark.tier(3)
 # RUBY expression type is no longer supported.
 @pytest.mark.uncollectif(lambda expression: "RUBY" in expression and current_version() >= "5.5")
 @pytest.mark.parametrize(("expression", "verify"), VM_EXPRESSIONS_TO_TEST)
@@ -364,6 +460,7 @@ def test_modify_vm_condition_expression(
         soft_assert(expression_editor.get_expression_as_text() == verify)
 
 
+@pytest.mark.tier(2)
 def test_alert_crud(soft_assert):
     alert = explorer.Alert(
         fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
@@ -378,9 +475,8 @@ def test_alert_crud(soft_assert):
         alert.notification_frequency = "2 Hours"
     sel.force_navigate("control_explorer_alert_edit", context={"alert_name": alert.description})
     soft_assert(
-        sel.text(
-            alert.form.notification_frequency.first_selected_option
-        ).strip() == "2 Hours", "Modification failed!"
+        (alert.form.notification_frequency.first_selected_option[0]
+         .strip()) == "2 Hours", "Modification failed!"
     )
     # D
     alert.delete()
@@ -389,6 +485,7 @@ def test_alert_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1303645], automates=[1303645])
 def test_control_alert_copy(random_alert, soft_assert):
     alert_copy = random_alert.copy()
@@ -401,6 +498,7 @@ def test_control_alert_copy(random_alert, soft_assert):
     ))
 
 
+@pytest.mark.tier(2)
 def test_alert_profile_crud(alert_profile, soft_assert):
     alert_profile.create()
     soft_assert(alert_profile.exists, "The alert profile {} does not exist!".format(

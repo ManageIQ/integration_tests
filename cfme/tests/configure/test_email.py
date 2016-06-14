@@ -1,7 +1,10 @@
 from cfme.configure import configuration
 from utils.wait import wait_for
 
+import pytest
 
+
+@pytest.mark.tier(3)
 def test_send_test_email(smtp_test, random_string):
     """ This test checks whether the mail sent for testing really arrives.
 

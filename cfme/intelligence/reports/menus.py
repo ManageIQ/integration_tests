@@ -6,7 +6,6 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import FolderManager
 from cfme.web_ui import Region, Tree, accordion, form_buttons, menu
 from cfme.web_ui.multibox import MultiBoxSelect
-from utils import version
 from utils.log import logger
 
 menu.nav.add_branch(
@@ -17,10 +16,7 @@ menu.nav.add_branch(
     }
 )
 
-reports_tree = Tree({
-    "5.3": "//div[@id='menu_roles_treebox']/ul",
-    version.LOWEST: "//div[@id='treebox']//table[not(tbody/tr/td[@class='hiddenRow'])]"
-})
+reports_tree = Tree("//div[@id='menu_roles_treebox']/ul")
 
 manager = FolderManager("//div[@id='folder_lists']/table")
 report_select = MultiBoxSelect(
@@ -116,7 +112,7 @@ def manage_folder(group, folder=None):
     try:
         yield manager
     except FolderManager._BailOut:
-        logger.info("Discarding editation modifications on {}".format(str(repr(manager))))
+        logger.info("Discarding editation modifications on %s", str(repr(manager)))
         manager.discard()
     except:
         # In case of any exception, nothing will be saved
@@ -146,7 +142,7 @@ def manage_subfolder(group, folder, subfolder):
     try:
         yield report_select
     except FolderManager._BailOut:
-        logger.info("Discarding editation modifications on {}".format(str(repr(manager))))
+        logger.info("Discarding editation modifications on %s", str(repr(manager)))
         manager.discard()
     except:
         # In case of any exception, nothing will be saved

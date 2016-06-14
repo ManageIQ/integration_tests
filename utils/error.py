@@ -49,7 +49,7 @@ def _callable(f, e):
 def regex(expr, e):
     """Search the message of the exception using the regex expr"""
     p = re.compile(expr)
-    return p.search(str(e.message))
+    return p.search(str(e))
 
 
 @match.method(basestring)

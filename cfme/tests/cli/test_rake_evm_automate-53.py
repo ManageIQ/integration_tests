@@ -8,8 +8,6 @@ from utils.update import update
 
 cli_path = data_path.join("cli")
 
-pytestmark = [pytest.mark.ignore_stream("5.2")]
-
 
 @pytest.yield_fixture(scope="function")
 def rake(ssh_client):
@@ -35,6 +33,7 @@ def qe_ae_data(ssh_client, rake):
             qe_cli_testing.enabled = True
 
 
+@pytest.mark.tier(1)
 @pytest.mark.smoke
 def test_evm_automate_import_export_works_upstream(ssh_client, rake, soft_assert):
     """This test checks whether CLI import and export works.
@@ -59,6 +58,7 @@ def test_evm_automate_import_export_works_upstream(ssh_client, rake, soft_assert
     assert ssh_client.run_command("ls /root/QECliTesting.yaml")[0] == 0, "Could not verify export!"
 
 
+@pytest.mark.tier(3)
 def test_evm_automate_simulate_upstream(rake, qe_ae_data, ssh_client):
     """This test checks whether CLI simulation works.
 
@@ -80,6 +80,7 @@ def test_evm_automate_simulate_upstream(rake, qe_ae_data, ssh_client):
     assert stdout.strip() == "check content", "The file has wrong contents"
 
 
+@pytest.mark.tier(1)
 @pytest.mark.smoke
 def test_evm_automate_convert(request, rake, ssh_client):
     """This test checks whether conversion from older XML format works.

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Bugs{% endblock %}
+{% block body %}
+<ul class="nav nav-tabs">
+{% for a_query in queries %}
+    <li {% if a_query.id == query.id %}class="active"{% endif %}><a href={% url 'view_bug_query' a_query.id %}>{% if a_query.is_global %}<span class="glyphicon glyphicon-globe"></span>{% endif %} {{a_query.name}}</a></li>
+{% endfor %}
+    <li {% if not query %}class="active"{% endif %}><a href={% url 'new_bug_query' %}>+</a></li>
+</ul>
+{% block bugs_body %}{% endblock %}
+{% endblock %}

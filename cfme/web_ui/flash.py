@@ -14,19 +14,9 @@ from utils.pretty import Pretty
 
 area = Region(
     locators={
-        'message': {
-            version.LOWEST: ' | '.join([
-                ('//div[starts-with(@id, "flash_") and '
-                    'not(ancestor::*[contains(@style,"display: none")])]//li'),
-                '//div[@id="flash_div"]',  # login screen
-            ]),
-            '5.3': ' | '.join([
-                ('//div[starts-with(@id, "flash_") and '
-                    'not(ancestor::*[contains(@style,"display: none")])]'
-                    '//div[contains(@class,"alert")]'),
-                '//div[@id="flash_div"]',  # login screen
-            ])
-        }
+        'message': ' | '.join([('//div[starts-with(@id, "flash_") and '
+                'not(ancestor::*[contains(@style,"display: none")])]'
+                '//div[contains(@class,"alert")]'), '//div[@id="flash_div"]', ])  # login screen
     }
 )
 
@@ -163,10 +153,10 @@ def assert_no_errors(messages=None):
 @verpick_message
 def assert_message_match(m):
     """ Asserts that a message matches a specific string."""
-    logger.debug('Asserting flash message match for "{}"'.format(m))
+    logger.debug('Asserting flash message match for %s', m)
     if not any([fm.message == m for fm in get_messages()]):
-        logger.debug(' No match found in...{}'.format(get_messages()))
-        raise FlashMessageException("No matching flash message for '%s'" % m)
+        logger.debug(' No match found in...%s', get_messages())
+        raise FlashMessageException("No matching flash message for '{}'".format(m))
 
 
 @verify_rails_error
@@ -174,7 +164,7 @@ def assert_message_match(m):
 def assert_message_contain(m):
     """ Asserts that a message contains a specific string """
     if not any([m in fm.message for fm in get_messages()]):
-        raise FlashMessageException("No flash message contains '%s'" % m)
+        raise FlashMessageException("No flash message contains '{}'".format(m))
 
 
 @verify_rails_error

@@ -6,7 +6,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, accordion, fill, flash, form_buttons, menu, DHTMLSelect, AngularSelect
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
-from utils import version
+from utils import deferred_verpick, version
 
 cfg_btn = partial(tb.select, "Configuration")
 buttons_tree = partial(accordion.tree, "Buttons", "Object Types")
@@ -87,8 +87,10 @@ class ButtonGroup(Updateable):
     """
     CLUSTER = "Cluster"
     DATASTORE = "Datastore"
-    HOST = version.pick({version.LOWEST: "Host",
-                         '5.4': "Host / Node"})
+    HOST = deferred_verpick({
+        version.LOWEST: "Host",
+        '5.4': "Host / Node"}
+    )
     PROVIDER = "Provider"
     SERVICE = "Service"
     TEMPLATE = "VM Template and Image"

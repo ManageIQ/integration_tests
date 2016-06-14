@@ -11,24 +11,24 @@
     <thead>
         <th>Stream</th>
         <th>Version</th>
+        <th>Date</th>
         <th>Provider</th>
         <th>Name</th>
-        <th>Date</th>
         <th>Configured</th>
         <th>Actions</th>
     </thead>
     <tbody>
-        {% for zstream, version, provider, template in prepared_table %}
+        {% for zstream, version, date, datetuple, provider, template in prepared_table %}
         <tr id="{{ template.id }}">
             {% if zstream %}<td rowspan={{ zstream_rowspans|keyvalue:zstream }}>{{ zstream }}</td>{% endif %}
             {% if version %}<td rowspan={{ version_rowspans|keyvalue:version }}>{{ version }}</td>{% endif %}
+            {% if date %}<td rowspan={{ date_version_rowspans|keyvalue:datetuple }}>{{ date }}</td>{% endif %}
             <td><a href="{% url 'specific_provider' provider.id %}#template-{{ template.id }}">{{ provider.id }}</a></td>
             <td>
                 {% if template.suggested_delete %}<strong>{% endif %}
                 {{ template.name }} {% if template.parent_template and template.parent_template.exists_and_ready %}(<a href="#{{ template.parent_template.id }}">parent</a>){% endif %}
                 {% if template.suggested_delete %}</strong>{% endif %}
             </td>
-            <td>{{ template.date }}</td>
             <td><span class="glyphicon glyphicon-{% if template.preconfigured %}ok{% else %}remove{% endif %}"></span></td>
             <td>
                 {% if template.suggested_delete %}
@@ -90,7 +90,7 @@ $(document).ready(function() {
             addAlert("info", "Deletion of the template " + template + " from provider initiated");
             waitForDeletionFinish(template, data);
         }).fail(function(xhr, textStatus, errorThrown){
-            addAlert("danger", "Error during tempalte delete request " + template + ": '" + xhr.responseText + "'.");
+            addAlert("danger", "Error during template delete request " + template + ": '" + xhr.responseText + "'.");
             $("#spinner-" + template).hide();
             $("#button-" + template).show();
         })

@@ -102,6 +102,7 @@ def generated_request(provider, provider_data, provisioning, template_name, vm_n
     flash.assert_no_errors()
 
 
+@pytest.mark.tier(3)
 def test_services_request_direct_url(generated_request):
     """Go to the request page, save the url and try to access it directly."""
     assert requests.go_to_request(generated_request), "could not find the request!"
@@ -116,6 +117,7 @@ def test_services_request_direct_url(generated_request):
     )
 
 
+@pytest.mark.tier(3)
 def test_copy_request(request, generated_request, vm_name, template_name):
     """Check if request gets properly copied."""
     new_vm_name = fauxfactory.gen_alphanumeric(length=16)

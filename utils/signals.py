@@ -8,12 +8,12 @@ caches have become stale and need to be invalidated. The example below shows thi
 
    import signals
    from fixtures.pytest_store import store
+   from utils import clear_property_cache
+
 
    def invalidate_server_details():
-       del store.current_appliance.configuration_details
-       del store.current_appliance.zone_description
-
-
+       clear_property_cache(store.current_appliance,
+                            'configuration_details', 'zone_description')
    signals.register_callback('server_details_changed', invalidate_server_details)
 
 Or by using a decorator:
@@ -25,8 +25,9 @@ Or by using a decorator:
 
    @on_signal("server_details_changed")
    def invalidate_server_details():
-       del store.current_appliance.configuration_details
-       del store.current_appliance.zone_description
+       clear_property_cache(store.current_appliance,
+                            'configuration_details', 'zone_description')
+
 
 Here we create a function to do the work of invalidating the cache and register it
 to the signal name 'server_details_changed'. Now whenever something in the framework
@@ -110,7 +111,7 @@ def fire(signal):
         signal: Name of signal to be invoked.
     """
 
-    logger.info('Invoking callback for signal [{}]'.format(signal))
+    logger.info('Invoking callback for signal [%s]', signal)
     for cb_obj in _callback_library.get(signal, set()):
         try:
             cb_obj()

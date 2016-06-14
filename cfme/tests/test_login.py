@@ -19,6 +19,7 @@ def check_logged_out():
         login.logout()
 
 
+@pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.smoke
 @pytest.mark.parametrize(
@@ -34,6 +35,7 @@ def test_login(method):
     assert login.page.is_displayed()
 
 
+@pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_bad_password():
     """ Tests logging in with a bad password. """
@@ -41,6 +43,6 @@ def test_bad_password():
     creds = Credential(principal=conf.credentials['default']['username'], secret="badpassword@#$")
     user = User(credential=creds)
 
-    with error.expected('Sorry, the username or password you entered is incorrect.'):
+    with error.expected("Sorry, the username or password you entered is incorrect."):
         login.login(user)
         assert login.page.is_displayed()

@@ -22,10 +22,10 @@ def provision_vm(request, provider):
     request.addfinalizer(vm.delete_from_provider)
 
     if not provider.mgmt.does_vm_exist(vm_name):
-        logger.info("deploying {} on provider {}".format(vm_name, provider.key))
+        logger.info("deploying %s on provider %s", vm_name, provider.key)
         vm.create_on_provider(allow_skip="default")
     else:
-        logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider.key))
+        logger.info("recycling deployed vm %s on provider %s", vm_name, provider.key)
     vm.provider.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm
@@ -39,13 +39,14 @@ def get_appliances():
     ver_to_prov = str(version.current_version())
     appl1 = provision_appliance(ver_to_prov, 'test_back')
     appl2 = provision_appliance(ver_to_prov, 'test_rest')
-    appl1.configure(region=0, patch_ajax_wait=False)
+    appl1.configure(region=0)
     appl1.ipapp.wait_for_web_ui()
-    appl2.configure(region=0, patch_ajax_wait=False)
+    appl2.configure(region=0)
     appl2.ipapp.wait_for_web_ui()
     return (appl1, appl2)
 
 
+@pytest.mark.tier(2)
 @pytest.mark.uncollectif(
     lambda: not (store.current_appliance.is_downstream and
         store.current_appliance.version >= '5.4'))
@@ -104,6 +105,6 @@ def test_db_restore(request, soft_assert):
         # Assert server roles on the second appliance
         for role, is_enabled in config.get_server_roles(db=False).iteritems():
             if is_enabled:
-                assert roles[role], "Role '%s' is selected but should not be" % role
+                assert roles[role], "Role '{}' is selected but should not be".format(role)
             else:
-                assert not roles[role], "Role '%s' is not selected but should be" % role
+                assert not roles[role], "Role '{}' is not selected but should be".format(role)

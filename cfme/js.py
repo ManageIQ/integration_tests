@@ -19,7 +19,10 @@ return {
     miq: window.miqAjaxTimers,
     spinner: (!isHidden(document.getElementById("spinner_div")))
         && isHidden(document.getElementById("lightbox_div")),
-    document: document.readyState
+    document: document.readyState,
+    autofocus: (typeof checkMiqQE === "undefined") ? 0 : checkMiqQE('autofocus'),
+    debounce: (typeof checkMiqQE === "undefined") ? 0 : checkMiqQE('debounce'),
+    miqQE: (typeof checkAllMiqQE === "undefined") ? 0 : checkAllMiqQE()
 };
 """
 

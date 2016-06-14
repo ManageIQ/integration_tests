@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from contextlib import contextmanager
 from functools import partial
-
+from cached_property import cached_property
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 
@@ -9,8 +9,8 @@ import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound, CandidateNotFound
 from cfme.web_ui import (
-    AngularSelect, Calendar, CheckboxSelect, DynamicTable, Form, InfoBlock, Input, MultiFill,
-    Region, Select, Table, accordion, fill, flash, form_buttons)
+    AngularSelect, Calendar, CheckboxSelect, CFMECheckbox, DynamicTable, Form, InfoBlock, Input,
+    MultiFill, Region, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.menu import nav
 from cfme.web_ui.form_buttons import change_stored_password
 from utils.db import cfmedb
@@ -18,16 +18,17 @@ from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
-from utils import version, conf, lazycache
+from utils import version, conf
 from utils.pretty import Pretty
 from utils.signals import fire, on_signal
-from utils.version import current_version
+from utils import clear_property_cache
 
 
 @on_signal("server_details_changed")
 def invalidate_server_details():
-    del store.current_appliance.configuration_details
-    del store.current_appliance.zone_description
+    clear_property_cache(store.current_appliance,
+                        'configuration_details', 'zone_description')
+
 
 access_tree = partial(accordion.tree, "Access Control")
 database_tree = partial(accordion.tree, "Database")
@@ -52,29 +53,31 @@ replication_process = Region(locators={
 
 server_roles = Form(
     fields=[
-        ('ems_metrics_coordinator', Input("server_roles_ems_metrics_coordinator")),
-        ('ems_operations', Input("server_roles_ems_operations")),
-        ('ems_metrics_collector', Input("server_roles_ems_metrics_collector")),
-        ('reporting', Input("server_roles_reporting")),
-        ('ems_metrics_processor', Input("server_roles_ems_metrics_processor")),
-        ('scheduler', Input("server_roles_scheduler")),
-        ('smartproxy', Input("server_roles_smartproxy")),
-        ('database_operations', Input("server_roles_database_operations")),
-        ('smartstate', Input("server_roles_smartstate")),
-        ('event', Input("server_roles_event")),
-        ('user_interface', Input("server_roles_user_interface")),
-        ('web_services', Input("server_roles_web_services")),
-        ('ems_inventory', Input("server_roles_ems_inventory")),
-        ('notifier', Input("server_roles_notifier")),
-        ('automate', Input("server_roles_automate")),
-        ('rhn_mirror', Input("server_roles_rhn_mirror")),
-        ('database_synchronization', Input("server_roles_database_synchronization")),
+        ('ems_metrics_coordinator', CFMECheckbox("server_roles_ems_metrics_coordinator")),
+        ('ems_operations', CFMECheckbox("server_roles_ems_operations")),
+        ('ems_metrics_collector', CFMECheckbox("server_roles_ems_metrics_collector")),
+        ('reporting', CFMECheckbox("server_roles_reporting")),
+        ('ems_metrics_processor', CFMECheckbox("server_roles_ems_metrics_processor")),
+        ('scheduler', CFMECheckbox("server_roles_scheduler")),
+        ('smartproxy', CFMECheckbox("server_roles_smartproxy")),
+        ('database_operations', CFMECheckbox("server_roles_database_operations")),
+        ('smartstate', CFMECheckbox("server_roles_smartstate")),
+        ('event', CFMECheckbox("server_roles_event")),
+        ('user_interface', CFMECheckbox("server_roles_user_interface")),
+        ('web_services', CFMECheckbox("server_roles_web_services")),
+        ('ems_inventory', CFMECheckbox("server_roles_ems_inventory")),
+        ('notifier', CFMECheckbox("server_roles_notifier")),
+        ('automate', CFMECheckbox("server_roles_automate")),
+        ('rhn_mirror', CFMECheckbox("server_roles_rhn_mirror")),
+        ('database_synchronization', CFMECheckbox("server_roles_database_synchronization")),
+        ('git_owner', CFMECheckbox("server_roles_git_owner")),
+        ('websocket', CFMECheckbox("server_roles_websocket")),
         # STORAGE OPTIONS
-        ("storage_metrics_processor", Input("server_roles_storage_metrics_processor")),
-        ("storage_metrics_collector", Input("server_roles_storage_metrics_collector")),
-        ("storage_metrics_coordinator", Input("server_roles_storage_metrics_coordinator")),
-        ("storage_inventory", Input("server_roles_storage_inventory")),
-        ("vmdb_storage_bridge", Input("server_roles_vmdb_storage_bridge")),
+        ("storage_metrics_processor", CFMECheckbox("server_roles_storage_metrics_processor")),
+        ("storage_metrics_collector", CFMECheckbox("server_roles_storage_metrics_collector")),
+        ("storage_metrics_coordinator", CFMECheckbox("server_roles_storage_metrics_coordinator")),
+        ("storage_inventory", CFMECheckbox("server_roles_storage_inventory")),
+        ("vmdb_storage_bridge", CFMECheckbox("server_roles_vmdb_storage_bridge")),
 
     ]
 )
@@ -104,9 +107,9 @@ category_form = Form(
         ('name', Input("name")),
         ('display_name', Input("description")),
         ('description', Input("example_text")),
-        ('show_in_console', Input("show")),
-        ('single_value', Input("single_value")),
-        ('capture_candu', Input("perf_by_tag"))
+        ('show_in_console', CFMECheckbox("show")),
+        ('single_value', CFMECheckbox("single_value")),
+        ('capture_candu', CFMECheckbox("perf_by_tag"))
     ])
 
 tag_form = Form(
@@ -114,10 +117,15 @@ tag_form = Form(
         ('category', Select("select#classification_name")),
         ('name', Input("entry[name]")),
         ('display_name', Input("entry[description]")),
-        ('add', Input("accept")),
+        ('add', {
+            version.LOWEST: Input("accept"),
+            '5.6': '//button[normalize-space(.)="Add"]'
+        }),
         ('new', {
-            version.LOWEST: "//img[@alt='New']",
-            '5.3': "//span[@class='glyphicon glyphicon-plus']"})
+            version.LOWEST: "//span[@class='glyphicon glyphicon-plus']",
+            '5.6': '//button[normalize-space(.)="Add"]'
+        }),
+        ('save', '//button[normalize-space(.)="Save"]'),
     ])
 
 zone_form = Form(
@@ -136,12 +144,8 @@ zone_form = Form(
 
 
 records_table = Table("//div[@id='records_div']/table")
-category_table = Table({
-    version.LOWEST: "//div[@id='settings_co_categories']/fieldset/table",
-    "5.3": "//div[@id='settings_co_categories']/table"})
-classification_table = Table({
-    version.LOWEST: "//div[@id='classification_entries_div']/fieldset/table",
-    "5.3": "//div[@id='classification_entries_div']/table"})
+category_table = Table("//div[@id='settings_co_categories']/table")
+classification_table = Table("//div[@id='classification_entries_div']/table")
 zones_table = Table("//div[@id='settings_list']/table")
 
 
@@ -582,9 +586,11 @@ class ServerLogDepot(Pretty):
         )
 
         validate = form_buttons.FormButton("Validate the credentials by logging into the Server")
+        # add FormButton because of inconsistency in attributes for Save buttons in cfme
         save_button = {
             version.LOWEST: form_buttons.save,
             "5.4": form_buttons.angular_save,
+            "5.6": form_buttons.FormButton("Save Changes", ng_click="btnClick()")
         }
 
         def __init__(self, p_type, name, uri, username=None, password=None):
@@ -596,15 +602,10 @@ class ServerLogDepot(Pretty):
             self.password = password
             self.name = name
 
-        @lazycache
+        @cached_property
         def p_types(self):
             return version.pick({
                 version.LOWEST: dict(
-                    ftp="File Transfer Protocol",
-                    nfs="Network File System",
-                    smb="Samba"
-                ),
-                "5.3": dict(
                     anon_ftp="Anonymous FTP",
                     ftp="FTP",
                     nfs="NFS",
@@ -633,7 +634,7 @@ class ServerLogDepot(Pretty):
                 "name": self.name,
                 "uri": self.uri,
             }
-            if self.p_type != "nfs":
+            if self.p_type not in {"nfs", "anon_ftp"}:
                 change_stored_password()
                 details["user"] = self.username
                 details["password"] = self.password
@@ -788,11 +789,6 @@ class BasicInformation(Updateable, Pretty):
         """
         sel.force_navigate("cfg_settings_currentserver_server")
         fill(self.basic_information, self.details)
-        # Workaround for issue with form_button staying dimmed.
-        if self.details["appliance_zone"] is not None and current_version() < "5.3":
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/ops/settings_form_field_changed/server',"
-                " data: {'server_zone':'%s'}})" % (self.details["appliance_zone"]))
         sel.click(form_buttons.save)
         # TODO: Maybe make a cascaded delete on lazycache?
         fire('server_details_changed')
@@ -824,8 +820,7 @@ class SMTPSettings(Updateable):
         )
         smtp.update()
 
-    Todo:
-        * send a test-email, if that will be needed.
+    Note: TODO: send a test-email, if that will be needed.
 
     """
     smtp_settings = Form(
@@ -903,7 +898,7 @@ class AuthSetting(Updateable, Pretty):
         """Sets the session timeout of the appliance."""
         sel.force_navigate("cfg_settings_currentserver_auth")
         logger.info(
-            "Setting authentication timeout to {} hours and {} minutes.".format(hours, minutes))
+            "Setting authentication timeout to %s hours and %s minutes.", hours, minutes)
         fill(cls.form, {"timeout_h": hours, "timeout_m": minutes}, action=form_buttons.save)
         flash.assert_no_errors()
         flash.assert_message_contain("Authentication settings saved")
@@ -1058,7 +1053,7 @@ class LDAPAuthSetting(AuthSetting):
             "5.5": AngularSelect("authentication_user_type")}),
         ("user_suffix", Input("authentication_user_suffix")),
         ("get_groups", Input("ldap_role")),
-        ("get_direct_groups", Input("get_direct_groups")),
+        ("get_roles", Input("get_direct_groups")),
         ("follow_referrals", Input("follow_referrals")),
         ("base_dn", Input("authentication_basedn")),
         ("bind_dn", Input("authentication_bind_dn")),
@@ -1140,7 +1135,6 @@ class Schedule(Pretty):
     """ Configure/Configuration/Region/Schedules functionality
 
     CReate, Update, Delete functionality.
-    Todo: Maybe the row handling might go into Table class?
 
     Args:
         name: Schedule's name.
@@ -1175,6 +1169,9 @@ class Schedule(Pretty):
         # Or
         Schedule.enable_by_names("One schedule", "Other schedule")
         # And so.
+
+    Note: TODO: Maybe the row handling might go into Table class?
+
     """
     tab = {"Hourly": "timer_hours",
            "Daily": "timer_days",
@@ -1206,9 +1203,7 @@ class Schedule(Pretty):
         ("time_zone", {
             version.LOWEST: Select("select#time_zone"),
             '5.5': AngularSelect('time_zone')}),
-        ("start_date", {
-            "5.3": Calendar("miq_date_1"),
-            "5.4": Calendar("miq_angular_date_1")}),
+        ("start_date", Calendar("miq_angular_date_1")),
         ("start_hour", {
             version.LOWEST: Select("select#start_hour"),
             '5.5': AngularSelect('start_hour')}),
@@ -1352,7 +1347,7 @@ class Schedule(Pretty):
                     break
             else:
                 raise ScheduleNotFound(
-                    "Schedule '%s' could not be found for selection!" % name
+                    "Schedule '{}' could not be found for selection!".format(name)
                 )
 
         sel.force_navigate("cfg_settings_schedules")
@@ -1438,9 +1433,7 @@ class DatabaseBackupSchedule(Schedule):
         ("log_protocol", {
             version.LOWEST: Select("select#log_protocol"),
             '5.5': AngularSelect('log_protocol')}),
-        ("depot_name", {
-            "5.3": None,
-            "5.4": Input("depot_name")}),
+        ("depot_name", Input("depot_name")),
         ("uri", Input("uri")),
         ("log_userid", Input("log_userid")),
         ("log_password", Input("log_password")),
@@ -1457,8 +1450,8 @@ class DatabaseBackupSchedule(Schedule):
             version.LOWEST: Select("select#time_zone"),
             '5.5': AngularSelect('time_zone')}),
         ("start_date", {
-            "5.3": Calendar("miq_date_1"),
-            "5.4": Calendar("miq_angular_date_1")}),
+            '5.4': Calendar("miq_angular_date_1"),
+            '5.5': Calendar("start_date")}),
         ("start_hour", {
             version.LOWEST: Select("select#start_hour"),
             '5.5': AngularSelect('start_hour')}),
@@ -1568,6 +1561,13 @@ class DatabaseBackupSchedule(Schedule):
         else:
             form_buttons.save()
 
+    @property
+    def last_date(self):
+        sel.force_navigate("cfg_settings_schedules")
+        name = self.details["name"]
+        row = records_table.find_row("Name", name)
+        return row[6].text
+
 
 class Zone(Pretty):
     """ Configure/Configuration/Region/Zones functionality
@@ -1643,7 +1643,7 @@ class Zone(Pretty):
             form_buttons.cancel()
         else:
             form_buttons.add()
-            flash.assert_message_match('Zone "%s" was added' % self.name)
+            flash.assert_message_match('Zone "{}" was added'.format(self.name))
 
     def update(self, updates, cancel=False):
         """ Modify an existing zone with information from this instance.
@@ -1662,7 +1662,7 @@ class Zone(Pretty):
             form_buttons.cancel()
         else:
             form_buttons.save()
-            flash.assert_message_match('Zone "%s" was saved' % self.name)
+            flash.assert_message_match('Zone "{}" was saved'.format(self.name))
 
     def delete(self, cancel=False):
         """ Delete the Zone represented by this object.
@@ -1674,7 +1674,7 @@ class Zone(Pretty):
         tb.select("Configuration", "Delete this Zone", invokes_alert=True)
         sel.handle_alert(cancel)
         if not cancel:
-            flash.assert_message_match('Zone "%s": Delete successful' % self.name)
+            flash.assert_message_match('Zone "{}": Delete successful'.format(self.name))
 
     @classmethod
     def go_to_by_description(cls, description):
@@ -1695,15 +1695,15 @@ class Zone(Pretty):
         try:
             zones_table.click_row_by_cells({1: description}, partial_check=True)
         except:
-            raise ZoneNotFound("No unique Zones with the description '%s'" % description)
+            raise ZoneNotFound("No unique Zones with the description '{}'".format(description))
 
     @property
     def exists(self):
         sel.force_navigate("cfg_settings_zones")
         table = Table(zones_table)
-        if table.find_cell(1, "Zone: %s" % self.description):
+        if table.find_cell(1, "Zone: {}".format(self.description)):
             return True
-        elif table.find_cell(1, "Zone : %s" % self.description):  # Another possibility
+        elif table.find_cell(1, "Zone : {}".format(self.description)):  # Another possibility
             return True
         else:
             return False
@@ -1757,7 +1757,11 @@ class Category(Pretty):
         if not cancel:
             sel.force_navigate("cfg_settings_region_my_company_categories")
             row = category_table.find_row_by_cells({'name': self.name})
-            sel.click(row[0], wait_ajax=False)
+            del_btn_fn = version.pick({
+                version.LOWEST: lambda: row[0],
+                '5.6': lambda: row.actions
+            })
+            sel.click(del_btn_fn(), wait_ajax=False)
             sel.handle_alert()
             flash.assert_success_message('Category "{}": Delete successful'.format(self.name))
 
@@ -1783,7 +1787,11 @@ class Tag(Pretty):
     def update(self, updates):
         sel.force_navigate("cfg_settings_region_my_company_tag_edit",
                            context={"tag": self})
-        fill(tag_form, self._form_mapping(**updates), action=tag_form.add)
+        update_action = version.pick({
+            version.LOWEST: tag_form.add,
+            '5.6': tag_form.save
+        })
+        fill(tag_form, self._form_mapping(**updates), action=update_action)
 
     def delete(self, cancel=True):
         """
@@ -1792,7 +1800,11 @@ class Tag(Pretty):
             sel.force_navigate("cfg_settings_region_my_company_tags")
             fill(tag_form, {'category': self.category.display_name})
             row = classification_table.find_row_by_cells({'name': self.name})
-            sel.click(row[0], wait_ajax=False)
+            del_btn_fn = version.pick({
+                version.LOWEST: lambda: row[0],
+                '5.6': lambda: row.actions
+            })
+            sel.click(del_btn_fn(), wait_ajax=False)
             sel.handle_alert()
 
 
@@ -1802,15 +1814,6 @@ def set_server_roles(**roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
-    cfg = store.current_appliance.get_yaml_config('vmdb')
-    # If we don't have storage enabled, ignore it.
-    if 'storage' not in cfg.get('product', {}):
-        delete_keys = set([])
-        for key in roles:
-            if key.startswith("storage"):
-                delete_keys.add(key)
-        for key in delete_keys:
-            roles.pop(key)
     if get_server_roles() == roles:
         logger.debug(' Roles already match, returning...')
         return
@@ -1855,9 +1858,9 @@ def get_server_roles(navigate=True, db=True):
         role_list = {}
         for (name, locator) in server_roles.fields:
             try:
-                role_list[name] = sel.element(locator).is_selected()
+                role_list[name] = locator.is_selected()
             except:
-                logger.warning("role not found, skipping, netapp storage role?  (" + name + ")")
+                logger.warning("role not found, skipping, netapp storage role?  (%s)", name)
         return role_list
 
 
@@ -1907,7 +1910,7 @@ def set_ntp_servers(*servers):
     fill(ntp_servers, fields, action=form_buttons.save)
     if servers:
         flash.assert_message_match(
-            "Configuration settings saved for CFME Server \"%s [%s]\" in Zone \"%s\"" % (
+            "Configuration settings saved for CFME Server \"{} [{}]\" in Zone \"{}\"".format(
                 server_name(),
                 server_id(),
                 server_zone_description().partition(' ')[0].lower()))

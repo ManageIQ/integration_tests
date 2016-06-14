@@ -12,7 +12,7 @@ test item.
 
 import pytest
 
-_no_mark_arg_err = '%s mark required test name or nodeid as first argument'
+_no_mark_arg_err = '{} mark required test name or nodeid as first argument'
 
 
 def pytest_configure(config):
@@ -39,7 +39,7 @@ def pytest_runtest_setup(item):
             test_id = item.keywords[mark].args[0]
         except IndexError:
             # mark called incorrectly, explode
-            raise Exception(_no_mark_arg_err % mark)
+            raise Exception(_no_mark_arg_err.format(mark))
 
     reporter = item.config.pluginmanager.getplugin('terminalreporter')
     passed = reporter.stats.get('passed', [])
@@ -57,5 +57,5 @@ def pytest_runtest_setup(item):
     else:
         error_verb = 'not yet run or does not exist'
 
-    errmsg = 'required test %s %s' % (test_id, error_verb)
+    errmsg = 'required test {} {}'.format(test_id, error_verb)
     pytest.skip(errmsg)

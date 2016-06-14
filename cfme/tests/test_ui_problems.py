@@ -17,6 +17,7 @@ LOCATIONS = [
     "infrastructure_virtual_machines", "infrastructure_pxe", "configuration"]
 
 
+@pytest.mark.tier(3)
 @pytest.mark.parametrize("location", LOCATIONS)
 @pytest.mark.meta(blockers=[1219019])
 @pytest.mark.uncollectif(lambda: current_version() >= "5.5")
@@ -28,11 +29,11 @@ def test_pull_splitter(location):
     original_position = left_half_size()
     pytest.sel.force_navigate("dashboard")
     pytest.sel.force_navigate(location)
-    assert (
-        original_position - TOLERANCE <= left_half_size() <= original_position + TOLERANCE,
-        "Splitter fail!")
+    assert original_position - TOLERANCE <= left_half_size() <= original_position + TOLERANCE,\
+        "Splitter fail!"
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: current_version() < "5.5.0.7")
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1274665])

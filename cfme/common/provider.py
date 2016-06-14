@@ -6,7 +6,7 @@ from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
 )
 import cfme
-from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form, Input
+from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form, Input, Radio
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons
 from cfme.web_ui.tabstrip import TabStripForm
@@ -20,56 +20,19 @@ from utils.signals import fire
 from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
-from utils import version
 from utils.varmeth import variable
+from utils import version
 
-from . import PolicyProfileAssignable, Taggable
+from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(tb.select, 'Configuration')
 
-manage_policies_tree = CheckboxTree(
-    {
-        version.LOWEST: "//div[@id='treebox']/div/table",
-        "5.3": "//div[@id='protect_treebox']/ul"
-    }
-)
+manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
 details_page = Region(infoblock_type='detail')
 
-credential_form = TabStripForm(
-    fields=[
-        ('token_secret', Input('bearer_token'))
-    ],
-    tab_fields={
-        "Default": [
-            ('default_principal', Input("default_userid")),
-            ('default_secret', Input("default_password")),
-            ('default_verify_secret', Input("default_verify")),
-        ],
 
-        "AMQP": [
-            ('amqp_principal', Input("amqp_userid")),
-            ('amqp_secret', Input("amqp_password")),
-            ('amqp_verify_secret', Input("amqp_verify")),
-        ],
-
-        "RSA key pair": [
-            ('ssh_user', Input("ssh_keypair_userid")),
-            ('ssh_key', Input("ssh_keypair_password")),
-        ],
-
-        "C & U Database": [
-            ('candu_principal', Input("metrics_userid")),
-            ('candu_secret', Input("metrics_password")),
-            ('candu_verify_secret', Input("metrics_verify")),
-        ],
-    },
-    fields_end=[
-        ('validate_btn', form_buttons.validate),
-    ])
-
-
-class BaseProvider(Taggable, Updateable):
+class BaseProvider(Taggable, Updateable, SummaryMixin):
     # List of constants that every non-abstract subclass must have defined
     STATS_TO_MATCH = []
     string_name = ""
@@ -78,7 +41,8 @@ class BaseProvider(Taggable, Updateable):
     detail_page_suffix = ""
     refresh_text = ""
     quad_name = None
-    properties_form = None
+    _properties_form = None
+    _properties_region = None
     add_provider_button = None
     save_button = None
 
@@ -89,6 +53,48 @@ class BaseProvider(Taggable, Updateable):
              type: One of [amqp, candu, ssh, token] (optional)
              domain: Domain for default credentials (optional)
         """
+        @property
+        def form(self):
+            fields = [
+                ('token_secret_55', Input('bearer_token')),
+                ('google_service_account', Input('service_account')),
+            ]
+            tab_fields = {
+                "Default": [
+                    ('default_principal', Input("default_userid")),
+                    ('default_secret', Input("default_password")),
+                    ('default_verify_secret', Input("default_verify")),
+                    ('token_secret', Input('bearer_password')),
+                    ('token_verify_secret', Input('bearer_verify')),
+                ],
+
+                "RSA key pair": [
+                    ('ssh_user', Input("ssh_keypair_userid")),
+                    ('ssh_key', Input("ssh_keypair_password")),
+                ],
+
+                "C & U Database": [
+                    ('candu_principal', Input("metrics_userid")),
+                    ('candu_secret', Input("metrics_password")),
+                    ('candu_verify_secret', Input("metrics_verify")),
+                ],
+            }
+            fields_end = [
+                ('validate_btn', form_buttons.validate),
+            ]
+
+            if version.current_version() >= '5.6':
+                amevent = "Events"
+            else:
+                amevent = "AMQP"
+            tab_fields[amevent] = [
+                ('event_selection', Radio('event_stream_selection')),
+                ('amqp_principal', Input("amqp_userid")),
+                ('amqp_secret', Input("amqp_password")),
+                ('amqp_verify_secret', Input("amqp_verify")),
+            ]
+
+            return TabStripForm(fields, tab_fields, fields_end)
 
         def __init__(self, **kwargs):
             super(BaseProvider.Credential, self).__init__(**kwargs)
@@ -96,6 +102,15 @@ class BaseProvider(Taggable, Updateable):
             self.domain = kwargs.get('domain', None)
             if self.type == 'token':
                 self.token = kwargs['token']
+            if self.type == 'service_account':
+                self.service_account = kwargs['service_account']
+
+    @property
+    def properties_form(self):
+        if self._properties_region:
+            return self._properties_region.properties_form
+        else:
+            return self._properties_form
 
     @property
     def data(self):
@@ -135,7 +150,8 @@ class BaseProvider(Taggable, Updateable):
         elif self.key is not None:
             return conf.cfme_data['management_systems'][self.key]
         else:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data', self.name)
+            raise ProviderHasNoKey(
+                'Provider {} has no key, so cannot get yaml data'.format(self.name))
 
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
@@ -148,7 +164,8 @@ class BaseProvider(Taggable, Updateable):
         elif getattr(self, 'provider_data', None):
             return get_mgmt(self.provider_data)
         else:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
+            raise ProviderHasNoKey(
+                'Provider {} has no key, so cannot get mgmt system'.format(self.name))
 
     def _submit(self, cancel, submit_button):
         if cancel:
@@ -171,7 +188,7 @@ class BaseProvider(Taggable, Updateable):
         sel.force_navigate('{}_provider_new'.format(self.page_name))
         fill(self.properties_form, self._form_mapping(True, **self.__dict__))
         for cred in self.credentials:
-            fill(credential_form, self.credentials[cred], validate=validate_credentials)
+            fill(self.credentials[cred].form, self.credentials[cred], validate=validate_credentials)
         self._submit(cancel, self.add_provider_button)
         fire("providers_changed")
         if not cancel:
@@ -191,7 +208,7 @@ class BaseProvider(Taggable, Updateable):
             context={'provider': self})
         fill(self.properties_form, self._form_mapping(**updates))
         for cred in self.credentials:
-            fill(credential_form, updates.get('credentials', {}).get(cred, None),
+            fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
                  validate=validate_credentials)
         self._submit(cancel, self.save_button)
         name = updates.get('name', self.name)
@@ -239,11 +256,17 @@ class BaseProvider(Taggable, Updateable):
 
     def validate(self):
         refresh_timer = RefreshTimer(time_for_refresh=300)
-        wait_for(self.is_refreshed,
-                 [refresh_timer],
-                 message="is_refreshed",
-                 num_sec=1000,
-                 delay=60)
+        try:
+            wait_for(self.is_refreshed,
+                     [refresh_timer],
+                     message="is_refreshed",
+                     num_sec=1000,
+                     delay=60,
+                     handle_exception=True)
+        except Exception:
+            # To see the possible error.
+            self.load_details(refresh=True)
+            raise
 
     def validate_stats(self, ui=False):
         """ Validates that the detail page matches the Providers information.
@@ -282,8 +305,11 @@ class BaseProvider(Taggable, Updateable):
     @variable(alias='rest')
     def refresh_provider_relationships(self, from_list_view=False):
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
-        col = rest_api().collections.providers.find_by(name=self.name)[0]
-        col.action.refresh()
+        col = rest_api().collections.providers.find_by(name=self.name)
+        try:
+            col[0].action.refresh()
+        except IndexError:
+            raise Exception("Provider collection empty")
 
     @refresh_provider_relationships.variant('ui')
     def refresh_provider_relationships_ui(self, from_list_view=False):
@@ -303,6 +329,19 @@ class BaseProvider(Taggable, Updateable):
             return col.last_refresh_date
         except AttributeError:
             return None
+
+    def _num_db_generic(self, table_str):
+        """ Fetch number of rows related to this provider in a given table
+
+        Args:
+            table_str: Name of the table; e.g. 'vms' or 'hosts'
+        """
+        res = cfmedb().engine.execute(
+            "SELECT count(*) "
+            "FROM ext_management_systems, {0} "
+            "WHERE {0}.ems_id=ext_management_systems.id "
+            "AND ext_management_systems.name='{1}'".format(table_str, self.name))
+        return int(res.first()[0])
 
     def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None, ui=False):
         """ A private function to match a set of statistics, with a Provider.
@@ -339,15 +378,15 @@ class BaseProvider(Taggable, Updateable):
                                            cfme_stat,
                                            min_error=0.05,
                                            low_val_correction=2)
-                logger.info(' Matching stat [{}], Host({}), CFME({}), '
-                    'with tolerance {} is {}'.format(stat, host_stats[stat], cfme_stat,
-                                                     value, success))
+                logger.info(' Matching stat [%s], Host(%s), CFME(%s), '
+                    'with tolerance %s is %s', stat, host_stats[stat], cfme_stat, value, success)
                 if not success:
                     return False
             except KeyError:
-                raise HostStatsNotContains("Host stats information does not contain '%s'" % stat)
+                raise HostStatsNotContains(
+                    "Host stats information does not contain '{}'".format(stat))
             except AttributeError:
-                raise ProviderHasNoProperty("Provider does not know how to get '%s'" % stat)
+                raise ProviderHasNoProperty("Provider does not know how to get '{}'".format(stat))
         else:
             return True
 
@@ -371,7 +410,7 @@ class BaseProvider(Taggable, Updateable):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
         ensure_browser_open()
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{} (Summary)")]'.format(self.name))
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
@@ -420,7 +459,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
             sel.force_navigate("{}_providers".format(self.page_name))
             q = Quadicon(self.name, self.quad_name)
             creds = q.creds
-            return creds == "checkmark"
+            return "checkmark" in creds
 
         wait_for(_wait_f, num_sec=300, delay=5, message="credentials of {} ok!".format(self.name))
 
@@ -535,38 +574,49 @@ def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
     if cred.type == 'amqp':
-        fill(credential_form, {'amqp_principal': cred.principal,
-                               'amqp_secret': cred.secret,
-                               'amqp_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
+        fill(cred.form, {'amqp_principal': cred.principal,
+            'amqp_secret': cred.secret,
+            'amqp_verify_secret': cred.verify_secret,
+            'validate_btn': validate})
     elif cred.type == 'candu':
-        fill(credential_form, {'candu_principal': cred.principal,
-                               'candu_secret': cred.secret,
-                               'candu_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
+        fill(cred.form, {'candu_principal': cred.principal,
+            'candu_secret': cred.secret,
+            'candu_verify_secret': cred.verify_secret,
+            'validate_btn': validate})
+    elif cred.type == 'azure':
+        fill(cred.form, {'default_username': cred.principal,
+                         'default_password': cred.secret,
+                         'default_verify': cred.secret})
     elif cred.type == 'ssh':
-        fill(credential_form, {'ssh_user': cred.principal,
-                               'ssh_key': cred.secret})
+        fill(cred.form, {'ssh_user': cred.principal, 'ssh_key': cred.secret})
     elif cred.type == 'token':
-        fill(credential_form, {'token_secret': cred.token,
-                               'validate_btn': validate})
+        if version.current_version() < "5.6":
+            fill(cred.form, {'token_secret_55': cred.token, 'validate_btn': validate})
+        else:
+            fill(cred.form, {
+                'token_secret': cred.token,
+                'token_verify_secret': cred.verify_token,
+                'validate_btn': validate
+            })
+    elif cred.type == 'service_account':
+        fill(cred.form, {'google_service_account': cred.service_account, 'validate_btn': validate})
     else:
         if cred.domain:
             principal = r'{}\{}'.format(cred.domain, cred.principal)
         else:
             principal = cred.principal
-        fill(credential_form, {'default_principal': principal,
-                               'default_secret': cred.secret,
-                               'default_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
+        fill(cred.form, {'default_principal': principal,
+            'default_secret': cred.secret,
+            'default_verify_secret': cred.verify_secret,
+            'validate_btn': validate})
     if validate:
         flash.assert_no_errors()
 
 
 def cleanup_vm(vm_name, provider):
     try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider.key))
+        logger.info('Cleaning up VM %s on provider %s', vm_name, provider.key)
         provider.mgmt.delete_vm(vm_name)
     except:
         # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider.key))
+        logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)

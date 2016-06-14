@@ -90,7 +90,7 @@ def get_clickable_tab(ident_string):
         ident_string: The text diplayed on the tab.
     """
     return sel.element(
-        ".//li/a[contains(normalize-space(text()), '%s')]" % ident_string, root=_root())
+        ".//li/a[contains(normalize-space(text()), '{}')]".format(ident_string), root=_root())
 
 
 def select_tab(ident_string):
@@ -119,10 +119,14 @@ class _TabStripField(Pretty):
         select_tab(self.ident_string)
         return self.arg
 
+    def __getattr__(self, name):
+        self.locate()
+        return getattr(self.arg, name)
+
 
 @web_ui.fill.method((_TabStripField, object))
 def _fill_tabstrip(tabstrip_field, value):
-    logger.debug(' Navigating to tabstrip "{}"'.format(tabstrip_field.ident_string))
+    logger.debug(' Navigating to tabstrip %s', tabstrip_field.ident_string)
     web_ui.fill(tabstrip_field.locate(), value)
 
 

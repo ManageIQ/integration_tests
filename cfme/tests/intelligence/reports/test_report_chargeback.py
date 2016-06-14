@@ -7,6 +7,8 @@ from cfme.intelligence.reports.reports import CustomReport
 from utils.providers import setup_a_provider
 from utils.log import logger
 
+pytestmark = [pytest.mark.tier(3)]
+
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
@@ -14,16 +16,11 @@ def setup_first_provider():
 
 
 def _cleanup_report(report):
-
-        try:
-
-            logger.info('Cleaning up report {}'.format(report.menu_name))
-            report.delete()
-
-        except:
-
-            logger.warning('Failed to clean up report {}'.
-                           format(report.menu_name))
+    try:
+        logger.info('Cleaning up report %s', report.menu_name)
+        report.delete()
+    except:
+        logger.warning('Failed to clean up report %s', report.menu_name)
 
 
 # These tests are meant to catch issues such as BZ 1203022

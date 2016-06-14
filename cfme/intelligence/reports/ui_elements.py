@@ -4,6 +4,8 @@ from xml.sax.saxutils import quoteattr
 
 from collections import Sequence, Mapping, Callable
 from contextlib import contextmanager
+
+from cached_property import cached_property
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -11,7 +13,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import AngularSelect, Calendar, Form, Region, Table, Select, fill
-from utils import deferred_verpick, lazycache, version
+from utils import deferred_verpick, version
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -119,7 +121,7 @@ class PivotCalcSelect(Pretty):
         return sel.uncheck(self._get_checkbox_of(item))
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self._id)))
+        return "{}({})".format(type(self).__name__, str(repr(self._id)))
 
     def __str__(self):
         return repr(self)
@@ -127,7 +129,7 @@ class PivotCalcSelect(Pretty):
 
 @fill.method((PivotCalcSelect, basestring))
 def _fill_pcs_str(o, s):
-    logger.info("  Filling {} with string {}".format(str(o), str(s)))
+    logger.info("  Filling %s with string %s", str(o), str(s))
     o.clear_selection()
     o.check(s)
     o.close_all_boxes()
@@ -135,7 +137,7 @@ def _fill_pcs_str(o, s):
 
 @fill.method((PivotCalcSelect, Sequence))
 def _fill_pcs_seq(o, l):
-    logger.info("  Filling {} with sequence {}".format(str(o), str(l)))
+    logger.info("  Filling %s with sequence %s", str(o), str(l))
     o.clear_selection()
     for name in l:
         o.check(name)
@@ -144,11 +146,11 @@ def _fill_pcs_seq(o, l):
 
 @fill.method((PivotCalcSelect, Callable))
 def _fill_pcs_callable(o, c):
-    logger.info("  Filling {} with callable {}".format(str(o), str(c)))
+    logger.info("  Filling %s with callable %s", str(o), str(c))
     for item in o.items():
-        logger.info("    Calling callable on item {}".format(item))
+        logger.info("    Calling callable on item %s", item)
         result = bool(c(item))
-        logger.info("      Setting item {} to {}".format(item, str(result)))
+        logger.info("      Setting item %s to %s", item, str(result))
         if result is True:
             o.check(item)
         else:
@@ -191,7 +193,7 @@ class RecordGrouper(Pretty):
         self.table = Table(table_loc)
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self._table_loc)))
+        return "{}({})".format(type(self).__name__, str(repr(self._table_loc)))
 
 
 @fill.method((RecordGrouper, Mapping))
@@ -243,7 +245,7 @@ class ColumnStyleTable(Pretty):
         self._div_id = div_id
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self._div_id)))
+        return "{}({})".format(type(self).__name__, str(repr(self._div_id)))
 
     def get_style_select(self, name, id=0):
         """Return Select element with selected style.
@@ -399,7 +401,7 @@ class MenuShortcuts(Pretty):
     def set_text_of(self, id, text):
         sel.set_text("//input[@id='shortcut_desc_{}']".format(id), text)
 
-    @lazycache
+    @cached_property
     def mapping(self):
         """Determine mapping Menu item => menu item id.
 
@@ -579,8 +581,11 @@ class DashboardWidgetSelector(Pretty):
 
 class NewerDashboardWidgetSelector(DashboardWidgetSelector):
     """Dashboard widget selector from 5.5 onwards."""
+    _button_open_close = ".//div[contains(@class, 'dropdown-menu open')]"
+    _combo_list = "//div[contains(@class, 'dropdown-menu open')]/ul"
+
     _remove_button = ".//a[../../h3[normalize-space(.)='{}']]"
-    _selected = ".//div[@id='modules']//h3"
+    _selected = "./div[@id='modules']/div/div/div/h3"
     _select = AngularSelect("widget")
 
     def select(self, *items):
@@ -650,7 +655,7 @@ class FolderManager(Pretty):
         self.root = lambda: sel.element(root)
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self.root)))
+        return "{}({})".format(type(self).__name__, str(repr(self.root)))
 
     @classmethod
     def bail_out(cls):

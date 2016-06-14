@@ -31,6 +31,12 @@ doc_data.yaml
 # Unit test / coverage reports
 .coverage
 .tox
+
+# pytest cache
+.cache/
+# quickstart virtualenv
+.cfme_tests/
+
 nosetests.xml
 chromedriver.log
 pytest.ini
@@ -52,8 +58,7 @@ docs/_build
 docs/modules
 
 # Ipython notebooks need to be explicitly added
-notebooks/*.ipynb
-notebooks/.ipynb_checkpoints
+notebooks/*
 
 # automation artifacts
 .generated_ssh_key*

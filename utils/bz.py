@@ -3,7 +3,7 @@ import re
 from bugzilla import Bugzilla as _Bugzilla
 from collections import Sequence
 
-from utils import lazycache
+from cached_property import cached_property
 from utils.conf import cfme_data, credentials
 from utils.log import logger
 from utils.version import (
@@ -88,19 +88,19 @@ class Bugzilla(object):
             url=url, user=username, password=password, cookiefile=None,
             tokenfile=None, product=product)
 
-    @lazycache
+    @cached_property
     def bugzilla(self):
         return _Bugzilla(**self.__kwargs)
 
-    @lazycache
+    @cached_property
     def loose(self):
         return cfme_data.get("bugzilla", {}).get("loose", [])
 
-    @lazycache
+    @cached_property
     def open_states(self):
         return cfme_data.get("bugzilla", {}).get("skip", set([]))
 
-    @lazycache
+    @cached_property
     def upstream_version(self):
         if self.default_product is not None:
             return self.default_product.latest_version
@@ -164,10 +164,9 @@ class Bugzilla(object):
                     filtered.add(variant)
                 else:
                     logger.info(
-                        "Ignoring bug #{}, appliance version not in bug release flag"
-                        .format(variant.id))
+                        "Ignoring bug #%s, appliance version not in bug release flag", variant.id)
             else:
-                logger.info("No release flags, wrong versions, ignoring {}".format(variant.id))
+                logger.info("No release flags, wrong versions, ignoring %s", variant.id)
         if not filtered:
             # No appropriate bug was found
             for forced_stream in force_block_streams:
@@ -301,9 +300,8 @@ class BugWrapper(object):
 
     @property
     def is_opened(self):
-        if self.upstream_bug and not appliance_is_downstream():
-            states = self._bugzilla.open_states
-        else:
+        states = self._bugzilla.open_states
+        if not self.upstream_bug and appliance_is_downstream():
             states = self._bugzilla.open_states + ["POST", "MODIFIED"]
         return self.status in states
 

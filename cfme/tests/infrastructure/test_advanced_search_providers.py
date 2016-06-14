@@ -5,8 +5,8 @@ It does not check for filtering results so far."""
 import fauxfactory
 import pytest
 
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
+# TODO: we should not call out to utils here, but maybe rather have an infra setup provider fixture
 from utils.providers import setup_a_provider
 from cfme.web_ui import search
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
@@ -20,7 +20,7 @@ def providers():
         setup_a_provider(prov_type="infra")
     except Exception:
         pytest.skip("It's not possible to set up any providers, therefore skipping")
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     search.ensure_no_filter_applied()
 
 
@@ -40,23 +40,23 @@ def close_search():
     search.ensure_advanced_search_closed()
 
 
-pytestmark = [pytest.mark.usefixtures("close_search")]
+pytestmark = [pytest.mark.usefixtures("close_search"), pytest.mark.tier(3)]
 
 
 def test_can_do_advanced_search():
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     assert search.is_advanced_search_possible(), "Cannot do advanced search here!"
 
 
 @pytest.mark.requires("test_can_do_advanced_search")
 def test_can_open_advanced_search():
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     search.ensure_advanced_search_open()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_without_user_input(providers):
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     # Set up the filter
     search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=, 0)")
     assert_no_cfme_exception()
@@ -65,7 +65,7 @@ def test_filter_without_user_input(providers):
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input(providers):
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     # Set up the filter
     search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=)", {"COUNT": 0})
     assert_no_cfme_exception()
@@ -74,7 +74,7 @@ def test_filter_with_user_input(providers):
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input_and_cancellation(providers):
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     # Set up the filter
     search.fill_and_apply_filter(
         "fill_count(Infrastructure Provider.VMs, >=)", {"COUNT": 0},
@@ -86,7 +86,7 @@ def test_filter_with_user_input_and_cancellation(providers):
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=[1168336])
 def test_filter_save_cancel(request, providers, ssh_client):
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up finalizer
     request.addfinalizer(
@@ -95,14 +95,14 @@ def test_filter_save_cancel(request, providers, ssh_client):
     # Try save filter
     search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name, cancel=True)
     assert_no_cfme_exception()
-    with pytest.raises(sel.NoSuchElementException):
+    with pytest.raises(pytest.sel.NoSuchElementException):
         search.load_filter(filter_name)  # does not exist
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=[1168336])
 def test_filter_save_and_load(request, providers, ssh_client):
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up finalizer
     request.addfinalizer(
@@ -121,7 +121,7 @@ def test_filter_save_and_load(request, providers, ssh_client):
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=[1168336])
 def test_filter_save_and_cancel_load(request, providers, ssh_client):
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up finalizer
     request.addfinalizer(
@@ -130,12 +130,12 @@ def test_filter_save_and_cancel_load(request, providers, ssh_client):
     # Try save filter
     search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name)
 
+    @request.addfinalizer
     def cleanup():
-        sel.force_navigate("infrastructure_providers")
+        pytest.sel.force_navigate("infrastructure_providers")
         search.load_filter(filter_name)
         search.delete_filter()
 
-    request.addfinalizer(cleanup)
     assert_no_cfme_exception()
     search.reset_filter()
 
@@ -146,7 +146,7 @@ def test_filter_save_and_cancel_load(request, providers, ssh_client):
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=[1168336])
 def test_filter_save_and_load_cancel(request, providers, ssh_client):
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up finalizer
     request.addfinalizer(
@@ -155,12 +155,12 @@ def test_filter_save_and_load_cancel(request, providers, ssh_client):
     # Try save filter
     search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name)
 
+    @request.addfinalizer
     def cleanup():
-        sel.force_navigate("infrastructure_providers")
+        pytest.sel.force_navigate("infrastructure_providers")
         search.load_filter(filter_name)
         search.delete_filter()
 
-    request.addfinalizer(cleanup)
     assert_no_cfme_exception()
     search.reset_filter()
 
@@ -173,7 +173,7 @@ def test_filter_save_and_load_cancel(request, providers, ssh_client):
 
 
 def test_quick_search_without_filter(request, providers):
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     search.ensure_no_filter_applied()
     assert_no_cfme_exception()
     # Make sure that we empty the regular search field after the test
@@ -184,7 +184,7 @@ def test_quick_search_without_filter(request, providers):
 
 
 def test_quick_search_with_filter(request, providers):
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=, 0)")
     assert_no_cfme_exception()
     # Make sure that we empty the regular search field after the test
@@ -196,7 +196,7 @@ def test_quick_search_with_filter(request, providers):
 
 @pytest.mark.meta(blockers=[1168336])
 def test_can_delete_filter():
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
     assert_no_cfme_exception()
@@ -209,27 +209,27 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1097150, 1168336])
+@pytest.mark.meta(blockers=[1097150, 1168336, 1320244])
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
 
+    @request.addfinalizer
     def cleanup():
-        sel.force_navigate("infrastructure_providers")
+        pytest.sel.force_navigate("infrastructure_providers")
         search.load_filter(filter_name)
         search.delete_filter()
 
-    request.addfinalizer(cleanup)
     if not search.delete_filter():  # Returns False if the button is not present
         pytest.fail("Could not delete filter right after saving!")
 
 
-@pytest.mark.meta(blockers=[1097150])
-def test_cannot_delete_more_than_once(request):
+@pytest.mark.meta(blockers=[1097150, 1320244])
+def test_cannot_delete_more_than_once(request, nuke_browser_after_test):
     """When Delete button appars, it does not want to go away"""
-    sel.force_navigate("infrastructure_providers")
+    pytest.sel.force_navigate("infrastructure_providers")
     filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
 

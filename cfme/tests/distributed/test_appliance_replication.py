@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-import random
 
 import cfme.web_ui.flash as flash
 from cfme.common.vm import VM
@@ -11,44 +10,20 @@ from cfme.infrastructure.provider import wait_for_a_provider
 import cfme.fixtures.pytest_selenium as sel
 from time import sleep
 from urlparse import urlparse
-from utils import db, testgen, version
+from utils import db, version
 from utils.appliance import provision_appliance
 from utils.conf import credentials
 from utils.log import logger
+from utils.providers import setup_a_provider
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.long_running]
 
-pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
 
-random_vm_test = []
-
-
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter'], choose_random=True)
-    if not idlist:
-        return
-    new_idlist = []
-    new_argvalues = []
-    if 'random_pwr_ctl_vm' in metafunc.fixturenames:
-        if random_vm_test:
-            argnames, new_argvalues, new_idlist = random_vm_test
-        else:
-            single_index = random.choice(range(len(idlist)))
-            new_idlist = ['random_provider']
-            new_argvalues = argvalues[single_index]
-            argnames.append('random_pwr_ctl_vm')
-            new_argvalues.append('')
-            new_argvalues = [new_argvalues]
-            random_vm_test.append(argnames)
-            random_vm_test.append(new_argvalues)
-            random_vm_test.append(new_idlist)
-    else:
-        new_idlist = idlist
-        new_argvalues = argvalues
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+@pytest.fixture
+def vmware_provider():
+    return setup_a_provider(prov_class="infra", prov_type="virtualcenter")
 
 
 def get_ssh_client(hostname):
@@ -63,6 +38,8 @@ def get_ssh_client(hostname):
     return SSHClient(**connect_kwargs)
 
 
+# TODO: These calls here should not be separate functions, the functions should be on the appliance
+# and we should be using the with context manager, they are being used incorrectly below
 def stop_db_process(address):
     with get_ssh_client(address) as ssh:
         assert ssh.run_command('service {}-postgresql stop'.format(db.scl_name()))[0] == 0,\
@@ -88,10 +65,10 @@ def get_replication_appliances():
     ver_to_prov = str(version.current_version())
     appl1 = provision_appliance(ver_to_prov, 'long-test_repl_A')
     appl2 = provision_appliance(ver_to_prov, 'long-test_repl_B')
-    appl1.configure(region=1, patch_ajax_wait=False)
+    appl1.configure(region=1)
     appl1.ipapp.wait_for_web_ui()
     update_appliance_uuid(appl2.address)
-    appl2.configure(region=2, patch_ajax_wait=False, key_address=appl1.address)
+    appl2.configure(region=2, key_address=appl1.address)
     appl2.ipapp.wait_for_web_ui()
     return (appl1, appl2)
 
@@ -137,25 +114,26 @@ def vm_name():
     return "test_repl_pwrctl_" + fauxfactory.gen_alphanumeric()
 
 
-@pytest.fixture(scope="class")
-def test_vm(request, provider, vm_name):
+@pytest.fixture(scope="module")
+def test_vm(request, vmware_provider, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = VM.factory(vm_name, provider)
+    vm = VM.factory(vm_name, vmware_provider)
 
     request.addfinalizer(vm.delete_from_provider)
 
-    if not provider.mgmt.does_vm_exist(vm_name):
-        logger.info("deploying {} on provider {}".format(vm_name, provider.key))
+    if not vmware_provider.mgmt.does_vm_exist(vm_name):
+        logger.info("deploying %s on provider %s", vm_name, vmware_provider.key)
         vm.create_on_provider(allow_skip="default")
     else:
-        logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider.key))
+        logger.info("recycling deployed vm %s on provider %s", vm_name, vmware_provider.key)
     vm.provider.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm
 
 
+@pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_between_regions(request, provider):
+def test_appliance_replicate_between_regions(request, vmware_provider):
     """Tests that a provider added to an appliance in one region
         is replicated to the parent appliance in another region.
 
@@ -171,17 +149,18 @@ def test_appliance_replicate_between_regions(request, provider):
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         configure_db_replication(appl2.address)
-        provider.create()
+        vmware_provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider.exists
+        assert vmware_provider.exists
 
 
+@pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_external_database_appliance(request, provider):
+def test_external_database_appliance(request, vmware_provider):
     """Tests that one appliance can externally
        connect to the database of another appliance.
 
@@ -196,17 +175,18 @@ def test_external_database_appliance(request, provider):
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        provider.create()
+        vmware_provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider.exists
+        assert vmware_provider.exists
 
 
+@pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_sync_role_change(request, provider):
+def test_appliance_replicate_sync_role_change(request, vmware_provider):
     """Tests that a role change is replicated
 
     Metadata:
@@ -231,17 +211,18 @@ def test_appliance_replicate_sync_role_change(request, provider):
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
-        provider.create()
+        vmware_provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider.exists
+        assert vmware_provider.exists
 
 
+@pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_sync_role_change_with_backlog(request, provider):
+def test_appliance_replicate_sync_role_change_with_backlog(request, vmware_provider):
     """Tests that a role change is replicated with backlog
 
     Metadata:
@@ -257,7 +238,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, provider):
     with appl1.ipapp:
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
-        provider.create()
+        vmware_provider.create()
         conf.set_server_roles(database_synchronization=False)
         sel.force_navigate("cfg_diagnostics_region_replication")
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
@@ -272,11 +253,12 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, provider):
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider.exists
+        assert vmware_provider.exists
 
 
+@pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_database_disconnection(request, provider):
+def test_appliance_replicate_database_disconnection(request, vmware_provider):
     """Tests a database disconnection
 
     Metadata:
@@ -299,17 +281,18 @@ def test_appliance_replicate_database_disconnection(request, provider):
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
-        provider.create()
+        vmware_provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider.exists
+        assert vmware_provider.exists
 
 
+@pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_database_disconnection_with_backlog(request, provider):
+def test_appliance_replicate_database_disconnection_with_backlog(request, vmware_provider):
     """Tests a database disconnection with backlog
 
     Metadata:
@@ -325,7 +308,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, provid
     with appl1.ipapp:
         configure_db_replication(appl2.address)
         # Replication is up and running, now stop the DB on the replication parent
-        provider.create()
+        vmware_provider.create()
         stop_db_process(appl2.address)
         sleep(60)
         start_db_process(appl2.address)
@@ -338,13 +321,13 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, provid
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider.exists
+        assert vmware_provider.exists
 
 
-@pytest.mark.usefixtures("random_pwr_ctl_vm")
+@pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-def test_distributed_vm_power_control(request, test_vm, provider, verify_vm_running, register_event,
-                                      soft_assert, setup_provider):
+def test_distributed_vm_power_control(request, test_vm, vmware_provider, verify_vm_running,
+                                      register_event, soft_assert):
     """Tests that a replication parent appliance can control the power state of a
     VM being managed by a replication child appliance.
 
@@ -360,7 +343,7 @@ def test_distributed_vm_power_control(request, test_vm, provider, verify_vm_runn
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         configure_db_replication(appl2.address)
-        provider.create()
+        vmware_provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True

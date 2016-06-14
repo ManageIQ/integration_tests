@@ -17,7 +17,7 @@ class SMTPCollectorClient(object):
         self._port = port
 
     def _query(self, method, path, **params):
-        return method("http://%s:%d/%s" % (self._host, self._port, path), params=params)
+        return method("http://{}:{}/{}".format(self._host, self._port, path), params=params)
 
     def clear_database(self):
         """Clear the database in collector

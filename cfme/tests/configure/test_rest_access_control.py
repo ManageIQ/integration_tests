@@ -20,6 +20,7 @@ class TestTenantsViaREST(object):
     def tenants(self, request, rest_api):
         return _tenants(request, rest_api, num=3)
 
+    @pytest.mark.tier(2)
     @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
     def test_edit_tenants(self, rest_api, tenants, multiple):
         if multiple:
@@ -50,6 +51,7 @@ class TestTenantsViaREST(object):
                 delay=10,
             )
 
+    @pytest.mark.tier(3)
     @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
     def test_delete_tenants(self, rest_api, tenants, multiple):
         if multiple:
@@ -68,6 +70,7 @@ class TestRolesViaREST(object):
     def roles(self, request, rest_api):
         return _roles(request, rest_api, num=3)
 
+    @pytest.mark.tier(2)
     @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
     def test_edit_roles(self, rest_api, roles, multiple):
         if "edit" not in rest_api.collections.roles.action.all:
@@ -101,6 +104,7 @@ class TestRolesViaREST(object):
                 delay=10,
             )
 
+    @pytest.mark.tier(3)
     def test_delete_roles(self, rest_api, roles):
         if "delete" not in rest_api.collections.roles.action.all:
             pytest.skip("Delete roles action is not implemented in this version")
@@ -109,6 +113,7 @@ class TestRolesViaREST(object):
         with error.expected("ActiveRecord::RecordNotFound"):
             rest_api.collections.roles.action.delete(*roles)
 
+    @pytest.mark.tier(3)
     def test_add_delete_role(self, rest_api):
         if "add" not in rest_api.collections.roles.action.all:
             pytest.skip("Add roles action is not implemented in this version")
@@ -124,6 +129,7 @@ class TestRolesViaREST(object):
         with error.expected("ActiveRecord::RecordNotFound"):
             role.action.delete()
 
+    @pytest.mark.tier(3)
     def test_role_assign_and_unassign_feature(self, rest_api, roles):
         feature = rest_api.collections.features.get(name="Everything")
         role = roles[0]
@@ -150,6 +156,7 @@ class TestGroupsViaREST(object):
     def groups(self, request, rest_api, roles, tenants):
         return _groups(request, rest_api, roles, tenants, num=3)
 
+    @pytest.mark.tier(2)
     @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
     def test_edit_groups(self, rest_api, groups, multiple):
         if multiple:
@@ -180,6 +187,7 @@ class TestGroupsViaREST(object):
                 delay=10,
             )
 
+    @pytest.mark.tier(3)
     @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
     def test_delete_groups(self, rest_api, groups, multiple):
         if multiple:
@@ -198,6 +206,7 @@ class TestUsersViaREST(object):
     def users(self, request, rest_api):
         return _users(request, rest_api, num=3)
 
+    @pytest.mark.tier(2)
     def test_edit_user_password(self, rest_api, users):
         if "edit" not in rest_api.collections.users.action.all:
             pytest.skip("Edit action for users is not implemented in this version")
@@ -208,6 +217,7 @@ class TestUsersViaREST(object):
         new_user = User(credential=cred)
         login(new_user)
 
+    @pytest.mark.tier(3)
     @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
     def test_edit_user_name(self, rest_api, users, multiple):
         if "edit" not in rest_api.collections.users.action.all:
@@ -240,6 +250,7 @@ class TestUsersViaREST(object):
                 delay=10,
             )
 
+    @pytest.mark.tier(3)
     @pytest.mark.parametrize("multiple", [False, True], ids=["one_request", "multiple_requests"])
     def test_delete_user(self, rest_api, users, multiple):
         if multiple:

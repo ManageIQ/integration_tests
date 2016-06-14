@@ -10,19 +10,25 @@ normally be placed in main function, are located in function run(**kwargs).
 """
 
 import argparse
-import subprocess
+import fauxfactory
 import sys
+from threading import Lock, Thread
 
 # from psphere.client import Client
 from psphere.managedobjects import VirtualMachine, ClusterComputeResource, HostSystem, Datacenter
 
+from utils import net
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.mgmt_system import VMWareSystem
+from utils.providers import list_providers
+from utils.ssh import SSHClient
+from mgmtsystem import VMWareSystem
 from utils.wait import wait_for
 
 # ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
 NUM_OF_TRIES_OVFTOOL = 5
+
+lock = Lock()
 
 
 def parse_cmd_line():
@@ -51,65 +57,61 @@ def parse_cmd_line():
     return args
 
 
-def check_template_exists(client, name):
+def check_template_exists(client, name, provider):
     if name in client.list_template():
-        print("VSPHERE: A Machine with that name already exists")
+        print("VSPHERE:{} template {} already exists".format(provider, name))
         return True
     else:
         return False
 
 
+def make_ssh_client(rhevip, sshname, sshpass):
+    connect_kwargs = {
+        'username': sshname,
+        'password': sshpass,
+        'hostname': rhevip
+    }
+    return SSHClient(**connect_kwargs)
+
+
 def upload_ova(hostname, username, password, name, datastore,
-               cluster, datacenter, url, host, proxy):
+               cluster, datacenter, url, provider, proxy,
+               ovf_tool_client, default_user, default_pass):
+
     cmd_args = ['ovftool']
-    cmd_args.append("--datastore=%s" % datastore)
-    cmd_args.append("--name=%s" % name)
+    cmd_args.append("--datastore={}".format(datastore))
+    cmd_args.append("--name={}".format(name))
     cmd_args.append("--vCloudTemplate=True")
     cmd_args.append("--overwrite")  # require when failures happen and it retries
     if proxy:
-        cmd_args.append("--proxy=%s" % proxy)
+        cmd_args.append("--proxy={}".format(proxy))
     cmd_args.append(url)
-    cmd_args.append("vi://%s@%s/%s/host/%s" % (username, hostname, datacenter, cluster))
+    cmd_args.append("vi://{}:{}@{}/{}/host/{}".format(username, password, hostname,
+                                                      datacenter, cluster))
+    print("VSPHERE:{} Running OVFTool...".format(provider))
 
-    print("VSPHERE: Running OVFTool...")
-
-    proc = subprocess.Popen(cmd_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-
-    out_string = ""
-
-    while "'yes' or 'no'" not in out_string and "Password:" not in out_string:
-        out_string += proc.stdout.read(1)
-        # on error jump out of the while loop to prevent infinite cycling
-        if "error" in out_string.lower():
-            print("VSPHERE: Upload did not complete")
-            return -1, out_string
-
-    if "'yes' or 'no'" in out_string:
-        proc.stdin.write("yes\n")
-        proc.stdin.flush()
-        print("VSPHERE: Added host to SSL hosts")
-        out_string = ""
-        while "Password:" not in out_string:
-            out_string += proc.stdout.read(1)
-
-    proc.stdin.write(password + "\n")
-    output = proc.stdout.read()
-    error = proc.stderr.read()
+    sshclient = make_ssh_client(ovf_tool_client, default_user, default_pass)
+    try:
+        command = ' '.join(cmd_args)
+        output = sshclient.run_command(command)[1]
+    except Exception as e:
+        print(e)
+        print("VSPHERE:{} Upload did not complete".format(provider))
+        return False
+    finally:
+        sshclient.close()
 
     if "successfully" in output:
-        print(" VSPHERE: Upload completed")
+        print(" VSPHERE:{} Upload completed".format(provider))
         return 0, output
     else:
-        print("VSPHERE: Upload did not complete")
-        return -1, "\n".join([output, error])
+        print("VSPHERE:{} Upload did not complete".format(provider))
         print(output)
-        print(error)
-        sys.exit(127)
+        return False
 
 
-def add_disk(client, name):
-    print("VSPHERE: Beginning disk add...")
+def add_disk(client, name, provider):
+    print("VSPHERE:{} Beginning disk add...".format(provider))
 
     backing = client.api.create("VirtualDiskFlatVer2BackingInfo")
     backing.datastore = None
@@ -146,22 +148,21 @@ def add_disk(client, name):
     wait_for(check_task, [task], fail_condition="running")
 
     if task.info.state == "success":
-        print(" VSPHERE: Successfully added new disk")
-        # client.api.logout()
+        print(" VSPHERE:{} Successfully added new disk".format(provider))
     else:
         client.api.logout()
-        print(" VSPHERE: Failed to add disk")
-        sys.exit(127)
+        print(" VSPHERE:{} Failed to add disk".format(provider))
+        return False
 
 
-def make_template(client, name):
-    print("VSPHERE: Marking as Template")
+def make_template(client, name, provider):
+    print("VSPHERE:{} Marking as Template".format(provider))
     vm = VirtualMachine.get(client.api, name=name)
     try:
         vm.MarkAsTemplate()
-        print(" VSPHERE: Successfully templatized machine")
+        print(" VSPHERE:{} Successfully templatized machine".format(provider))
     except:
-        print(" VSPHERE: Failed to templatize machine")
+        print(" VSPHERE:{} Failed to templatize machine".format(provider))
         sys.exit(127)
 
 
@@ -221,8 +222,10 @@ def get_datacenter(client):
 def check_kwargs(**kwargs):
     for key, val in kwargs.iteritems():
         if val is None:
-            print("VSPHERE: please supply required parameter '{}'.".format(key))
-            sys.exit(127)
+            print("VSPHERE:{} please supply required parameter '{}'.".format(
+                kwargs['provider'], key))
+            return False
+    return True
 
 
 def update_params_api(client, **kwargs):
@@ -268,57 +271,141 @@ def make_kwargs(args, **kwargs):
     return kwargs
 
 
-def run(**kwargs):
-    provider = cfme_data['management_systems'][kwargs.get('provider')]
-    creds = credentials[provider['credentials']]
+def make_kwargs_vsphere(cfmeqe_data, provider):
+    data = cfmeqe_data['management_systems'][provider]
+    temp_up = cfme_data['template_upload']['template_upload_vsphere']
 
-    hostname = provider['hostname']
-    username = creds['username']
-    password = creds['password']
+    kwargs = {'provider': provider}
+    if data.get('template_upload'):
+        kwargs['cluster'] = data['template_upload'].get('cluster', None)
+        kwargs['datacenter'] = data['template_upload'].get('datacenter', None)
+        kwargs['host'] = data['template_upload'].get('host', None)
+        if data['template_upload'].get('proxy', None):
+            kwargs['proxy'] = data['template_upload'].get('proxy', None)
+    else:
+        kwargs['cluster'] = None
+        kwargs['datacenter'] = None
+        kwargs['host'] = None
+        kwargs['proxy'] = None
+    if data.get('provisioning'):
+        kwargs['datastore'] = data['provisioning'].get('datastore', None)
+    else:
+        kwargs['datastore'] = None
+    upload = temp_up.get('upload', None)
+    disk = temp_up.get('disk', None)
+    template = temp_up.get('template', None)
+    kwargs['ovf_tool_client'] = temp_up.get('ovf_tool_client', None)
 
-    client = VMWareSystem(hostname, username, password)
+    if template:
+        kwargs['template'] = template
+    if upload:
+        kwargs['upload'] = upload
+    if disk:
+        kwargs['disk'] = disk
 
-    kwargs = update_params_api(client, **kwargs)
+    return kwargs
 
-    name = kwargs.get('template_name', None)
-    if name is None:
-        name = cfme_data['basic_info']['appliance_template']
 
-    print("VSPHERE: Template Name: {}".format(name))
+def upload_template(client, hostname, username, password,
+                    provider, url, name, provider_data):
 
-    check_kwargs(**kwargs)
+    try:
+        if provider_data:
+            kwargs = make_kwargs_vsphere(provider_data, provider)
+        else:
+            kwargs = make_kwargs_vsphere(cfme_data, provider)
+        kwargs['ovf_tool_username'] = credentials['host_default']['username']
+        kwargs['ovf_tool_password'] = credentials['host_default']['password']
 
-    url = kwargs.get('image_url')
+        if name is None:
+            name = cfme_data['basic_info']['appliance_template']
 
-    if not check_template_exists(client, name):
-        if kwargs.get('upload'):
-            # Wrapper for ovftool - sometimes it just won't work
-            for i in range(0, NUM_OF_TRIES_OVFTOOL):
-                print("VSPHERE: Trying ovftool {}...".format(i))
-                ova_ret, ova_out = upload_ova(hostname,
-                                              username,
-                                              password,
-                                              name,
-                                              kwargs.get('datastore'),
-                                              kwargs.get('cluster'),
-                                              kwargs.get('datacenter'),
-                                              url,
-                                              kwargs.get('host'),
-                                              kwargs.get('proxy'))
-                if ova_ret is 0:
-                    break
-            if ova_ret is -1:
-                print("VSPHERE: Ovftool failed to upload file.")
-                print(ova_out)
-                return
+        print("VSPHERE:{} Start uploading Template: {}".format(provider, name))
+        if not check_kwargs(**kwargs):
+            return False
+        if not check_template_exists(client, name, provider):
+            if kwargs.get('upload'):
+                # Wrapper for ovftool - sometimes it just won't work
+                ova_ret, ova_out = (1, 'no output yet')
+                for i in range(0, NUM_OF_TRIES_OVFTOOL):
+                    print("VSPHERE:{} Trying ovftool {}...".format(provider, i))
+                    ova_ret, ova_out = upload_ova(hostname,
+                                                  username,
+                                                  password,
+                                                  name,
+                                                  kwargs.get('datastore'),
+                                                  kwargs.get('cluster'),
+                                                  kwargs.get('datacenter'),
+                                                  url,
+                                                  provider,
+                                                  kwargs.get('proxy'),
+                                                  kwargs.get('ovf_tool_client'),
+                                                  kwargs['ovf_tool_username'],
+                                                  kwargs['ovf_tool_password'])
+                    if ova_ret is 0:
+                        break
+                if ova_ret is -1:
+                    print("VSPHERE:{} Ovftool failed to upload file.".format(provider))
+                    print(ova_out)
+                    return
 
-        if kwargs.get('disk'):
-            add_disk(client, name)
-        if kwargs.get('template'):
-            # make_template(client, name, hostname, username, password)
-            make_template(client, name)
+            if kwargs.get('disk'):
+                add_disk(client, name, provider)
+            if kwargs.get('template'):
+                # make_template(client, name, hostname, username, password)
+                make_template(client, name, provider)
+
+        if provider_data and check_template_exists(client, name, provider):
+            print("VSPHERE:{} Deploying {}....".format(provider, name))
+            vm_name = 'test_{}_{}'.format(name, fauxfactory.gen_alphanumeric(8))
+            deploy_args = {'provider': provider, 'vm_name': vm_name,
+                           'template': name, 'deploy': True}
+            getattr(__import__('clone_template'), "main")(**deploy_args)
         client.api.logout()
-    print("VSPHERE: Completed successfully")
+    except Exception as e:
+        print(e)
+        return False
+    finally:
+        print("VSPHERE:{} End uploading Template: {}".format(provider, name))
+
+
+def run(**kwargs):
+
+    try:
+        thread_queue = []
+        providers = list_providers("virtualcenter")
+        if kwargs['provider_data']:
+            mgmt_sys = providers = kwargs['provider_data']['management_systems']
+        for provider in providers:
+            if kwargs['provider_data']:
+                if mgmt_sys[provider]['type'] != 'virtualcenter':
+                    continue
+                username = mgmt_sys[provider]['username']
+                password = mgmt_sys[provider]['password']
+            else:
+                mgmt_sys = cfme_data['management_systems']
+                creds = credentials[mgmt_sys[provider]['credentials']]
+                username = creds['username']
+                password = creds['password']
+            host_ip = mgmt_sys[provider]['ipaddress']
+            hostname = mgmt_sys[provider]['hostname']
+            client = VMWareSystem(hostname, username, password)
+
+            if not net.is_pingable(host_ip):
+                continue
+            thread = Thread(target=upload_template,
+                            args=(client, hostname, username, password, provider,
+                                  kwargs.get('image_url'), kwargs.get('template_name'),
+                                  kwargs['provider_data']))
+            thread.daemon = True
+            thread_queue.append(thread)
+            thread.start()
+
+        for thread in thread_queue:
+            thread.join()
+    except Exception as e:
+        print(e)
+        return False
 
 
 if __name__ == "__main__":

@@ -78,7 +78,7 @@ def events_list(db, event_type=None, resource_name=None):
         bindings += (time,)
 
     if where_clause:
-        sql += ' WHERE %s' % " AND ".join(where_clause)
+        sql += ' WHERE {}'.format(" AND ".join(where_clause))
 
     # Order by time arrived
     sql += "  ORDER BY event_time ASC"

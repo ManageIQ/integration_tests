@@ -34,6 +34,7 @@ def dialog():
 
 
 @pytest.mark.sauce
+@pytest.mark.tier(2)
 def test_button_group_crud(request):
     buttongroup = ButtonGroup(
         text=fauxfactory.gen_alphanumeric(), hover="btn_hvr", type=ButtonGroup.SERVICE)
@@ -45,6 +46,7 @@ def test_button_group_crud(request):
 
 
 @pytest.mark.meta(blockers=[1143019, 1205235])
+@pytest.mark.tier(2)
 def test_button_crud(dialog, request):
     buttongroup = ButtonGroup(
         text=fauxfactory.gen_alphanumeric(),
@@ -64,6 +66,7 @@ def test_button_crud(dialog, request):
 
 
 @pytest.mark.meta(blockers=[1193758, 1205235])
+@pytest.mark.tier(3)
 def test_button_on_host(dialog, request):
     buttongroup = ButtonGroup(
         text=fauxfactory.gen_alphanumeric(),
@@ -84,6 +87,7 @@ def test_button_on_host(dialog, request):
 
 
 @pytest.mark.meta(blockers=[1229348], automates=[1229348])
+@pytest.mark.tier(2)
 def test_button_avp_displayed(request):
     """This test checks whether the Attribute/Values pairs are displayed in the dialog.
 
@@ -99,6 +103,6 @@ def test_button_avp_displayed(request):
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
     pytest.sel.force_navigate("new_button", context={'buttongroup': buttongroup})
-    assert (pytest.sel.is_displayed(
-        "//*[(self::h3 or self::p) and normalize-space(text())='Attribute/Value Pairs']"),
-        "The Attribute/Value Pairs part of the form is not displayed")
+    section_loc = "//*[(self::h3 or self::p) and normalize-space(text())='Attribute/Value Pairs']"
+    assert pytest.sel.is_displayed(section_loc),\
+        "The Attribute/Value Pairs part of the form is not displayed"

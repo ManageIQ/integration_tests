@@ -5,13 +5,11 @@ import pytest
 import cfme.configure.access_control as ac
 from cfme.fixtures import pytest_selenium as sel
 from cfme.automate import explorer as automate
-from cfme.exceptions import FlashMessageException
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import fill, flash
 from utils import testgen, version
 from utils.wait import wait_for
-from utils.providers import setup_provider
 
 
 pytestmark = [
@@ -22,20 +20,18 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter'], 'provisioning')
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+        metafunc, ['virtualcenter'])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_quota_prov_%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_quota_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
 @pytest.fixture(scope="module")
 def domain(request):
-    if version.current_version() < "5.3":
-        return None
     domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
@@ -89,7 +85,7 @@ def set_group_cpu():
 
 
 @pytest.fixture(scope="function")
-def prov_data(provisioning, provider):
+def prov_data(provider, provisioning):
     return {
         "first_name": fauxfactory.gen_alphanumeric(),
         "last_name": fauxfactory.gen_alphanumeric(),
@@ -110,13 +106,7 @@ def template_name(provisioning):
 
 
 @pytest.fixture(scope="function")
-def provisioner(request, provider):
-    if not provider.exists:
-        try:
-            setup_provider(provider.key)
-        except FlashMessageException as e:
-            e.skip_and_log("Provider failed to set up")
-
+def provisioner(request, setup_provider, provider):
     def _provisioner(template, provisioning_data, delayed=None):
         sel.force_navigate('infrastructure_provision_vms', context={
             'provider': provider,
@@ -148,8 +138,7 @@ def test_group_quota_max_memory_check_by_tagging(
     Metadata:
         test_flag: provision
     """
-    note = ('template %s to vm %s on provider %s' %
-        (template_name, vm_name, provider.key))
+    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     prov_data["vm_name"] = vm_name
     prov_data["memory"] = "4096"
     prov_data["notes"] = note
@@ -157,7 +146,7 @@ def test_group_quota_max_memory_check_by_tagging(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [%s] to [%s]' % (template_name, vm_name)
+    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                     fail_func=requests.reload, num_sec=300, delay=20)
@@ -188,8 +177,7 @@ def test_group_quota_max_cpu_check_by_tagging(
     Metadata:
         test_flag: provision
     """
-    note = ('template %s to vm %s on provider %s' %
-        (template_name, vm_name, provider.key))
+    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     prov_data["vm_name"] = vm_name
     prov_data["num_sockets"] = "8"
     prov_data["notes"] = note
@@ -197,7 +185,7 @@ def test_group_quota_max_cpu_check_by_tagging(
     provisioner(template_name, prov_data)
 
     # nav to requests page to check quota validation
-    row_description = 'Provision from [%s] to [%s]' % (template_name, vm_name)
+    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
                     fail_func=sel.refresh, num_sec=300, delay=20)

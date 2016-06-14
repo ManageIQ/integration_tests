@@ -22,26 +22,13 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, 'provisioning', template_location=["provisioning", "template"])
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'template', 'host', 'datastore'}.issubset(args['provisioning'].viewkeys()):
-            # Need all three for template provisioning
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
+        required_fields=[
+            ['provisioning', 'template'],
+            ['provisioning', 'host'],
+            ['provisioning', 'datastore']
+        ])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.yield_fixture(scope="function")
@@ -58,7 +45,7 @@ def dialog():
                      tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
                      box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
     service_dialog.create(element_data)
-    flash.assert_success_message('Dialog "%s" was added' % dialog)
+    flash.assert_success_message('Dialog "{}" was added'.format(dialog))
     yield dialog
 
 
@@ -72,7 +59,7 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(provider, provisioning, vm_name, dialog, catalog):
+def catalog_item(provider, vm_name, dialog, catalog, provisioning):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
 
@@ -85,11 +72,7 @@ def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     if provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = provisioning['vlan']
-        catalog_item_type = version.pick({
-            version.LATEST: "RHEV",
-            '5.3': "RHEV",
-            '5.2': "Redhat"
-        })
+        catalog_item_type = "RHEV"
     elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
     item_name = fauxfactory.gen_alphanumeric()
@@ -113,7 +96,7 @@ def create_vm(provider, setup_provider, catalog_item, request):
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
     flash.assert_no_errors()
-    logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -126,7 +109,7 @@ def create_vm(provider, setup_provider, catalog_item, request):
 @pytest.mark.usefixtures("setup_provider")
 @pytest.mark.uncollectif(version.appliance_is_downstream())
 @pytest.mark.long_running
-def test_vm_clone(provisioning, provider, clone_vm_name, request, create_vm):
+def test_vm_clone(provider, clone_vm_name, request, create_vm):
     vm_name = create_vm + "_0001"
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider))

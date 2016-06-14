@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+from cached_property import cached_property
 from collections import namedtuple
 from datetime import date, datetime
 
@@ -157,7 +158,10 @@ def pick(v_dict):
 
 class Version(object):
     """Version class based on distutil.version.LooseVersion"""
-    component_re = re.compile(r'(\d+ | [a-z]+ | \.)', re.VERBOSE)
+    SUFFIXES = ('nightly', 'pre', 'alpha', 'beta', 'rc')
+    SUFFIXES_STR = "|".join(r'-{}(?:\d+(?:\.\d+)?)?'.format(suff) for suff in SUFFIXES)
+    component_re = re.compile(r'(?:\s*(\d+|[a-z]+|\.|(?:{})+$))'.format(SUFFIXES_STR))
+    suffix_item_re = re.compile(r'^([^0-9]+)(\d+(?:\.\d+)?)?$')
 
     def __init__(self, vstring):
         self.parse(vstring)
@@ -173,7 +177,13 @@ class Version(object):
             vstring = 'master'
 
         components = filter(lambda x: x and x != '.',
-                            self.component_re.split(vstring))
+                            self.component_re.findall(vstring))
+        # Check if we have a version suffix which denotes pre-release
+        if components and components[-1].startswith('-'):
+            self.suffix = components[-1][1:].split('-')    # Chop off the -
+            components = components[:-1]
+        else:
+            self.suffix = None
         for i in range(len(components)):
             try:
                 components[i] = int(components[i])
@@ -183,23 +193,54 @@ class Version(object):
         self.vstring = vstring
         self.version = components
 
+    @cached_property
+    def normalized_suffix(self):
+        """Turns the string suffixes to numbers. Creates a list of tuples.
+
+        The list of tuples is consisting of 2-tuples, the first value says the position of the
+        suffix in the list and the second number the numeric value of an eventual numeric suffix.
+
+        If the numeric suffix is not present in a field, then the value is 0
+        """
+        numberized = []
+        if self.suffix is None:
+            return numberized
+        for item in self.suffix:
+            suff_t, suff_ver = self.suffix_item_re.match(item).groups()
+            if suff_ver is None or len(suff_ver) == 0:
+                suff_ver = 0.0
+            else:
+                suff_ver = float(suff_ver)
+            suff_t = self.SUFFIXES.index(suff_t)
+            numberized.append((suff_t, suff_ver))
+        return numberized
+
     @classmethod
     def latest(cls):
-        return cls('latest')
+        try:
+            return cls._latest
+        except AttributeError:
+            cls._latest = cls('latest')
+            return cls._latest
 
     @classmethod
     def lowest(cls):
-        return cls('lowest')
+        try:
+            return cls._lowest
+        except AttributeError:
+            cls._lowest = cls('lowest')
+            return cls._lowest
 
     def __str__(self):
         return self.vstring
 
     def __repr__(self):
-        return "Version ('%s')" % str(self)
+        return '{}({})'.format(type(self).__name__, repr(self.vstring))
 
     def __cmp__(self, other):
         try:
-            other = Version(other)
+            if not isinstance(other, type(self)):
+                other = Version(other)
         except:
             raise ValueError('Cannot compare Version to {}'.format(type(other).__name__))
 
@@ -210,11 +251,29 @@ class Version(object):
         elif self == self.lowest() or other == self.latest():
             return -1
         else:
-            return cmp(self.version, other.version)
+            result = cmp(self.version, other.version)
+            if result != 0:
+                return result
+            # Use suffixes to decide
+            if self.suffix is None and other.suffix is None:
+                # No suffix, the same
+                return 0
+            elif self.suffix is None:
+                # This does not have suffix but the other does so this is "newer"
+                return 1
+            elif other.suffix is None:
+                # This one does have suffix and the other does not so this one is older
+                return -1
+            else:
+                # Both have suffixes, so do some math
+                return cmp(self.normalized_suffix, other.normalized_suffix)
 
     def __eq__(self, other):
         try:
-            return self.version == Version(other).version
+            if not isinstance(other, type(self)):
+                other = Version(other)
+            return (
+                self.version == other.version and self.normalized_suffix == other.normalized_suffix)
         except:
             return False
 
@@ -222,7 +281,7 @@ class Version(object):
         """Enables to use ``in`` expression for :py:meth:`Version.is_in_series`.
 
         Example:
-            ``"5.2.5.2" in Version("5.2") returns ``True``
+            ``"5.5.5.2" in Version("5.5") returns ``True``
 
         Args:
             ver: Version that should be checked if it is in series of this version. If
@@ -236,7 +295,7 @@ class Version(object):
     def is_in_series(self, series):
         """This method checks whether the version belongs to another version's series.
 
-        Eg.: ``Version("5.2.5.2").is_in_series("5.2")`` returns ``True``
+        Eg.: ``Version("5.5.5.2").is_in_series("5.5")`` returns ``True``
 
         Args:
             series: Another :py:class:`Version` to check against. If string provided, will be
@@ -245,7 +304,7 @@ class Version(object):
 
         if not isinstance(series, Version):
             series = get_version(series)
-        if self in (self.lowest(), self.latest()):
+        if self in {self.lowest(), self.latest()}:
             if series == self:
                 return True
             else:
@@ -277,6 +336,7 @@ version_stream_product_mapping = {
     '5.3': SPTuple('downstream-53z', '3.1'),
     '5.4': SPTuple('downstream-54z', '3.2'),
     '5.5': SPTuple('downstream-55z', '4.0'),
+    '5.6': SPTuple('downstream-56z', '4.1'),
     LATEST: SPTuple('upstream', 'master')
 }
 

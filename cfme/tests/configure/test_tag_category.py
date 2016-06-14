@@ -8,6 +8,7 @@ from utils.wait import wait_for
 from utils import error, version
 
 
+@pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_category_crud():
     cg = Category(name=fauxfactory.gen_alphanumeric(8).lower(),
@@ -25,6 +26,7 @@ class TestCategoriesViaREST(object):
     def categories(self, request, rest_api):
         return _categories(request, rest_api, num=5)
 
+    @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     @pytest.mark.parametrize(
         "multiple", [False, True],
@@ -61,6 +63,7 @@ class TestCategoriesViaREST(object):
                 delay=10,
             )
 
+    @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
     @pytest.mark.parametrize(
         "multiple", [False, True],

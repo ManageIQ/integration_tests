@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 import datetime
 import pytest
 import fauxfactory
 
 from cfme.rest import a_provider as _a_provider
-from utils.version import appliance_is_downstream
+from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 
@@ -27,18 +28,25 @@ def vm(request, a_provider, rest_api):
     return vm_name
 
 
-@pytest.mark.uncollectif(lambda: appliance_is_downstream())
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:6943"])
+@pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda: current_version() <= "5.5.2.4")
 @pytest.mark.parametrize(
     "multiple", [True, False],
     ids=["from_collection", "from_detail"])
 def test_retire_vm_now(rest_api, vm, multiple):
     """Test retirement of vm
+
     Prerequisities:
+
         * An appliance with ``/api`` available.
         * VM
+
     Steps:
-        * POST /api/vm/<id> (method ``retire``)
+
+        * POST /api/vms/<id> (method ``retire``)
+        OR
+        * POST /api/vms (method ``retire``) with ``href`` of vm vm or vms
+
     Metadata:
         test_flag: rest
     """
@@ -62,18 +70,25 @@ def test_retire_vm_now(rest_api, vm, multiple):
     wait_for(_finished, num_sec=600, delay=10, message="REST vm retire now")
 
 
-@pytest.mark.uncollectif(lambda: appliance_is_downstream())
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:6943"])
+@pytest.mark.tier(3)
+@pytest.mark.uncollectif(lambda: current_version() <= "5.5.2.4")
 @pytest.mark.parametrize(
     "multiple", [True, False],
     ids=["from_collection", "from_detail"])
 def test_retire_vm_future(rest_api, vm, multiple):
     """Test retirement of vm
+
     Prerequisities:
+
         * An appliance with ``/api`` available.
         * VM
+
     Steps:
-        * POST /api/vm/<id> (method ``retire``) with the ``retire_date``
+
+        * POST /api/vms/<id> (method ``retire``) with the ``retire_date``
+        OR
+        * POST /api/vms (method ``retire``) with the ``retire_date`` and ``href`` of the vm or vms
+
     Metadata:
         test_flag: rest
     """
@@ -81,7 +96,7 @@ def test_retire_vm_future(rest_api, vm, multiple):
     assert "retire" in rest_api.collections.vms.action.all
 
     retire_vm = rest_api.collections.vms.get(name=vm)
-    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime('%m/%d/%y')
+    date = (datetime.datetime.now() + datetime.timedelta(days=5)).strftime('%m/%d/%Y')
     future = {
         "date": date,
         "warn": "4",

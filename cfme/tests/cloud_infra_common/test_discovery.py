@@ -38,7 +38,7 @@ def wait_for_vm_state_changes(vm, timeout=600):
     while count < timeout:
         try:
             quadicon = vm.find_quadicon(refresh=True, from_any_provider=True)
-            logger.info("Quadicon state for {} is {}".format(vm.name, repr(quadicon.state)))
+            logger.info("Quadicon state for %s is %s", vm.name, repr(quadicon.state))
             if "archived" in quadicon.state.lower():
                 return True
             elif "orphaned" in quadicon.state.lower():
@@ -52,6 +52,7 @@ def wait_for_vm_state_changes(vm, timeout=600):
         raise CFMEException("VM should be Archived but it is Orphaned now.")
 
 
+@pytest.mark.tier(2)
 def test_vm_discovery(request, setup_provider, provider, vm_crud):
     """ Tests whether cfme will discover a vm change (add/delete) without being manually refreshed.
 

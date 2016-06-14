@@ -17,13 +17,23 @@ from utils.conf import cfme_data
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('logged_in', 'vm_name', 'uses_infra_providers'),
-    pytest.mark.ignore_stream("5.2")
+    pytest.mark.tier(2)
 ]
 
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
+        ['provisioning', 'pxe_server'],
+        ['provisioning', 'pxe_image'],
+        ['provisioning', 'pxe_image_type'],
+        ['provisioning', 'pxe_kickstart'],
+        ['provisioning', 'pxe_template'],
+        ['provisioning', 'datastore'],
+        ['provisioning', 'host'],
+        ['provisioning', 'pxe_root_password'],
+        ['provisioning', 'vlan']
+    ])
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]
@@ -32,26 +42,15 @@ def pytest_generate_tests(metafunc):
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
 
         if args['provider'].type == "scvmm":
             continue
 
-        # required keys should be a subset of the dict keys set
-        if not {'pxe_template', 'host', 'datastore',
-                'pxe_server', 'pxe_image', 'pxe_kickstart',
-                'pxe_root_password',
-                'pxe_image_type', 'vlan'}.issubset(args['provisioning'].viewkeys()):
-            # Need all  for template provisioning
-            continue
-
-        pxe_server_name = args['provisioning']['pxe_server']
+        pxe_server_name = args['provider'].data['provisioning']['pxe_server']
         if pxe_server_name not in pxe_server_names:
             continue
 
-        pxe_cust_template = args['provisioning']['pxe_kickstart']
+        pxe_cust_template = args['provider'].data['provisioning']['pxe_kickstart']
         if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
@@ -63,7 +62,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
     if not pxe_server.exists():
         pxe_server.create()
@@ -100,7 +99,7 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(provider, provisioning, vm_name, dialog, catalog):
+def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_servers_vm_prov):
     # generate_tests makes sure these have values
     pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart, pxe_root_password,\
         pxe_image_type, pxe_vlan, catalog_item_type = map(
@@ -143,7 +142,7 @@ def test_rhev_pxe_servicecatalog(setup_provider, provider, catalog_item, request
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
     # nav to requests page happens on successful provision
-    logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
+    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],

@@ -11,24 +11,22 @@ from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers',
-        "vm_crud_delete_on_module_finish")
+                            "vm_crud_delete_on_module_finish"),
+    pytest.mark.tier(2)
 ]
 
 
 def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.all_providers(
-        metafunc, 'small_template', template_location=["small_template"])
-
+    argnames, argvalues, idlist = testgen.all_providers(metafunc)
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="module")
-def vm_crud(provider, setup_provider_modscope, small_template):
+def vm_crud(provider, setup_provider_modscope, small_template_modscope):
     return VM.factory(
         'test_events_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
         provider,
-        template_name=small_template)
+        template_name=small_template_modscope)
 
 
 @pytest.fixture(scope="module")

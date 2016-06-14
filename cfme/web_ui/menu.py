@@ -1,185 +1,379 @@
 # -*- coding: utf-8 -*-
 import inspect
-import ui_navigate as nav
+from ui_navigate import UINavigate
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, toolbar
 from lya import AttrDict
 from selenium.common.exceptions import NoSuchElementException
+from utils import version
+from utils.log import logger
 
 
-toplevel_tabs_loc = '//nav[contains(@class, "navbar")]/div/ul[@id="maintab"]'
-toplevel_loc = toplevel_tabs_loc + ('/li/a[normalize-space(.)="{}"'
-    'and (contains(@class, "visible-lg"))]')
-
-
-def get_current_toplevel_name():
-    """Returns text of the currently selected top level menu item."""
-    return sel.text("//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]")\
-        .encode("utf-8").strip()
-
-
-def _tree_func_with_grid(*args):
+def _not_implemented(menu_name, version_appeared):
     def f():
-        accordion.tree(*args)
-        toolbar.select('Grid View')
+        curr_ver = str(version.current_version())
+        raise NotImplementedError(
+            '{} is available since {}, this is {}'.format(menu_name, version_appeared, curr_ver))
     return f
 
-# Dictionary of (nav destination name, section title) section tuples
-# Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel sections
-# You can also add a resetting callable that is called after clicking the second level.
-sections = {
-    ('cloud_intelligence', 'Cloud Intelligence'): (
-        ('dashboard', 'Dashboard'),
-        ('reports', 'Reports'),
-        ('chargeback', 'Chargeback'),
-        ('timelines', 'Timelines'),
-        ('rss', 'RSS')
-    ),
-    ('services', 'Services'): (
-        ('my_services', 'My Services'),
-        ('services_catalogs', 'Catalogs'),
-        ('services_workloads', 'Workloads'),
-        ('services_requests', 'Requests')
-    ),
-    ('clouds', 'Clouds'): (
-        ('clouds_providers', 'Providers', lambda: toolbar.select('Grid View')),
-        ('clouds_availability_zones', 'Availability Zones'),
-        ('clouds_tenants', 'Tenants'),
-        ('clouds_flavors', 'Flavors'),
-        ('clouds_security_groups', 'Security Groups'),
-        ('clouds_instances', 'Instances',
-            _tree_func_with_grid("Instances by Provider", "Instances by Provider")),
-        ('clouds_stacks', 'Stacks')
-    ),
-    ('containers', 'Containers'): (
-        ('containers_providers', 'Providers'),
-        ('containers_projects', 'Projects'),
-        ('containers_nodes', 'Nodes'),
-        ('containers_pods', 'Pods'),
-        ('containers_routes', 'Routes'),
-        ('containers_replicators', 'Replicators'),
-        ('containers_services', 'Services'),
-        ('containers_containers', 'Containers'),
-        ('containers_images', 'Container Images'),
-        ('containers_image_registries', 'Image Registries'),
-        ('containers_topology', 'Topology')
-    ),
-    ('infrastructure', 'Infrastructure'): (
-        ('infrastructure_providers', 'Providers', lambda: toolbar.select('Grid View')),
-        ('infrastructure_clusters', "/ems_cluster"),
-        ('infrastructure_hosts', "/host"),
-        ('infrastructure_virtual_machines', 'Virtual Machines',
-            _tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
-        ('infrastructure_resource_pools', 'Resource Pools'),
-        ('infrastructure_datastores', 'Datastores'),
-        ('infrastructure_repositories', 'Repositories'),
-        ('infrastructure_pxe', 'PXE'),
-        ('infrastructure_requests', 'Requests'),
-        ('infrastructure_config_management', 'Configuration Management')
-    ),
-    ('storage', 'Storage'): (
-        ('filers', 'Filers'),
-        ('volumes', 'Volumes'),
-        ('luns', 'LUNs'),
-        ('file_shares', 'File Shares'),
-        ('storage_managers', 'Storage Managers')
-    ),
-    ('control', 'Control'): (
-        ('control_explorer', 'Explorer'),
-        ('control_simulation', 'Simulation'),
-        ('control_import_export', 'Import / Export'),
-        ('control_log', 'Log')
-    ),
-    ('automate', 'Automate'): (
-        ('automate_explorer', 'Explorer'),
-        ('automate_simulation', 'Simulation'),
-        ('automate_customization', 'Customization'),
-        ('automate_import_export', 'Import / Export'),
-        ('automate_log', 'Log'),
-        ('automate_requests', 'Requests')
-    ),
-    ('optimize', 'Optimize'): (
-        ('utilization', 'Utilization'),
-        ('planning', 'Planning'),
-        ('bottlenecks', 'Bottlenecks')
-    ),
-    ('configure', 'Configure'): (
-        ('my_settings', 'My Settings'),
-        ('tasks', 'Tasks'),
-        ('configuration', 'Configuration'),
-        ('smartproxies', 'SmartProxies'),
-        ('about', 'About')
-    )
-}
 
+class Menu(UINavigate):
+    """ Menu class for navigation
 
-TOP_LEV_ACTIVE = '//ul[@id="maintab"]/li[contains(@class,"active")]/a[normalize-space(.)="{}"]'
-TOP_LEV_INACTIVE = '//ul[@id="maintab"]/li[contains(@class,"dropdown")]/a[normalize-space(.)="{}"]'
-SECOND_LEV_ACTIVE = '/../ul[contains(@class,"nav")]/li/a[normalize-space(.)="{}"]'
-SECOND_LEV_INACTIVE = '/../ul[contains(@class,"dropdown-menu")]/li/a[normalize-space(.)="{}"]'
-SECOND_LEV_ACTIVE_HREF = '/../ul[contains(@class,"nav")]/li/a[@href="{}"]'
-SECOND_LEV_INACTIVE_HREF = '/../ul[contains(@class,"dropdown-menu")]/li/a[@href="{}"]'
+    The Menu() class uses the UINavigate() class to supply an instance of a menu. This menu is a
+    navigatable system that uses destination endpoints and traverses each endpoint in a path and
+    run the function associated with that destination, toreach the final destination.
 
+    In CFME, an example would be navigating to the form to add a new provider. We have a
+    ``clouds_providers`` destination which will ensure we are logged in
+    and sitting at the Clouds / Providers page. Then there will be a ``add_new_cloud_provider``
+    destination, which will have the ``clouds_provider`` as it's parent. When navigating to
+    ``add_new_cloud_provider``, we will first run the function associated with the parent
+    ``clouds_provider`` and then run the next function which is associated with the final endpoint.
 
-def is_page_active(toplevel, secondlevel=None):
-    try:
-        if get_current_toplevel_name() != toplevel:
-            return False
-    except NoSuchElementException:
-        return False
-    if secondlevel:
-        try:
-            sel.element(("//nav[contains(@class, 'navbar')]//ul/li[@class='active']"
-                        "/a[normalize-space(.)='{}']/..".format(secondlevel)))
-        except NoSuchElementException:
-            return False
-    return True
+    The Menu() system is used extensively in CFME-QE and is often grafted onto at module import.
+    To accomplish this, the Menu uses a deferral system to stack up graft requests until the menu
+    is ready to be initialized. This is necessary because Menu now needs to know what *version* of
+    the product it is dealing with.
 
+    :py:meth:`Menu.initialize` is used to initialize the object and collapse the stacked tree
+    grafts. It is currently called inside :py:func:`cfme.fixtures.pytest_selenium.force_navigate`
+    so it is set up *just* before the navigation is requested.
+    """
 
-def nav_to_fn(toplevel, secondlevel=None, reset_action=None, _final=False):
-    def f(_):
-        # Can't do this currently because silly menu traps us
-        # if is_page_active(toplevel, secondlevel):
-        #     return
-        if callable(toplevel):
-            top_level = toplevel()
-        else:
-            top_level = toplevel
+    # 5.5- locators
+    toplevel_tabs_loc = '//nav[contains(@class, "navbar")]/div/ul[@id="maintab"]'
+    toplevel_loc = toplevel_tabs_loc + ('/li/a[normalize-space(.)="{}"'
+        'and (contains(@class, "visible-lg"))]')
+    TOP_LEV_ACTIVE = '//ul[@id="maintab"]/li[contains(@class,"active")]/a[normalize-space(.)="{}"]'
+    TOP_LEV_INACTIVE = ('//ul[@id="maintab"]/li[contains(@class,"dropdown")]'
+        '/a[normalize-space(.)="{}"]')
+    SECOND_LEV_ACTIVE = '/../ul[contains(@class,"nav")]/li/a[normalize-space(.)="{}"]'
+    SECOND_LEV_INACTIVE = '/../ul[contains(@class,"dropdown-menu")]/li/a[normalize-space(.)="{}"]'
+    SECOND_LEV_ACTIVE_HREF = '/../ul[contains(@class,"nav")]/li/a[@href="{}"]'
+    SECOND_LEV_INACTIVE_HREF = '/../ul[contains(@class,"dropdown-menu")]/li/a[@href="{}"]'
 
-        if secondlevel is not None:
-            if callable(secondlevel):
-                second_level = secondlevel()
+    # Upstream locators
+    ROOT = '//ul[@id="maintab"]/..'
+    NAMED_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
+        '/a[normalize-space(.)="{}"]')
+    NAMED_LEV_HREF = (
+        '/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
+        '/a[@href="{}"]')
+    ACTIVE_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"active")]'
+        '/a')
+    ANY_LEV = ('/../div/ul[contains(@class,"list-group")]/li[contains(@class,"list-group-item")]'
+        '/a')
+
+    def __init__(self):
+        self._branches = None
+        self._branch_stack = []
+        super(Menu, self).__init__()
+
+    def initialize(self):
+        """Initializes the menu object by collapsing the grafted tree items onto the tree"""
+        if not self._branches:
+            self._branches = self._branch_convert(self.sections)
+            self.add_branch('toplevel', self._branches)
+            while self._branch_stack:
+                name, branches = self._branch_stack.pop(0)
+                try:
+                    self.add_branch(name, branches)
+                except LookupError:
+                    logger.error(
+                        'Menu tried to graft onto [{}] which is not available'.format(name))
+                except Exception:
+                    logger.error('Something bad went wrong in menu initialization, see traceback')
+                    raise
+            if version.current_version() < "5.6.0.1":
+                self.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
             else:
-                second_level = secondlevel
+                self.CURRENT_TOP_MENU = "{}{}".format(self.ROOT, self.ACTIVE_LEV)
 
-            if secondlevel.startswith('/'):
-                active_loc = (TOP_LEV_ACTIVE + SECOND_LEV_ACTIVE_HREF).format(
-                    top_level, second_level)
-                inactive_loc = (TOP_LEV_INACTIVE + SECOND_LEV_INACTIVE_HREF).format(
-                    top_level, second_level)
-            else:
-                active_loc = (TOP_LEV_ACTIVE + SECOND_LEV_ACTIVE).format(top_level, second_level)
-                inactive_loc = (TOP_LEV_INACTIVE + SECOND_LEV_INACTIVE).format(
-                    top_level, second_level)
-            el = "{} | {}".format(active_loc, inactive_loc)
+    def add_branch(self, name, branches):
+        """Adds a branch to the tree at a given destination
 
-            try:
-                href = sel.get_attribute(el, 'href')
-                sel.execute_script('document.location.href="{}"'.format(href))
-            except NoSuchElementException:
-                raise
+        This method will either:
+
+        * Add the tree item to a stack to be precessed in the :py:meth:`Menu.initialize` method
+        * Directly add the tree item to the UINavigate class
+
+        This decision is based on whether the :py:meth:`Menu.initialize` method has already been
+        called. As there are a default set of navigation endpoints that are always present in the
+        tree, the :py:meth:`Menu.initialize` method is only ever able to be run once.
+        """
+        if self._branches:
+            super(Menu, self).add_branch(name, branches)
         else:
-            active_loc = TOP_LEV_ACTIVE.format(top_level)
-            inactive_loc = TOP_LEV_INACTIVE.format(top_level)
-            el = "{} | {}".format(active_loc, inactive_loc)
+            self._branch_stack.append((name, branches))
 
+    def get_current_toplevel_name(self):
+        """Returns text of the currently selected top level menu item."""
+        return self.get_current_menu_state()[0]
+
+    def get_current_menu_state(self):
+        """Returns the current menu state
+
+        This function returns what each level of the menu is pointing to, or None, if that level
+        of menu is unused. Future work could possibly see this method using recursion to allow
+        unlimited levels of menu to be used, however it is unlikely that more than 3 will ever be
+        used.
+        """
+        lev = [None, None, None]
+        lev[0] = (sel.text(self.CURRENT_TOP_MENU).encode("utf-8").strip())
+        if version.current_version() < "5.6.0.1":
             try:
-                href = sel.get_attribute(el, 'href')
-                sel.execute_script('document.location.href="{}"'.format(href))
+                lev[1] = sel.text("//nav[contains(@class, 'navbar')]//ul/li[@class='active']/a") \
+                    .encode("utf-8").strip()
             except NoSuchElementException:
-                raise
+                pass
+        else:
+            lev[1] = sel.text("{}{}".format(
+                self.CURRENT_TOP_MENU, self.ACTIVE_LEV)).encode("utf-8").strip()
+            try:
+                lev[2] = sel.text("{}{}{}".format(
+                    self.CURRENT_TOP_MENU, self.ACTIVE_LEV, self.ACTIVE_LEV)).encode(
+                        "utf-8").strip()
+            except NoSuchElementException:
+                pass
+
+        return lev
+
+    @staticmethod
+    def _tree_func_with_grid(*args):
+        def f():
+            accordion.tree(*args)
+            toolbar.select('Grid View')
+        return f
+
+    @property
+    def sections(self):
+        """Dictionary of navigation elements.
+
+        These can be either (nav destination name, section title) section tuples, or dictionary
+        objects containing more section tuples.
+        Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel
+        sections, or thirdlevel sections.
+        You can also add a resetting callable that is called after clicking the second or third
+        level.
+
+        The main tab destination is usually the first secondlevel page in that tab
+        Since this is redundant, it's arguable that the toplevel tabs should be
+        nav destination at all; they're included here "just in case". The toplevel
+        and secondlevel destinations exist at the same level of nav_tree because the
+        secondlevel destinations don't depend on the toplevel nav taking place to reach
+        their destination.
+        """
+        if version.current_version() < "5.6.0.1":
+            sections = {
+                ('cloud_intelligence', 'Cloud Intelligence'): (
+                    ('dashboard', 'Dashboard'),
+                    ('reports', 'Reports'),
+                    ('chargeback', 'Chargeback'),
+                    ('timelines', 'Timelines'),
+                    ('rss', 'RSS')
+                ),
+                ('services', 'Services'): (
+                    ('my_services', 'My Services'),
+                    ('services_catalogs', 'Catalogs'),
+                    ('services_workloads', 'Workloads'),
+                    ('services_requests', 'Requests')
+                ),
+                ('clouds', 'Clouds'): (
+                    ('clouds_providers', 'Providers', lambda: toolbar.select('Grid View')),
+                    ('clouds_availability_zones', 'Availability Zones'),
+                    ('clouds_tenants', 'Tenants'),
+                    ('clouds_flavors', 'Flavors'),
+                    ('clouds_security_groups', 'Security Groups'),
+                    ('clouds_instances', 'Instances',
+                        self._tree_func_with_grid(
+                            "Instances by Provider", "Instances by Provider")),
+                    ('clouds_stacks', 'Stacks')
+                ),
+                ('containers', 'Containers'): (
+                    ('containers_providers', 'Providers'),
+                    ('containers_projects', 'Projects'),
+                    ('containers_nodes', 'Container Nodes'),
+                    ('containers_pods', 'Pods'),
+                    ('containers_routes', 'Routes'),
+                    ('containers_replicators', 'Replicators'),
+                    ('containers_services', 'Container Services'),
+                    ('containers_containers', 'Containers'),
+                    ('containers_images', 'Container Images'),
+                    ('containers_image_registries', 'Image Registries'),
+                    ('containers_topology', 'Topology')
+                ),
+                ('infrastructure', 'Infrastructure'): (
+                    ('infrastructure_providers', 'Providers', lambda: toolbar.select('Grid View')),
+                    ('infrastructure_clusters', "/ems_cluster"),
+                    ('infrastructure_hosts', "/host"),
+                    ('infrastructure_virtual_machines', 'Virtual Machines',
+                        self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
+                    ('infrastructure_resource_pools', 'Resource Pools'),
+                    ('infrastructure_datastores', 'Datastores'),
+                    ('infrastructure_repositories', 'Repositories'),
+                    ('infrastructure_pxe', 'PXE'),
+                    ('infrastructure_requests', 'Requests'),
+                ),
+                ('control', 'Control'): (
+                    ('control_explorer', 'Explorer'),
+                    ('control_simulation', 'Simulation'),
+                    ('control_import_export', 'Import / Export'),
+                    ('control_log', 'Log')
+                ),
+                ('automate', 'Automate'): (
+                    ('automate_explorer', 'Explorer'),
+                    ('automate_simulation', 'Simulation'),
+                    ('automate_customization', 'Customization'),
+                    ('automate_import_export', 'Import / Export'),
+                    ('automate_log', 'Log'),
+                    ('automate_requests', 'Requests')
+                ),
+                ('optimize', 'Optimize'): (
+                    ('utilization', 'Utilization'),
+                    ('planning', 'Planning'),
+                    ('bottlenecks', 'Bottlenecks')
+                ),
+                ('configure', 'Configure'): (
+                    ('my_settings', 'My Settings'),
+                    ('tasks', 'Tasks'),
+                    ('configuration', 'Configuration'),
+                    ('smartproxies', 'SmartProxies'),
+                    ('about', 'About')
+                ),
+                ('__bogus', lambda: logger.error('Trying to enter an unsupported feature!')): (
+                    ('middleware_providers', _not_implemented('Middleware providers', '5.6')),
+                    ('middleware_servers', _not_implemented('Middleware servers', '5.6')),
+                    ('middleware_deployments', _not_implemented('Middleware deployments', '5.6')),
+                    ('middleware_datasources', _not_implemented('Middleware datasources', '5.6')),
+                    ('middleware_topology', _not_implemented('Middleware topology', '5.6')),
+                )
+            }
+        else:
+            sections = {
+                ('cloud_intelligence', 'Cloud Intel'): (
+                    ('dashboard', 'Dashboard'),
+                    ('reports', 'Reports'),
+                    ('chargeback', 'Chargeback'),
+                    ('timelines', 'Timelines'),
+                    ('rss', 'RSS')
+                ),
+                ('services', 'Services'): (
+                    ('my_services', 'My Services'),
+                    ('services_catalogs', 'Catalogs'),
+                    ('services_workloads', 'Workloads'),
+                    ('services_requests', 'Requests')
+                ),
+                ('compute', 'Compute'): {
+                    ('clouds', 'Clouds'): (
+                        ('clouds_providers', 'Providers', lambda: toolbar.select('Grid View')),
+                        ('clouds_availability_zones', 'Availability Zones'),
+                        ('clouds_tenants', 'Tenants'),
+                        ('clouds_flavors', 'Flavors'),
+                        ('clouds_security_groups', 'Security Groups'),
+                        ('clouds_instances', 'Instances',
+                            self._tree_func_with_grid(
+                                "Instances by Provider", "Instances by Provider")),
+                        ('clouds_stacks', 'Stacks')
+                    ),
+                    ('infrastructure', 'Infrastructure'): (
+                        ('infrastructure_providers',
+                            'Providers', lambda: toolbar.select('Grid View')),
+                        ('infrastructure_clusters', "/ems_cluster"),
+                        ('infrastructure_hosts', "/host"),
+                        ('infrastructure_virtual_machines', 'Virtual Machines',
+                            self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
+                        ('infrastructure_resource_pools', 'Resource Pools'),
+                        ('infrastructure_datastores', 'Datastores'),
+                        ('infrastructure_repositories', 'Repositories'),
+                        ('infrastructure_pxe', 'PXE'),
+                        ('infrastructure_requests', 'Requests'),
+                        # ('infrastructure_config_management', 'Configuration Management')
+                    ),
+                    ('containers', 'Containers'): (
+                        ('containers_providers', 'Providers'),
+                        ('containers_projects', 'Projects'),
+                        ('containers_nodes', 'Container Nodes'),
+                        ('containers_pods', 'Pods'),
+                        ('containers_routes', 'Routes'),
+                        ('containers_replicators', 'Replicators'),
+                        ('containers_services', 'Services'),
+                        ('containers_containers', 'Containers'),
+                        ('containers_images', 'Container Images'),
+                        ('containers_image_registries', 'Image Registries'),
+                        ('containers_topology', 'Topology')
+                    ),
+                },
+                ('n_configuration', 'Configuration'): (
+                    ('infrastructure_config_management', 'Configuration Management'),
+                ),
+                ('middleware', 'Middleware'): (
+                    ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
+                        if not toolbar.is_active("Grid View") else None),
+                    ('middleware_servers', 'Middleware Servers',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
+                    ('middleware_deployments', 'Middleware Deployments',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
+                    ('middleware_datasources', 'Middleware Datasources',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
+                    ('middleware_topology', 'Topology'),
+                ),
+                ('control', 'Control'): (
+                    ('control_explorer', 'Explorer'),
+                    ('control_simulation', 'Simulation'),
+                    ('control_import_export', 'Import / Export'),
+                    ('control_log', 'Log')
+                ),
+                ('automate', 'Automate'): (
+                    ('automate_explorer', 'Explorer'),
+                    ('automate_simulation', 'Simulation'),
+                    ('automate_customization', 'Customization'),
+                    ('automate_import_export', 'Import / Export'),
+                    ('automate_log', 'Log'),
+                    ('automate_requests', 'Requests')
+                ),
+                ('optimize', 'Optimize'): (
+                    ('utilization', 'Utilization'),
+                    ('planning', 'Planning'),
+                    ('bottlenecks', 'Bottlenecks')
+                ),
+                ('configure', 'Settings'): (
+                    ('my_settings', 'My Settings'),
+                    ('tasks', 'Tasks'),
+                    ('configuration', 'Configuration'),
+                    ('about', 'About')
+                )
+            }
+        return sections
+
+    def is_page_active(self, toplevel, secondlevel=None, thirdlevel=None):
+        """ Checks three levels of menu to return if the menu is active
+
+        Usage:
+
+          menu.is_page_active('Compute', 'Clouds', 'Providers')
+          menu.is_page_active('Compute', 'Clouds')
+        """
+        present = self.get_current_menu_state()
+        required = toplevel, secondlevel, thirdlevel
+        for present, required in zip(present, required):
+            if required and present != required:
+                return False
+        else:
+            return True
+
+    @staticmethod
+    def _try_nav(el):
+        href = sel.get_attribute(el, 'href')
+        sel.execute_script('document.location.href = arguments[0];', href)
         sel.wait_for_ajax()
+
+    @staticmethod
+    def _try_reset_action(reset_action, _final, nav_fn):
         if reset_action is not None:
             try:
                 if callable(reset_action):
@@ -193,124 +387,242 @@ def nav_to_fn(toplevel, secondlevel=None, reset_action=None, _final=False):
                 else:
                     # Work around the problem when the display selector disappears after returning
                     # from VM summary view. Can be fixed by renavigating, it then appears again.
-                    nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
-        # todo move to element on the active tab to clear the menubox
-        sel.wait_for_ajax()
-    return f
+                    nav_fn()
 
+    @classmethod
+    def _nav_to_fn(cls, toplevel, secondlevel=None, thirdlevel=None, reset_action=None,
+            _final=False):
+        """ Returns a navigation function
 
-def reverse_lookup(toplevel_path, secondlevel_path=None):
-    """Reverse lookup for navigation destinations defined in this module, based on menu text
+        This is a helper function that returns another function that knows how to navigate to
+        a particular destination. It is used internally in the menu system.
+        """
 
-    Usage:
+        def f(_):
+            # Can't do this currently because silly menu traps us
+            # if is_page_active(toplevel, secondlevel):
+            #     return
+            if callable(toplevel):
+                top_level = toplevel()
+            else:
+                top_level = toplevel
 
-        # Returns 'clouds'
-        reverse_lookup('Clouds')
+            if secondlevel is not None:
+                if callable(secondlevel):
+                    second_level = secondlevel()
+                else:
+                    second_level = secondlevel
 
-        # Returns 'clouds_providers'
-        reverse_lookup('Clouds', 'Providers')
+                if secondlevel.startswith('/'):
+                    active_loc = (cls.TOP_LEV_ACTIVE + cls.SECOND_LEV_ACTIVE_HREF).format(
+                        top_level, second_level)
+                    inactive_loc = (cls.TOP_LEV_INACTIVE + cls.SECOND_LEV_INACTIVE_HREF).format(
+                        top_level, second_level)
+                else:
+                    active_loc = (cls.TOP_LEV_ACTIVE + cls.SECOND_LEV_ACTIVE).format(
+                        top_level, second_level)
+                    inactive_loc = (cls.TOP_LEV_INACTIVE + cls.SECOND_LEV_INACTIVE).format(
+                        top_level, second_level)
+                el = "{} | {}".format(active_loc, inactive_loc)
+                cls._try_nav(el)
 
-        # Returns 'automate_import_export'
-        reverse_lookup('Automate', 'Import / Export')
+            else:
+                active_loc = cls.TOP_LEV_ACTIVE.format(top_level)
+                inactive_loc = cls.TOP_LEV_INACTIVE.format(top_level)
+                el = "{} | {}".format(active_loc, inactive_loc)
+                cls._try_nav(el)
 
-    Note:
+            nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
+            cls._try_reset_action(reset_action, _final, nav_fn)
+            # todo move to element on the active tab to clear the menubox
+            sel.wait_for_ajax()
 
-        It may be tempting to use this when you don't know the name of a page, e.g.:
+        def f2(_):
+            args = [toplevel, secondlevel, thirdlevel]
+            loc = cls.ROOT
+            for arg in args:
+                if arg:
+                    if arg.startswith("/"):
+                        loc_to_use = cls.NAMED_LEV_HREF
+                    else:
+                        loc_to_use = cls.NAMED_LEV
+                    loc = "{}{}".format(loc, loc_to_use).format(arg)
+                else:
+                    break
+            cls._try_nav(loc)
 
-            go_to(reverse_lookup('Infrastructure', 'Providers'))
+            nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, thirdlevel, reset_action,
+                _final=True)
+            cls._try_reset_action(reset_action, _final, nav_fn)
 
-        Don't do that; use the nav tree name.
-
-    """
-    if secondlevel_path:
-        menu_path = '%s/%s' % (toplevel_path, secondlevel_path)
-    else:
-        menu_path = toplevel_path
-
-    for (toplevel_dest, toplevel), secondlevels in sections.items():
-        if callable(toplevel):
-            top_level = toplevel()
+        if version.current_version() < "5.6.0.1":
+            return f
         else:
-            top_level = toplevel
-        if menu_path == top_level:
-            return toplevel_dest
-        for level in secondlevels:
+            return f2
+
+    def reverse_lookup(self, toplevel_path, secondlevel_path=None, thirdlevel_path=None):
+        """Reverse lookup for navigation destinations defined in this module, based on menu text
+
+        Usage:
+
+            # Returns 'clouds'
+            reverse_lookup('Clouds')
+
+            # Returns 'clouds_providers'
+            reverse_lookup('Clouds', 'Providers')
+
+            # Returns 'automate_import_export'
+            reverse_lookup('Automate', 'Import / Export')
+
+        Note:
+
+            It may be tempting to use this when you don't know the name of a page, e.g.:
+
+                go_to(reverse_lookup('Infrastructure', 'Providers'))
+
+            Don't do that; use the nav tree name.
+
+        """
+        if thirdlevel_path:
+            menu_path = '{}/{}/{}'.format(toplevel_path, secondlevel_path, thirdlevel_path)
+        elif secondlevel_path:
+            menu_path = '{}/{}'.format(toplevel_path, secondlevel_path)
+        else:
+            menu_path = toplevel_path
+
+        def pco_b(level, str_so_far, next_levels=None):
             if len(level) == 2:
-                secondlevel_dest, secondlevel = level
+                level_dest, level = level
                 reset_action = None
             else:
-                secondlevel_dest, secondlevel, reset_action = level
-            if callable(secondlevel):
-                second_level = secondlevel()
+                level_dest, level, reset_action = level
+            if callable(level):
+                level = level()
             else:
-                second_level = secondlevel
-            if menu_path == '%s/%s' % (toplevel, second_level):
-                return secondlevel_dest
-
-
-def visible_toplevel_tabs():
-    menu_names = []
-    ele = 'li/a[2]'
-
-    for menu_elem in sel.elements(ele, root=toplevel_tabs_loc):
-        menu_names.append(sel.text(menu_elem))
-    return menu_names
-
-
-def visible_pages():
-    """Return a list of all the menu pages currently visible top- and second-level pages
-
-    Mainly useful for RBAC testing
-
-    """
-    # Gather up all the visible toplevel tabs
-    menu_names = visible_toplevel_tabs()
-
-    # Now go from tab to tab and pull the secondlevel names from the visible links
-    displayed_menus = []
-    for menu_name in menu_names:
-        menu_elem = sel.element(toplevel_loc.format(menu_name))
-        sel.move_to_element(menu_elem)
-        for submenu_elem in sel.elements('../ul/li/a', root=menu_elem):
-            displayed_menus.append((menu_name, sel.text(submenu_elem)))
-
-    # Do reverse lookups so we can compare to the list of nav destinations for this group
-    return sorted([reverse_lookup(*displayed) for displayed in displayed_menus])
-
-# Construct the nav tree based on sections
-
-# The main tab destination is usually the first secondlevel page in that tab
-# Since this is redundant, it's arguable that the toplevel tabs should be
-# nav destination at all; they're included here "just in case". The toplevel
-# and secondlevel destinations exist at the same level of nav_tree because the
-# secondlevel destinations don't depend on the toplevel nav taking place to reach
-# their destination.
-
-
-def branch_convert(input_set):
-    _branches = dict()
-    for (toplevel_dest, toplevel), secondlevels in input_set.items():
-        for level in secondlevels:
-            if len(level) == 2:
-                secondlevel_dest, secondlevel = level
-                reset_action = None
-            elif len(level) == 3:
-                secondlevel_dest, secondlevel, reset_action = level
+                level = level
+            if str_so_far:
+                str_so_far = "{}/{}".format(str_so_far, level)
             else:
-                raise Exception("Wrong length of menu navigation tuple! ({})".format(len(level)))
-            _branches[secondlevel_dest] = nav_to_fn(toplevel, secondlevel, reset_action)
-        _branches[toplevel_dest] = [nav_to_fn(toplevel, None), {}]
-    return _branches
+                str_so_far = level
 
-_branches = branch_convert(sections)
-nav.add_branch('toplevel', _branches)
+            if menu_path == str_so_far:
+                return level_dest
+            else:
+                if next_levels:
+                    return process_level(next_levels, str_so_far)
+                else:
+                    return False
+
+        def process_level(levels, str_so_far=None):
+            if isinstance(levels, tuple):
+                for level in levels:
+                    ache = pco_b(level, str_so_far)
+                    if ache:
+                        return ache
+            else:
+                for level, next_levels in levels.items():
+                    ache = pco_b(level, str_so_far, next_levels)
+                    if ache:
+                        return ache
+
+        return process_level(self.sections)
+
+    def _old_visible_toplevel_tabs(self):
+        """Method returning the visible toplevel_tabs in 5.4"""
+        menu_names = []
+        ele = 'li/a[2]'
+
+        for menu_elem in sel.elements(ele, root=self.toplevel_tabs_loc):
+            menu_names.append(sel.text(menu_elem))
+        return menu_names
+
+    def _old_visible_pages(self):
+        """Method returning the visible pages in 5.4"""
+        menu_names = self._old_visible_toplevel_tabs()
+
+        # Now go from tab to tab and pull the secondlevel names from the visible links
+        displayed_menus = []
+        for menu_name in menu_names:
+            menu_elem = sel.element(self.toplevel_loc.format(menu_name))
+            sel.move_to_element(menu_elem)
+            for submenu_elem in sel.elements('../ul/li/a', root=menu_elem):
+                displayed_menus.append((menu_name, sel.text(submenu_elem)))
+        return displayed_menus
+
+        # Do reverse lookups so we can compare to the list of nav destinations for this group
+
+    def _new_visible_pages(self):
+        """Method returning the visible toplevel_tabs in 5.6+"""
+        nodes = []
+
+        def proc_node(loc, c=0, prev_node=None):
+            if not prev_node:
+                prev_node = []
+            for el in sel.elements(loc + self.ANY_LEV):
+                sel.move_to_element(el)
+                new_loc = loc + self.NAMED_LEV.format(el.text)
+                nn = prev_node[:]
+                nn.append(el.text)
+                proc_node(new_loc, c + 1, nn)
+            else:
+                nodes.append(prev_node)
+
+        proc_node(self.ROOT)
+        return nodes
+
+    def visible_pages(self):
+        """Return a list of all the menu pages currently visible top- and second-level pages
+
+        Mainly useful for RBAC testing
+
+        """
+        if version.current_version() < "5.6.0.1":
+            displayed_menus = self._old_visible_pages()
+        else:
+            displayed_menus = self._new_visible_pages()
+        return sorted(
+            [self.reverse_lookup(*displayed) for displayed in displayed_menus if displayed])
+
+    def _branch_convert(self, input_set):
+        """Converts a set of nav points into the graftable tree nodes for the UINavigate module"""
+        _branches = dict()
+        for (toplevel_dest, toplevel), secondlevels in input_set.items():
+            if isinstance(secondlevels, dict):
+                for (secondlevel_dest, secondlevel), thirdlevels in secondlevels.items():
+                    for level in thirdlevels:
+                        if len(level) == 2:
+                            thirdlevel_dest, thirdlevel = level
+                            reset_action = None
+                        elif len(level) == 3:
+                            thirdlevel_dest, thirdlevel, reset_action = level
+                        else:
+                            raise Exception(
+                                "Wrong length of menu navigation tuple! ({})".format(len(level)))
+                        _branches[thirdlevel_dest] = self._nav_to_fn(
+                            toplevel, secondlevel, thirdlevel, reset_action=reset_action)
+                    _branches[secondlevel_dest] = self._nav_to_fn(
+                        toplevel, secondlevel, reset_action=reset_action)
+            else:
+                for level in secondlevels:
+                    if len(level) == 2:
+                        secondlevel_dest, secondlevel = level
+                        reset_action = None
+                    elif len(level) == 3:
+                        secondlevel_dest, secondlevel, reset_action = level
+                    else:
+                        raise Exception(
+                            "Wrong length of menu navigation tuple! ({})".format(len(level)))
+                    _branches[secondlevel_dest] = self._nav_to_fn(
+                        toplevel, secondlevel, reset_action=reset_action)
+            _branches[toplevel_dest] = [self._nav_to_fn(toplevel, None), {}]
+        return _branches
 
 
 ##
 # Tree class DSL
 # TODOS:
-# * Maybe kwargify the functions? So we can then specify the args directly in the methods and not
-#   pull them from the context. (probably more question on ui_navigate itself)
+# * Maybe kwargify the functions? So we can then specify the args directly in the methods and
+#   not pull them from the context. (probably more question on ui_navigate itself)
 def _scavenge_class(cls, ignore_navigate=False):
     """Scavenges locations and nav functions from the class. Recursively goes through so no loops.
 
@@ -380,6 +692,12 @@ def extend_nav(cls):
 
     Args:
         cls: Class to be decorated.
+
+    Note:
+        This class currently is incompatible with a multiple menu object system. It relies on
+        the ``nav`` attribute of this module. It needs to be fixed before FW3.0.
     """
     nav.add_branch(cls.__name__, _scavenge_class(cls, ignore_navigate=True))
     return cls
+
+nav = Menu()

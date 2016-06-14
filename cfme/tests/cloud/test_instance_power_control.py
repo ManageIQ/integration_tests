@@ -2,30 +2,20 @@
 import fauxfactory
 import cfme.web_ui.flash as flash
 import pytest
-from cfme.cloud.instance import EC2Instance, Instance, OpenStackInstance, get_all_instances
+from cfme.cloud.instance import (EC2Instance, Instance, OpenStackInstance,
+                                 AzureInstance, get_all_instances)
 from cfme.fixtures import pytest_selenium as sel
 from utils import error, testgen, version
 from utils.blockers import GH
 from utils.wait import wait_for, TimedOutError
 
-pytestmark = [pytest.mark.usefixtures('test_power_control')]
-
 
 def pytest_generate_tests(metafunc):
-    final_argv, final_ids = [], []
-
-    # Get all providers and pick those, that have power control test enabled
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['ec2', 'openstack'], 'test_power_control')
+        metafunc, ['ec2', 'openstack'], required_fields=[('test_power_control', True)])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
 
-    for argn, argv, single_id in zip(argnames, argvalues, idlist):
-        test_pwr_ctl_i = argnames.index('test_power_control')
-        provider = argnames.index('provider')
-        if argv[test_pwr_ctl_i] is True:
-            final_argv.append(argv)
-            final_ids.append(argv[provider].key)
-
-    testgen.parametrize(metafunc, argnames, final_argv, ids=final_ids, scope="function")
+pytestmark = [pytest.mark.tier(2)]
 
 
 @pytest.fixture(scope="function")
@@ -70,6 +60,10 @@ def check_power_options(soft_assert, instance, power_state):
     """ Checks if power options match given power state ('on', 'off')
     """
     must_be_available = {
+        AzureInstance: {
+            'on': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.TERMINATE],
+            'off': [AzureInstance.START, AzureInstance.TERMINATE]
+        },
         EC2Instance: {
             'on': [EC2Instance.STOP, EC2Instance.SOFT_REBOOT, EC2Instance.TERMINATE],
             'off': [EC2Instance.START, EC2Instance.TERMINATE]
@@ -85,6 +79,10 @@ def check_power_options(soft_assert, instance, power_state):
         }
     }
     mustnt_be_available = {
+        AzureInstance: {
+            'on': [AzureInstance.START],
+            'off': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.SOFT_REBOOT]
+        },
         EC2Instance: {
             'on': [EC2Instance.START],
             'off': [EC2Instance.STOP, EC2Instance.SOFT_REBOOT]
@@ -179,8 +177,6 @@ def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert,
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(
-    lambda provider: version.current_version < "5.3" and provider.type != 'ec2')
 def test_start(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_stopped):
     """ Tests instance start
@@ -271,7 +267,6 @@ def test_suspend(
 
 
 @pytest.mark.long_running
-@pytest.mark.ignore_stream("5.3")
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_unpause(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_paused):

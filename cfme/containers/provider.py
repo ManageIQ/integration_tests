@@ -1,9 +1,11 @@
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock
+    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region
 )
 from cfme.web_ui.menu import nav
+from cfme.web_ui.tabstrip import TabStripForm
+from utils import deferred_verpick, version
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.pretty import Pretty
@@ -47,25 +49,56 @@ properties_form = Form(
         ('type_select', AngularSelect('server_emstype')),
         ('name_text', Input('name')),
         ('hostname_text', Input('hostname')),
-        ('port_text', Input('port')),
-        # ('zone_select', AngularSelect('server_zone'))
+        ('port_text', Input('port'))
     ])
+
+properties_form_56 = TabStripForm(
+    fields=[
+        ('type_select', AngularSelect('ems_type')),
+        ('name_text', Input('name'))
+    ],
+    tab_fields={
+        "Default": [
+            ('hostname_text', Input("default_hostname")),
+            ('port_text', Input("default_api_port")),
+            ('sec_protocol', AngularSelect("default_security_protocol")),
+        ],
+        "Hawkular": [
+            ('hawkular_hostname', Input("hawkular_hostname")),
+            ('hawkular_api_port', Input("hawkular_api_port"))
+        ],
+    })
+
+
+prop_region = Region(
+    locators={
+        'properties_form': {
+            version.LOWEST: properties_form,
+            '5.6': properties_form_56,
+        }
+    }
+)
 
 
 class Provider(BaseProvider, Pretty):
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = [
         'num_project', 'num_service', 'num_replication_controller', 'num_pod', 'num_node',
-        'num_container', 'num_image', 'num_image_registry']
+        'num_container', 'num_image']
+    # TODO add 'num_image_registry' and 'num_volume'
     string_name = "Containers"
     page_name = "containers"
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
     quad_name = None
-    properties_form = properties_form
-    add_provider_button = form_buttons.FormButton("Add this Containers Provider")
-    save_button = form_buttons.FormButton("Save Changes")
+    _properties_region = prop_region  # This will get resolved in common to a real form
+    add_provider_button = deferred_verpick(
+        {version.LOWEST: form_buttons.FormButton("Add this Containers Provider"),
+         '5.6': form_buttons.add})
+    save_button = deferred_verpick(
+        {version.LOWEST: form_buttons.save,
+         '5.6': form_buttons.angular_save})
 
     def __init__(self, name=None, credentials=None, key=None,
                  zone=None, hostname=None, port=None, provider_data=None):
@@ -106,14 +139,6 @@ class Provider(BaseProvider, Pretty):
         """
         self.navigate(detail=True)
         return details_page.infoblock.text(*ident)
-
-    def _num_db_generic(self, table_str):
-        res = cfmedb().engine.execute(
-            "SELECT count(*) "
-            "FROM ext_management_systems, {0} "
-            "WHERE {0}.ems_id=ext_management_systems.id "
-            "AND ext_management_systems.name='{1}'".format(table_str, self.name))
-        return int(res.first()[0])
 
     @variable(alias='db')
     def num_project(self):

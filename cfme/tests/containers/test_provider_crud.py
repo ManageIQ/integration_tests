@@ -11,11 +11,14 @@ pytestmark = pytest.mark.uncollectif(lambda: current_version() < "5.5")
 pytest_generate_tests = testgen.generate(testgen.container_providers, scope="function")
 
 
-@pytest.fixture(scope="function")
+@pytest.yield_fixture(scope="function")
 def a_container_provider():
-    return _setup_a_provider("container")
+    prov = _setup_a_provider("container")
+    yield prov
+    prov.delete_if_exists(cancel=False)
 
 
+@pytest.mark.tier(2)
 @pytest.mark.usefixtures('has_no_container_providers')
 def test_provider_crud(request, provider):
     """ Tests provider add with good credentials
@@ -37,6 +40,7 @@ def test_provider_crud(request, provider):
     provider.wait_for_delete()
 
 
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1274842])
 def test_provider_edit_port(request, a_container_provider):
     old_port = a_container_provider.port

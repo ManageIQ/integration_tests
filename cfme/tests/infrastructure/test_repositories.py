@@ -5,6 +5,7 @@ from utils.update import update
 from utils.wait import TimedOutError, wait_for
 
 
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1188427])
 def test_repository_crud(soft_assert, random_string, request):
     repo_name = 'Test Repo {}'.format(random_string)

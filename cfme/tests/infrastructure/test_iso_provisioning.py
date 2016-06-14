@@ -10,45 +10,39 @@ from utils import testgen
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('uses_infra_providers')
+    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.tier(2)
 ]
 
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
+        ('iso_datastore', True),
+        ['provisioning', 'host'],
+        ['provisioning', 'datastore'],
+        ['provisioning', 'iso_template'],
+        ['provisioning', 'iso_file'],
+        ['provisioning', 'iso_kickstart'],
+        ['provisioning', 'iso_root_password'],
+        ['provisioning', 'iso_image_type'],
+        ['provisioning', 'vlan'],
+    ])
     argnames = argnames + ['iso_cust_template', 'iso_datastore']
 
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
-
         if args['provider'].type == "scvmm":
             continue
 
-        provider_data = cfme_data.get('management_systems', {})[
-            argvalue_tuple[argnames.index('provider')].key]
-        if not provider_data.get('iso_datastore', False):
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'iso_template', 'host', 'datastore',
-                'iso_file', 'iso_kickstart',
-                'iso_root_password',
-                'iso_image_type', 'vlan'}.issubset(args['provisioning'].viewkeys()):
-            # Need all  for template provisioning
-            continue
-
-        iso_cust_template = args['provisioning']['iso_kickstart']
+        iso_cust_template = args['provider'].data['provisioning']['iso_kickstart']
         if iso_cust_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
         argvalues[i].append(get_template_from_config(iso_cust_template))
-        argvalues[i].append(ISODatastore(provider_data['name']))
+        argvalues[i].append(ISODatastore(args['provider'].name))
         new_idlist.append(idlist[i])
         new_argvalues.append(argvalues[i])
 
@@ -56,7 +50,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture
-def datastore_init(iso_cust_template, provisioning, iso_datastore):
+def datastore_init(iso_cust_template, iso_datastore, provisioning):
     if not iso_datastore.exists():
         iso_datastore.create()
     # Fails on upstream, BZ1109256
@@ -67,12 +61,13 @@ def datastore_init(iso_cust_template, provisioning, iso_datastore):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_iso_prov_%s' % fauxfactory.gen_alphanumeric(8)
+    vm_name = 'test_iso_prov_{}'.format(fauxfactory.gen_alphanumeric(8))
     return vm_name
 
 
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1200783, 1207209])
-def test_iso_provision_from_template(provider, provisioning, vm_name, smtp_test, datastore_init,
+def test_iso_provision_from_template(provider, vm_name, smtp_test, datastore_init,
                                      request, setup_provider):
     """Tests ISO provisioning
 
@@ -82,9 +77,9 @@ def test_iso_provision_from_template(provider, provisioning, vm_name, smtp_test,
     """
     # generate_tests makes sure these have values
     iso_template, host, datastore, iso_file, iso_kickstart,\
-        iso_root_password, iso_image_type, vlan = map(provisioning.get, ('pxe_template', 'host',
-                                'datastore', 'iso_file', 'iso_kickstart',
-                                'iso_root_password', 'iso_image_type', 'vlan'))
+        iso_root_password, iso_image_type, vlan = map(provider.data['provisioning'].get,
+            ('pxe_template', 'host', 'datastore', 'iso_file', 'iso_kickstart',
+             'iso_root_password', 'iso_image_type', 'vlan'))
 
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 

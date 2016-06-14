@@ -16,6 +16,7 @@ def setup_first_provider():
     setup_a_provider(validate=True, check_existing=True)
 
 
+@pytest.mark.tier(2)
 def test_group_roles(configure_aws_iam_auth_mode, group_name, group_data, setup_first_provider):
     """Basic default AWS_IAM group role RBAC test
 
@@ -39,7 +40,7 @@ def test_group_roles(configure_aws_iam_auth_mode, group_name, group_data, setup_
         username = credentials[iam_group_name]['username']
         password = credentials[iam_group_name]['password']
     except KeyError:
-        pytest.fail('No match in credentials file for group "%s"' % iam_group_name)
+        pytest.fail('No match in credentials file for group "{}"'.format(iam_group_name))
 
     login(simple_user(username, password))
     assert set(menu.visible_pages()) == set(group_data)

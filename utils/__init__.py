@@ -2,67 +2,11 @@
 import atexit
 import re
 import subprocess
-
+import os
 # import diaper for backward compatibility
 import diaper
-
-
-def lazycache(wrapped_method):
-    """method decorator to create a lazily-evaluated and cached property
-
-    ``lazycache``'d properties are complete object descriptors, supporting
-    ``get``, ``set``, and ``del``, though ``del`` will clear a property's cache rather
-    than destroy the property entirely
-
-    Usage:
-
-        >>> from utils import lazycache
-        >>> class Example(object):
-        ...     @lazycache
-        ...     def lazyprop(self):
-        ...             return '42'
-        ...
-        >>> ex = Example()
-        >>> value = ex.lazyprop
-        >>> print(value)
-        42
-        >>> print(value is ex.lazyprop)
-        # lazyprop guarantees this to be True, normal properties do not.
-        True
-        >>> ex.lazyprop = '99'
-        >>> print(ex.lazyprop)
-        # setting works!
-        99
-        >>> del(ex.lazyprop)
-        >>> print(ex.lazyprop)
-        # deleting clears the cache, so the value is recomputed on the next call
-        42
-
-    Values are stored in a private attribute of the same name as the method being decorated,
-    e.g. a decorated method named ``lazyprop`` will store its cached value in an attr
-    called ``_lazyprop``
-    """
-    attr = '_' + wrapped_method.__name__
-
-    if wrapped_method.__doc__:
-        doc = wrapped_method.__doc__ + '\n\nThis attribute is lazily evaluated and cached.'
-    else:
-        doc = None
-
-    def get_lazy(self):
-        if not hasattr(self, attr):
-            setattr(self, attr, wrapped_method(self))
-        return getattr(self, attr)
-
-    def set_lazy(self, value):
-        setattr(self, attr, value)
-
-    def del_lazy(self):
-        if hasattr(self, attr):
-            delattr(self, attr)
-
-    lazy = property(get_lazy, set_lazy, del_lazy, doc)
-    return lazy
+from cached_property import cached_property
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 
 def property_or_none(wrapped, *args, **kwargs):
@@ -83,6 +27,15 @@ def property_or_none(wrapped, *args, **kwargs):
         except AttributeError:
             pass
     return property(wrapper, *args, **kwargs)
+
+
+def clear_property_cache(obj, *names):
+    """
+    clear a cached property regardess of if it was cached priority
+    """
+    for name in names:
+        assert isinstance(getattr(type(obj), name), cached_property)
+        obj.__dict__.pop(name, None)
 
 
 class _classproperty(property):
@@ -112,9 +65,31 @@ def at_exit(f, *args, **kwargs):
     return atexit.register(lambda: diaper(f, *args, **kwargs))
 
 
+def _prenormalize_text(text):
+    """Makes the text lowercase and removes all characters that are not digits, alphas, or spaces"""
+    return re.sub(r"[^a-z0-9 ]", "", text.strip().lower())
+
+
+def _replace_spaces_with(text, delim):
+    """Contracts spaces into one character and replaces it with a custom character."""
+    return re.sub(r"\s+", delim, text)
+
+
 def normalize_text(text):
-    text = re.sub(r"[^a-z0-9 ]", "", text.strip().lower())
-    return re.sub(r"\s+", " ", text)
+    """Converts a string to a lowercase string containing only letters, digits and spaces.
+
+    The space is always one character long if it is present.
+    """
+    return _replace_spaces_with(_prenormalize_text(text), ' ')
+
+
+def attributize_string(text):
+    """Converts a string to a lowercase string containing only letters, digits and underscores.
+
+    Usable for eg. generating object key names.
+    The underscore is always one character long if it is present.
+    """
+    return _replace_spaces_with(_prenormalize_text(text), '_')
 
 
 def tries(num_tries, exceptions, f, *args, **kwargs):
@@ -144,49 +119,69 @@ def tries(num_tries, exceptions, f, *args, **kwargs):
         raise e
 
 
+# There are some environment variables that get smuggled in anyway.
+# If there is yet another one that will be possibly smuggled in, update this entry.
+READ_ENV_UNWANTED = {'SHLVL', '_', 'PWD'}
+
+
 def read_env(file):
-    """Given a py.path.Local file name, return a dict of exported shell vars and their values
+    """Given a :py:class:`py.path.Local` file name, return a dict of exported shell vars and their
+    values.
+
+    Args:
+        file: A :py:class:`py.path.Local` instance.
 
     Note:
-
         This will only include shell variables that are exported from the file being parsed
 
-    Returns a dict of varname: value pairs. If the file does not exist or bash could not parse
-    the file, this dict will be empty.
-
+    Returns:
+        A :py:class:`dict` of ``varname: value`` pairs. If the file does not exist or bash could not
+        parse the file, this dict will be empty.
     """
     env_vars = {}
     if file.check():
-        with file.open() as f:
-            content = f.read()
-
         # parse the file with bash, since it's pretty good at it, and dump the env
-        command = ['bash', '-c', 'source {} && env'.format(file.strpath)]
+        # Use env -i to clean up the env (except the very few variables provider by bash itself)
+        command = ['env', '-i', 'bash', '-c', 'source {} && env'.format(file.strpath)]
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1)
 
-        # filter out vars not defined
+        # filter out the remaining unwanted things
         for line in iter(proc.stdout.readline, b''):
             try:
                 key, value = line.split("=", 1)
             except ValueError:
                 continue
-            if '{}='.format(key) in content:
-                env_vars[key] = value.strip()
+            if key not in READ_ENV_UNWANTED:
+                try:
+                    value = int(value.strip())
+                except (ValueError, TypeError):
+                    value = value.strip()
+                env_vars[key] = value
         stdout, stderr = proc.communicate()
     return env_vars
 
 
-def deferred_verpick(version_d):
-    """This turns a dictionary for verpick to a class property.
+class deferred_verpick(object):
+    """descriptor that version-picks on Access
 
-    Useful for verpicked constants.
+    Useful for verpicked constants in classes
     """
-    from utils.version import pick as _version_pick
 
-    @classproperty
-    def getter(self):
-        return _version_pick(version_d)
-    return getter
+    def __init__(self, version_pick):
+        self.version_pick = version_pick
+
+    def __get__(self, obj, cls):
+        # TODO: remove the need to trigger for classes
+        #       so we can use the class level for documentation of version picks
+        from utils.version import Version, pick as _version_pick
+        if on_rtd:
+            if self.version_pick:
+                latest = max(self.version_pick, key=Version)
+                return self.version_pick[latest]
+            else:
+                raise LookupError("Nothing to pick from")
+        else:
+            return _version_pick(self.version_pick)
 
 
 def safe_string(o):
@@ -291,3 +286,37 @@ def iterate_pairs(iterable):
     it = iter(iterable)
     for i in it:
         yield i, next(it)
+
+
+def icastmap(t, i, *args, **kwargs):
+    """Works like the map() but is made specially to map classes on iterables. A generator version.
+
+    This function only applies the ``t`` to the item of ``i`` if it is not of that type.
+
+    Args:
+        t: The class that you want all the yielded items to be type of.
+        i: Iterable with items to be cast.
+
+    Returns:
+        A generator.
+    """
+    for item in i:
+        if isinstance(item, t):
+            yield item
+        else:
+            yield t(item, *args, **kwargs)
+
+
+def castmap(t, i, *args, **kwargs):
+    """Works like the map() but is made specially to map classes on iterables.
+
+    This function only applies the ``t`` to the item of ``i`` if it is not of that type.
+
+    Args:
+        t: The class that you want all theitems in the list to be type of.
+        i: Iterable with items to be cast.
+
+    Returns:
+        A list.
+    """
+    return list(icastmap(t, i, *args, **kwargs))

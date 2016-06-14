@@ -1,0 +1,24 @@
+--- autofocus.js	2016-05-09 07:15:14.333132210 -0400
++++ autofocus.js.new	2016-05-09 07:09:10.016132210 -0400
+@@ -8,8 +8,10 @@
+         if(attr.autoFocus == "" || attr.autoFocus == "proactiveFocus") {
+           angular.element(scope['form_focus_' + ctrl.$name]).focus();
+           if (!angular.element(scope['form_focus_' + ctrl.$name]).is(":focus")) {
++            MiqQE['autofocus'] += 1;
+             $timeout(function () {
+               angular.element(scope['form_focus_' + ctrl.$name]).focus();
++              MiqQE['autofocus'] -= 1;
+             }, 1000);
+           }
+         }
+@@ -17,8 +19,10 @@
+
+       scope.$on('reactiveFocus', function(e) {;
+         if (!angular.element(scope['form_focus_' + ctrl.$name]).is(":focus")) {
++          MiqQE['autofocus'] += 1;
+           $timeout(function(){
+             angular.element(scope['form_focus_' + ctrl.$name]).focus();
++            MiqQE['autofocus'] -= 1;
+           }, 0);
+         };
+       });

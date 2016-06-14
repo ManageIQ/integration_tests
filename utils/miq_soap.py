@@ -5,7 +5,7 @@ Enables to operate Infrastructure objects. It has better VM provisioning code. O
 """
 from suds import WebFault
 
-from utils import lazycache
+from cached_property import cached_property
 from utils.conf import cfme_data
 from utils.db import cfmedb
 from utils.log import logger
@@ -65,12 +65,11 @@ class MiqInfraObject(object):
 
         Accesses network.
 
-        Todo:
-            * cache?
+        Note: TODO: cache?
         """
         return getattr(get_client().service, self.GETTER_FUNC)(self.id)
 
-    @lazycache
+    @cached_property
     def name(self):
         return str(self.object.name)
 
@@ -102,7 +101,7 @@ class MiqInfraObject(object):
     @property
     def tags(self):
         """Return tags as an array of :py:class:`MiqTag` objects."""
-        fname = "%sGetTags" % self.TAG_PREFIX
+        fname = "{}GetTags".format(self.TAG_PREFIX)
         return [
             MiqTag(tag.category, tag.category_display_name, tag.tag_name, tag.tag_display_name,
                 tag.tag_path, tag.display_name)
@@ -116,7 +115,7 @@ class MiqInfraObject(object):
         Args:
             tag: Tuple with tag specification.
         """
-        fname = "%sSetTag" % self.TAG_PREFIX
+        fname = "{}SetTag".format(self.TAG_PREFIX)
         if (isinstance(tag, tuple) or isinstance(tag, list)) and len(tag) == 2:
             return getattr(get_client().service, fname)(self.id, tag[0], tag[1])
         elif isinstance(tag, MiqTag):
@@ -125,7 +124,7 @@ class MiqInfraObject(object):
             raise TypeError("Wrong type passed!")
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, repr(self.id))
+        return "{}({})".format(type(self).__name__, repr(self.id))
 
     def __getattribute__(self, name):
         """Delegates unknown calls to the received object"""
@@ -140,19 +139,19 @@ class MiqInfraObject(object):
 
 # Here comes rails (but in a good way)
 class HasManyHosts(MiqInfraObject):
-    @lazycache
+    @cached_property
     def hosts(self):
         return [MiqHost(host.guid) for host in self.object.hosts]
 
 
 class HasManyEMSs(MiqInfraObject):
-    @lazycache
+    @cached_property
     def emss(self):
         return [MiqEms(ems.guid) for ems in self.object.ext_management_systems]
 
 
 class HasManyDatastores(MiqInfraObject):
-    @lazycache
+    @cached_property
     def datastores(self):
         return [MiqDatastore(store.id) for store in self.object.datastores]
 
@@ -164,19 +163,19 @@ class HasManyVMs(MiqInfraObject):
 
 
 class HasManyResourcePools(MiqInfraObject):
-    @lazycache
+    @cached_property
     def resource_pools(self):
         return [MiqResourcePool(rpool.id) for rpool in self.object.resource_pools]
 
 
 class BelongsToProvider(MiqInfraObject):
-    @lazycache
+    @cached_property
     def provider(self):
         return MiqEms(self.object.ext_management_system.guid)
 
 
 class BelongsToCluster(BelongsToProvider):
-    @lazycache
+    @cached_property
     def cluster(self):
         return MiqCluster(self.object.parent_cluster.id)
 
@@ -185,19 +184,19 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
     GETTER_FUNC = "FindEmsByGuid"
     TAG_PREFIX = "Ems"
 
-    @lazycache
+    @cached_property
     def port(self):
         return self.object.port
 
-    @lazycache
+    @cached_property
     def host_name(self):
         return self.object.hostname
 
-    @lazycache
+    @cached_property
     def ip_address(self):
         return self.object.ipaddress
 
-    @lazycache
+    @cached_property
     def clusters(self):
         return [MiqCluster(cluster.id) for cluster in self.object.clusters]
 
@@ -207,13 +206,13 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
             if ems.name.strip().lower() == name.strip().lower():
                 return cls(ems.guid)
         else:
-            raise Exception("EMS with name %s not found!" % name)
+            raise Exception("EMS with name {} not found!".format(name))
 
     @classmethod
     def all(cls):
         return [cls(ems.guid) for ems in get_client().service.GetEmsList()]
 
-    @lazycache
+    @cached_property
     def direct_connection(self):
         """Returns an API from mgmt_system.py targeted at this provider"""
         # Find the credentials entry
@@ -225,16 +224,16 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
                 provider_id = prov_id
                 break
         else:
-            raise NameError("Could not find provider %s in the credentials!" % name)
+            raise NameError("Could not find provider {} in the credentials!".format(name))
         ptype = str(self.type).lower()
         if ptype == "emsredhat":
             from utils.mgmt_system import RHEVMSystem
             return RHEVMSystem(self.host_name, credentials["username"], credentials["password"])
         elif ptype == "emsvmware":
-            from utils.mgmt_system import VMWareSystem
+            from mgmtsystem.virtualcenter import VMWareSystem
             return VMWareSystem(self.host_name, credentials["username"], credentials["password"])
         elif ptype == "emsmicrosoft":
-            from utils.mgmt_system import SCVMMSystem
+            from mgmtsystem.scvmm import SCVMMSystem
             return SCVMMSystem(
                 hostname=self.host_name,
                 username=credentials["username"],
@@ -242,10 +241,10 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
                 domain=credentials["domain"]
             )
         elif ptype == "emsamazon":
-            from utils.mgmt_system import EC2System
+            from mgmtsystem.ec2 import EC2System
             return EC2System(**credentials)
         elif ptype == "emsopenstack":
-            from utils.mgmt_system import OpenstackSystem
+            from mgmtsystem.openstack import OpenstackSystem
             credentials.update(
                 {"auth_url": cfme_data.get("management_systems", {})[provider_id]["auth_url"]}
             )
@@ -258,7 +257,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
     GETTER_FUNC = "FindVmByGuid"
     TAG_PREFIX = "Vm"
 
-    @lazycache
+    @cached_property
     def vendor(self):
         return self.object.vendor
 
@@ -311,10 +310,10 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
         name = str(self.name)
         if self.is_powered_on:
             if not self.power_off():
-                raise Exception("Could not power off vm %s" % name)
+                raise Exception("Could not power off vm {}".format(name))
             self.wait_powered_off()
         if not get_client().service.EVMDeleteVmByName(self.name):
-            raise Exception("Could not delete vm %s" % name)
+            raise Exception("Could not delete vm {}".format(name))
         wait_for(lambda: not self.exists, num_sec=60, delay=4, message="wait for VM removed")
 
     @classmethod
@@ -345,14 +344,14 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
                 template_guid = vm.guid
                 break
         else:
-            raise Exception("Template %s not found!" % template_name)
+            raise Exception("Template {} not found!".format(template_name))
         template = cls(template_guid)
         # Tag provider
         for tag in template.provider.tags:
             if tag.category == "prov_scope" and tag.tag_name == "all":
                 break
         else:
-            logger.info("Tagging provider %s" % template.provider.name)
+            logger.info("Tagging provider %s", template.provider.name)
             template.provider.add_tag(("prov_scope", "all"))
         # Tag all provider's hosts
         for host in template.provider.hosts:
@@ -360,19 +359,19 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
                 if tag.category == "prov_scope" and tag.tag_name == "all":
                     break
             else:
-                logger.info("Tagging host %s" % host.name)
+                logger.info("Tagging host %s", host.name)
                 host.add_tag(("prov_scope", "all"))
         # Tag all provider's datastores
         for datastore in template.provider.datastores:
             ds_name = datastore.name
             if is_datastore_banned(ds_name):
-                logger.info("Skipping datastore %s" % ds_name)
+                logger.info("Skipping datastore %s", ds_name)
                 continue
             for tag in datastore.tags:
                 if tag.category == "prov_scope" and tag.tag_name == "all":
                     break
             else:
-                logger.info("Tagging datastore %s" % ds_name)
+                logger.info("Tagging datastore %s", ds_name)
                 datastore.add_tag(("prov_scope", "all"))
         # Create request
         template_fields = get_client().pipeoptions(dict(guid=template_guid))
@@ -394,7 +393,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
                 "1.1", template_fields, vm_fields, requester, "", ""
             ).id
         except WebFault as e:
-            if "'Network/vLan' is required" in e.message:
+            if "'Network/vLan' is required" in str(e):
                 raise TypeError("You have to specify `vlan` parameter for this function! (RHEV-M?)")
             else:
                 raise
@@ -449,7 +448,7 @@ class MiqCluster(
     GETTER_FUNC = "FindClusterById"
     TAG_PREFIX = "Cluster"
 
-    @lazycache
+    @cached_property
     def default_resource_pool(self):
         return MiqResourcePool(self.object.default_resource_pool.id)
 
@@ -462,7 +461,7 @@ class MiqResourcePool(HasManyHosts, HasManyEMSs):
     GETTER_FUNC = "FindResourcePoolById"
     TAG_PREFIX = "ResourcePool"
 
-    @lazycache
+    @cached_property
     def store_type(self):
         return str(self.object.store_type)
 

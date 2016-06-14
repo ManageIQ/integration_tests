@@ -1,7 +1,9 @@
+#!/bin/bash
+
 RES=16
 # Append messages to setup.txt
 log () {
-    echo $@ >> $ARTIFACTOR_DIR/setup.txt
+    echo "$@" >> $ARTIFACTOR_DIR/setup.txt
 }
 
 # Runs given command and appends the stdout and stderr output to setup.txt
@@ -151,6 +153,7 @@ if [ -n "$PROVIDER" ]; then
     IP_ADDRESS=$(cat /appliance_ip | cut -d= -f2)
     APPLIANCE=https://$IP_ADDRESS
 fi
+export APPLIANCE=${APPLIANCE-"None"}
 log $APPLIANCE
 
 # Now fill out the env yaml with ALL THE THINGS
@@ -191,6 +194,9 @@ trackerbot:
 EOF
 
 run_n_log "cat $CFME_REPO_DIR/conf/env.local.yaml"
+
+# Remove .pyc files
+run_n_log "find $CFME_REPO_DIR -name \"*.pyc\" -exec rm -rf {} \;"
 
 set +e
 

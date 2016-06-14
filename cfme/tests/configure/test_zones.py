@@ -5,8 +5,10 @@ import pytest
 import cfme.web_ui.flash as flash
 import cfme.configure.configuration as conf
 from utils.update import update
+from utils import version
 
 
+@pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
 @pytest.mark.smoke
@@ -33,15 +35,21 @@ def test_zone_crud(soft_assert):
     ))
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_cancel_validation():
     zone = conf.Zone(
         name=fauxfactory.gen_alphanumeric(5),
         description=fauxfactory.gen_alphanumeric(8))
     zone.create(cancel=True)
-    flash.assert_message_match('Add of new Miq Zone was cancelled by the user')
+    if version.current_version() >= 5.6:
+        msg = 'Add of new Zone was cancelled by the user'
+    else:
+        msg = 'Add of new Miq Zone was cancelled by the user'
+    flash.assert_message_match(msg)
 
 
+@pytest.mark.tier(2)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_change_appliance_zone(request):

@@ -12,6 +12,9 @@ from types import ModuleType
 logger_cache = {}
 logger_cache_lock = Lock()
 
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 
 class LogWrapperForObject(object):
     """This class masks the logger in order to print out the id of the object to identify it.

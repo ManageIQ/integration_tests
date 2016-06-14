@@ -9,12 +9,10 @@
 
 from functools import partial
 
-import ui_navigate as nav
-
 import cfme
 import cfme.fixtures.pytest_selenium as sel
+from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostNotFound
@@ -35,6 +33,8 @@ from utils.pretty import Pretty
 
 # Page specific locators
 details_page = Region(infoblock_type='detail')
+
+page_title_loc = '//div[@id="center_div" or @id="main-content"]//h1'
 
 properties_form = Form(
     fields=[
@@ -69,12 +69,7 @@ credential_form = Form(
             '5.5': AngularSelect('validate_id')}),
     ])
 
-manage_policies_tree = CheckboxTree(
-    {
-        version.LOWEST: "//div[@id='treebox']/div/table",
-        "5.3": "//div[@id='protect_treebox']/ul"
-    }
-)
+manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 
 drift_table = CheckboxTable({
     version.LOWEST: "//table[@class='style3']",
@@ -85,29 +80,30 @@ host_add_btn = {
     version.LOWEST: FormButton('Add this Host'),
     "5.5": FormButton("Add")
 }
+default_host_filter_btn = FormButton('Set the current filter as my default')
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 pow_btn = partial(tb.select, 'Power')
 lif_btn = partial(tb.select, 'Lifecycle')
 
 nav.add_branch('infrastructure_hosts',
-               {'infrastructure_host_new': lambda _: cfg_btn(
-                   version.pick({version.LOWEST: 'Add a New Host',
-                                 '5.4': 'Add a New item'})),
-                'infrastructure_host_discover': lambda _: cfg_btn(
-                    'Discover Hosts'),
-                'infrastructure_host': [lambda ctx: sel.click(Quadicon(ctx['host'].name,
-                                                                      'host')),
-                                   {'infrastructure_host_edit':
-                                    lambda _: cfg_btn(
-                                        version.pick({version.LOWEST: 'Edit this Host',
-                                                      '5.4': 'Edit this item'})),
-                                    'infrastructure_host_policy_assignment':
-                                    lambda _: pol_btn('Manage Policies'),
-                                    'infrastructure_provision_host':
-                                    lambda _: lif_btn(
-                                        version.pick({version.LOWEST: 'Provision this Host',
-                                                      '5.4': 'Provision this item'}))}]})
+             {'infrastructure_host_new': lambda _: cfg_btn(
+                 version.pick({version.LOWEST: 'Add a New Host',
+                               '5.4': 'Add a New item'})),
+              'infrastructure_host_discover': lambda _: cfg_btn(
+                  'Discover Hosts'),
+              'infrastructure_host': [lambda ctx: sel.click(Quadicon(ctx['host'].name,
+                                                                     'host')),
+                                      {'infrastructure_host_edit':
+                                       lambda _: cfg_btn(
+                                           version.pick({version.LOWEST: 'Edit this Host',
+                                                         '5.4': 'Edit this item'})),
+                                       'infrastructure_host_policy_assignment':
+                                       lambda _: pol_btn('Manage Policies'),
+                                       'infrastructure_provision_host':
+                                       lambda _: lif_btn(
+                                           version.pick({version.LOWEST: 'Provision this Host',
+                                                         '5.4': 'Provision this item'}))}]})
 
 
 class Host(Updateable, Pretty):
@@ -212,27 +208,8 @@ class Host(Updateable, Pretty):
         change_stored_password()
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
 
-        # Workaround for issue with form_button staying dimmed.
-        try:
-            logger.debug("Trying to save update for host with id: " + str(self.get_db_id))
-            self._submit(cancel, self.forced_saved)
-            logger.debug("save worked, no exception")
-        except Exception as e:
-            logger.debug("exception detected: " + str(e))
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/host/form_field_changed/%s',"
-                " data: {'default_userid':'%s'}})" %
-                (str(sel.current_url().split('/')[5]), updates.get('credentials', None).principal))
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/host/form_field_changed/%s',"
-                " data: {'default_password':'%s'}})" %
-                (str(sel.current_url().split('/')[5]), updates.get('credentials', None).secret))
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/host/form_field_changed/%s',"
-                " data: {'default_verify':'%s'}})" %
-                (str(sel.current_url().split('/')[5]),
-                    updates.get('credentials', None).verify_secret))
-            self._submit(cancel, self.forced_saved)
+        logger.debug("Trying to save update for host with id: " + str(self.get_db_id))
+        self._submit(cancel, self.forced_saved)
 
     def delete(self, cancel=True):
         """
@@ -285,8 +262,8 @@ class Host(Updateable, Pretty):
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the hosts detail page, ``False`` if not."""
-        return sel.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
-                                % self.name)
+        return sel.is_displayed(
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}")]'.format(self.name))
 
     @property
     def exists(self):
@@ -305,7 +282,7 @@ class Host(Updateable, Pretty):
         """
         sel.force_navigate('infrastructure_hosts')
         quad = Quadicon(self.name, 'host')
-        return quad.creds == 'checkmark'
+        return 'checkmark' in quad.creds
 
     def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
         """DRY function for managing policy profiles.
@@ -345,8 +322,7 @@ class Host(Updateable, Pretty):
     def get_datastores(self):
         """ Gets list of all datastores used by this host"""
         sel.force_navigate('infrastructure_host', context={'host': self})
-        list_acc.select('Relationships', version.pick({version.LOWEST: 'Show Datastores',
-                                                       '5.3': 'Show all Datastores'}))
+        list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
 
         datastores = set([])
         for page in paginator.pages():

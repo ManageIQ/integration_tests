@@ -7,10 +7,8 @@ from utils import db_queries as dbq
 
 pytestmark = [
     pytest.mark.smoke,
-    pytest.mark.ignore_stream(
-        "5.2",
-        ("upstream", {"domain_name": "RedHat"})
-    )
+    pytest.mark.tier(2),
+    pytest.mark.ignore_stream(("upstream", {"domain_name": "RedHat"}))
 ]
 
 

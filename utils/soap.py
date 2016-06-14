@@ -19,7 +19,7 @@ class MiqClient(Client):
 
         pair_list = list()
         for key, value in options_dict.items():
-            pair_list.append("%s=%s" % (str(key), str(value)))
+            pair_list.append("{}={}".format(str(key), str(value)))
 
         return '|'.join(pair_list)
 
@@ -28,7 +28,7 @@ def soap_client():
     """ SoapClient to EVM based on base_url"""
     username = conf.credentials['default']['username']
     password = conf.credentials['default']['password']
-    url = '%s/vmdbws/wsdl/' % store.base_url
+    url = '{}/vmdbws/wsdl/'.format(store.base_url)
 
     transport = HttpAuthenticated(username=username, password=password)
     imp = Import('http://schemas.xmlsoap.org/soap/encoding/')

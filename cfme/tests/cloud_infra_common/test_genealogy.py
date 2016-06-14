@@ -7,14 +7,14 @@ from utils import testgen
 from utils.providers import is_cloud_provider
 
 pytestmark = [
-    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider')
+    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider'),
+    pytest.mark.tier(2)
 ]
 
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.all_providers(
-        metafunc, 'small_template', template_location=["small_template"])
+    argnames, argvalues, idlist = testgen.all_providers(metafunc)
 
     new_idlist = []
     new_argvalues = []
@@ -63,7 +63,7 @@ def test_vm_genealogy_detected(
         the only possibility available is to do the check via edit form.
 
     Metadata:
-        test_flag: geneaology, provision
+        test_flag: genealogy, provision
     """
     vm_crud.create_on_provider(find_in_cfme=True, allow_skip="default")
 
@@ -85,5 +85,5 @@ def test_vm_genealogy_detected(
         assert parent.startswith(small_template), "The parent template not detected!"
     else:
         vm_crud_ancestors = vm_crud.genealogy.ancestors
-        assert(small_template in vm_crud_ancestors, "{} is not in {}'s ancestors".format(
-            small_template, vm_crud.name))
+        assert small_template in vm_crud_ancestors, \
+            "{} is not in {}'s ancestors".format(small_template, vm_crud.name)

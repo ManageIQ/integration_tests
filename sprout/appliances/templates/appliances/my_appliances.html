@@ -21,7 +21,7 @@
 {% if not request.user.is_superuser %}
     <h2>Listing and operation of your appliances</h2>
 {% else %}
-    <h2>Listing and operation of {% if show_user == "my" %}my{% else %}{{ show_user }}'s{% endif %} appliances - switch to: 
+    <h2>Listing and operation of {% if show_user == "my" %}my{% else %}{{ show_user }}'s{% endif %} appliances - switch to:
         <select id="view_user">
             <option value="">Select an user ...</option>
         {% if show_user != "my" %}
@@ -64,6 +64,7 @@
                     <th>Name:</th>
                     <th>Provider:</th>
                     <th>Address:</th>
+                    <th>Swap</th>
                     <th style="width: 10%;">Manages:</th>
                     <th style="width: 10%;">Ready?</th>
                     <th>Power state:</th>
@@ -98,6 +99,15 @@
                         {% endif %}
                     </td>
                     <td>
+                        {% if appliance.ssh_failed %}
+                            <strong style="color: red;">SSH FAIL!</strong>
+                        {% elif appliance.swap > 0 %}
+                            <span style='color: red;'>{{ appliance.swap }} MB</span>
+                        {% else %}
+                            OK
+                        {% endif %}
+                    </td>
+                    <td>
                         {% if appliance.managed_providers %}
                             {% for provider in appliance.managed_providers %}
                                 <a href="{% url 'specific_provider' provider %}" class="btn btn-default btn-xs">{{provider}}</a>
@@ -108,12 +118,12 @@
                     </td>
                     <td style="overflow-x: auto;">
                         {% if appliance.ready %}
-                            <span class="glyphicon glyphicon-ok"></span>
+                            <span class="glyphicon glyphicon-ok" title="{{ appliance.status }}"></span>
                         {% else %}
                             {{ appliance.status }}
                         {% endif %}
                     </td>
-                    <td>{{ appliance.power_state }}</td>
+                    <td>{{ appliance.power_state|power_icon }}</td>
                     <td>{{ appliance.expires_in }}</td>
                     <td>
                         <div class="btn-toolbar" role="toolbar" aria-label="Appliance operations">

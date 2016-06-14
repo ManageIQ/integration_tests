@@ -4,15 +4,17 @@ import pytest
 
 from cfme.configure import tasks
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure import host
+from cfme.infrastructure import host as host_obj
 from cfme.web_ui import DriftGrid, toolbar as tb, tabstrip as tabs
-from utils import conf, error, testgen
+from utils import error, testgen
 from utils.wait import wait_for
+
+pytestmark = [pytest.mark.tier(3)]
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'hosts')
-    argnames += ['host_type', 'host_name']
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=['hosts'])
+    argnames += ['host']
 
     new_idlist = []
     new_argvalues = []
@@ -20,37 +22,25 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
 
-        if not args['hosts']:
-            continue
-        for test_host in args['hosts']:
+        for test_host in args['provider'].data['hosts']:
             if not test_host.get('test_fleece', False):
                 continue
 
             argvs = argvalues[i][:]
-            argvs.pop(argnames.index('hosts'))
-            new_argvalues.append(argvs + [test_host['type'], test_host['name']])
-            test_id = '{}-{}-{}'.format(args['provider'].key, test_host['type'], test_host['name'])
+            new_argvalues.append(argvs + [test_host])
+            test_id = '{}-{}'.format(args['provider'].key, test_host['type'])
             new_idlist.append(test_id)
-    argnames.remove('hosts')
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-def get_host_data_by_name(provider_key, host_name):
-    for host_obj in conf.cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
-        if host_name == host_obj['name']:
-            return host_obj
-    return None
-
-
 @pytest.mark.meta(blockers=[1242655])
-def test_host_drift_analysis(request, setup_provider, provider, host_type, host_name, soft_assert):
+def test_host_drift_analysis(request, setup_provider, provider, host, soft_assert):
     """Tests host drift analysis
 
     Metadata:
         test_flag: host_drift_analysis
     """
-    host_data = get_host_data_by_name(provider.key, host_name)
-    test_host = host.Host(name=host_name)
+    test_host = host_obj.Host(name=host['name'])
 
     wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh,
              message="hosts_exists")
@@ -61,7 +51,7 @@ def test_host_drift_analysis(request, setup_provider, provider, host_type, host_
     # add credentials to host + finalizer to remove them
     if not test_host.has_valid_credentials:
         test_host.update(
-            updates={'credentials': host.get_credentials_from_config(host_data['credentials'])},
+            updates={'credentials': host_obj.get_credentials_from_config(host['credentials'])},
             validate_credentials=True
         )
 
@@ -87,13 +77,13 @@ def test_host_drift_analysis(request, setup_provider, provider, host_type, host_
         if not sel.is_displayed(tasks.tasks_table) or not tabs.is_tab_selected('All Other Tasks'):
             sel.force_navigate('tasks_all_other')
         host_analysis_finished = tasks.tasks_table.find_row_by_cells({
-            'task_name': "SmartState Analysis for '{}'".format(host_name),
+            'task_name': "SmartState Analysis for '{}'".format(test_host.name),
             'state': 'Finished'
         })
         if host_analysis_finished:
             # Delete the task
             tasks.tasks_table.select_row_by_cells({
-                'task_name': "SmartState Analysis for '{}'".format(host_name),
+                'task_name': "SmartState Analysis for '{}'".format(test_host.name),
                 'state': 'Finished'
             })
             tb.select('Delete Tasks', 'Delete', invokes_alert=True)

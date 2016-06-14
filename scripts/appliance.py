@@ -50,14 +50,14 @@ def main():
             exit = 0
         else:
             # Unknown type, explode
-            raise Exception('Unknown return type for "%s"' % args.action)
+            raise Exception('Unknown return type for "{}"'.format(args.action))
     except Exception as e:
         exit = 1
         exc_type = type(e).__name__
-        if e.message:
-            sys.stderr.write('%s: %s\n' % (exc_type, e.message))
+        if str(e):
+            sys.stderr.write('{}: {}\n'.format(exc_type, str(e)))
         else:
-            sys.stderr.write('%s\n' % exc_type)
+            sys.stderr.write('{}\n'.format(exc_type))
 
     return exit
 
@@ -91,7 +91,7 @@ def call_appliance(provider_name, vm_name, action, *args):
     try:
         call = getattr(appliance, action)
     except AttributeError:
-        raise Exception('Action "%s" not found' % action)
+        raise Exception('Action "{}" not found'.format(action))
     if isinstance(getattr(type(appliance), action), property):
         return call
     else:

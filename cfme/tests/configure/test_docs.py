@@ -46,6 +46,7 @@ def guides():
         ) is not None]
 
 
+@pytest.mark.tier(3)
 @pytest.fixture(scope="session")
 def docs_info():
     if version.current_version() < "5.4.0.1":
@@ -83,6 +84,7 @@ def docs_info():
         return []
 
 
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1272618])
 @pytest.mark.sauce
 def test_links(guides, soft_assert):
@@ -97,6 +99,7 @@ def test_links(guides, soft_assert):
         )
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1272618])
 def test_contents(guides, soft_assert):
     """Test contents of each document."""
@@ -123,6 +126,7 @@ def test_contents(guides, soft_assert):
                 "{} not in {}".format(exp_str, pdf_titlepage_text_low))
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1232434, 1272618])
 def test_info(guides, soft_assert):
@@ -147,6 +151,7 @@ def test_info(guides, soft_assert):
         )
 
 
+@pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1272618])
 def test_all_docs_present(guides, docs_info):

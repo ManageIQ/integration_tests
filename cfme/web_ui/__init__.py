@@ -32,17 +32,19 @@
   * :py:class:`ShowingInputs`
   * :py:class:`SplitCheckboxTable`
   * :py:class:`SplitTable`
-  * :py:class:`Timelines`
   * :py:class:`Table`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
   * :py:mod:`cfme.web_ui.cfme_exception`
+  * :py:mod:`cfme.web_ui.expression_editor`
   * :py:mod:`cfme.web_ui.flash`
   * :py:mod:`cfme.web_ui.form_buttons`
+  * :py:mod:`cfme.web_ui.jstimelines`
   * :py:mod:`cfme.web_ui.listaccordion`
   * :py:mod:`cfme.web_ui.menu`
+  * :py:mod:`cfme.web_ui.mixins`
   * :py:mod:`cfme.web_ui.paginator`
-  * :py:mod:`cfme.web_ui.snmp_form`
+  * :py:mod:`cfme.web_ui.search`
   * :py:mod:`cfme.web_ui.tabstrip`
   * :py:mod:`cfme.web_ui.toolbar`
 
@@ -55,18 +57,53 @@ from datetime import date
 from collections import Sequence, Mapping, Callable
 from xml.sax.saxutils import quoteattr
 
+from cached_property import cached_property
 from selenium.common import exceptions as sel_exceptions
-from selenium.common.exceptions import NoSuchElementException, MoveTargetOutOfBoundsException
+from selenium.common.exceptions import NoSuchElementException
 from multimethods import multimethod, multidispatch, Anything
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions, js
 from cfme.fixtures.pytest_selenium import browser
-from utils import classproperty, lazycache, version
+from utils import attributize_string, castmap, version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
 from utils.pretty import Pretty
+
+
+class Selector(object):
+    """
+    Special Selector object allowing object resolution on attr access
+
+    The Selector is a simple class which allows a 'super' widget to support multiple
+    implementations. This is achieved by the use of a ``decide`` method which accesses
+    attrs of the object set by the ``__init__`` of the child class. These attributes
+    are then used to decide which type of object is on a page. In some cases, this can
+    avoid a version pick if the information used to instantiate both old and new implementations
+    can be identical. This is most noteably if using an "id" which remains constant from
+    implementation to implementation.
+
+    As an example, imagine the normal "checkbox" is replaced wit ha fancy new web 2.0
+    checkbox. Both have an "input" element, and give it the same "id". When the decide method is
+    invoked, the "id" is inspected and used to determine if it is an old or a new style widget.
+    We then set a hidden attribute of the super widget and proxy all further attr requests to
+    that object.
+
+    This means that in order for things to behave as expect ALL implementations must also expose
+    the same "public" API.
+    """
+
+    def __init__(self):
+        self._obj = None
+
+    def __getattr__(self, name):
+        if not self._obj:
+            self._obj = self.decide()
+        return getattr(self._obj, name)
+
+    def decide(self):
+        raise Exception('This widget does not have a "decide" method which is mandatory')
 
 
 class Region(Pretty):
@@ -154,7 +191,7 @@ class Region(Pretty):
             if not self.title:
                 logger.info('Identifying locator for region not found')
             else:
-                logger.info('Identifying locator for region {} not found'.format(self.title))
+                logger.info('Identifying locator for region %s not found', self.title)
             ident_match = False
 
         if self.title is None:
@@ -164,8 +201,7 @@ class Region(Pretty):
         elif self.title and browser_title == self.title:
             title_match = True
         else:
-            logger.info("Title '%s' doesn't match expected title '%s'" %
-                (browser_title, self.title))
+            logger.info("Title %s doesn't match expected title %s", browser_title, self.title)
             title_match = False
         return title_match and ident_match
 
@@ -179,6 +215,35 @@ def get_context_current_page():
     url = browser().current_url()
     stripped = url.lstrip('https://')
     return stripped[stripped.find('/'):stripped.rfind('?')]
+
+
+def _convert_header(header):
+    """Convers header cell text into something usable as an identifier.
+
+    Static method which replaces spaces in headers with underscores and strips out
+    all other characters to give an identifier.
+
+    Args:
+        header: A header name to be converted.
+
+    Returns: A string holding the converted header.
+    """
+    return re.sub('[^0-9a-zA-Z_]+', '', header.replace(' ', '_')).lower()
+
+
+class CachedTableHeaders(object):
+    """the internal cache of headers
+
+    This allows columns to be moved and the Table updated. The :py:attr:`headers` stores
+    the header cache element and the list of headers are stored in _headers. The
+    attribute header_indexes is then created, before finally creating the items
+    attribute.
+    """
+    def __init__(self, table):
+        self.headers = sel.elements('td | th', root=table.header_row)
+        self.indexes = {
+            _convert_header(cell.text): index
+            for index, cell in enumerate(self.headers)}
 
 
 class Table(Pretty):
@@ -280,7 +345,7 @@ class Table(Pretty):
         """Property representing the ``<tr>`` element that contains header cells"""
         # thead/tr containing header data
         # xpath is 1-indexed, so we need to add 1 to the offset to get the correct row
-        return sel.element('thead/tr[%d]' % (self.header_offset + 1), root=sel.element(self))
+        return sel.element('thead/tr[{}]'.format(self.header_offset + 1), root=sel.element(self))
 
     @property
     def body(self):
@@ -288,14 +353,25 @@ class Table(Pretty):
         # tbody containing body rows
         return sel.element('tbody', root=sel.element(self))
 
+    @cached_property
+    def _headers_cache(self):
+        return CachedTableHeaders(self)
+
+    def _update_cache(self):
+        """refresh the cache in case we know its stale"""
+        try:
+            del self._headers_cache
+        except AttributeError:
+            pass  # it's not cached, dont try to be eager
+        else:
+            self._headers_cache
+
     @property
     def headers(self):
         """List of ``<td>`` or ``<th>`` elements in :py:attr:`header_row`
 
          """
-        if self._headers is None:
-            self._update_cache()
-        return self._headers
+        return self._headers_cache.headers
 
     @property
     def header_indexes(self):
@@ -304,42 +380,14 @@ class Table(Pretty):
         Derived from :py:attr:`headers`
 
         """
-        if self._header_indexes is None:
-            self._update_cache()
-        return self._header_indexes
+        return self._headers_cache.indexes
 
     def locate(self):
         return sel.move_to_element(self._loc)
 
-    @staticmethod
-    def _convert_header(header):
-        """Convers header cell text into something usable as an identifier.
-
-        Static method which replaces spaces in headers with underscores and strips out
-        all other characters to give an identifier.
-
-        Args:
-            header: A header name to be converted.
-
-        Returns: A string holding the converted header.
-        """
-        return re.sub('[^0-9a-zA-Z_]+', '', header.replace(' ', '_')).lower()
-
     @property
     def _root_loc(self):
         return self.locate()
-
-    def _update_cache(self):
-        """Updates the internal cache of headers
-
-        This allows columns to be moved and the Table updated. The :py:attr:`headers` stores
-        the header cache element and the list of headers are stored in _headers. The
-        attribute header_indexes is then created, before finally creating the items
-        attribute.
-        """
-        self._headers = sel.elements('td | th', root=self.header_row)
-        self._header_indexes = {
-            self._convert_header(cell.text): self.headers.index(cell) for cell in self.headers}
 
     def rows(self):
         """A generator method holding the Row objects
@@ -395,9 +443,12 @@ class Table(Pretty):
     def find_rows_by_cells(self, cells, partial_check=False):
         """A fast row finder, based on cell content.
 
+        If you pass a regexp as a value, then it will be used with its ``.match()`` method.
+
         Args:
             cells: A dict of ``header: value`` pairs or a sequence of
                 nested ``(header, value)`` pairs.
+            partial_check: If to use the ``in`` operator rather than ``==``.
 
         Returns: A list of containing :py:class:`Table.Row` objects whose contents
             match all of the header: value pairs in ``cells``
@@ -406,11 +457,11 @@ class Table(Pretty):
         # accept dicts or supertuples
         cells = dict(cells)
         cell_text_loc = (
-            './/td/descendant-or-self::*[contains(normalize-space(text()), "%s")]/ancestor::tr[1]')
+            './/td/descendant-or-self::*[contains(normalize-space(text()), "{}")]/ancestor::tr[1]')
         matching_rows_list = list()
         for value in cells.values():
             # Get all td elements that contain the value text
-            matching_elements = sel.elements(cell_text_loc % value,
+            matching_elements = sel.elements(cell_text_loc.format(value),
                 root=sel.move_to_element(self._root_loc))
             if matching_elements:
                 matching_rows_list.append(set(matching_elements))
@@ -431,10 +482,15 @@ class Table(Pretty):
 
         # Only include rows where the expected values are in the right columns
         matching_rows = list()
-        if partial_check:
-            matching_row_filter = lambda heading, value: value in row[heading].text
-        else:
-            matching_row_filter = lambda heading, value: row[heading].text == value
+
+        def matching_row_filter(heading, value):
+            if isinstance(value, re._pattern_type):
+                return value.match(row[heading].text) is not None
+            elif partial_check:
+                return value in row[heading].text
+            else:
+                return row[heading].text == value
+
         for row in rows:
             if all(matching_row_filter(*cell) for cell in cells.items()):
                 matching_rows.append(row)
@@ -527,7 +583,7 @@ class Table(Pretty):
             for value in values:
                 res = self.click_cell(header, value)
                 if not res:
-                    failed_clicks.append("%s:%s" % (header, value))
+                    failed_clicks.append("{}:{}".format(header, value))
         if failed_clicks:
             raise exceptions.NotAllItemsClicked(failed_clicks)
 
@@ -581,7 +637,7 @@ class Table(Pretty):
             """
             Returns Row element by header name
             """
-            return self.columns[self.table.header_indexes[name.lower()]]
+            return self.columns[self.table.header_indexes[_convert_header(name)]]
 
         def __getitem__(self, index):
             """
@@ -591,11 +647,11 @@ class Table(Pretty):
                 return self.columns[index]
             except TypeError:
                 # Index isn't an int, assume it's a string
-                return getattr(self, self.table._convert_header(index))
+                return getattr(self, _convert_header(index))
             # Let IndexError raise
 
         def __str__(self):
-            return ", ".join(["'%s'" % el.text for el in self.columns])
+            return ", ".join(["'{}'".format(el.text) for el in self.columns])
 
         def __eq__(self, other):
             if isinstance(other, type(self)):
@@ -607,6 +663,94 @@ class Table(Pretty):
         def locate(self):
             # table.create_row_from_element(row_instance) might actually work...
             return sel.move_to_element(self.row_element)
+
+
+class CAndUGroupTable(Table):
+    """Type of tables used in C&U, not tested in others.
+
+    Provides ``.groups()`` generator which yields group objects. A group objects consists of the
+    rows that are located in the group plus the summary informations. THe main principle is that
+    all the rows inside group are stored in group object's ``.rows`` and when the script encounters
+    the end of the group, it will store the summary data after the data rows as attributes, so eg.
+    ``Totals:`` will become ``group.totals``. All the rows are represented as dictionaries.
+    """
+    class States:
+        NORMAL_ROWS = 0
+        GROUP_SUMMARY = 1
+
+    class Group(object):
+        def __init__(self, group_id, headers, rows, info_rows):
+            self.id = group_id
+            self.rows = [dict(zip(headers, row)) for row in rows]
+            info_headers = headers[1:]
+            for info_row in info_rows:
+                name = info_row[0]
+                rest = info_row[1:]
+                data = dict(zip(info_headers, rest))
+                group_attr = attributize_string(name)
+                setattr(self, group_attr, data)
+
+        def __repr__(self):
+            return '<CAndUGroupTable.Group {}'.format(repr(self.id))
+
+    def paginated_rows(self):
+        from cfme.web_ui import paginator
+        for page in paginator.pages():
+            for row in self.rows():
+                yield row
+
+    def find_group(self, group_id):
+        """Finds a group by its group ID (the string that is alone on the line)"""
+        for group in self.groups():
+            if group.id == group_id:
+                return group_id
+        else:
+            raise KeyError('Group {} not found'.format(group_id))
+
+    def groups(self):
+        headers = map(sel.text, self.headers)
+        headers_length = len(headers)
+        rows = self.paginated_rows()
+        current_group_rows = []
+        current_group_summary_rows = []
+        current_group_id = None
+        state = self.States.NORMAL_ROWS
+        while True:
+            try:
+                row = rows.next()
+            except StopIteration:
+                if state == self.States.GROUP_SUMMARY:
+                    row = None
+                else:
+                    break
+            if state == self.States.NORMAL_ROWS:
+                if len(row.columns) == headers_length:
+                    current_group_rows.append(tuple(map(sel.text, row.columns)))
+                else:
+                    # Transition to the group summary
+                    current_group_id = sel.text(row.columns[0]).strip()
+                    state = self.States.GROUP_SUMMARY
+            elif state == self.States.GROUP_SUMMARY:
+                # row is None == we are at the end of the table so a slightly different behaviour
+                if row is not None:
+                    fc_length = len(sel.text(row.columns[0]).strip())
+                if row is None or fc_length == 0:
+                    # Done with group
+                    yield self.Group(
+                        current_group_id, headers, current_group_rows, current_group_summary_rows)
+                    current_group_rows = []
+                    current_group_summary_rows = []
+                    current_group_id = None
+                    state = self.States.NORMAL_ROWS
+                else:
+                    current_group_summary_rows.append(tuple(map(sel.text, row.columns)))
+            else:
+                raise RuntimeError('This should never happen')
+
+        if current_group_id is not None or current_group_rows or current_group_summary_rows:
+            raise ValueError(
+                'GroupTable could not be parsed properly: {} {} {}'.format(
+                    current_group_id, repr(current_group_rows), repr(current_group_summary_rows)))
 
 
 class SplitTable(Table):
@@ -665,8 +809,6 @@ class SplitTable(Table):
 
     """
     def __init__(self, header_data, body_data):
-        self._headers = None
-        self._header_indexes = None
 
         self._header_loc, header_offset = header_data
         self._body_loc, body_offset = body_data
@@ -682,7 +824,8 @@ class SplitTable(Table):
         """Property representing the ``<tr>`` element that contains header cells"""
         # thead/tr containing header data
         # xpath is 1-indexed, so we need to add 1 to the offset to get the correct row
-        return sel.element('tr[%d]' % (self.header_offset + 1), root=sel.element(self._header_loc))
+        return sel.element(
+            'tr[{}]'.format(self.header_offset + 1), root=sel.element(self._header_loc))
 
     @property
     def body(self):
@@ -700,13 +843,7 @@ class SortTable(Table):
     @property
     def _sort_by_cell(self):
         try:
-            return sel.element(
-                version.pick({
-                    "default": "./th/a/img[contains(@src, 'sort')]/..",
-                    "5.3.0.0": "./th[contains(@class, 'sorting_')]"
-                }),
-                root=self.header_row
-            )
+            return sel.element("./th[contains(@class, 'sorting_')]", root=self.header_row)
         except NoSuchElementException:
             return None
 
@@ -729,28 +866,13 @@ class SortTable(Table):
         if cell is None:
             return None
 
-        def _downstream():
-            src = sel.get_attribute(sel.element("./img", root=cell), "src")
-            if "sort_up" in src:
-                return "ascending"
-            elif "sort_down" in src:
-                return "descending"
-            else:
-                return None
-
-        def _upstream():
-            cls = sel.get_attribute(cell, "class")
-            if "sorting_asc" in cls:
-                return "ascending"
-            elif "sorting_desc" in cls:
-                return "descending"
-            else:
-                return None
-
-        return version.pick({
-            "default": _downstream,
-            "5.3.0.0": _upstream
-        })()
+        cls = sel.get_attribute(cell, "class")
+        if "sorting_asc" in cls:
+            return "ascending"
+        elif "sorting_desc" in cls:
+            return "descending"
+        else:
+            return None
 
     def click_header_cell(self, text):
         """Clicks on the header to change sorting conditions.
@@ -771,11 +893,16 @@ class SortTable(Table):
         if header != self.sorted_by:
             # Change column to order by
             self.click_header_cell(header)
-            assert self.sorted_by == header, "Detected malfunction in table ordering"
+            if self.sorted_by != header:
+                raise Exception(
+                    "Detected malfunction in table ordering (wanted {}, got {})".format(
+                        header, self.sorted_by))
         if order != self.sort_order:
             # Change direction
             self.click_header_cell(header)
-            assert self.sort_order == order, "Detected malfunction in table ordering"
+            if self.sort_order != order:
+                raise Exception("Detected malfunction in table ordering (wanted {}, got {})".format(
+                    order, self.sort_order))
 
 
 class CheckboxTable(Table):
@@ -893,7 +1020,7 @@ class CheckboxTable(Table):
             for value in values:
                 res = self._set_row(header, value, set_to)
                 if not res:
-                    failed_selects.append("%s:%s" % (header, value))
+                    failed_selects.append("{}:{}".format(header, value))
         if failed_selects:
             raise exceptions.NotAllCheckboxesFound(failed_selects)
 
@@ -919,48 +1046,48 @@ class CheckboxTable(Table):
         """
         self._set_rows(cell_map, False)
 
-    def _set_row_by_cells(self, cells, set_to=False):
-        row = self.find_row_by_cells(cells)
+    def _set_row_by_cells(self, cells, set_to=False, partial_check=False):
+        row = self.find_row_by_cells(cells, partial_check=partial_check)
         self._set_row_checkbox(row, set_to)
 
-    def select_row_by_cells(self, cells):
+    def select_row_by_cells(self, cells, partial_check=False):
         """Select the first row matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
 
         """
-        self._set_row_by_cells(cells, True)
+        self._set_row_by_cells(cells, True, partial_check)
 
-    def deselect_row_by_cells(self, cells):
+    def deselect_row_by_cells(self, cells, partial_check=False):
         """Deselect the first row matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
 
         """
-        self._set_row_by_cells(cells, False)
+        self._set_row_by_cells(cells, False, partial_check)
 
-    def _set_rows_by_cells(self, cells, set_to=False):
+    def _set_rows_by_cells(self, cells, set_to=False, partial_check=False):
         rows = self.find_rows_by_cells(cells)
         for row in rows:
             self._set_row_checkbox(row, set_to)
 
-    def select_rows_by_cells(self, cells):
+    def select_rows_by_cells(self, cells, partial_check=False):
         """Select the rows matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
         """
-        self._set_rows_by_cells(cells, True)
+        self._set_rows_by_cells(cells, True, partial_check)
 
-    def deselect_rows_by_cells(self, cells):
+    def deselect_rows_by_cells(self, cells, partial_check=False):
         """Deselect the rows matched by ``cells``
 
         Args:
             cells: See :py:meth:`Table.find_rows_by_cells`
         """
-        self._set_rows_by_cells(cells, False)
+        self._set_rows_by_cells(cells, False, partial_check)
 
 
 class SplitCheckboxTable(SplitTable, CheckboxTable):
@@ -985,6 +1112,40 @@ class SplitCheckboxTable(SplitTable, CheckboxTable):
         self._header_checkbox_loc = header_checkbox_locator
         if body_checkbox_locator:
             self._checkbox_loc = body_checkbox_locator
+
+
+class PagedTable(Table):
+    """:py:class:`Table` with support for paginator
+
+    Args:
+        table_locator: See :py:class:`cfme.web_ui.Table`
+        header_checkbox_locator: Locator of header checkbox (default `None`)
+                                 Specify in case the header checkbox is not part of the header row
+        body_checkbox_locator: Locator for checkboxes in body rows
+        header_offset: See :py:class:`cfme.web_ui.Table`
+        body_offset: See :py:class:`cfme.web_ui.Table`
+    """
+    def find_row_on_all_pages(self, header, value):
+        from cfme.web_ui import paginator
+        for _ in paginator.pages():
+            sel.wait_for_element(self)
+            row = self.find_row(header, value)
+            if row is not None:
+                return row
+
+
+class SplitPagedTable(SplitTable, PagedTable):
+    """:py:class:`SplitTable` with support for paginator
+
+    Args:
+        header_data: See :py:class:`cfme.web_ui.SplitTable`
+        body_data: See :py:class:`cfme.web_ui.SplitTable`
+        header_offset: See :py:class:`cfme.web_ui.Table`
+        body_offset: See :py:class:`cfme.web_ui.Table`
+    """
+    def __init__(self, header_data, body_data):
+        # To limit multiple inheritance surprises, explicitly call out to SplitTable's __init__
+        SplitTable.__init__(self, header_data, body_data)
 
 
 def table_in_object(table_title):
@@ -1062,7 +1223,7 @@ def fill(loc, content, **kwargs):
         ident = loc.name
     else:
         ident = loc
-    logger.debug('  Filling in [%s], with value "%s"' % (ident, logval))
+    logger.debug('  Filling in [%s], with value %s', ident, logval)
     prev_state = action(loc, content)
     sel.detect_observed_field(loc)
     return prev_state
@@ -1139,7 +1300,7 @@ class Calendar(Pretty):
 def _sd_fill_date(calendar, value):
     input = sel.element(calendar)
     if isinstance(value, date):
-        date_str = '%s/%s/%s' % (value.month, value.day, value.year)
+        date_str = '{}/{}/{}'.format(value.month, value.day, value.year)
     else:
         date_str = str(value)
 
@@ -1151,14 +1312,14 @@ def _sd_fill_date(calendar, value):
         # Now when we set the value, we need to simulate a change event.
         if sel.get_attribute(input, "data-date-autoclose"):
             # New one
-            script = "$(\"#%s\").trigger('changeDate');"
+            script = "$(\"#{}\").trigger('changeDate');"
         else:
             # Old one
             script = (
                 "if(typeof $j == 'undefined') {var jq = $;} else {var jq = $j;} "
-                "jq(\"#%s\").change();")
+                "jq(\"#{}\").change();")
         try:
-            sel.execute_script(script % calendar.name)
+            sel.execute_script(script.format(calendar.name))
         except sel_exceptions.WebDriverException as e:
             logger.warning(
                 "An exception was raised during handling of the Cal #{}'s change event:\n{}"
@@ -1286,7 +1447,7 @@ def _fill_form_list(form, values, action=None, action_always=False):
     for field, value in values:
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
-            logger.trace(' Dispatching fill for "%s"' % field)
+            logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
         elif value is None and isinstance(form.locators[field], Select):
@@ -1453,7 +1614,7 @@ class Tree(Pretty):
     def __init__(self, locator):
         self.locator = locator
 
-    @lazycache
+    @cached_property
     def tree_id(self):
         if isinstance(self.locator, basestring) and re.match(r"^[a-zA-Z0-9_-]+$", self.locator):
             return self.locator
@@ -1515,6 +1676,10 @@ class Tree(Pretty):
         by_id = kwargs.pop("by_id", False)
         result = False
 
+        # Ensure we pass str to the javascript. This handles objects that represent themselves
+        # using __str__ and generally, you should only pass str because that is what makes sense
+        path = castmap(str, path)
+
         # We sometimes have to wait for ajax. In that case, JS function returns false
         # Then we repeat and wait. It does not seem completely possible to wait for the data in JS
         # as it runs on one thread it appears. So this way it will try to drill multiple times
@@ -1558,8 +1723,12 @@ class Tree(Pretty):
         Returns: The leaf web element.
 
         """
+        # Ensure we pass str to the javascript. This handles objects that represent themselves
+        # using __str__ and generally, you should only pass str because that is what makes sense
+        path = castmap(str, path)
+
         leaf = self.expand_path(*path, **kwargs)
-        logger.info("Path {} yielded menuitem {}".format(repr(path), repr(sel.text(leaf))))
+        logger.info("Path %r yielded menuitem %r", path, sel.text(leaf))
         if leaf is not None:
             sel.wait_for_ajax()
             sel.click(leaf)
@@ -1577,6 +1746,10 @@ class Tree(Pretty):
             tree: List with tree.
             *path: Path to browse.
         """
+        # Ensure we pass str to the javascript. This handles objects that represent themselves
+        # using __str__ and generally, you should only pass str because that is what makes sense
+        path = castmap(str, path)
+
         current = tree
         for i, step in enumerate(path, start=1):
             for node in current:
@@ -1611,7 +1784,7 @@ class Tree(Pretty):
         """
         return map(lambda item: item[0] if isinstance(item, list) else item, tree)
 
-    def find_path_to(self, target):
+    def find_path_to(self, target, exact=False):
         """ Method used to look up the exact path to an item we know only by its regexp or partial
         description.
 
@@ -1621,10 +1794,15 @@ class Tree(Pretty):
             target: Item searched for. Can be regexp made by
                 :py:func:`re.compile <python:re.compile>`,
                 otherwise it is taken as a string for `in` matching.
+            exact: Useful in string matching. If set to True, it matches the exact string.
+                Default is False.
         Returns: :py:class:`list` with path to that item.
         """
         if not isinstance(target, re._pattern_type):
-            target = re.compile(r".*?{}.*?".format(re.escape(str(target))))
+            if exact:
+                target = re.compile(r"^{}$".format(re.escape(str(target))))
+            else:
+                target = re.compile(r".*?{}.*?".format(re.escape(str(target))))
 
         def _find_in_tree(t, p=None):
             if p is None:
@@ -2042,6 +2220,7 @@ class Quadicon(Pretty):
             "vendor": ("c", 'img'),
             "no_snapshot": ("d", 'txt'),
         },
+        "middleware": {},   # Middleware quads have no fields
         None: {},  # If you just want to find the quad and not mess with data
     }
 
@@ -2083,9 +2262,9 @@ class Quadicon(Pretty):
         try:
             return sel.move_to_element(
                 'div/a',
-                root="//div[@id='quadicon' and ../../..//a[{}]]".format(self.a_cond))
+                root="//div[contains(@id, 'quadicon') and ../../..//a[{}]]".format(self.a_cond))
         except sel.NoSuchElementException:
-            quads = sel.elements("//div[@id='quadicon']/../../../tr/td/a")
+            quads = sel.elements("//div[contains(@id, 'quadicon')]/../../../tr/td/a")
             if not quads:
                 raise sel.NoSuchElementException("Quadicon {} not found. No quads present".format(
                     self._name))
@@ -2154,7 +2333,7 @@ class Quadicon(Pretty):
         else:
             pages = paginator.pages()
         for page in pages:
-            for href in sel.elements("//div[@id='quadicon']/../../../tr/td/a"):
+            for href in sel.elements("//div[contains(@id, 'quadicon')]/../../../tr/td/a"):
                 yield cls(cls._get_title(href), qtype)
 
     @classmethod
@@ -2163,18 +2342,18 @@ class Quadicon(Pretty):
 
     @staticmethod
     def select_first_quad():
-        fill("//div[@id='quadicon']/../..//input", True)
+        fill("//div[contains(@id, 'quadicon')]/../..//input", True)
 
     @staticmethod
     def get_first_quad_title():
-        first_quad = "//div[@id='quadicon']/../../../tr/td/a"
+        first_quad = "//div[contains(@id, 'quadicon')]/../../../tr/td/a"
         title = sel.get_attribute(first_quad, "title")
         if title:
             return title
         else:
             return sel.get_attribute(first_quad, "data-original-title") or ""  # To ensure str
 
-    @classproperty
+    @classmethod
     def any_present(cls):
         try:
             cls.get_first_quad_title()
@@ -2217,8 +2396,8 @@ class DHTMLSelect(Select):
     @staticmethod
     def _log(meth, val=None):
         if val:
-            val_string = " with value %s" % val
-        logger.debug('Filling in DHTMLSelect using (%s)%s' % (meth, val_string))
+            val_string = " with value {}".format(val)
+        logger.debug('Filling in DHTMLSelect using (%s)%s', meth, val_string)
 
     def _get_select_name(self):
         """ Get's the name reference of the element from its hidden attribute.
@@ -2251,7 +2430,7 @@ class DHTMLSelect(Select):
         """
         name = self._get_select_name()
         return browser().execute_script(
-            'return %s.getOptionByIndex(%s.getSelectedIndex()).content' % (name, name))
+            'return {}.getOptionByIndex({}}.getSelectedIndex()).content'.format(name, name))
 
     @property
     def options(self):
@@ -2260,7 +2439,7 @@ class DHTMLSelect(Select):
         Returns: A list of Webelements.
         """
         name = self._get_select_name()
-        return browser().execute_script('return %s.DOMlist.children' % name)
+        return browser().execute_script('return {}.DOMlist.children'.format(name))
 
     def select_by_index(self, index, _cascade=None):
         """ Selects an option by index.
@@ -2272,7 +2451,7 @@ class DHTMLSelect(Select):
         if index is not None:
             if not _cascade:
                 self._log('index', index)
-            browser().execute_script('%s.selectOption(%s)' % (name, index))
+            browser().execute_script('{}.selectOption({})'.format(name, index))
 
     def select_by_visible_text(self, text):
         """ Selects an option by visible text.
@@ -2283,8 +2462,8 @@ class DHTMLSelect(Select):
         name = self._get_select_name()
         if text is not None:
             self._log('visible_text', text)
-            value = browser().execute_script('return %s.getOptionByLabel("%s").value'
-                                             % (name, text))
+            value = browser().execute_script(
+                'return {}.getOptionByLabel("{}").value'.format(name, text))
             self.select_by_value(value, _cascade=True)
 
     def select_by_value(self, value, _cascade=None):
@@ -2297,7 +2476,7 @@ class DHTMLSelect(Select):
         if value is not None:
             if not _cascade:
                 self._log('value', value)
-            index = browser().execute_script('return %s.getIndexByValue("%s")' % (name, value))
+            index = browser().execute_script('return {}.getIndexByValue("{}")'.format(name, value))
             self.select_by_index(index, _cascade=True)
 
     def locate(self):
@@ -2473,7 +2652,8 @@ class ScriptBox(Pretty):
 
     def workaround_save_issue(self):
         # We need to fire off the handlers manually in some cases ...
-        sel.execute_script("%s._handlers.change.map(function(handler) { handler() });" % self.name)
+        sel.execute_script(
+            "{}._handlers.change.map(function(handler) {{ handler() }});".format(self.name))
         sel.wait_for_ajax()
 
 
@@ -2540,7 +2720,7 @@ class CheckboxSelect(Pretty):
     def checkbox_by_id(self, id):
         """Find checkbox's WebElement by id."""
         return sel.element(
-            ".//input[@type='checkbox' and @id='%s']" % id, root=sel.element(self._root)
+            ".//input[@type='checkbox' and @id='{}']".format(id), root=sel.element(self._root)
         )
 
     def select_all(self):
@@ -2561,11 +2741,11 @@ class CheckboxSelect(Pretty):
                 if txt == text:
                     return cb
             else:
-                raise NameError("Checkbox with text %s not found!" % text)
+                raise NameError("Checkbox with text {} not found!".format(text))
         else:
             # Has to be only single
             return sel.element(
-                ".//*[contains(., '%s')]/input[@type='checkbox']" % text,
+                ".//*[contains(., '{}')]/input[@type='checkbox']".format(text),
                 root=sel.element(self._root)
             )
 
@@ -2648,141 +2828,6 @@ def _fill_showing_inputs_str(si, s):
     fill(si, [s])
 
 
-class Timelines(Pretty):
-    """
-    A Timelines object represents the Timelines widget in CFME
-
-    Args:
-        loc: A locator for the Timelines element, usually the div with
-            id miq_timeline.
-    """
-    pretty_attrs = ['element']
-
-    class Object(Pretty):
-        """
-        A generic timelines object.
-
-        Args:
-            element: A WebElement for the event.
-        """
-        pretty_attrs = ['element']
-
-        def __init__(self, element):
-            self.element = element
-            self.pos = self.element.value_of_css_property('left')
-            self.text = self.element.text
-
-        def locate(self):
-            return self.element
-
-    class Event(Object):
-        """
-        An event object.
-        """
-        window_loc = '//div[@class="timeline-event-bubble-title"]/../..'
-        close_button = "{}/div[contains(@style, 'close-button')]".format(window_loc)
-        data_block = '{}//div[@class="timeline-event-bubble-body"]'.format(window_loc)
-
-        @property
-        def image(self):
-            """ Returns the image name of an event. """
-            el = sel.element('.//img', root=self.element)
-            if el:
-                return os.path.split(sel.get_attribute(el, 'src'))[1]
-                return False
-
-        def open_block(self):
-            """ Opens the events info block. """
-            self.close_block()
-            sel.click(self.element)
-
-        def close_block(self):
-            """ Closes the events info block. """
-            try:
-                sel.click(self.close_button)
-            except (NoSuchElementException, MoveTargetOutOfBoundsException):
-                pass
-
-        def block_info(self):
-            """ Attempts to return a dict with the information from the popup. """
-            self.open_block()
-            data = {}
-            elem = sel.element(self.data_block)
-            text_elements = elem.text.split("\n")
-            for line in text_elements:
-                line += " "
-                kv = line.split(": ")
-                if len(kv) == 1:
-                    if ':' not in kv[0]:
-                        data['title'] = kv[0].strip()
-                    else:
-                        data[kv[0]] = None
-                else:
-                    data[kv[0]] = kv[1].strip()
-            return data
-
-    class Marker(Object):
-        """ A proxied object in case it needs more methods further down the line."""
-        pass
-
-    def __init__(self, loc):
-        self.loc = loc
-
-    def _list_events(self):
-        ele = sel.elements('.//div[@name="events"]/div', root=self.loc)
-        return ele
-
-    def _list_markers(self):
-        ele = sel.elements('.//div[@name="ether-markers"]/div', root=self.loc)
-        return ele
-
-    def find_first_marker_in_range(self):
-        """ Finds the first marker on screen. """
-        for marker in self.markers():
-            if sel.is_displayed(marker.element):
-                return marker
-
-    def find_first_event_in_range(self):
-        """ Finds the first event on screen. """
-        marker = self.find_first_marker_in_range()
-        pos = marker.pos
-        for event in self.events():
-            if event.pos > pos:
-                return event
-
-    def visible_events(self):
-        """ A generator giving all visible events. """
-        marker = self.find_first_marker_in_range()
-        pos = marker.pos
-        for event in self.events():
-            if event.pos > pos:
-                yield event
-
-    def find_visible_events_for_vm(self, vm_name):
-        """ Finds all events for a given vm.
-
-        Args:
-            vm_name: The vm name.
-        """
-        events = []
-        for event in self.visible_events():
-            info = event.block_info()
-            if info.get('title', None) == vm_name:
-                events.append(event)
-                event.close_block()
-                return events
-
-    def events(self):
-        """ A generator yielding all events. """
-        for el in self._list_events():
-            yield self.Event(el)
-
-    def markers(self):
-        """ A generator yielding all markers. """
-        for el in self._list_markers():
-            yield self.Marker(el)
-
-
 class MultiFill(object):
     """Class designed to fill the same value to multiple fields
 
@@ -2821,11 +2866,7 @@ class DriftGrid(Pretty):
             Selenium element of the cell.
         """
         self.expand_all_sections()
-        cell_loc = {
-            '5.3': ".//div/div[1][contains(., '{}')]/../div[{}]".format(row_text, col_index + 2),
-            version.LOWEST: ".//tr/td[1][contains(., '{}')]/../td[{}]"
-                            .format(row_text, col_index + 2)
-        }
+        cell_loc = ".//div/div[1][contains(., '{}')]/../div[{}]".format(row_text, col_index + 2)
         cell = sel.element(cell_loc, root=self.loc)
         return cell
 
@@ -2867,9 +2908,8 @@ class DriftGrid(Pretty):
         while True:
             # We need to do this one by one because the DOM changes on every expansion
             try:
-                el = sel.element({
-                    '5.3': './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
-                    version.LOWEST: './/div/img[contains(@src, "plus")]'},
+                el = sel.element(
+                    './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
                     root=self.loc)
                 sel.click(el)
             except NoSuchElementException:
@@ -2885,6 +2925,20 @@ class ButtonGroup(object):
             key: The name of the key field text before the button group.
         """
         self.key = key
+
+    @property
+    def _icon_tag(self):
+        if version.current_version() >= 5.6:
+            return 'i'
+        else:
+            return 'img'
+
+    @property
+    def _state_attr(self):
+        if version.current_version() >= 5.6:
+            return 'title'
+        else:
+            return 'alt'
 
     @property
     def locator(self):
@@ -2911,18 +2965,19 @@ class ButtonGroup(object):
     @property
     def active(self):
         """ Returns the alt tag text of the active button in thr group. """
-        loc = sel.element(self.locator_base + '/ul/li[@class="active"]/img')
-        return loc.get_attribute('alt')
+        loc = sel.element(self.locator_base + '/ul/li[@class="active"]/{}'.format(self._icon_tag))
+        return loc.get_attribute(self._state_attr)
 
     def status(self, alt):
         """ Returns the status of the button identified by the Alt Text of the image. """
-        active_loc = self.locator_base + '/ul/li/img[@alt="{}"]'.format(alt)
+        active_loc = self.locator_base + '/ul/li/{}[@{}="{}"]'.format(
+            self._icon_tag, self._state_attr, alt)
         try:
             sel.element(active_loc)
             return True
         except NoSuchElementException:
             pass
-        inactive_loc = self.locator_base + '/ul/li/a/img[@alt="{}"]'.format(alt)
+        inactive_loc = self.locator_base + '/ul/li/a/{}[@alt="{}"]'.format(self._icon_tag, alt)
         try:
             sel.element(inactive_loc)
             return False
@@ -2932,7 +2987,7 @@ class ButtonGroup(object):
     def choose(self, alt):
         """ Sets the ButtonGroup to select the button identified by the alt text. """
         if not self.status(alt):
-            inactive_loc = self.locator_base + '/ul/li/a/img[@alt="{}"]'.format(alt)
+            inactive_loc = self.locator_base + '/ul/li/a/{}[@alt="{}"]'.format(self._icon_tag, alt)
             sel.click(inactive_loc)
 
 
@@ -3010,16 +3065,19 @@ class DynamicTable(Pretty):
     def rows(self):
         return map(lambda r_el: self.Row(self, r_el), sel.elements(self.ROWS, root=self.root_loc))
 
-    @lazycache
+    @cached_property
     def header_names(self):
         return map(sel.text, sel.elements(".//thead/tr/th", root=self.root_loc))
 
     def click_add(self):
-        sel.click(sel.element(".//tbody/tr[@id='new_tr']/td//img", root=self.root_loc))
+        sel.click(sel.element(
+            ".//tbody/tr[@id='new_tr']/td//img | .//tbody/tr[@id='new_tr']/td//i",
+            root=self.root_loc))
 
     def click_save(self):
-        sel.click(sel.element(
-            ".//tbody/tr[@id='new_tr']/td//input[@type='image']", root=self.root_loc))
+        if version.current_version() < "5.6":
+            sel.click(sel.element(
+                ".//tbody/tr[@id='new_tr']/td//input[@type='image']", root=self.root_loc))
 
     def delete_row(self, by):
         pass
@@ -3134,8 +3192,7 @@ class AngularSelect(object):
         return el.get_attribute('aria-expanded') == "true"
 
     def open(self):
-        el = sel.element(self._loc)
-        el.click()
+        sel.click(self._loc)
 
     def select_by_visible_text(self, text):
         if not self.is_open:
@@ -3230,7 +3287,7 @@ class AngularCalendarInput(Pretty):
 
     def fill(self, value):
         if isinstance(value, date):
-            value = '%s/%s/%s' % (value.month, value.day, value.year)
+            value = '{}/{}/{}'.format(value.month, value.day, value.year)
         else:
             value = str(value)
         try:
@@ -3292,7 +3349,7 @@ class EmailSelectForm(Pretty):
             email: E-mail to remove
         """
         if email in self.to_emails:
-            sel.click("//a[contains(@href, 'remove_email')][normalize-space(.)='%s']" % email)
+            sel.click("//a[contains(@href, 'remove_email')][normalize-space(.)='{}']".format(email))
             return email not in self.to_emails
         else:
             return True
@@ -3310,7 +3367,7 @@ class EmailSelectForm(Pretty):
         # Delete e-mails that have nothing to do here
         for email in self.to_emails:
             if email not in emails:
-                assert self.remove_email(email), "Could not remove e-mail '%s'" % email
+                assert self.remove_email(email), "Could not remove e-mail '{}'".format(email)
         # Add new
         for email in emails:
             if email in self.to_emails:
@@ -3320,7 +3377,7 @@ class EmailSelectForm(Pretty):
             else:
                 fill(self.fields.manual_input, email)
                 sel.click(self.fields.add_email_manually)
-                assert email in self.to_emails, "Adding e-mail '%s' manually failed!" % email
+                assert email in self.to_emails, "Adding e-mail '{}' manually failed!".format(email)
 
 
 @fill.method((EmailSelectForm, basestring))
@@ -3329,3 +3386,112 @@ class EmailSelectForm(Pretty):
 @fill.method((EmailSelectForm, tuple))
 def fill_email_select_form(form, emails):
     form.to_emails = emails
+
+
+class BootstrapSwitch(object):
+    def __init__(self, input_id):
+        """A Bootstrap On/Off switch
+
+        Args:
+            input_id: The HTML ID of the input element associated with the checkbox
+        """
+        self.input_id = input_id
+        self.loc_container = "//input[@id={}]/..".format(quoteattr(self.input_id))
+        self.on_off = "{}/span[contains(@class, 'bootstrap-switch-handle-{}')]".format(
+            self.loc_container, '{}')
+
+    def fill(self, val):
+        """Convenience function"""
+        if val:
+            self.check()
+        else:
+            self.uncheck()
+
+    def check(self):
+        """Checks the bootstrap box"""
+        el = sel.element(self.on_off.format("off"))
+        sel.click(el)
+
+    def uncheck(self):
+        """Unchecks the bootstrap box"""
+        el = sel.element(self.on_off.format("on"))
+        sel.click(el)
+
+    def is_selected(self):
+        if sel.is_displayed("//div[contains(@class, 'bootstrap-switch-on')]{}"
+                .format(self.loc_container)):
+            return True
+        else:
+            return False
+
+
+@fill.method((BootstrapSwitch, bool))
+def fill_bootstrap_switch(bs, val):
+    bs.fill(val)
+
+
+class OldCheckbox(object):
+    def __init__(self, input_id):
+        """An original HTML checkbox element
+
+        Args:
+            input_id: The HTML ID of the input element associated with the checkbox
+        """
+        self.input_id = input_id
+        self.locator = "//input[@id={}]".format(quoteattr(input_id))
+
+    def fill(self, val):
+        """
+        Checks or unchecks
+
+        Args:
+            value: The value the checkbox should represent as a bool (or None to do nothing)
+
+        Returns: Previous state of the checkbox
+        """
+
+        if val is not None:
+            selected = self.is_selected()
+
+            if selected is not val:
+                logger.debug("Setting checkbox {} to {}".format(str(self.locator), str(val)))
+                sel.click(self._el)
+            return selected
+
+    def check(self):
+        """Convenience function"""
+        self.fill(True)
+
+    def uncheck(self):
+        """Convenience function"""
+        self.fill(False)
+
+    def _el(self):
+        return sel.move_to_element(self.locator)
+
+    def is_selected(self):
+        return self._el().is_selected()
+
+
+@fill.method((OldCheckbox, bool))
+def fill_oldcheckbox_switch(ob, val):
+    ob.fill(val)
+
+
+class CFMECheckbox(Selector):
+    def __init__(self, input_id):
+        self.input_id = input_id
+        super(CFMECheckbox, self).__init__()
+
+    def decide(self):
+        ref_loc = "//input[@id={}]/../span" \
+            "[contains(@class, 'bootstrap-switch-label')]".format(quoteattr(self.input_id))
+        if sel.is_displayed(ref_loc):
+            return BootstrapSwitch(self.input_id)
+        else:
+            return OldCheckbox(self.input_id)
+
+
+@fill.method((CFMECheckbox, bool))
+def fill_cfmecheckbox_switch(ob, val):
+    ob.fill(val)

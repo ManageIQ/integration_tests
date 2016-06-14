@@ -23,8 +23,12 @@ stream_matchers = (
     (get_stream('5.3'), r'^cfme-53.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.4'), r'^cfme-54.*-(?P<month>\d{2})(?P<day>\d{2})'),
     (get_stream('5.5'), r'^cfme-55.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    # Nightly builds are currently in the 5.4.z stream
-    (get_stream('5.5'), r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.6'), r'^cfme-56.*-(?P<month>\d{2})(?P<day>\d{2})'),
+    # Nightly builds have potentially multiple version streams bound to them so we
+    # cannot use get_stream()
+    ('downstream-nightly', r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
+    # new format
+    ('downstream-nightly', r'^cfme-nightly-\d*-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
 )
 generic_matchers = (
     ('sprout', r'^s_tpl'),
@@ -223,7 +227,7 @@ def _as_providertemplate(provider, template):
 def post_task_result(tid, result, output=None):
     if not output:
         output = "No output capture"
-    api().task(tid).put({'result': result, 'output': output})
+    api().task(tid).patch({'result': result, 'output': output})
 
 
 def post_jenkins_result(job_name, number, stream, date, template,

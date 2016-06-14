@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import fauxfactory
 
 from cfme.automate.service_dialogs import ServiceDialog
@@ -8,7 +9,6 @@ from cfme.services import requests
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils import version
 
 
 def service_catalogs(request, rest_api):
@@ -128,11 +128,7 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
     if a_provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = vlan
-        catalog_item_type = version.pick({
-            version.LATEST: "RHEV",
-            '5.3': "RHEV",
-            '5.2': "Redhat"
-        })
+        catalog_item_type = "RHEV"
     elif a_provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
     catalog = service_catalogs[0].name
@@ -338,3 +334,21 @@ def _creating_skeleton(request, rest_api, col_name, col_data):
             collection.action.delete(*delete_entities)
 
     return entities
+
+
+def mark_vm_as_template(rest_api, provider, vm_name):
+    """
+        Function marks vm as template via mgmt and returns template Entity
+        Usage:
+            mark_vm_as_template(rest_api, provider, vm_name)
+    """
+    t_vm = rest_api.collections.vms.get(name=vm_name)
+    t_vm.action.stop()
+    provider.mgmt.wait_vm_stopped(vm_name=vm_name, num_sec=600)
+
+    provider.mgmt.mark_as_template(vm_name, delete=False)
+
+    wait_for(
+        lambda: rest_api.collections.templates.find_by(name=vm_name).subcount != 0,
+        num_sec=700, delay=15)
+    return rest_api.collections.templates.get(name=vm_name)

@@ -37,6 +37,7 @@ vm_cloud_filters = [
     re.compile(r'^POST \"\/vm_cloud\/tree_select\/\?id\=ms\-[A-Za-z0-9]*\"$')]
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_providers(ui_worker_pid, soft_assert):
@@ -53,6 +54,7 @@ def test_perf_ui_cloud_providers(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, cloud_provider_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_availability_zones(ui_worker_pid, soft_assert):
@@ -71,6 +73,7 @@ def test_perf_ui_cloud_availability_zones(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, availability_zones_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_tenants(ui_worker_pid, soft_assert):
@@ -89,6 +92,7 @@ def test_perf_ui_cloud_tenants(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, tenants_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_flavors(ui_worker_pid, soft_assert):
@@ -107,6 +111,7 @@ def test_perf_ui_cloud_flavors(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, flavors_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_security_groups(ui_worker_pid, soft_assert):
@@ -125,6 +130,7 @@ def test_perf_ui_cloud_security_groups(ui_worker_pid, soft_assert):
     pages_to_statistics_csv(pages, security_groups_filters, 'ui-statistics.csv')
 
 
+@pytest.mark.tier(3)
 # Currently unskip 1170778 since a large environment is a requirement for this bug
 @pytest.mark.meta(blockers=[BZ(1170778, unblock=True)])
 @pytest.mark.perf_ui_cloud

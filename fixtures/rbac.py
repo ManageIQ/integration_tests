@@ -97,7 +97,7 @@ from cfme.fixtures.pytest_selenium import take_screenshot
 import pytest
 import traceback
 from utils.browser import browser, ensure_browser_open
-from utils import conf
+from utils import conf, testgen
 
 
 enable_rbac = False
@@ -225,7 +225,7 @@ def pytest_generate_tests(metafunc):
 
         else:
             roles = ['default']
-        metafunc.parametrize('rbac_role', roles)
+        testgen.parametrize(metafunc, 'rbac_role', roles)
 
 
 def pytest_addoption(parser):

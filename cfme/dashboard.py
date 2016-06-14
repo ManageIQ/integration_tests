@@ -22,7 +22,8 @@ page = Region(
         'user_dropdown': {
             version.LOWEST: '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
             '5.4': '//nav//ul[contains(@class, "navbar-utility")]'
-                   '/li[contains(@class, "dropdown")]/a'
+                   '/li[contains(@class, "dropdown")]/a',
+            '5.6.0.1': '//nav//a[@id="dropdownMenu2"]',
         }
     },
     identifying_loc='reset_widgets_button')
@@ -52,26 +53,43 @@ def dashboards():
 class Widget(Pretty):
     _name = deferred_verpick({
         version.LOWEST: "//div[@id='{}']//span[contains(@class, 'modtitle_text')]",
-        "5.5": "//div[@id='{}']//h3"})
+        "5.5": "//div[@id='{}']//h3",
+        "5.6": "//div[@id='{}']//h2[contains(@class, 'card-pf-title')]"
+    })
     _remove = "//div[@id='{}']//a[@title='Remove from Dashboard']"
     _minimize = "//div[@id='{}']//a[@title='Minimize']"
     _restore = "//div[@id='{}']//a[@title='Restore']"
-    _footer = "//div[@id='{}']//div[@class='modboxfooter' or contains(@class, 'panel-footer')]"
+    _footer = deferred_verpick({
+        version.LOWEST:
+            "//div[@id='{}']//div[@class='modboxfooter' or contains(@class, 'panel-footer')]",
+        "5.6": "//div[@id='{}']//div[contains(@class, 'card-pf-footer')]"
+    })
     _zoom = "//div[@id='{}']//a[@title='Zoom in on this chart']"
     _zoomed_name = deferred_verpick({
         version.LOWEST: "//div[@id='lightbox_div']//span[contains(@class, 'modtitle_text')]",
-        "5.5": "//div[@id='lightbox_div']//h3"})
+        "5.5": "//div[@id='lightbox_div']//h3"
+    })
     _zoomed_close = deferred_verpick({
         version.LOWEST: "//div[@id='lightbox_div']//a[@title='Close']",
-        "5.5": "//div[@id='lightbox_div']//a[@title='Close']/i"})
+        "5.5": "//div[@id='lightbox_div']//a[@title='Close']/i"
+    })
     _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
     _content = deferred_verpick({
         version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]",
-        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]/div"})
-    _content_type_54 = "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]"
+        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]/div",
+        "5.6": "//div[@id='{}']//div[contains(@class,'card-pf-body')]/div"
+    })
+    _content_type = deferred_verpick({
+        version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]",
+        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]",
+        "5.6": "//div[@id='{}']//div[contains(@class,'card-pf-body')]"
+    })
 
     # 5.5+ updated
-    _menu_opener = "//div[@id='{}']//a[contains(@class, 'dropdown-toggle')]/i"
+    _menu_opener = deferred_verpick({
+        version.LOWEST: "//div[@id='{}']//a[contains(@class, 'dropdown-toggle')]/i",
+        "5.6": "//div[@id='{}']//button[contains(@class, 'dropdown-toggle')]"
+    })
     _menu_container = "//div[@id='{}']//ul[contains(@class, 'dropdown-menu')]"
     _menu_minmax = _menu_container + "/li/a[contains(@id, 'minmax')]"
     _menu_remove = _menu_container + "/li/a[contains(@id, 'close')]"
@@ -92,10 +110,11 @@ class Widget(Pretty):
 
     @property
     def content_type(self):
-        if version.current_version() < "5.4" or self.newer_version:
-            return sel.get_attribute(self._content.format(self._div_id), "class").rsplit(" ", 1)[-1]
+        if version.current_version() <= "5.4":
+            return sel.get_attribute(self._content_type.format(self._div_id), "class").strip()
         else:
-            return sel.get_attribute(self._content_type_54.format(self._div_id), "class").strip()
+            return sel.get_attribute(
+                self._content_type.format(self._div_id), "class").rsplit(" ", 1)[-1]
 
     @property
     def content(self):
@@ -213,6 +232,7 @@ class Widget(Pretty):
     @classmethod
     def all(cls):
         """Returns objects with all Widgets currently present."""
+        sel.force_navigate('dashboard')
         result = []
         for el in sel.elements(cls._all):
             result.append(cls(sel.get_attribute(el, "id")))
@@ -237,6 +257,14 @@ class Widget(Pretty):
     def is_dropdown_menu_opened(self):
         return sel.is_displayed(self._menu_container.format(self._div_id))
 
+    @property
+    def drag_element(self):
+        return sel.element(self._name.format(self._div_id))
+
+    @property
+    def drop_element(self):
+        return sel.element(self._footer.format(self._div_id))
+
     def open_dropdown_menu(self):
         if not sel.is_displayed(self._menu_opener.format(self._div_id)):
             return  # Not a 5.5+
@@ -254,6 +282,9 @@ class Widget(Pretty):
             wait_for(
                 lambda: not self.is_dropdown_menu_opened,
                 num_sec=10, delay=0.2, message="widget dropdown menu closed")
+
+    def drag_and_drop(self, widget):
+        sel.drag_and_drop(self.drag_element, widget.drop_element)
 
 
 class BaseWidgetContent(Pretty):

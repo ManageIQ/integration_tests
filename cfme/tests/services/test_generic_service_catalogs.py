@@ -5,7 +5,6 @@ import pytest
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.rest import service_catalogs as _service_catalogs
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services import requests
@@ -15,38 +14,11 @@ from utils import error
 from utils.log import logger
 from utils.wait import wait_for
 
-
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('logged_in', 'uses_infra_providers'),
-    pytest.mark.ignore_stream("5.2")
+    pytest.mark.tier(2)
 ]
-
-
-@pytest.yield_fixture(scope="function")
-def dialog():
-    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
-    element_data = dict(
-        choose_type="Text Box",
-        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
-        ele_name=fauxfactory.gen_alphanumeric(),
-        ele_desc="my ele desc",
-        default_text_box="default value"
-    )
-    service_dialog = ServiceDialog(label=dialog, description="my dialog", submit=True, cancel=True,
-                     tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
-                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
-    service_dialog.create(element_data)
-    yield dialog
-
-
-@pytest.yield_fixture(scope="function")
-def catalog():
-    cat_name = "cat_" + fauxfactory.gen_alphanumeric()
-    catalog = Catalog(name=cat_name,
-                  description="my catalog")
-    catalog.create()
-    yield catalog
 
 
 @pytest.yield_fixture(scope="function")
@@ -88,8 +60,8 @@ def test_service_circular_reference(catalog_item):
                    display_in=True, catalog=catalog_item.catalog,
                    dialog=catalog_item.dialog)
     sec_catalog_bundle.create([bundle_name])
-    with error.expected("Error during 'Resource Add': Adding resource <%s> to Service <%s> "
-                        "will create a circular reference" % (sec_bundle_name, bundle_name)):
+    with error.expected("Error during 'Resource Add': Adding resource <{}> to Service <{}> "
+                        "will create a circular reference".format(sec_bundle_name, bundle_name)):
         catalog_bundle.update({'description': "edit_desc",
                                'cat_item': sec_catalog_bundle.name})
 
@@ -102,7 +74,7 @@ def test_service_generic_catalog_bundle(catalog_item):
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_bundle)
     flash.assert_no_errors()
-    logger.info('Waiting for cfme provision request for service %s' % bundle_name)
+    logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = bundle_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -126,7 +98,7 @@ def test_bundles_in_bundle(catalog_item):
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, third_catalog_bundle)
     flash.assert_no_errors()
-    logger.info('Waiting for cfme provision request for service %s' % bundle_name)
+    logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = third_bundle_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -134,6 +106,7 @@ def test_bundles_in_bundle(catalog_item):
     assert row.last_message.text == 'Request complete'
 
 
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:7277'])
 def test_delete_dialog_before_parent_item(catalog_item):
     service_dialog = ServiceDialog(label=catalog_item.dialog)
     service_dialog.delete()

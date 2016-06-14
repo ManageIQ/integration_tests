@@ -5,7 +5,7 @@
            Cluster pages.
 """
 
-import ui_navigate as nav
+from cfme.web_ui.menu import nav
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, paginator, toolbar as tb
 from functools import partial
@@ -21,7 +21,7 @@ pol_btn = partial(tb.select, 'Policy')
 
 def nav_to_cluster_through_provider(context):
     sel.force_navigate('infrastructure_provider', context=context)
-    list_acc.select('Relationships', 'Show all managed Clusters')
+    list_acc.select('Relationships', 'Clusters', by_title=False, partial=True)
     sel.click(Quadicon(context['cluster'].name, 'cluster'))
 
 
@@ -97,8 +97,8 @@ class Cluster(Pretty):
     def _on_detail_page(self):
         """ Returns ``True`` if on the cluster detail page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
-            % (self.name, "Summary")
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
+                self.name, "Summary")
         )
 
     @property

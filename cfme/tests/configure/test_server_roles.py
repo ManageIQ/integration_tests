@@ -30,16 +30,17 @@ def roles(request, all_possible_roles):
     return result
 
 
+@pytest.mark.tier(3)
 @pytest.mark.sauce
-@pytest.sel.go_to('dashboard')
 @pytest.mark.uncollectif(lambda: not server_roles_conf["all"])
 def test_server_roles_changing(request, roles):
     """ Test that sets and verifies the server roles in configuration.
 
     If there is no forced interrupt, it cleans after, so the roles are intact after the testing.
-    Todo:
-        - Use for parametrization on more roles set?
-        - Change the yaml role list to dict.
+    Note:
+      TODO:
+      - Use for parametrization on more roles set?
+      - Change the yaml role list to dict.
     """
     request.addfinalizer(partial(configuration.set_server_roles,
                                  **configuration.get_server_roles()))   # For reverting back
@@ -49,6 +50,6 @@ def test_server_roles_changing(request, roles):
     # Get roles and check; use UI because the changes take a while to propagate to DB
     for role, is_enabled in configuration.get_server_roles(db=False).iteritems():
         if is_enabled:
-            assert roles[role], "Role '%s' is selected but should not be" % role
+            assert roles[role], "Role '{}' is selected but should not be".format(role)
         else:
-            assert not roles[role], "Role '%s' is not selected but should be" % role
+            assert not roles[role], "Role '{}' is not selected but should be".format(role)

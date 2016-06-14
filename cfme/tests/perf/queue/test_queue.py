@@ -25,6 +25,7 @@ def enable_candu():
     candu.enable_all()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.usefixtures("setup_infrastructure_providers")
 def test_queue_infrastructure(request, ssh_client, enable_candu):
     local_evm_gz = str(log_path.join('evm.perf.log.gz'))
@@ -36,20 +37,20 @@ def test_queue_infrastructure(request, ssh_client, enable_candu):
         for clean_file in files:
             # Clean up collected log files as they can be huge in case of exception
             if os.path.exists(clean_file):
-                logger.info('Removing: {}'.format(clean_file))
+                logger.info('Removing: %s', clean_file)
                 os.remove(clean_file)
     request.addfinalizer(lambda: clean_up_log_files([local_evm, local_evm_gz, local_top,
         local_top_gz]))
 
     sleep_time = perf_tests['test_queue']['infra_time']
 
-    logger.info('Waiting: {}'.format(sleep_time))
+    logger.info('Waiting: %s', sleep_time)
     time.sleep(sleep_time)
 
     collect_log(ssh_client, 'evm', local_evm_gz)
     collect_log(ssh_client, 'top_output', local_top_gz, strip_whitespace=True)
 
-    logger.info('Calling gunzip {}'.format(local_evm_gz))
+    logger.info('Calling gunzip %s', local_evm_gz)
     subprocess.call(['gunzip', local_evm_gz])
 
     logger.info('Calling gunzip {}'.format(local_top_gz))

@@ -13,6 +13,7 @@ def a_provider():
     return _a_provider()
 
 
+@pytest.mark.tier(2)
 def test_provider_refresh(request, a_provider, rest_api):
     """Test checking that refresh invoked from the REST API works.
     It provisions a VM when the Provider inventory functionality is disabled, then the functionality
@@ -60,6 +61,7 @@ def test_provider_refresh(request, a_provider, rest_api):
         vm.action.delete()
 
 
+@pytest.mark.tier(2)
 def test_provider_edit(request, a_provider, rest_api):
     """Test editing a provider using REST API.
     Prerequisities:
@@ -82,6 +84,7 @@ def test_provider_edit(request, a_provider, rest_api):
     assert provider_rest.name == new_name
 
 
+@pytest.mark.tier(2)
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["delete_from_detail", "delete_from_collection"])

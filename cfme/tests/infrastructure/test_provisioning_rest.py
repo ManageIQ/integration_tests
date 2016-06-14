@@ -5,23 +5,19 @@ from utils.wait import wait_for
 from utils import mgmt_system, testgen
 
 
-pytest_generate_tests = testgen.generate(
-    testgen.provider_by_type,
-    ['virtualcenter', 'rhevm'],
-    "small_template",
-    scope="module"
-)
+pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter', 'rhevm'],
+    scope="module")
 
 
 @pytest.fixture(scope="module")
-def provision_data(rest_api_modscope, provider, small_template):
-    templates = rest_api_modscope.collections.templates.find_by(name=small_template)
+def provision_data(rest_api_modscope, provider, small_template_modscope):
+    templates = rest_api_modscope.collections.templates.find_by(name=small_template_modscope)
     for template in templates:
         if template.ems.name == provider.data["name"]:
             guid = template.guid
             break
     else:
-        raise Exception("No such template {} on provider!".format(small_template))
+        raise Exception("No such template {} on provider!".format(small_template_modscope))
     result = {
         "version": "1.1",
         "template_fields": {
@@ -57,6 +53,7 @@ def provision_data(rest_api_modscope, provider, small_template):
 
 # Here also available the ability to create multiple provision request, but used the save
 # href and method, so it doesn't make any sense actually
+@pytest.mark.tier(2)
 @pytest.mark.meta(server_roles="+automate")
 @pytest.mark.usefixtures("setup_provider")
 def test_provision(request, provision_data, provider, rest_api):

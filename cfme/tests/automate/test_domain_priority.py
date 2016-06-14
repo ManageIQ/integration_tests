@@ -9,10 +9,6 @@ from cfme.automate.simulation import simulate
 from utils.update import update
 from utils.wait import wait_for
 
-pytestmark = [
-    pytest.mark.ignore_stream("5.2")
-]
-
 
 FILE_LOCATION = "/var/www/miq/vmdb/test_ae_{}".format(fauxfactory.gen_alphanumeric(16))
 
@@ -92,6 +88,7 @@ def original_instance(request, original_method, original_domain, original_class)
 
 
 @pytest.mark.meta(blockers=[1254055], server_roles=["+automate"])
+@pytest.mark.tier(2)
 def test_priority(
         request, ssh_client, original_method, original_instance, original_domain, copy_domain,
         original_method_write_data, copy_method_write_data):

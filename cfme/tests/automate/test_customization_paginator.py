@@ -34,6 +34,7 @@ def get_relevant_rows(table):
 
 
 @pytest.mark.meta(blocks=[1125230, 1205235])
+@pytest.mark.tier(3)
 def test_paginator(some_dialogs, soft_assert):
     """ This test tests weird behaviour of the paginator in Service dialogs.
 

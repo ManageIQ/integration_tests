@@ -24,7 +24,8 @@ def pytest_addoption(parser):
     group = parser.getgroup('cfme')
     for dest, cmdline_opt in skip_marks:
         group.addoption(cmdline_opt, dest=dest, action='store_true', default=False,
-            help="Run tests with the 'pytest.mark.%s' mark, which are skipped by default" % dest)
+            help="Run tests with the 'pytest.mark.{}' mark, which are skipped by default"
+            .format(dest))
 
 
 def pytest_configure(config):
@@ -39,8 +40,8 @@ def pytest_configure(config):
         if dest in mark_expr and ignore_mark:
             # If the mark is in the mark expression already and the commandline flag exists,
             # report the conflict to the terminal
-            store.terminalreporter.write_line('%s already in cmdline mark expression, '
-                '%s flag ignored' % (dest, cmdline_opt), yellow=True)
+            store.terminalreporter.write_line('{} already in cmdline mark expression, '
+                '{} flag ignored'.format(dest, cmdline_opt), yellow=True)
             continue
         elif dest in mark_expr or ignore_mark:
             # No need to log anything if there's no mark_expr / commandline flag conflict
@@ -49,12 +50,12 @@ def pytest_configure(config):
             marks_to_skip.append(dest)
 
     # Build all the marks to skip into one flat mark expression rather than nesting
-    skip_mark_expr = ' and '.join(['not %s' % mark for mark in marks_to_skip])
+    skip_mark_expr = ' and '.join(['not {}'.format(mark) for mark in marks_to_skip])
 
     # modify (or set) the mark expression to exclude tests as configured by the commandline flags
     if skip_mark_expr:
         if config.option.markexpr:
-            config.option.markexpr = '(%s) and (%s)' % (skip_mark_expr, config.option.markexpr)
+            config.option.markexpr = '({}) and ({})'.format(skip_mark_expr, config.option.markexpr)
         else:
             config.option.markexpr = skip_mark_expr
 

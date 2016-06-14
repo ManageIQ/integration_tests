@@ -6,6 +6,7 @@ from cfme.infrastructure import host, datastore, cluster, resource_pool
 from cfme.web_ui import Region
 from utils import testgen
 
+pytestmark = [pytest.mark.tier(3)]
 
 details_page = Region(infoblock_type='detail')
 

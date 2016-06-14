@@ -2,8 +2,7 @@ from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui.menu import nav
-
-from . import list_tbl, pol_btn
+from . import list_tbl, pol_btn, details_page
 
 nav.add_branch(
     'containers_containers',
@@ -36,6 +35,10 @@ class Container(Taggable):
         self.name = name
         self.pod = pod
 
+    def _on_detail_page(self):
+        return sel.is_displayed(
+            '//div//h1[contains(., "{} (Summary)")]'.format(self.name))
+
     def load_details(self, refresh=False):
         if not self._on_detail_page():
             self.navigate(detail=True)
@@ -45,8 +48,13 @@ class Container(Taggable):
     def navigate(self, detail=True):
         if detail is True:
             if not self._on_detail_page():
-                sel.force_navigate('containers_pod_detail',
-                    context={'container': self, 'pod': self.pod})
+                sel.force_navigate(
+                    'containers_container_detail', context={
+                        'container': self, 'pod': self.pod})
         else:
-            sel.force_navigate('containers_pod',
-                context={'container': self, 'pod': self.pod})
+            sel.force_navigate('containers_container',
+                               context={'container': self, 'pod': self.pod})
+
+    def click_element(self, *ident):
+        self.load_details(refresh=True)
+        return sel.click(details_page.infoblock.element(*ident))

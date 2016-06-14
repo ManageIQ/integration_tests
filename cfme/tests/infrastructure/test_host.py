@@ -13,7 +13,10 @@ from cfme.web_ui import Quadicon, fill
 from utils import testgen
 from utils import version
 
-pytestmark = [pytest.mark.meta(blockers=[1296258])]
+pytestmark = [
+    pytest.mark.meta(blockers=[1296258]),
+    pytest.mark.tier(3),
+]
 
 
 def config_option():
@@ -22,31 +25,25 @@ def config_option():
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without multiple hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'hosts')
-    argnames = argnames + ['host_list']
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=["hosts"])
 
     new_argvalues = []
     new_idlist = []
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
-        if not args['hosts']:
-            # No host data available
-            continue
+        hosts = args['provider'].data.get('hosts', {})
 
-        if len(args['hosts']) < 2:
+        if len(hosts) < 2:
             continue
-
-        host_list = [host['name'] for host in args['hosts']]
 
         new_idlist.append(idlist[i])
-        argvalues[i].append(host_list)
         new_argvalues.append(argvalues[i])
 
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 # Tests to automate BZ 1201092
-def test_multiple_host_good_creds(setup_provider, provider, hosts, host_list):
+def test_multiple_host_good_creds(setup_provider, provider):
     """  Tests multiple host credentialing  with good credentials """
 
     sel.force_navigate('infrastructure_provider', context={'provider': provider})
@@ -57,7 +54,7 @@ def test_multiple_host_good_creds(setup_provider, provider, hosts, host_list):
             sel.check(quad.checkbox())
     tb.select("Configuration", config_option())
 
-    cfme_host = random.choice(provider.get_yaml_data()["hosts"])
+    cfme_host = random.choice(provider.data["hosts"])
     cred = cfme_host['credentials']
     creds = conf.credentials[cred]
     fill(credential_form, {'default_principal': creds['username'],
@@ -72,7 +69,7 @@ def test_multiple_host_good_creds(setup_provider, provider, hosts, host_list):
     flash.assert_message_match('Credentials/Settings saved successfully')
 
 
-def test_multiple_host_bad_creds(setup_provider, provider, hosts, host_list):
+def test_multiple_host_bad_creds(setup_provider, provider):
     """    Tests multiple host credentialing with bad credentials """
 
     sel.force_navigate('infrastructure_provider', context={'provider': provider})
@@ -83,7 +80,7 @@ def test_multiple_host_bad_creds(setup_provider, provider, hosts, host_list):
             sel.check(quad.checkbox())
     tb.select("Configuration", config_option())
 
-    cfme_host = random.choice(provider.get_yaml_data()["hosts"])
+    cfme_host = random.choice(provider.data["hosts"])
     creds = conf.credentials['bad_credentials']
     fill(credential_form, {'default_principal': creds['username'],
                            'default_secret': creds['password'],

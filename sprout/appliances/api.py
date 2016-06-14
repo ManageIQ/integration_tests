@@ -492,7 +492,7 @@ def task_result(task_id):
 def appliance_provider_type(user, appliance):
     """Return appliance's provider class.
 
-    Corresponds to the mgmt_system class names.
+    Corresponds to the mgmtsystem class names.
 
     You can specify appliance by IP address, id or name.
     """

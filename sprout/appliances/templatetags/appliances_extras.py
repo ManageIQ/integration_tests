@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django import template
 from django.utils.safestring import mark_safe
+from appliances.models import Appliance
 
 register = template.Library()
 
@@ -19,3 +20,12 @@ def progress(value):
 @register.filter
 def keyvalue(d, k):
     return d[k]
+
+
+@register.filter(is_safe=True)
+def power_icon(power_state):
+    if power_state not in Appliance.POWER_ICON_MAPPING:
+        return power_state
+    else:
+        return mark_safe('<span class="glyphicon glyphicon-{}" title="{}"></span>'.format(
+            Appliance.POWER_ICON_MAPPING[power_state], power_state))

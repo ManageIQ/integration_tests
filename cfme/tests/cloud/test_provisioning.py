@@ -8,9 +8,9 @@ from textwrap import dedent
 
 from cfme.automate import explorer as automate
 from cfme.cloud.instance import Instance
-from cfme.cloud.provider import OpenStackProvider
+from cfme.cloud.provider import (OpenStackProvider, AzureProvider)
 from cfme.fixtures import pytest_selenium as sel
-from utils import testgen, version
+from utils import testgen
 from utils.update import update
 from utils.wait import wait_for
 
@@ -18,43 +18,27 @@ pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
 def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
-
-    new_argvalues = []
-    new_idlist = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # Don't know what type of instance to provision, move on
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'image'}.issubset(args['provisioning'].viewkeys()):
-            # Need image for image -> instance provisioning
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append([args[argname] for argname in argnames])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="function")
+    argnames, argvalues, idlist = testgen.cloud_providers(metafunc,
+        required_fields=[['provisioning', 'image']])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
 
 
 @pytest.fixture(scope="function")
 def vm_name(request):
-    vm_name = 'test_image_prov_%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_image_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
-def test_provision_from_template(request, setup_provider, provider, provisioning, vm_name):
+@pytest.mark.tier(2)
+def test_provision_from_template(request, setup_provider, provider, vm_name, provisioning):
     """ Tests instance provision from template
 
     Metadata:
         test_flag: provision
     """
     image = provisioning['image']['name']
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider.key))
+    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
+        image, vm_name, provider.key))
 
     instance = Instance.factory(vm_name, provider, image)
 
@@ -74,13 +58,20 @@ def test_provision_from_template(request, setup_provider, provider, provisioning
     if isinstance(provider, OpenStackProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
 
+    if isinstance(provider, AzureProvider):
+        inst_args['environment__cloud_network'] = provisioning['cloud_network']
+        inst_args['environment__cloud_subnet'] = provisioning['cloud_subnet']
+        inst_args['environment__security_groups'] = provisioning['security_group']
+        inst_args['environment__resource_group'] = provisioning['resource_group']
+        inst_args['hardware__instance_type'] = provisioning['vm_size']
+
     sel.force_navigate("clouds_instances_by_provider")
     instance.create(**inst_args)
 
 
-@pytest.mark.ignore_stream("5.2")
+@pytest.mark.tier(2)
 def test_provision_from_template_using_rest(
-        request, setup_provider, provider, provisioning, vm_name, rest_api):
+        request, setup_provider, provider, vm_name, rest_api, provisioning):
     """ Tests provisioning from a template using the REST API.
 
     Metadata:
@@ -154,16 +145,14 @@ VOLUME_METHOD = ("""
 prov = $evm.root["miq_provision"]
 prov.set_option(
     :clone_options,
-    {:block_device_mapping => [%s]})
+    {{ :block_device_mapping => [{}] }})
 """)
 
-ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
+ONE_FIELD = """{{:volume_id => "{}", :device_name => "{}"}}"""
 
 
 @pytest.fixture(scope="module")
 def domain(request):
-    if version.current_version() < "5.3":
-        return None
     domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
@@ -194,22 +183,21 @@ def copy_domains(domain):
 
 
 # Not collected for EC2 in generate_tests above
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-@pytest.mark.ignore_stream("5.2")
 def test_provision_from_template_with_attached_disks(
-        request, setup_provider, provider, provisioning, vm_name,
+        request, setup_provider, provider, vm_name, provisioning,
         disks, soft_assert, domain, cls, copy_domains):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:
         test_flag: provision
     """
-
     image = provisioning['image']['name']
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider.key))
+    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
+        image, vm_name, provider.key))
 
     DEVICE_NAME = "/dev/sd{}"
     device_mapping = []
@@ -230,8 +218,8 @@ def test_provision_from_template_with_attached_disks(
         with update(method):
             disk_mapping = []
             for mapping in device_mapping:
-                disk_mapping.append(ONE_FIELD % mapping)
-            method.data = VOLUME_METHOD % ", ".join(disk_mapping)
+                disk_mapping.append(ONE_FIELD.format(mapping))
+            method.data = VOLUME_METHOD.format(", ".join(disk_mapping))
 
         def _finish_method():
             with update(method):
@@ -265,20 +253,19 @@ def test_provision_from_template_with_attached_disks(
 
 
 # Not collected for EC2 in generate_tests above
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1160342])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-@pytest.mark.ignore_stream("5.2")
-def test_provision_with_boot_volume(request, setup_provider, provider, provisioning, vm_name,
-        soft_assert, domain, copy_domains):
+def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
+        soft_assert, domain, copy_domains, provisioning):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
         test_flag: provision, volumes
     """
-
     image = provisioning['image']['name']
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider.key))
+    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
+        image, vm_name, provider.key))
 
     with provider.mgmt.with_volume(1, imageRef=provider.mgmt.get_template_id(image)) as volume:
         # Set up automate
@@ -292,19 +279,19 @@ def test_provision_with_boot_volume(request, setup_provider, provider, provision
         with update(method):
             method.data = dedent('''\
                 $evm.root["miq_provision"].set_option(
-                    :clone_options, {
+                    :clone_options, {{
                         :image_ref => nil,
-                        :block_device_mapping_v2 => [{
+                        :block_device_mapping_v2 => [{{
                             :boot_index => 0,
-                            :uuid => "%s",
+                            :uuid => "{}",
                             :device_name => "vda",
                             :source_type => "volume",
                             :destination_type => "volume",
                             :delete_on_termination => false
-                        }]
-                    }
+                        }}]
+                    }}
                 )
-            ''' % (volume, ))
+            '''.format(volume))
 
         def _finish_method():
             with update(method):
@@ -336,21 +323,20 @@ def test_provision_with_boot_volume(request, setup_provider, provider, provision
 
 
 # Not collected for EC2 in generate_tests above
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1186413])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-@pytest.mark.ignore_stream("5.2")
-def test_provision_with_additional_volume(request, setup_provider, provisioning, provider,
-                                          vm_name, soft_assert, copy_domains, domain):
+def test_provision_with_additional_volume(request, setup_provider, provider, vm_name,
+        soft_assert, copy_domains, domain, provisioning):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
     Metadata:
         test_flag: provision, volumes
     """
-
     image = provisioning['image']['name']
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider.key))
+    note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
+        image, vm_name, provider.key))
 
     # Set up automate
     cls = automate.Class(
@@ -367,20 +353,20 @@ def test_provision_with_additional_volume(request, setup_provider, provisioning,
     with update(method):
         method.data = dedent('''\
             $evm.root["miq_provision"].set_option(
-              :clone_options, {
+              :clone_options, {{
                 :image_ref => nil,
-                :block_device_mapping_v2 => [{
+                :block_device_mapping_v2 => [{{
                   :boot_index => 0,
-                  :uuid => "%s",
+                  :uuid => "{}",
                   :device_name => "vda",
                   :source_type => "image",
                   :destination_type => "volume",
                   :volume_size => 3,
                   :delete_on_termination => false
-                }]
-              }
+                }}]
+              }}
         )
-        ''' % (image_id, ))
+        '''.format(image_id))
 
     def _finish_method():
         with update(method):

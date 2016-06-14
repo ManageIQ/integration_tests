@@ -20,7 +20,8 @@ def main():
 
     status = ip_a.precompile_assets()
     if status == 0:
-        print("CFME UI worker restarted, UI should be available shortly")
+        ip_a.restart_evm_service()
+        print("EVM service restarted, UI should be available shortly")
     return status
 
 if __name__ == '__main__':

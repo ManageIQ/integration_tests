@@ -23,9 +23,10 @@ import sys
 from urlparse import urlparse
 
 from _pytest.terminal import TerminalReporter
+from cached_property import cached_property
 from py.io import TerminalWriter
 
-from utils import conf, diaper, lazycache, property_or_none
+from utils import conf, diaper, property_or_none
 from utils.log import logger
 
 
@@ -89,7 +90,10 @@ class Store(object):
     def current_appliance(self):
         if not self._current_appliance:
             from utils.appliance import IPAppliance
-            self._current_appliance.append(IPAppliance(urlparse(conf.env['base_url'])))
+            base_url = conf.env['base_url']
+            if base_url is None or str(base_url.lower()) == 'none':
+                raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
+            self._current_appliance.append(IPAppliance(urlparse(base_url)))
         return self._current_appliance[-1]
 
     @property
@@ -152,7 +156,7 @@ class Store(object):
     def slave_manager(self):
         return self.pluginmanager.getplugin('slave_manager')
 
-    @lazycache
+    @cached_property
     def my_ip_address(self):
         try:
             # Check the environment first

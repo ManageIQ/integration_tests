@@ -10,6 +10,17 @@ from collections import Mapping
 from functools import partial
 from operator import methodcaller
 
+from mgmtsystem.virtualcenter import VMWareSystem
+from mgmtsystem.azure import AzureSystem
+from mgmtsystem.scvmm import SCVMMSystem
+from mgmtsystem.ec2 import EC2System
+from mgmtsystem.google import GoogleCloudSystem
+from mgmtsystem.openstack import OpenstackSystem
+from mgmtsystem.kubernetes import Kubernetes
+from mgmtsystem.openshift import Openshift
+from mgmtsystem.openstack_infra import OpenstackInfraSystem
+from mgmtsystem.hawkular import Hawkular
+
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 from cfme.web_ui import Quadicon, paginator, toolbar
@@ -18,37 +29,47 @@ from cfme.exceptions import UnknownProviderType
 from cfme.containers.provider import KubernetesProvider, OpenshiftProvider
 from cfme.infrastructure.provider import (
     OpenstackInfraProvider, RHEVMProvider, VMwareProvider, SCVMMProvider)
+from cfme.middleware.provider import HawkularProvider
 from fixtures.prov_filter import filtered
-from utils import conf, mgmt_system, version
+from utils import conf, version
+from utils.mgmt_system import RHEVMSystem
 from utils.log import logger, perflog
 from utils.wait import wait_for
 
-#: mapping of infra provider type names to :py:mod:`utils.mgmt_system` classes
+#: mapping of infra provider type names to ``mgmtsystem`` classes
 infra_provider_type_map = {
-    'virtualcenter': mgmt_system.VMWareSystem,
-    'rhevm': mgmt_system.RHEVMSystem,
-    'scvmm': mgmt_system.SCVMMSystem,
-    'openstack-infra': mgmt_system.OpenstackInfraSystem,
+    'virtualcenter': VMWareSystem,
+    'rhevm': RHEVMSystem,
+    'scvmm': SCVMMSystem,
+    'openstack-infra': OpenstackInfraSystem,
 }
 
-#: mapping of cloud provider type names to :py:mod:`utils.mgmt_system` classes
+#: mapping of cloud provider type names to ``mgmtsystem`` classes
 cloud_provider_type_map = {
-    'ec2': mgmt_system.EC2System,
-    'openstack': mgmt_system.OpenstackSystem,
+    'azure': AzureSystem,
+    'ec2': EC2System,
+    'openstack': OpenstackSystem,
+    'gce': GoogleCloudSystem,
 }
 
-#: mapping of container provider type names to :py:mod:`utils.mgmt_system` classes
+#: mapping of container provider type names to ``mgmtsystem`` classes
 container_provider_type_map = {
-    'kubernetes': mgmt_system.Kubernetes,
-    'openshift': mgmt_system.Openshift
+    'kubernetes': Kubernetes,
+    'openshift': Openshift
 }
 
-#: mapping of all provider type names to :py:mod:`utils.mgmt_system` classes
-provider_type_map = dict(
-    infra_provider_type_map.items()
-    + cloud_provider_type_map.items()
-    + container_provider_type_map.items()
-)
+#: mapping of middleware provider type names to ``mgmtsystem`` classes
+middleware_provider_type_map = {
+    'hawkular': Hawkular,
+}
+
+
+#: mapping of all provider type names to ``mgmtsystem`` classes
+provider_type_map = {}
+provider_type_map.update(infra_provider_type_map)
+provider_type_map.update(cloud_provider_type_map)
+provider_type_map.update(container_provider_type_map)
+provider_type_map.update(middleware_provider_type_map)
 
 providers_data = conf.cfme_data.get("management_systems", {})
 
@@ -67,7 +88,7 @@ def list_providers(allowed_types):
         provider_type = data.get("type", None)
         if provider not in filtered:
             continue
-        assert provider_type is not None, "Provider %s has no type specified!" % provider
+        assert provider_type is not None, "Provider {} has no type specified!".format(provider)
         if provider_type in allowed_types:
             providers.append(provider)
     return providers
@@ -80,6 +101,9 @@ list_cloud_providers = partial(list_providers, cloud_provider_type_map.keys())
 
 #: function that returns a list of container provider keys in cfme_data
 list_container_providers = partial(list_providers, container_provider_type_map.keys())
+
+#: function that returns a list of middleware provider keys in cfme_data
+list_middleware_providers = partial(list_providers, middleware_provider_type_map.keys())
 
 #: function that returns a list of all provider keys in cfme_data
 list_all_providers = partial(list_providers, provider_type_map.keys())
@@ -97,9 +121,13 @@ def is_container_provider(provider_key):
     return provider_key in list_container_providers()
 
 
+def is_middleware_provider(provider_key):
+    return provider_key in list_middleware_providers()
+
+
 def get_mgmt(provider_key, providers=None, credentials=None):
     """
-    Provides a :py:mod:`utils.mgmt_system` object, based on the request.
+    Provides a ``mgmtsystem`` object, based on the request.
 
     Args:
         provider_key: The name of a provider, as supplied in the yaml configuration files.
@@ -109,7 +137,7 @@ def get_mgmt(provider_key, providers=None, credentials=None):
             locations. Expects a dict.
         credentials: A set of credentials in the same format as the ``credentials`` yamls files.
             If ``None`` then credentials are loaded from the default locations. Expects a dict.
-    Return: A provider instance of the appropriate :py:class:`utils.mgmt_system.MgmtSystemAPIBase`
+    Return: A provider instance of the appropriate ``mgmtsystem.MgmtSystemAPIBase``
         subclass
     """
     if providers is None:
@@ -120,7 +148,12 @@ def get_mgmt(provider_key, providers=None, credentials=None):
         provider = providers[provider_key]
 
     if credentials is None:
-        credentials = conf.credentials[provider['credentials']]
+        # We need to handle the in-place credentials
+        credentials = provider['credentials']
+        # If it is not a mapping, it most likely points to a credentials yaml (as by default)
+        if not isinstance(credentials, Mapping):
+            credentials = conf.credentials[credentials]
+        # Otherwise it is a mapping and therefore we consider it credentials
 
     # Munge together provider dict and creds,
     # Let the provider do whatever they need with them
@@ -142,14 +175,14 @@ def get_provider_key(provider_name):
 
 
 def get_mgmt_by_name(provider_name, *args, **kwargs):
-    """Provides a :py:mod:`utils.mgmt_system` object, based on the request.
+    """Provides a ``mgmtsystem`` object, based on the request.
 
     For detailed parameter description, refer to the :py:func:`get_mgmt` (except its
     `provider_key` parameter)
 
     Args:
         provider_name: 'Nice' provider name (name field from provider's YAML entry)
-    Return: A provider instance of the appropriate :py:class:`utils.mgmt_system.MgmtSystemAPIBase`
+    Return: A provider instance of the appropriate ``mgmtsystem``
         subclass
     """
     return get_mgmt(get_provider_key(provider_name), *args, **kwargs)
@@ -162,7 +195,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     Does some counter-badness measures.
 
     Args:
-        prov_class: "infra", "cloud" or "container"
+        prov_class: "infra", "cloud", "container" or "middleware"
         prov_type: "ec2", "virtualcenter" or any other valid type
         validate: Whether to validate the provider.
         check_existing: Whether to check if the provider already exists.
@@ -170,13 +203,16 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     """
     if not required_keys:
         required_keys = []
-    if prov_class in ("infra", "cloud", "container"):
+    if prov_class in {'infra', 'cloud', 'container', 'middleware'}:
         if prov_class == "infra":
             potential_providers = list_infra_providers()
         elif prov_class == "cloud":
             potential_providers = list_cloud_providers()
-        else:
+        elif prov_class == 'container':
             potential_providers = list_container_providers()
+        elif prov_class == 'middleware':
+            potential_providers = list_middleware_providers()
+        # else not required because guarded by if
         if prov_type:
             providers = []
             for provider in potential_providers:
@@ -295,7 +331,7 @@ def setup_provider(provider_key, validate=True, check_existing=True):
         # pass so we don't skip the validate step
         pass
     else:
-        logger.info('Setting up provider: %s' % provider.key)
+        logger.info('Setting up provider: %s', provider.key)
         provider.create(validate_credentials=True)
 
     if validate:
@@ -332,6 +368,8 @@ def setup_providers(prov_classes=('cloud', 'infra'), validate=True, check_existi
         added_providers.extend(setup_infrastructure_providers(**setup_kwargs))
     if 'container' in prov_classes:
         added_providers.extend(setup_container_providers(**setup_kwargs))
+    if 'middleware' in prov_classes:
+        added_providers.extend(setup_middleware_providers(**setup_kwargs))
 
     if validate:
         map(methodcaller('validate'), added_providers)
@@ -345,7 +383,7 @@ def _setup_providers(prov_class, validate, check_existing):
     """Helper to set up all cloud, infra or container providers, and then validate them
 
     Args:
-        prov_class: Provider class - 'cloud, 'infra' or 'container' (a string)
+        prov_class: Provider class - 'cloud, 'infra', 'container' or 'middleware' (a string)
         validate: see description in :py:func:`setup_provider`
         check_existing: see description in :py:func:`setup_provider`
 
@@ -369,7 +407,12 @@ def _setup_providers(prov_class, validate, check_existing):
             'navigate': 'containers_providers',
             'quad': None,
             'list': list_container_providers
-        }
+        },
+        'middleware': {
+            'navigate': 'middleware_providers',
+            'quad': None,
+            'list': list_middleware_providers
+        },
     }
     # Check for existing providers all at once, to prevent reloading
     # the providers page for every provider in cfme_data
@@ -383,7 +426,7 @@ def _setup_providers(prov_class, validate, check_existing):
             quad = Quadicon(provider_name, options_map[prov_class]['quad'])
             for page in paginator.pages():
                 if sel.is_displayed(quad):
-                    logger.debug('Provider "%s" exists, skipping' % provider_key)
+                    logger.debug('Provider %s exists, skipping', provider_key)
                     break
             else:
                 add_providers.append(provider_key)
@@ -392,7 +435,7 @@ def _setup_providers(prov_class, validate, check_existing):
         add_providers = options_map[prov_class]['list']()
 
     if add_providers:
-        logger.info('Providers to be added: %s' % ', '.join(add_providers))
+        logger.info('Providers to be added: %s', ', '.join(add_providers))
 
     # Save the provider objects for validation and return
     added_providers = []
@@ -452,6 +495,21 @@ def setup_container_providers(validate=True, check_existing=True):
     return _setup_providers('container', validate, check_existing)
 
 
+def setup_middleware_providers(validate=True, check_existing=True):
+    """Run :py:func:`setup_middleware_provider` for every middleware provider
+
+    Args:
+        validate: see description in :py:func:`setup_provider`
+        check_existing: see description in :py:func:`setup_provider`
+
+
+    Returns:
+        An list of :py:class:`cfme.middleware.provider.HawkularProvider` instances.
+
+    """
+    return _setup_providers('middleware', validate, check_existing)
+
+
 def clear_cloud_providers(validate=True):
     sel.force_navigate('clouds_providers')
     logger.debug('Checking for existing cloud providers...')
@@ -497,6 +555,23 @@ def clear_container_providers(validate=True):
             wait_for_no_container_providers()
 
 
+def clear_middleware_providers(validate=True):
+    sel.force_navigate('middleware_providers')
+    total = paginator.rec_total()
+    if total > 0:
+        logger.info(' Providers exist, so removing all middleware providers')
+        # TODO: Fix.
+        # TEXT: "Items per page" hidden and failed to click paginator items drop down selection
+        # For the moment allow it go with default value 20
+        # paginator.results_per_page('100')
+        sel.click(paginator.check_all())
+        toolbar.select('Configuration', 'Remove Middleware Providers from the VMDB',
+                       invokes_alert=True)
+        sel.handle_alert()
+        if validate:
+            wait_for_no_middleware_providers()
+
+
 def get_paginator_value():
     return paginator.rec_total()
 
@@ -522,6 +597,13 @@ def wait_for_no_container_providers():
              num_sec=1000, fail_func=sel.refresh)
 
 
+def wait_for_no_middleware_providers():
+    sel.force_navigate('middleware_providers')
+    logger.debug('Waiting for all middleware providers to disappear...')
+    wait_for(lambda: get_paginator_value() == 0, message="Delete all middleware providers",
+             num_sec=1000, fail_func=sel.refresh)
+
+
 def clear_providers():
     """Rudely clear all providers on an appliance
 
@@ -534,10 +616,14 @@ def clear_providers():
     clear_infra_providers(validate=False)
     if version.current_version() > '5.5':
         clear_container_providers(validate=False)
+    if version.current_version() == version.LATEST:
+        clear_middleware_providers(validate=False)
     wait_for_no_cloud_providers()
     wait_for_no_infra_providers()
     if version.current_version() > '5.5':
         wait_for_no_container_providers()
+    if version.current_version() == version.LATEST:
+        wait_for_no_middleware_providers()
     perflog.stop('utils.providers.clear_providers')
 
 
@@ -558,19 +644,91 @@ def destroy_vm(provider_mgmt, vm_name):
                 logger.error('Destroying VM %s failed for unknown reasons', vm_name)
             return vm_deleted
     except Exception as e:
-        logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, e.message)
+        logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, str(e))
+
+
+def get_credentials(credential_dict, cred_type=None):
+    """Processes a credential dictionary into a credential object.
+
+    Args:
+        credential_dict: A credential dictionary.
+        cred_type: Type of credential (None, token, ssh, amqp, ...)
+
+    Returns:
+        A :py:class:`BaseProvider.Credential` instance.
+    """
+    domain = credential_dict.get('domain', None)
+    token = credential_dict.get('token', None)
+    service_account = credential_dict.get('service_account', None)
+    if service_account:
+        service_account = gce_service_account_formating(service_account)
+    return BaseProvider.Credential(
+        principal=credential_dict['username'],
+        secret=credential_dict['password'],
+        cred_type=cred_type,
+        domain=domain,
+        token=token,
+        service_account=service_account)
+
+
+def gce_service_account_formating(data):
+    service_data = '''
+      "type": "{type}",
+      "project_id": "{project}",
+      "private_key_id": "{private_key_id}",
+      "private_key": "{private_key}",
+      "client_email": "{email}",
+      "client_id": "{client}",
+      "auth_uri": "{auth}",
+      "token_uri": "{token}",
+      "auth_provider_x509_cert_url": "{auth_provider}",
+      "client_x509_cert_url": "{cert_url}"
+    '''.format(
+        type=data.get('type'),
+        project=data.get('project_id'),
+        private_key_id=data.get('private_key_id'),
+        private_key=data.get('private_key').replace('\n', '\\n'),
+        email=data.get('client_email'),
+        client=data.get('client_id'),
+        auth=data.get('auth_uri'),
+        token=data.get('token_uri'),
+        auth_provider=data.get('auth_provider_x509_cert_url'),
+        cert_url=data.get('client_x509_cert_url'))
+    return '{' + service_data + '}'
 
 
 def get_credentials_from_config(credential_config_name, cred_type=None):
+    """Retrieves the credential by its name from the credentials yaml.
+
+    Args:
+        credential_config_name: The name of the credential in the credentials yaml.
+        cred_type: Type of credential (None, token, ssh, amqp, ...)
+
+    Returns:
+        A :py:class:`BaseProvider.Credential` instance.
+    """
     creds = conf.credentials[credential_config_name]
-    domain = creds.get('domain', None)
-    token = creds.get('token', None)
-    return BaseProvider.Credential(
-        principal=creds['username'],
-        secret=creds['password'],
-        cred_type=cred_type,
-        domain=domain,
-        token=token)
+    return get_credentials(creds, cred_type=cred_type)
+
+
+def process_credential_yaml_key(cred_yaml_key, cred_type=None):
+    """Function that detects if it needs to look up credentials in the credential yaml and acts
+    as expected.
+
+    If you pass a dictionary, it assumes it does not need to look up in the credentials yaml file.
+    If anything else is passed, it continues with looking up the credentials in the yaml file.
+
+    Args:
+        cred_yaml_key: Either a string pointing to the credentials.yaml or a dictionary which is
+            considered as the credentials.
+
+    Returns:
+        :py:class:`BaseProvider.Credentials` instance
+    """
+    if isinstance(cred_yaml_key, dict):
+        return get_credentials(cred_yaml_key, cred_type=cred_type)
+    else:
+        return get_credentials_from_config(cred_yaml_key, cred_type=cred_type)
 
 
 def get_crud(provider_config_name):
@@ -584,7 +742,8 @@ def get_crud(provider_config_name):
     """
 
     prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
-    credentials = get_credentials_from_config(prov_config['credentials'])
+    credentials_key = prov_config['credentials']
+    credentials = process_credential_yaml_key(credentials_key)
     prov_type = prov_config.get('type')
 
     if prov_type != 'ec2':
@@ -601,13 +760,34 @@ def get_crud(provider_config_name):
             credentials={'default': credentials},
             zone=prov_config['server_zone'],
             key=provider_config_name)
+    if prov_type == 'gce':
+        from cfme.cloud.provider import GCEProvider
+        ser_acc_creds = get_credentials_from_config(
+            prov_config['credentials'], cred_type='service_account')
+        return GCEProvider(name=prov_config['name'],
+            project=prov_config['project'],
+            zone=prov_config['zone'],
+            region=prov_config['region'],
+            credentials={'default': ser_acc_creds},
+            key=provider_config_name)
+    elif prov_type == 'azure':
+        from cfme.cloud.provider import AzureProvider
+        return AzureProvider(name=prov_config['name'],
+            region=prov_config['region'],
+            tenant_id=prov_config['tenant_id'],
+            credentials={'default': credentials},
+            key=provider_config_name)
     elif prov_type == 'openstack':
         from cfme.cloud.provider import OpenStackProvider
+        credentials_dict = {'default': credentials}
+        if 'amqp_credentials' in prov_config:
+            credentials_dict['amqp'] = process_credential_yaml_key(
+                prov_config['amqp_credentials'], cred_type='amqp')
         return OpenStackProvider(name=prov_config['name'],
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
             api_port=prov_config['port'],
-            credentials={'default': credentials},
+            credentials=credentials_dict,
             zone=prov_config['server_zone'],
             key=provider_config_name,
             sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
@@ -633,17 +813,15 @@ def get_crud(provider_config_name):
             sec_protocol=prov_config['sec_protocol'],
             sec_realm=prov_config['sec_realm'])
     elif prov_type == 'rhevm':
+        credential_dict = {'default': credentials}
         if prov_config.get('candu_credentials', None):
-            candu_credentials = get_credentials_from_config(
+            credential_dict['candu'] = process_credential_yaml_key(
                 prov_config['candu_credentials'], cred_type='candu')
-        else:
-            candu_credentials = None
         return RHEVMProvider(name=prov_config['name'],
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
             api_port='',
-            credentials={'default': credentials,
-                         'candu': candu_credentials},
+            credentials=credential_dict,
             zone=prov_config['server_zone'],
             key=provider_config_name,
             start_ip=start_ip,
@@ -651,10 +829,10 @@ def get_crud(provider_config_name):
     elif prov_type == "openstack-infra":
         credential_dict = {'default': credentials}
         if 'ssh_credentials' in prov_config:
-            credential_dict['ssh'] = get_credentials_from_config(
+            credential_dict['ssh'] = process_credential_yaml_key(
                 prov_config['ssh_credentials'], cred_type='ssh')
         if 'amqp_credentials' in prov_config:
-            credential_dict['amqp'] = get_credentials_from_config(
+            credential_dict['amqp'] = process_credential_yaml_key(
                 prov_config['amqp_credentials'], cred_type='amqp')
         return OpenstackInfraProvider(
             name=prov_config['name'],
@@ -666,7 +844,7 @@ def get_crud(provider_config_name):
             start_ip=start_ip,
             end_ip=end_ip)
     elif prov_type == 'kubernetes':
-        token_creds = get_credentials_from_config(prov_config['credentials'], cred_type='token')
+        token_creds = process_credential_yaml_key(prov_config['credentials'], cred_type='token')
         return KubernetesProvider(
             name=prov_config['name'],
             credentials={'token': token_creds},
@@ -676,7 +854,7 @@ def get_crud(provider_config_name):
             port=prov_config['port'],
             provider_data=prov_config)
     elif prov_type == 'openshift':
-        token_creds = get_credentials_from_config(prov_config['credentials'], cred_type='token')
+        token_creds = process_credential_yaml_key(prov_config['credentials'], cred_type='token')
         return OpenshiftProvider(
             name=prov_config['name'],
             credentials={'token': token_creds},
@@ -685,6 +863,13 @@ def get_crud(provider_config_name):
             hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
             port=prov_config['port'],
             provider_data=prov_config)
+    elif prov_type == 'hawkular':
+        return HawkularProvider(
+            name=prov_config['name'],
+            key=provider_config_name,
+            hostname=prov_config['hostname'],
+            port=prov_config['port'],
+            credentials={'default': credentials})
     else:
         raise UnknownProviderType('{} is not a known provider type'.format(prov_type))
 
@@ -695,4 +880,4 @@ class UnknownProvider(Exception):
         self.provider_key = provider_key
 
     def __str__(self):
-        return ('Unknown provider: "%s"' % self.provider_key)
+        return ('Unknown provider: "{}"'.format(self.provider_key))

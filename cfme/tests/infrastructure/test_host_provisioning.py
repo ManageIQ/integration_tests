@@ -19,7 +19,21 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without host provisioning data defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'host_provisioning')
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
+        ['host_provisioning', 'pxe_server'],
+        ['host_provisioning', 'pxe_image'],
+        ['host_provisioning', 'pxe_image_type'],
+        ['host_provisioning', 'pxe_kickstart'],
+        ['host_provisioning', 'datacenter'],
+        ['host_provisioning', 'cluster'],
+        ['host_provisioning', 'datastores'],
+        ['host_provisioning', 'hostname'],
+        ['host_provisioning', 'root_password'],
+        ['host_provisioning', 'ip_addr'],
+        ['host_provisioning', 'subnet_mask'],
+        ['host_provisioning', 'gateway'],
+        ['host_provisioning', 'dns'],
+    ])
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]
@@ -29,21 +43,13 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
         try:
-            prov_data = args['host_provisioning']
+            prov_data = args['provider'].data['host_provisioning']
         except KeyError:
             # No host provisioning data available
             continue
 
         stream = prov_data.get('runs_on_stream', '')
         if not version.current_version().is_in_series(str(stream)):
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'pxe_server', 'pxe_image', 'pxe_image_type', 'pxe_kickstart',
-                'datacenter', 'cluster', 'datastores',
-                'hostname', 'root_password', 'ip_addr',
-                'subnet_mask', 'gateway', 'dns'}.issubset(prov_data.viewkeys()):
-            # Need all  for host provisioning
             continue
 
         pxe_server_name = prov_data.get('pxe_server', '')
@@ -95,7 +101,7 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
 
     def cleanup_host():
         try:
-            logger.info('Cleaning up host %s on provider %s' % (prov_host_name, provider.key))
+            logger.info('Cleaning up host %s on provider %s', prov_host_name, provider.key)
             mgmt_system = provider.mgmt
             host_list = mgmt_system.list_host()
             if host_provisioning['ip_addr'] in host_list:
@@ -125,15 +131,15 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
                 host.wait_for_host_delete(host_renamed_obj2)
         except:
             # The mgmt_sys classes raise Exception :\
-            logger.warning('Failed to clean up host %s on provider %s' %
-                           (prov_host_name, provider.key))
+            logger.warning('Failed to clean up host %s on provider %s',
+                prov_host_name, provider.key)
 
     request.addfinalizer(cleanup_host)
 
     pytest.sel.force_navigate('infrastructure_provision_host', context={
         'host': test_host, })
 
-    note = ('Provisioning host %s on provider %s' % (prov_host_name, provider.key))
+    note = ('Provisioning host {} on provider {}'.format(prov_host_name, provider.key))
     provisioning_data = {
         'email': 'template_provisioner@example.com',
         'first_name': 'Template',
@@ -157,7 +163,7 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
     flash.assert_success_message(
         "Host Request was Submitted, you will be notified when your Hosts are ready")
 
-    row_description = 'PXE install on [%s] from image [%s]' % (prov_host_name, pxe_image)
+    row_description = 'PXE install on [{}] from image [{}]'.format(prov_host_name, pxe_image)
     cells = {'Description': row_description}
 
     row, __ = wait_for(requests.wait_for_request, [cells],
@@ -183,9 +189,8 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
     def verify():
         return len(
             smtp_test.get_emails(
-                subject_like="Your host provisioning request has Completed - Host:%%%s" %
-                prov_host_name
-            )
+                subject_like="Your host provisioning request has Completed - Host:%%".format(
+                    prov_host_name))
         ) > 0
 
     wait_for(verify, message="email receive check", delay=5)

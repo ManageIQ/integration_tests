@@ -17,8 +17,6 @@ pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 @pytest.fixture(scope="module")
 def domain(request):
-    if version.current_version() < "5.3":
-        return None
     domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
@@ -41,6 +39,7 @@ def setup_single_provider():
     setup_a_provider()
 
 
+@pytest.mark.tier(2)
 def test_namespace_crud(namespace):
     namespace.create()
     old_name = namespace.name
@@ -52,6 +51,7 @@ def test_namespace_crud(namespace):
     assert not namespace.exists()
 
 
+@pytest.mark.tier(2)
 def test_add_delete_namespace_nested(namespace):
     namespace.create()
     nested_ns = Namespace(name="Nested", parent=namespace)
@@ -61,6 +61,7 @@ def test_add_delete_namespace_nested(namespace):
 
 
 @pytest.mark.meta(blockers=[1136518])
+@pytest.mark.tier(2)
 def test_duplicate_namespace_disallowed(namespace):
     namespace.create()
     with error.expected("Name has already been taken"):
@@ -69,6 +70,7 @@ def test_duplicate_namespace_disallowed(namespace):
 
 # provider needed as workaround for bz1035399
 @pytest.mark.meta(blockers=[1140331])
+@pytest.mark.tier(3)
 def test_permissions_namespace_crud(setup_single_provider, domain):
     """ Tests that a namespace can be manipulated only with the right permissions"""
     tac.single_task_permission_test([['Everything', 'Automate', 'Explorer']],

@@ -53,6 +53,7 @@ def schedule(request):
         return Schedule(name, description, filter, **data)
 
 
+@pytest.mark.tier(3)
 def test_custom_report_crud(custom_report):
     custom_report.create()
     with update(custom_report):
@@ -63,6 +64,7 @@ def test_custom_report_crud(custom_report):
     custom_report.delete()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202412])
 def test_schedule_crud(schedule):
     schedule.create()
@@ -72,6 +74,7 @@ def test_schedule_crud(schedule):
     schedule.delete()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1209945])
 def test_menuwidget_crud():
     w = MenuWidget(
@@ -90,6 +93,7 @@ def test_menuwidget_crud():
     w.delete()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1209945])
 def test_reportwidget_crud():
     w = ReportWidget(
@@ -108,6 +112,7 @@ def test_reportwidget_crud():
     w.delete()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1209945])
 def test_chartwidget_crud():
     w = ChartWidget(
@@ -124,6 +129,7 @@ def test_chartwidget_crud():
     w.delete()
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1209945])
 def test_rssfeedwidget_crud():
     w = RSSFeedWidget(
@@ -150,6 +156,7 @@ def test_rssfeedwidget_crud():
     w.delete()
 
 
+@pytest.mark.tier(3)
 def test_dashboard_crud():
     d = Dashboard(
         fauxfactory.gen_alphanumeric(),
@@ -168,6 +175,7 @@ def test_dashboard_crud():
     d.delete()
 
 
+@pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_run_report(rest_api):
     report = rest_api.collections.reports.get(name='VM Disk Usage')
@@ -184,6 +192,7 @@ def test_run_report(rest_api):
     assert result.name == report.name
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_import_report(rest_api):
     menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())

@@ -5,7 +5,6 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.provisioning import do_vm_provisioning
 from cfme.infrastructure.pxe import get_template_from_config
-from utils.conf import cfme_data
 from utils import ssh
 from utils import testgen
 from utils.wait import wait_for
@@ -18,51 +17,32 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
-    argnames = argnames + ['cloud_init_template']
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
-
-        if args['provider'].type == "scvmm" or args['provider'].type == 'virtualcenter':
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'ci-template', 'ci-username', 'ci-pass', 'template'}.issubset(
-                args['provisioning'].viewkeys()):
-            continue
-
-        cloud_init_template = args['provisioning']['ci-template']
-        if cloud_init_template not in cfme_data.get('customization_templates', {}).keys():
-            continue
-
-        argvalues[i].append(get_template_from_config(cloud_init_template))
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['rhevm'],
+        required_fields=[
+            ['provisioning', 'ci-template'],
+            ['provisioning', 'ci-username'],
+            ['provisioning', 'ci-pass'],
+            ['provisioning', 'image']
+    ])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 @pytest.fixture(scope="module")
-def setup_ci_template(cloud_init_template):
+def setup_ci_template(provisioning):
+    cloud_init_template_name = provisioning['ci-template']
+    cloud_init_template = get_template_from_config(cloud_init_template_name)
     if not cloud_init_template.exists():
         cloud_init_template.create()
 
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_tmpl_prov_%s' % fauxfactory.gen_alphanumeric()
+    vm_name = 'test_tmpl_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
-def test_provision_cloud_init(setup_provider, provider, setup_ci_template, provisioning,
-                              vm_name, smtp_test, request):
+def test_provision_cloud_init(setup_provider, provider, setup_ci_template,
+                              vm_name, smtp_test, request, provisioning):
     """Tests cloud init provisioning
 
     Metadata:

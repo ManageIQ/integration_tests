@@ -4,23 +4,24 @@ from contextlib import contextmanager
 from datetime import date
 from functools import partial
 
+from mgmtsystem import exceptions
+
 from cfme import js
 from cfme.exceptions import (
     VmOrInstanceNotFound, TemplateNotFound, OptionNotAvailable, UnknownProviderType)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
-    form_buttons, paginator, toolbar)
+    form_buttons, paginator, toolbar, PagedTable, SplitPagedTable, search)
 from utils import version
 from utils.log import logger
-from utils.mgmt_system import exceptions
 from utils.pretty import Pretty
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 
-from . import PolicyProfileAssignable, Taggable
+from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(toolbar.select, "Configuration")
 lcl_btn = partial(toolbar.select, "Lifecycle")
@@ -43,7 +44,7 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
+class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 
@@ -173,6 +174,15 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
     def quadicon_type(self):
         return self.QUADICON_TYPE
 
+    @property
+    def paged_table(self):
+        _paged_table_template = '//div[@id="list_grid"]/div[@class="{}"]/table/tbody'
+        return version.pick({
+            version.LOWEST: SplitPagedTable(header_data=(_paged_table_template.format("xhdr"), 1),
+                                            body_data=(_paged_table_template.format("objbox"), 0)),
+            "5.5": PagedTable('//table'),
+        })
+
     ###
     # Methods
     #
@@ -257,7 +267,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
             return False
 
     def find_quadicon(
-            self, do_not_navigate=False, mark=False, refresh=True, from_any_provider=False):
+            self, do_not_navigate=False, mark=False, refresh=True, from_any_provider=False,
+            use_search=True):
         """Find and return a quadicon belonging to a specific vm
 
         Args:
@@ -276,8 +287,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
             else:
                 self.provider.load_all_provider_templates()
             toolbar.select('Grid View')
-        elif refresh:
-            sel.refresh()
+        else:
+            # Search requires navigation, we shouldn't use it then
+            use_search = False
+            if refresh:
+                sel.refresh()
         if not paginator.page_controls_exist():
             if self.is_vm:
                 raise VmOrInstanceNotFound("VM '{}' not found in UI!".format(self.name))
@@ -286,6 +300,19 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
 
         # this is causing some issues in 5.5.0.9, commenting out for a bit
         # paginator.results_per_page(1000)
+        if use_search:
+            try:
+                if not search.has_quick_search_box():
+                    # We don't use provider-specific page (vm_templates_provider_branch) here
+                    # as those don't list archived/orphaned VMs
+                    if self.is_vm:
+                        sel.force_navigate(self.provider.instances_page_name)
+                    else:
+                        sel.force_navigate(self.provider.templates_page_name)
+                search.normal_search(self.name)
+            except Exception as e:
+                logger.warning("Failed to use search: %s", str(e))
+
         for page in paginator.pages():
             if sel.is_displayed(quadicon, move_to=True):
                 if mark:
@@ -310,6 +337,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
             return InfoBlock.icon_href(*properties)
         else:
             return InfoBlock.text(*properties)
+
+    def open_details(self, properties=None):
+        """Clicks on details infoblock"""
+        self.load_details(refresh=True)
+        sel.click(InfoBlock(*properties))
 
     @classmethod
     def get_first_vm_title(cls, do_not_navigate=False, provider=None):
@@ -448,7 +480,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         else:
             action = form_buttons.save
             msg_assert = lambda: flash.assert_success_message(
-                'Ownership saved for selected Virtual Machine')
+                'Ownership saved for selected {}'.format(self.VM_TYPE))
         fill(set_ownership_form, {'user_name': user, 'group_name': group},
              action=action)
         msg_assert()
@@ -458,9 +490,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable):
         # choose the vm code comes here
         sel.click(self.find_quadicon(False, False, False))
         cfg_btn('Set Ownership')
-        fill(set_ownership_form, {'user_name': '<No Owner>', 'group_name': '<No Group>'},
+        fill(set_ownership_form, {'user_name': '<No Owner>',
+            'group_name': 'EvmGroup-administrator'},
             action=form_buttons.save)
-        flash.assert_success_message('Ownership saved for selected Virtual Machine')
+        flash.assert_success_message('Ownership saved for selected {}'.format(self.VM_TYPE))
 
 
 def date_retire_element(fill_data):
@@ -468,7 +501,7 @@ def date_retire_element(fill_data):
     the subsequent callbacks from the server"""
     # TODO: Move the code in the Calendar itself? I did not check other calendars
     if isinstance(fill_data, date):
-        date_str = '%s/%s/%s' % (fill_data.month, fill_data.day, fill_data.year)
+        date_str = '{}/{}/{}'.format(fill_data.month, fill_data.day, fill_data.year)
     else:
         date_str = str(fill_data)
     sel.execute_script(
@@ -515,8 +548,8 @@ class VM(BaseVM):
                 pwr_btn(option, invokes_alert=True)
                 sel.handle_alert(cancel=cancel)
                 logger.info(
-                    "Power control action of VM/instance %s, option %s, cancel %s executed" %
-                    (self.name, option, str(cancel)))
+                    "Power control action of VM/instance %s, option %s, cancel %s executed",
+                    self.name, option, str(cancel))
         else:
             raise OptionNotAvailable(option + " is not visible or enabled")
 
@@ -584,8 +617,8 @@ class VM(BaseVM):
         if self.provider.mgmt.does_vm_exist(self.name):
             try:
                 if self.provider.mgmt.is_vm_suspended(self.name):
-                    logger.debug("Powering up VM %s to shut it down correctly on %s." %
-                                 (self.name, self.provider.key))
+                    logger.debug("Powering up VM %s to shut it down correctly on %s.",
+                                self.name, self.provider.key)
                     self.provider.mgmt.start_vm(self.name)
                     self.provider.mgmt.wait_vm_steady(self.name)
                     self.provider.mgmt.stop_vm(self.name)

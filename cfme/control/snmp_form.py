@@ -89,8 +89,9 @@ def fill_snmp_trap_field_tuple(field, val):
     assert 2 <= len(val) <= 3, "The tuple must be at least 2 items and max 3 items!"
     if len(val) == 2:
         val = val + (None,)
-    logger.debug(' Filling in SNMPTrapField #%d with values %s, %s, %s' % ((field.seq_id,) + val))
     field.oid, field.type, field.value = val
+    logger.debug(' Filling in SNMPTrapField #%d with values %s, %s, %s',
+        field.seq_id, field.oid, field.type, field.value)
 
 
 @fill.method((SNMPTrapField, Mapping))  # dict because we disassemble it in web_ui

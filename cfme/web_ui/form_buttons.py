@@ -108,7 +108,7 @@ class FormButton(Pretty):
     def _custom_click_handler(self, wait_ajax):
         """Handler called from pytest_selenium"""
         if self.is_dimmed and not self._force:
-            logger.info("Not clicking {} because it is dimmed".format(repr(self)))
+            logger.error("Could not click %s because it was dimmed", repr(self))
             return
         sel.wait_for_element(self, timeout=5)
         return sel.click(self, no_custom_handler=True, wait_ajax=wait_ajax)
@@ -117,7 +117,7 @@ class FormButton(Pretty):
         return self.locate()
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self._alt)))
+        return "{}({})".format(type(self).__name__, str(repr(self._alt)))
 
 add = FormButton("Add")
 save = FormButton("Save Changes", dimmed_alt="Save", ng_click="saveClicked()")

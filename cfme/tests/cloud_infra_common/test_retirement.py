@@ -7,18 +7,16 @@ from functools import partial
 from cfme.common.vm import VM
 from utils import testgen
 from utils.wait import wait_for
-
+from utils.version import current_version
 
 pytestmark = [
-    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers')
+    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
+    pytest.mark.tier(2)
 ]
 
 
 def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.all_providers(
-        metafunc, 'small_template', template_location=["small_template"])
-
+    argnames, argvalues, idlist = testgen.all_providers(metafunc)
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
@@ -37,23 +35,29 @@ def vm(request, provider, setup_provider, small_template):
 
 
 def verify_retirement(vm):
-    today = datetime.date.today()
-    get_date = partial(vm.get_detail, ["Lifecycle", "Retirement Date"])
-    get_state = partial(vm.get_detail, ["Power Management", "Power State"])
+    # add condition because of differ behaviour between 5.5 and 5.6
+    if current_version() < "5.6":
+        wait_for(lambda: vm.exists is False, delay=30, num_sec=360,
+                 message="Wait for VM {} removed from provider".format(vm.name))
+    else:
+        today = datetime.date.today()
+        get_date = partial(vm.get_detail, ["Lifecycle", "Retirement Date"])
+        get_state = partial(vm.get_detail, ["Power Management", "Power State"])
 
-    # wait for the info block showing a date as retired date
-    def retirement_date_present():
-        return get_date() != "Never"
+        # wait for the info block showing a date as retired date
+        def retirement_date_present():
+            return get_date() != "Never"
 
-    wait_for(retirement_date_present, delay=30, num_sec=600, message="retirement_date_present")
+        wait_for(retirement_date_present, delay=30, num_sec=600, message="retirement_date_present")
 
-    # wait for the power state to go to 'off'
-    wait_for(lambda: get_state() in {'off', 'suspended'}, delay=30, num_sec=360)
+        # wait for the power state to go to 'off'
+        wait_for(lambda: get_state() in {'off', 'suspended'}, delay=30, num_sec=360)
 
-    # make sure retirement date is today
-    assert datetime.datetime.strptime(get_date(), "%m/%d/%y").date() == today
+        # make sure retirement date is today
+        assert datetime.datetime.strptime(get_date(), "%m/%d/%y").date() == today
 
 
+@pytest.mark.meta(blockers=[1337697])
 def test_retirement_now(vm):
     """Tests retirement
 

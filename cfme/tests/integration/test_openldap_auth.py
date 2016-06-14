@@ -12,6 +12,7 @@ def setup_first_provider():
     setup_a_provider(validate=True, check_existing=True)
 
 
+@pytest.mark.tier(3)
 def test_openldap_auth(request, setup_first_provider, configure_openldap_auth_mode):
     data = cfme_data.get("openldap_test", {})
     if not data:

@@ -154,7 +154,7 @@ def all_messages():
         bindings += (time,)
 
     if where_clause:
-        sql += ' WHERE %s' % " AND ".join(where_clause)
+        sql += ' WHERE {}'.format(" AND ".join(where_clause))
 
     # Order by time arrived
     sql += " ORDER BY time ASC"

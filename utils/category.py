@@ -15,7 +15,7 @@ class CategoryBase(object):
         return self.value
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, str(repr(self.value)))
+        return "{}({})".format(type(self).__name__, str(repr(self.value)))
 
 
 def categorize(iterable, cat):

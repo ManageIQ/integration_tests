@@ -14,7 +14,7 @@ pytest_plugins = 'pytester'
 test_file = """
 import imp
 
-soft_assert_path = '%s'
+soft_assert_path = '{}'
 imp.load_source('soft_assert', soft_assert_path)
 pytest_plugins = 'soft_assert'
 
@@ -22,7 +22,7 @@ pytest_plugins = 'soft_assert'
 def test_soft_assert(soft_assert):
     soft_assert(None)
     soft_assert(False, 'soft_assert message!')
-""" % os.path.abspath(fixtures.soft_assert.__file__.replace('pyc', 'py'))
+""".format(os.path.abspath(fixtures.soft_assert.__file__.replace('pyc', 'py')))
 
 test_output_match_lines = [
     ">           raise SoftAssertionError(_thread_locals.caught_asserts)",

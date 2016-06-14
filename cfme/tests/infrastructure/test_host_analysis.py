@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.configure import tasks
+from cfme.configure.tasks import is_host_analysis_finished
 from cfme.exceptions import ListAccordionLinkNotFound
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
-from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as tb, InfoBlock
+from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
 from utils import conf
 from utils import testgen
 from utils import version
-from utils.blockers import BZ
 from utils.update import update
 from utils.wait import wait_for
 
-
+pytestmark = [pytest.mark.tier(3)]
 HOST_TYPES = ('rhev', 'rhel', 'esx', 'esxi')
 
 
@@ -39,10 +37,9 @@ def pytest_generate_tests(metafunc):
 
             argvalues[i] = argvalues[i] + [test_host['type'], test_host['name']]
             test_id = '{}-{}-{}'.format(args['provider'].key, test_host['type'], test_host['name'])
-            idlist.append(test_id)
             new_argvalues.append(argvalues[i])
             new_idlist.append(test_id)
-    metafunc.parametrize(argnames, new_argvalues, ids=new_idlist, scope="module")
+    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 def get_host_data_by_name(provider_key, host_name):
@@ -85,35 +82,14 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
     # Initiate analysis
     test_host.run_smartstate_analysis()
 
-    # Wait for the task to finish
-    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
-    def is_host_analysis_finished():
-        """ Check if analysis is finished - if not, reload page
-        """
-        if not sel.is_displayed(tasks.tasks_table) or not tabs.is_tab_selected('All Other Tasks'):
-            sel.force_navigate('tasks_all_other')
-        host_analysis_finished = tasks.tasks_table.find_row_by_cells({
-            'task_name': "SmartState Analysis for '{}'".format(host_name),
-            'state': 'Finished'
-        })
-        return host_analysis_finished is not None
-
-    # Delete the task
-    tasks.tasks_table.select_row_by_cells({
-        'task_name': "SmartState Analysis for '{}'".format(host_name),
-        'state': 'Finished'
-    })
-    tb.select('Delete Tasks', 'Delete', invokes_alert=True)
-    sel.handle_alert()
+    wait_for(lambda: is_host_analysis_finished(host_name),
+             delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check results of the analysis
     drift_history = test_host.get_detail('Relationships', 'Drift History')
     soft_assert(drift_history != '0', 'No drift history change found')
 
-    # This is done on purpose; we cannot use the "bug" fixture here as
-    # the bug doesnt block streams other than 5.3
-    services_bug = BZ(1156028, forced_streams=["5.3", "5.4", "5.5", "upstream"])
-    if provider.type == "rhevm" and (not services_bug.blocks):
+    if provider.type == "rhevm":
         soft_assert(test_host.get_detail('Configuration', 'Services') != '0',
             'No services found in host detail')
 
@@ -128,17 +104,14 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
             'No packages found in host detail')
         soft_assert(InfoBlock.text('Configuration', 'Files') != '0',
             'No files found in host detail')
-
-        if not BZ(1055657, forced_streams=["5.4", "5.5", "upstream"]).blocks:
-            soft_assert(InfoBlock.text('Security', 'Firewall Rules') != '0',
-                        'No firewall rules found in host detail')
+        soft_assert(InfoBlock.text('Security', 'Firewall Rules') != '0',
+            'No firewall rules found in host detail')
 
     elif host_type in ('esx', 'esxi'):
         soft_assert(InfoBlock.text('Configuration', 'Advanced Settings') != '0',
             'No advanced settings found in host detail')
 
-        fw_bug = bug(1055657)
-        if not (fw_bug is not None and provider.type == "virtualcenter" and provider.version < "5"):
+        if not(provider.type == "virtualcenter" and provider.version < "5"):
             # If the Firewall Rules are 0, the element can't be found (it's not a link)
             try:
                 # This fails for vsphere4...  https://bugzilla.redhat.com/show_bug.cgi?id=1055657

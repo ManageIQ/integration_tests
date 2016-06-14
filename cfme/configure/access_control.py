@@ -160,7 +160,7 @@ class User(Updateable, Pretty):
     def __enter__(self):
         if self._restore_user != store.user:
             from cfme.login import logout
-            logger.info('Switching to new user: {}'.format(self.credential.principal))
+            logger.info('Switching to new user: %s', self.credential.principal)
             self._restore_user = store.user
             logout()
             store.user = self
@@ -168,7 +168,7 @@ class User(Updateable, Pretty):
     def __exit__(self, *args, **kwargs):
         if self._restore_user != store.user:
             from cfme.login import logout
-            logger.info('Restoring to old user: {}'.format(self._restore_user.credential.principal))
+            logger.info('Restoring to old user: %s', self._restore_user.credential.principal)
             logout()
             store.user = self._restore_user
             self._restore_user = None
@@ -183,7 +183,7 @@ class User(Updateable, Pretty):
                               'user_group_select': getattr(self.group,
                                                            'description', None)},
              action=form_buttons.add)
-        flash.assert_success_message('User "%s" was saved' % self.name)
+        flash.assert_success_message('User "{}" was saved'.format(self.name))
 
     def update(self, updates):
         sel.force_navigate("cfg_accesscontrol_user_edit", context={"user": self})
@@ -197,7 +197,7 @@ class User(Updateable, Pretty):
                                                            'description', None)},
              action=form_buttons.save)
         flash.assert_success_message(
-            'User "%s" was saved' % updates.get('name', self.name))
+            'User "{}" was saved'.format(updates.get('name', self.name)))
 
     def copy(self):
         sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
@@ -210,14 +210,14 @@ class User(Updateable, Pretty):
                               'password_txt': new_user.credential.secret,
                               'password_verify_txt': new_user.credential.verify_secret},
              action=form_buttons.add)
-        flash.assert_success_message('User "%s" was saved' % new_user.name)
+        flash.assert_success_message('User "{}" was saved'.format(new_user.name))
         return new_user
 
     def delete(self):
         sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
         tb.select('Configuration', 'Delete this User', invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('EVM User "%s": Delete successful' % self.name)
+        flash.assert_success_message('EVM User "{}": Delete successful'.format(self.name))
 
     def edit_tags(self, tag, value):
         sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
@@ -263,7 +263,7 @@ class Group(Updateable, Pretty):
                                'role_select': self.role,
                                'group_tenant': self.tenant},
              action=form_buttons.add)
-        flash.assert_success_message('Group "%s" was saved' % self.description)
+        flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def update(self, updates):
         sel.force_navigate("cfg_accesscontrol_group_edit", context={"group": self})
@@ -272,13 +272,13 @@ class Group(Updateable, Pretty):
                                'group_tenant': updates.get('tenant')},
              action=form_buttons.save)
         flash.assert_success_message(
-            'Group "%s" was saved' % updates.get('description', self.description))
+            'Group "{}" was saved'.format(updates.get('description', self.description)))
 
     def delete(self):
         sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": self})
         tb_select('Delete this Group', invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('EVM Group "%s": Delete successful' % self.description)
+        flash.assert_success_message('EVM Group "{}": Delete successful'.format(self.description))
 
     def edit_tags(self, tag, value):
         sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": self})
@@ -333,7 +333,7 @@ class Role(Updateable, Pretty):
                          'vm_restriction_select': self.vm_restriction,
                          'product_features_tree': self.product_features},
              action=form_buttons.add)
-        flash.assert_success_message('Role "%s" was saved' % self.name)
+        flash.assert_success_message('Role "{}" was saved'.format(self.name))
 
     def update(self, updates):
         sel.force_navigate("cfg_accesscontrol_role_edit", context={"role": self})
@@ -341,13 +341,13 @@ class Role(Updateable, Pretty):
                          'vm_restriction_select': updates.get('vm_restriction'),
                          'product_features_tree': updates.get('product_features')},
              action=form_buttons.save)
-        flash.assert_success_message('Role "%s" was saved' % updates.get('name', self.name))
+        flash.assert_success_message('Role "{}" was saved'.format(updates.get('name', self.name)))
 
     def delete(self):
         sel.force_navigate("cfg_accesscontrol_role_ed", context={"role": self})
         tb_select('Delete this Role', invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Role "%s": Delete successful' % self.name)
+        flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
 
     def copy(self, name=None):
         if not name:
@@ -357,7 +357,7 @@ class Role(Updateable, Pretty):
         new_role = Role(name=name)
         fill(self.form, {'name_txt': new_role.name},
              action=form_buttons.add)
-        flash.assert_success_message('Role "%s" was saved' % new_role.name)
+        flash.assert_success_message('Role "{}" was saved'.format(new_role.name))
         return new_role
 
 

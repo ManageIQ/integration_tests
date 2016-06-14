@@ -15,7 +15,8 @@ hash gunicorn 2>/dev/null && hash celery 2>/dev/null || {
 YAMLS_DIR=${YAMLS_DIR:-"../../cfme-qe-yamls"}
 BACKUP_DIR=${BACKUP_DIR:-"/tmp/sprout-backup"}
 
-export PYTHONPATH="`pwd`:${PYTHONPATH}"
+PYTHONPATH="`pwd`:${PYTHONPATH}"
+export PYTHONPATH
 
 ACTION="${1}"
 shift 1;
@@ -41,7 +42,7 @@ FALSE=$?
 
 function cddir() {
     BASENAME="`dirname $0`"
-    cd ${SPROUT_HOME:-$BASENAME}
+    cd ${SPROUT_HOME:-$BASENAME} || exit
 }
 
 function needs_update() {
@@ -49,9 +50,9 @@ function needs_update() {
     OLD=`pwd`
     cd ..
     git fetch origin >/dev/null 2>&1
-    git diff --name-only `git rev-parse master` `git rev-parse origin/master` | grep -E "^sprout|^utils/mgmt_system|^utils/appliance"
+    git diff --name-only "git rev-parse master" "git rev-parse origin/master" | grep -E "^sprout|^utils/mgmt_system|^utils/appliance"
     RESULT=$?
-    cd "${OLD}"
+    cd "${OLD}" || exit
     return $RESULT
 }
 
@@ -71,7 +72,7 @@ function clearpyc() {
     cd ..
     find . -name \*.pyc -delete
     find . -name __pycache__ -delete
-    cd "${OLD}"
+    cd "${OLD}" || exit
 }
 
 function migrations_needed() {
@@ -94,7 +95,7 @@ function start_memcached() {
     cddir
     if [ -e "${PIDFILE_MEMCACHED}" ] ;
     then
-        ps -p `cat $PIDFILE_MEMCACHED` >/dev/null
+        ps -p "$(cat "$PIDFILE_MEMCACHED")" >/dev/null
         if [ $? -eq 0 ] ;
         then
             echo ">> Memcached is already running!"
@@ -145,7 +146,7 @@ function start_logserver() {
     cddir
     if [ -e "${PIDFILE_LOGSERVER}" ] ;
     then
-        ps -p `cat $PIDFILE_LOGSERVER` >/dev/null
+        ps -p "$(cat "$PIDFILE_LOGSERVER")" >/dev/null
         if [ $? -eq 0 ] ;
         then
             echo ">> Logserver is already running!"
@@ -196,7 +197,7 @@ function start_gunicorn() {
     cddir
     if [ -e "${PIDFILE_GUNICORN}" ] ;
     then
-        ps -p `cat $PIDFILE_GUNICORN` >/dev/null
+        ps -p "$(cat "$PIDFILE_GUNICORN")" >/dev/null
         if [ $? -eq 0 ] ;
         then
             echo ">> Gunicorn is already running!"
@@ -267,7 +268,7 @@ function start_worker() {
     cddir
     if [ -e "${PIDFILE_WORKER}" ] ;
     then
-        ps -p `cat $PIDFILE_WORKER` >/dev/null
+        ps -p "$(cat "$PIDFILE_WORKER")" >/dev/null
         if [ $? -eq 0 ] ;
         then
             echo ">> Worker is already running!"
@@ -317,7 +318,7 @@ function start_beat() {
     cddir
     if [ -e "${PIDFILE_BEAT}" ] ;
     then
-        ps -p `cat $PIDFILE_BEAT` >/dev/null
+        ps -p "$(cat "$PIDFILE_BEAT")" >/dev/null
         if [ $? -eq 0 ] ;
         then
             echo ">> Beat is already running!"
@@ -368,7 +369,7 @@ function start_flower() {
     cddir
     if [ -e "${PIDFILE_FLOWER}" ] ;
     then
-        ps -p `cat $PIDFILE_FLOWER` >/dev/null
+        ps -p "$(cat "$PIDFILE_FLOWER")" >/dev/null
         if [ $? -eq 0 ] ;
         then
             echo ">> Flower is already running!"
@@ -440,7 +441,7 @@ function backup_before_update() {
     [ ! -e "${BACKUP_DIR}" ] && {
         echo ">>> Creating the backup directory"
         mkdir "${BACKUP_DIR}"
-        cd "${BACKUP_DIR}"
+        cd "${BACKUP_DIR}" || exit
         git init .
         cddir
     }
@@ -453,7 +454,7 @@ function backup_before_update() {
     echo ">> Dumping the database"
     ./manage.py dumpdata --format=yaml --natural-foreign -e contenttypes -e sessions.Session -e auth.Permission > "${BACKUP_DIR}/database.yaml"
     echo ">>> Storing the backup in git"
-    cd "${BACKUP_DIR}"
+    cd "${BACKUP_DIR}" || exit
     git add .
     git commit -a -m "`cat ${BACKUP_DIR}/backup.date`, `cat ${BACKUP_DIR}/backup.hash`"
     cddir
@@ -548,13 +549,13 @@ case "${ACTION}" in
     memcached-start) start_memcached ;;
     logserver-start) start_logserver ;;
     gunicorn-stop) stop_gunicorn ;;
-    
+
     beat-stop) stop_beat ;;
     worker-stop) stop_worker ;;
     flower-stop) stop_flower ;;
     memcached-stop) stop_memcached ;;
     logserver-stop) stop_logserver ;;
-    
+
     start) start_sprout ;;
     stop) stop_sprout ;;
     restart) restart_sprout ;;
@@ -566,4 +567,3 @@ case "${ACTION}" in
     backup) backup_before_update ;;
     *) echo "Usage: ${0} start|{gunicorn,beat,worker,flower,memcached,logserver}-start|stop|{gunicorn,beat,worker,flower,memcached, logserver}-stop|restart|check-update|update|reload" ;;
 esac
-

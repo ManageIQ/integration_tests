@@ -7,14 +7,14 @@ from cfme.web_ui import ButtonGroup, form_buttons
 
 pytestmark = [
     pytest.mark.usefixtures('logged_in'),
-    pytest.mark.ignore_stream("5.2", "5.3", "upstream"),
+    pytest.mark.ignore_stream("upstream"),
 ]
 
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['ec2'], 'provisioning')
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+        metafunc, ['ec2'])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 
 def set_grid_view(name):
@@ -27,32 +27,38 @@ def set_grid_view(name):
 
 
 @pytest.fixture(scope="function")
-def stack(setup_provider, provisioning):
+def stack(setup_provider, provider, provisioning):
     set_grid_view("Stacks")
     stackname = provisioning['stack']
     stack = Stack(stackname)
     return stack
 
 
+@pytest.mark.tier(3)
 def test_security_group_link(stack):
     stack.nav_to_security_group_link()
 
 
+@pytest.mark.tier(3)
 def test_parameters_link(stack):
     stack.nav_to_parameters_link()
 
 
+@pytest.mark.tier(3)
 def test_outputs_link(stack):
     stack.nav_to_output_link()
 
 
+@pytest.mark.tier(3)
 def test_resources_link(stack):
     stack.nav_to_resources_link()
 
 
+@pytest.mark.tier(3)
 def test_edit_tags(stack):
     stack.edit_tags("Cost Center *", "Cost Center 001")
 
 
+@pytest.mark.tier(3)
 def test_delete(stack):
     stack.delete()

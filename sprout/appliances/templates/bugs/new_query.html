@@ -1,0 +1,66 @@
+{% extends "bugs/bugs_base.html" %}
+{% block title %}Entering new query{% endblock %}
+{% block bugs_body %}
+<h1>Enter a new bug query</h1>
+<h4>URLS with <pre>cmdtype=</pre> in them are unsupported.</h4>
+<form action={% url 'new_bug_query' %} method="POST" class="form-horizontal">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="name" class="col-md-2 control-label">Name:</label>
+      <div class="col-md-4">
+          <input type="text" class="form-control" id="name" name="name">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="url" class="col-md-2 control-label">Bugzilla query URL:</label>
+      <div class="col-md-4">
+          <input type="text" class="form-control" id="url" name="url">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="parsed_query" class="col-md-2 control-label">Parsed query:</label>
+      <div class="col-md-4">
+          <pre id="parsed_query">
+          </pre>
+        </div>
+    </div>
+    <div class="form-group">
+      <label for="global" class="col-md-2 control-label">Global?:</label>
+      <div class="col-md-4">
+          <input type="checkbox" class="form-control" id="global" name="global" {% if not request.user.is_superuser %}disabled{% endif %} value="true">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="global" class="col-md-2 control-label"></label>
+      <div class="col-md-4">
+          <input type="submit" class="form-control" value="Save" id="submit" disabled>
+      </div>
+    </div>
+</form>
+<script type="text/javascript">
+$(document).ready(function() {
+    // Description setting
+    $('#url').blur(function(){
+        var e = $(this);
+        var url = e.val();
+        $.ajax({
+            type: "POST",
+            url: "{% url 'check_query' %}",
+            data: {url: url},
+            dataType: 'html'
+        }).done(function(data){
+            jsonData = $.parseJSON(data);
+            if(jsonData == null){
+                $('#parsed_query').html('Invalid query');
+                $("#submit").prop('disabled', true);
+            } else {
+                $('#parsed_query').html(data);
+                $("#submit").prop('disabled', false);
+            }
+        }).fail(function(xhr, textStatus, errorThrown){
+            addAlert("danger", "Error during checking of the validity of the url: '" + xhr.responseText + "'.");
+        })
+    });
+});
+</script>
+{% endblock %}
