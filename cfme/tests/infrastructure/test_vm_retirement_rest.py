@@ -57,17 +57,8 @@ def test_retire_vm_now(rest_api, vm, multiple):
     else:
         retire_vm.action.retire()
 
-    def _finished():
-        retire_vm.reload()
-        # The retirement_state field appears after calling retire method
-        try:
-            if retire_vm.retirement_state == "retired":
-                return True
-        except:
-            pass
-        return False
-
-    wait_for(_finished, num_sec=600, delay=10, message="REST vm retire now")
+    wait_for(lambda: not rest_api.collections.vms.find_by(name=vm),
+        num_sec=600, delay=10, message="REST vm retire now")
 
 
 @pytest.mark.tier(3)
