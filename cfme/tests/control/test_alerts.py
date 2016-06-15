@@ -200,15 +200,15 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     if not provider.mgmt.is_vm_stopped(vm_name):
         provider.mgmt.stop_vm(vm_name)
     provider.refresh_provider_relationships()
-    register_event(provider.type, "vm", vm_name, ["vm_power_off"])
+    register_event('VmOrTemplate', vm_name, ['request_vm_poweroff', 'vm_poweoff'])
     vm_crud.wait_for_vm_state_change(vm_crud.STATE_OFF)
     for i in range(5):
         vm_crud.power_control_from_cfme(option=vm_crud.POWER_ON, cancel=False)
-        register_event(provider.type, "vm", vm_name, ["vm_power_on", "vm_power_on_req"])
+        register_event('VmOrTemplate', vm_name, ['request_vm_start', 'vm_start'])
         wait_for(lambda: provider.mgmt.is_vm_running(vm_name), num_sec=300)
         vm_crud.wait_for_vm_state_change(vm_crud.STATE_ON)
         vm_crud.power_control_from_cfme(option=vm_crud.POWER_OFF, cancel=False)
-        register_event(provider.type, "vm", vm_name, ["vm_power_off", "vm_power_off_req"])
+        register_event('VmOrTemplate', vm_name, ['request_vm_poweroff', 'vm_poweroff'])
         wait_for(lambda: provider.mgmt.is_vm_stopped(vm_name), num_sec=300)
         vm_crud.wait_for_vm_state_change(vm_crud.STATE_OFF)
 

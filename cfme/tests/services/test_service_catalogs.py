@@ -48,9 +48,7 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=1400, delay=20)
     assert row.last_message.text == 'Request complete'
-    register_event(
-        provider.get_yaml_data()['type'],
-        "service", catalog_item.name, ["service_provision_complete"])
+    register_event('Service', catalog_item.name, 'service_provisioned')
 
 
 @pytest.mark.tier(2)

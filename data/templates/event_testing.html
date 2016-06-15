@@ -14,42 +14,47 @@
             <th>Time registered</th>
             <th>Succeeded?</th>
             <th>Delay [s]</th>
-            <th>System type</th>
-            <th>Object type</th>
-            <th>Object</th>
-            <th>Event</th>
+            <th>Event id</th>
+            <th>Target type</th>
+            <th>Target id</th>
+            <th>Real target id</th>
+            <th>Event type</th>
+            <th>Message</th>
         </tr>
         {% for event in registered_events %}
         <tr>
             <td>{{ event.time_friendly }}</td>
             <td style="color: {{ event.colour }};">{{ event.success_friendly }}</td>
             <td style="color: {{ event.colour }};">{{ event.time_difference }}</td>
-            <td>{{ event.sys_type }}</td>
-            <td>{{ event.obj_type }}</td>
-            <td>{{ event.obj }}</td>
-            <td><i>{{ event.event }}</i></td>
+            <td>{{ event.id }}</td>
+            <td>{{ event.target_type }}</td>
+            <td>{{ event.target_id }}</td>
+            <td>{{ event.real_target_id }}</td>
+            <td><em>{{ event.event_type }}</em></td>
+            <td><em>{{ event.message }}</em></td>
         </tr>
         {% endfor %}
     </table>
     <h3>All received events:</h3>
     <table class="zebra-striped">
         <tr>
+            <th>Event id</th>
             <th>Event type</th>
-            <th>Resource name</th>
-            <th>Time arrived</th>
-            <th>Event</th>
+            <th>Timestamp</th>
+            <th>Target type</th>
+            <th>Target id</th>
+            <th>Message</th>
         </tr>
         {% for event in all_events %}
             <tr>
+                <td>{{ event["event_id"] }}</td>
                 <td>{{ event["event_type"] }}</td>
-                <td>{{ event["resource_name"] }}</td>
-                <td>{{ event["event_time"] }}</td>
-                <td>{{ event["event"] }}</td>
+                <td>{{ event["timestamp"] }}</td>
+                <td>{{ event["target_type"] }}</td>
+                <td>{{ event["target_id"] }}</td>
+                <td><em>{{ event["message"] }}</em></td>
             </tr>
         {% endfor %}
     </table>
-    <p>
-        <i>If something breaks down, go kill <a href="mailto:mfalesni@redhat.com">mfalesni@redhat.com</a></i>
-    </p>
 </div>
 {% endblock %}

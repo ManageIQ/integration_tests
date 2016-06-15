@@ -76,7 +76,7 @@ def test_vm_create(request, vm_crud, provider, register_event):
     provider.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: provider.unassign_policy_profiles(profile.description))
 
-    register_event(provider.type, "vm", vm_crud.name, ["vm_create_complete"])
+    register_event('VmOrTemplate', vm_crud.name, 'vm_create')
     vm_crud.create_on_provider()
     provider.refresh_provider_relationships()
     vm_crud.wait_to_appear()
