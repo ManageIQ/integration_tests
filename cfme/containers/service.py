@@ -2,14 +2,14 @@ from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui.menu import nav
-from . import list_tbl as list_tbl_service, pol_btn, details_page
+from . import list_tbl, mon_btn, pol_btn, details_page
 
 nav.add_branch(
     'containers_services',
     {
         'containers_service':
         [
-            lambda ctx: list_tbl_service.select_row_by_cells(
+            lambda ctx: list_tbl.select_row_by_cells(
                 {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
             {
                 'containers_service_edit_tags':
@@ -18,7 +18,7 @@ nav.add_branch(
         ],
         'containers_service_detail':
         [
-            lambda ctx: list_tbl_service.click_row_by_cells(
+            lambda ctx: list_tbl.click_row_by_cells(
                 {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
             {
                 'containers_service_edit_tags_detail':
