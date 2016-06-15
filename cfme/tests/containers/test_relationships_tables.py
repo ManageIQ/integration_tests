@@ -3,10 +3,15 @@
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers import list_tbl as list_tbl_pods
+from cfme.containers import list_tbl as list_tbl_pods_rel
 from cfme.containers import list_tbl as list_tbl_services
+from cfme.containers import list_tbl as list_tbl_services_rel
 from cfme.containers import list_tbl as list_tbl_nodes
+from cfme.containers import list_tbl as list_tbl_nodes_rel
 from cfme.containers import list_tbl as list_tbl_replicators
+from cfme.containers import list_tbl as list_tbl_replicators_rel
 from cfme.containers import list_tbl as list_tbl_images
+from cfme.containers import list_tbl as list_tbl_images_rel
 from cfme.containers.pod import Pod
 from cfme.containers.service import Service
 from cfme.containers.node import Node
@@ -53,7 +58,7 @@ def test_pods_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl_pods.rows()]) == val
+            assert len([r for r in list_tbl_pods_rel.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
@@ -81,7 +86,7 @@ def test_services_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl_services.rows()]) == val
+            assert len([r for r in list_tbl_services_rel.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
@@ -114,7 +119,7 @@ def test_nodes_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl_nodes.rows()]) == val
+            assert len([r for r in list_tbl_nodes_rel.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
@@ -143,7 +148,7 @@ def test_replicators_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl_replicators.rows()]) == val
+            assert len([r for r in list_tbl_replicators_rel.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
@@ -170,6 +175,6 @@ def test_images_rel(provider, rel):
 
         try:
             val = int(val)
-            assert len([r for r in list_tbl_images.rows()]) == val
+            assert len([r for r in list_tbl_images_rel.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
