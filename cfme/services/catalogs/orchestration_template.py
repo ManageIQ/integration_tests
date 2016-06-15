@@ -20,11 +20,11 @@ dialog_form = Form(
 
 create_template_form = Form(
     fields=[
-        ('template_name', Input("name")),
         ('description', "textarea#description"),
         ("template_type", Select("select#type")),
         ('content', ScriptBox(ta_locator="//div[@id='basic_info_div']/div/div"
                     "/div/div/div/div/div/div/pre/span")),
+        ('template_name', Input("name")),
         ('add_button', form_buttons.add),
         ('edit_button', form_buttons.save),
     ])

@@ -174,7 +174,6 @@ def create_template(setup_provider, provider, dialog):
     yield dialog
 
 
-@pytest.mark.meta(blockers=[BZ(1340570, forced_streams=["5.6", "upstream"])])
 def test_provision_stack(provider, create_template, catalog, request):
     """Tests stack provisioning
 
@@ -208,7 +207,7 @@ def test_provision_stack(provider, create_template, catalog, request):
     assert row.last_message.text == 'Service Provisioned Successfully'
 
 
-@pytest.mark.meta(blockers=[BZ(1340570, forced_streams=["5.6", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1341873, forced_streams=["5.6", "upstream"])])
 @pytest.mark.uncollectif(lambda: version.current_version() <= '5.5')
 def test_reconfigure_service(provider, create_template, catalog, request):
     """Tests stack provisioning
@@ -272,7 +271,6 @@ def test_remove_template_provisioning(provider, create_template, catalog, reques
     assert row.last_message.text == 'Service_Template_Provisioning failed'
 
 
-@pytest.mark.meta(blockers=[BZ(1340570, forced_streams=["5.6", "upstream"])])
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_retire_stack(provider, create_template, catalog, request):
     """Tests stack provisioning

@@ -7,7 +7,7 @@ from functools import partial
 from utils import version
 from cfme.exceptions import PaginatorException
 
-_locator = '(//div[@id="paging_div"] | //div[@id="records_div"])'
+_locator = '(//div[@id="paging_div"]//div[@id="pc_div_1"])'
 _next = '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
 _previous = '//img[@alt="Previous"]|//li[contains(@class, "prev")]/span'
 _first = '//img[@alt="First"]|//li[contains(@class, "first")]/span'
