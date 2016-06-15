@@ -237,7 +237,8 @@ def test_tag(provisioner, prov_data, provider):
     vm = provisioner(template_name, prov_data)
 
     tags = vm.get_tags()
-    assert "Service Level: Gold" in tags, "Service Level: Gold not in tags ({})".format(str(tags))
+    assert any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+               for tag in tags), "Service Level: Gold not in tags ({})".format(str(tags))
 
 
 @pytest.mark.meta(blockers=[1204115])

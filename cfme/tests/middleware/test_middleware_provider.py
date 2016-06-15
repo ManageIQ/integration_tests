@@ -1,5 +1,7 @@
 import uuid
+
 import pytest
+from cfme.configure.configuration import Category, Tag
 from utils import testgen
 from utils.update import update
 from utils.version import current_version
@@ -40,3 +42,21 @@ def test_hawkular_crud(provider):
 
     provider.delete(cancel=False)
     provider.wait_for_delete()
+
+
+@pytest.mark.usefixtures('setup_provider')
+def test_tags(provider):
+    """Tests tags in provider page
+
+    Steps:
+        * Run `validate_tags` with `tags` input
+    """
+    tags = [
+        Tag(category=Category(display_name='Department', single_value=False),
+            display_name='Engineering'),
+        Tag(category=Category(display_name='Environment', single_value=True), display_name='Test'),
+        Tag(category=Category(display_name='Location', single_value=True), display_name='Paris'),
+        Tag(category=Category(display_name='Service Level', single_value=True),
+            display_name='Gold'),
+    ]
+    provider.validate_tags(tags=tags)

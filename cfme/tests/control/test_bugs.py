@@ -81,11 +81,12 @@ def test_folder_field_scope(request, vmware_provider, vmware_vm):
     # Retrieve folder location
     folder = None
     tags = vmware_vm.get_tags()
-    for tag in tags:
-        if "Parent Folder Path (VMs & Templates)" in tag:
-            folder = tag.split(":", 1)[-1].strip()
-            logger.info("Detected folder: %s", folder)
-            break
+    if any(tag.category.display_name == "Parent Folder Path (VMs & Templates)" for tag in tags):
+        folder = ', '.join(
+            item.display_name for item in
+            [tag for tag in tags
+             if tag.category.display_name == "Parent Folder Path (VMs & Templates)"])
+        logger.info("Detected folder: %s", folder)
     else:
         pytest.fail("Could not read the folder from the tags:\n{}".format(repr(tags)))
 
@@ -122,7 +123,10 @@ def test_folder_field_scope(request, vmware_provider, vmware_vm):
     # Wait for the tag to appear
     wait_for(
         vmware_vm.get_tags, num_sec=600, delay=15,
-        fail_condition=lambda tags: "Service Level: Platinum" not in tags, message="vm be tagged")
+        fail_condition=lambda tags: not any(
+            tag.category.display_name == "Service Level" and tag.display_name == "Platinum"
+            for tag in tags),
+        message="vm be tagged")
 
 
 @pytest.mark.meta(blockers=[1243357], automates=[1243357])

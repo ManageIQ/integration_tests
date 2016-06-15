@@ -1,11 +1,11 @@
 import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
-from mgmtsystem.hawkular import Path
 from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
+from mgmtsystem.hawkular import Path
 from utils import attributize_string
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key
@@ -17,12 +17,12 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, nativeid=None, server=None, provider=None):
-    """Column order: `nativeid`, `name`, `properties`, `server_name`,
+    """Column order: `id`, `nativeid`, `name`, `properties`, `server_name`,
     `feed`, `provider_name`, `ems_ref`"""
     t_ms = cfmedb()['middleware_servers']
     t_mds = cfmedb()['middleware_datasources']
     t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(t_mds.nativeid, t_mds.name, t_mds.properties,
+    query = cfmedb().session.query(t_mds.id, t_mds.nativeid, t_mds.name, t_mds.properties,
                                    t_ms.name.label('server_name'), t_ms.feed,
                                    t_ems.name.label('provider_name'), t_mds.ems_ref)\
         .join(t_ms, t_mds.server_id == t_ms.id).join(t_ems, t_mds.ems_id == t_ems.id)
@@ -72,6 +72,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         nativeid: Native id (internal id) of datasource
         server: Server object of the datasource (MiddlewareServer)
         properties: Datasource driver name, connection URL and JNDI name
+        db_id: database row id of datasource
 
     Usage:
 
@@ -88,6 +89,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
     property_tuples = [('name', 'name'), ('nativeid', 'nativeid'),
                        ('driver_name', 'driver_name'), ('jndi_name', 'jndi_name'),
                        ('connection_url', 'connection_url'), ('enabled', 'enabled')]
+    taggable_type = 'MiddlewareDatasource'
 
     def __init__(self, name, server, provider=None, **kwargs):
         if name is None:
@@ -101,6 +103,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         if 'properties' in kwargs:
             for property in kwargs['properties']:
                 setattr(self, attributize_string(property), kwargs['properties'][property])
+        self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
 
     @classmethod
     def datasources(cls, provider=None, server=None):
@@ -125,7 +128,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
             _server = MiddlewareServer(name=datasource.server_name, feed=datasource.feed,
                                        provider=provider)
             datasources.append(MiddlewareDatasource(nativeid=datasource.nativeid,
-                                            name=datasource.name,
+                                            name=datasource.name, db_id=datasource.id,
                                             server=_server, provider=_provider,
                                             properties=parse_properties(datasource.properties)))
         return datasources
@@ -172,6 +175,9 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         if not self._on_detail_page():
             _get_datasources_page(provider=self.provider, server=self.server)
             list_tbl.click_row_by_cells({'Datasource Name': self.name, 'Server': self.server.name})
+        if not self.db_id or refresh:
+            tmp_dsource = self.datasource(method='db')
+            self.db_id = tmp_dsource.db_id
         if refresh:
             tb.refresh()
 
@@ -204,7 +210,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
                                       nativeid=self.nativeid).first()
         if datasource:
             _server = MiddlewareServer(name=datasource.server_name, provider=self.provider)
-            return MiddlewareDatasource(provider=self.provider, server=_server,
+            return MiddlewareDatasource(provider=self.provider, server=_server, db_id=datasource.id,
                                     nativeid=datasource.nativeid, name=datasource.name,
                                     properties=parse_properties(datasource.properties))
         return None
