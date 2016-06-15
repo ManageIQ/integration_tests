@@ -1,3 +1,4 @@
+# deleted list_tbl definition to prevent caching
 from cfme.web_ui import toolbar as tb, Region
 from functools import partial
 

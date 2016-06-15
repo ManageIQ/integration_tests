@@ -1,3 +1,4 @@
+# added new list_tbl definition
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# the test verifies data integrity in tables
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import Pod
@@ -22,6 +23,8 @@ pytest_generate_tests = testgen.generate(
 
 
 # container pods
+# verification of the data in relationships table and properties summary
+# table as related to pods
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
                           'Project',
@@ -56,6 +59,8 @@ def test_pods_rel(provider, rel):
 
 
 # container services
+# verification of the data in relationships table and properties summary
+# table as related to services
 @pytest.mark.parametrize(
     'rel', ['Containers Provider', 'Project', 'Routes', 'Pods', 'Nodes'])
 def test_services_rel(provider, rel):
@@ -86,6 +91,8 @@ def test_services_rel(provider, rel):
 
 
 # container nodes
+# verification of the data in relationships table and properties summary
+# table as related to nodes
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
                           'Routes',
@@ -121,6 +128,8 @@ def test_nodes_rel(provider, rel):
 
 
 # container replicators
+# verification of the data in relationships table and properties summary
+# table as related to replicators
 @pytest.mark.parametrize(
     'rel', ['Containers Provider', 'Project', 'Pods', 'Nodes'])
 def test_replicators_rel(provider, rel):
@@ -152,6 +161,8 @@ def test_replicators_rel(provider, rel):
 
 
 # container images
+# verification of the data in relationships table and properties summary
+# table as related to images
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
                           'Image Registry',
@@ -181,6 +192,8 @@ def test_images_rel(provider, rel):
 
 
 # container projects
+# verification of the data in relationships table and properties summary
+# table as related to projects
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
                           'Routes',
