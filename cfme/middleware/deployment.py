@@ -1,4 +1,5 @@
 import re
+from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
@@ -12,13 +13,13 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, server=None, provider=None):
-    """Column order: `nativeid`, `name`, `server_name`, `feed`, `provider_name`"""
+    """Column order: `id`, `nativeid`, `name`, `server_name`, `feed`, `provider_name`"""
     t_ems = cfmedb()['ext_management_systems']
     t_ms = cfmedb()['middleware_servers']
     t_md = cfmedb()['middleware_deployments']
-    query = cfmedb().session.query(t_md.nativeid.label('nativeid'), t_md.name,
+    query = cfmedb().session.query(t_md.id, t_md.nativeid.label('nativeid'), t_md.name,
                                    t_ms.name.label('server_name'), t_ms.feed.label('feed'),
-                                   t_ems.name.label('provider_name'))\
+                                   t_ems.name.label('provider_name')) \
         .join(t_ms, t_md.server_id == t_ms.id).join(t_ems, t_md.ems_id == t_ems.id)
     if name:
         query = query.filter(t_md.name == name)
@@ -52,7 +53,7 @@ nav.add_branch(
 )
 
 
-class MiddlewareDeployment(MiddlewareBase):
+class MiddlewareDeployment(MiddlewareBase, Taggable):
     """
     MiddlewareDeployment class provides details on deployment page.
     Class methods available to get existing deployments list
@@ -62,6 +63,7 @@ class MiddlewareDeployment(MiddlewareBase):
         provider: Provider object (HawkularProvider)
         server: Server object of the deployment (MiddlewareServer)
         nativeid: Native id (internal id) of deployment
+        db_id: database row id of deployment
 
     Usage:
 
@@ -75,6 +77,7 @@ class MiddlewareDeployment(MiddlewareBase):
 
     """
     property_tuples = [('name', 'name')]
+    taggable_type = 'MiddlewareDeployment'
 
     def __init__(self, name, server, provider=None, **kwargs):
         if name is None:
@@ -85,6 +88,7 @@ class MiddlewareDeployment(MiddlewareBase):
         self.server = server
         self.provider = provider
         self.nativeid = kwargs['nativeid'] if 'nativeid' in kwargs else None
+        self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
 
     @classmethod
     def deployments(cls, provider=None, server=None):
@@ -110,7 +114,7 @@ class MiddlewareDeployment(MiddlewareBase):
             _server = MiddlewareServer(name=deployment.server_name, feed=deployment.feed,
                                        provider=provider)
             deployments.append(MiddlewareDeployment(nativeid=deployment.nativeid,
-                                                    name=deployment.name,
+                                                    name=deployment.name, db_id=deployment.id,
                                                     server=_server, provider=_provider))
         return deployments
 
@@ -156,6 +160,9 @@ class MiddlewareDeployment(MiddlewareBase):
         if not self._on_detail_page():
             _get_deployments_page(provider=self.provider, server=self.server)
             list_tbl.click_row_by_cells({'Deployment Name': self.name, 'Server': self.server.name})
+            if not self.db_id or refresh:
+                tmp_dep = self.deployment(method='db')
+                self.db_id = tmp_dep.db_id
         if refresh:
             tb.refresh()
 
@@ -178,7 +185,7 @@ class MiddlewareDeployment(MiddlewareBase):
             _server = MiddlewareServer(name=deployment.server_name, feed=deployment.feed,
                                        provider=_provider)
             return MiddlewareDeployment(nativeid=deployment.nativeid, name=deployment.name,
-                                        server=_server, provider=_provider)
+                                        server=_server, provider=_provider, db_id=deployment.id)
         return None
 
     @deployment.variant('rest')

@@ -1,4 +1,5 @@
 import pytest
+from cfme.configure.configuration import Category, Tag
 from cfme.middleware import get_random_list
 from cfme.middleware.deployment import MiddlewareDeployment
 from cfme.middleware.server import MiddlewareServer
@@ -113,3 +114,21 @@ def test_deployment(provider):
         assert dep_ui.server.name == dep_db.server.name, \
             "deployment server name does not match between UI and DB"
         dep_ui.validate_properties()
+
+
+def test_tags(provider):
+    """Tests tags in deployment page
+
+    Steps:
+        * Select a deployment randomly from database
+        * Run `validate_tags` with `tags` input
+    """
+    tags = [
+        Tag(category=Category(display_name='Environment', single_value=True), display_name='Test'),
+        Tag(category=Category(display_name='Department', single_value=False),
+            display_name='Engineering'),
+    ]
+    deps_db = MiddlewareDeployment.deployments_in_db(provider=provider)
+    assert len(deps_db) > 0, "There is no deployment(s) available in UI"
+    deployment = get_random_list(deps_db, 1)[0]
+    deployment.validate_tags(tags=tags)
