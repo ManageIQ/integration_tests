@@ -2,7 +2,7 @@ from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable
 from cfme.web_ui.menu import nav
-from . import mon_btn, pol_btn, details_page
+from . import pol_btn, details_page
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
