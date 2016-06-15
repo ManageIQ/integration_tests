@@ -2,14 +2,14 @@ from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui.menu import nav
-from . import list_tbl, mon_btn, pol_btn, details_page
+from . import list_tbl as list_tbl_node, mon_btn, pol_btn, details_page
 
 nav.add_branch(
     'containers_nodes',
     {
         'containers_node':
         [
-            lambda ctx: list_tbl.select_row_by_cells(
+            lambda ctx: list_tbl_node.select_row_by_cells(
                 {'Name': ctx['node'].name, 'Provider': ctx['provider'].name}),
             {
                 'containers_node_edit_tags':
@@ -18,7 +18,7 @@ nav.add_branch(
         ],
         'containers_node_detail':
         [
-            lambda ctx: list_tbl.click_row_by_cells(
+            lambda ctx: list_tbl_node.click_row_by_cells(
                 {'Name': ctx['node'].name, 'Provider': ctx['provider'].name}),
             {
                 'containers_node_timelines_detail':
