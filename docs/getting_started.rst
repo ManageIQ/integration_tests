@@ -10,6 +10,11 @@ carefully read this page from beginning to the end. That will make you familiari
 and will minimize the chance of doing it wrong. Then you can proceed the shortest way using the
 setup and execution scripts.
 
+Appliances in containers
+------------------------
+If the target appliance you will be testing is a container, you might like to consult
+:doc:`guides/container` for the details specific to testing containers.
+
 Setup
 -----
 You can use this shortcut to install the system and python dependencies which will leave you only
