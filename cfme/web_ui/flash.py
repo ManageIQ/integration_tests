@@ -136,6 +136,23 @@ def verpick_message(f):
     return g
 
 
+def onexception_printall(f):
+    """If FlashMessageException happens, appends all the present flash messages in the error text"""
+    @wraps(f)
+    def g(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except FlashMessageException as e:
+            err_text = str(e)
+            messages = get_messages()
+            if not messages:
+                raise  # Just reraise the original
+            messages = ['{}: {}'.format(message.level, message.message) for message in messages]
+            new_err_text = '{}\nPresent flash messages:\n{}'.format(err_text, '\n'.join(messages))
+            raise type(e)(new_err_text)
+    return g
+
+
 @verify_rails_error
 def assert_no_errors(messages=None):
     """Asserts that there are no current Error messages. If no messages
@@ -151,6 +168,7 @@ def assert_no_errors(messages=None):
 
 @verify_rails_error
 @verpick_message
+@onexception_printall
 def assert_message_match(m):
     """ Asserts that a message matches a specific string."""
     logger.debug('Asserting flash message match for %s', m)
@@ -161,6 +179,7 @@ def assert_message_match(m):
 
 @verify_rails_error
 @verpick_message
+@onexception_printall
 def assert_message_contain(m):
     """ Asserts that a message contains a specific string """
     if not any([m in fm.message for fm in get_messages()]):
@@ -169,6 +188,7 @@ def assert_message_contain(m):
 
 @verify_rails_error
 @verpick_message
+@onexception_printall
 def assert_success_message(m):
     """Asserts that there are no errors and a (green) info message
     matches the given string."""
