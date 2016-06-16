@@ -26,6 +26,7 @@ from cfme.configure.configuration import server_name, server_id
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
 from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
+from utils.browser import browser
 from utils.datafile import load_data_file
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
@@ -76,6 +77,9 @@ class IPAppliance(object):
                 self._url = address.geturl()
         self.browser_steal = browser_steal
         self._db_ssh_client = None
+
+    def browser(self):
+        return browser()
 
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
