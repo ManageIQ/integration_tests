@@ -7,9 +7,6 @@ import utils.error as error
 import cfme.tests.automate as ta
 
 
-pytestmark = [pytest.mark.usefixtures("logged_in")]
-
-
 @pytest.fixture(scope="module")
 def make_namespace(request):
     return ta.make_namespace(request=request)

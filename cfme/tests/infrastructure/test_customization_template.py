@@ -7,7 +7,7 @@ from utils import error
 from utils.blockers import BZ
 from utils.update import update
 
-pytestmark = [pytest.mark.usefixtures("logged_in"), pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3)]
 
 
 def test_customization_template_crud():

@@ -9,7 +9,7 @@ from utils.wait import wait_for
 import utils.error as error
 
 
-pytestmark = [pytest.mark.usefixtures("logged_in"), pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3)]
 
 
 def new_compute_rate():
