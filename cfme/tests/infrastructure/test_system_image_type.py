@@ -6,7 +6,7 @@ from cfme.infrastructure import pxe
 import utils.error as error
 from utils.update import update
 
-pytestmark = [pytest.mark.usefixtures("logged_in"), pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3)]
 
 
 def test_system_image_type_crud():

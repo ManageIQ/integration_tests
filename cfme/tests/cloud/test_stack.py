@@ -6,7 +6,6 @@ from cfme.configure import settings  # NOQA
 from cfme.web_ui import ButtonGroup, form_buttons
 
 pytestmark = [
-    pytest.mark.usefixtures('logged_in'),
     pytest.mark.ignore_stream("upstream"),
 ]
 

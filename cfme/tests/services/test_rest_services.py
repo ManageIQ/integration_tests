@@ -20,7 +20,6 @@ class TestServiceRESTAPI(object):
     def a_provider(self):
         return _setup_a_provider("infra")
 
-    @pytest.mark.usefixtures("logged_in")
     @pytest.fixture(scope="function")
     def dialog(self):
         return _dialog()
@@ -29,7 +28,6 @@ class TestServiceRESTAPI(object):
     def service_catalogs(self, request, rest_api):
         return _service_catalogs(request, rest_api)
 
-    @pytest.mark.usefixtures("logged_in")
     @pytest.fixture(scope="function")
     def services(self, request, rest_api, a_provider, dialog, service_catalogs):
         return _services(request, rest_api, a_provider, dialog, service_catalogs)
@@ -173,12 +171,10 @@ class TestServiceRESTAPI(object):
 
 
 class TestServiceTemplateRESTAPI(object):
-    @pytest.mark.usefixtures("logged_in")
     @pytest.fixture(scope='function')
     def service_templates(self, request, rest_api, dialog):
         return _service_templates(request, rest_api, dialog)
 
-    @pytest.mark.usefixtures("logged_in")
     @pytest.fixture(scope="function")
     def dialog(self):
         return _dialog()

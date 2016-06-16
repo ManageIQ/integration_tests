@@ -15,7 +15,7 @@ from utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('logged_in', 'vm_name', 'catalog_item', 'uses_infra_providers'),
+    pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
     pytest.mark.long_running
 ]
 

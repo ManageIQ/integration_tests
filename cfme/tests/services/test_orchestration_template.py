@@ -8,7 +8,7 @@ from cfme.web_ui import mixins
 from cfme.fixtures import pytest_selenium as sel
 
 
-pytestmark = [pytest.mark.usefixtures("logged_in"), pytest.mark.tier(2)]
+pytestmark = [pytest.mark.tier(2)]
 
 METHOD_TORSO = """
 {  "AWSTemplateFormatVersion" : "2010-09-09",
