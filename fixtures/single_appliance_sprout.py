@@ -76,7 +76,7 @@ def pytest_configure(config):
         reset_timer(sprout, pool_id, config.option.sprout_timeout)
         terminal.write("Appliance lease timer is running ...\n")
         appliance = IPAppliance(address=ip_address)
-        appliance.push()
+        pytest.store.appliance_stack.push(appliance)
         # Retrieve and print the template_name for Jenkins to pick up
         template_name = request["appliances"][0]["template_name"]
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name

@@ -271,7 +271,9 @@ class ParallelSession(object):
             request = self.sprout_client.request_check(self.sprout_pool)
             self.appliances = []
             # Push an appliance to the stack to have proper reference for test collection
-            IPAppliance(address=request["appliances"][0]["ip_address"]).push()
+            # FIXME: this is a bad hack based on the need for controll of collection partitioning
+            pytest.store.appliance_stack.push(
+                IPAppliance(address=request["appliances"][0]["ip_address"]))
             self.terminal.write("Appliances were provided:\n")
             for appliance in request["appliances"]:
                 url = "https://{}/".format(appliance["ip_address"])
