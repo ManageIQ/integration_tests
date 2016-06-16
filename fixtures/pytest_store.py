@@ -100,12 +100,6 @@ class Store(object):
         self._user = value
 
     @property
-    def any_appliance(self):
-        # this makes me unhappy
-        if 'utils.appliance' in sys.modules:
-            return self.appliance_stack.top is not None
-
-    @property
     def base_url(self):
         """ If there is a current appliance the base url of that appliance is returned
             else, the base_url from the config is returned."""
