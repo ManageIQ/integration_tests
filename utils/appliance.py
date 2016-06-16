@@ -6,7 +6,6 @@ import random
 import re
 import socket
 import yaml
-from datetime import datetime
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
@@ -235,17 +234,10 @@ class IPAppliance(object):
             :py:class:`set` of :py:class:`str` - provider_key-s
         """
         ip_addresses = set([])
-        if (    # LISP powa!
-                (self.is_downstream and self.version >= '5.6')
-                or ((not self.is_downstream)
-                    and self.build_datetime >= datetime(year=2015, month=10, day=5))):
-            query = self._query_post_endpoints
-        else:
-            query = self._query_pre_endpoints
 
         # Fetch all providers at once, return empty list otherwise
         try:
-            query_res = list(query())
+            query_res = list(self._query_endpoints())
         except Exception as ex:
             self.log.warning("Unable to query DB for managed providers: %s", str(ex))
             return []
@@ -265,6 +257,13 @@ class IPAppliance(object):
             if provider_data.get("ipaddress", None) in ip_addresses:
                 provider_keys.add(provider_key)
         return provider_keys
+
+    def _query_endpoints(self):
+
+        if "endpoints" in self.db:
+            return self._query_post_endpoints()
+        else:
+            return self._query_pre_endpoints()
 
     def _query_pre_endpoints(self):
         ems_table = self.db["ext_management_systems"]
