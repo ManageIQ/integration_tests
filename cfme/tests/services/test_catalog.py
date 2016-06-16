@@ -6,8 +6,6 @@ from utils.update import update
 import utils.error as error
 import cfme.tests.configure.test_access_control as tac
 
-pytestmark = [pytest.mark.usefixtures("logged_in")]
-
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce

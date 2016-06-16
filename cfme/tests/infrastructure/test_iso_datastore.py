@@ -4,7 +4,6 @@ from cfme.infrastructure import pxe
 from utils import testgen
 
 pytestmark = [
-    pytest.mark.usefixtures("logged_in"),
     pytest.mark.usefixtures('uses_infra_providers'),
 ]
 

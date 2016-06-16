@@ -6,9 +6,6 @@ from utils.update import update
 import utils.error as error
 
 
-pytestmark = [pytest.mark.usefixtures("logged_in")]
-
-
 def _make_namespace(domain):
     name = fauxfactory.gen_alphanumeric(8)
     description = fauxfactory.gen_alphanumeric(32)

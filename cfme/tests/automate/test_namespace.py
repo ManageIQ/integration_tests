@@ -12,8 +12,6 @@ import utils.error as error
 import cfme.tests.configure.test_access_control as tac
 import cfme.tests.automate as ta
 
-pytestmark = [pytest.mark.usefixtures("logged_in")]
-
 
 @pytest.fixture(scope="module")
 def domain(request):

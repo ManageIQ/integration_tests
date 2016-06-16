@@ -9,7 +9,7 @@ from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('logged_in', 'vm_name', 'uses_infra_providers', 'catalog_item'),
+    pytest.mark.usefixtures('vm_name', 'uses_infra_providers', 'catalog_item'),
     pytest.mark.long_running,
 ]
 

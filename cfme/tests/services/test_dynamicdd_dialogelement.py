@@ -9,7 +9,6 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer import Domain, Namespace, Class, Method, Instance
 
 pytestmark = [
-    pytest.mark.usefixtures("logged_in"),
     pytest.mark.long_running,
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles="+automate")
