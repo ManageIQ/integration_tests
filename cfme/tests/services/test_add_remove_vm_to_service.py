@@ -13,7 +13,6 @@ from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.usefixtures("logged_in"),
     pytest.mark.usefixtures("vm_name"),
     pytest.mark.usefixtures("catalog_item"),
     pytest.mark.usefixtures('uses_infra_providers'),

@@ -64,9 +64,7 @@ def test_retire_service(provider, myservice, register_event):
         test_flag: provision
     """
     myservice.retire()
-    register_event(
-        provider.get_yaml_data()['type'],
-        "service", myservice.service_name, ["service_retired"])
+    register_event('Service', myservice.service_name, 'service_retired')
 
 
 def test_retire_service_on_date(myservice):

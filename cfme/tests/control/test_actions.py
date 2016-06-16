@@ -711,7 +711,8 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refr
     Metadata:
         test_flag: actions, provision
     """
-    if "Service Level: Gold" in vm.crud.get_tags():
+    if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+           for tag in vm.crud.get_tags()):
         vm.crud.remove_tag(("Service Level", "Gold"))
 
     tag_assign_action = explorer.Action(
@@ -730,7 +731,8 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refr
     vm_crud_refresh()
     try:
         wait_for(
-            lambda: "Service Level: Gold" in vm.crud.get_tags(),
+            lambda: any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+                        for tag in vm.crud.get_tags()),
             num_sec=600,
             message="tag presence check"
         )
@@ -745,12 +747,14 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
     Metadata:
         test_flag: actions, provision
     """
-    if "Service Level: Gold" not in vm.crud.get_tags():
+    if not any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+           for tag in vm.crud.get_tags()):
         vm.crud.add_tag(("Service Level", "Gold"), single_value=True)
 
     @request.addfinalizer
     def _remove_tag():
-        if "Service Level: Gold" in vm.crud.get_tags():
+        if any(tag.category.display_name == "Service Level" and tag.display_name == "Gold"
+               for tag in vm.crud.get_tags()):
             vm.crud.remove_tag(("Service Level", "Gold"))
 
     tag_unassign_action = explorer.Action(
@@ -770,7 +774,8 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
     try:
 
         wait_for(
-            lambda: "Service Level: Gold" not in vm.crud.get_tags(),
+            lambda: not any(tag.category.display_name == "Service Level" and
+                            tag.display_name == "Gold" for tag in vm.crud.get_tags()),
             num_sec=600,
             message="tag presence check"
         )

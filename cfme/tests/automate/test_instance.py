@@ -5,8 +5,6 @@ from utils.update import update
 import utils.error as error
 import cfme.tests.automate as ta
 
-pytestmark = [pytest.mark.usefixtures("logged_in")]
-
 
 @pytest.fixture(scope='module')
 def make_class(request):

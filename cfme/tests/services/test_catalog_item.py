@@ -10,7 +10,7 @@ from utils.update import update
 from utils.blockers import BZ
 import cfme.tests.configure.test_access_control as tac
 
-pytestmark = [pytest.mark.usefixtures("logged_in"), pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3)]
 
 
 @pytest.yield_fixture(scope="function")

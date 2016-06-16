@@ -77,7 +77,7 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
                 test_host.credentials = host.Host.Credential(
                     principal="", secret="", verify_secret="")
 
-    register_event(None, "host", host_name, ["host_analysis_request", "host_analysis_complete"])
+    register_event('Host', host_name, ["request_host_scan", "host_scan_complete"])
 
     # Initiate analysis
     test_host.run_smartstate_analysis()

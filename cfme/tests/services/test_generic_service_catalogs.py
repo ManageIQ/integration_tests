@@ -13,10 +13,11 @@ from cfme.web_ui import flash
 from utils import error
 from utils.log import logger
 from utils.wait import wait_for
+from utils import version
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
-    pytest.mark.usefixtures('logged_in', 'uses_infra_providers'),
+    pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.tier(2)
 ]
 
@@ -110,8 +111,13 @@ def test_bundles_in_bundle(catalog_item):
 def test_delete_dialog_before_parent_item(catalog_item):
     service_dialog = ServiceDialog(label=catalog_item.dialog)
     service_dialog.delete()
-    flash.assert_message_match(("Dialog \"{}\": Error during 'destroy': Dialog cannot be deleted " +
-    "because it is connected to other components.").format(catalog_item.dialog))
+    message = version.pick({'5.6': (("Dialog \"{}\": Error during delete: Dialog cannot be " +
+                            "deleted because it is connected to other components.").
+                            format(catalog_item.dialog)),
+                            '5.5': (("Dialog \"{}\": Error during 'destroy': Dialog cannot be " +
+                            "deleted because it is connected to other components.").
+                            format(catalog_item.dialog))})
+    flash.assert_message_match(message)
 
 
 class TestServiceCatalogViaREST(object):

@@ -1623,14 +1623,14 @@ class Zone(Pretty):
         tb.select("Configuration", "Add a new Zone")
         if self.name is not None:
             try:
-                sel.browser().execute_script(
+                sel.execute_script(
                     "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?name=%s',"
                     " data: {'name':'%s'}})" % (self.name, self.name))
             except sel.WebDriverException:
                 logger.info("Ignoring workaround for zone description filling")
         if self.description is not None:
             try:
-                sel.browser().execute_script(
+                sel.execute_script(
                     "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?description=%s',"
                     " data: {'description':'%s'}})" % (self.description,
                     self.description))
@@ -1808,17 +1808,22 @@ class Tag(Pretty):
             sel.handle_alert()
 
 
-def set_server_roles(**roles):
+def set_server_roles(db=True, **roles):
     """ Set server roles on Configure / Configuration pages.
 
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
+    yaml = store.current_appliance.get_yaml_config("vmdb")
     if get_server_roles() == roles:
         logger.debug(' Roles already match, returning...')
         return
-    sel.force_navigate("cfg_settings_currentserver_server")
-    fill(server_roles, roles, action=form_buttons.save)
+    if db:
+        yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
+        store.current_appliance.set_yaml_config("vmdb", yaml)
+    else:
+        sel.force_navigate("cfg_settings_currentserver_server")
+        fill(server_roles, roles, action=form_buttons.save)
 
 
 def get_server_roles(navigate=True, db=True):

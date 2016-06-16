@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import iso8601
 import re
 import socket
@@ -16,6 +17,7 @@ from utils.log import logger
 from utils.net import net_check
 from fixtures.pytest_store import store
 from utils.path import project_path
+from utils.quote import quote
 from utils.timeutil import parsetime
 
 
@@ -35,12 +37,16 @@ class SSHClient(paramiko.SSHClient):
 
     Allows copying/overriding and use as a context manager
     Constructor kwargs are handed directly to paramiko.SSHClient.connect()
+
+    If ``container`` param is specified, then it is assumed that the VM hosts a container of CFME.
+    The ``container`` param then contains the name of the container.
     """
     def __init__(self, stream_output=False, **connect_kwargs):
         super(SSHClient, self).__init__()
         self._streaming = stream_output
         # deprecated/useless karg, included for backward-compat
         self._keystate = connect_kwargs.pop('keystate', None)
+        self._container = connect_kwargs.pop('container', None)
 
         # load the defaults for ssh
         default_connect_kwargs = {
@@ -53,9 +59,9 @@ class SSHClient(paramiko.SSHClient):
         if not connect_kwargs.get('hostname', None):
             parsed_url = urlparse(store.base_url)
             default_connect_kwargs["port"] = ports.SSH
-            default_connect_kwargs['username'] = conf.credentials['ssh']['username'],
-            default_connect_kwargs['password'] = conf.credentials['ssh']['password'],
-            default_connect_kwargs['hostname'] = parsed_url.hostname,
+            default_connect_kwargs['username'] = conf.credentials['ssh']['username']
+            default_connect_kwargs['password'] = conf.credentials['ssh']['password']
+            default_connect_kwargs['hostname'] = parsed_url.hostname
         default_connect_kwargs["port"] = ports.SSH
 
         # Overlay defaults with any passed-in kwargs and store
@@ -63,6 +69,10 @@ class SSHClient(paramiko.SSHClient):
         self._connect_kwargs = default_connect_kwargs
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         _client_session.append(self)
+
+    @property
+    def is_container(self):
+        return self._container is not None
 
     def __repr__(self):
         return "<SSHClient hostname={} port={}>".format(
@@ -124,6 +134,9 @@ class SSHClient(paramiko.SSHClient):
             return super(SSHClient, self).connect(**self._connect_kwargs)
 
     def open_sftp(self, *args, **kwargs):
+        if self.is_container:
+            logger.warning(
+                'You are about to use sftp on a containerized appliance. It may not work.')
         self.connect()
         return super(SSHClient, self).open_sftp(*args, **kwargs)
 
@@ -135,10 +148,14 @@ class SSHClient(paramiko.SSHClient):
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
-    def run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False):
+    def run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False):
         if isinstance(command, dict):
             command = version.pick(command)
         logger.info("Running command `%s`", command)
+        if self.is_container and not ensure_host:
+            command = 'docker exec {} bash -c {}'.format(self._container, quote(
+                'source /etc/default/evm; ' + command))
+            logger.info("Actually running command `%s`", command)
         template = '{}\n'
         command = template.format(command)
 
@@ -208,13 +225,28 @@ class SSHClient(paramiko.SSHClient):
 
     def put_file(self, local_file, remote_file='.', **kwargs):
         logger.info("Transferring local file %s to remote %s", local_file, remote_file)
-        return SCPClient(self.get_transport(), progress=self._progress_callback).put(
-            local_file, remote_file, **kwargs)
+        if self.is_container:
+            tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
+            scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
+                local_file, tempfilename, **kwargs)
+            self.run_command('mv {} {}'.format(tempfilename, remote_file))
+            return scp
+        else:
+            return SCPClient(self.get_transport(), progress=self._progress_callback).put(
+                local_file, remote_file, **kwargs)
 
     def get_file(self, remote_file, local_path='', **kwargs):
         logger.info("Transferring remote file %s to local %s", remote_file, local_path)
-        return SCPClient(self.get_transport(), progress=self._progress_callback).get(
-            remote_file, local_path, **kwargs)
+        if self.is_container:
+            tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
+            self.run_command('cp {} {}'.format(remote_file, tempfilename))
+            scp = SCPClient(self.get_transport(), progress=self._progress_callback).get(
+                tempfilename, local_path, **kwargs)
+            self.run_command('rm {}'.format(tempfilename))
+            return scp
+        else:
+            return SCPClient(self.get_transport(), progress=self._progress_callback).get(
+                remote_file, local_path, **kwargs)
 
     def patch_file(self, local_path, remote_path, md5=None):
         """ Patches a single file on the appliance
@@ -295,7 +327,7 @@ class SSHClient(paramiko.SSHClient):
         return 0
 
     def client_address(self):
-        res = self.run_command('echo $SSH_CLIENT')
+        res = self.run_command('echo $SSH_CLIENT', ensure_host=True)
         # SSH_CLIENT format is 'clientip clientport serverport', we want clientip
         if not res.output:
             raise Exception('unable to get client address via SSH')

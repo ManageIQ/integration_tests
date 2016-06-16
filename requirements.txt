@@ -12,6 +12,7 @@ ipython
 iso8601
 Jinja2
 jsmin
+jupyter
 kwargify
 # 15.8.1 breaks yaycl: https://github.com/mk-fg/layered-yaml-attrdict-config/commit/ea12fbf31b96abf15543c7b436272d8854b5d324
 layered-yaml-attrdict-config
@@ -30,8 +31,8 @@ pycurl
 pycrypto
 pygal
 PyGithub
-# Temporary stick to 2.7.0 due to fixture scoping mismatches in 2.7.1 and possibly up
-pytest==2.7.0
+
+pytest==2.9.2
 python-bugzilla>=1.2.0
 python-cinderclient
 python-dateutil
@@ -78,3 +79,6 @@ psycopg2
 
 # zeromq bindings, for ipython and parallel testing, needs zeromq3-devel
 pyzmq
+
+# werkzeug.local until extraction
+werkzeug

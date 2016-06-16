@@ -24,7 +24,6 @@ def a_provider():
     return _setup_a_provider("infra")
 
 
-@pytest.mark.usefixtures("logged_in")
 @pytest.fixture(scope='function')
 def user():
     user = User(credential=Credential(principal=fauxfactory.gen_alphanumeric(),

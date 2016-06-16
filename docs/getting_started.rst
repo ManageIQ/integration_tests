@@ -10,6 +10,11 @@ carefully read this page from beginning to the end. That will make you familiari
 and will minimize the chance of doing it wrong. Then you can proceed the shortest way using the
 setup and execution scripts.
 
+Appliances in containers
+------------------------
+If the target appliance you will be testing is a container, you might like to consult
+:doc:`guides/container` for the details specific to testing containers.
+
 Setup
 -----
 You can use this shortcut to install the system and python dependencies which will leave you only
@@ -20,14 +25,7 @@ file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
 
   #!/usr/bin/env bash
 
-  if hash dnf;
-  then
-    YUM=dnf
-  else
-    YUM=yum
-  fi
-
-  sudo $YUM install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel
+  pkcon install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel
   virtualenv .cfme_tests
   echo "export PYTHONPATH='`pwd`'" | tee -a ./.cfme_tests/bin/activate
   echo "export PYTHONDONTWRITEBYTECODE=yes" | tee -a ./.cfme_tests/bin/activate
@@ -91,9 +89,7 @@ Detailed steps (manual environment setup):
   * ``libffi-devel``
   * Fedora (possibly RHEL-like systems) users:
 
-    * ``hash dnf 2>/dev/null && { YUM=dnf; } || { YUM=yum; }``
-
-    * ``sudo $YUM install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel``
+    * ``pkcon install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel``
 
     * On RHEL and derived systems, it will say the zeromq package is not available but that is ok.
 

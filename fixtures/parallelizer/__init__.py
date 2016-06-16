@@ -35,6 +35,7 @@ import collections
 import difflib
 import json
 import os
+import re
 import signal
 import subprocess
 from collections import OrderedDict, defaultdict, deque, namedtuple
@@ -53,7 +54,7 @@ from fixtures import terminalreporter
 from fixtures.parallelizer import remote
 from fixtures.pytest_store import store
 from utils import at_exit, conf
-from utils.appliance import IPAppliance
+from utils.appliance import IPAppliance, stack as appliance_stack
 from utils.log import create_sublogger
 from utils.net import random_port
 from utils.path import conf_path, project_path
@@ -102,13 +103,12 @@ def pytest_addoption(parser):
 
 def pytest_addhooks(pluginmanager):
     import hooks
-    pluginmanager.addhooks(hooks)
+    pluginmanager.add_hookspecs(hooks)
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.trylast
 def pytest_configure(config):
     # configures the parallel session, then fires pytest_parallel_configured
-    yield
     if (config.option.appliances or (config.option.use_sprout and
             config.option.sprout_appliances > 1)):
         session = ParallelSession(config)
@@ -215,6 +215,25 @@ class ParallelSession(object):
         else:
             # Using sprout
             self.sprout_client = SproutClient.from_config()
+            try:
+                if self.config.option.sprout_desc is not None:
+                    jenkins_job = re.findall(r"Jenkins.*[^\d+$]", self.config.option.sprout_desc)
+                    if jenkins_job:
+                        self.terminal.write(
+                            "Check if pool already exists for this '{}' Jenkins job\n".format(
+                                jenkins_job[0]))
+                        jenkins_job_pools = self.sprout_client.find_pools_by_description(
+                            jenkins_job[0], partial=True)
+                        for pool in jenkins_job_pools:
+                            self.terminal.write("Destroying the old pool {} for '{}' job.\n".format(
+                                pool, jenkins_job[0]))
+                            self.sprout_client.destroy_pool(pool)
+            except Exception as e:
+                self.terminal.write(
+                    "Exception occurred during old pool deletion, this can be ignored"
+                    "proceeding to Request new pool")
+                self.terminal.write("> The exception was: {}".format(str(e)))
+
             self.terminal.write(
                 "Requesting {} appliances from Sprout at {}\n".format(
                     self.config.option.sprout_appliances, self.sprout_client.api_entry))
@@ -251,7 +270,9 @@ class ParallelSession(object):
             request = self.sprout_client.request_check(self.sprout_pool)
             self.appliances = []
             # Push an appliance to the stack to have proper reference for test collection
-            IPAppliance(address=request["appliances"][0]["ip_address"]).push()
+            # FIXME: this is a bad hack based on the need for controll of collection partitioning
+            appliance_stack.push(
+                IPAppliance(address=request["appliances"][0]["ip_address"]))
             self.terminal.write("Appliances were provided:\n")
             for appliance in request["appliances"]:
                 url = "https://{}/".format(appliance["ip_address"])
@@ -355,7 +376,9 @@ class ParallelSession(object):
 
         # worker output redirected to null; useful info comes via messages and logs
         slave = subprocess.Popen(
-            ['python', remote.__file__, slaveid, base_url], stdout=devnull, stderr=devnull)
+            ['python', remote.__file__, slaveid, base_url],
+            stdout=devnull, stderr=devnull,
+        )
         self.slaves[slaveid] = slave
         self.slave_spawn_count += 1
         at_exit(slave.kill)

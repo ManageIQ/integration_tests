@@ -14,6 +14,8 @@ from tempfile import NamedTemporaryFile
 
 from cached_property import cached_property
 
+from werkzeug.local import LocalStack, LocalProxy
+
 import dateutil.parser
 import requests
 import traceback
@@ -22,11 +24,11 @@ from utils.mgmt_system import RHEVMSystem
 from mgmtsystem.virtualcenter import VMWareSystem
 
 from cfme.common.vm import VM
-from cfme.configure.configuration import server_name, server_id
 from fixtures import ui_coverage
-from fixtures.pytest_store import _push_appliance, _pop_appliance, store
+from fixtures.pytest_store import store
 from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
 from utils.datafile import load_data_file
+from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path
@@ -60,7 +62,7 @@ class IPAppliance(object):
             is used to generate a new session.
     """
 
-    def __init__(self, address=None, browser_steal=False):
+    def __init__(self, address=None, browser_steal=False, container=None):
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -75,16 +77,11 @@ class IPAppliance(object):
                 self.scheme = address.scheme
                 self._url = address.geturl()
         self.browser_steal = browser_steal
+        self.container = container
         self._db_ssh_client = None
 
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
-
-    def push(self):
-        _push_appliance(self)
-
-    def pop(self):
-        _pop_appliance(self)
 
     def __call__(self, **kwargs):
         """Syntactic sugar for overriding certain instance variables for context managers.
@@ -93,13 +90,12 @@ class IPAppliance(object):
 
         * `browser_steal`
         """
-        if "browser_steal" in kwargs:
-            self.browser_steal = kwargs["browser_steal"]
+        self.browser_steal = kwargs.get("browser_steal", self.browser_steal)
         return self
 
     def __enter__(self):
         """ This method will replace the current appliance in the store """
-        self.push()
+        stack.push(self)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -133,7 +129,7 @@ class IPAppliance(object):
                     contents_base64=False, contents=ss_error, display_type="danger", group_id=g_id)
         elif exc_type is not None:
             logger.info("Error happened but we are not inside a test run so no screenshot now.")
-        self.pop()
+        assert stack.pop() is self, 'appliance stack inconsistent'
 
     def __eq__(self, other):
         return isinstance(other, IPAppliance) and self.address == other.address
@@ -400,8 +396,12 @@ class IPAppliance(object):
             'hostname': self.hostname,
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],
+            'container': self.container,
         }
-        return ssh.SSHClient(**connect_kwargs)
+        ssh_client = ssh.SSHClient(**connect_kwargs)
+        # FIXME: propperly store ssh clients we made
+        store.ssh_clients_to_close.append(ssh_client)
+        return ssh_client
 
     @property
     def db_ssh_client(self, **connect_kwargs):
@@ -431,6 +431,11 @@ class IPAppliance(object):
         except (TypeError, ValueError):
             value = None
         return value
+
+    @cached_property
+    def events(self):
+        """Returns an instance of the event capturing class pointed to this appliance."""
+        return EventTool(self)
 
     def diagnose_evm_failure(self):
         """Go through various EVM processes, trying to figure out what fails
@@ -715,9 +720,8 @@ class IPAppliance(object):
 
         Ignores certain files, like redhat.repo.
         """
-        ftp = self.ssh_client.open_sftp()
-        ftp.chdir("/etc/yum.repos.d")
-        return [f for f in ftp.listdir() if f not in {"redhat.repo"} and f.endswith(".repo")]
+        repofiles = self.ssh_client.run_command('ls /etc/yum.repos.d').output.strip().split('\n')
+        return [f for f in repofiles if f not in {"redhat.repo"} and f.endswith(".repo")]
 
     def read_repos(self):
         """Reads repofiles so it gives you mapping of id and url."""
@@ -764,14 +768,13 @@ class IPAppliance(object):
             kwargs["gpgcheck"] = 0
         if "enabled" not in kwargs:
             kwargs["enabled"] = 1
-        sftp = self.ssh_client.open_sftp()
+        filename = "/etc/yum.repos.d/{}.repo".format(repo_id)
         logger.info("Writing a new repofile %s %s", repo_id, repo_url)
-        with sftp.open("/etc/yum.repos.d/{}.repo".format(repo_id), "w") as f:
-            f.write("[update-{}]\n".format(repo_id))
-            f.write("name=update-url-{}\n".format(repo_id))
-            f.write("baseurl={}\n".format(repo_url))
-            for k, v in kwargs.iteritems():
-                f.write("{}={}\n".format(k, v))
+        self.ssh_client.run_command('echo "[update-{}]" > {}'.format(repo_id, filename))
+        self.ssh_client.run_command('echo "name=update-url-{}" >> {}'.format(repo_id, filename))
+        self.ssh_client.run_command('echo "baseurl={}" >> {}'.format(repo_url, filename))
+        for k, v in kwargs.iteritems():
+            self.ssh_client.run_command('echo "{}={}" >> {}'.format(k, v, filename))
         return repo_id
 
     def add_product_repo(self, repo_url, **kwargs):
@@ -1356,13 +1359,39 @@ class IPAppliance(object):
                  delay=5,
                  num_sec=timeout)
 
+    def get_host_address(self):
+        try:
+            if self.version >= '5.6':
+                server = self.get_yaml_config('vmdb').get('server', None)
+            else:
+                server = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db').get(
+                    'server', None)
+            if server:
+                return server.get('host', None)
+        except Exception as e:
+            logger.exception(e)
+            self.log.error('Exception occured while fetching host address')
+
+    def wait_for_host_address(self):
+        try:
+            wait_for(func=self.get_host_address,
+                     fail_condition=None,
+                     delay=5,
+                     num_sec=120)
+            return self.get_host_address()
+        except Exception as e:
+            logger.exception(e)
+            self.log.error('waiting for host address from yaml_config timedout')
+
     @cached_property
     def db_address(self):
         # pulls the db address from the appliance by default, falling back to the appliance
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
         try:
-            db = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db')['server']['host']
+            db = self.wait_for_host_address()
+            if db is None:
+                return self.address
             db = db.strip()
             ip_addr = self.ssh_client.run_command('ip address show')
             if db in ip_addr.output or db.startswith('127') or 'localhost' in db:
@@ -1545,7 +1574,7 @@ class IPAppliance(object):
             else:
                 raise Exception('Only [vmdb] config is allowed from 5.6+')
         else:
-            return db.set_yaml_config(config_name, data_dict, self.address)
+            return db.set_yaml_config(config_name, data_dict)
 
     def get_yaml_file(self, yaml_path):
         """Get (and parse) a yaml file from the appliance, returning a python data structure"""
@@ -1595,10 +1624,10 @@ class Appliance(IPAppliance):
 
     _default_name = 'EVM'
 
-    def __init__(self, provider_name, vm_name, browser_steal=False):
+    def __init__(self, provider_name, vm_name, browser_steal=False, container=None):
         """Initializes a deployed appliance VM
         """
-        super(Appliance, self).__init__(browser_steal=browser_steal)
+        super(Appliance, self).__init__(browser_steal=browser_steal, container=None)
         self.name = Appliance._default_name
 
         self._provider_name = provider_name
@@ -1745,7 +1774,7 @@ class Appliance(IPAppliance):
                 log_callback('Setting up CFME VM relationship...')
                 vm = VM.factory(self.vm_name, get_crud(self._provider_name))
                 cfme_rel = Vm.CfmeRelationship(vm)
-                cfme_rel.set_relationship(str(server_name()), server_id())
+                cfme_rel.set_relationship(str(self.server_name()), self.server_id())
 
     def does_vm_exist(self):
         return self.provider.does_vm_exist(self.vm_name)
@@ -2015,3 +2044,40 @@ def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
     logger.info('Done - configuring appliances')
 
     return appliance_set
+
+
+class ApplianceStack(LocalStack):
+
+    def push(self, obj):
+        was_before = self.top
+        super(ApplianceStack, self).push(obj)
+
+        logger.info("Pushed appliance {} on stack (was {} before) ".format(
+            obj.address, getattr(was_before, 'address', 'empty')))
+        if obj.browser_steal:
+            from utils import browser
+            browser.start()
+
+    def pop(self):
+        was_before = super(ApplianceStack, self).pop()
+        current = self.top
+        logger.info(
+            "Popped appliance {} from the stack (now there is {})".format(
+                was_before.address, getattr(current, 'address', 'empty')))
+        if was_before.browser_steal:
+            from utils import browser
+            browser.start()
+        return was_before
+
+stack = ApplianceStack()
+
+
+def get_or_create_current_appliance():
+    if stack.top is None:
+        base_url = conf.env['base_url']
+        if base_url is None or str(base_url.lower()) == 'none':
+            raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
+        stack.push(IPAppliance(urlparse(base_url), container=conf.env.get('container', None)))
+    return stack.top
+
+current_appliance = LocalProxy(get_or_create_current_appliance)

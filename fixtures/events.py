@@ -3,60 +3,171 @@
 
 Some very important tips:
 
-* You MUST have your firewall turned off if you use random ports (as it is done in tests). If you
-  use a specific fixed port, make sure it is reachable from outside.
-* If you develop tests that use event testing, create a config in env.yaml:
-
-  .. code-block:: yaml
-
-    event_testing:
-        port: 12345
-
-  Then in multiple runs, the port stays the same so it works. Failure to do this will bite you. If
-  you forgot to do that, you can change the hostname and ip of event listener at Automate's
-  ``Datastore/EventTesting/QE/Automation/APIMethods/relay_events``. You can run the listener
-  standalone using ``python scripts/listener.py 0.0.0.0 <port>`` and use it for development.
-  It will eat all events that come to it and you will be able to see them at
-  ``localhost:port/events``, although just in JSON (rendering of HTML is done in cfme_tests). You
-  can issue a ``DELETE /events`` on the listener (eg. using ``curl``) in order to flush the event
-  database.
-
 * You should run with artifactor in order to get per-test HTML event reports.
 
 Usage of ``register_event`` is explained in :py:func:`register_event`.
+
+Uses :py:class:`utils.events.EventTool` through :py:class:`utils.appliance.IPAppliance`.
+
+Available event types:
+
+* ``assigned_company_tag``
+* ``assigned_company_tag_parent_ems_cluster``
+* ``assigned_company_tag_parent_host``
+* ``assigned_company_tag_parent_resource_pool``
+* ``assigned_company_tag_parent_storage``
+* ``containerimage_compliance_check``
+* ``containerimage_compliance_failed``
+* ``containerimage_compliance_passed``
+* ``containerimage_created``
+* ``containerimage_scan_complete``
+* ``cpu_usage_100``
+* ``cpu_usage_50``
+* ``cpu_usage_75``
+* ``cpu_usage_90``
+* ``disk_usage_100``
+* ``disk_usage_50``
+* ``disk_usage_75``
+* ``disk_usage_90``
+* ``ems_auth_changed``
+* ``ems_auth_error``
+* ``ems_auth_incomplete``
+* ``ems_auth_invalid``
+* ``ems_auth_unreachable``
+* ``ems_auth_valid``
+* ``ems_performance_gap_detected``
+* ``evm_server_boot_disk_high_usage``
+* ``evm_server_db_backup_low_space``
+* ``evm_server_db_disk_high_usage``
+* ``evm_server_home_disk_high_usage``
+* ``evm_server_is_master``
+* ``evm_server_memory_exceeded``
+* ``evm_server_miq_tmp_disk_high_usage``
+* ``evm_server_not_responding``
+* ``evm_server_start``
+* ``evm_server_stop``
+* ``evm_server_system_disk_high_usage``
+* ``evm_server_tmp_disk_high_usage``
+* ``evm_server_var_disk_high_usage``
+* ``evm_server_var_log_audit_disk_high_usage``
+* ``evm_server_var_log_disk_high_usage``
+* ``evm_worker_exit_file``
+* ``evm_worker_killed``
+* ``evm_worker_memory_exceeded``
+* ``evm_worker_not_responding``
+* ``evm_worker_start``
+* ``evm_worker_stop``
+* ``evm_worker_uptime_exceeded``
+* ``host_add_to_cluster``
+* ``host_auth_changed``
+* ``host_auth_error``
+* ``host_auth_incomplete``
+* ``host_auth_invalid``
+* ``host_auth_unreachable``
+* ``host_auth_valid``
+* ``host_compliance_check``
+* ``host_compliance_failed``
+* ``host_compliance_passed``
+* ``host_connect``
+* ``host_disconnect``
+* ``host_perf_complete``
+* ``host_provisioned``
+* ``host_remove_from_cluster``
+* ``host_scan_complete``
+* ``mem_usage_100``
+* ``mem_usage_50``
+* ``mem_usage_75``
+* ``mem_usage_90``
+* ``request_assign_company_tag``
+* ``request_host_disable_vmotion``
+* ``request_host_enable_vmotion``
+* ``request_host_enter_maintenance_mode``
+* ``request_host_exit_maintenance_mode``
+* ``request_host_reboot``
+* ``request_host_reset``
+* ``request_host_scan``
+* ``request_host_shutdown``
+* ``request_host_standby``
+* ``request_host_start``
+* ``request_host_stop``
+* ``request_service_retire``
+* ``request_service_start``
+* ``request_service_stop``
+* ``request_storage_scan``
+* ``request_unassign_company_tag``
+* ``request_vm_create_snapshot``
+* ``request_vm_destroy``
+* ``request_vm_pause``
+* ``request_vm_poweroff``
+* ``request_vm_reboot_guest``
+* ``request_vm_reset``
+* ``request_vm_retire``
+* ``request_vm_scan``
+* ``request_vm_shelve``
+* ``request_vm_shelve_offload``
+* ``request_vm_shutdown_guest``
+* ``request_vm_standby_guest``
+* ``request_vm_start``
+* ``request_vm_suspend``
+* ``request_vm_unregister``
+* ``service_provisioned``
+* ``service_retire_warn``
+* ``service_retired``
+* ``service_started``
+* ``service_stopped``
+* ``storage_scan_complete``
+* ``unassigned_company_tag``
+* ``unassigned_company_tag_parent_ems_cluster``
+* ``unassigned_company_tag_parent_host``
+* ``unassigned_company_tag_parent_resource_pool``
+* ``unassigned_company_tag_parent_storage``
+* ``vm_clone``
+* ``vm_clone_start``
+* ``vm_compliance_check``
+* ``vm_compliance_failed``
+* ``vm_compliance_passed``
+* ``vm_create``
+* ``vm_migrate``
+* ``vm_pause``
+* ``vm_perf_complete``
+* ``vm_poweroff``
+* ``vm_provisioned``
+* ``vm_reboot_guest``
+* ``vm_reconfigure``
+* ``vm_remote_console_connected``
+* ``vm_renamed_event``
+* ``vm_reset``
+* ``vm_resume``
+* ``vm_retire_warn``
+* ``vm_retired``
+* ``vm_scan_abort``
+* ``vm_scan_complete``
+* ``vm_scan_start``
+* ``vm_shelve``
+* ``vm_shelve_offload``
+* ``vm_shutdown_guest``
+* ``vm_snapshot``
+* ``vm_snapshot_complete``
+* ``vm_standby_guest``
+* ``vm_start``
+* ``vm_suspend``
+* ``vm_template``
+* ``vm_unregister``
+
+The types can be retrieved using the :py:class:`utils.events.EventTool` by calling
+:py:meth:`utils.events.EventTool.all_event_types` on it.
 """
-import requests
-import signal
-import subprocess
-import time
 from datetime import datetime
 
 import pytest
-from cached_property import cached_property
 
 from fixtures.artifactor_plugin import art_client, get_test_idents
-from fixtures.terminalreporter import reporter
-from utils import providers
-from utils.conf import env
-from utils.db import cfmedb
+from fixtures.pytest_store import store
 from utils.datafile import template_env
-from utils.events import setup_for_event_testing
 from utils.log import create_logger
-from utils.net import my_ip_address, random_port
-from utils.path import scripts_path
-from utils.ssh import SSHClient
 from utils.wait import wait_for, TimedOutError
 
 logger = create_logger('events')
-
-
-def get_current_time_GMT():
-    """ Because SQLite loves GMT.
-
-    Returns:
-        datetime() with current GMT time
-    """
-    return datetime.strptime(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "%Y-%m-%d %H:%M:%S")
 
 
 class HTMLReport(object):
@@ -84,25 +195,26 @@ class EventExpectation(object):
 
     TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-    def __init__(self, sys_type, obj_type, obj, event, time=None):
-        self.sys_type = sys_type
-        self.obj_type = obj_type
-        self.obj = obj
-        self.event = event
+    def __init__(self, target_type, target_id, event_type, time=None):
+        self.target_type = target_type
+        self.target_id = target_id
+        self.event_type = event_type
         self.arrived = None
+        # These two following attributes are set from the events that come
+        self.message = None
+        self.id = id
+        self.real_target_id = None
         if time:
             self.time = time
         else:
-            self.time = get_current_time_GMT()
+            self.time = datetime.utcnow()
 
     def __eq__(self, other):
         try:
-            assert self.sys_type == other.sys_type
-            assert self.obj_type == other.obj_type
-            assert self.obj == other.obj
-            assert self.event == other.event
-            return True
-        except (AssertionError, AttributeError):
+            return (
+                self.target_type == other.target_type and self.target_id == other.target_id and
+                self.event_type == other.event_type)
+        except AttributeError:
             return False
 
     @property
@@ -125,221 +237,93 @@ class EventExpectation(object):
         else:
             return "Did not come"
 
+    @property
+    def query_params(self):
+        return {
+            'target_type': self.target_type, 'target_id': self.target_id,
+            'event_type': self.event_type, 'since': self.time}
+
 
 class EventListener(object):
 
-    TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
-
-    def __init__(self, verbose=False):
-        listener_filename = scripts_path.join('listener.py').strpath
-        self.listener_script = "{} 0.0.0.0 {}".format(listener_filename, self.listener_port)
-        if not verbose:
-            self.listener_script += ' --quiet'
+    def __init__(self, appliance=None):
+        self.started = False
         self.expectations = []
-        self.listener = None
+        # last_id is used to "clear" the database
+        # When database is "cleared" the id of the last event is placed here. That is then used
+        # in queries to prevent events of this id and earlier to get in.
+        self.last_id = None
+        self.appliance = appliance or store.current_appliance
 
-    @cached_property
-    def listener_port(self):
-        return env.get("event_listener", {}).get("port", None) or random_port()
-
-    def listener_host(self):
-        return "http://{}".format(my_ip_address())
-
-    def _get(self, route):
-        """ Query event listener
-        """
-        assert not self.finished, "Listener dead!"
-        listener_url = "{}:{}".format(self.listener_host(), self.listener_port)
-        logger.info("checking api: %s%s", listener_url, route)
-        r = requests.get(listener_url + route)
-        r.raise_for_status()
-        response = r.json()
-        logger.debug("Response: %s", response)
-        return response
-
-    def _delete_database(self):
-        """ Sends a DELETE /events request for listener.
-
-        Listener reacts to this kind of request by truncating contents of the events table.
-
-        Returns:
-            Boolean signalizing success.
-        """
-        assert not self.finished, "Listener dead!"
-        listener_url = "{}:{}".format(self.listener_host(), self.listener_port)
-        r = requests.delete(listener_url + "/events")
-        r.raise_for_status()
-        return r.json().get("result") == "success"
-
-    def mgmt_sys_type(self, sys_type, obj_type):
-        """ Map management system type from cfme_data.yaml to match event string
-            and also add possibility of host based test.
-        """
-        # TODO: obj_type ('ems' or 'vm') is the same for all tests in class
-        #       there must be a better way than to pass this around
-        ems_map = {"rhevm": "EmsRedhat",
-                   "virtualcenter": "EmsVmware"}
-        vm_map = {"rhevm": "VmRedhat",
-                  "virtualcenter": "VmVmware"}
-        if obj_type in {"ems"}:
-            return ems_map.get(sys_type)
-        elif obj_type in {"vm"}:
-            return vm_map.get(sys_type)
-        elif obj_type in {"host"}:
-            return obj_type
-
-    def check_db(self, sys_type, obj_type, obj, event, after=None, before=None):
-        """ Utility to check listener database for event
-
-        Args:
-            after: Return only events that happened AFTER this time
-            before: Return only events that happened BEFORE this time
-
-        Note:
-            Both can be combined. If None, then the filter won't be applied.
-        """
-        max_attempts = 10
-        sleep_interval = 2
-        req = "/events/{}/{}?event={}".format(self.mgmt_sys_type(sys_type, obj_type), obj, event)
-        # Timespan limits
-        if after:
-            req += "&from_time={}".format(datetime.strftime(after, self.TIME_FORMAT))
-        if before:
-            req += "&to_time={}".format(datetime.strftime(before, self.TIME_FORMAT))
-
-        for attempt in range(1, max_attempts + 1):
-            data = self._get(req)
-            try:
-                assert len(data) > 0
-            except AssertionError as e:
-                if attempt < max_attempts:
-                    logger.debug("Waiting for DB (%s/%s): %s", attempt, max_attempts, e)
-                    time.sleep(sleep_interval)
-                    pass
-                # Enough sleeping, something went wrong
-                else:
-                    logger.exception("Check DB failed. Max attempts: %s.", max_attempts)
-                    return False
-            else:
-                # No exceptions raised
-                logger.info("DB row found for %s", req)
-                return datetime.strptime(data[0]["event_time"], "%Y-%m-%d %H:%M:%S")
-        return False
+    def delete_database(self):
+        try:
+            last_record = self.appliance.events.query_miq_events()[-1]
+            self.last_id = last_record['id']
+        except IndexError:
+            # No events yet, so do nothing
+            pass
 
     def get_all_received_events(self):
-        return self._get("/events")
+        return self.appliance.events.query_miq_events(from_id=self.last_id)
 
     def check_all_expectations(self):
         """ Check whether all triggered events have been captured.
 
         Sets a flag for each event.
 
-        Simplified to check just against the time of registration
-        and the begin of this check.
-
         Returns:
             Boolean whether all events have already been captured.
 
         """
-        check_started = get_current_time_GMT()
+        until = datetime.utcnow()
+        seen_ids = set()
         for expectation in self.expectations:
-            # Get the events with the same parameters, just with different time
-            the_same = [item
-                        for item
-                        in self.expectations
-                        if item == expectation and item is not expectation
-                        ]
-            # Split them into preceeding and following events
-            preceeding_events = [event
-                                 for event
-                                 in the_same
-                                 if event.time <= expectation.time and event is not expectation
-                                 ]
-            # Get immediate predecessor's of follower's time of this event
-            preceeding_event = preceeding_events[-1].time if preceeding_events else expectation.time
-            # following_event = following_events[0].time if following_events else check_started
-            # Shorten the params
-            params = [expectation.sys_type,
-                      expectation.obj_type,
-                      expectation.obj,
-                      expectation.event]
-            came = self.check_db(*params, after=preceeding_event, before=check_started)
-            if came:
-                expectation.arrived = came
-        return all([exp.arrived is not None for exp in self.expectations])
+            try:
+                arrived_events = self.appliance.events.query_miq_events(
+                    until=until, from_id=self.last_id, **expectation.query_params)
+            except ValueError:
+                # An object name - not present in the database yet - assuming the event has not come
+                # .... yet
+                continue
+            for event in arrived_events:
+                if event['id'] in seen_ids:
+                    # Already processed
+                    continue
+                seen_ids.add(event['id'])
+                expectation.arrived = event['timestamp']
+                expectation.message = event['message']
+                expectation.id = event['id']
+                expectation.real_target_id = event['target_id']
+                logger.info(
+                    'Detected event {}/{} from {}/{} ({}): {}'.format(
+                        expectation.id,
+                        expectation.event_type,
+                        expectation.target_id,
+                        expectation.real_target_id,
+                        expectation.target_type,
+                        expectation.message))
+        return all(exp.arrived is not None for exp in self.expectations)
 
     @property
     def expectations_count(self):
         return len(self.expectations)
 
-    def add_expectation(self, sys_type, obj_type, obj, event):
-        expectation = EventExpectation(sys_type, obj_type, obj, event)  # Time added automatically
-        self.expectations.append(expectation)
+    def add_expectation(self, *args):
+        # Time added automatically if not given
+        self.expectations.append(EventExpectation(*args))
 
-    def __call__(self, sys_type, obj_type, obj, events):
-        if not isinstance(events, list):
-            events = [events]
-        for event in events:
-            logger.info("Event registration: %s", str(locals()))
-            self.add_expectation(sys_type, obj_type, obj, event)
-
-    @pytest.fixture(scope="session")
-    def listener_info(self):
-        """ Listener fixture
-
-        This fixture provides listener's address and port.
-        It is used in setup test cases located at:
-        ``/tests/test_setup_event_testing.py``
-        """
-        return type(
-            "Listener",
-            (object,),
-            {
-                "host": self.listener_host(),
-                "port": self.listener_port
-            }
-        )
-
-    @property
-    def finished(self):
-        if not self.listener:
-            return True
-        return self.listener.poll() is not None
+    def __call__(self, target_type, target_id, event_types):
+        if not self.started:
+            # Ignore
+            return
+        if not isinstance(event_types, (list, tuple, set)):
+            event_types = [event_types]
+        for event_type in event_types:
+            logger.info("Event %s registration for %s/%d", event_type, target_type, target_id)
+            self.add_expectation(target_type, target_id, event_type)
 
     def start(self):
-        assert not self.listener, "Listener can't be running in order to start it!"
-        logger.info("Starting listener %s", self.listener_script)
-        logger.info("In order to run the event testing, port %d must be enabled.",
-            self.listener_port)
-        logger.info("sudo firewall-cmd --add-port %d/tcp --permanent", self.listener_port)
-        self.listener = subprocess.Popen(self.listener_script,
-                                         shell=True)
-        logger.info("Listener pid %d", self.listener.pid)
-        time.sleep(3)
-        assert not self.finished, "Listener has died. Something must be blocking selected port"
-        logger.info("Listener alive")
-
-    def stop(self):
-        assert self.listener, "Listener must be running in order to stop it!"
-        logger.info("Killing listener %d", (self.listener.pid))
-        self.listener.send_signal(signal.SIGINT)
-        self.listener.wait()
-        self.listener = None
-
-    def pytest_unconfigure(self, config):
-        """ Collect and clean up the testing.
-
-        If the event testing is active, collects results, stops the listener
-        and generates the report.
-        """
-        if config.getoption("event_testing_enabled"):
-            # Collect results
-            try:
-                # Report to the terminal
-                termreporter = reporter(config)
-                termreporter.write_sep('-', 'Stopping event listener')
-            finally:
-                self.stop()
+        self.started = True
 
 
 def pytest_addoption(parser):
@@ -348,88 +332,54 @@ def pytest_addoption(parser):
                      dest='event_testing_enabled',
                      default=False,
                      help='Enable testing of the events. (default: %default)')
-    parser.addoption('--event-testing-result',
-                     action='store',
-                     dest='event_testing_result',
-                     default="log/events.html",
-                     help='Filename of result report. (default: %default)')
-    parser.addoption('--event-testing-verbose-listener',
-                     action='store_true',
-                     dest='event_testing_verbose_listener',
-                     default=False,
-                     help='Enabled access logging from the event listener')
 
 
 @pytest.mark.trylast
-@pytest.mark.hookwrapper
 def pytest_configure(config):
     """ Event testing setup.
 
     Sets up and registers the EventListener plugin for py.test.
     If the testing is enabled, listener is started.
     """
-    yield
-    plugin = EventListener(config.getoption("event_testing_verbose_listener"))
+    plugin = EventListener()
     registration = config.pluginmanager.register(plugin, "event_testing")
     assert registration
     if config.getoption("event_testing_enabled"):
         plugin.start()
 
 
-@pytest.fixture(scope="module")
-def configure_appliance_for_event_testing(request, listener_info):
-    """ This fixture ensures that the appliance is configured for event testing.
-    """
-    event_testing = request.config.pluginmanager.getplugin("event_testing")
-    # If we did not enable the event testing, do not setup
-    if event_testing.listener is None:
-        return
-    return setup_for_event_testing(
-        SSHClient(), cfmedb(), listener_info, providers.list_infra_providers()
-    )
-
-
 @pytest.fixture(scope="function")
 def register_event(
-        uses_event_listener, configure_appliance_for_event_testing, request, soft_assert):
-    """register_event(sys_type, obj_type, obj, event)
-    Event registration fixture (ALWAYS PLACE BEFORE PAGE NAVIGATION FIXTURE!)
+        uses_event_listener, request, soft_assert):
+    """register_event(target_type, target_id, event_types)
+    Event registration fixture.
 
     This fixture is used to notify the testing system that some event
     should have occured during execution of the test case using it.
     It does not register anything by itself.
 
     Args:
-        sys_type: Management system type to expect
-        obj_type: Management system related object type to expect
-        obj: Expected identifier for related object
-        event: Event name or list of event names to expect
+        target_type: Target type, in form of classname (VmOrTemplate, Host, Service, ...)
+        target_id: Database id (integer) of the object, but you can use a string in form of the
+            object's name since the :py:class:`utils.events.EventTool` can retrieve the id by itself
+        event_types: Names of the event(s). Can be either a string or a list of strings
 
     Returns: :py:class:`EventExpectation`
 
     Usage:
 
         def test_something(foo, bar, register_event):
-            register_event("systype", "objtype", "obj", "event")
+            register_event("VmOrTemplate", 123, 'vm_start')
             # or
-            register_event("systype", "objtype", "obj", ["event1", "event2"])
+            register_event("VmOrTemplate", 123, ['request_vm_start', 'vm_start'])
             # do_some_stuff_that_triggers()
-
-    For host_events, use `None` for sys_type.
-
-    It also registers the time when the registration was done so we can filter
-    out the same events, but coming in other times (like vm on/off/on/off will
-    generate 3 unique events, but twice, distinguishable only by time).
-    It can also partially prevent scumbag 'Jimmy' ruining the test if he does
-    something in the hypervisor that the listener registers.
-
     """
     # We pull out the plugin directly.
     self = request.config.pluginmanager.getplugin("event_testing")  # Workaround for bind
 
-    if self.listener is not None:
+    if self.started:
         logger.info("Clearing the database before testing ...")
-        self._delete_database()
+        self.delete_database()
         self.expectations = []
 
     return self  # Run the test and provide the plugin as a fixture
@@ -443,26 +393,31 @@ def pytest_runtest_call(item):
     It uses `soft_assert` fixture.
     Before and after each test run using `register_event` fixture, database is cleared.
     """
+    if "register_event" in item.funcargs:
+        register_event = item.funcargs["register_event"]
+        store.current_appliance.wait_for_ssh()
+        register_event.delete_database()
+    else:
+        register_event = None
     try:
         yield
     finally:
-        if "register_event" not in item.funcargs:
+        if register_event is None:
             return
 
         node_id = item._nodeid
-        register_event = item.funcargs["register_event"]
-        # If the event testing is disabled, skip the collection and failing
-        if register_event.listener is None:
-            return
 
         # Event testing is enabled.
         try:
+            logger.info('Checking the events to come.')
             wait_for(register_event.check_all_expectations,
                      delay=5,
                      num_sec=75,
                      handle_exception=True)
         except TimedOutError:
-            pass
+            logger.warning('Some of the events seem to not have come!')
+        else:
+            logger.info('Seems like all events have arrived!')
 
         name, location = get_test_idents(item)
 
@@ -479,8 +434,11 @@ def pytest_runtest_call(item):
             group_id="misc-artifacts",
         )
         logger.info("Clearing the database after testing ...")
-        register_event._delete_database()
+        register_event.delete_database()
         soft_assert = item.funcargs["soft_assert"]
         for expectation in register_event.expectations:
-            soft_assert(expectation.arrived, "Event {} did not come!".format(expectation.event))
+            soft_assert(
+                expectation.arrived,
+                "Event {} for {} {} did not come!".format(
+                    expectation.event_type, expectation.target_type, expectation.target_id))
         register_event.expectations = []

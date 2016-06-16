@@ -5,7 +5,6 @@ import re
 from cfme.fixtures import pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import ButtonGroup, form_buttons, Quadicon
-from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils import version
 from cfme.configure import settings  # NOQA
@@ -22,17 +21,30 @@ def minimise_dict(item):
     else:
         return item
 
-try:
-    gtl_params = cfme_data['defaultview_data']['gtl']['infra']
-    gtl_params = [minimise_dict(item) for item in gtl_params]
-    exp_comp_params = cfme_data['defaultview_data']['exp_comp']['infra']
-    exp_comp_params = [minimise_dict(item) for item in exp_comp_params]
-except KeyError:
-    gtl_params = []
-    exp_comp_params = []
-finally:
-    gtl_parametrize = pytest.mark.parametrize('key', gtl_params, scope="module")
-    exp_comp_parametrize = pytest.mark.parametrize('key', exp_comp_params, scope="module")
+
+gtl_params = [
+    'Infrastructure Providers/infrastructure_providers',
+    'Clusters/infrastructure_clusters',
+    'Hosts/infrastructure_hosts',
+    'VMs/infra_vms',
+    'Resource Pools/infrastructure_resource_pools',
+    'Datastores/infrastructure_datastores',
+    'My Services/my_services',
+    'Catalog Items/catalog_items',
+    'VMs & Instances/service_vms_instances',
+    'Templates & Images/service_templates_images'
+]
+exp_comp_params = [
+    {
+        '5.4': 'Compare/infrastructure_hosts/Configuration/Compare Selected items',
+        '5.3': 'Compare/infrastructure_hosts/Configuration/Compare Selected Hosts'
+    },
+    'Compare/infrastructure_virtual_machines/Configuration/Compare Selected items'
+]
+exp_comp_params = [minimise_dict(item) for item in exp_comp_params]
+
+gtl_parametrize = pytest.mark.parametrize('key', gtl_params, scope="module")
+exp_comp_parametrize = pytest.mark.parametrize('key', exp_comp_params, scope="module")
 
 
 @pytest.fixture(scope="module")

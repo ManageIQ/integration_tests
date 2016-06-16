@@ -129,12 +129,12 @@ class Menu(UINavigate):
             except NoSuchElementException:
                 pass
         else:
-            lev[1] = sel.text("{}{}".format(
-                self.CURRENT_TOP_MENU, self.ACTIVE_LEV)).encode("utf-8").strip()
+            lev[1] = sel.get_attribute("{}{}".format(
+                self.CURRENT_TOP_MENU, self.ACTIVE_LEV), "textContent").encode("utf-8").strip()
             try:
-                lev[2] = sel.text("{}{}{}".format(
-                    self.CURRENT_TOP_MENU, self.ACTIVE_LEV, self.ACTIVE_LEV)).encode(
-                        "utf-8").strip()
+                lev[2] = sel.get_attribute("{}{}{}".format(
+                    self.CURRENT_TOP_MENU, self.ACTIVE_LEV, self.ACTIVE_LEV), "textContent") \
+                    .encode("utf-8").strip()
             except NoSuchElementException:
                 pass
 

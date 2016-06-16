@@ -3,7 +3,7 @@
 import pytest
 from cfme.configure import configuration
 from cfme.web_ui import flash
-from utils import conf
+from utils import conf, version
 from functools import partial
 
 try:
@@ -17,7 +17,11 @@ except KeyError:
 
 @pytest.fixture(scope="session")
 def all_possible_roles():
-    return server_roles_conf['all']
+    roles = server_roles_conf['all']
+    if version.current_version() < 5.6:
+        roles.remove('git_owner')
+        roles.remove('websocket')
+    return roles
 
 
 @pytest.fixture(scope="module", params=server_roles_conf['sets'].keys())
@@ -33,6 +37,7 @@ def roles(request, all_possible_roles):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 @pytest.mark.uncollectif(lambda: not server_roles_conf["all"])
+@pytest.mark.meta(blockers=[1351716])
 def test_server_roles_changing(request, roles):
     """ Test that sets and verifies the server roles in configuration.
 
@@ -45,7 +50,7 @@ def test_server_roles_changing(request, roles):
     request.addfinalizer(partial(configuration.set_server_roles,
                                  **configuration.get_server_roles()))   # For reverting back
     # Set roles
-    configuration.set_server_roles(**roles)
+    configuration.set_server_roles(db=False, **roles)
     flash.assert_no_errors()
     # Get roles and check; use UI because the changes take a while to propagate to DB
     for role, is_enabled in configuration.get_server_roles(db=False).iteritems():

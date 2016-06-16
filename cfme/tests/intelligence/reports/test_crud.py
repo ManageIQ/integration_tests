@@ -49,8 +49,10 @@ def schedule(request):
         data = yaml.load(rep_yaml)
         name = data.pop("name")
         description = data.pop("description")
-        filter = data.pop("filter")
-        return Schedule(name, description, filter, **data)
+        yfilter = data.pop("filter")
+        if version.current_version() >= 5.6:
+            yfilter[2] += ' - Sample 1'
+        return Schedule(name, description, yfilter, **data)
 
 
 @pytest.mark.tier(3)

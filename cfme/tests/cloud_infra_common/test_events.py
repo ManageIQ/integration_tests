@@ -10,8 +10,7 @@ from utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers',
-                            "vm_crud_delete_on_module_finish"),
+    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
     pytest.mark.tier(2)
 ]
 
@@ -21,20 +20,15 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="function")
 def vm_crud(provider, setup_provider_modscope, small_template_modscope):
-    return VM.factory(
+    vm = VM.factory(
         'test_events_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
         provider,
         template_name=small_template_modscope)
-
-
-@pytest.fixture(scope="module")
-def vm_crud_delete_on_module_finish(request, vm_crud):
-    @request.addfinalizer
-    def _delete_vm():
-        if vm_crud.does_vm_exist_on_provider():
-            vm_crud.delete_from_provider()
+    yield vm
+    if vm.does_vm_exist_on_provider():
+        vm.delete_from_provider()
 
 
 @pytest.mark.meta(blockers=[1238371], automates=[1238371])
@@ -76,12 +70,13 @@ def test_vm_create(request, vm_crud, provider, register_event):
     provider.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: provider.unassign_policy_profiles(profile.description))
 
-    register_event(provider.type, "vm", vm_crud.name, ["vm_create_complete"])
+    register_event('VmOrTemplate', vm_crud.name, 'vm_create')
     vm_crud.create_on_provider()
     provider.refresh_provider_relationships()
     vm_crud.wait_to_appear()
 
     def _check():
-        return "Environment: Development" in vm_crud.get_tags()
+        return any(tag.category.display_name == "Environment" and tag.display_name == "Development"
+                   for tag in vm_crud.get_tags())
 
     wait_for(_check, num_sec=180, delay=15, message="tags to appear")

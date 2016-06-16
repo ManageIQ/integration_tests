@@ -475,7 +475,7 @@ def dismiss_any_alerts():
         pass
 
 
-def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
+def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None, check_present=False):
     """Handles an alert popup.
 
     Args:
@@ -485,12 +485,15 @@ def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
             Default 30 seconds, can be set to 0 to disable waiting.
         squash: Whether or not to squash errors during alert handling.
             Default False
+        prompt: If the alert is a prompt, specify the keys to type in here
+        check_present: Does not squash
+            :py:class:`selenium.common.exceptions.NoAlertPresentException`
 
     Returns:
         True if the alert was handled, False if exceptions were
         squashed, None if there was no alert.
 
-    No exceptions will be raised if ``squash`` is True.
+    No exceptions will be raised if ``squash`` is True and ``check_present`` is False.
 
     Raises:
         utils.wait.TimedOutError: If the alert popup does not appear
@@ -515,7 +518,10 @@ def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None):
         wait_for_ajax()
         return True
     except NoAlertPresentException:
-        return None
+        if check_present:
+            raise
+        else:
+            return None
     except Exception as e:
         logger.exception(e)
         if squash:
@@ -668,7 +674,8 @@ def text_sane(loc, **kwargs):
 
     Returns: A string containing the text of the element, decoded and stripped.
     """
-    return text(loc).encode("utf-8").strip()
+    # TODO: normalize_space() when the PR comes in.
+    return re.sub(r'\s+', ' ', text(loc).strip().encode("utf-8"))
 
 
 def value(loc):
@@ -914,7 +921,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     _tries += 1
 
-    logger.debug('force_navigate to %s, try %d', page_name, _tries)
+    logger.debug('force_navigate to {}, try {}'.format(page_name, _tries))
     # circular import prevention: cfme.login uses functions in this module
     from cfme import login
     # Import the top-level nav menus for convenience
@@ -1022,7 +1029,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 'top -c -b -n1 | head -30').output)
             logger.debug('Top Memory consumers:')
             logger.debug(store.current_appliance.ssh_client.run_command(
-                'top -c -b -n1 -o "%MEM" | head -30').output)
+                'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
         logger.debug('Managed Providers:')
         logger.debug(store.current_appliance.managed_providers)
         quit()  # Refresh the session, forget loaded summaries, ...
@@ -1053,9 +1060,9 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
         ctx = kwargs.get("context", False)
         if ctx:
-            logger.info('Navigating to %s with context: %s', page_name, ctx)
+            logger.info('Navigating to {} with context: {}'.format(page_name, ctx))
         else:
-            logger.info('Navigating to %s', page_name)
+            logger.info('Navigating to {}'.format(page_name))
         menu.nav.go_to(page_name, *args, **kwargs)
     except (KeyboardInterrupt, ValueError):
         # KeyboardInterrupt: Don't block this while navigating
@@ -1081,7 +1088,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         recycle = True
     except exceptions.CannotContinueWithNavigation as e:
         # The some of the navigation steps cannot succeed
-        logger.info('Cannot continue with navigation due to: %s; Recycling browser', str(e))
+        logger.info('Cannot continue with navigation due to: {}; Recycling browser'.format(str(e)))
         recycle = True
     except (NoSuchElementException, InvalidElementStateException, WebDriverException,
             StaleElementReferenceException) as e:
@@ -1100,8 +1107,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             logger.warning("Page was blocked with blocker div, recycling.")
             recycle = True
         elif cfme_exc.is_cfme_exception():
-            logger.exception("CFME Exception before force_navigate started!: `%s`",
-                cfme_exc.cfme_exception_text())
+            logger.exception("CFME Exception before force_navigate started!: {}".format(
+                cfme_exc.cfme_exception_text()))
             recycle = True
         elif is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
             # 502
@@ -1110,13 +1117,13 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             req = text(req[0]) if req else "No request stated"
             reason = elements("/html/body/p[2]/strong")
             reason = text(reason[0]) if reason else "No reason stated"
-            logger.info("Proxy error: %s / %s", req, reason)
+            logger.info("Proxy error: {} / {}".format(req, reason))
             restart_evmserverd = True
         elif is_displayed("//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
             # 503 and similar sort of errors
             title = text("//body/h1")
             body = text("//body/p")
-            logger.exception("Application error %s: %s", title, body)
+            logger.exception("Application error {}: {}".format(title, body))
             sleep(5)  # Give it a little bit of rest
             recycle = True
         elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]", _no_deeper=True):
@@ -1138,7 +1145,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             recycle = True
         else:
             logger.error("Could not determine the reason for failing the navigation. " +
-                " Reraising.  Exception: %s", str(e))
+                " Reraising.  Exception: {}".format(str(e)))
             logger.debug(store.current_appliance.ssh_client.run_command(
                 'service evmserverd status').output)
             raise
@@ -1150,7 +1157,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     if recycle or restart_evmserverd:
         browser().quit()  # login.current_user() will be retained for next login
-        logger.debug('browser killed on try %d', _tries)
+        logger.debug('browser killed on try {}'.format(_tries))
         # If given a "start" nav destination, it won't be valid after quitting the browser
         kwargs.pop("start", None)
         force_navigate(page_name, _tries, *args, **kwargs)

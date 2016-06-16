@@ -50,16 +50,19 @@
 
 """
 
+import atexit
 import os
 import re
 import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
+from tempfile import NamedTemporaryFile
 from xml.sax.saxutils import quoteattr
 
 from cached_property import cached_property
 from selenium.common import exceptions as sel_exceptions
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.remote.file_detector import LocalFileDetector
 from multimethods import multimethod, multidispatch, Anything
 
 import cfme.fixtures.pytest_selenium as sel
@@ -1517,6 +1520,35 @@ class Input(Pretty):
 
     def __radd__(self, string):
         return string + self.locate()
+
+
+class FileInput(Input):
+    """A file input handling widget.
+
+    Accepts a string. If the string is a file, then it is put in the input. Otherwise a temporary
+    file is generated and that one is fed to the file input.
+    """
+    pass
+
+
+@fill.method((FileInput, Anything))
+def _fill_file_input(i, a):
+    # Engage the selenium's file detector so we can reliably transfer the file to the browser
+    with browser().file_detector_context(LocalFileDetector):
+        # We need a raw element so we can send_keys to it
+        input_el = sel.element(i.locate())
+        if browser().file_detector.is_local_file(a) is None:
+            # Create a temp file
+            f = NamedTemporaryFile()
+            f.write(str(a))
+            f.flush()
+            input_el.send_keys(f.name)
+            atexit.register(f.close)
+        else:
+            # It already is a file ...
+            input_el.send_keys(a)
+    # Since we used raw selenium element, wait for ajax here ...
+    sel.wait_for_ajax()
 
 
 class Radio(Input):
@@ -3056,6 +3088,10 @@ class DynamicTable(Pretty):
     """
     pretty_attrs = "root_loc", "default_row_item"
     ROWS = ".//tbody/tr[not(contains(@id, 'new_tr'))]"
+    DELETE_ALL = {
+        version.LOWEST: ".//tbody/tr/td/img[@alt='Delete']",
+        '5.6': './/tbody/tr/td/button/i[contains(@class, "minus")]'
+    }
 
     def __init__(self, root_loc, default_row_item=None):
         self.root_loc = root_loc
@@ -3078,13 +3114,16 @@ class DynamicTable(Pretty):
         if version.current_version() < "5.6":
             sel.click(sel.element(
                 ".//tbody/tr[@id='new_tr']/td//input[@type='image']", root=self.root_loc))
+        else:
+            # 5.6+ uses the same button.
+            self.click_add()
 
     def delete_row(self, by):
         pass
 
     def clear(self):
         while True:
-            buttons = sel.elements(".//tbody/tr/td/img[@alt='Delete']")
+            buttons = sel.elements(self.DELETE_ALL)
             if not buttons:
                 break
             sel.click(buttons[0])
@@ -3495,3 +3534,32 @@ class CFMECheckbox(Selector):
 @fill.method((CFMECheckbox, bool))
 def fill_cfmecheckbox_switch(ob, val):
     ob.fill(val)
+
+
+def breadcrumbs():
+    """Returns a list of breadcrumbs.
+
+    Returns:
+        :py:class:`list` of breadcrumbs if they are present, :py:class:`NoneType` otherwise.
+    """
+    result = map(sel.text_sane, sel.elements('//ol[contains(@class, "breadcrumb")]/li'))
+    return result if result else None
+
+
+SUMMARY_TITLE_LOCATORS = [
+    '//h1'
+]
+
+SUMMARY_TITLE_LOCATORS = '|'.join(SUMMARY_TITLE_LOCATORS)
+
+
+def summary_title():
+    """Returns a title of the page.
+
+    Returns:
+        :py:class:`str` if present, :py:class:`NoneType` otherwise.
+    """
+    try:
+        return sel.text_sane(SUMMARY_TITLE_LOCATORS)
+    except sel.NoSuchElementException:
+        return None

@@ -8,7 +8,7 @@ from cfme.web_ui import mixins
 from cfme.fixtures import pytest_selenium as sel
 
 
-pytestmark = [pytest.mark.usefixtures("logged_in"), pytest.mark.tier(2)]
+pytestmark = [pytest.mark.tier(2)]
 
 METHOD_TORSO = """
 {  "AWSTemplateFormatVersion" : "2010-09-09",
@@ -49,40 +49,46 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-def test_orchestration_template_crud(provisioning):
+@pytest.yield_fixture(scope="function")
+def create_template():
+    method = METHOD_TORSO.replace('CloudFormation', fauxfactory.gen_alphanumeric())
+    yield method
+
+
+def test_orchestration_template_crud(provisioning, create_template):
     template_type = provisioning['stack_provisioning']['template_type']
     template = OrchestrationTemplate(template_type=template_type,
                                      template_name=fauxfactory.gen_alphanumeric(),
                                      description="my template")
-    template.create(METHOD_TORSO)
+    template.create(create_template)
     with update(template):
         template.description = "my edited description"
     template.delete()
 
 
-def test_copy_template(provisioning):
+def test_copy_template(provisioning, create_template):
     template_type = provisioning['stack_provisioning']['template_type']
     template = OrchestrationTemplate(template_type=template_type,
                                      template_name=fauxfactory.gen_alphanumeric(),
                                      description="my template")
-    template.create(METHOD_TORSO)
-    template.copy_template(template.template_name + "_copied", METHOD_TORSO_copied)
+    template.create(create_template)
+    copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
+    template.copy_template(template.template_name + "_copied", copied_method)
     template.delete()
 
 
-def test_name_required_error_validation(provisioning):
+def test_name_required_error_validation(provisioning, create_template):
     flash_msg = \
         "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"
     template_type = provisioning['stack_provisioning']['template_type']
     template = OrchestrationTemplate(template_type=template_type,
                                      template_name=None,
                                      description="my template")
-
     with error.expected(flash_msg):
-        template.create(METHOD_TORSO)
+        template.create(create_template)
 
 
-def test_all_fields_required_error_validation(provisioning):
+def test_all_fields_required_error_validation(provisioning, create_template):
     flash_msg = \
         "Error during 'Orchestration Template creation': Validation failed: Name can't be blank"
     template_type = provisioning['stack_provisioning']['template_type']
@@ -91,7 +97,7 @@ def test_all_fields_required_error_validation(provisioning):
                                      description=None)
 
     with error.expected(flash_msg):
-        template.create(METHOD_TORSO)
+        template.create(create_template)
 
 
 def test_new_template_required_error_validation(provisioning):
@@ -106,12 +112,12 @@ def test_new_template_required_error_validation(provisioning):
         template.create('')
 
 
-def test_tag_orchestration_template(provisioning, tag):
+def test_tag_orchestration_template(provisioning, tag, create_template):
     template_type = provisioning['stack_provisioning']['template_type']
     template = OrchestrationTemplate(template_type=template_type,
                                     template_name=fauxfactory.gen_alphanumeric(),
                                     description="my template")
-    template.create(METHOD_TORSO)
+    template.create(create_template)
     sel.force_navigate('select_template', context={
         'template_type': template.template_type,
         'template_name': template.template_name})

@@ -7,8 +7,7 @@ from cfme.automate.service_dialogs import ServiceDialog
 from cfme.infrastructure import host
 from utils.update import update
 
-pytestmark = [pytest.mark.usefixtures("logged_in"),
-              pytest.mark.ignore_stream("upstream"),
+pytestmark = [pytest.mark.ignore_stream("upstream"),
               pytest.mark.usefixtures('uses_infra_providers')]
 
 
