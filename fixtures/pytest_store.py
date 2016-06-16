@@ -56,19 +56,10 @@ class Store(object):
     """
 
     @property
-    def _appliance_mod(self):
+    def current_appliance(self):
         # layz import due to loops and loops and loops
         from utils import appliance
-        return appliance
-
-    @property
-    def appliance_stack(self):
-        return self._appliance_mod.appliance_stack
-
-    @property
-    def current_appliance(self):
-        return self._appliance_mod.current_appliance
-    # compat attributes
+        return appliance.current_appliance
 
     def __init__(self):
         #: The py.test config instance, None if not in py.test

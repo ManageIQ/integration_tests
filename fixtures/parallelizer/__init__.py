@@ -53,7 +53,7 @@ from fixtures import terminalreporter
 from fixtures.parallelizer import remote
 from fixtures.pytest_store import store
 from utils import at_exit, conf
-from utils.appliance import IPAppliance
+from utils.appliance import IPAppliance, stack as appliance_stack
 from utils.log import create_sublogger
 from utils.net import random_port
 from utils.path import conf_path, project_path
@@ -252,7 +252,7 @@ class ParallelSession(object):
             self.appliances = []
             # Push an appliance to the stack to have proper reference for test collection
             # FIXME: this is a bad hack based on the need for controll of collection partitioning
-            pytest.store.appliance_stack.push(
+            appliance_stack.push(
                 IPAppliance(address=request["appliances"][0]["ip_address"]))
             self.terminal.write("Appliances were provided:\n")
             for appliance in request["appliances"]:
