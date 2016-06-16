@@ -24,7 +24,7 @@ from mgmtsystem.virtualcenter import VMWareSystem
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_name, server_id
 from fixtures import ui_coverage
-from fixtures.pytest_store import _push_appliance, _pop_appliance, store
+from fixtures.pytest_store import store
 from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventTool
@@ -81,12 +81,6 @@ class IPAppliance(object):
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
 
-    def push(self):
-        _push_appliance(self)
-
-    def pop(self):
-        _pop_appliance(self)
-
     def __call__(self, **kwargs):
         """Syntactic sugar for overriding certain instance variables for context managers.
 
@@ -94,13 +88,12 @@ class IPAppliance(object):
 
         * `browser_steal`
         """
-        if "browser_steal" in kwargs:
-            self.browser_steal = kwargs["browser_steal"]
+        self.browser_steal = kwargs.get("browser_steal", self.browser_steal)
         return self
 
     def __enter__(self):
         """ This method will replace the current appliance in the store """
-        self.push()
+        store.appliance_stack.push(self)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -134,7 +127,7 @@ class IPAppliance(object):
                     contents_base64=False, contents=ss_error, display_type="danger", group_id=g_id)
         elif exc_type is not None:
             logger.info("Error happened but we are not inside a test run so no screenshot now.")
-        self.pop()
+        assert store.appliance_stack.pop() is self, 'appliance stack inconsistent'
 
     def __eq__(self, other):
         return isinstance(other, IPAppliance) and self.address == other.address
@@ -402,7 +395,10 @@ class IPAppliance(object):
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],
         }
-        return ssh.SSHClient(**connect_kwargs)
+        ssh_client = ssh.SSHClient(**connect_kwargs)
+        # FIXME: propperly store ssh clients we made
+        store.ssh_clients_to_close.append(ssh_client)
+        return ssh_client
 
     @property
     def db_ssh_client(self, **connect_kwargs):
