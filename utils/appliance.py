@@ -14,6 +14,8 @@ from tempfile import NamedTemporaryFile
 
 from cached_property import cached_property
 
+from werkzeug.local import LocalStack, LocalProxy
+
 import dateutil.parser
 import requests
 import traceback
@@ -93,7 +95,7 @@ class IPAppliance(object):
 
     def __enter__(self):
         """ This method will replace the current appliance in the store """
-        store.appliance_stack.push(self)
+        stack.push(self)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -127,7 +129,7 @@ class IPAppliance(object):
                     contents_base64=False, contents=ss_error, display_type="danger", group_id=g_id)
         elif exc_type is not None:
             logger.info("Error happened but we are not inside a test run so no screenshot now.")
-        assert store.appliance_stack.pop() is self, 'appliance stack inconsistent'
+        assert stack.pop() is self, 'appliance stack inconsistent'
 
     def __eq__(self, other):
         return isinstance(other, IPAppliance) and self.address == other.address
@@ -2020,3 +2022,40 @@ def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
     logger.info('Done - configuring appliances')
 
     return appliance_set
+
+
+class ApplianceStack(LocalStack):
+
+    def push(self, obj):
+        was_before = self.top
+        super(ApplianceStack, self).push(obj)
+
+        logger.info("Pushed appliance {} on stack (was {} before) ".format(
+            obj.address, getattr(was_before, 'address', 'empty')))
+        if obj.browser_steal:
+            from utils import browser
+            browser.start()
+
+    def pop(self):
+        was_before = super(ApplianceStack, self).pop()
+        current = self.top
+        logger.info(
+            "Popped appliance {} from the stack (now there is {})".format(
+                was_before.address, getattr(current, 'address', 'empty')))
+        if was_before.browser_steal:
+            from utils import browser
+            browser.start()
+        return was_before
+
+stack = ApplianceStack()
+
+
+def get_or_create_current_appliance():
+    if stack.top is None:
+        base_url = conf.env['base_url']
+        if base_url is None or str(base_url.lower()) == 'none':
+            raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
+        stack.push(IPAppliance(urlparse(base_url)))
+    return stack.top
+
+current_appliance = LocalProxy(get_or_create_current_appliance)
