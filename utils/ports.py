@@ -12,7 +12,7 @@ class Ports(object):
     def _top(self, m=sys.modules):
         mod = m.get('utils.appliance')
 
-        return mod and mod.appliance_stack
+        return mod and mod.stack.top
 
     def __init__(self):
         self.logger = logger
