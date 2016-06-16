@@ -13,6 +13,7 @@ from utils.path import project_path
 from utils.sprout import SproutClient
 from utils.wait import wait_for
 
+# todo introduce a sproutstate plugin
 
 timer = None
 appliance = None
@@ -105,7 +106,7 @@ def pytest_sessionfinish(session, exitstatus):
         timer = None
     if appliance is not None:
         terminal.write("Popping out the appliance\n")
-        appliance.pop()
+        appliance_stack.pop()
         appliance = None
     destroy_the_pool()
 
