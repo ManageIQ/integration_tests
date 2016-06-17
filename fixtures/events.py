@@ -334,15 +334,12 @@ def pytest_addoption(parser):
                      help='Enable testing of the events. (default: %default)')
 
 
-@pytest.mark.trylast
-@pytest.mark.hookwrapper
 def pytest_configure(config):
     """ Event testing setup.
 
     Sets up and registers the EventListener plugin for py.test.
     If the testing is enabled, listener is started.
     """
-    yield
     plugin = EventListener()
     registration = config.pluginmanager.register(plugin, "event_testing")
     assert registration

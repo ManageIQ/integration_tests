@@ -133,10 +133,11 @@ def appliance_police():
     store.slave_manager.message('Resuming testing following remote debugging')
 
 PLUGIN_PRIORITY = [
+    'fixtures.portset',             # This is a must, ports must be set asap
     'fixtures.artifactor_plugin',
-    'fixtures.parallelizer',
+    'fixtures.parallelizer',        # Requires artifactor to be set up ^^
     'fixtures.single_appliance_sprout',
-    'fixtures.events',
+    'fixtures.events',              # Requires appliances to be set up ^^
 ]
 
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pytest
 from utils import ports
 from utils.log import logger
 
@@ -18,7 +17,6 @@ def pytest_addoption(parser):
                     help="Override appliance's SSH port.")
 
 
-@pytest.mark.tryfirst
 def pytest_configure(config):
     # SSH
     port_ssh = config.getoption("port_ssh")
