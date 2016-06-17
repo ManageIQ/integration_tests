@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 """ A model of a PXE Server in CFME
 """
+# ** So the pxe module became a package. This was not strictly necessary, but with the other
+# ** changes that were happening, such as the desire to split apart the UI / DB / REST (endpoint)
+# ** related things, it made sense.
+# ** Why did we want to do that in the first place?!
+# ** It's a good question, and one can argue that having a single file makes more sense frankly
+# ** I don't mind either way, but the rationale is that UI has a lot of cruft (locators, nav trees)
+# ** If you end up with multiple UIs in the same file, then you have multiple sets of locators,
+# ** multiple sets of nav trees, there for moving this to a new package made a whole lot of sense.
+# ** This way we can keep one UIs locators separate from another. DB / REST endpoints also then
+# ** remain clean.
 
 from functools import partial
 
@@ -30,6 +40,8 @@ pxe_details_page = Region(locators=dict(
     last_refreshed=InfoBlock("Basic Information", "Last Refreshed On"),
     pxe_image_type=InfoBlock("Basic Information", "Type")
 ))
+
+pxe_tree = partial(acc.tree, "PXE Servers", "All PXE Servers")
 
 pxe_properties_form = Form(
     fields=[
@@ -86,7 +98,6 @@ iso_image_type_form = Form(
     ])
 
 
-pxe_tree = partial(acc.tree, "PXE Servers", "All PXE Servers")
 template_tree = partial(acc.tree, "Customization Templates",
                         "All Customization Templates - System Image Types")
 image_tree = partial(acc.tree, "System Image Types", "All System Image Types")
@@ -94,13 +105,7 @@ iso_tree = partial(acc.tree, "ISO Datastores", "All ISO Datastores")
 
 
 nav.add_branch('infrastructure_pxe',
-               {'infrastructure_pxe_servers': [lambda _: pxe_tree(),
-                {'infrastructure_pxe_server_new': lambda _: cfg_btn('Add a New PXE Server'),
-                 'infrastructure_pxe_server': [lambda ctx: pxe_tree(ctx.pxe_server.name),
-                                               {'infrastructure_pxe_server_edit':
-                                                lambda _: cfg_btn('Edit this PXE Server')}]}],
-
-                'infrastructure_pxe_templates': [lambda _: template_tree(),
+               {'infrastructure_pxe_templates': [lambda _: template_tree(),
                 {'infrastructure_pxe_template_new':
                  lambda _: cfg_btn('Add a New Customization Template'),
                  'infrastructure_pxe_template':
@@ -123,7 +128,14 @@ nav.add_branch('infrastructure_pxe',
                  lambda ctx: iso_tree(ctx.pxe_iso_datastore.provider)}]})
 
 
-class PXEServer(Updateable, Pretty):
+# ** Here are the other endpoint specific classes that we mixin to the main PXEServer
+# ** class.
+from ui import PXEServerUI
+from db import PXEServerDB
+import sentaku
+
+
+class PXEServer(Updateable, Pretty, PXEServerUI, PXEServerDB, sentaku.Element):
     """Model of a PXE Server object in CFME
 
     Args:
@@ -140,9 +152,21 @@ class PXEServer(Updateable, Pretty):
     """
     pretty_attrs = ['name', 'uri', 'access_url']
 
-    def __init__(self, name=None, depot_type=None, uri=None, userid=None, password=None,
+    def __init__(self, parent=None, name=None, depot_type=None, uri=None, userid=None,
+                 password=None,
                  access_url=None, pxe_dir=None, windows_dir=None, customize_dir=None,
                  menu_filename=None):
+        # ** This should not be necessary, but for now it is. We will need some factory
+        # ** to generate these!
+        # ** What am I getting upset about?
+        # ** We shouldn't need to pass in the parent(the sentaku context) for each
+        # ** instantiation of an object. So the conditional below is hacky at best to enable us to
+        # ** create the object without specifying it. As we are almost ALWAYS going to be creating
+        # ** an object for use with the current_appliance, we should not have to specify this.
+        if not parent:
+            from utils.appliance import current_appliance
+            parent = current_appliance.sentaku_ctx
+        sentaku.Element.__init__(self, parent)
         self.name = name
         self.depot_type = depot_type
         self.uri = uri
@@ -193,29 +217,6 @@ class PXEServer(Updateable, Pretty):
                 self.refresh(timeout=refresh_timeout)
         else:
             flash.assert_message_match('Add of new PXE Server was cancelled by the user')
-
-    @variable(alias="db")
-    def exists(self):
-        """
-        Checks if the PXE server already exists
-        """
-        dbs = cfmedb()
-        candidates = list(dbs.session.query(dbs["pxe_servers"]))
-        return self.name in [s.name for s in candidates]
-
-    @exists.variant('ui')
-    def exists_ui(self):
-        """
-        Checks if the PXE server already exists
-        """
-        sel.force_navigate('infrastructure_pxe_servers')
-        try:
-            pxe_tree(self.name)
-            return True
-        except CandidateNotFound:
-            return False
-        except NoSuchElementException:
-            return False
 
     def update(self, updates, cancel=False):
         """
