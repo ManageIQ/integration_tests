@@ -290,7 +290,6 @@ def test_retire_stack(provider, create_template, catalog, request):
 
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
-    request.addfinalizer(lambda: template.delete_all_templates())
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
