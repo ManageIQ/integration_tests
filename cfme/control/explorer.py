@@ -515,6 +515,8 @@ class _type_check_object(object):
             return isinstance(what, VMObject)
         elif isinstance(self, HostObject):
             return isinstance(what, HostObject)
+        elif isinstance(self, ContainerImageObject):
+            return isinstance(what, ContainerImageObject)
         else:
             raise TypeError("Wrong object passed!")
 
@@ -644,7 +646,7 @@ class HostCondition(BaseCondition, HostObject):
     })
 
 
-class ContainerImageCondition(BaseCondition, VMObject):
+class ContainerImageCondition(BaseCondition, ContainerImageObject):
     PREFIX = "container_image_"
     DELETE_STRING = "Delete this Image Condition"
 
