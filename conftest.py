@@ -132,6 +132,13 @@ def appliance_police():
     Rdb(msg).set_trace(**rdb_kwargs)
     store.slave_manager.message('Resuming testing following remote debugging')
 
+PLUGIN_PRIORITY = [
+    'fixtures.artifactor_plugin',
+    'fixtures.parallelizer',
+    'fixtures.single_appliance_sprout',
+    'fixtures.events',
+]
+
 
 def _pytest_plugins_generator(*extension_pkgs):
     # Finds all submodules in pytest extension packages and loads them
@@ -141,5 +148,16 @@ def _pytest_plugins_generator(*extension_pkgs):
         for importer, modname, is_package in iter_modules(path, prefix):
             yield modname
 
-pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers, cfme.fixtures, metaplugins))
-collect_ignore = ["tests/scenarios"]
+pytest_plugins = list(_pytest_plugins_generator(fixtures, markers, cfme.fixtures, metaplugins))
+# Shuffle the plugins a bit based on the order request
+for plugin in reversed(PLUGIN_PRIORITY):
+    # Why reversed? We will be inserting the plugins at 0, therefore always moving the first plugin
+    # back.
+    if plugin not in pytest_plugins:
+        raise ValueError('Plugin {} is not present in the collected plugins!'.format(plugin))
+    pos = pytest_plugins.index(plugin)
+    pytest_plugins.pop(pos)
+    pytest_plugins.insert(0, plugin)
+
+pytest_plugins = tuple(pytest_plugins)
+collect_ignore = []
