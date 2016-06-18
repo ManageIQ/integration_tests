@@ -12,6 +12,8 @@ from time import sleep
 from urlparse import ParseResult, urlparse
 from tempfile import NamedTemporaryFile
 
+import sentaku
+
 from cached_property import cached_property
 
 from werkzeug.local import LocalStack, LocalProxy
@@ -64,6 +66,11 @@ class ApplianceException(Exception):
     pass
 
 
+ViaUI = sentaku.ImplementationName('ViaUI')
+ViaDB = sentaku.ImplementationName('ViaDB')
+ViaREST = sentaku.ImplementationName('ViaREST')
+
+
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
@@ -92,6 +99,19 @@ class IPAppliance(object):
                 self._url = address.geturl()
         self.browser_steal = browser_steal
         self._db_ssh_client = None
+        # this will be renamed
+        self.sentaku_ctx = sentaku.ImplementationContext(
+            implementations=sentaku.AttributeBasedImplementations(self, {
+                ViaREST: 'rest_api',
+                ViaDB: 'db',
+                ViaUI: 'browser_session',
+            }),
+            default_choices=[
+                ViaDB,
+                ViaREST,
+                ViaUI,
+            ],
+        )
 
     def force_navigate(self, page_name, _tries=0, *args, **kwargs):
         """force_navigate(page_name)

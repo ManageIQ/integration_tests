@@ -31,6 +31,8 @@ pxe_details_page = Region(locators=dict(
     pxe_image_type=InfoBlock("Basic Information", "Type")
 ))
 
+pxe_tree = partial(acc.tree, "PXE Servers", "All PXE Servers")
+
 pxe_properties_form = Form(
     fields=[
         ('name_text', Input('name')),
@@ -86,7 +88,6 @@ iso_image_type_form = Form(
     ])
 
 
-pxe_tree = partial(acc.tree, "PXE Servers", "All PXE Servers")
 template_tree = partial(acc.tree, "Customization Templates",
                         "All Customization Templates - System Image Types")
 image_tree = partial(acc.tree, "System Image Types", "All System Image Types")
@@ -94,13 +95,7 @@ iso_tree = partial(acc.tree, "ISO Datastores", "All ISO Datastores")
 
 
 nav.add_branch('infrastructure_pxe',
-               {'infrastructure_pxe_servers': [lambda _: pxe_tree(),
-                {'infrastructure_pxe_server_new': lambda _: cfg_btn('Add a New PXE Server'),
-                 'infrastructure_pxe_server': [lambda ctx: pxe_tree(ctx.pxe_server.name),
-                                               {'infrastructure_pxe_server_edit':
-                                                lambda _: cfg_btn('Edit this PXE Server')}]}],
-
-                'infrastructure_pxe_templates': [lambda _: template_tree(),
+               {'infrastructure_pxe_templates': [lambda _: template_tree(),
                 {'infrastructure_pxe_template_new':
                  lambda _: cfg_btn('Add a New Customization Template'),
                  'infrastructure_pxe_template':
@@ -122,8 +117,15 @@ nav.add_branch('infrastructure_pxe',
                  'infrastructure_iso_datastore':
                  lambda ctx: iso_tree(ctx.pxe_iso_datastore.provider)}]})
 
+import sentaku
+exists = sentaku.ContextualMethod()
 
-class PXEServer(Updateable, Pretty):
+
+from ui import PXEServerUI
+from db import PXEServerDB
+
+
+class PXEServer(Updateable, Pretty, PXEServerUI, PXEServerDB, sentaku.Element):
     """Model of a PXE Server object in CFME
 
     Args:
@@ -140,9 +142,14 @@ class PXEServer(Updateable, Pretty):
     """
     pretty_attrs = ['name', 'uri', 'access_url']
 
-    def __init__(self, name=None, depot_type=None, uri=None, userid=None, password=None,
+    def __init__(self, parent=None, name=None, depot_type=None, uri=None, userid=None,
+                 password=None,
                  access_url=None, pxe_dir=None, windows_dir=None, customize_dir=None,
                  menu_filename=None):
+        if not parent:
+            from utils.appliance import current_appliance
+            parent = current_appliance.sentaku_ctx
+        sentaku.Element.__init__(self, parent)
         self.name = name
         self.depot_type = depot_type
         self.uri = uri
@@ -193,29 +200,6 @@ class PXEServer(Updateable, Pretty):
                 self.refresh(timeout=refresh_timeout)
         else:
             flash.assert_message_match('Add of new PXE Server was cancelled by the user')
-
-    @variable(alias="db")
-    def exists(self):
-        """
-        Checks if the PXE server already exists
-        """
-        dbs = cfmedb()
-        candidates = list(dbs.session.query(dbs["pxe_servers"]))
-        return self.name in [s.name for s in candidates]
-
-    @exists.variant('ui')
-    def exists_ui(self):
-        """
-        Checks if the PXE server already exists
-        """
-        sel.force_navigate('infrastructure_pxe_servers')
-        try:
-            pxe_tree(self.name)
-            return True
-        except CandidateNotFound:
-            return False
-        except NoSuchElementException:
-            return False
 
     def update(self, updates, cancel=False):
         """
