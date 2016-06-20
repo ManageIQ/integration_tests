@@ -29,7 +29,7 @@ mon_btn = partial(toolbar.select, 'Monitoring')
 pol_btn = partial(toolbar.select, "Policy")
 pwr_btn = partial(toolbar.select, "Power")
 
-retire_remove_button = "//span[@id='remove_button']/a/img|//a/img[contains(@src, 'clear.png')]"
+retire_remove_button = "//span[@id='remove_button']/a/img|//a/img[contains(@src, '/clear')]"
 
 set_ownership_form = Form(fields=[
     ('user_name', Select("//select[@id='user_name']")),
