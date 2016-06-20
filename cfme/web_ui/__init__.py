@@ -3056,6 +3056,10 @@ class DynamicTable(Pretty):
     """
     pretty_attrs = "root_loc", "default_row_item"
     ROWS = ".//tbody/tr[not(contains(@id, 'new_tr'))]"
+    DELETE_ALL = {
+        version.LOWEST: ".//tbody/tr/td/img[@alt='Delete']",
+        '5.6': './/tbody/tr/td/button/i[contains(@class, "minus")]'
+    }
 
     def __init__(self, root_loc, default_row_item=None):
         self.root_loc = root_loc
@@ -3078,13 +3082,16 @@ class DynamicTable(Pretty):
         if version.current_version() < "5.6":
             sel.click(sel.element(
                 ".//tbody/tr[@id='new_tr']/td//input[@type='image']", root=self.root_loc))
+        else:
+            # 5.6+ uses the same button.
+            self.click_add()
 
     def delete_row(self, by):
         pass
 
     def clear(self):
         while True:
-            buttons = sel.elements(".//tbody/tr/td/img[@alt='Delete']")
+            buttons = sel.elements(self.DELETE_ALL)
             if not buttons:
                 break
             sel.click(buttons[0])
