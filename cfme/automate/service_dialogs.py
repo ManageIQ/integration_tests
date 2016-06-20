@@ -13,7 +13,8 @@ from utils import version
 accordion_tree = functools.partial(accordion.tree, "Service Dialogs")
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
-entry_table = Table("//div[@id='field_values_div']/form/fieldset/table")
+entry_table = Table({'5.6': "//div[@id='field_values_div']/form/table",
+                     '5.5': "//div[@id='field_values_div']/form/fieldset/table"})
 text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table[@class='style1']")
 text_area_table = Table({version.LOWEST: "//div[@id='dialog_field_div']/fieldset/table"
                         "[@class='style1']",
@@ -195,11 +196,8 @@ class ServiceDialog(Updateable, Pretty):
             text_area_table.click_cell(1, value="Default text")
 
     def element(self, element_data):
-        return sel.element(version.pick({
-            '5.5': '//div[@class="panel-heading"]/h3[@class="panel-title"]'
-            '[contains(normalize-space(.), "{}")]/..'.format(element_data),
-            '5.4': '//div[@class="modbox"]/h2[@class="modtitle"]'
-            '[contains(normalize-space(.), "{}")]/..'.format(element_data)}))
+        return sel.element('//div[@class="panel-heading"]'
+            '[contains(normalize-space(.), "{}")]/..'.format(element_data))
 
     def reorder_elements(self, tab, box, *element_data):
         sel.force_navigate('service_dialog_edit', context={'dialog': self})

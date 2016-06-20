@@ -4,7 +4,6 @@ import pytest
 from utils.update import update
 from utils import error
 from cfme.automate.service_dialogs import ServiceDialog
-from utils.blockers import BZ
 
 
 pytestmark = [pytest.mark.tier(3)]
@@ -211,7 +210,6 @@ def test_reorder_elements():
     dialog.reorder_elements(dialog.tab_label, dialog.box_label, element_1_data, element_2_data)
 
 
-@pytest.mark.meta(blockers=[BZ(1238721, forced_streams=["5.4", "5.5", "upstream"])])
 def test_reorder_unsaved_elements():
     # Automate BZ - https://bugzilla.redhat.com/show_bug.cgi?id=1238721
     element_1_data = {
