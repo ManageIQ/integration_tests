@@ -2,7 +2,6 @@
 import datetime
 import fauxfactory
 import pytest
-from functools import partial
 
 from cfme.common.vm import VM
 from utils import testgen
@@ -41,20 +40,24 @@ def verify_retirement(vm):
                  message="Wait for VM {} removed from provider".format(vm.name))
     else:
         today = datetime.date.today()
-        get_date = partial(vm.get_detail, ["Lifecycle", "Retirement Date"])
-        get_state = partial(vm.get_detail, ["Power Management", "Power State"])
 
         # wait for the info block showing a date as retired date
+        @pytest.wait_for(delay=30, timeout='5m')
         def retirement_date_present():
-            return get_date() != "Never"
+            vm.summary.reload()
+            return vm.summary.lifecycle.retirement_date.text_value.lower() != 'never'
 
-        wait_for(retirement_date_present, delay=30, num_sec=600, message="retirement_date_present")
+        # wait for the state to change
+        @pytest.wait_for(delay=15, timeout='6m')
+        def wait_for_retired():
+            vm.summary.reload()
+            return vm.summary.lifecycle.retirement_state.text_value.lower() == 'retired'
 
-        # wait for the power state to go to 'off'
-        wait_for(lambda: get_state() in {'off', 'suspended'}, delay=30, num_sec=360)
+        assert vm.summary.power_management.power_state.text_value in {'off', 'suspended', 'unknown'}
 
         # make sure retirement date is today
-        assert datetime.datetime.strptime(get_date(), "%m/%d/%y").date() == today
+        retirement_date = vm.summary.lifecycle.retirement_date.text_value.lower()
+        assert datetime.datetime.strptime(retirement_date, "%m/%d/%y").date() == today
 
 
 @pytest.mark.meta(blockers=[1337697])
