@@ -10,8 +10,7 @@ from utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers',
-                            "vm_crud_delete_on_module_finish"),
+    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
     pytest.mark.tier(2)
 ]
 
@@ -21,20 +20,15 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="function")
 def vm_crud(provider, setup_provider_modscope, small_template_modscope):
-    return VM.factory(
+    vm = VM.factory(
         'test_events_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
         provider,
         template_name=small_template_modscope)
-
-
-@pytest.fixture(scope="module")
-def vm_crud_delete_on_module_finish(request, vm_crud):
-    @request.addfinalizer
-    def _delete_vm():
-        if vm_crud.does_vm_exist_on_provider():
-            vm_crud.delete_from_provider()
+    yield vm
+    if vm.does_vm_exist_on_provider():
+        vm.delete_from_provider()
 
 
 @pytest.mark.meta(blockers=[1238371], automates=[1238371])
