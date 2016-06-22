@@ -356,25 +356,17 @@ def process_field(values):
 
 
 class Validatable(SummaryMixin):
-    """
-    Class which Middleware provider and other middleware pages must extend
-    to be able to validate properties values shown in summary page.
-    """
+    """Mixin for various validations. Requires the class to be also :py:class:`Taggable`.
 
-    """
-    Tuples which first value is the provider class's attribute name,
-    the second value is provider's UI summary page field key.
-
-    Should have values in child classes.
-
+    :var property_tuples: Tuples which first value is the provider class's attribute name, the
+        second value is provider's UI summary page field key. Should have values in child classes.
     """
     property_tuples = []
 
     def validate_properties(self):
-        """
-        Validation method which checks whether class attributes,
-        which were used during creation of provider,
-        is correctly displayed in Properties section of provider UI.
+        """Validation method which checks whether class attributes, which were used during creation
+        of provider, are correctly displayed in Properties section of provider UI.
+
         The maps between class attribute and UI property is done via 'property_tuples' variable.
 
         Fails if some property does not match.
@@ -391,23 +383,24 @@ class Validatable(SummaryMixin):
 
     def validate_tags(self, tags):
         """Remove all tags and add `tags` from user input, validates added tags"""
-        self._validate_tags_internal()
+        self._validate_tags()
         tags_db = self.get_tags(method='db')
         if len(tags_db) > 0:
             self.remove_tags(tags=tags_db)
             tags_db = self.get_tags(method='db')
         assert len(tags_db) == 0, "Some of tags still available in database!"
         self.add_tags(tags)
-        self._validate_tags_internal(reference_tags=tags)
+        self._validate_tags(reference_tags=tags)
 
-    def _validate_tags_internal(self, tag="My Company Tags", reference_tags=None):
-        self.tags_ = """
-        Validation method which check tagging between UI and database
+    def _validate_tags(self, tag="My Company Tags", reference_tags=None):
+        """Validation method which check tagging between UI and database.
+
         To use this method, `self`/`caller` should be extended with `Taggable` class
 
-        tag: tag name, default is `My Company Tags`
-        reference_tags: If you want to compare user input with database
-         pass user input as `reference_tags`
+        Args:
+            tag: tag name, default is `My Company Tags`
+            reference_tags: If you want to compare user input with database, pass user input
+                as `reference_tags`
         """
         if reference_tags and not isinstance(reference_tags, list):
             raise KeyError("'reference_tags' should be an instance of list")
@@ -421,24 +414,24 @@ class Validatable(SummaryMixin):
         if len(tags_ui) > 0:
             tags_ui = sorted(tags_ui, key=lambda x: (x.category.display_name, x.display_name))
             tags_db = sorted(tags_db, key=lambda x: (x.category.display_name, x.display_name))
-            for _index in range(len(tags_db)):
+            for i in range(len(tags_db)):
                 assert \
-                    tags_db[_index].category.display_name == tags_ui[_index].category.display_name,\
+                    tags_db[i].category.display_name == tags_ui[i].category.display_name,\
                     ("Expected category '{}', but was '{}'".format(
-                        tags_db[_index].category.display_name,
-                        tags_ui[_index].category.display_name))
-                assert tags_db[_index].display_name == tags_ui[_index].display_name, \
-                    ("Expected tag_name '{}', but was '{}'".format(tags_db[_index].display_name,
-                                                                   tags_ui[_index].display_name))
+                        tags_db[i].category.display_name,
+                        tags_ui[i].category.display_name))
+                assert tags_db[i].display_name == tags_ui[i].display_name, \
+                    ("Expected tag_name '{}', but was '{}'".format(tags_db[i].display_name,
+                                                                   tags_ui[i].display_name))
         # if user passed reference tags, validate with database
         if reference_tags:
-            for _r_tag in reference_tags:
-                _found = False
-                for _d_tag in tags_db:
-                    if _r_tag.category.display_name == _d_tag.category.display_name \
-                            and _r_tag.display_name == _d_tag.display_name:
-                        _found = True
-                        assert _r_tag.category.single_value == _d_tag.category.single_value, \
+            for ref_tag in reference_tags:
+                found = False
+                for d_tag in tags_db:
+                    if ref_tag.category.display_name == d_tag.category.display_name \
+                            and ref_tag.display_name == d_tag.display_name:
+                        found = True
+                        assert ref_tag.category.single_value == d_tag.category.single_value, \
                             ("'single_value' of '{}' did not match'"
-                             .format(_r_tag))
-                assert _found, ("Tag '{}' not found in database".format(_r_tag))
+                             .format(ref_tag))
+                assert found, ("Tag '{}' not found in database".format(ref_tag))
