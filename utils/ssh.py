@@ -53,9 +53,9 @@ class SSHClient(paramiko.SSHClient):
         if not connect_kwargs.get('hostname', None):
             parsed_url = urlparse(store.base_url)
             default_connect_kwargs["port"] = ports.SSH
-            default_connect_kwargs['username'] = conf.credentials['ssh']['username'],
-            default_connect_kwargs['password'] = conf.credentials['ssh']['password'],
-            default_connect_kwargs['hostname'] = parsed_url.hostname,
+            default_connect_kwargs['username'] = conf.credentials['ssh']['username']
+            default_connect_kwargs['password'] = conf.credentials['ssh']['password']
+            default_connect_kwargs['hostname'] = parsed_url.hostname
         default_connect_kwargs["port"] = ports.SSH
 
         # Overlay defaults with any passed-in kwargs and store
