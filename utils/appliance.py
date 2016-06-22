@@ -24,7 +24,6 @@ from utils.mgmt_system import RHEVMSystem
 from mgmtsystem.virtualcenter import VMWareSystem
 
 from cfme.common.vm import VM
-from cfme.configure.configuration import server_name, server_id
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
 from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
@@ -1752,7 +1751,7 @@ class Appliance(IPAppliance):
                 log_callback('Setting up CFME VM relationship...')
                 vm = VM.factory(self.vm_name, get_crud(self._provider_name))
                 cfme_rel = Vm.CfmeRelationship(vm)
-                cfme_rel.set_relationship(str(server_name()), server_id())
+                cfme_rel.set_relationship(str(self.server_name()), self.server_id())
 
     def does_vm_exist(self):
         return self.provider.does_vm_exist(self.vm_name)
