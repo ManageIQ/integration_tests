@@ -191,6 +191,8 @@ def versions_for_group(request):
     group_id = request.POST.get("stream")
     latest_version = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
+    container = request.POST.get("container", "false").lower() == "true"
+    container_q = ~Q(container=None) if container else Q(container=None)
     if group_id == "<None>":
         versions = []
         group = None
@@ -201,6 +203,7 @@ def versions_for_group(request):
             versions = []
         else:
             versions = Template.get_versions(
+                container_q,
                 template_group=group, ready=True, usable=True, exists=True,
                 preconfigured=preconfigured, provider__working=True, provider__disabled=False,
                 provider__user_groups__in=request.user.groups.all())
@@ -217,6 +220,8 @@ def date_for_group_and_version(request):
     group_id = request.POST.get("stream")
     latest_date = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
+    container = request.POST.get("container", "false").lower() == "true"
+    container_q = ~Q(container=None) if container else Q(container=None)
     if group_id == "<None>":
         dates = []
     else:
@@ -237,13 +242,13 @@ def date_for_group_and_version(request):
             }
             if version == "latest":
                 try:
-                    versions = Template.get_versions(**filters)
+                    versions = Template.get_versions(container_q, **filters)
                     filters["version"] = versions[0]
                 except IndexError:
                     pass  # No such thing as version for this template group
             else:
                 filters["version"] = version
-            dates = Template.get_dates(**filters)
+            dates = Template.get_dates(container_q, **filters)
             if dates:
                 latest_date = dates[0]
     return render(request, 'appliances/_dates.html', locals())
@@ -259,6 +264,12 @@ def providers_for_date_group_and_version(request):
     shepherd_appliances = {}
     group_id = request.POST.get("stream")
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
+    container = request.POST.get("container", "false").lower() == "true"
+    container_q = ~Q(container=None) if container else Q(container=None)
+    if container:
+        appliance_container_q = ~Q(template__container=None)
+    else:
+        appliance_container_q = Q(template__container=None)
     if group_id == "<None>":
         providers = []
     else:
@@ -279,7 +290,7 @@ def providers_for_date_group_and_version(request):
             }
             if version == "latest":
                 try:
-                    versions = Template.get_versions(**filters)
+                    versions = Template.get_versions(container_q, **filters)
                     filters["version"] = versions[0]
                 except IndexError:
                     pass  # No such thing as version for this template group
@@ -288,13 +299,14 @@ def providers_for_date_group_and_version(request):
             date = request.POST.get("date")
             if date == "latest":
                 try:
-                    dates = Template.get_dates(**filters)
+                    dates = Template.get_dates(container_q, **filters)
                     filters["date"] = dates[0]
                 except IndexError:
                     pass  # No such thing as date for this template group
             else:
                 filters["date"] = parser.parse(date)
-            providers = Template.objects.filter(**filters).values("provider").distinct()
+            providers = Template.objects.filter(
+                container_q, **filters).values("provider").distinct()
             providers = sorted([p.values()[0] for p in providers])
             providers = [Provider.objects.get(id=provider) for provider in providers]
             for provider in providers:
@@ -307,7 +319,8 @@ def providers_for_date_group_and_version(request):
 
                 if "version" in filters:
                     appl_filter["template__version"] = filters["version"]
-                shepherd_appliances[provider.id] = len(Appliance.objects.filter(**appl_filter))
+                shepherd_appliances[provider.id] = len(
+                    Appliance.objects.filter(appliance_container_q, **appl_filter))
                 total_shepherd_slots += shepherd_appliances[provider.id]
                 total_appliance_slots += provider.remaining_appliance_slots
                 total_provisioning_slots += provider.remaining_provisioning_slots
@@ -537,11 +550,12 @@ def request_pool(request):
             provider = None
         preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
         yum_update = request.POST.get("yum_update", "false").lower() == "true"
+        container = request.POST.get("container", "false").lower() == "true"
         count = int(request.POST["count"])
         lease_time = int(request.POST.get("expiration", 60))
         pool_id = AppliancePool.create(
             request.user, group, version, date, provider, count, lease_time, preconfigured,
-            yum_update).id
+            yum_update, container).id
         messages.success(request, "Pool requested - id {}".format(pool_id))
     except Exception as e:
         messages.warning(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))

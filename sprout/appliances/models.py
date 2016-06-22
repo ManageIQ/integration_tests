@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import base64
-import diaper
 import re
 import yaml
 
@@ -46,6 +45,7 @@ def has_quotas(self):
 
 def is_a_bot(self):
     return self.last_name.lower() == "bot"
+
 
 User.has_quotas = property(has_quotas)
 User.is_a_bot = property(is_a_bot)
@@ -132,6 +132,9 @@ class Provider(MetadataMixin):
         help_text='We can specify the providers that are tied to a specific user group.')
     allow_renaming = models.BooleanField(
         default=False, help_text="Whether this provider can rename appliances.")
+    container_base_template = models.CharField(
+        max_length=64,
+        null=True, blank=True, help_text='Base tempalte for containerized ManageIQ deployment.')
 
     @property
     def is_working(self):
@@ -350,6 +353,8 @@ class Group(MetadataMixin):
         default=False,
         help_text="If template_obsolete_days set, this will enable deletion of obsolete templates"
         " using that metric. WARNING! Use with care. Best use for upstream templates.")
+    templates_url = models.TextField(
+        blank=True, null=True, help_text='Location of templates. Currently used for containers.')
 
     @property
     def obsolete_templates(self):
@@ -484,6 +489,11 @@ class Template(MetadataMixin):
     parent_template = models.ForeignKey(
         "self", blank=True, null=True, related_name="child_templates",
         help_text="What was source of this template?")
+    container = models.CharField(
+        max_length=32, null=True, blank=True,
+        help_text=(
+            'Whether the appliance is located in a container in the VM. '
+            'This then specifies the container name.'))
 
     @property
     def provider_api(self):
@@ -517,7 +527,7 @@ class Template(MetadataMixin):
 
     @property
     def cfme(self):
-        return CFMEAppliance(self.provider_name, self.name)
+        return CFMEAppliance(self.provider_name, self.name, container=self.container)
 
     @property
     def can_be_deleted(self):
@@ -543,9 +553,9 @@ class Template(MetadataMixin):
                 del metadata["temporary_name"]
 
     @classmethod
-    def get_versions(cls, **filters):
+    def get_versions(cls, *filters, **kwfilters):
         versions = []
-        for version in cls.objects.filter(**filters).values('version').distinct():
+        for version in cls.objects.filter(*filters, **kwfilters).values('version').distinct():
             v = version.values()[0]
             if v is not None:
                 versions.append(v)
@@ -553,10 +563,10 @@ class Template(MetadataMixin):
         return versions
 
     @classmethod
-    def get_dates(cls, **filters):
+    def get_dates(cls, *filters, **kwfilters):
         dates = map(
             lambda d: d.values()[0],
-            cls.objects.filter(**filters).values('date').distinct())
+            cls.objects.filter(*filters, **kwfilters).values('date').distinct())
         dates.sort(reverse=True)
         return dates
 
@@ -717,6 +727,7 @@ class Appliance(MetadataMixin):
             template_sprout_name=self.template.name,
             preconfigured=self.preconfigured,
             lun_disk_connected=self.lun_disk_connected,
+            container=self.template.container,
         )
 
     @property
@@ -743,11 +754,11 @@ class Appliance(MetadataMixin):
 
     @property
     def cfme(self):
-        return CFMEAppliance(self.provider_name, self.name)
+        return CFMEAppliance(self.provider_name, self.name, container=self.template.container)
 
     @property
     def ipapp(self):
-        return IPAppliance(self.ip_address)
+        return IPAppliance(self.ip_address, container=self.template.container)
 
     def user_can_use(self, user):
         return self.provider.user_can_use(user)
@@ -761,6 +772,10 @@ class Appliance(MetadataMixin):
 
     def is_visible_only_in_group(self, group):
         return len(self.visible_in_groups) == 1 and self.visible_in_groups[0] == group
+
+    @property
+    def containerized(self):
+        return self.template.container is not None
 
     def set_status(self, status):
         with transaction.atomic():
@@ -949,10 +964,12 @@ class AppliancePool(MetadataMixin):
         default=False, help_text="Used for marking the appliance pool as being deleted")
     finished = models.BooleanField(default=False, help_text="Whether fulfillment has been met.")
     yum_update = models.BooleanField(default=False, help_text="Whether to update appliances.")
+    is_container = models.BooleanField(default=False, help_text='Whether the pool uses containers.')
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
-            time_leased=60, preconfigured=True, yum_update=False):
+            time_leased=60, preconfigured=True, yum_update=False, container=False):
+        container_q = ~Q(container=None) if container else Q(container=None)
         if owner.has_quotas:
             user_pools_count = cls.objects.filter(owner=owner).count()
             user_vms_count = Appliance.objects.filter(appliance_pool__owner=owner).count()
@@ -974,7 +991,7 @@ class AppliancePool(MetadataMixin):
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
-            versions = Template.get_versions(
+            versions = Template.get_versions(container_q,
                 template_group=group, ready=True, usable=True, exists=True,
                 preconfigured=preconfigured, provider__working=True, provider__disabled=False,
                 **user_filter)
@@ -982,11 +999,11 @@ class AppliancePool(MetadataMixin):
                 version = versions[0]
         if not date:
             if version is not None:
-                dates = Template.get_dates(template_group=group, version=version, ready=True,
-                    usable=True, exists=True, preconfigured=preconfigured, provider__working=True,
-                    provider__disabled=False, **user_filter)
+                dates = Template.get_dates(container_q, template_group=group, version=version,
+                    ready=True, usable=True, exists=True, preconfigured=preconfigured,
+                    provider__working=True, provider__disabled=False, **user_filter)
             else:
-                dates = Template.get_dates(
+                dates = Template.get_dates(container_q,
                     template_group=group, ready=True, usable=True, exists=True,
                     preconfigured=preconfigured, provider__working=True, provider__disabled=False,
                     **user_filter)
@@ -1004,7 +1021,8 @@ class AppliancePool(MetadataMixin):
                 'The user does not have the right to use provider {}'.format(provider.id))
         req_params = dict(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
-            provider=provider, preconfigured=preconfigured, yum_update=yum_update)
+            provider=provider, preconfigured=preconfigured, yum_update=yum_update,
+            is_container=container)
         req = cls(**req_params)
         if not req.possible_templates:
             raise Exception("No possible templates! (pool params: {})".format(str(req_params)))
@@ -1020,6 +1038,14 @@ class AppliancePool(MetadataMixin):
                 task.delete()
 
         return super(AppliancePool, self).delete(*args, **kwargs)
+
+    @property
+    def container_q(self):
+        return ~Q(container=None) if self.is_container else Q(container=None)
+
+    @property
+    def appliance_container_q(self):
+        return ~Q(template__container=None) if self.is_container else Q(template__container=None)
 
     @property
     def filter_params(self):
@@ -1047,6 +1073,7 @@ class AppliancePool(MetadataMixin):
     @property
     def possible_templates(self):
         return Template.objects.filter(
+            self.container_q,
             ready=True, exists=True, usable=True,
             **self.filter_params).all().distinct()
 
@@ -1208,7 +1235,8 @@ class AppliancePool(MetadataMixin):
     def num_shepherd_appliances(self):
         return len(
             Appliance.objects.filter(
-                appliance_pool=None, **self.appliance_filter_params).distinct())
+                self.appliance_container_q, appliance_pool=None, **self.appliance_filter_params
+            ).distinct())
 
     def __repr__(self):
         return "<AppliancePool id: {}, group: {}, total_count: {}>".format(
