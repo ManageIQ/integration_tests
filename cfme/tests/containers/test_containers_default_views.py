@@ -22,7 +22,8 @@ def test_containers_providers_view():
     """
 
     This test checks successful change of default views settings for Containers --> Providers menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view settings of Containers --> Containers Providers to Grid/Tile/List view
+    * Goes to Settings --> My Settings --> Default Views menu and change the default view
+     settings of Containers --> Containers Providers to Grid/Tile/List view
     * Goes to Compute --> Containers --> Providers and verifies the selected view
 
     """
@@ -63,7 +64,8 @@ def test_containers_projects_view():
     """
 
     This test checks successful change of default views settings for Containers --> Projects menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view settings of Containers --> Containers Projects to Grid/Tile/List view
+    * Goes to Settings --> My Settings --> Default Views menu and change the default view
+    settings of Containers --> Containers Projects to Grid/Tile/List view
     * Goes to Compute --> Containers --> Projects and verifies the selected view
 
     """
@@ -104,11 +106,12 @@ def test_containers_routes_view():
     """
 
     This test checks successful change of default views settings for Containers --> Routes menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view settings of Containers --> Containers Routes to Grid/Tile/List view
+    * Goes to Settings --> My Settings --> Default Views menu and change the default view
+    settings of Containers --> Containers Routes to Grid/Tile/List view
     * Goes to Compute --> Containers --> Routes and verifies the selected view
 
     """
-    #change the default view to the following: Container Routes tiles to Grid View
+    # change the default view to the following: Container Routes tiles to Grid View
     sel.force_navigate('my_settings_default_views')
     b = ButtonGroup('Routes')
     b.choose('Grid View')
@@ -145,7 +148,8 @@ def test_containers_nodes_views():
     """
 
     This test checks successful change of default views settings for Containers --> Nodes menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view settings of Containers --> Containers Nodes to Grid/Tile/List view
+    * Goes to Settings --> My Settings --> Default Views menu and change the default view
+    settings of Containers --> Containers Nodes to Grid/Tile/List view
     * Goes to Compute --> Containers --> Nodes and verifies the selected view
 
     """
@@ -186,7 +190,8 @@ def test_containers_containers_view():
     """
 
     This test checks successful change of default views settings for Containers --> Containers menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view settings of Containers --> Containers Containers to Grid/Tile/List view
+    * Goes to Settings --> My Settings --> Default Views menu and change the default view
+    settings of Containers --> Containers Containers to Grid/Tile/List view
     * Goes to Compute --> Containers --> Containers and verifies the selected view
 
     """
@@ -227,7 +232,8 @@ def test_containers_replicators_view():
     """
 
     This test checks successful change of default views settings for Containers --> Replicators menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view settings of Containers --> Containers Replicators to Grid/Tile/List view
+    * Goes to Settings --> My Settings --> Default Views menu and change the default view
+    settings of Containers --> Containers Replicators to Grid/Tile/List view
     * Goes to Compute --> Containers --> Replicators and verifies the selected view
 
     """
