@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from functools import partial
 from cached_property import cached_property
 import cfme.fixtures.pytest_selenium as sel
+from fixtures.pytest_store import store
 
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
@@ -25,8 +26,7 @@ from utils import clear_property_cache
 
 @on_signal("server_details_changed")
 def invalidate_server_details():
-    from utils.appliance import current_appliance
-    clear_property_cache(current_appliance,
+    clear_property_cache(store.current_appliance,
                         'configuration_details', 'zone_description')
 
 
@@ -150,8 +150,7 @@ zones_table = Table("//div[@id='settings_list']/table")
 
 
 def server_region():
-    from utils.appliance import current_appliance
-    return current_appliance.server_region()
+    return store.current_appliance.server_region()
 
 
 def server_region_pair():
@@ -160,13 +159,11 @@ def server_region_pair():
 
 
 def server_name():
-    from utils.appliance import current_appliance
-    return current_appliance.server_name()
+    return store.current_appliance.server_name()
 
 
 def server_id():
-    from utils.appliance import current_appliance
-    return current_appliance.server_id()
+    return store.current_appliance.server_id()
 
 
 def add_tag(cat_name):
@@ -180,8 +177,7 @@ def edit_tag(cat_name, tag_name):
 
 
 def server_zone_description():
-    from utils.appliance import current_appliance
-    return current_appliance.zone_description
+    return store.current_appliance.zone_description
 
 
 def server_region_string():
@@ -1831,11 +1827,10 @@ def get_server_roles(navigate=True, db=True):
     Returns: :py:class:`dict` with the roles in the same format as :py:func:`set_server_roles`
         accepts as kwargs.
     """
-    from utils.appliance import current_appliance
     if db:
         asr = cfmedb()['assigned_server_roles']
         sr = cfmedb()['server_roles']
-        cfg = current_appliance.get_yaml_config('vmdb')
+        cfg = store.current_appliance.get_yaml_config('vmdb')
         roles = list(cfmedb().session.query(sr.name))
         roles_set = list(cfmedb().session.query(sr.name)
                          .join(asr, asr.server_role_id == sr.id))
