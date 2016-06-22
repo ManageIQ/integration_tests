@@ -17,12 +17,20 @@ from cfme.web_ui.menu import Menu
 
 class UIEndpoint(Endpoint):
     """UI endpoint"""
-
+    # ** Wow, a lot to talk about here. so we introduced the idea of this "endpoint" object at
+    # ** the moment. This endpoint object contains everything you need to talk to that endpoint.
+    # ** Sessions, endpoint sepcific functions(a la force navigate). The base class does precious
+    # ** little. It's more an organizational level thing.
     def __init__(self, name, impl, owner):
         """UI Endpoint"""
         super(UIEndpoint, self).__init__(name=name, impl=impl, owner=owner)
         self.menu = Menu()
 
+    # ** Notice our friend force_navigate is here. It used to live in pytest_selenium fixture.
+    # ** Funny story! That thing was never a fixture.
+    # ** Now it lives here, because it is an implementation/endpoint specific function.
+    # ** Almost all of our sel functions, click, move_to_element, elements, etc, will move here.
+    # ** This is what this module is for. It's for describing the way we interact with the endpoint.
     def force_navigate(self, page_name, _tries=0, *args, **kwargs):
         """force_navigate(page_name)
 
@@ -51,6 +59,9 @@ class UIEndpoint(Endpoint):
         from cfme import login
         # Import the top-level nav menus for convenience
 
+        # ** Notice here that the menu is an attribute of the endpoint because it too is endpoint
+        # ** specific. Menu is not something global anymore, we don't need a Menu for REST,
+        # ** therefore we don't need a Menu object globally, or in the REST module.
         # Collapse the stack
         self.menu.initialize()
 
@@ -64,6 +75,7 @@ class UIEndpoint(Endpoint):
             def _patch_recycle_retry():
                 self.owner.patch_with_miqqe()
                 browser().quit()
+                # ** There are a few of these, force_navigates that now reference themselves.
                 self.force_navigate(page_name, _tries, *args, **kwargs)
             try:
                 # latest js diff version always has to be placed here to keep this check current
@@ -261,6 +273,8 @@ class UIEndpoint(Endpoint):
                 logger.exception("Rails exception before force_navigate started!: %s:%s at %s",
                     text("//body/div[@class='dialog']/h1").encode("utf-8"),
                     text("//body/div[@class='dialog']/p").encode("utf-8"),
+                    # ** This call will eventually access the browser from this very object,
+                    # ** self.browser or something something.
                     browser().current_url()
                 )
                 recycle = True

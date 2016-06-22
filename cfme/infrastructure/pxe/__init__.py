@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 """ A model of a PXE Server in CFME
 """
+# ** So the pxe module became a package. This was not strictly necessary, but with the other
+# ** changes that were happening, such as the desire to split apart the UI / DB / REST (endpoint)
+# ** related things, it made sense.
+# ** Why did we want to do that in the first place?!
+# ** It's a good question, and one can argue that having a single file makes more sense frankly
+# ** I don't mind either way, but the rationale is that UI has a lot of cruft (locators, nav trees)
+# ** If you end up with multiple UIs in the same file, then you have multiple sets of locators,
+# ** multiple sets of nav trees, there for moving this to a new package made a whole lot of sense.
+# ** This way we can keep one UIs locators separate from another. DB / REST endpoints also then
+# ** remain clean.
 
 from functools import partial
 
@@ -118,6 +128,8 @@ nav.add_branch('infrastructure_pxe',
                  lambda ctx: iso_tree(ctx.pxe_iso_datastore.provider)}]})
 
 
+# ** Here are the other endpoint specific classes that we mixin to the main PXEServer
+# ** class.
 from ui import PXEServerUI
 from db import PXEServerDB
 import sentaku
@@ -144,6 +156,13 @@ class PXEServer(Updateable, Pretty, PXEServerUI, PXEServerDB, sentaku.Element):
                  password=None,
                  access_url=None, pxe_dir=None, windows_dir=None, customize_dir=None,
                  menu_filename=None):
+        # ** This should not be necessary, but for now it is. We will need some factory
+        # ** to generate these!
+        # ** What am I getting upset about?
+        # ** We shouldn't need to pass in the parent(the sentaku context) for each
+        # ** instantiation of an object. So the conditional below is hacky at best to enable us to
+        # ** create the object without specifying it. As we are almost ALWAYS going to be creating
+        # ** an object for use with the current_appliance, we should not have to specify this.
         if not parent:
             from utils.appliance import current_appliance
             parent = current_appliance.sentaku_ctx

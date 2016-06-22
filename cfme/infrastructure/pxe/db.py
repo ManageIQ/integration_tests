@@ -3,6 +3,7 @@ from utils.appliance import ViaDB
 
 
 class PXEServerDB(PXEBase):
+    # ** See the comments in the ui.py file for more information here.
     @PXEBase.exists.implemented_for(ViaDB)
     def existse(self):
         """
