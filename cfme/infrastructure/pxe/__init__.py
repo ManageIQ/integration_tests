@@ -117,12 +117,10 @@ nav.add_branch('infrastructure_pxe',
                  'infrastructure_iso_datastore':
                  lambda ctx: iso_tree(ctx.pxe_iso_datastore.provider)}]})
 
-import sentaku
-exists = sentaku.ContextualMethod()
-
 
 from ui import PXEServerUI
 from db import PXEServerDB
+import sentaku
 
 
 class PXEServer(Updateable, Pretty, PXEServerUI, PXEServerDB, sentaku.Element):
