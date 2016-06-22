@@ -46,7 +46,7 @@ class UIEndpoint(Endpoint):
 
         _tries += 1
 
-        logger.debug('force_navigate to %s, try %d', page_name, _tries)
+        logger.debug('force_navigate to {}, try {}'.format(page_name, _tries))
         # circular import prevention: cfme.login uses functions in this module
         from cfme import login
         # Import the top-level nav menus for convenience
