@@ -79,3 +79,6 @@ psycopg2
 
 # zeromq bindings, for ipython and parallel testing, needs zeromq3-devel
 pyzmq
+
+# werkzeug.local until extraction
+werkzeug

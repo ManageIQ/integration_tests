@@ -20,14 +20,12 @@ all should be available in the collection and testing phases of a test run.
 import fauxfactory
 import os
 import sys
-from urlparse import urlparse
 
 from _pytest.terminal import TerminalReporter
 from cached_property import cached_property
 from py.io import TerminalWriter
 
-from utils import conf, diaper, property_or_none
-from utils.log import logger
+from utils import diaper, property_or_none
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -56,6 +54,13 @@ class Store(object):
     it will be None.
 
     """
+
+    @property
+    def current_appliance(self):
+        # layz import due to loops and loops and loops
+        from utils import appliance
+        return appliance.current_appliance
+
     def __init__(self):
         #: The py.test config instance, None if not in py.test
         self.config = None
@@ -66,13 +71,12 @@ class Store(object):
         #: Parallelizer role, None if not running a parallelized session
         self.parallelizer_role = None
 
-        # appliance push/pop stack
-        self._current_appliance = []
-
         # Stash of the "real" terminal reporter once we get it,
         # so we don't have to keep going through pluginmanager
         self._terminalreporter = None
         self._user = None
+        #: hack variable until we get a more sustainable solution
+        self.ssh_clients_to_close = []
 
     @property
     def has_config(self):
@@ -85,24 +89,6 @@ class Store(object):
     @user.setter
     def user(self, value):
         self._user = value
-
-    @property
-    def current_appliance(self):
-        if not self._current_appliance:
-            from utils.appliance import IPAppliance
-            base_url = conf.env['base_url']
-            if base_url is None or str(base_url.lower()) == 'none':
-                raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
-            self._current_appliance.append(IPAppliance(urlparse(base_url)))
-        return self._current_appliance[-1]
-
-    @property
-    def any_appliance(self):
-        return bool(self._current_appliance)
-
-    @property
-    def appliance_stack(self):
-        return self._current_appliance
 
     @property
     def base_url(self):
@@ -169,32 +155,8 @@ class Store(object):
     def write_line(self, line, **kwargs):
         return write_line(line, **kwargs)
 
+
 store = Store()
-
-
-def _push_appliance(app):
-    was_before = store.current_appliance.address if store.any_appliance else None
-    store._current_appliance.append(app)
-    if was_before is not None:
-        logger.info("Pushed appliance {} on stack (was {} before) ".format(app.address, was_before))
-    else:
-        logger.info("Pushed appliance {} on stack (empty stack before) ".format(app.address))
-    if app.browser_steal:
-        from utils import browser
-        browser.start()
-
-
-def _pop_appliance(app):
-    store._current_appliance.pop()
-    if store.any_appliance:
-        logger.info(
-            "Popped appliance {} from the stack (now there is {})".format(
-                app.address, store.current_appliance.address))
-    else:
-        logger.info("Popped appliance {} from the stack. The stack is empty now.")
-    if app.browser_steal:
-        from utils import browser
-        browser.start()
 
 
 def pytest_namespace():

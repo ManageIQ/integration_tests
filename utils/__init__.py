@@ -6,6 +6,8 @@ import os
 # import diaper for backward compatibility
 import diaper
 from cached_property import cached_property
+from werkzeug.local import LocalProxy
+
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 
@@ -33,6 +35,8 @@ def clear_property_cache(obj, *names):
     """
     clear a cached property regardess of if it was cached priority
     """
+    if isinstance(obj, LocalProxy):
+        obj = obj._get_current_object()
     for name in names:
         assert isinstance(getattr(type(obj), name), cached_property)
         obj.__dict__.pop(name, None)

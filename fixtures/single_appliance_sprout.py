@@ -8,11 +8,12 @@ from threading import Timer
 from fixtures.parallelizer import dump_pool_info
 from fixtures.terminalreporter import reporter
 from utils import at_exit, conf
-from utils.appliance import IPAppliance
+from utils.appliance import IPAppliance, stack as appliance_stack
 from utils.path import project_path
 from utils.sprout import SproutClient
 from utils.wait import wait_for
 
+# todo introduce a sproutstate plugin
 
 timer = None
 appliance = None
@@ -76,7 +77,7 @@ def pytest_configure(config):
         reset_timer(sprout, pool_id, config.option.sprout_timeout)
         terminal.write("Appliance lease timer is running ...\n")
         appliance = IPAppliance(address=ip_address)
-        appliance.push()
+        appliance_stack.push(appliance)
         # Retrieve and print the template_name for Jenkins to pick up
         template_name = request["appliances"][0]["template_name"]
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
@@ -105,7 +106,7 @@ def pytest_sessionfinish(session, exitstatus):
         timer = None
     if appliance is not None:
         terminal.write("Popping out the appliance\n")
-        appliance.pop()
+        appliance_stack.pop()
         appliance = None
     destroy_the_pool()
 
