@@ -12,6 +12,7 @@ from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons
 from cfme.web_ui.tabstrip import TabStripForm
 import cfme.fixtures.pytest_selenium as sel
+from fixtures.pytest_store import store
 from utils.api import rest_api
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
@@ -247,8 +248,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         rdate = self.last_refresh_date()
         if not rdate:
             return False
-        from utils.appliance import current_appliance
-        td = current_appliance.utc_time() - rdate
+        td = store.current_appliance.utc_time() - rdate
         if td > datetime.timedelta(0, 600):
             self.refresh_provider_relationships()
             return False
