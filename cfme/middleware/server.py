@@ -1,11 +1,11 @@
 import re
 from cfme.common import Taggable
-from mgmtsystem.hawkular import Path
 from cfme.exceptions import MiddlewareServerNotFound
 from cfme.fixtures import pytest_selenium as sel
+from cfme.middleware import parse_properties
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
-from cfme.middleware import parse_properties
+from mgmtsystem.hawkular import Path
 from utils import attributize_string
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_middleware_providers
@@ -16,11 +16,11 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
 def _db_select_query(name=None, feed=None, provider=None):
-    """column order: `name`, `hostname`, `feed`, `product`,
+    """column order: `id`, `name`, `hostname`, `feed`, `product`,
     `provider_name`, `ems_ref`, `properties`"""
     t_ms = cfmedb()['middleware_servers']
     t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(t_ms.name, t_ms.hostname, t_ms.feed, t_ms.product,
+    query = cfmedb().session.query(t_ms.id, t_ms.name, t_ms.hostname, t_ms.feed, t_ms.product,
                                    t_ems.name.label('provider_name'),
                                    t_ms.ems_ref, t_ms.properties)\
         .join(t_ems, t_ms.ems_id == t_ems.id)
@@ -60,6 +60,7 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         provider: Provider object (HawkularProvider)
         product: Product type of the server
         feed: feed of the server
+        db_id: database row id of server
 
     Usage:
 
@@ -72,6 +73,7 @@ class MiddlewareServer(MiddlewareBase, Taggable):
     property_tuples = [('name', 'name'), ('feed', 'feed'),
                        ('hostname', 'hostname'), ('bound_address', 'bind_address'),
                        ('product_name', 'product'), ('version', 'version')]
+    taggable_type = 'MiddlewareServer'
 
     def __init__(self, name, provider=None, **kwargs):
         if name is None:
@@ -84,6 +86,7 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         if 'properties' in kwargs:
             for property in kwargs['properties']:
                 setattr(self, attributize_string(property), kwargs['properties'][property])
+        self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
 
     @classmethod
     def servers(cls, provider=None, strict=True):
@@ -117,7 +120,7 @@ class MiddlewareServer(MiddlewareBase, Taggable):
                 _provider = get_crud(get_provider_key(server.provider_name))
             servers.append(MiddlewareServer(name=server.name, hostname=server.hostname,
                                             feed=server.feed, product=server.product,
-                                            provider=_provider,
+                                            db_id=server.id, provider=_provider,
                                             properties=parse_properties(server.properties)))
         return servers
 
@@ -157,6 +160,9 @@ class MiddlewareServer(MiddlewareBase, Taggable):
                 list_tbl.click_row_by_cells({'Server Name': self.name, 'Feed': self.feed})
             else:
                 list_tbl.click_row_by_cells({'Server Name': self.name})
+        if not self.db_id or refresh:
+            tmp_ser = self.server(method='db')
+            self.db_id = tmp_ser.db_id
         if refresh:
             tb.refresh()
 
@@ -184,7 +190,8 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         server = _db_select_query(name=self.name, provider=self.provider,
                                  feed=self.feed).first()
         if server:
-            return MiddlewareServer(provider=self.provider, feed=server.feed, name=server.name,
+            return MiddlewareServer(db_id=server.id, provider=self.provider,
+                                    feed=server.feed, name=server.name,
                                     properties=parse_properties(server.properties))
         return None
 

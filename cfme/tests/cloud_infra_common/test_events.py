@@ -76,6 +76,7 @@ def test_vm_create(request, vm_crud, provider, register_event):
     vm_crud.wait_to_appear()
 
     def _check():
-        return "Environment: Development" in vm_crud.get_tags()
+        return any(tag.category.display_name == "Environment" and tag.display_name == "Development"
+                   for tag in vm_crud.get_tags())
 
     wait_for(_check, num_sec=180, delay=15, message="tags to appear")

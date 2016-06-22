@@ -3,9 +3,13 @@ from functools import partial
 from urlparse import urlparse
 
 from cached_property import cached_property
+from cfme.configure.configuration import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTree, flash, form_buttons, mixins, toolbar
+from sqlalchemy.orm import aliased
 from utils import attributize_string, version
+from utils.db import cfmedb
+from utils.varmeth import variable
 
 pol_btn = partial(toolbar.select, "Policy")
 
@@ -79,13 +83,71 @@ class Taggable(object):
         self.load_details(refresh=True)
         mixins.add_tag(tag, single_value=single_value, navigate=True)
 
+    def add_tags(self, tags):
+        """Add list of tags
+        tags: List of `Tag`
+        """
+        for tag in tags:
+            self.add_tag(tag=tag)
+
     def remove_tag(self, tag):
         self.load_details(refresh=True)
         mixins.remove_tag(tag)
 
+    def remove_tags(self, tags):
+        """Remove list of tags
+        tags: List of `Tag`
+        """
+        for tag in tags:
+            self.remove_tag(tag=tag)
+
+    @variable(alias='ui')
     def get_tags(self, tag="My Company Tags"):
         self.load_details(refresh=True)
-        return mixins.get_tags(tag=tag)
+        tags = []
+        # Sample out put from UI, [u'Department: Accounting | Engineering', u'Location: London']
+        for _tag in mixins.get_tags(tag=tag):
+            if _tag == 'No {} have been assigned'.format(tag):
+                return tags
+            _tag = _tag.split(':', 1)
+            if len(_tag) != 2:
+                raise RuntimeError('Unknown format of tagging in UI [{}]'.format(_tag))
+            if ' | ' in _tag[1]:
+                for _sub_tag in _tag[1].split(' | '):
+                    tags.append(Tag(category=Category(display_name=tag[0], single_value=None),
+                                    display_name=_sub_tag.strip()))
+            else:
+                tags.append(Tag(category=Category(display_name=_tag[0], single_value=None),
+                                display_name=_tag[1].strip()))
+        return tags
+
+    @get_tags.variant('db')
+    def get_tags_db(self):
+        """
+        Gets tags detail from database
+        Column order: `tag_id`, `db_id`, `category`, `tag_name`, `single_value`
+        """
+        # Some times object of db_id might changed in database, when we do CRUD operations,
+        # do update now
+        self.load_details(refresh=True)
+        if not self.db_id or not self.taggable_type:
+            raise KeyError("'db_id' and/or 'taggable_type' not set")
+        t_cls1 = aliased(cfmedb()['classifications'])
+        t_cls2 = aliased(cfmedb()['classifications'])
+        t_tgg = aliased(cfmedb()['taggings'])
+        query = cfmedb().session.query(t_cls1.tag_id, t_tgg.taggable_id.label('db_id'),
+                                       t_cls2.description.label('category'),
+                                       t_cls1.description.label('tag_name'), t_cls1.single_value)\
+            .join(t_cls2, t_cls1.parent_id == t_cls2.id)\
+            .join(t_tgg, t_tgg.tag_id == t_cls1.tag_id)\
+            .filter(t_tgg.taggable_id == self.db_id)\
+            .filter(t_tgg.taggable_type == self.taggable_type)
+        tags = []
+        for tag in query.all():
+            tags.append(Tag(category=Category(display_name=tag.category,
+                                              single_value=tag.single_value),
+                            display_name=tag.tag_name))
+        return tags
 
 
 class SummaryMixin(object):
@@ -326,3 +388,57 @@ class Validatable(SummaryMixin):
             assert expected_value == shown_value,\
                 ("Property '{}' has wrong value, expected '{}' but was '{}'"
                  .format(property_tuple, expected_value, shown_value))
+
+    def validate_tags(self, tags):
+        """Remove all tags and add `tags` from user input, validates added tags"""
+        self._validate_tags_internal()
+        tags_db = self.get_tags(method='db')
+        if len(tags_db) > 0:
+            self.remove_tags(tags=tags_db)
+            tags_db = self.get_tags(method='db')
+        assert len(tags_db) == 0, "Some of tags still available in database!"
+        self.add_tags(tags)
+        self._validate_tags_internal(reference_tags=tags)
+
+    def _validate_tags_internal(self, tag="My Company Tags", reference_tags=None):
+        self.tags_ = """
+        Validation method which check tagging between UI and database
+        To use this method, `self`/`caller` should be extended with `Taggable` class
+
+        tag: tag name, default is `My Company Tags`
+        reference_tags: If you want to compare user input with database
+         pass user input as `reference_tags`
+        """
+        if reference_tags and not isinstance(reference_tags, list):
+            raise KeyError("'reference_tags' should be an instance of list")
+        # Get tags from UI and DB
+        tags_ui = self.get_tags(method='ui')
+        tags_db = self.get_tags(method='db')
+        # Verify tags
+        assert len(tags_db) == len(tags_ui), \
+            ("Tags count between DB and UI mismatch, expected '{}' but was '{}'"
+             .format(tags_db, tags_ui))
+        if len(tags_ui) > 0:
+            tags_ui = sorted(tags_ui, key=lambda x: (x.category.display_name, x.display_name))
+            tags_db = sorted(tags_db, key=lambda x: (x.category.display_name, x.display_name))
+            for _index in range(len(tags_db)):
+                assert \
+                    tags_db[_index].category.display_name == tags_ui[_index].category.display_name,\
+                    ("Expected category '{}', but was '{}'".format(
+                        tags_db[_index].category.display_name,
+                        tags_ui[_index].category.display_name))
+                assert tags_db[_index].display_name == tags_ui[_index].display_name, \
+                    ("Expected tag_name '{}', but was '{}'".format(tags_db[_index].display_name,
+                                                                   tags_ui[_index].display_name))
+        # if user passed reference tags, validate with database
+        if reference_tags:
+            for _r_tag in reference_tags:
+                _found = False
+                for _d_tag in tags_db:
+                    if _r_tag.category.display_name == _d_tag.category.display_name \
+                            and _r_tag.display_name == _d_tag.display_name:
+                        _found = True
+                        assert _r_tag.category.single_value == _d_tag.category.single_value, \
+                            ("'single_value' of '{}' did not match'"
+                             .format(_r_tag))
+                assert _found, ("Tag '{}' not found in database".format(_r_tag))
