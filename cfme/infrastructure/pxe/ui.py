@@ -11,7 +11,7 @@ cfg_btn = partial(tb.select, 'Configuration')
 
 pxe_tree = partial(acc.tree, "PXE Servers", "All PXE Servers")
 
-current_appliance.menu.add_branch('infrastructure_pxe',
+current_appliance.browser.menu.add_branch('infrastructure_pxe',
                {'infrastructure_pxe_servers': [lambda _: pxe_tree(),
                 {'infrastructure_pxe_server_new': lambda _: cfg_btn('Add a New PXE Server'),
                  'infrastructure_pxe_server': [lambda ctx: pxe_tree(ctx.pxe_server.name),
@@ -26,7 +26,7 @@ class PXEServerUI(PXEBase):
         """
         Checks if the PXE server already exists
         """
-        current_appliance.force_navigate('infrastructure_pxe_servers')
+        self.impl.force_navigate('infrastructure_pxe_servers')
         try:
             pxe_tree(self.name)
             return True

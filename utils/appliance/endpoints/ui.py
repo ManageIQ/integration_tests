@@ -12,6 +12,7 @@ from selenium.common.exceptions import (
 from utils.browser import quit, ensure_browser_open, browser
 from fixtures.pytest_store import store
 from time import sleep
+from cfme.web_ui.menu import Menu
 
 
 class UIEndpoint(Endpoint):
@@ -20,6 +21,7 @@ class UIEndpoint(Endpoint):
     def __init__(self, name, impl, owner):
         """UI Endpoint"""
         super(UIEndpoint, self).__init__(name=name, impl=impl, owner=owner)
+        self.menu = Menu()
 
     def force_navigate(self, page_name, _tries=0, *args, **kwargs):
         """force_navigate(page_name)

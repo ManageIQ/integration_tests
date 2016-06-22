@@ -8,8 +8,8 @@ class PXEServerDB(PXEBase):
         """
         Checks if the PXE server already exists
         """
-        return self.impl.session.query(
-            self.impl["pxe_servers"]
+        return self.impl.db.session.query(
+            self.impl.db["pxe_servers"]
         ).filter_by(
             name=self.name
         ).count() > 0

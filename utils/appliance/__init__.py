@@ -25,7 +25,6 @@ import traceback
 from utils.mgmt_system import RHEVMSystem
 from mgmtsystem.virtualcenter import VMWareSystem
 
-from cfme.web_ui.menu import Menu
 from cfme.common.vm import VM
 
 from fixtures import ui_coverage
@@ -75,7 +74,6 @@ class IPAppliance(object):
     """
 
     def __init__(self, address=None, browser_steal=False):
-        self.menu = Menu()
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
