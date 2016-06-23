@@ -921,7 +921,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     _tries += 1
 
-    logger.debug('force_navigate to %s, try %d', page_name, _tries)
+    logger.debug('force_navigate to {}, try {}'.format(page_name, _tries))
     # circular import prevention: cfme.login uses functions in this module
     from cfme import login
     # Import the top-level nav menus for convenience
@@ -1029,7 +1029,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 'top -c -b -n1 | head -30').output)
             logger.debug('Top Memory consumers:')
             logger.debug(store.current_appliance.ssh_client.run_command(
-                'top -c -b -n1 -o "%MEM" | head -30').output)
+                'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
         logger.debug('Managed Providers:')
         logger.debug(store.current_appliance.managed_providers)
         quit()  # Refresh the session, forget loaded summaries, ...
@@ -1060,9 +1060,9 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
         ctx = kwargs.get("context", False)
         if ctx:
-            logger.info('Navigating to %s with context: %s', page_name, ctx)
+            logger.info('Navigating to {} with context: {}'.format(page_name, ctx))
         else:
-            logger.info('Navigating to %s', page_name)
+            logger.info('Navigating to {}'.format(page_name))
         menu.nav.go_to(page_name, *args, **kwargs)
     except (KeyboardInterrupt, ValueError):
         # KeyboardInterrupt: Don't block this while navigating
@@ -1088,7 +1088,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         recycle = True
     except exceptions.CannotContinueWithNavigation as e:
         # The some of the navigation steps cannot succeed
-        logger.info('Cannot continue with navigation due to: %s; Recycling browser', str(e))
+        logger.info('Cannot continue with navigation due to: {}; Recycling browser'.format(str(e)))
         recycle = True
     except (NoSuchElementException, InvalidElementStateException, WebDriverException,
             StaleElementReferenceException) as e:
@@ -1107,8 +1107,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             logger.warning("Page was blocked with blocker div, recycling.")
             recycle = True
         elif cfme_exc.is_cfme_exception():
-            logger.exception("CFME Exception before force_navigate started!: `%s`",
-                cfme_exc.cfme_exception_text())
+            logger.exception("CFME Exception before force_navigate started!: {}".format(
+                cfme_exc.cfme_exception_text()))
             recycle = True
         elif is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
             # 502
@@ -1117,13 +1117,13 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             req = text(req[0]) if req else "No request stated"
             reason = elements("/html/body/p[2]/strong")
             reason = text(reason[0]) if reason else "No reason stated"
-            logger.info("Proxy error: %s / %s", req, reason)
+            logger.info("Proxy error: {} / {}".format(req, reason))
             restart_evmserverd = True
         elif is_displayed("//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
             # 503 and similar sort of errors
             title = text("//body/h1")
             body = text("//body/p")
-            logger.exception("Application error %s: %s", title, body)
+            logger.exception("Application error {}: {}".format(title, body))
             sleep(5)  # Give it a little bit of rest
             recycle = True
         elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]", _no_deeper=True):
@@ -1145,7 +1145,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             recycle = True
         else:
             logger.error("Could not determine the reason for failing the navigation. " +
-                " Reraising.  Exception: %s", str(e))
+                " Reraising.  Exception: {}".format(str(e)))
             logger.debug(store.current_appliance.ssh_client.run_command(
                 'service evmserverd status').output)
             raise
@@ -1157,7 +1157,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     if recycle or restart_evmserverd:
         browser().quit()  # login.current_user() will be retained for next login
-        logger.debug('browser killed on try %d', _tries)
+        logger.debug('browser killed on try {}'.format(_tries))
         # If given a "start" nav destination, it won't be valid after quitting the browser
         kwargs.pop("start", None)
         force_navigate(page_name, _tries, *args, **kwargs)
