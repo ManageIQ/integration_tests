@@ -154,7 +154,7 @@ def test_region_required_validation(request, soft_assert):
         with error.expected(FlashMessageException):
             prov.create()
         soft_assert(
-            "ng-invalid-required" in prov.properties_form.amazon_region_select.classes)
+            "ng-invalid-required" in prov.properties_form.region_select.classes)
 
 
 @pytest.mark.tier(3)
