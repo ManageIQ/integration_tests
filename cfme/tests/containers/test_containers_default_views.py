@@ -14,17 +14,26 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope='function')
 
+# CMP-9875
+
+
+def test_containers_route_list_view():
+    sel.force_navigate('containers_routes')
+    bg = ButtonGroup('Containers Routes')
+    is_active = bg.active()
 
 # CMP-9936
 
 
-def test_containers_providers_view():
-    """
+def test_containers_providers_default_view():
+    """ Containers providers default view test
 
     This test checks successful change of default views settings for Containers --> Providers menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view
-     settings of Containers --> Containers Providers to Grid/Tile/List view
-    * Goes to Compute --> Containers --> Providers and verifies the selected view
+
+    Steps:
+        * Goes to Settings --> My Settings --> Default Views menu and change the default view
+         settings of Containers --> Containers Providers to Grid/Tile/List view
+        * Goes to Compute --> Containers --> Providers and verifies the selected view
 
     """
     # Change the view to Grid View
@@ -60,13 +69,15 @@ def test_containers_providers_view():
 # CMP-9937
 
 
-def test_containers_projects_view():
-    """
+def test_containers_projects_default_view():
+    """ Containers projects default view test
 
     This test checks successful change of default views settings for Containers --> Projects menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view
-    settings of Containers --> Containers Projects to Grid/Tile/List view
-    * Goes to Compute --> Containers --> Projects and verifies the selected view
+
+    Steps:
+        * Goes to Settings --> My Settings --> Default Views menu and change the default view
+        settings of Containers --> Containers Projects to Grid/Tile/List view
+        * Goes to Compute --> Containers --> Projects and verifies the selected view
 
     """
     # Change the view to Grid View
@@ -102,13 +113,15 @@ def test_containers_projects_view():
 # CMP-9938
 
 
-def test_containers_routes_view():
-    """
+def test_containers_routes_default_view():
+    """Containers providers routes view test
 
     This test checks successful change of default views settings for Containers --> Routes menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view
-    settings of Containers --> Containers Routes to Grid/Tile/List view
-    * Goes to Compute --> Containers --> Routes and verifies the selected view
+
+    Steps:
+        * Goes to Settings --> My Settings --> Default Views menu and change the default view
+        settings of Containers --> Containers Routes to Grid/Tile/List view
+        * Goes to Compute --> Containers --> Routes and verifies the selected view
 
     """
     # change the default view to the following: Container Routes tiles to Grid View
@@ -144,13 +157,15 @@ def test_containers_routes_view():
 # CMP-10003
 
 
-def test_containers_nodes_views():
-    """
+def test_containers_nodes_default_view():
+    """Containers nodes default view test
 
     This test checks successful change of default views settings for Containers --> Nodes menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view
-    settings of Containers --> Containers Nodes to Grid/Tile/List view
-    * Goes to Compute --> Containers --> Nodes and verifies the selected view
+
+    Steps:
+        * Goes to Settings --> My Settings --> Default Views menu and change the default view
+        settings of Containers --> Containers Nodes to Grid/Tile/List view
+        * Goes to Compute --> Containers --> Nodes and verifies the selected view
 
     """
     # Change the view to Grid View
@@ -186,13 +201,15 @@ def test_containers_nodes_views():
 # CMP-10002
 
 
-def test_containers_containers_view():
-    """
+def test_containers_containers_default_view():
+    """Containers containers default view test
 
     This test checks successful change of default views settings for Containers --> Containers menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view
-    settings of Containers --> Containers Containers to Grid/Tile/List view
-    * Goes to Compute --> Containers --> Containers and verifies the selected view
+
+    Steps:
+        * Goes to Settings --> My Settings --> Default Views menu and change the default view
+        settings of Containers --> Containers Containers to Grid/Tile/List view
+        * Goes to Compute --> Containers --> Containers and verifies the selected view
 
     """
     # Change the view to Grid View
@@ -228,13 +245,15 @@ def test_containers_containers_view():
 # CMP-10000
 
 
-def test_containers_replicators_view():
-    """
+def test_containers_replicators_default_view():
+    """Containers replicators default view test
 
     This test checks successful change of default views settings for Containers --> Replicators menu
-    * Goes to Settings --> My Settings --> Default Views menu and change the default view
-    settings of Containers --> Containers Replicators to Grid/Tile/List view
-    * Goes to Compute --> Containers --> Replicators and verifies the selected view
+
+    Steps:
+        * Goes to Settings --> My Settings --> Default Views menu and change the default view
+        settings of Containers --> Containers Replicators to Grid/Tile/List view
+        * Goes to Compute --> Containers --> Replicators and verifies the selected view
 
     """
     # Change the view to Grid View
