@@ -14,13 +14,6 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope='function')
 
-# CMP-9875
-
-
-def test_containers_route_list_view():
-    sel.force_navigate('containers_routes')
-    bg = ButtonGroup('Containers Routes')
-    is_active = bg.active()
 
 # CMP-9936
 
