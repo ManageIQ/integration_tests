@@ -1,7 +1,6 @@
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, ButtonGroup, form_buttons
-from cfme.configure import settings
 from utils import testgen
 from utils.version import current_version
 
