@@ -282,6 +282,6 @@ MOCK_MODULES = ['pycurl', 'mgmtsystem', 'ovirt-engine-sdk-python',
                 'mgmtsystem.ec2', 'mgmtsystem.openstack', 'mgmtsystem.rhevm',
                 'mgmtsystem.scvmm', 'mgmtsystem.virtualcenter', 'mgmtsystem.kubernetes',
                 'mgmtsystem.openshift', 'mgmtsystem.rest_client', 'mgmtsystem.openstack_infra',
-                'mgmtsystem.hawkular', 'mgmtsystem.azure', 'mgmtsystem.google',
-                'ovirtsdk.xml']
+                'mgmtsystem.hawkular', 'mgmtsystem.azure', 'mgmtsystem.google', 'ovirtsdk',
+                'ovirtsdk.xml', 'ovirtsdk.infrastructure', 'ovirtsdk.infrastructure.errors']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
