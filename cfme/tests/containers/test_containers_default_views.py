@@ -9,7 +9,7 @@ pytestmark = [
     pytest.mark.uncollectif(
         lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(3)]
+    pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope='function')
 
