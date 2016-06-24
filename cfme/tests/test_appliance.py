@@ -4,7 +4,6 @@
 import pytest
 
 from utils import db, version
-from utils.blockers import BZ
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 
@@ -84,7 +83,7 @@ def test_httpd_running(ssh_client):
     assert 'is running' in stdout
 
 
-@pytest.mark.meta(blockers=[BZ(1336742, forced_streams=["5.5"])])
+@pytest.mark.meta(blockers=[1341242])
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_journald_running(ssh_client):
     """Verifies systemd-journald service is running on the appliance"""
