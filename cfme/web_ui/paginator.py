@@ -7,7 +7,8 @@ from functools import partial
 from utils import version
 from cfme.exceptions import PaginatorException
 
-_locator = '(//div[@id="paging_div"]//div[@id="pc_div_1"])'
+_locator = lambda: version.pick({version.LOWEST: '(//div[@id="paging_div"]//div[@id="pc_div_1"])',
+    '5.5': '(//div[@id="paging_div"]//div[@id="rpb_div_1"])'})
 _next = '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
 _previous = '//img[@alt="Previous"]|//li[contains(@class, "prev")]/span'
 _first = '//img[@alt="First"]|//li[contains(@class, "first")]/span'
@@ -23,16 +24,16 @@ _regexp = r"{}(?P<first>\d+)-?(?P<last>\d+)? of (?P<total>\d+)\s*(?:items?)?".fo
 
 def page_controls_exist():
     """ Simple check to see if page controls exist. """
-    return sel.is_displayed(_locator + _page_cell)
+    return sel.is_displayed(_locator() + _page_cell)
 
 
 def _page_nums():
-    return sel.text(_locator + _page_cell)
+    return sel.text(_locator() + _page_cell)
 
 
 def check_all():
     """ Returns the Check All locator."""
-    return sel.element(_locator + _check_all)
+    return sel.element(_locator() + _check_all)
 
 
 def is_dimmed(btn):
@@ -50,25 +51,25 @@ def is_dimmed(btn):
 
 def next():
     """ Returns the Next button locator."""
-    btn = sel.element(_locator + _next)
+    btn = sel.element(_locator() + _next)
     return btn
 
 
 def previous():
     """ Returns the Previous button locator."""
-    btn = sel.element(_locator + _previous)
+    btn = sel.element(_locator() + _previous)
     return btn
 
 
 def first():
     """ Returns the First button locator."""
-    btn = sel.element(_locator + _first)
+    btn = sel.element(_locator() + _first)
     return btn
 
 
 def last():
     """ Returns the Last button locator."""
-    btn = sel.element(_locator + _last)
+    btn = sel.element(_locator() + _last)
     return btn
 
 
@@ -79,7 +80,7 @@ def results_per_page(num):
         num: Number of results per page
     """
     _select = version.pick({
-        version.LOWEST: Select(_locator + _num_results),
+        version.LOWEST: Select(_locator() + _num_results),
         "5.5": AngularSelect('ppsetting')})
     sel.select(_select, sel.ByText(str(num)))
 
@@ -91,7 +92,7 @@ def sort_by(sort):
         sort: Value to sort by (visible text in select box)
     """
     _select = version.pick({
-        version.LOWEST: Select(_locator + _sort_by),
+        version.LOWEST: Select(_locator() + _sort_by),
         "5.5": AngularSelect('sort_choice')})
     sel.select(_select, sel.ByText(str(sort)))
 
