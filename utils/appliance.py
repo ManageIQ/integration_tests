@@ -62,7 +62,7 @@ class IPAppliance(object):
             is used to generate a new session.
     """
 
-    def __init__(self, address=None, browser_steal=False):
+    def __init__(self, address=None, browser_steal=False, container=None):
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -77,6 +77,7 @@ class IPAppliance(object):
                 self.scheme = address.scheme
                 self._url = address.geturl()
         self.browser_steal = browser_steal
+        self.container = container
         self._db_ssh_client = None
 
     def __repr__(self):
@@ -395,6 +396,7 @@ class IPAppliance(object):
             'hostname': self.hostname,
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],
+            'container': self.container,
         }
         ssh_client = ssh.SSHClient(**connect_kwargs)
         # FIXME: propperly store ssh clients we made
@@ -718,9 +720,8 @@ class IPAppliance(object):
 
         Ignores certain files, like redhat.repo.
         """
-        ftp = self.ssh_client.open_sftp()
-        ftp.chdir("/etc/yum.repos.d")
-        return [f for f in ftp.listdir() if f not in {"redhat.repo"} and f.endswith(".repo")]
+        repofiles = self.ssh_client.run_command('ls /etc/yum.repos.d').output.strip().split('\n')
+        return [f for f in repofiles if f not in {"redhat.repo"} and f.endswith(".repo")]
 
     def read_repos(self):
         """Reads repofiles so it gives you mapping of id and url."""
@@ -767,14 +768,13 @@ class IPAppliance(object):
             kwargs["gpgcheck"] = 0
         if "enabled" not in kwargs:
             kwargs["enabled"] = 1
-        sftp = self.ssh_client.open_sftp()
+        filename = "/etc/yum.repos.d/{}.repo".format(repo_id)
         logger.info("Writing a new repofile %s %s", repo_id, repo_url)
-        with sftp.open("/etc/yum.repos.d/{}.repo".format(repo_id), "w") as f:
-            f.write("[update-{}]\n".format(repo_id))
-            f.write("name=update-url-{}\n".format(repo_id))
-            f.write("baseurl={}\n".format(repo_url))
-            for k, v in kwargs.iteritems():
-                f.write("{}={}\n".format(k, v))
+        self.ssh_client.run_command('echo "[update-{}]" > {}'.format(repo_id, filename))
+        self.ssh_client.run_command('echo "name=update-url-{}" >> {}'.format(repo_id, filename))
+        self.ssh_client.run_command('echo "baseurl={}" >> {}'.format(repo_url, filename))
+        for k, v in kwargs.iteritems():
+            self.ssh_client.run_command('echo "{}={}" >> {}'.format(k, v, filename))
         return repo_id
 
     def add_product_repo(self, repo_url, **kwargs):
@@ -1601,10 +1601,10 @@ class Appliance(IPAppliance):
 
     _default_name = 'EVM'
 
-    def __init__(self, provider_name, vm_name, browser_steal=False):
+    def __init__(self, provider_name, vm_name, browser_steal=False, container=None):
         """Initializes a deployed appliance VM
         """
-        super(Appliance, self).__init__(browser_steal=browser_steal)
+        super(Appliance, self).__init__(browser_steal=browser_steal, container=None)
         self.name = Appliance._default_name
 
         self._provider_name = provider_name
@@ -2054,7 +2054,7 @@ def get_or_create_current_appliance():
         base_url = conf.env['base_url']
         if base_url is None or str(base_url.lower()) == 'none':
             raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
-        stack.push(IPAppliance(urlparse(base_url)))
+        stack.push(IPAppliance(urlparse(base_url), container=conf.env.get('container', None)))
     return stack.top
 
 current_appliance = LocalProxy(get_or_create_current_appliance)
