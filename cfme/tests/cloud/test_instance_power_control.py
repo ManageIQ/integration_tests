@@ -126,7 +126,7 @@ def test_quadicon_terminate_cancel(setup_provider_funcscope, provider, testing_i
             num_sec=60,
             delay=15,
             message="instance still exists")
-    soft_assert(testing_instance.find_quadicon().state == 'currentstate-on')
+    soft_assert('currentstate-on' in testing_instance.find_quadicon().state)
 
 
 @pytest.mark.long_running
