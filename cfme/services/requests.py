@@ -10,11 +10,11 @@ REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 
 buttons = Region(
     locators=dict(
-        approve="//*[@title='Approve this Request']/img",
-        deny="//*[@title='Deny this Request']/img",
-        copy="//*[@title='Copy original Request']/img",
-        edit="//*[@title='Edit the original Request']/img",
-        delete="//*[@title='Delete this Request']/img",
+        approve="//*[@title='Approve this Request']",
+        deny="//*[@title='Deny this Request']",
+        copy="//*[@title='Copy original Request']",
+        edit="//*[@title='Edit the original Request']",
+        delete="//*[@title='Delete this Request']",
         submit="//span[@id='buttons_on']/a[@title='Submit']",
         cancel="//a[@title='Cancel']",
     )
@@ -64,7 +64,7 @@ def approve_request(cells, reason, cancel=False):
     Raises:
         RequestException: :py:class:`cfme.exceptions.RequestException` if the request was not found
     """
-    if not go_to_request(cells):
+    if not go_to_request(cells=cells, partial_check=True):
         raise RequestException("Request with identification {} not found!".format(str(cells)))
     approve(reason, cancel)
 
@@ -221,7 +221,7 @@ def find_request(cells):
         return False
 
 
-def go_to_request(cells):
+def go_to_request(cells, partial_check=False):
     """Finds the request and opens the page
 
     See :py:func:`wait_for_request` for futher details.
@@ -234,7 +234,7 @@ def go_to_request(cells):
     for page in paginator.pages():
         try:
             # found the row!
-            row, = fields.request_list.find_rows_by_cells(cells)
+            row, = fields.request_list.find_rows_by_cells(cells, partial_check)
             sel.click(row)
             return True
         except ValueError:
