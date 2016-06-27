@@ -7,22 +7,38 @@ from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb, menu
-from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
 
 pytestmark = [pytest.mark.tier(3)]
 
-try:
-    grid_pages = cfme_data.grid_pages.infra
-except KeyError:
-    grid_pages = []
-grid_uncollectif = pytest.mark.uncollectif(not grid_pages, reason='no grid pages configured')
 
-try:
-    landing_pages = cfme_data.landing_pages.infra
-except KeyError:
-    landing_pages = []
-landing_uncollectif = pytest.mark.uncollectif(not grid_pages, reason='no landing pages configured')
+grid_pages = [
+    'infrastructure_providers',
+    'infrastructure_clusters',
+    'infrastructure_hosts',
+    'infrastructure_virtual_machines',
+    'infrastructure_resource_pools',
+    'infrastructure_datastores'
+]
+
+landing_pages = [
+    'Cloud Intelligence / Reports',
+    'Cloud Intelligence / Timelines',
+    'Cloud Intelligence / RSS',
+    'Services / Catalogs',
+    'Services / Requests',
+    'Infrastructure / Providers',
+    'Infrastructure / Clusters',
+    'Infrastructure / Hosts',
+    'Infrastructure / Resource Pools',
+    'Infrastructure / Datastores',
+    'Infrastructure / Repositories',
+    'Control / Explorer',
+    'Automate / Explorer',
+    'Optimize / Utilization',
+    'Optimize / Planning',
+    'Optimize / Bottlenecks',
+]
 
 
 @pytest.fixture(scope="module")
@@ -106,7 +122,6 @@ def set_template_quad():
     visual.template_quad = True
 
 
-@grid_uncollectif
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
@@ -123,7 +138,6 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
         assert int(paginator.rec_end()) == int(limit), "Gridview Failed for page {}!".format(page)
 
 
-@grid_uncollectif
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
@@ -140,7 +154,6 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
         assert int(paginator.rec_end()) == int(limit), "Tileview Failed for page {}!".format(page)
 
 
-@grid_uncollectif
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 def test_list_page_per_item(request, setup_a_provider, page, set_list):
@@ -172,7 +185,6 @@ def test_report_page_per_item(setup_a_provider, set_report):
         assert int(paginator.rec_end()) == int(limit), "Reportview Failed!"
 
 
-@landing_uncollectif
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
 def test_start_page(request, setup_a_provider, start_page):
