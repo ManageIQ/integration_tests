@@ -63,6 +63,7 @@ class IPAppliance(object):
     """
 
     def __init__(self, address=None, browser_steal=False, container=None):
+        self._mode = "default"
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -195,6 +196,18 @@ class IPAppliance(object):
         self.loosen_pgssl(log_callback=log_callback)
         self.restart_evm_service(log_callback=log_callback)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, mode):
+        if mode == "ssui":
+            self._mode = "ssui"
+        else:
+            self._mode = "default"
+        del self.url
 
     def seal_for_templatizing(self):
         """Prepares the VM to be "generalized" for saving as a template."""

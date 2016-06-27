@@ -899,6 +899,20 @@ class ContextWrapper(dict):
                     repr(item), repr(self.keys())))
 
 
+def ssui_force_navigate(page_name, *args, **kwargs):
+    from cfme import login
+    # Import the top-level nav menus for convenience
+    from cfme.ssui import ssui_links
+
+    # browser fixture should do this, but it's needed for subsequent calls
+    ensure_browser_open()
+
+    if(store.current_appliance.mode == "ssui"):
+        login.ssui_login()
+        wait_for_ajax()
+    ssui_links.go_to(page_name)
+
+
 def force_navigate(page_name, _tries=0, *args, **kwargs):
     """force_navigate(page_name)
 
