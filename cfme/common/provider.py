@@ -7,7 +7,7 @@ from cfme.exceptions import (
 )
 import cfme
 from cfme.web_ui import breadcrumbs, summary_title
-from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form, Input, Radio
+from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, Form, Input, Radio
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons
 from cfme.web_ui.tabstrip import TabStripForm
@@ -71,7 +71,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
 
                 "RSA key pair": [
                     ('ssh_user', Input("ssh_keypair_userid")),
-                    ('ssh_key', Input("ssh_keypair_password")),
+                    ('ssh_key', FileInput("ssh_keypair_password")),
                 ],
 
                 "C & U Database": [
