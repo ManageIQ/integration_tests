@@ -5,32 +5,26 @@ import re
 from cfme.fixtures import pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import ButtonGroup, form_buttons, Quadicon
-from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
-from utils import version
 from cfme.configure import settings  # NOQA
 from cfme.cloud import instance  # NOQA
 
 pytestmark = [pytest.mark.tier(3)]
 
 
-def minimise_dict(item):
-    if isinstance(item, dict):
-        return version.pick({str(k): v for k, v in item.iteritems()})
-    else:
-        return item
+gtl_params = [
+    'Cloud Providers/clouds_providers',
+    'Availability Zones/clouds_availability_zones',
+    'Flavors/clouds_flavors',
+    'Instances/clouds_instances',
+    'Images/clouds_images'
+]
+exp_comp_params = [
+    'Compare/clouds_instances/Configuration/Compare Selected items'
+]
 
-try:
-    gtl_params = cfme_data['defaultview_data']['gtl']['cloud']
-    gtl_params = [minimise_dict(item) for item in gtl_params]
-    exp_comp_params = cfme_data['defaultview_data']['exp_comp']['cloud']
-    exp_comp_params = [minimise_dict(item) for item in exp_comp_params]
-except KeyError:
-    gtl_params = []
-    exp_comp_params = []
-finally:
-    gtl_parametrize = pytest.mark.parametrize('key', gtl_params, scope="module")
-    exp_comp_parametrize = pytest.mark.parametrize('key', exp_comp_params, scope="module")
+gtl_parametrize = pytest.mark.parametrize('key', gtl_params, scope="module")
+exp_comp_parametrize = pytest.mark.parametrize('key', exp_comp_params, scope="module")
 
 
 @pytest.fixture(scope="module")
