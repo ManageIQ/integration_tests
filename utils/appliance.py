@@ -43,7 +43,6 @@ RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false
 if not RUNNING_UNDER_SPROUT:
     from cfme.configure.configuration import set_server_roles, get_server_roles
     from utils.providers import setup_provider
-    from utils.browser import browser_session
     from utils.hosts import setup_providers_hosts_credentials
 
 
@@ -936,17 +935,6 @@ class IPAppliance(object):
         # restart postgres
         status, out = client.run_command("service {scl}-postgresql restart".format(scl=scl))
         return status
-
-    def browser_session(self):
-        """Creates browser session connected to this appliance
-
-        Returns: Browser session connected to this appliance.
-
-        Usage:
-            with appliance.browser_session() as browser:
-                browser.do_stuff(TM)
-        """
-        return browser_session(base_url=self.url)
 
     @logger_wrap("Enable internal DB: {}")
     def enable_internal_db(self, region=0, key_address=None, db_password=None,
