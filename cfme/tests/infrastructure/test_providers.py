@@ -55,6 +55,7 @@ def test_type_required_validation():
         prov.create()
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() > "5.6")
 @pytest.mark.tier(3)
 def test_name_required_validation():
     """Tests to validate the name while adding a provider"""
