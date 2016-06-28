@@ -29,6 +29,7 @@ file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
   virtualenv .cfme_tests
 
   . ./.cfme_tests/bin/activate
+  python scripts/disable-bytecode.py
   PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt
   echo "Run '. ./.cfme_tests/bin/activate' to load the virtualenv"
 
@@ -97,6 +98,7 @@ will not work.
       happen)
     * Run ``PYCURL_SSL_LIBRARY=nss pip install -U -r requirements.txt --no-cache-dir``
 
+* run ``python scripts/disable-bytecode.py`` if you want to avoid having to clean up python bytecode
 * You copy/symlink the required YAML files into ``conf/`` if you have access to team's internal YAML
   repository. Required YAML files are ``env``, ``cfme_data``, ``credentials``. If the file's
   extension is ``.yaml`` it is loaded normally, if its extension is ``.eyaml`` then it is encrypted
