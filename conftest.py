@@ -9,10 +9,6 @@ from pkgutil import iter_modules
 import pytest
 import requests
 
-import cfme.fixtures
-import fixtures
-import markers
-import metaplugins
 from fixtures.artifactor_plugin import art_client, appliance_ip_address
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
@@ -141,5 +137,61 @@ def _pytest_plugins_generator(*extension_pkgs):
         for importer, modname, is_package in iter_modules(path, prefix):
             yield modname
 
-pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers, cfme.fixtures, metaplugins))
+pytest_plugins = (
+
+    'fixtures.pytest_store',
+
+    'fixtures.portset',
+    'fixtures.artifactor_plugin',
+    'fixtures.parallelizer',
+
+    'fixtures.single_appliance_sprout',
+    'fixtures.events',
+    'fixtures.appliance_update',
+    'fixtures.blockers',
+    'fixtures.browser',
+    'fixtures.cfme_data',
+    'fixtures.datafile',
+    'fixtures.db',
+    'fixtures.fixtureconf',
+    'fixtures.log',
+    'fixtures.maximized',
+    'fixtures.merkyl',
+    'fixtures.mgmt_system',
+    'fixtures.nelson',
+    'fixtures.node_annotate',
+    'fixtures.page_screenshots',
+    'fixtures.perf',
+    'fixtures.prov_filter',
+    'fixtures.provider',
+    'fixtures.qa_contact',
+    'fixtures.randomness',
+    'fixtures.rbac',
+    'fixtures.screenshots',
+    'fixtures.snmp',
+    'fixtures.soap_client',
+    'fixtures.soft_assert',
+    'fixtures.ssh_client',
+    'fixtures.templateloader',
+    'fixtures.terminalreporter',
+    'fixtures.ui_coverage',
+    'fixtures.version_file',
+    'fixtures.video',
+    'fixtures.virtual_machine',
+    'fixtures.widgets',
+
+    'markers',
+
+    'cfme.fixtures.pytest_selenium',
+    'cfme.fixtures.configure_auth_mode',
+    'cfme.fixtures.rdb',
+    'cfme.fixtures.rest_api',
+    'cfme.fixtures.service_fixtures',
+    'cfme.fixtures.smtp',
+    'cfme.fixtures.tag',
+    'cfme.fixtures.tracer',
+    'cfme.fixtures.vm_name',
+
+    'metaplugins',
+)
 collect_ignore = ["tests/scenarios"]
