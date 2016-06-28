@@ -1,6 +1,4 @@
-import os
 import signal
-import sys
 from collections import deque
 from urlparse import urlparse
 
@@ -211,12 +209,6 @@ if __name__ == '__main__':
     from fixtures import terminalreporter
     from fixtures.pytest_store import store
     from utils import conf
-
-    # These must be set before remote_initconfig is called and py.test starts
-    # TODO: Not sure this is necessary, since cwd should already be on the path?
-    import_path = os.getcwd()
-    sys.path.insert(0, import_path)
-    os.environ['PYTHONPATH'] = os.path.join(import_path, os.environ.get('PYTHONPATH', ''))
 
     conf.runtime['env']['slaveid'] = args.slaveid
     conf.runtime['env']['base_url'] = args.base_url
