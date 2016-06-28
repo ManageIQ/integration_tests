@@ -5,6 +5,10 @@ Top-level conftest.py does a couple of things:
 2) Load a number of plugins and fixtures automatically
 """
 from pkgutil import iter_modules
+import sys
+import os
+sys.dont_write_bytecode = True  # NOQA
+os.environ['PYTHONDONTWRITEBYTECODE'] = '1'  # NOQA
 
 import pytest
 import requests

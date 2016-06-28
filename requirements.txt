@@ -82,3 +82,6 @@ pyzmq
 
 # werkzeug.local until extraction
 werkzeug
+
+# do editable self-install to avoid need for pythonpath changes
+-e .
