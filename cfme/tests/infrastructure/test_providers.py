@@ -6,10 +6,10 @@ import pytest
 
 import cfme.web_ui.flash as flash
 import utils.error as error
+from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import (discover, Provider, VMwareProvider, RHEVMProvider,
     wait_for_a_provider)
 from utils import testgen, providers, version
-from utils.blockers import GH
 from utils.providers import get_credentials_from_config
 from utils.update import update
 
@@ -51,11 +51,17 @@ def test_add_cancelled_validation():
 def test_type_required_validation():
     """Test to validate type while adding a provider"""
     prov = Provider()
-    with error.expected('Type is required'):
+    err = version.pick(
+        {version.LOWEST: 'Type is required',
+         '5.6': FlashMessageException})
+
+    with error.expected(err):
         prov.create()
 
+    if version.current_version() >= 5.6:
+        assert prov.add_provider_button.is_dimmed
 
-@pytest.mark.uncollectif(lambda: version.current_version() > "5.6")
+
 @pytest.mark.tier(3)
 def test_name_required_validation():
     """Tests to validate the name while adding a provider"""
@@ -64,12 +70,19 @@ def test_name_required_validation():
         hostname=fauxfactory.gen_alphanumeric(5),
         ip_address='10.10.10.10')
 
-    with error.expected("Name can't be blank"):
+    err = version.pick(
+        {version.LOWEST: "Name can't be blank",
+         '5.6': FlashMessageException})
+
+    with error.expected(err):
         prov.create()
+
+    if version.current_version() >= 5.6:
+        assert prov.properties_form.name_text.angular_help_block == "Required"
+        assert prov.add_provider_button.is_dimmed
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[GH('RedHatQE/cfme_tests:3036', upstream_only=False, since='5.6')])
 def test_host_name_required_validation():
     """Test to validate the hostname while adding a provider"""
     prov = VMwareProvider(
@@ -77,8 +90,16 @@ def test_host_name_required_validation():
         hostname=None,
         ip_address='10.10.10.11')
 
-    with error.expected("Host Name can't be blank"):
+    err = version.pick(
+        {version.LOWEST: "Host Name can't be blank",
+         '5.6': FlashMessageException})
+
+    with error.expected(err):
         prov.create()
+
+    if version.current_version() >= 5.6:
+        assert prov.properties_form.hostname_text.angular_help_block == "Required"
+        assert prov.add_provider_button.is_dimmed
 
 
 @pytest.mark.tier(3)
