@@ -46,7 +46,7 @@ Detailed steps (manual environment setup):
   * To activate the virtualenv later: ``source <name>/bin/activate``, but do not do it yet, it still
     needs finishing touches.
 
-* Fork and Clone this repository.d
+* Fork and Clone this repository
 * Get the shared encryption key (``.yaml_key``) for credentials. Ask in CFME QE.
 * Make sure you set the shared secret for the credentials files encryption. There are two ways:
 
