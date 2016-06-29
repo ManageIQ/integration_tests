@@ -14,6 +14,9 @@ from utils.ftp import FTPClient
 from utils.path import log_path
 from cfme.configure import configuration as configure
 from cfme.web_ui import toolbar
+from utils.virtual_machines import deploy_template
+from utils.providers import get_mgmt
+from utils.blockers import BZ
 
 
 def pytest_generate_tests(metafunc):
@@ -59,7 +62,7 @@ def pytest_generate_tests(metafunc):
     This generator provides these fixtures:
 
     - depot_type: ftp, smb or nfs.
-    - depot_machine: hostname or IP of the depot machine from YAML.
+    - depot_machine_folder: sub folder from YAML.
     - depot_credentials
     - depot_ftp: FTP client targeted for the machine.
 
@@ -69,14 +72,15 @@ def pytest_generate_tests(metafunc):
 
     @todo: Think about using SSH for file check? Or FTP is enough?
     """
-    data = conf.cfme_data.get("log_db_depot", {})
+    data = conf.cfme_data.get("log_db_operations", {})
 
     # Fixtures used for parametrisation
     fixtures = [
         "depot_type",
-        "depot_machine",
+        "depot_machine_folder",
         "depot_credentials",
-        "depot_ftp"
+        "depot_ftp",
+
     ]
 
     # Permitted methods
@@ -90,7 +94,6 @@ def pytest_generate_tests(metafunc):
     # FTP credentials for machines
     # Used for checking the uploaded content
     machines_ftp = {}
-
     try:
         for fixture_name in fixtures:
             assert fixture_name in metafunc.fixturenames
@@ -99,6 +102,8 @@ def pytest_generate_tests(metafunc):
 
     parametrized = []
     for machine_id, machine_content in data.iteritems():
+        if machine_id == 'log_db_depot_template':
+            continue
         credentials = machine_content.get("credentials", None)
         if credentials:
             try:
@@ -112,11 +117,11 @@ def pytest_generate_tests(metafunc):
             if depot_type == 'credentials':
                 continue
             assert depot_type in methods, "{} is illegal depot type".format(depot_type)
-            assert "hostname" in depot_type_content,\
-                "cfme_data.yaml/log_db_depot/{}/{} does not contain hostname!"\
-                .format(machine_id, depot_type)
-
-            hostname = depot_type_content["hostname"]
+            # add sub_folder to hostname if it present in yaml
+            if "sub_folder" in depot_type_content:
+                hostname = depot_type_content["sub_folder"]
+            else:
+                hostname = ""
             if depot_type == "ftp" and machine_id not in machines_ftp:
                 machines_ftp[machine_id] = credentials
                 machines_ftp[machine_id]["hostname"] = hostname
@@ -136,7 +141,7 @@ def pytest_generate_tests(metafunc):
                 .format(machine_id)
             ftp_credentials = machines_ftp[machine_id]
 
-        def get_ftp(depot_type=depot_type):
+        def get_ftp(machine_ip, depot_type=depot_type):
             """ Returns FTP client generator targeted to the depot machine.
 
             Usage:
@@ -152,13 +157,13 @@ def pytest_generate_tests(metafunc):
                 # case anonymous connection cfme works only with hardcoded "incoming" directory
                 # incoming folder used for https://bugzilla.redhat.com/show_bug.cgi?id=1307019
                 upload_dir = "incoming"
-                ftp_host_name = hostname
+                ftp_host_name = machine_ip + hostname
             else:
                 ftp_user_name = ftp_credentials["username"]
                 ftp_password = ftp_credentials["password"]
                 # if it's not anonymous using predefined credentials
                 upload_dir = "/"
-                ftp_host_name = ftp_credentials["hostname"]
+                ftp_host_name = machine_ip + ftp_credentials["hostname"]
             return FTPClient(ftp_host_name,
                              ftp_user_name,
                              ftp_password,
@@ -169,8 +174,31 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, fixtures, new_parametrized, scope="function")
 
 
+@pytest.fixture(scope="module")
+def depot_machine_ip(request):
+    """ Deploy vm for depot test
+
+    This fixture uses for deploy vm on provider from yaml and then receive it's ip
+    After test run vm deletes from provider
+    """
+    depot_machine_name = "test_long_log_depot_{}".format(fauxfactory.gen_alphanumeric())
+    data = conf.cfme_data.get("log_db_operations", {})
+    depot_provider_key = data["log_db_depot_template"]["provider_key"]
+    depot_template_name = data["log_db_depot_template"]["template_name"]
+    prov = get_mgmt(depot_provider_key)
+    deploy_template(depot_provider_key,
+                    depot_machine_name,
+                    template_name=depot_template_name)
+
+    def fin():
+        prov.delete_vm(depot_machine_name)
+    request.addfinalizer(fin)
+    return prov.get_ip_address(depot_machine_name)
+
+
 @pytest.fixture(scope="function")
-def depot_configured(request, depot_type, depot_machine, depot_credentials):
+def depot_configured(request, depot_type, depot_machine_folder, depot_credentials,
+                     depot_machine_ip):
     """ Configure selected depot provider
 
     This fixture used the trick that the fixtures are cached for given function.
@@ -179,11 +207,12 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
 
     It also provides a finalizer to disable the depot after test run.
     """
+    machine = depot_machine_ip + depot_machine_folder
     if depot_type not in ["nfs", "anon_ftp"]:
         credentials = configure.ServerLogDepot.Credentials(
             depot_type,
             fauxfactory.gen_alphanumeric(),
-            depot_machine,
+            machine,
             username=depot_credentials["username"],
             password=depot_credentials["password"],
         )
@@ -191,7 +220,7 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
         credentials = configure.ServerLogDepot.Credentials(
             depot_type,
             fauxfactory.gen_alphanumeric(),
-            depot_machine,
+            machine,
         )
     # Fails on upstream - BZ1108087
     credentials.update()
@@ -201,9 +230,11 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.meta(blockers=[1335824], forced_streams=['5.6', 'upstream'])
-def test_collect_log_depot(depot_type, depot_machine, depot_credentials, depot_ftp,
-                           depot_configured, soft_assert, request):
+@pytest.mark.meta(blockers=BZ(1341502, unblock=lambda depot_type: depot_type != "anon_ftp",
+                              forced_streams=["5.6"]))
+def test_collect_log_depot(depot_type, depot_machine_folder, depot_credentials, depot_ftp,
+                           depot_configured, soft_assert, depot_machine_ip,
+                           request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
@@ -211,12 +242,12 @@ def test_collect_log_depot(depot_type, depot_machine, depot_credentials, depot_f
     # Wipe the FTP contents in the end
     @request.addfinalizer
     def _clear_ftp():
-        with depot_ftp() as ftp:
+        with depot_ftp(depot_machine_ip) as ftp:
             ftp.cwd(ftp.upload_dir)
             ftp.recursively_delete()
 
     # Prepare empty workspace
-    with depot_ftp() as ftp:
+    with depot_ftp(depot_machine_ip) as ftp:
         # move to upload folder
         ftp.cwd(ftp.upload_dir)
         # delete all files
@@ -225,7 +256,7 @@ def test_collect_log_depot(depot_type, depot_machine, depot_credentials, depot_f
     # Start the collection
     configure.ServerLogDepot.collect_all()
     # Check it on FTP
-    with depot_ftp() as ftp:
+    with depot_ftp(depot_machine_ip) as ftp:
         # Files must have been created after start
         zip_files = ftp.filesystem.search(re.compile(r"^.*?[.]zip$"), directories=False)
         assert zip_files, "No logs found!"
