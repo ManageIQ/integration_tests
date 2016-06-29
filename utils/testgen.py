@@ -438,9 +438,8 @@ def auth_groups(metafunc, auth_mode):
 
     if auth_mode in cfme_data.get('auth_modes', {}):
         # If auth_modes exists, group_roles is assumed to exist as well
-        gdata = group_data()
-        for group in gdata:
-            argvalues.append([group, sorted(gdata[group])])
+        for group in group_data:
+            argvalues.append([group, sorted(group_data[group])])
             idlist.append(group)
     return argnames, argvalues, idlist
 
