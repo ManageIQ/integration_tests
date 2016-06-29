@@ -43,7 +43,6 @@ properties_form_55 = Form(
             '5.5': AngularSelect("emstype")}),
         ('azure_tenant_id', Input("azure_tenant_id")),
         ('name_text', Input("name")),
-        ('azure_region_select', AngularSelect("provider_region")),
         ('hostname_text', Input("hostname")),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('region_select', {version.LOWEST: Select("select#provider_region"),
@@ -54,9 +53,8 @@ properties_form_55 = Form(
                 "5.5": "api_port",
             }
         )),
-        ('infra_provider', Input("provider_id")),
-        ('subscription', Input("subscription")),
-        ("api_version", AngularSelect("api_version"), {"appeared_in": "5.5"}),
+        ('azure_subscription_id', Input("subscription")),
+        ('api_version', AngularSelect("api_version"), {"appeared_in": "5.5"}),
         ('sec_protocol', AngularSelect("security_protocol"), {"appeared_in": "5.5"}),
         ('infra_provider', {
             version.LOWEST: None,
@@ -70,14 +68,11 @@ properties_form_56 = TabStripForm(
         ('name_text', Input("name")),
         ('region_select', AngularSelect("ems_region")),
         ('google_region_select', AngularSelect("ems_preferred_region")),
-        ("api_version", AngularSelect("ems_api_version")),
+        ('api_version', AngularSelect("ems_api_version")),
         ('infra_provider', AngularSelect("ems_infra_provider_id")),
         ('google_project_text', Input("project")),
         ('azure_tenant_id', Input("azure_tenant_id")),
         ('azure_subscription_id', Input("subscription")),
-        ('amazon_region_select', {version.LOWEST: Select("select#provider_region"),
-            "5.5": AngularSelect("provider_region")}),
-        ("api_version", AngularSelect("api_version")),
     ],
     tab_fields={
         "Default": [
