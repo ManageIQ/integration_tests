@@ -51,7 +51,6 @@ class Project(Taggable):
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
-
         Args:
             *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
         Returns: A string representing the contents of the InfoBlock's value.
@@ -67,7 +66,7 @@ class Project(Taggable):
                         'project': self, 'provider': self.provider})
         else:
             sel.force_navigate(
-                'containers_pod',
+                'containers_project',
                 context={
                     'project': self,
                     'provider': self.provider})

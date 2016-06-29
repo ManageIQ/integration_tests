@@ -12,7 +12,7 @@ nav.add_branch(
             lambda ctx: list_tbl.select_row_by_cells(
                 {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
             {
-                'container_service_edit_tags':
+                'containers_service_edit_tags':
                 lambda _: pol_btn('Edit Tags'),
             }
         ],
@@ -21,7 +21,7 @@ nav.add_branch(
             lambda ctx: list_tbl.click_row_by_cells(
                 {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
             {
-                'container_service_edit_tags_detail':
+                'containers_service_edit_tags_detail':
                 lambda _: pol_btn('Edit Tags'),
             }
         ]
