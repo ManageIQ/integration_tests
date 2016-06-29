@@ -21,11 +21,39 @@ VIEWS = ['Grid View', 'Tile View', 'List View']
 
 
 @pytest.mark.parametrize('view', product(VIEWS))
-def test_containers_route_views(view):
+def test_containers_routes_views(view):
     """
     Click on top right "grid view", "tile view", "list view" icon.
     Verify routes appear in a proper view
     """
     sel.force_navigate('containers_routes')
+    tb.select(''.join(view))
+    assert tb.is_active(''.join(view)), "{}' setting failed".format(''.join(view))
+
+
+# CMP-9866,# CMP-9865
+
+
+@pytest.mark.parametrize('view', product(VIEWS))
+def test_containers_projects_views(view):
+    """
+    Click on top right "grid view", "tile view", "list view" icon.
+    Verify routes appear in a proper view
+    """
+    sel.force_navigate('containers_projects')
+    tb.select(''.join(view))
+    assert tb.is_active(''.join(view)), "{}' setting failed".format(''.join(view))
+
+
+# CMP-9859, # CMP-9858, # CMP-9857
+
+
+@pytest.mark.parametrize('view', product(VIEWS))
+def test_containers_providers_views(view):
+    """
+    Click on top right "grid view", "tile view", "list view" icon.
+    Verify routes appear in a proper view
+    """
+    sel.force_navigate('containers_providers')
     tb.select(''.join(view))
     assert tb.is_active(''.join(view)), "{}' setting failed".format(''.join(view))
