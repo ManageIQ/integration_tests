@@ -11,81 +11,44 @@ from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 
 
-def service_catalogs(request, rest_api):
+def service_catalogs(request, rest_api, num=1):
     name = fauxfactory.gen_alphanumeric()
     scls_data = [{
         "name": "name_{}_{}".format(name, index),
         "description": "description_{}_{}".format(name, index),
         "service_templates": []
-    } for index in range(1, 5)]
+    } for index in range(0, num)]
 
-    scls = rest_api.collections.service_catalogs.action.add(*scls_data)
-    for scl in scls:
-        wait_for(
-            lambda: rest_api.collections.service_catalogs.find_by(name=scl.name),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [s.id for s in scls]
-        delete_scls = [s for s in rest_api.collections.service_catalogs if s.id in ids]
-        if len(delete_scls) != 0:
-            rest_api.collections.service_catalogs.action.delete(*delete_scls)
-
+    scls = _creating_skeleton(request, rest_api, "service_catalogs", scls_data)
+    if num == 1:
+        return scls.pop()
     return scls
 
 
 def categories(request, rest_api, num=1):
-    ctg_data = [{
+    ctgs_data = [{
         'name': 'test_category_{}_{}'.format(fauxfactory.gen_alphanumeric().lower(), _index),
         'description': 'test_category_{}_{}'.format(fauxfactory.gen_alphanumeric().lower(), _index)
     } for _index in range(0, num)]
-    ctgs = rest_api.collections.categories.action.create(*ctg_data)
-    for ctg in ctgs:
-        wait_for(
-            lambda: rest_api.collections.categories.find_by(description=ctg.description),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [ctg.id for ctg in ctgs]
-        delete_ctgs = [ctg for ctg in rest_api.collections.categories
-            if ctg.id in ids]
-        if len(delete_ctgs) != 0:
-            rest_api.collections.categories.action.delete(*delete_ctgs)
-
+    ctgs = _creating_skeleton(request, rest_api, "categories", ctgs_data)
+    if num == 1:
+        return ctgs.pop()
     return ctgs
 
 
 def tags(request, rest_api, categories):
     # Category id, href or name needs to be specified for creating a new tag resource
-    tags = []
+    tags_data = []
     for ctg in categories:
         data = {
             'name': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
             'description': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
             'category': {'href': ctg.href}
         }
-        tags.append(data)
-    tags = rest_api.collections.tags.action.create(*tags)
-    for tag in tags:
-        wait_for(
-            lambda: rest_api.collections.tags.find_by(name=tag.name),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [tag.id for tag in tags]
-        delete_tags = [tag for tag in rest_api.collections.tags if tag.id in ids]
-        if len(delete_tags) != 0:
-            rest_api.collections.tags.action.delete(*delete_tags)
-
+        tags_data.append(data)
+    tags = _creating_skeleton(request, rest_api, "tags", tags_data)
+    if len(categories) == 1:
+        return tags.pop()
     return tags
 
 
@@ -111,60 +74,61 @@ def dialog():
     return service_dialog
 
 
-def services(request, rest_api, a_provider, dialog, service_catalogs):
+def services(request, rest_api, a_provider, dialog, service_catalog, num=1):
     """
-    The attempt to add the service entities via web
+    The attempt to add the services entities via web
     """
     template, host, datastore, iso_file, vlan, catalog_item_type = map(a_provider.data.get(
         "provisioning").get,
         ('template', 'host', 'datastore', 'iso_file', 'vlan', 'catalog_item_type'))
 
     provisioning_data = {
-        'vm_name': 'test_rest_{}'.format(fauxfactory.gen_alphanumeric()),
         'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]}
+        'datastore_name': {'name': [datastore]},
+        'vlan': vlan
     }
 
     if a_provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
-        provisioning_data['vlan'] = vlan
-        catalog_item_type = "RHEV"
     elif a_provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
-    catalog = service_catalogs[0].name
-    item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
-                               description="my catalog", display_in=True,
-                               catalog=catalog,
-                               dialog=dialog.label,
-                               catalog_name=template,
-                               provider=a_provider.name,
-                               prov_data=provisioning_data)
 
-    catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
-    row_description = catalog_item.name
-    cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=2000, delay=20)
-    assert row.last_message.text == 'Request complete'
-    try:
-        services = [_ for _ in rest_api.collections.services]
-        services[0]
-    except IndexError:
-        raise Exception("No options are selected")
+    catalog = service_catalog.name
+    service_names = []
+    for i in range(0, num):
+        provisioning_data['vm_name'] = 'test_rest_{}_{}'.format(fauxfactory.gen_alphanumeric(), i),
+        item_name = fauxfactory.gen_alphanumeric()
+        catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
+                                   description="my catalog", display_in=True,
+                                   catalog=catalog,
+                                   dialog=dialog.label,
+                                   catalog_name=template,
+                                   provider=a_provider.name,
+                                   prov_data=provisioning_data)
+
+        catalog_item.create()
+        service_catalogs = ServiceCatalogs("service_name")
+        service_catalogs.order(catalog_item.catalog, catalog_item)
+        row_description = catalog_item.name
+        cells = {'Description': row_description}
+        row, __ = wait_for(requests.wait_for_request, [cells, True],
+            fail_func=requests.reload, num_sec=2000, delay=20)
+        assert row.last_message.text == 'Request complete'
+        service_names.append(catalog_item.name)
+
+    services = [_ for _ in rest_api.collections.services if _.name in service_names]
 
     @request.addfinalizer
     def _finished():
-        services = [_ for _ in rest_api.collections.services]
-        if len(services) != 0:
-            rest_api.collections.services.action.delete(*services)
+        ids = [e.id for e in services]
+        delete_services = [e for e in rest_api.collections.services if e.id in ids]
+        if len(delete_services) != 0:
+            rest_api.collections.services.action.delete(*delete_services)
 
     return services
 
 
-def rates(request, rest_api):
+def rates(request, rest_api, num=1):
     chargeback = rest_api.collections.chargebacks.get(rate_type='Compute')
     data = [{
         'description': 'test_rate_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
@@ -173,23 +137,11 @@ def rates(request, rest_api):
         'per_time': 'daily',
         'per_unit': 'megahertz',
         'chargeback_rate_id': chargeback.id
-    } for _index in range(0, 3)]
+    } for _index in range(0, num)]
 
-    rates = rest_api.collections.rates.action.create(*data)
-    for rate in data:
-        wait_for(
-            lambda: rest_api.collections.rates.find_by(description=rate.get('description')),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [rate.id for rate in rates]
-        delete_rates = [rate for rate in rest_api.collections.rates if rate.id in ids]
-        if len(delete_rates) != 0:
-            rest_api.collections.rates.action.delete(*delete_rates)
-
+    rates = _creating_skeleton(request, rest_api, "rates", data)
+    if num == 1:
+        return rates.pop()
     return rates
 
 
@@ -210,14 +162,15 @@ def vm(request, a_provider, rest_api):
     return vm_name
 
 
-def service_templates(request, rest_api, dialog):
+def service_templates(request, rest_api, dialog, service_catalog, num=1):
     catalog_items = []
-    for index in range(1, 5):
+    for index in range(0, num):
         catalog_items.append(
             CatalogItem(
                 item_type="Generic",
                 name="item_{}_{}".format(index, fauxfactory.gen_alphanumeric()),
                 description="my catalog", display_in=True,
+                catalog=service_catalog.name,
                 dialog=dialog.label)
         )
 

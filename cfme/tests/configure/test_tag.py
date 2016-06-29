@@ -60,7 +60,7 @@ class TestTagsViaREST(object):
         return _tags(request, rest_api_modscope, categories_mod)
 
     @pytest.fixture(scope="module")
-    def service_catalogs(self, request, rest_api_modscope):
+    def service_catalog(self, request, rest_api_modscope):
         return _service_catalogs(request, rest_api_modscope)
 
     @pytest.fixture(scope="module")
@@ -76,15 +76,15 @@ class TestTagsViaREST(object):
         return _dialog()
 
     @pytest.fixture(scope="module")
-    def services(self, request, rest_api_modscope, a_provider, dialog, service_catalogs):
+    def services(self, request, rest_api_modscope, a_provider, dialog, service_catalog):
         try:
-            return _services(request, rest_api_modscope, a_provider, dialog, service_catalogs)
+            return _services(request, rest_api_modscope, a_provider, dialog, service_catalog)
         except:
             pass
 
     @pytest.fixture(scope="module")
-    def service_templates(self, request, rest_api_modscope, dialog):
-        return _service_templates(request, rest_api_modscope, dialog)
+    def service_templates(self, request, rest_api_modscope, dialog, service_catalo):
+        return _service_templates(request, rest_api_modscope, dialog, service_catalo)
 
     @pytest.fixture(scope="module")
     def vm(self, request, a_provider, rest_api):
@@ -129,13 +129,14 @@ class TestTagsViaREST(object):
     def test_delete_tags(self, rest_api, tags, multiple):
         if multiple:
             rest_api.collections.tags.action.delete(*tags)
-            with error.expected("ActiveRecord::RecordNotFound"):
-                rest_api.collections.tags.action.delete(*tags)
+            for tag in tags:
+                with error.expected("ActiveRecord::RecordNotFound"):
+                    tag.reload()
         else:
             tag = tags[0]
             tag.action.delete()
             with error.expected("ActiveRecord::RecordNotFound"):
-                tag.action.delete()
+                tag.reload()
 
     @pytest.mark.tier(3)
     def test_create_tag_with_wrong_arguments(self, rest_api):
