@@ -10,7 +10,7 @@ content = "import sys\nsys.dont_write_bytecode = True\n"
 if path.exists(target):
     with open(target) as fp:
         if content not in fp.read():
-            print('%r has unexpected content' % target)
+            print('{target!r} has unexpected content'.format(target=target))
             print('please open the file and add the following:')
             print(content)
             print("# end")
