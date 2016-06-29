@@ -27,6 +27,7 @@ from cfme.common.vm import VM
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
 from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
+from utils.browser import browser
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
@@ -79,6 +80,9 @@ class IPAppliance(object):
         self.browser_steal = browser_steal
         self.container = container
         self._db_ssh_client = None
+
+    def browser(self):
+        return browser()
 
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
