@@ -1347,16 +1347,39 @@ class IPAppliance(object):
                  delay=5,
                  num_sec=timeout)
 
+    def get_host_address(self):
+        try:
+            if self.version >= '5.6':
+                server = self.get_yaml_config('vmdb').get('server', None)
+            else:
+                server = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db').get(
+                    'server', None)
+            if server:
+                return server.get('host', None)
+        except Exception as e:
+            logger.exception(e)
+            self.log.error('Exception occured while fetching host address')
+
+    def wait_for_host_address(self):
+        try:
+            wait_for(func=self.get_host_address,
+                     fail_condition=None,
+                     delay=5,
+                     num_sec=120)
+            return self.get_host_address()
+        except Exception as e:
+            logger.exception(e)
+            self.log.error('waiting for host address from yaml_config timedout')
+
     @cached_property
     def db_address(self):
         # pulls the db address from the appliance by default, falling back to the appliance
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
         try:
-            if self.version >= '5.6':
-                db = self.get_yaml_config("vmdb")['server']['host']
-            else:
-                db = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db')['server']['host']
+            db = self.wait_for_host_address()
+            if db is None:
+                return self.address
             db = db.strip()
             ip_addr = self.ssh_client.run_command('ip address show')
             if db in ip_addr.output or db.startswith('127') or 'localhost' in db:
