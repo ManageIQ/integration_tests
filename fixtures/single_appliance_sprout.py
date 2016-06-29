@@ -35,8 +35,6 @@ def reset_timer(sprout, pool, timeout):
     timer.start()
 
 
-@pytest.mark.tryfirst
-@pytest.mark.hookwrapper
 def pytest_configure(config):
     global appliance
     global pool_id
@@ -89,7 +87,6 @@ def pytest_configure(config):
         provider = request["appliances"][0]["provider"]
         terminal.write("appliance_provider=\"{}\";\n".format(provider))
         conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider
-    yield
 
 
 @pytest.mark.hookwrapper

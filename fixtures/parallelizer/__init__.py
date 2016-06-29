@@ -105,10 +105,8 @@ def pytest_addhooks(pluginmanager):
     pluginmanager.addhooks(hooks)
 
 
-@pytest.mark.hookwrapper
 def pytest_configure(config):
     # configures the parallel session, then fires pytest_parallel_configured
-    yield
     if (config.option.appliances or (config.option.use_sprout and
             config.option.sprout_appliances > 1)):
         session = ParallelSession(config)
