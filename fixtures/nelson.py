@@ -5,9 +5,9 @@ from textwrap import dedent
 from types import FunctionType
 
 from six import iteritems
-from sphinxcontrib.napoleon import _skip_member, Config
-from sphinxcontrib.napoleon import docstring
-from sphinxcontrib.napoleon.docstring import NumpyDocstring
+from sphinx.ext.napoleon import _skip_member, Config
+from sphinx.ext.napoleon import docstring
+from sphinx.ext.napoleon.docstring import NumpyDocstring
 import sphinx
 import yaml
 
