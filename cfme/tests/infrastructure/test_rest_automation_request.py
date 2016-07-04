@@ -11,8 +11,8 @@ def a_provider():
 
 
 @pytest.fixture(scope="module")
-def vm(request, a_provider, rest_api):
-    return _vm(request, a_provider, rest_api)
+def vm(request, a_provider, rest_api_modscope):
+    return _vm(request, a_provider, rest_api_modscope)
 
 
 @pytest.fixture(scope="module")

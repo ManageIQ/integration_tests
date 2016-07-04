@@ -103,13 +103,12 @@ def pytest_addoption(parser):
 
 def pytest_addhooks(pluginmanager):
     import hooks
-    pluginmanager.addhooks(hooks)
+    pluginmanager.add_hookspecs(hooks)
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.trylast
 def pytest_configure(config):
     # configures the parallel session, then fires pytest_parallel_configured
-    yield
     if (config.option.appliances or (config.option.use_sprout and
             config.option.sprout_appliances > 1)):
         session = ParallelSession(config)
