@@ -1574,7 +1574,7 @@ class IPAppliance(object):
             else:
                 raise Exception('Only [vmdb] config is allowed from 5.6+')
         else:
-            return db.set_yaml_config(config_name, data_dict, self.address)
+            return db.set_yaml_config(config_name, data_dict)
 
     def get_yaml_file(self, yaml_path):
         """Get (and parse) a yaml file from the appliance, returning a python data structure"""
