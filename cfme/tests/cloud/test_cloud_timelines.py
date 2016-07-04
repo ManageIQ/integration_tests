@@ -54,7 +54,7 @@ def delete_instances_fin(request):
 
 
 @pytest.fixture(scope="module")
-def test_instance(setup_provider, request, delete_instances_fin, provider, vm_name):
+def test_instance(setup_provider_modscope, request, delete_instances_fin, provider, vm_name):
     """ Fixture to provision instance on the provider
     """
     instance = Instance.factory(vm_name, provider)
