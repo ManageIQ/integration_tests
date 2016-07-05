@@ -1,8 +1,11 @@
+# added new list_tbl definition
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb
+from cfme.web_ui import toolbar as tb, CheckboxTable
 from cfme.web_ui.menu import nav
-from . import list_tbl, pol_btn, details_page
+from . import pol_btn, details_page
+
+list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
 nav.add_branch(
     'containers_services',
@@ -12,7 +15,7 @@ nav.add_branch(
             lambda ctx: list_tbl.select_row_by_cells(
                 {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
             {
-                'container_service_edit_tags':
+                'containers_service_edit_tags':
                 lambda _: pol_btn('Edit Tags'),
             }
         ],
@@ -21,7 +24,7 @@ nav.add_branch(
             lambda ctx: list_tbl.click_row_by_cells(
                 {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
             {
-                'container_service_edit_tags_detail':
+                'containers_service_edit_tags_detail':
                 lambda _: pol_btn('Edit Tags'),
             }
         ]
