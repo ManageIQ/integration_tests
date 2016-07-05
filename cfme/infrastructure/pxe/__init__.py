@@ -11,7 +11,7 @@
 # ** multiple sets of nav trees, there for moving this to a new package made a whole lot of sense.
 # ** This way we can keep one UIs locators separate from another. DB / REST endpoints also then
 # ** remain clean.
-
+import sentaku
 from functools import partial
 
 from cfme.exceptions import CandidateNotFound
@@ -128,14 +128,7 @@ nav.add_branch('infrastructure_pxe',
                  lambda ctx: iso_tree(ctx.pxe_iso_datastore.provider)}]})
 
 
-# ** Here are the other endpoint specific classes that we mixin to the main PXEServer
-# ** class.
-from ui import PXEServerUI
-from db import PXEServerDB
-import sentaku
-
-
-class PXEServer(Updateable, Pretty, PXEServerUI, PXEServerDB, sentaku.Element):
+class PXEServer(Updateable, Pretty, sentaku.Element):
     """Model of a PXE Server object in CFME
 
     Args:
@@ -177,6 +170,8 @@ class PXEServer(Updateable, Pretty, PXEServerUI, PXEServerDB, sentaku.Element):
         self.windows_dir = windows_dir
         self.customize_dir = customize_dir
         self.menu_filename = menu_filename
+
+    exists = sentaku.ContextualMethod()
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -640,3 +635,7 @@ def remove_all_pxe_servers():
         sel.click(pg.check_all())
         cfg_btn('Remove PXE Servers from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=False)
+
+
+from . import db, ui  # NOQA last for import cycles
+sentaku.register_external_implementations_in(db, ui)

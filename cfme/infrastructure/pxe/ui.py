@@ -1,4 +1,4 @@
-from base import PXEBase
+from . import PXEServer
 from utils.appliance import ViaUI, current_appliance
 
 from cfme.exceptions import CandidateNotFound
@@ -32,32 +32,23 @@ current_appliance.browser.menu.add_branch('infrastructure_pxe',
                 })
 
 
-class PXEServerUI(PXEBase):
-    # ** We inherit the PXEBase object here to gain access to the exists attribute. There was no
-    # ** other easy way with the current Sentaku implementation without creating a circular
-    # **  dependency. At least, there was no way which made sense to me.
+@PXEServer.exists.external_implementation_for(ViaUI)
+def exists_ux(self):
+    """
+    Checks if the PXE server already exists
+    """
+    # ** Here we are talking to the Sentaku system and asking for the implementation object,
+    # ** or the endpoint object. This object is what enables us to "talk" to the endpoint, so
+    # ** in this example it provides force_navigate, a browser, and other UI related things.
+    # ** Over in the db module it will provide a db session.
 
-    # ** Notice that we only have one method in here right now, that's the exists method. It's
-    # ** name is 'existse' on purpose to show that when we use it, the methods ACTUAL name
-    # ** doesn't matter. That it is the "exists" in the @PXEBase.exists...... line that denotes
-    # ** how it will be called.
-    @PXEBase.exists.implemented_for(ViaUI)
-    def existse(self):
-        """
-        Checks if the PXE server already exists
-        """
-        # ** Here we are talking to the Sentaku system and asking for the implementation object,
-        # ** or the endpoint object. This object is what enables us to "talk" to the endpoint, so
-        # ** in this example it provides force_navigate, a browser, and other UI related things.
-        # ** Over in the db module it will provide a db session.
-
-        # ** Notice also how the rest of the UI stuff, like pxe_tree remains unchanged. This is our
-        # ** desire, to leave as much of the objects code intact as possible.
-        self.impl.force_navigate('infrastructure_pxe_servers')
-        try:
-            pxe_tree(self.name)
-            return True
-        except CandidateNotFound:
-            return False
-        except NoSuchElementException:
-            return False
+    # ** Notice also how the rest of the UI stuff, like pxe_tree remains unchanged. This is our
+    # ** desire, to leave as much of the objects code intact as possible.
+    self.impl.force_navigate('infrastructure_pxe_servers')
+    try:
+        pxe_tree(self.name)
+        return True
+    except CandidateNotFound:
+        return False
+    except NoSuchElementException:
+        return False
