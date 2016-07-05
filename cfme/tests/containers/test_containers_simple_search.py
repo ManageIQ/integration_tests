@@ -11,7 +11,7 @@ pytestmark = [
     pytest.mark.uncollectif(
         lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
-    pytest.mark.tier(1)]
+    pytest.mark.tier(3)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope='function')
 
@@ -35,8 +35,8 @@ def test_projects_search(projects_search_strings):
                * Inserts: Irregular symbol, '*' character, full search string, partial search string
                * Verify proper results
            """
+    sel.force_navigate('containers_projects')
     if ''.join(projects_search_strings) == '*':
-        sel.force_navigate('containers_projects')
         full_name_to_search = '*'
         names_list = []
         located_names = []
@@ -49,7 +49,6 @@ def test_projects_search(projects_search_strings):
         for name in located_names:
             assert name in names_list
     elif ''.join(projects_search_strings) == 'infra':
-        sel.force_navigate('containers_projects')
         full_name_to_search = 'infra'
         search.normal_search(full_name_to_search)
         projects_table = Table(table_el)
@@ -57,12 +56,10 @@ def test_projects_search(projects_search_strings):
             name = row.name.text
             assert full_name_to_search in name
     elif ''.join(projects_search_strings) == '$':
-        sel.force_navigate('containers_projects')
         full_name_to_search = '$'
         search.normal_search(full_name_to_search)
         assert sel.is_displayed_text("No Records Found.")
     else:
-        sel.force_navigate('containers_projects')
         full_name_to_search = ''.join(projects_search_strings)
         search.normal_search(full_name_to_search)
         projects_table = Table(table_el)
@@ -84,8 +81,8 @@ def test_routes_search(routes_search_strings):
                * Inserts: Irregular symbol, '*' character, full search string, partial search string
                * Verify proper results
            """
+    sel.force_navigate('containers_routes')
     if ''.join(routes_search_strings) == '*':
-        sel.force_navigate('containers_routes')
         full_name_to_search = '*'
         names_list = []
         located_names = []
@@ -98,7 +95,6 @@ def test_routes_search(routes_search_strings):
         for name in located_names:
             assert name in names_list
     elif ''.join(routes_search_strings) == 'front':
-        sel.force_navigate('containers_routes')
         full_name_to_search = 'front'
         search.normal_search(full_name_to_search)
         projects_table = Table(table_el)
@@ -106,12 +102,10 @@ def test_routes_search(routes_search_strings):
             name = row.name.text
             assert full_name_to_search in name
     elif ''.join(routes_search_strings) == '$':
-        sel.force_navigate('containers_routes')
         full_name_to_search = '$'
         search.normal_search(full_name_to_search)
         assert sel.is_displayed_text("No Records Found.")
     else:
-        sel.force_navigate('containers_routes')
         full_name_to_search = ''.join(routes_search_strings)
         search.normal_search(full_name_to_search)
         projects_table = Table(table_el)
