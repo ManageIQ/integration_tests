@@ -272,6 +272,14 @@ def main():
     stream = args.stream or cfme_data['template_upload']['stream']
     provider_type = args.provider_type or cfme_data['template_upload']['provider_type']
 
+    if args.provider_data is not None:
+        local_datafile = open(args.provider_data, 'r').read()
+        create_datafile = open(path.conf_path.strpath + '/provider_data.yaml', 'w')
+        create_datafile.write(local_datafile)
+        create_datafile.close()
+        provider_data = utils.conf.provider_data
+        stream = provider_data['stream']
+
     if stream:
         urls = {}
         image_url = cfme_data['basic_info']['cfme_images_url']
@@ -320,11 +328,6 @@ def main():
                 continue
         kwargs['image_url'] = dir_files[module]
         if args.provider_data is not None:
-            local_datafile = open(args.provider_data, 'r').read()
-            create_datafile = open(path.conf_path.strpath + '/provider_data.yaml', 'w')
-            create_datafile.write(local_datafile)
-            create_datafile.close()
-            provider_data = utils.conf.provider_data
             kwargs['provider_data'] = provider_data
         else:
             kwargs['provider_data'] = None
