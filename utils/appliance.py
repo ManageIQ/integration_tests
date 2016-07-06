@@ -509,11 +509,15 @@ class IPAppliance(object):
             return
 
         # (local_path, remote_path, md5/None) trio
+        autofocus_patch = pick({
+            '5.6': 'autofocus.js.diff',
+            LATEST: 'autofocus_upstream.js.diff'
+        })
         patch_args = (
             (str(patches_path.join('miq_application.js.diff')),
              '/var/www/miq/vmdb/app/assets/javascripts/miq_application.js',
              None),
-            (str(patches_path.join('autofocus.js.diff')),
+            (str(patches_path.join(autofocus_patch)),
              '/var/www/miq/vmdb/app/assets/javascripts/directives/autofocus.js',
              'f5ce9fa129d1662e6fe6f7c213458227'),
         )
