@@ -17,6 +17,7 @@ from xml.sax.saxutils import quoteattr, unescape
 from collections import Iterable, namedtuple
 from contextlib import contextmanager
 from textwrap import dedent
+import warnings
 import json
 import re
 from selenium.common.exceptions import \
@@ -70,6 +71,15 @@ def __repr__(self):
 
 if WebElement.__repr__ is not __repr__:
     WebElement.__repr__ = __repr__
+
+
+def force_navigate(*k, **kw):
+    warnings.warn(
+        "force_navigate will be removed",
+        category=DeprecationWarning,
+        stacklevel=2,
+    )
+    return store.current_appliance.browser.force_navigate(*k, **kw)
 
 
 class ByValue(Pretty):
