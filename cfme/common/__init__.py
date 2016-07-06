@@ -6,6 +6,7 @@ from cached_property import cached_property
 from cfme.configure.configuration import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTree, flash, form_buttons, mixins, toolbar
+from cfme.web_ui.topology import Topology
 from sqlalchemy.orm import aliased
 from utils import attributize_string, version
 from utils.db import cfmedb
@@ -435,3 +436,41 @@ class Validatable(SummaryMixin):
                             ("'single_value' of '{}' did not match'"
                              .format(ref_tag))
                 assert found, ("Tag '{}' not found in database".format(ref_tag))
+
+
+class TopologyMixin(object):
+    """Use this mixin to have simple access to the Topology page.
+    To use this `TopologyMixin` you have to implement `load_topology_page`
+    function, which should take to topology page
+
+    Sample usage:
+
+    .. code-block:: python
+
+        # You can retrieve the elements details as it is in the UI
+        topology.elements  # => 'hostname'
+        # You can do actions on topology page
+        topology.display_names.enable()
+        topology.display_names.disable()
+        topology.display_names.is_enabled
+        # You can do actions on topology search box
+        topology.search_box.text(text='hello')
+        topology.search_box.text(text='hello', submit=False)
+        topology.search_box.submit()
+        topology.search_box.clear()
+        # You can get legends and can perform actions
+        topology.legends
+        topology.pod.name
+        topology.pod.is_active
+        topology.pod.set_active()
+        # You can get elements, element parents and children
+        topology.elements
+        topology.elements[0].parents
+        topology.elements[0].children
+        topology.elements[0].double_click()
+        topology.elements[0].is_displayed()
+
+    """
+    @cached_property
+    def topology(self):
+        return Topology(self)

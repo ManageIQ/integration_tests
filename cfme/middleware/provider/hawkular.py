@@ -1,17 +1,16 @@
 import re
-
-from utils.varmeth import variable
-
+from cfme.common import TopologyMixin
 from cfme.common.provider import BaseProvider
+from cfme.web_ui import form_buttons
+from mgmtsystem.hawkular import Hawkular
+from utils.db import cfmedb
+from utils.varmeth import variable
 from . import properties_form, _get_providers_page, _db_select_query
 from .. import download, MiddlewareBase
-from mgmtsystem.hawkular import Hawkular
-from cfme.web_ui import form_buttons
-from utils.db import cfmedb
 
 
 @BaseProvider.add_type_map
-class HawkularProvider(MiddlewareBase, BaseProvider):
+class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
     """
     HawkularProvider class holds provider data. Used to perform actions on hawkular provider page
 
@@ -124,6 +123,10 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
             tmp_provider = _db_select_query(
                 name=self.name, type='ManageIQ::Providers::Hawkular::MiddlewareManager').first()
             self.db_id = tmp_provider.id
+
+    def load_topology_page(self):
+        self.summary.reload()
+        self.summary.overview.topology.click()
 
     @staticmethod
     def configloader(prov_config, prov_key):
