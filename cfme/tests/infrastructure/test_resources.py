@@ -23,7 +23,7 @@ def test_number_of_cpu(provider, soft_assert):
         "Aggregate Node CPU is 0")
     soft_assert(int(
         provider.get_detail("Properties", "Aggregate Node CPUs Cores")) < 1,
-                "Aggregate Node CPU Cores is 0")
+        "Aggregate Node CPU Cores is 0")
 
 
 def test_node_memory(provider, soft_assert):
