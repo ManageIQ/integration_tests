@@ -467,7 +467,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
 
     def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
         """Set ownership of the VM/Instance or Template/Image"""
-        sel.click(self.find_quadicon(False, False, False))
+        sel.click(self.find_quadicon(False, False, False, use_search=False))
         cfg_btn('Set Ownership')
         if click_reset:
             action = form_buttons.reset
