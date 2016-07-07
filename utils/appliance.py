@@ -239,10 +239,18 @@ class IPAppliance(object):
                 (self.is_downstream and self.version >= '5.6')
                 or ((not self.is_downstream)
                     and self.build_datetime >= datetime(year=2015, month=10, day=5))):
-            query = self._query_post_endpoints()
+            query = self._query_post_endpoints
         else:
-            query = self._query_pre_endpoints()
-        for ipaddress, hostname in query:
+            query = self._query_pre_endpoints
+
+        # Fetch all providers at once, return empty list otherwise
+        try:
+            query_res = list(query())
+        except Exception as ex:
+            self.log.warning("Unable to query DB for managed providers: %s", str(ex))
+            return []
+
+        for ipaddress, hostname in query_res:
             if ipaddress is not None:
                 ip_addresses.add(ipaddress)
             elif hostname is not None:
