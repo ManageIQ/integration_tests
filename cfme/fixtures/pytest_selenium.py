@@ -324,6 +324,7 @@ def wait_for_ajax():
         anything_in_flight |= running["prototype"] > 0
         anything_in_flight |= running["spinner"]
         anything_in_flight |= running["document"] != "complete"
+        anything_in_flight |= running['progressbar']
         anything_in_flight |= running["autofocus"] > 0
         anything_in_flight |= running["debounce"] > 0
         anything_in_flight |= running["miqQE"] > 0

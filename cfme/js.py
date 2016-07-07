@@ -13,6 +13,13 @@ function xpath(root, xpath) {
 in_flight = """
 function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
 
+function progressbarFinished() {
+    el = document.getElementById("ngProgress");
+    if (el === null)
+        return true;
+    return el.style.width == "0%" && el.style.opacity === "1";
+}
+
 return {
     jquery: jQuery.active,
     prototype: (typeof Ajax === "undefined") ? 0 : Ajax.activeRequestCount,
@@ -20,6 +27,7 @@ return {
     spinner: (!isHidden(document.getElementById("spinner_div")))
         && isHidden(document.getElementById("lightbox_div")),
     document: document.readyState,
+    progressbar: !progressbarFinished(),
     autofocus: (typeof checkMiqQE === "undefined") ? 0 : checkMiqQE('autofocus'),
     debounce: (typeof checkMiqQE === "undefined") ? 0 : checkMiqQE('debounce'),
     miqQE: (typeof checkAllMiqQE === "undefined") ? 0 : checkAllMiqQE()
