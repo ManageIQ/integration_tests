@@ -934,7 +934,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     # check for MiqQE javascript patch in 5.6 on first try and patch the appliance if necessary
     # raise an exception on subsequent unsuccessful attempts to access the MiqQE javascript funcs
-    if store.current_appliance.version >= "5.6":
+    if store.current_appliance.version >= "5.5.5.0":
         def _patch_recycle_retry():
             store.current_appliance.patch_with_miqqe()
             browser().quit()
@@ -942,7 +942,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         try:
             # latest js diff version always has to be placed here to keep this check current
             ver = execute_script("return MiqQE_version")
-            if ver < 1:
+            if ver < 2:
                 logger.info("Old patch present on appliance; patching appliance")
                 _patch_recycle_retry()
         except WebDriverException as ex:

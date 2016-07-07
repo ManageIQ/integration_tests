@@ -504,12 +504,12 @@ class IPAppliance(object):
 
     @logger_wrap("Patch appliance with MiqQE js: {}")
     def patch_with_miqqe(self, log_callback=None):
-        if self.version < "5.6":
+        if self.version < "5.5.5.0":
             return
 
         # (local_path, remote_path, md5/None) trio
         autofocus_patch = pick({
-            '5.6': 'autofocus.js.diff',
+            '5.5': 'autofocus.js.diff',
             LATEST: 'autofocus_upstream.js.diff'
         })
         patch_args = (
@@ -518,7 +518,7 @@ class IPAppliance(object):
              None),
             (str(patches_path.join(autofocus_patch)),
              '/var/www/miq/vmdb/app/assets/javascripts/directives/autofocus.js',
-             'f5ce9fa129d1662e6fe6f7c213458227'),
+             None),
         )
 
         patched_anything = False
