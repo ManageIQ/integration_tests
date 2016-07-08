@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import inspect
-from smartloc import Locator
 from threading import Lock
 
+from .browser import Browser
 from .navigator import Navigator
 
 
@@ -24,12 +24,24 @@ class LocatorDescriptor(object):
 
     def __get__(self, obj, type=None):
         if obj is None:  # class access
-            return self.klass
+            return self
 
         # Cache on LocatorDescriptor
         if self not in obj._widget_cache:
             obj._widget_cache[self] = self.klass(obj, *self.args, **self.kwargs)
         return obj._widget_cache[self]
+
+    def __repr__(self):
+        if self.args:
+            args = ', ' + ', '.join(repr(arg) for arg in self.args)
+        else:
+            args = ''
+        if self.kwargs:
+            kwargs = ', ' + ', '.join(
+                '{}={}'.format(k, repr(v)) for k, v in self.kwargs.iteritems())
+        else:
+            kwargs = ''
+        return '{}({}{}{})'.format(type(self).__name__, self.klass.__name__, args, kwargs)
 
 
 class Widget(object):
@@ -40,7 +52,7 @@ class Widget(object):
         actual widget, it will return LocatorDescriptor instead which will resolve automatically
         inside of View instance.
         """
-        if args and isinstance(args[0], View):
+        if args and isinstance(args[0], (View, Navigator)):
             return super(Widget, cls).__new__(cls, *args, **kwargs)
         else:
             return LocatorDescriptor(cls, *args, **kwargs)
@@ -48,11 +60,27 @@ class Widget(object):
     def __init__(self, parent):
         self.parent = parent
 
+    @property
+    def browser(self):
+        if isinstance(self.parent, (View, Navigator)):
+            return self.parent.browser
+        elif isinstance(self.parent, Browser):
+            return self.parent
+        else:
+            raise ValueError('Unknown value {} specified as parent.'.format(repr(self.parent)))
+
+    @property
+    def parent_view(self):
+        if isinstance(self.parent, View):
+            return self.parent
+        else:
+            return None
+
     def __locator__(self):
         raise NotImplementedError('You have to implement __locator__ or __element__')
 
     def __element__(self):
-        return Locator(self).find_element(self.parent.browser)
+        return self.browser.element(self, parent=self.parent_view)
 
 
 class ViewMetaclass(type):
