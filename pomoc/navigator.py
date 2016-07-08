@@ -19,7 +19,7 @@ class Navigator(object):
             cls.view_classes = {}
         if view.__name__ in cls.view_classes:
             raise NameError('{} is already registered View name'.format(view.__name__))
-        cls.view_classes.add(view)
+        cls.view_classes[view.__name__] = view
         return view
 
     @staticmethod
@@ -36,3 +36,17 @@ class Navigator(object):
         self.entry_view = entry_view
         self.state = NavigatorState()
         self.browser = Browser(self.root_object.selenium)
+        self._navigation = None
+
+    @property
+    def navigation(self):
+        if self._navigation is None:
+            self._rebuild_navigation()
+        return self._navigation
+
+    @navigation.deleter
+    def navigation(self):
+        self._navigation = None
+
+    def navigate_to(self, *o, **additional_context):
+        pass
