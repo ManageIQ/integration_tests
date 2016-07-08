@@ -3,7 +3,6 @@ import inspect
 from smartloc import Locator
 from threading import Lock
 
-from .browser import Browser
 from .navigator import Navigator
 
 
@@ -65,8 +64,6 @@ class Widget(object):
     def browser(self):
         if isinstance(self.parent, (View, Navigator)):
             return self.parent.browser
-        elif isinstance(self.parent, Browser):
-            return self.parent
         else:
             raise ValueError('Unknown value {} specified as parent.'.format(repr(self.parent)))
 
@@ -82,7 +79,7 @@ class Widget(object):
 
     def __element__(self):
         """Default functionality, resolves :py:meth:`__locator__`."""
-        return self.browser.element(self, parent=self.parent_view)
+        return self.browser.element(self)
 
 
 def _gen_locator_meth(loc):
@@ -141,7 +138,20 @@ class View(object):
 
     @property
     def browser(self):
-        return self.navigator.browser
+        return self.navigator.browser.in_parent_context(self.element_parents)
+
+    @property
+    def resolvable(self):
+        return hasattr(self, '__locator__') or hasattr(self, '__element__')
+
+    @property
+    def element_parents(self):
+        """Returns a chain of resolvable views used to query elements."""
+        this = [self] if self.resolvable else []
+        if isinstance(self.parent, View):
+            return self.parent.element_parents + this
+        else:
+            return this
 
     def __iter__(self):
         for widget_attr in self.widget_names:

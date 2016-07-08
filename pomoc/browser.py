@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import inspect
+from functools import wraps
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
@@ -13,10 +15,39 @@ from time import sleep
 from .beacon import before_element_query, element_found, element_not_found
 
 
+class BrowserParentContextProxy(object):
+    def __init__(self, browser, parents):
+        self._browser = browser
+        self._parents = parents
+
+    def __getattr__(self, attr):
+        value = getattr(self._browser, attr)
+        try:
+            argspec = inspect.getargspec(value)
+            args = argspec.args
+            if 'parents' not in args:
+                return value
+
+            # Otherwise wrap it
+            @wraps(value)
+            def wrapped(*args, **kwargs):
+                # Inject parents into the arguments
+                if 'parents' not in kwargs:
+                    kwargs['parents'] = self._parents
+                return value(*args, **kwargs)
+
+            return wrapped
+        except TypeError:
+            return value
+
+
 class Browser(object):
     """Equivalent of pytest_selenium - browser functions"""
     def __init__(self, selenium_browser):
         self.selenium = selenium_browser
+
+    def in_parent_context(self, parents):
+        return BrowserParentContextProxy(self, parents)
 
     @staticmethod
     def _process_locator(self, locator):

@@ -17,9 +17,16 @@ class Navigator(object):
             cls.view_classes
         except AttributeError:
             cls.view_classes = {}
+
+        try:
+            cls.view_classes_changes
+        except AttributeError:
+            cls.view_classes_changes = 0
+
         if view.__name__ in cls.view_classes:
             raise NameError('{} is already registered View name'.format(view.__name__))
         cls.view_classes[view.__name__] = view
+        cls.view_classes_changes += 1
         return view
 
     @staticmethod
@@ -37,16 +44,23 @@ class Navigator(object):
         self.state = NavigatorState()
         self.browser = Browser(self.root_object.selenium)
         self._navigation = None
+        self._navigation_change_id = None
 
     @property
     def navigation(self):
-        if self._navigation is None:
+        if (
+                self._navigation is None or
+                self._navigation_change_id is None or
+                self._navigation_change_id < self.view_classes_changes):
             self._rebuild_navigation()
         return self._navigation
 
     @navigation.deleter
     def navigation(self):
         self._navigation = None
+
+    def _rebuild_navigation(self):
+        pass
 
     def navigate_to(self, *o, **additional_context):
         pass
