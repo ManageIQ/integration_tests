@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import inspect
+from smartloc import Locator
 from threading import Lock
 
 from .browser import Browser
@@ -48,9 +49,9 @@ class Widget(object):
     def __new__(cls, *args, **kwargs):
         """Implement some typing saving magic.
 
-        Unless you are passing a View as a first argument which implies the instantiation of an
-        actual widget, it will return LocatorDescriptor instead which will resolve automatically
-        inside of View instance.
+        Unless you are passing a View or Navigator as a first argument which implies the
+        instantiation of an actual widget, it will return LocatorDescriptor instead which will
+        resolve automatically inside of View instance.
         """
         if args and isinstance(args[0], (View, Navigator)):
             return super(Widget, cls).__new__(cls, *args, **kwargs)
@@ -80,17 +81,28 @@ class Widget(object):
         raise NotImplementedError('You have to implement __locator__ or __element__')
 
     def __element__(self):
+        """Default functionality, resolves :py:meth:`__locator__`."""
         return self.browser.element(self, parent=self.parent_view)
+
+
+def _gen_locator_meth(loc):
+    def __locator__(self):
+        return loc
+    return __locator__
 
 
 class ViewMetaclass(type):
     def __new__(cls, name, bases, attrs):
         new_attrs = {}
         for key, value in attrs.iteritems():
-            if inspect.isclass(value) and getattr(value, '__metaclass__', None) == cls:
+            if inspect.isclass(value) and getattr(value, '__metaclass__', None) is cls:
                 new_attrs[key] = LocatorDescriptor(value)
             else:
                 new_attrs[key] = value
+        if 'ROOT' in new_attrs:
+            # For handling the root locator of the View
+            rl = Locator(new_attrs['ROOT'])
+            new_attrs['__locator__'] = _gen_locator_meth(rl)
         return super(ViewMetaclass, cls).__new__(cls, name, bases, new_attrs)
 
 
@@ -102,6 +114,9 @@ class View(object):
         self._widget_cache = {}
 
     def flush_widget_cache(self):
+        # Recursively ...
+        for view in self._views:
+            view._widget_cache.clear()
         self._widget_cache.clear()
 
     @classmethod
@@ -112,6 +127,10 @@ class View(object):
             if isinstance(value, LocatorDescriptor):
                 result.append((key, value))
         return [name for name, _ in sorted(result, key=lambda pair: pair[1]._seq_id)]
+
+    @property
+    def _views(self):
+        return [view for view in self if isinstance(view, View)]
 
     @property
     def navigator(self):
