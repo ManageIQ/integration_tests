@@ -47,7 +47,6 @@ RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false
 if not RUNNING_UNDER_SPROUT:
     from cfme.configure.configuration import set_server_roles, get_server_roles
     from utils.providers import setup_provider
-    from utils.browser import browser_session
     from utils.hosts import setup_providers_hosts_credentials
 
 # ** We need our endpoints! Can this be done via some entrypoints so that they can become
@@ -78,7 +77,7 @@ class IPAppliance(object):
             is used to generate a new session.
     """
 
-    def __init__(self, address=None, browser_steal=False):
+    def __init__(self, address=None, browser_steal=False, container=None):
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -93,6 +92,7 @@ class IPAppliance(object):
                 self.scheme = address.scheme
                 self._url = address.geturl()
         self.browser_steal = browser_steal
+        self.container = container
         self._db_ssh_client = None
 
         # ** browser is an endpoint object and we ***CURRENTLY*** (gosh I can't stress that
@@ -283,10 +283,18 @@ class IPAppliance(object):
                 (self.is_downstream and self.version >= '5.6')
                 or ((not self.is_downstream)
                     and self.build_datetime >= datetime(year=2015, month=10, day=5))):
-            query = self._query_post_endpoints()
+            query = self._query_post_endpoints
         else:
-            query = self._query_pre_endpoints()
-        for ipaddress, hostname in query:
+            query = self._query_pre_endpoints
+
+        # Fetch all providers at once, return empty list otherwise
+        try:
+            query_res = list(query())
+        except Exception as ex:
+            self.log.warning("Unable to query DB for managed providers: %s", str(ex))
+            return []
+
+        for ipaddress, hostname in query_res:
             if ipaddress is not None:
                 ip_addresses.add(ipaddress)
             elif hostname is not None:
@@ -439,6 +447,7 @@ class IPAppliance(object):
             'hostname': self.hostname,
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],
+            'container': self.container,
         }
         # ** Ack! you caught me.....
         ssh_client = john_ssh.SSHClient(**connect_kwargs)
@@ -548,17 +557,21 @@ class IPAppliance(object):
 
     @logger_wrap("Patch appliance with MiqQE js: {}")
     def patch_with_miqqe(self, log_callback=None):
-        if self.version < "5.6":
+        if self.version < "5.5.5.0":
             return
 
         # (local_path, remote_path, md5/None) trio
+        autofocus_patch = pick({
+            '5.5': 'autofocus.js.diff',
+            LATEST: 'autofocus_upstream.js.diff'
+        })
         patch_args = (
             (str(patches_path.join('miq_application.js.diff')),
              '/var/www/miq/vmdb/app/assets/javascripts/miq_application.js',
              None),
-            (str(patches_path.join('autofocus.js.diff')),
+            (str(patches_path.join(autofocus_patch)),
              '/var/www/miq/vmdb/app/assets/javascripts/directives/autofocus.js',
-             'f5ce9fa129d1662e6fe6f7c213458227'),
+             None),
         )
 
         patched_anything = False
@@ -763,9 +776,8 @@ class IPAppliance(object):
 
         Ignores certain files, like redhat.repo.
         """
-        ftp = self.ssh_client.open_sftp()
-        ftp.chdir("/etc/yum.repos.d")
-        return [f for f in ftp.listdir() if f not in {"redhat.repo"} and f.endswith(".repo")]
+        repofiles = self.ssh_client.run_command('ls /etc/yum.repos.d').output.strip().split('\n')
+        return [f for f in repofiles if f not in {"redhat.repo"} and f.endswith(".repo")]
 
     def read_repos(self):
         """Reads repofiles so it gives you mapping of id and url."""
@@ -812,14 +824,13 @@ class IPAppliance(object):
             kwargs["gpgcheck"] = 0
         if "enabled" not in kwargs:
             kwargs["enabled"] = 1
-        sftp = self.ssh_client.open_sftp()
+        filename = "/etc/yum.repos.d/{}.repo".format(repo_id)
         logger.info("Writing a new repofile %s %s", repo_id, repo_url)
-        with sftp.open("/etc/yum.repos.d/{}.repo".format(repo_id), "w") as f:
-            f.write("[update-{}]\n".format(repo_id))
-            f.write("name=update-url-{}\n".format(repo_id))
-            f.write("baseurl={}\n".format(repo_url))
-            for k, v in kwargs.iteritems():
-                f.write("{}={}\n".format(k, v))
+        self.ssh_client.run_command('echo "[update-{}]" > {}'.format(repo_id, filename))
+        self.ssh_client.run_command('echo "name=update-url-{}" >> {}'.format(repo_id, filename))
+        self.ssh_client.run_command('echo "baseurl={}" >> {}'.format(repo_url, filename))
+        for k, v in kwargs.iteritems():
+            self.ssh_client.run_command('echo "{}={}" >> {}'.format(k, v, filename))
         return repo_id
 
     def add_product_repo(self, repo_url, **kwargs):
@@ -981,17 +992,6 @@ class IPAppliance(object):
         # restart postgres
         status, out = client.run_command("service {scl}-postgresql restart".format(scl=scl))
         return status
-
-    def browser_session(self):
-        """Creates browser session connected to this appliance
-
-        Returns: Browser session connected to this appliance.
-
-        Usage:
-            with appliance.browser_session() as browser:
-                browser.do_stuff(TM)
-        """
-        return browser_session(base_url=self.url)
 
     @logger_wrap("Enable internal DB: {}")
     def enable_internal_db(self, region=0, key_address=None, db_password=None,
@@ -1404,16 +1404,39 @@ class IPAppliance(object):
                  delay=5,
                  num_sec=timeout)
 
+    def get_host_address(self):
+        try:
+            if self.version >= '5.6':
+                server = self.get_yaml_config('vmdb').get('server', None)
+            else:
+                server = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db').get(
+                    'server', None)
+            if server:
+                return server.get('host', None)
+        except Exception as e:
+            logger.exception(e)
+            self.log.error('Exception occured while fetching host address')
+
+    def wait_for_host_address(self):
+        try:
+            wait_for(func=self.get_host_address,
+                     fail_condition=None,
+                     delay=5,
+                     num_sec=120)
+            return self.get_host_address()
+        except Exception as e:
+            logger.exception(e)
+            self.log.error('waiting for host address from yaml_config timedout')
+
     @cached_property
     def db_address(self):
         # pulls the db address from the appliance by default, falling back to the appliance
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
         try:
-            if self.version >= '5.6':
-                db = self.get_yaml_config("vmdb")['server']['host']
-            else:
-                db = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db')['server']['host']
+            db = self.wait_for_host_address()
+            if db is None:
+                return self.address
             db = db.strip()
             ip_addr = self.ssh_client.run_command('ip address show')
             if db in ip_addr.output or db.startswith('127') or 'localhost' in db:
@@ -1596,7 +1619,7 @@ class IPAppliance(object):
             else:
                 raise Exception('Only [vmdb] config is allowed from 5.6+')
         else:
-            return db.set_yaml_config(config_name, data_dict, self.address)
+            return db.set_yaml_config(config_name, data_dict)
 
     def get_yaml_file(self, yaml_path):
         """Get (and parse) a yaml file from the appliance, returning a python data structure"""
@@ -1646,10 +1669,10 @@ class Appliance(IPAppliance):
 
     _default_name = 'EVM'
 
-    def __init__(self, provider_name, vm_name, browser_steal=False):
+    def __init__(self, provider_name, vm_name, browser_steal=False, container=None):
         """Initializes a deployed appliance VM
         """
-        super(Appliance, self).__init__(browser_steal=browser_steal)
+        super(Appliance, self).__init__(browser_steal=browser_steal, container=None)
         self.name = Appliance._default_name
 
         self._provider_name = provider_name
@@ -2099,7 +2122,7 @@ def get_or_create_current_appliance():
         base_url = conf.env['base_url']
         if base_url is None or str(base_url.lower()) == 'none':
             raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
-        stack.push(IPAppliance(urlparse(base_url)))
+        stack.push(IPAppliance(urlparse(base_url), container=conf.env.get('container', None)))
     return stack.top
 
 current_appliance = LocalProxy(get_or_create_current_appliance)

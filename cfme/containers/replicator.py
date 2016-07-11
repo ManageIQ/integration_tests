@@ -1,8 +1,11 @@
+# added new list_tbl definition
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb
+from cfme.web_ui import toolbar as tb, CheckboxTable
 from cfme.web_ui.menu import nav
-from . import list_tbl, pol_btn, details_page
+from . import pol_btn, details_page
+
+list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
 nav.add_branch(
     'containers_replicators',

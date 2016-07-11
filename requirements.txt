@@ -31,8 +31,8 @@ pycurl
 pycrypto
 pygal
 PyGithub
-# Temporary stick to 2.7.0 due to fixture scoping mismatches in 2.7.1 and possibly up
-pytest==2.7.0
+
+pytest==2.9.2
 python-bugzilla>=1.2.0
 python-cinderclient
 python-dateutil
@@ -82,3 +82,6 @@ pyzmq
 
 # werkzeug.local until extraction
 werkzeug
+
+# do editable self-install to avoid need for pythonpath changes
+-e .

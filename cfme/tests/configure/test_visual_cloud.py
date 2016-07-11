@@ -7,23 +7,26 @@ from cfme import login
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator, toolbar as tb, menu
-from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 
 pytestmark = [pytest.mark.tier(3)]
 
-try:
-    grid_pages = cfme_data.grid_pages.cloud
-except KeyError:
-    grid_pages = []
-grid_uncollectif = pytest.mark.uncollectif(not grid_pages, reason='no grid pages configured')
+grid_pages = [
+    'clouds_providers',
+    'clouds_availability_zones',
+    'clouds_tenants',
+    'clouds_flavors',
+    'clouds_instances',
+    'clouds_stacks',
+]
 
-try:
-    landing_pages = cfme_data.landing_pages.cloud
-except KeyError:
-    landing_pages = []
-landing_uncollectif = pytest.mark.uncollectif(not grid_pages, reason='no landing pages configured')
+landing_pages = [
+    'Clouds / Providers',
+    'Clouds / Availability Zones',
+    'Clouds / Tenants',
+    'Clouds / Flavors',
+]
 
 
 @pytest.fixture(scope="module")
@@ -71,7 +74,6 @@ def set_cloud_provider_quad():
     visual.cloud_provider_quad = True
 
 
-@grid_uncollectif
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 @pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
@@ -91,7 +93,6 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
                 "Gridview Failed for page {}!".format(page)
 
 
-@grid_uncollectif
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 @pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
@@ -111,7 +112,6 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
                 "Tileview Failed for page {}!".format(page)
 
 
-@grid_uncollectif
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
 @pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
@@ -131,7 +131,6 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
                 "Listview Failed for page {}!".format(page)
 
 
-@landing_uncollectif
 @pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
 def test_start_page(request, setup_a_provider, start_page):

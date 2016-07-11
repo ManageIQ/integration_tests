@@ -128,7 +128,8 @@ def update_registration(appliance_set, rh_updates_data, reg_method):
     else:
         repo_or_channel = reg_data.get('add_channel', None)
 
-    with appliance_set.primary.browser_session():
+    appliance_set.primary.browser_steal = True
+    with appliance_set.primary():
         red_hat_updates.update_registration(
             service=reg_method,
             url=reg_data['url'],
@@ -144,7 +145,8 @@ def update_registration(appliance_set, rh_updates_data, reg_method):
 
 
 def register_appliances(appliance_set, appliances_to_register):
-    with appliance_set.primary.browser_session():
+    appliance_set.primary.browser_steal = True
+    with appliance_set.primary():
         red_hat_updates.register_appliances(*appliances_to_register)
 
         logger.info('Waiting for appliance statuses to change to Registered')
@@ -251,7 +253,8 @@ def rhn_mirror_setup(appliance_set):
     """Sets up RHN mirror feature on primary appliance and checks secondary are subscribed
     """
 
-    with appliance_set.primary.browser_session():
+    appliance_set.primary.browser_steal = True
+    with appliance_set.primary():
         set_server_roles(rhn_mirror=True)
 
     appliance_set.primary.restart_evm_service()
@@ -294,7 +297,8 @@ def rhn_mirror_setup(appliance_set):
             logger.info('Done')
 
     # And confirm that all appliances are subscribed
-    with appliance_set.primary.browser_session():
+    appliance_set.primary.browser_steal = True
+    with appliance_set.primary():
         assert red_hat_updates.are_subscribed(),\
             'Failed to subscribe all appliances (secondary via proxy)'
 
@@ -306,7 +310,8 @@ def run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update):
         Just a heads up - CFME 5.3+ will, on non-db appliances, apply platform updates
         along with cfme updates.
     """
-    with appliance_set.primary.browser_session():
+    appliance_set.primary.browser_steal = True
+    with appliance_set.primary():
         red_hat_updates.update_appliances(*appliances_to_update)
 
         version_match_args = [rh_updates_data['current_version']] + appliances_to_update
@@ -328,7 +333,8 @@ def run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update):
             # Primary will not be updated but we still need to wait for secondaries the full time
             version_check_wait_sec = 720
 
-    with appliance_set.primary.browser_session():
+    appliance_set.primary.browser_steal = True
+    with appliance_set.primary():
         logger.info('Waiting for appliances to update (checking versions)')
         wait_for(red_hat_updates.versions_match,
                  func_args=version_match_args,
@@ -341,7 +347,8 @@ def run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update):
 def run_platform_updates(appliance_set, appliances_to_update):
     """Runs platform update on appliances_to_update using ssh
     """
-    with appliance_set.primary.browser_session():
+    appliance_set.primary.browser_steal = True
+    with appliance_set.primary():
         primary_will_be_updated = False
         for appliance_name in appliances_to_update:
             appliance = appliance_set.find_by_name(appliance_name)
@@ -376,7 +383,8 @@ def run_platform_updates(appliance_set, appliances_to_update):
             red_hat_updates.check_updates(*appliances_to_update)
             red_hat_updates.refresh()
 
-    with appliance_set.primary.browser_session():
+    appliance_set.primary.browser_steal = True
+    with appliance_set.primary():
         logger.info("Waiting for platform update statuses to change")
         wait_for(red_hat_updates.platform_updates_available,
                  func_args=appliances_to_update,

@@ -52,6 +52,7 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1350903, forced_streams=["5.6", "upstream"])])
 def test_order_catalog_item_via_rest(
         request, rest_api, provider, setup_provider, catalog_item, catalog):
     """Same as :py:func:`test_order_catalog_item`, but using REST.

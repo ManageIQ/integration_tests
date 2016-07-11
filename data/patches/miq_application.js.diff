@@ -1,6 +1,6 @@
 --- miq_application.js	2016-05-23 15:46:51.571062620 +0200
 +++ miq_application.js.new	2016-05-23 15:48:51.438832567 +0200
-@@ -1,5 +1,52 @@
+@@ -1,5 +1,54 @@
  // MIQ specific JS functions
 
 +// MiqQE section
@@ -9,7 +9,7 @@
 +// Initialize MiqQE
 +// Make sure to update version here and in pytest_selenium when changed
 +var MiqQE = {'autofocus': 0, 'debounce': 0};
-+var MiqQE_version = 1;
++var MiqQE_version = 2;
 +
 +function checkMiqQE(key) {
 +  var v = MiqQE[key];
@@ -25,27 +25,29 @@
 +  return v_incomplete;
 +}
 +
-+// Override the default debounce fn
-+var orig_debounce = _.debounce;
-+_.debounce = function(func, wait, options) {
-+  // Override the original fn; new_func will be the original fn with wait prepended to it
-+  // We make sure that once this fn is actually run, it decreases the counter
-+  var new_func = function() {
-+    try {
-+      return func.apply(this, arguments);
-+    } finally {
-+      // this is run before the return above, always
-+      MiqQE['debounce'] -= 1;
++// Override the default debounce fn if used
++if (typeof _ !== 'undefined' && typeof _.debounce !== 'undefined') {
++  var orig_debounce = _.debounce;
++  _.debounce = function(func, wait, options) {
++    // Override the original fn; new_func will be the original fn with wait prepended to it
++    // We make sure that once this fn is actually run, it decreases the counter
++    var new_func = function() {
++      try {
++        return func.apply(this, arguments);
++      } finally {
++        // this is run before the return above, always
++        MiqQE['debounce'] -= 1;
++      }
 +    }
++    // Override the newly-created fn (prepended wait + original fn)
++    // We have to increase the counter before the waiting is initiated
++    var debounced_func = orig_debounce.call(this, new_func, wait, options);
++    var new_debounced_func = function() {
++      MiqQE['debounce'] += 1;
++      return debounced_func.apply(this, arguments);
++    }
++    return new_debounced_func;
 +  }
-+  // Override the newly-created fn (prepended wait + original fn)
-+  // We have to increase the counter before the waiting is initiated
-+  var debounced_func = orig_debounce.call(this, new_func, wait, options);
-+  var new_debounced_func = function() {
-+    MiqQE['debounce'] += 1;
-+    return debounced_func.apply(this, arguments);
-+  }
-+  return new_debounced_func;
 +}
 +// --------------
 +

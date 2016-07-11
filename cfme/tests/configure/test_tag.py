@@ -52,20 +52,20 @@ class TestTagsViaREST(object):
         return _tags(request, rest_api, categories)
 
     @pytest.fixture(scope="module")
-    def categories_mod(self, request, rest_api, num=3):
-        return _categories(request, rest_api, num)
+    def categories_mod(self, request, rest_api_modscope, num=3):
+        return _categories(request, rest_api_modscope, num)
 
     @pytest.fixture(scope="module")
-    def tags_mod(self, request, rest_api, categories_mod):
-        return _tags(request, rest_api, categories_mod)
+    def tags_mod(self, request, rest_api_modscope, categories_mod):
+        return _tags(request, rest_api_modscope, categories_mod)
 
     @pytest.fixture(scope="module")
-    def service_catalogs(self, request, rest_api):
-        return _service_catalogs(request, rest_api)
+    def service_catalogs(self, request, rest_api_modscope):
+        return _service_catalogs(request, rest_api_modscope)
 
     @pytest.fixture(scope="module")
-    def tenants(self, request, rest_api):
-        return _tenants(request, rest_api, num=1)
+    def tenants(self, request, rest_api_modscope):
+        return _tenants(request, rest_api_modscope, num=1)
 
     @pytest.fixture(scope="module")
     def a_provider(self):
@@ -76,15 +76,15 @@ class TestTagsViaREST(object):
         return _dialog()
 
     @pytest.fixture(scope="module")
-    def services(self, request, rest_api, a_provider, dialog, service_catalogs):
+    def services(self, request, rest_api_modscope, a_provider, dialog, service_catalogs):
         try:
-            return _services(request, rest_api, a_provider, dialog, service_catalogs)
+            return _services(request, rest_api_modscope, a_provider, dialog, service_catalogs)
         except:
             pass
 
     @pytest.fixture(scope="module")
-    def service_templates(self, request, rest_api, dialog):
-        return _service_templates(request, rest_api, dialog)
+    def service_templates(self, request, rest_api_modscope, dialog):
+        return _service_templates(request, rest_api_modscope, dialog)
 
     @pytest.fixture(scope="module")
     def vm(self, request, a_provider, rest_api):

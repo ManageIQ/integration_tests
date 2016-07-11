@@ -214,11 +214,14 @@ def is_greyed(root, sub=None):
     return False
 
 
+RELOAD_LOC = "//div[@title='Reload current display']|//button[@title='Reload Current Display']"
+
+
 def refresh():
     """Refreshes page, attempts to use cfme refresh button otherwise falls back to browser refresh.
     """
-    if sel.is_displayed("//div[@title='Reload current display']"):
-        sel.click("//div[@title='Reload current display']")
+    if sel.is_displayed(RELOAD_LOC):
+        sel.click(RELOAD_LOC)
     else:
         sel.refresh()
 

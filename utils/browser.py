@@ -4,7 +4,6 @@ import json
 import os
 import threading
 import urllib2
-from contextlib import contextmanager
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
@@ -190,25 +189,6 @@ def quit():
         pass
     finally:
         thread_locals.browser = None
-
-
-@contextmanager
-def browser_session(*args, **kwargs):
-    """A context manager that can be used to start and stop a browser.
-
-    Usage:
-
-        with browser_session as browser:
-            # do stuff with browser here
-        # Browser will be closed here
-
-    """
-
-    browser = start(*args, **kwargs)
-    try:
-        yield browser
-    finally:
-        quit()
 
 
 def _load_firefox_profile():

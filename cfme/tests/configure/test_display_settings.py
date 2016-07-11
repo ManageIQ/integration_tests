@@ -4,17 +4,19 @@ import pytest
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import ColorGroup, form_buttons
-from utils.conf import cfme_data
 from utils import version
 from cfme.configure import settings  # NOQA
 
 pytestmark = [pytest.mark.tier(3)]
 
-try:
-    displaysettings = cfme_data.displaysettings.color
-except KeyError:
-    displaysettings = []
-grid_uncollectif = pytest.mark.uncollectif(not displaysettings, reason='no settings configured')
+colors = [
+    'Orange',
+    'Yellow',
+    'Green',
+    'Blue',
+    'ManageIQ-Blue',
+    'Black',
+]
 
 
 @pytest.yield_fixture(scope="module")
@@ -66,10 +68,9 @@ def test_timezone_setting(set_timezone):
     assert sel.is_displayed(locator), "Timezone settings Failed"
 
 
-@grid_uncollectif
 @pytest.mark.uncollectif(lambda: version.current_version() >= "5.4")
-@pytest.mark.parametrize('name', displaysettings, scope="module")
-def test_color_setting(request, name):
+@pytest.mark.parametrize('color', colors, scope="module")
+def test_color_setting(request, color):
     """ Tests  color settings
 
     Metadata:
@@ -78,6 +79,6 @@ def test_color_setting(request, name):
     sel.force_navigate("my_settings_visual")
     cg = ColorGroup('Header Accent Color')
     default_color = cg.active
-    set_header_color(name)
-    assert is_header_color_changed(name), "Header Accent Color setting failed"
+    set_header_color(color)
+    assert is_header_color_changed(color), "Header Accent Color setting failed"
     reset_default_color(default_color)

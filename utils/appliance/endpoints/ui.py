@@ -71,7 +71,7 @@ class UIEndpoint(Endpoint):
         # check for MiqQE javascript patch in 5.6 on first try and patch the appliance if necessary
         # raise an exception on subsequent unsuccessful attempts to access the MiqQE
         # javascript funcs
-        if self.owner.version >= "5.6":
+        if self.owner.version >= "5.5.5.0":
             def _patch_recycle_retry():
                 self.owner.patch_with_miqqe()
                 browser().quit()
@@ -80,7 +80,7 @@ class UIEndpoint(Endpoint):
             try:
                 # latest js diff version always has to be placed here to keep this check current
                 ver = execute_script("return MiqQE_version")
-                if ver < 1:
+                if ver < 2:
                     logger.info("Old patch present on appliance; patching appliance")
                     _patch_recycle_retry()
             except WebDriverException as ex:
@@ -169,7 +169,7 @@ class UIEndpoint(Endpoint):
                     'top -c -b -n1 | head -30').output)
                 logger.debug('Top Memory consumers:')
                 logger.debug(self.owner.ssh_client.run_command(
-                    'top -c -b -n1 -o "%MEM" | head -30').output)
+                    'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
             logger.debug('Managed Providers:')
             logger.debug(self.owner.managed_providers)
             quit()  # Refresh the session, forget loaded summaries, ...
@@ -229,7 +229,8 @@ class UIEndpoint(Endpoint):
             recycle = True
         except exceptions.CannotContinueWithNavigation as e:
             # The some of the navigation steps cannot succeed
-            logger.info('Cannot continue with navigation due to: %s; Recycling browser', str(e))
+            logger.info('Cannot continue with navigation due to: {}; Recycling browser'.format(
+                str(e)))
             recycle = True
         except (NoSuchElementException, InvalidElementStateException, WebDriverException,
                 StaleElementReferenceException) as e:

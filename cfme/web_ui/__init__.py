@@ -50,16 +50,19 @@
 
 """
 
+import atexit
 import os
 import re
 import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
+from tempfile import NamedTemporaryFile
 from xml.sax.saxutils import quoteattr
 
 from cached_property import cached_property
 from selenium.common import exceptions as sel_exceptions
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.remote.file_detector import LocalFileDetector
 from multimethods import multimethod, multidispatch, Anything
 
 import cfme.fixtures.pytest_selenium as sel
@@ -1517,6 +1520,35 @@ class Input(Pretty):
 
     def __radd__(self, string):
         return string + self.locate()
+
+
+class FileInput(Input):
+    """A file input handling widget.
+
+    Accepts a string. If the string is a file, then it is put in the input. Otherwise a temporary
+    file is generated and that one is fed to the file input.
+    """
+    pass
+
+
+@fill.method((FileInput, Anything))
+def _fill_file_input(i, a):
+    # Engage the selenium's file detector so we can reliably transfer the file to the browser
+    with browser().file_detector_context(LocalFileDetector):
+        # We need a raw element so we can send_keys to it
+        input_el = sel.element(i.locate())
+        if browser().file_detector.is_local_file(a) is None:
+            # Create a temp file
+            f = NamedTemporaryFile()
+            f.write(str(a))
+            f.flush()
+            input_el.send_keys(f.name)
+            atexit.register(f.close)
+        else:
+            # It already is a file ...
+            input_el.send_keys(a)
+    # Since we used raw selenium element, wait for ajax here ...
+    sel.wait_for_ajax()
 
 
 class Radio(Input):
