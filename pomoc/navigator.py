@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import inspect
+from cached_property import cached_property
+
 from .browser import Browser
 
 
@@ -11,56 +14,67 @@ class NavigatorState(dict):
 
 
 class Navigator(object):
-    @classmethod
-    def register_view(cls, view):
-        try:
-            cls.view_classes
-        except AttributeError:
-            cls.view_classes = {}
-
-        try:
-            cls.view_classes_changes
-        except AttributeError:
-            cls.view_classes_changes = 0
-
-        if view.__name__ in cls.view_classes:
-            raise NameError('{} is already registered View name'.format(view.__name__))
-        cls.view_classes[view.__name__] = view
-        cls.view_classes_changes += 1
-        return view
-
     @staticmethod
-    def transition_to(o):
+    def transition_to(*view_classes):
         def g(f):
             if not hasattr(f, '_navigator'):
                 f._navigator = {}
-            f._navigator['transition_to'] = o
+            f._navigator['transition_to'] = list(view_classes)
             return f
         return g
 
+    @staticmethod
+    def retrieve_transitions_for(view_class):
+        for name, method in inspect.getmembers(view_class, predicate=inspect.ismethod):
+            if not hasattr(method, '_navigator'):
+                continue
+            argnames = inspect.getargspec(method).args[1:]
+            if 'transition_to' in method._navigator:
+                if len(method._navigator['transition_to']) > 1:
+                    bad_views = []
+                    for view in method._navigator['transition_to']:
+                        if isinstance(view, basestring):
+                            raise ValueError('Circular resolution using strings not supported yet.')
+                        if not hasattr(view, 'on_view') or not inspect.ismethod(view.on_view):
+                            bad_views.append(view.__name__)
+                    if bad_views:
+                        raise TypeError(
+                            ('Since {}.{} defines multiple transitions, classes {} must define a '
+                            'on_view method').format(
+                                view_class.__name__, name, ', '.join(bad_views)))
+                yield name, method._navigator['transition_to'], argnames
+
     def __init__(self, root_object, entry_view):
         self.root_object = root_object
+        if not hasattr(entry_view, 'on_load'):
+            raise ValueError('The entry view does not have on_load method.')
         self.entry_view = entry_view
         self.state = NavigatorState()
-        self.browser = Browser(self.root_object.selenium)
-        self._navigation = None
-        self._navigation_change_id = None
+        self.navigation = {}
+        self.build_navigation()
 
-    @property
-    def navigation(self):
-        if (
-                self._navigation is None or
-                self._navigation_change_id is None or
-                self._navigation_change_id < self.view_classes_changes):
-            self._rebuild_navigation()
-        return self._navigation
+    @cached_property
+    def browser(self):
+        return Browser(self.root_object.selenium)
 
-    @navigation.deleter
-    def navigation(self):
-        self._navigation = None
+    def build_navigation(self):
+        if self.navigation:
+            raise ValueError(
+                'Navigation is already built. You probably wanted to use clear_navigation?')
+        self.process_view(self.entry_view)
 
-    def _rebuild_navigation(self):
-        pass
+    def process_view(self, view):
+        if view in self.navigation:
+            return  # Skip because it has already been created
+        self.navigation[view] = {}
+        for name, targets, args in self.retrieve_transitions_for(view):
+            self.navigation[view][name] = (tuple(targets), tuple(args))
+            for target in targets:
+                self.process_view(target)
+
+    def clear_navigation(self):
+        self.navigation = {}
+        self.build_navigation()
 
     def navigate_to(self, *o, **additional_context):
         pass
