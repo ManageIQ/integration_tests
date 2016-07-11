@@ -62,9 +62,9 @@ class Widget(object):
 
     @property
     def browser(self):
-        if isinstance(self.parent, (View, Navigator)):
+        try:
             return self.parent.browser
-        else:
+        except AttributeError:
             raise ValueError('Unknown value {} specified as parent.'.format(repr(self.parent)))
 
     @property
@@ -73,6 +73,10 @@ class Widget(object):
             return self.parent
         else:
             return None
+
+    @property
+    def is_displayed(self):
+        return self.browser.is_displayed(self)
 
     def __locator__(self):
         raise NotImplementedError('You have to implement __locator__ or __element__')
@@ -131,10 +135,10 @@ class View(object):
 
     @property
     def navigator(self):
-        if isinstance(self.parent, Navigator):
-            return self.parent
-        else:
+        if isinstance(self.parent, View):
             return self.parent.navigator
+        else:
+            return self.parent
 
     @property
     def browser(self):

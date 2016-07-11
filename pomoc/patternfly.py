@@ -1,19 +1,14 @@
 # -*- coding: utf-8 -*-
 from xml.sax.saxutils import quoteattr
 
-from .objects import Widget
+from pomoc.library import ByTextOrAttr, Clickable
 
 
-class Clickable(object):
-    def click(self, **kwargs):
-        self.browser.click(self, **kwargs)
-
-
-class ByTextOrAttr(Widget):
+class Button(ByTextOrAttr, Clickable):
     ALLOWED_ATTRS = {'title', 'alt'}
 
     def __init__(self, parent, *text, **by_attr):
-        super(ByTextOrAttr, self).__init__(parent)
+        super(Button, self).__init__(parent)
         if text:
             if len(text) > 1:
                 raise TypeError('For text based buttons you can only pass one param')
@@ -29,19 +24,12 @@ class ByTextOrAttr(Widget):
                     raise ValueError('You are specifying multiple attributes to match')
                 self.attr = (attr, value)
 
-
-class Link(ByTextOrAttr, Clickable):
     def __locator__(self):
         if self.text is not None:
-            return '//a[normalize-space(.)={}]'.format(quoteattr(self.text))
+            return (
+                '//a[contains(@class, "btn") and normalize-space(.)={}]'.format(
+                    quoteattr(self.text)))
         else:
-            return '//a[@{}={}]'.format(self.attr[0], quoteattr(self.attr[1]))
-
-
-class Input(Widget):
-    def __init__(self, parent, id):
-        super(Input, self).__init__(parent)
-        self.id = id
-
-    def __locator__(self):
-        return '#'.format(self.id)
+            return (
+                '//a[contains(@class, "btn") and @{}={}]'.format(
+                    self.attr[0], quoteattr(self.attr[1])))

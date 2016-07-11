@@ -51,6 +51,8 @@ class Browser(object):
 
     @staticmethod
     def _process_locator(self, locator):
+        if isinstance(locator, WebElement):
+            return locator
         try:
             return Locator(locator)
         except TypeError:
@@ -91,6 +93,11 @@ class Browser(object):
             element_not_found.trigger(browser=self, locator=locator)
             raise NoSuchElementException('Could not find an element {}'.format(repr(locator)))
 
+    def click(self, locator, parents=None, check_visibility=False):
+        self.move_to_element(locator, parents=parents, check_visibility=check_visibility)
+        # and then click on current mouse position
+        ActionChains(self.selenium).click().perform()
+
     def is_displayed(self, locator, parents=None):
         retry = True
         tries = 10
@@ -111,13 +118,13 @@ class Browser(object):
         # Just in case
         return False
 
-    def move_to_element(self, locator, parents=None):
-        el = self.element(locator, parents=parents)
+    def move_to_element(self, locator, parents=None, check_visibility=False):
+        el = self.element(locator, parents=parents, check_visibility=check_visibility)
         if el.tag_name == "option":
             # Instead of option, let's move on its parent <select> if possible
             parent = self.element("..", parents=[el])
             if parent.tag_name == "select":
-                self.move_to_element(parent)
+                self.move_to_element(parent, parents=parents)
                 return el
         move_to = ActionChains(self.selenium).move_to_element(el)
         try:

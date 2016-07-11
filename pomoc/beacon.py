@@ -33,6 +33,7 @@ class Signal(object):
                     'Signal {} needs an argument {}'.format(self.name, required_variable))
         kwargs = {'state': {
             'total_callbacks': len(self.callbacks),
+            'suppress_exception': False,
             'callbacks_run': 0,
             'callbacks_errors_suppressed': 0}}
         kwargs.update(arguments)

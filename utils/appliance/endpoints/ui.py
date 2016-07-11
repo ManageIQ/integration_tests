@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from cached_property import cached_property
+
 from . import Endpoint
 
 from utils.log import logger
@@ -14,6 +17,9 @@ from fixtures.pytest_store import store
 from time import sleep
 from cfme.web_ui.menu import Menu
 
+from cfme.classic_ui import Login
+from pomoc.navigator import Navigator
+
 
 class UIEndpoint(Endpoint):
     """UI endpoint"""
@@ -25,6 +31,14 @@ class UIEndpoint(Endpoint):
         """UI Endpoint"""
         super(UIEndpoint, self).__init__(name=name, impl=impl, owner=owner)
         self.menu = Menu()
+
+    @property
+    def selenium(self):
+        return ensure_browser_open()
+
+    @cached_property
+    def navigator(self):
+        return Navigator(self, Login)
 
     # ** Notice our friend force_navigate is here. It used to live in pytest_selenium fixture.
     # ** Funny story! That thing was never a fixture.
