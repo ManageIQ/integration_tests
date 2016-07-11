@@ -212,9 +212,8 @@ def pytest_pyfunc_call(pyfuncitem):
                     raise Exception("RBAC: Test should have passed!")
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.trylast
 def pytest_generate_tests(metafunc):
-    yield
     if 'rbac_role' in metafunc.fixturenames:
         if enable_rbac:
             try:

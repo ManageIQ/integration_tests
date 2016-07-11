@@ -15,12 +15,11 @@ def logger():
     return log.logger
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.tryfirst
 def pytest_runtest_setup(item):
     path, lineno, domaininfo = item.location
     logger().info(log.format_marker(_format_nodeid(item.nodeid), mark="-"),
         extra={'source_file': path, 'source_lineno': lineno})
-    yield
 
 
 def pytest_collection_modifyitems(session, config, items):
@@ -30,12 +29,11 @@ def pytest_collection_modifyitems(session, config, items):
     logger().info('Collected {} items{}'.format(len(items), expr_string))
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.trylast
 def pytest_runtest_logreport(report):
     # e.g. test_tracking['test_name']['setup'] = 'passed'
     #      test_tracking['test_name']['call'] = 'skipped'
     #      test_tracking['test_name']['teardown'] = 'failed'
-    yield
     test_tracking[_format_nodeid(report.nodeid, False)][report.when] = report.outcome
     if report.when == 'teardown':
         path, lineno, domaininfo = report.location

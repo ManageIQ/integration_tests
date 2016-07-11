@@ -27,21 +27,19 @@ def pytest_addoption(parser):
            help="halt the test run if smoke tests fail")
 
 
-@pytest.mark.trylast
 def pytest_configure(config):
     smoke_tests = SmokeTests(reporter(config))
     config.pluginmanager.register(smoke_tests, 'smoke_tests')
     config.addinivalue_line('markers', __doc__.splitlines()[0])
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.trylast
 def pytest_collection_modifyitems(session, config, items):
     # XXX: This also handles moving long_running tests to the front of the test module
     # There are a few different ways to handle this batter, but rather than building in logic
     # for both smoke and long_running marks to make sure each one reorders tests with respect to
     # the other, it made sense to just combine this here for now and organize these marks better
     # later on.
-    yield
 
     # Split marked and unmarked tests
     split_tests = defaultdict(list)

@@ -54,7 +54,7 @@ def ssh_client_modscope(uses_ssh):
     return store.current_appliance.ssh_client
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.tryfirst
 def pytest_sessionfinish(session, exitstatus):
     """Loop through the appliance stack and close ssh connections"""
 
@@ -69,4 +69,3 @@ def pytest_sessionfinish(session, exitstatus):
     for session in ssh._client_session:
         with diaper:
             session.close()
-    yield
