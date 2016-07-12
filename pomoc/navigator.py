@@ -2,6 +2,7 @@
 import inspect
 import sys
 from cached_property import cached_property
+from kwargify import kwargify
 
 from .browser import Browser
 
@@ -169,7 +170,12 @@ class Navigator(object):
             for target in targets:
                 if target in ignored_views:
                     continue
-                signature = (name, params, target)
+                if len(targets) > 1:
+                    # Other possible targets
+                    additional_targets = tuple(t for t in targets if t != target)
+                else:
+                    additional_targets = None
+                signature = (name, params, target, additional_targets)
                 resulting_paths.append([signature])
                 if to_view is not None and target is to_view:
                     continue
@@ -183,25 +189,25 @@ class Navigator(object):
             resulting_paths = filter(lambda path: path[-1][-1] == to_view, resulting_paths)
         return resulting_paths
 
-    def navigate_to(self, *o, **additional_context):
+    def detect_view(self):
+        # TODO: Actual detection
+        return self.entry_view
+
+    def navigate_to(self, *o, **context):
         if len(o) == 0:
             raise TypeError('You have to pass something')
         if len(o) == 1 and o[0] in self.navigation:
             # A view
-            return self.navigate_to_view(o[0], additional_context)
+            return self.navigate_to_view(self.detect_view(), o[0], context)
 
-    def navigate_to_view(self, view, additional_context):
-        context = {}
-        context.update(self.default_context)
-        context.update(additional_context)
-
+    def path_from_to(self, from_view, to_view, given_params):
         paths = []
-        for path in self.all_paths(from_view=self.entry_view, to_view=view):
+        for path in self.all_paths(from_view=from_view, to_view=to_view):
             # Disqualify paths based on the variables
             skip = False
-            for _, params, _ in path:
+            for _, params, _, _ in path:
                 for param in params:
-                    if param not in context:
+                    if param not in given_params:
                         skip = True
             if not skip:
                 paths.append(path)
@@ -212,7 +218,53 @@ class Navigator(object):
         except IndexError:
             raise ValueError('Could not find a path!')
 
-        return self.navigate_path(self.entry_view, path, context)
+        return path
 
-    def navigate_path(self, from_view, path, context):
-        pass
+    def instantiate_view(self, view_class, context):
+        view = view_class(self, context)
+        try:
+            view.on_load()
+        except AttributeError:
+            pass
+        return view
+
+    def execute_transition(self, view, name, context):
+        levels = name.split('.')
+        call = getattr(view, levels.pop(0))
+        for level in levels:
+            call = getattr(call, level)
+        # Call now contains reference to the method
+        call = kwargify(call)  # Makes it immune against big dicts and so
+        call(**context)
+
+    def navigate_path(self, from_view, final_view, context):
+        context = {}
+        context.update(self.default_context)
+        context.update(context)
+
+        path = self.path_from_to(from_view, final_view, context.keys())
+        # Create initial view
+        current_view = self.instantiate_view(from_view, context)
+
+        while path:
+            transition_name, params, target, additional_targets = path.pop(0)
+            self.execute_transition(current_view, transition_name, context)
+            if additional_targets:
+                view = self.instantiate_view(target, context)
+                if view.on_view():
+                    # Reinstantiate to execute onload
+                    current_view = view
+                else:
+                    for additional_target in additional_targets:
+                        view = self.instantiate_view(additional_target, context)
+                        if view.on_view():
+                            current_view = view
+                            # Reload path from this new place
+                            path = self.path_from_to(type(current_view), final_view, context.keys())
+                            break
+                    else:
+                        raise RuntimeError('Landed on an unknown page!')
+            else:
+                current_view = self.instantiate_view(target, context)
+
+        return current_view

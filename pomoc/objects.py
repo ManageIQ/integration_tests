@@ -110,8 +110,9 @@ class ViewMetaclass(type):
 class View(object):
     __metaclass__ = ViewMetaclass
 
-    def __init__(self, parent):
+    def __init__(self, parent, additional_context=None):
         self.parent = parent
+        self.context = additional_context or {}
         self._widget_cache = {}
 
     def flush_widget_cache(self):

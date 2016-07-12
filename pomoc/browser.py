@@ -7,6 +7,7 @@ from selenium.common.exceptions import \
      InvalidElementStateException, MoveTargetOutOfBoundsException, WebDriverException,
      StaleElementReferenceException)
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.remote.file_detector import LocalFileDetector, UselessFileDetector
 from selenium.webdriver.remote.webelement import WebElement
 from smartloc import Locator
 from textwrap import dedent
@@ -147,5 +148,30 @@ class Browser(object):
         """Return a list of classes attached to the element."""
         return set(self.execute_script(
             "return arguments[0].classList;", self.element(*args, **kwargs)))
+
+    def tag(self, *args, **kwargs):
+        return self.element(*args, **kwargs).tag_name
+
+    def get_attribute(self, attr, *args, **kwargs):
+        return self.element(*args, **kwargs).get_attribute(attr)
+
+    def send_keys(self, text, *args, **kwargs):
+        text = text or ''
+        file_intercept = False
+        # If the element is input type file, we will need to use the file detector
+        if self.tag(*args, **kwargs) == 'input':
+            type_attr = self.get_attribute('type', *args, **kwargs)
+            if type_attr and type_attr.strip() == 'file':
+                file_intercept = True
+        try:
+            if file_intercept:
+                # If we detected a file upload field, let's use the file detector.
+                self.selenium.file_detector = LocalFileDetector()
+            self.move_to_element(*args, **kwargs).send_keys(text)
+        finally:
+            # Always the UselessFileDetector for all other kinds of fields, so do not leave
+            # the LocalFileDetector there.
+            if file_intercept:
+                self.selenium.file_detector = UselessFileDetector()
 
     # So on ...

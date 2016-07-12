@@ -38,10 +38,13 @@ class Link(ByTextOrAttr, Clickable):
             return '//a[@{}={}]'.format(self.attr[0], quoteattr(self.attr[1]))
 
 
-class Input(Widget):
+class Input(Widget, Clickable):
     def __init__(self, parent, id):
         super(Input, self).__init__(parent)
         self.id = id
 
+    def fill(self, text):
+        self.browser.send_keys(text, self)
+
     def __locator__(self):
-        return '#'.format(self.id)
+        return 'input#'.format(self.id)
