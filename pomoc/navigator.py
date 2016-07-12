@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import inspect
+import sys
 from cached_property import cached_property
 
 from .browser import Browser
@@ -63,6 +64,46 @@ class Navigator(object):
             raise ValueError(
                 'Navigation is already built. You probably wanted to use rebuild_navigation?')
         self.process_view(self.entry_view)
+        self.resolve_string_pointers()
+
+    def resolve_string_pointers(self):
+        name_mapping = {
+            c.__name__: c for c in self.navigation.iterkeys() if not isinstance(c, basestring)}
+        updates = {}
+        views_to_process = set()
+        for cls, transitions in self.navigation.iteritems():
+            for transition_name, (targets, args) in transitions.iteritems():
+                if any(isinstance(c, basestring) for c in targets):
+                    # We have to resolve
+                    if cls not in updates:
+                        updates[cls] = {}
+                    new_targets = []
+                    for target in targets:
+                        if isinstance(target, basestring):
+                            if target not in name_mapping:
+                                try:
+                                    new_targets.append(self._possible_other_nav_classes[target])
+                                except KeyError:
+                                    raise NameError('Could not resolve view name {}'.format(target))
+                                else:
+                                    views_to_process.add(self._possible_other_nav_classes[target])
+                            else:
+                                new_targets.append(name_mapping[target])
+                        else:
+                            new_targets.append(target)
+                    updates[cls][transition_name] = (tuple(new_targets), args)
+
+        # Updates created, now update the data themselves
+        for cls, transitions in updates.iteritems():
+            for transition_name, value in transitions.iteritems():
+                self.navigation[cls][transition_name] = value
+
+        # Update the views
+        if views_to_process:
+            for view in views_to_process:
+                self.process_view(view)
+            # And then resolve the strings again
+            self.resolve_string_pointers()
 
     def process_view(self, view):
         if view in self.navigation:
@@ -71,11 +112,48 @@ class Navigator(object):
         for name, targets, args in self.retrieve_transitions_for(view):
             self.navigation[view][name] = (tuple(targets), tuple(args))
             for target in targets:
-                self.process_view(target)
+                if not isinstance(target, basestring):
+                    self.process_view(target)
+        for subview in view._cls_subviews():
+            self.navigation[view].update(self.process_subview_as(subview))
+
+    def process_subview_as(self, view, parent_view_name=None):
+        transitions = {}
+        if parent_view_name is not None:
+            sub_name = '{}.{}'.format(parent_view_name, view.__name__)
+        else:
+            sub_name = view.__name__
+        for name, targets, args in self.retrieve_transitions_for(view):
+            transitions['{}.{}'.format(sub_name, name)] = (tuple(targets), tuple(args))
+            for target in targets:
+                if not isinstance(target, basestring):
+                    self.process_view(target)
+
+        for subview in view._cls_subviews():
+            transitions.update(
+                self.process_subview_as(subview, sub_name))
+
+        return transitions
 
     def rebuild_navigation(self):
         self.navigation = {}
         self.build_navigation()
+
+    @property
+    def _nav_modules(self):
+        modules = set()
+        for cls in self.navigation.iterkeys():
+            modules.add(sys.modules[cls.__module__])
+        return modules
+
+    @property
+    def _possible_other_nav_classes(self):
+        classes = {}
+        for module in self._nav_modules:
+            for name, cls in inspect.getmembers(module, predicate=inspect.isclass):
+                if cls not in self.navigation:
+                    classes[name] = cls
+        return classes
 
     def all_paths(self, from_view=None, to_view=None, ignored_views=None):
         view = from_view or self.entry_view
@@ -101,6 +179,8 @@ class Navigator(object):
                         from_view=target, to_view=to_view, ignored_views=new_ignored_views):
                     resulting_paths.append([signature] + path)
 
+        if to_view is not None and resulting_paths:
+            resulting_paths = filter(lambda path: path[-1][-1] == to_view, resulting_paths)
         return resulting_paths
 
     def navigate_to(self, *o, **additional_context):

@@ -143,4 +143,9 @@ class Browser(object):
     def execute_script(self, script, *args, **kwargs):
         return self.selenium.execute_script(dedent(script), *args, **kwargs)
 
+    def classes(self, *args, **kwargs):
+        """Return a list of classes attached to the element."""
+        return set(self.execute_script(
+            "return arguments[0].classList;", self.element(*args, **kwargs)))
+
     # So on ...

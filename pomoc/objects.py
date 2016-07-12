@@ -133,6 +133,13 @@ class View(object):
     def _views(self):
         return [view for view in self if isinstance(view, View)]
 
+    @classmethod
+    def _cls_subviews(cls):
+        for widget_attr in cls.widget_names():
+            c = getattr(cls, widget_attr)
+            if isinstance(c, LocatorDescriptor) and issubclass(c.klass, View):
+                yield c.klass
+
     @property
     def navigator(self):
         if isinstance(self.parent, View):
@@ -158,5 +165,5 @@ class View(object):
             return this
 
     def __iter__(self):
-        for widget_attr in self.widget_names:
+        for widget_attr in self.widget_names():
             yield getattr(self, widget_attr)
