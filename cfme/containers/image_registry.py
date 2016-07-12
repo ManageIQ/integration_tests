@@ -1,36 +1,26 @@
-from cfme.common import Taggable
+# -*- coding: utf-8 -*-
+from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb
+from cfme.web_ui import CheckboxTable, toolbar as tb
 from cfme.web_ui.menu import nav
 
-from . import list_tbl, pol_btn
+list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
 nav.add_branch(
     'containers_image_registries',
     {
         'containers_image_registry':
-        [
-            lambda ctx: list_tbl.select_row_by_cells(
-                {'Host': ctx['image_registry'].host, 'Provider': ctx['provider'].name}),
-            {
-                'containers_image_registry_edit_tags':
-                lambda _: pol_btn('Edit Tags'),
-            }
-        ],
+        lambda ctx: list_tbl.select_row_by_cells(
+            {'Host': ctx['image_registry'].host, 'Provider': ctx['image_registry'].provider.name}),
+
         'containers_image_registry_detail':
-        [
-            lambda ctx: list_tbl.click_row_by_cells(
-                {'Host': ctx['image_registry'].host, 'Provider': ctx['provider'].name}),
-            {
-                'containers_image_registry_edit_tags_detail':
-                lambda _: pol_btn('Edit Tags'),
-            }
-        ]
+        lambda ctx: list_tbl.click_row_by_cells(
+            {'Host': ctx['image_registry'].host, 'Provider': ctx['image_registry'].provider.name}),
     }
 )
 
 
-class ImageRegistry(Taggable):
+class ImageRegistry(Taggable, SummaryMixin):
 
     def __init__(self, host, provider):
         self.host = host
@@ -46,7 +36,7 @@ class ImageRegistry(Taggable):
         if detail is True:
             if not self._on_detail_page():
                 sel.force_navigate('containers_image_registry_detail',
-                    context={'image_registry': self, 'provider': self.provider})
+                    context={'image_registry': self})
         else:
             sel.force_navigate('containers_image_registry',
-                context={'image_registry': self, 'provider': self.provider})
+                context={'image_registry': self})
