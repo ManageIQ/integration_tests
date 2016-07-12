@@ -50,7 +50,8 @@ def scl_name():
     # so this is a little resolver to help keep the version picking centralized
     return version.pick({
         version.LOWEST: 'postgresql92',
-        '5.5': 'rh-postgresql94'
+        '5.5': 'rh-postgresql94',
+        '5.7': 'rh-postgresql95'
     })
 
 
