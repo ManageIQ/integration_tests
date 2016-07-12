@@ -77,7 +77,7 @@ class Navigator(object):
         self.navigation = {}
         self.build_navigation()
 
-    def all_paths(self, from_view=None, ignored_views=None):
+    def all_paths(self, from_view=None, to_view=None, ignored_views=None):
         view = from_view or self.entry_view
         ignored_views = ignored_views or set()
 
@@ -93,9 +93,12 @@ class Navigator(object):
                     continue
                 signature = (name, params, target)
                 resulting_paths.append([signature])
+                if to_view is not None and target is to_view:
+                    continue
                 new_ignored_views = {view}
                 new_ignored_views.update(ignored_views)
-                for path in self.all_paths(target, new_ignored_views):
+                for path in self.all_paths(
+                        from_view=target, to_view=to_view, ignored_views=new_ignored_views):
                     resulting_paths.append([signature] + path)
 
         return resulting_paths
@@ -105,15 +108,15 @@ class Navigator(object):
             raise TypeError('You have to pass something')
         if len(o) == 1 and o[0] in self.navigation:
             # A view
-            return self.navigate_to_view(o[0], **additional_context)
+            return self.navigate_to_view(o[0], additional_context)
 
-    def navigate_to_view(self, view, **additional_context):
+    def navigate_to_view(self, view, additional_context):
         context = {}
         context.update(self.default_context)
         context.update(additional_context)
 
         paths = []
-        for path in self.all_paths(from_view=view):
+        for path in self.all_paths(from_view=self.entry_view, to_view=view):
             # Disqualify paths based on the variables
             skip = False
             for _, params, _ in path:
@@ -129,7 +132,7 @@ class Navigator(object):
         except IndexError:
             raise ValueError('Could not find a path!')
 
-        self.navigate_path(view, path, **context)
+        return self.navigate_path(self.entry_view, path, context)
 
     def navigate_path(self, from_view, path, context):
         pass
