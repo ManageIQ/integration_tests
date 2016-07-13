@@ -53,7 +53,6 @@ properties_form_55 = Form(
                 "5.5": "api_port",
             }
         )),
-        ('azure_subscription_id', Input("subscription")),
         ('api_version', AngularSelect("api_version"), {"appeared_in": "5.5"}),
         ('sec_protocol', AngularSelect("security_protocol"), {"appeared_in": "5.5"}),
         ('infra_provider', {
@@ -174,7 +173,7 @@ class AzureProvider(Provider):
         self.subscription_id = subscription_id
 
     def _form_mapping(self, create=None, **kwargs):
-        # Will still need to figure out where to put the tenant id.
+        # Tenant ID and Subscription ID will have to live in cfme_data for now.
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Azure',
                 'region_select': kwargs.get('region'),
