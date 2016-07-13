@@ -2,7 +2,6 @@
 from xml.sax.saxutils import quoteattr
 
 from pomoc.objects import Widget
-from pomoc.library import Clickable
 
 
 class TwoLevelMenuItem(Widget):
@@ -31,48 +30,3 @@ class ContentTitle(Widget):
 
     def __locator__(self):
         return '//div[@id="main-content"]//h1[normalize-space(.)={}]'.format(quoteattr(self.title))
-
-
-class TopMenuItem(Widget, Clickable):
-    def __init__(self, parent, name):
-        super(TopMenuItem, self).__init__(parent)
-        self.name = name
-
-    @property
-    def li_element(self):
-        return self.browser.element('../..', parents=[self])
-
-    @property
-    def is_active(self):
-        return 'active' in self.browser.classes(self.li_element)
-
-    def __locator__(self):
-        return '//ul[@id="maintab"]/li/a/span[normalize-space(.)={}]'.format(quoteattr(self.name))
-
-
-class SecondMenuItem(Widget, Clickable):
-    def __init__(self, parent, name):
-        super(SecondMenuItem, self).__init__(parent)
-        self.name = name
-
-    @property
-    def li_element(self):
-        return self.browser.element('../..', parents=[self])
-
-    @property
-    def is_active(self):
-        return 'active' in self.browser.classes(self.li_element)
-
-    def __locator__(self):
-        return '//ul[contains(@class, "list-group")]/li/a/span[normalize-space(.)={}]'.format(
-            quoteattr(self.name))
-
-
-class SecondMenuHeader(Widget):
-    def __init__(self, parent, title):
-        super(SecondMenuHeader, self).__init__(parent)
-        self.title = title
-
-    def __locator__(self):
-        return '//div[contains(@class, "nav-item-pf-header")]/span[normalize-space(.)={}]'.format(
-            quoteattr(self.title))

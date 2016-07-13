@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from cfme.classic_ui import CFMEView
+from cfme.classic_ui.base import CFMEView
 from cfme.classic_ui.widgets import ContentTitle
 
 
