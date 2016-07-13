@@ -13,8 +13,6 @@ from smartloc import Locator
 from textwrap import dedent
 from time import sleep
 
-from .beacon import before_element_query, element_found, element_not_found
-
 
 class BrowserParentContextProxy(object):
     def __init__(self, browser, parents):
@@ -66,10 +64,8 @@ class Browser(object):
             else:
                 raise
 
-    def elements(self, locator, parents=None, check_visibility=False, _suppress_signal=False):
+    def elements(self, locator, parents=None, check_visibility=False):
         locator = self._process_locator(locator)
-        if not _suppress_signal:
-            before_element_query.trigger(browser=self, locator=locator)
         # Get result
         if isinstance(locator, WebElement):
             result = [locator]
@@ -77,7 +73,7 @@ class Browser(object):
             # Get the direct parent object
             parents = list(parents) if parents else []
             if parents:
-                root_element = self.element(parents.pop(0), parents=parents, _suppress_signal=True)
+                root_element = self.element(parents.pop(0), parents=parents)
             else:
                 root_element = self.selenium
             result = root_element.find_elements(*locator)
@@ -85,17 +81,12 @@ class Browser(object):
         if check_visibility:
             result = filter(self.is_displayed, result)
 
-        if not _suppress_signal:
-            for element in result:
-                element_found.trigger(browser=self, locator=locator, element=element)
-
         return result
 
     def element(self, locator, parents=None, check_visibility=False):
         try:
             return self.elements(locator, parents=parents, check_visibility=check_visibility)[0]
         except IndexError:
-            element_not_found.trigger(browser=self, locator=locator)
             raise NoSuchElementException('Could not find an element {}'.format(repr(locator)))
 
     def click(self, locator, parents=None, check_visibility=False):
