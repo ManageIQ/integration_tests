@@ -2,6 +2,7 @@
 import inspect
 from smartloc import Locator
 from threading import Lock
+from wait_for import wait_for
 
 from .navigator import Navigator
 
@@ -77,6 +78,12 @@ class Widget(object):
     @property
     def is_displayed(self):
         return self.browser.is_displayed(self)
+
+    def wait_displayed(self):
+        wait_for(lambda: self.is_displayed, timeout='15s', delay=0.2)
+
+    def move_to_element(self):
+        return self.browser.move_to_element(self)
 
     def __locator__(self):
         raise NotImplementedError('You have to implement __locator__ or __element__')

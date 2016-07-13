@@ -4,6 +4,8 @@ import sys
 from cached_property import cached_property
 from kwargify import kwargify
 
+from wait_for import TimedOutError, wait_for
+
 from .browser import Browser
 from .plugin import BasePlugin
 
@@ -65,6 +67,12 @@ class Navigator(object):
     @cached_property
     def selenium(self):
         return self.root_object.selenium
+
+    def ensure_page_safe(self):
+        try:
+            wait_for(self.plugin.check_page_ready, timeout='15s', delay=0.2)
+        except TimedOutError:
+            raise RuntimeError('Could not wait for the page to become safe to touch')
 
     def build_navigation(self):
         if self.navigation:
@@ -232,6 +240,8 @@ class Navigator(object):
             view.on_load()
         except AttributeError:
             pass
+        finally:
+            self.ensure_page_safe()
         return view
 
     def execute_transition(self, view, name, context):
@@ -241,7 +251,9 @@ class Navigator(object):
             call = getattr(call, level)
         # Call now contains reference to the method
         call = kwargify(call)  # Makes it immune against big dicts and so
+        self.ensure_page_safe()
         call(**context)
+        self.ensure_page_safe()
 
     def navigate_path(self, from_view, final_view, passed_context):
         context = {}

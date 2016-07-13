@@ -38,3 +38,13 @@ class SecondMenuItem(Widget, Clickable):
     def __locator__(self):
         return '//ul[contains(@class, "list-group")]/li/a/span[normalize-space(.)={}]'.format(
             quoteattr(self.name))
+
+
+class SecondMenuHeader(Widget):
+    def __init__(self, parent, title):
+        super(SecondMenuHeader, self).__init__(parent)
+        self.title = title
+
+    def __locator__(self):
+        return '//div[contains(@class, "nav-item-pf-header")]/span[normalize-space(.)={}]'.format(
+            quoteattr(self.title))

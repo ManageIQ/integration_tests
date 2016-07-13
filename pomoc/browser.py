@@ -99,9 +99,11 @@ class Browser(object):
             raise NoSuchElementException('Could not find an element {}'.format(repr(locator)))
 
     def click(self, locator, parents=None, check_visibility=False):
+        self.navigator.ensure_page_safe()
         self.move_to_element(locator, parents=parents, check_visibility=check_visibility)
         # and then click on current mouse position
         ActionChains(self.selenium).click().perform()
+        self.navigator.ensure_page_safe()
 
     def is_displayed(self, locator, parents=None):
         retry = True
@@ -160,6 +162,7 @@ class Browser(object):
         return self.element(*args, **kwargs).get_attribute(attr)
 
     def send_keys(self, text, *args, **kwargs):
+        self.navigator.ensure_page_safe()
         text = text or ''
         file_intercept = False
         # If the element is input type file, we will need to use the file detector
@@ -177,5 +180,6 @@ class Browser(object):
             # the LocalFileDetector there.
             if file_intercept:
                 self.selenium.file_detector = UselessFileDetector()
+            self.navigator.ensure_page_safe()
 
     # So on ...

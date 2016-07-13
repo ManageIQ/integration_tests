@@ -3,14 +3,17 @@ from pomoc.library import Input, Link
 from pomoc.patternfly import Button
 from pomoc.navigator import Navigator
 from pomoc.objects import View
+from smartloc import Locator
 
-from .widgets import TopMenuItem, SecondMenuItem
+from .widgets import TopMenuItem, SecondMenuItem, SecondMenuHeader
 
 
 class CFMEView(View):
     class menu(View):
         class intelligence(View):
-            intelligence = TopMenuItem('Cloud Intel')
+            brand = Locator('//img[@alt="ManageIQ"]')
+            topmenuitem = TopMenuItem('Cloud Intel')
+            header = SecondMenuHeader('Cloud Intel')
             dashboard = SecondMenuItem('Dashboard')
             reports = SecondMenuItem('Reports')
             chargeback = SecondMenuItem('Chargeback')
@@ -19,12 +22,18 @@ class CFMEView(View):
 
             @Navigator.transition_to('Dashboard')
             def go_to_dashboard(self):
-                self.intelligence.click()
+                self.topmenuitem.click()
+                self.browser.move_to_element(self.brand)
+                self.topmenuitem.move_to_element()
+                self.header.wait_displayed()
                 self.dashboard.click()
 
             @Navigator.transition_to('Reports')
             def go_to_reports(self):
-                self.intelligence.click()
+                self.topmenuitem.click()
+                self.browser.move_to_element(self.brand)
+                self.topmenuitem.move_to_element()
+                self.header.wait_displayed()
                 self.reports.click()
         # insights = TopMenuItem('Red Hat Insights')
         # services = TopMenuItem('Services')
