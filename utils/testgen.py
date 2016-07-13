@@ -331,8 +331,6 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
 
     """
 
-    metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
-
     argnames = []
     argvalues = []
     idlist = []
@@ -367,6 +365,7 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
             continue
 
         if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
+            metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
             argnames.append('provider')
 
         # uncollect when required field is not present and option['require_field'] == True
