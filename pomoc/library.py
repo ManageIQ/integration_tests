@@ -47,4 +47,4 @@ class Input(Widget, Clickable):
         self.browser.send_keys(text, self)
 
     def __locator__(self):
-        return 'input#'.format(self.id)
+        return 'input#{}'.format(self.id)

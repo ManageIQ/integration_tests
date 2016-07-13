@@ -44,14 +44,18 @@ class BrowserParentContextProxy(object):
 
 class Browser(object):
     """Equivalent of pytest_selenium - browser functions"""
-    def __init__(self, selenium_browser):
-        self.selenium = selenium_browser
+    def __init__(self, navigator):
+        self.navigator = navigator
+
+    @property
+    def selenium(self):
+        return self.navigator.selenium
 
     def in_parent_context(self, parents):
         return BrowserParentContextProxy(self, parents)
 
     @staticmethod
-    def _process_locator(self, locator):
+    def _process_locator(locator):
         if isinstance(locator, WebElement):
             return locator
         try:

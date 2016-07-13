@@ -5,6 +5,7 @@ from cached_property import cached_property
 from kwargify import kwargify
 
 from .browser import Browser
+from .plugin import BasePlugin
 
 
 class NavigatorState(dict):
@@ -46,7 +47,7 @@ class Navigator(object):
                                 view_class.__name__, name, ', '.join(bad_views)))
                 yield name, method._navigator['transition_to'], argnames
 
-    def __init__(self, root_object, entry_view):
+    def __init__(self, root_object, entry_view, plugin=BasePlugin):
         self.root_object = root_object
         if not hasattr(entry_view, 'on_load'):
             raise ValueError('The entry view does not have on_load method.')
@@ -54,11 +55,16 @@ class Navigator(object):
         self.state = NavigatorState()
         self.default_context = {}
         self.navigation = {}
+        self.plugin = plugin(self)
         self.build_navigation()
 
     @cached_property
     def browser(self):
-        return Browser(self.root_object.selenium)
+        return Browser(self)
+
+    @cached_property
+    def selenium(self):
+        return self.root_object.selenium
 
     def build_navigation(self):
         if self.navigation:
@@ -186,7 +192,7 @@ class Navigator(object):
                     resulting_paths.append([signature] + path)
 
         if to_view is not None and resulting_paths:
-            resulting_paths = filter(lambda path: path[-1][-1] == to_view, resulting_paths)
+            resulting_paths = filter(lambda path: path[-1][-2] == to_view, resulting_paths)
         return resulting_paths
 
     def detect_view(self):
@@ -198,7 +204,7 @@ class Navigator(object):
             raise TypeError('You have to pass something')
         if len(o) == 1 and o[0] in self.navigation:
             # A view
-            return self.navigate_to_view(self.detect_view(), o[0], context)
+            return self.navigate_path(self.detect_view(), o[0], context)
 
     def path_from_to(self, from_view, to_view, given_params):
         paths = []
@@ -237,10 +243,10 @@ class Navigator(object):
         call = kwargify(call)  # Makes it immune against big dicts and so
         call(**context)
 
-    def navigate_path(self, from_view, final_view, context):
+    def navigate_path(self, from_view, final_view, passed_context):
         context = {}
         context.update(self.default_context)
-        context.update(context)
+        context.update(passed_context)
 
         path = self.path_from_to(from_view, final_view, context.keys())
         # Create initial view
