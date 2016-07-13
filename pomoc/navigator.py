@@ -6,6 +6,8 @@ from kwargify import kwargify
 
 from wait_for import TimedOutError, wait_for
 
+from utils.browser import quit
+
 from .browser import Browser
 from .plugin import BasePlugin
 
@@ -54,6 +56,7 @@ class Navigator(object):
         if not hasattr(entry_view, 'on_load'):
             raise ValueError('The entry view does not have on_load method.')
         self.entry_view = entry_view
+        self.current_view = None
         self.state = NavigatorState()
         self.default_context = {}
         self.navigation = {}
@@ -172,6 +175,8 @@ class Navigator(object):
 
     def all_paths(self, from_view=None, to_view=None, ignored_views=None):
         view = from_view or self.entry_view
+        if not inspect.isclass(view):
+            view = type(view)
         ignored_views = ignored_views or set()
 
         try:
@@ -203,9 +208,25 @@ class Navigator(object):
             resulting_paths = filter(lambda path: path[-1][-2] == to_view, resulting_paths)
         return resulting_paths
 
+    def reload_browser(self):
+        self.current_view = None
+        del self.browser
+        del self.selenium
+        # TODO: Use something nonspecific!!
+        quit()
+
     def detect_view(self):
-        # TODO: Actual detection
-        return self.entry_view
+        if self.current_view is None:
+            self.reload_browser()
+        elif not hasattr(self.current_view, 'on_view'):
+            self.reload_browser()
+        elif not self.current_view.on_view():
+            self.reload_browser()
+
+        if self.current_view is None:
+            return self.entry_view
+        else:
+            return self.current_view
 
     def navigate_to(self, *o, **context):
         if len(o) == 0:
@@ -235,6 +256,9 @@ class Navigator(object):
         return path
 
     def instantiate_view(self, view_class, context):
+        if not inspect.isclass(view_class):
+            view_class.context.update(context)
+            return view_class
         view = view_class(self, context)
         try:
             view.on_load()
@@ -266,17 +290,28 @@ class Navigator(object):
 
         while path:
             transition_name, params, target, additional_targets = path.pop(0)
-            self.execute_transition(current_view, transition_name, context)
+            try:
+                self.execute_transition(current_view, transition_name, context)
+            except Exception:
+                if hasattr(current_view, 'on_view') and current_view.on_view():
+                    self.current_view = current_view
+                else:
+                    # We are somewhere where we can't say
+                    self.current_view = None
+                raise
             if additional_targets:
                 view = self.instantiate_view(target, context)
                 if view.on_view():
-                    # Reinstantiate to execute onload
                     current_view = view
+                    # Update the state
+                    self.current_view = current_view
                 else:
                     for additional_target in additional_targets:
                         view = self.instantiate_view(additional_target, context)
                         if view.on_view():
                             current_view = view
+                            # Update the state
+                            self.current_view = current_view
                             # Reload path from this new place
                             path = self.path_from_to(type(current_view), final_view, context.keys())
                             break
@@ -284,5 +319,12 @@ class Navigator(object):
                         raise RuntimeError('Landed on an unknown page!')
             else:
                 current_view = self.instantiate_view(target, context)
+                if hasattr(current_view, 'on_view') and not current_view.on_view():
+                    self.current_view = None
+                    raise RuntimeError(
+                        'Transition {} was supposed to land at {} but it did not!'.format(
+                            transition_name, type(current_view).__name__))
+                # Update the state
+                self.current_view = current_view
 
         return current_view

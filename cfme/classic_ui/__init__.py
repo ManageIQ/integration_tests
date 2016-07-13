@@ -3,38 +3,26 @@ from pomoc.library import Input, Link
 from pomoc.patternfly import Button
 from pomoc.navigator import Navigator
 from pomoc.objects import View
-from smartloc import Locator
 
-from .widgets import TopMenuItem, SecondMenuItem, SecondMenuHeader
+from .widgets import TwoLevelMenuItem
 
 
 class CFMEView(View):
     class menu(View):
-        class intelligence(View):
-            brand = Locator('//img[@alt="ManageIQ"]')
-            topmenuitem = TopMenuItem('Cloud Intel')
-            header = SecondMenuHeader('Cloud Intel')
-            dashboard = SecondMenuItem('Dashboard')
-            reports = SecondMenuItem('Reports')
-            chargeback = SecondMenuItem('Chargeback')
-            timelines = SecondMenuItem('Timelines')
-            rss = SecondMenuItem('RSS')
+        dashboard = TwoLevelMenuItem('Cloud Intel', 'Dashboard')
+        reports = TwoLevelMenuItem('Cloud Intel', 'Reports')
+        chargeback = TwoLevelMenuItem('Cloud Intel', 'Chargeback')
+        timelines = TwoLevelMenuItem('Cloud Intel', 'Timelines')
+        rss = TwoLevelMenuItem('Cloud Intel', 'RSS')
 
-            @Navigator.transition_to('Dashboard')
-            def go_to_dashboard(self):
-                self.topmenuitem.click()
-                self.browser.move_to_element(self.brand)
-                self.topmenuitem.move_to_element()
-                self.header.wait_displayed()
-                self.dashboard.click()
+        @Navigator.transition_to('Dashboard')
+        def go_to_dashboard(self):
+            self.dashboard.click()
 
-            @Navigator.transition_to('Reports')
-            def go_to_reports(self):
-                self.topmenuitem.click()
-                self.browser.move_to_element(self.brand)
-                self.topmenuitem.move_to_element()
-                self.header.wait_displayed()
-                self.reports.click()
+        @Navigator.transition_to('Reports')
+        def go_to_reports(self):
+            self.reports.click()
+
         # insights = TopMenuItem('Red Hat Insights')
         # services = TopMenuItem('Services')
         # compute = TopMenuItem('Compute')
@@ -47,7 +35,10 @@ class CFMEView(View):
 
 
 class Dashboard(CFMEView):
-    pass
+    reset_button = Button(title='Reset Dashboard Widgets to the defaults')
+
+    def on_view(self):
+        return self.reset_button.is_displayed
 
 
 class Reports(CFMEView):

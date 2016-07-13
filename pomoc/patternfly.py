@@ -27,9 +27,9 @@ class Button(ByTextOrAttr, Clickable):
     def __locator__(self):
         if self.text is not None:
             return (
-                '//a[contains(@class, "btn") and normalize-space(.)={}]'.format(
+                '(//a | //button)[contains(@class, "btn") and normalize-space(.)={}]'.format(
                     quoteattr(self.text)))
         else:
             return (
-                '//a[contains(@class, "btn") and @{}={}]'.format(
+                '(//a | //button)[contains(@class, "btn") and @{}={}]'.format(
                     self.attr[0], quoteattr(self.attr[1])))
