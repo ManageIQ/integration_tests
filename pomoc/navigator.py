@@ -210,8 +210,15 @@ class Navigator(object):
 
     def reload_browser(self):
         self.current_view = None
-        del self.browser
-        del self.selenium
+        try:
+            del self.browser
+        except AttributeError:
+            pass
+
+        try:
+            del self.selenium
+        except AttributeError:
+            pass
         # TODO: Use something nonspecific!!
         quit()
 

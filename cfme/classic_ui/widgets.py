@@ -24,6 +24,15 @@ class TwoLevelMenuItem(Widget):
         return self.LOC.format(quoteattr(self.toplevel), quoteattr(self.secondlevel))
 
 
+class ContentTitle(Widget):
+    def __init__(self, parent, title):
+        super(ContentTitle, self).__init__(parent)
+        self.title = title
+
+    def __locator__(self):
+        return '//div[@id="main-content"]//h1[normalize-space(.)={}]'.format(quoteattr(self.title))
+
+
 class TopMenuItem(Widget, Clickable):
     def __init__(self, parent, name):
         super(TopMenuItem, self).__init__(parent)
