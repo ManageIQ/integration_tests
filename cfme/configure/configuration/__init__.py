@@ -5,6 +5,7 @@ from cached_property import cached_property
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 
+from cfme import dashboard
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound, CandidateNotFound
@@ -153,6 +154,11 @@ def server_region():
     return store.current_appliance.server_region()
 
 
+def go_to_configuration():
+    sel.click(dashboard.page.user_dropdown)
+    sel.click(dashboard.page.configuration)
+
+
 def server_region_pair():
     r = server_region()
     return r, r
@@ -181,116 +187,126 @@ def server_zone_description():
 
 
 def server_region_string():
+    if version.current_version() == 'master':
+        go_to_configuration()
     return "CFME Region: Region {} [{}]".format(*server_region_pair())
 
-nav.add_branch("configuration",
-    {
-        "cfg_settings_region":
+
+def get_branch_name():
+    if version.current_version() == 'master':
+        return 'dashboard'
+    return 'configuration'
+
+cfg_branch = {
+    "cfg_settings_region":
         [
             lambda _: settings_tree(server_region_string()),
             {
                 "cfg_settings_region_details":
-                lambda _: tabs.select_tab("Details"),
+                    lambda _: tabs.select_tab("Details"),
 
                 "cfg_settings_region_cu_collection":
-                lambda _: tabs.select_tab("C & U Collection"),
+                    lambda _: tabs.select_tab("C & U Collection"),
 
                 "cfg_settings_region_my_company_categories":
-                [
-                    lambda _: tabs.select_tab("My Company Categories"),
-                    {
-                        "cfg_settings_region_my_company_category_new":
-                        lambda _: sel.click(category_form.new_tr),
+                    [
+                        lambda _: tabs.select_tab("My Company Categories"),
+                        {
+                            "cfg_settings_region_my_company_category_new":
+                                lambda _: sel.click(category_form.new_tr),
 
-                        "cfg_settings_region_my_company_category_edit":
-                        lambda ctx: category_table.click_cell("name", ctx.category.name)
-                    },
-                ],
+                            "cfg_settings_region_my_company_category_edit":
+                                lambda ctx: category_table.click_cell("name",
+                                                                      ctx.category.name)
+                        },
+                    ],
 
                 "cfg_settings_region_my_company_tags":
-                [
-                    lambda _: tabs.select_tab("My Company Tags"),
-                    {
-                        "cfg_settings_region_my_company_tag_new":
-                        lambda ctx: add_tag(ctx.tag.category.display_name),
+                    [
+                        lambda _: tabs.select_tab("My Company Tags"),
+                        {
+                            "cfg_settings_region_my_company_tag_new":
+                                lambda ctx: add_tag(ctx.tag.category.display_name),
 
-                        "cfg_settings_region_my_company_tag_edit":
-                        lambda ctx: edit_tag(ctx.tag.category.display_name, ctx.tag.name)
-                    },
-                ],
+                            "cfg_settings_region_my_company_tag_edit":
+                                lambda ctx: edit_tag(ctx.tag.category.display_name,
+                                                     ctx.tag.name)
+                        },
+                    ],
 
                 "cfg_settings_region_import_tags":
-                lambda _: tabs.select_tab("Import Tags"),
+                    lambda _: tabs.select_tab("Import Tags"),
 
                 "cfg_settings_region_import":
-                lambda _: tabs.select_tab("Import"),
+                    lambda _: tabs.select_tab("Import"),
 
                 "cfg_settings_region_red_hat_updates":
-                lambda _: tabs.select_tab("Red Hat Updates")
+                    lambda _: tabs.select_tab("Red Hat Updates")
             }
         ],
 
-        "cfg_analysis_profiles": [
-            lambda _: settings_tree(server_region_string(), "Analysis Profiles"),
-            {
-                "host_analysis_profile_add": lambda _: tb.select(
-                    "Configuration", "Add Host Analysis Profile"),
-                "vm_analysis_profile_add": lambda _: tb.select(
-                    "Configuration", "Add VM Analysis Profile"),
-            }
-        ],
+    "cfg_analysis_profiles": [
+        lambda _: settings_tree(server_region_string(), "Analysis Profiles"),
+        {
+            "host_analysis_profile_add": lambda _: tb.select(
+                "Configuration", "Add Host Analysis Profile"),
+            "vm_analysis_profile_add": lambda _: tb.select(
+                "Configuration", "Add VM Analysis Profile"),
+        }
+    ],
 
-        "cfg_analysis_profile": [
-            lambda ctx:
-            settings_tree(server_region_string(), "Analysis Profiles", str(ctx.analysis_profile)),
-            {
-                "analysis_profile_edit":
+    "cfg_analysis_profile": [
+        lambda ctx:
+        settings_tree(server_region_string(), "Analysis Profiles",
+                      str(ctx.analysis_profile)),
+        {
+            "analysis_profile_edit":
                 lambda _: tb.select("Configuration", "Edit this Analysis Profile"),
-            }
-        ],
+        }
+    ],
 
-        "cfg_settings_defaultzone":
+    "cfg_settings_defaultzone":
         lambda _: settings_tree(
             server_region_string(),
             "Zones",
             "Zone: Default Zone (current)",
         ),
 
-        "cfg_settings_zones":
+    "cfg_settings_zones":
         [
             lambda _: settings_tree(
                 server_region_string(),
                 "Zones"),
             {
                 "cfg_settings_zone":
-                [
-                    lambda ctx: zones_table.click_cell("name", ctx["zone_name"]),
-                    {
-                        "cfg_settings_zone_edit":
-                        lambda _: tb.select("Configuration", "Edit this Zone")
-                    }
-                ]
+                    [
+                        lambda ctx: zones_table.click_cell("name", ctx["zone_name"]),
+                        {
+                            "cfg_settings_zone_edit":
+                                lambda _: tb.select("Configuration", "Edit this Zone")
+                        }
+                    ]
             }
         ],
 
-        "cfg_settings_schedules":
+    "cfg_settings_schedules":
         [
             lambda _: settings_tree(
                 server_region_string(),
                 "Schedules"),
             {
                 "cfg_settings_schedule":
-                [
-                    lambda ctx: records_table.click_cell("name", ctx["schedule_name"]),
-                    {
-                        "cfg_settings_schedule_edit":
-                        lambda _: tb.select("Configuration", "Edit this Schedule")
-                    }
-                ]
+                    [
+                        lambda ctx: records_table.click_cell("name", ctx["schedule_name"]),
+                        {
+                            "cfg_settings_schedule_edit":
+                                lambda _: tb.select("Configuration", "Edit this Schedule")
+                        }
+                    ]
             }
         ],
 
-        "cfg_settings_currentserver":
+    "cfg_settings_currentserver":
         [
             lambda _: settings_tree(
                 server_region_string(),
@@ -300,31 +316,31 @@ nav.add_branch("configuration",
             ),
             {
                 "cfg_settings_currentserver_server":
-                lambda _: tabs.select_tab("Server"),
+                    lambda _: tabs.select_tab("Server"),
 
                 "cfg_settings_currentserver_auth":
-                lambda _: tabs.select_tab("Authentication"),
+                    lambda _: tabs.select_tab("Authentication"),
 
                 "cfg_settings_currentserver_workers":
-                lambda _: tabs.select_tab("Workers"),
+                    lambda _: tabs.select_tab("Workers"),
 
                 "cfg_settings_currentserver_database":
-                lambda _: tabs.select_tab("Database"),
+                    lambda _: tabs.select_tab("Database"),
 
                 "cfg_settings_currentserver_logos":
-                lambda _: tabs.select_tab("Custom Logos"),
+                    lambda _: tabs.select_tab("Custom Logos"),
 
                 "cfg_settings_currentserver_maintenance":
-                lambda _: tabs.select_tab("Maintenance"),
+                    lambda _: tabs.select_tab("Maintenance"),
 
                 "cfg_settings_currentserver_smartproxy":
-                lambda _: tabs.select_tab("SmartProxy"),
+                    lambda _: tabs.select_tab("SmartProxy"),
 
                 "cfg_settings_currentserver_advanced":
-                lambda _: tabs.select_tab("Advanced")
+                    lambda _: tabs.select_tab("Advanced")
             }
         ],
-        "cfg_diagnostics_currentserver":
+    "cfg_diagnostics_currentserver":
         [
             lambda _: diagnostics_tree(
                 server_region_string(),
@@ -333,37 +349,37 @@ nav.add_branch("configuration",
             ),
             {
                 "cfg_diagnostics_server_summary":
-                lambda _: tabs.select_tab("Summary"),
+                    lambda _: tabs.select_tab("Summary"),
 
                 "cfg_diagnostics_server_workers":
-                lambda _: tabs.select_tab("Workers"),
+                    lambda _: tabs.select_tab("Workers"),
 
                 "cfg_diagnostics_server_collect":
-                [
-                    lambda _: tabs.select_tab("Collect Logs"),
-                    {
-                        "cfg_diagnostics_server_collect_settings":
-                        lambda _: tb.select("Edit")
-                    }
-                ],
+                    [
+                        lambda _: tabs.select_tab("Collect Logs"),
+                        {
+                            "cfg_diagnostics_server_collect_settings":
+                                lambda _: tb.select("Edit")
+                        }
+                    ],
 
                 "cfg_diagnostics_server_cfmelog":
-                lambda _: tabs.select_tab("CFME Log"),
+                    lambda _: tabs.select_tab("CFME Log"),
 
                 "cfg_diagnostics_server_auditlog":
-                lambda _: tabs.select_tab("Audit Log"),
+                    lambda _: tabs.select_tab("Audit Log"),
 
                 "cfg_diagnostics_server_productionlog":
-                lambda _: tabs.select_tab("Production Log"),
+                    lambda _: tabs.select_tab("Production Log"),
 
                 "cfg_diagnostics_server_utilization":
-                lambda _: tabs.select_tab("Utilization"),
+                    lambda _: tabs.select_tab("Utilization"),
 
                 "cfg_diagnostics_server_timelines":
-                lambda _: tabs.select_tab("Timelines"),
+                    lambda _: tabs.select_tab("Timelines"),
             }
         ],
-        "cfg_diagnostics_defaultzone":
+    "cfg_diagnostics_defaultzone":
         [
             lambda _: diagnostics_tree(
                 server_region_string(),
@@ -371,52 +387,56 @@ nav.add_branch("configuration",
             ),
             {
                 "cfg_diagnostics_zone_roles_by_servers":
-                lambda _: tabs.select_tab("Roles by Servers"),
+                    lambda _: tabs.select_tab("Roles by Servers"),
 
                 "cfg_diagnostics_zone_servers_by_roles":
-                lambda _: tabs.select_tab("Servers by Roles"),
+                    lambda _: tabs.select_tab("Servers by Roles"),
 
                 "cfg_diagnostics_zone_servers":
-                lambda _: tabs.select_tab("Servers"),
+                    lambda _: tabs.select_tab("Servers"),
 
                 "cfg_diagnostics_zone_collect":
-                lambda _: tabs.select_tab("Collect Logs"),
+                    lambda _: tabs.select_tab("Collect Logs"),
 
                 "cfg_diagnostics_zone_gap_collect":
-                lambda _: tabs.select_tab("C & U Gap Collection"),
+                    lambda _: tabs.select_tab("C & U Gap Collection"),
             }
         ],
-        "cfg_diagnostics_region":
+    "cfg_diagnostics_region":
         [
             lambda _: diagnostics_tree(server_region_string()),
             {
                 "cfg_diagnostics_region_zones":
-                lambda _: tabs.select_tab("Zones"),
+                    lambda _: tabs.select_tab("Zones"),
 
                 "cfg_diagnostics_region_roles_by_servers":
-                lambda _: tabs.select_tab("Roles by Servers"),
+                    lambda _: tabs.select_tab("Roles by Servers"),
 
                 "cfg_diagnostics_region_servers_by_roles":
-                lambda _: tabs.select_tab("Servers by Roles"),
+                    lambda _: tabs.select_tab("Servers by Roles"),
 
                 "cfg_diagnostics_region_servers":
-                lambda _: tabs.select_tab("Servers"),
+                    lambda _: tabs.select_tab("Servers"),
 
                 "cfg_diagnostics_region_replication":
-                lambda _: tabs.select_tab("Replication"),
+                    lambda _: tabs.select_tab("Replication"),
 
                 "cfg_diagnostics_region_database":
-                lambda _: tabs.select_tab("Database"),
+                    lambda _: tabs.select_tab("Database"),
 
                 "cfg_diagnostics_region_orphaned":
-                lambda _: tabs.select_tab("Orphaned Data"),
+                    lambda _: tabs.select_tab("Orphaned Data"),
             }
         ],
 
-        "configuration_access_control": lambda _: accordion.click("Access Control"),
-        "configuration_database": lambda _: accordion.click("Database"),
-    }
-)
+    "configuration_access_control": lambda _: accordion.click("Access Control"),
+    "configuration_database": lambda _: accordion.click("Database"),
+}
+
+
+def nav_add_branch():
+    nav.add_branch(name=get_branch_name(),
+                   branches=cfg_branch)
 
 
 class AnalysisProfile(Pretty, Updateable):
@@ -470,6 +490,7 @@ class AnalysisProfile(Pretty, Updateable):
         self.events = events
         self.categories = categories
         self.registry = registry
+        nav_add_branch()
 
     def create(self):
         sel.force_navigate(self.CREATE_LOC)
@@ -601,6 +622,7 @@ class ServerLogDepot(Pretty):
             self.username = username
             self.password = password
             self.name = name
+            nav_add_branch()
 
         @cached_property
         def p_types(self):
@@ -1577,6 +1599,7 @@ class Zone(Pretty):
     pretty_attrs = ['name', 'description', 'smartproxy_ip', 'ntp_server_1',
                     'ntp_server_2', 'ntp_server_3', 'max_scans', 'user', 'password', 'verify']
 
+
     def __init__(self,
                  name=None,
                  description=None,
@@ -1598,6 +1621,7 @@ class Zone(Pretty):
         self.user = user
         self.password = password
         self.verify = verify
+        nav_add_branch()
 
     def _form_mapping(self, create=None, **kwargs):
         return {
