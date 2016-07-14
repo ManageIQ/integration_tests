@@ -71,7 +71,8 @@ def at_exit(f, *args, **kwargs):
 
 def _prenormalize_text(text):
     """Makes the text lowercase and removes all characters that are not digits, alphas, or spaces"""
-    return re.sub(r"[^a-z0-9 ]", "", text.strip().lower())
+    # _'s represent spaces so convert those to spaces too
+    return re.sub(r"[^a-z0-9 ]", "", text.strip().lower().replace('_', ' '))
 
 
 def _replace_spaces_with(text, delim):
