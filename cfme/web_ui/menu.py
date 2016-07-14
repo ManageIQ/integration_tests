@@ -76,6 +76,11 @@ class Menu(UINavigate):
         if not self._branches:
             self._branches = self._branch_convert(self.sections)
             self.add_branch('toplevel', self._branches)
+
+            if version.current_version() >= '5.7':
+                from cfme.dashboard import add_nav_branches
+                add_nav_branches()
+
             while self._branch_stack:
                 name, branches = self._branch_stack.pop(0)
                 try:
@@ -90,9 +95,6 @@ class Menu(UINavigate):
                 self.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
             else:
                 self.CURRENT_TOP_MENU = "{}{}".format(self.ROOT, self.ACTIVE_LEV)
-            from cfme.dashboard import add_nav_branches
-            if version.current_version() >= '5.7':
-                add_nav_branches()
 
     def add_branch(self, name, branches):
         """Adds a branch to the tree at a given destination
