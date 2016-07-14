@@ -6,6 +6,7 @@ import re
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Region, Table, tabstrip, toolbar
+from cfme.web_ui.menu import nav
 from utils import deferred_verpick, version
 from utils.timeutil import parsetime
 from utils.pretty import Pretty
@@ -27,6 +28,22 @@ page = Region(
         }
     },
     identifying_loc='reset_widgets_button')
+
+
+def click_top_right(item):
+    base_locator = '//nav//a[@id="dropdownMenu2"]/../ul//a[normalize-space(.)="{}"]'
+    sel.click(page.user_dropdown)
+    sel.click(base_locator.format(item), wait_ajax=False)
+    sel.handle_alert(wait=False)
+
+
+def add_nav_branches():
+    nav.add_branch('toplevel', {
+        'my_settings': lambda _: click_top_right('My Settings'),
+        'tasks': lambda _: click_top_right('Tasks'),
+        'configuration': lambda _: click_top_right('Configuration'),
+        'about': lambda _: click_top_right('About')
+    })
 
 
 def reset_widgets(cancel=False):
