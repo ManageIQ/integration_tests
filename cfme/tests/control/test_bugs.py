@@ -5,6 +5,7 @@ import pytest
 from cfme.common.vm import VM
 from cfme.control.explorer import PolicyProfile, VMCompliancePolicy, Action, VMControlPolicy
 from cfme.infrastructure.virtual_machines import Vm
+from utils.version import current_version
 from utils.log import logger
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
@@ -58,6 +59,7 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1209538], automates=[1209538])
+@pytest.mark.skipif(current_version() > "5.5", reason="requires cfme 5.5 and lower")
 def test_folder_field_scope(request, vmware_provider, vmware_vm):
     """This test tests the bug that makes the folder filter in expression not work.
 
