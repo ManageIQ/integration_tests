@@ -91,7 +91,7 @@ class Menu(UINavigate):
             else:
                 self.CURRENT_TOP_MENU = "{}{}".format(self.ROOT, self.ACTIVE_LEV)
             from cfme.dashboard import add_nav_branches
-            if version.current_version() >= 5.7:
+            if version.current_version() >= '5.7':
                 add_nav_branches()
 
     def add_branch(self, name, branches):
@@ -351,7 +351,7 @@ class Menu(UINavigate):
                     ('about', 'About')
                 )
             }
-        if version.current_version() == version.LATEST:
+        if version.current_version() >= '5.7':
             del sections[('configure', 'Settings')]
         return sections
 
