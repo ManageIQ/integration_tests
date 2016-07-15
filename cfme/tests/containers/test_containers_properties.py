@@ -1,6 +1,5 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-# the test performs field verification in Properties table
+# the test performs field validation in Properties table
 # Polarion test 9911
 # Polarion test 9877
 # Polarion test 9867
@@ -22,7 +21,7 @@ pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
 
-# container pods Properties table data validation
+# container pods Properties table field verification
 @pytest.mark.parametrize('rel',
                          ['Name',
                           'Phase',
@@ -36,6 +35,7 @@ def test_pods_properties_rel(provider, rel):
     list_tbl_pod = CheckboxTable(table_locator="//div[@id='list_grid']//table")
     ui_pods = [r.name.text for r in list_tbl_pod.rows()]
     mgmt_objs = provider.mgmt.list_container_group()  # run only if table is not empty
+    validate_str = False
 
     if ui_pods:
         # verify that mgmt pods exist in ui listed pods
@@ -44,15 +44,20 @@ def test_pods_properties_rel(provider, rel):
 
     for name in ui_pods:
         obj = Pod(name, provider)
+        val = obj.get_detail('Properties', rel)
 
-        val = str(obj.get_detail('Properties', rel))
-        if val:
-            print ('\n' + val)
-        else:
-            print "Data integrity validation failed"
+        # the field should not be empty
+        try:
+            str(val)
+            validate_str = True
+        except ValueError:
+            pass
+
+        if validate_str:
+            assert len(val) != 0
 
 
-# container routes Properties table validation
+# container routes Properties table field verification
 @pytest.mark.parametrize('rel',
                          ['Name',
                           'Creation timestamp',
@@ -64,6 +69,7 @@ def test_routes_properties_rel(provider, rel):
         table_locator="//div[@id='list_grid']//table")
     ui_routes = [r.name.text for r in list_tbl_route.rows()]
     mgmt_objs = provider.mgmt.list_route()  # run only if table is not empty
+    validate_str = False
 
     if ui_routes:
         # verify that mgmt routes exist in ui listed routes
@@ -72,12 +78,17 @@ def test_routes_properties_rel(provider, rel):
 
     for name in ui_routes:
         obj = Route(name, provider)
-
         val = str(obj.get_detail('Properties', rel))
-        if val:
-            print ('\n' + val)
-        else:
-            print "Data integrity validation failed"
+
+        # the field should not be empty
+        try:
+            str(val)
+            validate_str = True
+        except ValueError:
+            pass
+
+        if validate_str:
+            assert len(val) != 0
 
 
 # container projects Properties table validation
@@ -91,6 +102,7 @@ def test_projects_properties_rel(provider, rel):
         table_locator="//div[@id='list_grid']//table")
     ui_projects = [r.name.text for r in list_tbl_project.rows()]
     mgmt_objs = provider.mgmt.list_project()  # run only if table is not empty
+    validate_str = False
 
     if ui_projects:
         # verify that mgmt projects exist in ui listed projects
@@ -99,9 +111,14 @@ def test_projects_properties_rel(provider, rel):
 
     for name in ui_projects:
         obj = Project(name, provider)
-
         val = str(obj.get_detail('Properties', rel))
-        if val:
-            print ('\n' + val)
-        else:
-            print "Data integrity validation failed"
+
+        # the field should not be empty
+        try:
+            str(val)
+            validate_str = True
+        except ValueError:
+            pass
+
+        if validate_str:
+            assert len(val) != 0
