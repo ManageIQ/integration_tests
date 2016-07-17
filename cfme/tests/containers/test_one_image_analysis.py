@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+import pytest
+from cfme.fixtures import pytest_selenium as sel
+from utils import testgen
+from utils.version import current_version
+from cfme.web_ui import flash, toolbar as tb, tabstrip as tabs
+from utils.wait import wait_for, TimedOutError
+from cfme.configure import tasks
+
+# Polarion test case CMP-10064
+pytestmark = [
+    pytest.mark.uncollectif(
+        lambda: current_version() < "5.6"),
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.tier(1)]
+pytest_generate_tests = testgen.generate(
+    testgen.container_providers, scope="function")
+
+
+def test_image_analysis_finished():
+    sel.force_navigate('containers_images')
+    checkbox = ".//input[@class='list-grid-checkbox']"
+    sel.check(checkbox)
+    tb.select(
+        'Configuration',
+        'Perform SmartState Analysis',
+        invokes_alert=True)
+    sel.handle_alert()
+    flash.assert_message_contain('Analysis successfully initiated')
+    success_alert = ".//div[@class='alert alert-success']"
+
+    if not success_alert:
+        wait_for(lambda: sel.is_displayed(success_alert), num_sec=10, delay=5)
+
+    is_task_finished()
+
+
+def is_task_finished():
+    tab_name = "All VM and Container Analysis Tasks"
+    page = sel.force_navigate('tasks_all_vm')
+    task_name = "Container image analysis"
+    expected_status = "finished"
+    if not sel.is_displayed(
+            tasks.tasks_table) or not tabs.is_tab_selected(tab_name):
+        sel.force_navigate(page)
+
+    el = tasks.tasks_table.find_row_by_cells({
+        'task_name': task_name,
+        'state': expected_status
+    })
+    if not el:
+        try:
+            wait_for(is_task_finished, delay=20, timeout="5m",
+                     fail_func=lambda: tb.select('Reload'))
+        except TimedOutError:
+            pytest.fail("Analysis has not completed")
+
+        return el
