@@ -61,22 +61,21 @@ class BrowserManager(object):
         finally:
             self.browser = None
 
-    def start(self, webdriver_name=None, base_url=None, **kwargs):
+    def start(self):
         if self.browser is not None:
             self.quit()
-        return self.open_fresh(webdriver_name, base_url, **kwargs)
+        return self.open_fresh()
 
-    def open_fresh(self, webdriver_name=None, base_url=None, **kwargs):
+    def open_fresh(self):
         assert self.browser is None
 
-        webdriver_class, browser_kwargs, browser_conf, base_url = self._browser_config(
-            webdriver_name, base_url, **kwargs)
-        self._modify_when_on_wharf(webdriver_name, browser_conf, browser_kwargs)
+        webdriver_class, browser_kwargs = self._browser_config()
+
         try:
             browser = tries(3, WebDriverException, webdriver_class, **browser_kwargs)
             browser.file_detector = UselessFileDetector()
             browser.maximize_window()
-            browser.get(base_url)
+            browser.get(store.base_url)
             self.browser = browser
         except urllib2.URLError as ex:
             # connection to selenium was refused for unknown reasons
@@ -89,15 +88,18 @@ class BrowserManager(object):
                 logger.exception(ex)
                 self.wharf.checkin()
                 self.wharf = None
-                start(webdriver_name, base_url, **kwargs)
+                self.open_fresh()
             else:
                 # If we aren't running wharf, raise it
                 raise
 
         return self.browser
 
-    def _modify_when_on_wharf(self, webdriver_name, browser_conf, browser_kwargs):
-        if webdriver_name == 'Remote' and 'webdriver_wharf' in browser_conf and not self.wharf:
+    def _modify_when_on_wharf(self, webdriver_class, browser_conf, browser_kwargs):
+        if webdriver_class is not webdriver.Remote or 'webdriver_wharf' not in browser_conf:
+            return
+
+        if self.wharf is None:
             # Configured to use wharf, but it isn't configured yet; check out a webdriver container
             wharf = Wharf(browser_conf['webdriver_wharf'])
             # TODO: Error handling! :D
@@ -126,10 +128,10 @@ class BrowserManager(object):
             logger.info(view_msg)
             write_line(view_msg, cyan=True)
 
-    def _insert_profile_on_firefox(self, webdriver_name, browser_kwargs):
-        if webdriver_name == 'Firefox':
+    def _insert_profile_on_firefox(self, webdriver_class, browser_kwargs):
+        if webdriver_class is webdriver.Firefox:
             browser_kwargs['firefox_profile'] = self._firefox_profile
-        elif (webdriver_name == 'Remote' and
+        elif (webdriver_class is webdriver.Remote and
               browser_kwargs['desired_capabilities']['browserName'] == 'firefox'):
             browser_kwargs['browser_profile'] = self._firefox_profile
 
@@ -137,26 +139,23 @@ class BrowserManager(object):
     def _firefox_profile(self):
         return _load_firefox_profile()
 
-    def _browser_config(self, webdriver_name=None, base_url=None, **kwargs):
+    def _browser_config(self):
         browser_conf = conf.env.get('browser', {})
 
-        webdriver_name = webdriver_name or browser_conf.get('webdriver', 'Firefox')
+        webdriver_name = browser_conf.get('webdriver', 'Firefox')
         webdriver_class = getattr(webdriver, webdriver_name)
-        base_url = base_url or store.base_url
 
         # Pull in browser kwargs from browser yaml
         browser_kwargs = browser_conf.get('webdriver_options', {})
 
         # Handle firefox profile for Firefox or Remote webdriver
-        self._insert_profile_on_firefox(webdriver_name, browser_kwargs)
-
-        # Update it with passed-in options/overrides
-        browser_kwargs.update(kwargs)
+        self._insert_profile_on_firefox(webdriver, browser_kwargs)
 
         if webdriver_name != 'Remote' and 'desired_capabilities' in browser_kwargs:
             # desired_capabilities is only for Remote driver, but can sneak in
             del(browser_kwargs['desired_capabilities'])
-        return webdriver_class, browser_kwargs, browser_conf, base_url
+        self._modify_when_on_wharf(webdriver_class, browser_conf, browser_kwargs)
+        return webdriver_class, browser_kwargs
 
 
 manager = BrowserManager()
@@ -190,19 +189,15 @@ def ensure_browser_open():
     return manager.ensure_open()
 
 
-def start(webdriver_name=None, base_url=None, **kwargs):
+def start():
     """Starts a new web browser
 
     If a previous browser was open, it will be closed before starting the new browser
 
     Args:
-        webdriver_name: The name of the selenium Webdriver to use. Default: 'Firefox'
-        base_url: Optional, will use ``utils.conf.env['base_url']`` by default
-        **kwargs: Any additional keyword arguments will be passed to the webdriver constructor
-
     """
     # Try to clean up an existing browser session if starting a new one
-    return manager.start(webdriver_name, base_url, **kwargs)
+    return manager.start()
 
 
 def quit():
