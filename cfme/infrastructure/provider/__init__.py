@@ -52,9 +52,7 @@ properties_form = Form(
             '5.5': AngularSelect("server_emstype")
         }),
         ('name_text', Input("name")),
-        ('hostname_text', {
-            version.LOWEST: Input("hostname"),
-        }),
+        ('hostname_text', {version.LOWEST: Input("hostname")}),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('api_port', Input("port")),
         ('sec_protocol', {version.LOWEST: Select("select#security_protocol"),

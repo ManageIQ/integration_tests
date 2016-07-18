@@ -53,6 +53,7 @@
 import atexit
 import os
 import re
+import time
 import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
@@ -1485,6 +1486,12 @@ def _fill_form_list(form, values, action=None, action_always=False):
     for field, value in values:
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
+            try:
+                sel.wait_for_element(loc)
+            except TypeError:
+                # TypeError - when loc is not resolvable to an element, elements() will yell
+                # vvv An alternate scenario when element is not resolvable, just wait a bit.
+                time.sleep(1)
             logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
