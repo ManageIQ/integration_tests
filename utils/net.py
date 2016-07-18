@@ -90,7 +90,7 @@ def net_check_remote(port, addr=None, machine_addr=None, ssh_creds=None, force=F
         if not machine_addr:
             machine_addr = urlparse.urlparse(store.base_url).hostname
         if not ssh_creds:
-            ssh = SSHClient(hostname=machine_addr)
+            ssh = store.current_appliance.ssh_client
         else:
             ssh = SSHClient(
                 hostname=machine_addr,
