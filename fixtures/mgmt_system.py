@@ -18,7 +18,7 @@ def setup_infrastructure_providers(uses_infra_providers):
 
     This includes ``rhev`` and ``virtualcenter`` provider types
     """
-    providers.setup_infrastructure_providers(validate=True, check_existing=True)
+    providers._setup_providers('infra', validate=True, check_existing=True)
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def setup_cloud_providers(uses_cloud_providers):
 
     This includes ``ec2`` and ``openstack`` provider types
     """
-    providers.setup_cloud_providers(validate=True, check_existing=True)
+    providers._setup_providers('cloud', validate=True, check_existing=True)
 
 
 @pytest.fixture
@@ -36,7 +36,7 @@ def setup_container_providers(uses_container_providers):
 
     This includes ``kubernetes`` and ``openshift`` provider types
     """
-    providers.setup_container_providers(validate=True, check_existing=True)
+    providers._setup_providers('container', validate=True, check_existing=True)
 
 
 @pytest.fixture(scope='module')  # IGNORE:E1101
@@ -65,7 +65,7 @@ def has_no_cloud_providers():
     This is a destructive fixture. It will clear all cloud managements systems from
     the current appliance.
     """
-    providers.clear_cloud_providers()
+    providers.clear_provider_by_type('cloud', validate=True)
 
 
 @pytest.fixture
@@ -75,7 +75,7 @@ def has_no_infra_providers():
     This is a destructive fixture. It will clear all infrastructure managements systems from
     the current appliance.
     """
-    providers.clear_infra_providers()
+    providers.clear_provider_by_type('infra', validate=True)
 
 
 @pytest.fixture
@@ -85,10 +85,10 @@ def has_no_container_providers():
     This is a destructive fixture. It will clear all container managements systems from
     the current appliance.
     """
-    providers.clear_container_providers()
+    providers.clear_provider_by_type('container', validate=True)
 
 
 @pytest.fixture
 def has_no_middleware_providers():
     """Clear all middleware providers."""
-    providers.clear_middleware_providers()
+    providers.clear_provider_by_type('middleware', validate=True)
