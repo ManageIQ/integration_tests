@@ -10,7 +10,7 @@
 """
 from functools import partial
 
-from cfme.common.provider import CloudInfraProvider
+from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.web_ui import (
@@ -137,6 +137,7 @@ class Provider(Pretty, CloudInfraProvider):
         myprov.create()
 
     """
+    type_tclass = "infra"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
@@ -258,6 +259,9 @@ class Provider(Pretty, CloudInfraProvider):
         Usage:
             discover_from_config(utils.providers.get_crud('rhevm'))
         """
+        from virtualcenter import VMwareProvider
+        from rhevm import RHEVMProvider
+        from scvmm import SCVMMProvider
         vmware = isinstance(self, VMwareProvider)
         rhevm = isinstance(self, RHEVMProvider)
         scvmm = isinstance(self, SCVMMProvider)
@@ -279,114 +283,6 @@ class Provider(Pretty, CloudInfraProvider):
             )
             result.append(Host(name=host["name"], credentials=cred))
         return result
-
-
-class VMwareProvider(Provider):
-    def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None, provider_data=None):
-        super(VMwareProvider, self).__init__(name=name, credentials=credentials,
-                                             zone=zone, key=key, provider_data=provider_data)
-
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.start_ip = start_ip
-        self.end_ip = end_ip
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'VMware vCenter',
-                'hostname_text': kwargs.get('hostname'),
-                'ipaddress_text': kwargs.get('ip_address')}
-
-
-class OpenstackInfraProvider(Provider):
-    STATS_TO_MATCH = ['num_template', 'num_host']
-    _properties_region = prop_region
-
-    def __init__(self, name=None, credentials=None, key=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None, provider_data=None,
-                 sec_protocol=None):
-        super(OpenstackInfraProvider, self).__init__(name=name, credentials=credentials,
-                                             key=key, provider_data=provider_data)
-
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.start_ip = start_ip
-        self.end_ip = end_ip
-        self.sec_protocol = sec_protocol
-
-    def _form_mapping(self, create=None, **kwargs):
-        data_dict = {
-            'name_text': kwargs.get('name'),
-            'type_select': create and 'OpenStack Platform Director',
-            'hostname_text': kwargs.get('hostname'),
-            'api_port': kwargs.get('api_port'),
-            'ipaddress_text': kwargs.get('ip_address'),
-            'sec_protocol': kwargs.get('sec_protocol'),
-            'amqp_sec_protocol': kwargs.get('amqp_sec_protocol')}
-        if 'amqp' in self.credentials:
-            data_dict.update({
-                'event_selection': 'amqp',
-                'amqp_hostname_text': kwargs.get('hostname'),
-                'amqp_api_port': kwargs.get('amqp_api_port', '5672'),
-                'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
-            })
-        return data_dict
-
-
-class SCVMMProvider(Provider):
-    STATS_TO_MATCH = ['num_template', 'num_vm']
-
-    def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None,
-                 provider_data=None):
-        super(SCVMMProvider, self).__init__(name=name, credentials=credentials,
-            zone=zone, key=key, provider_data=provider_data)
-
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.start_ip = start_ip
-        self.end_ip = end_ip
-        self.sec_protocol = sec_protocol
-        self.sec_realm = sec_realm
-
-    def _form_mapping(self, create=None, **kwargs):
-
-        values = {
-            'name_text': kwargs.get('name'),
-            'type_select': create and 'Microsoft System Center VMM',
-            'hostname_text': kwargs.get('hostname'),
-            'ipaddress_text': kwargs.get('ip_address'),
-            'sec_protocol': kwargs.get('sec_protocol')
-        }
-
-        if 'sec_protocol' in values and values['sec_protocol'] is 'Kerberos':
-            values['sec_realm'] = kwargs.get('sec_realm')
-
-        return values
-
-
-class RHEVMProvider(Provider):
-    _properties_region = prop_region
-
-    def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, start_ip=None, end_ip=None,
-                 provider_data=None):
-        super(RHEVMProvider, self).__init__(name=name, credentials=credentials,
-                                            zone=zone, key=key, provider_data=provider_data)
-
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.api_port = api_port
-        self.start_ip = start_ip
-        self.end_ip = end_ip
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'Red Hat Enterprise Virtualization Manager',
-                'hostname_text': kwargs.get('hostname'),
-                'api_port': kwargs.get('api_port'),
-                'ipaddress_text': kwargs.get('ip_address')}
 
 
 def get_all_providers(do_not_navigate=False):
@@ -440,3 +336,5 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
+
+import_all_modules_of('cfme.infrastructure.provider')

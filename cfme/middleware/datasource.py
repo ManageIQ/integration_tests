@@ -9,7 +9,7 @@ from mgmtsystem.hawkular import Path
 from utils import attributize_string
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key
-from utils.providers import list_middleware_providers
+from utils.providers import list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
 
@@ -158,7 +158,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
     def datasources_in_mgmt(cls, provider=None, server=None):
         if provider is None:
             datasources = []
-            for _provider in list_middleware_providers():
+            for _provider in list_providers('hawkular'):
                 datasources.extend(cls._datasources_in_mgmt(get_crud(_provider), server))
             return datasources
         else:
