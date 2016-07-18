@@ -1,5 +1,3 @@
-from . import Endpoint
-
 from utils.log import logger
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import (
@@ -15,15 +13,14 @@ from time import sleep
 from cfme.web_ui.menu import Menu
 
 
-class UIEndpoint(Endpoint):
-    """UI endpoint"""
+class ViaUI(object):
+    """UI implementation using the normal ux"""
     # ** Wow, a lot to talk about here. so we introduced the idea of this "endpoint" object at
     # ** the moment. This endpoint object contains everything you need to talk to that endpoint.
     # ** Sessions, endpoint sepcific functions(a la force navigate). The base class does precious
     # ** little. It's more an organizational level thing.
-    def __init__(self, name, impl, owner):
-        """UI Endpoint"""
-        super(UIEndpoint, self).__init__(name=name, impl=impl, owner=owner)
+    def __init__(self, owner):
+        self.owner = owner
         self.menu = Menu()
 
     # ** Notice our friend force_navigate is here. It used to live in pytest_selenium fixture.
