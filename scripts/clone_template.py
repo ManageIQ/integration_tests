@@ -9,6 +9,7 @@ import utils
 from utils.appliance import Appliance
 from utils.conf import cfme_data
 from utils.log import logger
+from utils.path import log_path
 from utils.providers import destroy_vm, get_mgmt
 from utils.wait import wait_for
 
@@ -164,14 +165,32 @@ def main(**kwargs):
         logger.error("VM is not running")
         return 10
 
-    ip, time_taken = wait_for(provider.get_ip_address, [deploy_args['vm_name']], num_sec=1200,
-                              fail_condition=None)
-    logger.info('IP Address returned is {}'.format(ip))
+    try:
+        ip, time_taken = wait_for(provider.get_ip_address, [deploy_args['vm_name']], num_sec=1200,
+                                  fail_condition=None)
+        logger.info('IP Address returned is {}'.format(ip))
+    except Exception as e:
+        logger.exception(e)
+        logger.error('IP address not returned')
+        return 10
 
-    if kwargs.get('configure', None):
-        logger.info('Configuring appliance, this can take a while.')
+    try:
+        if kwargs.get('configure', None):
+            logger.info('Configuring appliance, this can take a while.')
+            app = Appliance(kwargs['provider'], deploy_args['vm_name'])
+            app.configure()
+            logger.info('Successfully Configured the appliance.')
+    except Exception as e:
+        logger.exception(e)
+        logger.error('Appliance Configuration Failed')
         app = Appliance(kwargs['provider'], deploy_args['vm_name'])
-        app.configure()
+        ssh_client = app.ssh_client()
+        status, output = ssh_client.run_command('find /root/anaconda-post.log')
+        if status == 0:
+            ssh_client.get_file('/root/anaconda-post.log',
+                                log_path.join('anaconda-post.log').strpath)
+        ssh_client.close()
+        return 10
 
     if kwargs.get('outfile', None):
         with open(kwargs['outfile'], 'w') as outfile:
