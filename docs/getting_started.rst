@@ -25,7 +25,7 @@ file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
 
   #!/usr/bin/env bash
 
-  pkcon install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel
+  pkcon install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel python-devel
   virtualenv .cfme_tests
 
   . ./.cfme_tests/bin/activate
@@ -67,9 +67,10 @@ Detailed steps (manual environment setup):
   * ``gcc-c++``
   * ``openssl-devel``
   * ``libffi-devel``
+  * ``python-devel``
   * Fedora (possibly RHEL-like systems) users:
 
-    * ``pkcon install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel``
+    * ``pkcon install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel python-devel``
 
     * On RHEL and derived systems, it will say the zeromq package is not available but that is ok.
 
