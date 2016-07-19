@@ -12,12 +12,32 @@ nav.add_branch(
     'containers_services',
     {
         'containers_service':
+<<<<<<< HEAD
         lambda ctx: list_tbl.select_row_by_cells(
             {'Name': ctx['service'].name, 'Provider': ctx['service'].provider.name}),
 
         'containers_service_detail':
         lambda ctx: list_tbl.click_row_by_cells(
             {'Name': ctx['service'].name, 'Provider': ctx['service'].provider.name}),
+=======
+        [
+            lambda ctx: list_tbl.select_row_by_cells(
+                {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
+            {
+                'containers_service_edit_tags':
+                lambda _: pol_btn('Edit Tags'),
+            }
+        ],
+        'containers_service_detail':
+        [
+            lambda ctx: list_tbl.click_row_by_cells(
+                {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
+            {
+                'containers_service_edit_tags_detail':
+                lambda _: pol_btn('Edit Tags'),
+            }
+        ]
+>>>>>>> 2f8d888da9f7ed026fd48ca930671aeced168a05
     }
 )
 
