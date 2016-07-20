@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import url
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.views import login, logout, password_change
+from django.contrib.auth.views import login, password_change
 
 from appliances import api, views
 
@@ -43,7 +43,7 @@ urlpatterns = [
     url(r'^change_password$', password_change, {'template_name': 'password.html'},
         name="password_change"),
     url(r'^change_password/done$', views.go_home, name='password_change_done'),
-    url(r'^logout(?:/(?P<next_page>.*?))?$', logout, name="logout"),
+    url(r'^logout$', views.logout, name="logout"),
     url(r'^pool/request$', views.request_pool, name="request_pool"),
     url(r'^pool/transfer$', views.transfer_pool, name="transfer_pool"),
     url(r'^pool/kill/(?P<pool_id>\d+)$', views.kill_pool, name="kill_pool"),
