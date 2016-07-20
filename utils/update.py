@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from copy import deepcopy
+from copy import copy
 
 from cfme.web_ui import fill
 
@@ -62,7 +62,7 @@ def update(o, **kwargs):
            myrecord.address.zipcode = '27707'
 
     """
-    cp = deepcopy(o)
+    cp = copy(o)
 
     # let the block presumably mutate o
     yield
