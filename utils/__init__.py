@@ -11,6 +11,20 @@ from werkzeug.local import LocalProxy
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 
+class FakeObject(object):
+    def __init__(self, **kwargs):
+        self.__dict__ = kwargs
+
+
+def fakeobject_or_object(obj, attr, default=None):
+    if isinstance(obj, basestring):
+        return FakeObject(**{attr: obj})
+    elif not obj:
+        return FakeObject(**{attr: default})
+    else:
+        return obj
+
+
 def property_or_none(wrapped, *args, **kwargs):
     """property_or_none([fget[, fset[, fdel[, doc]]]])
     Property decorator that turns AttributeErrors into None returns
