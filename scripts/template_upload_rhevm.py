@@ -650,7 +650,7 @@ def run(**kwargs):
             rhevip = mgmt_sys[provider]['ipaddress']
         else:
             mgmt_sys = cfme_data['management_systems']
-            ssh_rhevm_creds = mgmt_sys[provider]['hosts'][0]['credentials']
+            ssh_rhevm_creds = mgmt_sys[provider]['ssh_creds']
             sshname = credentials[ssh_rhevm_creds]['username']
             sshpass = credentials[ssh_rhevm_creds]['password']
             rhevip = mgmt_sys[provider]['ipaddress']
@@ -669,7 +669,7 @@ def run(**kwargs):
             username = mgmt_sys[provider]['username']
             password = mgmt_sys[provider]['password']
         else:
-            ssh_rhevm_creds = mgmt_sys[provider]['hosts'][0]['credentials']
+            ssh_rhevm_creds = mgmt_sys[provider]['ssh_creds']
             sshname = credentials[ssh_rhevm_creds]['username']
             sshpass = credentials[ssh_rhevm_creds]['password']
             rhevm_credentials = mgmt_sys[provider]['credentials']
