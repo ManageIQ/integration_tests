@@ -1,68 +1,16 @@
 import re
-from cfme.common.provider import BaseProvider
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import (
-    Region, Form, AngularSelect, form_buttons, Input, Quadicon
-)
-from cfme.web_ui.menu import nav
-from utils.db import cfmedb
+
 from utils.varmeth import variable
-from . import cfg_btn, mon_btn, pol_btn, download, MiddlewareBase
 
-details_page = Region(infoblock_type='detail')
-
-
-def _db_select_query(name=None, type=None):
-    """column order: `id`, `name`, `type`"""
-    t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(t_ems.id, t_ems.name, t_ems.type)
-    if name:
-        query = query.filter(t_ems.name == name)
-    if type:
-        query = query.filter(t_ems.type == type)
-    return query
+from cfme.common.provider import BaseProvider
+from . import properties_form, _get_providers_page, _db_select_query
+from .. import download, MiddlewareBase
+from mgmtsystem.hawkular import Hawkular
+from cfme.web_ui import form_buttons
+from utils.db import cfmedb
 
 
-def _get_providers_page():
-    sel.force_navigate('middleware_providers')
-
-nav.add_branch(
-    'middleware_providers',
-    {
-        'middleware_provider_new':
-            lambda _: cfg_btn('Add a New Middleware Provider'),
-        'middleware_provider':
-        [
-            lambda ctx: sel.check(Quadicon(ctx['provider'].name).checkbox),
-            {
-                'middleware_provider_edit':
-                lambda _: cfg_btn('Edit Selected Middleware Provider'),
-                'middleware_provider_edit_tags':
-                lambda _: pol_btn('Edit Tags')
-            }],
-        'middleware_provider_detail':
-        [
-            lambda ctx: sel.click(Quadicon(ctx['provider'].name)),
-            {
-                'middleware_provider_edit_detail':
-                lambda _: cfg_btn('Edit this Middleware Provider'),
-                'middleware_provider_timelines_detail':
-                lambda _: mon_btn('Timelines'),
-                'middleware_provider_edit_tags_detail':
-                lambda _: pol_btn('Edit Tags'),
-            }]
-    }
-)
-
-properties_form = Form(
-    fields=[
-        ('type_select', AngularSelect('server_emstype')),
-        ('name_text', Input('name')),
-        ('hostname_text', Input('hostname')),
-        ('port_text', Input('port'))
-    ])
-
-
+@BaseProvider.add_type_map
 class HawkularProvider(MiddlewareBase, BaseProvider):
     """
     HawkularProvider class holds provider data. Used to perform actions on hawkular provider page
@@ -87,7 +35,9 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
     STATS_TO_MATCH = ['num_server', 'num_deployment', 'num_datasource']
     property_tuples = [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'),
                        ('provider_type', 'type')]
-
+    type_tclass = "middleware"
+    type_name = "hawkular"
+    mgmt_class = Hawkular
     page_name = 'middleware'
     string_name = 'Middleware'
     detail_page_suffix = 'provider_detail'
@@ -174,3 +124,14 @@ class HawkularProvider(MiddlewareBase, BaseProvider):
             tmp_provider = _db_select_query(
                 name=self.name, type='ManageIQ::Providers::Hawkular::MiddlewareManager').first()
             self.db_id = tmp_provider.id
+
+    @staticmethod
+    def configloader(prov_config, prov_key):
+        credentials_key = prov_config['credentials']
+        credentials = HawkularProvider.process_credential_yaml_key(credentials_key)
+        return HawkularProvider(
+            name=prov_config['name'],
+            key=prov_key,
+            hostname=prov_config['hostname'],
+            port=prov_config['port'],
+            credentials={'default': credentials})

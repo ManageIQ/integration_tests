@@ -5,7 +5,7 @@ not be difficult to extend the parametrizer.
 """
 import pytest
 
-from cfme.infrastructure.provider import VMwareProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils.conf import credentials
 from utils.net import resolve_hostname
 from utils import testgen

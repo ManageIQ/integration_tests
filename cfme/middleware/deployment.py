@@ -5,7 +5,7 @@ from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_middleware_providers
+from utils.providers import get_crud, get_provider_key, list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
 
@@ -143,7 +143,7 @@ class MiddlewareDeployment(MiddlewareBase, Taggable):
     def deployments_in_mgmt(cls, provider=None, server=None):
         if provider is None:
             deployments = []
-            for _provider in list_middleware_providers():
+            for _provider in list_providers('hawkular'):
                 deployments.extend(cls._deployments_in_mgmt(get_crud(_provider), server))
             return deployments
         else:

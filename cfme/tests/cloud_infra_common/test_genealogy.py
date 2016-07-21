@@ -4,7 +4,7 @@ import pytest
 
 from cfme.common.vm import VM
 from utils import testgen
-from utils.providers import is_cloud_provider
+
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider'),
@@ -42,7 +42,7 @@ def vm_crud(provider, small_template):
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:473"])
 @pytest.mark.parametrize("from_edit", [True, False], ids=["via_edit", "via_summary"])
 @pytest.mark.uncollectif(
-    lambda provider, from_edit: is_cloud_provider(provider.key) and not from_edit)
+    lambda provider, from_edit: provider.type_tclass == "cloud" and not from_edit)
 def test_vm_genealogy_detected(
         request, setup_provider, provider, small_template, soft_assert, from_edit, vm_crud):
     """Tests vm genealogy from what CFME can detect.

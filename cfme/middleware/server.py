@@ -8,7 +8,7 @@ from cfme.web_ui.menu import nav, toolbar as tb
 from mgmtsystem.hawkular import Path
 from utils import attributize_string
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_middleware_providers
+from utils.providers import get_crud, get_provider_key, list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, mon_btn, pwr_btn, MiddlewareBase, download
 
@@ -140,7 +140,7 @@ class MiddlewareServer(MiddlewareBase, Taggable):
     def servers_in_mgmt(cls, provider=None):
         if provider is None:
             deployments = []
-            for _provider in list_middleware_providers():
+            for _provider in list_providers('hawkular'):
                 deployments.extend(cls._servers_in_mgmt(get_crud(_provider)))
             return deployments
         else:

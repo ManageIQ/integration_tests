@@ -4,7 +4,7 @@ import pytest
 import time
 from cfme.common.vm import VM
 from cfme.exceptions import CFMEException
-from cfme.infrastructure.provider import SCVMMProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from utils import testgen
 from utils.log import logger
 from utils.wait import TimedOutError

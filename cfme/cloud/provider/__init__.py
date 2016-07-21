@@ -12,16 +12,14 @@
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.infrastructure.provider import OpenstackInfraProvider
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
-from cfme.common.provider import CloudInfraProvider
+from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
 from utils.log import logger
-from utils.providers import setup_provider_by_name
 from utils.wait import wait_for
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
@@ -53,6 +51,7 @@ properties_form_55 = Form(
                 "5.5": "api_port",
             }
         )),
+        ('azure_subscription_id', Input("subscription")),
         ('api_version', AngularSelect("api_version"), {"appeared_in": "5.5"}),
         ('sec_protocol', AngularSelect("security_protocol"), {"appeared_in": "5.5"}),
         ('infra_provider', {
@@ -133,6 +132,7 @@ class Provider(Pretty, CloudInfraProvider):
         myprov.create()
 
     """
+    type_tclass = "cloud"
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
@@ -161,95 +161,6 @@ class Provider(Pretty, CloudInfraProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
-
-
-class AzureProvider(Provider):
-    def __init__(self, name=None, credentials=None, zone=None, key=None, region=None,
-                 tenant_id=None, subscription_id=None):
-        super(AzureProvider, self).__init__(name=name, credentials=credentials,
-                                            zone=zone, key=key)
-        self.region = region
-        self.tenant_id = tenant_id
-        self.subscription_id = subscription_id
-
-    def _form_mapping(self, create=None, **kwargs):
-        # Tenant ID and Subscription ID will have to live in cfme_data for now.
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'Azure',
-                'region_select': kwargs.get('region'),
-                'azure_tenant_id': kwargs.get('tenant_id'),
-                'azure_subscription_id': kwargs.get('subscription_id')}
-
-
-class EC2Provider(Provider):
-    def __init__(self, name=None, credentials=None, zone=None, key=None, region=None):
-        super(EC2Provider, self).__init__(name=name, credentials=credentials,
-                                          zone=zone, key=key)
-        self.region = region
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'Amazon EC2',
-                'region_select': sel.ByValue(kwargs.get('region'))}
-
-
-class GCEProvider(Provider):
-    def __init__(self, name=None, project=None, zone=None, region=None, credentials=None, key=None):
-        super(GCEProvider, self).__init__(name=name, zone=zone, key=key, credentials=credentials)
-        self.region = region
-        self.project = project
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'Google Compute Engine',
-                'google_region_select': sel.ByValue(kwargs.get('region')),
-                'google_project_text': kwargs.get('project')}
-
-
-class OpenStackProvider(Provider):
-    def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,
-                 infra_provider=None):
-        super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
-                                                zone=zone, key=key)
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.api_port = api_port
-        self.infra_provider = infra_provider
-        self.sec_protocol = sec_protocol
-        self.amqp_sec_protocol = amqp_sec_protocol
-
-    def create(self, *args, **kwargs):
-        # Override the standard behaviour to actually create the underlying infra first.
-        if self.infra_provider is not None:
-            if isinstance(self.infra_provider, OpenstackInfraProvider):
-                infra_provider_name = self.infra_provider.name
-            else:
-                infra_provider_name = str(self.infra_provider)
-            setup_provider_by_name(
-                infra_provider_name, validate=True, check_existing=True)
-        return super(OpenStackProvider, self).create(*args, **kwargs)
-
-    def _form_mapping(self, create=None, **kwargs):
-        infra_provider = kwargs.get('infra_provider')
-        if isinstance(infra_provider, OpenstackInfraProvider):
-            infra_provider = infra_provider.name
-        data_dict = {
-            'name_text': kwargs.get('name'),
-            'type_select': create and 'OpenStack',
-            'hostname_text': kwargs.get('hostname'),
-            'api_port': kwargs.get('api_port'),
-            'ipaddress_text': kwargs.get('ip_address'),
-            'sec_protocol': kwargs.get('sec_protocol'),
-            'infra_provider': "---" if infra_provider is False else infra_provider}
-        if 'amqp' in self.credentials:
-            data_dict.update({
-                'event_selection': 'amqp',
-                'amqp_hostname_text': kwargs.get('hostname'),
-                'amqp_api_port': kwargs.get('amqp_api_port', '5672'),
-                'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
-            })
-        return data_dict
 
 
 def get_all_providers(do_not_navigate=False):
@@ -290,3 +201,5 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
+
+import_all_modules_of('cfme.cloud.provider')
