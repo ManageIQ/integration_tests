@@ -1310,7 +1310,7 @@ class Action(Updateable, Pretty):
     form = Form(
         fields=[
             ("description", Input("description")),
-            ("action_type", AngularSelect("select#miq_action_type")),
+            ("action_type", AngularSelect("miq_action_type")),
             # Evaluate Alerts (TODO)
         ]
     )
@@ -1324,7 +1324,7 @@ class Action(Updateable, Pretty):
         "Assign Profile to Analysis Task":
         Form(
             fields=[
-                ("analysis_profile", AngularSelect("select#analysis_profile")),
+                ("analysis_profile", AngularSelect("analysis_profile")),
             ]
         ),
 
@@ -1338,14 +1338,14 @@ class Action(Updateable, Pretty):
         "Delete Snapshots by Age":
         Form(
             fields=[
-                ("snapshot_age", AngularSelect("select#snapshot_age")),
+                ("snapshot_age", AngularSelect("snapshot_age")),
             ]
         ),
 
         "Inherit Parent Tags":
         Form(
             fields=[
-                ("parent_type", AngularSelect("select#parent_type")),
+                ("parent_type", AngularSelect("parent_type")),
                 ("tags", CheckboxSelect({
                     version.LOWEST:
                     "//*[@id='action_options_div']/fieldset/table/tbody/tr[2]/td[2]/table",
@@ -1374,7 +1374,7 @@ class Action(Updateable, Pretty):
         "Reconfigure CPUs":
         Form(
             fields=[
-                ("num_cpus", AngularSelect("select#cpu_value")),
+                ("num_cpus", AngularSelect("cpu_value")),
             ]
         ),
 

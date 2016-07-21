@@ -3241,8 +3241,10 @@ fill.prefer((DHTMLSelect, types.NoneType), (object, types.NoneType))
 fill.prefer((object, types.NoneType), (Select, object))
 
 
-class AngularSelect(object):
+class AngularSelect(Pretty):
     BUTTON = "//button[@data-id='{}']"
+
+    pretty_attrs = ['_loc', 'none', 'multi']
 
     def __init__(self, loc, none=None, multi=False):
         self.none = none
