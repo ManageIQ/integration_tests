@@ -26,6 +26,7 @@ import pytest
 
 from artifactor import ArtifactorClient
 from fixtures.pytest_store import write_line, store
+from markers.polarion import extract_polarion_ids
 from utils.conf import env, credentials
 from utils.net import random_port, net_check
 from utils.path import project_path
@@ -145,7 +146,7 @@ def pytest_runtest_teardown(item, nextitem):
                          slaveid=SLAVEID, ip=appliance_ip_address, grab_result=True)
     art_client.fire_hook('sanitize', test_location=location, test_name=name, words=words)
     art_client.fire_hook('ostriz_send', test_location=location, test_name=name,
-                         slaveid=SLAVEID,)
+                         slaveid=SLAVEID, polarion_ids=extract_polarion_ids(item))
 
 
 def pytest_runtest_logreport(report):

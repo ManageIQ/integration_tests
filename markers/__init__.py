@@ -21,4 +21,5 @@ pytest_plugins = """
     markers.uses
     markers.uncollect
     markers.smoke
+    markers.polarion
 """.strip().split()
