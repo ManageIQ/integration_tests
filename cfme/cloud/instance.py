@@ -177,7 +177,9 @@ class OpenStackInstance(Instance):
     STOP = "Stop"
     PAUSE = "Pause"
     RESTART = "Restart"
-
+    # Provider-only shelve options since 5.5
+    SHELVE = "Shelve"
+    SHELVE_OFFLOAD = "Shelve Offload"
     # CFME power states
     STATE_ON = "on"
     STATE_OFF = "off"
