@@ -12,6 +12,57 @@ from fixtures.pytest_store import store
 from time import sleep
 from cfme.web_ui.menu import Menu
 
+from selenium_view import Browser, DefaultPlugin
+
+
+class CFMEBrowserPlugin(DefaultPlugin):
+    ENSURE_PAGE_SAFE = '''\
+        function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
+        return {
+            miq: window.miqAjaxTimers === undefined || window.miqAjaxTimers < 1,
+            spinner: !((!isHidden(document.getElementById("spinner_div")))
+                && isHidden(document.getElementById("lightbox_div"))),
+            jquery: (typeof jQuery === "undefined") ? true : jQuery.active < 1,
+            prototype: (typeof Ajax === "undefined") ? true : Ajax.activeRequestCount < 1,
+            document: document.readyState == "complete"
+        }
+        '''
+
+
+class CFMEBrowser(Browser):
+    def __init__(self, ui_endpoint, *args, **kwargs):
+        super(CFMEBrowser, self).__init__(*args, **kwargs)
+        self.ui_endpoint = ui_endpoint
+
+    @property
+    def appliance(self):
+        return self.ui_endpoint.owner
+
+    @property
+    def product_version(self):
+        return self.appliance.version
+
+    def rails_error(self):
+        """Get displayed rails error. If not present, return None"""
+        if self.is_displayed(
+                "//body[./h1 and ./p and ./hr and ./address]"):
+            try:
+                title = text("//body/h1")
+                body = text("//body/p")
+            except NoSuchElementException:  # Just in case something goes really wrong
+                return None
+            return "{}: {}".format(title, body)
+        elif self.is_displayed(
+                "//h1[normalize-space(.)='Unexpected error encountered']"):
+            try:
+                error_text = self.text(
+                    "//h1[normalize-space(.)='Unexpected error encountered']"
+                    "/following-sibling::h3[not(fieldset)]")
+            except NoSuchElementException:  # Just in case something goes really wrong
+                return None
+            return error_text
+        return None
+
 
 class ViaUI(object):
     """UI implementation using the normal ux"""
@@ -22,6 +73,28 @@ class ViaUI(object):
     def __init__(self, owner):
         self.owner = owner
         self.menu = Menu()
+
+    def instantiate_view(self, view_class, do_not_navigate=False, **context):
+        """This method instantiates a view from a class. In case the view specifies a specific
+        location, it goes there before instantiating the view.
+
+        Args:
+            view_class: A subclass if View.
+            do_not_navigate: If you explicitly do not want to navigate.
+            **context: Gets passed to the navigation and then into the instance of the view.
+
+        Returns:
+            An instance of the passed ``view_class``.
+        """
+        vname = view_class.__name__
+        if hasattr(view_class, 'PAGE_LOCATION') and not do_not_navigate:
+            logger.info(
+                ' Because view %r specifies page location %r, force_navigating there',
+                vname, view_class.PAGE_LOCATION)
+            self.force_navigate(view_class.PAGE_LOCATION, **context)
+        browser = CFMEBrowser(self, ensure_browser_open(), plugin_class=CFMEBrowserPlugin)
+        view = view_class(browser, additional_context=context)
+        return view
 
     # ** Notice our friend force_navigate is here. It used to live in pytest_selenium fixture.
     # ** Funny story! That thing was never a fixture.

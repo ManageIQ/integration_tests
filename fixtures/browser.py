@@ -4,6 +4,7 @@ from py.error import ENOENT
 import utils.browser
 from cfme.fixtures.pytest_selenium import take_screenshot
 from fixtures.artifactor_plugin import art_client, get_test_idents
+from utils.appliance import current_appliance
 from utils.datafile import template_env
 from utils.path import log_path
 from utils import safe_string
@@ -104,6 +105,11 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.fixture(scope='session')
 def browser():
     return utils.browser.browser
+
+
+@pytest.fixture(scope='function')
+def create_view():
+    return lambda *args, **kwargs: current_appliance.browser.instantiate_view(*args, **kwargs)
 
 
 @pytest.yield_fixture(scope="function")
