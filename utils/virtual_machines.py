@@ -87,7 +87,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900,
         if ('network_name' not in deploy_args) and data.get('network'):
             deploy_args.update(network_name=data['network'])
     else:
-        raise Exception("Unsupported provider type: {}".format(mgmt.__class__.__name__))
+        raise Exception("Unsupported provider type: {}".format(type(mgmt).__name__))
 
     logger.info("Getting ready to deploy VM/instance %s from template %s on provider %s",
         vm_name, deploy_args['template'], data['name'])
@@ -108,5 +108,6 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900,
         # Make it visible also in the log.
         store.write_line(
             "Skipping due to a provider error: {}: {}\n".format(e_c.__name__, str(e)), purple=True)
+        logger.exception(e)
         pytest.skip("{}: {}".format(e_c.__name__, str(e)))
     return vm_name
