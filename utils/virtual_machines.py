@@ -6,6 +6,7 @@ from mgmtsystem.virtualcenter import VMWareSystem
 from mgmtsystem.scvmm import SCVMMSystem
 from mgmtsystem.ec2 import EC2System
 from mgmtsystem.openstack import OpenstackSystem
+from mgmtsystem.rhevm import RHEVMSystem
 
 from utils.providers import get_crud
 from fixtures.pytest_store import store
@@ -13,7 +14,6 @@ from novaclient.exceptions import OverLimit as OSOverLimit
 from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
 from ssl import SSLError
 from utils.log import logger
-from utils.mgmt_system import RHEVMSystem
 from utils.mgmt_system import exceptions
 
 
