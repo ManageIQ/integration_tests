@@ -7,12 +7,13 @@ from cfme.cloud.instance import (EC2Instance, Instance, OpenStackInstance,
 from cfme.fixtures import pytest_selenium as sel
 from utils import error, testgen, version
 from utils.blockers import GH
+from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['ec2', 'openstack'], required_fields=[('test_power_control', True)])
+        metafunc, ['azure', 'ec2', 'openstack'], required_fields=[('test_power_control', True)])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
 
 pytestmark = [pytest.mark.tier(2)]
@@ -154,7 +155,7 @@ def test_quadicon_terminate(setup_provider_funcscope, provider, testing_instance
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'ec2')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'ec2' and provider.type != 'azure')
 def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_running):
     """ Tests instance stop
 
@@ -164,11 +165,17 @@ def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert,
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
     check_power_options(soft_assert, testing_instance, 'on')
+    logger.info("Begin Power Control Stop \n")
     testing_instance.power_control_from_cfme(
         option=testing_instance.STOP, cancel=False, from_details=True)
     flash.assert_message_contain("Stop initiated")
+    logger.info("Stop initiated Flash message\n")
+    if provider.type == 'azure':
+        provider.mgmt.wait_vm_stopped(testing_instance.name)
+        logger.info("Just waited for wait_vm_stopped to avoid state change confusion")
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_OFF, timeout=720, from_details=True)
+    logger.info("Waiting for VM State Change \n")
     wait_for(
         lambda: provider.mgmt.is_vm_stopped(testing_instance.name),
         num_sec=180,
@@ -190,8 +197,13 @@ def test_start(
     testing_instance.power_control_from_cfme(
         option=testing_instance.START, cancel=False, from_details=True)
     flash.assert_message_contain("Start initiated")
+    logger.info("Start initiated Flash message\n")
+    if provider.type == 'azure':
+        provider.mgmt.wait_vm_running(testing_instance.name)
+        logger.info("Just waited for wait_vm_running to avoid state change confusion")
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
+    logger.info("Waiting for VM State Change \n")
     soft_assert(
         provider.mgmt.is_vm_running(testing_instance.name),
         "instance is not running")
@@ -222,7 +234,7 @@ def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
 def test_hard_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
                      verify_vm_running):
     """ Tests instance hard reboot
@@ -245,7 +257,7 @@ def test_hard_reboot(setup_provider_funcscope, provider, testing_instance, soft_
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
 def test_suspend(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_running):
     """ Tests instance suspend
@@ -259,6 +271,9 @@ def test_suspend(
     testing_instance.power_control_from_cfme(
         option=testing_instance.SUSPEND, cancel=False, from_details=True)
     flash.assert_message_contain("Suspend initiated")
+    if provider.type == 'azure':
+        provider.mgmt.wait_vm_suspended(testing_instance.name)
+        logger.info("Just waited for wait_vm_suspended to avoid state change confusion")
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_SUSPENDED, timeout=720, from_details=True)
     soft_assert(
@@ -267,7 +282,7 @@ def test_suspend(
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
 def test_unpause(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_paused):
     """ Tests instance unpause
@@ -289,7 +304,7 @@ def test_unpause(
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
 def test_resume(setup_provider_funcscope, provider, testing_instance, soft_assert,
                 verify_vm_suspended):
     """ Tests instance resume

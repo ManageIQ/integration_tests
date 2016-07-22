@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import json
 import xmlrpclib
+from functools import wraps
 
 from celery import chain
 from celery.result import AsyncResult
 from dateutil import parser
 from django.contrib import messages
+from django.contrib.auth import views
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import Q
@@ -35,6 +37,27 @@ def go_back_or_home(request):
         return redirect(ref)
     else:
         return go_home(request)
+
+
+def only_authenticated(view):
+    @wraps(view)
+    def g(request, *args, **kwargs):
+        if not request.user.is_authenticated():
+            messages.error(
+                request, 'You need to be authenticated to access "{}"'.format(request.path))
+            return go_home(request)
+        else:
+            return view(request, *args, **kwargs)
+
+    if not hasattr(g, '__wrapped__'):
+        g.__wrapped__ = view
+    return g
+
+
+def logout(request):
+    views.logout(request)
+    messages.info(request, 'You have been logged out')
+    return go_home(request)
 
 
 def index(request):
@@ -128,13 +151,13 @@ def templates(request, group_id=None, prov_id=None):
     return render(request, 'appliances/templates.html', locals())
 
 
+@only_authenticated
 def shepherd(request):
-    if not request.user.is_authenticated():
-        return go_home(request)
     groups = Group.objects.all()
     return render(request, 'appliances/shepherd.html', locals())
 
 
+@only_authenticated
 def versions_for_group(request):
     group_id = request.POST.get("stream")
     latest_version = None
@@ -157,6 +180,7 @@ def versions_for_group(request):
     return render(request, 'appliances/_versions.html', locals())
 
 
+@only_authenticated
 def date_for_group_and_version(request):
     group_id = request.POST.get("stream")
     latest_date = None
@@ -192,6 +216,7 @@ def date_for_group_and_version(request):
     return render(request, 'appliances/_dates.html', locals())
 
 
+@only_authenticated
 def providers_for_date_group_and_version(request):
     total_provisioning_slots = 0
     total_appliance_slots = 0
@@ -258,9 +283,8 @@ def providers_for_date_group_and_version(request):
     return render(request, 'appliances/_providers.html', locals())
 
 
+@only_authenticated
 def my_appliances(request, show_user="my"):
-    if not request.user.is_authenticated():
-        return go_home(request)
     if not request.user.is_superuser:
         if not (show_user == "my" or show_user == request.user.username):
             messages.info(request, "You can't view others' appliances!")
@@ -309,9 +333,8 @@ def can_operate_appliance_or_pool(appliance_or_pool, user):
         return appliance_or_pool.owner == user
 
 
+@only_authenticated
 def appliance_action(request, appliance_id, action, x=None):
-    if not request.user.is_authenticated():
-        return go_home(request)
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
@@ -382,9 +405,8 @@ def appliance_action(request, appliance_id, action, x=None):
         messages.warning(request, "Unknown action '{}'".format(action))
 
 
+@only_authenticated
 def prolong_lease_pool(request, pool_id, minutes):
-    if not request.user.is_authenticated():
-        return go_home(request)
     try:
         appliance_pool = AppliancePool.objects.get(id=pool_id)
     except ObjectDoesNotExist:
@@ -398,9 +420,8 @@ def prolong_lease_pool(request, pool_id, minutes):
     return go_back_or_home(request)
 
 
+@only_authenticated
 def dont_expire_pool(request, pool_id):
-    if not request.user.is_authenticated():
-        return go_home(request)
     try:
         appliance_pool = AppliancePool.objects.get(id=pool_id)
     except ObjectDoesNotExist:
@@ -417,9 +438,8 @@ def dont_expire_pool(request, pool_id):
     return go_back_or_home(request)
 
 
+@only_authenticated
 def kill_pool(request, pool_id):
-    if not request.user.is_authenticated():
-        return go_home(request)
     try:
         pool = AppliancePool.objects.get(id=pool_id)
     except ObjectDoesNotExist:
@@ -467,9 +487,8 @@ def delete_template_provider(request):
     return HttpResponse(task.id)
 
 
+@only_authenticated
 def request_pool(request):
-    if not request.user.is_authenticated():
-        return go_home(request)
     try:
         group = request.POST["stream"]
         version = request.POST["version"]
@@ -494,9 +513,8 @@ def request_pool(request):
     return go_back_or_home(request)
 
 
+@only_authenticated
 def transfer_pool(request):
-    if not request.user.is_authenticated():
-        return go_home(request)
     try:
         pool_id = int(request.POST["pool_id"])
         user_id = int(request.POST["user_id"])
@@ -526,7 +544,7 @@ def transfer_pool(request):
 
 
 def vms(request, current_provider=None):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated() or not request.user.is_superuser:
         return go_home(request)
     provider_keys = sorted(Provider.get_available_provider_keys())
     providers = []
@@ -543,7 +561,7 @@ def vms(request, current_provider=None):
 
 
 def vms_table(request, current_provider=None):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated() or not request.user.is_superuser:
         return go_home(request)
     try:
         manager = get_mgmt(current_provider)
@@ -554,6 +572,8 @@ def vms_table(request, current_provider=None):
 
 
 def power_state(request, current_provider):
+    if not request.user.is_authenticated() or not request.user.is_superuser:
+        return go_home(request)
     vm_name = request.POST["vm_name"]
     manager = get_mgmt(current_provider)
     state = Appliance.POWER_STATES_MAPPING.get(manager.vm_status(vm_name), "unknown")
@@ -561,6 +581,8 @@ def power_state(request, current_provider):
 
 
 def power_state_buttons(request, current_provider):
+    if not request.user.is_authenticated() or not request.user.is_superuser:
+        return go_home(request)
     manager = get_mgmt(current_provider)
     vm_name = request.POST["vm_name"]
     power_state = request.POST["power_state"]
@@ -572,7 +594,7 @@ def power_state_buttons(request, current_provider):
 
 
 def vm_action(request, current_provider):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated() or not request.user.is_superuser:
         return HttpResponse("Not authenticated", content_type="text/plain")
     try:
         get_mgmt(current_provider)

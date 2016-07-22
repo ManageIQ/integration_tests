@@ -4,6 +4,7 @@ import pytest
 
 from mgmtsystem.virtualcenter import VMWareSystem
 from mgmtsystem.scvmm import SCVMMSystem
+from mgmtsystem.azure import AzureSystem
 from mgmtsystem.ec2 import EC2System
 from mgmtsystem.openstack import OpenstackSystem
 
@@ -83,6 +84,8 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900,
             deploy_args.update(host_group=data.get("host_group", "All Hosts"))
     elif isinstance(mgmt, EC2System):
         pass
+    elif isinstance(mgmt, AzureSystem):
+        deploy_args.update(data['provisioning'])
     elif isinstance(mgmt, OpenstackSystem):
         if ('network_name' not in deploy_args) and data.get('network'):
             deploy_args.update(network_name=data['network'])
