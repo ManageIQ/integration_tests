@@ -1310,7 +1310,7 @@ class Action(Updateable, Pretty):
     form = Form(
         fields=[
             ("description", Input("description")),
-            ("action_type", AngularSelect("miq_action_type")),
+            ("action_type", AngularSelect("miq_action_type", exact=True)),
             # Evaluate Alerts (TODO)
         ]
     )
@@ -1324,7 +1324,7 @@ class Action(Updateable, Pretty):
         "Assign Profile to Analysis Task":
         Form(
             fields=[
-                ("analysis_profile", AngularSelect("analysis_profile")),
+                ("analysis_profile", AngularSelect("analysis_profile", exact=True)),
             ]
         ),
 

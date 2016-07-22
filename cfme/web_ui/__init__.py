@@ -3244,15 +3244,16 @@ fill.prefer((object, types.NoneType), (Select, object))
 class AngularSelect(Pretty):
     BUTTON = "//button[@data-id='{}']"
 
-    pretty_attrs = ['_loc', 'none', 'multi']
+    pretty_attrs = ['_loc', 'none', 'multi', 'exact']
 
-    def __init__(self, loc, none=None, multi=False):
+    def __init__(self, loc, none=None, multi=False, exact=False):
         self.none = none
         if isinstance(loc, AngularSelect):
             self._loc = loc._loc
         else:
             self._loc = self.BUTTON.format(loc)
         self.multi = multi
+        self.exact = exact
 
     def locate(self):
         return sel.move_to_element(self._loc)
@@ -3280,7 +3281,11 @@ class AngularSelect(Pretty):
     def select_by_visible_text(self, text):
         if not self.is_open:
             self.open()
-        new_loc = self._loc + '/../div/ul/li/a[contains(., "{}")]'.format(text)
+        if self.exact:
+            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(quoteattr(text))
+        else:
+            new_loc = self._loc + '/../div/ul/li/a[contains(normalize-space(.), {})]'.format(
+                quoteattr(text))
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)
