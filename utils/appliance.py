@@ -6,7 +6,6 @@ import random
 import re
 import socket
 import yaml
-from datetime import datetime
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
@@ -235,17 +234,10 @@ class IPAppliance(object):
             :py:class:`set` of :py:class:`str` - provider_key-s
         """
         ip_addresses = set([])
-        if (    # LISP powa!
-                (self.is_downstream and self.version >= '5.6')
-                or ((not self.is_downstream)
-                    and self.build_datetime >= datetime(year=2015, month=10, day=5))):
-            query = self._query_post_endpoints
-        else:
-            query = self._query_pre_endpoints
 
         # Fetch all providers at once, return empty list otherwise
         try:
-            query_res = list(query())
+            query_res = list(self._query_endpoints())
         except Exception as ex:
             self.log.warning("Unable to query DB for managed providers: %s", str(ex))
             return []
@@ -265,6 +257,13 @@ class IPAppliance(object):
             if provider_data.get("ipaddress", None) in ip_addresses:
                 provider_keys.add(provider_key)
         return provider_keys
+
+    def _query_endpoints(self):
+
+        if "endpoints" in self.db:
+            return self._query_post_endpoints()
+        else:
+            return self._query_pre_endpoints()
 
     def _query_pre_endpoints(self):
         ems_table = self.db["ext_management_systems"]
@@ -1534,14 +1533,24 @@ class IPAppliance(object):
     def get_yaml_config(self, config_name):
         if self.version >= '5.6':
             if config_name == 'vmdb':
-                base_data = store.current_appliance.ssh_client.run_rails_command(
-                    'puts\(Settings.to_hash.deep_stringify_keys.to_yaml\)')
+                writeout = store.current_appliance.ssh_client.run_rails_command(
+                    '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
+                    '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
+                )
+                if writeout.rc:
+                    logger.error("Config couldn't be found")
+                    logger.error(writeout.output)
+                    raise Exception('Error obtaining config')
+                base_data = store.current_appliance.ssh_client.run_command('cat /tmp/yam_dump.yaml')
                 if base_data.rc:
                     logger.error("Config couldn't be found")
                     logger.error(base_data.output)
                     raise Exception('Error obtaining config')
-                yaml_data = base_data.output[:base_data.output.find('DEPRE')]
-                return yaml.load(yaml_data)
+                try:
+                    return yaml.load(base_data.output)
+                except:
+                    logger.debug(base_data.output)
+                    raise
             else:
                 raise Exception('Only [vmdb] config is allowed from 5.6+')
         else:

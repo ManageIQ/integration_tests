@@ -17,7 +17,7 @@ from threading import Lock, Thread
 # from psphere.client import Client
 from psphere.managedobjects import VirtualMachine, ClusterComputeResource, HostSystem, Datacenter
 
-from utils import net
+from utils import net, trackerbot
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.providers import list_providers
@@ -307,7 +307,7 @@ def make_kwargs_vsphere(cfmeqe_data, provider):
 
 
 def upload_template(client, hostname, username, password,
-                    provider, url, name, provider_data):
+                    provider, url, name, provider_data, stream):
 
     try:
         if provider_data:
@@ -354,7 +354,8 @@ def upload_template(client, hostname, username, password,
             if kwargs.get('template'):
                 # make_template(client, name, hostname, username, password)
                 make_template(client, name, provider)
-
+            print("RHEVM:{} Adding template {} to trackerbot...".format(provider, name))
+            trackerbot.trackerbot_add_provider_template(stream, provider, name)
         if provider_data and check_template_exists(client, name, provider):
             print("VSPHERE:{} Deploying {}....".format(provider, name))
             vm_name = 'test_{}_{}'.format(name, fauxfactory.gen_alphanumeric(8))
@@ -396,7 +397,7 @@ def run(**kwargs):
             thread = Thread(target=upload_template,
                             args=(client, hostname, username, password, provider,
                                   kwargs.get('image_url'), kwargs.get('template_name'),
-                                  kwargs['provider_data']))
+                                  kwargs['provider_data'], kwargs['stream']))
             thread.daemon = True
             thread_queue.append(thread)
             thread.start()

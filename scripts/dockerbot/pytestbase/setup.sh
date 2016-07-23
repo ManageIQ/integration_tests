@@ -24,7 +24,7 @@ on_exit () {
     log "Running pip update..."
     run_pip_update
     if [ -n "$POST_TASK" ]; then
-        [ $RES -eq 0 ] && OUT_RESULT="passed" || OUT_RESULT="failed"
+        [ $RES -eq 0 ] || [ $RES -eq 5 ] && OUT_RESULT="passed" || OUT_RESULT="failed"
         log "Posting result..."
         run_n_log "/post_result.py $POST_TASK $OUT_RESULT"
         log $?
@@ -132,8 +132,9 @@ if [ -n "$CFME_PR" ]; then
     log "Checking out PR $CFME_PR"
     git fetch origin refs/pull/$CFME_PR/head:refs/remotes/origin/pr/$CFME_PR
     run_n_log "/verify_commit.py origin/pr/$CFME_PR"
-    git fetch origin master
-    git checkout origin/master
+    log "merging against $BASE_BRANCH"
+    git fetch origin $BASE_BRANCH
+    git checkout origin/$BASE_BRANCH
     run_n_log "git merge --no-ff --no-edit origin/pr/$CFME_PR"
 else
     log "Checking out branch $BRANCH"

@@ -129,13 +129,17 @@ def pytest_runtest_protocol(item):
             stream=session_stream)
 
     name, location = get_test_idents(item)
+    tier = item.get_marker('tier')
+    if tier:
+        tier = tier.args[0]
     # This pre_start_test hook is needed so that filedump is able to make get the test
     # object set up before the logger starts logging. As the logger fires a nested hook
     # to the filedumper, and we can't specify order inriggerlib.
     art_client.fire_hook('pre_start_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
     art_client.fire_hook('start_test', test_location=location, test_name=name,
-                         slaveid=SLAVEID, ip=appliance_ip_address)
+                         slaveid=SLAVEID, ip=appliance_ip_address,
+                         tier=tier)
     yield
 
 

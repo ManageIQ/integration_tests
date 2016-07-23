@@ -33,6 +33,7 @@ The Workflow
 
 import collections
 import difflib
+import fauxfactory
 import json
 import os
 import re
@@ -383,7 +384,7 @@ class ParallelSession(object):
         self.slave_spawn_count += 1
         at_exit(slave.kill)
 
-    def _reset_timer(self):
+    def _reset_timer(self, timeout=None):
         if not (self.sprout_client is not None and self.sprout_pool is not None):
             if self.sprout_timer:
                 self.sprout_timer.cancel()  # Cancel it anyway
@@ -391,13 +392,15 @@ class ParallelSession(object):
             return
         if self.sprout_timer:
             self.sprout_timer.cancel()
+        timeout = timeout or ((self.config.option.sprout_timeout / 2) * 60)
         self.sprout_timer = Timer(
-            (self.config.option.sprout_timeout / 2) * 60,
+            timeout,
             self.sprout_ping_pool)
         self.sprout_timer.daemon = True
         self.sprout_timer.start()
 
     def sprout_ping_pool(self):
+        timeout = None  # None - keep the half of the lease time
         try:
             self.sprout_client.prolong_appliance_pool_lease(self.sprout_pool)
         except SproutException as e:
@@ -408,7 +411,18 @@ class ParallelSession(object):
                 "(last deleted appliance deleted the pool")
             self.terminal.write("> The exception was: {}".format(str(e)))
             self.sprout_pool = None  # Will disable the timer in next reset call.
-        self._reset_timer()
+        except Exception as e:
+            self.terminal.write('An unexpected error happened during interaction with Sprout:')
+            self.terminal.write('{}: {}'.format(type(e).__name__, str(e)))
+            self.log.error('An unexpected error happened during interaction with Sprout:')
+            self.log.exception(e)
+            # Have a shorter timer now (1 min), because something is happening right now
+            # WE have a reserve of half the lease time so that should be enough time to
+            # solve any minor problems
+            # Adding a 0-10 extra random sec just for sake of dispersing any possible "swarm"
+            timeout = 60 + fauxfactory.gen_integer(0, 10)
+        finally:
+            self._reset_timer(timeout=timeout)
 
     def send(self, slaveid, event_data):
         """Send data to slave.

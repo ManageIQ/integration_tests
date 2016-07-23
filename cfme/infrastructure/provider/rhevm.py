@@ -25,28 +25,31 @@ class RHEVMProvider(Provider):
                 'type_select': create and 'Red Hat Enterprise Virtualization Manager',
                 'hostname_text': kwargs.get('hostname'),
                 'api_port': kwargs.get('api_port'),
-                'ipaddress_text': kwargs.get('ip_address')}
+                'ipaddress_text': kwargs.get('ip_address'),
+                'candu_hostname_text':
+                kwargs.get('hostname') if self.credentials.get('candu', None) else None}
 
     @classmethod
     def configloader(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
-        credentials = cls.process_credential_yaml_key(credentials_key)
+        credentials = {
+            # The default credentials for controlling the provider
+            'default': cls.process_credential_yaml_key(credentials_key),
+        }
         if prov_config.get('discovery_range', None):
             start_ip = prov_config['discovery_range']['start']
             end_ip = prov_config['discovery_range']['end']
         else:
             start_ip = end_ip = prov_config.get('ipaddress')
         if prov_config.get('candu_credentials', None):
-            candu_credentials = RHEVMProvider.process_credential_yaml_key(
+            # Insert C&U credentials if those are present
+            credentials['candu'] = RHEVMProvider.process_credential_yaml_key(
                 prov_config['candu_credentials'], cred_type='candu')
-        else:
-            candu_credentials = None
         return cls(name=prov_config['name'],
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
             api_port='',
-            credentials={'default': credentials,
-                         'candu': candu_credentials},
+            credentials=credentials,
             zone=prov_config['server_zone'],
             key=prov_key,
             start_ip=start_ip,

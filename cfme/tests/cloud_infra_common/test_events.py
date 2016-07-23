@@ -16,7 +16,7 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.all_providers(metafunc)
+    argnames, argvalues, idlist = testgen.all_providers(metafunc, required_fields=['provisioning'])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
