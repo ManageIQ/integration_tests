@@ -14,7 +14,7 @@ from utils.log import logger
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.ssh import SSHClient
-from utils.providers import list_all_providers, get_mgmt
+from utils.providers import list_providers, get_mgmt
 
 lock = Lock()
 
@@ -138,7 +138,7 @@ def delete_provider_vms(provider_key, vm_names):
 
 
 def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
-    providers = providers or list_all_providers()
+    providers = providers or list_providers()
     providers_data = cfme_data.get("management_systems", {})
     delta = datetime.timedelta(hours=int(max_hours))
     vms_to_delete = defaultdict(set)
