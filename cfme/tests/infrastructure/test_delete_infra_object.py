@@ -102,7 +102,7 @@ def test_delete_resource_pool(setup_provider, provider, remove_test):
     test_resourcepool.wait_for_appear()
 
 
-@pytest.mark.meta(blockers=[1236977])
+@pytest.mark.meta(blockers=[1236977, 1335961])
 @pytest.mark.ignore_stream("upstream")
 def test_delete_datastore(setup_provider, provider, remove_test):
     """ Tests delete datastore
@@ -112,12 +112,12 @@ def test_delete_datastore(setup_provider, provider, remove_test):
     """
     data_store = remove_test['datastore']
     test_datastore = datastore.Datastore(name=data_store)
-    host_count = len(test_datastore.get_hosts())
-    vm_count = len(test_datastore.get_vms())
-    if host_count != 0:
+    host_count = test_datastore.get_detail('Relationships', 'Hosts')
+    vm_count = test_datastore.get_detail('Relationships', 'Managed VMs')
+    if host_count != "0":
         test_datastore.delete_all_attached_hosts()
         test_datastore.wait_for_delete_all()
-    if vm_count != 0:
+    if vm_count != "0":
         test_datastore.delete_all_attached_vms()
         test_datastore.wait_for_delete_all()
     test_datastore.delete(cancel=False)

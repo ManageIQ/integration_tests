@@ -391,18 +391,7 @@ class Validatable(SummaryMixin):
                 ("Property '{}' has wrong value, expected '{}' but was '{}'"
                  .format(property_tuple, expected_value, shown_value))
 
-    def validate_tags(self, tags):
-        """Remove all tags and add `tags` from user input, validates added tags"""
-        self._validate_tags()
-        tags_db = self.get_tags(method='db')
-        if len(tags_db) > 0:
-            self.remove_tags(tags=tags_db)
-            tags_db = self.get_tags(method='db')
-        assert len(tags_db) == 0, "Some of tags still available in database!"
-        self.add_tags(tags)
-        self._validate_tags(reference_tags=tags)
-
-    def _validate_tags(self, tag="My Company Tags", reference_tags=None):
+    def validate_tags(self, tag="My Company Tags", reference_tags=None):
         """Validation method which check tagging between UI and database.
 
         To use this method, `self`/`caller` should be extended with `Taggable` class
