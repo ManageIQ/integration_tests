@@ -31,13 +31,12 @@ def test_host_cpu_resources(provider, soft_assert):
         wait_for(lambda: is_host_analysis_finished(host.name), delay=15,
                  timeout="10m", fail_func=lambda: toolbar.select('Reload'))
 
-        result = get_integer_value(host.get_detail("Properties", "Memory"))
-        soft_assert(get_integer_value(
-                host.get_detail("Properties", "Number of CPUs")) > 0,
+        soft_assert(get_integer_value(host.get_detail(
+                "Properties", "Number of CPUs")) > 0,
                     "Aggregate Node CPU resources is 0")
-        soft_assert(get_integer_value(
-                host.get_detail("Properties", "Number of CPU Cores")) > 0,
+        soft_assert(get_integer_value(host.get_detail(
+                "Properties", "Number of CPU Cores")) > 0,
                     "Aggregate node CPUs is 0")
-        soft_assert(get_integer_value(
-                host.get_detail("Properties", "CPU Cores Per Socket")) > 0,
+        soft_assert(get_integer_value(host.get_detail(
+                "Properties", "CPU Cores Per Socket")) > 0,
                     "Aggregate Node CPU Cores is 0")

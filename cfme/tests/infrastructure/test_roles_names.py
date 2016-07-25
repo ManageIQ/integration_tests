@@ -1,6 +1,8 @@
 
 from cfme.fixtures import pytest_selenium as sel
+from utils import testgen
 from cfme.web_ui import Quadicon
+import pytest
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = \
@@ -10,7 +12,6 @@ def pytest_generate_tests(metafunc):
 
 ROLES = ['Compute', 'Controller', 'BlockStorage', 'ObjectStorage',
          'CephStorage']
-
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")
@@ -23,6 +24,3 @@ def test_roles_name(provider):
         if role_name in ROLES:
             result = True
     assert result
-
-
-

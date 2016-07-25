@@ -20,6 +20,7 @@ NODE_TYPE = "Compute"
     as availability zone
 """
 
+
 @pytest.mark.usefixtures("setup_provider_modscope")
 def test_host_assigned_zones(provider):
     provider.load_details()

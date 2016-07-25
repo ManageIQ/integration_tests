@@ -1,14 +1,16 @@
 
 import pytest
 from utils import testgen
-from cfme.web_ui import Quadicon, toolbar
+from cfme.web_ui import Quadicon
 from cfme.fixtures import pytest_selenium as sel
 
+
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = \
-        testgen.infra_providers(metafunc, required_fields=["ssh_credentials"])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist,
-                        scope="module")
+    argnames, argvalues, idlist = testgen.infra_providers(
+        metafunc, required_fields=["ssh_credentials"])
+    testgen.parametrize(metafunc, argnames, argvalues,
+                        ids=idlist, scope="module")
+
 
 @pytest.mark.usefixtures("setup_provider_modscope")
 def test_credentials_quads(provider):
