@@ -43,7 +43,7 @@ def report():
 
 # TODO Prevent Firefox from popping up "Save file" in order to add 'pdf' parametrization
 # Files download is unsolved, since the browser runs in a separate container
-@pytest.skip
+@pytest.mark.skip
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
 def test_download_report_firefox(needs_firefox, setup_a_provider, report, filetype):
     """ Download the report as a file and check whether it was downloaded. """
