@@ -275,12 +275,15 @@ class Menu(UINavigate):
                         ('clouds_providers', 'Providers', lambda: toolbar.select('Grid View')),
                         ('clouds_availability_zones', 'Availability Zones'),
                         ('clouds_tenants', 'Tenants'),
+                        ('clouds_volumes', 'Volumes'),
                         ('clouds_flavors', 'Flavors'),
                         ('clouds_security_groups', 'Security Groups'),
                         ('clouds_instances', 'Instances',
                             self._tree_func_with_grid(
                                 "Instances by Provider", "Instances by Provider")),
-                        ('clouds_stacks', 'Stacks')
+                        ('clouds_stacks', 'Stacks'),
+                        ('clouds_key_pairs', 'Key Pairs'),
+                        ('clouds_object_stores', 'Object Stores'),
                     ),
                     ('infrastructure', 'Infrastructure'): (
                         ('infrastructure_providers',
