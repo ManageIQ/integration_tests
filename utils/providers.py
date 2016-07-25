@@ -422,6 +422,37 @@ def destroy_vm(provider_mgmt, vm_name):
         logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, str(e))
 
 
+def is_template_exists(provider, template):
+    try:
+        api = get_mgmt(provider)
+        if template not in api.list_template():
+            return True
+        return False
+    except Exception as e:
+        logger.exception(e)
+        return False
+
+
+def cleanup_old_templates(provider, delete_templates):
+    try:
+        api = get_mgmt(provider)
+        templates = api.list_template()
+        for template in templates:
+            try:
+                if template in delete_templates:
+                    api.delete_template(template)
+                    wait_for(is_template_exists, [provider, template], timeout=500)
+                    logger.info("{}:Old template {} deleted successfully".format(
+                        provider, template))
+            except Exception as e:
+                logger.exception(e)
+                logger.error("{}:Error while deleting old template".format(provider, template))
+                continue
+    except Exception as e:
+        logger.exception(e)
+        logger.error("{}:Exception occurred while deleting old templates".format(provider))
+
+
 def get_crud(provider_config_name):
     """
     Creates a Provider object given a yaml entry in cfme_data.

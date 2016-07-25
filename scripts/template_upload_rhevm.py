@@ -20,7 +20,7 @@ from ovirtsdk.xml import params
 from utils import net
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.providers import get_mgmt, list_providers
+from utils.providers import get_mgmt, list_providers, cleanup_old_templates
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -555,7 +555,7 @@ def make_kwargs_rhevm(cfmeqe_data, provider):
 
 
 def upload_template(rhevip, sshname, sshpass, username, password,
-                    provider, image_url, template_name, provider_data):
+                    provider, image_url, template_name, provider_data, delete_templates):
     try:
         print("RHEVM:{} Template {} upload started".format(provider, template_name))
         if provider_data:
@@ -607,6 +607,7 @@ def upload_template(rhevip, sshname, sshpass, username, password,
                 print("RHEVM:{} Templatizing VM...".format(provider))
                 templatize_vm(api, template_name, kwargs.get('cluster'), temp_vm_name, provider)
             finally:
+                cleanup_old_templates(provider, delete_templates)
                 cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider,
                         temp_template_name, temp_vm_name)
                 change_edomain_state(api, 'maintenance', kwargs.get('edomain'), provider)
@@ -680,7 +681,7 @@ def run(**kwargs):
         thread = Thread(target=upload_template,
                         args=(rhevip, sshname, sshpass, username, password, provider,
                               kwargs.get('image_url'), kwargs.get('template_name'),
-                              kwargs['provider_data']))
+                              kwargs['provider_data'], kwargs.get('delete_templates', [])))
         thread.daemon = True
         thread_queue.append(thread)
         thread.start()

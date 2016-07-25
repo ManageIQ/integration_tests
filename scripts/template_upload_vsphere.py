@@ -20,7 +20,7 @@ from psphere.managedobjects import VirtualMachine, ClusterComputeResource, HostS
 from utils import net
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.providers import list_providers
+from utils.providers import list_providers, cleanup_old_templates
 from utils.ssh import SSHClient
 from mgmtsystem import VMWareSystem
 from utils.wait import wait_for
@@ -307,8 +307,7 @@ def make_kwargs_vsphere(cfmeqe_data, provider):
 
 
 def upload_template(client, hostname, username, password,
-                    provider, url, name, provider_data):
-
+                    provider, url, name, provider_data, delete_templates):
     try:
         if provider_data:
             kwargs = make_kwargs_vsphere(provider_data, provider)
@@ -361,11 +360,12 @@ def upload_template(client, hostname, username, password,
             deploy_args = {'provider': provider, 'vm_name': vm_name,
                            'template': name, 'deploy': True}
             getattr(__import__('clone_template'), "main")(**deploy_args)
-        client.api.logout()
     except Exception as e:
         print(e)
         return False
     finally:
+        cleanup_old_templates(provider, delete_templates)
+        client.api.logout()
         print("VSPHERE:{} End uploading Template: {}".format(provider, name))
 
 
@@ -396,7 +396,7 @@ def run(**kwargs):
             thread = Thread(target=upload_template,
                             args=(client, hostname, username, password, provider,
                                   kwargs.get('image_url'), kwargs.get('template_name'),
-                                  kwargs['provider_data']))
+                                  kwargs['provider_data'], kwargs.get('delete_templates', [])))
             thread.daemon = True
             thread_queue.append(thread)
             thread.start()

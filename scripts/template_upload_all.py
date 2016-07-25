@@ -24,6 +24,7 @@ import sys
 import utils
 from contextlib import closing
 from utils import path
+from utils import trackerbot
 
 from urllib2 import urlopen, HTTPError
 from utils.conf import cfme_data
@@ -137,6 +138,46 @@ def get_last_modified(image_url):
 
     headers = urlo.info()
     return datetime.datetime.strptime(headers.getheader("Last-Modified"), format)
+
+
+def get_old_providertemplates(stream):
+    template_regex = (r'^miq-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})',
+                      r'^cfme-52.*-(?P<month>\d{2})(?P<day>\d{2})',
+                      r'^cfme-53.*-(?P<month>\d{2})(?P<day>\d{2})',
+                      r'^cfme-54.*-(?P<month>\d{2})(?P<day>\d{2})',
+                      r'^cfme-55.*-(?P<month>\d{2})(?P<day>\d{2})',
+                      r'^cfme-56.*-(?P<month>\d{2})(?P<day>\d{2})',
+                      r'^cfme-nightly-\d*-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
+    usable_templates = []
+    all_templates = []
+    api = trackerbot.api(cfme_data['sprout']['trackerbot_url'])
+    groups = api.group.get().get('objects', [])
+    for group in groups:
+        if group['name'] == 'unknown':
+            continue
+        templates = trackerbot.depaginate(
+            api, api.template.get(group__name=group['name'])).get('objects', [])
+        temp = []
+        for template in templates:
+            all_templates.append(template['name'])
+            if template['usable_providers']:
+                temp.append(template['name'])
+            if len(temp) == 3:
+                break
+        usable_templates = usable_templates + temp
+        if templates[0]['name'] not in usable_templates:
+            usable_templates.append(templates[0]['name'])
+
+    all_templates = [template['name'] for template in api.template.get(
+        limit=1500).get(
+        'objects', [])]
+    delete_templates = []
+    for all_template in all_templates:
+        if all_template not in usable_templates:
+            for regex in template_regex:
+                if re.findall(regex, all_template):
+                    delete_templates.append(all_template)
+    return delete_templates
 
 
 def make_kwargs_rhevm(cfme_data, provider):
@@ -339,6 +380,7 @@ def main():
                 checksum_url,
                 get_version(url)
             )
+        kwargs['delete_templates'] = get_old_providertemplates(stream)
         print("TEMPLATE_UPLOAD_ALL:-----Start of {} upload on: {}--------".format(
             kwargs['template_name'], provider_type))
 
