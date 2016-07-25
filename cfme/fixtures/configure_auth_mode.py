@@ -37,6 +37,21 @@ def configure_openldap_auth_mode(browser, available_auth_modes):
 
 
 @pytest.yield_fixture(scope='module')
+def configure_openldap_auth_mode_default_groups(browser, available_auth_modes):
+    """Configure LDAP authentication mode"""
+    if 'openldap' in available_auth_modes:
+        server_data = cfme_data.get('auth_modes', {})['openldap']
+        server_data['get_groups'] = False
+        server_data['default_groups'] = 'EvmRole-user'
+        configuration.set_auth_mode(**server_data)
+        yield
+        login_admin()
+        configuration.set_auth_mode(mode='database')
+    else:
+        yield
+
+
+@pytest.yield_fixture(scope='module')
 def configure_aws_iam_auth_mode(browser, available_auth_modes):
     """Configure AWS IAM authentication mode"""
     if 'aws_iam' in available_auth_modes:
