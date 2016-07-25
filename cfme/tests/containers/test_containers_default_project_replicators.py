@@ -9,8 +9,7 @@ from utils.version import current_version
 
 pytestmark = [
     pytest.mark.uncollectif(
-        lambda: current_version() < "5.6"),
-    pytest.mark.uncollectif(lambda provider: provider.version < 3.2),
+        (lambda: current_version() < "5.6") or (lambda provider: provider.version < 3.2)),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
