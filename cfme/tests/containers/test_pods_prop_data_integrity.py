@@ -20,18 +20,10 @@ pytest_generate_tests = testgen.generate(
 
 
 def test_summary_properties_validation(provider):
-    """ Pods Summary page - Properties - data integrity - Container Status summary table - # of containers test
-          This test verifies that the number of running containers in the status summary table is the same number that
+    """
+          This test verifies that the number of running containers in the status summary table
+          is the same number that
           appears in the Relationships table in the Containers field
-          Steps:
-               Compute --> Containers --> Pods
-                click on every pod in the table
-                While on the summary page, verify that the number of running containers in the
-                Container Statuses Summary is the same as what appears in the Containers field in
-                the Relationships table
-                to Grid/Tile/List view
-               Example: the number of running containers in the container statuses table ---> Relationships table -->
-                Containers = 1
     """
     sel.force_navigate('containers_pods')
     list_tbl_pod = CheckboxTable(table_locator="//div[@id='list_grid']//table")
