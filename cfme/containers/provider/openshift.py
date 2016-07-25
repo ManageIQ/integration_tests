@@ -7,7 +7,7 @@ from mgmtsystem.openshift import Openshift
 class OpenshiftProvider(Provider):
     STATS_TO_MATCH = Provider.STATS_TO_MATCH + ['num_route']
     type_name = "openshift"
-    mgmt_system = Openshift
+    mgmt_class = Openshift
 
     def __init__(self, name=None, credentials=None, key=None,
                  zone=None, hostname=None, port=None, provider_data=None):
