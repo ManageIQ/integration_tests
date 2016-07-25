@@ -8,6 +8,8 @@ from . import details_page
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
+checkbox = ".//input[@class='list-grid-checkbox']"
+
 nav.add_branch(
     'containers_images',
     {
