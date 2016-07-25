@@ -424,9 +424,9 @@ def _test_vm_removal():
     'product_features, action',
     [(
         {version.LOWEST: [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'VM Access Rules',
-             'Modify', 'Provision VMs']],
-         '5.5': [['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
+             'Provision VMs']],
+         '5.6': [['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
             ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
              'Provision VMs']]},
         _test_vm_provision)])
@@ -566,11 +566,11 @@ def test_permissions_vm_provisioning():
     features = version.pick({
         version.LOWEST: [
             ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify',
+            ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
                 'Provision VMs']
         ],
-        '5.5': [
-            ['Everything', 'Infrastructure', 'Virtual Machines', 'Accordions'],
+        '5.6': [
+            ['Everything', 'Compute', 'Infrastructure', 'Virtual Machines', 'Accordions'],
             ['Everything', 'Access Rules for all Virtual Machines', 'VM Access Rules', 'Modify',
                 'Provision VMs']
         ]})
