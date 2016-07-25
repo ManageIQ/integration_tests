@@ -1,8 +1,9 @@
 import pytest
 from utils import testgen
-from cfme.web_ui import Quadicon, toolbar
+from cfme.web_ui import Quadicon
 from cfme.web_ui import InfoBlock
 from cfme.fixtures import pytest_selenium as sel
+
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = \
@@ -25,4 +26,3 @@ def test_host_role_type(provider):
         if role_name in ROLES:
             result = True
     assert result
-

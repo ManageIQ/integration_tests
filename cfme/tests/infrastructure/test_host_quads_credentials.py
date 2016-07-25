@@ -1,9 +1,10 @@
 import pytest
 from utils import testgen
-from cfme.web_ui import Quadicon, toolbar
+from cfme.web_ui import Quadicon
 from cfme.infrastructure.host import Host
 from cfme.web_ui import InfoBlock
 from cfme.fixtures import pytest_selenium as sel
+
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = \
@@ -13,7 +14,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")
-def test_host_quads_credentials(provider):
+def test_host_quads_credentials(provider, soft_assert):
     provider.load_details()
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
@@ -21,4 +22,4 @@ def test_host_quads_credentials(provider):
     for quad in my_quads:
         host = Host(name=quad.name)
         result = host.has_valid_credentials
-        assert result
+        soft_assert(result, "Invalid host quadicon credentials")

@@ -8,6 +8,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.configure.tasks import is_host_analysis_finished
 from utils.wait import wait_for
 
+
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = \
         testgen.infra_providers(metafunc, required_fields=["ssh_credentials"])
@@ -16,7 +17,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")
-def test_smbios_data(provider):
+def test_smbios_data(provider, soft_assert):
     provider.load_details()
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
@@ -28,4 +29,4 @@ def test_smbios_data(provider):
                  timeout="10m", fail_func=lambda: toolbar.select('Reload'))
         result = host.get_detail("Properties",
                                  "Manufacturer / Model")
-        assert result != "N/A"
+        soft_assert(result != "N/A", "Invalid Manufacturer / Model details")

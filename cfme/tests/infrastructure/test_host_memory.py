@@ -8,13 +8,17 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.configure.tasks import is_host_analysis_finished
 from utils.wait import wait_for
 
+
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = \
         testgen.infra_providers(metafunc, required_fields=["ssh_credentials"])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist,
                         scope="module")
+
+
 def get_integer_value(x):
     return int(x.split(' ')[0])
+
 
 @pytest.mark.usefixtures("setup_provider_modscope")
 def test_smbios_data(provider):

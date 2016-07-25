@@ -57,6 +57,7 @@ def test_nodes(provider, soft_assert):
 
     assert result > 0
 
+
 def test_templates(provider, soft_assert):
     provider.load_details()
     result = int(provider.summary.relationships.templates.value)
@@ -66,6 +67,7 @@ def test_templates(provider, soft_assert):
     """
 
     assert result == 5
+
 
 def test_stacks(provider, soft_assert):
     provider.load_details()

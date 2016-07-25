@@ -30,20 +30,17 @@ def test_host_configuration(provider, soft_assert):
         host.run_smartstate_analysis()
         wait_for(lambda: is_host_analysis_finished(host.name), delay=15,
                  timeout="10m", fail_func=lambda: toolbar.select('Reload'))
-        soft_assert(
-                get_integer_value(host.get_detail("Configuration",
-                                                  "Packages")) > 0,
-                "Nodes number of Packages is 0")
+        soft_assert(get_integer_value(host.get_detail("Configuration",
+                                                      "Packages")) > 0,
+                    "Nodes number of Packages is 0")
 
-        soft_assert(
-                get_integer_value(host.get_detail("Configuration",
-                                                  "Services")) > 0,
-                "Nodes number of Services is 0")
+        soft_assert(get_integer_value(host.get_detail("Configuration",
+                                                      "Services")) > 0,
+                    "Nodes number of Services is 0")
 
-        soft_assert(
-                get_integer_value(host.get_detail("Configuration",
-                                                  "Files")) > 0,
-                'Nodes number of Files is 0')
+        soft_assert(get_integer_value(host.get_detail("Configuration",
+                                                      "Files")) > 0,
+                    'Nodes number of Files is 0')
 
         # @rrasouli - No patches test yet
         #         soft_assert(get_integer_value(

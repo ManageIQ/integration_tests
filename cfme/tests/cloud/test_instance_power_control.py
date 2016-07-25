@@ -74,6 +74,7 @@ def check_power_options(soft_assert, instance, power_state):
                 OpenStackInstance.SOFT_REBOOT,
                 OpenStackInstance.HARD_REBOOT,
                 OpenStackInstance.TERMINATE,
+                OpenStackInstance.SHELVE
             ],
             'off': [OpenStackInstance.START, OpenStackInstance.TERMINATE]
         }
@@ -267,11 +268,10 @@ def test_suspend(
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_pause(
         setup_provider_funcscope, provider, testing_instance, soft_assert,
         verify_vm_running):
-    """ Tests instance unpause
+    """ Tests instance pause
 
     Metadata:
         test_flag: power_control, provision
@@ -286,8 +286,53 @@ def test_pause(
         desired_state=testing_instance.STATE_PAUSED, timeout=720,
             from_details=True)
     soft_assert(
-        provider.mgmt.is_vm_running(testing_instance.name),
+        provider.mgmt.is_vm_(testing_instance.name),
         "instance is still running")
+
+@pytest.mark.long_running
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
+def test_shelve(
+        setup_provider_funcscope, provider, testing_instance, soft_assert,
+        verify_vm_running):
+    """ Tests instance shelve (openstack)
+
+    Metadata:
+        test_flag: power_control, provision
+    """
+    testing_instance.wait_for_vm_state_change(
+        desired_state=testing_instance.STATE_ON, timeout=720,
+            from_details=True)
+    check_power_options(soft_assert, testing_instance, 'off')
+    testing_instance.power_control_from_cfme(
+        option=testing_instance.SHELVE, cancel=False, from_details=True)
+    flash.assert_message_contain("Shelve initiated")
+    testing_instance.wait_for_vm_state_change(
+        desired_state=testing_instance.STATE_SHELVED, timeout=720,
+            from_details=True)
+    soft_assert(
+        provider.mgmt.is_vm_shelved(testing_instance.name),
+        "instance is still running")
+
+
+def test_shelve_offload(
+        setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_stopped):
+    """ Tests instance shelve offload from powered off instance
+
+    Metadata:
+        test_flag: power_control, provision
+    """
+    testing_instance.wait_for_vm_state_change(
+        desired_state=testing_instance.STATE_OFF, timeout=720, from_details=True)
+    check_power_options(soft_assert, testing_instance, 'off')
+    testing_instance.power_control_from_cfme(
+        option=testing_instance.START, cancel=False, from_details=True)
+    flash.assert_message_contain("Start initiated")
+    testing_instance.wait_for_vm_state_change(
+        desired_state=testing_instance.STATE_SHELVE_OFFLOAD, timeout=720,
+            from_details=True)
+    soft_assert(
+        provider.mgmt.is_vm_shelved_offload(testing_instance.name),
+        "instance is not shelved offloaded")
 
 
 @pytest.mark.long_running

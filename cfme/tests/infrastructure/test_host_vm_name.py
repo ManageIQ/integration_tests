@@ -7,11 +7,15 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.configure.tasks import is_host_analysis_finished
 from utils.wait import wait_for
 
+
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = \
         testgen.infra_providers(metafunc, required_fields=["ssh_credentials"])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist,
                         scope="module")
+
+
+INSTANCE_NAME = "cirros"
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")
@@ -36,7 +40,7 @@ def test_host_vm_name(provider):
         sel.click(InfoBlock.element("Relationships", "VMs"))
         vm_quads = list(Quadicon.all())
         for vm_quad in vm_quads:
-            assert vm_quad in "cirros"
+            assert vm_quad in "INSTANCE_NAME"
 
 
 

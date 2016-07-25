@@ -180,6 +180,9 @@ class OpenStackInstance(Instance):
     # Provider-only shelve options since 5.5
     SHELVE = "Shelve"
     SHELVE_OFFLOAD = "Shelve Offload"
+    # openstack power state
+    STATE_SHELVED = "shelved"
+    STATE_SHELVED_OFFLOAD = "shelved_offloaded"
     # CFME power states
     STATE_ON = "on"
     STATE_OFF = "off"
@@ -259,6 +262,8 @@ class OpenStackInstance(Instance):
             self.provider.mgmt.resume_vm(self.name)
         elif option == OpenStackInstance.PAUSE:
             self.provider.mgmt.pause_vm(self.name)
+        elif option == OpenStackInstance.shelve_vm(self.name):
+            self.provider.mgmt.shelve_vm(self.name)
         elif option == OpenStackInstance.UNPAUSE:
             self.provider.mgmt.unpause_vm(self.name)
         elif option == OpenStackInstance.RESTART:

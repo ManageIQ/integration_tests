@@ -37,22 +37,22 @@ def test_host_security(provider, soft_assert):
         soft_assert(get_integer_value(
                 host.get_detail("Security", "Groups")) > 0,
                     "Nodes number of groups is 0")
-        """
-        @rrasouli - No patches test yet
-                soft_assert(get_integer_value(
-                host.get_detail("Security", "Patches")) > 0,
-                    "Nodes number of patches is 0")
-        """
-        """
-        @rrasouli - No Firewall Rules test yet
-                soft_assert(get_integer_value(
-                host.get_detail("Security", "Firewall Rules")) > 0,
-                    "Nodes number of Firewall rules is 0")
-        """
-        """
-        @rrasouli - No SSH Root test yet
-                soft_assert(
-                host.get_detail("Security", "SSH Root").lower() == 'yes',
-                    "Nodes number of Firewall rules is 0")
-        """
 
+        # """
+        # @rrasouli - No patches test yet
+        #         soft_assert(get_integer_value(
+        #         host.get_detail("Security", "Patches")) > 0,
+        #             "Nodes number of patches is 0")
+        # """
+        # """
+        # @rrasouli - No Firewall Rules test yet
+        #         soft_assert(get_integer_value(
+        #         host.get_detail("Security", "Firewall Rules")) > 0,
+        #             "Nodes number of Firewall rules is 0")
+        # """
+        # """
+        # @rrasouli - No SSH Root test yet
+        #         soft_assert(
+        #         host.get_detail("Security", "SSH Root").lower() == 'yes',
+        #             "Nodes number of Firewall rules is 0")
+        # """
