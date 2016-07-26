@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-
-""" This module verifies data integrity in the Properties table
-    for services
-"""
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.service import Service, list_tbl as list_tbl_srvc
@@ -30,6 +26,9 @@ pytest_generate_tests = testgen.generate(
                           'portal_ip'
                           ])
 def test_services_properties_rel(provider, rel):
+    """ This module verifies data integrity in the Properties table
+        for services
+    """
     sel.force_navigate('containers_services')
     ui_services = [r.name.text for r in list_tbl_srvc.rows()]
     mgmt_objs = provider.mgmt.list_service()

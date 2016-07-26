@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-
-""" This module verifies data integrity in the Properties table for:
-    pods, routes and projects
-"""
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import Pod, list_tbl as list_tbl_pod
@@ -20,8 +16,7 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
-""" CMP-9911
-"""
+# CMP-9911 # CMP-9877 # CMP-9867
 
 
 @pytest.mark.parametrize('rel',
@@ -34,16 +29,15 @@ pytest_generate_tests = testgen.generate(
                           'ip_address'
                           ])
 def test_pods_properties_rel(provider, rel):
+    """ This module verifies data integrity in the Properties table for:
+        pods, routes and projects
+    """
     sel.force_navigate('containers_pods')
     ui_pods = [r.name.text for r in list_tbl_pod.rows()]
 
     for name in ui_pods:
         obj = Pod(name, provider)
         assert getattr(obj.summary.properties, rel).text_value
-
-
-""" CMP-9877
-"""
 
 
 @pytest.mark.parametrize('rel',
@@ -59,10 +53,6 @@ def test_routes_properties_rel(provider, rel):
     for name in ui_routes:
         obj = Route(name, provider)
         assert getattr(obj.summary.properties, rel).text_value
-
-
-""" CMP-9867
-"""
 
 
 @pytest.mark.parametrize('rel',

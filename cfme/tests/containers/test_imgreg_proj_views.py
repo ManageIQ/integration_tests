@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-
-""" The test_image_registries_views function verifies that
-    image registries can be viewed in grid, tile and list views
-    The test_project_list_views_function verifies that list view
-    is the default view for container projects
-"""
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
@@ -23,6 +17,11 @@ pytest_generate_tests = testgen.generate(
 
 
 def test_image_registries_views():
+    """ The test_image_registries_views function verifies that
+        image registries can be viewed in grid, tile and list views
+        The test_project_list_views_function verifies that list view
+        is the default view for container projects
+    """
     sel.force_navigate('containers_image_registries')
     tb.select('Grid View')
     assert tb.is_active(
