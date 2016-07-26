@@ -8,6 +8,8 @@ from . import details_page
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
+link_to_prv_page = "//a[@href='/container_service/show_list']"
+
 nav.add_branch(
     'containers_services',
     {
