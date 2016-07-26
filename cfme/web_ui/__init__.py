@@ -2322,7 +2322,11 @@ class Quadicon(Pretty):
 
     @property
     def a_cond(self):
-        return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
+        if self.qtype == "middleware":
+            return "contains(normalize-space(@title), {name})"\
+                .format(name=quoteattr('Name: {}'.format(self._name)))
+        else:
+            return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""

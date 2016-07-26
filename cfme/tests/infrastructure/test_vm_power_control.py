@@ -26,12 +26,12 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="class")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='class')
 def vm_name(provider):  # Provider in order to keep the names provider-specific
     return 'test_pwrctl_' + fauxfactory.gen_alphanumeric()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="class")
 def test_vm(request, provider, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
     vm = VM.factory(vm_name, provider)

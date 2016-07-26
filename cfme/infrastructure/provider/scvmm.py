@@ -6,7 +6,7 @@ from . import Provider
 class SCVMMProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     type_name = "scvmm"
-    mgmt_system = SCVMMSystem
+    mgmt_class = SCVMMSystem
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None,
