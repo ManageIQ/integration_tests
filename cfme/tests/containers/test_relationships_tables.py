@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-
-""" This module verifies the integrity of the Relationships table
-    We also verify that clicking on the Relationships table field
-    takes the user to the correct page, and the number of rows
-    that appears on that page is equal to the number in the
-    Relationships table
-"""
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import Pod
@@ -18,10 +11,6 @@ from utils import testgen
 from utils.version import current_version
 from cfme.web_ui import InfoBlock, CheckboxTable
 
-
-# CMP-9929 # CMP-9930
-
-
 pytestmark = [
     pytest.mark.uncollectif(
         lambda: current_version() < "5.5"),
@@ -29,6 +18,9 @@ pytestmark = [
     pytest.mark.tier(2)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
+
+# CMP-9929 # CMP-9930 # CMP-9892 # CMP-9965 # CMP=9962 # CMP-9983
+# CMP-9980 # CMP-9868 # CMP-9869
 
 
 @pytest.mark.parametrize('rel',
@@ -39,6 +31,13 @@ pytest_generate_tests = testgen.generate(
                           'Containers',
                           'Node'])
 def test_pods_rel(provider, rel):
+    """ This module verifies the integrity of the Relationships table
+          We also verify that clicking on the Relationships table field
+          takes the user to the correct page, and the number of rows
+          that appears on that page is equal to the number in the
+          Relationships table
+    """
+
     sel.force_navigate('containers_pods')
     list_tbl_pod = CheckboxTable(table_locator="//div[@id='list_grid']//table")
     ui_pods = [r.name.text for r in list_tbl_pod.rows()]
@@ -59,8 +58,6 @@ def test_pods_rel(provider, rel):
             assert len([r for r in list_tbl_pod.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
-
-# CMP-9892
 
 
 @pytest.mark.parametrize(
@@ -89,8 +86,6 @@ def test_services_rel(provider, rel):
             assert len([r for r in list_tbl_service.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
-
-# CMP-9965 # CMP=9962
 
 
 @pytest.mark.parametrize('rel',
@@ -125,8 +120,6 @@ def test_nodes_rel(provider, rel):
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
-# need to add the test case to Polarion
-
 
 @pytest.mark.parametrize(
     'rel', ['Containers Provider', 'Project', 'Pods', 'Nodes'])
@@ -155,8 +148,6 @@ def test_replicators_rel(provider, rel):
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
 
-# CMP-9983 # CMP-9980
-
 
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
@@ -183,8 +174,6 @@ def test_images_rel(provider, rel):
             assert len([r for r in list_tbl_image.rows()]) == val
         except ValueError:
             assert val == InfoBlock.text('Properties', 'Name')
-
-# CMP-9868 # CMP-9869
 
 
 @pytest.mark.parametrize('rel',
