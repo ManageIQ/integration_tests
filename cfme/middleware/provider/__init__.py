@@ -32,7 +32,7 @@ nav.add_branch(
             lambda _: cfg_btn('Add a New Middleware Provider'),
         'middleware_provider':
         [
-            lambda ctx: sel.check(Quadicon(ctx['provider'].name).checkbox),
+            lambda ctx: sel.check(Quadicon(ctx['provider'].name, "middleware").checkbox),
             {
                 'middleware_provider_edit':
                 lambda _: cfg_btn('Edit Selected Middleware Provider'),
@@ -41,7 +41,7 @@ nav.add_branch(
             }],
         'middleware_provider_detail':
         [
-            lambda ctx: sel.click(Quadicon(ctx['provider'].name)),
+            lambda ctx: sel.click(Quadicon(ctx['provider'].name, "middleware")),
             {
                 'middleware_provider_edit_detail':
                 lambda _: cfg_btn('Edit this Middleware Provider'),
