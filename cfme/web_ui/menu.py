@@ -303,7 +303,7 @@ class Menu(UINavigate):
                     ),
                     ('containers', 'Containers'): (
                         ('container_dashboard', 'Overview'),
-                        ('containers_providers', 'Providers'),
+                        ('containers_providers', 'Providers', lambda: toolbar.select('Grid View')),
                         ('containers_projects', 'Projects'),
                         ('containers_nodes', 'Container Nodes'),
                         ('containers_pods', 'Pods'),
