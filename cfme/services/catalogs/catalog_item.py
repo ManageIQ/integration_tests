@@ -221,7 +221,7 @@ class CatalogItem(Updateable, Pretty):
                                'select_orch_template': self.orch_template,
                                'select_provider': self.provider_type,
                                'select_config_template': self.config_template})
-        if self.item_type != "Orchestration":
+        if self.item_type != "Orchestration" and self.item_type != "AnsibleTower":
             sel.click(basic_info_form.field_entry_point)
             dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
