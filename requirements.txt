@@ -64,6 +64,8 @@ sphinx-rtd-theme
 sphinxcontrib-napoleon
 six>=1.9
 
+debtcollector
+
 # requirements for prt-bot interaction via RabbitMQ
 pika
 

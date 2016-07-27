@@ -33,7 +33,12 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import singledispatch, multidispatch
 
+
+from debtcollector.removals import removed_module, remove
+
 import base64
+
+
 from cfme import exceptions, js
 from fixtures.pytest_store import store
 from utils import version
@@ -53,6 +58,11 @@ class_selector = re.compile(r"^(?:[a-zA-Z][a-zA-Z0-9]*)?(?:[#.][a-zA-Z0-9_-]+)+$
 urls = []
 
 
+removed_module(__name__, removal_version="framework 3.0")
+removed = remove(
+    message="replaced by the browser endpoint api",
+    removal_version="framework 3.0",
+)
 # Monkeypatching WebElement
 if "_old__repr__" not in globals():
     _old__repr__ = WebElement.__repr__
@@ -72,6 +82,7 @@ if WebElement.__repr__ is not __repr__:
     WebElement.__repr__ = __repr__
 
 
+@removed
 class ByValue(Pretty):
     pretty_attrs = ['value']
 
@@ -85,6 +96,7 @@ class ByValue(Pretty):
         return str(self.value)
 
 
+@removed
 class ByText(Pretty):
     pretty_attrs = ['text']
 
@@ -98,6 +110,7 @@ class ByText(Pretty):
         return self.text == other.text
 
 
+@removed
 @singledispatch
 def elements(o, **kwargs):
     """
@@ -237,6 +250,7 @@ def get_rails_error():
     return None
 
 
+@removed
 def element(o, **kwargs):
     """
     Convert o to a single matching WebElement.
@@ -267,6 +281,7 @@ def element(o, **kwargs):
     return matches[0]
 
 
+@removed
 def wait_until(f, msg="Webdriver wait timed out", timeout=120.0):
     """This used to be a wrapper around WebDriverWait from selenium.
 
@@ -275,6 +290,7 @@ def wait_until(f, msg="Webdriver wait timed out", timeout=120.0):
     return wait_for(lambda: f(ensure_browser_open()), num_sec=timeout, message=msg, delay=0.5)
 
 
+@removed
 def in_flight():
     """Check remaining (running) ajax requests
 
@@ -295,6 +311,7 @@ def in_flight():
         return execute_script(js.in_flight)
 
 
+@removed
 def wait_for_ajax():
     """
     Waits until all ajax timers are complete, in other words, waits until there are no
@@ -361,6 +378,7 @@ def wait_for_ajax():
         urls.append(url)
 
 
+@removed
 @contextmanager
 def ajax_timeout(seconds):
     """Change the AJAX timeout in this context. Useful when something takes a long time.
@@ -374,6 +392,7 @@ def ajax_timeout(seconds):
     _thread_local.ajax_timeout = original
 
 
+@removed
 def is_displayed(loc, _deep=0, **kwargs):
     """
     Checks if a particular locator is displayed
@@ -413,6 +432,7 @@ def is_displayed(loc, _deep=0, **kwargs):
             return is_displayed(loc, _deep + 1)
 
 
+@removed
 def is_displayed_text(text):
     """
     Checks if a particular text is displayed
@@ -425,6 +445,7 @@ def is_displayed_text(text):
     return is_displayed("//*[normalize-space(text())={}]".format(quoteattr(text)))
 
 
+@removed
 def wait_for_element(*locs, **kwargs):
     """
     Wrapper around wait_until, specific to an element.
@@ -448,10 +469,12 @@ def wait_for_element(*locs, **kwargs):
     )
 
 
+@removed
 def get_alert():
     return browser().switch_to_alert()
 
 
+@removed
 def is_alert_present():
     try:
         get_alert().text
@@ -461,6 +484,7 @@ def is_alert_present():
         return True
 
 
+@removed
 def dismiss_any_alerts():
     """Loops until there are no further alerts present to dismiss.
 
@@ -475,6 +499,7 @@ def dismiss_any_alerts():
         pass
 
 
+@removed
 def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None, check_present=False):
     """Handles an alert popup.
 
@@ -530,6 +555,7 @@ def handle_alert(cancel=False, wait=30.0, squash=False, prompt=None, check_prese
             raise
 
 
+@removed
 def click(loc, wait_ajax=True, no_custom_handler=False):
     """
     Clicks on an element.
@@ -558,6 +584,7 @@ def click(loc, wait_ajax=True, no_custom_handler=False):
     return True
 
 
+@removed
 def raw_click(loc, wait_ajax=True):
     """Does raw selenium's .click() call on element. Circumvents mouse move.
 
@@ -570,6 +597,7 @@ def raw_click(loc, wait_ajax=True):
         wait_for_ajax()
 
 
+@removed
 def double_click(loc, wait_ajax=True):
     """Double-clicks on an element.
 
@@ -588,6 +616,7 @@ def double_click(loc, wait_ajax=True):
     return True
 
 
+@removed
 def drag_and_drop(source_element, dest_element):
     """Drag and Drop element.
 
@@ -600,6 +629,7 @@ def drag_and_drop(source_element, dest_element):
     ActionChains(browser()).drag_and_drop(source_element, dest_element).perform()
 
 
+@removed
 def drag_and_drop_by_offset(source_element, x=0, y=0):
     """Drag and Drop element by offset
 
@@ -612,6 +642,7 @@ def drag_and_drop_by_offset(source_element, x=0, y=0):
     ActionChains(browser()).drag_and_drop_by_offset(e, x, y).perform()
 
 
+@removed
 def move_to_element(loc, **kwargs):
     """
     Moves to an element.
@@ -649,6 +680,7 @@ def move_to_element(loc, **kwargs):
     return el
 
 
+@removed
 def text(loc, **kwargs):
     """
     Returns the text of an element.
@@ -666,6 +698,7 @@ def text(loc, **kwargs):
         return execute_script("return arguments[0].textContent || arguments[0].innerText;", el)
 
 
+@removed
 def text_sane(loc, **kwargs):
     """Returns text decoded from UTF-8 and stripped
 
@@ -678,6 +711,7 @@ def text_sane(loc, **kwargs):
     return re.sub(r'\s+', ' ', text(loc).strip().encode("utf-8"))
 
 
+@removed
 def value(loc):
     """
     Returns the value of an input element.
@@ -690,11 +724,13 @@ def value(loc):
     return get_attribute(loc, 'value')
 
 
+@removed
 def classes(loc):
     """Return a list of classes attached to the element."""
     return set(execute_script("return arguments[0].classList;", element(loc)))
 
 
+@removed
 def tag(loc):
     """
     Returns the tag name of an element
@@ -707,6 +743,7 @@ def tag(loc):
     return element(loc).tag_name
 
 
+@removed
 def get_attribute(loc, attr):
     """
     Returns the value of the HTML attribute of the given locator.
@@ -720,6 +757,7 @@ def get_attribute(loc, attr):
     return element(loc).get_attribute(attr)
 
 
+@removed
 def set_attribute(loc, attr, value):
     """Sets the attribute of an element.
 
@@ -736,6 +774,7 @@ def set_attribute(loc, attr, value):
         "arguments[0].setAttribute(arguments[1], arguments[2]);", element(loc), attr, value)
 
 
+@removed
 def unset_attribute(loc, attr):
     """Removes an attribute of an element.
 
@@ -749,6 +788,7 @@ def unset_attribute(loc, attr):
     return execute_script("arguments[0].removeAttribute(arguments[1]);", element(loc), attr)
 
 
+@removed
 def set_angularjs_value(loc, value):
     """Sets value of an element managed by angularjs
 
@@ -760,6 +800,7 @@ def set_angularjs_value(loc, value):
     return execute_script(js.set_angularjs_value_script, element(loc), value)
 
 
+@removed
 def send_keys(loc, text):
     """Sends the supplied keys to an element. Handles the file upload fields on background.
 
@@ -790,6 +831,7 @@ def send_keys(loc, text):
         wait_for_ajax()
 
 
+@removed
 def checkbox(loc, set_to=False):
     """
     Checks or unchecks a given checkbox
@@ -817,6 +859,7 @@ def checkbox(loc, set_to=False):
         return selected
 
 
+@removed
 def check(loc):
     """
     Convenience function to check a checkbox
@@ -827,6 +870,7 @@ def check(loc):
     return checkbox(loc, True)
 
 
+@removed
 def uncheck(loc):
     """
     Convenience function to uncheck a checkbox
@@ -837,6 +881,7 @@ def uncheck(loc):
     return checkbox(loc, False)
 
 
+@removed
 def current_url():
     """
     Returns the current_url of the page
@@ -846,10 +891,12 @@ def current_url():
     return browser().current_url
 
 
+@removed
 def title():
     return browser().title
 
 
+@removed
 def get(url):
     """
     Changes page to the specified URL
@@ -860,6 +907,7 @@ def get(url):
     return browser().get(url)
 
 
+@removed
 def refresh():
     """
     Refreshes the current browser window.
@@ -871,6 +919,7 @@ def refresh():
 # out everything above into a lib
 
 
+@removed
 def base_url():
     """
     Returns the base url.
@@ -899,6 +948,7 @@ class ContextWrapper(dict):
                     repr(item), repr(self.keys())))
 
 
+@removed
 def force_navigate(page_name, _tries=0, *args, **kwargs):
     """force_navigate(page_name)
 
@@ -1163,6 +1213,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         force_navigate(page_name, _tries, *args, **kwargs)
 
 
+@removed
 def detect_observed_field(loc):
     """Detect observed fields; sleep if needed
 
@@ -1218,6 +1269,7 @@ def detect_observed_field(loc):
     wait_for_ajax()
 
 
+@removed
 def set_text(loc, text):
     """
     Clears the element and then sends the supplied keys.
@@ -1400,6 +1452,7 @@ class Select(SeleniumSelect, Pretty):
             type(self).__name__, repr(self._loc), repr(self.is_multiple))
 
 
+@removed
 @multidispatch
 def select(loc, o):
     raise NotImplementedError('Unable to select {} in this type: {}'.format(o, loc))
@@ -1462,6 +1515,7 @@ def _sel_desel(el, getter_fn, setter_attr, item):
         return old_item
 
 
+@removed
 def select_by_text(select_element, txt):
     """
     Works on a select element and selects an option by the visible text.
@@ -1481,6 +1535,7 @@ def select_by_text(select_element, txt):
                       'select_by_visible_text', txt)
 
 
+@removed
 def select_by_value(select_element, val):
     """
     Works on a select element and selects an option by the value attribute.
@@ -1492,6 +1547,7 @@ def select_by_value(select_element, val):
     return _sel_desel(select_element, lambda s: ByValue(value(s)), 'select_by_value', val)
 
 
+@removed
 def deselect_by_text(select_element, txt):
     """
     Works on a select element and deselects an option by the visible text.
@@ -1504,6 +1560,7 @@ def deselect_by_text(select_element, txt):
                       'deselect_by_visible_text', txt)
 
 
+@removed
 def deselect_by_value(select_element, val):
     """
     Works on a select element and deselects an option by the value attribute.
@@ -1515,6 +1572,7 @@ def deselect_by_value(select_element, val):
     return _sel_desel(select_element, lambda s: ByValue(value(s)), 'deselect_by_value', val)
 
 
+@removed
 def execute_script(script, *args, **kwargs):
     """Wrapper for execute_script() to not have to pull browser() from somewhere.
 
@@ -1526,6 +1584,7 @@ def execute_script(script, *args, **kwargs):
 ScreenShot = namedtuple("screenshot", ['png', 'error'])
 
 
+@removed
 def take_screenshot():
     screenshot = None
     screenshot_error = None
