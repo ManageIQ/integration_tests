@@ -93,10 +93,10 @@ def get_mgmt(provider_key, providers=None, credentials=None):
 
 
 def _get_provider_class_by_type(prov_type):
-    for _, class_dict in BaseProvider.type_mapping.iteritems():
-        for ptype, the_class in class_dict.iteritems():
-            if ptype == prov_type:
-                return the_class
+    for class_dict in BaseProvider.type_mapping.iteritems():
+        maybe_the_class = class_dict.get(prov_type)
+        if maybe_the_class is not None:
+            return maybe_the_class
 
 
 def get_provider_key(provider_name):
