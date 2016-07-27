@@ -105,7 +105,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                 ('amqp_verify_secret', Input("amqp_verify")),
             ]
 
-            return TabStripForm(fields, tab_fields, fields_end)
+            return TabStripForm(fields=fields, tab_fields=tab_fields, fields_end=fields_end)
 
         def __init__(self, **kwargs):
             super(BaseProvider.Credential, self).__init__(**kwargs)
