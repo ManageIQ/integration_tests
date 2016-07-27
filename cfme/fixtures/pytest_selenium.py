@@ -33,11 +33,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import singledispatch, multidispatch
 
-
-from debtcollector.removals import removed_module, remove
-
 import base64
-
 
 from cfme import exceptions, js
 from fixtures.pytest_store import store
@@ -47,6 +43,7 @@ from utils.path import log_path
 from utils.log import logger
 from utils.wait import wait_for
 from utils.pretty import Pretty
+from utils.deprecation import removed_selenium as removed
 
 from threading import local
 _thread_local = local()
@@ -58,11 +55,6 @@ class_selector = re.compile(r"^(?:[a-zA-Z][a-zA-Z0-9]*)?(?:[#.][a-zA-Z0-9_-]+)+$
 urls = []
 
 
-removed_module(__name__, removal_version="framework 3.0")
-removed = remove(
-    message="replaced by the browser endpoint api",
-    removal_version="framework 3.0",
-)
 # Monkeypatching WebElement
 if "_old__repr__" not in globals():
     _old__repr__ = WebElement.__repr__
