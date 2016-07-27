@@ -7,6 +7,7 @@ from cfme.web_ui import (
     accordion, fill, flash, paginator, toolbar, CheckboxTree, Region, Tree, Quadicon)
 from cfme.web_ui.menu import extend_nav
 from functools import partial
+from utils import deferred_verpick, version
 from utils.api import rest_api
 from utils.wait import wait_for
 
@@ -162,6 +163,7 @@ class Instance(VM):
 
     def get_collection_via_rest(self):
         return rest_api().collections.instances
+
 
 @VM.register_for_provider_type("openstack")
 class OpenStackInstance(Instance):
@@ -367,7 +369,12 @@ class AzureInstance(Instance):
     START = "Start"
     POWER_ON = START  # For compatibility with the infra objects.
     STOP = "Stop"
-    TERMINATE = "Terminate"
+    SUSPEND = "Suspend"
+    DELETE = "Delete"
+    TERMINATE = deferred_verpick({
+        version.LOWEST: 'Terminate',
+        '5.6.1': 'Delete',
+    })
     # CFME-only power control options
     SOFT_REBOOT = "Soft Reboot"
     # Provider-only power control options
@@ -449,6 +456,8 @@ class AzureInstance(Instance):
             self.provider.mgmt.stop_vm(self.name)
         elif option == AzureInstance.RESTART:
             self.provider.mgmt.restart_vm(self.name)
+        elif option == AzureInstance.SUSPEND:
+            self.provider.mgmt.suspend_vm(self.name)
         elif option == AzureInstance.TERMINATE:
             self.provider.mgmt.delete_vm(self.name)
         else:
