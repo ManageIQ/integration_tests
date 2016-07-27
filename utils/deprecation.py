@@ -1,9 +1,6 @@
-
-
 from debtcollector.removals import remove
 
 
-removed_selenium = remove(
-    message="it is replaced by the browser endpoint api",
+removed_in_fw30 = remove(
     removal_version="framework 3.0",
 )

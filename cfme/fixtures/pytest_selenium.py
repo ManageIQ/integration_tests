@@ -43,14 +43,14 @@ from utils.path import log_path
 from utils.log import logger
 from utils.wait import wait_for
 from utils.pretty import Pretty
-from utils.deprecation import removed_selenium as removed
+from utils.deprecation import removed_in_fw30
 
 from threading import local
 _thread_local = local()
 _thread_local.ajax_timeout = 30
 
 class_selector = re.compile(r"^(?:[a-zA-Z][a-zA-Z0-9]*)?(?:[#.][a-zA-Z0-9_-]+)+$")
-
+removed = removed_in_fw30(message="it is replaced by the browser endpoint api")
 
 urls = []
 
