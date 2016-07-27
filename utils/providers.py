@@ -387,18 +387,16 @@ def clear_providers():
     # Executes the deletes first, then validates in a second pass
     logger.info('Destroying all appliance providers')
     perflog.start('utils.providers.clear_providers')
-    clear_provider_by_type('cloud', validate=False)
-    clear_provider_by_type('infra', validate=False)
-    if version.current_version() > '5.5':
-        clear_provider_by_type('container', validate=False)
-    if version.current_version() == version.LATEST:
-        clear_provider_by_type('middleware', validate=False)
-    wait_for_no_providers_by_type('cloud')
-    wait_for_no_providers_by_type('infra')
-    if version.current_version() > '5.5':
-        wait_for_no_providers_by_type('container')
-    if version.current_version() == version.LATEST:
-        wait_for_no_providers_by_type('middleware')
+
+    def do_for_provider_types(op):
+        op('cloud', validate=False)
+        op('infra', validate=False)
+        if version.current_version() > '5.5':
+            op('container', validate=False)
+        if version.current_version() == version.LATEST:
+            op('middleware', validate=False)
+    do_for_provider_types(clear_provider_by_type)
+    do_for_provider_types(wait_for_no_providers_by_type)
     perflog.stop('utils.providers.clear_providers')
 
 
