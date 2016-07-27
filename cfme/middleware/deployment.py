@@ -123,8 +123,8 @@ class MiddlewareDeployment(MiddlewareBase, Taggable):
         deployments = []
         rows = provider.mgmt.list_server_deployment()
         for deployment in rows:
-            _server = MiddlewareServer(name=re.sub(r'~~$', '', deployment.path.resource[0]),
-                                       feed=deployment.path.feed,
+            _server = MiddlewareServer(name=re.sub(r'~~$', '', deployment.path.resource_id[0]),
+                                       feed=deployment.path.feed_id,
                                        provider=provider)
             _include = False
             if server:

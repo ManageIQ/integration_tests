@@ -5,7 +5,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
-from mgmtsystem.hawkular import Path
+from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_providers
@@ -129,9 +129,9 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         servers = []
         rows = provider.mgmt.list_server()
         for server in rows:
-            servers.append(MiddlewareServer(name=re.sub(r'~~$', '', server.path.resource),
+            servers.append(MiddlewareServer(name=re.sub(r'~~$', '', server.path.resource_id),
                                             hostname=server.data['Hostname'],
-                                            feed=server.path.feed,
+                                            feed=server.path.feed_id,
                                             product=server.data['Product Name'],
                                             provider=provider))
         return servers
@@ -176,9 +176,9 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         db_srv = _db_select_query(name=self.name, provider=self.provider,
                                  feed=self.feed).first()
         if db_srv:
-            path = Path(db_srv.ems_ref)
-            mgmt_srv = self.provider.mgmt.resource_data(feed_id=path.feed,
-                        resource_id=path.resource)
+            path = CanonicalPath(db_srv.ems_ref)
+            mgmt_srv = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
+                        resource_id=path.resource_id)
             if mgmt_srv:
                 return MiddlewareServer(provider=self.provider,
                                         name=db_srv.name, feed=db_srv.feed,
@@ -216,9 +216,9 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         db_srv = _db_select_query(name=self.name, provider=self.provider,
                                  feed=self.feed).first()
         if db_srv:
-            path = Path(db_srv.ems_ref)
-            mgmt_srv = self.provider.mgmt.resource_data(feed_id=path.feed,
-                        resource_id=path.resource)
+            path = CanonicalPath(db_srv.ems_ref)
+            mgmt_srv = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
+                        resource_id=path.resource_id)
             if mgmt_srv:
                 return mgmt_srv.value['Server State'] == 'running'
         raise MiddlewareServerNotFound("Server '{}' not found in MGMT!".format(self.name))
