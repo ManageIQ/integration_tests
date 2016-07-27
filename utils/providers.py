@@ -7,8 +7,6 @@ To quickly add all providers::
 """
 import random
 from collections import Mapping
-from operator import methodcaller
-
 
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
@@ -288,7 +286,8 @@ def setup_providers(prov_classes=('cloud', 'infra'), validate=True, check_existi
         added_providers.extend(_setup_providers(pclass, **setup_kwargs))
 
     if validate:
-        map(methodcaller('validate'), added_providers)
+        for provider in added_providers:
+            provider.validate()
 
     perflog.stop('utils.providers.setup_providers')
 
@@ -343,7 +342,8 @@ def _setup_providers(prov_class, validate, check_existing):
         added_providers.append(provider)
 
     if validate:
-        map(methodcaller('validate'), added_providers)
+        for provider in added_providers:
+            provider.validate()
 
     return added_providers
 
