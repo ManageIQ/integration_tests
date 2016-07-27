@@ -53,6 +53,7 @@
 import atexit
 import os
 import re
+import time
 import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
@@ -1485,6 +1486,12 @@ def _fill_form_list(form, values, action=None, action_always=False):
     for field, value in values:
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
+            try:
+                sel.wait_for_element(loc)
+            except TypeError:
+                # TypeError - when loc is not resolvable to an element, elements() will yell
+                # vvv An alternate scenario when element is not resolvable, just wait a bit.
+                time.sleep(1)
             logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
@@ -3238,16 +3245,19 @@ fill.prefer((DHTMLSelect, types.NoneType), (object, types.NoneType))
 fill.prefer((object, types.NoneType), (Select, object))
 
 
-class AngularSelect(object):
+class AngularSelect(Pretty):
     BUTTON = "//button[@data-id='{}']"
 
-    def __init__(self, loc, none=None, multi=False):
+    pretty_attrs = ['_loc', 'none', 'multi', 'exact']
+
+    def __init__(self, loc, none=None, multi=False, exact=False):
         self.none = none
         if isinstance(loc, AngularSelect):
             self._loc = loc._loc
         else:
             self._loc = self.BUTTON.format(loc)
         self.multi = multi
+        self.exact = exact
 
     def locate(self):
         return sel.move_to_element(self._loc)
@@ -3275,7 +3285,11 @@ class AngularSelect(object):
     def select_by_visible_text(self, text):
         if not self.is_open:
             self.open()
-        new_loc = self._loc + '/../div/ul/li/a[contains(., "{}")]'.format(text)
+        if self.exact:
+            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(quoteattr(text))
+        else:
+            new_loc = self._loc + '/../div/ul/li/a[contains(normalize-space(.), {})]'.format(
+                quoteattr(text))
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)

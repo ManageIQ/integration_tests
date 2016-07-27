@@ -638,7 +638,9 @@ def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
     if cred.type == 'amqp':
-        fill(cred.form, {'amqp_principal': cred.principal,
+        fill(cred.form, {
+            'event_selection': 'amqp',
+            'amqp_principal': cred.principal,
             'amqp_secret': cred.secret,
             'amqp_verify_secret': cred.verify_secret,
             'validate_btn': validate})

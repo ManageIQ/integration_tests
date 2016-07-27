@@ -272,7 +272,7 @@ def wait_until(f, msg="Webdriver wait timed out", timeout=120.0):
 
     Now it is just compatibility layer using :py:func:`utils.wait.wait_for`
     """
-    return wait_for(lambda: f(browser()), num_sec=timeout, message=msg, delay=0.5)
+    return wait_for(lambda: f(ensure_browser_open()), num_sec=timeout, message=msg, delay=0.5)
 
 
 def in_flight():
