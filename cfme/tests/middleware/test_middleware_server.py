@@ -267,6 +267,8 @@ def _check_server_running(server):
             delay=10, num_sec=600, message='Server {} must be running'.format(server.name))
 
 
+# it needs refactoring and fixing all tags tests
+@pytest.mark.uncollect
 def test_tags(provider):
     """Tests tags in server page
 
