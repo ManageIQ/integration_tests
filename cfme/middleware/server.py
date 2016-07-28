@@ -71,8 +71,7 @@ class MiddlewareServer(MiddlewareBase, Taggable):
 
     """
     property_tuples = [('name', 'name'), ('feed', 'feed'),
-                       ('hostname', 'hostname'), ('bound_address', 'bind_address'),
-                       ('product_name', 'product'), ('version', 'version')]
+                       ('hostname', 'hostname'), ('bound_address', 'bind_address')]
     taggable_type = 'MiddlewareServer'
 
     def __init__(self, name, provider=None, **kwargs):
@@ -83,10 +82,12 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         self.product = kwargs['product'] if 'product' in kwargs else None
         self.hostname = kwargs['hostname'] if 'hostname' in kwargs else None
         self.feed = kwargs['feed'] if 'feed' in kwargs else None
+        self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
         if 'properties' in kwargs:
             for property in kwargs['properties']:
-                setattr(self, attributize_string(property), kwargs['properties'][property])
-        self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
+                # check the properties first, so it will not overwrite core attributes
+                if getattr(self, attributize_string(property), None) is None:
+                    setattr(self, attributize_string(property), kwargs['properties'][property])
 
     @classmethod
     def servers(cls, provider=None, strict=True):
@@ -98,10 +99,13 @@ class MiddlewareServer(MiddlewareBase, Taggable):
                 for row in list_tbl.rows():
                     if strict:
                         _provider = get_crud(get_provider_key(row.provider.text))
-                    servers.append(MiddlewareServer(name=row.server_name.text,
-                                                    feed=row.feed.text,
-                                                    product=row.product.text,
-                                                    provider=_provider))
+                    servers.append(MiddlewareServer(
+                        name=row.server_name.text,
+                        feed=row.feed.text,
+                        hostname=row.host_name.text,
+                        product=row.product.text
+                        if row.product.text else None,
+                        provider=_provider))
         return servers
 
     @classmethod
@@ -118,10 +122,14 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         for server in rows:
             if strict:
                 _provider = get_crud(get_provider_key(server.provider_name))
-            servers.append(MiddlewareServer(name=server.name, hostname=server.hostname,
-                                            feed=server.feed, product=server.product,
-                                            db_id=server.id, provider=_provider,
-                                            properties=parse_properties(server.properties)))
+            servers.append(MiddlewareServer(
+                name=server.name,
+                hostname=server.hostname,
+                feed=server.feed,
+                product=server.product,
+                db_id=server.id,
+                provider=_provider,
+                properties=parse_properties(server.properties)))
         return servers
 
     @classmethod
@@ -129,11 +137,13 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         servers = []
         rows = provider.mgmt.list_server()
         for server in rows:
-            servers.append(MiddlewareServer(name=re.sub(r'~~$', '', server.path.resource_id),
-                                            hostname=server.data['Hostname'],
-                                            feed=server.path.feed_id,
-                                            product=server.data['Product Name'],
-                                            provider=provider))
+            servers.append(MiddlewareServer(
+                name=re.sub(r'~~$', '', server.path.resource_id),
+                hostname=server.data['Hostname'],
+                feed=server.path.feed_id,
+                product=server.data['Product Name']
+                if 'Product Name' in server.data else None,
+                provider=provider))
         return servers
 
     @classmethod
@@ -180,9 +190,10 @@ class MiddlewareServer(MiddlewareBase, Taggable):
             mgmt_srv = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
                         resource_id=path.resource_id)
             if mgmt_srv:
-                return MiddlewareServer(provider=self.provider,
-                                        name=db_srv.name, feed=db_srv.feed,
-                                        properties=mgmt_srv.value)
+                return MiddlewareServer(
+                    provider=self.provider,
+                    name=db_srv.name, feed=db_srv.feed,
+                    properties=mgmt_srv.value)
         return None
 
     @server.variant('db')
@@ -190,9 +201,11 @@ class MiddlewareServer(MiddlewareBase, Taggable):
         server = _db_select_query(name=self.name, provider=self.provider,
                                  feed=self.feed).first()
         if server:
-            return MiddlewareServer(db_id=server.id, provider=self.provider,
-                                    feed=server.feed, name=server.name,
-                                    properties=parse_properties(server.properties))
+            return MiddlewareServer(
+                db_id=server.id, provider=self.provider,
+                feed=server.feed, name=server.name,
+                hostname=server.hostname,
+                properties=parse_properties(server.properties))
         return None
 
     @server.variant('rest')
@@ -222,6 +235,26 @@ class MiddlewareServer(MiddlewareBase, Taggable):
             if mgmt_srv:
                 return mgmt_srv.value['Server State'] == 'running'
         raise MiddlewareServerNotFound("Server '{}' not found in MGMT!".format(self.name))
+
+    def shutdown_server(self):
+        self.load_details(refresh=True)
+        pwr_btn("Gracefully shutdown Server", invokes_alert=True)
+        sel.handle_alert()
+
+    def restart_server(self):
+        self.load_details(refresh=True)
+        pwr_btn("Restart Server", invokes_alert=True)
+        sel.handle_alert()
+
+    def suspend_server(self):
+        self.load_details(refresh=True)
+        pwr_btn("Suspend Server", invokes_alert=True)
+        sel.handle_alert()
+
+    def resume_server(self):
+        self.load_details(refresh=True)
+        pwr_btn("Resume Server", invokes_alert=True)
+        sel.handle_alert()
 
     def reload_server(self):
         self.load_details(refresh=True)
