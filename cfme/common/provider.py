@@ -64,6 +64,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
              type: One of [amqp, candu, ssh, token] (optional)
              domain: Domain for default credentials (optional)
         """
+
         @property
         def form(self):
             fields = [
@@ -80,12 +81,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                         version.LOWEST: Input('bearer_password'),
                         '5.6': Input('default_password')
                     }),
-                    ('token_verify_secret', {
-                        version.LOWEST: Input('bearer_verify'),
-                        '5.6': Input('default_verify')
-                    }),
                     ('token_verify_secret', Input('bearer_verify')),
                 ],
+
                 "RSA key pair": [
                     ('ssh_user', Input("ssh_keypair_userid")),
                     ('ssh_key', FileInput("ssh_keypair_password")),
@@ -215,7 +213,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
            cancel (boolean): whether to cancel out of the update.
         """
         sel.force_navigate('{}_{}'.format(self.page_name, self.edit_page_suffix),
-            context={'provider': self})
+                           context={'provider': self})
         fill(self.properties_form, self._form_mapping(**updates))
         for cred in self.credentials:
             fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
@@ -234,7 +232,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         """
         self.load_details()
         cfg_btn('Remove this {} Provider from the VMDB'.format(self.string_name),
-            invokes_alert=True)
+                invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         fire("providers_changed")
         if not cancel:
@@ -389,7 +387,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                                            min_error=0.05,
                                            low_val_correction=2)
                 logger.info(' Matching stat [%s], Host(%s), CFME(%s), '
-                    'with tolerance %s is %s', stat, host_stats[stat], cfme_stat, value, success)
+                            'with tolerance %s is %s', stat, host_stats[stat], cfme_stat, value, success)
                 if not success:
                     return False
             except KeyError:
@@ -423,7 +421,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             # And since it is badly configured, let's notify the user.
             logger.warning(
                 'Hey, _on_details_page called from {} class which does not have string_name set'
-                .format(type(self).__name__))
+                    .format(type(self).__name__))
             return False
         ensure_browser_open()
         collection = '{} Providers'.format(self.string_name)
@@ -435,7 +433,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         if not self._on_detail_page():
             logger.debug("load_details: not on details already, navigating")
             sel.force_navigate('{}_{}'.format(self.page_name, self.detail_page_suffix),
-                context={'provider': self})
+                               context={'provider': self})
         else:
             logger.debug("load_details: already on details, refreshing")
             if refresh:
@@ -550,7 +548,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
         Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
         """
         sel.force_navigate('{}_provider_policy_assignment'.format(self.page_name),
-            context={'provider': self})
+                           context={'provider': self})
         return self._assigned_policy_profiles
 
     @property
@@ -567,13 +565,13 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
         Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
         """
         sel.force_navigate('{}_provider_policy_assignment'.format(self.page_name),
-            context={'provider': self})
+                           context={'provider': self})
         return self._unassigned_policy_profiles
 
     @property
     def _all_available_policy_profiles(self):
-        pp_rows_locator = "//table/tbody/tr/td[@class='standartTreeImage']"\
-            "/img[contains(@src, 'policy_profile')]/../../td[@class='standartTreeRow']"
+        pp_rows_locator = "//table/tbody/tr/td[@class='standartTreeImage']" \
+                          "/img[contains(@src, 'policy_profile')]/../../td[@class='standartTreeRow']"
         return sel.elements(pp_rows_locator)
 
     def _is_policy_profile_row_checked(self, row):
@@ -647,17 +645,15 @@ def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
     if cred.type == 'amqp':
-        fill(cred.form, {
-            'amqp_principal': cred.principal,
-            'event_selection': 'amqp',
-            'amqp_secret': cred.secret,
-            'amqp_verify_secret': cred.verify_secret,
-            'validate_btn': validate})
+        fill(cred.form, {'amqp_principal': cred.principal,
+                         'amqp_secret': cred.secret,
+                         'amqp_verify_secret': cred.verify_secret,
+                         'validate_btn': validate})
     elif cred.type == 'candu':
         fill(cred.form, {'candu_principal': cred.principal,
-            'candu_secret': cred.secret,
-            'candu_verify_secret': cred.verify_secret,
-            'validate_btn': validate})
+                         'candu_secret': cred.secret,
+                         'candu_verify_secret': cred.verify_secret,
+                         'validate_btn': validate})
     elif cred.type == 'azure':
         fill(cred.form, {'default_username': cred.principal,
                          'default_password': cred.secret,
@@ -681,9 +677,9 @@ def _fill_credential(form, cred, validate=None):
         else:
             principal = cred.principal
         fill(cred.form, {'default_principal': principal,
-            'default_secret': cred.secret,
-            'default_verify_secret': cred.verify_secret,
-            'validate_btn': validate})
+                         'default_secret': cred.secret,
+                         'default_verify_secret': cred.verify_secret,
+                         'validate_btn': validate})
     if validate:
         flash.assert_no_errors()
 
