@@ -82,6 +82,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                         '5.6': Input('default_password')
                     }),
                     ('token_verify_secret', Input('bearer_verify')),
+                    ('token_verify_secret', {
+                        version.LOWEST: Input('bearer_password'),
+                    })
                 ],
 
                 "RSA key pair": [
@@ -421,7 +424,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             # And since it is badly configured, let's notify the user.
             logger.warning(
                 'Hey, _on_details_page called from {} class which does not have string_name set'
-                    .format(type(self).__name__))
+                .format(type(self).__name__))
             return False
         ensure_browser_open()
         collection = '{} Providers'.format(self.string_name)
