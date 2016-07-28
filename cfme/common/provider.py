@@ -86,7 +86,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                     }),
                     ('token_verify_secret', Input('bearer_verify')),
                 ],
-                
                 "RSA key pair": [
                     ('ssh_user', Input("ssh_keypair_userid")),
                     ('ssh_key', FileInput("ssh_keypair_password")),
@@ -648,7 +647,9 @@ def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
     if cred.type == 'amqp':
-        fill(cred.form, {'amqp_principal': cred.principal,
+        fill(cred.form, {
+            'amqp_principal': cred.principal,
+            'event_selection': 'amqp',
             'amqp_secret': cred.secret,
             'amqp_verify_secret': cred.verify_secret,
             'validate_btn': validate})
