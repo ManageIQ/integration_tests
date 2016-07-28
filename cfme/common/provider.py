@@ -575,7 +575,8 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     @property
     def _all_available_policy_profiles(self):
         pp_rows_locator = "//table/tbody/tr/td[@class='standartTreeImage']" \
-                          "/img[contains(@src, 'policy_profile')]/../../td[@class='standartTreeRow']"
+                          "/img[contains(@src, 'policy_profile')]" \
+                          "/../../td[@class='standartTreeRow']"
         return sel.elements(pp_rows_locator)
 
     def _is_policy_profile_row_checked(self, row):
