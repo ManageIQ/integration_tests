@@ -70,6 +70,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                 ('token_secret_55', Input('bearer_token')),
                 ('google_service_account', Input('service_account')),
             ]
+
             tab_fields = {
                 "Default": [
                     ('default_principal', Input("default_userid")),
@@ -83,8 +84,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                         version.LOWEST: Input('bearer_verify'),
                         '5.6': Input('default_verify')
                     }),
+                    ('token_verify_secret', Input('bearer_verify')),
                 ],
-
                 "RSA key pair": [
                     ('ssh_user', Input("ssh_keypair_userid")),
                     ('ssh_key', FileInput("ssh_keypair_password")),
@@ -646,9 +647,7 @@ def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
     if cred.type == 'amqp':
-        fill(cred.form, {
-            'event_selection': 'amqp',
-            'amqp_principal': cred.principal,
+        fill(cred.form, {'amqp_principal': cred.principal,
             'amqp_secret': cred.secret,
             'amqp_verify_secret': cred.verify_secret,
             'validate_btn': validate})
