@@ -86,6 +86,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                     }),
                     ('token_verify_secret', Input('bearer_verify')),
                 ],
+                
                 "RSA key pair": [
                     ('ssh_user', Input("ssh_keypair_userid")),
                     ('ssh_key', FileInput("ssh_keypair_password")),
