@@ -45,7 +45,7 @@ class OpenStackProvider(Provider):
             'ipaddress_text': kwargs.get('ip_address'),
             'sec_protocol': kwargs.get('sec_protocol'),
             'infra_provider': "---" if infra_provider is False else infra_provider}
-        if 'amqp' in self.credentials:
+        if 'amqp_credentials' in self.credentials:
             data_dict.update({
                 'event_selection': 'amqp',
                 'amqp_hostname_text': kwargs.get('hostname'),
