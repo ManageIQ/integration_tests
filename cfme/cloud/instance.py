@@ -367,6 +367,7 @@ class AzureInstance(Instance):
     START = "Start"
     POWER_ON = START  # For compatibility with the infra objects.
     STOP = "Stop"
+    SUSPEND = "Suspend"
     TERMINATE = "Terminate"
     # CFME-only power control options
     SOFT_REBOOT = "Soft Reboot"
@@ -376,6 +377,7 @@ class AzureInstance(Instance):
     # CFME power states
     STATE_ON = "on"
     STATE_OFF = "off"
+    STATE_PAUSED = "suspended"
     STATE_SUSPENDED = "suspended"
     STATE_TERMINATED = "terminated"
     STATE_UNKNOWN = "unknown"
@@ -449,6 +451,8 @@ class AzureInstance(Instance):
             self.provider.mgmt.stop_vm(self.name)
         elif option == AzureInstance.RESTART:
             self.provider.mgmt.restart_vm(self.name)
+        elif option == AzureInstance.SUSPEND:
+            self.provider.mgmt.suspend_vm(self.name)
         elif option == AzureInstance.TERMINATE:
             self.provider.mgmt.delete_vm(self.name)
         else:

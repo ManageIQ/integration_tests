@@ -7,6 +7,7 @@ To quickly add all providers::
 """
 import random
 from collections import Mapping
+from functools import partial
 from operator import methodcaller
 
 
@@ -436,7 +437,133 @@ def get_crud(provider_config_name):
     prov_type = prov_config.get('type')
 
     return _get_provider_class_by_type(prov_type).configloader(prov_config, provider_config_name)
+    if prov_type != 'ec2':
+        if prov_config.get('discovery_range', None):
+            start_ip = prov_config['discovery_range']['start']
+            end_ip = prov_config['discovery_range']['end']
+        else:
+            start_ip = end_ip = prov_config.get('ipaddress')
 
+    if prov_type == 'ec2':
+        from cfme.cloud.provider import EC2Provider
+        return EC2Provider(name=prov_config['name'],
+            region=prov_config['region'],
+            credentials={'default': credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name)
+    if prov_type == 'gce':
+        from cfme.cloud.provider import GCEProvider
+        ser_acc_creds = get_credentials_from_config(
+            prov_config['credentials'], cred_type='service_account')
+        return GCEProvider(name=prov_config['name'],
+            project=prov_config['project'],
+            zone=prov_config['zone'],
+            region=prov_config['region'],
+            credentials={'default': ser_acc_creds},
+            key=provider_config_name)
+    elif prov_type == 'azure':
+        from cfme.cloud.provider import AzureProvider
+        return AzureProvider(name=prov_config['name'],
+            provisioning=prov_config['provisioning'],
+            tenant_id=prov_config['tenant_id'],
+            subscription_id=prov_config['subscription_id'],
+            credentials={'default': credentials},
+            key=provider_config_name)
+    elif prov_type == 'openstack':
+        from cfme.cloud.provider import OpenStackProvider
+        credentials_dict = {'default': credentials}
+        if 'amqp_credentials' in prov_config:
+            credentials_dict['amqp'] = process_credential_yaml_key(
+                prov_config['amqp_credentials'], cred_type='amqp')
+        return OpenStackProvider(name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            api_port=prov_config['port'],
+            credentials=credentials_dict,
+            zone=prov_config['server_zone'],
+            key=provider_config_name,
+            sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
+            infra_provider=prov_config.get('infra_provider'))
+    elif prov_type == 'virtualcenter':
+        return VMwareProvider(name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials={'default': credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip)
+    elif prov_type == 'scvmm':
+        return SCVMMProvider(
+            name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials={'default': credentials},
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip,
+            sec_protocol=prov_config['sec_protocol'],
+            sec_realm=prov_config['sec_realm'])
+    elif prov_type == 'rhevm':
+        credential_dict = {'default': credentials}
+        if prov_config.get('candu_credentials', None):
+            credential_dict['candu'] = process_credential_yaml_key(
+                prov_config['candu_credentials'], cred_type='candu')
+        return RHEVMProvider(name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            api_port='',
+            credentials=credential_dict,
+            zone=prov_config['server_zone'],
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip)
+    elif prov_type == "openstack-infra":
+        credential_dict = {'default': credentials}
+        if 'ssh_credentials' in prov_config:
+            credential_dict['ssh'] = process_credential_yaml_key(
+                prov_config['ssh_credentials'], cred_type='ssh')
+        if 'amqp_credentials' in prov_config:
+            credential_dict['amqp'] = process_credential_yaml_key(
+                prov_config['amqp_credentials'], cred_type='amqp')
+        return OpenstackInfraProvider(
+            name=prov_config['name'],
+            sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials=credential_dict,
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip)
+    elif prov_type == 'kubernetes':
+        token_creds = process_credential_yaml_key(prov_config['credentials'], cred_type='token')
+        return KubernetesProvider(
+            name=prov_config['name'],
+            credentials={'token': token_creds},
+            key=provider_config_name,
+            zone=prov_config['server_zone'],
+            hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
+            port=prov_config['port'],
+            provider_data=prov_config)
+    elif prov_type == 'openshift':
+        token_creds = process_credential_yaml_key(prov_config['credentials'], cred_type='token')
+        return OpenshiftProvider(
+            name=prov_config['name'],
+            credentials={'token': token_creds},
+            key=provider_config_name,
+            zone=prov_config['server_zone'],
+            hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
+            port=prov_config['port'],
+            provider_data=prov_config)
+    elif prov_type == 'hawkular':
+        return HawkularProvider(
+            name=prov_config['name'],
+            key=provider_config_name,
+            hostname=prov_config['hostname'],
+            port=prov_config['port'],
+            credentials={'default': credentials})
+    else:
+        raise UnknownProviderType('{} is not a known provider type'.format(prov_type))
 
 class UnknownProvider(Exception):
     def __init__(self, provider_key, *args, **kwargs):

@@ -616,7 +616,8 @@ class VM(BaseVM):
     def delete_from_provider(self):
         if self.provider.mgmt.does_vm_exist(self.name):
             try:
-                if self.provider.mgmt.is_vm_suspended(self.name):
+                if self.provider.mgmt.is_vm_suspended(self.name) and self.provider.type != 'azure':
+                    # Azure doesn't require VM to be in any particular state to delete it.
                     logger.debug("Powering up VM %s to shut it down correctly on %s.",
                                 self.name, self.provider.key)
                     self.provider.mgmt.start_vm(self.name)
