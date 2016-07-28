@@ -231,6 +231,8 @@ class Summary(object):
 class SummaryTable(object):
     ROWS = '../../../tbody/tr'
 
+    MULTIKEY_LOC = '../../../tbody/tr[1]/td/strong'
+
     def __init__(self, o, text, entry):
         self._object = o
         self._text = text
@@ -246,6 +248,9 @@ class SummaryTable(object):
     def load(self):
         self._keys = []
         key_values = []
+        if sel.is_displayed(self.MULTIKEY_LOC, root=self._entry):
+            # WE cannot process this kind of table yet.
+            return
         for row in sel.elements(self.ROWS, root=self._entry):
             tds = sel.elements('./td', root=row)
             key = tds[0]
