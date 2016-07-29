@@ -7,6 +7,7 @@ from cfme.login import login_admin, logout
 from utils.browser import ensure_browser_open
 from utils.conf import credentials
 from utils.ssh import SSHClient
+from utils import appliance
 
 
 def setup_external_auth_ipa(**data):
@@ -18,7 +19,25 @@ def setup_external_auth_ipa(**data):
         iparealm: Realm.
         credentials: Key of the credential in credentials.yaml
     """
+    connect_kwargs = {
+        'username': credentials['host_default']['username'],
+        'password': credentials['host_default']['password'],
+        'hostname': data['ipaserver'],
+    }
+    import fauxfactory
+    appliance_name = 'cfmeappliance'.format(fauxfactory.gen_alpha(7).lower())
+    appliance_address = appliance.IPAppliance().address
+    appliance_fqdn = '{}.{}'.format(appliance_name, data['iparealm'].lower())
+    ipaserver_ssh = SSHClient(**connect_kwargs)
+    # updating the /etc/hosts is a workaround due to the
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1360928
+    command = 'echo "{}\t{}" >> /etc/hosts'.format(appliance_address, appliance_fqdn)
+    ipaserver_ssh.run_command(command)
+    ipaserver_ssh.close()
     ssh = SSHClient()
+    rc, out = ssh.run_command('appliance_console_cli --host {}'.format(appliance_fqdn))
+    assert rc == 0, out
+    ssh.run_command('echo "127.0.0.1\t{}" > /etc/hosts'.format(appliance_fqdn))
     ensure_browser_open()
     login_admin()
     if data["ipaserver"] not in get_ntp_servers():

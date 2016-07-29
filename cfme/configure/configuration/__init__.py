@@ -979,8 +979,8 @@ class ExternalAuthSetting(AuthSetting):
     pretty_attrs = ['timeout_h', 'timeout_m', 'get_groups']
 
     def __init__(self, get_groups=False, timeout_h="1", timeout_m="0"):
-        self.timeout_h = timeout_h,
-        self.timeout_m = timeout_m,
+        self.timeout_h = timeout_h
+        self.timeout_m = timeout_m
         self.auth_mode = "External (httpd)"
         self.get_groups = get_groups
 
