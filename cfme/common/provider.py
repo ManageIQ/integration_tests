@@ -98,12 +98,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                 amevent = "Events"
             else:
                 amevent = "AMQP"
-            tab_fields[amevent] = [
-                ('event_selection', Radio('event_stream_selection')),
+            tab_fields[amevent] = []
+            if version.current_version() >= "5.6":
+                tab_fields[amevent].append(('event_selection', Radio('event_stream_selection')))
+            tab_fields[amevent].extend([
                 ('amqp_principal', Input("amqp_userid")),
                 ('amqp_secret', Input("amqp_password")),
                 ('amqp_verify_secret', Input("amqp_verify")),
-            ]
+            ])
 
             return TabStripForm(fields=fields, tab_fields=tab_fields, fields_end=fields_end)
 
