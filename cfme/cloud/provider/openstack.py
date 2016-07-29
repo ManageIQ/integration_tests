@@ -1,6 +1,8 @@
 from mgmtsystem.openstack import OpenstackSystem
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 
+from utils.version import current_version
+
 from . import Provider
 
 
@@ -31,6 +33,9 @@ class OpenStackProvider(Provider):
             from utils.providers import setup_provider_by_name
             setup_provider_by_name(
                 infra_provider_name, validate=True, check_existing=True)
+        if current_version() >= "5.6" and 'validate_credentials' not in kwargs:
+            # 5.6 requires validation, so unless we specify, we want to validate
+            kwargs['validate_credentials'] = True
         return super(OpenStackProvider, self).create(*args, **kwargs)
 
     def _form_mapping(self, create=None, **kwargs):
@@ -45,7 +50,7 @@ class OpenStackProvider(Provider):
             'ipaddress_text': kwargs.get('ip_address'),
             'sec_protocol': kwargs.get('sec_protocol'),
             'infra_provider': "---" if infra_provider is False else infra_provider}
-        if 'amqp_credentials' in self.credentials:
+        if 'amqp' in self.credentials:
             data_dict.update({
                 'event_selection': 'amqp',
                 'amqp_hostname_text': kwargs.get('hostname'),
@@ -62,7 +67,7 @@ class OpenStackProvider(Provider):
         if 'amqp_credentials' in prov_config:
             amqp_credentials = cls.process_credential_yaml_key(
                 prov_config['amqp_credentials'], cred_type='amqp')
-            creds['amqp_credentials'] = amqp_credentials
+            creds['amqp'] = amqp_credentials
         return cls(name=prov_config['name'],
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
