@@ -1,14 +1,11 @@
+
 """Test generation helpers
-
 Intended to functionalize common tasks when working with the pytest_generate_tests hook.
-
 When running a test, it is quite often the case that multiple parameters need to be passed
 to a single test. An example of this would be the need to run a Provider Add test against
 multiple providers. We will assume that the providers are stored in the yaml under a common
 structure like so:
-
 .. code-block:: yaml
-
     providers:
         prov_1:
             name: test
@@ -18,12 +15,9 @@ structure like so:
             name: test2
             ip: 10.0.0.2
             test_vm: abc2
-
 Our test requires that we have a Provider Object and as an example, the 'test_vm' field of the
 object. Let's assume a test prototype like so::
-
     test_provider_add(provider_obj, test_vm):
-
 In this case we require the test to be run twice, once for prov_1 and then again for prov_2.
 We are going to use the generate function to help us provide parameters to pass to
 ``pytest_generate_tests()``. ``pytest_generate_tests()`` requires three pieces of
@@ -35,54 +29,39 @@ items are stored. Each element of ``argvalues`` is a list containing a value for
 gives us the values to unpack to make up one test. An example is below, where we assume
 that a provider object is obtained via the ``Provider`` class, and the ``mgmt_sys object``
 is obtained via a ``MgmtSystem`` class.
-
 ===== =============== =================
 ~     provider_obj    test_vm
 ===== =============== =================
 prov1 Provider(prov1) abc1
 prov2 Provider(prov2) abc2
 ===== =============== =================
-
 This is analogous to the following layout:
-
 ========= =============== ===============
 ~         argnames[0]     argnames[1]
 ========= =============== ===============
 idlist[0] argvalues[0][0] argvalues[0][1]
 idlist[1] argvalues[1][0] argvalues[1][1]
 ========= =============== ===============
-
 This could be generated like so:
-
 .. code-block:: python
-
     def gen_providers:
-
         argnames = ['provider_obj', 'test_vm']
         argvalues = []
         idlist = []
-
         for provider in yaml['providers']:
             idlist.append(provider)
             argvalues.append([
                 Provider(yaml['providers'][provider]['name']),
                 yaml['providers'][provider]['test_vm'])
             ])
-
         return argnames, argvalues, idlist
-
 This is then used with pytest_generate_tests like so::
-
     pytest_generate_tests(gen_providers)
-
 Additionally, py.test joins the values of ``idlist`` with dashes to generate a unique id for this
 test, falling back to joining ``argnames`` with dashes if ``idlist`` is not set. This is the value
 seen in square brackets in a test report on parametrized tests.
-
 More information on ``parametrize`` can be found in pytest's documentation:
-
 * https://pytest.org/latest/parametrize.html#_pytest.python.Metafunc.parametrize
-
 """
 import pytest
 
@@ -107,7 +86,6 @@ _version_operator_map = OrderedDict([('>=', lambda o, v: o >= v),
 
 def generate(gen_func, *args, **kwargs):
     """Functional handler for inline pytest_generate_tests definition
-
     Args:
         gen_func: Test generator function, expected to return argnames, argvalues, and an idlist
             suitable for use with pytest's parametrize method in pytest_generate_tests hooks
@@ -120,23 +98,17 @@ def generate(gen_func, *args, **kwargs):
             test. If seen, it will be removed from the kwargs passed to gen_func.
         *args: Additional positional arguments which will be passed to ``gen_func``
         **kwargs: Additional keyword arguments whill be passed to ``gen_func``
-
     Usage:
-
         # Abstract example:
         pytest_generate_tests = testgen.generate(testgen.test_gen_func, arg1, arg2, kwarg1='a')
-
         # Concrete example using infra_providers and scope
         pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
-
     Note:
-
         ``filter_unused`` is helpful, in that you don't have to accept all of the args in argnames
         in every test in the module. However, if all tests don't share one common parametrized
         argname, py.test may not have enough information to properly organize tests beyond the
         'function' scope. Thus, when parametrizing in the module scope, it's a good idea to include
         at least one common argname in every test signature to give pytest a clue in sorting tests.
-
     """
     # Pull out/default kwargs for this function and parametrize
     scope = kwargs.pop('scope', 'function')
@@ -157,9 +129,7 @@ def generate(gen_func, *args, **kwargs):
 
 def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
     """parametrize wrapper that calls :py:func:`param_check`, and only parametrizes when needed
-
     This can be used in any place where conditional parametrization is used.
-
     """
     if param_check(metafunc, argnames, argvalues):
         metafunc.parametrize(argnames, argvalues, *args, **kwargs)
@@ -269,64 +239,46 @@ def _uncollect_since_version(data, metafunc, required_fields):
 
 def provider_by_type(metafunc, provider_types, required_fields=None):
     """Get the values of the named field keys from ``cfme_data.get('management_systems', {})``
-
     ``required_fields`` is special and can take many forms, it is used to ensure that
     yaml data is present for a particular key, or path of keys, and can even validate
     the values as long as they are not None.
-
-
     Args:
         provider_types: A list of provider types to include. If None, all providers are considered
-
     Returns:
         An tuple of ``(argnames, argvalues, idlist)`` for use in a pytest_generate_tests hook, or
         with the :py:func:`parametrize` helper.
-
     Usage:
-
         # In the function itself
         def pytest_generate_tests(metafunc):
             argnames, argvalues, idlist = testgen.provider_by_type(
                 ['openstack', 'ec2'], required_fields=['provisioning']
             )
         metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
-
         # Using the parametrize wrapper
         pytest_generate_tests = testgen.parametrize(testgen.provider_by_type, ['openstack', 'ec2'],
             scope='module')
-
         # Using required_fields
-
         # Ensures that ``provisioning`` exists as a yaml field
         testgen.provider_by_type(
             ['openstack', 'ec2'], required_fields=['provisioning']
         )
-
         # Ensures that ``provisioning`` exists as a yaml field and has another field in it called
         # ``host``
         testgen.provider_by_type(
             ['openstack', 'ec2'], required_fields=[['provisioning', 'host']]
         )
-
         # Ensures that ``powerctl`` exists as a yaml field and has a value 'True'
         testgen.provider_by_type(
             ['openstack', 'ec2'], required_fields=[('powerctl', True)]
         )
-
-
-
     Note:
-
         Using the default 'function' scope, each test will be run individually for each provider
         before moving on to the next test. To group all tests related to single provider together,
         parametrize tests in the 'module' scope.
-
     Note:
-
         testgen for providers now requires the usage of test_flags for collection to work.
         Please visit http://cfme-tests.readthedocs.org/guides/documenting.html#documenting-tests
         for more details.
-
     """
 
     argnames = []
@@ -379,7 +331,6 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
 def cloud_providers(metafunc, **options):
     """Wrapper for :py:func:`provider_by_type` that pulls types from
     :py:attr:`utils.providers.cloud_provider_type_map`
-
     """
     return provider_by_type(metafunc, 'cloud', **options)
 
@@ -387,7 +338,6 @@ def cloud_providers(metafunc, **options):
 def infra_providers(metafunc, **options):
     """Wrapper for :py:func:`provider_by_type` that pulls types from
     :py:attr:`utils.providers.infra_provider_type_map`
-
     """
     return provider_by_type(metafunc, 'infra', **options)
 
@@ -395,7 +345,6 @@ def infra_providers(metafunc, **options):
 def container_providers(metafunc, **options):
     """Wrapper for :py:func:`provider_by_type` that pulls types from
     :py:attr:`utils.providers.container_provider_type_map`
-
     """
     return provider_by_type(metafunc, 'container', **options)
 
@@ -403,7 +352,6 @@ def container_providers(metafunc, **options):
 def middleware_providers(metafunc, **options):
     """Wrapper for :py:func:`provider_by_type` that pulls types from
     :py:attr:`utils.providers.container_provider_type_map`
-
     """
     return provider_by_type(metafunc, 'middleware', **options)
 
@@ -411,24 +359,18 @@ def middleware_providers(metafunc, **options):
 def all_providers(metafunc, **options):
     """Wrapper for :py:func:`provider_by_type` that pulls types from
     :py:attr:`utils.providers.provider_type_map`
-
     """
     return provider_by_type(metafunc, None, **options)
 
 
 def auth_groups(metafunc, auth_mode):
     """Provides two test params based on the 'auth_modes' and 'group_roles' in cfme_data:
-
         ``group_name``:
             expected group name in provided by the backend specified in ``auth_mode``
-
         ``group_data``:
             list of nav destinations that should be visible as a member of ``group_name``
-
     Args:
-
         auth_mode: One of the auth_modes specified in ``cfme_data.get('auth_modes', {})``
-
     """
     argnames = ['group_name', 'group_data']
     argvalues = []
@@ -459,10 +401,8 @@ def config_managers(metafunc):
 
 def pxe_servers(metafunc):
     """Provides pxe data based on the server_type
-
     Args:
         server_name: One of the server names to filter by, or 'all'.
-
     """
     argnames = ['pxe_name', 'pxe_server_crud']
     argvalues = []
@@ -479,24 +419,19 @@ def pxe_servers(metafunc):
 
 def param_check(metafunc, argnames, argvalues):
     """Helper function to check if parametrizing is necessary
-
     * If no argnames were specified, parametrization is unnecessary.
     * If argvalues were generated, parametrization is necessary.
     * If argnames were specified, but no values were generated, the test cannot run successfully,
       and will be uncollected using the :py:mod:`markers.uncollect` mark.
-
     See usage in :py:func:`parametrize`
-
     Args:
         metafunc: metafunc objects from pytest_generate_tests
         argnames: argnames list for use in metafunc.parametrize
         argvalues: argvalues list for use in metafunc.parametrize
-
     Returns:
         * ``True`` if this test should be parametrized
         * ``False`` if it shouldn't be parametrized
         * ``None`` if the test will be uncollected
-
     """
     # If no parametrized args were named, don't parametrize
     if not argnames:
@@ -520,3 +455,8 @@ def param_check(metafunc, argnames, argvalues):
 
         # apply the mark
         pytest.mark.uncollect()(metafunc.function)
+
+    Contact GitHub API Training Shop Blog About
+
+    © 2016 GitHub, Inc. Terms Privacy Security Status Help
+
