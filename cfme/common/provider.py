@@ -178,7 +178,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             submit_button()
             flash.assert_no_errors()
 
-    def create(self, cancel=False, validate_credentials=False):
+    def create(self, cancel=False, validate_credentials=True):
         """
         Creates a provider in the UI
 
@@ -198,7 +198,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
                                                                             self.name))
 
-    def update(self, updates, cancel=False, validate_credentials=False):
+    def update(self, updates, cancel=False, validate_credentials=True):
         """
         Updates a provider in the UI.  Better to use utils.update.update context
         manager than call this directly.
