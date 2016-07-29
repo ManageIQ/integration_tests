@@ -32,6 +32,7 @@
   * :py:class:`ShowingInputs`
   * :py:class:`SplitCheckboxTable`
   * :py:class:`SplitTable`
+  * :py:class:`StatusBox`
   * :py:class:`Table`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
@@ -3616,3 +3617,23 @@ def summary_title():
         return sel.text_sane(SUMMARY_TITLE_LOCATORS)
     except sel.NoSuchElementException:
         return None
+
+
+class StatusBox(object):
+    """ Status box as seen in containers overview page
+
+    Status box modelling.
+
+    Args:
+        name: The name of the status box as it appears in CFME, e.g. 'Nodes'
+
+    Returns: A StatusBox instance.
+
+    """
+    def __init__(self, name):
+        self.name = name
+
+    def value(self):
+        return sel.element(
+            '//span[contains(@class, "card-pf-aggregate-status-count")]'
+            '/../../span[contains(., "{}")]/span'.format(self.name)).text
