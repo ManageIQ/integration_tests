@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-from cfme.common import Taggable
+from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb
 from cfme.web_ui.menu import nav
@@ -22,7 +21,7 @@ nav.add_branch(
 )
 
 
-class Container(Taggable):
+class Container(Taggable, SummaryMixin):
 
     def __init__(self, name, pod):
         self.name = name
@@ -60,3 +59,4 @@ class Container(Taggable):
         """
         self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
+    
