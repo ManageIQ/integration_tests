@@ -179,7 +179,9 @@ class OpenStackInstance(Instance):
     STOP = "Stop"
     PAUSE = "Pause"
     RESTART = "Restart"
-
+    # openstack-provider shelve options since 5.5
+    SHELVE = "Shelve"
+    SHELVE_OFFLOAD = "Shelve Offload"
     # CFME power states
     STATE_ON = "on"
     STATE_OFF = "off"
@@ -265,6 +267,10 @@ class OpenStackInstance(Instance):
             self.provider.mgmt.restart_vm(self.name)
         elif option == OpenStackInstance.TERMINATE:
             self.provider.mgmt.delete_vm(self.name)
+        elif option == OpenStackInstance.SHELEVE:
+            self.provider.mgmt.shelve_vm(self.name)
+        elif option == OpenStackInstance.SHELEVE_OFFLOAD:
+            self.provider.mgmt.shelve_off_vm(self.name)
         else:
             raise OptionNotAvailable(option + " is not a supported action")
 
