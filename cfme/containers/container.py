@@ -7,7 +7,6 @@ from . import details_page
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
-
 nav.add_branch(
     'containers_containers',
     {
