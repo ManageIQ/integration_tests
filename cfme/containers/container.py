@@ -59,4 +59,3 @@ class Container(Taggable, SummaryMixin):
         """
         self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
-    
