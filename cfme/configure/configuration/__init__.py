@@ -136,7 +136,9 @@ zone_form = Form(
         ("ntp_server_1", Input("ntp_server_1")),
         ("ntp_server_2", Input("ntp_server_2")),
         ("ntp_server_3", Input("ntp_server_3")),
-        ("max_scans", Select("select#max_scans")),
+        ("max_scans", {
+            version.LOWEST: Select('select#max_scans'),
+            '5.5': AngularSelect("max_scans")}),
         ("user", Input("userid")),
         ("password", Input("password")),
         ("verify", Input("verify")),
