@@ -18,6 +18,9 @@ def _not_implemented(menu_name, version_appeared):
     return f
 
 
+_branch_stack = []
+
+
 class Menu(UINavigate):
     """ Menu class for navigation
 
@@ -68,23 +71,21 @@ class Menu(UINavigate):
 
     def __init__(self):
         self._branches = None
-        self._branch_stack = []
         super(Menu, self).__init__()
 
     def initialize(self):
         """Initializes the menu object by collapsing the grafted tree items onto the tree"""
         if not self._branches:
             self._branches = self._branch_convert(self.sections)
-            self.add_branch('toplevel', self._branches)
+            self.add_branch('toplevel', self._branches, add_to_stack=False)
 
             if version.current_version() >= '5.7':
                 from cfme.dashboard import add_nav_branches
                 add_nav_branches()
 
-            while self._branch_stack:
-                name, branches = self._branch_stack.pop(0)
+            for name, branches in _branch_stack:
                 try:
-                    self.add_branch(name, branches)
+                    self.add_branch(name, branches, add_to_stack=False)
                 except LookupError:
                     logger.error(
                         'Menu tried to graft onto [{}] which is not available'.format(name))
@@ -96,7 +97,7 @@ class Menu(UINavigate):
             else:
                 self.CURRENT_TOP_MENU = "{}{}".format(self.ROOT, self.ACTIVE_LEV)
 
-    def add_branch(self, name, branches):
+    def add_branch(self, name, branches, add_to_stack=True):
         """Adds a branch to the tree at a given destination
 
         This method will either:
@@ -110,8 +111,8 @@ class Menu(UINavigate):
         """
         if self._branches:
             super(Menu, self).add_branch(name, branches)
-        else:
-            self._branch_stack.append((name, branches))
+        if add_to_stack:
+            _branch_stack.append((name, branches))
 
     def get_current_toplevel_name(self):
         """Returns text of the currently selected top level menu item."""
