@@ -30,8 +30,13 @@ pytest_generate_tests = testgen.generate(
                           'ip_address'
                           ])
 def test_pods_properties_rel(provider, rel):
-    """ This module verifies data integrity in the Properties table for:
-        pods, routes and projects
+    """ Properties table fields tests - Containers Pods' summary page
+    This test verifies the fields of the Properties table in Containers Pods'
+    details menu
+    Steps:
+    Containers -- > Containers Pods
+    Loop through each Pod object in the table and check validity of
+    the fields in the Properties table
     """
     sel.force_navigate('containers_pods')
     ui_pods = [r.name.text for r in list_tbl_pods.rows()]
@@ -50,6 +55,14 @@ def test_pods_properties_rel(provider, rel):
                           'host_name'
                           ])
 def test_routes_properties_rel(provider, rel):
+    """ Properties table fields tests - Containers Routes' summary page
+    This test verifies the fields of the Properties table in Containers Routes'
+    details menu
+    Steps:
+    Containers -- > Containers Routes
+    Loop through each Route object in the table and check validity of
+    the fields in the Properties table
+    """
     sel.force_navigate('containers_routes')
     ui_routes = [r.name.text for r in list_tbl_routes.rows()]
 
@@ -66,6 +79,14 @@ def test_routes_properties_rel(provider, rel):
                           'resource_version'
                           ])
 def test_projects_properties_rel(provider, rel):
+    """ Properties table fields tests - Containers Projects' summary page
+    This test verifies the fields of the Properties table in Containers Projects'
+    details menu
+    Steps:
+    Containers -- > Containers Projects
+    Loop through each Project object in the table and check validity of
+    the fields in the Properties table
+    """
     sel.force_navigate('containers_projects')
     ui_projects = [r.name.text for r in list_tbl_projects.rows()]
 
@@ -85,6 +106,14 @@ def test_projects_properties_rel(provider, rel):
                           'portal_ip'
                           ])
 def test_services_properties_rel(provider, rel):
+    """ Properties table fields tests - Containers Services' summary page
+    This test verifies the fields of the Properties table in Containers Services'
+    details menu
+    Steps:
+    Containers -- > Containers Services
+    Loop through each Service object in the table and check validity of
+    the fields in the Properties table
+    """
     sel.force_navigate('containers_services')
     ui_services = [r.name.text for r in list_tbl_services.rows()]
 
