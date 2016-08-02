@@ -10,6 +10,7 @@ from cfme.web_ui.topology import Topology
 from sqlalchemy.orm import aliased
 from utils import attributize_string, version
 from utils.db import cfmedb
+from utils.units import Unit
 from utils.varmeth import variable
 
 pol_btn = partial(toolbar.select, "Policy")
@@ -325,7 +326,10 @@ class SummaryValue(object):
             try:
                 return float(self.text_value)
             except (ValueError, TypeError):
-                return self.text_value
+                try:
+                    return Unit.parse(self.text_value)
+                except ValueError:
+                    return self.text_value
 
     @cached_property
     def link(self):
