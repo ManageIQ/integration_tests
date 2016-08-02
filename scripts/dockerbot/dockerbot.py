@@ -121,6 +121,7 @@ class DockerBot(object):
     def __init__(self, **args):
         links = []
         self.args = args
+        self.base_branch = 'master'
         self.validate_args()
         self.display_banner()
         self.process_appliance()
@@ -175,6 +176,17 @@ class DockerBot(object):
             self.modified_files = self.find_files_by_pr(self.args['pr'])
             if self.requirements_update:
                 self.args['update_pip'] = True
+
+    def get_base_branch(self, pr):
+        token = self.args['gh_token']
+        owner = self.args['gh_owner']
+        repo = self.args['gh_repo']
+        if token:
+            headers = {'Authorization': 'token {}'.format(token)}
+            r = requests.get(
+                'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
+                headers=headers)
+            return r.json()['base']['ref']
 
     def get_pr_metadata(self, pr=None):
         token = self.args['gh_token']
@@ -360,6 +372,8 @@ class DockerBot(object):
                                            "--no-tracer --perf").format(" ".join(files))
                 else:
                     self.args['pytest'] = "py.test -v --use-provider default -m smoke --no-tracer"
+        if self.args['pr']:
+            self.base_branch = self.get_base_branch(self.args['pr']) or self.base_branch
         if self.args['sprout']:
             self.args['pytest'] += ' --use-sprout --sprout-appliances {}'.format(sprout_appliances)
             self.args['pytest'] += ' --sprout-group {}'.format(self.args['sprout_stream'])
@@ -420,6 +434,7 @@ class DockerBot(object):
             self.env_details['SPROUT_PASSWORD'] = self.args['sprout_password']
         if self.args['sprout_description']:
             self.env_details['SPROUT_DESCRIPTION'] = self.args['sprout_description']
+        self.env_details['BASE_BRANCH'] = self.base_branch
 
     def handle_pr(self):
         if self.args['pr']:
@@ -502,6 +517,9 @@ if __name__ == "__main__":
     repo.add_argument('--branch',
                       help='The branch name',
                       default=None)
+    repo.add_argument('--base-branch',
+                      help='The base branch name',
+                      default='master')
     repo.add_argument('--pr',
                       help='A PR Number (overides --branch)',
                       default=None)
