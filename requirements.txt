@@ -45,6 +45,7 @@ requests
 riggerlib>=2.0
 scp
 selenium
+selenium-smart-locator
 slumber
 sqlalchemy
 suds
