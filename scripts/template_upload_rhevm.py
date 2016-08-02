@@ -11,6 +11,7 @@ normally be placed in main function, are located in function run(**kwargs).
 
 import argparse
 import fauxfactory
+import re
 import sys
 from threading import Lock, Thread
 
@@ -127,7 +128,8 @@ def download_ova(ssh_client, ovaurl):
 
 def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_client,
                       temp_template_name, provider):
-    """Uses rhevm-image-uploader to make a template from ova file.
+    """Uses rhevm-image-uploader or engine-image-uploader based on rhevm-image-uploader version
+       to make a template from ova file.
 
     Args:
         api: API for RHEVM.
@@ -143,7 +145,13 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_cli
         print("RHEVM:{} Warning: found another template with this name.".format(provider))
         print("RHEVM:{} Skipping this step. Attempting to continue...".format(provider))
         return
+    version_cmd = 'rpm -qa| grep rhevm-image-uploader'
     command = ['rhevm-image-uploader']
+    status, out = ssh_client.run_command(version_cmd)
+    if status == 0:
+        version = re.findall(r'(\d.\d)', out)[0]
+        if float(version) >= 3.6:
+            command = ['engine-image-uploader']
     command.append("-u {}".format(username))
     command.append("-p {}".format(password))
     command.append("-r {}:443".format(rhevip))
@@ -642,7 +650,7 @@ def run(**kwargs):
             rhevip = mgmt_sys[provider]['ipaddress']
         else:
             mgmt_sys = cfme_data['management_systems']
-            ssh_rhevm_creds = mgmt_sys[provider]['hosts'][0]['credentials']
+            ssh_rhevm_creds = mgmt_sys[provider]['ssh_creds']
             sshname = credentials[ssh_rhevm_creds]['username']
             sshpass = credentials[ssh_rhevm_creds]['password']
             rhevip = mgmt_sys[provider]['ipaddress']
@@ -661,7 +669,7 @@ def run(**kwargs):
             username = mgmt_sys[provider]['username']
             password = mgmt_sys[provider]['password']
         else:
-            ssh_rhevm_creds = mgmt_sys[provider]['hosts'][0]['credentials']
+            ssh_rhevm_creds = mgmt_sys[provider]['ssh_creds']
             sshname = credentials[ssh_rhevm_creds]['username']
             sshpass = credentials[ssh_rhevm_creds]['password']
             rhevm_credentials = mgmt_sys[provider]['credentials']

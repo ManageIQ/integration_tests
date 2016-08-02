@@ -8,7 +8,7 @@ from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.version import current_version
-from utils import version
+from utils import version, fakeobject_or_object
 
 cfg_btn = partial(tb.select, "Configuration")
 accordion_tree = partial(accordion.tree, "Catalog Items")
@@ -210,15 +210,18 @@ class CatalogItem(Updateable, Pretty):
         sel.force_navigate('catalog_item_new',
                            context={'provider_type': self.item_type})
         sel.wait_for_element(basic_info_form.name_text)
+        catalog = fakeobject_or_object(self.catalog, "name", "<Unassigned>")
+        dialog = fakeobject_or_object(self.dialog, "name", "<No Dialog>")
+
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
-                               'select_catalog': str(self.catalog),
-                               'select_dialog': str(self.dialog),
+                               'select_catalog': catalog.name,
+                               'select_dialog': dialog.name,
                                'select_orch_template': self.orch_template,
                                'select_provider': self.provider_type,
                                'select_config_template': self.config_template})
-        if self.item_type != "Orchestration":
+        if self.item_type != "Orchestration" and self.item_type != "AnsibleTower":
             sel.click(basic_info_form.field_entry_point)
             dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
@@ -237,8 +240,9 @@ class CatalogItem(Updateable, Pretty):
         sel.click(template_select_form.add_button)
 
     def update(self, updates):
+        catalog = fakeobject_or_object(self.catalog, "name", "<Unassigned>")
         sel.force_navigate('catalog_item_edit',
-                           context={'catalog': self.catalog,
+                           context={'catalog': catalog.name,
                                     'catalog_item': self})
         fill(basic_info_form, {'name_text': updates.get('name', None),
                                'description_text':

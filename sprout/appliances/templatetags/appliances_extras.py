@@ -29,3 +29,11 @@ def power_icon(power_state):
     else:
         return mark_safe('<span class="glyphicon glyphicon-{}" title="{}"></span>'.format(
             Appliance.POWER_ICON_MAPPING[power_state], power_state))
+
+
+@register.filter(is_safe=True)
+def alert_type(tags):
+    if tags == 'error':
+        return mark_safe('danger')
+    else:
+        return mark_safe(tags)

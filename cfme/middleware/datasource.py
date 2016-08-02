@@ -5,11 +5,11 @@ from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
-from mgmtsystem.hawkular import Path
+from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key
-from utils.providers import list_middleware_providers
+from utils.providers import list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
 
@@ -138,8 +138,8 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         datasources = []
         rows = provider.mgmt.list_server_datasource()
         for datasource in rows:
-            _server = MiddlewareServer(name=re.sub(r'~~$', '', datasource.path.resource[0]),
-                                       feed=datasource.path.feed,
+            _server = MiddlewareServer(name=re.sub(r'~~$', '', datasource.path.resource_id[0]),
+                                       feed=datasource.path.feed_id,
                                        provider=provider)
             _include = False
             if server:
@@ -158,7 +158,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
     def datasources_in_mgmt(cls, provider=None, server=None):
         if provider is None:
             datasources = []
-            for _provider in list_middleware_providers():
+            for _provider in list_providers('hawkular'):
                 datasources.extend(cls._datasources_in_mgmt(get_crud(_provider), server))
             return datasources
         else:
@@ -194,9 +194,9 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         db_ds = _db_select_query(name=self.name, server=self.server,
                                  nativeid=self.nativeid).first()
         if db_ds:
-            path = Path(db_ds.ems_ref)
-            mgmt_ds = self.provider.mgmt.resource_data(feed_id=path.feed,
-                        resource_id="{}/{}".format(path.resource[0], path.resource[1]))
+            path = CanonicalPath(db_ds.ems_ref)
+            mgmt_ds = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
+                        resource_id="{}/r;{}".format(path.resource_id[0], path.resource_id[1]))
             if mgmt_ds:
                 ds = MiddlewareDatasource(server=self.server, provider=self.provider,
                                           name=db_ds.name, nativeid=db_ds.nativeid,

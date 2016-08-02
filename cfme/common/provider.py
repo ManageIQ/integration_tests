@@ -1,10 +1,13 @@
 from functools import partial
 import datetime
+import pkgutil
+import importlib
 
 from utils import conf
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
 )
+from collections import defaultdict
 import cfme
 from cfme.web_ui import breadcrumbs, summary_title
 from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, Form, Input, Radio
@@ -18,6 +21,7 @@ from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
 from utils.signals import fire
+from utils.path import project_path
 from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
@@ -35,6 +39,7 @@ details_page = Region(infoblock_type='detail')
 
 class BaseProvider(Taggable, Updateable, SummaryMixin):
     # List of constants that every non-abstract subclass must have defined
+    type_mapping = defaultdict(dict)
     STATS_TO_MATCH = []
     string_name = ""
     page_name = ""
@@ -46,6 +51,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
     _properties_region = None
     add_provider_button = None
     save_button = None
+
+    @classmethod
+    def add_type_map(cls, nclass):
+        cls.type_mapping[nclass.type_tclass][nclass.type_name] = nclass
+        return nclass
 
     class Credential(cfme.Credential, Updateable):
         """Provider credentials
@@ -88,14 +98,16 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                 amevent = "Events"
             else:
                 amevent = "AMQP"
-            tab_fields[amevent] = [
-                ('event_selection', Radio('event_stream_selection')),
+            tab_fields[amevent] = []
+            if version.current_version() >= "5.6":
+                tab_fields[amevent].append(('event_selection', Radio('event_stream_selection')))
+            tab_fields[amevent].extend([
                 ('amqp_principal', Input("amqp_userid")),
                 ('amqp_secret', Input("amqp_password")),
                 ('amqp_verify_secret', Input("amqp_verify")),
-            ]
+            ])
 
-            return TabStripForm(fields, tab_fields, fields_end)
+            return TabStripForm(fields=fields, tab_fields=tab_fields, fields_end=fields_end)
 
         def __init__(self, **kwargs):
             super(BaseProvider.Credential, self).__init__(**kwargs)
@@ -131,17 +143,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
 
     @property
     def category(self):
-        # Prevent circular imports
-        from utils.providers import (
-            cloud_provider_type_map, infra_provider_type_map, container_provider_type_map)
-        if self.type in cloud_provider_type_map:
-            return "cloud"
-        elif self.type in infra_provider_type_map:
-            return "infra"
-        elif self.type in container_provider_type_map:
-            return "container"
-        else:
-            return "unknown"
+        return self.type_tclass
 
     def get_yaml_data(self):
         """ Returns yaml data for this provider.
@@ -176,7 +178,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             submit_button()
             flash.assert_no_errors()
 
-    def create(self, cancel=False, validate_credentials=False):
+    def create(self, cancel=False, validate_credentials=True):
         """
         Creates a provider in the UI
 
@@ -196,7 +198,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
                                                                             self.name))
 
-    def update(self, updates, cancel=False, validate_credentials=False):
+    def update(self, updates, cancel=False, validate_credentials=True):
         """
         Updates a provider in the UI.  Better to use utils.update.update context
         manager than call this directly.
@@ -452,6 +454,61 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         else:
             return details_page.infoblock.text(*ident)
 
+    @classmethod
+    def get_credentials(cls, credential_dict, cred_type=None):
+        """Processes a credential dictionary into a credential object.
+
+        Args:
+            credential_dict: A credential dictionary.
+            cred_type: Type of credential (None, token, ssh, amqp, ...)
+
+        Returns:
+            A :py:class:`BaseProvider.Credential` instance.
+        """
+        domain = credential_dict.get('domain', None)
+        token = credential_dict.get('token', None)
+        return cls.Credential(
+            principal=credential_dict['username'],
+            secret=credential_dict['password'],
+            cred_type=cred_type,
+            domain=domain,
+            token=token)
+
+    @classmethod
+    def get_credentials_from_config(cls, credential_config_name, cred_type=None):
+        """Retrieves the credential by its name from the credentials yaml.
+
+        Args:
+            credential_config_name: The name of the credential in the credentials yaml.
+            cred_type: Type of credential (None, token, ssh, amqp, ...)
+
+        Returns:
+            A :py:class:`BaseProvider.Credential` instance.
+        """
+        creds = conf.credentials[credential_config_name]
+        return cls.get_credentials(creds, cred_type=cred_type)
+
+    @classmethod
+    def process_credential_yaml_key(cls, cred_yaml_key, cred_type=None):
+        """Function that detects if it needs to look up credentials in the credential yaml and acts
+        as expected.
+
+        If you pass a dictionary, it assumes it does not need to look up in the credentials yaml
+        file.
+        If anything else is passed, it continues with looking up the credentials in the yaml file.
+
+        Args:
+            cred_yaml_key: Either a string pointing to the credentials.yaml or a dictionary which is
+                considered as the credentials.
+
+        Returns:
+            :py:class:`BaseProvider.Credentials` instance
+        """
+        if isinstance(cred_yaml_key, dict):
+            return cls.get_credentials(cred_yaml_key, cred_type=cred_type)
+        else:
+            return cls.get_credentials_from_config(cred_yaml_key, cred_type=cred_type)
+
 
 class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     vm_name = ""
@@ -583,7 +640,9 @@ def _fill_credential(form, cred, validate=None):
     """How to fill in a credential. Validates the credential if that option is passed in.
     """
     if cred.type == 'amqp':
-        fill(cred.form, {'amqp_principal': cred.principal,
+        fill(cred.form, {
+            'event_selection': 'amqp',
+            'amqp_principal': cred.principal,
             'amqp_secret': cred.secret,
             'amqp_verify_secret': cred.verify_secret,
             'validate_btn': validate})
@@ -629,3 +688,9 @@ def cleanup_vm(vm_name, provider):
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s', vm_name, provider.key)
+
+
+def import_all_modules_of(loc):
+    path = project_path.join('{}'.format(loc.replace('.', '/'))).strpath
+    for _, name, _ in pkgutil.iter_modules([path]):
+        importlib.import_module('{}.{}'.format(loc, name))

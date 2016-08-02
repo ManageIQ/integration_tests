@@ -216,7 +216,7 @@ class ConfigManager(Updateable, Pretty):
                     raise
 
                 wait_for(
-                    func=config_profiles_loaded,
+                    config_profiles_loaded,
                     fail_func=self.refresh_relationships,
                     handle_exception=True,
                     num_sec=180, delay=30)
@@ -294,12 +294,16 @@ class ConfigManager(Updateable, Pretty):
         if not cancel:
             flash.assert_message_match(self._refresh_flash_msg)
 
+    def _does_profile_exist(self):
+        return sel.is_displayed(page.list_table_config_profiles)
+
     @property
     def config_profiles(self):
         """Returns 'ConfigProfile' configuration profiles (hostgroups) available on this manager"""
         self.navigate()
         tb.select('List View')
-        return [ConfigProfile(row['description'].text, self) for row in
+        wait_for(self._does_profile_exist, num_sec=300, delay=20, fail_func=sel.refresh)
+        return [ConfigProfile(row['name'].text, self) for row in
                 page.list_table_config_profiles.rows()]
 
     @property
