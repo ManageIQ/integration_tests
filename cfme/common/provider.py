@@ -74,9 +74,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                 "Default": [
                     ('default_principal', Input("default_userid")),
                     ('default_secret', Input("default_password")),
-                    ('default_verify_secret', Input("default_verify")),
-                    ('token_secret', Input('default_password')),
-                    ('token_verify_secret', Input('default_verify')),
+                    ('token_secret', {
+                        version.LOWEST: Input('bearer_password'),
+                        '5.6': Input('default_password')
+                    }),
+                    ('token_verify_secret', {
+                        version.LOWEST: Input('bearer_verify'),
+                        '5.6': Input('default_verify')
+                    }),
                 ],
 
                 "RSA key pair": [
