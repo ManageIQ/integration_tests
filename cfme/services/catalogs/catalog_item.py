@@ -29,11 +29,21 @@ basic_info_form = Form(
         ('name_text', Input("name")),
         ('description_text', Input("description")),
         ('display_checkbox', Input("display")),
-        ('select_catalog', Select("//select[@id='catalog_id']")),
-        ('select_dialog', Select("//select[@id='dialog_id']")),
-        ('select_orch_template', Select("//select[@id='template_id']")),
-        ('select_provider', Select("//select[@id='manager_id']")),
-        ('select_config_template', Select("//select[@id='template_id']")),
+        ('select_catalog', {
+            version.LOWEST: Select("//select[@id='catalog_id']"),
+            '5.5': AngularSelect('catalog_id')}),
+        ('select_dialog', {
+            version.LOWEST: Select("//select[@id='dialog_id']"),
+            '5.5': AngularSelect('dialog_id')}),
+        ('select_orch_template', {
+            version.LOWEST: Select("//select[@id='template_id']"),
+            '5.5': AngularSelect('template_id')}),
+        ('select_provider', {
+            version.LOWEST: Select("//select[@id='manager_id']"),
+            '5.5': AngularSelect('manager_id')}),
+        ('select_config_template', {
+            version.LOWEST: Select("//select[@id='template_id']"),
+            '5.5': AngularSelect('template_id')}),
         ('field_entry_point', Input("fqname")),
         ('edit_button', form_buttons.save),
         ('apply_btn', {
@@ -41,15 +51,20 @@ basic_info_form = Form(
             '5.5.0.6': '//a[normalize-space(.)="Apply"]'})
     ])
 
+# TODO: Replace with Taggable
 edit_tags_form = Form(
     fields=[
-        ("select_tag", Select("select#tag_cat")),
-        ("select_value", Select("select#tag_add"))
+        ("select_tag", {
+            version.LOWEST: Select("select#tag_cat"),
+            '5.5': AngularSelect('tag_cat')}),
+        ("select_value", {
+            version.LOWEST: Select("select#tag_add"),
+            '5.5': AngularSelect('tag_add')})
     ])
 
 detail_form = Form(
     fields=[
-        ('long_desc', "//textarea[@id='long_description']")
+        ('long_desc', Input('long_description')),
     ])
 
 request_form = tabstrip.TabStripForm(

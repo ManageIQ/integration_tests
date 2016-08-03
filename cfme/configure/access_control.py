@@ -143,7 +143,9 @@ class User(Updateable, Pretty):
             ('password_verify_txt', {version.LOWEST: Input('password2'),
                                      "5.5": Input('verify')}),
             ('email_txt', Input('email')),
-            ('user_group_select', Select("//*[@id='chosen_group']")),
+            ('user_group_select', {
+                version.LOWEST: Select("//*[@id='chosen_group']"),
+                '5.5': AngularSelect('chosen_group')}),
         ])
 
     pretty_attrs = ['name', 'group']
@@ -354,7 +356,9 @@ class Role(Updateable, Pretty):
     form = Form(
         fields=[
             ('name_txt', Input('name')),
-            ('vm_restriction_select', Select("//*[@id='vm_restriction']")),
+            ('vm_restriction_select', {
+                version.LOWEST: Select("//*[@id='vm_restriction']"),
+                '5.5': AngularSelect('vm_restriction')}),
             ('product_features_tree', CheckboxTree("//div[@id='features_treebox']/ul")),
         ])
     pretty_attrs = ['name', 'product_features']

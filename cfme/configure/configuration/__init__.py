@@ -114,7 +114,9 @@ category_form = Form(
 
 tag_form = Form(
     fields=[
-        ('category', Select("select#classification_name")),
+        ('category', {
+            version.LOWEST: Select("select#classification_name"),
+            '5.5': AngularSelect('classification_name')}),
         ('name', Input("entry[name]")),
         ('display_name', Input("entry[description]")),
         ('add', {
@@ -891,8 +893,12 @@ class SMTPSettings(Updateable):
 
 class AuthSetting(Updateable, Pretty):
     form = Form(fields=[
-        ("timeout_h", Select("select#session_timeout_hours")),
-        ("timeout_m", Select("select#session_timeout_mins")),
+        ("timeout_h", {
+            version.LOWEST: Select("select#session_timeout_hours"),
+            '5.5': AngularSelect('session_timeout_hours')}),
+        ("timeout_m", {
+            version.LOWEST: Select("select#session_timeout_mins"),
+            '5.5': AngularSelect('session_timeout_mins')}),
     ])
 
     @classmethod
@@ -921,9 +927,15 @@ class DatabaseAuthSetting(AuthSetting):
     """
 
     form = Form(fields=[
-        ("timeout_h", Select("select#session_timeout_hours")),
-        ("timeout_m", Select("select#session_timeout_mins")),
-        ("auth_mode", Select("select#authentication_mode"))
+        ("timeout_h", {
+            version.LOWEST: Select("select#session_timeout_hours"),
+            '5.5': AngularSelect('session_timeout_hours')}),
+        ("timeout_m", {
+            version.LOWEST: Select("select#session_timeout_mins"),
+            '5.5': AngularSelect('session_timeout_mins')}),
+        ("auth_mode", {
+            version.LOWEST: Select("select#authentication_mode"),
+            '5.5': AngularSelect('authentication_mode')})
     ])
     pretty_attrs = ['timeout_h', 'timeout_m']
 
@@ -953,9 +965,15 @@ class ExternalAuthSetting(AuthSetting):
     """
 
     form = Form(fields=[
-        ("timeout_h", Select("select#session_timeout_hours")),
-        ("timeout_m", Select("select#session_timeout_mins")),
-        ("auth_mode", Select("select#authentication_mode")),
+        ("timeout_h", {
+            version.LOWEST: Select("select#session_timeout_hours"),
+            '5.5': AngularSelect('session_timeout_hours')}),
+        ("timeout_m", {
+            version.LOWEST: Select("select#session_timeout_mins"),
+            '5.5': AngularSelect('session_timeout_mins')}),
+        ("auth_mode", {
+            version.LOWEST: Select("select#authentication_mode"),
+            '5.5': AngularSelect('authentication_mode')}),
         ("get_groups", Input("httpd_role")),
     ])
     pretty_attrs = ['timeout_h', 'timeout_m', 'get_groups']
@@ -993,9 +1011,15 @@ class AmazonAuthSetting(AuthSetting):
     """
 
     form = Form(fields=[
-        ("timeout_h", Select("select#session_timeout_hours")),
-        ("timeout_m", Select("select#session_timeout_mins")),
-        ("auth_mode", Select("select#authentication_mode")),
+        ("timeout_h", {
+            version.LOWEST: Select("select#session_timeout_hours"),
+            '5.5': AngularSelect('session_timeout_hours')}),
+        ("timeout_m", {
+            version.LOWEST: Select("select#session_timeout_mins"),
+            '5.5': AngularSelect('session_timeout_mins')}),
+        ("auth_mode", {
+            version.LOWEST: Select("select#authentication_mode"),
+            '5.5': AngularSelect('authentication_mode')}),
         ("access_key", Input("authentication_amazon_key")),
         ("secret_key", Input("authentication_amazon_secret")),
         ("get_groups", Input("amazon_role")),
@@ -1043,9 +1067,15 @@ class LDAPAuthSetting(AuthSetting):
 
     """
     form = Form(fields=[
-        ("timeout_h", Select("select#session_timeout_hours")),
-        ("timeout_m", Select("select#session_timeout_mins")),
-        ("auth_mode", Select("select#authentication_mode")),
+        ("timeout_h", {
+            version.LOWEST: Select("select#session_timeout_hours"),
+            '5.5': AngularSelect('session_timeout_hours')}),
+        ("timeout_m", {
+            version.LOWEST: Select("select#session_timeout_mins"),
+            '5.5': AngularSelect('session_timeout_mins')}),
+        ("auth_mode", {
+            version.LOWEST: Select("select#authentication_mode"),
+            '5.5': AngularSelect('authentication_mode')}),
         ("ldaphost_1", Input("authentication_ldaphost_1")),
         ("ldaphost_2", Input("authentication_ldaphost_2")),
         ("ldaphost_3", Input("authentication_ldaphost_3")),
@@ -1056,7 +1086,9 @@ class LDAPAuthSetting(AuthSetting):
         ("user_suffix", Input("authentication_user_suffix")),
         ("get_groups", Input("ldap_role")),
         ("get_roles", Input("get_direct_groups")),
-        ("default_groups", Select("select#authentication_default_group_for_users")),
+        ("default_groups", {
+            version.LOWEST: Select("select#authentication_default_group_for_users"),
+            '5.5': AngularSelect('authentication_default_group_for_users')}),
         ("get_direct_groups", Input("get_direct_groups")),
         ("follow_referrals", Input("follow_referrals")),
         ("base_dn", Input("authentication_basedn")),
