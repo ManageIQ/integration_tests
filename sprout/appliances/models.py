@@ -338,6 +338,8 @@ class Group(MetadataMixin):
         default=False,
         help_text="If template_obsolete_days set, this will enable deletion of obsolete templates"
         " using that metric. WARNING! Use with care. Best use for upstream templates.")
+    suggested_templates_delete = models.BooleanField(
+        default=False, help_text='Enable deleting of suggested templates')
 
     @property
     def obsolete_templates(self):
@@ -449,6 +451,8 @@ class Template(MetadataMixin):
     preconfigured = models.BooleanField(default=True, help_text="Is prepared for immediate use?")
     suggested_delete = models.BooleanField(
         default=False, help_text="Whether Sprout suggests deleting this template.")
+    keep = models.BooleanField(
+        default=False, help_text='Whether Sprout should refrain from deleting this template')
 
     parent_template = models.ForeignKey(
         "self", blank=True, null=True, related_name="child_templates",

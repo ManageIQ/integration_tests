@@ -239,6 +239,11 @@ CELERYBEAT_SCHEDULE = {
     'synchronize-appliances-metadata': {
         'task': 'appliances.tasks.appliances_synchronize_metadata',
         'schedule': timedelta(minutes=45),
+    },
+
+    'delete-suggested-templates': {
+        'task': 'appliances.tasks.delete_suggested_templates',
+        'schedule': timedelta(days=1),
     }
 }
 

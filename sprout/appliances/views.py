@@ -828,3 +828,53 @@ def swap_offenders(request):
     failed_ssh = Appliance.objects.filter(ssh_failed=True, power_state=Appliance.Power.ON).order_by(
         'appliance_pool__owner__username', 'name')
     return render(request, 'appliances/swap_offenders.html', locals())
+
+
+def enable_group_template_deletion(request, group_id):
+    if not request.user.is_authenticated() or not request.user.is_superuser:
+        raise PermissionDenied()
+    try:
+        group = Group.objects.get(id=group_id)
+        group.suggested_templates_delete = True
+        group.save()
+    except ObjectDoesNotExist:
+        raise Http404('Group with ID {} does not exist!.'.format(group_id))
+    return HttpResponse('Template deletion for {} enabled!'.format(group_id))
+
+
+def disable_group_template_deletion(request, group_id):
+    if not request.user.is_authenticated() or not request.user.is_superuser:
+        raise PermissionDenied()
+    try:
+        group = Group.objects.get(id=group_id)
+        group.suggested_templates_delete = False
+        group.save()
+    except ObjectDoesNotExist:
+        raise Http404('Group with ID {} does not exist!.'.format(group_id))
+    return HttpResponse('Template deletion for {} disabled!'.format(group_id))
+
+
+def template_keep_enable(request):
+    template_id = request.POST.get('template_id', None)
+    if not request.user.is_authenticated() or not request.user.is_superuser:
+        raise PermissionDenied()
+    try:
+        template = Template.objects.get(id=template_id)
+        template.keep = True
+        template.save()
+    except ObjectDoesNotExist:
+        raise Http404('Template with ID {} does not exist!.'.format(template_id))
+    return HttpResponse('Template keep for {} enabled!'.format(template_id))
+
+
+def template_keep_disable(request):
+    template_id = request.POST.get('template_id', None)
+    if not request.user.is_authenticated() or not request.user.is_superuser:
+        raise PermissionDenied()
+    try:
+        template = Template.objects.get(id=template_id)
+        template.keep = False
+        template.save()
+    except ObjectDoesNotExist:
+        raise Http404('Template with ID {} does not exist!.'.format(template_id))
+    return HttpResponse('Template keep for {} disabled!'.format(template_id))
