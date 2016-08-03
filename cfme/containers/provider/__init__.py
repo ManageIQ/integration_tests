@@ -1,4 +1,4 @@
-from cfme.common.provider import BaseProvider
+from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region
@@ -11,7 +11,8 @@ from utils.db import cfmedb
 from utils.pretty import Pretty
 from utils.varmeth import variable
 
-from . import cfg_btn, mon_btn, pol_btn, details_page
+
+from .. import cfg_btn, mon_btn, pol_btn, details_page
 
 nav.add_branch(
     'containers_providers',
@@ -81,6 +82,7 @@ prop_region = Region(
 
 
 class Provider(BaseProvider, Pretty):
+    type_tclass = "container"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = [
         'num_project', 'num_service', 'num_replication_controller', 'num_pod', 'num_node',
@@ -222,48 +224,4 @@ class Provider(BaseProvider, Pretty):
     def num_image_registry_ui(self):
         return int(self.get_detail("Relationships", "Image Registries"))
 
-
-class KubernetesProvider(Provider):
-
-    def __init__(self, name=None, credentials=None, key=None,
-                 zone=None, hostname=None, port=None, provider_data=None):
-        super(KubernetesProvider, self).__init__(
-            name=name, credentials=credentials, key=key, zone=zone, hostname=hostname, port=port,
-            provider_data=provider_data)
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'Kubernetes',
-                'hostname_text': kwargs.get('hostname'),
-                'port_text': kwargs.get('port'),
-                'zone_select': kwargs.get('zone')}
-
-
-class OpenshiftProvider(Provider):
-    STATS_TO_MATCH = Provider.STATS_TO_MATCH + ['num_route']
-
-    def __init__(self, name=None, credentials=None, key=None,
-                 zone=None, hostname=None, port=None, provider_data=None):
-        super(OpenshiftProvider, self).__init__(
-            name=name, credentials=credentials, key=key, zone=zone, hostname=hostname, port=port,
-            provider_data=provider_data)
-
-    def create(self, validate_credentials=True, **kwargs):
-        # Workaround - randomly fails on 5.5.0.8 with no validation
-        # probably a js wait issue, not reproducible manually
-        super(OpenshiftProvider, self).create(validate_credentials=validate_credentials, **kwargs)
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'OpenShift',
-                'hostname_text': kwargs.get('hostname'),
-                'port_text': kwargs.get('port'),
-                'zone_select': kwargs.get('zone')}
-
-    @variable(alias='db')
-    def num_route(self):
-        return self._num_db_generic('container_routes')
-
-    @num_route.variant('ui')
-    def num_route_ui(self):
-        return int(self.get_detail("Relationships", "Routes"))
+import_all_modules_of('cfme.containers.provider')

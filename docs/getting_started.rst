@@ -25,12 +25,11 @@ file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
 
   #!/usr/bin/env bash
 
-  pkcon install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel
+  pkcon install -y python-virtualenv gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel python-devel
   virtualenv .cfme_tests
-  echo "export PYTHONPATH='`pwd`'" | tee -a ./.cfme_tests/bin/activate
-  echo "export PYTHONDONTWRITEBYTECODE=yes" | tee -a ./.cfme_tests/bin/activate
 
   . ./.cfme_tests/bin/activate
+  python scripts/disable-bytecode.py
   PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt
   echo "Run '. ./.cfme_tests/bin/activate' to load the virtualenv"
 
@@ -48,26 +47,7 @@ Detailed steps (manual environment setup):
   * To activate the virtualenv later: ``source <name>/bin/activate``, but do not do it yet, it still
     needs finishing touches.
 
-* Fork and Clone this repository.
-* Set the ``PYTHONPATH`` to include ``cfme_tests``. Edit your virtualenv's ``bin/activate`` script,
-  created with the virtualenv. At the end of the file, export a PYTHONPATH variable with the path to
-  the repository clone by adding this line (altered to match your repository locations):
-
-  * ``export PYTHONPATH='/path/to/cfme_tests_repo'``
-
-* Also add this line at the end of your virtualenv to prevent .pyc files polluting your folders:
-
-  * ``export PYTHONDONTWRITEBYTECODE="yes"``
-
-* If you forgot to do that and you have ``pyc`` files polluting your folders, this is a cure, placed
-  in ``~/.bashrc`` and usable everywhere:
-
-  .. code-block:: bash
-
-    alias rmpyc='find . -name \*.pyc -delete; find . -name __pycache__ -delete'
-
-  Reload your ``.bashrc`` and issue ``rmpyc`` command.
-
+* Fork and Clone this repository
 * Get the shared encryption key (``.yaml_key``) for credentials. Ask in CFME QE.
 * Make sure you set the shared secret for the credentials files encryption. There are two ways:
 
@@ -87,9 +67,10 @@ Detailed steps (manual environment setup):
   * ``gcc-c++``
   * ``openssl-devel``
   * ``libffi-devel``
+  * ``python-devel``
   * Fedora (possibly RHEL-like systems) users:
 
-    * ``pkcon install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel``
+    * ``pkcon install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel redhat-rpm-config gcc-c++ openssl-devel libffi-devel python-devel``
 
     * On RHEL and derived systems, it will say the zeromq package is not available but that is ok.
 
@@ -118,6 +99,7 @@ will not work.
       happen)
     * Run ``PYCURL_SSL_LIBRARY=nss pip install -U -r requirements.txt --no-cache-dir``
 
+* run ``python scripts/disable-bytecode.py`` if you want to avoid having to clean up python bytecode
 * You copy/symlink the required YAML files into ``conf/`` if you have access to team's internal YAML
   repository. Required YAML files are ``env``, ``cfme_data``, ``credentials``. If the file's
   extension is ``.yaml`` it is loaded normally, if its extension is ``.eyaml`` then it is encrypted

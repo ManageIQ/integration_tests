@@ -8,7 +8,8 @@ from textwrap import dedent
 
 from cfme.automate import explorer as automate
 from cfme.cloud.instance import Instance
-from cfme.cloud.provider import (OpenStackProvider, AzureProvider)
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.cloud.provider.azure import AzureProvider
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.update import update

@@ -100,16 +100,13 @@ def test_server_reload(provider):
     _check_server_running(server)
 
 
-def test_hawkular_reload(provider):
+def test_hawkular_fail(provider):
     """Tests Hawkular server itself reload operation message on UI
 
     Steps:
         * Get servers list from UI
         * Chooses Hawkular server from list
-        * Invokes 'Reload Server' toolbar operation
-        * Checks that notification message is shown
-        * Checks that server status is running in UI, in DB and in MGMT.
-        * Invokes 'Stop Server' toolbar operation
+        * Invokes all 'Power' toolbar operation
         * Checks that notification message is shown
         * Checks that server status is running in UI, in DB and in MGMT.
     """
@@ -120,10 +117,22 @@ def test_hawkular_reload(provider):
             break
     assert server, 'Hawkular server was not found in servers list'
     server.reload_server()
-    flash.assert_success_message('Not reloading Hawkular server')
+    flash.assert_success_message('Not reloading the provider')
     _check_server_running(server)
     server.stop_server()
-    flash.assert_success_message('Not stopping Hawkular server')
+    flash.assert_success_message('Not stopping the provider')
+    _check_server_running(server)
+    server.shutdown_server()
+    flash.assert_success_message('Not shutting down the provider')
+    _check_server_running(server)
+    server.restart_server()
+    flash.assert_success_message('Not restarting the provider')
+    _check_server_running(server)
+    server.suspend_server()
+    flash.assert_success_message('Not suspending the provider')
+    _check_server_running(server)
+    server.resume_server()
+    flash.assert_success_message('Not resuming the provider')
     _check_server_running(server)
 
 
@@ -155,6 +164,90 @@ def test_server_stop(provider):
     _check_server_running(server)
 
 
+# MiQ functionality not yet implemented
+@pytest.mark.uncollect
+def test_server_shutdown(provider):
+    """Tests server gracefully shutdown operation on UI
+
+    Steps:
+        * Get servers list from UI
+        * Chooses Wildfly server from list
+        * Invokes 'Gracefully shutdown Server' toolbar operation
+        * Checks that server status is not running in UI, in DB and in MGMT.
+        * Invokes 'Start Server' toolbar operation
+        * Waits for some time
+        * Checks that server status is running in UI, in DB and in MGMT.
+    """
+    server_list = MiddlewareServer.servers(provider=provider)
+    for _server in server_list:
+        if _server.product != 'Hawkular':
+            server = _server
+            break
+    assert server, 'Wildfly server was not found in servers list'
+    _check_server_running(server)
+    server.shutdown_server()
+    flash.assert_success_message('Shutdown initiated for selected server(s)')
+    # enable when HWKINVENT-185 is fixed
+    # _check_server_stopped(server)
+    server.resume_server()
+    _check_server_running(server)
+
+
+def test_server_restart(provider):
+    """Tests server restart operation on UI
+
+    Steps:
+        * Get servers list from UI
+        * Chooses Wildfly server from list
+        * Invokes 'Restart Server' toolbar operation
+        * Checks that server status is not running in UI, in DB and in MGMT.
+        * Waits for some time
+        * Checks that server status is running in UI, in DB and in MGMT.
+    """
+    server_list = MiddlewareServer.servers(provider=provider)
+    for _server in server_list:
+        if _server.product != 'Hawkular':
+            server = _server
+            break
+    assert server, 'Wildfly server was not found in servers list'
+    _check_server_running(server)
+    server.restart_server()
+    flash.assert_success_message('Restart initiated for selected server(s)')
+    # enable when HWKINVENT-185 is fixed
+    # _check_server_stopped(server)
+    _check_server_running(server)
+
+
+# MiQ functionality not yet implemented
+@pytest.mark.uncollect
+def test_server_suspend_resume(provider):
+    """Tests server suspend/resume operation on UI
+
+    Steps:
+        * Get servers list from UI
+        * Chooses Wildfly server from list
+        * Invokes Suspend Server' toolbar operation
+        * Checks that server status is not running in UI, in DB and in MGMT.
+        * Invokes 'Resume Server' toolbar operation
+        * Waits for some time
+        * Checks that server status is running in UI, in DB and in MGMT.
+    """
+    server_list = MiddlewareServer.servers(provider=provider)
+    for _server in server_list:
+        if _server.product != 'Hawkular':
+            server = _server
+            break
+    assert server, 'Wildfly server was not found in servers list'
+    _check_server_running(server)
+    server.suspend_server()
+    flash.assert_success_message('Suspend initiated for selected server(s)')
+    # enable when HWKINVENT-185 is fixed
+    # _check_server_stopped(server)
+    server.resume_server()
+    flash.assert_success_message('Resume initiated for selected server(s)')
+    _check_server_running(server)
+
+
 def _get_servers_set(servers):
     """
     Return the set of servers which contains only necessary fields,
@@ -174,6 +267,8 @@ def _check_server_running(server):
             delay=10, num_sec=600, message='Server {} must be running'.format(server.name))
 
 
+# it needs refactoring and fixing all tags tests
+@pytest.mark.uncollect
 def test_tags(provider):
     """Tests tags in server page
 

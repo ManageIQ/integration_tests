@@ -32,6 +32,7 @@
   * :py:class:`ShowingInputs`
   * :py:class:`SplitCheckboxTable`
   * :py:class:`SplitTable`
+  * :py:class:`StatusBox`
   * :py:class:`Table`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
@@ -53,6 +54,7 @@
 import atexit
 import os
 import re
+import time
 import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
@@ -68,9 +70,9 @@ from multimethods import multimethod, multidispatch, Anything
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions, js
 from cfme.fixtures.pytest_selenium import browser
-from utils import attributize_string, castmap, version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
+from utils import attributize_string, castmap, normalize_space, version
 from utils.log import logger
 from utils.pretty import Pretty
 
@@ -220,20 +222,6 @@ def get_context_current_page():
     return stripped[stripped.find('/'):stripped.rfind('?')]
 
 
-def _convert_header(header):
-    """Convers header cell text into something usable as an identifier.
-
-    Static method which replaces spaces in headers with underscores and strips out
-    all other characters to give an identifier.
-
-    Args:
-        header: A header name to be converted.
-
-    Returns: A string holding the converted header.
-    """
-    return re.sub('[^0-9a-zA-Z_]+', '', header.replace(' ', '_')).lower()
-
-
 class CachedTableHeaders(object):
     """the internal cache of headers
 
@@ -245,7 +233,7 @@ class CachedTableHeaders(object):
     def __init__(self, table):
         self.headers = sel.elements('td | th', root=table.header_row)
         self.indexes = {
-            _convert_header(cell.text): index
+            attributize_string(cell.text): index
             for index, cell in enumerate(self.headers)}
 
 
@@ -264,6 +252,9 @@ class Table(Pretty):
         body_offset: In the case of a padding table row above the body rows, the row offset
             can be used to skip rows in ``<ttbody>`` to locate the correct header row. This offset
             is 1-indexed, not 0-indexed, so an offset of 1 is the first child row element
+        hidden_locator: If the table can disappear, you probably want ot set this param as it
+            instructs the table that if it cannot find the table on the page but the element
+            represented by ``hidden_locator`` is visible, it assumes no data and returns no rows.
 
     Attributes:
         header_indexes: A dict of header names related to their int index as a column.
@@ -336,29 +327,42 @@ class Table(Pretty):
 
     pretty_attrs = ['_loc']
 
-    def __init__(self, table_locator, header_offset=0, body_offset=0):
+    def __init__(self, table_locator, header_offset=0, body_offset=0, hidden_locator=None):
         self._headers = None
         self._header_indexes = None
         self._loc = table_locator
         self.header_offset = int(header_offset)
         self.body_offset = int(body_offset)
+        self.hidden_locator = hidden_locator
 
     @property
     def header_row(self):
         """Property representing the ``<tr>`` element that contains header cells"""
         # thead/tr containing header data
         # xpath is 1-indexed, so we need to add 1 to the offset to get the correct row
-        return sel.element('thead/tr[{}]'.format(self.header_offset + 1), root=sel.element(self))
+        return sel.element('./thead/tr[{}]'.format(self.header_offset + 1), root=sel.element(self))
 
     @property
     def body(self):
         """Property representing the ``<tbody>`` element that contains body rows"""
         # tbody containing body rows
-        return sel.element('tbody', root=sel.element(self))
+        return sel.element('./tbody', root=sel.element(self))
 
     @cached_property
     def _headers_cache(self):
         return CachedTableHeaders(self)
+
+    def verify_headers(self):
+        """Verifies whether the headers in the table correspond with the cached ones."""
+        current_headers = CachedTableHeaders(self)
+        cached_headers = self._headers_cache
+        if current_headers.indexes != cached_headers.indexes:
+            raise exceptions.UsingSharedTables(
+                ('{cn} suspects that you are using shared tables! '
+                'That means you are using one {cn} instance to represent different UI tables. '
+                'This is not possible due to the header caching, but also wrong from the '
+                'design point of view. Please, create separate instances of {cn} for EACH table '
+                'in the user interface.').format(cn=type(self).__name__))
 
     def _update_cache(self):
         """refresh the cache in case we know its stale"""
@@ -400,10 +404,23 @@ class Table(Pretty):
         Yields:
             :py:class:`Table.Row` object corresponding to the next row in the table.
         """
-        index = self.body_offset
-        row_elements = sel.elements('tr', root=self.body)
-        for row_element in row_elements[index:]:
-            yield self.create_row_from_element(row_element)
+        try:
+            index = self.body_offset
+            row_elements = sel.elements('./tr', root=self.body)
+            for row_element in row_elements[index:]:
+                yield self.create_row_from_element(row_element)
+        except (exceptions.CannotScrollException, NoSuchElementException):
+            if self.hidden_locator is None:
+                # No hiding is documented here, so just explode
+                raise
+            elif not sel.is_displayed(self.hidden_locator):
+                # Hiding is documented but the element that signalizes that it is all right is not
+                # present so explode too.
+                raise
+            else:
+                # The table is not present but there is something that signalizes it is all right
+                # but no data.
+                return
 
     def find_row(self, header, value):
         """
@@ -487,12 +504,13 @@ class Table(Pretty):
         matching_rows = list()
 
         def matching_row_filter(heading, value):
+            text = normalize_space(row[heading].text)
             if isinstance(value, re._pattern_type):
-                return value.match(row[heading].text) is not None
+                return value.match(text) is not None
             elif partial_check:
-                return value in row[heading].text
+                return value in text
             else:
-                return row[heading].text == value
+                return text == value
 
         for row in rows:
             if all(matching_row_filter(*cell) for cell in cells.items()):
@@ -529,10 +547,13 @@ class Table(Pretty):
 
         """
         rows = self.find_rows_by_cells(cells, partial_check=partial_check)
-        if click_column is None:
-            map(sel.click, rows)
-        else:
-            map(sel.click, [row[click_column] for row in rows])
+        if click_column is not None:
+            rows = [row[click_column] for row in rows]
+
+        for row in rows:
+            if row is None:
+                self.verify_headers()  # Suspected shared table use
+            sel.click(row)
 
     def click_row_by_cells(self, cells, click_column=None, partial_check=False):
         """Click the cell at ``click_column`` in the first row matched by ``cells``
@@ -543,10 +564,14 @@ class Table(Pretty):
 
         """
         row = self.find_row_by_cells(cells, partial_check=partial_check)
-        if click_column is None:
-            sel.click(row)
-        else:
-            sel.click(row[click_column])
+        if row is None:
+            raise NameError('No row matching {} found'.format(repr(cells)))
+        elif click_column is not None:
+            row = row[click_column]
+
+        if row is None:
+            self.verify_headers()   # Suspected shared table use
+        sel.click(row)
 
     def create_row_from_element(self, row_element):
         """Given a row element in this table, create a :py:class:`Table.Row`
@@ -608,6 +633,8 @@ class Table(Pretty):
             sel.click(cell)
             return True
         else:
+            # This *might* lead to the shared table. So be safe here.
+            self.verify_headers()
             return False
 
     class Row(Pretty):
@@ -634,13 +661,19 @@ class Table(Pretty):
         @property
         def columns(self):
             """A list of WebElements corresponding to the ``<td>`` elements in this row"""
-            return sel.elements('td', root=self.row_element)
+            return sel.elements('./td', root=self.row_element)
 
         def __getattr__(self, name):
             """
             Returns Row element by header name
             """
-            return self.columns[self.table.header_indexes[_convert_header(name)]]
+            try:
+                return self.columns[self.table.header_indexes[attributize_string(name)]]
+            except (KeyError, IndexError):
+                # Suspected shared table use
+                self.table.verify_headers()
+                # If it did not fail at that time, reraise
+                raise
 
         def __getitem__(self, index):
             """
@@ -650,8 +683,12 @@ class Table(Pretty):
                 return self.columns[index]
             except TypeError:
                 # Index isn't an int, assume it's a string
-                return getattr(self, _convert_header(index))
-            # Let IndexError raise
+                return getattr(self, attributize_string(index))
+            except IndexError:
+                # Suspected shared table use
+                self.table.verify_headers()
+                # If it did not fail at that time, reraise
+                raise
 
         def __str__(self):
             return ", ".join(["'{}'".format(el.text) for el in self.columns])
@@ -1450,6 +1487,12 @@ def _fill_form_list(form, values, action=None, action_always=False):
     for field, value in values:
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
+            try:
+                sel.wait_for_element(loc)
+            except TypeError:
+                # TypeError - when loc is not resolvable to an element, elements() will yell
+                # vvv An alternate scenario when element is not resolvable, just wait a bit.
+                time.sleep(1)
             logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
@@ -2287,7 +2330,11 @@ class Quadicon(Pretty):
 
     @property
     def a_cond(self):
-        return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
+        if self.qtype == "middleware":
+            return "contains(normalize-space(@title), {name})"\
+                .format(name=quoteattr('Name: {}'.format(self._name)))
+        else:
+            return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
@@ -3199,16 +3246,19 @@ fill.prefer((DHTMLSelect, types.NoneType), (object, types.NoneType))
 fill.prefer((object, types.NoneType), (Select, object))
 
 
-class AngularSelect(object):
+class AngularSelect(Pretty):
     BUTTON = "//button[@data-id='{}']"
 
-    def __init__(self, loc, none=None, multi=False):
+    pretty_attrs = ['_loc', 'none', 'multi', 'exact']
+
+    def __init__(self, loc, none=None, multi=False, exact=False):
         self.none = none
         if isinstance(loc, AngularSelect):
             self._loc = loc._loc
         else:
             self._loc = self.BUTTON.format(loc)
         self.multi = multi
+        self.exact = exact
 
     def locate(self):
         return sel.move_to_element(self._loc)
@@ -3236,7 +3286,11 @@ class AngularSelect(object):
     def select_by_visible_text(self, text):
         if not self.is_open:
             self.open()
-        new_loc = self._loc + '/../div/ul/li/a[contains(., "{}")]'.format(text)
+        if self.exact:
+            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(quoteattr(text))
+        else:
+            new_loc = self._loc + '/../div/ul/li/a[contains(normalize-space(.), {})]'.format(
+                quoteattr(text))
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)
@@ -3563,3 +3617,23 @@ def summary_title():
         return sel.text_sane(SUMMARY_TITLE_LOCATORS)
     except sel.NoSuchElementException:
         return None
+
+
+class StatusBox(object):
+    """ Status box as seen in containers overview page
+
+    Status box modelling.
+
+    Args:
+        name: The name of the status box as it appears in CFME, e.g. 'Nodes'
+
+    Returns: A StatusBox instance.
+
+    """
+    def __init__(self, name):
+        self.name = name
+
+    def value(self):
+        return sel.element(
+            '//span[contains(@class, "card-pf-aggregate-status-count")]'
+            '/../../span[contains(., "{}")]/span'.format(self.name)).text

@@ -6,9 +6,11 @@ from cached_property import cached_property
 from cfme.configure.configuration import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTree, flash, form_buttons, mixins, toolbar
+from cfme.web_ui.topology import Topology
 from sqlalchemy.orm import aliased
 from utils import attributize_string, version
 from utils.db import cfmedb
+from utils.units import Unit
 from utils.varmeth import variable
 
 pol_btn = partial(toolbar.select, "Policy")
@@ -231,6 +233,8 @@ class Summary(object):
 class SummaryTable(object):
     ROWS = '../../../tbody/tr'
 
+    MULTIKEY_LOC = '../../../tbody/tr[1]/td/strong'
+
     def __init__(self, o, text, entry):
         self._object = o
         self._text = text
@@ -246,6 +250,9 @@ class SummaryTable(object):
     def load(self):
         self._keys = []
         key_values = []
+        if sel.is_displayed(self.MULTIKEY_LOC, root=self._entry):
+            # WE cannot process this kind of table yet.
+            return
         for row in sel.elements(self.ROWS, root=self._entry):
             tds = sel.elements('./td', root=row)
             key = tds[0]
@@ -319,7 +326,10 @@ class SummaryValue(object):
             try:
                 return float(self.text_value)
             except (ValueError, TypeError):
-                return self.text_value
+                try:
+                    return Unit.parse(self.text_value)
+                except ValueError:
+                    return self.text_value
 
     @cached_property
     def link(self):
@@ -375,7 +385,7 @@ class Validatable(SummaryMixin):
         properties = self.summary.properties.items()
         assert len(properties) > 0, 'No property was found in UI'
         for property_tuple in self.property_tuples:
-            expected_value = str(getattr(self, property_tuple[0]))
+            expected_value = str(getattr(self, property_tuple[0], ''))
             shown_value = properties[property_tuple[1]].text_value
             assert expected_value == shown_value,\
                 ("Property '{}' has wrong value, expected '{}' but was '{}'"
@@ -435,3 +445,41 @@ class Validatable(SummaryMixin):
                             ("'single_value' of '{}' did not match'"
                              .format(ref_tag))
                 assert found, ("Tag '{}' not found in database".format(ref_tag))
+
+
+class TopologyMixin(object):
+    """Use this mixin to have simple access to the Topology page.
+    To use this `TopologyMixin` you have to implement `load_topology_page`
+    function, which should take to topology page
+
+    Sample usage:
+
+    .. code-block:: python
+
+        # You can retrieve the elements details as it is in the UI
+        topology.elements  # => 'hostname'
+        # You can do actions on topology page
+        topology.display_names.enable()
+        topology.display_names.disable()
+        topology.display_names.is_enabled
+        # You can do actions on topology search box
+        topology.search_box.text(text='hello')
+        topology.search_box.text(text='hello', submit=False)
+        topology.search_box.submit()
+        topology.search_box.clear()
+        # You can get legends and can perform actions
+        topology.legends
+        topology.pod.name
+        topology.pod.is_active
+        topology.pod.set_active()
+        # You can get elements, element parents and children
+        topology.elements
+        topology.elements[0].parents
+        topology.elements[0].children
+        topology.elements[0].double_click()
+        topology.elements[0].is_displayed()
+
+    """
+    @cached_property
+    def topology(self):
+        return Topology(self)

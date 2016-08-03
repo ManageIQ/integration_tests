@@ -12,14 +12,31 @@ def setup_first_provider():
     setup_a_provider(validate=True, check_existing=True)
 
 
-@pytest.mark.tier(3)
-def test_openldap_auth(request, setup_first_provider, configure_openldap_auth_mode):
+@pytest.fixture()
+def group():
     data = cfme_data.get("openldap_test", {})
     if not data:
         pytest.skip("No openldap_test section in yaml")
-    group = Group(description=data["group_name"], role="EvmRole-user")
+    credentials = Credential(
+        principal=data["username"],
+        secret=data["password"],
+    )
+    return Group(description=data["group_name"], role="EvmRole-user",
+                 user_to_lookup=data['username'], ldap_credentials=credentials)
+
+
+@pytest.mark.tier(3)
+@pytest.mark.meta(blockers=[1357489])
+@pytest.mark.parametrize(
+    "add_from_ldap", [False, True],
+    ids=['create', 'add_group_from_ldap_lookup'])
+def test_openldap_auth(request, group, add_from_ldap, configure_openldap_auth_mode):
+    data = cfme_data.get("openldap_test", {})
+    if add_from_ldap:
+        group.add_group_from_ldap_lookup()
+    else:
+        group.create()
     request.addfinalizer(group.delete)
-    group.create()
     credentials = Credential(
         principal=data["username"],
         secret=data["password"],
@@ -31,3 +48,6 @@ def test_openldap_auth(request, setup_first_provider, configure_openldap_auth_mo
     with user:
         login.login(user)
         assert login.current_full_name() == data["fullname"]
+        login.logout()
+    login.login_admin()
+    assert user.exists is True

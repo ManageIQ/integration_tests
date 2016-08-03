@@ -2,8 +2,11 @@ import pytest
 from itertools import combinations
 
 from utils import testgen
-from utils.providers import get_crud, clear_infra_providers
-from cfme.infrastructure.provider import (discover, RHEVMProvider, SCVMMProvider, VMwareProvider)
+from utils.providers import get_crud, clear_provider_by_type
+from cfme.infrastructure.provider import discover
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 
 
 def generate_signature(combination):
@@ -79,7 +82,7 @@ def pytest_generate_tests(metafunc):
 @pytest.yield_fixture(scope='function')
 def delete_providers_after_test():
     yield
-    clear_infra_providers()
+    clear_provider_by_type('infra')
 
 
 @pytest.mark.tier(2)

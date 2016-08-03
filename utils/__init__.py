@@ -11,6 +11,20 @@ from werkzeug.local import LocalProxy
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 
+class FakeObject(object):
+    def __init__(self, **kwargs):
+        self.__dict__ = kwargs
+
+
+def fakeobject_or_object(obj, attr, default=None):
+    if isinstance(obj, basestring):
+        return FakeObject(**{attr: obj})
+    elif not obj:
+        return FakeObject(**{attr: default})
+    else:
+        return obj
+
+
 def property_or_none(wrapped, *args, **kwargs):
     """property_or_none([fget[, fset[, fdel[, doc]]]])
     Property decorator that turns AttributeErrors into None returns
@@ -71,7 +85,8 @@ def at_exit(f, *args, **kwargs):
 
 def _prenormalize_text(text):
     """Makes the text lowercase and removes all characters that are not digits, alphas, or spaces"""
-    return re.sub(r"[^a-z0-9 ]", "", text.strip().lower())
+    # _'s represent spaces so convert those to spaces too
+    return re.sub(r"[^a-z0-9 ]", "", text.strip().lower().replace('_', ' '))
 
 
 def _replace_spaces_with(text, delim):
@@ -94,6 +109,18 @@ def attributize_string(text):
     The underscore is always one character long if it is present.
     """
     return _replace_spaces_with(_prenormalize_text(text), '_')
+
+
+def normalize_space(text):
+    """Works in accordance with the XPath's normalize-space() operator.
+
+    `Description <https://developer.mozilla.org/en-US/docs/Web/XPath/Functions/normalize-space>`_:
+
+        *The normalize-space function strips leading and trailing white-space from a string,
+        replaces sequences of whitespace characters by a single space, and returns the resulting
+        string.*
+    """
+    return _replace_spaces_with(text.strip(), ' ')
 
 
 def tries(num_tries, exceptions, f, *args, **kwargs):

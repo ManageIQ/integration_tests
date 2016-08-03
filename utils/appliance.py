@@ -6,7 +6,6 @@ import random
 import re
 import socket
 import yaml
-from datetime import datetime
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
@@ -235,14 +234,15 @@ class IPAppliance(object):
             :py:class:`set` of :py:class:`str` - provider_key-s
         """
         ip_addresses = set([])
-        if (    # LISP powa!
-                (self.is_downstream and self.version >= '5.6')
-                or ((not self.is_downstream)
-                    and self.build_datetime >= datetime(year=2015, month=10, day=5))):
-            query = self._query_post_endpoints()
-        else:
-            query = self._query_pre_endpoints()
-        for ipaddress, hostname in query:
+
+        # Fetch all providers at once, return empty list otherwise
+        try:
+            query_res = list(self._query_endpoints())
+        except Exception as ex:
+            self.log.warning("Unable to query DB for managed providers: %s", str(ex))
+            return []
+
+        for ipaddress, hostname in query_res:
             if ipaddress is not None:
                 ip_addresses.add(ipaddress)
             elif hostname is not None:
@@ -257,6 +257,13 @@ class IPAppliance(object):
             if provider_data.get("ipaddress", None) in ip_addresses:
                 provider_keys.add(provider_key)
         return provider_keys
+
+    def _query_endpoints(self):
+
+        if "endpoints" in self.db:
+            return self._query_post_endpoints()
+        else:
+            return self._query_pre_endpoints()
 
     def _query_pre_endpoints(self):
         ems_table = self.db["ext_management_systems"]
@@ -504,17 +511,21 @@ class IPAppliance(object):
 
     @logger_wrap("Patch appliance with MiqQE js: {}")
     def patch_with_miqqe(self, log_callback=None):
-        if self.version < "5.6":
+        if self.version < "5.5.5.0":
             return
 
         # (local_path, remote_path, md5/None) trio
+        autofocus_patch = pick({
+            '5.5': 'autofocus.js.diff',
+            LATEST: 'autofocus_upstream.js.diff'
+        })
         patch_args = (
             (str(patches_path.join('miq_application.js.diff')),
              '/var/www/miq/vmdb/app/assets/javascripts/miq_application.js',
              None),
-            (str(patches_path.join('autofocus.js.diff')),
+            (str(patches_path.join(autofocus_patch)),
              '/var/www/miq/vmdb/app/assets/javascripts/directives/autofocus.js',
-             'f5ce9fa129d1662e6fe6f7c213458227'),
+             None),
         )
 
         patched_anything = False

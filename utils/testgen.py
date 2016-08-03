@@ -94,9 +94,7 @@ from cfme.roles import group_data
 from utils import version
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.providers import (
-    cloud_provider_type_map, infra_provider_type_map, container_provider_type_map,
-    middleware_provider_type_map, provider_type_map, get_crud)
+from utils.providers import get_crud
 from cfme.infrastructure.config_management import get_config_manager_from_config
 
 _version_operator_map = OrderedDict([('>=', lambda o, v: o >= v),
@@ -331,8 +329,6 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
 
     """
 
-    metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
-
     argnames = []
     argvalues = []
     idlist = []
@@ -352,8 +348,9 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
             logger.debug("Whilst trying to create an object for %s we failed", provider)
             continue
 
-        if provider_types is not None and prov_obj.type not in provider_types:
-            continue
+        if provider_types is not None:
+            if not(prov_obj.type_tclass in provider_types or prov_obj.type_name in provider_types):
+                continue
 
         # Run through all the testgen uncollect fns
         uncollect = False
@@ -367,6 +364,7 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
             continue
 
         if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
+            metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
             argnames.append('provider')
 
         # uncollect when required field is not present and option['require_field'] == True
@@ -383,7 +381,7 @@ def cloud_providers(metafunc, **options):
     :py:attr:`utils.providers.cloud_provider_type_map`
 
     """
-    return provider_by_type(metafunc, cloud_provider_type_map, **options)
+    return provider_by_type(metafunc, 'cloud', **options)
 
 
 def infra_providers(metafunc, **options):
@@ -391,7 +389,7 @@ def infra_providers(metafunc, **options):
     :py:attr:`utils.providers.infra_provider_type_map`
 
     """
-    return provider_by_type(metafunc, infra_provider_type_map, **options)
+    return provider_by_type(metafunc, 'infra', **options)
 
 
 def container_providers(metafunc, **options):
@@ -399,7 +397,7 @@ def container_providers(metafunc, **options):
     :py:attr:`utils.providers.container_provider_type_map`
 
     """
-    return provider_by_type(metafunc, container_provider_type_map, **options)
+    return provider_by_type(metafunc, 'container', **options)
 
 
 def middleware_providers(metafunc, **options):
@@ -407,7 +405,7 @@ def middleware_providers(metafunc, **options):
     :py:attr:`utils.providers.container_provider_type_map`
 
     """
-    return provider_by_type(metafunc, middleware_provider_type_map, **options)
+    return provider_by_type(metafunc, 'middleware', **options)
 
 
 def all_providers(metafunc, **options):
@@ -415,7 +413,7 @@ def all_providers(metafunc, **options):
     :py:attr:`utils.providers.provider_type_map`
 
     """
-    return provider_by_type(metafunc, provider_type_map, **options)
+    return provider_by_type(metafunc, None, **options)
 
 
 def auth_groups(metafunc, auth_mode):

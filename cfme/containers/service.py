@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 # added new list_tbl definition
-from cfme.common import Taggable
+from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable
 from cfme.web_ui.menu import nav
-from . import pol_btn, details_page
+from . import details_page
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
@@ -11,28 +12,17 @@ nav.add_branch(
     'containers_services',
     {
         'containers_service':
-        [
-            lambda ctx: list_tbl.select_row_by_cells(
-                {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
-            {
-                'container_service_edit_tags':
-                lambda _: pol_btn('Edit Tags'),
-            }
-        ],
+        lambda ctx: list_tbl.select_row_by_cells(
+            {'Name': ctx['service'].name, 'Provider': ctx['service'].provider.name}),
+
         'containers_service_detail':
-        [
-            lambda ctx: list_tbl.click_row_by_cells(
-                {'Name': ctx['service'].name, 'Provider': ctx['provider'].name}),
-            {
-                'container_service_edit_tags_detail':
-                lambda _: pol_btn('Edit Tags'),
-            }
-        ]
+        lambda ctx: list_tbl.click_row_by_cells(
+            {'Name': ctx['service'].name, 'Provider': ctx['service'].provider.name}),
     }
 )
 
 
-class Service(Taggable):
+class Service(Taggable, SummaryMixin):
 
     def __init__(self, name, provider):
         self.name = name
@@ -64,12 +54,6 @@ class Service(Taggable):
     def navigate(self, detail=True):
         if detail is True:
             if not self._on_detail_page():
-                sel.force_navigate(
-                    'containers_service_detail', context={
-                        'service': self, 'provider': self.provider})
+                sel.force_navigate('containers_service_detail', context={'service': self})
         else:
-            sel.force_navigate(
-                'containers_service',
-                context={
-                    'service': self,
-                    'provider': self.provider})
+            sel.force_navigate('containers_service', context={'service': self})

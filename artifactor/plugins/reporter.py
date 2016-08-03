@@ -363,9 +363,11 @@ class Reporter(ArtifactorBasePlugin, ReporterBase):
         return None, {'artifacts': {test_ident: {'skipped': skip_data}}}
 
     @ArtifactorBasePlugin.check_configured
-    def start_test(self, test_location, test_name, slaveid):
+    def start_test(self, test_location, test_name, slaveid, tier=None):
         test_ident = "{}/{}".format(test_location, test_name)
-        return None, {'artifacts': {test_ident: {'start_time': time.time(), 'slaveid': slaveid}}}
+        return None, {'artifacts': {test_ident: {
+            'start_time': time.time(), 'slaveid': slaveid, 'tier': tier or "N/A"}}
+        }
 
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifacts, test_location, test_name, slaveid):

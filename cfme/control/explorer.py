@@ -1310,16 +1310,21 @@ class Action(Updateable, Pretty):
     form = Form(
         fields=[
             ("description", Input("description")),
-            ("action_type", Select("select#miq_action_type")),
+            ("action_type", AngularSelect("miq_action_type", exact=True)),
             # Evaluate Alerts (TODO)
         ]
     )
+
+    trees = '|'.join([
+        "//div[@id='action_tags_treebox']/div/table",   # Old builds
+        "//div[@id='action_tags_treebox']/ul",          # New builds
+    ])
 
     sub_forms = {
         "Assign Profile to Analysis Task":
         Form(
             fields=[
-                ("analysis_profile", Select("select#analysis_profile")),
+                ("analysis_profile", AngularSelect("analysis_profile", exact=True)),
             ]
         ),
 
@@ -1333,14 +1338,14 @@ class Action(Updateable, Pretty):
         "Delete Snapshots by Age":
         Form(
             fields=[
-                ("snapshot_age", Select("select#snapshot_age")),
+                ("snapshot_age", AngularSelect("snapshot_age")),
             ]
         ),
 
         "Inherit Parent Tags":
         Form(
             fields=[
-                ("parent_type", Select("select#parent_type")),
+                ("parent_type", AngularSelect("parent_type")),
                 ("tags", CheckboxSelect({
                     version.LOWEST:
                     "//*[@id='action_options_div']/fieldset/table/tbody/tr[2]/td[2]/table",
@@ -1369,14 +1374,14 @@ class Action(Updateable, Pretty):
         "Reconfigure CPUs":
         Form(
             fields=[
-                ("num_cpus", Select("select#cpu_value")),
+                ("num_cpus", AngularSelect("cpu_value")),
             ]
         ),
 
         "Reconfigure Memory":
         Form(
             fields=[
-                ("memory_size", Select("select#memory_value")),
+                ("memory_size", Input("memory_value")),
             ]
         ),
 
@@ -1411,11 +1416,7 @@ class Action(Updateable, Pretty):
             fields=[
                 (
                     "tag",
-                    Tree(
-                        "//div[@id='action_tags_treebox']/div/table"    # Old builds
-                        "|"
-                        "//div[@id='action_tags_treebox']/ul",          # New builds
-                    )
+                    Tree(trees)
                 ),
             ]
         ),
