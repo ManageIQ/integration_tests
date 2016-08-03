@@ -11,8 +11,6 @@ from time import sleep
 from urlparse import ParseResult, urlparse
 from tempfile import NamedTemporaryFile
 
-import sentaku
-
 from cached_property import cached_property
 
 from werkzeug.local import LocalStack, LocalProxy
@@ -23,6 +21,8 @@ import traceback
 
 from utils.mgmt_system import RHEVMSystem
 from mgmtsystem.virtualcenter import VMWareSystem
+
+from sentaku import ImplementationContext
 
 from cfme.common.vm import VM
 
@@ -41,6 +41,10 @@ from utils.signals import fire
 from utils.wait import wait_for
 from utils import clear_property_cache
 
+
+from .endpoints.ui import ViaUI
+from .endpoints.db import ViaDB
+
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # Do not import the whole stuff around
 if not RUNNING_UNDER_SPROUT:
@@ -48,21 +52,9 @@ if not RUNNING_UNDER_SPROUT:
     from utils.providers import setup_provider
     from utils.hosts import setup_providers_hosts_credentials
 
-# ** We need our endpoints! Can this be done via some entrypoints so that they can become
-# ** pip modules to install....... who knows!? Does it make sense? I'm too tired to make
-# ** a judgement call on that :)
-from endpoints.ui import UIEndpoint
-from endpoints.db import DBEndpoint
-
 
 class ApplianceException(Exception):
     pass
-
-# ** Here we define our implementation names. It has been already noted that we should carefully
-# ** think about the wording so that implemented_for(ViaDB) reads either implemented_for(DB) or
-# ** implemented(ViaDB)
-ViaUI = sentaku.ImplementationName('ViaUI')
-ViaDB = sentaku.ImplementationName('ViaDB')
 
 
 class IPAppliance(object):
@@ -94,33 +86,12 @@ class IPAppliance(object):
         self.container = container
         self._db_ssh_client = None
 
-        # ** browser is an endpoint object and we ***CURRENTLY*** (gosh I can't stress that
-        # ** enough) pass in the name of the attribute that holds the "session" so that we
-        # ** can access that in the endpoint via the "owner.<session>".
-        # ** Why is this needed?
-        # ** Iteration my friend iteration. We have not yet moved the sessions to be inside
-        # ** the endpoint objects. That IS on the roadmap, so these little calls will become
-        # ** simpler.
-        # ** Note also the complexity surrounding this that browser_session is a "new" session
-        # ** and that we still need to work out how to handle multiple browsers, for multiple
-        # ** appliances and how that interacts with Wharf etc.
-        self.browser = UIEndpoint('ui', 'browser_session', self)
-        self.db_session = DBEndpoint('db', 'db', self)
-        # ** this will be renamed <---- see I told you we had it covered.
-        self.sentaku_ctx = sentaku.ImplementationContext(
-            implementations=sentaku.AttributeBasedImplementations(self, {
-                ViaDB: 'db_session',
-                ViaUI: 'browser',
-            }),
-            default_choices=[
-                ViaDB,
-                ViaUI,
-            ],
-        )
-        # ** Above here, we simple "link" the endpoint implementation objects with their
-        # ** corresponding endpoint objects. If this seems a little confusing?? It is.
-        # ** The good thing is that a) we can probably make this better, and b) we will
-        # ** probably only need to do it in this file. W00t!
+        # TODO: investigate if we actually need those attributes
+        self.browser = ViaUI(owner=self)
+        self.db_session = ViaDB(owner=self)
+        # TODO: investigate if there is a better name for this attribute
+        self.sentaku_ctx = ImplementationContext.from_instances(
+            [self.db_session, self.browser])
 
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
@@ -2099,7 +2070,7 @@ class ApplianceStack(LocalStack):
         logger.info("Pushed appliance {} on stack (was {} before) ".format(
             obj.address, getattr(was_before, 'address', 'empty')))
         if obj.browser_steal:
-            from utils import browser
+            from utils.browser import browser
             browser.start()
 
     def pop(self):
