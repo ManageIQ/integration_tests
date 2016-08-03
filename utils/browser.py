@@ -2,12 +2,13 @@
 import atexit
 import json
 import os
-import threading
 import urllib2
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
 from threading import Timer
+
+from werkzeug.local import LocalProxy
 
 import requests
 from selenium import webdriver
@@ -15,22 +16,151 @@ from selenium.common.exceptions import UnexpectedAlertPresentException, WebDrive
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.remote.file_detector import UselessFileDetector
 
+from cached_property import cached_property
+
 from fixtures.pytest_store import store, write_line
 from utils import conf, tries
 from utils.log import logger
 from utils.path import data_path
 
-# Conditional guards against getting a new thread_locals when this module is reloaded.
-if 'thread_locals' not in globals():
-    # New threads get their own browser instances
-    thread_locals = threading.local()
-    thread_locals.browser = None
-    thread_locals.wharf = None
+
+class BrowserManager(object):
+    def __init__(self):
+        #: After starting a firefox browser, this will be set to the temporary
+        #: directory where files are downloaded.
+        self.firefox_profile_tmpdir = None
+        self.browser = None
+        self.wharf = None
+
+    def ensure_open(self):
+        if self.browser is None:
+            return self.start()
+
+        try:
+            self.browser.current_url
+        except UnexpectedAlertPresentException:
+            # Try to handle an open alert, restart the browser if possible
+            try:
+                self.browser.switch_to_alert().dismiss()
+            except:
+                return self.start()
+        except:
+            # If we couldn't poke the browser for any other reason, start a new one
+            self.start()
+        if self.wharf:
+            self.wharf.renew()
+        return self.browser
+
+    def quit(self):
+        try:
+            self.browser.quit()
+        except:
+            # Due to the multitude of exceptions can be thrown when attempting to kill the browser,
+            # Diaper Pattern!
+            pass
+        finally:
+            self.browser = None
+
+    def start(self):
+        if self.browser is not None:
+            self.quit()
+        return self.open_fresh()
+
+    def open_fresh(self):
+        assert self.browser is None
+
+        webdriver_class, browser_kwargs = self._browser_config()
+
+        try:
+            browser = tries(3, WebDriverException, webdriver_class, **browser_kwargs)
+            browser.file_detector = UselessFileDetector()
+            browser.maximize_window()
+            browser.get(store.base_url)
+            self.browser = browser
+        except urllib2.URLError as ex:
+            # connection to selenium was refused for unknown reasons
+            if self.wharf:
+                # If we're running wharf, try again with a new container
+                logger.error('URLError connecting to selenium; recycling container. URLError:')
+                # Plus, since this is a really weird thing that we need to figure out,
+                # throw a message out to the terminal for visibility
+                write_line('URLError caused container recycle, see log for details', red=True)
+                logger.exception(ex)
+                self.wharf.checkin()
+                self.wharf = None
+                self.open_fresh()
+            else:
+                # If we aren't running wharf, raise it
+                raise
+
+        return self.browser
+
+    def _modify_when_on_wharf(self, webdriver_class, browser_conf, browser_kwargs):
+        if webdriver_class is not webdriver.Remote or 'webdriver_wharf' not in browser_conf:
+            return
+
+        if self.wharf is None:
+            # Configured to use wharf, but it isn't configured yet; check out a webdriver container
+            wharf = Wharf(browser_conf['webdriver_wharf'])
+            # TODO: Error handling! :D
+            wharf.checkout()
+            atexit.register(wharf.checkin)
+            self.wharf = wharf
+
+            if browser_kwargs['desired_capabilities']['browserName'] == 'chrome':
+                # chrome uses containers to sandbox the browser, and we use containers to
+                # run chrome in wharf, so disable the sandbox if running chrome in wharf
+                co = browser_kwargs['desired_capabilities'].get('chromeOptions', {})
+                arg = '--no-sandbox'
+                if 'args' not in co:
+                    co['args'] = [arg]
+                elif arg not in co['args']:
+                    co['args'].append(arg)
+                browser_kwargs['desired_capabilities']['chromeOptions'] = co
+
+        if self.wharf:
+            # Wharf is configured, make sure to use its command_executor
+            wharf_config = self.wharf.config
+            browser_kwargs['command_executor'] = wharf_config['webdriver_url']
+            view_msg = 'tests can be viewed via vnc on display {}'.format(
+                wharf_config['vnc_display'])
+            logger.info('webdriver command executor set to %s', wharf_config['webdriver_url'])
+            logger.info(view_msg)
+            write_line(view_msg, cyan=True)
+
+    def _insert_profile_on_firefox(self, webdriver_class, browser_kwargs):
+        if webdriver_class is webdriver.Firefox:
+            browser_kwargs['firefox_profile'] = self._firefox_profile
+        elif (webdriver_class is webdriver.Remote and
+              browser_kwargs['desired_capabilities']['browserName'] == 'firefox'):
+            browser_kwargs['browser_profile'] = self._firefox_profile
+
+    @cached_property
+    def _firefox_profile(self):
+        return _load_firefox_profile()
+
+    def _browser_config(self):
+        browser_conf = conf.env.get('browser', {})
+
+        webdriver_name = browser_conf.get('webdriver', 'Firefox')
+        webdriver_class = getattr(webdriver, webdriver_name)
+
+        # Pull in browser kwargs from browser yaml
+        browser_kwargs = browser_conf.get('webdriver_options', {})
+
+        # Handle firefox profile for Firefox or Remote webdriver
+        self._insert_profile_on_firefox(webdriver, browser_kwargs)
+
+        if webdriver_name != 'Remote' and 'desired_capabilities' in browser_kwargs:
+            # desired_capabilities is only for Remote driver, but can sneak in
+            del(browser_kwargs['desired_capabilities'])
+        self._modify_when_on_wharf(webdriver_class, browser_conf, browser_kwargs)
+        return webdriver_class, browser_kwargs
 
 
-#: After starting a firefox browser, this will be set to the temporary
-#: directory where files are downloaded.
-firefox_profile_tmpdir = None
+manager = BrowserManager()
+
+driver = LocalProxy(manager.ensure_open)
 
 
 def browser():
@@ -43,11 +173,7 @@ def browser():
         The current browser instance.
 
     """
-    return thread_locals.browser
-
-
-def wharf():
-    return thread_locals.wharf
+    return manager.browser
 
 
 def ensure_browser_open():
@@ -60,116 +186,18 @@ def ensure_browser_open():
         The current browser instance.
 
     """
-    try:
-        browser().current_url
-    except UnexpectedAlertPresentException:
-        # Try to handle an open alert, restart the browser if possible
-        try:
-            browser().switch_to_alert().dismiss()
-        except:
-            start()
-    except:
-        # If we couldn't poke the browser for any other reason, start a new one
-        start()
-    if thread_locals.wharf:
-        thread_locals.wharf.renew()
-    return browser()
+    return manager.ensure_open()
 
 
-def start(webdriver_name=None, base_url=None, **kwargs):
+def start():
     """Starts a new web browser
 
     If a previous browser was open, it will be closed before starting the new browser
 
     Args:
-        webdriver_name: The name of the selenium Webdriver to use. Default: 'Firefox'
-        base_url: Optional, will use ``utils.conf.env['base_url']`` by default
-        **kwargs: Any additional keyword arguments will be passed to the webdriver constructor
-
     """
     # Try to clean up an existing browser session if starting a new one
-    if thread_locals.browser is not None:
-        quit()
-
-    browser_conf = conf.env.get('browser', {})
-
-    if webdriver_name is None:
-        # If unset, look to the config for the webdriver type
-        # defaults to Firefox
-        webdriver_name = browser_conf.get('webdriver', 'Firefox')
-    webdriver_class = getattr(webdriver, webdriver_name)
-
-    if base_url is None:
-        base_url = store.base_url
-
-    # Pull in browser kwargs from browser yaml
-    browser_kwargs = browser_conf.get('webdriver_options', {})
-
-    # Handle firefox profile for Firefox or Remote webdriver
-    if webdriver_name == 'Firefox':
-        browser_kwargs['firefox_profile'] = _load_firefox_profile()
-    elif (webdriver_name == 'Remote' and
-          browser_kwargs['desired_capabilities']['browserName'] == 'firefox'):
-        browser_kwargs['browser_profile'] = _load_firefox_profile()
-
-    # Update it with passed-in options/overrides
-    browser_kwargs.update(kwargs)
-
-    if webdriver_name != 'Remote' and 'desired_capabilities' in browser_kwargs:
-        # desired_capabilities is only for Remote driver, but can sneak in
-        del(browser_kwargs['desired_capabilities'])
-
-    if webdriver_name == 'Remote' and 'webdriver_wharf' in browser_conf and not thread_locals.wharf:
-        # Configured to use wharf, but it isn't configured yet; check out a webdriver container
-        wharf = Wharf(browser_conf['webdriver_wharf'])
-        # TODO: Error handling! :D
-        wharf.checkout()
-        atexit.register(wharf.checkin)
-        thread_locals.wharf = wharf
-
-        if browser_kwargs['desired_capabilities']['browserName'] == 'chrome':
-            # chrome uses containers to sandbox the browser, and we use containers to
-            # run chrome in wharf, so disable the sandbox if running chrome in wharf
-            co = browser_kwargs['desired_capabilities'].get('chromeOptions', {})
-            arg = '--no-sandbox'
-            if 'args' not in co:
-                co['args'] = [arg]
-            elif arg not in co['args']:
-                co['args'].append(arg)
-            browser_kwargs['desired_capabilities']['chromeOptions'] = co
-
-    if thread_locals.wharf:
-        # Wharf is configured, make sure to use its command_executor
-        wharf_config = thread_locals.wharf.config
-        browser_kwargs['command_executor'] = wharf_config['webdriver_url']
-        view_msg = 'tests can be viewed via vnc on display {}'.format(wharf_config['vnc_display'])
-        logger.info('webdriver command executor set to %s', wharf_config['webdriver_url'])
-        logger.info(view_msg)
-        write_line(view_msg, cyan=True)
-
-    try:
-        browser = tries(3, WebDriverException, webdriver_class, **browser_kwargs)
-        browser.file_detector = UselessFileDetector()
-        browser.maximize_window()
-        browser.get(base_url)
-        thread_locals.browser = browser
-    except urllib2.URLError as ex:
-        # connection to selenium was refused for unknown reasons
-        if thread_locals.wharf:
-            # If we're running wharf, try again with a new container
-            logger.error('URLError connecting to selenium; recycling container. URLError:')
-            # Plus, since this is a really weird thing that we need to figure out,
-            # throw a message out to the terminal for visibility
-            write_line('URLError caused container recycle, see log for details', red=True)
-            logger.exception(ex)
-            thread_locals.wharf.checkin()
-            thread_locals.wharf = None
-            start(webdriver_name, base_url, **kwargs)
-        else:
-            # If we aren't running wharf, raise it
-            raise
-
-    return thread_locals.browser
+    return manager.start()
 
 
 def quit():
@@ -181,25 +209,17 @@ def quit():
         If a browser can't be closed, it's usually because it has already been closed elsewhere.
 
     """
-    try:
-        browser().quit()
-    except:
-        # Due to the multitude of exceptions can be thrown when attempting to kill the browser,
-        # Diaper Pattern!
-        pass
-    finally:
-        thread_locals.browser = None
+    manager.quit()
 
 
 def _load_firefox_profile():
     # create a firefox profile using the template in data/firefox_profile.js.template
-    global firefox_profile_tmpdir
 
     # Make a new firefox profile dir if it's unset or doesn't exist for some reason
-    if firefox_profile_tmpdir is None or not os.path.exists(firefox_profile_tmpdir):
-        firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
-        # Clean up tempdir at exit
-        atexit.register(rmtree, firefox_profile_tmpdir, ignore_errors=True)
+    firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
+
+    # Clean up tempdir at exit
+    atexit.register(rmtree, firefox_profile_tmpdir, ignore_errors=True)
 
     template = data_path.join('firefox_profile.js.template').read()
     profile_json = Template(template).substitute(profile_dir=firefox_profile_tmpdir)
