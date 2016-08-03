@@ -48,11 +48,16 @@ def is_task_finished():
         'task_name': task_name,
         'state': expected_status
     })
+
     if not el:
         try:
             wait_for(is_task_finished, delay=20, timeout="5m",
                      fail_func=lambda: tb.select('Reload'))
         except TimedOutError:
             pytest.fail("Analysis has not completed")
+
+    if el:
+        tb.select('Delete Tasks', 'Delete All', invokes_alert=True)
+        sel.handle_alert(cancel=False)
 
         return el
