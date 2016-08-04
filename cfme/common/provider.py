@@ -82,6 +82,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                     ('token_verify_secret', {
                         version.LOWEST: Input('bearer_verify'),
                         '5.6': Input('default_verify')
+                        # nothing
                     }),
                 ],
 
