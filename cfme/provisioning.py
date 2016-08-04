@@ -140,15 +140,15 @@ provisioning_form = tabstrip.TabStripForm(
             ('dns_servers', ui.Input('customize__dns_servers')),
             ('dns_suffixes', ui.Input('customize__dns_suffixes')),
 
-            # Cloud
             ('specification', ui.Select('select#customize__sysprep_enabled')),
+            ('customize_type', ui.Select('select#customize__sysprep_enabled')),
             ('specification_name', ui.Table('//div[@id="prov_vc_div"]/table')),
+
+            # Cloud
             ('computer_name', ui.Input('customize__linux_host_name')),
             ('domain_name', ui.Input('customize__linux_domain_name')),
 
             # Infra
-            ('customize_type', ui.Select('select#customize__sysprep_enabled')),
-            ('specification_name', ui.Table('//div[@id="prov_vc_div"]/table')),
             ('linux_host_name', ui.Input('customize__linux_host_name')),
             ('linux_domain_name', ui.Input('customize__linux_domain_name')),
             ('prov_host_name', ui.Input('customize__hostname')),
