@@ -1218,7 +1218,6 @@ class Schedule(Pretty):
         ("name", Input("name")),
         ("description", Input("description")),
         ("active", Input("enabled")),
-        ("name", Input("name")),
         ("action", {
             version.LOWEST: Select("select#action_typ"),
             '5.5': AngularSelect('action_typ')}),
