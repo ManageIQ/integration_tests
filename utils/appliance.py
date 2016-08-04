@@ -1540,7 +1540,11 @@ class IPAppliance(object):
                     logger.error(base_data.output)
                     raise Exception('Error obtaining config')
                 yaml_data = base_data.output[:base_data.output.find('DEPRE')]
-                return yaml.load(yaml_data)
+                try:
+                    return yaml.load(yaml_data)
+                except:
+                    logger.debug(yaml_data)
+                    raise
             else:
                 raise Exception('Only [vmdb] config is allowed from 5.6+')
         else:
