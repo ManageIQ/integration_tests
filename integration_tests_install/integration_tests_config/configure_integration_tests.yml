@@ -1,0 +1,256 @@
+---
+- hosts: localhost
+  connection: local
+  become: yes
+  #become_user: "{{ username }}"
+  become_method: su
+  #vars_files:
+  #  - "{{ vars_config }}"
+  vars:
+    user_id: "{{ lookup('env','USER_ID') }}"
+    group_id: "{{ lookup('env','GROUP_ID') }}"
+    username: "{{ lookup('env','USERNAME') }}"
+    groupname: "{{ lookup('env','GROUPNAME') }}"
+  
+  tasks:
+    - pause: prompt="Welcome to ManageIQ integration tests configuration \n
+                   press \n
+                    ENTER if you want to keep default value [] \n
+                    Ctrl+C followed with A - to abort \n
+                    Ctrl+C anytime during playbookx execution \n
+                  
+                  If you want to change any of integration tests parameters, you can safely re-run this script. 
+                  Now, you will be prompted to input needed variables (press ENTER to continue):"
+    
+    - name: add group into container
+      group: name="{{ groupname }}" gid="{{ group_id }}" state=present
+ 
+    - name: add user to container
+      user: name="{{ username }}" comment="{{ username }} container" uid="{{ user_id }}" group="{{ groupname }}"
+
+    - name: Checking if we are connected to internet
+      ipify_facts:
+      register: ip
+      become_user: root
+
+    - name: Set fact if we are connected to internet
+      set_fact: 
+        internet: false
+      when: ip.ansible_facts.ipify_public_ip
+ 
+    - name: check if file with vars exists
+      stat: path="{{ vars_config }}"
+      register: p
+   
+    - name: create "{{ vars_config }}"
+      file: path="{{ vars_config }}" state=touch owner="{{ username }}" group="{{ groupname }}" mode=0660
+      when: p.stat.exists == False
+    
+    - name: create valid yaml config
+      lineinfile: "dest='{{ vars_config }}' regexp='^---' line='---'"
+      when: p.stat.exists == False
+    
+    - name: import variables if defined
+      include_vars: "{{ vars_config }}"
+      when: p.stat.exists == True
+
+    - name: "1)"
+      # https://gist.githubusercontent.com/confiks/6d7b0ee3e137df01b758/raw/6b31d61151c4199e5121c34c841f7168850a6071/ask_key.py
+      # action: custom_prompt prompt="{{ pull_requests_question }} - [{{ pull_requests }}]:" accepted_keys="{{ pull_requests_accepted_keys }}"
+      action: custom_prompt prompt="{{ pull_requests_question }}:" accepted_keys="{{ pull_requests_accepted_keys }}"
+      register: pull_requests_p
+
+    - name: "2)"
+      #action: custom_prompt prompt="SSH username - [ {{ ssh_user }} ]:" accepted_keys="['y', 'n', 'r']"
+      action: custom_prompt prompt="{{ git_account_username_question }} - [{{ git_account_username }}]:"
+      register: git_account_username_p
+      when: pull_requests_p.key != "n"
+
+    - name: "3)"
+      action: custom_prompt prompt="{{ git_full_name_question }} - [{{ git_full_name }}]:"
+      register: git_full_name_p
+      when: pull_requests_p.key != "n"
+    
+    - name: "4)"
+      action: custom_prompt prompt="{{ git_email_question }} - [{{ git_email }}]:"
+      register: git_email_p
+      when: pull_requests_p.key != "n"
+    
+    - name: "5)"
+      action: custom_prompt prompt="{{ gpg_public_key_question }} - [{{ gpg_public_key }}]:"
+      register: gpg_public_key_p
+      when: pull_requests_p.key != "n"
+    
+    - name: "6)"
+      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:"
+      register: yaml_repo_p
+      when: pull_requests_p.key != "n"
+    
+    - name: "7)"
+      action: custom_prompt prompt="{{ yaml_repo_username_question }} - [{{ yaml_repo_username }}]:"
+      register: yaml_repo_username_p
+      when: pull_requests_p.key != "n"
+    
+    - name: "8)"
+      action: custom_prompt prompt="{{ yaml_key_password_question }} - [{{ yaml_key_password }}]:"
+      register: yaml_key_password_p
+      when: pull_requests_p.key != "n"
+    
+    - name: "9)"
+      action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
+      register: base_url_p
+      when: pull_requests_p.key != "n"
+
+    - name: "10)"
+      action: custom_prompt prompt="{{ browser_question }} - [[ {{browser}} ]]" accepted_keys="{{browser_accepted_keys}}" 
+      register: browser_p
+ 
+    - name: debug
+      debug: msg="{{ git_account_username_p.key }}"
+ 
+    - name: write vars into variables file
+      lineinfile: "dest={{ vars_config }} regexp='^{{ item.key }}:' line='{{ item.key }}: {{ item.value }}'"
+      with_items:
+        - { key: 'pull_requests', value: "{{ pull_requests_p.key }}"}
+        - { key: 'git_account_username', value: "{{ git_account_username_p.key|default('') }}"}
+        - { key: 'git_full_name', value: "{{ git_full_name_p.key|default('') }}"}
+        - { key: 'git_email', value: "{{ git_email_p.key|default('') }}"}
+        - { key: 'gpg_public_key', value: "{{ gpg_public_key_p.key|default('') }}"}
+        - { key: 'yaml_repo', value: "{{ yaml_repo_p.key|default('') }}"}
+        - { key: 'yaml_repo_username', value: "{{ yaml_repo_username_p.key|default('') }}"}
+        - { key: 'yaml_key_password', value: "{{ yaml_key_password_p.key|default('') }}"}
+        - { key: 'base_url', value: "{{ base_url_p.key|default('') }}"}
+        - { key: 'browser', value: "{{ browser_p.key }}"}
+      when: item.value != ''
+    
+    - name: import vars
+      include_vars: "{{ vars_config }}"
+
+#    - name: set variables
+      
+#      when: 
+
+    # - debug: msg="Mesage {{ git_account_username_p }}"          
+    # - debug: msg="Mesage {{ (git_account_username_p.key == "") | ternary(git_account_username_p.key, '1') }}"
+# TBD 
+#    - name: check if github account exists
+#      uri: 
+#        url: "https://github.com/{{ (git_account_username_p.key == '') | ternary(git_account_username, git_account_username_p.key ) }}/cfme_tests"
+#        return_content: no 
+#        follow_redirects: safe 
+#        method: HEAD
+#      failed_when: false
+#      register: git_uri
+#      when: pull_requests_p.key != "n"
+
+    # - debug: msg="{{ git_uri }}"
+
+#    - name: evaluating if account exists
+#      action: fail msg="Github account does not exist - create one and re-run again"
+#      when: git_uri.status != 200
+    # Clone repo if it does not exists
+    # Example just get information about the repository whether or not it has
+    # already been cloned locally.
+
+    - name: Chceck if repo exists
+      git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" update=no clone=no version=master remote=upstream
+      register: git_repo_exists
+
+    - debug: msg="{{ git_repo_exists }}"
+
+
+    - name: Get active branch
+      shell: cd "{{ cfme_vol }}/integration_tests"; git rev-parse --abbrev-ref HEAD
+      register: git_active_branch
+      when: not git_repo_exists.changed
+
+    - debug: msg="{{ git_active_branch }}"
+      when: not git_repo_exists.changed
+
+    - name: Check if we need to stash
+      shell: cd "{{ cfme_vol }}/integration_tests"; git status
+      register: git_status
+      when: not git_repo_exists.changed
+
+    - debug: msg="{{ git_status }}"
+      when: not git_repo_exists.changed
+    
+    - name: update git config
+      ini_file: dest="{{ cfme_vol }}/integration_tests/.git/config" section="{{ item.section }}" option="        {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
+      with_items:
+        - { section: 'user',  key: 'email', value: "{{ git_email }}", state: 'present' }
+        - { section: 'user', key: 'name', value: "{{ git_full_name }}", state: 'present' }
+        - { section:  'user', key: 'signkey', value: "{{ gpg_public_key }}", state: 'present' }
+        - { section: 'push', key: 'default', value: 'simple', state: 'present'}
+        - { section: 'remote "upstream"', key: 'url', value: 'git://github.com/ManageIQ/integration_tests.git', state: 'present'}
+        - { section: 'remote "upstream"', key: 'fetch', value: '+refs/heads/*:refs/remotes/upstream/*', state: 'present'}
+        - { section: 'remote "origin"', key: 'url', value: 'https://github.com/ManageIQ/integration_tests', state: 'absent'}
+        - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'absent'}
+        - { section: 'remote "origin"', key: 'url', value: 'git@github.com/{{ git_account_username }}/cfme_tests.git', state: 'present' }
+        - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
+      #when: pull_requests_p.key == "y"
+      when: pull_requests == "y"
+
+    - name: stash changed
+      shell: cd "{{ cfme_vol }}/integration_tests"; git stash
+      # when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1)
+      become_user: "{{ username }}"
+      when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+
+    - name: Clone Integration tests repo
+      #git: repo="git://github.com/{{ git_account_username}}/cfme_tests.git" dest="{{ cfme_vol }}/cfme_tests" clone=yes update=yes version=master
+      git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote=upstream
+      become_user: "{{ username }}"
+      #when: pull_requests_p.key != "n"
+      #when: pull_requests.key != "n"
+      when: pull_requests != "n"
+    
+    - name: Clone Integration tests PR [testing]
+      git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote=upstream refspec=+refs/pull/3254/head:integration_tests_container force=yes
+      become_user: "{{ username }}"
+      when: pull_requests != "n"
+
+    - name: switch branch
+      shell: cd "{{ cfme_vol }}/integration_tests"; git checkout "{{ git_active_branch.stdout}}"
+      become_user: "{{ username }}"
+      when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+
+    - name: unstash changes
+      shell: cd "{{ cfme_vol }}/integration_tests"; git stash pop
+      #when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1) # and (not git_repo_exists.changed)
+      become_user: "{{ username }}"
+      when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+
+    - name: get basename from url
+      set_fact: 
+        yamls_base: "{{ yaml_repo | basename }}"
+
+    - name: check if repo has been cloned
+      # git: repo="{{ yaml_repo }}" dest="{{ cfme_vol }}/{{ yamls_base }}" clone=yes
+      git: repo="{{ yaml_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
+      become_user: "{{ username }}"
+      when: pull_requests_p.key != "n"
+    
+    #- name: update git config
+    - name: add yaml key if defined
+      #lineinfile: dest="{{ cfme_vol }}/cfme_tests/.yaml_key" line="{{ yaml_key_password }}" state=present 
+      template: src=templates/yaml_key.j2 dest="{{ cfme_vol }}/integration_tests/.yaml_key"
+      when: yaml_key_password is defined
+     
+    - debug: msg="{{item | basename }}"
+      with_fileglob: 
+        - /projects/cfme_env/cfme_vol/cfme-qe-yamls/complete/*.*yaml 
+      when: item | basename != 'env.yaml'
+      
+ 
+    - name: Create symlinks
+      file: src="../../cfme-qe-yamls/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
+      with_fileglob: 
+        - /projects/cfme_env/cfme_vol/cfme-qe-yamls/complete/*.*yaml 
+      when: (pull_requests == "y") and ( item | basename != 'env.yaml')
+
+    - name: Update env.yaml
+      template: src=templates/env.yaml.j2 dest="{{ cfme_vol }}/integration_tests/conf/env.yaml"
+
+    - name: change permissions recursively
+      file: path="{{ cfme_vol }}/integration_tests" state=directory owner="{{ username }}" group="{{ groupname }}" recurse=yes

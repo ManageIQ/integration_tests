@@ -3,6 +3,7 @@
 # Set up the environment so selenium can find everything it might want
 # (namely chrome and chromedriver)
 #export PATH="/path/to/google/chrome/directory/:/path/to/chromdriver/directory:$PATH"
+rm /tmp/.X1-lock /tmp/.X11-unix/X1
 
 # Start the window manager
 fluxbox &
