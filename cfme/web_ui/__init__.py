@@ -1426,11 +1426,16 @@ class Form(Region):
     def __init__(self, fields=None, identifying_loc=None):
         self.metadata = {}
         self.locators = {}
+        fields_seen = set()
         for field in fields:
             try:
+                if field[0] in fields_seen:
+                    raise ValueError('You cannot have duplicate field names in a Form ({})'.format(
+                        field[0]))
                 self.locators[field[0]] = field[1]
                 if len(field) == 3:
                     self.metadata[field[0]] = field[2]
+                fields_seen.add(field[0])
             except IndexError:
                 raise ValueError("fields= can be 2- or 3-tuples only! (name, loc[, metadata])")
 
