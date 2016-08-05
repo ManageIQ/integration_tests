@@ -75,6 +75,7 @@ from cfme.fixtures.pytest_selenium import Select
 from utils import attributize_string, castmap, normalize_space, version
 from utils.log import logger
 from utils.pretty import Pretty
+from wait_for import TimedOutError
 
 
 class Selector(object):
@@ -1498,6 +1499,8 @@ def _fill_form_list(form, values, action=None, action_always=False):
                 # TypeError - when loc is not resolvable to an element, elements() will yell
                 # vvv An alternate scenario when element is not resolvable, just wait a bit.
                 time.sleep(1)
+            except TimedOutError:
+                logger.warning("This element [{}] couldn't be waited for".format(loc))
             logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
