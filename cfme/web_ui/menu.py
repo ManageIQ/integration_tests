@@ -197,6 +197,7 @@ class Menu(UINavigate):
                     ('clouds_stacks', 'Stacks')
                 ),
                 ('containers', 'Containers'): (
+                    ('container_dashboard', 'Overview'),
                     ('containers_providers', 'Providers'),
                     ('containers_projects', 'Projects'),
                     ('containers_nodes', 'Container Nodes'),
@@ -297,6 +298,7 @@ class Menu(UINavigate):
                         # ('infrastructure_config_management', 'Configuration Management')
                     ),
                     ('containers', 'Containers'): (
+                        ('container_dashboard', 'Overview'),
                         ('containers_providers', 'Providers'),
                         ('containers_projects', 'Projects'),
                         ('containers_nodes', 'Container Nodes'),
