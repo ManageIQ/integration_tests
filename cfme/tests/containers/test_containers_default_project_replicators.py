@@ -28,6 +28,7 @@ REPLICATORS_RELATIONSHIPS_FIELDS = ['Containers Provider', 'Project', 'Pods', 'N
 @pytest.mark.parametrize(('prop', 'rel'), product(REPLICATORS_PROPERTIES_FIELDS,
                                                   REPLICATORS_RELATIONSHIPS_FIELDS))
 def test_replicators_properties(provider, prop, rel):
+    #meh
     """ Default Project Replicator properties test
         This test checks the properties fields of each Replicator
         Steps:
