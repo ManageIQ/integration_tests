@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb
