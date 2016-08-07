@@ -52,6 +52,7 @@ class Container(Taggable, SummaryMixin):
         return sel.click(details_page.infoblock.element(*ident))
 
     def get_detail(self, *ident):
+        # meh
         """ Gets details from the details infoblock
         Args:
             *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
