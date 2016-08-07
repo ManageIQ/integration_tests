@@ -10,7 +10,7 @@ import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from cfme.provisioning import provisioning_form as request_form
 from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill,\
-    flash, form_buttons, Input, Tree
+    flash, form_buttons, Input, Tree, AngularSelect
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
@@ -34,8 +34,12 @@ basic_info_form = Form(
         ('name_text', Input("name")),
         ('description_text', Input("description")),
         ('display_checkbox', Input("display")),
-        ('select_catalog', Select("//select[@id='catalog_id']")),
-        ('select_dialog', Select("//select[@id='dialog_id']")),
+        ('select_catalog', {
+            version.LOWEST: Select("//select[@id='catalog_id']"),
+            '5.5': AngularSelect('catalog_id')}),
+        ('select_dialog', {
+            version.LOWEST: Select("//select[@id='dialog_id']"),
+            '5.5': AngularSelect('dialog_id')}),
         ('edit_button', form_buttons.save),
         ('field_entry_point', Input("fqname")),
         ('apply_btn', {

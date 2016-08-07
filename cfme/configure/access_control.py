@@ -26,6 +26,7 @@ edit_tags_form = Form(
     ])
 
 tag_table = Table("//div[@id='assignments_div']//table")
+users_table = Table("//div[@id='records_div']//table")
 
 group_order_selector = UpDownSelect(
     "select#seq_fields",
@@ -142,7 +143,9 @@ class User(Updateable, Pretty):
             ('password_verify_txt', {version.LOWEST: Input('password2'),
                                      "5.5": Input('verify')}),
             ('email_txt', Input('email')),
-            ('user_group_select', Select("//*[@id='chosen_group']")),
+            ('user_group_select', {
+                version.LOWEST: Select("//*[@id='chosen_group']"),
+                '5.5': AngularSelect('chosen_group')}),
         ])
 
     pretty_attrs = ['name', 'group']
@@ -237,6 +240,15 @@ class User(Updateable, Pretty):
         flash.assert_success_message('Tag edits were successfully saved')
 
     @property
+    def exists(self):
+        try:
+            sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
+        except CandidateNotFound:
+            return False
+        else:
+            return True
+
+    @property
     def description(self):
         return self.credential.principal
 
@@ -244,24 +256,51 @@ class User(Updateable, Pretty):
 class Group(Updateable, Pretty):
     group_form = Form(
         fields=[
+            ('ldap_groups_for_user', Select("//*[@id='ldap_groups_user']")),
             ('description_txt', Input('description')),
+            ('lookup_ldap_groups_chk', Input('lookup')),
             ('role_select', {
                 version.LOWEST: Select("//*[@id='group_role']"),
                 "5.5": AngularSelect("group_role")}),
-            ('group_tenant', AngularSelect("group_tenant"), {"appeared_in": "5.5"})
+            ('group_tenant', AngularSelect("group_tenant"), {"appeared_in": "5.5"}),
+            ('user_to_look_up', Input('user')),
+            ('username', Input('user_id')),
+            ('password', Input('password')),
         ])
     pretty_attrs = ['description', 'role']
 
-    def __init__(self, description=None, role=None, tenant="My Company"):
+    def __init__(self, description=None, role=None, tenant="My Company",
+                 user_to_lookup=None, ldap_credentials=None):
         self.description = description
         self.role = role
         self.tenant = tenant
+        self.ldap_credentials = ldap_credentials
+        self.user_to_lookup = user_to_lookup
 
     def create(self):
         sel.force_navigate('cfg_accesscontrol_group_add')
         fill(self.group_form, {'description_txt': self.description,
                                'role_select': self.role,
                                'group_tenant': self.tenant},
+             action=form_buttons.add)
+        flash.assert_success_message('Group "{}" was saved'.format(self.description))
+
+    def retrieve_ldap_user_groups(self):
+        sel.force_navigate('cfg_accesscontrol_group_add')
+        fill(self.group_form, {'lookup_ldap_groups_chk': True,
+                               'user_to_look_up': self.user_to_lookup,
+                               'username': self.ldap_credentials.principal,
+                               'password': self.ldap_credentials.secret,
+                               },
+             action=form_buttons.retrieve)
+
+    def add_group_from_ldap_lookup(self):
+        self.retrieve_ldap_user_groups()
+        fill(self.group_form, {'ldap_groups_for_user': self.description,
+                               'description_txt': self.description,
+                               'role_select': self.role,
+                               'group_tenant': self.tenant,
+                               },
              action=form_buttons.add)
         flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
@@ -317,7 +356,9 @@ class Role(Updateable, Pretty):
     form = Form(
         fields=[
             ('name_txt', Input('name')),
-            ('vm_restriction_select', Select("//*[@id='vm_restriction']")),
+            ('vm_restriction_select', {
+                version.LOWEST: Select("//*[@id='vm_restriction']"),
+                '5.5': AngularSelect('vm_restriction')}),
             ('product_features_tree', CheckboxTree("//div[@id='features_treebox']/ul")),
         ])
     pretty_attrs = ['name', 'product_features']

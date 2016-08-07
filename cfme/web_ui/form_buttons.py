@@ -131,6 +131,7 @@ validate_short = FormButton("Validate the credentials")
 validate_multi_host = FormButton("Validate the credentials by logging into the selected Host")
 host_provision_submit = FormButton("Submit this provisioning request")
 host_provision_cancel = FormButton("Cancel this provisioning request")
+retrieve = FormButton("LDAP Group Lookup")
 
 
 _stored_pw_script = '//a[contains(@id, "change_stored_password")]'

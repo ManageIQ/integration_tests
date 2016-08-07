@@ -9,11 +9,12 @@ import pytest
 import utils.error as error
 from cfme import Credential
 from cfme.exceptions import FlashMessageException
-from cfme.cloud.provider import (discover, EC2Provider, wait_for_a_provider,
-    Provider, OpenStackProvider, prop_region)
+from cfme.cloud.provider import (discover, wait_for_a_provider,
+    Provider, prop_region)
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
 from utils import testgen, version
-from utils.providers import get_credentials_from_config
 from utils.update import update
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
@@ -64,8 +65,10 @@ def test_password_mismatch_validation():
 @pytest.mark.uncollect()
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_providers_discovery_amazon():
-    amazon_creds = get_credentials_from_config('cloudqe_amazon')
-    discover(amazon_creds, d_type="Amazon")
+    # This test was being uncollected anyway, and needs to be parametrized and not directory call
+    # out to specific credential keys
+    # amazon_creds = get_credentials_from_config('cloudqe_amazon')
+    # discover(amazon_creds, d_type="Amazon")
     flash.assert_message_match('Amazon Cloud Providers: Discovery successfully initiated')
     wait_for_a_provider()
 
@@ -78,7 +81,10 @@ def test_provider_add_with_bad_credentials(provider):
     Metadata:
         test_flag: crud
     """
-    provider.credentials['default'] = get_credentials_from_config('bad_credentials')
+    provider.credentials['default'] = provider.Credential(
+        principal='bad',
+        secret='reallybad',
+    )
     with error.expected('Login failed due to a bad username or password.'):
         provider.create(validate_credentials=True)
 

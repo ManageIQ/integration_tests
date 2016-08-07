@@ -43,7 +43,7 @@ def add_nav_branches():
         'tasks': lambda _: click_top_right('Tasks'),
         'configuration': lambda _: click_top_right('Configuration'),
         'about': lambda _: click_top_right('About')
-    })
+    }, add_to_stack=False)
 
 
 def reset_widgets(cancel=False):

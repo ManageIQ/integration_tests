@@ -62,14 +62,14 @@
             <li id="appliances">
               <a href="{% url 'my_appliances' %}">My Appliances</a>
             </li>
-            <li id="vms">
-              <a href="{% url 'vms_default' %}">VM Manager</a>
-            </li>
             <li id="shepherd">
               <a href="{% url 'shepherd' %}">Free appliance shepherd</a>
             </li>
         {% endif %}
         {% if user.is_staff or user.is_superuser %}
+            <li id="vms">
+              <a href="{% url 'vms_default' %}">VM Manager</a>
+            </li>
             <li id="admin">
               <a href="{% url 'admin:index' %}">Admin page</a>
             </li>
@@ -95,7 +95,7 @@
                     <a href="{% url 'password_change' %}?next={{request.path}}" title="Change password" style="color: #333;">Change password</a>
                 </li>
                 <li>
-                    <a href="{% url 'logout' request.path%}" title="Logout" style="color: #333;">Logout{% if user.first_name %}, {{ user.first_name }}{% endif %}</a>
+                    <a href="{% url 'logout' %}" title="Logout" style="color: #333;">Logout{% if user.first_name %}, {{ user.first_name }}{% endif %}</a>
                 </li>
             {% else %}
                 <li>
@@ -110,12 +110,14 @@
   <div id="alerts">
     {% if messages %}
         {% for message in messages %}
-            <div class='alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade in'>
+            <div class='alert {% if message.tags %}alert-{{ message.tags|alert_type }}{% endif %} alert-dismissible fade in'>
                 <button class="close" data-dismiss="alert">×</button>
                 {{ message }}
                 {% if "success" in message.tags %}
                     <span class="pficon pficon-ok"></span>
-                {% elif "warning" in message.tags %}
+                {% elif "info" in message.tags %}
+                    <span class="pficon pficon-info"></span>
+                {% elif "warning" in message.tags or "error" in message.tags %}
                     <span class="pficon-layered">
                       <span class="pficon pficon-warning-triangle"></span>
                       <span class="pficon pficon-warning-exclamation"></span>

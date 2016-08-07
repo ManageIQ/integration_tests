@@ -10,6 +10,10 @@ from utils.log import logger
 from utils.wait import wait_for
 from cfme.services import requests
 
+pytestmark = [
+    pytest.mark.ignore_stream("5.5"),
+    pytest.mark.tier(2)]
+
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
@@ -33,7 +37,7 @@ def config_manager(config_manager_obj):
     """ Fixture that provides a random config manager and sets it up"""
     set_default_view("Configuration Management Providers", "Grid View")
     if config_manager_obj.type == "Ansible Tower":
-        config_manager_obj.create(validate=False)
+        config_manager_obj.create(validate=True)
     else:
         config_manager_obj.create()
     yield config_manager_obj

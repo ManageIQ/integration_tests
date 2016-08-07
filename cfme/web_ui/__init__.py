@@ -32,6 +32,7 @@
   * :py:class:`ShowingInputs`
   * :py:class:`SplitCheckboxTable`
   * :py:class:`SplitTable`
+  * :py:class:`StatusBox`
   * :py:class:`Table`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
@@ -53,6 +54,7 @@
 import atexit
 import os
 import re
+import time
 import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
@@ -73,6 +75,7 @@ from cfme.fixtures.pytest_selenium import Select
 from utils import attributize_string, castmap, normalize_space, version
 from utils.log import logger
 from utils.pretty import Pretty
+from wait_for import TimedOutError
 
 
 class Selector(object):
@@ -1424,11 +1427,16 @@ class Form(Region):
     def __init__(self, fields=None, identifying_loc=None):
         self.metadata = {}
         self.locators = {}
+        fields_seen = set()
         for field in fields:
             try:
+                if field[0] in fields_seen:
+                    raise ValueError('You cannot have duplicate field names in a Form ({})'.format(
+                        field[0]))
                 self.locators[field[0]] = field[1]
                 if len(field) == 3:
                     self.metadata[field[0]] = field[2]
+                fields_seen.add(field[0])
             except IndexError:
                 raise ValueError("fields= can be 2- or 3-tuples only! (name, loc[, metadata])")
 
@@ -1485,6 +1493,14 @@ def _fill_form_list(form, values, action=None, action_always=False):
     for field, value in values:
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
+            try:
+                sel.wait_for_element(loc)
+            except TypeError:
+                # TypeError - when loc is not resolvable to an element, elements() will yell
+                # vvv An alternate scenario when element is not resolvable, just wait a bit.
+                time.sleep(1)
+            except TimedOutError:
+                logger.warning("This element [{}] couldn't be waited for".format(loc))
             logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
@@ -2322,7 +2338,11 @@ class Quadicon(Pretty):
 
     @property
     def a_cond(self):
-        return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
+        if self.qtype == "middleware":
+            return "contains(normalize-space(@title), {name})"\
+                .format(name=quoteattr('Name: {}'.format(self._name)))
+        else:
+            return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
@@ -3234,16 +3254,19 @@ fill.prefer((DHTMLSelect, types.NoneType), (object, types.NoneType))
 fill.prefer((object, types.NoneType), (Select, object))
 
 
-class AngularSelect(object):
+class AngularSelect(Pretty):
     BUTTON = "//button[@data-id='{}']"
 
-    def __init__(self, loc, none=None, multi=False):
+    pretty_attrs = ['_loc', 'none', 'multi', 'exact']
+
+    def __init__(self, loc, none=None, multi=False, exact=False):
         self.none = none
         if isinstance(loc, AngularSelect):
             self._loc = loc._loc
         else:
             self._loc = self.BUTTON.format(loc)
         self.multi = multi
+        self.exact = exact
 
     def locate(self):
         return sel.move_to_element(self._loc)
@@ -3271,7 +3294,11 @@ class AngularSelect(object):
     def select_by_visible_text(self, text):
         if not self.is_open:
             self.open()
-        new_loc = self._loc + '/../div/ul/li/a[contains(., "{}")]'.format(text)
+        if self.exact:
+            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(quoteattr(text))
+        else:
+            new_loc = self._loc + '/../div/ul/li/a[contains(normalize-space(.), {})]'.format(
+                quoteattr(text))
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)
@@ -3598,3 +3625,23 @@ def summary_title():
         return sel.text_sane(SUMMARY_TITLE_LOCATORS)
     except sel.NoSuchElementException:
         return None
+
+
+class StatusBox(object):
+    """ Status box as seen in containers overview page
+
+    Status box modelling.
+
+    Args:
+        name: The name of the status box as it appears in CFME, e.g. 'Nodes'
+
+    Returns: A StatusBox instance.
+
+    """
+    def __init__(self, name):
+        self.name = name
+
+    def value(self):
+        return sel.element(
+            '//span[contains(@class, "card-pf-aggregate-status-count")]'
+            '/../../span[contains(., "{}")]/span'.format(self.name)).text

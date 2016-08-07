@@ -467,15 +467,31 @@ def _fill_ms_str(ms, s):
 
 class Timer(object):
     form = Form(fields=[
-        ("run", Select("//select[@id='timer_typ']")),
-        ("hours", Select("//select[@id='timer_hours']")),
-        ("days", Select("//select[@id='timer_days']")),
-        ("weeks", Select("//select[@id='timer_weeks']")),
-        ("months", Select("//select[@id='timer_months']")),
-        ("time_zone", Select("//select[@id='time_zone']")),
+        ("run", {
+            version.LOWEST: Select("//select[@id='timer_typ']"),
+            '5.5': AngularSelect('timer_typ')}),
+        ("hours", {
+            version.LOWEST: Select("//select[@id='timer_hours']"),
+            '5.5': AngularSelect('timer_hours')}),
+        ("days", {
+            version.LOWEST: Select("//select[@id='timer_days']"),
+            '5.5': AngularSelect('timer_days')}),
+        ("weeks", {
+            version.LOWEST: Select("//select[@id='timer_weeks']"),
+            '5.5': AngularSelect('timer_weeks')}),
+        ("months", {
+            version.LOWEST: Select("//select[@id='timer_months']"),
+            '5.5': AngularSelect('timer_months')}),
+        ("time_zone", {
+            version.LOWEST: Select("//select[@id='time_zone']"),
+            '5.5': AngularSelect('time_zone')}),
         ("start_date", Calendar("miq_date_1")),
-        ("start_hour", Select("//select[@id='start_hour']")),
-        ("start_min", Select("//select[@id='start_min']")),
+        ("start_hour", {
+            version.LOWEST: Select("//select[@id='start_hour']"),
+            '5.5': AngularSelect('start_hour')}),
+        ("start_min", {
+            version.LOWEST: Select("//select[@id='start_min']"),
+            '5.5': AngularSelect('start_min')}),
     ])
 
 

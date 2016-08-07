@@ -3,7 +3,7 @@ RUN dnf install -y gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-deve
 RUN git clone https://github.com/RedHatQE/cfme_tests.git
 RUN dnf -y install python-setuptools; easy_install pip
 RUN pip install -U pip
-RUN PYCURL_SSL_LIBRARY=nss pip install -U -r /cfme_tests/requirements.txt --no-cache-dir
+RUN cd /cfme_tests && PYCURL_SSL_LIBRARY=nss pip install -U -r /cfme_tests/requirements.txt --no-cache-dir
 ADD setup.sh /setup.sh
 ADD post_result.py /post_result.py
 ADD get_keys.py /get_keys.py

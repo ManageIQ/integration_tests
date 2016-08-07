@@ -5,11 +5,11 @@ from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
-from mgmtsystem.hawkular import Path
+from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key
-from utils.providers import list_middleware_providers
+from utils.providers import list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
 
@@ -18,13 +18,20 @@ list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 def _db_select_query(name=None, nativeid=None, server=None, provider=None):
     """Column order: `id`, `nativeid`, `name`, `properties`, `server_name`,
-    `feed`, `provider_name`, `ems_ref`"""
+    `feed`, `provider_name`, `ems_ref`, `hostname`"""
     t_ms = cfmedb()['middleware_servers']
     t_mds = cfmedb()['middleware_datasources']
     t_ems = cfmedb()['ext_management_systems']
-    query = cfmedb().session.query(t_mds.id, t_mds.nativeid, t_mds.name, t_mds.properties,
-                                   t_ms.name.label('server_name'), t_ms.feed,
-                                   t_ems.name.label('provider_name'), t_mds.ems_ref)\
+    query = cfmedb().session.query(
+        t_mds.id,
+        t_mds.nativeid,
+        t_mds.name,
+        t_mds.properties,
+        t_ms.name.label('server_name'),
+        t_ms.feed,
+        t_ems.name.label('provider_name'),
+        t_ms.hostname,
+        t_mds.ems_ref)\
         .join(t_ms, t_mds.server_id == t_ms.id).join(t_ems, t_mds.ems_id == t_ems.id)
     if name:
         query = query.filter(t_mds.name == name)
@@ -100,6 +107,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         self.provider = provider
         self.server = server
         self.nativeid = kwargs['nativeid'] if 'nativeid' in kwargs else None
+        self.hostname = kwargs['hostname'] if 'hostname' in kwargs else None
         if 'properties' in kwargs:
             for property in kwargs['properties']:
                 setattr(self, attributize_string(property), kwargs['properties'][property])
@@ -113,8 +121,11 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     _server = MiddlewareServer(provider=provider, name=row.server.text)
-                    datasources.append(MiddlewareDatasource(provider=provider, server=_server,
-                                                            name=row.datasource_name.text))
+                    datasources.append(MiddlewareDatasource(
+                        provider=provider,
+                        server=_server,
+                        name=row.datasource_name.text,
+                        hostname=row.host_name.text))
         return datasources
 
     @classmethod
@@ -125,12 +136,18 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         for datasource in rows:
             if strict:
                 _provider = get_crud(get_provider_key(datasource.provider_name))
-            _server = MiddlewareServer(name=datasource.server_name, feed=datasource.feed,
-                                       provider=provider)
-            datasources.append(MiddlewareDatasource(nativeid=datasource.nativeid,
-                                            name=datasource.name, db_id=datasource.id,
-                                            server=_server, provider=_provider,
-                                            properties=parse_properties(datasource.properties)))
+            _server = MiddlewareServer(
+                name=datasource.server_name,
+                feed=datasource.feed,
+                provider=provider)
+            datasources.append(MiddlewareDatasource(
+                nativeid=datasource.nativeid,
+                name=datasource.name,
+                db_id=datasource.id,
+                server=_server,
+                provider=_provider,
+                hostname=datasource.hostname,
+                properties=parse_properties(datasource.properties)))
         return datasources
 
     @classmethod
@@ -138,8 +155,8 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         datasources = []
         rows = provider.mgmt.list_server_datasource()
         for datasource in rows:
-            _server = MiddlewareServer(name=re.sub(r'~~$', '', datasource.path.resource[0]),
-                                       feed=datasource.path.feed,
+            _server = MiddlewareServer(name=re.sub(r'~~$', '', datasource.path.resource_id[0]),
+                                       feed=datasource.path.feed_id,
                                        provider=provider)
             _include = False
             if server:
@@ -158,7 +175,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
     def datasources_in_mgmt(cls, provider=None, server=None):
         if provider is None:
             datasources = []
-            for _provider in list_middleware_providers():
+            for _provider in list_providers('hawkular'):
                 datasources.extend(cls._datasources_in_mgmt(get_crud(_provider), server))
             return datasources
         else:
@@ -167,14 +184,22 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
     def _on_detail_page(self):
         """Override existing `_on_detail_page` and return `False` always.
         There is no uniqueness on summary page of this resource.
-        Refer: https://github.com/ManageIQ/manageiq/issues/9046
+        Refer: https://github.com/ManageIQ/manageiq/issues/10189
         """
         return False
 
+    def _listed_on_page(self):
+        """Check weather Datasource is listed in opened page.
+        """
+        return sel.is_displayed(list_tbl) and list_tbl.find_row_by_cells(
+            {'Datasource Name': self.name, 'Server': self.server.name, 'Host Name': self.hostname})
+
     def load_details(self, refresh=False):
         if not self._on_detail_page():
-            _get_datasources_page(provider=self.provider, server=self.server)
-            list_tbl.click_row_by_cells({'Datasource Name': self.name, 'Server': self.server.name})
+            if not self._listed_on_page():
+                _get_datasources_page(provider=self.provider, server=self.server)
+            list_tbl.click_row_by_cells({'Datasource Name': self.name, 'Server': self.server.name,
+                                        'Host Name': self.hostname})
         if not self.db_id or refresh:
             tmp_dsource = self.datasource(method='db')
             self.db_id = tmp_dsource.db_id
@@ -185,8 +210,9 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
     def datasource(self):
         self.summary.reload()
         self.id = self.summary.properties.nativeid.text_value
-        self.server = MiddlewareServer(provider=self.provider,
-                                       name=self.summary.relationships.middleware_server.text_value)
+        self.server = MiddlewareServer(
+            provider=self.provider,
+            name=self.summary.relationships.middleware_server.text_value)
         return self
 
     @datasource.variant('mgmt')
@@ -194,13 +220,17 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         db_ds = _db_select_query(name=self.name, server=self.server,
                                  nativeid=self.nativeid).first()
         if db_ds:
-            path = Path(db_ds.ems_ref)
-            mgmt_ds = self.provider.mgmt.resource_data(feed_id=path.feed,
-                        resource_id="{}/{}".format(path.resource[0], path.resource[1]))
+            path = CanonicalPath(db_ds.ems_ref)
+            mgmt_ds = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
+                        resource_id="{}/r;{}".format(path.resource_id[0], path.resource_id[1]))
             if mgmt_ds:
-                ds = MiddlewareDatasource(server=self.server, provider=self.provider,
-                                          name=db_ds.name, nativeid=db_ds.nativeid,
-                                          properties=mgmt_ds.value)
+                ds = MiddlewareDatasource(
+                    server=self.server,
+                    provider=self.provider,
+                    name=db_ds.name,
+                    hostname=db_ds.hostname,
+                    nativeid=db_ds.nativeid,
+                    properties=mgmt_ds.value)
                 return ds
         return None
 
@@ -210,9 +240,14 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
                                       nativeid=self.nativeid).first()
         if datasource:
             _server = MiddlewareServer(name=datasource.server_name, provider=self.provider)
-            return MiddlewareDatasource(provider=self.provider, server=_server, db_id=datasource.id,
-                                    nativeid=datasource.nativeid, name=datasource.name,
-                                    properties=parse_properties(datasource.properties))
+            return MiddlewareDatasource(
+                provider=self.provider,
+                server=_server,
+                db_id=datasource.id,
+                nativeid=datasource.nativeid,
+                name=datasource.name,
+                hostname=datasource.hostname,
+                properties=parse_properties(datasource.properties))
         return None
 
     @datasource.variant('rest')
