@@ -54,6 +54,7 @@ def test_containers_projects_summary_properties(provider, projects_properties_fi
             * Go through each Container Project in the menu and check validity of Properties fields
         """
     sel.force_navigate('containers_projects')
+    # meh
     project_name = [r.name.text for r in list_tbl.rows()]
     for name in project_name:
         obj = Project(name, provider)
