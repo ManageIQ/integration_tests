@@ -1,5 +1,4 @@
 import pytest
-from itertools import product
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from utils import testgen
