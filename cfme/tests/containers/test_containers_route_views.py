@@ -56,5 +56,3 @@ def test_containers_providers_views():
     for view in views:
         tb.select(view)
         assert tb.is_active(view), "{}' setting failed".format(view)
-
-
