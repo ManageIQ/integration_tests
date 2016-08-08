@@ -5,7 +5,7 @@ from cfme import web_ui as ui
 from cfme.exceptions import TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
-from cfme.web_ui import AngularSelect,fill, flash, form_buttons, tabstrip, toolbar
+from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip, toolbar
 from cfme.web_ui.menu import nav
 from utils import version
 from utils.log import logger
@@ -103,7 +103,7 @@ provisioning_form = tabstrip.TabStripForm(
             # Cloud
             ('availability_zone', {
                 version.LOWEST: ui.Select('select#environment__placement_availability_zone'),
-                '5.5':AngularSelect('environment__placement_availability_zone')}),
+                '5.5': AngularSelect('environment__placement_availability_zone')}),
             ('virtual_private_cloud', {
                 version.LOWEST: ui.Select('select#environment__cloud_network'),
                 '5.5': AngularSelect('environment__cloud_network')}),
