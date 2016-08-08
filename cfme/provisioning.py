@@ -5,7 +5,7 @@ from cfme import web_ui as ui
 from cfme.exceptions import TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
-from cfme.web_ui import fill, flash, form_buttons, tabstrip, toolbar
+from cfme.web_ui import AngularSelect,fill, flash, form_buttons, tabstrip, toolbar
 from cfme.web_ui.menu import nav
 from utils import version
 from utils.log import logger
@@ -70,19 +70,29 @@ provisioning_form = tabstrip.TabStripForm(
 
         ('Catalog', [
             # Cloud
-            ('num_instances', ui.Select('select#service__number_of_vms')),
+            ('num_instances', {
+                version.LOWEST: ui.Select('select#service__number_of_vms'),
+                '5.5': AngularSelect('service__number_of_vms')}),
             ('instance_name', '//input[@name="service__vm_name"]'),
             ('instance_description', ui.Input('service__vm_description')),
 
             # Infra
-            ('vm_filter', ui.Select('select#service__vm_filter#')),
-            ('num_vms', ui.Select('select#service__number_of_vms')),
+            ('vm_filter', {
+                version.LOWEST: ui.Select('select#service__vm_filter'),
+                '5.5': AngularSelect('service__vm_filter')}),
+            ('num_vms', {
+                version.LOWEST: ui.Select('select#service__number_of_vms'),
+                '5.5': AngularSelect('service__number_of_vms')}),
             ('vm_name', '//input[@name="service__vm_name"]'),
             ('vm_description', ui.Input('service__vm_description')),
             ('catalog_name', ui.Table('//div[@id="prov_vm_div"]/table')),
-            ('provision_type', ui.Select('select#service__provision_type')),
+            ('provision_type', {
+                version.LOWEST: ui.Select('select#service__provision_type'),
+                '5.5': AngularSelect('service__provision_type')}),
             ('linked_clone', ui.Input('service__linked_clone')),
-            ('pxe_server', ui.Select('select#service__pxe_server_id')),
+            ('pxe_server', {
+                version.LOWEST: ui.Select('select#service__pxe_server_id'),
+                '5.5': AngularSelect('service__pxe_server_id')}),
             ('pxe_image', ui.Table('//div[@id="prov_pxe_img_div"]/table')),
             ('iso_file', ui.Table('//div[@id="prov_iso_img_div"]/table'))
         ]),
@@ -91,29 +101,62 @@ provisioning_form = tabstrip.TabStripForm(
             ('automatic_placement', ui.Input('environment__placement_auto')),
 
             # Cloud
-            ('availability_zone', ui.Select('select#environment__placement_availability_zone')),
-            ('virtual_private_cloud', ui.Select('select#environment__cloud_network')),
-            ('cloud_subnet', ui.Select('select#environment__cloud_subnet')),
-            ('cloud_network', ui.Select('select#environment__cloud_network')),
-            ('security_groups', select_security_group),
-            ('public_ip_address', ui.Select('select#environment__floating_ip_address')),
+            ('availability_zone', {
+                version.LOWEST: ui.Select('select#environment__placement_availability_zone'),
+                '5.5':AngularSelect('environment__placement_availability_zone')}),
+            ('virtual_private_cloud', {
+                version.LOWEST: ui.Select('select#environment__cloud_network'),
+                '5.5': AngularSelect('environment__cloud_network')}),
+            ('cloud_subnet', {
+                version.LOWEST: ui.Select('select#environment__cloud_subnet'),
+                '5.5': AngularSelect('environment__cloud_subnet')}),
+            ('cloud_network', {
+                version.LOWEST: ui.Select('select#environment__cloud_network'),
+                '5.5': AngularSelect('environment__cloud_network')}),
+            ('security_groups', {
+                version.LOWEST: ui.Select('select#environment__security_groups'),
+                '5.5': AngularSelect('environment__security_groups')}),
+            ('public_ip_address', {
+                version.LOWEST: ui.Select('select#environment__floating_ip_address'),
+                '5.5': AngularSelect('environment__floating_ip_address')}),
+
 
             # Infra
-            ('provider_name', ui.Select('select#environment__placement_ems_name')),
-            ('datacenter', ui.Select('select#environment__placement_dc_name')),
-            ('cluster', ui.Select('select#environment__placement_cluster_name')),
-            ('resource_pool', ui.Select('select#environment__placement_rp_name')),
-            ('folder', ui.Select('select#environment__placement_folder_name')),
-            ('host_filter', ui.Select('select#environment__host_filter')),
+            ('provider_name', {
+                version.LOWEST: ui.Select('select#environment__placement_ems_name'),
+                '5.5': AngularSelect('environment__placement_ems_name')}),
+            ('datacenter', {
+                version.LOWEST: ui.Select('select#environment__placement_dc_name'),
+                '5.5': AngularSelect('environment__placement_dc_name')}),
+            ('cluster', {
+                version.LOWEST: ui.Select('select#environment__placement_cluster_name'),
+                '5.5': AngularSelect('environment__placement_cluster_name')}),
+            ('resource_pool', {
+                version.LOWEST: ui.Select('select#environment__placement_rp_name'),
+                '5.5': AngularSelect('environment__placement_rp_name')}),
+            ('folder', {
+                version.LOWEST: ui.Select('select#environment__placement_folder_name'),
+                '5.5': AngularSelect('environment__placement_folder_name')}),
+            ('host_filter', {
+                version.LOWEST: ui.Select('select#environment__host_filter'),
+                '5.5': AngularSelect('environment__host_filter')}),
             ('host_name', ui.Table('//div[@id="prov_host_div"]/table')),
             ('datastore_create', '#environment__new_datastore_create'),
-            ('datastore_filter', ui.Select('select#environment__ds_filter')),
+            ('datastore_filter', {
+                version.LOWEST: ui.Select('select#environment__ds_filter'),
+                '5.5': AngularSelect('environment__ds_filter')}),
             ('datastore_name', ui.Table('//div[@id="prov_ds_div"]/table')),
         ]),
         ('Hardware', [
-            ('num_sockets', ui.Select('select#hardware__number_of_sockets')),
-            ('cores_per_socket', ui.Select('select#hardware__cores_per_socket')),
-            ('memory', ui.Select('select#hardware__vm_memory')),
+            ('num_sockets', {
+                version.LOWEST: ui.Select('select#hardware__number_of_sockets'),
+                '5.5': AngularSelect('environment__ds_filter')}),
+            ('cores_per_socket', {
+                version.LOWEST: ui.Select('select#hardware__cores_per_socket'),
+                '5.5': AngularSelect('hardware__cores_per_socket')}),
+            ('memory', {
+                version.LOWEST: ui.Select('select#hardware__vm_memory'),
+                '5.5': AngularSelect('hardware__vm_memory')}),
             ('disk_format', ui.Radio('hardware__disk_format')),
             ('vm_limit_cpu', ui.Input('hardware__cpu_limit')),
             ('vm_limit_memory', ui.Input('hardware__memory_limit')),
@@ -123,16 +166,26 @@ provisioning_form = tabstrip.TabStripForm(
 
         # Infra
         ('Network', [
-            ('vlan', ui.Select('select#network__vlan')),
+            ('vlan', {
+                version.LOWEST: ui.Select('select#network__vlan'),
+                '5.5': AngularSelect('network__vlan')}),
         ]),
 
         # Cloud
         ('Properties', [
-            ('instance_type', ui.Select('select#hardware__instance_type')),
-            ('guest_keypair', ui.Select('select#hardware__guest_access_key_pair',
+            ('instance_type', {
+                version.LOWEST: ui.Select('select#hardware__instance_type'),
+                '5.5': AngularSelect('hardware__instance_type')}),
+            ('guest_keypair', {
+                version.LOWEST: ui.Select('select#hardware__guest_access_key_pair',
                 none={'5.4': "<None>",
-                      version.LOWEST: "<No Choices Available>"})),
-            ('hardware_monitoring', ui.Select('select#hardware__monitoring')),
+                      version.LOWEST: "<No Choices Available>"}),
+                '5.5': AngularSelect('hardware__guest_access_key_pair',
+                none={'5.4': "<None>",
+                      version.LOWEST: "<No Choices Available>"})}),
+            ('hardware_monitoring', {
+                version.LOWEST: ui.Select('select#hardware__monitoring'),
+                '5.5': AngularSelect('hardware__monitoring')}),
         ]),
 
         ('Customize', [
@@ -141,13 +194,17 @@ provisioning_form = tabstrip.TabStripForm(
             ('dns_suffixes', ui.Input('customize__dns_suffixes')),
 
             # Cloud
-            ('specification', ui.Select('select#customize__sysprep_enabled')),
+            ('specification', {
+                version.LOWEST: ui.Select('select#customize__sysprep_enabled'),
+                '5.5': AngularSelect('customize__sysprep_enabled')}),
             ('specification_name', ui.Table('//div[@id="prov_vc_div"]/table')),
             ('computer_name', ui.Input('customize__linux_host_name')),
             ('domain_name', ui.Input('customize__linux_domain_name')),
 
             # Infra
-            ('customize_type', ui.Select('select#customize__sysprep_enabled')),
+            ('customize_type', {
+                version.LOWEST: ui.Select('select#customize__sysprep_enabled'),
+                '5.5': AngularSelect('customize__sysprep_enabled')}),
             ('specification_name', ui.Table('//div[@id="prov_vc_div"]/table')),
             ('linux_host_name', ui.Input('customize__linux_host_name')),
             ('linux_domain_name', ui.Input('customize__linux_domain_name')),
@@ -163,11 +220,19 @@ provisioning_form = tabstrip.TabStripForm(
             # Common
             ('schedule_type', ui.Radio('schedule__schedule_type')),
             ('provision_date', ui.Calendar('miq_date_1')),
-            ('provision_start_hour', ui.Select('select#start_hour')),
-            ('provision_start_min', ui.Select('select#start_min')),
+            ('provision_start_hour', {
+                version.LOWEST: ui.Select('select#start_hour'),
+                '5.5': AngularSelect('start_hour')}),
+            ('provision_start_min', {
+                version.LOWEST: ui.Select('select#start_min'),
+                '5.5': AngularSelect('start_min')}),
             ('power_on', ui.Input('schedule__vm_auto_start')),
-            ('retirement', ui.Select('select#schedule__retirement')),
-            ('retirement_warning', ui.Select('select#schedule__retirement_warn')),
+            ('retirement', {
+                version.LOWEST: ui.Select('select#schedule__retirement'),
+                '5.5': AngularSelect('schedule__retirement')}),
+            ('retirement_warning', {
+                version.LOWEST: ui.Select('select#schedule__retirement_warn'),
+                '5.5': AngularSelect('schedule__retirement_warn')}),
 
             # Infra
             ('stateless', ui.Input('schedule__stateless')),
