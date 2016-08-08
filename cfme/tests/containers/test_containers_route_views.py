@@ -14,46 +14,47 @@ pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope='function')
 
 
-VIEWS = ['Grid View', 'Tile View', 'List View']
+views = ['Grid View', 'Tile View', 'List View']
 
 
 # CMP-9873 # CMP-9874 # CMP-9875
 
 
-@pytest.mark.parametrize('view', product(VIEWS))
-def test_containers_routes_views(view):
+def test_containers_routes_views():
     """
     Click on top right "grid view", "tile view", "list view" icon.
     Verify routes appear in a proper view
     """
     sel.force_navigate('containers_routes')
-    tb.select(''.join(view))
-    assert tb.is_active(''.join(view)), "{}' setting failed".format(''.join(view))
+    for view in views:
+        tb.select(view)
+        assert tb.is_active(view), "{}' setting failed".format(view)
 
 
 # CMP-9866,# CMP-9865
 
 
-@pytest.mark.parametrize('view', product(VIEWS))
-def test_containers_projects_views(view):
+def test_containers_projects_views():
     """
     Click on top right "grid view", "tile view", "list view" icon.
     Verify routes appear in a proper view
     """
     sel.force_navigate('containers_projects')
-    tb.select(''.join(view))
-    assert tb.is_active(''.join(view)), "{}' setting failed".format(''.join(view))
+    for view in views:
+        tb.select(view)
+        assert tb.is_active(view), "{}' setting failed".format(view)
 
 
 # CMP-9859, # CMP-9858, # CMP-9857
 
 
-@pytest.mark.parametrize('view', product(VIEWS))
-def test_containers_providers_views(view):
+def test_containers_providers_views():
     """
     Click on top right "grid view", "tile view", "list view" icon.
     Verify routes appear in a proper view
     """
     sel.force_navigate('containers_providers')
-    tb.select(''.join(view))
-    assert tb.is_active(''.join(view)), "{}' setting failed".format(''.join(view))
+    for view in views:
+        tb.select(view)
+        assert tb.is_active(view), "{}' setting failed".format(view)
+
