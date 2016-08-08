@@ -17,7 +17,7 @@ from threading import Lock, Thread
 from utils import net, ports
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.providers import list_providers
+from utils.providers import cleanup_old_templates, list_providers
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -180,7 +180,7 @@ def make_kwargs_rhos(cfme_data, provider):
 
 
 def upload_template(rhosip, sshname, sshpass, username, password, auth_url, provider, image_url,
-                    template_name, provider_data):
+                    template_name, provider_data, delete_templates):
     try:
         print("RHOS:{} Starting template {} upload...".format(provider, template_name))
 
@@ -220,6 +220,8 @@ def upload_template(rhosip, sshname, sshpass, username, password, auth_url, prov
         print("RHOS:{} Error occurred in upload_qc2_file".format(provider, template_name))
         return False
     finally:
+        print("RHOS:{} Deleting old templates".format(provider))
+        cleanup_old_templates(provider, delete_templates)
         print("RHOS:{} End template {} upload...".format(provider, template_name))
 
 
@@ -257,7 +259,7 @@ def run(**kwargs):
         thread = Thread(target=upload_template,
                         args=(rhosip, sshname, sshpass, username, password, auth_url, provider,
                               kwargs.get('image_url'), kwargs.get('template_name'),
-                              kwargs['provider_data']))
+                              kwargs['provider_data'], kwargs.get('delete_templates', [])))
         thread.daemon = True
         thread_queue.append(thread)
         thread.start()

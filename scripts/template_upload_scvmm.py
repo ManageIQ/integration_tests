@@ -13,7 +13,7 @@ import argparse
 import sys
 import os
 
-from utils.providers import list_providers
+from utils.providers import list_providers, cleanup_old_templates
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.wait import wait_for
@@ -139,6 +139,7 @@ def run(**kwargs):
 
     for provider in list_providers("scvmm"):
 
+        delete_old_templates = kwargs.get('delete_templates', [])
         kwargs = make_kwargs_scvmm(cfme_data, provider,
                                    kwargs.get('image_url'), kwargs.get('template_name'))
         check_kwargs(**kwargs)
@@ -218,6 +219,7 @@ def run(**kwargs):
                     provider, new_template_name))
         else:
             print("SCVMM: A Template with that name already exists in the SCVMMLibrary")
+        cleanup_old_templates(provider, delete_old_templates)
 
 if __name__ == "__main__":
     print("Start SCVMM Template upload")
