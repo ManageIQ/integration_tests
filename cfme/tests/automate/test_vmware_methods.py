@@ -7,15 +7,13 @@ from textwrap import dedent
 
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.automate.explorer import Namespace, Class, Instance, Domain, Method
-from cfme.automate.service_dialogs import ServiceDialog
 from cfme.common.vm import VM
-from cfme.web_ui import fill, flash, form_buttons, toolbar, Input
+from cfme.web_ui import flash, toolbar
 from utils import testgen
 from utils.blockers import BZ
 from utils.log import logger
 from utils.wait import wait_for
 
-submit = form_buttons.FormButton("Submit")
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("upstream"),
@@ -83,23 +81,20 @@ def test_vmware_vimapi_hotadd_disk(
 
     Steps:
         * It creates an instance in ``System/Request`` that can be accessible from eg. a button.
-        * Then it creates a service dialog that contains a field with the desired disk size, the
-            text field name should be ``size``
         * Then it creates a button, that refers to the ``VMware_HotAdd_Disk`` in ``Request``. The
             button shall belong in the VM and instance button group.
-        * After the button is created, it goes to a VM's summary page, clicks the button, enters
-            the size of the disk and submits the dialog.
-        * The test waits until the number of disks is raised.
+        * After the button is created, it goes to a VM's summary page, clicks the button.
+        * The test waits until the capacity of disks is raised.
 
     Metadata:
         test_flag: hotdisk, provision
     """
     meth = Method(
-        name='parse_dialog_value_{}'.format(fauxfactory.gen_alpha()),
+        name='load_value_{}'.format(fauxfactory.gen_alpha()),
         data=dedent('''\
-            # Transfers the dialog value to the root so the VMware method can use it.
+            # Sets the capacity of the new disk.
 
-            $evm.root['size'] = $evm.object['dialog_size']
+            $evm.root['size'] = 1  # GB
             exit MIQ_OK
             '''),
         cls=cls)
@@ -115,7 +110,7 @@ def test_vmware_vimapi_hotadd_disk(
     instance = Instance(
         name="VMware_HotAdd_Disk_{}".format(fauxfactory.gen_alpha()),
         values={
-            "meth4": {'on_entry': meth.name},  # To preparse the value
+            "meth4": meth.name,  # To get the value
             "rel5": "/Integration/VMware/VimApi/VMware_HotAdd_Disk",
         },
         cls=cls
@@ -126,45 +121,25 @@ def test_vmware_vimapi_hotadd_disk(
         if instance.exists():
             instance.delete()
     instance.create()
-    # Dialog to put the disk capacity
-    element_data = {
-        'ele_label': "Disk size",
-        'ele_name': "size",
-        'ele_desc': "Disk size",
-        'choose_type': "Text Box",
-        'default_text_box': "Default text"
-    }
-    dialog = ServiceDialog(
-        label=fauxfactory.gen_alphanumeric(),
-        description=fauxfactory.gen_alphanumeric(),
-        submit=True,
-        tab_label=fauxfactory.gen_alphanumeric(),
-        tab_desc=fauxfactory.gen_alphanumeric(),
-        box_label=fauxfactory.gen_alphanumeric(),
-        box_desc=fauxfactory.gen_alphanumeric(),
-    )
-    dialog.create(element_data)
-    request.addfinalizer(dialog.delete)
+
     # Button that will invoke the dialog and action
     button_name = fauxfactory.gen_alphanumeric()
     button = Button(group=testing_group,
                     text=button_name,
-                    hover=button_name,
-                    dialog=dialog, system="Request", request=instance.name)
+                    hover=button_name, system="Request", request=instance.name)
     request.addfinalizer(button.delete_if_exists)
     button.create()
 
-    def _get_disk_count():
-        return int(testing_vm.get_detail(
-            properties=("Datastore Allocation Summary", "Number of Disks")).strip())
-    original_disk_count = _get_disk_count()
-    logger.info('Initial disk count: %s', original_disk_count)
+    def _get_disk_capacity():
+        testing_vm.summary.reload()
+        return testing_vm.summary.datastore_allocation_summary.total_allocation.value
+
+    original_disk_capacity = _get_disk_capacity()
+    logger.info('Initial disk allocation: %s', original_disk_capacity)
     toolbar.select(testing_group.text, button.text)
-    fill(Input("size"), '1')
-    pytest.sel.click(submit)
     flash.assert_no_errors()
     try:
         wait_for(
-            lambda: original_disk_count + 1 == _get_disk_count(), num_sec=180, delay=5)
+            lambda: _get_disk_capacity() > original_disk_capacity, num_sec=180, delay=5)
     finally:
-        logger.info('End disk count: %s', _get_disk_count())
+        logger.info('End disk capacity: %s', _get_disk_capacity())
