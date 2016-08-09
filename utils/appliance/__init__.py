@@ -1549,14 +1549,24 @@ class IPAppliance(object):
     def get_yaml_config(self, config_name):
         if self.version >= '5.6':
             if config_name == 'vmdb':
-                base_data = store.current_appliance.ssh_client.run_rails_command(
-                    'puts\(Settings.to_hash.deep_stringify_keys.to_yaml\)')
+                writeout = store.current_appliance.ssh_client.run_rails_command(
+                    '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
+                    '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
+                )
+                if writeout.rc:
+                    logger.error("Config couldn't be found")
+                    logger.error(writeout.output)
+                    raise Exception('Error obtaining config')
+                base_data = store.current_appliance.ssh_client.run_command('cat /tmp/yam_dump.yaml')
                 if base_data.rc:
                     logger.error("Config couldn't be found")
                     logger.error(base_data.output)
                     raise Exception('Error obtaining config')
-                yaml_data = base_data.output[:base_data.output.find('DEPRE')]
-                return yaml.load(yaml_data)
+                try:
+                    return yaml.load(base_data.output)
+                except:
+                    logger.debug(base_data.output)
+                    raise
             else:
                 raise Exception('Only [vmdb] config is allowed from 5.6+')
         else:

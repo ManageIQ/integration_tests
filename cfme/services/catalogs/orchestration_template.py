@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import accordion, fill, form_buttons, menu, Form, Input, flash, Select, ScriptBox
+from cfme.web_ui import (
+    accordion, fill, form_buttons, menu, Form, Input, flash, AngularSelect, Select, ScriptBox)
 from cfme.web_ui import paginator as pg
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
-from utils import error
+from utils import error, version
 
 
 cfg_btn = partial(tb.select, "Configuration")
@@ -21,7 +22,9 @@ dialog_form = Form(
 create_template_form = Form(
     fields=[
         ('description', "textarea#description"),
-        ("template_type", Select("select#type")),
+        ("template_type", {
+            version.LOWEST: Select("select#type"),
+            '5.5': AngularSelect('type')}),
         ('content', ScriptBox(ta_locator="//div[@id='basic_info_div']/div/div"
                     "/div/div/div/div/div/div/pre/span")),
         ('template_name', Input("name")),
