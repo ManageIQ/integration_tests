@@ -13,7 +13,6 @@ from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
 from utils.conf import cfme_data
-from utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -54,7 +53,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def setup_iso_datastore(setup_provider_modscope, iso_cust_template, iso_datastore, provisioning):
     if not iso_datastore.exists():
         iso_datastore.create()
@@ -116,7 +115,6 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
     yield catalog_item
 
 
-@pytest.mark.meta(blockers=[BZ(1246686, forced_streams=["5.4", "5.5", "upstream"])])
 @pytest.mark.usefixtures('setup_iso_datastore')
 def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request):
     """Tests RHEV ISO service catalog
