@@ -108,6 +108,8 @@ def check_template_name(name):
 def upload_template(project, zone, service_account, image_url,
         template_name, bucket_name, provider):
     try:
+        if not bucket_name:
+            bucket_name = cfme_data['template_upload']['template_upload_gce']['bucket_name']
         print("GCE:{} Starting image downloading {} ...".format(provider, image_url))
         file_name, file_path = download_image_file(image_url)
         print("GCE:{} Image downloaded {} ...".format(provider, file_path))
