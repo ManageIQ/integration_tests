@@ -27,7 +27,7 @@ class RHEVMProvider(Provider):
                 'api_port': kwargs.get('api_port'),
                 'ipaddress_text': kwargs.get('ip_address'),
                 'candu_hostname_text':
-                kwargs.get('hostname') if self.credentials.get('candu', None) is not None else None}
+                kwargs.get('hostname') if self.credentials.get('candu', None) else None}
 
     @classmethod
     def configloader(cls, prov_config, prov_key):
