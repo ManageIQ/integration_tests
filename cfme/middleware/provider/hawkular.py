@@ -6,7 +6,7 @@ from mgmtsystem.hawkular import Hawkular
 from utils.db import cfmedb
 from utils.varmeth import variable
 from . import properties_form, _get_providers_page, _db_select_query
-from .. import download, MiddlewareBase
+from .. import download, MiddlewareBase, auth_btn
 
 
 @BaseProvider.add_type_map
@@ -127,6 +127,10 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
     def load_topology_page(self):
         self.summary.reload()
         self.summary.overview.topology.click()
+
+    def recheck_auth_status(self):
+        self.load_details(refresh=True)
+        auth_btn("Re-check Authentication Status")
 
     @staticmethod
     def configloader(prov_config, prov_key):

@@ -878,7 +878,6 @@ def appliance_reboot(self, appliance_id, if_needs_restarting=False):
         with transaction.atomic():
             appliance = Appliance.objects.get(id=appliance_id)
             appliance.set_power_state(Appliance.Power.REBOOTING)
-            appliance.ready = False
             appliance.save()
         appliance.ipapp.reboot(wait_for_web_ui=False, log_callback=appliance.set_status)
         with transaction.atomic():

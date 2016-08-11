@@ -219,7 +219,7 @@ def test_provision_from_template_with_attached_disks(
         with update(method):
             disk_mapping = []
             for mapping in device_mapping:
-                disk_mapping.append(ONE_FIELD.format(mapping))
+                disk_mapping.append(ONE_FIELD.format(*mapping))
             method.data = VOLUME_METHOD.format(", ".join(disk_mapping))
 
         def _finish_method():

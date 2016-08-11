@@ -15,6 +15,7 @@ pwr_btn = partial(tb.select, 'Power')
 download_btn = partial(tb.select, "Download")
 deploy_btn = partial(tb.select, 'Deployments')
 operations_btn = partial(tb.select, 'Operations')
+auth_btn = partial(tb.select, 'Authentication')
 
 LIST_TABLE_LOCATOR = "//div[@id='list_grid']/table"
 

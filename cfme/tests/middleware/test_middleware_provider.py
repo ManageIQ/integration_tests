@@ -2,6 +2,7 @@ import uuid
 
 import pytest
 from cfme.configure.configuration import Category, Tag
+from cfme.web_ui import flash
 from utils import testgen
 from utils.update import update
 from utils.version import current_version
@@ -79,3 +80,13 @@ def test_topology(provider):
     assert provider.num_deployment(method='db') == len(
         provider.topology.elements(element_type='MiddlewareDeployment')),\
         "Number of deployment(s) miss match between topology page and in database"
+
+
+@pytest.mark.usefixtures('setup_provider')
+def test_authentication(provider):
+    """Tests executing "Re-check Authentication Status" menu item.
+    Verifies that success message is shown.
+    """
+    provider.recheck_auth_status()
+    flash.assert_success_message('Authentication status will be saved'
+        ' and workers will be restarted for this Middleware Provider')
