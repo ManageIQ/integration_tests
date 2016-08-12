@@ -71,7 +71,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                 ('google_service_account', Input('service_account')),
             ]
             tab_fields = {
-                "Default": [
+                ("Default", ('default_when_no_tabs', )): [
                     ('default_principal', Input("default_userid")),
                     ('default_secret', Input("default_password")),
                     ('default_verify_secret', Input("default_verify")),
