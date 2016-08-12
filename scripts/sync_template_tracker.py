@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Populate template tracker with information based on cfme_data"""
+from __future__ import unicode_literals
 import sys
 import traceback
 from collections import defaultdict

@@ -17,6 +17,7 @@ The scripts for respective providers are:
     - template_upload_vsphere.py
 """
 
+from __future__ import unicode_literals
 import argparse
 import re
 import datetime

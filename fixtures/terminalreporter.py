@@ -1,5 +1,6 @@
 # FlexibleTerminalReporter is imported for backward compatibility;
 # it should be imported from pytest_store
+from __future__ import unicode_literals
 from fixtures.pytest_store import store
 from utils import diaper
 from utils.log import logger

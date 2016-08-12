@@ -3,6 +3,7 @@
 """Collect artifacts after jenkins run
 """
 
+from __future__ import unicode_literals
 import argparse
 import sys
 from utils.conf import credentials

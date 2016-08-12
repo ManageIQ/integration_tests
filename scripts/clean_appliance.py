@@ -11,6 +11,7 @@ appliance if needed.
 This can take several minutes to run, but should be faster than provisioning a new appliance.
 
 """
+from __future__ import unicode_literals
 import argparse
 import subprocess
 import sys

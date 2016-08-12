@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from mgmtsystem.azure import AzureSystem
 from . import Provider
 

@@ -4,6 +4,7 @@
 
 """
 
+from __future__ import unicode_literals
 from datetime import datetime as _datetime
 import time
 import tzlocal

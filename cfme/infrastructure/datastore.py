@@ -5,6 +5,7 @@
            Datastores pages.
 """
 
+from __future__ import unicode_literals
 from cfme.web_ui.menu import nav
 
 from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound

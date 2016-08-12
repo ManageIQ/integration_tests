@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
+from __future__ import unicode_literals
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable

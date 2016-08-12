@@ -90,6 +90,8 @@ called *rhos* and one called *ec2* we could not change the expected exception to
 depending on if the test was run against *rhos* or *ec2*.
 
 """
+from __future__ import unicode_literals
+
 from utils.log import logger
 from cfme.login import logout, User
 from fixtures.artifactor_plugin import art_client, get_test_idents

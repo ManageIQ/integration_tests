@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=W0621
+from __future__ import unicode_literals
 import pytest
 import time
 from functools import partial

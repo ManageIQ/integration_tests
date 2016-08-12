@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from suds.client import Client
 from suds.transport.https import HttpAuthenticated
 from suds.xsd.doctor import ImportDoctor, Import

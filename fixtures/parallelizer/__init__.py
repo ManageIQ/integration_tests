@@ -31,6 +31,7 @@ The Workflow
 
 """
 
+from __future__ import unicode_literals
 import collections
 import difflib
 import fauxfactory

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # TODO: WIP WIP WIP WIP!
 # I got another stage of this library aside, but this is perfectly usable with some restrictions :)
+from __future__ import unicode_literals
+
 import iso8601
 import json
 import re
@@ -70,13 +72,14 @@ class API(object):
         raise last_connection_exception
 
     def get(self, url, **get_params):
-        logger.info("[RESTAPI] GET %s %s", url, repr(get_params))
+        logger.info("[RESTAPI] GET %s %r", url, get_params)
         data = self._sending_request(
             partial(self._session.get, url, params=get_params, verify=False))
         try:
             data = data.json()
         except simplejson.scanner.JSONDecodeError:
             raise APIException("JSONDecodeError: {}".format(data.text))
+        logger.debug("[RESTAPI] GET %s %s result %r", url, get_params, data)
         return self._result_processor(data)
 
     def post(self, url, **payload):
@@ -255,7 +258,7 @@ class Collection(object):
             if isinstance(value, int):
                 search_query.append("{}={}".format(key, value))
             else:
-                search_query.append("{}={}".format(key, repr(str(value))))
+                search_query.append("{}='{}'".format(key, value))  # We may need to escape some chars here!
         return SearchResult(self, self._api.get(self._href, **{"filter[]": search_query}))
 
     def get(self, **params):

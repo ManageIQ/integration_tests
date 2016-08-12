@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (

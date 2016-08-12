@@ -1,4 +1,5 @@
 """A set of functions for dealing with the paginator controls."""
+from __future__ import unicode_literals
 from cfme.web_ui import Select, Input, AngularSelect
 import cfme.fixtures.pytest_selenium as sel
 import re

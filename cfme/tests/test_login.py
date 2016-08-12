@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 from cfme import dashboard, login, Credential
 from cfme.configure.access_control import User

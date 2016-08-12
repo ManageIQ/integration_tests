@@ -11,6 +11,8 @@ If you want to take a screenshot inside your test, just do it like this:
         # do something else
 
 """
+from __future__ import unicode_literals
+
 import fauxfactory
 import pytest
 

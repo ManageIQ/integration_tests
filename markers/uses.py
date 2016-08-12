@@ -17,6 +17,7 @@ Note:
     but is not a fixture itself.
 
 """
+from __future__ import unicode_literals
 import pytest
 
 # List of fixture marks to create and use for test marking

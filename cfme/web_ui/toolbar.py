@@ -8,6 +8,7 @@ Usage:
     tb.select('Configuration', 'Add a New Host')
 
 """
+from __future__ import unicode_literals
 import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable

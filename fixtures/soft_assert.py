@@ -20,6 +20,7 @@ list by the context manager. Because the store is a :py:func:`list <python:list>
 will be reported in the order that they failed.
 
 """
+from __future__ import unicode_literals
 from contextlib import contextmanager
 from threading import local
 from functools import partial

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Module handling Dashboards accordion.
 """
+from __future__ import unicode_literals
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import (
     DashboardWidgetSelector, NewerDashboardWidgetSelector)

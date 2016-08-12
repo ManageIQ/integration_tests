@@ -31,6 +31,7 @@ Note:
     This is very insecure, and should be used as a last resort for debugging elusive failures.
 
 """
+from __future__ import unicode_literals
 import signal
 import smtplib
 import socket

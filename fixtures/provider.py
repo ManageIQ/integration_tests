@@ -8,6 +8,7 @@ If the provider setup fails, this fixture will record that failure and skip futu
 using the provider.
 
 """
+from __future__ import unicode_literals
 import pytest
 
 from fixtures.artifactor_plugin import art_client, get_test_idents

@@ -130,6 +130,7 @@ Members
 ^^^^^^^
 
 """
+from __future__ import unicode_literals
 import fauxfactory
 import inspect
 import logging

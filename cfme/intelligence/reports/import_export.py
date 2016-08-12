@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Region, accordion, fill, flash, form_buttons

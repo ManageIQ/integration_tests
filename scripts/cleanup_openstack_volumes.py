@@ -7,6 +7,7 @@ Usage: scripts/cleanup_openstack_volumes.py [optional list of provider keys]
 If no providers specified, it will cleanup all of them.
 
 """
+from __future__ import unicode_literals
 import sys
 import iso8601
 import tzlocal

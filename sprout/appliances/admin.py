@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from functools import wraps
 from celery import chain
 from django.contrib import admin

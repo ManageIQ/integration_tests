@@ -47,6 +47,7 @@ It has a command-line option that allows you to disable certain plugins. Just sp
 ``--disablemetaplugins a,b,c`` where a, b and c are the plugins that should be disabled
 
 """
+from __future__ import unicode_literals
 from collections import namedtuple
 from kwargify import kwargify
 from types import FunctionType

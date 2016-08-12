@@ -9,6 +9,7 @@ together with template_upload_all script. This is why all the function calls, wh
 normally be placed in main function, are located in function run(**kwargs).
 """
 
+from __future__ import unicode_literals
 import argparse
 import sys
 import os

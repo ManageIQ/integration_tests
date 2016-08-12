@@ -1,4 +1,5 @@
 """ A model of Instances page in CFME."""
+from __future__ import unicode_literals
 from cfme.common.vm import VM, Template
 from cfme.exceptions import InstanceNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel

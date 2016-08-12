@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from cfme import web_ui as ui
 from cfme.web_ui import form_buttons, CFMECheckbox
 import cfme.fixtures.pytest_selenium as sel

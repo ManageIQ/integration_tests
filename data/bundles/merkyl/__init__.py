@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from bottle import request, route, run, template
 import os
 import subprocess

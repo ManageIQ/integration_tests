@@ -18,6 +18,7 @@
 ``reuse_dir`` if this is False and Artifactor comes across a dir that has
 already been used, it will die
 """
+from __future__ import unicode_literals
 import atexit
 from urlparse import urlparse
 

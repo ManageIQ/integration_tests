@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """This file contains useful classes for working with SNMP filling."""
 
+from __future__ import unicode_literals
 from collections import Mapping
 
 from cfme.web_ui import Select, Form, fill, Input

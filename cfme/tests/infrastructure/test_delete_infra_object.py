@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 import pytest
 from cfme.common.vm import VM
 from cfme.infrastructure import host, datastore, cluster, resource_pool

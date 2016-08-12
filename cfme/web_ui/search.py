@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module operates the `Advanced search` box located on multiple pages."""
+from __future__ import unicode_literals
 import re
 from functools import partial
 

@@ -43,6 +43,7 @@ To ensure the appliance has the default roles::
 For a list of server role names currently exposed in the CFME interface,
 see keys of :py:data:`cfme.configure.configuration.server_roles`.
 """
+from __future__ import unicode_literals
 from markers.meta import plugin
 
 from cfme.configure.configuration import get_server_roles, set_server_roles, server_roles

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from copy import copy
 from functools import partial
 from xml.sax.saxutils import quoteattr

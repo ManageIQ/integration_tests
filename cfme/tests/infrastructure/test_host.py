@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 import cfme.web_ui.flash as flash

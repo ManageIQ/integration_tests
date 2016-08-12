@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module tests tagging of objects in different locations."""
+from __future__ import unicode_literals
 import diaper
 import pytest
 

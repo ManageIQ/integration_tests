@@ -13,6 +13,7 @@ Required YAML keys:
         work (iso datastore or whatever), therefore failing the provision.
 """
 # TODO: Move the SOAP calls to UI checks since SOAP is deprecated
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 

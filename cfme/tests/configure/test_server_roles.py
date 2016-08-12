@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 import pytest
 from cfme.configure import configuration
 from cfme.web_ui import flash

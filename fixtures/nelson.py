@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import os
 import re
 import base64
@@ -33,7 +34,8 @@ def pytest_collection_modifyitems(items):
             item_name = item_name.replace(item_param[0], '')
         node_name = '{}.{}'.format(item_class, item_name)
         output[node_name] = {}
-        output[node_name]['docstring'] = base64.b64encode(getattr(item.function, '__doc__') or '')
+        output[node_name]['docstring'] = base64.b64encode(
+            (getattr(item.function, '__doc__') or '').encode("utf-8"))
         output[node_name]['name'] = item_name
 
         # This is necessary to convert AttrDict in metadata, or even metadict(previously)

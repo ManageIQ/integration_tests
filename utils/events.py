@@ -4,6 +4,7 @@
 
 """
 
+from __future__ import unicode_literals
 from cached_property import cached_property
 from contextlib import contextmanager
 from datetime import datetime

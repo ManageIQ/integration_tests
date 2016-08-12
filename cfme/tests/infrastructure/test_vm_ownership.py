@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 from cfme.rest import a_provider as _a_provider
 from cfme.rest import vm as _vm

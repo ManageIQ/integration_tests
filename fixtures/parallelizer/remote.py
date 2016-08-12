@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import signal
 from collections import deque
 from urlparse import urlparse

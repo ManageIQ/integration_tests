@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """I missed callable based skipper so here it is."""
+from __future__ import unicode_literals
 from markers.meta import plugin
 
 import pytest

@@ -3,6 +3,7 @@
 """Run yum updates against a given repo
 """
 
+from __future__ import unicode_literals
 import argparse
 import sys
 from utils.appliance import IPAppliance

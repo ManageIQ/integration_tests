@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, SplitTable, flash, Form, fill, form_buttons, Table
 from utils.pretty import Pretty

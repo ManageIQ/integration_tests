@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import fauxfactory
 import cfme.web_ui.flash as flash
 import pytest

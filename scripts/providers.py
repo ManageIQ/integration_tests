@@ -24,6 +24,7 @@ It expects pairs in format ``--key value``. If you fail to provide such formatte
 error will happen.
 
 """
+from __future__ import unicode_literals
 import argparse
 import os
 import sys

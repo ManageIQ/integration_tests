@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Module designed to handle the simple case when one wants to use Sprout but does not use the
 parallelizer. Uses IPAppliance that is pushed on top of the appliance stack"""
+from __future__ import unicode_literals
 import pytest
 
 from threading import Timer

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 from cfme.configure.tasks import is_datastore_analysis_finished
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host

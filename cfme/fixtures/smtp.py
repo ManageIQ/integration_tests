@@ -6,6 +6,7 @@ a :py:meth:`smtp_test_module` fixture for which the smtp_test is just a function
 to speed things up. The base of all this is the session-scoped _smtp_test_session that keeps care
 about the collector.
 """
+from __future__ import unicode_literals
 import pytest
 import signal
 import subprocess

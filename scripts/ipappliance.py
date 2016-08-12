@@ -15,6 +15,7 @@ Returns the resulting value of the call written to the stdout, one line per appl
 Logs its actions to stderr.
 
 """
+from __future__ import unicode_literals
 import argparse
 import inspect
 import json

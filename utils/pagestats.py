@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 """Functions and PageStat object for performance testing of the UI."""
+from __future__ import unicode_literals
 from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.login import login_admin

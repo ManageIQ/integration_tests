@@ -6,6 +6,7 @@ Args:
     loc: A locator for the Timelines element, usually the div with
         id miq_timeline.
 """
+from __future__ import unicode_literals
 import os
 import re
 

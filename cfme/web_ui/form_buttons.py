@@ -3,6 +3,7 @@
 Whenever you use Add, Save, Cancel, Reset button, use this module.
 You can use it also for the other buttons with same shape like those CRUD ones.
 """
+from __future__ import unicode_literals
 from selenium.common.exceptions import NoSuchElementException
 from xml.sax.saxutils import quoteattr
 

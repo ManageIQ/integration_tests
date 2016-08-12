@@ -1,4 +1,5 @@
 """Core functionality for starting, restarting, and stopping a selenium browser."""
+from __future__ import unicode_literals
 import atexit
 import json
 import os

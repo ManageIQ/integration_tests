@@ -1,4 +1,5 @@
 """Functions that performance tests use."""
+from __future__ import unicode_literals
 from utils.ssh import SSHClient, SSHTail
 from utils.db import get_yaml_config, set_yaml_config
 from utils.log import logger

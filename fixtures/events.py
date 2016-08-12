@@ -157,6 +157,7 @@ Available event types:
 The types can be retrieved using the :py:class:`utils.events.EventTool` by calling
 :py:meth:`utils.events.EventTool.all_event_types` on it.
 """
+from __future__ import unicode_literals
 from datetime import datetime
 
 import pytest

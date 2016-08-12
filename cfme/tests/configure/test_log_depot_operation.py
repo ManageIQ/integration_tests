@@ -5,6 +5,7 @@
 Author: Milan Falešník <mfalesni@redhat.com>
 Since: 2013-02-20
 """
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 import re

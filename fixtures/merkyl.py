@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 
 from fixtures.artifactor_plugin import appliance_ip_address, art_client, get_test_idents

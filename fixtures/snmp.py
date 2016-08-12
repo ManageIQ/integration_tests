@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Fixture providing SNMP client for tests that want it."""
+from __future__ import unicode_literals
 import pytest
 from urlparse import urlparse
 

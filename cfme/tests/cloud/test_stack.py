@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.cloud.stack import Stack

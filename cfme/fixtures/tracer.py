@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from contextlib import contextmanager
 import os.path
 import function_trace

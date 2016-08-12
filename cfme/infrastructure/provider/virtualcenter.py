@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from mgmtsystem.virtualcenter import VMWareSystem
 from . import Provider
 

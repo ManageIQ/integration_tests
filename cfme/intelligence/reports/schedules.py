@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module handling schedules"""
+from __future__ import unicode_literals
 from functools import partial
 
 from cfme.fixtures import pytest_selenium as sel

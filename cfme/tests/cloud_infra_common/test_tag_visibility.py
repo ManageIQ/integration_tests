@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import cfme.configure.access_control as ac
 import fauxfactory
 import pytest

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Script used to catch and expose e-mails from CFME"""
 
+from __future__ import unicode_literals
 from bottle import route, run, response, request
 from collections import namedtuple
 from datetime import datetime

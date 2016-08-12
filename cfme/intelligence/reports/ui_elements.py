@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This file contains element definitions of elements that are common in reports."""
+from __future__ import unicode_literals
 from xml.sax.saxutils import quoteattr
 
 from collections import Sequence, Mapping, Callable

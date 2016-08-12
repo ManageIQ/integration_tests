@@ -2,6 +2,7 @@
 log file aftwards and creates a bunch of graphs displaying the queued/execution time of the backend
 messages.
 """
+from __future__ import unicode_literals
 from cfme.configure.configuration import candu
 from utils.conf import perf_tests
 from utils.log import logger

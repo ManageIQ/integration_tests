@@ -3,6 +3,7 @@
 """SSH into a running appliance and install Netapp SDK
 """
 
+from __future__ import unicode_literals
 import argparse
 from urlparse import urlparse
 from utils.appliance import IPAppliance

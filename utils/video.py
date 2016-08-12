@@ -12,6 +12,7 @@ Configuration for this module + fixture:
 
 """
 
+from __future__ import unicode_literals
 import os
 import subprocess
 

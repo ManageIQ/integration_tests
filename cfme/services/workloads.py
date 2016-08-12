@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """ A model of Workloads page in CFME
 """
+from __future__ import unicode_literals
 from functools import partial
 from cfme.web_ui import accordion, menu
 

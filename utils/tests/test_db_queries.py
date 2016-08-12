@@ -2,6 +2,7 @@
 
 """Run against fresh instance to ensure that the data checked is correct.
 """
+from __future__ import unicode_literals
 import pytest
 from fixtures.pytest_store import store
 from utils import db_queries

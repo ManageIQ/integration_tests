@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import unicode_literals
 from functools32 import lru_cache
 import requests
 from collections import defaultdict

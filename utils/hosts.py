@@ -3,6 +3,7 @@ utils.hosts
 --------------
 
 """
+from __future__ import unicode_literals
 from cfme.infrastructure import host
 from utils.wait import wait_for
 from utils import conf

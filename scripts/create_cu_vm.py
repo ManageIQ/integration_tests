@@ -9,6 +9,7 @@ Usage:
 
 If vm_name is not passed,the script creates these 2 CU VMs: cu-9-5 and cu-24x7
 """
+from __future__ import unicode_literals
 import argparse
 import sys
 

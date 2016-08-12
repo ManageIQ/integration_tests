@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from mgmtsystem.openstack import OpenstackSystem
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 

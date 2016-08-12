@@ -2,6 +2,7 @@
 """ A model of a PXE Server in CFME
 """
 
+from __future__ import unicode_literals
 from functools import partial
 
 from cfme.exceptions import CandidateNotFound

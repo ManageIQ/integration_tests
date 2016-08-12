@@ -7,6 +7,7 @@ Tests will be marked automatically if:
 * their name ends with \_crud
 * their name contains \_crud\_
 """
+from __future__ import unicode_literals
 import re
 
 matcher = re.compile(r"^crud_|_crud_|_crud$")

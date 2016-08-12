@@ -2,6 +2,7 @@
 """
 
 
+from __future__ import unicode_literals
 import pytest
 from utils.log import logger
 from utils.wait import wait_for
