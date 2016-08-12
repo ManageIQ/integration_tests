@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from miqclient.api import APIException
 
 from cfme.configure.configuration import Category, Tag
 from cfme.rest import a_provider as _a_provider
@@ -12,7 +13,6 @@ from cfme.rest import service_templates as _service_templates
 from cfme.rest import tenants as _tenants
 from cfme.rest import tags as _tags
 from cfme.rest import vm as _vm
-from utils.api import APIException
 from utils.blockers import BZ
 from utils.update import update
 from utils.wait import wait_for

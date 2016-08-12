@@ -6,9 +6,9 @@ from cfme.services import requests
 from cfme.web_ui import (
     accordion, fill, flash, paginator, toolbar, CheckboxTree, Region, Tree, Quadicon)
 from cfme.web_ui.menu import extend_nav
+from fixtures.pytest_store import store
 from functools import partial
 from utils import deferred_verpick, version
-from utils.api import rest_api
 from utils.wait import wait_for
 
 
@@ -156,13 +156,14 @@ class Instance(VM):
     def get_vm_via_rest(self):
         # Try except block, because instances collection isn't available on 5.4
         try:
-            instance = rest_api().collections.instances.get(name=self.name)
+            instance = store.current_appliance.rest_api.collections.instances.get(name=self.name)
         except AttributeError:
             raise Exception("Collection instances isn't available")
-        return instance
+        else:
+            return instance
 
     def get_collection_via_rest(self):
-        return rest_api().collections.instances
+        return store.current_appliance.rest_api.collections.instances
 
 
 @VM.register_for_provider_type("openstack")
