@@ -1,3 +1,8 @@
+# Internal dependencies
+# MIQ REST API Client
+git+https://github.com/ManageIQ/manageiq-api-client-python.git
+
+# External dependencies
 cached-property
 boto
 bottle

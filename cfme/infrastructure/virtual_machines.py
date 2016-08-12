@@ -13,9 +13,9 @@ from cfme.web_ui import (
     paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, summary_title
 )
 from cfme.web_ui.menu import extend_nav
+from fixtures.pytest_store import store
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
-from utils.api import rest_api
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
@@ -389,10 +389,10 @@ class Vm(BaseVM, Common):
         return sel.text(l).strip()
 
     def get_vm_via_rest(self):
-        return rest_api().collections.vms.get(name=self.name)
+        return store.current_appliance.rest_api.collections.vms.get(name=self.name)
 
     def get_collection_via_rest(self):
-        return rest_api().collections.vms
+        return store.current_appliance.rest_api.collections.vms
 
     def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text

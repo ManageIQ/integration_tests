@@ -7,7 +7,7 @@ import random
 import re
 
 from utils import conf
-from utils.api import API
+from miqclient.api import API
 
 parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
