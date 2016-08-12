@@ -27,12 +27,15 @@ def testing_instance(request, setup_provider, provider):
     if not provider.mgmt.does_vm_exist(instance.name):
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
         request.addfinalizer(instance.delete_from_provider)
+        provider.refresh_provider_relationships()
     elif instance.provider.type == "ec2" and \
             provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted']):
         provider.mgmt.set_name(
             instance.name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
         request.addfinalizer(instance.delete_from_provider)
+        provider.refresh_provider_relationships()
+    instance.wait_to_appear()
     return instance
 
 
