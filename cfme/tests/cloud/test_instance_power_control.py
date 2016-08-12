@@ -144,7 +144,11 @@ def test_quadicon_terminate(setup_provider_funcscope, provider, testing_instance
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, timeout=720)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE, cancel=False)
-    testing_instance.wait_to_disappear(timeout=300)
+    if provider.type == 'azure':
+        # It takes at least 300 for azure to delete it.
+        testing_instance.wait_to_disappear(timeout=720)
+    else:
+        testing_instance.wait_to_disappear(timeout=300)
     if provider.type == 'openstack':
         soft_assert(not testing_instance.does_vm_exist_on_provider(), "instance still exists")
     else:
@@ -230,7 +234,7 @@ def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_hard_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
                      verify_vm_running):
     """ Tests instance hard reboot
