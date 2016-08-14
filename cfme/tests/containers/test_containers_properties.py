@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-# the test performs field validation in Properties table
+
+""" Field validation for properties table.
+"""
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import Pod, list_tbl as list_tbl_pod
@@ -16,11 +18,10 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
+    
 
-# Polarion test 9911
-# container pods Properties table field verification
-
-
+""" Polarion test case CMP-9911.
+"""
 @pytest.mark.parametrize('rel',
                          ['name',
                           'phase',
@@ -48,7 +49,8 @@ def test_pods_properties_rel(provider, rel):
             assert len(field_content) != 0
 
 
-# Polarion test 9877
+""" Polarion test case CMP-9877.
+"""
 @pytest.mark.parametrize('rel',
                          ['name',
                           'creation_timestamp',
@@ -73,7 +75,8 @@ def test_routes_properties_rel(provider, rel):
             assert len(field_content) != 0
 
 
-# Polarion test 9867
+""" Polarion test case CMP-9867.
+"""
 @pytest.mark.parametrize('rel',
                          ['name',
                           'creation_timestamp',
