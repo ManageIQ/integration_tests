@@ -18,10 +18,12 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
-    
+
 
 """ Polarion test case CMP-9911.
 """
+
+
 @pytest.mark.parametrize('rel',
                          ['name',
                           'phase',
@@ -51,6 +53,8 @@ def test_pods_properties_rel(provider, rel):
 
 """ Polarion test case CMP-9877.
 """
+
+
 @pytest.mark.parametrize('rel',
                          ['name',
                           'creation_timestamp',
@@ -77,6 +81,8 @@ def test_routes_properties_rel(provider, rel):
 
 """ Polarion test case CMP-9867.
 """
+
+
 @pytest.mark.parametrize('rel',
                          ['name',
                           'creation_timestamp',
