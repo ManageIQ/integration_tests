@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-# the test performs field validation in Properties table
+
+""" Polarion test case CMP-9884.
+"""
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.service import Service, list_tbl as list_tbl_srvc
@@ -14,9 +16,6 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
-
-# Polarion test 9884
-# container services Properties table field verification
 
 
 @pytest.mark.parametrize('rel',
