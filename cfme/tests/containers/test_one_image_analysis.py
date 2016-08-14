@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+""" Polarion test case CMP-10064.
+"""
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
@@ -8,7 +11,7 @@ from cfme.containers import image
 from utils.wait import wait_for, TimedOutError
 from cfme.configure import tasks
 
-# Polarion test case CMP-10064
+
 pytestmark = [
     pytest.mark.uncollectif(
         lambda: current_version() < "5.6"),
