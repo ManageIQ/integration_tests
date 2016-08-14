@@ -4,6 +4,7 @@ from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.version import current_version
 from cfme.web_ui import flash, toolbar as tb, tabstrip as tabs
+from cfme.containers import image
 from utils.wait import wait_for, TimedOutError
 from cfme.configure import tasks
 
@@ -19,18 +20,14 @@ pytest_generate_tests = testgen.generate(
 
 def test_image_analysis_finished():
     sel.force_navigate('containers_images')
-    checkbox = ".//input[@class='list-grid-checkbox']"
-    sel.check(checkbox)
+    m = 'Analysis successfully initiated'
+    sel.check(image.checkbox)
     tb.select(
         'Configuration',
         'Perform SmartState Analysis',
         invokes_alert=True)
     sel.handle_alert()
-    flash.assert_message_contain('Analysis successfully initiated')
-    success_alert = ".//div[@class='alert alert-success']"
-
-    if not success_alert:
-        wait_for(lambda: sel.is_displayed(success_alert), num_sec=10, delay=5)
+    flash.assert_message_contain(m)
 
     is_task_finished()
 
