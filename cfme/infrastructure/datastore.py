@@ -112,8 +112,8 @@ class Datastore(Pretty):
     def _on_detail_page(self):
         """ Returns ``True`` if on the datastore detail page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
-                self.name, "Summary")
+            '//div[@id="main-content"][contains(., "{}") and contains(., "{}")]'.format(
+                "Datastore", self.name)
         )
 
     def get_hosts(self):
@@ -124,7 +124,7 @@ class Datastore(Pretty):
         if not self._on_hosts_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
             try:
-                list_acc.select('Relationships', 'Hosts', by_title=False, partial=True)
+                sel.click(details_page.infoblock.element("Relationships", "Hosts"))
             except sel.NoSuchElementException:
                 sel.click(InfoBlock('Relationships', 'Hosts'))
         return [q.name for q in Quadicon.all("host")]
@@ -132,7 +132,7 @@ class Datastore(Pretty):
     def _on_hosts_page(self):
         """ Returns ``True`` if on the datastore hosts page, ``False`` if not."""
         return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}") and contains(., "{}")]'.format(
+            '//div[@id="main-content"][contains(., "{}") and contains(., "{}")]'.format(
                 self.name, "All Registered Hosts")
         )
 
@@ -157,14 +157,16 @@ class Datastore(Pretty):
         )
 
     def delete_all_attached_vms(self):
-        sel.force_navigate('infrastructure_datastore', context=self._get_context())
+        if not self._on_detail_page():
+            sel.force_navigate('infrastructure_datastore', context=self._get_context())
         sel.click(details_page.infoblock.element("Relationships", "Managed VMs"))
         sel.click(pg.check_all())
         cfg_btn("Remove selected items from the VMDB", invokes_alert=True)
         sel.handle_alert(cancel=False)
 
     def delete_all_attached_hosts(self):
-        sel.force_navigate('infrastructure_datastore', context=self._get_context())
+        if not self._on_detail_page():
+            sel.force_navigate('infrastructure_datastore', context=self._get_context())
         sel.click(details_page.infoblock.element("Relationships", "Hosts"))
         sel.click(pg.check_all())
         path = version.pick({
