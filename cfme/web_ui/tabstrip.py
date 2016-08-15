@@ -111,11 +111,19 @@ class _TabStripField(Pretty):
 
     pretty_attrs = ['ident_string', 'arg']
 
-    def __init__(self, ident_string, arg):
+    def __init__(self, ident_string, arg, default_when_no_tabs=False):
         self.ident_string = ident_string
         self.arg = arg
+        self.default_when_no_tabs = default_when_no_tabs
 
     def locate(self):
+        if len(get_all_tabs()) == 0:
+            if self.default_when_no_tabs:
+                # There is no tabstrip and this is the proper "tab"
+                return self.arg
+            else:
+                # A different tab but given the fact that this one is "hidden", bail out
+                raise ValueError('Requested tab {} is not displayed'.format(self.ident_string))
         select_tab(self.ident_string)
         return self.arg
 
@@ -190,6 +198,18 @@ class TabStripForm(web_ui.Form):
     def __init__(
             self, fields=None, tab_fields=None, identifying_loc=None, order=None, fields_end=None):
         fields = fields or list()
+        new_tab_fields = {}
+        flags_per_tab = {}
+        for key, value in tab_fields.iteritems():
+            if isinstance(key, tuple):
+                field_name, flags = key
+                flags = {f: True for f in flags}
+            else:
+                field_name = key
+                flags = {}
+            new_tab_fields[field_name] = value
+            flags_per_tab[field_name] = flags
+        tab_fields = new_tab_fields
         if order is None:
             order = tab_fields.keys()
         else:
@@ -203,7 +223,9 @@ class TabStripForm(web_ui.Form):
         for tab_ident in order:
             field = tab_fields[tab_ident]
             for field_name, field_locator in field:
-                fields.append((field_name, _TabStripField(tab_ident, field_locator)))
+                fields.append(
+                    (field_name, _TabStripField(
+                        tab_ident, field_locator, **flags_per_tab[tab_ident])))
         if fields_end is not None:
             fields.extend(fields_end)
         super(TabStripForm, self).__init__(fields, identifying_loc)

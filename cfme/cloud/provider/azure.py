@@ -1,3 +1,4 @@
+from utils.version import pick
 from mgmtsystem.azure import AzureSystem
 from . import Provider
 
@@ -27,7 +28,14 @@ class AzureProvider(Provider):
     def configloader(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
-        return cls(name=prov_config['name'],
+        # HACK: stray domain entry in credentials, so ensure it is not there
+        credentials.domain = None
+        region = prov_config.get('region', None)
+        if region is not None and isinstance(region, dict):
+            region = pick(region)
+        return cls(
+            name=prov_config['name'],
+            region=region,
             tenant_id=prov_config['tenant_id'],
             subscription_id=prov_config['subscription_id'],
             credentials={'default': credentials},
