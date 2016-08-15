@@ -102,7 +102,7 @@ def test_delete_resource_pool(setup_provider, provider, remove_test):
     test_resourcepool.wait_for_appear()
 
 
-@pytest.mark.meta(blockers=[1236977,1335961])
+@pytest.mark.meta(blockers=[1236977, 1335961])
 @pytest.mark.ignore_stream("upstream")
 def test_delete_datastore(setup_provider, provider, remove_test):
     """ Tests delete datastore
