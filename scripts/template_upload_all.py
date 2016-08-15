@@ -44,7 +44,8 @@ def parse_cmd_line():
                         help='url for the image to be uploaded',
                         default=None)
     parser.add_argument('--provider-type', dest='provider_type',
-                        help='Type of provider to upload to (virtualcenter, rhevm, openstack)',
+                        help='Type of provider to upload to (virtualcenter, rhevm,'
+                             'openstack, google, scvmm)',
                         default=None)
     parser.add_argument('--provider-version', dest='provider_version',
                         help='Version of chosen provider',
@@ -246,6 +247,8 @@ def browse_directory(dir_url):
     scvmm_image_name = scvmm_pattern.findall(string_from_url)
     vsphere_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')
     vsphere_image_name = vsphere_pattern.findall(string_from_url)
+    google_pattern = re.compile(r'<a href="?\'?([^"\']*gce[^"\'>]*)')
+    google_image_name = google_pattern.findall(string_from_url)
 
     if len(rhevm_image_name) is not 0:
         name_dict['template_upload_rhevm'] = rhevm_image_name[0]
@@ -255,6 +258,8 @@ def browse_directory(dir_url):
         name_dict['template_upload_scvmm'] = scvmm_image_name[0]
     if len(vsphere_image_name) is not 0:
         name_dict['template_upload_vsphere'] = vsphere_image_name[0]
+    if len(google_image_name) is not 0:
+        name_dict['template_upload_gce'] = google_image_name[0]
 
     if not dir_url.endswith('/'):
         dir_url = dir_url + '/'
@@ -331,6 +336,10 @@ def main():
                 continue
         elif provider_type == 'scvmm':
             module = 'template_upload_scvmm'
+            if module not in dir_files.iterkeys():
+                continue
+        elif provider_type == 'google':
+            module = 'template_upload_gce'
             if module not in dir_files.iterkeys():
                 continue
         kwargs['stream'] = stream
