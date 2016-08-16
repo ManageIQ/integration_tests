@@ -186,7 +186,7 @@ def test_provision_stack(provider, create_template, catalog, request):
                   dialog=dialog_name, orch_template=template.template_name,
                   provider_type=provider.name)
     catalog_item.create()
-    stackname = "test_" + fauxfactory.gen_alphanumeric()
+    stackname = "test" + fauxfactory.gen_alphanumeric()
     stack_data = {'stack_name': stackname}
 
     @request.addfinalizer
@@ -221,7 +221,7 @@ def test_reconfigure_service(provider, create_template, catalog, request):
                   dialog=dialog_name, orch_template=template.template_name,
                   provider_type=provider.name)
     catalog_item.create()
-    stackname = "test_" + fauxfactory.gen_alphanumeric()
+    stackname = "test" + fauxfactory.gen_alphanumeric()
     stack_data = {'stack_name': stackname}
 
     @request.addfinalizer
@@ -256,7 +256,7 @@ def test_remove_template_provisioning(provider, create_template, catalog, reques
                   dialog=dialog_name, orch_template=template.template_name,
                   provider_type=provider.name)
     catalog_item.create()
-    stackname = "test_" + fauxfactory.gen_alphanumeric()
+    stackname = "test" + fauxfactory.gen_alphanumeric()
     stack_data = {'stack_name': stackname}
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
@@ -285,7 +285,7 @@ def test_retire_stack(provider, create_template, catalog, request):
                   dialog=dialog_name, orch_template=template.template_name,
                   provider_type=provider.name)
     catalog_item.create()
-    stackname = "test_" + fauxfactory.gen_alphanumeric()
+    stackname = "test" + fauxfactory.gen_alphanumeric()
     stack_data = {'stack_name': stackname}
 
     service_catalogs = ServiceCatalogs("service_name", stack_data)
