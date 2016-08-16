@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import pytest
-
 from utils import InstanceClassMethod
 
 
@@ -26,8 +24,7 @@ def test_check_complete_definition():
     assert ClassWithCompleteDefinition.execute() is ClassWithCompleteDefinition
 
 
-def test_check_incomplete_definition():
+def test_check_partial_definition():
     inst = ClassWithCompleteDefinition()
     assert inst.execute(1) == (inst, 1)
-    with pytest.raises(TypeError):
-        assert ClassWithIncompleteDefinition.execute() is ClassWithIncompleteDefinition
+    assert ClassWithIncompleteDefinition.execute(1) == (ClassWithIncompleteDefinition, 1)
