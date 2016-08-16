@@ -1,5 +1,4 @@
 import pytest
-from cfme.configure.configuration import Category, Tag
 from cfme.middleware import get_random_list
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import flash
@@ -265,24 +264,3 @@ def _check_server_stopped(server):
 def _check_server_running(server):
     wait_for(lambda: server.is_running(method='db') and server.is_running(method='mgmt'),
             delay=10, num_sec=600, message='Server {} must be running'.format(server.name))
-
-
-# it needs refactoring and fixing all tags tests
-@pytest.mark.uncollect
-def test_tags(provider):
-    """Tests tags in server page
-
-    Steps:
-        * Select a server randomly from database
-        * Run `validate_tags` with `tags` input
-    """
-    tags = [
-        Tag(category=Category(display_name='Environment', single_value=True), display_name='Test'),
-        Tag(category=Category(display_name='Location', single_value=True), display_name='New York'),
-        Tag(category=Category(display_name='Workload', single_value=False),
-            display_name='Application Servers'),
-    ]
-    servers_db = MiddlewareServer.servers_in_db(provider=provider)
-    assert len(servers_db) > 0, "There is no server(s) available in DB"
-    server = get_random_list(servers_db, 1)[0]
-    server.validate_tags(tags=tags)
