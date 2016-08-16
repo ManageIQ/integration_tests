@@ -33,3 +33,4 @@ def test_image_registries_views():
 def test_projects_list_views():
     sel.force_navigate('containers_projects')
     assert tb.is_active(
+        'List View'), "Projects list view setting failed"
