@@ -33,6 +33,7 @@ from utils import api, conf, datafile, db, trackerbot, db_queries, ports, ssh as
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
+from utils.navigate import Navigatable, NavigateWrap, NavigateStep
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path
 from utils.providers import get_mgmt, get_crud
@@ -57,7 +58,7 @@ class ApplianceException(Exception):
     pass
 
 
-class IPAppliance(object):
+class IPAppliance(Navigatable):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
     it knows both the provider, vm_name and can there for derive the IP address.
@@ -67,6 +68,7 @@ class IPAppliance(object):
         browser_streal: If True then then current browser is killed and the new appliance
             is used to generate a new session.
     """
+    _nav_steps = {}
 
     def __init__(self, address=None, browser_steal=False, container=None):
         if address is not None:
@@ -1643,6 +1645,33 @@ class IPAppliance(object):
     def reset_automate_model(self):
         with self.ssh_client as ssh_client:
             ssh_client.run_rake_command("evm:automate:reset")
+
+
+@NavigateWrap(IPAppliance)
+class LoggedIn(NavigateStep):
+    def step(self):
+        from cfme.login import login_admin
+        from utils.browser import browser
+        browser()
+        login_admin()
+
+
+@NavigateWrap(IPAppliance)
+class Dashboard(NavigateStep):
+    def prerequisite(self):
+        self.obj.navigate('LoggedIn')
+
+    def am_i_here(self):
+        from cfme.web_ui.menu import nav
+        if self.obj.version < "5.6.0.1":
+            nav.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
+        else:
+            nav.CURRENT_TOP_MENU = "{}{}".format(nav.ROOT, nav.ACTIVE_LEV)
+        nav.is_page_active('Dashboard')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Cloud Intel', 'Dashboard')(None)
 
 
 class Appliance(IPAppliance):

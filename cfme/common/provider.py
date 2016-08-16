@@ -194,6 +194,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
            validate_credentials (boolean): Whether to validate credentials - if True and the
                credentials are invalid, an error will be raised.
         """
+        # Here for instance we could do
+        # self.navigate('new')
+        # as each class instance will have the right nav steps, there is no need to put
+        # cloud_provider, making some of this
+        # a lot simpler
         sel.force_navigate('{}_provider_new'.format(self.page_name))
         fill(self.properties_form, self._form_mapping(True, **self.__dict__))
         for cred in self.credentials:
@@ -213,6 +218,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
            updates (dict): fields that are changing.
            cancel (boolean): whether to cancel out of the update.
         """
+        # This would become
+        # self.instance_navigate('details')
         sel.force_navigate('{}_{}'.format(self.page_name, self.edit_page_suffix),
             context={'provider': self})
         fill(self.properties_form, self._form_mapping(**updates))
