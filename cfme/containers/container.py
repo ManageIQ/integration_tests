@@ -5,6 +5,7 @@ from cfme.web_ui import CheckboxTable, toolbar as tb
 from cfme.web_ui.menu import nav
 from . import details_page
 
+
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
 nav.add_branch(
@@ -44,8 +45,18 @@ class Container(Taggable, SummaryMixin):
                     'containers_container_detail', context={
                         'container': self, 'pod': self.pod})
         else:
-            sel.force_navigate('containers_container', context={'container': self})
+            sel.force_navigate('containers_container',
+                               context={'container': self, 'pod': self.pod})
 
     def click_element(self, *ident):
         self.load_details(refresh=True)
         return sel.click(details_page.infoblock.element(*ident))
+
+    def get_detail(self, *ident):
+        """ Gets details from the details infoblock
+        Args:
+            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+        Returns: A string representing the contents of the InfoBlock's value.
+        """
+        self.load_details(refresh=True)
+        return details_page.infoblock.text(*ident)
