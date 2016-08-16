@@ -1,7 +1,6 @@
 import uuid
 
 import pytest
-from cfme.configure.configuration import Category, Tag
 from cfme.web_ui import flash
 from utils import testgen
 from utils.update import update
@@ -46,24 +45,6 @@ def test_hawkular_crud(provider):
 
 
 @pytest.mark.usefixtures('setup_provider')
-def test_tags(provider):
-    """Tests tags in provider page
-
-    Steps:
-        * Run `validate_tags` with `tags` input
-    """
-    tags = [
-        Tag(category=Category(display_name='Department', single_value=False),
-            display_name='Engineering'),
-        Tag(category=Category(display_name='Environment', single_value=True), display_name='Test'),
-        Tag(category=Category(display_name='Location', single_value=True), display_name='Paris'),
-        Tag(category=Category(display_name='Service Level', single_value=True),
-            display_name='Gold'),
-    ]
-    provider.validate_tags(tags=tags)
-
-
-@pytest.mark.usefixtures('setup_provider')
 def test_topology(provider):
     """Tests topology page from provider page
 
@@ -77,8 +58,10 @@ def test_topology(provider):
     el_hawkular = provider.topology.elements(element_type='Hawkular')[0]
     assert provider.num_server(method='db') == len(el_hawkular.children), \
         "Number of server(s) miss match between topology page and in database"
-    assert provider.num_deployment(method='db') == len(
-        provider.topology.elements(element_type='MiddlewareDeployment')),\
+    assert provider.num_deployment(method='db') == \
+        len(provider.topology.elements(element_type='MiddlewareDeployment')) + \
+        len(provider.topology.elements(element_type='MiddlewareDeploymentWar')) + \
+        len(provider.topology.elements(element_type='MiddlewareDeploymentEar')),\
         "Number of deployment(s) miss match between topology page and in database"
 
 

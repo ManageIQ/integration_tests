@@ -10,7 +10,7 @@ from cfme.web_ui.menu import nav
 from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg, flash
+    Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg, flash, InfoBlock
 )
 from cfme.web_ui.form_buttons import FormButton
 from functools import partial
@@ -126,7 +126,7 @@ class Datastore(Pretty):
             try:
                 list_acc.select('Relationships', 'Hosts', by_title=False, partial=True)
             except sel.NoSuchElementException:
-                return []
+                sel.click(InfoBlock('Relationships', 'Hosts'))
         return [q.name for q in Quadicon.all("host")]
 
     def _on_hosts_page(self):
@@ -146,7 +146,7 @@ class Datastore(Pretty):
             try:
                 list_acc.select('Relationships', "VMs", by_title=False, partial=True)
             except (sel.NoSuchElementException, ListAccordionLinkNotFound):
-                return []
+                sel.click(InfoBlock('Relationships', 'Managed VMs'))
         return [q.name for q in Quadicon.all("vm")]
 
     def _on_vms_page(self):

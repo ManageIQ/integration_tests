@@ -594,18 +594,24 @@ class IPAppliance(object):
         log_callback('Precompiling assets')
         client = self.ssh_client
 
+        store.terminalreporter.write_line('Precompiling assets')
+        store.terminalreporter.write_line(
+            'THIS IS NOT STUCK. Just wait until it\'s done, it will be only done once', red=True)
+        store.terminalreporter.write_line('Phase 1 of 2: rake assets:clobber')
         status, out = client.run_rake_command("assets:clobber")
         if status != 0:
             msg = 'Appliance {} failed to nuke old assets'.format(self.address)
             log_callback(msg)
             raise ApplianceException(msg)
 
+        store.terminalreporter.write_line('Phase 2 of 2: rake assets:precompile')
         status, out = client.run_rake_command("assets:precompile")
         if status != 0:
             msg = 'Appliance {} failed to precompile assets'.format(self.address)
             log_callback(msg)
             raise ApplianceException(msg)
 
+        store.terminalreporter.write_line('Asset precompilation done')
         return status
 
     @logger_wrap("Backup database: {}")
@@ -1150,6 +1156,7 @@ class IPAppliance(object):
         """Restarts the ``evmserverd`` service on this appliance
         """
         log_callback('restarting evm service')
+        store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
         with self.ssh_client as ssh:
             if rude:
                 status, msg = ssh.run_command(

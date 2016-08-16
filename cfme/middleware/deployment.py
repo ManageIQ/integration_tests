@@ -108,7 +108,10 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Deployable):
             _provider = provider  # In deployment UI, we cannot get provider name on list all page
             for _ in paginator.pages():
                 for row in list_tbl.rows():
-                    _server = MiddlewareServer(provider=provider, name=row.server.text)
+                    _server = MiddlewareServer(
+                        provider=provider,
+                        name=row.server.text,
+                        hostname=row.host_name.text)
                     deployments.append(MiddlewareDeployment(
                         provider=_provider,
                         server=_server,

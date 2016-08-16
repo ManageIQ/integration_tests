@@ -368,8 +368,12 @@ def clear_provider_by_type(prov_class, validate=True):
         logger.info(' Providers exist, so removing all {} providers'.format(prov_class))
         paginator.results_per_page('100')
         sel.click(paginator.check_all())
-        toolbar.select('Configuration', 'Remove {} Providers from the VMDB'.format(string_name),
-                       invokes_alert=True)
+        toolbar.select(
+            'Configuration', {
+                version.LOWEST: 'Remove {} Providers from the VMDB'.format(string_name),
+                '5.7': 'Remove {} Providers'.format(string_name),
+            },
+            invokes_alert=True)
         sel.handle_alert()
         if validate:
             wait_for_no_providers_by_type(prov_class)

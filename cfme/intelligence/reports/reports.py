@@ -165,6 +165,7 @@ report_form = TabStripForm(
             ("filter_owner", select(id="cb_owner_id")),
             ("filter_tag_cat", select(id="cb_tag_cat")),
             ("filter_tag_value", select(id="cb_tag_value")),
+            ("interval_end", select(id="cb_end_interval_offset")),
         ],
         "Summary": [
             ("sort", ShowingInputs(

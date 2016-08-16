@@ -232,7 +232,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             cancel: Whether to cancel the deletion, defaults to True
         """
         self.load_details()
-        cfg_btn('Remove this {} Provider from the VMDB'.format(self.string_name),
+        cfg_btn('Remove this {} Provider'.format(self.string_name),
             invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         fire("providers_changed")

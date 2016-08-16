@@ -89,7 +89,9 @@ class Instance(Updateable, Pretty):
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None, vm_name=None, catalog_name=None,
                  instance_type=None, availability_zone=None, cloud_tenant=None, cloud_network=None,
-                 security_groups=None, provider=None, provider_mgmt=None, guest_keypair=None):
+                 security_groups=None, virtual_private_cloud=None, resource_group=None,
+                 cloud_subnet=None, provider=None,
+                 provider_mgmt=None, guest_keypair=None):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -103,6 +105,9 @@ class Instance(Updateable, Pretty):
         self.cloud_tenant = cloud_tenant
         self.cloud_network = cloud_network
         self.security_groups = security_groups
+        self.resource_group = resource_group
+        self.cloud_subnet = cloud_subnet
+        self.virtual_private_cloud = virtual_private_cloud
         self.provider = provider
         self.provider_mgmt = provider_mgmt
         self.guest_keypair = guest_keypair
@@ -137,6 +142,9 @@ class Instance(Updateable, Pretty):
             'availability_zone': self.availability_zone,
             'cloud_tenant': self.cloud_tenant,
             'cloud_network': self.cloud_network,
+            'resource_groups': self.resource_group,
+            'virtual_private_cloud': self.virtual_private_cloud,
+            'cloud_subnet': self.cloud_subnet,
             'security_groups': self.security_groups[0],  # not supporting multiselect now,
                                                          # just take first value
         })
