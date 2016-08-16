@@ -57,7 +57,7 @@ def catalog():
     yield catalog
 
 
-@pytest.mark.meta(blockers=1290932)
+@pytest.mark.meta(blockers=[1344103, 1367176])
 def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, provisioning):
     """Tests cloud catalog item
 
@@ -68,8 +68,7 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     image = provisioning['image']['name']
     item_name = fauxfactory.gen_alphanumeric()
-
-    cloud_catalog_item = cct.Instance(
+    data = dict(
         item_type=provisioning['item_type'],
         name=item_name,
         description="my catalog",
@@ -78,15 +77,26 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
         dialog=dialog,
         catalog_name=image,
         vm_name=vm_name,
-        instance_type=provisioning['instance_type'],
-        availability_zone=provisioning['availability_zone'],
-        cloud_tenant=provisioning['cloud_tenant'],
-        cloud_network=provisioning['cloud_network'],
-        security_groups=[provisioning['security_group']],
         provider_mgmt=provider.mgmt,
         provider=provider.name,
-        guest_keypair=provisioning['guest_keypair'])
-
+        instance_type=provisioning['instance_type'],
+        security_groups=[provisioning['security_group']],
+    )
+    if provider.type == "azure":
+        updates = dict(
+            virtual_private_cloud=provisioning['virtual_private_cloud'],
+            cloud_subnet=provisioning['cloud_subnet'],
+            resource_group=[provisioning['resource_group']],
+        )
+    else:
+        updates = dict(
+            availability_zone=provisioning['availability_zone'],
+            cloud_tenant=provisioning['cloud_tenant'],
+            cloud_network=provisioning['cloud_network'],
+            guest_keypair=provisioning['guest_keypair']
+        )
+    data.update(updates)
+    cloud_catalog_item = cct.Instance(**data)
     cloud_catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog.name, cloud_catalog_item)

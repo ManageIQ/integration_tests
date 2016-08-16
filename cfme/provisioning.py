@@ -116,6 +116,9 @@ provisioning_form = tabstrip.TabStripForm(
             ('security_groups', {
                 version.LOWEST: ui.Select('select#environment__security_groups'),
                 '5.5': AngularSelect('environment__security_groups')}),
+            ('resource_groups', {
+                version.LOWEST: ui.Select('select#environment__resource_group'),
+                '5.5': AngularSelect('environment__resource_group')}),
             ('public_ip_address', {
                 version.LOWEST: ui.Select('select#environment__floating_ip_address'),
                 '5.5': AngularSelect('environment__floating_ip_address')}),
