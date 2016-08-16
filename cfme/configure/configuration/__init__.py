@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from contextlib import contextmanager
 from functools import partial
 from cached_property import cached_property

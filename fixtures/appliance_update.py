@@ -5,6 +5,7 @@ It has two uses:
 1) If only ``--update-appliance`` is specified, it will use the YAML url.
 2) If you also specify one or more ``--update-url``, it will use them instead.
 """
+from __future__ import unicode_literals
 import pytest
 
 

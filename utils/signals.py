@@ -6,6 +6,7 @@ caches have become stale and need to be invalidated. The example below shows thi
 
 .. code-block:: python
 
+from __future__ import unicode_literals
    import signals
    from fixtures.pytest_store import store
    from utils import clear_property_cache

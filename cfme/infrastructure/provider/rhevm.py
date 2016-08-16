@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from mgmtsystem.rhevm import RHEVMSystem
 from . import Provider, prop_region
 

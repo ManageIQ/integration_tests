@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import xml.etree.ElementTree as ET
 from jinja2 import Environment, FileSystemLoader
 from utils.path import template_path, log_path, data_path

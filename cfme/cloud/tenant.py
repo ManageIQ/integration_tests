@@ -5,6 +5,7 @@
 :var details_page: A :py:class:`cfme.web_ui.Region` object describing elements on the detail page.
 """
 
+from __future__ import unicode_literals
 from utils.conf import cfme_data
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Region, SplitTable

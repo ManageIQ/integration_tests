@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests around the appliance"""
 
+from __future__ import unicode_literals
 import pytest
 
 from utils import db, version

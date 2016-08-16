@@ -24,6 +24,7 @@ Example usage:
 
 """
 
+from __future__ import unicode_literals
 import argparse
 import fauxfactory
 import re

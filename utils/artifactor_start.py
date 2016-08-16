@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import unicode_literals
 from artifactor import Artifactor, initialize
 import argparse
 from artifactor.plugins import merkyl, logger, video, filedump, reporter, post_result, ostriz

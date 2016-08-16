@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import pytest
 from utils import ports
 from utils.log import logger

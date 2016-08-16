@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from utils.conf import cfme_data
 from utils.log import logger
 

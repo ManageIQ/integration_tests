@@ -15,6 +15,7 @@ Example usage:
 
 """
 
+from __future__ import unicode_literals
 import argparse
 import sys
 

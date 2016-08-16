@@ -3,6 +3,7 @@
 You probably want to pipe this to a pager.
 
 """
+from __future__ import unicode_literals
 import os
 import sys
 

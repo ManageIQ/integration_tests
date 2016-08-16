@@ -3,6 +3,7 @@
 """Add/activate/remove a direct_lun disk on a rhevm appliance
 """
 
+from __future__ import unicode_literals
 import argparse
 import sys
 from utils.providers import get_mgmt

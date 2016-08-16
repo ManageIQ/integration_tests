@@ -49,6 +49,7 @@ Post-testing (e.g. ci environment):
 2. Zip up and archive the entire coverage dir for review
 
 """
+from __future__ import unicode_literals
 import subprocess
 from threading import Thread
 

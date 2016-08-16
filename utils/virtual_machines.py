@@ -1,5 +1,6 @@
 """Helper functions related to the creation and destruction of virtual machines and instances
 """
+from __future__ import unicode_literals
 import pytest
 
 from mgmtsystem.virtualcenter import VMWareSystem

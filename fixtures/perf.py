@@ -1,4 +1,6 @@
 """Fixtures specifically for performance tests."""
+from __future__ import unicode_literals
+
 from utils.perf import set_rails_loglevel
 from utils.perf import get_worker_pid
 import pytest

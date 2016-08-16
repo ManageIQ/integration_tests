@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from functools import partial
 from collections import OrderedDict
 from cfme.fixtures import pytest_selenium as sel

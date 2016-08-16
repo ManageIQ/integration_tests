@@ -3,6 +3,7 @@
 
 Enables to operate Infrastructure objects. It has better VM provisioning code. OOP encapsulated.
 """
+from __future__ import unicode_literals
 from suds import WebFault
 
 from cached_property import cached_property

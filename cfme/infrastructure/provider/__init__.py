@@ -8,6 +8,7 @@
 :var default_form: A :py:class:`cfme.web_ui.Form` object describing the default credentials form.
 :var candu_form: A :py:class:`cfme.web_ui.Form` object describing the C&U credentials form.
 """
+from __future__ import unicode_literals
 from functools import partial
 
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of

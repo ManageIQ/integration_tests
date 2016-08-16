@@ -41,6 +41,8 @@ Implementation:
     Milan Falešník
 """
 
+from __future__ import unicode_literals
+
 
 class _default(object):
     """Whoever touches this outside of this module, his/her hands will fall off."""

@@ -3,6 +3,7 @@
 """ Module dealing with Configure/Tasks section.
 """
 
+from __future__ import unicode_literals
 from cfme import web_ui as ui
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs

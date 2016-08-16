@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 
 pytestmark = pytest.mark.meta(from_pytest='yep')

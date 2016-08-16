@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel

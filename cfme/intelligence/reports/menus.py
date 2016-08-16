@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module handling report menus contents"""
+from __future__ import unicode_literals
 from contextlib import contextmanager
 
 from cfme.fixtures import pytest_selenium as sel

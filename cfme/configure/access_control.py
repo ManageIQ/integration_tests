@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from functools import partial
 from cfme import Credential
 from fixtures.pytest_store import store

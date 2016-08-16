@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Provides custom exceptions for the ``cfme`` module. """
+from __future__ import unicode_literals
 import pytest
 from utils.log import logger
 

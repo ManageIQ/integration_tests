@@ -5,6 +5,7 @@ To quickly add all providers::
     setup_providers(validate=False)
 
 """
+from __future__ import unicode_literals
 import random
 from collections import Mapping
 

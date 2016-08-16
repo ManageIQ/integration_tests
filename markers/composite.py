@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from fixtures.artifactor_plugin import get_test_idents
 from fixtures.pytest_store import store
 from utils.log import logger

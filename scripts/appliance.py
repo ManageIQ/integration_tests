@@ -15,6 +15,7 @@ For example, this will work but not do anyhting helpful:
     scripts/appliance.py providername vmname __init__
 
 """
+from __future__ import unicode_literals
 import argparse
 import sys
 

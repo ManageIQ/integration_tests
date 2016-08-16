@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This testing module tests the behaviour of the search box in the Hosts section"""
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 from itertools import dropwhile

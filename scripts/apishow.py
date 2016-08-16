@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """This script browses thorugh the REST API and shows all collections and their actions"""
 # TODO: Subcollections
+from __future__ import unicode_literals
 import argparse
 import random
 import re

@@ -34,6 +34,7 @@ If the blocker does not block, the ``unblock`` is not called. There is also a ``
 will get called if the blocker blocks. if the action does nothing, then it continues with next
 actions etc., until it gets to the point that it skips the test because there are blockers.
 """
+from __future__ import unicode_literals
 import pytest
 
 from kwargify import kwargify as _kwargify

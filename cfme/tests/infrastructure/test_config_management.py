@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 from cfme.fixtures import pytest_selenium as sel

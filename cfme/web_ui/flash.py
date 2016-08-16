@@ -3,6 +3,7 @@
 
 :var area: A :py:class:`cfme.web_ui.Region` object representing the flash region.
 """
+from __future__ import unicode_literals
 from functools import wraps
 
 import cfme.fixtures.pytest_selenium as sel
@@ -143,12 +144,11 @@ def onexception_printall(f):
         try:
             return f(*args, **kwargs)
         except FlashMessageException as e:
-            err_text = str(e)
             messages = get_messages()
             if not messages:
                 raise  # Just reraise the original
             messages = ['{}: {}'.format(message.level, message.message) for message in messages]
-            new_err_text = '{}\nPresent flash messages:\n{}'.format(err_text, '\n'.join(messages))
+            new_err_text = '{}\nPresent flash messages:\n{}'.format(e, '\n'.join(messages))
             raise type(e)(new_err_text)
     return g
 

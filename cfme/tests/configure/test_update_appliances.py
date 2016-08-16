@@ -5,6 +5,7 @@
 @author: jkrocil@redhat.com
 """
 
+from __future__ import unicode_literals
 from cfme.configure.configuration import set_server_roles
 from cfme.configure import red_hat_updates
 from utils import conf

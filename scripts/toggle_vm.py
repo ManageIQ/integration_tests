@@ -11,6 +11,7 @@ scripts/toggle_vm.py provider_name vm_name  uptime downtime
 
 """
 
+from __future__ import unicode_literals
 import argparse
 import sys
 import time

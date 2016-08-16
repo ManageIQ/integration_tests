@@ -2,6 +2,7 @@
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the dashboard page
 """
+from __future__ import unicode_literals
 import re
 
 import cfme.fixtures.pytest_selenium as sel

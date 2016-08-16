@@ -84,6 +84,7 @@ More information on ``parametrize`` can be found in pytest's documentation:
 * https://pytest.org/latest/parametrize.html#_pytest.python.Metafunc.parametrize
 
 """
+from __future__ import unicode_literals
 import pytest
 
 from collections import OrderedDict

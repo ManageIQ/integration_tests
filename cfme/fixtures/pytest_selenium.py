@@ -11,6 +11,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 :var ajax_wait_js: A Javascript function for ajax wait checking
 :var class_selector: Regular expression to detect simple CSS locators
 """
+from __future__ import unicode_literals
 from HTMLParser import HTMLParser
 from time import sleep
 from xml.sax.saxutils import quoteattr, unescape
@@ -262,8 +263,8 @@ def element(o, **kwargs):
             if r_e is not None:
                 raise exceptions.CFMEExceptionOccured(
                     "Element {} not found on page because the following Rails error happened:\n{}"
-                    .format(str(o), r_e))
-        raise NoSuchElementException("Element {} not found on page.".format(str(o)))
+                    .format(o, r_e))
+        raise NoSuchElementException("Element {} not found on page.".format(o))
     return matches[0]
 
 

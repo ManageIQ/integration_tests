@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from mgmtsystem.google import GoogleCloudSystem
 from . import Provider
 import cfme.fixtures.pytest_selenium as sel

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
+from __future__ import unicode_literals
 from contextlib import contextmanager
 from datetime import date
 from functools import partial

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate

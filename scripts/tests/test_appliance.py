@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for appliance.py script."""
+from __future__ import unicode_literals
 import pytest
 
 from scripts import appliance

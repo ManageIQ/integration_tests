@@ -12,6 +12,7 @@ Furthermore, smoke tests are an excellent target for the requires_test mark
 since they're run first.
 
 """
+from __future__ import unicode_literals
 from collections import defaultdict
 from time import time
 

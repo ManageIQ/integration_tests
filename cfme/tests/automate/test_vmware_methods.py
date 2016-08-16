@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module contains tests that exercise the canned VMware Automate stuff."""
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 

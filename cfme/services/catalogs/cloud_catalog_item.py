@@ -2,6 +2,7 @@
 catalog item of type "Amazon
 
 """
+from __future__ import unicode_literals
 import functools
 
 import cfme.fixtures.pytest_selenium as sel

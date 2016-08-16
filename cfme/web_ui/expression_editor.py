@@ -2,6 +2,7 @@
 """ The expression editor present in some locations of CFME.
 
 """
+from __future__ import unicode_literals
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from multimethods import singledispatch

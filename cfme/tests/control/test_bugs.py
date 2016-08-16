@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 
@@ -36,7 +37,7 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
     policy = VMCompliancePolicy(
         "Windows registry scope glitch testing Compliance Policy",
         active=True,
-        scope=r"fill_registry(HKLM\SOFTWARE\Microsoft\CurrentVersion\Uninstall\test, "
+        scope=r"fill_registry(HKLM\\SOFTWARE\\Microsoft\\CurrentVersion\\Uninstall\\test, "
         r"some value, INCLUDES, some content)"
     )
     request.addfinalizer(lambda: policy.delete() if policy.exists else None)

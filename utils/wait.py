@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from wait_for import wait_for as wait_for_mod
 from wait_for import RefreshTimer, TimedOutError  # NOQA
 from utils.log import logger

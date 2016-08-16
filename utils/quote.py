@@ -6,6 +6,7 @@
 ######################################################################
 # PEP8 applied and some things tweaked by Milan Falesnik
 
+from __future__ import unicode_literals
 import re
 
 __all__ = ('quote',)

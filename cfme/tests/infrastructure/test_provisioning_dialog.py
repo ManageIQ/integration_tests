@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module tests various ways how to set up the provisioning using the provisioning dialog."""
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 import re

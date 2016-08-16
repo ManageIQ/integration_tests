@@ -7,6 +7,7 @@ Usage: scripts/cleanup_openstack_fips.py [optional list of provider keys]
 If no providers specified, it will cleanup all of them.
 
 """
+from __future__ import unicode_literals
 import sys
 from traceback import format_exc
 

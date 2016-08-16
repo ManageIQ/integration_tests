@@ -7,6 +7,7 @@ Usage:
    scripts/encrypt_conf.py confname1 confname2 ... confnameN
    scripts/encrypt_conf.py credentials
 """
+from __future__ import unicode_literals
 import sys
 
 import yaycl_crypt

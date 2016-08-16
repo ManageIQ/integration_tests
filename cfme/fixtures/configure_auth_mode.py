@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 from utils.conf import cfme_data, credentials
 from utils.ext_auth import disable_external_auth_ipa, setup_external_auth_ipa

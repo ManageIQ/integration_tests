@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import unicode_literals
 from utils.conf import docker as docker_conf
 from utils.net import random_port, my_ip_address
 import argparse

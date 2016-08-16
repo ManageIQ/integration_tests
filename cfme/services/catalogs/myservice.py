@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from functools import partial
 from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel

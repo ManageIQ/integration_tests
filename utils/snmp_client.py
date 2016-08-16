@@ -4,6 +4,7 @@
 It automatically detects whether the listener is installed and if it is not, it installs it
 automatically.
 """
+from __future__ import unicode_literals
 import requests
 from subprocess import Popen, PIPE
 

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from collections import Mapping
 
 from cfme.fixtures import pytest_selenium as sel

@@ -51,6 +51,7 @@ Note:
     pytest and may invalidate your puppies.
 
 """
+from __future__ import unicode_literals
 import inspect
 import os
 

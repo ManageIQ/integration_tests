@@ -1,5 +1,6 @@
 # Imports for backward compatility and convenience
 # NOQA all the things because
+from __future__ import unicode_literals
 import time
 from mgmtsystem.base import VMInfo, MgmtSystemAPIBase, ContainerMgmtSystemAPIBase, Logger  # NOQA
 from mgmtsystem import exceptions  # NOQA

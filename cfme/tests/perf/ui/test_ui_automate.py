@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 """UI performance tests on Automate."""
+from __future__ import unicode_literals
 from cfme.fixtures import pytest_selenium as sel
 from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat

@@ -9,6 +9,7 @@
 :var amqp_form: A :py:class:`cfme.web_ui.Form` object describing the AMQP credentials form.
 """
 
+from __future__ import unicode_literals
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel

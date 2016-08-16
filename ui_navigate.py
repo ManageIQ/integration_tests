@@ -11,6 +11,7 @@ containing other nodes.
 
 .. moduleauthor:: Jeff Weiss <jweiss@redhat.com>
 """
+from __future__ import unicode_literals
 from itertools import dropwhile
 from copy import deepcopy
 import functools

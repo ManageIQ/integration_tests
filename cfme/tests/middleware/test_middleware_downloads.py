@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 from cfme.middleware import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider

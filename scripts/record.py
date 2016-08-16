@@ -4,6 +4,7 @@
 
 Use when you want to record something separately
 """
+from __future__ import unicode_literals
 import time
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from utils.video import Recorder

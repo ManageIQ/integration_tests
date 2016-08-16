@@ -5,6 +5,7 @@ the credentials in the cfme yamls.
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the login page
 """
+from __future__ import unicode_literals
 from __future__ import absolute_import
 
 from selenium.webdriver.common.keys import Keys

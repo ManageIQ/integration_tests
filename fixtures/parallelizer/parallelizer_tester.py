@@ -6,6 +6,7 @@ This file is named specially to prevent being picked up by py.test's default col
 not be run during a normal test run.
 
 """
+from __future__ import unicode_literals
 import random
 from time import sleep
 

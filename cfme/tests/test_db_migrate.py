@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 from os import path as os_path
 

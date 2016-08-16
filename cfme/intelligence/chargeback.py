@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from collections import Mapping
 from copy import copy
 from functools import partial

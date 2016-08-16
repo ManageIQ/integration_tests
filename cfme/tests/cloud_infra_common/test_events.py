@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module tests events that are invoked by Cloud/Infra VMs."""
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 

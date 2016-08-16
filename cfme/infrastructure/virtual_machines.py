@@ -2,6 +2,7 @@
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
+from __future__ import unicode_literals
 import fauxfactory
 import re
 from cfme.common.vm import VM as BaseVM, Template as BaseTemplate

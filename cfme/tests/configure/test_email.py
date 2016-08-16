@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from cfme.configure import configuration
 from utils.wait import wait_for
 

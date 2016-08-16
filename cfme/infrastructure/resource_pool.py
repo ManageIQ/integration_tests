@@ -5,6 +5,7 @@
            Resource pool pages.
 """
 
+from __future__ import unicode_literals
 from cfme.web_ui.menu import nav
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, toolbar as tb

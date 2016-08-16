@@ -17,6 +17,8 @@ The availability of these objects varies during a test run, but
 all should be available in the collection and testing phases of a test run.
 
 """
+from __future__ import unicode_literals
+
 import fauxfactory
 import os
 import sys

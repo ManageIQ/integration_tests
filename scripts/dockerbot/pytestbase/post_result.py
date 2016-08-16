@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import unicode_literals
 from utils.trackerbot import post_task_result
 import os
 import sys

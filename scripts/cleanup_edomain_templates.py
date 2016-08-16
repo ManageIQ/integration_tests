@@ -6,6 +6,7 @@ them. In case of no --provider parameter specified then this script
 traverse all the rhevm providers in cfme_data.
 """
 
+from __future__ import unicode_literals
 import argparse
 import datetime
 import pytz

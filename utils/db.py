@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from collections import Mapping
 from contextlib import contextmanager
 from itertools import izip

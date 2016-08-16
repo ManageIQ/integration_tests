@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module contains tests that are supposed to test CFME's CLI functionality."""
+from __future__ import unicode_literals
 import pytest
 
 from cfme.automate.explorer import Domain

@@ -11,6 +11,7 @@ Usage:
       acc.is_active('Diagnostics')
 """
 
+from __future__ import unicode_literals
 from xml.sax.saxutils import quoteattr, unescape
 
 import cfme.fixtures.pytest_selenium as sel

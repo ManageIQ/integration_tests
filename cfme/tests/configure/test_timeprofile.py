@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import fauxfactory
 import cfme.configure.settings as st
 import pytest

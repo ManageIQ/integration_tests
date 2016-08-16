@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Storage for ports. Set defaults here, then :py:mod:`fixtures.portset` will make overrides."""
+from __future__ import unicode_literals
 import sys
 
 from utils.log import logger

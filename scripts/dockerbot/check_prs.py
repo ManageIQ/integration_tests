@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import unicode_literals
 from datetime import datetime
 
 import fauxfactory
@@ -49,7 +50,7 @@ def send_message_to_bot(msg):
         channel = connection.channel()
         message = {"channel": irc_channel, "body": msg}
         channel.basic_publish(exchange='', routing_key=queue,
-                              body=json.dumps(message, ensure_ascii=True))
+                              body=json.dumps(message, ensure_ascii=False))
     except Exception:
         output = traceback.format_exc()
         logger.warn("Exception while sending a message to the bot: {}".format(output))

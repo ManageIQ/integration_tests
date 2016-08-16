@@ -2,6 +2,7 @@
 
 """SSH into a running appliance and install SNMP listener."""
 
+from __future__ import unicode_literals
 import argparse
 import requests
 import sys

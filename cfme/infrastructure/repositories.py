@@ -1,5 +1,6 @@
 """Infrastructure / Repositories"""
 
+from __future__ import unicode_literals
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel

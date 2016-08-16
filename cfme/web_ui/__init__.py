@@ -50,6 +50,7 @@
   * :py:mod:`cfme.web_ui.toolbar`
 
 """
+from __future__ import unicode_literals
 
 import atexit
 import os
@@ -2342,7 +2343,8 @@ class Quadicon(Pretty):
             return "contains(normalize-space(@title), {name})"\
                 .format(name=quoteattr('Name: {}'.format(self._name)))
         else:
-            return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
+            return "@title={name} or @data-original-title={name}".format(
+                name=quoteattr(self._name))
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""

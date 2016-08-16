@@ -3,6 +3,7 @@
 
 Extensively uses :py:mod:`cfme.intelligence.reports.ui_elements`
 """
+from __future__ import unicode_literals
 from functools import partial
 
 from cached_property import cached_property

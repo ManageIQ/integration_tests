@@ -3,6 +3,7 @@
 
 See :py:func:`rest_api` and py:func:`rest_api_modscope`
 """
+from __future__ import unicode_literals
 import pytest
 
 

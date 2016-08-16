@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from . import Provider
 from utils.varmeth import variable
 from mgmtsystem.openshift import Openshift

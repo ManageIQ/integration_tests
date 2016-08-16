@@ -9,6 +9,7 @@ Usage:
     print(get_selected_tab())
 
 """
+from __future__ import unicode_literals
 from collections import Mapping
 
 import cfme.fixtures.pytest_selenium as sel

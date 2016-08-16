@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from functools import partial
 from cached_property import cached_property
 import cfme

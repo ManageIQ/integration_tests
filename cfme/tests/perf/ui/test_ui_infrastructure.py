@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 """UI performance tests on Infrastructure."""
+from __future__ import unicode_literals
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.datastore import get_all_datastores
 from cfme.infrastructure.host import get_all_hosts

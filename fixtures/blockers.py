@@ -8,6 +8,7 @@ it accepts number argument and spits out the BUGZILLA BUG! (:py:class:`utils.bz.
 as specified in the meta marker. All of them are converted to the :py:class:`utils.blockers.Blocker`
 instances
 """
+from __future__ import unicode_literals
 import pytest
 
 from fixtures.pytest_store import store

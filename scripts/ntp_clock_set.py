@@ -15,6 +15,7 @@ clock_servers:
 - serverN.org
 """
 
+from __future__ import unicode_literals
 import argparse
 
 from utils.appliance import IPAppliance

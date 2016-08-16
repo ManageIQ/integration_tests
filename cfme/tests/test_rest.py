@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module contains REST API specific tests."""
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 

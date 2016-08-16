@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 """UI performance tests on Cloud."""
+from __future__ import unicode_literals
 from cfme.cloud.provider import get_all_providers as get_all_cloud_provs
 from cfme.fixtures import pytest_selenium as sel
 from utils.blockers import BZ

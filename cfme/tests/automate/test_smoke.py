@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This test contains necessary smoke tests for the Automate."""
+from __future__ import unicode_literals
 import pytest
 
 from cfme.automate.explorer import Domain

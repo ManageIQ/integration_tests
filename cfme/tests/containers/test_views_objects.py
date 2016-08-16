@@ -1,6 +1,7 @@
 # the test verifies functionality
 # of different views such as grid view, tile view
 # and list view
+from __future__ import unicode_literals
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb

@@ -3,6 +3,7 @@
 not be difficult to extend the parametrizer.
 
 """
+from __future__ import unicode_literals
 import pytest
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider

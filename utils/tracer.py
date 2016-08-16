@@ -1,4 +1,5 @@
 """
+from __future__ import unicode_literals
 To use the function tracer, simply import the trace object and wrap a function with it
 
 from utils.tracer import trace::

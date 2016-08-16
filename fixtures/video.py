@@ -11,6 +11,7 @@ Yaml example:
                quality: 10
 """
 
+from __future__ import unicode_literals
 import os
 import os.path
 import pytest

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
 from . import Provider, prop_region
 

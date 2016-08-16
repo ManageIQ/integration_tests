@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from mgmtsystem.ec2 import EC2System
 from . import Provider
 import cfme.fixtures.pytest_selenium as sel

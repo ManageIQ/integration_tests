@@ -2,6 +2,7 @@
 """This testing module tests the behaviour of the search box in the Provider section
 
 It does not check for filtering results so far."""
+from __future__ import unicode_literals
 import fauxfactory
 import pytest
 

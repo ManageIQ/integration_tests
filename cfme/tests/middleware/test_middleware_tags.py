@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 from cfme.configure.configuration import Category, Tag
 from cfme.middleware import get_random_list

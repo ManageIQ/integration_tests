@@ -2,6 +2,7 @@
 """Module handling Dashboard Widgets accordion.
 
 """
+from __future__ import unicode_literals
 from xml.sax.saxutils import quoteattr
 
 from cfme.fixtures import pytest_selenium as sel
