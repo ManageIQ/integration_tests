@@ -16,9 +16,12 @@ grid_pages = [
     'clouds_providers',
     'clouds_availability_zones',
     'clouds_tenants',
+    'clouds_volumes',
     'clouds_flavors',
     'clouds_instances',
     'clouds_stacks',
+    'clouds_key_pairs',
+    'clouds_object_stores',
 ]
 
 landing_pages = [
@@ -74,9 +77,7 @@ def set_cloud_provider_quad():
     visual.cloud_provider_quad = True
 
 
-@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-@pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
 def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     """ Tests grid items per page
 
@@ -93,9 +94,7 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
                 "Gridview Failed for page {}!".format(page)
 
 
-@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-@pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
 def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
     """ Tests tile items per page
 
@@ -112,9 +111,7 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
                 "Tileview Failed for page {}!".format(page)
 
 
-@pytest.mark.meta(blockers=[1267148])
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-@pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
 def test_list_page_per_item(request, setup_a_provider, page, set_list):
     """ Tests list items per page
 
