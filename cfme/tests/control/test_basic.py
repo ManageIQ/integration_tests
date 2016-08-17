@@ -44,6 +44,17 @@ VM_EXPRESSIONS_TO_TEST = [
     # Needs working input/select mutability
 ]
 
+CONTAINER_POLICIES = [
+    explorer.ReplicatorCompliancePolicy,
+    explorer.PodCompliancePolicy,
+    explorer.ContainerNodeCompliancePolicy,
+    explorer.ContainerImageCompliancePolicy,
+    explorer.ReplicatorControlPolicy,
+    explorer.PodControlPolicy,
+    explorer.ContainerNodeControlPolicy,
+    explorer.ContainerImageControlPolicy
+]
+
 
 @pytest.yield_fixture
 def random_alert():
@@ -55,14 +66,23 @@ def random_alert():
     alert.delete()
 
 
-@pytest.yield_fixture(params=[explorer.VMCompliancePolicy,
-                              explorer.HostCompliancePolicy,
-                              explorer.HostControlPolicy,
-                              explorer.VMControlPolicy],
-                      ids=["VMCompliancePolicy",
-                           "HostCompliancePolicy",
-                           "HostControlPolicy",
-                           "VMControlPolicy"])
+@pytest.yield_fixture(
+    params=[
+        explorer.HostCompliancePolicy,
+        explorer.VMCompliancePolicy,
+        explorer.ReplicatorCompliancePolicy,
+        explorer.PodCompliancePolicy,
+        explorer.ContainerNodeCompliancePolicy,
+        explorer.ContainerImageCompliancePolicy,
+        explorer.HostControlPolicy,
+        explorer.VMControlPolicy,
+        explorer.ReplicatorControlPolicy,
+        explorer.PodControlPolicy,
+        explorer.ContainerNodeControlPolicy,
+        explorer.ContainerImageControlPolicy
+    ],
+    ids=lambda policy_class: policy_class.__name__
+)
 def random_policy(request):
     policy = request.param(fauxfactory.gen_alphanumeric())
     policy.create()
@@ -404,6 +424,8 @@ def test_container_image_compliance_policy_crud(soft_assert):
 
 
 @pytest.mark.tier(3)
+@pytest.mark.uncollectif(
+    lambda random_policy: random_policy in CONTAINER_POLICIES and current_version() < "5.6")
 def test_policies_copy(random_policy, soft_assert):
     random_policy_copy = random_policy.copy()
     soft_assert(random_policy_copy.exists, "The {} does not exist!".format(random_policy_copy))
