@@ -56,7 +56,7 @@ properties_form = Form(
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('api_port', Input("port")),
         ('sec_protocol', {version.LOWEST: Select("select#security_protocol"),
-            '5.5': AngularSelect("security_protocol")}),
+            '5.5': AngularSelect("security_protocol", exact=True)}),
         ('sec_realm', Input("realm"))
     ])
 
@@ -71,13 +71,13 @@ properties_form_56 = TabStripForm(
         "Default": [
             ('hostname_text', Input("default_hostname")),
             ('api_port', Input("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol")),
+            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
         ],
         "Events": [
             ('event_selection', Radio('event_stream_selection')),
             ('amqp_hostname_text', Input("amqp_hostname")),
             ('amqp_api_port', Input("amqp_api_port")),
-            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol")),
+            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol", exact=True)),
         ],
         "C & U Database": [
             ('candu_hostname_text', Input("metrics_hostname")),
