@@ -62,7 +62,7 @@ properties_form_56 = TabStripForm(
         "Default": [
             ('hostname_text', Input("default_hostname")),
             ('port_text', Input("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol")),
+            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
         ],
         "Hawkular": [
             ('hawkular_hostname', Input("hawkular_hostname")),
