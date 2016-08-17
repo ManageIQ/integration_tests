@@ -173,7 +173,7 @@ def test_providers_discovery(request, provider):
     """
     provider.discover()
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
-    request.addfinalizer(providers.clear_infra_providers)
+    request.addfinalizer(lambda: providers.clear_provider_by_type("infra"))
     wait_for_a_provider()
 
 

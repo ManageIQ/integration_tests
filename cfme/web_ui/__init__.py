@@ -75,6 +75,7 @@ from cfme.fixtures.pytest_selenium import Select
 from utils import attributize_string, castmap, normalize_space, version
 from utils.log import logger
 from utils.pretty import Pretty
+from wait_for import TimedOutError
 
 
 class Selector(object):
@@ -1426,11 +1427,16 @@ class Form(Region):
     def __init__(self, fields=None, identifying_loc=None):
         self.metadata = {}
         self.locators = {}
+        fields_seen = set()
         for field in fields:
             try:
+                if field[0] in fields_seen:
+                    raise ValueError('You cannot have duplicate field names in a Form ({})'.format(
+                        field[0]))
                 self.locators[field[0]] = field[1]
                 if len(field) == 3:
                     self.metadata[field[0]] = field[2]
+                fields_seen.add(field[0])
             except IndexError:
                 raise ValueError("fields= can be 2- or 3-tuples only! (name, loc[, metadata])")
 
@@ -1488,11 +1494,13 @@ def _fill_form_list(form, values, action=None, action_always=False):
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
             try:
-                sel.wait_for_element(loc)
+                sel.wait_for_element(loc, timeout=10)
             except TypeError:
                 # TypeError - when loc is not resolvable to an element, elements() will yell
                 # vvv An alternate scenario when element is not resolvable, just wait a bit.
                 time.sleep(1)
+            except TimedOutError:
+                logger.warning("This element [{}] couldn't be waited for".format(loc))
             logger.trace(' Dispatching fill for %s', field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed

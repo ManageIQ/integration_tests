@@ -6,6 +6,7 @@ import os
 # import diaper for backward compatibility
 import diaper
 from cached_property import cached_property
+from functools import partial
 from werkzeug.local import LocalProxy
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
@@ -351,3 +352,43 @@ def castmap(t, i, *args, **kwargs):
         A list.
     """
     return list(icastmap(t, i, *args, **kwargs))
+
+
+class InstanceClassMethod(object):
+    """ Decorator-descriptor that enables you to use any method both as class and instance one
+
+    Usage:
+
+    .. code-block:: python
+        class SomeClass(object):
+            @InstanceClassMethod
+            def a_method(self):
+                the_instance_variant()
+
+            @a_method.classmethod
+            def a_method(cls):
+                the_class_variant()
+
+        i = SomeClass()
+        i.a_method()
+        SomeClass.a_method()
+        # Both are possible
+
+    If you don't pass ``classmethod`` the "instance" method, the one that was passed first will
+    be called for both kinds of invocation.
+    """
+    def __init__(self, instance_or_class_method):
+        self.instance_or_class_method = instance_or_class_method
+        self.class_method = None
+
+    def classmethod(self, class_method):
+        self.class_method = class_method
+        return self
+
+    def __get__(self, o, t):
+        if o is None:
+            # classmethod
+            return partial(self.class_method or self.instance_or_class_method, t)
+        else:
+            # instancemethod
+            return partial(self.instance_or_class_method, o)

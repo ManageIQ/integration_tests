@@ -147,6 +147,26 @@ def jsonapi_doc(*args, **kwargs):
 
 
 @jsonapi.method
+def has_template(template_name, preconfigured):
+    """Check if Sprout tracks a template with a particular name.
+
+    Can check both fresh templates and preconfigured ones. It will only take the ones that are:
+
+    * Ready
+    * Existing
+    * Usable
+
+    Args:
+        template_name: Name of the *original* template.
+        preconfigured: Whether to check the fresh templates or preconfigured ones.
+    """
+    query = Template.objects.filter(
+        ready=True, exists=True, usable=True, preconfigured=bool(preconfigured),
+        original_name=template_name)
+    return query.count() > 0
+
+
+@jsonapi.method
 def list_appliances(used=False):
     """Returns list of appliances.
 

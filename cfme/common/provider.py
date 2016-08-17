@@ -75,8 +75,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
                     ('default_principal', Input("default_userid")),
                     ('default_secret', Input("default_password")),
                     ('default_verify_secret', Input("default_verify")),
-                    ('token_secret', Input('bearer_password')),
-                    ('token_verify_secret', Input('bearer_verify')),
+                    ('token_secret', {
+                        version.LOWEST: Input('bearer_password'),
+                        '5.6': Input('default_password')
+                    }),
+                    ('token_verify_secret', {
+                        version.LOWEST: Input('bearer_verify'),
+                        '5.6': Input('default_verify')
+                    }),
                 ],
 
                 "RSA key pair": [
@@ -226,7 +232,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             cancel: Whether to cancel the deletion, defaults to True
         """
         self.load_details()
-        cfg_btn('Remove this {} Provider from the VMDB'.format(self.string_name),
+        cfg_btn('Remove this {} Provider'.format(self.string_name),
             invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         fire("providers_changed")

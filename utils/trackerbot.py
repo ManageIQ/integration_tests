@@ -246,6 +246,24 @@ def post_jenkins_result(job_name, number, stream, date, template,
         print(exc.content)
 
 
+def trackerbot_add_provider_template(stream, provider, template_name):
+    try:
+        existing_provider_templates = [
+            pt['id']
+            for pt in depaginate(
+                api(), api().providertemplate.get())['objects']]
+        if '{}_{}'.format(template_name, provider) in existing_provider_templates:
+            print('Template {} already tracked for provider {}'.format(
+                template_name, provider))
+        else:
+            mark_provider_template(api(), provider, template_name)
+            print('Added {} template {} on provider {}'.format(
+                stream, template_name, provider))
+    except Exception as e:
+        print(e)
+        print('{}: Error occured while template sync to trackerbot'.format(provider))
+
+
 def depaginate(api, result):
     """Depaginate the first (or only) page of a paginated result"""
     meta = result['meta']

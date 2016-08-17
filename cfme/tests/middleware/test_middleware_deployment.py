@@ -1,10 +1,15 @@
 import pytest
-from cfme.configure.configuration import Category, Tag
+
+import os
+import fauxfactory
 from cfme.middleware import get_random_list
 from cfme.middleware.deployment import MiddlewareDeployment
 from cfme.middleware.server import MiddlewareServer
 from utils import testgen
 from utils.version import current_version
+from utils.wait import wait_for
+from utils.path import middleware_resources_path
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -13,38 +18,54 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
 ITEMS_LIMIT = 5  # when we have big list, limit number of items to test
 
+RESOURCE_WAR_NAME = 'cfme_test_war_middleware.war'
+RESOURCE_JAR_NAME = 'cfme_test_jar_middleware.jar'
+RESOURCE_EAR_NAME = 'cfme_test_ear_middleware.ear'
 
-def test_list_deployments():
+EAP_PRODUCT_NAME = 'JBoss EAP'
+HAWKULAR_PRODUCT_NAME = 'Hawkular'
+
+
+def test_list_deployments(provider):
     """Tests deployments list between UI, DB and management system
 
     Steps:
-        * Get deployments list from UI
-        * Get deployments list from Database
-        * Compare size of all the list [UI, Database, Management system]
+        * Get deployments list from UI for whole Middleware
+        * Get deployments list from Database for Hawkular Local server
+        * Get deployments list from Management system for Hawkular Local server
+        * Verifies that UI list contains all DB entities
+        * Verifies that UI list contains all MGMT entities
     """
-    ui_deps = _get_deployments_set(MiddlewareDeployment.deployments())
-    db_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_db())
-    mgmt_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_mgmt())
-    assert ui_deps == db_deps == mgmt_deps, \
-        ("Lists of deployments mismatch! UI:{}, DB:{}, MGMT:{}".format(ui_deps, db_deps, mgmt_deps))
+    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    ui_deps = get_deployments_set(MiddlewareDeployment.deployments())
+    db_deps = get_deployments_set(MiddlewareDeployment.deployments_in_db(
+        provider=provider, server=server))
+    mgmt_deps = get_deployments_set(MiddlewareDeployment.deployments_in_mgmt(
+        provider=provider, server=server))
+    assert ui_deps >= db_deps, \
+        ("Lists of deployments in UI does not contain the list in DB! UI:{}, DB:{}"
+         .format(ui_deps, db_deps))
+    assert ui_deps >= mgmt_deps, \
+        ("Lists of deployments in MGMT does not contain the list in DB! UI:{}, MGMT:{}"
+         .format(ui_deps, mgmt_deps))
 
 
-def test_list_server_deployments():
-    """Gets servers list and tests deployments list for each server
+def test_list_server_deployments(provider):
+    """Tests deployments list for Hawkular Local server
 
     Steps:
-        * Get servers list from UI
+        * Get Hawkular Local server
         * Get deployments list from UI of server
         * Get deployments list from Database of server
-        * Compare size of all the list [UI, Database]
+        * Compares both lists [UI, Database]
     """
-    servers = MiddlewareServer.servers()
-    assert len(servers) > 0, "There is no server(s) available in UI"
-    for server in get_random_list(servers, ITEMS_LIMIT):
-        ui_deps = _get_deployments_set(MiddlewareDeployment.deployments(server=server))
-        db_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_db(server=server))
-        assert ui_deps == db_deps, \
-            ("Lists of deployments mismatch! UI:{}, DB:{}".format(ui_deps, db_deps))
+    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    ui_deps = get_deployments_set(MiddlewareDeployment.deployments(
+        server=server))
+    db_deps = get_deployments_set(MiddlewareDeployment.deployments_in_db(
+        server=server))
+    assert ui_deps == db_deps, \
+        ("Lists of deployments mismatch! UI:{}, DB:{}".format(ui_deps, db_deps))
 
 
 def test_list_provider_deployments(provider):
@@ -52,15 +73,23 @@ def test_list_provider_deployments(provider):
 
     Steps:
         * Get deployments list from UI of provider
-        * Get deployments list from Database of provider
-        * Get deployments list from Management system(Hawkular)
-        * Compare size of all the list [UI, Database, Management system]
+        * Get deployments list from Database for Hawkular Local server
+        * Get deployments list from Management system(Hawkular) for Hawkular Local server
+        * Verifies that UI list contains all DB entities
+        * Verifies that UI list contains all MGMT entities
     """
-    ui_deps = _get_deployments_set(MiddlewareDeployment.deployments(provider=provider))
-    db_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_db(provider=provider))
-    mgmt_deps = _get_deployments_set(MiddlewareDeployment.deployments_in_mgmt(provider=provider))
-    assert ui_deps == db_deps == mgmt_deps, \
-        ("Lists of deployments mismatch! UI:{}, DB:{}, MGMT:{}".format(ui_deps, db_deps, mgmt_deps))
+    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    ui_deps = get_deployments_set(MiddlewareDeployment.deployments(provider=provider))
+    db_deps = get_deployments_set(MiddlewareDeployment.deployments_in_db(
+        provider=provider, server=server))
+    mgmt_deps = get_deployments_set(MiddlewareDeployment.deployments_in_mgmt(
+        provider=provider, server=server))
+    assert ui_deps >= db_deps, \
+        ("Lists of deployments in UI does not contain the list in DB! UI:{}, DB:{}"
+         .format(ui_deps, db_deps))
+    assert ui_deps >= mgmt_deps, \
+        ("Lists of deployments in MGMT does not contain the list in DB! UI:{}, MGMT:{}"
+         .format(ui_deps, mgmt_deps))
 
 
 def test_list_provider_server_deployments(provider):
@@ -68,7 +97,7 @@ def test_list_provider_server_deployments(provider):
     between UI, DB and Management system
 
     Steps:
-        * Get servers list from UI of provider
+        * Get Local server from UI of provider
         * Get deployments list for the server
         * Get deployments list from UI of provider, server
         * Get deployments list from Database of provider, server
@@ -76,26 +105,16 @@ def test_list_provider_server_deployments(provider):
         * Get deployments list from Management system(Hawkular) of server
         * Compare size of all the list [UI, Database, Management system]
     """
-    servers = MiddlewareServer.servers(provider=provider)
-    assert len(servers) > 0, "There is no server(s) available in UI"
-    for server in get_random_list(servers, ITEMS_LIMIT):
-        ui_deps = _get_deployments_set(
-            MiddlewareDeployment.deployments(provider=provider, server=server))
-        db_deps = _get_deployments_set(
-            MiddlewareDeployment.deployments_in_db(provider=provider, server=server))
-        mgmt_deps = _get_deployments_set(
-            MiddlewareDeployment.deployments_in_mgmt(provider=provider, server=server))
-        assert ui_deps == db_deps == mgmt_deps, \
-            ("Lists of deployments mismatch! UI:{}, DB:{}, MGMT:{}"
-             .format(ui_deps, db_deps, mgmt_deps))
-
-
-def _get_deployments_set(deployments):
-    """
-    Return the set of deployments which contains only necessary fields,
-    such as 'name' and 'server'
-    """
-    return set((deployment.name, deployment.server.name) for deployment in deployments)
+    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    ui_deps = get_deployments_set(
+        MiddlewareDeployment.deployments(provider=provider, server=server))
+    db_deps = get_deployments_set(
+        MiddlewareDeployment.deployments_in_db(provider=provider, server=server))
+    mgmt_deps = get_deployments_set(
+        MiddlewareDeployment.deployments_in_mgmt(provider=provider, server=server))
+    assert ui_deps == db_deps == mgmt_deps, \
+        ("Lists of deployments mismatch! UI:{}, DB:{}, MGMT:{}"
+         .format(ui_deps, db_deps, mgmt_deps))
 
 
 def test_deployment(provider):
@@ -106,7 +125,8 @@ def test_deployment(provider):
         * Select up to `ITEMS_LIMIT` deployments randomly
         * Compare selected deployment details with CFME database
     """
-    ui_deps = MiddlewareDeployment.deployments(provider=provider)
+    ui_deps = MiddlewareDeployment.deployments(provider=provider,
+                                               server=get_server(provider, HAWKULAR_PRODUCT_NAME))
     assert len(ui_deps) > 0, "There is no deployment(s) available in UI"
     for dep_ui in get_random_list(ui_deps, ITEMS_LIMIT):
         dep_db = dep_ui.deployment(method='db')
@@ -116,19 +136,210 @@ def test_deployment(provider):
         dep_ui.validate_properties()
 
 
-def test_tags(provider):
-    """Tests tags in deployment page
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+def test_deploy(provider, archive_name):
+    """Tests Deployment of provided archive into EAP7 server
 
     Steps:
-        * Select a deployment randomly from database
-        * Run `validate_tags` with `tags` input
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Invokes 'Add Deployment' toolbar operation
+        * Selects "war" file to upload.
+        * Chose random Runtime Name.
+        * Checks that notification message is shown.
+        * Refreshes the provider.
+        * Verifies that deployment is shown in list and is Enabled.
+        * Selects deployment to show the details.
+        * Verified details properties.
     """
-    tags = [
-        Tag(category=Category(display_name='Environment', single_value=True), display_name='Test'),
-        Tag(category=Category(display_name='Department', single_value=False),
-            display_name='Engineering'),
-    ]
-    deps_db = MiddlewareDeployment.deployments_in_db(provider=provider)
-    assert len(deps_db) > 0, "There is no deployment(s) available in UI"
-    deployment = get_random_list(deps_db, 1)[0]
-    deployment.validate_tags(tags=tags)
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    deploy(provider, server, get_resource_path(archive_name))
+    # disable for now as not stable test because of performance issue #10138
+    # _check_deployment_enabled(provider, server, runtime_name)
+    # deployment = _get_deployment_from_list(provider, server, runtime_name)
+    # deployment.validate_properties()
+
+
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10138'])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+def test_undeploy(provider, archive_name):
+    """Tests Undeployment of archive from EAP7 server
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Deplays some deployment archive into server.
+        * Select that deployment from deployments list.
+        * Performs "Undeploy" toolbar operation on it.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently undeployed archive's status is Disabled.
+        * Selects that archive from the list to load details.
+        * Verifies that properties of deplyment's summary page and the status is Disabled.
+    """
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    runtime_name = deploy(provider, server, get_resource_path(archive_name))
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.undeploy()
+    check_deployment_disabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.validate_properties()
+
+
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10138'])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+def test_redeploy(provider, archive_name):
+    """Tests Redeployment of undeployed archive into EAP7 server
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Deploys some deployment archive into server.
+        * Undeploys that archive.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently redeployed archive's status is Enabled.
+        * Selects that archive from the list to load details.
+        * Verifies that properties of deplyment's summary page and the status is Enabled.
+    """
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    runtime_name = deploy(provider, server, get_resource_path(archive_name))
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.undeploy()
+    check_deployment_disabled(provider, server, runtime_name)
+    deployment.redeploy()
+    # enable when #9876 is fixed
+    # _check_deployment_enabled(provider, server, runtime_name)
+    # deployment = _get_deployment_from_list(provider, server, runtime_name)
+    # deployment.validate_properties()
+
+
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10138'])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+def test_stop(provider, archive_name):
+    """Tests Stopping of archive from EAP7 server
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Deploys some deployment archive into server.
+        * Select that deployment from deployments list.
+        * Performs "Stop" toolbar operation on it.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently stopped archive's status is Disabled.
+        * Selects that archive from the list to load details.
+        * Verifies that properties of deplyment's summary page and the status is Disabled.
+    """
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    runtime_name = deploy(provider, server, get_resource_path(archive_name))
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.stop()
+    check_deployment_disabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.validate_properties()
+
+
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10138'])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+def test_start(provider, archive_name):
+    """Tests Starting of stopped archive into EAP7 server
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Deploys some deployment archive into server.
+        * Stops that archive.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently stopped archive's status is Enabled.
+        * Selects that archive from the list to load details.
+        * Verifies that properties of deplyment's summary page and the status is Enabled.
+    """
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    runtime_name = deploy(provider, server, get_resource_path(archive_name))
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.stop()
+    check_deployment_disabled(provider, server, runtime_name)
+    deployment.start()
+    # enable when #10111 is fixed
+    # _check_deployment_enabled(provider, server, runtime_name)
+    # deployment = _get_deployment_from_list(provider, server, runtime_name)
+    # deployment.validate_properties()
+
+
+def get_deployments_set(deployments):
+    """
+    Return the set of deployments which contains only necessary fields,
+    such as 'name' and 'server'
+    """
+    return set((deployment.name, deployment.server.name) for deployment in deployments)
+
+
+def get_deployments_statuses(deployments):
+    """
+    Return the map of deployments which contains,
+    'name' as key, 'status' as value
+    """
+    return {deployment.name: deployment.status for deployment in deployments}
+
+
+def deploy(provider, server, file_path):
+    runtime_name = "{}_{}".format(fauxfactory.gen_alpha(8).lower(), os.path.basename(file_path))
+    server.add_deployment(file_path, runtime_name)
+    provider.refresh_provider_relationships(method='ui')
+    return runtime_name
+
+
+def get_server(provider, product):
+    for server in MiddlewareServer.servers(provider=provider):
+        if server.product == product:
+            return server
+    else:
+        raise ValueError('{} server was not found in servers list'.format(provider))
+
+
+def get_resource_path(archive_name):
+    return middleware_resources_path.join(archive_name).strpath
+
+
+def get_deployment_from_list(provider, server, runtime_name):
+    for deployment in MiddlewareDeployment.deployments(provider=provider, server=server):
+        if deployment.name == runtime_name:
+            return deployment
+    raise ValueError('Recently deployed archive {} was not found in deployments list'
+                     .format(runtime_name))
+
+
+def check_deployment_appears(provider, server, runtime_name):
+    provider.refresh_provider_relationships(method='ui')
+    wait_for(lambda: runtime_name in
+             get_deployments_statuses(MiddlewareDeployment.deployments(provider=provider,
+                                                                   server=server)),
+            delay=30, num_sec=1200,
+            message='Deployment {} must be found for server {}'
+            .format(runtime_name, server.name))
+
+
+def check_deployment_enabled(provider, server, runtime_name):
+    check_deployment_appears(provider, server, runtime_name)
+    wait_for(lambda:
+             get_deployments_statuses(MiddlewareDeployment.deployments(provider=provider,
+                                            server=server))[runtime_name] == 'Enabled',
+            delay=120, num_sec=1800,
+            message='Deployment {} must be Enabled for server {}'
+            .format(runtime_name, server.name))
+
+
+def check_deployment_disabled(provider, server, runtime_name):
+    provider.refresh_provider_relationships(method='ui')
+    wait_for(lambda:
+             get_deployments_statuses(MiddlewareDeployment.deployments(provider=provider,
+                                            server=server))[runtime_name] == 'Disabled',
+            delay=120, num_sec=1800,
+            message='Deployment {} must be Disabled for server {}'
+            .format(runtime_name, server.name))

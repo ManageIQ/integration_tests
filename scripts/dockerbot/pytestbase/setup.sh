@@ -24,7 +24,7 @@ on_exit () {
     log "Running pip update..."
     run_pip_update
     if [ -n "$POST_TASK" ]; then
-        [ $RES -eq 0 ] && OUT_RESULT="passed" || OUT_RESULT="failed"
+        [ $RES -eq 0 ] || [ $RES -eq 5 ] && OUT_RESULT="passed" || OUT_RESULT="failed"
         log "Posting result..."
         run_n_log "/post_result.py $POST_TASK $OUT_RESULT"
         log $?

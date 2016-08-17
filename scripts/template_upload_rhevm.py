@@ -17,7 +17,7 @@ from threading import Lock, Thread
 
 from ovirtsdk.xml import params
 
-from utils import net
+from utils import net, trackerbot
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.providers import get_mgmt, list_providers
@@ -555,7 +555,7 @@ def make_kwargs_rhevm(cfmeqe_data, provider):
 
 
 def upload_template(rhevip, sshname, sshpass, username, password,
-                    provider, image_url, template_name, provider_data):
+                    provider, image_url, template_name, provider_data, stream):
     try:
         print("RHEVM:{} Template {} upload started".format(provider, template_name))
         if provider_data:
@@ -606,6 +606,8 @@ def upload_template(rhevip, sshname, sshpass, username, password,
                                temp_vm_name, provider)
                 print("RHEVM:{} Templatizing VM...".format(provider))
                 templatize_vm(api, template_name, kwargs.get('cluster'), temp_vm_name, provider)
+                print("RHEVM:{} Adding template {} to trackerbot..".format(provider, template_name))
+                trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
             finally:
                 cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider,
                         temp_template_name, temp_vm_name)
@@ -680,7 +682,7 @@ def run(**kwargs):
         thread = Thread(target=upload_template,
                         args=(rhevip, sshname, sshpass, username, password, provider,
                               kwargs.get('image_url'), kwargs.get('template_name'),
-                              kwargs['provider_data']))
+                              kwargs['provider_data'], kwargs['stream']))
         thread.daemon = True
         thread_queue.append(thread)
         thread.start()

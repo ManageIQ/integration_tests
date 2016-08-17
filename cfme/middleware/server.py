@@ -2,7 +2,7 @@ import re
 from cfme.common import Taggable
 from cfme.exceptions import MiddlewareServerNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import parse_properties
+from cfme.middleware import parse_properties, Container
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import nav, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
@@ -49,7 +49,7 @@ nav.add_branch(
 )
 
 
-class MiddlewareServer(MiddlewareBase, Taggable):
+class MiddlewareServer(MiddlewareBase, Taggable, Container):
     """
     MiddlewareServer class provides actions and details on Server page.
     Class method available to get existing servers list
@@ -168,6 +168,8 @@ class MiddlewareServer(MiddlewareBase, Taggable):
             _get_servers_page(self.provider)
             if self.feed:
                 list_tbl.click_row_by_cells({'Server Name': self.name, 'Feed': self.feed})
+            elif self.hostname:
+                list_tbl.click_row_by_cells({'Server Name': self.name, 'Host Name': self.hostname})
             else:
                 list_tbl.click_row_by_cells({'Server Name': self.name})
         if not self.db_id or refresh:

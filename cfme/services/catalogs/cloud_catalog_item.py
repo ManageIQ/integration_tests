@@ -10,7 +10,7 @@ import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from cfme.provisioning import provisioning_form as request_form
 from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill,\
-    flash, form_buttons, Input, Tree
+    flash, form_buttons, Input, Tree, AngularSelect
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
@@ -34,8 +34,12 @@ basic_info_form = Form(
         ('name_text', Input("name")),
         ('description_text', Input("description")),
         ('display_checkbox', Input("display")),
-        ('select_catalog', Select("//select[@id='catalog_id']")),
-        ('select_dialog', Select("//select[@id='dialog_id']")),
+        ('select_catalog', {
+            version.LOWEST: Select("//select[@id='catalog_id']"),
+            '5.5': AngularSelect('catalog_id')}),
+        ('select_dialog', {
+            version.LOWEST: Select("//select[@id='dialog_id']"),
+            '5.5': AngularSelect('dialog_id')}),
         ('edit_button', form_buttons.save),
         ('field_entry_point', Input("fqname")),
         ('apply_btn', {
@@ -85,7 +89,9 @@ class Instance(Updateable, Pretty):
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None, vm_name=None, catalog_name=None,
                  instance_type=None, availability_zone=None, cloud_tenant=None, cloud_network=None,
-                 security_groups=None, provider=None, provider_mgmt=None, guest_keypair=None):
+                 security_groups=None, virtual_private_cloud=None, resource_group=None,
+                 cloud_subnet=None, provider=None,
+                 provider_mgmt=None, guest_keypair=None):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -99,6 +105,9 @@ class Instance(Updateable, Pretty):
         self.cloud_tenant = cloud_tenant
         self.cloud_network = cloud_network
         self.security_groups = security_groups
+        self.resource_group = resource_group
+        self.cloud_subnet = cloud_subnet
+        self.virtual_private_cloud = virtual_private_cloud
         self.provider = provider
         self.provider_mgmt = provider_mgmt
         self.guest_keypair = guest_keypair
@@ -133,6 +142,9 @@ class Instance(Updateable, Pretty):
             'availability_zone': self.availability_zone,
             'cloud_tenant': self.cloud_tenant,
             'cloud_network': self.cloud_network,
+            'resource_groups': self.resource_group,
+            'virtual_private_cloud': self.virtual_private_cloud,
+            'cloud_subnet': self.cloud_subnet,
             'security_groups': self.security_groups[0],  # not supporting multiselect now,
                                                          # just take first value
         })

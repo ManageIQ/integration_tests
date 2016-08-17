@@ -24,7 +24,56 @@ from utils.timeutil import parsetime
 # Default blocking time before giving up on an ssh command execution,
 # in seconds (float)
 RUNCMD_TIMEOUT = 1200.0
-SSHResult = namedtuple("SSHResult", ["rc", "output"])
+
+
+class SSHResult(namedtuple("SSHResult", ["rc", "output"])):
+    """Allows rich comparison for more convenient testing.
+
+    Given you have ``result`` which is an instance of :py:class:`SSHResult`, you can do as follows:
+
+    .. code-block:: python
+
+        assert result  # If $?=0, then the result evaluates to a truthy value and passes the assert
+        assert result == 'installed'  # direct matching of the output value
+        assert 'something' in result  # like before but uses the ``in`` matching for a partial match
+        assert result == 5  # assert that the $?=5 (you can use <, >, ...)
+
+    Therefore this class can act like 3 kinds of values:
+
+    * Like a string (with the output of the command) when compared with or cast to one
+    * Like a number (with the return code) when compared with or cast to one
+    * Like a bool, giving truthy value if the return code was zero. That is related to the
+      preceeding bullet.
+
+      But it still subclasses the original class therefore all old behaviour is kept. But you don't
+      have to expand the tuple or pull the value out if you are checking only one of them.
+    """
+    def __str__(self):
+        return self.output
+
+    def __contains__(self, what):
+        # Handling 'something' in x
+        if not isinstance(what, basestring):
+            raise ValueError('You can only check strings using the in operator')
+        return what in self.output
+
+    def __nonzero__(self):
+        # Handling bool(x) or if x:
+        return self.rc == 0
+
+    def __int__(self):
+        # handling int(x)
+        return self.rc
+
+    def __cmp__(self, other):
+        # Handling comparison to strings or numbers
+        if isinstance(other, int):
+            return cmp(self.rc, other)
+        elif isinstance(other, basestring):
+            return cmp(self.output, other)
+        else:
+            raise ValueError('You can only compare SSHResult with str or int')
+
 
 _ssh_key_file = project_path.join('.generated_ssh_key')
 _ssh_pubkey_file = project_path.join('.generated_ssh_key.pub')

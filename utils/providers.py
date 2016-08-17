@@ -7,8 +7,6 @@ To quickly add all providers::
 """
 import random
 from collections import Mapping
-from operator import methodcaller
-
 
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
@@ -93,10 +91,10 @@ def get_mgmt(provider_key, providers=None, credentials=None):
 
 
 def _get_provider_class_by_type(prov_type):
-    for _, class_dict in BaseProvider.type_mapping.iteritems():
-        for ptype, the_class in class_dict.iteritems():
-            if ptype == prov_type:
-                return the_class
+    for class_dict in BaseProvider.type_mapping.itervalues():
+        maybe_the_class = class_dict.get(prov_type)
+        if maybe_the_class is not None:
+            return maybe_the_class
 
 
 def get_provider_key(provider_name):
@@ -288,7 +286,8 @@ def setup_providers(prov_classes=('cloud', 'infra'), validate=True, check_existi
         added_providers.extend(_setup_providers(pclass, **setup_kwargs))
 
     if validate:
-        map(methodcaller('validate'), added_providers)
+        for provider in added_providers:
+            provider.validate()
 
     perflog.stop('utils.providers.setup_providers')
 
@@ -343,7 +342,8 @@ def _setup_providers(prov_class, validate, check_existing):
         added_providers.append(provider)
 
     if validate:
-        map(methodcaller('validate'), added_providers)
+        for provider in added_providers:
+            provider.validate()
 
     return added_providers
 
@@ -368,8 +368,12 @@ def clear_provider_by_type(prov_class, validate=True):
         logger.info(' Providers exist, so removing all {} providers'.format(prov_class))
         paginator.results_per_page('100')
         sel.click(paginator.check_all())
-        toolbar.select('Configuration', 'Remove {} Providers from the VMDB'.format(string_name),
-                       invokes_alert=True)
+        toolbar.select(
+            'Configuration', {
+                version.LOWEST: 'Remove {} Providers from the VMDB'.format(string_name),
+                '5.7': 'Remove {} Providers'.format(string_name),
+            },
+            invokes_alert=True)
         sel.handle_alert()
         if validate:
             wait_for_no_providers_by_type(prov_class)
@@ -387,18 +391,16 @@ def clear_providers():
     # Executes the deletes first, then validates in a second pass
     logger.info('Destroying all appliance providers')
     perflog.start('utils.providers.clear_providers')
-    clear_provider_by_type('cloud', validate=False)
-    clear_provider_by_type('infra', validate=False)
-    if version.current_version() > '5.5':
-        clear_provider_by_type('container', validate=False)
-    if version.current_version() == version.LATEST:
-        clear_provider_by_type('middleware', validate=False)
-    wait_for_no_providers_by_type('cloud')
-    wait_for_no_providers_by_type('infra')
-    if version.current_version() > '5.5':
-        wait_for_no_providers_by_type('container')
-    if version.current_version() == version.LATEST:
-        wait_for_no_providers_by_type('middleware')
+
+    def do_for_provider_types(op):
+        op('cloud', validate=False)
+        op('infra', validate=False)
+        if version.current_version() > '5.5':
+            op('container', validate=False)
+        if version.current_version() == version.LATEST:
+            op('middleware', validate=False)
+    do_for_provider_types(clear_provider_by_type)
+    do_for_provider_types(wait_for_no_providers_by_type)
     perflog.stop('utils.providers.clear_providers')
 
 
