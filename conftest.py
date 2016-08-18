@@ -9,16 +9,24 @@ from pkgutil import iter_modules
 import pytest
 import requests
 
-from fixtures.artifactor_plugin import art_client, appliance_ip_address
-from cfme.fixtures.rdb import Rdb
-from fixtures.pytest_store import store
-from utils import ports
-from utils.appliance import ApplianceException
-from utils.conf import rdb
-from utils.log import logger
-from utils.path import data_path
-from utils.net import net_check
-from utils.wait import TimedOutError
+# bandaid
+pytest.register_assert_rewrite(
+    'fixtures.artifactor_plugin',
+    'cfme.fixtures.rdb',
+    'fixtures.pytest_store,'
+    'fixtures',
+)
+
+from fixtures.artifactor_plugin import art_client, appliance_ip_address  # NOQA
+from cfme.fixtures.rdb import Rdb  # NOQA
+from fixtures.pytest_store import store  # NOQA
+from utils import ports  # NOQA
+from utils.appliance import ApplianceException #NOQA
+from utils.conf import rdb  # NOQA
+from utils.log import logger  # NOQA
+from utils.path import data_path  # NOQA
+from utils.net import net_check  # NOQA
+from utils.wait import TimedOutError  # NOQA
 
 
 class _AppliancePoliceException(Exception):
@@ -164,9 +172,7 @@ pytest_plugins = (
     'fixtures.portset',
     'fixtures.artifactor_plugin',
     'fixtures.parallelizer',
-
     'fixtures.prov_filter',
-
     'fixtures.single_appliance_sprout',
     'fixtures.dev_branch',
     'fixtures.events',
