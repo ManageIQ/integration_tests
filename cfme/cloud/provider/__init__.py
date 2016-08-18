@@ -51,7 +51,7 @@ properties_form_55 = Form(
                 "5.5": "api_port",
             }
         )),
-        ('azure_subscription_id', Input("subscription")),
+        ('azure_subscription_id', Input("subscription"), {'appeared_in', '5.6'}),
         ('api_version', AngularSelect("api_version"), {"appeared_in": "5.5"}),
         ('sec_protocol', AngularSelect("security_protocol"), {"appeared_in": "5.5"}),
         ('infra_provider', {
@@ -64,7 +64,9 @@ properties_form_56 = TabStripForm(
     fields=[
         ('type_select', AngularSelect("ems_type")),
         ('name_text', Input("name")),
-        ('region_select', AngularSelect("ems_region")),
+        ('region_select', {
+            version.LOWEST: AngularSelect("ems_region"),
+            '5.7': AngularSelect('provider_region')}),
         ('google_region_select', AngularSelect("ems_preferred_region")),
         ('api_version', AngularSelect("ems_api_version")),
         ('infra_provider', AngularSelect("ems_infra_provider_id")),
