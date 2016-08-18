@@ -20,6 +20,7 @@ from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, Angular
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
 from utils.log import logger
+from utils.navigate import Navigatable, NavigateWrap, NavigateStep
 from utils.wait import wait_for
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
@@ -116,7 +117,7 @@ nav.add_branch('clouds_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
-class Provider(Pretty, CloudInfraProvider):
+class Provider(Pretty, CloudInfraProvider, Navigatable):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
 
@@ -134,6 +135,7 @@ class Provider(Pretty, CloudInfraProvider):
         myprov.create()
 
     """
+    _nav_steps = {}
     type_tclass = "cloud"
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']
@@ -163,6 +165,33 @@ class Provider(Pretty, CloudInfraProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
+
+
+@NavigateWrap(Provider)
+class All(NavigateStep):
+    def prerequisite(self):
+        from fixtures.pytest_store import store
+        store.current_appliance.navigate('Dashboard')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
+
+
+@NavigateWrap(Provider)
+class New(NavigateStep):
+    prerequisite = 'All'
+
+    def step(self):
+        cfg_btn('Add a New Cloud Provider')
+
+
+@NavigateWrap(Provider)
+class Details(NavigateStep):
+    prerequisite = 'All'
+
+    def step(self):
+        sel.click(Quadicon(self.obj.name, 'cloud_prov'))
 
 
 def get_all_providers(do_not_navigate=False):
