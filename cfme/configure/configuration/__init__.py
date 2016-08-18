@@ -1933,7 +1933,8 @@ def set_ntp_servers(*servers):
     fill(ntp_servers, fields, action=form_buttons.save)
     if servers:
         flash.assert_message_match(
-            "Configuration settings saved for CFME Server \"{} [{}]\" in Zone \"{}\"".format(
+            "Configuration settings saved for {} Server \"{} [{}]\" in Zone \"{}\"".format(
+                store.current_appliance.product_name,
                 store.current_appliance.server_name(),
                 store.current_appliance.server_id(),
                 store.current_appliance.zone_description.partition(' ')[0].lower()))
@@ -2086,6 +2087,10 @@ def get_workers_list(do_not_navigate=False, refresh=True):
             pass
         workers[name].append(worker)
     return workers
+
+
+def setup_authmode_database():
+    set_auth_mode(mode='database')
 
 
 def set_auth_mode(mode, **kwargs):

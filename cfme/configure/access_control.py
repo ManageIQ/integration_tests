@@ -177,7 +177,7 @@ class User(Updateable, Pretty, Navigatable):
         navigate_to(self, 'Details')
         pol_btn("Edit 'My Company' Tags for this User", invokes_alert=True)
         row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
-            partial_check=True)
+                                          partial_check=True)
         sel.click(row[0])
         form_buttons.save()
         flash.assert_success_message('Tag edits were successfully saved')
@@ -186,10 +186,9 @@ class User(Updateable, Pretty, Navigatable):
     def exists(self):
         try:
             navigate_to(self, 'Details')
+            return True
         except CandidateNotFound:
             return False
-        else:
-            return True
 
     @property
     def description(self):
@@ -231,7 +230,7 @@ class UserEdit(CFMENavigateStep):
 class Group(Updateable, Pretty, Navigatable):
     group_form = Form(
         fields=[
-            ('ldap_groups_for_user', Select("//*[@id='ldap_groups_user']")),
+            ('ldap_groups_for_user', AngularSelect("ldap_groups_user")),
             ('description_txt', Input('description')),
             ('lookup_ldap_groups_chk', Input('lookup')),
             ('role_select', AngularSelect("group_role")),
@@ -259,17 +258,36 @@ class Group(Updateable, Pretty, Navigatable):
              action=form_buttons.add)
         flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
-    def retrieve_ldap_user_groups(self):
+    def _retrieve_ldap_user_groups(self):
         navigate_to(self, 'Add')
         fill(self.group_form, {'lookup_ldap_groups_chk': True,
                                'user_to_look_up': self.user_to_lookup,
                                'username': self.ldap_credentials.principal,
                                'password': self.ldap_credentials.secret,
-                               },
-             action=form_buttons.retrieve)
+                               },)
+        sel.wait_for_element(form_buttons.retrieve)
+        sel.click(form_buttons.retrieve)
+
+    def _retrieve_ext_auth_user_groups(self):
+        navigate_to(self, 'Add')
+        fill(self.group_form, {'lookup_ldap_groups_chk': True,
+                               'user_to_look_up': self.user_to_lookup,
+                               },)
+        sel.wait_for_element(form_buttons.retrieve)
+        sel.click(form_buttons.retrieve)
 
     def add_group_from_ldap_lookup(self):
-        self.retrieve_ldap_user_groups()
+        self._retrieve_ldap_user_groups()
+        fill(self.group_form, {'ldap_groups_for_user': self.description,
+                               'description_txt': self.description,
+                               'role_select': self.role,
+                               'group_tenant': self.tenant,
+                               },
+             action=form_buttons.add)
+        flash.assert_success_message('Group "{}" was saved'.format(self.description))
+
+    def add_group_from_ext_auth_lookup(self):
+        self._retrieve_ext_auth_user_groups()
         fill(self.group_form, {'ldap_groups_for_user': self.description,
                                'description_txt': self.description,
                                'role_select': self.role,
@@ -305,10 +323,18 @@ class Group(Updateable, Pretty, Navigatable):
         navigate_to(self, 'Details')
         pol_btn("Edit 'My Company' Tags for this Group", invokes_alert=True)
         row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
-            partial_check=True)
+                                          partial_check=True)
         sel.click(row[0])
         form_buttons.save()
         flash.assert_success_message('Tag edits were successfully saved')
+
+    @property
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
 
 
 @navigator.register(Group, 'All')
@@ -528,10 +554,9 @@ class Tenant(Updateable, Pretty, Navigatable):
     def exists(self):
         try:
             sel.force_navigate("cfg_tenant_project", context={"tenant": self})
+            return True
         except CandidateNotFound:
             return False
-        else:
-            return True
 
     @property
     def tree_path(self):
