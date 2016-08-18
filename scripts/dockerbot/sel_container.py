@@ -1,9 +1,11 @@
 #!/usr/bin/env python2
 import argparse
 import subprocess
+import time
+from wait_for import wait_for
 
 from dockerbot import SeleniumDocker
-from utils.net import random_port
+from utils.net import random_port, net_check
 from utils.conf import docker as docker_conf
 
 if __name__ == "__main__":
@@ -30,9 +32,11 @@ if __name__ == "__main__":
 
     if args.watch:
         print
-        print("  Waiting for container for 10 seconds...")
-        import time
+        print("  Waiting for VNC port to open...")
+        wait_for(lambda: net_check(args.vnc, '127.0.0.1'), num_sec=60)
         time.sleep(10)
+        print net_check(args.vnc, '127.0.0.1')
+
         print("  Initiating VNC watching...")
         ipport = "vnc://127.0.0.1:" + str(args.vnc)
         cmd = ['xdg-open', ipport]
