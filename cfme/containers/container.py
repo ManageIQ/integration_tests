@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb
 from cfme.web_ui.menu import nav
 from . import details_page
+
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
@@ -44,7 +44,8 @@ class Container(Taggable, SummaryMixin):
                     'containers_container_detail', context={
                         'container': self, 'pod': self.pod})
         else:
-            sel.force_navigate('containers_container', context={'container': self})
+            sel.force_navigate('containers_container',
+                               context={'container': self, 'pod': self.pod})
 
     def click_element(self, *ident):
         self.load_details(refresh=True)
