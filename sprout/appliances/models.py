@@ -1063,13 +1063,23 @@ class AppliancePool(MetadataMixin):
         if self.appliances:
             for appliance in self.appliances:
                 kill = False
+                try:
+                    # Ping ping ssh
+                    appliance.ipapp.ssh_client.run_command('echo 1')
+                except Exception:
+                    # Bad luck, you have been volunteered ...
+                    appliance.set_status('SSH check failed, therefore no saving of this appliance.')
+                    ssh_ok = False
+                else:
+                    ssh_ok = True
                 with transaction.atomic():
                     with appliance.kill_lock:
                         if (
-                                save_lives and appliance.ready and appliance.leased_until is None
-                                and appliance.marked_for_deletion is False
-                                and not appliance.managed_providers
-                                and appliance.power_state not in appliance.BAD_POWER_STATES):
+                                save_lives and appliance.ready and ssh_ok and
+                                appliance.leased_until is None and
+                                appliance.marked_for_deletion is False and
+                                not appliance.managed_providers and
+                                appliance.power_state not in appliance.BAD_POWER_STATES):
                             appliance.appliance_pool = None
                             appliance.datetime_leased = None
                             appliance.save()
