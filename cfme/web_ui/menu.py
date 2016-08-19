@@ -279,7 +279,6 @@ class Menu(UINavigate):
                         ('clouds_tenants', 'Tenants'),
                         ('clouds_volumes', 'Volumes'),
                         ('clouds_flavors', 'Flavors'),
-                        ('clouds_security_groups', 'Security Groups'),
                         ('clouds_instances', 'Instances',
                             self._tree_func_with_grid(
                                 "Instances by Provider", "Instances by Provider")),
@@ -332,6 +331,16 @@ class Menu(UINavigate):
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
                     ('middleware_topology', 'Topology'),
+                ),
+                ('Networks', 'Networks'): (
+                    ('networks_providers', 'Providers'),
+                    ('networks_networks', 'Networks'),
+                    ('networks_subnets', 'Subnets'),
+                    ('networks_router', 'Network Router'),
+                    ('networks_security_groups', 'Security Groups'),
+                    ('networks_floating_ip', 'Floating IP'),
+                    ('networks_ports', 'Network Ports'),
+                    ('networks_topology', 'Topology'),
                 ),
                 ('control', 'Control'): (
                     ('control_explorer', 'Explorer'),
