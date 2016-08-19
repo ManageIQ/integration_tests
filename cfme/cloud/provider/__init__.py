@@ -53,7 +53,7 @@ properties_form_55 = Form(
         )),
         ('azure_subscription_id', Input("subscription"), {'appeared_in', '5.6'}),
         ('api_version', AngularSelect("api_version"), {"appeared_in": "5.5"}),
-        ('sec_protocol', AngularSelect("security_protocol"), {"appeared_in": "5.5"}),
+        ('sec_protocol', AngularSelect("security_protocol", exact=True), {"appeared_in": "5.5"}),
         ('infra_provider', {
             version.LOWEST: None,
             "5.4": Select("select#provider_id"),
@@ -78,13 +78,13 @@ properties_form_56 = TabStripForm(
         "Default": [
             ('hostname_text', Input("default_hostname")),
             ('api_port', Input("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol")),
+            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
         ],
         "Events": [
             ('event_selection', Radio('event_stream_selection')),
             ('amqp_hostname_text', Input("amqp_hostname")),
             ('amqp_api_port', Input("amqp_api_port")),
-            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol")),
+            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol", exact=True)),
         ]
     })
 
