@@ -245,40 +245,59 @@ class ParallelSession(object):
                 date=self.config.option.sprout_date,
                 lease_time=self.config.option.sprout_timeout
             )
-            self.terminal.write("Pool {}. Waiting for fulfillment ...\n".format(pool_id))
+            self.println("Pool {}. Waiting for fulfillment ...".format(pool_id))
             self.sprout_pool = pool_id
             at_exit(self.sprout_client.destroy_pool, self.sprout_pool)
             if self.config.option.sprout_desc is not None:
                 self.sprout_client.set_pool_description(
                     pool_id, str(self.config.option.sprout_desc))
+
+            def detailed_check():
+                try:
+                    result = self.sprout_client.request_check(self.sprout_pool)
+                except SproutException as e:
+                    # TODO: ensure we only exit this way on sprout usage
+                    try:
+                        self.sprout_client.destroy_pool(pool_id)
+                    except Exception:
+                        pass
+                    self.println(
+                        "sprout pool could not be fulfilled\n{}".format(e))
+                    pytest.exit(1)
+
+                self.println("[{now:%H:%M}] fulfilled at {progress:2}%".format(
+                    now=datetime.now(),
+                    progress=result['progress']
+                ))
+                return result["fulfilled"]
             try:
                 result = wait_for(
-                    lambda: self.sprout_client.request_check(self.sprout_pool)["fulfilled"],
+                    detailed_check,
                     num_sec=self.config.option.sprout_provision_timeout * 60,
                     delay=5,
                     message="requesting appliances was fulfilled"
                 )
-            except:
+            except Exception:
                 pool = self.sprout_client.request_check(self.sprout_pool)
-                dump_pool_info(lambda x: self.terminal.write("{}\n".format(x)), pool)
-                self.terminal.write("Destroying the pool on error.\n")
+                dump_pool_info(self.println, pool)
+                self.println("Destroying the pool on error.")
                 self.sprout_client.destroy_pool(pool_id)
                 raise
             else:
                 pool = self.sprout_client.request_check(self.sprout_pool)
-                dump_pool_info(lambda x: self.terminal.write("{}\n".format(x)), pool)
-            self.terminal.write("Provisioning took {0:.1f} seconds\n".format(result.duration))
+                dump_pool_info(self.println, pool)
+            self.println("Provisioning took {0:.1f} seconds".format(result.duration))
             request = self.sprout_client.request_check(self.sprout_pool)
             self.appliances = []
             # Push an appliance to the stack to have proper reference for test collection
             # FIXME: this is a bad hack based on the need for controll of collection partitioning
             appliance_stack.push(
                 IPAppliance(address=request["appliances"][0]["ip_address"]))
-            self.terminal.write("Appliances were provided:\n")
+            self.println("Appliances were provided:")
             for appliance in request["appliances"]:
                 url = "https://{}/".format(appliance["ip_address"])
                 self.appliances.append(url)
-                self.terminal.write("- {} is {}\n".format(url, appliance['name']))
+                self.println("- {} is {}".format(url, appliance['name']))
             map(lambda a: "https://{}/".format(a["ip_address"]), request["appliances"])
             self._reset_timer()
             # Set the base_url for collection purposes on the first appliance
@@ -289,7 +308,7 @@ class ParallelSession(object):
             self.terminal.write("appliance_template=\"{}\";\n".format(template_name))
             with project_path.join('.appliance_template').open('w') as template_file:
                 template_file.write('export appliance_template="{}"'.format(template_name))
-            self.terminal.write("Parallelized Sprout setup finished.\n")
+            self.println("Parallelized Sprout setup finished.")
             self.slave_appliances_data = {}
             for appliance in request["appliances"]:
                 self.slave_appliances_data[appliance["ip_address"]] = (
@@ -441,6 +460,9 @@ class ParallelSession(object):
                 return self._recv_queue.popleft()
         except IndexError:
             return None, None, None
+
+    def println(self, line):
+        self.terminal.write(line.lstrip('\n') + '\n')
 
     def print_message(self, message, prefix='master', **markup):
         """Print a message from a node to the py.test console
