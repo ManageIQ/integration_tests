@@ -4,7 +4,7 @@ from py.error import ENOENT
 import utils.browser
 from cfme.fixtures.pytest_selenium import take_screenshot
 from fixtures.artifactor_plugin import art_client, get_test_idents
-from utils.appliance import current_appliance
+from utils.appliance import get_or_create_current_appliance
 from utils.datafile import template_env
 from utils.path import log_path
 from utils import safe_string
@@ -108,8 +108,10 @@ def browser():
 
 
 @pytest.fixture(scope='function')
-def create_view():
-    return lambda *args, **kwargs: current_appliance.browser.instantiate_view(*args, **kwargs)
+def open_view():
+    def _open_view(*args, **kwargs):
+        return get_or_create_current_appliance().browser.open_view(*args, **kwargs)
+    return _open_view
 
 
 @pytest.yield_fixture(scope="function")

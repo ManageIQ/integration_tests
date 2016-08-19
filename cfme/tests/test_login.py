@@ -1,5 +1,5 @@
 import pytest
-from cfme import dashboard, login, Credential
+from cfme import login, Credential
 from cfme import BasicLoggedInView
 from cfme.login import LoginPage
 from cfme.configure.access_control import User
@@ -27,21 +27,21 @@ def check_logged_out():
 @pytest.mark.parametrize(
     "method", login.LOGIN_METHODS, ids=[x.__name__ for x in login.LOGIN_METHODS])
 @pytest.mark.usefixtures("check_logged_out")
-def test_login(method, create_view):
+def test_login(method, open_view):
     """ Tests that the appliance can be logged into and shows dashboard page. """
     pytest.sel.get(pytest.sel.base_url())
-    logged_in = create_view(BasicLoggedInView, do_not_navigate=True)
+    logged_in = open_view(BasicLoggedInView, navigate=False)
     assert not logged_in.is_displayed
     login.login_admin(submit_method=method)
     assert logged_in.is_displayed
     login.logout()
-    login_page = create_view(LoginPage, do_not_navigate=True)
+    login_page = open_view(LoginPage, navigate=False)
     assert login_page.is_displayed
 
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
-def test_bad_password(create_view):
+def test_bad_password(open_view):
     """ Tests logging in with a bad password. """
     pytest.sel.get(pytest.sel.base_url())
     creds = Credential(principal=conf.credentials['default']['username'], secret="badpassword@#$")
@@ -49,5 +49,5 @@ def test_bad_password(create_view):
 
     with error.expected("Sorry, the username or password you entered is incorrect."):
         login.login(user)
-        login_page = create_view(LoginPage, do_not_navigate=True)
+        login_page = open_view(LoginPage, navigate=False)
         assert login_page.is_displayed

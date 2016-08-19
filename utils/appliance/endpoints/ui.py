@@ -12,6 +12,8 @@ from fixtures.pytest_store import store
 from time import sleep
 from cfme.web_ui.menu import Menu
 
+from cached_property import cached_property
+
 from selenium_view import Browser, DefaultPlugin
 
 
@@ -74,27 +76,62 @@ class ViaUI(object):
         self.owner = owner
         self.menu = Menu()
 
-    def instantiate_view(self, view_class, do_not_navigate=False, **context):
+    @cached_property
+    def cfme_browser(self):
+        return CFMEBrowser(self, ensure_browser_open(), plugin_class=CFMEBrowserPlugin)
+
+    def open_view(self, *view_classes, **kwargs):
         """This method instantiates a view from a class. In case the view specifies a specific
         location, it goes there before instantiating the view.
 
         Args:
-            view_class: A subclass if View.
-            do_not_navigate: If you explicitly do not want to navigate.
-            **context: Gets passed to the navigation and then into the instance of the view.
+            *view_classes: A subclass of View.
+
+        Keywords:
+            navigate: If you explicitly do not want to navigate, pass navigate=False.
+            context: Gets passed to the navigation and then into the instance of the view.
 
         Returns:
             An instance of the passed ``view_class``.
         """
-        vname = view_class.__name__
-        if hasattr(view_class, 'PAGE_LOCATION') and not do_not_navigate:
-            logger.info(
-                ' Because view %r specifies page location %r, force_navigating there',
-                vname, view_class.PAGE_LOCATION)
-            self.force_navigate(view_class.PAGE_LOCATION, **context)
-        browser = CFMEBrowser(self, ensure_browser_open(), plugin_class=CFMEBrowserPlugin)
-        view = view_class(browser, additional_context=context)
-        return view
+        context = kwargs.get('context', {})
+        navigate = kwargs.get('navigate', True)
+        if len(view_classes) > 1 and navigate:
+            raise TypeError('When not using navigate=False, you can only pass one class')
+        if not view_classes:
+            raise TypeError('You must pass at least one view class')
+
+        if len(view_classes) > 1:
+            # detection
+            views = filter(
+                lambda vc: vc.is_displayed,
+                [vc(self.cfme_browser, additional_context=context) for vc in view_classes])
+            if len(views) > 1:
+                raise ValueError(
+                    'Could not determine which view is now displayed. '
+                    '%r are reporting they are visible'.format(views))
+            elif views:
+                # Only one
+                return views[0]
+            else:
+                # No view detected
+                raise ValueError(
+                    'Could not determine which view is now displayed. None of the views reported'
+                    ' that it is visible.')
+        else:
+            # Navigation, if requested
+            view_class = view_classes[0]
+            vname = view_class.__name__
+            if hasattr(view_class, 'PAGE_LOCATION') and navigate:
+                logger.info(
+                    ' Because view %r specifies page location %r, force_navigating there',
+                    vname, view_class.PAGE_LOCATION)
+                self.force_navigate(view_class.PAGE_LOCATION, **context)
+            view = view_class(self.cfme_browser, additional_context=context)
+            if not view.is_displayed:
+                raise ValueError(
+                    'View {!r} reported it is not displayed. navigate={!r}'.format(vname, navigate))
+            return view
 
     # ** Notice our friend force_navigate is here. It used to live in pytest_selenium fixture.
     # ** Funny story! That thing was never a fixture.

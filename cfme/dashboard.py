@@ -49,7 +49,7 @@ def reset_widgets(cancel=False):
     Args:
         cancel: Set whether to accept the popup confirmation box. Defaults to ``False``.
     """
-    dashboard = current_appliance.browser.instantiate_view(Dashboard)
+    dashboard = current_appliance.browser.open_view(Dashboard)
     dashboard.reset_widgets.click()
     dashboard.browser.handle_alert(cancel)
 

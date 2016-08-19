@@ -7,14 +7,14 @@ from utils.wait import wait_for, TimedOutError
 
 @pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1285778, 'GH#ManageIQ/manageiq:5657'])
-def test_csrf_post(create_view):
+def test_csrf_post(open_view):
     """CSRF should prevent forged POST requests
 
     POST requests use the CSRF token to validate requests, so setting the token
     to something invalid should set off the CSRF detector and reject the request
 
     """
-    dashboard = create_view(Dashboard)
+    dashboard = open_view(Dashboard)
     dashboard.csrf_token.fill("Bogus!")
     dashboard.reset_widgets()
     dashboard.browser.handle_alert(cancel=False)

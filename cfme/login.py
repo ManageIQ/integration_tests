@@ -9,13 +9,12 @@ from __future__ import absolute_import
 
 from functools import wraps
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
-from cfme import dashboard, Credential
+from cfme import Credential
 from cfme.configure.access_control import User
-from cfme.web_ui import Region, Form, fill
+from cfme.web_ui import Region
 from utils import conf, version
 from utils.browser import ensure_browser_open, quit
 from utils.log import logger
@@ -100,7 +99,7 @@ class LoginPage(View):
 def login_shim(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
-        login_page = current_appliance.browser.instantiate_view(LoginPage, do_not_navigate=True)
+        login_page = current_appliance.browser.open_view(LoginPage, navigate=False)
         return f(login_page, *args, **kwargs)
 
     return wrapped
@@ -172,7 +171,7 @@ def login(user, submit_method=_js_auth_fn):
         sel.sleep(1.0)
 
         logger.debug('Logging in as user %s', user.credential.principal)
-        login_page = current_appliance.browser.instantiate_view(LoginPage, do_not_navigate=True)
+        login_page = current_appliance.browser.open_view(LoginPage, navigate=False)
         try:
             login_page.fill({
                 'username': user.credential.principal,
@@ -189,8 +188,7 @@ def login(user, submit_method=_js_auth_fn):
                 sel.sleep(1.0)
                 sel.wait_for_ajax()
                 # And try filling the form again
-                login_page = current_appliance.browser.instantiate_view(
-                    LoginPage, do_not_navigate=True)
+                login_page = current_appliance.browser.open_view(LoginPage, navigate=False)
                 login_page.fill({
                     'username': user.credential.principal,
                     'password': user.credential.secret,
@@ -228,8 +226,7 @@ def logout():
     Logs out of CFME.
     """
     if logged_in():
-        logged_in_view = current_appliance.browser.instantiate_view(
-            BasicLoggedInView, do_not_navigate=True)
+        logged_in_view = current_appliance.browser.open_view(BasicLoggedInView, navigate=False)
         if not logged_in_view.logout.is_displayed:
             logged_in_view.user_dropdown.click()
         logged_in_view.logout()
@@ -238,8 +235,7 @@ def logout():
 
 
 def _full_name():
-    logged_in_view = current_appliance.browser.instantiate_view(
-        BasicLoggedInView, do_not_navigate=True)
+    logged_in_view = current_appliance.browser.open_view(BasicLoggedInView, navigate=False)
     return logged_in_view.user_dropdown.read().split('|')[0].strip()
 
 
@@ -267,7 +263,7 @@ def fill_login_fields(username, password):
     """ Fills in login information without submitting the form """
     if logged_in():
         logout()
-    login_page = current_appliance.browser.instantiate_view(LoginPage, do_not_navigate=True)
+    login_page = current_appliance.browser.open_view(LoginPage, navigate=False)
     login_page.fill({
         'username': username,
         'password': password,
@@ -278,7 +274,7 @@ def show_password_update_form():
     """ Shows the password update form """
     if logged_in():
         logout()
-    login_page = current_appliance.browser.instantiate_view(LoginPage, do_not_navigate=True)
+    login_page = current_appliance.browser.open_view(LoginPage, navigate=False)
     return login_page.show_password_update_form()
 
 
@@ -287,7 +283,7 @@ def update_password(username, password, new_password,
     """ Changes user password """
     if logged_in():
         logout()
-    login_page = current_appliance.browser.instantiate_view(LoginPage, do_not_navigate=True)
+    login_page = current_appliance.browser.open_view(LoginPage, navigate=False)
     login_page.update_password(username, password, new_password, verify_password, submit_method)
 
 
