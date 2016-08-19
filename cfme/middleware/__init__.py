@@ -94,6 +94,11 @@ class Container(SummaryMixin):
                 import_form,
                 {"runtime_name": runtime_name},
             )
+        if not enable_deploy:
+            fill(
+                import_form,
+                {"enable_deployment": enable_deploy}
+            )
         sel.click(import_form.cancel_button if cancel else import_form.deploy_button)
         flash.assert_success_message('Deployment "{}" has been initiated on this server.'
                     .format(runtime_name if runtime_name else os.path.basename(filename)))
