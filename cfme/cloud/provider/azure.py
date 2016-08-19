@@ -25,7 +25,7 @@ class AzureProvider(Provider):
                 'azure_subscription_id': kwargs.get('subscription_id')}
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         # HACK: stray domain entry in credentials, so ensure it is not there
