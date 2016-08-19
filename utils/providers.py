@@ -437,7 +437,7 @@ def get_crud(provider_config_name):
     prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
     prov_type = prov_config.get('type')
 
-    return _get_provider_class_by_type(prov_type).configloader(prov_config, provider_config_name)
+    return _get_provider_class_by_type(prov_type).from_config(prov_config, provider_config_name)
 
 
 class UnknownProvider(Exception):

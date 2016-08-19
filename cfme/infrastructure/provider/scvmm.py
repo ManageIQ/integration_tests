@@ -37,7 +37,7 @@ class SCVMMProvider(Provider):
         return values
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         if prov_config.get('discovery_range', None):

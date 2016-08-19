@@ -30,7 +30,7 @@ class RHEVMProvider(Provider):
                 kwargs.get('hostname') if self.credentials.get('candu', None) else None}
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = {
             # The default credentials for controlling the provider

@@ -24,7 +24,7 @@ class VMwareProvider(Provider):
                 'ipaddress_text': kwargs.get('ip_address')}
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         if prov_config.get('discovery_range', None):

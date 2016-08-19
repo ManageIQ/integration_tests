@@ -133,7 +133,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
         auth_btn("Re-check Authentication Status")
 
     @staticmethod
-    def configloader(prov_config, prov_key):
+    def from_config(prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = HawkularProvider.process_credential_yaml_key(credentials_key)
         return HawkularProvider(
