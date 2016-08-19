@@ -36,7 +36,7 @@ class OpenshiftProvider(Provider):
         return int(self.get_detail("Relationships", "Routes"))
 
     @staticmethod
-    def configloader(prov_config, prov_key):
+    def from_config(prov_config, prov_key):
         token_creds = OpenshiftProvider.process_credential_yaml_key(
             prov_config['credentials'], cred_type='token')
         return OpenshiftProvider(
