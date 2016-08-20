@@ -25,8 +25,8 @@ def test_summary_properties_validation(provider):
           is the same number that appears in the Relationships table
     """
     sel.force_navigate('containers_pods')
-    list_tbl_pod = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-    ui_pods = [r.name.text for r in list_tbl_pod.rows()]
+    list_tbl_pod_new = CheckboxTable(table_locator="//div[@id='list_grid']//table")
+    ui_pods = [r.name.text for r in list_tbl_pod_new.rows()]
     ui_pods_revised = filter(
         lambda ch: not ch.startswith('metrics'),
         ui_pods)
