@@ -3630,20 +3630,20 @@ def summary_title():
 class StatusBox(object):
     """ Status box as seen in containers overview page
 
-    Status box modelling.
+    Status box modelling
 
     Args:
-        name: The name of the status box as it appears in CFME, e.g. 'nodes'
+        name: The name of the status box as it appears in CFME, e.g. 'Nodes'
 
     Returns: A StatusBox instance.
 
     """
     def __init__(self, name):
-        self.name = name
+        assert type(name) == str
+        self.name = name.lower()
 
     def value(self):
         elem_text = sel.element(
             "//span[contains(@class,'card-pf-aggregate-status-count')]"
             "/../../../../../div[contains(@status, '{}')]".format(self.name)).text
         return int(re.findall(r'\d+', elem_text)[0])
-
