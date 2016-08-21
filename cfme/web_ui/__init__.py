@@ -3641,7 +3641,7 @@ class StatusBox(object):
     def __init__(self, name):
         assert type(name) == str
         self.name = name.lower()
-
+        
     def value(self):
         elem_text = sel.element(
             "//span[contains(@class,'card-pf-aggregate-status-count')]"
