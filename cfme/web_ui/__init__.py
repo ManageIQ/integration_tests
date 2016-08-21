@@ -3633,13 +3633,14 @@ class StatusBox(object):
     Status box modelling.
 
     Args:
-        name: The name of the status box as it appears in CFME, e.g. 'nodes'
+        name: The name of the status box as it appears in CFME, e.g. 'Nodes'
 
     Returns: A StatusBox instance.
 
     """
     def __init__(self, name):
-        self.name = name
+        assert type(name) == str
+        self.name = name.lower()
 
     def value(self):
         elem_text = sel.element(
