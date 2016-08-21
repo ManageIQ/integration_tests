@@ -3630,7 +3630,7 @@ def summary_title():
 class StatusBox(object):
     """ Status box as seen in containers overview page
 
-    Status box modelling.
+    Status box modelling
 
     Args:
         name: The name of the status box as it appears in CFME, e.g. 'Nodes'
