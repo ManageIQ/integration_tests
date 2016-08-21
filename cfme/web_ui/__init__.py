@@ -3633,7 +3633,7 @@ class StatusBox(object):
     Status box modelling.
 
     Args:
-        name: The name of the status box as it appears in CFME, e.g. 'Nodes'
+        name: The name of the status box as it appears in CFME, e.g. 'nodes'
 
     Returns: A StatusBox instance.
 
@@ -3642,6 +3642,8 @@ class StatusBox(object):
         self.name = name
 
     def value(self):
-        return sel.element(
-            '//span[contains(@class, "card-pf-aggregate-status-count")]'
-            '/../../span[contains(., "{}")]/span'.format(self.name)).text
+        elem_text = sel.element(
+            "//span[contains(@class,'card-pf-aggregate-status-count')]"
+            "/../../../../../div[contains(@status, '{}')]".format(self.name)).text
+        return int(re.findall(r'\d+', elem_text)[0])
+
