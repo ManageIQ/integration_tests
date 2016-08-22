@@ -405,11 +405,11 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
     @property
     def exists(self):
         ems = cfmedb()['ext_management_systems']
-        provs = (prov[0] for prov in cfmedb().session.query(ems.name))
-        if self.name in provs:
-            return True
-        else:
-            return False
+        provs = [prov[0].encode('utf-8') for prov in cfmedb().session.query(ems.name)]
+        exists = self.name in provs
+        logger.info('The provider %r %s in current providers: %r.',
+                    self.name, 'exists' if exists else "doesn't exist", provs)
+        return exists
 
     def wait_for_delete(self):
         sel.force_navigate('{}_providers'.format(self.page_name))

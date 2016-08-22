@@ -119,7 +119,7 @@ def get_mgmt_by_name(provider_name, *args, **kwargs):
 
 
 def setup_a_provider(prov_class="infra", prov_type=None, validate=True, check_existing=True,
-                     required_keys=None):
+                     required_keys=None, create=True):
     """Sets up a single provider robustly.
 
     Does some counter-badness measures.
@@ -192,7 +192,8 @@ def setup_a_provider(prov_class="infra", prov_type=None, validate=True, check_ex
             else:
                 store.terminalreporter.write_line(
                     "Trying to set up provider {}\n".format(provider), green=True)
-            return setup_provider(provider, validate=validate, check_existing=check_existing)
+            return setup_provider(provider, validate=validate, check_existing=check_existing,
+                                  create=create)
         except Exception as e:
             # In case of a known provider error:
             logger.exception(e)
@@ -230,7 +231,7 @@ def existing_providers():
     return filter(is_provider_setup, list_providers())
 
 
-def setup_provider(provider_key, validate=True, check_existing=True):
+def setup_provider(provider_key, validate=True, check_existing=True, create=True):
     """Add the named provider to CFME
 
     Args:
@@ -252,9 +253,10 @@ def setup_provider(provider_key, validate=True, check_existing=True):
         pass
     else:
         logger.info('Setting up provider: %s', provider.key)
-        provider.create(validate_credentials=True)
+        if create:
+            provider.create(validate_credentials=True)
 
-    if validate:
+    if validate and create:
         provider.validate()
 
     return provider

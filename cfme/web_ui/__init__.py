@@ -1267,7 +1267,7 @@ def fill(loc, content, **kwargs):
     logger.debug('  Filling in [%s], with value %s', ident, logval)
     prev_state = action(loc, content)
     sel.detect_observed_field(loc)
-    return prev_state
+    return prev_state.encode('utf-8')
 
 
 @fill.method((Mapping, Anything))
@@ -2342,7 +2342,8 @@ class Quadicon(Pretty):
             return "contains(normalize-space(@title), {name})"\
                 .format(name=quoteattr('Name: {}'.format(self._name)))
         else:
-            return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
+            return "@title={name} or @data-original-title={name}"\
+                .format(name=quoteattr(self._name))
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
