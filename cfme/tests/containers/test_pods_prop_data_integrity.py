@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import Pod
@@ -33,7 +32,9 @@ def test_summary_properties_validation(provider):
 
     for name in ui_pods_revised:
         obj = Pod(name, provider)
-        val_cont_stat_summary = obj.get_detail(
-            'Container Statuses Summary', 'Running')
-        val_cont_rel_tbl = obj.get_detail('Relationships', 'Containers')
-        assert val_cont_rel_tbl == val_cont_stat_summary
+        num_container_status_summary = getattr(
+            obj.summary.container_statuses_summary, 'running').text_value
+        num_relationships_containers = getattr(
+            obj.summary.relationships, 'containers').text_value
+        assert num_container_status_summary == num_relationships_containers
+
