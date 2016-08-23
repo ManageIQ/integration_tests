@@ -18,27 +18,9 @@ pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
 
-# CMP-10064
-
 def test_image_analysis_finished():
-    """ This module verifies the SSA scan
-        On the Images page ---> put a checkmark next to the image
-        Click on Configuration ---> Perform SmartState Analysis
-        Verify the relevant notification is displayed
-        Settings ---> Tasks ---> All VM and Container Analysis Tasks
-        Verify the image is being scanned
-        Wait for the scan to finish ---> Delete All
-    """
-    sel.force_navigate('containers_images')
-    m = 'Analysis successfully initiated'
-    sel.check(image.checkbox)
-    tb.select(
-        'Configuration',
-        'Perform SmartState Analysis',
-        invokes_alert=True)
-    sel.handle_alert()
-    flash.assert_message_contain(m)
-
+    # CMP-10064
+    image.run_smart_state_analysis()
     is_task_finished()
 
 
