@@ -19,7 +19,9 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
+from utils.appliance import IPAppliance, get_or_create_current_appliance
 from utils.log import logger
+from utils.navigate import navigate, NavigateStep, NavigateToSibling
 from utils.wait import wait_for
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
@@ -151,7 +153,8 @@ class Provider(Pretty, CloudInfraProvider):
         {version.LOWEST: form_buttons.save,
          '5.5': form_buttons.angular_save})
 
-    def __init__(self, name=None, credentials=None, zone=None, key=None):
+    def __init__(self, name=None, credentials=None, zone=None, key=None, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
         if not credentials:
             credentials = {}
         self.name = name
@@ -161,6 +164,32 @@ class Provider(Pretty, CloudInfraProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
+
+
+@navigate.register(IPAppliance, 'AllCloudProviders')
+class All(NavigateStep):
+    prerequisite = NavigateToSibling('Dashboard')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
+
+
+@navigate.register(IPAppliance, 'AddNewCloudProvider')
+class New(NavigateStep):
+    prerequisite = NavigateToSibling('AllCloudProviders')
+
+    def step(self):
+        cfg_btn('Add a New Cloud Provider')
+
+
+@navigate.register(Provider)
+class Details(NavigateStep):
+    def prerequisite(self):
+        self.navigate_obj.navigate(self.obj.appliance, 'AllCloudProviders')
+
+    def step(self):
+        sel.click(Quadicon(self.obj.name, 'cloud_prov'))
 
 
 def get_all_providers(do_not_navigate=False):
