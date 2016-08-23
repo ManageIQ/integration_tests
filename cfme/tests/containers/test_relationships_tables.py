@@ -149,6 +149,9 @@ def test_replicators_rel(provider, rel):
             assert val == InfoBlock.text('Properties', 'Name')
 
 
+# https://bugzilla.redhat.com/show_bug.cgi?id=1365878
+
+
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
                           'Image registry',
