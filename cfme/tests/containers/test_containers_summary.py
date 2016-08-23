@@ -1,6 +1,6 @@
 import pytest
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import StatusBox as sb
+from cfme.web_ui import StatusBox as SB
 from utils import testgen
 from utils.version import current_version
 import time
@@ -29,7 +29,7 @@ def test_containers_summary_containers(provider):
        """
     sel.force_navigate('container_dashboard')
     time.sleep(2)
-    containers_amount = sb('containers').value()
+    containers_amount = SB('containers').value()
     sel.force_navigate('containers_provider', context={'provider': provider})
     cont_val = provider.summary.relationships.containers.value
     assert cont_val == containers_amount
@@ -49,7 +49,7 @@ def test_containers_summary_pods(provider):
         """
     sel.force_navigate('container_dashboard')
     time.sleep(2)
-    pods_amount = sb('pods').value()
+    pods_amount = SB('pods').value()
     sel.force_navigate('containers_provider', context={'provider': provider})
     cont_val = provider.summary.relationships.pods.value
     assert cont_val == pods_amount
@@ -69,7 +69,7 @@ def test_containers_summary_nodes(provider):
         """
     sel.force_navigate('container_dashboard')
     time.sleep(2)
-    nodes_amount = sb('nodes').value()
+    nodes_amount = SB('nodes').value()
     sel.force_navigate('containers_provider', context={'provider': provider})
     cont_val = provider.summary.relationships.nodes.value
     assert cont_val == nodes_amount
