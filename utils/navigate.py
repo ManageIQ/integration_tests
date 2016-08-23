@@ -135,10 +135,12 @@ class NavigateStep(object):
         logger.debug("NAVIGATE: Checking if already at {}".format(self._name))
         try:
             if self.am_i_here():
+                logger.debug("NAVIGATE: Already at {}".format(self._name))
                 return
         except Exception as e:
             logger.debug("NAVIGATE: Exception raised [{}] whilst checking if already at {}".format(
                 e, self._name))
+        logger.debug("NAVIGATE: I'm not at {}".format(self._name))
         self.prerequisite()
         logger.debug("NAVIGATE: Heading to destination {}".format(self._name))
         self.step()

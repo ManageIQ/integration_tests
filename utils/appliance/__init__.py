@@ -2142,3 +2142,13 @@ def get_or_create_current_appliance():
     return stack.top
 
 current_appliance = LocalProxy(get_or_create_current_appliance)
+
+
+class CurrentAppliance(object):
+    def __init__(self):
+        self.ca = None
+
+    def __get__(self, instance, owner):
+        print "getting"
+        self.ca = get_or_create_current_appliance()
+        return self.ca

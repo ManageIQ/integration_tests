@@ -19,7 +19,7 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
-from utils.appliance import IPAppliance, get_or_create_current_appliance
+from utils.appliance import IPAppliance, get_or_create_current_appliance, CurrentAppliance, current_appliance
 from utils.log import logger
 from utils.navigate import navigate, NavigateStep, NavigateToSibling
 from utils.wait import wait_for
@@ -152,6 +152,7 @@ class Provider(Pretty, CloudInfraProvider):
     save_button = deferred_verpick(
         {version.LOWEST: form_buttons.save,
          '5.5': form_buttons.angular_save})
+    appliance = CurrentAppliance()
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, appliance=None):
         self.appliance = appliance or get_or_create_current_appliance()
@@ -166,18 +167,19 @@ class Provider(Pretty, CloudInfraProvider):
         return {'name_text': kwargs.get('name')}
 
 
-@navigate.register(IPAppliance, 'AllCloudProviders')
+@navigate.register(Provider, 'All')
 class All(NavigateStep):
-    prerequisite = NavigateToSibling('Dashboard')
+    def prerequisite(self):
+        self.navigate_obj.navigate(self.obj.appliance, 'Dashboard')
 
     def step(self):
         from cfme.web_ui.menu import nav
         nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
 
 
-@navigate.register(IPAppliance, 'AddNewCloudProvider')
+@navigate.register(Provider, 'Add')
 class New(NavigateStep):
-    prerequisite = NavigateToSibling('AllCloudProviders')
+    prerequisite = NavigateToSibling('All')
 
     def step(self):
         cfg_btn('Add a New Cloud Provider')
@@ -185,8 +187,7 @@ class New(NavigateStep):
 
 @navigate.register(Provider)
 class Details(NavigateStep):
-    def prerequisite(self):
-        self.navigate_obj.navigate(self.obj.appliance, 'AllCloudProviders')
+    prerequisite = NavigateToSibling('All')
 
     def step(self):
         sel.click(Quadicon(self.obj.name, 'cloud_prov'))
