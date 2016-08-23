@@ -37,4 +37,3 @@ def test_summary_properties_validation(provider):
         num_relationships_containers = getattr(
             obj.summary.relationships, 'containers').text_value
         assert num_container_status_summary == num_relationships_containers
-
