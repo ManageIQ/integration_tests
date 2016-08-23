@@ -3,7 +3,7 @@ import pytest
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.version import current_version
-from cfme.web_ui import flash, toolbar as tb, tabstrip as tabs
+from cfme.web_ui import toolbar as tb, tabstrip as tabs
 from cfme.containers import image
 from utils.wait import wait_for, TimedOutError
 from cfme.configure import tasks
