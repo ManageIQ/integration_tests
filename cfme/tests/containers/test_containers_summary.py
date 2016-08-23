@@ -73,4 +73,3 @@ def test_containers_summary_nodes(provider):
     sel.force_navigate('containers_provider', context={'provider': provider})
     cont_val = provider.summary.relationships.nodes.value
     assert cont_val == nodes_amount
-
