@@ -3647,4 +3647,3 @@ class StatusBox(object):
             "//span[contains(@class,'card-pf-aggregate-status-count')]"
             "/../../../../../div[contains(@status, '{}')]".format(self.name))
         return int(re.findall(r'\d+', elem_text)[0])
-
