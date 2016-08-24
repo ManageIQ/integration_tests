@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 """ Tests used to check whether assigned actions really do what they're supposed to do.
 
-This module is currently being slowly reworked to not use SOAP, because it was dropped from support.
-
 Required YAML keys:
     * Provider must have hostname (not amazon)
     * Provider must have section provisioning/template (otherwise test will be skipped)
     * RHEV-M provider must have provisioning/vlan specified, otherwise the test fails on provis.
     * There should be a 'datastores_not_for_provision' in the root, being a list of datastores that
-        should not be used for tagging for provisioning (used by miq_soap.py). If not present,
+        should not be used for tagging for provisioning. If not present,
         nothing terrible happens, but provisioning can be then assigned to a datastore that does not
         work (iso datastore or whatever), therefore failing the provision.
 """
-# TODO: Move the SOAP calls to UI checks since SOAP is deprecated
 import fauxfactory
 import pytest
 
@@ -30,7 +27,6 @@ from utils import testgen
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.miq_soap import MiqVM
 from utils.version import current_version, pick, LOWEST
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
@@ -103,26 +99,15 @@ def get_vm_object(vm_name):
 
     Args:
         vm_name: VM name
+
     Returns:
-        If found, :py:class:`utils.miq_soap.MiqVM` for 5.4 and :py:class:`utils.api.Entity` for 5.5
+        If found, :py:class:`utils.api.Entity`
         If not, `None`
     """
-    if current_version() < "5.5":
-        vm_table = store.current_appliance.db['vms']
-        for vm in store.current_appliance.db.session.query(vm_table.name, vm_table.guid)\
-                .filter(vm_table.template == False):  # NOQA
-            # Previous line is ok, if you change it to `is`, it won't work!
-            if vm.name == vm_name:
-                return MiqVM(vm.guid)
-        else:
-            return None
-    else:
-        rest_api = pytest.store.current_appliance.rest_api
-        results = rest_api.collections.vms.find_by(name=vm_name)
-        if len(results) > 0:
-            return results[0]
-        else:
-            return None
+    try:
+        return pytest.store.current_appliance.rest_api.collections.vms.find_by(name=vm_name)[0]
+    except IndexError:
+        return None
 
 
 @pytest.fixture(scope="module")
@@ -403,8 +388,6 @@ def test_action_suspend_virtual_machine_after_starting(
 def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests action 'Prevent current event from proceeding'
 
-    Must be done with SOAP.
-
     This test sets the policy that it prevents powering the VM up. Then the vm is powered up
     and then it waits that VM does not come alive.
 
@@ -667,41 +650,40 @@ def test_action_initiate_smartstate_analysis(
         pytest.fail("CFME did not finish analysing the VM {}".format(vm.name))
 
 
-# TODO: Get the id other way than from SOAP.
-@pytest.mark.uncollectif(lambda: current_version() >= "5.4")  # Need to get the id somehow different
-def test_action_raise_automation_event(
-        request, assign_policy_for_testing, vm, vm_on, ssh_client, vm_crud_refresh):
-    """ This test tests actions 'Raise Automation Event'.
+# TODO: Rework to use REST
+# def test_action_raise_automation_event(
+#         request, assign_policy_for_testing, vm, vm_on, ssh_client, vm_crud_refresh):
+#     """ This test tests actions 'Raise Automation Event'.
 
-    This test sets the policy that it raises an automation event VM after it's powered on.
-    Then it checks logs whether that really happened.
+#     This test sets the policy that it raises an automation event VM after it's powered on.
+#     Then it checks logs whether that really happened.
 
-    Metadata:
-        test_flag: actions, provision
-    """
-    # Set up the policy and prepare finalizer
-    assign_policy_for_testing.assign_actions_to_event("VM Power Off", ["Raise Automation Event"])
-    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
-    # Start the VM
-    vm.stop_vm()
-    vm_crud_refresh()
+#     Metadata:
+#         test_flag: actions, provision
+#     """
+#     # Set up the policy and prepare finalizer
+#     assign_policy_for_testing.assign_actions_to_event("VM Power Off", ["Raise Automation Event"])
+#     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
+#     # Start the VM
+#     vm.stop_vm()
+#     vm_crud_refresh()
 
-    # Search the logs
-    def search_logs():
-        rc, stdout = ssh_client.run_command(
-            "cat /var/www/miq/vmdb/log/automation.log | grep 'MiqAeEvent.build_evm_event' |"
-            " grep 'event=<\"vm_poweroff\">' | grep 'id: {}'".format(vm.api.object.id)
-            # not guid, but the ID
-        )
-        if rc != 0:  # Nothing found, so shortcut
-            return False
-        found = [event for event in stdout.strip().split("\n") if len(event) > 0]
-        if not found:
-            return False
-        else:
-            logger.info("Found event: `%s`", event[-1].strip())
-            return True
-    wait_for(search_logs, num_sec=180, message="log search")
+#     # Search the logs
+#     def search_logs():
+#         rc, stdout = ssh_client.run_command(
+#             "cat /var/www/miq/vmdb/log/automation.log | grep 'MiqAeEvent.build_evm_event' |"
+#             " grep 'event=<\"vm_poweroff\">' | grep 'id: {}'".format(vm.api.object.id)
+#             # not guid, but the ID
+#         )
+#         if rc != 0:  # Nothing found, so shortcut
+#             return False
+#         found = [event for event in stdout.strip().split("\n") if len(event) > 0]
+#         if not found:
+#             return False
+#         else:
+#             logger.info("Found event: `%s`", event[-1].strip())
+#             return True
+#     wait_for(search_logs, num_sec=180, message="log search")
 
 
 # Purely custom actions

@@ -26,7 +26,6 @@ _marks_to_make = [
     'uses_event_listener',
     'uses_providers',
     'uses_pxe',
-    'uses_soap',
     'uses_ssh',
     'uses_blockers',
 ]
