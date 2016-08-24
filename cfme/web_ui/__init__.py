@@ -3643,7 +3643,8 @@ class StatusBox(object):
         self.name = name.lower()
 
     def value(self):
-        elem_text = sel.element(
+        elem_text = sel.text(
             "//span[contains(@class,'card-pf-aggregate-status-count')]"
-            "/../../../../../div[contains(@status, '{}')]".format(self.name)).text
+            "/../../../../../div[contains(@status, '{}')]".format(self.name))
         return int(re.findall(r'\d+', elem_text)[0])
+
