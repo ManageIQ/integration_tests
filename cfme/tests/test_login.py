@@ -24,10 +24,10 @@ def check_logged_out():
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "method", login.LOGIN_METHODS, ids=[x.__name__ for x in login.LOGIN_METHODS])
-@pytest.mark.usefixtures("check_logged_out")
+@pytest.mark.parametrize('browser', ['firefox', 'chrome'])
 def test_login(method):
     """ Tests that the appliance can be logged into and shows dashboard page. """
-    pytest.sel.get(pytest.sel.base_url())
+    # pytest.sel.get(pytest.sel.base_url())
     assert not pytest.sel.is_displayed(dashboard.page.user_dropdown)
     login.login_admin(submit_method=method)
     assert pytest.sel.is_displayed(dashboard.page.user_dropdown), "Could not determine if logged in"

@@ -61,6 +61,11 @@ def ensure_browser_open():
 
     """
     try:
+        if conf.env['browser'].get('browserName', None):
+            if browser().name != conf.env['browser']['browserName']:
+                browser().quit()
+                start()
+
         browser().current_url
     except UnexpectedAlertPresentException:
         # Try to handle an open alert, restart the browser if possible
@@ -92,18 +97,32 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         quit()
 
     browser_conf = conf.env.get('browser', {})
+    browser_kwargs = browser_conf.get('webdriver_options', {})
+    # Pull in browser kwargs from browser yaml
+    if browser_conf.get('sauce', False):
+        webdriver_name = 'Remote'
+        browser_kwargs['command_executor'] = conf.cfme_data['sauce_ondemand']['url'].format(
+            conf.credentials['sauce']['sauce_user_name'],
+            conf.credentials['sauce']['sauce_api_key'])
+        desired_capabilities = browser_kwargs.get('desired_capabilities', {})
+        desired_capabilities['name'] = browser_conf['itemName']
+        desired_capabilities['browserName'] = browser_conf['browserName']
 
     if webdriver_name is None:
         # If unset, look to the config for the webdriver type
         # defaults to Firefox
-        webdriver_name = browser_conf.get('webdriver', 'Firefox')
+        if browser_kwargs['desired_capabilities']['browserName'] == 'firefox':
+            webdriver_name = browser_conf['webdriver'] = 'Firefox'
+        elif browser_kwargs['desired_capabilities']['browserName'] == 'chrome':
+            webdriver_name = browser_conf['webdriver'] = 'Chrome'
+        else:
+            logger.info('webdriver and webdriver_name are set to default Firefox')
+            webdriver_name = browser_conf['webdriver'] = 'Firefox'
     webdriver_class = getattr(webdriver, webdriver_name)
 
     if base_url is None:
         base_url = store.base_url
 
-    # Pull in browser kwargs from browser yaml
-    browser_kwargs = browser_conf.get('webdriver_options', {})
 
     # Handle firefox profile for Firefox or Remote webdriver
     if webdriver_name == 'Firefox':
@@ -113,7 +132,8 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         browser_kwargs['browser_profile'] = _load_firefox_profile()
 
     # Update it with passed-in options/overrides
-    browser_kwargs.update(kwargs)
+    if not browser_conf.get('sauce', None):
+        browser_kwargs.update(kwargs)
 
     if webdriver_name != 'Remote' and 'desired_capabilities' in browser_kwargs:
         # desired_capabilities is only for Remote driver, but can sneak in
@@ -168,7 +188,6 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         else:
             # If we aren't running wharf, raise it
             raise
-
     return thread_locals.browser
 
 
