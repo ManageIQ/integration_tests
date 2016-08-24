@@ -426,10 +426,14 @@ def prepare_template_verify_version(self, template_id):
         return
     if true_version != supposed_version:
         # Check if the difference is not just in the suffixes, which can be the case ...
-        if supposed_version.version == true_version.version:
+        t = str(true_version)
+        s = str(supposed_version)
+        if supposed_version.version == true_version.version or t.startswith(s):
             # The two have same version but different suffixes, apply the suffix to the template obj
+            # OR also a case - when the supposed version is incomplete so we will use the detected
+            # version.
             with transaction.atomic():
-                template.version = str(true_version)
+                template.version = t
                 template.save()
                 if template.parent_template is not None:
                     # In case we have a parent template, update the version there too.
