@@ -52,6 +52,7 @@ VERSION_REGEXPS = [
     r"cfme-(?:nightly-)?(\d)(\d)(\d)(\d{2})-",   # cfme-53111-   -> 5.3.1.11, cfme-53101 -> 5.3.1.1
 ]
 VERSION_REGEXPS = map(re.compile, VERSION_REGEXPS)
+VERSION_REGEXP_UPSTREAM = re.compile(r'^miq-stable-([^-]+)-')
 TRACKERBOT_PAGINATE = 20
 
 
@@ -61,6 +62,10 @@ def retrieve_cfme_appliance_version(template_name):
         match = regexp.search(template_name)
         if match is not None:
             return ".".join(map(str, map(int, match.groups())))
+    else:
+        match = VERSION_REGEXP_UPSTREAM.search(template_name)
+        if match is not None:
+            return match.groups()[0]
 
 
 def trackerbot():
@@ -206,6 +211,8 @@ def poke_trackerbot(self):
     objects = depaginate(tbapi, tbapi.providertemplate().get(limit=TRACKERBOT_PAGINATE))["objects"]
     per_group = {}
     for obj in objects:
+        if obj["template"]["group"]["name"] == 'unknown':
+            continue
         if obj["template"]["group"]["name"] not in per_group:
             per_group[obj["template"]["group"]["name"]] = []
 
@@ -419,10 +426,14 @@ def prepare_template_verify_version(self, template_id):
         return
     if true_version != supposed_version:
         # Check if the difference is not just in the suffixes, which can be the case ...
-        if supposed_version.version == true_version.version:
+        t = str(true_version)
+        s = str(supposed_version)
+        if supposed_version.version == true_version.version or t.startswith(s):
             # The two have same version but different suffixes, apply the suffix to the template obj
+            # OR also a case - when the supposed version is incomplete so we will use the detected
+            # version.
             with transaction.atomic():
-                template.version = str(true_version)
+                template.version = t
                 template.save()
                 if template.parent_template is not None:
                     # In case we have a parent template, update the version there too.

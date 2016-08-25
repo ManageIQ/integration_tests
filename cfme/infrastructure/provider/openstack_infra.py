@@ -40,7 +40,7 @@ class OpenstackInfraProvider(Provider):
         return data_dict
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         credential_dict = {'default': credentials}

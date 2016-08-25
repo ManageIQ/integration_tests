@@ -20,7 +20,7 @@ class GCEProvider(Provider):
                 'google_project_text': kwargs.get('project')}
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         ser_acc_creds = cls.get_credentials_from_config(
             prov_config['credentials'], cred_type='service_account')
         return cls(name=prov_config['name'],
