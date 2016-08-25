@@ -1,5 +1,7 @@
 import pytest
 from cfme.middleware import get_random_list
+from cfme.middleware.domain import MiddlewareDomain
+from cfme.middleware.server_group import MiddlewareServerGroup
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import flash
 from utils import testgen
@@ -49,6 +51,30 @@ def test_list_provider_servers(provider):
     assert ui_servers == db_servers == mgmt_servers, \
         ("Lists of servers mismatch! UI:{}, DB:{}, MGMT:{}"
          .format(ui_servers, db_servers, mgmt_servers))
+
+
+def test_list_server_group_servers(provider):
+    """Tests servers lists from server groups of domain and checks values
+    between UI, DB and Management system
+
+    Steps:
+        * Get domains list from UI of provider
+        * Chooses one of domains
+        * Get server groups list from UI of domain
+        * Get servers list from UI of each server group
+        * Get servers list from Database of each server group
+        * @TODO add support of checking in MGMT
+        * Compare content of all the list [UI, Database]
+    """
+    domain_list = MiddlewareDomain.domains(provider=provider)
+    for domain in get_random_list(domain_list, 1):
+        server_groups = MiddlewareServerGroup.server_groups(domain=domain)
+        for server_group in server_groups:
+            ui_servers = _get_servers_set(MiddlewareServer.servers(server_group=server_group))
+            db_servers = _get_servers_set(MiddlewareServer.servers_in_db(server_group=server_group))
+            assert ui_servers == db_servers, \
+                ("Lists of servers mismatch! UI:{}, DB:{}"
+                 .format(ui_servers, db_servers))
 
 
 def test_server_details(provider):
@@ -250,9 +276,10 @@ def test_server_suspend_resume(provider):
 def _get_servers_set(servers):
     """
     Return the set of servers which contains only necessary fields,
-    such as 'feed', 'provider.name', 'name' and 'product'
+    such as 'feed', 'provider.name' and 'name'
+    @TODO add 'product' field once https://github.com/ManageIQ/manageiq/issues/10728 is fixed
     """
-    return set((server.feed, server.provider.name, server.name, server.product)
+    return set((server.feed, server.provider.name, server.name)
                for server in servers)
 
 

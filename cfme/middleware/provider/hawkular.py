@@ -31,7 +31,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, BaseProvid
         myprov.create()
         myprov.num_deployment(method="ui")
     """
-    STATS_TO_MATCH = ['num_server', 'num_deployment', 'num_datasource']
+    STATS_TO_MATCH = ['num_server', 'num_domain', 'num_deployment', 'num_datasource']
     property_tuples = [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'),
                        ('provider_type', 'type')]
     type_tclass = "middleware"
@@ -94,6 +94,16 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, BaseProvid
         if reload_data:
             self.summary.reload()
         return self.summary.relationships.middleware_datasources.value
+
+    @variable(alias='db')
+    def num_domain(self):
+        return self._num_db_generic('middleware_domains')
+
+    @num_server.variant('ui')
+    def num_domain_ui(self, reload_data=True):
+        if reload_data:
+            self.summary.reload()
+        return self.summary.relationships.middleware_domains.value
 
     @variable(alias='ui')
     def is_refreshed(self, reload_data=True):
