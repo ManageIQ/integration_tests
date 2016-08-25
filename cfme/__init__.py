@@ -1,5 +1,8 @@
 from utils.pretty import Pretty
 
+from selenium_view import View, AttributeValue, VersionPick, Text
+from utils import version
+
 
 class Credential(Pretty):
     """
@@ -31,3 +34,27 @@ class Credential(Pretty):
                 return object.__getattribute__(self, 'token')
         else:
             return object.__getattribute__(self, attr)
+
+
+class BasicLoggedInView(View):
+    csrf_token = AttributeValue('//meta[@name="csrf-token"]', 'content')
+    user_dropdown = VersionPick({
+        version.LOWEST: Text('//div[@id="page_header_div"]//li[contains(@class, "dropdown")]'),
+        '5.4': Text(
+            '//nav//ul[contains(@class, "navbar-utility")]/li[contains(@class, "dropdown")]/a'),
+        '5.6.0.1': Text('//nav//a[@id="dropdownMenu2"]'),
+    })
+    logout = Text('//a[contains(@href, "/logout")]')
+
+    @property
+    def is_displayed(self):
+        return self.user_dropdown.is_displayed
+
+    @property
+    def logged_in(self):
+        self.browser.ensure_page_safe(timeout='90s')
+        return self.is_displayed
+
+    @property
+    def logged_out(self):
+        return not self.logged_in

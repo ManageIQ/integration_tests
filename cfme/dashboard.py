@@ -5,34 +5,31 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Region, Table, tabstrip, toolbar
+from cfme.web_ui import Table, tabstrip
 from cfme.web_ui.menu import nav
 from utils import deferred_verpick, version
+from utils.appliance import current_appliance
 from utils.timeutil import parsetime
 from utils.pretty import Pretty
 from utils.wait import wait_for
 
-page = Region(
-    title="Dashboard",
-    locators={
-        'reset_widgets_button': {
-            version.LOWEST: toolbar.root_loc('Reset Dashboard Widgets'),
-            '5.5.0.11': toolbar.root_loc('Reset Dashboard Widgets to the defaults'),
-        },
-        'csrf_token': "//meta[@name='csrf-token']",
-        'user_dropdown': {
-            version.LOWEST: '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
-            '5.4': '//nav//ul[contains(@class, "navbar-utility")]'
-                   '/li[contains(@class, "dropdown")]/a',
-            '5.6.0.1': '//nav//a[@id="dropdownMenu2"]',
-        }
-    },
-    identifying_loc='reset_widgets_button')
+from selenium_view import Button, VersionPick
+
+from . import BasicLoggedInView
+
+
+class Dashboard(BasicLoggedInView):
+    PAGE_LOCATION = 'dashboard'
+
+    reset_widgets = VersionPick({
+        version.LOWEST: Button(title='Reset Dashboard Widgets'),
+        '5.5.0.11': Button(title='Reset Dashboard Widgets to the defaults')
+    })
 
 
 def click_top_right(item):
     base_locator = '//nav//a[@id="dropdownMenu2"]/../ul//a[normalize-space(.)="{}"]'
-    sel.click(page.user_dropdown)
+    sel.click('//nav//a[@id="dropdownMenu2"]')  # TODO: In a view
     sel.click(base_locator.format(item), wait_ajax=False)
     sel.handle_alert(wait=False)
 
@@ -52,8 +49,9 @@ def reset_widgets(cancel=False):
     Args:
         cancel: Set whether to accept the popup confirmation box. Defaults to ``False``.
     """
-    sel.click(page.reset_widgets_button, wait_ajax=False)
-    sel.handle_alert(cancel)
+    dashboard = current_appliance.browser.open_view(Dashboard)
+    dashboard.reset_widgets.click()
+    dashboard.browser.handle_alert(cancel)
 
 
 def dashboards():
@@ -341,20 +339,3 @@ class ReportWidgetContent(BaseWidgetContent):
     @property
     def data(self):
         return Table(lambda: sel.element("./div/table[thead]", root=self.root))
-
-
-def get_csrf_token():
-    """Retuns current CSRF token.
-
-    Returns: Current  CSRF token.
-    """
-    return sel.get_attribute(page.csrf_token, "content")
-
-
-def set_csrf_token(csrf_token):
-    """Changing the CSRF Token on the fly via the DOM by iterating over the meta tags
-
-    Args:
-        csrf_token: Token to set as the CSRF token.
-    """
-    return sel.set_attribute(page.csrf_token, "content", csrf_token)
