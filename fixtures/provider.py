@@ -9,6 +9,7 @@ using the provider.
 
 """
 import pytest
+import six
 
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.templateloader import TEMPLATES
@@ -41,7 +42,7 @@ def _setup_provider(provider_key, request=None):
     try:
         providers.setup_provider(provider_key)
     except Exception as ex:
-        logger.error('Error setting up provider {}'.format(provider_key))
+        logger.error('Error setting up provider %s', provider_key)
         logger.exception(ex)
         _failed_providers.add(provider_key)
         skip(provider_key)
@@ -92,29 +93,35 @@ def template(template_location, provider):
             for field in template_location:
                 o = o[field]
         except (IndexError, KeyError):
-            logger.info("Cannot apply %s to %s in the template specification, ignoring.",
-                repr(field), repr(o))
+            logger.info("Cannot apply %r to %r in the template specification, ignoring.", field, o)
         else:
-            if not isinstance(o, basestring):
-                raise ValueError("{} is not a string! (for template)".format(repr(o)))
+            if not isinstance(o, six.string_types):
+                raise ValueError("{!r} is not a string! (for template)".format(o))
+            if not TEMPLATES:
+                # There is nothing in TEMPLATES, that means no trackerbot URL and no data pulled.
+                # This should normally not constitute an issue so continue.
+                return o
             templates = TEMPLATES.get(provider.key, None)
             if templates is not None:
                 if o in templates:
                     return o
-    logger.info(
-        "Wanted template {} on {} but it is not there!\n".format(o, provider.key))
+    logger.info("Wanted template %s on %s but it is not there!", o, provider.key)
     pytest.skip('Template not available')
 
 
 def _small_template(provider):
     template = provider.data.get('small_template', None)
     if template:
+        if not TEMPLATES:
+            # Same as couple of lines above
+            return template
         templates = TEMPLATES.get(provider.key, None)
         if templates is not None:
             if template in templates:
                 return template
-    logger.info(
-        "Wanted template {} on {} but it is not there!\n".format(template, provider.key))
+    else:
+        pytest.skip('No small_template for provider {}'.format(provider.key))
+    logger.info("Wanted template %s on %s but it is not there!", template, provider.key)
     pytest.skip('Template not available')
 
 
@@ -132,12 +139,16 @@ def small_template_modscope(provider):
 def full_template(provider):
     template = provider.data.get('full_template', {})
     if template:
+        if not TEMPLATES:
+            # Same as couple of lines above
+            return template
         templates = TEMPLATES.get(provider.key, None)
         if templates is not None:
             if template['name'] in templates:
                 return template
-    logger.info(
-        "Wanted template {} on {} but it is not there!\n".format(template, provider.key))
+    else:
+        pytest.skip('No full_template for provider {}'.format(provider.key))
+    logger.info("Wanted template %s on %s but it is not there!", template, provider.key)
     pytest.skip('Template not available')
 
 
