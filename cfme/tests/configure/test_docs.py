@@ -38,8 +38,7 @@ def guides():
         loc
         for loc
         in about.locators.iterkeys()
-        if loc.endswith("_guide")
-        and (
+        if loc.endswith("_guide") and (
             version.pick(about.locators[loc])
             if isinstance(about.locators[loc], dict)
             else about.locators[loc]
@@ -49,26 +48,7 @@ def guides():
 @pytest.mark.tier(3)
 @pytest.fixture(scope="session")
 def docs_info():
-    if version.current_version() < "5.4.0.1":
-        return [
-            'Control',
-            'Lifecycle and Automation',
-            'Quick Start',
-            'Settings And Operations',
-            'Insight',
-            'Integration Services'
-        ]
-    elif version.current_version() < "5.5.0.12":
-        return [
-            'Insight',
-            'Control',
-            'Lifecycle and Automation',
-            'REST API',
-            'SOAP API',
-            'User',
-            'Settings and Operations'
-        ]
-    elif version.appliance_is_downstream():
+    if version.appliance_is_downstream():
         return [
             'Monitoring Alerts Reporting',
             'General Configuration',
