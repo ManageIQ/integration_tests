@@ -1,6 +1,11 @@
-# the test verifies functionality
-# of different views such as grid view, tile view
-# and list view
+# -*- coding: utf-8 -*-
+
+
+""" the test verifies functionality
+    of different views such as grid view, tile view
+    and list view
+"""
+
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
@@ -15,6 +20,8 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
+# CMP-9907 # CMP-9908 # CMP-9909
+
 
 def test_pods_views():
     sel.force_navigate('containers_pods')
@@ -24,6 +31,9 @@ def test_pods_views():
     assert tb.is_active('Tile View'), "Pods tile view setting failed"
     tb.select('List View')
     assert tb.is_active('List View'), "Pods list view setting failed"
+
+
+# CMP-9918 # CMP-9919 # CMP-9920
 
 
 def test_replicators_views():
@@ -36,6 +46,9 @@ def test_replicators_views():
     assert tb.is_active('List View'), "Replicators list view setting failed"
 
 
+# CMP-9941 # CMP-9942 # CMP-9943
+
+
 def test_containers_views():
     sel.force_navigate('containers_containers')
     tb.select('Grid View')
@@ -44,6 +57,9 @@ def test_containers_views():
     assert tb.is_active('Tile View'), "Containers tile view setting failed"
     tb.select('List View')
     assert tb.is_active('List View'), "Containers list view setting failed"
+
+
+# CMP-9887 # CMP-9888 # CMP-9889
 
 
 def test_services_views():
@@ -56,6 +72,9 @@ def test_services_views():
     assert tb.is_active('List View'), "Services list view setting failed"
 
 
+# CMP-9956 # CMP-9957 # CMP-9958
+
+
 def test_nodes_views():
     sel.force_navigate('containers_nodes')
     tb.select('Grid View')
@@ -64,6 +83,9 @@ def test_nodes_views():
     assert tb.is_active('Tile View'), "Nodes tile view setting failed"
     tb.select('List View')
     assert tb.is_active('List View'), "Nodes list view setting failed"
+
+
+# CMP-9974 # CMP-9975 # CMP-9976
 
 
 def test_images_views():

@@ -54,6 +54,8 @@ class Service(Taggable, SummaryMixin):
     def navigate(self, detail=True):
         if detail is True:
             if not self._on_detail_page():
-                sel.force_navigate('containers_service_detail', context={'service': self})
+                sel.force_navigate(
+                    'containers_service_detail', context={
+                        'service': self})
         else:
             sel.force_navigate('containers_service', context={'service': self})
