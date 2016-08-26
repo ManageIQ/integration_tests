@@ -25,12 +25,12 @@ class TestServiceRESTAPI(object):
         return _dialog()
 
     @pytest.fixture(scope="function")
-    def service_catalogs(self, request, rest_api):
-        return _service_catalogs(request, rest_api)
+    def service_catalog(self, request, rest_api):
+        return _service_catalogs(request, rest_api, num=1)
 
     @pytest.fixture(scope="function")
-    def services(self, request, rest_api, a_provider, dialog, service_catalogs):
-        return _services(request, rest_api, a_provider, dialog, service_catalogs)
+    def services(self, request, rest_api, a_provider, dialog, service_catalog):
+        return _services(request, rest_api, a_provider, dialog, service_catalog, num=2)
 
     def test_edit_service(self, rest_api, services):
         """Tests editing a service.
@@ -172,16 +172,16 @@ class TestServiceRESTAPI(object):
 
 class TestServiceTemplateRESTAPI(object):
     @pytest.fixture(scope='function')
-    def service_templates(self, request, rest_api, dialog):
-        return _service_templates(request, rest_api, dialog)
+    def service_templates(self, request, rest_api, dialog, service_catalog):
+        return _service_templates(request, rest_api, dialog, service_catalog, num=3)
 
     @pytest.fixture(scope="function")
     def dialog(self):
         return _dialog()
 
     @pytest.fixture(scope="function")
-    def service_catalogs(self, request, rest_api):
-        return _service_catalogs(request, rest_api)
+    def service_catalog(self, request, rest_api):
+        return _service_catalogs(request, rest_api, num=1)
 
     def test_edit_service_template(self, rest_api, service_templates):
         """Tests cediting a service template.
@@ -214,7 +214,7 @@ class TestServiceTemplateRESTAPI(object):
             s_tpl.action.delete()
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-    def test_assign_unassign_service_template_to_service_catalog(self, rest_api, service_catalogs,
+    def test_assign_unassign_service_template_to_service_catalog(self, rest_api, service_catalog,
             service_templates):
         """Tests assigning and unassigning the service templates to service catalog.
         Prerequisities:
@@ -230,7 +230,7 @@ class TestServiceTemplateRESTAPI(object):
             test_flag: rest
         """
 
-        scl = service_catalogs[0]
+        scl = service_catalog
         stpl = service_templates[0]
         scl.service_templates.action.assign(stpl)
         scl.reload()

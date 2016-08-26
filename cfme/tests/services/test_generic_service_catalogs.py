@@ -123,7 +123,7 @@ def test_delete_dialog_before_parent_item(catalog_item):
 class TestServiceCatalogViaREST(object):
     @pytest.fixture(scope="function")
     def service_catalogs(self, request, rest_api):
-        return _service_catalogs(request, rest_api)
+        return _service_catalogs(request, rest_api, num=3)
 
     def test_delete_service_catalog(self, rest_api, service_catalogs):
         """Tests delete service catalog via rest
