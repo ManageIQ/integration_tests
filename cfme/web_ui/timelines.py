@@ -17,6 +17,21 @@ timelines_form = Form(
 
 
 class Timelines(object):
+    """ Represents Common UI Page for showing generated events
+    of different Providers as a timeline.
+    UI page contains several drop-down items which are doing filtering of displayed events.
+    In this class, there are described several methods to change those filters.
+    After each filter change, UI page is reloaded and the displayed events graphic is changed.
+    And after each page reload, the displayed events are re-read by this class.
+    The main purpose of this class is to check
+    whether particular event is displayed or not in timelines page.
+
+    Usage:
+        timelines.change_interval('Hourly')
+        timelines.change_event_groups('Application')
+        timelines.change_level('Summary')
+        timelines.contains_event('hawkular_deployment.ok')
+    """
 
     def __init__(self, o):
         self._object = o
