@@ -87,8 +87,8 @@ class TestTagsViaREST(object):
         return _service_templates(request, rest_api_modscope, dialog)
 
     @pytest.fixture(scope="module")
-    def vm(self, request, a_provider, rest_api):
-        return _vm(request, a_provider, rest_api)
+    def vm(self, request, a_provider, rest_api_modscope):
+        return _vm(request, a_provider, rest_api_modscope)
 
     @pytest.mark.tier(2)
     def test_edit_tags(self, rest_api, tags):
