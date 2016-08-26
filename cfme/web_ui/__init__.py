@@ -144,7 +144,7 @@ class Region(Pretty):
     Note:
 
         When specifying a region title, omit the "Cloudforms Management Engine: " or "ManageIQ: "
-        prefix. They're included on every page, and different for the two versions of the appliance,
+        prefix. They are included on every page, and different for the two versions of the appliance,
         and :py:meth:`is_displayed` strips them off before checking for equality.
 
     """
