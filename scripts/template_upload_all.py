@@ -40,8 +40,12 @@ def parse_cmd_line():
                              'can be specified as e.g downstream_542, downstream_532,'
                              'upstream',
                         default=None)
+    parser.add_argument('--image_url', dest='image_url',
+                        help='url for the image to be uploaded',
+                        default=None)
     parser.add_argument('--provider-type', dest='provider_type',
-                        help='Type of provider to upload to (virtualcenter, rhevm, openstack)',
+                        help='Type of provider to upload to (virtualcenter, rhevm,'
+                             'openstack, google, scvmm)',
                         default=None)
     parser.add_argument('--provider-version', dest='provider_version',
                         help='Version of chosen provider',
@@ -243,6 +247,8 @@ def browse_directory(dir_url):
     scvmm_image_name = scvmm_pattern.findall(string_from_url)
     vsphere_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')
     vsphere_image_name = vsphere_pattern.findall(string_from_url)
+    google_pattern = re.compile(r'<a href="?\'?([^"\']*gce[^"\'>]*)')
+    google_image_name = google_pattern.findall(string_from_url)
 
     if len(rhevm_image_name) is not 0:
         name_dict['template_upload_rhevm'] = rhevm_image_name[0]
@@ -252,6 +258,8 @@ def browse_directory(dir_url):
         name_dict['template_upload_scvmm'] = scvmm_image_name[0]
     if len(vsphere_image_name) is not 0:
         name_dict['template_upload_vsphere'] = vsphere_image_name[0]
+    if len(google_image_name) is not 0:
+        name_dict['template_upload_gce'] = google_image_name[0]
 
     if not dir_url.endswith('/'):
         dir_url = dir_url + '/'
@@ -270,6 +278,7 @@ def main():
 
     urls = cfme_data['basic_info']['cfme_images_url']
     stream = args.stream or cfme_data['template_upload']['stream']
+    upload_url = args.image_url
     provider_type = args.provider_type or cfme_data['template_upload']['provider_type']
 
     if args.provider_data is not None:
@@ -296,6 +305,9 @@ def main():
     for key, url in urls.iteritems():
         if stream is not None:
             if key != stream:
+                continue
+        if upload_url:
+            if url != upload_url:
                 continue
         dir_files = browse_directory(url)
         if not dir_files:
@@ -326,6 +338,11 @@ def main():
             module = 'template_upload_scvmm'
             if module not in dir_files.iterkeys():
                 continue
+        elif provider_type == 'google':
+            module = 'template_upload_gce'
+            if module not in dir_files.iterkeys():
+                continue
+        kwargs['stream'] = stream
         kwargs['image_url'] = dir_files[module]
         if args.provider_data is not None:
             kwargs['provider_data'] = provider_data

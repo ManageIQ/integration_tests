@@ -26,6 +26,7 @@ stream_matchers = (
     (get_stream('5.6'), r'^cfme-56.*-(?P<month>\d{2})(?P<day>\d{2})'),
     # Nightly builds have potentially multiple version streams bound to them so we
     # cannot use get_stream()
+    ('upstream_stable', r'^miq-stable-darga-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     ('downstream-nightly', r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     # new format
     ('downstream-nightly', r'^cfme-nightly-\d*-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
@@ -244,6 +245,24 @@ def post_jenkins_result(job_name, number, stream, date, template,
     except slumber.exceptions.HttpServerError as exc:
         print(exc.response)
         print(exc.content)
+
+
+def trackerbot_add_provider_template(stream, provider, template_name):
+    try:
+        existing_provider_templates = [
+            pt['id']
+            for pt in depaginate(
+                api(), api().providertemplate.get())['objects']]
+        if '{}_{}'.format(template_name, provider) in existing_provider_templates:
+            print('Template {} already tracked for provider {}'.format(
+                template_name, provider))
+        else:
+            mark_provider_template(api(), provider, template_name)
+            print('Added {} template {} on provider {}'.format(
+                stream, template_name, provider))
+    except Exception as e:
+        print(e)
+        print('{}: Error occured while template sync to trackerbot'.format(provider))
 
 
 def depaginate(api, result):

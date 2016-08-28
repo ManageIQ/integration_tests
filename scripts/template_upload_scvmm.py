@@ -13,6 +13,7 @@ import argparse
 import sys
 import os
 
+from utils import trackerbot
 from utils.providers import list_providers
 from utils.conf import cfme_data
 from utils.conf import credentials
@@ -212,6 +213,10 @@ def run(**kwargs):
                          [client, new_template_name], fail_condition=False, delay=5)
                 print("SCVMM:{} template {} uploaded successfully".format(
                     provider, new_template_name))
+                print("SCVMM:{} Adding template {} to trackerbot".format(
+                    provider, new_template_name))
+                trackerbot.trackerbot_add_provider_template(kwargs.get('stream'),
+                                                            provider, kwargs.get('template_name'))
             except Exception as e:
                 print(e)
                 print("SCVMM:{} Exception occured while verifying the template {} upload".format(

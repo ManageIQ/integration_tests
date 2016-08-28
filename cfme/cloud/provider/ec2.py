@@ -19,7 +19,7 @@ class EC2Provider(Provider):
                 'region_select': sel.ByValue(kwargs.get('region'))}
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         return cls(name=prov_config['name'],

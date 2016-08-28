@@ -7,6 +7,7 @@ from cfme.configure.configuration import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTree, flash, form_buttons, mixins, toolbar
 from cfme.web_ui.topology import Topology
+from cfme.web_ui.timelines import Timelines
 from sqlalchemy.orm import aliased
 from utils import attributize_string, version
 from utils.db import cfmedb
@@ -391,18 +392,7 @@ class Validatable(SummaryMixin):
                 ("Property '{}' has wrong value, expected '{}' but was '{}'"
                  .format(property_tuple, expected_value, shown_value))
 
-    def validate_tags(self, tags):
-        """Remove all tags and add `tags` from user input, validates added tags"""
-        self._validate_tags()
-        tags_db = self.get_tags(method='db')
-        if len(tags_db) > 0:
-            self.remove_tags(tags=tags_db)
-            tags_db = self.get_tags(method='db')
-        assert len(tags_db) == 0, "Some of tags still available in database!"
-        self.add_tags(tags)
-        self._validate_tags(reference_tags=tags)
-
-    def _validate_tags(self, tag="My Company Tags", reference_tags=None):
+    def validate_tags(self, tag="My Company Tags", reference_tags=None):
         """Validation method which check tagging between UI and database.
 
         To use this method, `self`/`caller` should be extended with `Taggable` class
@@ -483,3 +473,28 @@ class TopologyMixin(object):
     @cached_property
     def topology(self):
         return Topology(self)
+
+
+class TimelinesMixin(object):
+    """Use this mixin to have simple access to the Timelines page.
+    To use this `TimelinesMixin` you have to implement `load_timelines_page`
+    function, which should take to timelines page
+
+    Sample usage:
+
+    .. code-block:: python
+
+        # Change Timelines showing interval Select
+        timelines.change_interval('Hourly')
+        # Change Timelines showing event group Select
+        timelines.change_event_groups('Application')
+        # Change Level of showed Timelines
+        timelines.change_level('Detail')
+        # Check whether timelines contain particular event
+        # which is generated after provided datetime
+        timelines.contains_event('hawkular_deployment.ok', before_test_date)
+
+    """
+    @cached_property
+    def timelines(self):
+        return Timelines(self)

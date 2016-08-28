@@ -198,6 +198,7 @@ class Menu(UINavigate):
                     ('clouds_stacks', 'Stacks')
                 ),
                 ('containers', 'Containers'): (
+                    ('container_dashboard', 'Overview'),
                     ('containers_providers', 'Providers'),
                     ('containers_projects', 'Projects'),
                     ('containers_nodes', 'Container Nodes'),
@@ -217,7 +218,8 @@ class Menu(UINavigate):
                     ('infrastructure_virtual_machines', 'Virtual Machines',
                         self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
                     ('infrastructure_resource_pools', 'Resource Pools'),
-                    ('infrastructure_datastores', 'Datastores'),
+                    ('infrastructure_datastores', 'Datastores',
+                        self._tree_func_with_grid("Datastores", "All Datastores")),
                     ('infrastructure_repositories', 'Repositories'),
                     ('infrastructure_pxe', 'PXE'),
                     ('infrastructure_requests', 'Requests'),
@@ -278,7 +280,6 @@ class Menu(UINavigate):
                         ('clouds_tenants', 'Tenants'),
                         ('clouds_volumes', 'Volumes'),
                         ('clouds_flavors', 'Flavors'),
-                        ('clouds_security_groups', 'Security Groups'),
                         ('clouds_instances', 'Instances',
                             self._tree_func_with_grid(
                                 "Instances by Provider", "Instances by Provider")),
@@ -294,13 +295,15 @@ class Menu(UINavigate):
                         ('infrastructure_virtual_machines', 'Virtual Machines',
                             self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
                         ('infrastructure_resource_pools', 'Resource Pools'),
-                        ('infrastructure_datastores', 'Datastores'),
+                        ('infrastructure_datastores', 'Datastores',
+                            self._tree_func_with_grid("Datastores", "All Datastores")),
                         ('infrastructure_repositories', 'Repositories'),
                         ('infrastructure_pxe', 'PXE'),
                         ('infrastructure_requests', 'Requests'),
                         # ('infrastructure_config_management', 'Configuration Management')
                     ),
                     ('containers', 'Containers'): (
+                        ('container_dashboard', 'Overview'),
                         ('containers_providers', 'Providers'),
                         ('containers_projects', 'Projects'),
                         ('containers_nodes', 'Container Nodes'),
@@ -330,6 +333,16 @@ class Menu(UINavigate):
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
                     ('middleware_topology', 'Topology'),
+                ),
+                ('Networks', 'Networks'): (
+                    ('networks_providers', 'Providers'),
+                    ('networks_networks', 'Networks'),
+                    ('networks_subnets', 'Subnets'),
+                    ('networks_router', 'Network Router'),
+                    ('networks_security_groups', 'Security Groups'),
+                    ('networks_floating_ip', 'Floating IP'),
+                    ('networks_ports', 'Network Ports'),
+                    ('networks_topology', 'Topology'),
                 ),
                 ('control', 'Control'): (
                     ('control_explorer', 'Explorer'),

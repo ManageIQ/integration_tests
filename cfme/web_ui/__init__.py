@@ -144,8 +144,8 @@ class Region(Pretty):
     Note:
 
         When specifying a region title, omit the "Cloudforms Management Engine: " or "ManageIQ: "
-        prefix. They're included on every page, and different for the two versions of the appliance,
-        and :py:meth:`is_displayed` strips them off before checking for equality.
+        prefix. They are included on every page, and different for the two versions of the
+        appliance, and :py:meth:`is_displayed` strips them off before checking for equality.
 
     """
     pretty_attrs = ['title']
@@ -1494,7 +1494,7 @@ def _fill_form_list(form, values, action=None, action_always=False):
         if value is not None and form.field_valid(field):
             loc = form.locators[field]
             try:
-                sel.wait_for_element(loc)
+                sel.wait_for_element(loc, timeout=10)
             except TypeError:
                 # TypeError - when loc is not resolvable to an element, elements() will yell
                 # vvv An alternate scenario when element is not resolvable, just wait a bit.

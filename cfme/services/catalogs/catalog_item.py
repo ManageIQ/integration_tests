@@ -73,7 +73,7 @@ request_form = tabstrip.TabStripForm(
             ('vm_filter', Select('//select[@id="service__vm_filter"]')),
             ('catalog_name', Table('//div[@id="prov_vm_div"]/table')),
             ('vm_name', '//input[@name="service__vm_name"]'),
-            ('provision_type', Select('//select[@id="service__provision_type"]')),
+            ('provision_type', AngularSelect("service__provision_type")),
             ('linked_clone', Input("service__linked_clone")),
             ('pxe_server', Select('//select[@id="service__pxe_server_id"]')),
             ('pxe_image', Table('//div[@id="prov_pxe_img_div"]/table')),
@@ -102,7 +102,7 @@ request_form = tabstrip.TabStripForm(
             ('vm_reserve_memory', Input("hardware__memory_reserve")),
         ]),
         ('Network', [
-            ('vlan', Select('//select[@id="network__vlan"]')),
+            ('vlan', AngularSelect("network__vlan")),
         ]),
         ('Customize', [
             ('customize_type', Select('//select[@id="customize__sysprep_enabled"]')),
@@ -225,8 +225,8 @@ class CatalogItem(Updateable, Pretty):
         sel.force_navigate('catalog_item_new',
                            context={'provider_type': self.item_type})
         sel.wait_for_element(basic_info_form.name_text)
-        catalog = fakeobject_or_object(self.catalog, "name", "<Unassigned>")
-        dialog = fakeobject_or_object(self.dialog, "name", "<No Dialog>")
+        catalog = fakeobject_or_object(self.catalog, "name", "Unassigned")
+        dialog = fakeobject_or_object(self.dialog, "name", "No Dialog")
 
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,

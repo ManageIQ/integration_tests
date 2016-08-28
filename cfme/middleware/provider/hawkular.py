@@ -1,16 +1,16 @@
 import re
-from cfme.common import TopologyMixin
+from cfme.common import TopologyMixin, TimelinesMixin
 from cfme.common.provider import BaseProvider
 from cfme.web_ui import form_buttons
 from mgmtsystem.hawkular import Hawkular
 from utils.db import cfmedb
 from utils.varmeth import variable
 from . import properties_form, _get_providers_page, _db_select_query
-from .. import download, MiddlewareBase
+from .. import download, MiddlewareBase, auth_btn, mon_btn
 
 
 @BaseProvider.add_type_map
-class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
+class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, BaseProvider):
     """
     HawkularProvider class holds provider data. Used to perform actions on hawkular provider page
 
@@ -128,8 +128,16 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
         self.summary.reload()
         self.summary.overview.topology.click()
 
+    def recheck_auth_status(self):
+        self.load_details(refresh=True)
+        auth_btn("Re-check Authentication Status")
+
+    def load_timelines_page(self):
+        self.load_details()
+        mon_btn("Timelines")
+
     @staticmethod
-    def configloader(prov_config, prov_key):
+    def from_config(prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = HawkularProvider.process_credential_yaml_key(credentials_key)
         return HawkularProvider(

@@ -14,7 +14,7 @@ import fauxfactory
 import sys
 from threading import Lock, Thread
 
-from utils import net, ports
+from utils import net, ports, trackerbot
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.providers import list_providers
@@ -180,7 +180,7 @@ def make_kwargs_rhos(cfme_data, provider):
 
 
 def upload_template(rhosip, sshname, sshpass, username, password, auth_url, provider, image_url,
-                    template_name, provider_data):
+                    template_name, provider_data, stream):
     try:
         print("RHOS:{} Starting template {} upload...".format(provider, template_name))
 
@@ -206,6 +206,8 @@ def upload_template(rhosip, sshname, sshpass, username, password, auth_url, prov
                 wait_for(check_image_status, [image_id, export, ssh_client],
                          fail_condition=False, delay=5, num_sec=300)
                 print("RHOS:{} Successfully uploaded the template.".format(provider))
+                print("RHOS:{} Adding template {} to trackerbot...".format(provider, template_name))
+                trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
         else:
             print("RHOS:{} Found image with name {}. Exiting...".format(provider, template_name))
         if provider_data and check_image_exists(template_name, export, ssh_client):
@@ -257,7 +259,7 @@ def run(**kwargs):
         thread = Thread(target=upload_template,
                         args=(rhosip, sshname, sshpass, username, password, auth_url, provider,
                               kwargs.get('image_url'), kwargs.get('template_name'),
-                              kwargs['provider_data']))
+                              kwargs['provider_data'], kwargs['stream']))
         thread.daemon = True
         thread_queue.append(thread)
         thread.start()

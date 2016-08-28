@@ -168,6 +168,8 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
             _get_servers_page(self.provider)
             if self.feed:
                 list_tbl.click_row_by_cells({'Server Name': self.name, 'Feed': self.feed})
+            elif self.hostname:
+                list_tbl.click_row_by_cells({'Server Name': self.name, 'Host Name': self.hostname})
             else:
                 list_tbl.click_row_by_cells({'Server Name': self.name})
         if not self.db_id or refresh:

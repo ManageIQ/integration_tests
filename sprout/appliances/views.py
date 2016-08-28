@@ -358,8 +358,7 @@ def appliance_action(request, appliance_id, action, x=None):
         if appliance.power_state == Appliance.Power.ON:
             chain(
                 appliance_reboot.si(appliance.id),
-                (wait_appliance_ready if appliance.preconfigured else mark_appliance_ready).si(
-                    appliance.id))()
+                mark_appliance_ready.si(appliance.id))()
             messages.success(request, 'Initiated reboot of appliance.')
             return go_back_or_home(request)
         else:

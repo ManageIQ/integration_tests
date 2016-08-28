@@ -467,7 +467,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
 
     def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
         """Set ownership of the VM/Instance or Template/Image"""
-        sel.click(self.find_quadicon(False, False, False))
+        sel.click(self.find_quadicon(False, False, False, use_search=False))
         cfg_btn('Set Ownership')
         if click_reset:
             action = form_buttons.reset
@@ -614,9 +614,10 @@ class VM(BaseVM):
             return False
 
     def delete_from_provider(self):
+        logger.info("Begin delete_from_provider")
         if self.provider.mgmt.does_vm_exist(self.name):
             try:
-                if self.provider.mgmt.is_vm_suspended(self.name):
+                if self.provider.mgmt.is_vm_suspended(self.name) and self.provider.type != 'azure':
                     logger.debug("Powering up VM %s to shut it down correctly on %s.",
                                 self.name, self.provider.key)
                     self.provider.mgmt.start_vm(self.name)
@@ -629,6 +630,7 @@ class VM(BaseVM):
             # One more check (for the suspended one)
             if self.provider.mgmt.does_vm_exist(self.name):
                 try:
+                    logger.info("Mgmt System delete_vm")
                     return self.provider.mgmt.delete_vm(self.name)
                 except exceptions.VMInstanceNotFound:
                     # Does not exist already

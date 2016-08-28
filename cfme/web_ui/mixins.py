@@ -2,13 +2,13 @@
 import re
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import fill, Form, Select, Table, toolbar, form_buttons, flash
+from cfme.web_ui import fill, Form, AngularSelect, Table, toolbar, form_buttons, flash
 from xml.sax.saxutils import quoteattr
 
 tag_form = Form(
     fields=[
-        ('category', Select('//select[@id="tag_cat"]')),
-        ('tag', Select('//select[@id="tag_add"]'))
+        ('category', AngularSelect('tag_cat')),
+        ('tag', AngularSelect('tag_add'))
     ])
 
 tag_table = Table("//div[@id='assignments_div']//table")
