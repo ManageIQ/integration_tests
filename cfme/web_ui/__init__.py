@@ -2342,7 +2342,10 @@ class Quadicon(Pretty):
             return "contains(normalize-space(@title), {name})"\
                 .format(name=quoteattr('Name: {}'.format(self._name)))
         else:
-            return "@title={name} or @data-original-title={name}".format(name=quoteattr(self._name))
+            return "@title={name} or @data-original-title={name} or @title={short_name}".format(
+                name=quoteattr(self._name),
+                short_name=quoteattr("{}...{}".format(
+                    self._name[:5], self._name[-5:])) if len(self._name) > 12 else None)
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
