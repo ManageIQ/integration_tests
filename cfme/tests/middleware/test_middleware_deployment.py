@@ -1,15 +1,14 @@
 import pytest
 
-import os
-import fauxfactory
 from cfme.middleware import get_random_list
 from cfme.middleware.deployment import MiddlewareDeployment
-from cfme.middleware.server import MiddlewareServer
 from utils import testgen
 from utils.version import current_version
 from utils.wait import wait_for
-from utils.path import middleware_resources_path
-
+from deployment_methods import deploy, get_resource_path, get_server
+from deployment_methods import EAP_PRODUCT_NAME, HAWKULAR_PRODUCT_NAME
+from deployment_methods import RESOURCE_EAR_NAME, RESOURCE_JAR_NAME
+from deployment_methods import RESOURCE_WAR_NAME
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -17,13 +16,6 @@ pytestmark = [
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
 ITEMS_LIMIT = 5  # when we have big list, limit number of items to test
-
-RESOURCE_WAR_NAME = 'cfme_test_war_middleware.war'
-RESOURCE_JAR_NAME = 'cfme_test_jar_middleware.jar'
-RESOURCE_EAR_NAME = 'cfme_test_ear_middleware.ear'
-
-EAP_PRODUCT_NAME = 'JBoss EAP'
-HAWKULAR_PRODUCT_NAME = 'Hawkular'
 
 
 def test_list_deployments(provider):
@@ -286,25 +278,6 @@ def get_deployments_statuses(deployments):
     'name' as key, 'status' as value
     """
     return {deployment.name: deployment.status for deployment in deployments}
-
-
-def deploy(provider, server, file_path):
-    runtime_name = "{}_{}".format(fauxfactory.gen_alpha(8).lower(), os.path.basename(file_path))
-    server.add_deployment(file_path, runtime_name)
-    provider.refresh_provider_relationships(method='ui')
-    return runtime_name
-
-
-def get_server(provider, product):
-    for server in MiddlewareServer.servers(provider=provider):
-        if server.product == product:
-            return server
-    else:
-        raise ValueError('{} server was not found in servers list'.format(provider))
-
-
-def get_resource_path(archive_name):
-    return middleware_resources_path.join(archive_name).strpath
 
 
 def get_deployment_from_list(provider, server, runtime_name):

@@ -479,7 +479,7 @@ def _go_to(dest):
     return lambda: nav.go_to(dest)
 
 
-cat_name = "Configure"
+cat_name = "Settings"
 
 
 @pytest.mark.tier(3)
