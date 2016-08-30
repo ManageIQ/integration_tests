@@ -20,7 +20,7 @@ mgmtsystem>0.0.15
 mock
 multimethods.py
 numpy
-ovirt-engine-sdk-python
+ovirt-engine-sdk-python<4.0.0
 paramiko
 parsedatetime
 pdfminer
