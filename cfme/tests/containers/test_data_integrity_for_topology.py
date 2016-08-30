@@ -50,8 +50,8 @@ def test_data_integrity_for_topology():
     sel.force_navigate('container_dashboard')
     time.sleep(2)  # We should wait a second to let it be loaded (until we find a better solution)
     for cls, properties in CONTAINER_CLASSES.items():
-        SB = StatusBox(properties[1])
-        section_values[cls] = int(SB.value())
+        status_box = StatusBox(properties[1])
+        section_values[cls] = int(status_box.value())
     for cls, properties in CONTAINER_CLASSES.items():
         sel.force_navigate(properties[0])
         if section_values[cls] > 0:
