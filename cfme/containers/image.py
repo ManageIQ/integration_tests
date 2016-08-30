@@ -5,8 +5,11 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable
 from cfme.web_ui.menu import nav
 from . import details_page
+from cfme.web_ui import flash
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
+
+checkbox = ".//input[@class='list-grid-checkbox']"
 
 nav.add_branch(
     'containers_images',
@@ -20,6 +23,18 @@ nav.add_branch(
             {'Name': ctx['image'].name, 'Provider': ctx['image'].provider.name}),
     }
 )
+
+
+def run_smart_state_analysis(self):
+    sel.force_navigate('containers_images')
+    notification = "Analysis successfully initiated"
+    sel.check(checkbox)
+    tb.select(
+        'Configuration',
+        'Perform SmartState Analysis',
+        invokes_alert=True)
+    sel.handle_alert()
+    flash.assert_message_contain(notification)
 
 
 class Image(Taggable, SummaryMixin):
