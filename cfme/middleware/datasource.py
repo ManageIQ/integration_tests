@@ -222,7 +222,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         if db_ds:
             path = CanonicalPath(db_ds.ems_ref)
             mgmt_ds = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
-                        resource_id="{}/r;{}".format(path.resource_id[0], path.resource_id[1]))
+                        resource_id=path.resource_id)
             if mgmt_ds:
                 ds = MiddlewareDatasource(
                     server=self.server,

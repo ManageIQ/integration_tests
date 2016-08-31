@@ -323,6 +323,9 @@ class Menu(UINavigate):
                 ('middleware', 'Middleware'): (
                     ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
                         if not toolbar.is_active("Grid View") else None),
+                    ('middleware_domains', 'Middleware Domains',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
                     ('middleware_servers', 'Middleware Servers',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
