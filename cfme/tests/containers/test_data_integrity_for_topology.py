@@ -15,22 +15,25 @@ from utils.version import current_version
 from cfme.containers.provider import Provider
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.6" and provider.version > 3.2),
+    pytest.mark.uncollectif(
+        lambda provider: current_version() < "5.6" and provider.version > 3.2),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
 # CONTAINER_CLASSES: Referenced from: Menu.sections()
-CONTAINER_CLASSES = {Node: ('containers_nodes', 'Nodes'),
-                     Container: ('containers_containers', 'Containers'),
-                     ImageRegistry: ('containers_image_registries', 'Registries'),
-                     Project: ('containers_projects', 'Projects'),
-                     Pod: ('containers_pods', 'Pods'),
-                     Service: ('containers_services', 'Services'),
-                     Image: ('containers_images', 'Images'),
-                     Route: ('containers_routes', 'Routes'),
-                     Provider: ('containers_providers', 'Providers')}
+CONTAINER_CLASSES = {
+    Node: (
+        'containers_nodes', 'Nodes'), Container: (
+            'containers_containers', 'Containers'), ImageRegistry: (
+                'containers_image_registries', 'Registries'), Project: (
+                    'containers_projects', 'Projects'), Pod: (
+                        'containers_pods', 'Pods'), Service: (
+                            'containers_services', 'Services'), Image: (
+                                'containers_images', 'Images'), Route: (
+                                    'containers_routes', 'Routes'), Provider: (
+                                        'containers_providers', 'Providers')}
 #   CMP-9521
 
 
@@ -48,7 +51,9 @@ def test_data_integrity_for_topology():
     '''
     section_values = {}
     sel.force_navigate('container_dashboard')
-    time.sleep(2)  # We should wait a second to let it be loaded (until we find a better solution)
+    # We should wait a second to let it be loaded (until we find a better
+    # solution)
+    time.sleep(2)
     for cls, properties in CONTAINER_CLASSES.items():
         status_box = StatusBox(properties[1])
         section_values[cls] = int(status_box.value())
@@ -60,6 +65,7 @@ def test_data_integrity_for_topology():
                 assert len(icons) == section_values[cls]
             else:
                 table = Table(table_locator='//div[@id="list_grid"]//table')
-                assert len(map(lambda r: r, table.rows())) == section_values[cls]
+                assert len(map(lambda r: r, table.rows())
+                           ) == section_values[cls]
         else:
             assert sel.is_displayed_text('No Records Found.')
