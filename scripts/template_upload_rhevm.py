@@ -145,7 +145,7 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_cli
         print("RHEVM:{} Warning: found another template with this name.".format(provider))
         print("RHEVM:{} Skipping this step. Attempting to continue...".format(provider))
         return
-    version_cmd = 'rpm -qa| grep rhevm-image-uploader'
+    version_cmd = 'rpm -qa| grep image-uploader'
     command = ['rhevm-image-uploader']
     status, out = ssh_client.run_command(version_cmd)
     if status == 0:
@@ -569,7 +569,6 @@ def upload_template(rhevip, sshname, sshpass, username, password,
         kwargs['template_name'] = template_name
         ovaname = get_ova_name(image_url)
         ssh_client = make_ssh_client(rhevip, sshname, sshpass)
-
         temp_template_name = ('auto-tmp-{}-'.format(
             fauxfactory.gen_alphanumeric(8))) + template_name
         temp_vm_name = ('auto-vm-{}-'.format(
