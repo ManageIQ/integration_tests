@@ -303,3 +303,7 @@ class MiddlewareDomainNotFound(CFMEException):
 
 class UsingSharedTables(CFMEException):
     """Raised if the :py:class:`cfme.web_ui.Table` suspects there is a use of shared tables."""
+
+
+class MenuItemNotFound(CFMEException):
+    """Raised during navigation of certain menu item was not found."""
