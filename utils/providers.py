@@ -7,6 +7,7 @@ To quickly add all providers::
 """
 import random
 from collections import Mapping
+from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
@@ -348,7 +349,7 @@ def _setup_providers(prov_class, validate, check_existing):
     return added_providers
 
 
-def wait_for_no_providers_by_type(prov_class):
+def wait_for_no_providers_by_type(prov_class, **kwargs):
     navigate = "{}_providers".format(BaseProvider.type_mapping[prov_class].values()[0].page_name)
     sel.force_navigate(navigate)
     logger.debug('Waiting for all {} providers to disappear...'.format(prov_class))
@@ -392,14 +393,16 @@ def clear_providers():
     logger.info('Destroying all appliance providers')
     perflog.start('utils.providers.clear_providers')
 
+    clear_prov_type_no_validate = partial(clear_provider_by_type, validate=False)
+
     def do_for_provider_types(op):
-        op('cloud', validate=False)
-        op('infra', validate=False)
+        op('cloud')
+        op('infra')
         if version.current_version() > '5.5':
-            op('container', validate=False)
+            op('container')
         if version.current_version() == version.LATEST:
-            op('middleware', validate=False)
-    do_for_provider_types(clear_provider_by_type)
+            op('middleware')
+    do_for_provider_types(clear_prov_type_no_validate)
     do_for_provider_types(wait_for_no_providers_by_type)
     perflog.stop('utils.providers.clear_providers')
 
