@@ -32,7 +32,7 @@
         {% endif %}
         {% for user in other_users %}
             {% if user.id != show_user %}
-                <option value="{% url 'user_appliances' user.username %}">{{ user.first_name }} {{ user.last_name }}</option>
+                <option value="{% url 'user_appliances' user.username %}">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</option>
             {% endif %}
         {% endfor %}
         </select>
@@ -189,6 +189,7 @@
                 <tr>
                     <td colspan="10">
                         <a href="{% url 'kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')" style="display: inline;"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
+                        {% if pool.possible_other_owners %}
                         <form action="{% url 'transfer_pool' %}" method="POST" style="display: inline;">
                             {% csrf_token %}
                             <input type="hidden" name="pool_id" value="{{ pool.id }}">
@@ -199,6 +200,7 @@
                             {% endfor %}
                             </select>
                         </form>
+                        {% endif %}
                         {% if not pool.not_needed_anymore %}
                         | Set expiration for all vms:
                         <a href="{% url 'prolong_lease_pool' pool.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>

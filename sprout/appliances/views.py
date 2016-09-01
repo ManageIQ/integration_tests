@@ -73,9 +73,10 @@ def providers(request, provider_id=None):
         user_filter = {'user_groups__in': request.user.groups.all()}
     if provider_id is None:
         try:
+            provider = Provider.objects.filter(hidden=False, **user_filter).order_by("id")[0]
             return redirect(
                 "specific_provider",
-                provider_id=Provider.objects.filter(**user_filter).order_by("id")[0].id)
+                provider_id=provider.id)
         except IndexError:
             # No Provider
             messages.info(request, "No provider present, redirected to the homepage.")
@@ -83,6 +84,9 @@ def providers(request, provider_id=None):
     else:
         try:
             provider = Provider.objects.filter(id=provider_id, **user_filter).distinct().first()
+            if provider.hidden:
+                messages.warning(request, 'Provider {} is hidden.'.format(provider_id))
+                return redirect('providers')
         except ObjectDoesNotExist:
             messages.warning(request, "Provider '{}' does not exist.".format(provider_id))
             return redirect("providers")
