@@ -1155,8 +1155,22 @@ class AppliancePool(MetadataMixin):
     @property
     def possible_other_owners(self):
         """Returns a list of User objects that can own this pool instead of original owner"""
-        return type(self.owner).objects.exclude(pk=self.owner.pk).order_by("last_name",
-                                                                           "first_name")
+        if self.provider is not None:
+            providers = {self.provider}
+        else:
+            providers = {appliance.template.provider for appliance in self.appliances}
+        possible_groups = set()
+        for provider in providers:
+            for group in provider.user_groups.all():
+                possible_groups.add(group)
+        common_groups = set()
+        for group in possible_groups:
+            if all(group in provider.user_groups.all() for provider in providers):
+                common_groups.add(group)
+        return User.objects\
+            .filter(groups__in=common_groups)\
+            .exclude(pk=self.owner.pk)\
+            .order_by("last_name", "first_name", 'username')
 
     @property
     def num_delayed_provisioning_tasks(self):

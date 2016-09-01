@@ -195,7 +195,7 @@
                             <input type="submit" class="btn btn-success btn-sm" value="Transfer ownership to:" onclick="return confirm('Are you sure?')">
                             <select name="user_id" class='select-user'>
                             {% for user in pool.possible_other_owners %}
-                                <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                <option value="{{ user.id }}">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</option>
                             {% endfor %}
                             </select>
                         </form>
