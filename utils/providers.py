@@ -348,7 +348,7 @@ def _setup_providers(prov_class, validate, check_existing):
     return added_providers
 
 
-def wait_for_no_providers_by_type(prov_class):
+def wait_for_no_providers_by_type(prov_class, **kwargs):
     navigate = "{}_providers".format(BaseProvider.type_mapping[prov_class].values()[0].page_name)
     sel.force_navigate(navigate)
     logger.debug('Waiting for all {} providers to disappear...'.format(prov_class))
