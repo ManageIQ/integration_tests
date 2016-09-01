@@ -295,6 +295,6 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
         mon_btn("Utilization")
 
     @classmethod
-    def download(cls, extension, provider=None):
-        _get_servers_page(provider)
+    def download(cls, extension, provider=None, server_group=None):
+        _get_servers_page(provider, server_group)
         download(extension)

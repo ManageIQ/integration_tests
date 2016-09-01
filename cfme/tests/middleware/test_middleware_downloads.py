@@ -4,6 +4,8 @@ from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.middleware.datasource import MiddlewareDatasource
 from cfme.middleware.deployment import MiddlewareDeployment
+from cfme.middleware.domain import MiddlewareDomain
+from cfme.middleware.server_group import MiddlewareServerGroup
 import cfme.web_ui.flash as flash
 from utils import testgen
 from utils.version import current_version
@@ -17,7 +19,8 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"],
 
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
 @pytest.mark.parametrize("objecttype", [MiddlewareDatasource, MiddlewareDeployment,
-                                        HawkularProvider, MiddlewareServer])
+                                        HawkularProvider, MiddlewareServer,
+                                        MiddlewareDomain])
 def test_download_lists_base(filetype, objecttype):
     """ Download the items from base lists. """
     objecttype.download(filetype)
@@ -25,7 +28,7 @@ def test_download_lists_base(filetype, objecttype):
 
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
 @pytest.mark.parametrize("objecttype", [MiddlewareDatasource, MiddlewareDeployment,
-                                        MiddlewareServer])
+                                        MiddlewareServer, MiddlewareDomain])
 def test_download_lists_from_provider(provider, filetype, objecttype):
     """ Download the items from providers. """
     objecttype.download(filetype, provider=provider)
@@ -36,7 +39,21 @@ def test_download_lists_from_provider(provider, filetype, objecttype):
 def test_download_lists_from_provider_server(provider, filetype, objecttype):
     """ Download the items from provider's server. """
     objecttype.download(filetype, provider=provider,
-                        server=_get_random_server(provider=provider))
+                        server=get_random_server(provider=provider))
+
+
+@pytest.mark.parametrize("filetype", ["txt", "csv"])
+@pytest.mark.parametrize("objecttype", [MiddlewareServerGroup])
+def test_download_lists_from_domain(provider, filetype, objecttype):
+    """ Download the items from domains. """
+    objecttype.download(filetype, domain=get_random_domain(provider))
+
+
+@pytest.mark.parametrize("filetype", ["txt", "csv"])
+@pytest.mark.parametrize("objecttype", [MiddlewareServer])
+def test_download_lists_from_server_group(provider, filetype, objecttype):
+    """ Download the items from domains. """
+    objecttype.download(filetype, server_group=get_random_server_group(provider))
 
 
 def verify_download(filetype):
@@ -47,7 +64,19 @@ def verify_download(filetype):
     flash.assert_no_errors()
 
 
-def _get_random_server(provider):
+def get_random_server(provider):
     servers = MiddlewareServer.servers(provider=provider)
     assert len(servers) > 0, "There is no server(s) available in UI"
     return get_random_list(servers, 1)[0]
+
+
+def get_random_domain(provider):
+    domains = MiddlewareDomain.domains(provider=provider)
+    assert len(domains) > 0, "There is no domains(s) available in UI"
+    return get_random_list(domains, 1)[0]
+
+
+def get_random_server_group(provider):
+    server_groups = MiddlewareServerGroup.server_groups(get_random_domain(provider))
+    assert len(server_groups) > 0, "There is no server_groups(s) available in UI"
+    return get_random_list(server_groups, 1)[0]
