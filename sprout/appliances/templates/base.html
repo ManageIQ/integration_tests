@@ -100,7 +100,7 @@
                     <a href="{% url 'password_change' %}?next={{request.path}}" title="Change password" style="color: #333;">Change password</a>
                 </li>
                 <li>
-                    <a href="{% url 'logout' %}" title="Logout" style="color: #333;">Logout{% if user.first_name %}, {{ user.first_name }}{% if user.last_name %} {{ user.last_name }}{% endif %}{% else %}, {{ user.username }}{% endif %}</a>
+                    <a href="{% url 'logout' %}" title="Logout" style="color: #333;">Logout, {{ user|user_repr }}</a>
                 </li>
             {% else %}
                 <li>
