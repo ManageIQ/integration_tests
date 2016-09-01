@@ -192,8 +192,11 @@ def test_start(
     Metadata:
         test_flag: power_control, provision
     """
-    testing_instance.wait_for_vm_state_change(
-        desired_state=testing_instance.STATE_OFF, timeout=720, from_details=True)
+    if provider.type == 'azure':
+        provider.mgmt.stop_vm(testing_instance.name)
+    else:
+        testing_instance.wait_for_vm_state_change(
+            desired_state=testing_instance.STATE_OFF, timeout=720, from_details=True)
     check_power_options(soft_assert, testing_instance, 'off')
     testing_instance.power_control_from_cfme(
         option=testing_instance.START, cancel=False, from_details=True)
@@ -210,6 +213,7 @@ def test_start(
 
 
 @pytest.mark.long_running
+@pytest.mark.uncollectif(lambda provider: provider.type == 'azure')
 def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
                      verify_vm_running):
     """ Tests instance soft reboot
@@ -265,8 +269,9 @@ def test_suspend(
     Metadata:
         test_flag: power_control, provision
     """
-    testing_instance.wait_for_vm_state_change(
-        desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
+    if provider.type != 'azure':
+        testing_instance.wait_for_vm_state_change(
+            desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
     check_power_options(soft_assert, testing_instance, 'on')
     testing_instance.power_control_from_cfme(
         option=testing_instance.SUSPEND, cancel=False, from_details=True)
@@ -281,7 +286,7 @@ def test_suspend(
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_unpause(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_paused):
     """ Tests instance unpause
@@ -332,14 +337,15 @@ def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_as
     Metadata:
         test_flag: power_control, provision
     """
-    testing_instance.wait_for_vm_state_change(
-        desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
+    if provider.type != 'azure':
+        testing_instance.wait_for_vm_state_change(
+            desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
     testing_instance.power_control_from_cfme(
         option=testing_instance.TERMINATE, cancel=False, from_details=True)
     flash.assert_message_contain({
         version.LOWEST: "Terminate initiated",
         "5.5": "Vm Destroy initiated"})
-    testing_instance.wait_to_disappear(timeout=600)
+    testing_instance.wait_to_disappear(timeout=720)
     if provider.type == 'openstack':
         soft_assert(not testing_instance.does_vm_exist_on_provider(), "instance still exists")
     else:
@@ -360,14 +366,15 @@ def test_terminate_via_rest(setup_provider_funcscope, provider, testing_instance
     if provider.type == 'ec2' and GH("ManageIQ/manageiq:6955").blocks:
         pytest.skip("Termination ec2 is blocked by""manageiq/issues/6955")
 
-    testing_instance.wait_for_vm_state_change(
-        desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
+    if provider.type != 'azure':
+        testing_instance.wait_for_vm_state_change(
+            desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
     vm = rest_api.collections.instances.get(name=testing_instance.name)
     if from_detail:
         vm.action.terminate()
     else:
         rest_api.collections.instances.action.terminate(vm)
-    if provider.type == 'openstack':
+    if provider.type == 'openstack' or provider.type == 'azure':
         testing_instance.wait_to_disappear(timeout=800)
         soft_assert(not testing_instance.does_vm_exist_on_provider(), "instance still exists")
     else:
