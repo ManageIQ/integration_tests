@@ -23,9 +23,6 @@ from utils import version
 import cfme.web_ui.toolbar as tb
 
 
-QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
-                         " or contains(@href, '/show/')]")  # for provider specific vm/template page
-
 cfg_btn = partial(toolbar.select, 'Configuration')
 pol_btn = partial(toolbar.select, 'Policy')
 lcl_btn = partial(toolbar.select, 'Lifecycle')
@@ -738,29 +735,7 @@ def get_all_vms(do_not_navigate=False):
     """Returns list of all vms"""
     if not do_not_navigate:
         sel.force_navigate('infra_vms')
-    vms = set([])
-
-    # This is really stupid, but I cannot come up with better getting of the attributes :(
-    if not paginator.page_controls_exist():
-        for title in sel.elements(QUADICON_TITLE_LOCATOR):
-            title_value = sel.get_attribute(title, "title")
-            if not title_value:
-                title_value = sel.get_attribute(title, "data-original-title")
-            vms.add(title_value)
-        return vms
-
-    paginator.results_per_page(1000)
-    for page in paginator.pages():
-        try:
-            for page in paginator.pages():
-                for title in sel.elements(QUADICON_TITLE_LOCATOR):
-                    title_value = sel.get_attribute(title, "title")
-                    if not title_value:
-                        title_value = sel.get_attribute(title, "data-original-title")
-                    vms.add(title_value)
-        except sel.NoSuchElementException:
-            pass
-    return vms
+    return [q.name for q in Quadicon.all("vm")]
 
 
 def get_number_of_vms(do_not_navigate=False):

@@ -305,13 +305,7 @@ class Host(Updateable, Pretty, Navigatable):
         """ Gets list of all datastores used by this host"""
         navigate_to(self, 'Details')
         list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
-
-        datastores = set([])
-        for page in paginator.pages():
-            for title in sel.elements(
-                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'storage/show')]"):
-                datastores.add(sel.get_attribute(title, "title"))
-        return datastores
+        return [q.name for q in Quadicon.all("datastore")]
 
     @property
     def get_db_id(self):
@@ -544,12 +538,7 @@ def get_all_hosts(do_not_navigate=False):
     """Returns list of all hosts"""
     if not do_not_navigate:
         navigate_to(Host, 'All')
-    hosts = set([])
-    for page in paginator.pages():
-        for title in sel.elements(
-                "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'host/show')]"):
-            hosts.add(sel.get_attribute(title, "title"))
-    return hosts
+    return [q.name for q in Quadicon.all("host")]
 
 
 def find_quadicon(host, do_not_navigate=False):
