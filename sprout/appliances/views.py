@@ -84,6 +84,12 @@ def providers(request, provider_id=None):
     else:
         try:
             provider = Provider.objects.filter(id=provider_id, **user_filter).distinct().first()
+            if provider is None:
+                messages.error(
+                    request,
+                    'Could not find a provider with name {} that you would have access to.'.format(
+                        provider_id))
+                return go_home(request)
             if provider.hidden:
                 messages.warning(request, 'Provider {} is hidden.'.format(provider_id))
                 return redirect('providers')
