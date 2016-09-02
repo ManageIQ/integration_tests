@@ -158,7 +158,7 @@ class TestVmEventRESTAPI(object):
         }
         rest_vm = rest_api.collections.vms.get(name=vm)
         if from_detail:
-            assert rest_vm.action.add_event(event)["success"], "Could not add event"
+            assert rest_vm.action.add_event(**event)["success"], "Could not add event"
         else:
             response = rest_api.collections.vms.action.add_event(rest_vm, **event)
             assert len(response) > 0, "Could not add event"
