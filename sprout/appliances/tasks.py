@@ -1731,9 +1731,10 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
                 vm_name, 'sprout_pool_group')
             pool_construct['group'] = Group.objects.get(id=group_id)
             try:
-                pool_construct['provider'] = provider_api.get_meta_value(
+                construct_provider_id = provider_api.get_meta_value(
                     vm_name, 'sprout_pool_provider')
-            except KeyError:
+                pool_construct['provider'] = Provider.objects.get(id=construct_provider_id)
+            except (KeyError, ObjectDoesNotExist):
                 # optional
                 pool_construct['provider'] = None
             pool_construct['version'] = provider_api.get_meta_value(
