@@ -97,6 +97,7 @@ def logged_task(*args, **kwargs):
                 self.logger.error(
                     "An exception occured when executing with args: %r kwargs: %r",
                     args, kwargs)
+                self.logger.exception(e)
                 raise
         return shared_task(*args, **kwargs)(wrapped_task)
     return f
@@ -126,6 +127,7 @@ def singleton_task(*args, **kwargs):
                     self.logger.error(
                         "An exception occured when executing with args: %r kwargs: %r",
                         args, kwargs)
+                    self.logger.exception(e)
                     raise
                 finally:
                     cache.delete(lock_id)
