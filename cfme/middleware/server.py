@@ -147,7 +147,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
     @classmethod
     def _servers_in_mgmt(cls, provider, server_group=None):
         servers = []
-        rows = provider.mgmt.list_server(feed_id=server_group.feed
+        rows = provider.mgmt.inventory.list_server(feed_id=server_group.feed
                                         if server_group else None)
         for row in rows:
             server = MiddlewareServer(
@@ -211,8 +211,8 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
                                  feed=self.feed).first()
         if db_srv:
             path = CanonicalPath(db_srv.ems_ref)
-            mgmt_srv = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
-                        resource_id=path.resource_id)
+            mgmt_srv = self.provider.mgmt.inventory.get_config_data(feed_id=path.feed_id,
+                                                                    resource_id=path.resource_id)
             if mgmt_srv:
                 return MiddlewareServer(
                     provider=self.provider,
@@ -254,8 +254,8 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
                                  feed=self.feed).first()
         if db_srv:
             path = CanonicalPath(db_srv.ems_ref)
-            mgmt_srv = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
-                        resource_id=path.resource_id)
+            mgmt_srv = self.provider.mgmt.inventory.get_config_data(feed_id=path.feed_id,
+                                                                    resource_id=path.resource_id)
             if mgmt_srv:
                 return mgmt_srv.value['Server State'] == 'running'
         raise MiddlewareServerNotFound("Server '{}' not found in MGMT!".format(self.name))
