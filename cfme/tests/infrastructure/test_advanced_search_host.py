@@ -16,7 +16,7 @@ from utils.version import current_version
 def hosts():
     """Ensure the infra providers are set up and get list of hosts"""
     try:
-        setup_a_provider(prov_type="infra")
+        setup_a_provider(prov_class="infra")
     except Exception:
         pytest.skip("It's not possible to set up any providers, therefore skipping")
     pytest.sel.force_navigate("infrastructure_hosts")
