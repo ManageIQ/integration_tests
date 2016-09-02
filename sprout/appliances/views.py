@@ -16,7 +16,8 @@ from django.shortcuts import render, redirect
 
 from appliances.api import json_response
 from appliances.models import (
-    Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer, User, BugQuery)
+    Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer, User, BugQuery,
+    GroupShepherd)
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
     anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
     appliance_rename, wait_appliance_ready, mark_appliance_ready, appliance_reboot)
@@ -66,30 +67,45 @@ def index(request):
 
 
 def providers(request, provider_id=None):
+    if request.user.is_staff or request.user.is_superuser:
+        user_filter = {}
+    else:
+        user_filter = {'user_groups__in': request.user.groups.all()}
     if provider_id is None:
         try:
+            provider = Provider.objects.filter(hidden=False, **user_filter).order_by("id")[0]
             return redirect(
-                "specific_provider", provider_id=Provider.objects.order_by("id")[0].id)
+                "specific_provider",
+                provider_id=provider.id)
         except IndexError:
             # No Provider
             messages.info(request, "No provider present, redirected to the homepage.")
             return go_home(request)
     else:
         try:
-            provider = Provider.objects.get(id=provider_id)
+            provider = Provider.objects.filter(id=provider_id, **user_filter).distinct().first()
+            if provider.hidden:
+                messages.warning(request, 'Provider {} is hidden.'.format(provider_id))
+                return redirect('providers')
         except ObjectDoesNotExist:
             messages.warning(request, "Provider '{}' does not exist.".format(provider_id))
             return redirect("providers")
-    providers = Provider.objects.filter(hidden=False).order_by("id")
+    providers = Provider.objects.filter(hidden=False, **user_filter).order_by("id").distinct()
     return render(request, 'appliances/providers.html', locals())
 
 
 def provider_usage(request):
-    complete_usage = Provider.complete_user_usage()
+    complete_usage = Provider.complete_user_usage(request.user)
     return render(request, 'appliances/provider_usage.html', locals())
 
 
 def templates(request, group_id=None, prov_id=None):
+    if request.user.is_staff or request.user.is_superuser:
+        user_filter = {}
+        user_filter_2 = {}
+    else:
+        user_filter = {'user_groups__in': request.user.groups.all()}
+        user_filter_2 = {'provider__user_groups__in': request.user.groups.all()}
     if group_id is None:
         try:
             return redirect("group_templates", group_id=Group.objects.order_by("id")[0].id)
@@ -105,12 +121,14 @@ def templates(request, group_id=None, prov_id=None):
             return redirect("templates")
     if prov_id is not None:
         try:
-            provider = Provider.objects.get(id=prov_id)
+            provider = Provider.objects.filter(id=prov_id, **user_filter).distinct().first()
         except ObjectDoesNotExist:
             messages.warning(request, "Provider '{}' does not exist.".format(prov_id))
             return redirect("templates")
     else:
         provider = None
+    if provider is not None:
+        user_filter_2 = {'provider': provider}
     groups = Group.objects.order_by("id")
     mismatched_versions = MismatchVersionMailer.objects.order_by("id")
     prepared_table = []
@@ -123,7 +141,7 @@ def templates(request, group_id=None, prov_id=None):
         for version in versions:
             for template in Template.objects.filter(
                     template_group=group, version=version, exists=True,
-                    ready=True).order_by('-date', 'provider'):
+                    ready=True, **user_filter_2).order_by('-date', 'provider').distinct():
                 if zstream in zstream_rowspans:
                     zstream_rowspans[zstream] += 1
                     zstream_append = None
@@ -154,11 +172,16 @@ def templates(request, group_id=None, prov_id=None):
 @only_authenticated
 def shepherd(request):
     groups = Group.objects.all()
+    shepherds = GroupShepherd.objects.filter(
+        template_group__in=groups, user_group__in=request.user.groups.all()).distinct().order_by(
+        'template_group__id')
     return render(request, 'appliances/shepherd.html', locals())
 
 
 @only_authenticated
 def versions_for_group(request):
+    if not request.user.is_authenticated():
+        return go_home(request)
     group_id = request.POST.get("stream")
     latest_version = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
@@ -173,7 +196,8 @@ def versions_for_group(request):
         else:
             versions = Template.get_versions(
                 template_group=group, ready=True, usable=True, exists=True,
-                preconfigured=preconfigured, provider__working=True, provider__disabled=False)
+                preconfigured=preconfigured, provider__working=True, provider__disabled=False,
+                provider__user_groups__in=request.user.groups.all())
             if versions:
                 latest_version = versions[0]
 
@@ -182,6 +206,8 @@ def versions_for_group(request):
 
 @only_authenticated
 def date_for_group_and_version(request):
+    if not request.user.is_authenticated():
+        return go_home(request)
     group_id = request.POST.get("stream")
     latest_date = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
@@ -201,6 +227,7 @@ def date_for_group_and_version(request):
                 "usable": True,
                 "preconfigured": preconfigured,
                 "provider__working": True,
+                "provider__user_groups__in": request.user.groups.all(),
             }
             if version == "latest":
                 try:
@@ -218,6 +245,8 @@ def date_for_group_and_version(request):
 
 @only_authenticated
 def providers_for_date_group_and_version(request):
+    if not request.user.is_authenticated():
+        return go_home(request)
     total_provisioning_slots = 0
     total_appliance_slots = 0
     total_shepherd_slots = 0
@@ -240,6 +269,7 @@ def providers_for_date_group_and_version(request):
                 "usable": True,
                 "preconfigured": preconfigured,
                 "provider__working": True,
+                "provider__user_groups__in": request.user.groups.all(),
             }
             if version == "latest":
                 try:
@@ -288,9 +318,9 @@ def my_appliances(request, show_user="my"):
     if not request.user.is_superuser:
         if not (show_user == "my" or show_user == request.user.username):
             messages.info(request, "You can't view others' appliances!")
-            show_user = "my"
+            return redirect("my_appliances")
         if show_user == request.user.username:
-            show_user = "my"
+            return redirect("my_appliances")
     else:
         other_users = User.objects.exclude(pk=request.user.pk).order_by("last_name", "first_name")
     if show_user == "my":
@@ -545,15 +575,21 @@ def transfer_pool(request):
 def vms(request, current_provider=None):
     if not request.user.is_authenticated() or not request.user.is_superuser:
         return go_home(request)
-    provider_keys = sorted(Provider.get_available_provider_keys())
+    all_provider_keys = sorted(Provider.get_available_provider_keys())
     providers = []
-    for provider_key in provider_keys:
+    provider_keys = []
+    if request.user.is_staff or request.user.is_superuser:
+        user_filter = {}
+    else:
+        user_filter = {'user_groups__in': request.user.groups.all()}
+    for provider_key in all_provider_keys:
         try:
-            provider = Provider.objects.get(id=provider_key)
+            provider = Provider.objects.filter(id=provider_key, **user_filter).distinct().first()
         except ObjectDoesNotExist:
-            providers.append((provider_key, True))
-        else:
+            continue
+        if provider is not None:
             providers.append((provider_key, provider.is_working))
+            provider_keys.append(provider_key)
     if current_provider is None and providers:
         return redirect("vms_at_provider", current_provider=provider_keys[0])
     return render(request, 'appliances/vms/index.html', locals())
