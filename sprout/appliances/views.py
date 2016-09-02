@@ -318,9 +318,9 @@ def my_appliances(request, show_user="my"):
     if not request.user.is_superuser:
         if not (show_user == "my" or show_user == request.user.username):
             messages.info(request, "You can't view others' appliances!")
-            show_user = "my"
+            return redirect("my_appliances")
         if show_user == request.user.username:
-            show_user = "my"
+            return redirect("my_appliances")
     else:
         other_users = User.objects.exclude(pk=request.user.pk).order_by("last_name", "first_name")
     if show_user == "my":

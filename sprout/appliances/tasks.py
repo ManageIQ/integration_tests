@@ -91,12 +91,13 @@ def logged_task(*args, **kwargs):
         @wraps(task)
         def wrapped_task(self, *args, **kwargs):
             self.logger = create_logger(task)
-            self.logger.info(
-                "Entering with arguments: {} / {}".format(", ".join(map(str, args)), str(kwargs)))
             try:
                 return task(self, *args, **kwargs)
-            finally:
-                self.logger.info("Leaving")
+            except Exception as e:
+                self.logger.error(
+                    "An exception occured when executing with args: %r kwargs: %r",
+                    args, kwargs)
+                raise
         return shared_task(*args, **kwargs)(wrapped_task)
     return f
 
@@ -119,19 +120,18 @@ def singleton_task(*args, **kwargs):
             lock_id = '{0}-lock-{1}'.format(self.name, digest)
 
             if cache.add(lock_id, 'true', LOCK_EXPIRE):
-                self.logger.info(
-                    "Entering with arguments: {} / {}".format(
-                        ", ".join(map(str, args)), str(kwargs)))
                 try:
                     return task(self, *args, **kwargs)
+                except Exception as e:
+                    self.logger.error(
+                        "An exception occured when executing with args: %r kwargs: %r",
+                        args, kwargs)
+                    raise
                 finally:
                     cache.delete(lock_id)
-                    self.logger.info("Leaving")
             elif wait:
                 self.logger.info("Waiting for another instance of the task to end.")
                 self.retry(args=args, countdown=wait_countdown, max_retries=wait_retries)
-            else:
-                self.logger.info("Already running, ignoring.")
 
         return shared_task(*args, **kwargs)(wrapped_task)
     return f
