@@ -481,6 +481,9 @@ function update_sprout() {
     git pull origin master  >> $UPDATE_LOG 2>&1
     echo "> Installing requirements"
     pip install -U pip
+    pushd ..
+    PYCURL_SSL_LIBRARY=nss pip install -Ur requirements.txt >> $UPDATE_LOG
+    popd
     PYCURL_SSL_LIBRARY=nss pip install -Ur requirements.txt >> $UPDATE_LOG
     clearpyc
     echo "> Collecting static files"
