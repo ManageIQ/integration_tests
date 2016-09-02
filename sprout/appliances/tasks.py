@@ -1385,7 +1385,11 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
 def calculate_provider_management_usage(self, appliance_ids):
     results = {}
     for appliance_id in filter(lambda id: id is not None, appliance_ids):
-        appliance = Appliance.objects.get(id=appliance_id)
+        try:
+            appliance = Appliance.objects.get(id=appliance_id)
+        except ObjectDoesNotExist:
+            # Deleted in meanwhile
+            continue
         for provider in appliance.managed_providers:
             if provider not in results:
                 results[provider] = []
