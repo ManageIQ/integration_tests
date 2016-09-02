@@ -2,7 +2,7 @@ from mgmtsystem.virtualcenter import VMWareSystem
 from . import Provider
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class VMwareProvider(Provider):
     type_name = "virtualcenter"
     mgmt_class = VMWareSystem

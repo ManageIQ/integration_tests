@@ -81,7 +81,10 @@ prop_region = Region(
 )
 
 
+@BaseProvider.add_base_type
 class Provider(BaseProvider, Pretty):
+    provider_types = {}
+    in_version = ('5.5', version.LATEST)
     type_tclass = "container"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = [

@@ -6,11 +6,12 @@ import pytest
 
 import cfme.web_ui.flash as flash
 import utils.error as error
+from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import testgen, providers, version
+from utils import testgen, version
 from utils.update import update
 
 
@@ -173,7 +174,7 @@ def test_providers_discovery(request, provider):
     """
     provider.discover()
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
-    request.addfinalizer(lambda: providers.clear_provider_by_type("infra"))
+    request.addfinalizer(lambda: BaseProvider.clear_provider_by_type(Provider))
     wait_for_a_provider()
 
 

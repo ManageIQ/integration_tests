@@ -3,7 +3,7 @@ from mgmtsystem.azure import AzureSystem
 from . import Provider
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class AzureProvider(Provider):
     type_name = "azure"
     mgmt_class = AzureSystem

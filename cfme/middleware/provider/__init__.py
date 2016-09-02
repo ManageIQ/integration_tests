@@ -1,8 +1,10 @@
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Region, Form, AngularSelect, Input, Quadicon
+    Region, Form, AngularSelect, Input, Quadicon, form_buttons
 )
 from cfme.web_ui.menu import nav
+from cfme.common.provider import BaseProvider
+from utils import version
 from utils.db import cfmedb
 from cfme.common.provider import import_all_modules_of
 from .. import cfg_btn, mon_btn, pol_btn
@@ -60,5 +62,26 @@ properties_form = Form(
         ('hostname_text', Input('hostname')),
         ('port_text', Input('port'))
     ])
+
+
+@BaseProvider.add_base_type
+class MiddlewareProvider(BaseProvider):
+    in_version = (version.LATEST, version.LATEST)
+    type_tclass = "middleware"
+    page_name = 'middleware'
+    string_name = 'Middleware'
+    provider_types = {}
+    STATS_TO_MATCH = ['num_server', 'num_deployment', 'num_datasource']
+    property_tuples = [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'),
+                       ('provider_type', 'type')]
+    detail_page_suffix = 'provider_detail'
+    edit_page_suffix = 'provider_edit_detail'
+    refresh_text = "Refresh items and relationships"
+    quad_name = None
+    _properties_form = properties_form
+    add_provider_button = form_buttons.FormButton("Add this Middleware Provider")
+    save_button = form_buttons.FormButton("Save Changes")
+    taggable_type = 'ExtManagementSystem'
+
 
 import_all_modules_of('cfme.middleware.provider')

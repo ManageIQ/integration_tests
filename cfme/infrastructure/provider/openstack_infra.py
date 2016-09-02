@@ -2,7 +2,7 @@ from mgmtsystem.openstack_infra import OpenstackInfraSystem
 from . import Provider, prop_region
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class OpenstackInfraProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_host']
     _properties_region = prop_region

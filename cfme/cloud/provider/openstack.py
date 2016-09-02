@@ -6,7 +6,7 @@ from utils.version import current_version
 from . import Provider
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class OpenStackProvider(Provider):
     type_name = "openstack"
     mgmt_class = OpenstackSystem

@@ -3,7 +3,7 @@ from . import Provider
 import cfme.fixtures.pytest_selenium as sel
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class GCEProvider(Provider):
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
