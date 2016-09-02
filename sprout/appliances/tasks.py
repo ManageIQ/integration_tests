@@ -690,7 +690,7 @@ def apply_lease_times(self, appliance_id, time_minutes):
     with transaction.atomic():
         appliance = Appliance.objects.get(id=appliance_id)
         appliance.datetime_leased = timezone.now()
-        appliance.leased_until = appliance.datetime_leased + timedelta(minutes=time_minutes)
+        appliance.leased_until = appliance.datetime_leased + timedelta(minutes=int(time_minutes))
         appliance.save()
 
 
