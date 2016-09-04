@@ -60,7 +60,7 @@ def test_data_integrity_for_topology():
     for cls, properties in CONTAINER_CLASSES.items():
         sel.force_navigate(properties[0])
         if section_values[cls] > 0:
-            if cls == Provider:
+            if cls is Provider:
                 assert len(map(lambda i: i, Quadicon.all())) == section_values[cls]
             else:
                 assert len(map(lambda r: r, properties[2].rows())
