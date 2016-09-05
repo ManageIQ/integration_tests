@@ -1677,6 +1677,9 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
     """'re'-synchronizes any vms that might be lost during outages."""
     provider = Provider.objects.get(id=provider_id)
     provider_api = provider.api
+    if not hasattr(provider_api, 'list_vm'):
+        # This provider does not have VMs (eg. Hawkular or Openshift)
+        return
     for vm_name in sorted(map(str, provider_api.list_vm())):
         if Appliance.objects.filter(name=vm_name, template__provider=provider).count() != 0:
             continue
