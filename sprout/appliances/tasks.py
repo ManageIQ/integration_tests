@@ -1647,16 +1647,10 @@ The Sprout™
 @singleton_task()
 def appliances_synchronize_metadata(self):
     for appliance in Appliance.objects.all():
-        appliance_synchronize_metadata.delay(appliance.id)
-
-
-@singleton_task()
-def appliance_synchronize_metadata(self, appliance_id):
-    try:
-        appliance = Appliance.objects.get(id=appliance_id)
-    except ObjectDoesNotExist:
-        return
-    appliance.synchronize_metadata()
+        try:
+            appliance.synchronize_metadata()
+        except ObjectDoesNotExist:
+            return
 
 
 @singleton_task()
