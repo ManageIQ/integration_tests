@@ -22,48 +22,45 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
-# CONTAINER_CLASSES: Referenced from: Menu.sections()
-CONTAINER_CLASSES = {
-    Node: ('containers_nodes', 'Nodes', list_tbl_nodes),
-    Container: ('containers_containers', 'Containers', list_tbl_containers),
-    ImageRegistry: ('containers_image_registries', 'Registries', list_tbl_image_registrys),
-    Project: ('containers_projects', 'Projects', list_tbl_projects),
-    Pod: ('containers_pods', 'Pods', list_tbl_pods),
-    Service: ('containers_services', 'Services', list_tbl_services),
-    Image: ('containers_images', 'Images', list_tbl_images),
-    Route: ('containers_routes', 'Routes', list_tbl_routes),
-    Provider: ('containers_providers', 'Providers')
-}
+# TEST_DATAS: Referenced from: Menu.sections()
+TEST_DATAS = [
+    (Node, 'containers_nodes', 'Nodes', list_tbl_nodes),
+    (Container, 'containers_containers', 'Containers', list_tbl_containers),
+    (ImageRegistry, 'containers_image_registries', 'Registries', list_tbl_image_registrys),
+    (Project, 'containers_projects', 'Projects', list_tbl_projects),
+    (Pod, 'containers_pods', 'Pods', list_tbl_pods),
+    (Service, 'containers_services', 'Services', list_tbl_services),
+    (Image, 'containers_images', 'Images', list_tbl_images),
+    (Route, 'containers_routes', 'Routes', list_tbl_routes),
+    (Provider, 'containers_providers', 'Providers')
+]
 #   CMP-9521
 
 
-def test_data_integrity_for_topology():
-    '''
-    This test verify that every Status box value under Containers Overview
-    is identical to the number presents on its page.
-    Step:
-        In CFME go to Containers -> Overview
-    Expected result:
-        All cells should contain the correct relevant information
-            # of Providers
-            # of Nodes
-            ...
-    '''
+@pytest.mark.parametrize(('test_data'), TEST_DATAS)
+def test_data_integrity_for_topology(test_data):
+    """ This test verifies that every status box value under Containers Overview is identical to the
+    number present on its page.
+    Steps:
+        * Go to Containers / Overview
+        * All cells should contain the correct relevant information
+            # of nodes
+            # of providers
+            # ...
+    """
     section_values = {}
     sel.force_navigate('container_dashboard')
     # We should wait ~2 seconds for the StatusBox population
     # (until we find a better solution)
     time.sleep(2)
-    for cls, properties in CONTAINER_CLASSES.items():
-        status_box = StatusBox(properties[1])
-        section_values[cls] = int(status_box.value())
-    for cls, properties in CONTAINER_CLASSES.items():
-        sel.force_navigate(properties[0])
-        if section_values[cls] > 0:
-            if cls is Provider:
-                assert len(map(lambda i: i, Quadicon.all())) == section_values[cls]
-            else:
-                assert len(map(lambda r: r, properties[2].rows())
-                           ) == section_values[cls]
+    status_box = StatusBox(test_data[2])
+    section_values[test_data[0]] = int(status_box.value())
+    sel.force_navigate(test_data[1])
+    if section_values[test_data[0]] > 0:
+        if test_data[0] is Provider:
+            assert len(map(lambda i: i, Quadicon.all())) == section_values[test_data[0]]
         else:
-            assert sel.is_displayed_text('No Records Found.')
+            assert len(map(lambda r: r, test_data[3].rows())
+                       ) == section_values[test_data[0]]
+    else:
+        assert sel.is_displayed_text('No Records Found.')
