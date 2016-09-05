@@ -22,7 +22,7 @@ def test_summary_properties_validation(provider):
         is the same number that appears in the Relationships table containers field
     """
     sel.force_navigate('containers_pods')
-    ui_pods = ui_pods = [r.name.text for r in list_tbl.rows()]
+    ui_pods = [r.name.text for r in list_tbl.rows()]
 
     for name in ui_pods:
         obj = Pod(name, provider)
