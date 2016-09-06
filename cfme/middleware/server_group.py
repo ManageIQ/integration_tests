@@ -114,7 +114,7 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable):
     def server_groups_in_mgmt(cls, domain):
         server_groups = []
 
-        rows = domain.provider.mgmt.list_server_group(feed_id=domain.feed)
+        rows = domain.provider.mgmt.inventory.list_server_group(feed_id=domain.feed)
 
         for row in rows:
             server_groups.append(MiddlewareServerGroup(
@@ -163,8 +163,8 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable):
                                  feed=self.feed).first()
         if db_sgr:
             path = CanonicalPath(db_sgr.ems_ref)
-            mgmt_sgr = self.domain.provider.mgmt.get_config_data(feed_id=path.feed_id,
-                        resource_id=path.resource_id)
+            mgmt_sgr = self.domain.provider.mgmt.inventory.get_config_data(
+                feed_id=path.feed_id, resource_id=path.resource_id)
             if mgmt_sgr:
                 return MiddlewareServerGroup(
                     domain=self.domain,
