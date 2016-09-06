@@ -7,7 +7,7 @@
 
 from cfme.web_ui.menu import nav
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, paginator, toolbar as tb
+from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, paginator, toolbar as tb, flash
 from functools import partial
 from utils.pretty import Pretty
 from utils.providers import get_crud
@@ -110,6 +110,12 @@ class Cluster(Pretty):
                 return True
         except sel.NoSuchElementException:
             return False
+
+    def run_smartstate_analysis(self):
+        sel.force_navigate('infrastructure_cluster', context={'cluster': self})
+        tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
+        sel.handle_alert(cancel=False)
+        flash.assert_message_contain('Cluster / Deployment Role: scan successfully initiated')
 
 
 def get_all_clusters(do_not_navigate=False):
