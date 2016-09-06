@@ -145,7 +145,7 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Deployable):
     @classmethod
     def _deployments_in_mgmt(cls, provider, server=None):
         deployments = []
-        rows = provider.mgmt.list_server_deployment()
+        rows = provider.mgmt.inventory.list_server_deployment()
         for deployment in rows:
             _server = MiddlewareServer(
                 name=re.sub(r'~~$', '', deployment.path.resource_id[0]),

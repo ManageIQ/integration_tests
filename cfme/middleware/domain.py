@@ -125,7 +125,7 @@ class MiddlewareDomain(MiddlewareBase, Taggable):
     @classmethod
     def _domains_in_mgmt(cls, provider):
         domains = []
-        rows = provider.mgmt.list_domain()
+        rows = provider.mgmt.inventory.list_domain()
         for row in rows:
             domains.append(MiddlewareDomain(
                 name=row.data['Local Host Name'],
@@ -176,7 +176,7 @@ class MiddlewareDomain(MiddlewareBase, Taggable):
                                  feed=self.feed).first()
         if db_dmn:
             path = CanonicalPath(db_dmn.ems_ref)
-            mgmt_dmn = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
+            mgmt_dmn = self.provider.mgmt.inventory.get_config_data(feed_id=path.feed_id,
                         resource_id=path.resource_id)
             if mgmt_dmn:
                 return MiddlewareDomain(
@@ -218,8 +218,8 @@ class MiddlewareDomain(MiddlewareBase, Taggable):
                                  feed=self.feed).first()
         if db_dmn:
             path = CanonicalPath(db_dmn.ems_ref)
-            mgmt_dmn = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
-                        resource_id=path.resource_id)
+            mgmt_dmn = self.provider.mgmt.inventory.get_config_data(feed_id=path.feed_id,
+                                                                    resource_id=path.resource_id)
             if mgmt_dmn:
                 return mgmt_dmn.value['Domain State'] == 'running'
         raise MiddlewareDomainNotFound("Domain '{}' not found in MGMT!".format(self.name))

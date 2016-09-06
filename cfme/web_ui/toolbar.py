@@ -13,7 +13,13 @@ from selenium.webdriver.common.by import By
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from utils import version
 from utils.log import logger
-from xml.sax.saxutils import quoteattr
+from xml.sax.saxutils import quoteattr, unescape
+
+
+def xpath_quote(x):
+    """Putting strings in xpath requires unescape also"""
+    # TODO: Move it to some library!
+    return unescape(quoteattr(x))
 
 
 def root_loc(root):
@@ -31,7 +37,7 @@ def root_loc(root):
              "//a[@data-original-title = {0}]/.. |"
              "//a[@title = {0}]/.. |"
              "//button[@title = {0}]")
-            .format(quoteattr(root)))
+            .format(xpath_quote(root)))
 
 
 def sub_loc(sub):
@@ -45,7 +51,7 @@ def sub_loc(sub):
         By.XPATH,
         ("//div[contains(@class, 'btn_sel_text')][normalize-space(text()) = {0}]/../.. |"
          "//ul[contains(@class, 'dropdown-menu')]//li[normalize-space(.) = {0}]").format(
-            quoteattr(sub)))
+            xpath_quote(sub)))
 
 
 def select_n_move(el):
@@ -64,10 +70,11 @@ def select_n_move(el):
 
 
 def select(*args, **kwargs):
+    logger.debug('Selecting %r', args)
     if version.current_version() > '5.5.0.7':
-        pf_select(*args, **kwargs)
+        return pf_select(*args, **kwargs)
     else:
-        old_select(*args, **kwargs)
+        return old_select(*args, **kwargs)
 
 
 def pf_select(root, sub=None, invokes_alert=False):
@@ -90,11 +97,11 @@ def pf_select(root, sub=None, invokes_alert=False):
         sub = version.pick(sub)
 
     if sub:
-        q_sub = quoteattr(sub).replace("'", "\\'")
+        q_sub = xpath_quote(sub).replace("'", "\\'")
         sel.execute_script(
             "return $('a:contains({})').trigger('click')".format(q_sub))
     else:
-        q_root = quoteattr(root).replace("'", "\\'")
+        q_root = xpath_quote(root).replace("'", "\\'")
         try:
             sel.element("//button[@data-original-title = {0}] | "
                         "//a[@data-original-title = {0}]".format(q_root))

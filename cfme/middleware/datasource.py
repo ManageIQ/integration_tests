@@ -153,7 +153,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
     @classmethod
     def _datasources_in_mgmt(cls, provider, server=None):
         datasources = []
-        rows = provider.mgmt.list_server_datasource()
+        rows = provider.mgmt.inventory.list_server_datasource()
         for datasource in rows:
             _server = MiddlewareServer(name=re.sub(r'~~$', '', datasource.path.resource_id[0]),
                                        feed=datasource.path.feed_id,
@@ -221,8 +221,8 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
                                  nativeid=self.nativeid).first()
         if db_ds:
             path = CanonicalPath(db_ds.ems_ref)
-            mgmt_ds = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
-                        resource_id=path.resource_id)
+            mgmt_ds = self.provider.mgmt.inventory.get_config_data(feed_id=path.feed_id,
+                                                                   resource_id=path.resource_id)
             if mgmt_ds:
                 ds = MiddlewareDatasource(
                     server=self.server,

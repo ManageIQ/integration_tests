@@ -19,29 +19,31 @@ import dateutil.parser
 import requests
 import traceback
 
+from navmazing import NavigateToSibling
+from sentaku import ImplementationContext
 from utils.mgmt_system import RHEVMSystem
 from mgmtsystem.virtualcenter import VMWareSystem
 
-from cfme.common.vm import VM
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
+from utils import api, conf, datafile, db, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
+from utils.appliance.endpoints.ui import navigate, CFMENavigateStep
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path
-from utils.providers import get_mgmt, get_crud
 from utils.version import Version, get_stream, pick, LATEST
 from utils.signals import fire
 from utils.wait import wait_for
 from utils import clear_property_cache
 
+from .endpoints.ui import ViaUI
+
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # Do not import the whole stuff around
 if not RUNNING_UNDER_SPROUT:
     from cfme.configure.configuration import set_server_roles, get_server_roles
-    from utils.providers import setup_provider
     from utils.hosts import setup_providers_hosts_credentials
 
 
@@ -59,6 +61,7 @@ class IPAppliance(object):
         browser_streal: If True then then current browser is killed and the new appliance
             is used to generate a new session.
     """
+    _nav_steps = {}
 
     def __init__(self, address=None, browser_steal=False, container=None):
         if address is not None:
@@ -77,6 +80,10 @@ class IPAppliance(object):
         self.browser_steal = browser_steal
         self.container = container
         self._db_ssh_client = None
+
+        self.browser = ViaUI(owner=self)
+        self.sentaku_ctx = ImplementationContext.from_instances(
+            [self.browser])
 
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
@@ -1629,6 +1636,32 @@ class IPAppliance(object):
             ssh_client.run_rake_command("evm:automate:reset")
 
 
+@navigate.register(IPAppliance)
+class LoggedIn(CFMENavigateStep):
+    def step(self):
+        from cfme.login import login_admin
+        from utils.browser import browser
+        browser()
+        login_admin()
+
+
+@navigate.register(IPAppliance)
+class Dashboard(CFMENavigateStep):
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def am_i_here(self):
+        from cfme.web_ui.menu import nav
+        if self.obj.version < "5.6.0.1":
+            nav.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
+        else:
+            nav.CURRENT_TOP_MENU = "{}{}".format(nav.ROOT, nav.ACTIVE_LEV)
+        nav.is_page_active('Dashboard')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Cloud Intel', 'Dashboard')(None)
+
+
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
 
@@ -1670,6 +1703,7 @@ class Appliance(IPAppliance):
         Note:
             Cannot be cached because provider object is unpickable.
         """
+        from utils.providers import get_mgmt
         return get_mgmt(self._provider_name)
 
     @property
@@ -1755,6 +1789,7 @@ class Appliance(IPAppliance):
 
     @logger_wrap("Configure fleecing: {}")
     def configure_fleecing(self, log_callback=None):
+        from utils.providers import setup_provider
         with self(browser_steal=True):
             if self.is_on_vsphere:
                 self.install_vddk(reboot=True, log_callback=log_callback)
@@ -1788,6 +1823,8 @@ class Appliance(IPAppliance):
             if self.is_on_rhev:
                 from cfme.infrastructure.virtual_machines import Vm  # For Vm.CfmeRelationship
                 log_callback('Setting up CFME VM relationship...')
+                from cfme.common.vm import VM
+                from utils.providers import get_crud
                 vm = VM.factory(self.vm_name, get_crud(self._provider_name))
                 cfme_rel = Vm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server_name()), self.server_id())
@@ -1953,6 +1990,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
             return '{}_{}'.format(vm_name_prefix, fauxfactory.gen_alphanumeric(8))
 
     def _get_latest_template():
+        from utils import trackerbot
         api = trackerbot.api()
         stream = get_stream(version)
         template_data = trackerbot.latest_template(api, stream, provider_name)
@@ -1982,7 +2020,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         raise ApplianceException('Either version or template name must be specified')
 
     prov_data = conf.cfme_data.get('management_systems', {})[provider_name]
-
+    from utils.providers import get_mgmt
     provider = get_mgmt(provider_name)
     if not vm_name:
         vm_name = _generate_vm_name()
@@ -2097,3 +2135,8 @@ def get_or_create_current_appliance():
     return stack.top
 
 current_appliance = LocalProxy(get_or_create_current_appliance)
+
+
+class CurrentAppliance(object):
+    def __get__(self, instance, owner):
+        return get_or_create_current_appliance()

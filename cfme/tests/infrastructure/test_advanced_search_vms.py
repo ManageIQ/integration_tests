@@ -16,7 +16,7 @@ from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
 def vms():
     """Ensure the infra providers are set up and get list of vms"""
     try:
-        setup_a_provider(prov_type="infra", required_keys="large")
+        setup_a_provider(prov_class="infra", required_keys=["large"])
     except Exception:
         pytest.skip("It's not possible to set up any providers, therefore skipping")
     pytest.sel.force_navigate("infra_vms")
