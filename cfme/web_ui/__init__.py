@@ -59,7 +59,7 @@ import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
 from tempfile import NamedTemporaryFile
-from xml.sax.saxutils import quoteattr
+from xml.sax.saxutils import quoteattr, unescape
 
 from cached_property import cached_property
 from selenium.common import exceptions as sel_exceptions
@@ -3295,10 +3295,11 @@ class AngularSelect(Pretty):
         if not self.is_open:
             self.open()
         if self.exact:
-            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(quoteattr(text))
+            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(
+                unescape(quoteattr(text)))
         else:
             new_loc = self._loc + '/../div/ul/li/a[contains(normalize-space(.), {})]'.format(
-                quoteattr(text))
+                unescape(quoteattr(text)))
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)
