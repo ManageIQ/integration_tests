@@ -650,8 +650,9 @@ def move_to_element(loc, **kwargs):
 
 
 def text(loc, **kwargs):
-    """
-    Returns the text of an element.
+    """ Returns the text of an element. Always.
+
+    If the element is not visible and the text cannot be retrieved by usual means, JS is used.
 
     Args:
         loc: A locator, expects eithera  string, WebElement, tuple.
@@ -659,11 +660,29 @@ def text(loc, **kwargs):
     Returns: A string containing the text of the element.
     """
     try:
-        return move_to_element(loc, **kwargs).text
+        text = move_to_element(loc, **kwargs).text.strip()
+        if not text:
+            # Not visible for some other reason?
+            text = text_content(loc, **kwargs)
+        return text
     except exceptions.CannotScrollException:
         # Work around, the element is not movable to
-        el = element(loc, **kwargs)
-        return execute_script("return arguments[0].textContent || arguments[0].innerText;", el)
+        return text_content(loc, **kwargs)
+
+
+def text_content(loc, **kwargs):
+    """Retrieves the text content of the element using JavaScript.
+
+    Use if the element is not visible
+
+    Args:
+        loc: A locator, expects either a string, WebElement or tuple
+
+    Returns: A string containing the text of the element.
+    """
+    return execute_script(
+        "return arguments[0].textContent || arguments[0].innerText;",
+        element(loc, **kwargs)).strip()
 
 
 def text_sane(loc, **kwargs):
@@ -675,7 +694,7 @@ def text_sane(loc, **kwargs):
     Returns: A string containing the text of the element, decoded and stripped.
     """
     # TODO: normalize_space() when the PR comes in.
-    return re.sub(r'\s+', ' ', text(loc).strip().encode("utf-8"))
+    return re.sub(r'\s+', ' ', text(loc).encode("utf-8"))
 
 
 def value(loc):

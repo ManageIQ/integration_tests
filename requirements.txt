@@ -19,6 +19,7 @@ layered-yaml-attrdict-config
 mgmtsystem>0.0.15
 mock
 multimethods.py
+navmazing
 numpy
 ovirt-engine-sdk-python<4.0.0
 paramiko
@@ -55,6 +56,8 @@ wait_for
 yaycl
 yaycl-crypt
 shyaml
+
+sentaku>=0.3.0
 
 # docs requirements
 # When Sphinx 1.3 is released and on RTD, we can upgrade and use
