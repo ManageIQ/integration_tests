@@ -288,6 +288,19 @@ class WarningsRelpathFilter(logging.Filter):
         return True
 
 
+class WarningsDeduplicationFilter(object):
+    def __init__(self):
+        self.seen = set()
+
+    def filter(self, record):
+        msg = record.args[0].splitlines()[0].split(': ', 1)[-1]
+        if msg in self.seen:
+            return False
+        else:
+            self.seen.add(msg)
+            return True
+
+
 class Perflog(object):
     """Performance logger, useful for timing arbitrary events by name
 
@@ -557,7 +570,7 @@ def _configure_warnings():
     logging.captureWarnings(True)
     wlog = logging.getLogger('py.warnings')
     wlog.addFilter(WarningsRelpathFilter())
-
+    wlog.addFilter(WarningsDeduplicationFilter())
     file_handler = RotatingFileHandler(
         str(log_path.join('py.warnings.log')), encoding='utf8')
     wlog.addHandler(file_handler)
