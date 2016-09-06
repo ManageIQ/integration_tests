@@ -1,5 +1,4 @@
--r ../requirements.txt
-Django>=1.8
+Django<1.10
 django-object-actions
 celery[redis]<3.2
 python-memcached

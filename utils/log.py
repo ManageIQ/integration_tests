@@ -142,7 +142,7 @@ from traceback import extract_tb, format_tb
 
 from cached_property import cached_property
 from utils import conf, safe_string
-from utils.path import get_rel_path, log_path
+from utils.path import get_rel_path, log_path, project_path
 
 MARKER_LEN = 80
 
@@ -276,7 +276,15 @@ class _RelpathFilter(logging.Filter):
             record.source = "{}:{}".format(relpath, lineno)
         else:
             record.source = relpath
+        return True
 
+
+class WarningsRelpathFilter(logging.Filter):
+    """filter to modify warnings messages, to use relative paths in the project"""
+    def filter(self, record):
+        if record.args:
+            new_record = record.args[0].replace(project_path.strpath, '.')
+            record.args = (new_record,) + record.args[1:]
         return True
 
 
@@ -385,21 +393,6 @@ def create_logger(logger_name, filename=None, max_file_size=None, max_backups=No
 def create_sublogger(logger_sub_name, logger_name='cfme'):
     logger = create_logger(logger_name)
     return NamedLoggerAdapter(logger, logger_sub_name)
-
-
-def _showwarning(message, category, filename, lineno, file=None, line=None):
-    relpath = get_rel_path(filename)
-    if relpath:
-        # Only show warnings from inside this project
-        message = "{} from {}:{}: {}".format(category.__name__, relpath, lineno, message)
-        try:
-            logger.warning(message)
-        except ImportError:
-            # In case we have both credentials.eyaml and credentials.yaml, it gets in an import loop
-            # Therefore it would raise ImportError for art_client. Let's don't bother and just spit
-            # it out. This should reduce number of repeated questions down by 99%.
-            print("[WARNING] {}".format(message))
-
 
 def format_marker(mstring, mark="-"):
     """ Creates a marker in log files using a string and leader mark.
@@ -557,9 +550,19 @@ logger = ArtifactorLoggerAdapter(cfme_logger, {})
 
 perflog = Perflog()
 
-# Capture warnings to the cfme logger using the warnings.showwarning hook
-warnings.showwarning = _showwarning
-warnings.simplefilter('default')
+
+def _configure_warnings():
+    # Capture warnings
+    warnings.simplefilter('once')
+    logging.captureWarnings(True)
+    wlog = logging.getLogger('py.warnings')
+    wlog.addFilter(WarningsRelpathFilter())
+
+    file_handler = RotatingFileHandler(
+        str(log_path.join('py.warnings.log')), encoding='utf8')
+    wlog.addHandler(file_handler)
+    wlog.propagate = False
+_configure_warnings()
 
 # Register a custom excepthook to log unhandled exceptions
 sys.excepthook = _custom_excepthook

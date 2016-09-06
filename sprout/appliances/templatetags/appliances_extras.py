@@ -37,3 +37,11 @@ def alert_type(tags):
         return mark_safe('danger')
     else:
         return mark_safe(tags)
+
+
+@register.filter
+def user_repr(user):
+    if user.first_name:
+        return u'{} {}'.format(user.first_name, user.last_name)
+    else:
+        return user.username

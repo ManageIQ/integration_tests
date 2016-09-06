@@ -2,6 +2,7 @@
 import inspect
 from ui_navigate import UINavigate
 
+from cfme.exceptions import MenuItemNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, toolbar
 from lya import AttrDict
@@ -323,6 +324,9 @@ class Menu(UINavigate):
                 ('middleware', 'Middleware'): (
                     ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
                         if not toolbar.is_active("Grid View") else None),
+                    ('middleware_domains', 'Middleware Domains',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
                     ('middleware_servers', 'Middleware Servers',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
@@ -391,8 +395,23 @@ class Menu(UINavigate):
             return True
 
     @staticmethod
-    def _try_nav(el):
-        href = sel.get_attribute(el, 'href')
+    def _try_nav(el, toplevel, secondlevel, thirdlevel=None):
+        try:
+            href = sel.get_attribute(el, 'href')
+        except NoSuchElementException as e:
+            # Make our own exception
+            if thirdlevel is None:
+                item = '{} / {}'.format(toplevel, secondlevel)
+            else:
+                item = '{} / {} / {}'.format(toplevel, secondlevel, thirdlevel)
+
+            message = '\n'.join([
+                'An error happened during selecting of the menu item: {}'.format(item),
+                str(e).rstrip(),  # An extra newline at the end.
+            ])
+
+            raise MenuItemNotFound(message)
+
         sel.execute_script('document.location.href = arguments[0];', href)
         sel.wait_for_ajax()
 
@@ -448,13 +467,13 @@ class Menu(UINavigate):
                     inactive_loc = (cls.TOP_LEV_INACTIVE + cls.SECOND_LEV_INACTIVE).format(
                         top_level, second_level)
                 el = "{} | {}".format(active_loc, inactive_loc)
-                cls._try_nav(el)
+                cls._try_nav(el, toplevel, secondlevel)
 
             else:
                 active_loc = cls.TOP_LEV_ACTIVE.format(top_level)
                 inactive_loc = cls.TOP_LEV_INACTIVE.format(top_level)
                 el = "{} | {}".format(active_loc, inactive_loc)
-                cls._try_nav(el)
+                cls._try_nav(el, toplevel, secondlevel)
 
             nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
             cls._try_reset_action(reset_action, _final, nav_fn)
@@ -473,7 +492,7 @@ class Menu(UINavigate):
                     loc = "{}{}".format(loc, loc_to_use).format(arg)
                 else:
                     break
-            cls._try_nav(loc)
+            cls._try_nav(loc, toplevel, secondlevel, thirdlevel)
 
             nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, thirdlevel, reset_action,
                 _final=True)

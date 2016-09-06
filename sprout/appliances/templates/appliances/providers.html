@@ -11,6 +11,13 @@
     <div class="panel-heading">
         <strong>{{ provider.id }}</strong> - {{ provider.ip_address }} (currently <strong>{% if provider.is_working %}IS{% else %}NOT{% endif %}</strong> working)
         <br>
+        <strong>Member of the groups:</strong>
+        {% for grp in provider.user_groups.all %}
+            {{grp.name}}{% if not forloop.last %}, {% endif %}
+        {% empty %}
+            <em>No groups assigned</em>
+        {% endfor %}
+        <br>
         {% if request.user.is_superuser %}
             {% if provider.disabled %}
                 <a href="{% url 'provider_enable' provider.id %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Enable</a>

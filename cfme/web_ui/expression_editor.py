@@ -7,7 +7,7 @@ from selenium.common.exceptions import NoSuchElementException
 from multimethods import singledispatch
 from utils.wait import wait_for, TimedOutError
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Anything, Calendar, Form, Input, Region, Select, fill
+from cfme.web_ui import Anything, Calendar, Form, Input, Region, AngularSelect, fill
 import re
 import sys
 import types
@@ -146,9 +146,9 @@ def get_expression_as_text():
 #
 field_form = Form(
     fields=[
-        ("type", Select("select#chosen_typ")),
-        ("field", Select("select#chosen_field")),
-        ("key", Select("select#chosen_key")),
+        ("type", AngularSelect("chosen_typ")),
+        ("field", AngularSelect("chosen_field")),
+        ("key", AngularSelect("chosen_key")),
         ("value", Input("chosen_value")),
         ("user_input", Input("user_input")),
     ]
@@ -156,17 +156,17 @@ field_form = Form(
 
 field_date_form = Form(
     fields=[
-        ("dropdown_select", Select("select#chosen_from_1")),
+        ("dropdown_select", AngularSelect("chosen_from_1")),
         ("input_select_date", Calendar("miq_date_1_0")),
-        ("input_select_time", Select("select#miq_time_1_0"))
+        ("input_select_time", AngularSelect("miq_time_1_0"))
     ]
 )
 
 count_form = Form(
     fields=[
-        ("type", Select("select#chosen_typ")),
-        ("count", Select("select#chosen_count")),
-        ("key", Select("select#chosen_key")),
+        ("type", AngularSelect("chosen_typ")),
+        ("count", AngularSelect("chosen_count")),
+        ("key", AngularSelect("chosen_key")),
         ("value", Input("chosen_value")),
         ("user_input", Input("user_input")),
     ]
@@ -174,32 +174,32 @@ count_form = Form(
 
 tag_form = Form(
     fields=[
-        ("type", Select("select#chosen_typ")),
-        ("tag", Select("select#chosen_tag")),
-        ("value", Select("#chosen_value")),
+        ("type", AngularSelect("chosen_typ")),
+        ("tag", AngularSelect("chosen_tag")),
+        ("value", AngularSelect("chosen_value")),
         ("user_input", Input("user_input")),
     ]
 )
 
 find_form = Form(
     fields=[
-        ("type", Select("select#chosen_typ")),
-        ("field", Select("select#chosen_field")),
-        ("skey", Select("select#chosen_skey")),
+        ("type", AngularSelect("chosen_typ")),
+        ("field", AngularSelect("chosen_field")),
+        ("skey", AngularSelect("chosen_skey")),
         ("value", "#chosen_value"),
-        ("check", Select("select#chosen_check")),
-        ("cfield", Select("select#chosen_cfield")),
-        ("ckey", Select("select#chosen_ckey")),
+        ("check", AngularSelect("chosen_check")),
+        ("cfield", AngularSelect("chosen_cfield")),
+        ("ckey", AngularSelect("chosen_ckey")),
         ("cvalue", Input("chosen_cvalue")),
     ]
 )
 
 registry_form = Form(
     fields=[
-        ("type", Select("select#chosen_typ")),
+        ("type", AngularSelect("chosen_typ")),
         ("key", Input("chosen_regkey")),
         ("value", Input("chosen_regval")),
-        ("operation", Select("#chosen_key")),
+        ("operation", AngularSelect("chosen_key")),
         ("contents", Input("chosen_value")),
     ]
 )
@@ -214,14 +214,14 @@ date_switch_buttons = Region(
 date_specific_form = Form(
     fields=[
         ("date", Calendar("miq_date_1_0")),
-        ("time", Select("select#miq_time_1_0")),
+        ("time", AngularSelect("miq_time_1_0")),
     ]
 )
 
 date_relative_form = Form(
     fields=[
-        ("from", Select("select#chosen_from_1")),
-        ("through", Select("select#chosen_through_1")),
+        ("from", AngularSelect("chosen_from_1")),
+        ("through", AngularSelect("chosen_through_1")),
     ]
 )
 

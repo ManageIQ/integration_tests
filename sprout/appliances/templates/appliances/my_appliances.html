@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block title %}My appliances{% endblock %}
 {% block additional_js %}
-<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.min.js" integrity="sha256-6Sr0HqNgUf/p88g6vsl87CrAnNqiOWhjlY6LS8jeWHA=" crossorigin="anonymous"></script>
 <script src={% static "app-js/my_appliances.js" %}></script>
 {% endblock %}
 {% block body-script %}
@@ -32,7 +32,7 @@
         {% endif %}
         {% for user in other_users %}
             {% if user.id != show_user %}
-                <option value="{% url 'user_appliances' user.username %}">{{ user.first_name }} {{ user.last_name }}</option>
+                <option value="{% url 'user_appliances' user.username %}">{{ user|user_repr }}</option>
             {% endif %}
         {% endfor %}
         </select>
@@ -46,7 +46,7 @@
             - D: {{ pool.num_delayed_provisioning_tasks }}, Q: {{ pool.num_provisioning_tasks_before }}, PS: {{ pool.num_possible_provisioning_slots }}, AS: {{ pool.num_possible_appliance_slots}}, SA: {{ pool.num_shepherd_appliances }}
             {% endif %}</strong>
             {% if show_user == "all" %}
-                <em>Owner: {{ pool.owner.first_name }} {{ pool.owner.last_name }}
+                <em>Owner: {{ pool.owner|user_repr }}
                 <a href="{% url 'user_appliances' pool.owner.username %}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
             {% endif %}
             <div class="form-inline">
@@ -78,18 +78,25 @@
                 <tr id="appliance-{{ appliance.id }}">
                     <td>{{ appliance.id }}</td>
                     <!-- There's gotta be a better way to do this angular thing, but that probably involves REST. -->
-                    <td style=" overflow: auto;" ng-controller="EditVmName" ng-init="applianceId = '{{ appliance.id }}'; apiURL = '{% url 'rename_appliance' %}'; taskResultURL = '{% url 'task_result' %}'; applianceOriginalName = '{{ appliance.name }}'; applianceHasUUID = {{ appliance.has_uuid_angular }} ;">
-                    {% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}
-                        <div ng-hide="editing" ng-click="edit()">
-                            {[{ vm.name }]}
-                        </div>
-                        <div ng-show="editing">
-                            <input ng-model="vm.name" ng-disabled="submitting">
-                            <a href="#" class="btn btn-success btn-xs" ng-click="save(vm)" ng-hide="submitting"><span class="glyphicon glyphicon-ok"></span></a>
-                            <a href="#" class="btn btn-danger btn-xs" ng-click="cancel()" ng-hide="submitting"><span class="glyphicon glyphicon-remove"></span></a>
-                            <span class="spinner spinner-xs spinner-inline" ng-show="submitting"></span>
-                        </div>
-                    </td>
+                    {% if appliance.provider.allow_renaming %}
+                        <td style=" overflow: auto;" ng-controller="EditVmName" ng-init="applianceId = '{{ appliance.id }}'; apiURL = '{% url 'rename_appliance' %}'; taskResultURL = '{% url 'task_result' %}'; applianceOriginalName = '{{ appliance.name }}'; applianceHasUUID = {{ appliance.has_uuid_angular }} ;">
+                        {% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}
+                            <div ng-hide="editing" ng-click="edit()">
+                                {[{ vm.name }]}
+                            </div>
+                            <div ng-show="editing">
+                                <input ng-model="vm.name" ng-disabled="submitting">
+                                <a href="#" class="btn btn-success btn-xs" ng-click="save(vm)" ng-hide="submitting"><span class="glyphicon glyphicon-ok"></span></a>
+                                <a href="#" class="btn btn-danger btn-xs" ng-click="cancel()" ng-hide="submitting"><span class="glyphicon glyphicon-remove"></span></a>
+                                <span class="spinner spinner-xs spinner-inline" ng-show="submitting"></span>
+                            </div>
+                        </td>
+                    {% else %}
+                        <td title="Cannot rename because provider does not allow it">
+                        {% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}
+                        {{ appliance.name }}
+                        </td>
+                    {% endif %}
                     <td>{{ appliance.template.provider.id }}</td>
                     <td>
                         {% if appliance.ip_address %}
@@ -182,16 +189,18 @@
                 <tr>
                     <td colspan="10">
                         <a href="{% url 'kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')" style="display: inline;"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
+                        {% if pool.possible_other_owners %}
                         <form action="{% url 'transfer_pool' %}" method="POST" style="display: inline;">
                             {% csrf_token %}
                             <input type="hidden" name="pool_id" value="{{ pool.id }}">
                             <input type="submit" class="btn btn-success btn-sm" value="Transfer ownership to:" onclick="return confirm('Are you sure?')">
                             <select name="user_id" class='select-user'>
                             {% for user in pool.possible_other_owners %}
-                                <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                <option value="{{ user.id }}">{{ user|user_repr }}</option>
                             {% endfor %}
                             </select>
                         </form>
+                        {% endif %}
                         {% if not pool.not_needed_anymore %}
                         | Set expiration for all vms:
                         <a href="{% url 'prolong_lease_pool' pool.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
