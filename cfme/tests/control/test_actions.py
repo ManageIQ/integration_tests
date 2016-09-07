@@ -127,7 +127,11 @@ def get_vm_object(vm_name):
 
 @pytest.fixture(scope="module")
 def vm_name(provider):
-    return "long-test_act-{}-{}".format(provider.key, fauxfactory.gen_alpha().lower())
+    name = "long-test_act-{}-{}".format(provider.key, fauxfactory.gen_alpha().lower())
+    # Must be a match of regex '(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)' for GCE
+    if provider.type == "gce":
+        name = name.replace("_", "-")
+    return name
 
 
 def set_host_credentials(request, provider, vm):

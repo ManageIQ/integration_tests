@@ -269,6 +269,26 @@ class OpenStackInstance(Instance):
             raise OptionNotAvailable(option + " is not a supported action")
 
 
+@VM.register_for_provider_type("gce")
+class GCEInstance(Instance):
+    # CFME & provider power control options
+    START = "Start"
+    POWER_ON = START  # For compatibility with the infra objects.
+    STOP = "Stop"
+    TERMINATE = "Terminate"
+    # CFME-only power control options
+    SOFT_REBOOT = "Soft Reboot"
+    # Provider-only power control options
+    RESTART = "Restart"
+
+    # CFME power states
+    STATE_ON = "on"
+    STATE_OFF = "off"
+    STATE_SUSPENDED = "suspended"
+    STATE_TERMINATED = "terminated"
+    STATE_UNKNOWN = "unknown"
+
+
 @VM.register_for_provider_type("ec2")
 class EC2Instance(Instance):
     # CFME & provider power control options
