@@ -1,6 +1,6 @@
 import pytest
 import time
-from utils import db
+from fixtures.pytest_store import store
 from utils import providers
 from utils import testgen
 from utils import conf
@@ -45,11 +45,11 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
     Metadata:
         test_flag: metrics_collection
     """
-    metrics_tbl = db.cfmedb()['metrics']
-    mgmt_systems_tbl = db.cfmedb()['ext_management_systems']
+    metrics_tbl = store.current_appliance.db['metrics']
+    mgmt_systems_tbl = store.current_appliance.db['ext_management_systems']
 
     logger.info("Fetching provider ID for %s", provider.key)
-    mgmt_system_id = db.cfmedb().session.query(mgmt_systems_tbl).filter(
+    mgmt_system_id = store.current_appliance.db.session.query(mgmt_systems_tbl).filter(
         mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
 
@@ -66,11 +66,11 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
         logger.info("name: %s, id: %s, vms: %s, hosts: %s",
             provider.key, mgmt_system_id, vm_count, host_count)
         # count host and vm metrics for the provider we're testing
-        host_count = db.cfmedb().session.query(metrics_tbl).filter(
+        host_count = store.current_appliance.db.session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "Host"
         ).count()
-        vm_count = db.cfmedb().session.query(metrics_tbl).filter(
+        vm_count = store.current_appliance.db.session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "VmOrTemplate"
         ).count()

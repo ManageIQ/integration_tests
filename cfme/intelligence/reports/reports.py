@@ -8,6 +8,7 @@ from functools import partial
 from cached_property import cached_property
 
 from cfme.fixtures import pytest_selenium as sel
+from fixtures.pytest_store import store
 from cfme.intelligence.reports.ui_elements import (ColumnHeaderFormatTable, ColumnStyleTable,
     RecordGrouper)
 from cfme.web_ui import (CAndUGroupTable, Form, Table, Select, ShowingInputs, accordion, fill,
@@ -16,7 +17,6 @@ from cfme.web_ui.expression_editor import Expression
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from cfme.web_ui.multibox import MultiBoxSelect
-from utils import db
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
@@ -70,7 +70,7 @@ nav.add_branch(
         "reports_custom":
         lambda ctx: accordion.tree(
             "Reports", "All Reports", "{} (All EVM Groups)".format(
-                db.get_yaml_config("vmdb")["server"]["company"]
+                store.current_appliance.get_yaml_config("vmdb")["server"]["company"]
             ), "Custom",
         ),
 
@@ -78,7 +78,7 @@ nav.add_branch(
         [
             lambda ctx: accordion.tree(
                 "Reports", "All Reports", "{} (All EVM Groups)".format(
-                    db.get_yaml_config("vmdb")["server"]["company"]
+                    store.current_appliance.get_yaml_config("vmdb")["server"]["company"]
                 ), "Custom",
                 get_report_name(ctx["report"])
             ),
@@ -98,7 +98,7 @@ nav.add_branch(
         "saved_report_custom":
         lambda ctx: accordion.tree(
             "Reports", "All Reports", "{} (All EVM Groups)".format(
-                db.get_yaml_config("vmdb")["server"]["company"]),
+                store.current_appliance.get_yaml_config("vmdb")["server"]["company"]),
             "Custom", get_report_name(ctx["report"]), ctx["datetime"]
         ),
 

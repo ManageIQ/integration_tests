@@ -1,9 +1,7 @@
 from collections import Mapping
 from contextlib import contextmanager
 from itertools import izip
-from tempfile import NamedTemporaryFile
 
-import yaml
 from cached_property import cached_property
 from sqlalchemy import MetaData, create_engine, event, inspect
 from sqlalchemy.exc import ArgumentError, DisconnectionError, InvalidRequestError
@@ -13,19 +11,7 @@ from sqlalchemy.pool import Pool
 
 from fixtures.pytest_store import store
 from utils import conf, ports, version
-from utils.datafile import load_data_file
 from utils.log import logger
-from utils.path import data_path
-from utils.signals import fire, on_signal
-from utils.ssh import SSHClient
-
-
-@on_signal("server_config_changed")
-def invalidate_server_config():
-    try:
-        del store.current_appliance.db_yamls
-    except AttributeError:
-        pass  # cache is not populated, ignore
 
 
 @event.listens_for(Pool, "checkout")
@@ -297,106 +283,6 @@ class Db(Mapping):
                 # This usually happens on join tables with no PKs
                 logger.info('Unable to create table class for table "%s"')
                 return None
-
-
-def db_yamls(db=None, guid=None):
-    """Returns the yamls from the db configuration table as a dict
-
-    Usage:
-
-        # Get all the yaml configs
-        configs = db_yamls
-
-        # Get all the yaml names
-        configs.keys()
-
-        # Retrieve a specific yaml (but you should use get_yaml_config here)
-        vmdb_config = configs['vmdb']
-
-    """
-    db = db or cfmedb()
-    guid = guid or store.current_appliance.guid
-
-    with db.transaction:
-        config = db['configurations']
-        servers = db['miq_servers']
-
-        configs = db.session.query(config.typ, config.settings)\
-            .join(servers, config.miq_server_id == servers.id)\
-            .filter(servers.guid == guid)
-        return {name: yaml.load(settings) for name, settings in configs}
-
-
-def get_yaml_config(config_name, db=None):
-    """Return a specific yaml from the db configuration table as a dict
-
-    Usage:
-
-        # Retrieve a specific yaml
-        vmdb_config = get_yaml_config('vmdb')
-
-    """
-    return db_yamls(db)[config_name]
-
-
-def set_yaml_config(config_name, data_dict, hostname=None):
-    """Given a yaml name, dictionary and hostname, set the configuration yaml on the server
-
-    The configuration yamls must be inserted into the DB using the ruby console, so this function
-    uses SSH, not the database. It makes sense to be included here as a counterpart to
-    :py:func:`get_yaml_config`
-
-    Args:
-        config_name: Name of the yaml configuration file
-        data_dict: Dictionary with data to set/change
-        hostname: Hostname/address of the server that we want to set up (default ``None``)
-
-    Note:
-        If hostname is set to ``None``, the default server set up for this session will be
-        used. See :py:class:``utils.ssh.SSHClient`` for details of the default setup.
-
-    Warning:
-
-        Manually editing the config yamls is potentially dangerous. Furthermore,
-        the rails runner doesn't return useful information on the outcome of the
-        set request, so errors that arise from the newly loading config file
-        will go unreported.
-
-    Usage:
-
-        # Update the appliance name, for example
-        vmbd_yaml = get_yaml_config('vmdb')
-        vmdb_yaml['server']['name'] = 'EVM IS AWESOME'
-        set_yaml_config('vmdb', vmdb_yaml, '1.2.3.4')
-
-    """
-    # CFME does a lot of things when loading a configfile, so
-    # let their native conf loader handle the job
-    # If hostname is defined, connect to the specified server
-    if hostname is not None:
-        _ssh_client = SSHClient(hostname=hostname)
-    # Else, connect to the default one set up for this session
-    else:
-        _ssh_client = store.current_appliance.ssh_client
-    # Build & send new config
-    temp_yaml = NamedTemporaryFile()
-    dest_yaml = '/tmp/conf.yaml'
-    yaml.dump(data_dict, temp_yaml, default_flow_style=False)
-    _ssh_client.put_file(temp_yaml.name, dest_yaml)
-    # Build and send ruby script
-    dest_ruby = '/tmp/load_conf.rb'
-    ruby_template = data_path.join('utils', 'cfmedb_load_config.rbt')
-    ruby_replacements = {
-        'config_name': config_name,
-        'config_file': dest_yaml
-    }
-    temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
-    _ssh_client.put_file(temp_ruby.name, dest_ruby)
-
-    # Run it
-    _ssh_client.run_rails_command(dest_ruby)
-    fire('server_details_changed')
-    fire('server_config_changed')
 
 
 @contextmanager
