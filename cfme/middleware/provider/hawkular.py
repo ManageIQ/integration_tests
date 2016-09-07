@@ -1,16 +1,16 @@
 import re
+
 from cfme.common import TopologyMixin, TimelinesMixin
-from cfme.common.provider import BaseProvider
-from cfme.web_ui import form_buttons
+from . import MiddlewareProvider
 from mgmtsystem.hawkular import Hawkular
 from utils.db import cfmedb
 from utils.varmeth import variable
-from . import properties_form, _get_providers_page, _db_select_query
+from . import _get_providers_page, _db_select_query
 from .. import download, MiddlewareBase, auth_btn, mon_btn
 
 
-@BaseProvider.add_type_map
-class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, BaseProvider):
+@MiddlewareProvider.add_provider_type
+class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, MiddlewareProvider):
     """
     HawkularProvider class holds provider data. Used to perform actions on hawkular provider page
 
@@ -34,19 +34,8 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, BaseProvid
     STATS_TO_MATCH = ['num_server', 'num_domain', 'num_deployment', 'num_datasource']
     property_tuples = [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'),
                        ('provider_type', 'type')]
-    type_tclass = "middleware"
     type_name = "hawkular"
     mgmt_class = Hawkular
-    page_name = 'middleware'
-    string_name = 'Middleware'
-    detail_page_suffix = 'provider_detail'
-    edit_page_suffix = 'provider_edit_detail'
-    refresh_text = "Refresh items and relationships"
-    quad_name = None
-    _properties_form = properties_form
-    add_provider_button = form_buttons.FormButton("Add this Middleware Provider")
-    save_button = form_buttons.FormButton("Save Changes")
-    taggable_type = 'ExtManagementSystem'
 
     def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None, **kwargs):
         self.name = name
@@ -128,7 +117,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, BaseProvid
 
     def load_details(self, refresh=False):
         """Call super class `load_details` and load `db_id` if not set"""
-        BaseProvider.load_details(self, refresh=refresh)
+        MiddlewareProvider.load_details(self, refresh=refresh)
         if not self.db_id or refresh:
             tmp_provider = _db_select_query(
                 name=self.name, type='ManageIQ::Providers::Hawkular::MiddlewareManager').first()

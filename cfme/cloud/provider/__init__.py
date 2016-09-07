@@ -119,6 +119,7 @@ nav.add_branch('clouds_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
+@CloudInfraProvider.add_base_type
 class Provider(Pretty, CloudInfraProvider):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
@@ -137,6 +138,8 @@ class Provider(Pretty, CloudInfraProvider):
         myprov.create()
 
     """
+    provider_types = {}
+    in_version = (version.LOWEST, version.LATEST)
     type_tclass = "cloud"
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']

@@ -2,7 +2,7 @@ from . import Provider
 from mgmtsystem.kubernetes import Kubernetes
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class KubernetesProvider(Provider):
     type_name = "kubernetes"
     mgmt_class = Kubernetes

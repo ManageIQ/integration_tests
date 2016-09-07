@@ -116,6 +116,7 @@ nav.add_branch('infrastructure_providers',
                                            lambda _: mon_btn('Timelines')}]})
 
 
+@CloudInfraProvider.add_base_type
 class Provider(Pretty, CloudInfraProvider):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
@@ -135,6 +136,8 @@ class Provider(Pretty, CloudInfraProvider):
         myprov.create()
 
     """
+    provider_types = {}
+    in_version = (version.LOWEST, version.LATEST)
     type_tclass = "infra"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']

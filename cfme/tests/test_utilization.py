@@ -6,6 +6,7 @@ from utils import testgen
 from utils import conf
 from utils.log import logger
 from cfme.configure.configuration import server_roles_enabled, candu
+from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, None)
@@ -29,14 +30,14 @@ def enable_candu():
 @pytest.yield_fixture
 def handle_provider(provider):
     try:
-        providers.clear_providers()
+        BaseProvider.clear_providers()
         providers.setup_provider(provider.key)
     except FlashMessageException as e:
         e.skip_and_log("Provider failed to set up")
     else:
         yield
     finally:
-        providers.clear_providers()
+        BaseProvider.clear_providers()
 
 
 def test_metrics_collection(handle_provider, provider, enable_candu):

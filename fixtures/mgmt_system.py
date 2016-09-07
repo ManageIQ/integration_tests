@@ -1,5 +1,6 @@
 import pytest
 
+from cfme.common.provider import BaseProvider
 from utils import providers
 
 
@@ -55,7 +56,7 @@ def has_no_providers():
     This is a destructive fixture. It will clear all managements systems from
     the current appliance.
     """
-    providers.clear_providers()
+    BaseProvider.clear_providers()
 
 
 @pytest.fixture
@@ -65,7 +66,7 @@ def has_no_cloud_providers():
     This is a destructive fixture. It will clear all cloud managements systems from
     the current appliance.
     """
-    providers.clear_provider_by_type('cloud', validate=True)
+    BaseProvider.clear_provider_by_type(BaseProvider.type_mapping['cloud'], validate=True)
 
 
 @pytest.fixture
@@ -75,7 +76,7 @@ def has_no_infra_providers():
     This is a destructive fixture. It will clear all infrastructure managements systems from
     the current appliance.
     """
-    providers.clear_provider_by_type('infra', validate=True)
+    BaseProvider.clear_provider_by_type(BaseProvider.type_mapping['infra'], validate=True)
 
 
 @pytest.fixture
@@ -85,10 +86,10 @@ def has_no_container_providers():
     This is a destructive fixture. It will clear all container managements systems from
     the current appliance.
     """
-    providers.clear_provider_by_type('container', validate=True)
+    BaseProvider.clear_provider_by_type(BaseProvider.type_mapping['container'], validate=True)
 
 
 @pytest.fixture
 def has_no_middleware_providers():
     """Clear all middleware providers."""
-    providers.clear_provider_by_type('middleware', validate=True)
+    BaseProvider.clear_provider_by_type(BaseProvider.type_mapping['middleware'], validate=True)
