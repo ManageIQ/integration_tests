@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pytest
-import re
 import requests
 try:
     # Faster, C-ext
@@ -46,7 +45,6 @@ def guides():
         ) is not None]
 
 
-@pytest.mark.tier(3)
 @pytest.fixture(scope="session")
 def docs_info():
     if version.current_version() < "5.4.0.1":
@@ -84,8 +82,20 @@ def docs_info():
         return []
 
 
+@pytest.fixture(scope="session")
+def docs_content():
+    return {'monitoring_guide': 'monitoring, alerts, and reporting',
+            'user_guide': 'general configuration',
+            'vm_hosts_guide': 'provisioning virtual machines and hosts',
+            'lifecycle_and_automation_guide': 'methods available for automation',
+            'insight_guide': 'managing infrastructure and inventory',
+            'providers_guide': 'managing providers',
+            'scripting_actions_guide': 'scripting actions in cloudforms',
+            'control_guide': 'policies and profiles guide'}
+
+
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[1272618])
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.sauce
 def test_links(guides, soft_assert):
     """Test whether the PDF documents are present."""
@@ -100,11 +110,10 @@ def test_links(guides, soft_assert):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1272618])
-def test_contents(guides, soft_assert):
+@pytest.mark.ignore_stream("upstream")
+def test_contents(docs_content, guides, soft_assert):
     """Test contents of each document."""
     pytest.sel.force_navigate("about")
-    precomp_noguide = re.compile("(.*) Guide")
     cur_ver = version.current_version()
     for link in guides:
         locator = getattr(about, link)
@@ -112,7 +121,7 @@ def test_contents(guides, soft_assert):
         data = requests.get(url, verify=False)
         pdf_titlepage_text_low = pdf_get_text(StringIO(data.content), [0]).lower()
         # don't include the word 'guide'
-        title_text_low = precomp_noguide.search(pytest.sel.text(locator)).group(1).lower()
+        title_text_low = docs_content[link]
         expected = [title_text_low]
         if cur_ver == version.LATEST:
             expected.append('manageiq')
@@ -128,7 +137,8 @@ def test_contents(guides, soft_assert):
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@pytest.mark.meta(blockers=[1232434, 1272618])
+@pytest.mark.ignore_stream("upstream")
+@pytest.mark.meta(blockers=[1232434])
 def test_info(guides, soft_assert):
     pytest.sel.force_navigate("about")
     for link in guides:
@@ -153,7 +163,6 @@ def test_info(guides, soft_assert):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.meta(blockers=[1272618])
 def test_all_docs_present(guides, docs_info):
     pytest.sel.force_navigate("about")
     docs_list = list(docs_info)
