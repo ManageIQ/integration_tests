@@ -289,6 +289,13 @@ class WarningsRelpathFilter(logging.Filter):
 
 
 class WarningsDeduplicationFilter(object):
+    """
+    this filter is needed since something in the codebase causes the warnings
+    once filter to be reset, so we need to deduplicate on our own
+
+    there is no indicative codepath that is clearly at fault
+    so this low implementation cost solution was choosen to deduplicate off-band
+    """
     def __init__(self):
         self.seen = set()
 
