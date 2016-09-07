@@ -27,7 +27,14 @@ To use version picking is easy::
 
 In this example, if the version is below 5.3, the ``Boat`` will be returned. Anything between 5.3 and 5.4
 will return ``House`` and anything over 5.4 will return ``Houses``. There is also a ``version.LATEST``
-which points to upstream appliances.
+which points to upstream appliances. Another important point to remember is that one shouldn't verspick at import time. The best practise is to use it inside locators without using verpick excpliticly. The syntax is pretty simple::
+
+    locators={
+        'properties_form': {
+            version.LOWEST: Input('House'),
+            '5.6': Input('Houses'),
+                 }
+            }
 
 .. _blockers:
 
