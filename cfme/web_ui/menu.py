@@ -181,6 +181,11 @@ class Menu(UINavigate):
                     ('timelines', 'Timelines'),
                     ('rss', 'RSS')
                 ),
+                ('red_hat_insights', 'Red Hat Insights'): (
+                    ('redhat_insights_dashboard', 'Overview'),
+                    ('rules', 'Rules'),
+                    ('systems', 'Systems')
+                ),
                 ('services', 'Services'): (
                     ('my_services', 'My Services'),
                     ('services_catalogs', 'Catalogs'),
@@ -267,6 +272,11 @@ class Menu(UINavigate):
                     ('chargeback', 'Chargeback'),
                     ('timelines', 'Timelines'),
                     ('rss', 'RSS')
+                ),
+                ('red_hat_insights', 'Red Hat Insights'): (
+                    ('redhat_insights_dashboard', 'Overview'),
+                    ('rules', 'Rules'),
+                    ('systems', 'Systems')
                 ),
                 ('services', 'Services'): (
                     ('my_services', 'My Services'),
