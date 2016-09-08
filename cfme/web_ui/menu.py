@@ -2,6 +2,7 @@
 import inspect
 from ui_navigate import UINavigate
 
+from cfme.exceptions import MenuItemNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, toolbar
 from lya import AttrDict
@@ -16,6 +17,9 @@ def _not_implemented(menu_name, version_appeared):
         raise NotImplementedError(
             '{} is available since {}, this is {}'.format(menu_name, version_appeared, curr_ver))
     return f
+
+
+_branch_stack = []
 
 
 class Menu(UINavigate):
@@ -68,23 +72,21 @@ class Menu(UINavigate):
 
     def __init__(self):
         self._branches = None
-        self._branch_stack = []
         super(Menu, self).__init__()
 
     def initialize(self):
         """Initializes the menu object by collapsing the grafted tree items onto the tree"""
         if not self._branches:
             self._branches = self._branch_convert(self.sections)
-            self.add_branch('toplevel', self._branches)
+            self.add_branch('toplevel', self._branches, add_to_stack=False)
 
             if version.current_version() >= '5.7':
                 from cfme.dashboard import add_nav_branches
                 add_nav_branches()
 
-            while self._branch_stack:
-                name, branches = self._branch_stack.pop(0)
+            for name, branches in _branch_stack:
                 try:
-                    self.add_branch(name, branches)
+                    self.add_branch(name, branches, add_to_stack=False)
                 except LookupError:
                     logger.error(
                         'Menu tried to graft onto [{}] which is not available'.format(name))
@@ -96,7 +98,7 @@ class Menu(UINavigate):
             else:
                 self.CURRENT_TOP_MENU = "{}{}".format(self.ROOT, self.ACTIVE_LEV)
 
-    def add_branch(self, name, branches):
+    def add_branch(self, name, branches, add_to_stack=True):
         """Adds a branch to the tree at a given destination
 
         This method will either:
@@ -110,8 +112,8 @@ class Menu(UINavigate):
         """
         if self._branches:
             super(Menu, self).add_branch(name, branches)
-        else:
-            self._branch_stack.append((name, branches))
+        if add_to_stack:
+            _branch_stack.append((name, branches))
 
     def get_current_toplevel_name(self):
         """Returns text of the currently selected top level menu item."""
@@ -179,6 +181,11 @@ class Menu(UINavigate):
                     ('timelines', 'Timelines'),
                     ('rss', 'RSS')
                 ),
+                ('red_hat_insights', 'Red Hat Insights'): (
+                    ('redhat_insights_dashboard', 'Overview'),
+                    ('rules', 'Rules'),
+                    ('systems', 'Systems')
+                ),
                 ('services', 'Services'): (
                     ('my_services', 'My Services'),
                     ('services_catalogs', 'Catalogs'),
@@ -197,6 +204,7 @@ class Menu(UINavigate):
                     ('clouds_stacks', 'Stacks')
                 ),
                 ('containers', 'Containers'): (
+                    ('container_dashboard', 'Overview'),
                     ('containers_providers', 'Providers'),
                     ('containers_projects', 'Projects'),
                     ('containers_nodes', 'Container Nodes'),
@@ -216,7 +224,8 @@ class Menu(UINavigate):
                     ('infrastructure_virtual_machines', 'Virtual Machines',
                         self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
                     ('infrastructure_resource_pools', 'Resource Pools'),
-                    ('infrastructure_datastores', 'Datastores'),
+                    ('infrastructure_datastores', 'Datastores',
+                        self._tree_func_with_grid("Datastores", "All Datastores")),
                     ('infrastructure_repositories', 'Repositories'),
                     ('infrastructure_pxe', 'PXE'),
                     ('infrastructure_requests', 'Requests'),
@@ -264,6 +273,11 @@ class Menu(UINavigate):
                     ('timelines', 'Timelines'),
                     ('rss', 'RSS')
                 ),
+                ('red_hat_insights', 'Red Hat Insights'): (
+                    ('redhat_insights_dashboard', 'Overview'),
+                    ('rules', 'Rules'),
+                    ('systems', 'Systems')
+                ),
                 ('services', 'Services'): (
                     ('my_services', 'My Services'),
                     ('services_catalogs', 'Catalogs'),
@@ -275,12 +289,14 @@ class Menu(UINavigate):
                         ('clouds_providers', 'Providers', lambda: toolbar.select('Grid View')),
                         ('clouds_availability_zones', 'Availability Zones'),
                         ('clouds_tenants', 'Tenants'),
+                        ('clouds_volumes', 'Volumes'),
                         ('clouds_flavors', 'Flavors'),
-                        ('clouds_security_groups', 'Security Groups'),
                         ('clouds_instances', 'Instances',
                             self._tree_func_with_grid(
                                 "Instances by Provider", "Instances by Provider")),
-                        ('clouds_stacks', 'Stacks')
+                        ('clouds_stacks', 'Stacks'),
+                        ('clouds_key_pairs', 'Key Pairs'),
+                        ('clouds_object_stores', 'Object Stores'),
                     ),
                     ('infrastructure', 'Infrastructure'): (
                         ('infrastructure_providers',
@@ -290,13 +306,15 @@ class Menu(UINavigate):
                         ('infrastructure_virtual_machines', 'Virtual Machines',
                             self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
                         ('infrastructure_resource_pools', 'Resource Pools'),
-                        ('infrastructure_datastores', 'Datastores'),
+                        ('infrastructure_datastores', 'Datastores',
+                            self._tree_func_with_grid("Datastores", "All Datastores")),
                         ('infrastructure_repositories', 'Repositories'),
                         ('infrastructure_pxe', 'PXE'),
                         ('infrastructure_requests', 'Requests'),
                         # ('infrastructure_config_management', 'Configuration Management')
                     ),
                     ('containers', 'Containers'): (
+                        ('container_dashboard', 'Overview'),
                         ('containers_providers', 'Providers'),
                         ('containers_projects', 'Projects'),
                         ('containers_nodes', 'Container Nodes'),
@@ -316,6 +334,9 @@ class Menu(UINavigate):
                 ('middleware', 'Middleware'): (
                     ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
                         if not toolbar.is_active("Grid View") else None),
+                    ('middleware_domains', 'Middleware Domains',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
                     ('middleware_servers', 'Middleware Servers',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
@@ -326,6 +347,16 @@ class Menu(UINavigate):
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
                     ('middleware_topology', 'Topology'),
+                ),
+                ('Networks', 'Networks'): (
+                    ('networks_providers', 'Providers'),
+                    ('networks_networks', 'Networks'),
+                    ('networks_subnets', 'Subnets'),
+                    ('networks_router', 'Network Router'),
+                    ('networks_security_groups', 'Security Groups'),
+                    ('networks_floating_ip', 'Floating IP'),
+                    ('networks_ports', 'Network Ports'),
+                    ('networks_topology', 'Topology'),
                 ),
                 ('control', 'Control'): (
                     ('control_explorer', 'Explorer'),
@@ -374,8 +405,23 @@ class Menu(UINavigate):
             return True
 
     @staticmethod
-    def _try_nav(el):
-        href = sel.get_attribute(el, 'href')
+    def _try_nav(el, toplevel, secondlevel, thirdlevel=None):
+        try:
+            href = sel.get_attribute(el, 'href')
+        except NoSuchElementException as e:
+            # Make our own exception
+            if thirdlevel is None:
+                item = '{} / {}'.format(toplevel, secondlevel)
+            else:
+                item = '{} / {} / {}'.format(toplevel, secondlevel, thirdlevel)
+
+            message = '\n'.join([
+                'An error happened during selecting of the menu item: {}'.format(item),
+                str(e).rstrip(),  # An extra newline at the end.
+            ])
+
+            raise MenuItemNotFound(message)
+
         sel.execute_script('document.location.href = arguments[0];', href)
         sel.wait_for_ajax()
 
@@ -431,13 +477,13 @@ class Menu(UINavigate):
                     inactive_loc = (cls.TOP_LEV_INACTIVE + cls.SECOND_LEV_INACTIVE).format(
                         top_level, second_level)
                 el = "{} | {}".format(active_loc, inactive_loc)
-                cls._try_nav(el)
+                cls._try_nav(el, toplevel, secondlevel)
 
             else:
                 active_loc = cls.TOP_LEV_ACTIVE.format(top_level)
                 inactive_loc = cls.TOP_LEV_INACTIVE.format(top_level)
                 el = "{} | {}".format(active_loc, inactive_loc)
-                cls._try_nav(el)
+                cls._try_nav(el, toplevel, secondlevel)
 
             nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
             cls._try_reset_action(reset_action, _final, nav_fn)
@@ -456,7 +502,7 @@ class Menu(UINavigate):
                     loc = "{}{}".format(loc, loc_to_use).format(arg)
                 else:
                     break
-            cls._try_nav(loc)
+            cls._try_nav(loc, toplevel, secondlevel, thirdlevel)
 
             nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, thirdlevel, reset_action,
                 _final=True)
