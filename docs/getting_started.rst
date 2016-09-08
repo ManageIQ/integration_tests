@@ -63,7 +63,7 @@ Detailed steps (manual environment setup):
   * ``libxslt-devel``
   * ``zeromq3-devel``
   * ``libcurl-devel``
-  * ``redhat-rpm-config`` if you use some kind of really stripped system.
+  * ``redhat-rpm-config``
   * ``gcc-c++``
   * ``openssl-devel``
   * ``libffi-devel``
