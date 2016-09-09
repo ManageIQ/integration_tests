@@ -456,8 +456,13 @@ class Vm(BaseVM, Common):
             return False
         return True
 
-    class CfmeRelationship(object):
+    @property
+    def cluster_id(self):
+        """returns id of cluster current vm belongs to"""
+        vm = self.get_vm_via_rest()
+        return int(vm.ems_cluster_id)
 
+    class CfmeRelationship(object):
         relationship_form = Form(
             fields=[
                 ('server_select', Select("//*[@id='server_id']")),

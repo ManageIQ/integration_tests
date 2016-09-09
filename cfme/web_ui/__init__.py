@@ -2468,6 +2468,9 @@ class Quadicon(Pretty):
                 return False
         return sel.is_displayed(self._locate_quadrant("e"))  # Image has only 'e'
 
+    @property
+    def href(self):
+        return self.locate().get_attribute('href')
 
 class DHTMLSelect(Select):
     """
