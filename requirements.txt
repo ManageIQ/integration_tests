@@ -52,6 +52,7 @@ suds
 tornado
 tzlocal
 wait_for
+widgetastic.core>=0.1.18
 yaycl
 yaycl-crypt
 shyaml
