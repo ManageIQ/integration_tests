@@ -53,6 +53,7 @@ tornado
 tzlocal
 ui-navigate
 wait_for
+widgetastic.core>=0.1.5
 yaycl
 yaycl-crypt
 shyaml

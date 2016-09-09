@@ -19,7 +19,7 @@ from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
-from cfme.web_ui import Input
+# from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
 from utils.appliance import get_or_create_current_appliance, CurrentAppliance
 from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
@@ -27,6 +27,9 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
+
+from widgetastic.widget import View, WidgetDescriptor
+from widgetastic_patternfly import Tab, Input, BootstrapSelect
 
 
 # Forms
@@ -91,6 +94,33 @@ properties_form_56 = TabStripForm(
             ('amqp_sec_protocol', AngularSelect("amqp_security_protocol", exact=True)),
         ]
     })
+
+
+class AuthTab(Tab):
+    ROOT = '//div[@id="auth_tabs"]/ul'
+
+
+class CloudProviderProperties(View):
+    provider_type = BootstrapSelect('#ems_type')
+    name = Input(name='name')
+    api_version = BootstrapSelect('#ems_api_version')
+
+    @WidgetDescriptor
+    class default(AuthTab):  # noqa
+        TAB_NAME = 'Default'
+
+        hostname = Input(name='default_hostname')
+        api_port = Input(name='default_api_port')
+        sec_protocol = BootstrapSelect('#default_security_protocol')
+
+    @WidgetDescriptor
+    class events(AuthTab):  # noqa
+        TAB_NAME = 'Events'
+
+        hostname = Input(name='amqp_hostname')
+        api_port = Input(name='amqp_api_port')
+        sec_protocol = BootstrapSelect('#amqp_security_protocol')
+
 
 prop_region = Region(
     locators={

@@ -27,7 +27,7 @@ from _pytest.terminal import TerminalReporter
 from cached_property import cached_property
 from py.io import TerminalWriter
 
-from utils import diaper, property_or_none
+from utils import conf, diaper, property_or_none
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -86,6 +86,15 @@ class Store(object):
 
     @property
     def user(self):
+        if self._user is None:
+            from cfme import Credential
+            from cfme.configure.access_control import User
+            username = conf.credentials.get('default', {}).get('username', 'admin')
+            password = conf.credentials.get('default', {}).get('password', 'smartvm')
+            cred = Credential(principal=username, secret=password)
+            user = User(credential=cred)
+            user.full_name = 'Administrator'
+            self._user = user
         return self._user
 
     @user.setter

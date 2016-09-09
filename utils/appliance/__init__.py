@@ -41,6 +41,11 @@ from utils import clear_property_cache
 from .endpoints.ui import ViaUI
 from .endpoints.db import ViaDB
 
+from cfme import BaseLoggedInPage
+from cfme.dashboard import DashboardView
+from cfme.login import LoginPage
+from utils.browser import ensure_browser_open, quit
+
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 
 
@@ -97,6 +102,10 @@ class IPAppliance(object):
         # TODO: investigate if there is a better name for this attribute
         self.sentaku_ctx = ImplementationContext.from_instances(
             [self.db_session, self.browser])
+
+    @property
+    def appliance(self):
+        return self
 
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
@@ -1648,29 +1657,43 @@ class IPAppliance(object):
 
 
 @navigator.register(IPAppliance)
-class LoggedIn(CFMENavigateStep):
+class LoginScreen(CFMENavigateStep):
+    VIEW = LoginPage
+
+    def prerequisite(self):
+        ensure_browser_open()
+
     def step(self):
-        from cfme.login import login_admin
-        from utils.browser import browser
-        browser()
-        login_admin()
+        # Can be either blank or logged in
+        logged_in_view = self.create_view(BaseLoggedInPage)
+        if logged_in_view.logged_in:
+            logged_in_view.logout()
+        if not self.view.is_displayed:
+            # Something is wrong
+            del self.view  # In order to unbind the browser
+            quit()
+            ensure_browser_open()
+            if not self.view.is_displayed:
+                raise Exception('Could not open the login screen')
+
+
+@navigator.register(IPAppliance)
+class LoggedIn(CFMENavigateStep):
+    VIEW = BaseLoggedInPage
+    prerequisite = NavigateToSibling('LoginScreen')
+
+    def step(self):
+        login_view = self.create_view(LoginPage)
+        login_view.default_login()
 
 
 @navigator.register(IPAppliance)
 class Dashboard(CFMENavigateStep):
+    VIEW = DashboardView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def am_i_here(self):
-        from cfme.web_ui.menu import nav
-        if self.obj.version < "5.6.0.1":
-            nav.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
-        else:
-            nav.CURRENT_TOP_MENU = "{}{}".format(nav.ROOT, nav.ACTIVE_LEV)
-        nav.is_page_active('Dashboard')
-
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Dashboard')(None)
+        self.view.navigation.select('Cloud Intel', 'Dashboard')
 
 
 class Appliance(IPAppliance):
