@@ -1,6 +1,6 @@
 """Functions that performance tests use."""
+from fixtures.pytest_store import store
 from utils.ssh import SSHClient, SSHTail
-from utils.db import get_yaml_config, set_yaml_config
 from utils.log import logger
 import numpy
 import time
@@ -95,14 +95,14 @@ def set_rails_loglevel(level, validate_against_worker='MiqUiWorker'):
     ui_worker_pid = '#{}'.format(get_worker_pid(validate_against_worker))
 
     logger.info('Setting log level_rails on appliance to {}'.format(level))
-    yaml = get_yaml_config('vmdb')
+    yaml = store.current_appliance.get_yaml_config('vmdb')
     if not str(yaml['log']['level_rails']).lower() == level.lower():
         logger.info('Opening /var/www/miq/vmdb/log/evm.log for tail')
         evm_tail = SSHTail('/var/www/miq/vmdb/log/evm.log')
         evm_tail.set_initial_file_end()
 
         yaml['log']['level_rails'] = level
-        set_yaml_config("vmdb", yaml)
+        store.current_appliance.set_yaml_config("vmdb", yaml)
 
         attempts = 0
         detected = False

@@ -25,7 +25,7 @@ and it is then done only once per template.
         If you need to reset your password or you believe you shall have access into Sprout, you can contact any of the superusers:
         <ul>
             {% for superuser in superusers %}
-                <li>{{ superuser.first_name }} {{ superuser.last_name }} {% if superuser.email %}&lt;{{ superuser.email }}&gt;{% endif %}</li>
+                <li>{{ superuser|user_repr }} {% if superuser.email %}&lt;{{ superuser.email }}&gt;{% endif %}</li>
             {% endfor %}
         </ul>
     </p>

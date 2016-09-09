@@ -10,6 +10,7 @@ using the provider.
 """
 import pytest
 
+from cfme.common.provider import BaseProvider
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.templateloader import TEMPLATES
 from utils import providers
@@ -80,7 +81,7 @@ def setup_provider_funcscope(request, provider):
 
 @pytest.fixture(scope="session")
 def any_provider_session():
-    providers.clear_providers()  # To make it clean
+    BaseProvider.clear_providers()  # To make it clean
     providers.setup_a_provider(validate=True, check_existing=True)
 
 

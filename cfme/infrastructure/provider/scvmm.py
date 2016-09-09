@@ -2,7 +2,7 @@ from mgmtsystem.scvmm import SCVMMSystem
 from . import Provider
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class SCVMMProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     type_name = "scvmm"

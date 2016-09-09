@@ -6,6 +6,8 @@ import pytest
 
 import cfme.web_ui.flash as flash
 import utils.error as error
+import cfme.fixtures.pytest_selenium as sel
+from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, Provider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -15,6 +17,11 @@ from utils.update import update
 
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
+
+
+@pytest.fixture(scope="module")
+def setup_a_provider():
+    return providers.setup_a_provider(prov_class="infra", validate=True, check_existing=True)
 
 
 @pytest.mark.tier(3)
@@ -117,16 +124,14 @@ def test_ip_required_validation():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.xfail(message='http://cfme-tests.readthedocs.org/guides/gotchas.html#'
-    'selenium-is-not-clicking-on-the-element-it-says-it-is')
-def test_name_max_character_validation():
+def test_name_max_character_validation(request, setup_a_provider):
     """Test to validate max character for name field"""
-    prov = VMwareProvider(
-        name=fauxfactory.gen_alphanumeric(256),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address='10.10.10.12')
-    prov.create()
-    prov.delete(cancel=False)
+    provider = setup_a_provider
+    request.addfinalizer(lambda: provider.delete_if_exists(cancel=False))
+    name = fauxfactory.gen_alphanumeric(255)
+    provider.update({'name': name})
+    provider.name = name
+    assert provider.exists
 
 
 @pytest.mark.tier(3)
@@ -136,19 +141,12 @@ def test_host_name_max_character_validation():
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(256),
         ip_address='10.10.10.13')
-    prov.create()
-    prov.delete(cancel=False)
-
-
-@pytest.mark.tier(3)
-def test_ip_max_character_validation():
-    """Test to validate max character for ip address field"""
-    prov = VMwareProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address='10.10.10.14')
-    prov.create()
-    prov.delete(cancel=False)
+    try:
+        prov.create()
+    except FlashMessageException:
+        element = sel.move_to_element(prov.properties_form.locators["hostname_text"])
+        text = element.get_attribute('value')
+        assert text == prov.hostname[0:255]
 
 
 @pytest.mark.tier(3)
@@ -158,9 +156,13 @@ def test_api_port_max_character_validation():
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
         ip_address='10.10.10.15',
-        api_port=fauxfactory.gen_alphanumeric(15))
-    prov.create()
-    prov.delete(cancel=False)
+        api_port=fauxfactory.gen_alphanumeric(16))
+    try:
+        prov.create()
+    except FlashMessageException:
+        element = sel.move_to_element(prov.properties_form.locators["api_port"])
+        text = element.get_attribute('value')
+        assert text == prov.api_port[0:15]
 
 
 @pytest.mark.usefixtures('has_no_infra_providers')
@@ -173,7 +175,7 @@ def test_providers_discovery(request, provider):
     """
     provider.discover()
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
-    request.addfinalizer(lambda: providers.clear_provider_by_type("infra"))
+    request.addfinalizer(lambda: BaseProvider.clear_provider_by_type(Provider))
     wait_for_a_provider()
 
 

@@ -15,30 +15,41 @@ from . import LIST_TABLE_LOCATOR, mon_btn, pwr_btn, MiddlewareBase, download
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
-def _db_select_query(name=None, feed=None, provider=None):
+def _db_select_query(name=None, feed=None, provider=None, server_group=None):
     """column order: `id`, `name`, `hostname`, `feed`, `product`,
-    `provider_name`, `ems_ref`, `properties`"""
+    `provider_name`, `ems_ref`, `properties`, `server_group_name`"""
     t_ms = cfmedb()['middleware_servers']
+    t_msgr = cfmedb()['middleware_server_groups']
     t_ems = cfmedb()['ext_management_systems']
     query = cfmedb().session.query(t_ms.id, t_ms.name, t_ms.hostname, t_ms.feed, t_ms.product,
                                    t_ems.name.label('provider_name'),
-                                   t_ms.ems_ref, t_ms.properties)\
-        .join(t_ems, t_ms.ems_id == t_ems.id)
+                                   t_ms.ems_ref, t_ms.properties,
+                                   t_msgr.name.label('server_group_name'))\
+        .join(t_ems, t_ms.ems_id == t_ems.id)\
+        .outerjoin(t_msgr, t_ms.server_group_id == t_msgr.id)
     if name:
         query = query.filter(t_ms.name == name)
     if feed:
         query = query.filter(t_ms.feed == feed)
     if provider:
         query = query.filter(t_ems.name == provider.name)
+    if server_group:
+        query = query.filter(t_msgr.name == server_group.name)
     return query
 
 
-def _get_servers_page(provider):
+def _get_servers_page(provider=None, server_group=None):
     if provider:  # if provider instance is provided navigate through provider's servers page
         provider.summary.reload()
         if provider.summary.relationships.middleware_servers.value == 0:
             return
         provider.summary.relationships.middleware_servers.click()
+    elif server_group:
+        # if server group instance is provided navigate through it's servers page
+        server_group.summary.reload()
+        if server_group.summary.relationships.middleware_servers.value == 0:
+            return
+        server_group.summary.relationships.middleware_servers.click()
     else:  # if None(provider) given navigate through all middleware servers page
         sel.force_navigate('middleware_servers')
 
@@ -71,7 +82,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
 
     """
     property_tuples = [('name', 'name'), ('feed', 'feed'),
-                       ('hostname', 'hostname'), ('bound_address', 'bind_address')]
+                       ('bound_address', 'bind_address')]
     taggable_type = 'MiddlewareServer'
 
     def __init__(self, name, provider=None, **kwargs):
@@ -90,9 +101,9 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
                     setattr(self, attributize_string(property), kwargs['properties'][property])
 
     @classmethod
-    def servers(cls, provider=None, strict=True):
+    def servers(cls, provider=None, server_group=None, strict=True):
         servers = []
-        _get_servers_page(provider=provider)
+        _get_servers_page(provider=provider, server_group=server_group)
         if sel.is_displayed(list_tbl):
             _provider = provider
             for _ in paginator.pages():
@@ -116,9 +127,10 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
         return headers
 
     @classmethod
-    def servers_in_db(cls, name=None, feed=None, provider=None, strict=True):
+    def servers_in_db(cls, name=None, feed=None, provider=None, server_group=None, strict=True):
         servers = []
-        rows = _db_select_query(name=name, feed=feed, provider=provider).all()
+        rows = _db_select_query(name=name, feed=feed, provider=provider,
+            server_group=server_group).all()
         for server in rows:
             if strict:
                 _provider = get_crud(get_provider_key(server.provider_name))
@@ -133,28 +145,38 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
         return servers
 
     @classmethod
-    def _servers_in_mgmt(cls, provider):
+    def _servers_in_mgmt(cls, provider, server_group=None):
         servers = []
-        rows = provider.mgmt.list_server()
-        for server in rows:
-            servers.append(MiddlewareServer(
-                name=re.sub(r'~~$', '', server.path.resource_id),
-                hostname=server.data['Hostname'],
-                feed=server.path.feed_id,
-                product=server.data['Product Name']
-                if 'Product Name' in server.data else None,
-                provider=provider))
+        rows = provider.mgmt.inventory.list_server(feed_id=server_group.feed
+                                        if server_group else None)
+        for row in rows:
+            server = MiddlewareServer(
+                name=re.sub('(Domain )|(WildFly Server \\[)|(\\])', '', row.name),
+                hostname=row.data['Hostname']
+                if 'Hostname' in row.data else None,
+                feed=row.path.feed_id,
+                product=row.data['Product Name']
+                if 'Product Name' in row.data else None,
+                provider=provider)
+            # if server_group is given, filter those servers which belongs to it
+            if not server_group or cls._belongs_to_group(server, server_group):
+                servers.append(server)
         return servers
 
     @classmethod
-    def servers_in_mgmt(cls, provider=None):
+    def servers_in_mgmt(cls, provider=None, server_group=None):
         if provider is None:
-            deployments = []
+            servers = []
             for _provider in list_providers('hawkular'):
-                deployments.extend(cls._servers_in_mgmt(get_crud(_provider)))
-            return deployments
+                servers.extend(cls._servers_in_mgmt(get_crud(_provider), server_group))
+            return servers
         else:
-            return cls._servers_in_mgmt(provider)
+            return cls._servers_in_mgmt(provider, server_group)
+
+    @classmethod
+    def _belongs_to_group(cls, server, server_group):
+        server_mgmt = server.server(method='mgmt')
+        return getattr(server_mgmt, attributize_string('Server Group'), None) == server_group.name
 
     def _on_detail_page(self):
         """Override existing `_on_detail_page` and return `False` always.
@@ -189,8 +211,8 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
                                  feed=self.feed).first()
         if db_srv:
             path = CanonicalPath(db_srv.ems_ref)
-            mgmt_srv = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
-                        resource_id=path.resource_id)
+            mgmt_srv = self.provider.mgmt.inventory.get_config_data(feed_id=path.feed_id,
+                                                                    resource_id=path.resource_id)
             if mgmt_srv:
                 return MiddlewareServer(
                     provider=self.provider,
@@ -232,8 +254,8 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
                                  feed=self.feed).first()
         if db_srv:
             path = CanonicalPath(db_srv.ems_ref)
-            mgmt_srv = self.provider.mgmt.get_config_data(feed_id=path.feed_id,
-                        resource_id=path.resource_id)
+            mgmt_srv = self.provider.mgmt.inventory.get_config_data(feed_id=path.feed_id,
+                                                                    resource_id=path.resource_id)
             if mgmt_srv:
                 return mgmt_srv.value['Server State'] == 'running'
         raise MiddlewareServerNotFound("Server '{}' not found in MGMT!".format(self.name))
@@ -273,6 +295,6 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
         mon_btn("Utilization")
 
     @classmethod
-    def download(cls, extension, provider=None):
-        _get_servers_page(provider)
+    def download(cls, extension, provider=None, server_group=None):
+        _get_servers_page(provider, server_group)
         download(extension)

@@ -185,6 +185,10 @@ def is_datastore_analysis_finished(name, **kwargs):
     return is_analysis_finished(name=name, task_type='datastore', **kwargs)
 
 
+def is_cluster_analysis_finished(name, **kwargs):
+    return is_analysis_finished(name=name, task_type='cluster', **kwargs)
+
+
 def is_task_finished(tab, page, task_name, expected_status, clear_tasks_after_success=True):
     el = None
     try:
@@ -231,6 +235,12 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
             'state': 'Finished'
         },
         'datastore': {
+            'tab': 'My Other UI Tasks',
+            'page': 'tasks_my_other_ui',
+            'task': 'SmartState Analysis for [{}]',
+            'state': "Finished"
+        },
+        'cluster': {
             'tab': 'My Other UI Tasks',
             'page': 'tasks_my_other_ui',
             'task': 'SmartState Analysis for [{}]',

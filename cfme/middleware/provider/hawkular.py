@@ -1,16 +1,16 @@
 import re
-from cfme.common import TopologyMixin
-from cfme.common.provider import BaseProvider
-from cfme.web_ui import form_buttons
+
+from cfme.common import TopologyMixin, TimelinesMixin
+from . import MiddlewareProvider
 from mgmtsystem.hawkular import Hawkular
 from utils.db import cfmedb
 from utils.varmeth import variable
-from . import properties_form, _get_providers_page, _db_select_query
-from .. import download, MiddlewareBase, auth_btn
+from . import _get_providers_page, _db_select_query
+from .. import download, MiddlewareBase, auth_btn, mon_btn
 
 
-@BaseProvider.add_type_map
-class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
+@MiddlewareProvider.add_provider_type
+class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, MiddlewareProvider):
     """
     HawkularProvider class holds provider data. Used to perform actions on hawkular provider page
 
@@ -31,22 +31,11 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
         myprov.create()
         myprov.num_deployment(method="ui")
     """
-    STATS_TO_MATCH = ['num_server', 'num_deployment', 'num_datasource']
+    STATS_TO_MATCH = ['num_server', 'num_domain', 'num_deployment', 'num_datasource']
     property_tuples = [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'),
                        ('provider_type', 'type')]
-    type_tclass = "middleware"
     type_name = "hawkular"
     mgmt_class = Hawkular
-    page_name = 'middleware'
-    string_name = 'Middleware'
-    detail_page_suffix = 'provider_detail'
-    edit_page_suffix = 'provider_edit_detail'
-    refresh_text = "Refresh items and relationships"
-    quad_name = None
-    _properties_form = properties_form
-    add_provider_button = form_buttons.FormButton("Add this Middleware Provider")
-    save_button = form_buttons.FormButton("Save Changes")
-    taggable_type = 'ExtManagementSystem'
 
     def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None, **kwargs):
         self.name = name
@@ -95,6 +84,16 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
             self.summary.reload()
         return self.summary.relationships.middleware_datasources.value
 
+    @variable(alias='db')
+    def num_domain(self):
+        return self._num_db_generic('middleware_domains')
+
+    @num_server.variant('ui')
+    def num_domain_ui(self, reload_data=True):
+        if reload_data:
+            self.summary.reload()
+        return self.summary.relationships.middleware_domains.value
+
     @variable(alias='ui')
     def is_refreshed(self, reload_data=True):
         if reload_data:
@@ -118,7 +117,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
 
     def load_details(self, refresh=False):
         """Call super class `load_details` and load `db_id` if not set"""
-        BaseProvider.load_details(self, refresh=refresh)
+        MiddlewareProvider.load_details(self, refresh=refresh)
         if not self.db_id or refresh:
             tmp_provider = _db_select_query(
                 name=self.name, type='ManageIQ::Providers::Hawkular::MiddlewareManager').first()
@@ -131,6 +130,10 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, BaseProvider):
     def recheck_auth_status(self):
         self.load_details(refresh=True)
         auth_btn("Re-check Authentication Status")
+
+    def load_timelines_page(self):
+        self.load_details()
+        mon_btn("Timelines")
 
     @staticmethod
     def from_config(prov_config, prov_key):

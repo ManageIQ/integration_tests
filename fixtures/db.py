@@ -26,9 +26,3 @@ def db(uses_db):
 
     """
     return utils.db.cfmedb().copy()
-
-
-@pytest.fixture(scope='session')
-def db_yamls(db):
-    """Returns a mapping of database yaml names to the yaml contents serialized in python"""
-    return utils.db.db_yamls(db)

@@ -10,6 +10,7 @@
 """
 
 from functools import partial
+from navmazing import NavigateToSibling
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import form_buttons
@@ -19,6 +20,8 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
+from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance.endpoints.ui import navigate, CFMENavigateStep
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
@@ -116,6 +119,7 @@ nav.add_branch('clouds_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
+@CloudInfraProvider.add_base_type
 class Provider(Pretty, CloudInfraProvider):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
@@ -134,6 +138,8 @@ class Provider(Pretty, CloudInfraProvider):
         myprov.create()
 
     """
+    provider_types = {}
+    in_version = (version.LOWEST, version.LATEST)
     type_tclass = "cloud"
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']
@@ -152,8 +158,10 @@ class Provider(Pretty, CloudInfraProvider):
     save_button = deferred_verpick(
         {version.LOWEST: form_buttons.save,
          '5.5': form_buttons.angular_save})
+    appliance = CurrentAppliance()
 
-    def __init__(self, name=None, credentials=None, zone=None, key=None):
+    def __init__(self, name=None, credentials=None, zone=None, key=None, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
         if not credentials:
             credentials = {}
         self.name = name
@@ -163,6 +171,32 @@ class Provider(Pretty, CloudInfraProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
+
+
+@navigate.register(Provider, 'All')
+class All(CFMENavigateStep):
+    def prerequisite(self):
+        self.navigate_obj.navigate(self.obj.appliance, 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
+
+
+@navigate.register(Provider, 'Add')
+class New(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New Cloud Provider')
+
+
+@navigate.register(Provider)
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.click(Quadicon(self.obj.name, 'cloud_prov'))
 
 
 def get_all_providers(do_not_navigate=False):

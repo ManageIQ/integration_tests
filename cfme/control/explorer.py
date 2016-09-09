@@ -471,6 +471,7 @@ class BaseCondition(Updateable, Pretty):
 
 class HostCondition(BaseCondition, HostObject):
     PREFIX = "host_"
+    PRETTY_NAME = "Host / Node"
     DELETE_STRING = deferred_verpick({
         version.LOWEST: "Delete this Host Condition",
         '5.4': "Delete this Host / Node Condition"
@@ -479,26 +480,31 @@ class HostCondition(BaseCondition, HostObject):
 
 class VMCondition(BaseCondition, VMObject):
     PREFIX = "vm_"
+    PRETTY_NAME = "VM and Instance"
     DELETE_STRING = "Delete this VM and Instance Condition"
 
 
 class ReplicatorCondition(BaseCondition, ReplicatorObject):
     PREFIX = "replicator_"
+    PRETTY_NAME = "Replicator"
     DELETE_STRING = "Delete this Replicator Condition"
 
 
 class PodCondition(BaseCondition, PodObject):
     PREFIX = "pod_"
+    PRETTY_NAME = "Pod"
     DELETE_STRING = "Delete this Pod Condition"
 
 
 class ContainerNodeCondition(BaseCondition, ContainerNodeObject):
     PREFIX = "container_node_"
-    DELETE_STRING = "Delete this Container Node Condition"
+    PRETTY_NAME = "Node"
+    DELETE_STRING = "Delete this Node Condition"
 
 
 class ContainerImageCondition(BaseCondition, ContainerImageObject):
     PREFIX = "container_image_"
+    PRETTY_NAME = "Image"
     DELETE_STRING = deferred_verpick({
         version.LOWEST: "Delete this Image Condition",
         '5.7': "Delete this Container Image Condition"
@@ -888,7 +894,7 @@ class VMControlPolicy(BaseControlPolicy, VMObject):
         return "VM and Instance Control: {}".format(self.description)
 
 
-class ReplicatorControlPolicy(BasePolicy, ReplicatorObject):
+class ReplicatorControlPolicy(BaseControlPolicy, ReplicatorObject):
     PREFIX = "replicator_control_"
     DELETE_STRING = "Delete this Replicator Policy"
     COPY_STRING = "Copy this Replicator Policy"
@@ -897,7 +903,7 @@ class ReplicatorControlPolicy(BasePolicy, ReplicatorObject):
         return "Replcaitor Control: {}".format(self.description)
 
 
-class PodControlPolicy(BasePolicy, PodObject):
+class PodControlPolicy(BaseControlPolicy, PodObject):
     PREFIX = "pod_control_"
     DELETE_STRING = "Delete this Pod Policy"
     COPY_STRING = "Copy this Pod Policy"
@@ -906,7 +912,7 @@ class PodControlPolicy(BasePolicy, PodObject):
         return "Pod Control: {}".format(self.description)
 
 
-class ContainerNodeControlPolicy(BasePolicy, ContainerNodeObject):
+class ContainerNodeControlPolicy(BaseControlPolicy, ContainerNodeObject):
     PREFIX = "container_node_control_"
     DELETE_STRING = "Delete this Node Policy"
     COPY_STRING = "Copy this Node Policy"

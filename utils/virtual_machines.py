@@ -6,6 +6,7 @@ from mgmtsystem.virtualcenter import VMWareSystem
 from mgmtsystem.scvmm import SCVMMSystem
 from mgmtsystem.azure import AzureSystem
 from mgmtsystem.ec2 import EC2System
+from mgmtsystem.google import GoogleCloudSystem
 from mgmtsystem.openstack import OpenstackSystem
 from mgmtsystem.rhevm import RHEVMSystem
 
@@ -83,6 +84,8 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900,
         if 'host_group' not in deploy_args:
             deploy_args.update(host_group=data.get("host_group", "All Hosts"))
     elif isinstance(mgmt, EC2System):
+        pass
+    elif isinstance(mgmt, GoogleCloudSystem):
         pass
     elif isinstance(mgmt, AzureSystem):
         deploy_args.update(data['provisioning'])
