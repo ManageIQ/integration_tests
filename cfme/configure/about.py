@@ -24,11 +24,6 @@ product_assistance = Region(
             '5.4': "//a[normalize-space(.)='REST API Guide']",
             '5.5': None
         },
-        'soap_api_guide': {
-            version.LOWEST: None,
-            "5.4.0.1": "//a[normalize-space(.)='SOAP API Guide']",
-            '5.5': None
-        },
         'user_guide': {
             version.LOWEST: None,
             "5.4.0.1": "//a[normalize-space(.)='User Guide']",
