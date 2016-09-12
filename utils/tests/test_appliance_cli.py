@@ -27,7 +27,7 @@ def test_configure_appliance(request):
 
 def test_configure_ipa(request):
     current_appliance.ap_cli.configure_ipa(
-        hostname="", domain="", realm="", username="", password="")
+        hostname, domain, realm, username, password)
     return_code, output = (current_appliance.ssh.run_command(
         "systemctl status sssd | grep running"))
     assert return_code == 0
