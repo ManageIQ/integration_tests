@@ -58,6 +58,36 @@ class ApplianceException(Exception):
     pass
 
 
+class ApplianceConsoleCli(object):
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+        self.ssh = appliance.ssh_client
+
+    def run(self, ap_cli_command):
+        return self.ssh.run_command("appliance_console_cli {}".format(ap_cli_command))
+
+    def set_hostname(self, hostname):  # set appliance hostname
+        self.run("-H {}".format(hostname))
+
+    def configure_appliance(self, region=0, internal=True, dbhostname=localhost, username='admin',
+            password, dbname=vmdb_production, key=True, fetch_key=False, sshlogin, sshpass):
+        self.run("-r {} -i {} -h {} -U {} -p {} -d {} -k {} -v -K {} -s {} -a {} ".format(
+            region, internal, dbhostname, username, password, dbname, key, fetch_key, sshlogin,
+            sshpass))
+
+    # if fetch key = false ignore sshlogin, sshpass?
+    # internal=true.. how do I get that to relate back to -i (internal=-i {})? also if
+    # internal=true dbhostname will always be localhost (remove option?)
+
+    def configure_ipa(self, hostname, domain, realm, username, password):
+        self.run("-e {} -o {} -l {} -n {} -w {}".format(
+            hostname, domain, realm, username, password))
+
+    def uninstall_ipa_client(self):
+        self.run("--uninstall-ipa")
+
+
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
@@ -88,6 +118,7 @@ class IPAppliance(object):
         self.container = container
         self._db_ssh_client = None
         self._user = None
+        self.ap_cli = ApplianceConsoleCli(self)
         self.browser = ViaUI(owner=self)
         self.context = ImplementationContext.from_instances(
             [self.browser])
