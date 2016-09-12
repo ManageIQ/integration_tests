@@ -10,7 +10,7 @@ def test_set_hostname(request):
 
 def test_configure_appliance(request):
     current_appliance.ap_cli.configure_appliance(region, internal, dbhostname, username,
-    password, dbname, key, fetch_key, sshlogin, sshpass)
+        password, dbname, key, fetch_key, sshlogin, sshpass)
     return_code, output = (current_appliance.ssh.run_command(
         "systemctl status evmserverd | grep running"))
     assert return_code == 0
@@ -27,7 +27,7 @@ def test_configure_appliance(request):
 
 def test_configure_ipa(request):
     current_appliance.ap_cli.configure_ipa(
-    hostname="", domain="", realm="", username="", password="")
+        hostname="", domain="", realm="", username="", password="")
     return_code, output = (current_appliance.ssh.run_command(
         "systemctl status sssd | grep running"))
     assert return_code == 0
