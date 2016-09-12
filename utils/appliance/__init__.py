@@ -70,8 +70,9 @@ class ApplianceConsoleCli(object):
     def set_hostname(self, hostname):  # set appliance hostname
         self.run("-H {}".format(hostname))
 
-    def configure_appliance(self, region=0, internal=True, dbhostname=localhost, username='admin',
-            password, dbname=vmdb_production, key=True, fetch_key=False, sshlogin, sshpass):
+    def configure_appliance(self, sshlogin, sshpass, password, region=0, internal=True,
+            dbhostname=localhost, username='admin', dbname=vmdb_production, key=True,
+            fetch_key=False):
         self.run("-r {} -i {} -h {} -U {} -p {} -d {} -k {} -v -K {} -s {} -a {} ".format(
             region, internal, dbhostname, username, password, dbname, key, fetch_key, sshlogin,
             sshpass))
