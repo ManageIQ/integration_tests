@@ -5,7 +5,7 @@ import pytest
 
 from cfme import Credential
 from cfme.configure.access_control import User, Group
-from cfme.login import login
+from cfme.login import login, login_admin
 from cfme.rest import vm as _vm
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
@@ -36,9 +36,10 @@ def user():
 # This test should be deleted when we get new build > 5.5.2.4
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_edit_user_password(rest_api, user):
+def test_edit_user_password(request, rest_api, user):
     if "edit" not in rest_api.collections.users.action.all:
         pytest.skip("Edit action for users is not implemented in this version")
+    request.addfinalizer(login_admin)
     try:
         for cur_user in rest_api.collections.users:
             if cur_user.userid != conf.credentials['default']['username']:

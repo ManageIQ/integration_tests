@@ -4,7 +4,7 @@ import pytest
 
 from cfme import Credential
 from cfme.configure.access_control import User
-from cfme.login import login
+from cfme.login import login, login_admin
 from cfme.rest import groups as _groups
 from cfme.rest import roles as _roles
 from cfme.rest import tenants as _tenants
@@ -207,9 +207,10 @@ class TestUsersViaREST(object):
         return _users(request, rest_api, num=3)
 
     @pytest.mark.tier(2)
-    def test_edit_user_password(self, rest_api, users):
+    def test_edit_user_password(self, request, rest_api, users):
         if "edit" not in rest_api.collections.users.action.all:
             pytest.skip("Edit action for users is not implemented in this version")
+        request.addfinalizer(login_admin)
         user = users[0]
         new_password = fauxfactory.gen_alphanumeric()
         user.action.edit(password=new_password)
