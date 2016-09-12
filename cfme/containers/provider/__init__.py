@@ -5,6 +5,7 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
+from utils import conf
 from utils import deferred_verpick, version
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
@@ -141,6 +142,21 @@ class Provider(BaseProvider, Pretty):
         """
         self.navigate(detail=True)
         return details_page.infoblock.text(*ident)
+
+    @staticmethod
+    def check_metrics(provider):
+        """ Checks if OSE Metrics is up
+        Returns: True if up, False if down
+        """
+        hostname = 'https://' + conf.cfme_data.get('management_systems', {})[provider.key] \
+            .get('hostname', []) + '/hawkular/metrics'
+        ensure_browser_open()
+        sel.get(hostname)
+        element = sel.elements('//*[contains(., "STARTED")]')
+        if element:
+            return True
+        else:
+            return False
 
     @variable(alias='db')
     def num_project(self):
