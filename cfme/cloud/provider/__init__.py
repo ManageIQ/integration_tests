@@ -10,12 +10,13 @@
 """
 
 from functools import partial
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
+from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
-from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
