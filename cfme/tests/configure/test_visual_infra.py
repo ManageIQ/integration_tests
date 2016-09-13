@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import pytest
 import re
+import pytest
 from cfme import login
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.providers import setup_a_provider as _setup_a_provider
+from cfme.infrastructure import virtual_machines  # NOQA
 
 pytestmark = [pytest.mark.tier(3)]
 
@@ -21,10 +22,12 @@ grid_pages = [
     'infrastructure_datastores'
 ]
 
+# BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
+# BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331399
+# TODO: update landing_pages once these bugs are fixed.
 landing_pages = [
-    'Cloud Intelligence / Reports',
-    'Cloud Intelligence / Timelines',
-    'Cloud Intelligence / RSS',
+    'Cloud Intel / Dashboard',
+    'Services / My Services',
     'Services / Catalogs',
     'Services / Requests',
     'Infrastructure / Providers',
@@ -32,7 +35,6 @@ landing_pages = [
     'Infrastructure / Hosts',
     'Infrastructure / Resource Pools',
     'Infrastructure / Datastores',
-    'Infrastructure / Repositories',
     'Control / Explorer',
     'Automate / Explorer',
     'Optimize / Utilization',
@@ -198,7 +200,11 @@ def test_start_page(request, setup_a_provider, start_page):
     login.logout()
     login.login_admin()
     level = re.split(r"\/", start_page)
-    assert menu.nav.is_page_active(level[0].strip(), level[1].strip()), "Landing Page Failed"
+    two_level = level[0].strip(), level[1].strip()
+    three_level = None, level[0].strip(), level[1].strip()
+    # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
+    assert (menu.nav.is_page_active(*two_level) or menu.nav.is_page_active(*three_level)), \
+        "Landing Page Failed"
 
 
 def test_infraprovider_noquads(request, setup_a_provider, set_infra_provider_quad):
@@ -221,6 +227,7 @@ def test_vm_noquads(request, setup_a_provider, set_vm_quad):
     assert visual.check_image_exists, "Image View Failed!"
 
 
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])
 def test_template_noquads(request, setup_a_provider, set_template_quad):
     sel.force_navigate('infra_templates')
     assert visual.check_image_exists, "Image View Failed!"
