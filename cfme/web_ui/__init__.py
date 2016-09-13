@@ -59,7 +59,7 @@ import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
 from tempfile import NamedTemporaryFile
-from xml.sax.saxutils import quoteattr, unescape
+from xml.sax.saxutils import quoteattr
 
 from cached_property import cached_property
 from selenium.common import exceptions as sel_exceptions
@@ -3295,11 +3295,10 @@ class AngularSelect(Pretty):
         if not self.is_open:
             self.open()
         if self.exact:
-            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(
-                unescape(quoteattr(text)))
+            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(quoteattr(text))
         else:
             new_loc = self._loc + '/../div/ul/li/a[contains(normalize-space(.), {})]'.format(
-                unescape(quoteattr(text)))
+                quoteattr(text))
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)
@@ -3640,9 +3639,11 @@ class StatusBox(object):
 
     """
     def __init__(self, name):
-        self.name = name
+        self.name = str(name).lower()
 
     def value(self):
-        return sel.element(
-            '//span[contains(@class, "card-pf-aggregate-status-count")]'
-            '/../../span[contains(., "{}")]/span'.format(self.name)).text
+        elem_text = sel.text(
+            "//span[contains(@class,'card-pf-aggregate-status-count')]"
+            "/../../../../../div[contains(@status, '{}')]".format(self.name))
+        match = re.search(r'\d+', elem_text)
+        return int(match.group())
