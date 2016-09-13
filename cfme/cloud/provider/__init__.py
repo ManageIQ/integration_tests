@@ -10,7 +10,7 @@
 """
 
 from functools import partial
-from navmazing import NavigateToSibling
+from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import form_buttons
@@ -175,8 +175,7 @@ class Provider(Pretty, CloudInfraProvider):
 
 @navigate.register(Provider, 'All')
 class All(CFMENavigateStep):
-    def prerequisite(self):
-        self.navigate_obj.navigate(self.obj.appliance, 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
