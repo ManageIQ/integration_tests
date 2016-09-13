@@ -231,7 +231,7 @@ def depot_configured(request, depot_type, depot_machine_folder, depot_credential
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
 @pytest.mark.meta(blockers=BZ(1341502, unblock=lambda depot_type: depot_type != "anon_ftp",
-                              forced_streams=["5.6"]))
+                              forced_streams=["5.6", "upstream"]))
 def test_collect_log_depot(depot_type, depot_machine_folder, depot_credentials, depot_ftp,
                            depot_configured, soft_assert, depot_machine_ip,
                            request):
