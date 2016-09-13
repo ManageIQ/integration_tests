@@ -124,7 +124,7 @@ class BrowserFactory(object):
     def renew(self):
         pass
 
-    def processed_bowser_args(self):
+    def processed_browser_args(self):
         return self.browser_kwargs
 
     def create(self):
@@ -140,7 +140,7 @@ class BrowserFactory(object):
 class WharfFactory(BrowserFactory):
     def __init__(self, webdriver_class, browser_kwargs, wharf):
         super(WharfFactory, self).__init__(webdriver_class, browser_kwargs)
-        self.whaf = wharf
+        self.wharf = wharf
 
         if browser_kwargs['desired_capabilities']['browserName'] == 'chrome':
             # chrome uses containers to sandbox the browser, and we use containers to
@@ -153,7 +153,7 @@ class WharfFactory(BrowserFactory):
                 co['args'].append(arg)
             browser_kwargs['desired_capabilities']['chromeOptions'] = co
 
-    def processed_bowser_args(self):
+    def processed_browser_args(self):
         command_executor = self.wharf.config['webdriver_url']
         view_msg = 'tests can be viewed via vnc on display {}'.format(
             self.wharf.config['vnc_display'])
@@ -161,7 +161,7 @@ class WharfFactory(BrowserFactory):
         logger.info(view_msg)
         write_line(view_msg, cyan=True)
         return dict(
-            super(WharfFactory, self).processed_bowser_args(),
+            super(WharfFactory, self).processed_browser_args(),
             command_executor=command_executor,
         )
 
@@ -177,8 +177,8 @@ class WharfFactory(BrowserFactory):
                 logger.exception(ex)
                 self.wharf.checkin()
 
-        def renew(self):
-            self.wharf.renew()
+    def renew(self):
+        self.wharf.renew()
 
 
 class BrowserManager(object):
