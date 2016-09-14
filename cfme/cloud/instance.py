@@ -76,7 +76,7 @@ class clouds_instances:
     def clouds_image_orphan_obj(ctx):
         tree_image_by_prov("Images by Provider", '<Orphaned>', ctx["orphan_name"])
 
-    def clouds_instances_all(_):
+    def clouds_instances_all(_): # noqa
         tree_instances("All Instances")
 
     def clouds_instances_filter_folder(ctx):

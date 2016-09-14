@@ -412,13 +412,13 @@ class ConfigSystem(Pretty):
     def navigate(self):
         """Navigates to the system's detail page"""
         sel.force_navigate('infrastructure_config_system',
-                           context={'system': self.profile.manager, 'profile': self.profile,
-                                    'system': self})
+            context={'system': self.profile.manager, 'profile': self.profile,'system': self})
 
     def tag(self, tag):
         """Tags the system by given tag"""
         self.navigate()
         # Workaround for BZ#1241867
+        tb.select('Policy', 'Edit Tags')
         tb.select('Policy', 'Edit Tags')
         fill(mixins.tag_form, {'category': 'Cost Center *', 'tag': 'Cost Center 001'})
         # ---

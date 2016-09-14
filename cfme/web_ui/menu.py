@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import inspect
 from ui_navigate import UINavigate
 
@@ -24,23 +23,19 @@ _branch_stack = []
 
 class Menu(UINavigate):
     """ Menu class for navigation
-
     The Menu() class uses the UINavigate() class to supply an instance of a menu. This menu is a
     navigatable system that uses destination endpoints and traverses each endpoint in a path and
     run the function associated with that destination, toreach the final destination.
-
     In CFME, an example would be navigating to the form to add a new provider. We have a
     ``clouds_providers`` destination which will ensure we are logged in
     and sitting at the Clouds / Providers page. Then there will be a ``add_new_cloud_provider``
     destination, which will have the ``clouds_provider`` as it's parent. When navigating to
     ``add_new_cloud_provider``, we will first run the function associated with the parent
     ``clouds_provider`` and then run the next function which is associated with the final endpoint.
-
     The Menu() system is used extensively in CFME-QE and is often grafted onto at module import.
     To accomplish this, the Menu uses a deferral system to stack up graft requests until the menu
     is ready to be initialized. This is necessary because Menu now needs to know what *version* of
     the product it is dealing with.
-
     :py:meth:`Menu.initialize` is used to initialize the object and collapse the stacked tree
     grafts. It is currently called inside :py:func:`cfme.fixtures.pytest_selenium.force_navigate`
     so it is set up *just* before the navigation is requested.
@@ -100,12 +95,9 @@ class Menu(UINavigate):
 
     def add_branch(self, name, branches, add_to_stack=True):
         """Adds a branch to the tree at a given destination
-
         This method will either:
-
         * Add the tree item to a stack to be precessed in the :py:meth:`Menu.initialize` method
         * Directly add the tree item to the UINavigate class
-
         This decision is based on whether the :py:meth:`Menu.initialize` method has already been
         called. As there are a default set of navigation endpoints that are always present in the
         tree, the :py:meth:`Menu.initialize` method is only ever able to be run once.
@@ -121,7 +113,6 @@ class Menu(UINavigate):
 
     def get_current_menu_state(self):
         """Returns the current menu state
-
         This function returns what each level of the menu is pointing to, or None, if that level
         of menu is unused. Future work could possibly see this method using recursion to allow
         unlimited levels of menu to be used, however it is unlikely that more than 3 will ever be
@@ -157,14 +148,12 @@ class Menu(UINavigate):
     @property
     def sections(self):
         """Dictionary of navigation elements.
-
         These can be either (nav destination name, section title) section tuples, or dictionary
         objects containing more section tuples.
         Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel
         sections, or thirdlevel sections.
         You can also add a resetting callable that is called after clicking the second or third
         level.
-
         The main tab destination is usually the first secondlevel page in that tab
         Since this is redundant, it's arguable that the toplevel tabs should be
         nav destination at all; they're included here "just in case". The toplevel
@@ -264,7 +253,7 @@ class Menu(UINavigate):
                     ('middleware_topology', _not_implemented('Middleware topology', '5.6')),
                 )
             }
-        elif version.current_version() < '5.7':
+        else:
             sections = {
                 ('cloud_intelligence', 'Cloud Intel'): (
                     ('dashboard', 'Dashboard'),
@@ -313,7 +302,7 @@ class Menu(UINavigate):
                         ('infrastructure_requests', 'Requests'),
                         # ('infrastructure_config_management', 'Configuration Management')
                     ),
-                    ('containers', 'Containers'): [
+                    ('containers', 'Containers'): (
                         ('container_dashboard', 'Overview'),
                         ('containers_providers', 'Providers'),
                         ('containers_projects', 'Projects'),
@@ -327,8 +316,8 @@ class Menu(UINavigate):
                         ('containers_builds', 'Container Builds'),
                         ('containers_image_registries', 'Image Registries'),
                         ('containers_images', 'Container Images'),
-                        ('containers_topology', 'Topology'),
-                    ],
+                        ('containers_topology', 'Topology')
+                    ),
                 },
                 ('n_configuration', 'Configuration'): (
                     ('infrastructure_config_management', 'Configuration Management'),
@@ -355,11 +344,11 @@ class Menu(UINavigate):
                     ('networks_providers', 'Providers'),
                     ('networks_networks', 'Networks'),
                     ('networks_subnets', 'Subnets'),
-                    ('networks_router', 'Network Router'),
+                    ('networks_router', "/network_router"),
                     ('networks_security_groups', 'Security Groups'),
-                    ('networks_floating_ip', 'Floating IP'),
+                    ('networks_floating_ip', "/floating_ip"),
                     ('networks_ports', 'Network Ports'),
-                    ('networks_topology', 'Topology')
+                    ('networks_topology', 'Topology'),
                 ),
                 ('control', 'Control'): (
                     ('control_explorer', 'Explorer'),
@@ -387,125 +376,13 @@ class Menu(UINavigate):
                     ('about', 'About')
                 )
             }
-        elif version.current_version() >= '5.7':
-            sections = {
-                ('cloud_intelligence', 'Cloud Intel'): (
-                    ('dashboard', 'Dashboard'),
-                    ('reports', 'Reports'),
-                    ('chargeback', 'Chargeback'),
-                    ('timelines', 'Timelines'),
-                    ('rss', 'RSS')
-                ),
-                ('services', 'Services'): (
-                    ('my_services', 'My Services'),
-                    ('services_catalogs', 'Catalogs'),
-                    ('services_workloads', 'Workloads'),
-                    ('services_requests', 'Requests')
-                ),
-                ('compute', 'Compute'): {
-                    ('clouds', 'Clouds'): (
-                        ('clouds_providers', 'Providers', lambda: toolbar.select('Grid View')),
-                        ('clouds_availability_zones', 'Availability Zones'),
-                        ('clouds_tenants', 'Tenants'),
-                        ('clouds_volumes', 'Volumes'),
-                        ('clouds_flavors', 'Flavors'),
-                        ('clouds_instances', 'Instances',
-                         self._tree_func_with_grid(
-                             "Instances by Provider", "Instances by Provider")),
-                        ('clouds_stacks', 'Stacks'),
-                        ('clouds_key_pairs', 'Key Pairs'),
-                        ('clouds_object_stores', 'Object Stores'),
-                    ),
-                    ('infrastructure', 'Infrastructure'): (
-                        ('infrastructure_providers',
-                         'Providers', lambda: toolbar.select('Grid View')),
-                        ('infrastructure_clusters', "/ems_cluster"),
-                        ('infrastructure_hosts', "/host"),
-                        ('infrastructure_virtual_machines', 'Virtual Machines',
-                         self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
-                        ('infrastructure_resource_pools', 'Resource Pools'),
-                        ('infrastructure_datastores', 'Datastores',
-                         self._tree_func_with_grid("Datastores", "All Datastores")),
-                        # ('infrastructure_repositories', 'Repositories'),
-                        ('infrastructure_pxe', 'PXE'),
-                        ('infrastructure_requests', 'Requests'),
-                        # ('infrastructure_config_management', 'Configuration Management')
-                    ),
-                    ('containers', 'Containers'): [
-                        ('container_dashboard', 'Overview'),
-                        ('containers_providers', 'Providers'),
-                        ('containers_projects', 'Projects'),
-                        ('containers_routes', 'Routes'),
-                        ('containers_services', 'Container Services'),
-                        ('containers_replicators', 'Replicators'),
-                        ('containers_pods', 'Pods'),
-                        ('containers_containers', 'Containers'),
-                        ('containers_nodes', 'Container Nodes'),
-                        ('containers_volumes', 'Volumes'),
-                        ('containers_builds', 'Container Builds'),
-                        ('containers_image_registries', 'Image Registries'),
-                        ('containers_images', 'Container Images'),
-                        ('containers_topology', 'Topology'),
-                    ],
-                },
-                ('n_configuration', 'Configuration'): (
-                    ('infrastructure_config_management', 'Configuration Management'),
-                    ('infrastructure_config_jobs', 'Jobs'),
-                ),
-                ('middleware', 'Middleware'): (
-                    ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
-                    if not toolbar.is_active("Grid View") else None),
-                    ('middleware_domains', 'Middleware Domains',
-                     lambda: toolbar.select('List View')
-                     if not toolbar.is_active("List View") else None),
-                    ('middleware_servers', 'Middleware Servers',
-                     lambda: toolbar.select('List View')
-                     if not toolbar.is_active("List View") else None),
-                    ('middleware_deployments', 'Middleware Deployments',
-                     lambda: toolbar.select('List View')
-                     if not toolbar.is_active("List View") else None),
-                    ('middleware_datasources', 'Middleware Datasources',
-                     lambda: toolbar.select('List View')
-                     if not toolbar.is_active("List View") else None),
-                    ('middleware_topology', 'Topology'),
-                ),
-                ('Networks', 'Networks'): (
-                    ('networks_providers', 'Providers'),
-                    ('networks_networks', 'Networks'),
-                    ('networks_subnets', 'Subnets'),
-                    ('networks_routers', 'Network Routers'),
-                    ('networks_security_groups', 'Security Groups'),
-                    ('networks_floating_ips', 'Floating IPs'),
-                    ('networks_ports', 'Network Ports'),
-                    ('networks_topology', 'Topology')
-                ),
-                ('control', 'Control'): (
-                    ('control_explorer', 'Explorer'),
-                    ('control_simulation', 'Simulation'),
-                    ('control_import_export', 'Import / Export'),
-                    ('control_log', 'Log')
-                ),
-                ('automate', 'Automate'): (
-                    ('automate_explorer', 'Explorer'),
-                    ('automate_simulation', 'Simulation'),
-                    ('automate_customization', 'Customization'),
-                    ('automate_import_export', 'Import / Export'),
-                    ('automate_log', 'Log'),
-                    ('automate_requests', 'Requests')
-                ),
-                ('optimize', 'Optimize'): (
-                    ('utilization', 'Utilization'),
-                    ('planning', 'Planning'),
-                    ('bottlenecks', 'Bottlenecks')
-                )
-            }
+        if version.current_version() >= '5.7':
+            del sections[('configure', 'Settings')]
         return sections
 
     def is_page_active(self, toplevel, secondlevel=None, thirdlevel=None):
         """ Checks three levels of menu to return if the menu is active
-
         Usage:
-
           menu.is_page_active('Compute', 'Clouds', 'Providers')
           menu.is_page_active('Compute', 'Clouds')
         """
@@ -559,7 +436,6 @@ class Menu(UINavigate):
     def _nav_to_fn(cls, toplevel, secondlevel=None, thirdlevel=None, reset_action=None,
             _final=False):
         """ Returns a navigation function
-
         This is a helper function that returns another function that knows how to navigate to
         a particular destination. It is used internally in the menu system.
         """
@@ -628,26 +504,17 @@ class Menu(UINavigate):
 
     def reverse_lookup(self, toplevel_path, secondlevel_path=None, thirdlevel_path=None):
         """Reverse lookup for navigation destinations defined in this module, based on menu text
-
         Usage:
-
             # Returns 'clouds'
             reverse_lookup('Clouds')
-
             # Returns 'clouds_providers'
             reverse_lookup('Clouds', 'Providers')
-
             # Returns 'automate_import_export'
             reverse_lookup('Automate', 'Import / Export')
-
         Note:
-
             It may be tempting to use this when you don't know the name of a page, e.g.:
-
                 go_to(reverse_lookup('Infrastructure', 'Providers'))
-
             Don't do that; use the nav tree name.
-
         """
         if thirdlevel_path:
             menu_path = '{}/{}/{}'.format(toplevel_path, secondlevel_path, thirdlevel_path)
@@ -738,9 +605,7 @@ class Menu(UINavigate):
 
     def visible_pages(self):
         """Return a list of all the menu pages currently visible top- and second-level pages
-
         Mainly useful for RBAC testing
-
         """
         if version.current_version() < "5.6.0.1":
             displayed_menus = self._old_visible_pages()
@@ -791,7 +656,6 @@ class Menu(UINavigate):
 #   not pull them from the context. (probably more question on ui_navigate itself)
 def _scavenge_class(cls, ignore_navigate=False):
     """Scavenges locations and nav functions from the class. Recursively goes through so no loops.
-
     Args:
         ignore_navigate: Useful for the initial - root class that has no navigate function.
     """
@@ -832,33 +696,24 @@ def _scavenge_class(cls, ignore_navigate=False):
 
 def extend_nav(cls):
     """A decorator, that when placed on a class will turn it to a nav tree extension.
-
     Takes the original class and "compiles" it into the nav tree in form of lists/dicts that
     :py:mod:`ui_navigate` takes.
-
     The classes in the structure are not instantiated during the scavenge process, they serve as a
     sort of static container of namespaced functions.
-
     Example:
-
     .. code-block:: python
-
        @extend_nav
        class infra_vms(object):   # This will extend the node infra_vms
            class node_a(object):  # with node a
                def navigate(_):   # that can be reached this way from preceeding one
                    pass
-
                def leaf_location(ctx):  # Leaf location, no other child locations
                    pass
-
                class node_x(object):  # Or an another location that can contain locations
                    def navigate(_):
                        pass
-
     Args:
         cls: Class to be decorated.
-
     Note:
         This class currently is incompatible with a multiple menu object system. It relies on
         the ``nav`` attribute of this module. It needs to be fixed before FW3.0.
@@ -867,3 +722,6 @@ def extend_nav(cls):
     return cls
 
 nav = Menu()
+
+
+
