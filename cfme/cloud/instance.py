@@ -171,7 +171,11 @@ class OpenStackInstance(Instance):
     START = "Start"  # START also covers RESUME and UNPAUSE (same as in CFME 5.4+ web UI)
     POWER_ON = START  # For compatibility with the infra objects.
     SUSPEND = "Suspend"
-    TERMINATE = "Terminate"
+    DELETE = "Delete"
+    TERMINATE = deferred_verpick({
+        version.LOWEST: 'Terminate',
+        '5.6.1': 'Delete',
+    })
     # CFME-only power control options
     SOFT_REBOOT = "Soft Reboot"
     HARD_REBOOT = "Hard Reboot"
@@ -187,6 +191,8 @@ class OpenStackInstance(Instance):
     STATE_PAUSED = "paused"
     STATE_SUSPENDED = "suspended"
     STATE_UNKNOWN = "unknown"
+    STATE_ARCHIVED = "archived"
+    STATE_TERMINATED = "terminated"
 
     def create(self, email=None, first_name=None, last_name=None, cloud_network=None,
                instance_type=None, cancel=False, **prov_fill_kwargs):
@@ -275,7 +281,11 @@ class EC2Instance(Instance):
     START = "Start"
     POWER_ON = START  # For compatibility with the infra objects.
     STOP = "Stop"
-    TERMINATE = "Terminate"
+    DELETE = "Delete"
+    TERMINATE = deferred_verpick({
+        version.LOWEST: 'Terminate',
+        '5.6.1': 'Delete',
+    })
     # CFME-only power control options
     SOFT_REBOOT = "Soft Reboot"
     # Provider-only power control options
@@ -286,6 +296,7 @@ class EC2Instance(Instance):
     STATE_OFF = "off"
     STATE_SUSPENDED = "suspended"
     STATE_TERMINATED = "terminated"
+    STATE_ARCHIVED = "archived"
     STATE_UNKNOWN = "unknown"
 
     def create(self, email=None, first_name=None, last_name=None, availability_zone=None,

@@ -10,18 +10,19 @@
 """
 
 from functools import partial
-from navmazing import NavigateToSibling
+
+from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
+from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
-from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
 from utils.appliance import get_or_create_current_appliance, CurrentAppliance
-from utils.appliance.endpoints.ui import navigate, CFMENavigateStep
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
@@ -173,17 +174,16 @@ class Provider(Pretty, CloudInfraProvider):
         return {'name_text': kwargs.get('name')}
 
 
-@navigate.register(Provider, 'All')
+@navigator.register(Provider, 'All')
 class All(CFMENavigateStep):
-    def prerequisite(self):
-        self.navigate_obj.navigate(self.obj.appliance, 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
         nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
 
 
-@navigate.register(Provider, 'Add')
+@navigator.register(Provider, 'Add')
 class New(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -191,7 +191,7 @@ class New(CFMENavigateStep):
         cfg_btn('Add a New Cloud Provider')
 
 
-@navigate.register(Provider)
+@navigator.register(Provider)
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 

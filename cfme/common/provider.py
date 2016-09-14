@@ -1,20 +1,21 @@
-from functools import partial
 import datetime
 import pkgutil
 import importlib
+from functools import partial
 
-from utils import conf
+import cfme
+import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
 )
-import cfme
 from cfme.web_ui import breadcrumbs, summary_title
 from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, Form, Input, Radio
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
-import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
+from utils import conf
+from utils import version
 from utils.api import rest_api
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
@@ -25,7 +26,6 @@ from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
-from utils import version
 
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 

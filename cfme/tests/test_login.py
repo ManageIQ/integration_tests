@@ -37,8 +37,9 @@ def test_login(method):
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
-def test_bad_password():
+def test_bad_password(request):
     """ Tests logging in with a bad password. """
+    request.addfinalizer(login.login_admin)
     pytest.sel.get(pytest.sel.base_url())
     creds = Credential(principal=conf.credentials['default']['username'], secret="badpassword@#$")
     user = User(credential=creds)

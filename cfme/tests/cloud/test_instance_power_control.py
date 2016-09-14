@@ -3,12 +3,10 @@ import fauxfactory
 import cfme.web_ui.flash as flash
 import pytest
 from cfme.cloud.instance import (EC2Instance, Instance, OpenStackInstance,
-                                 AzureInstance, get_all_instances)
-from cfme.fixtures import pytest_selenium as sel
-from utils import error, testgen, version
-from utils.blockers import GH
+                                 AzureInstance)
+from utils import testgen, version
 from utils.log import logger
-from utils.wait import wait_for, TimedOutError
+from utils.wait import wait_for, TimedOutError, RefreshTimer
 
 
 def pytest_generate_tests(metafunc):
@@ -60,6 +58,39 @@ def wait_for_state_change_time_refresh(instance, state_change_time, timeout=300)
         return False
 
 
+def wait_for_termination(provider, instance):
+    """ Waits for VM/instance termination and refreshes power states and relationships
+    """
+    state_change_time = instance.get_detail(('Power Management', 'State Changed On'))
+    provider.refresh_provider_relationships()
+    logger.info("Refreshing provider relationships and power states")
+    refresh_timer = RefreshTimer(time_for_refresh=300)
+    wait_for(provider.is_refreshed,
+             [refresh_timer],
+             message="is_refreshed",
+             num_sec=1000,
+             delay=60,
+             handle_exception=True)
+    wait_for_state_change_time_refresh(instance, state_change_time, timeout=720)
+    if instance.get_detail(('Power Management', 'Power State')) not in \
+            {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
+        """Wait for one more state change as transitional state also
+        changes "State Changed On" time
+        """
+        logger.info("Instance is still powering down. please wait before termination")
+        state_change_time = instance.get_detail(('Power Management', 'State Changed On'))
+        wait_for_state_change_time_refresh(instance, state_change_time, timeout=720)
+    if provider.type == 'openstack' and instance.get_detail(('Power Management', 'Power State'))\
+            in {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
+        return True
+
+    elif provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted']):
+        return True
+    else:
+        logger.info("Instance is still running")
+        return False
+
+
 def check_power_options(soft_assert, instance, power_state):
     """ Checks if power options match given power state ('on', 'off')
     """
@@ -104,11 +135,11 @@ def check_power_options(soft_assert, instance, power_state):
     for pwr_option in must_be_available[instance.__class__][power_state]:
         soft_assert(
             instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
-            "{} must be available in current power state".format(pwr_option))
+            "{} must be available in current power state - {} ".format(pwr_option, power_state))
     for pwr_option in mustnt_be_available[instance.__class__][power_state]:
         soft_assert(
             not instance.is_pwr_option_available_in_cfme(option=pwr_option, from_details=True),
-            "{} must not be available in current power state".format(pwr_option))
+            "{} must not be available in current power state - {} ".format(pwr_option, power_state))
 
 
 @pytest.mark.long_running
@@ -122,14 +153,6 @@ def test_quadicon_terminate_cancel(setup_provider_funcscope, provider, testing_i
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, timeout=720)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE, cancel=True)
-    with error.expected('instance still exists'):
-        # try to find VM, if found, try again - times out with expected message
-        wait_for(
-            lambda: provider.mgmt.does_vm_exist(testing_instance.name),
-            fail_condition=True,
-            num_sec=60,
-            delay=15,
-            message="instance still exists")
     soft_assert('currentstate-on' in testing_instance.find_quadicon().state)
 
 
@@ -144,21 +167,11 @@ def test_quadicon_terminate(setup_provider_funcscope, provider, testing_instance
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, timeout=720)
     testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE, cancel=False)
-    if provider.type == 'azure':
-        # It takes at least 300 for azure to delete it.
-        testing_instance.wait_to_disappear(timeout=720)
-    else:
-        testing_instance.wait_to_disappear(timeout=300)
-    if provider.type == 'openstack':
-        soft_assert(not testing_instance.does_vm_exist_on_provider(), "instance still exists")
-    else:
-        soft_assert(
-            provider.mgmt.is_vm_state(testing_instance.name, provider.mgmt.states['deleted']),
-            "instance still exists")
-    sel.force_navigate("clouds_instances_archived_branch")
-    soft_assert(
-        testing_instance.name in get_all_instances(do_not_navigate=True),
-        "instance is not among archived instances")
+    logger.info("Terminate initiated")
+    flash.assert_message_contain({
+        version.LOWEST: "Terminate initiated",
+        "5.5": "Vm Destroy initiated"})
+    soft_assert(wait_for_termination(provider, testing_instance), "Instance still exists")
 
 
 @pytest.mark.long_running
@@ -198,7 +211,7 @@ def test_start(
     testing_instance.power_control_from_cfme(
         option=testing_instance.START, cancel=False, from_details=True)
     flash.assert_message_contain("Start initiated")
-    logger.info("Start initiated Flash message\n")
+    logger.info("Start initiated Flash message")
     if provider.type == 'azure':
         # Adding this as wait_for_vm_state_change doesn't deal with Azure's multiple state changes
         provider.mgmt.wait_vm_running(testing_instance.name)
@@ -339,17 +352,7 @@ def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_as
     flash.assert_message_contain({
         version.LOWEST: "Terminate initiated",
         "5.5": "Vm Destroy initiated"})
-    testing_instance.wait_to_disappear(timeout=600)
-    if provider.type == 'openstack':
-        soft_assert(not testing_instance.does_vm_exist_on_provider(), "instance still exists")
-    else:
-        soft_assert(
-            provider.mgmt.is_vm_state(testing_instance.name, provider.mgmt.states['deleted']),
-            "instance still exists")
-    sel.force_navigate("clouds_instances_archived_branch")
-    soft_assert(
-        testing_instance.name in get_all_instances(do_not_navigate=True),
-        "instance is not among archived instances")
+    soft_assert(wait_for_termination(provider, testing_instance), "Instance still exists")
 
 
 @pytest.mark.ignore_stream("5.4")
@@ -357,9 +360,6 @@ def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_as
 def test_terminate_via_rest(setup_provider_funcscope, provider, testing_instance, soft_assert,
         verify_vm_running, rest_api, from_detail):
     assert "terminate" in rest_api.collections.instances.action.all
-    if provider.type == 'ec2' and GH("ManageIQ/manageiq:6955").blocks:
-        pytest.skip("Termination ec2 is blocked by""manageiq/issues/6955")
-
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
     vm = rest_api.collections.instances.get(name=testing_instance.name)
@@ -367,16 +367,4 @@ def test_terminate_via_rest(setup_provider_funcscope, provider, testing_instance
         vm.action.terminate()
     else:
         rest_api.collections.instances.action.terminate(vm)
-    if provider.type == 'openstack':
-        testing_instance.wait_to_disappear(timeout=800)
-        soft_assert(not testing_instance.does_vm_exist_on_provider(), "instance still exists")
-    else:
-        wait_for(lambda: vm.power_state == testing_instance.STATE_TERMINATED,
-            num_sec=600, delay=10, fail_func=vm.reload)
-    # Bug https://bugzilla.redhat.com/show_bug.cgi?id=1310067
-    # That's why we skip soft_assert for aws
-    if provider.type != 'ec2':
-        sel.force_navigate("clouds_instances_archived_branch")
-        soft_assert(
-            testing_instance.name in get_all_instances(do_not_navigate=True),
-            "instance is not among archived instances")
+    soft_assert(wait_for_termination(provider, testing_instance), "Instance still exists")

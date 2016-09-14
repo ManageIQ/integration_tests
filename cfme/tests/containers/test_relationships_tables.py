@@ -159,7 +159,7 @@ def test_replicators_rel(provider, rel):
 @pytest.mark.meta(blockers=[1365878])
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
-                          'Image registry',
+                          'Image Registry',
                           'Projects',
                           'Pods',
                           'Containers',

@@ -8,7 +8,6 @@ from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.providers import setup_a_provider as _setup_a_provider
-from utils.version import current_version
 
 pytestmark = [pytest.mark.tier(3)]
 
@@ -26,6 +25,7 @@ grid_pages = [
 
 landing_pages = [
     'Clouds / Providers',
+    'Clouds / Key Pairs',
     'Clouds / Availability Zones',
     'Clouds / Tenants',
     'Clouds / Flavors',
@@ -141,11 +141,7 @@ def test_start_page(request, setup_a_provider, start_page):
     login.logout()
     login.login_admin()
     level = re.split(r"\/", start_page)
-    if current_version() >= 5.6:
-        levels = (None, level[0].strip(), level[1].strip())
-    else:
-        levels = (level[0].strip(), level[1].strip())
-    assert menu.nav.is_page_active(*levels), "Landing Page Failed"
+    assert menu.nav.is_page_active(None, level[0].strip(), level[1].strip()), "Landing Page Failed"
 
 
 def test_cloudprovider_noquads(request, setup_a_provider, set_cloud_provider_quad):

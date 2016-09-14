@@ -546,4 +546,5 @@ class CFMENavigateStep(NavigateStep):
         self.do_nav(_tries)
         self.post_navigate(_tries)
 
-navigate = Navigate()
+navigator = Navigate()
+navigate_to = navigator.navigate

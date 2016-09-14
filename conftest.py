@@ -168,7 +168,6 @@ pytest_plugins = (
     'fixtures.rbac',
     'fixtures.screenshots',
     'fixtures.snmp',
-    'fixtures.soap_client',
     'fixtures.soft_assert',
     'fixtures.ssh_client',
     'fixtures.templateloader',
