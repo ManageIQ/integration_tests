@@ -524,7 +524,7 @@ class IPAppliance(object):
         # (local_path, remote_path, md5/None) trio
         autofocus_patch = pick({
             '5.5': 'autofocus.js.diff',
-            LATEST: 'autofocus_upstream.js.diff'
+            '5.7': 'autofocus_upstream.js.diff'
         })
         patch_args = (
             (str(patches_path.join('miq_application.js.diff')),
