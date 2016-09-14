@@ -16,7 +16,6 @@ from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.wait import wait_for
 
-
 properties_form = Form(
     fields=[
         ('name_text', Input('name')),
@@ -35,13 +34,11 @@ credential_form = Form(
         ('validate_btn', form_buttons.validate)
     ])
 
-
 CfgMgrSplitTable = lambda: SplitTable(
     header_data=("//div[@id='list_grid']/div[@class='xhdr']/table/tbody", 1),
-    body_data=("//div[@id='list_grid']/div[@class='objbox']/table/tbody", 1),)
+    body_data=("//div[@id='list_grid']/div[@class='objbox']/table/tbody", 1), )
 
 CfgMgrTable = lambda: Table("//div[@id='main_div']//div[@id='list_grid']/table")
-
 
 page = Region(locators={
     'list_table_config_profiles': {
@@ -59,69 +56,82 @@ nav.add_branch(
     'infrastructure_config_management',
     {
         'infrastructure_config_managers':
-        [
-            lambda _: (accordion.tree('Providers',
-                version.pick({version.LOWEST: 'All Red Hat Satellite Providers',
-                              '5.6': 'All Configuration Manager Providers'})),
-                tb.select('Grid View')),
-            {
-                'infrastructure_config_manager_new':
-                lambda _: cfg_btn('Add a new Provider'),
-                'infrastructure_config_manager':
-                [
-                    lambda ctx: sel.check(
-                        Quadicon(
-                            '{} Configuration Manager'
-                            .format(ctx['manager'].name), None).checkbox()),
-                    {
-                        'infrastructure_config_manager_edit':
-                        lambda _: cfg_btn('Edit Selected item'),
-                        'infrastructure_config_manager_refresh':
-                        lambda _: cfg_btn('Refresh Relationships and Power states',
-                                  invokes_alert=True),
-                        'infrastructure_config_manager_remove':
-                        lambda _: cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
-                    }
-                ],
-                'infrastructure_config_manager_detail':
-                [
-                    lambda ctx: sel.click(
-                        Quadicon('{} Configuration Manager'.format(ctx['manager'].name), None)),
-                    {
-                        'infrastructure_config_manager_edit_detail':
-                        lambda _: cfg_btn('Edit this Provider'),
-                        'infrastructure_config_manager_refresh_detail':
-                        lambda _: cfg_btn('Refresh Relationships and Power states',
-                                  invokes_alert=True),
-                        'infrastructure_config_manager_remove_detail':
-                        lambda _: cfg_btn('Remove this Provider from the VMDB', invokes_alert=True),
-                        'infrastructure_config_manager_config_profile':
-                        lambda ctx: (tb.select('List View'),
-                               page.list_table_config_profiles.click_cell(
-                            'Description', ctx['profile'].name))
-                    }
-                ]
-            }
-        ],
+            [
+                lambda _: (accordion.tree('Providers',
+                                          version.pick(
+                                              {version.LOWEST: 'All Red Hat Satellite Providers',
+                                               '5.6': 'All Configuration Manager Providers'})),
+                           tb.select('Grid View')),
+                {
+                    'infrastructure_config_manager_new':
+                        lambda _: cfg_btn('Add a new Provider'),
+                    'infrastructure_config_manager':
+                        [
+                            lambda ctx: sel.check(
+                                Quadicon(
+                                    '{} Configuration Manager'
+                                    .format(ctx['manager'].name), None).checkbox()),
+                            {
+                                'infrastructure_config_manager_edit':
+                                    lambda _: cfg_btn('Edit Selected item'),
+                                'infrastructure_config_manager_refresh':
+                                    lambda _: cfg_btn('Refresh Relationships and Power states',
+                                                      invokes_alert=True),
+                                'infrastructure_config_manager_remove':
+                                    lambda _: cfg_btn('Remove selected items from the VMDB',
+                                                      invokes_alert=True)
+                            }
+                        ],
+                    'infrastructure_config_manager_detail':
+                        [
+                            lambda ctx: sel.click(
+                                Quadicon('{} Configuration Manager'.format(ctx['manager'].name),
+                                         None)),
+                            {
+                                'infrastructure_config_manager_edit_detail':
+                                    lambda _: cfg_btn('Edit this Provider'),
+                                'infrastructure_config_manager_refresh_detail':
+                                    lambda _: cfg_btn('Refresh Relationships and Power states',
+                                                      invokes_alert=True),
+                                'infrastructure_config_manager_remove_detail':
+                                    lambda _: cfg_btn('Remove this Provider from the VMDB',
+                                                      invokes_alert=True),
+                                'infrastructure_config_manager_config_profile':
+                                    lambda ctx: (tb.select('List View'),
+                                                 page.list_table_config_profiles.click_cell(
+                                                     'Description', ctx['profile'].name))
+                            }
+                        ]
+                }
+            ],
         'infrastructure_config_systems':
-        [
-            lambda _: accordion.tree('Configured Systems',
-                version.pick({version.LOWEST: 'All Red Hat Satellite Configured Systems',
-                              '5.6': 'All Configured Systems'})),
-            {
-                'infrastructure_config_system':
-                [
-                    lambda ctx: (tb.select('Grid View'),
-                    sel.click(Quadicon(ctx['system'].name, None))),
-                    {
-                        'infrastructure_config_system_provision':
-                        lambda _: cfg_btn('Provision Configured System'),
-                        'infrastructure_config_system_edit_tags':
-                        lambda _: cfg_btn('Edit Tags')
-                    }
-                ]
-            }
-        ]
+            [
+                lambda _: accordion.tree('Configured Systems',
+                    version.pick({
+                        version.LOWEST: 'All Red Hat Satellite Configured Systems',
+                        '5.6': 'All Configured Systems'})),
+                {
+                    'infrastructure_config_system':
+                        [
+                            lambda ctx: (tb.select('Grid View'),
+                                         sel.click(Quadicon(ctx['system'].name, None))),
+                            {
+                                'infrastructure_config_system_provision':
+                                    lambda _: cfg_btn('Provision Configured System'),
+                                'infrastructure_config_system_edit_tags':
+                                    lambda _: cfg_btn('Edit Tags')
+                            }
+                        ]
+                }
+            ],
+        'infrastructure_ansible_job_templates':
+            [
+                lambda _: accordion.tree('Ansible Tower Job Templates',
+                                         'All Ansible Tower Job Templates'),
+                {
+
+                }
+            ]
     }
 )
 
@@ -191,6 +201,7 @@ class ConfigManager(Updateable, Pretty):
             force (bool): Whether to force the creation even if the manager already exists.
                 True will try anyway; False will check for its existence and leave, if present.
         """
+
         def config_profiles_loaded():
             # Workaround - without this, validation of provider failed
             config_profiles_names = [prof.name for prof in self.config_profiles]
@@ -367,18 +378,17 @@ class ConfigProfile(Pretty):
     def navigate(self):
         """Navigates to the profile's detail page"""
         sel.force_navigate('infrastructure_config_manager_config_profile',
-            context={'manager': self.manager, 'profile': self})
+                           context={'manager': self.manager, 'profile': self})
 
     @property
     def systems(self):
         """Returns 'ConfigSystem' objects that are active under this profile"""
         self.navigate()
         # ajax wait doesn't work here
-        _title_loc = version.pick({'5.4':
-                        "//div[contains(@class, 'dhtmlxInfoBarLabel')"
-                        " and contains(normalize-space(text()), 'Configured Systems')]",
-                    '5.5': "//span[contains(@id, 'explorer_title_text')"
-                            " and contains(normalize-space(text()), 'Configured Systems')]"})
+        _title_loc = version.pick({'5.4': "//div[contains(@class, 'dhtmlxInfoBarLabel')"
+            " and contains(normalize-space(text()), 'Configured Systems')]",
+            '5.5': "//span[contains(@id, 'explorer_title_text')"
+            " and contains(normalize-space(text()), 'Configured Systems')]"})
         sel.wait_for_element(_title_loc)
 
         # Unassigned config profile has no tabstrip
@@ -393,7 +403,6 @@ class ConfigProfile(Pretty):
 
 
 class ConfigSystem(Pretty):
-
     pretty_attrs = ['name', 'manager_key']
 
     def __init__(self, name, profile):
@@ -403,7 +412,8 @@ class ConfigSystem(Pretty):
     def navigate(self):
         """Navigates to the system's detail page"""
         sel.force_navigate('infrastructure_config_system',
-            context={'system': self.profile.manager, 'profile': self.profile, 'system': self})
+                           context={'system': self.profile.manager, 'profile': self.profile,
+                                    'system': self})
 
     def tag(self, tag):
         """Tags the system by given tag"""

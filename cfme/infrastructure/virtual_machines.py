@@ -113,7 +113,10 @@ class infrastructure_virtual_machines:
         vms_tree("All VMs", ctx["folder_name"], ctx["filter_name"])
 
     def infra_templates(_):
-        templates_tree("All Templates")
+        if version.current_version() >= '5.7':
+            templates_tree("All VMs")
+        else:
+            templates_tree("All Templates")
         toolbar.select('Grid View')
 
     def infra_templates_filter_folder(ctx):

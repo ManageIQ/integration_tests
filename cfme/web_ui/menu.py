@@ -264,7 +264,7 @@ class Menu(UINavigate):
                     ('middleware_topology', _not_implemented('Middleware topology', '5.6')),
                 )
             }
-        else:
+        elif version.current_version() < '5.7':
             sections = {
                 ('cloud_intelligence', 'Cloud Intel'): (
                     ('dashboard', 'Dashboard'),
@@ -308,28 +308,31 @@ class Menu(UINavigate):
                         ('infrastructure_resource_pools', 'Resource Pools'),
                         ('infrastructure_datastores', 'Datastores',
                             self._tree_func_with_grid("Datastores", "All Datastores")),
-                        ('infrastructure_repositories', 'Repositories'),
+                        # ('infrastructure_repositories', 'Repositories'),
                         ('infrastructure_pxe', 'PXE'),
                         ('infrastructure_requests', 'Requests'),
                         # ('infrastructure_config_management', 'Configuration Management')
                     ),
-                    ('containers', 'Containers'): (
+                    ('containers', 'Containers'): [
                         ('container_dashboard', 'Overview'),
                         ('containers_providers', 'Providers'),
                         ('containers_projects', 'Projects'),
-                        ('containers_nodes', 'Container Nodes'),
-                        ('containers_pods', 'Pods'),
                         ('containers_routes', 'Routes'),
-                        ('containers_replicators', 'Replicators'),
                         ('containers_services', 'Container Services'),
+                        ('containers_replicators', 'Replicators'),
+                        ('containers_pods', 'Pods'),
                         ('containers_containers', 'Containers'),
-                        ('containers_images', 'Container Images'),
+                        ('containers_nodes', 'Container Nodes'),
+                        ('containers_volumes', 'Volumes'),
+                        ('containers_builds', 'Container Builds'),
                         ('containers_image_registries', 'Image Registries'),
-                        ('containers_topology', 'Topology')
-                    ),
+                        ('containers_images', 'Container Images'),
+                        ('containers_topology', 'Topology'),
+                    ],
                 },
                 ('n_configuration', 'Configuration'): (
                     ('infrastructure_config_management', 'Configuration Management'),
+                    ('infrastructure_config_jobs', 'Jobs'),
                 ),
                 ('middleware', 'Middleware'): (
                     ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
@@ -356,7 +359,7 @@ class Menu(UINavigate):
                     ('networks_security_groups', 'Security Groups'),
                     ('networks_floating_ip', 'Floating IP'),
                     ('networks_ports', 'Network Ports'),
-                    ('networks_topology', 'Topology'),
+                    ('networks_topology', 'Topology')
                 ),
                 ('control', 'Control'): (
                     ('control_explorer', 'Explorer'),
@@ -384,8 +387,118 @@ class Menu(UINavigate):
                     ('about', 'About')
                 )
             }
-        if version.current_version() >= '5.7':
-            del sections[('configure', 'Settings')]
+        elif version.current_version() >= '5.7':
+            sections = {
+                ('cloud_intelligence', 'Cloud Intel'): (
+                    ('dashboard', 'Dashboard'),
+                    ('reports', 'Reports'),
+                    ('chargeback', 'Chargeback'),
+                    ('timelines', 'Timelines'),
+                    ('rss', 'RSS')
+                ),
+                ('services', 'Services'): (
+                    ('my_services', 'My Services'),
+                    ('services_catalogs', 'Catalogs'),
+                    ('services_workloads', 'Workloads'),
+                    ('services_requests', 'Requests')
+                ),
+                ('compute', 'Compute'): {
+                    ('clouds', 'Clouds'): (
+                        ('clouds_providers', 'Providers', lambda: toolbar.select('Grid View')),
+                        ('clouds_availability_zones', 'Availability Zones'),
+                        ('clouds_tenants', 'Tenants'),
+                        ('clouds_volumes', 'Volumes'),
+                        ('clouds_flavors', 'Flavors'),
+                        ('clouds_instances', 'Instances',
+                         self._tree_func_with_grid(
+                             "Instances by Provider", "Instances by Provider")),
+                        ('clouds_stacks', 'Stacks'),
+                        ('clouds_key_pairs', 'Key Pairs'),
+                        ('clouds_object_stores', 'Object Stores'),
+                    ),
+                    ('infrastructure', 'Infrastructure'): (
+                        ('infrastructure_providers',
+                         'Providers', lambda: toolbar.select('Grid View')),
+                        ('infrastructure_clusters', "/ems_cluster"),
+                        ('infrastructure_hosts', "/host"),
+                        ('infrastructure_virtual_machines', 'Virtual Machines',
+                         self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
+                        ('infrastructure_resource_pools', 'Resource Pools'),
+                        ('infrastructure_datastores', 'Datastores',
+                         self._tree_func_with_grid("Datastores", "All Datastores")),
+                        # ('infrastructure_repositories', 'Repositories'),
+                        ('infrastructure_pxe', 'PXE'),
+                        ('infrastructure_requests', 'Requests'),
+                        # ('infrastructure_config_management', 'Configuration Management')
+                    ),
+                    ('containers', 'Containers'): [
+                        ('container_dashboard', 'Overview'),
+                        ('containers_providers', 'Providers'),
+                        ('containers_projects', 'Projects'),
+                        ('containers_routes', 'Routes'),
+                        ('containers_services', 'Container Services'),
+                        ('containers_replicators', 'Replicators'),
+                        ('containers_pods', 'Pods'),
+                        ('containers_containers', 'Containers'),
+                        ('containers_nodes', 'Container Nodes'),
+                        ('containers_volumes', 'Volumes'),
+                        ('containers_builds', 'Container Builds'),
+                        ('containers_image_registries', 'Image Registries'),
+                        ('containers_images', 'Container Images'),
+                        ('containers_topology', 'Topology'),
+                    ],
+                },
+                ('n_configuration', 'Configuration'): (
+                    ('infrastructure_config_management', 'Configuration Management'),
+                    ('infrastructure_config_jobs', 'Jobs'),
+                ),
+                ('middleware', 'Middleware'): (
+                    ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
+                    if not toolbar.is_active("Grid View") else None),
+                    ('middleware_domains', 'Middleware Domains',
+                     lambda: toolbar.select('List View')
+                     if not toolbar.is_active("List View") else None),
+                    ('middleware_servers', 'Middleware Servers',
+                     lambda: toolbar.select('List View')
+                     if not toolbar.is_active("List View") else None),
+                    ('middleware_deployments', 'Middleware Deployments',
+                     lambda: toolbar.select('List View')
+                     if not toolbar.is_active("List View") else None),
+                    ('middleware_datasources', 'Middleware Datasources',
+                     lambda: toolbar.select('List View')
+                     if not toolbar.is_active("List View") else None),
+                    ('middleware_topology', 'Topology'),
+                ),
+                ('Networks', 'Networks'): (
+                    ('networks_providers', 'Providers'),
+                    ('networks_networks', 'Networks'),
+                    ('networks_subnets', 'Subnets'),
+                    ('networks_routers', 'Network Routers'),
+                    ('networks_security_groups', 'Security Groups'),
+                    ('networks_floating_ips', 'Floating IPs'),
+                    ('networks_ports', 'Network Ports'),
+                    ('networks_topology', 'Topology')
+                ),
+                ('control', 'Control'): (
+                    ('control_explorer', 'Explorer'),
+                    ('control_simulation', 'Simulation'),
+                    ('control_import_export', 'Import / Export'),
+                    ('control_log', 'Log')
+                ),
+                ('automate', 'Automate'): (
+                    ('automate_explorer', 'Explorer'),
+                    ('automate_simulation', 'Simulation'),
+                    ('automate_customization', 'Customization'),
+                    ('automate_import_export', 'Import / Export'),
+                    ('automate_log', 'Log'),
+                    ('automate_requests', 'Requests')
+                ),
+                ('optimize', 'Optimize'): (
+                    ('utilization', 'Utilization'),
+                    ('planning', 'Planning'),
+                    ('bottlenecks', 'Bottlenecks')
+                )
+            }
         return sections
 
     def is_page_active(self, toplevel, secondlevel=None, thirdlevel=None):
