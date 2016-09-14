@@ -993,30 +993,12 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # browser fixture should do this, but it's needed for subsequent calls
     ensure_browser_open()
 
-    # check for MiqQE javascript patch in 5.6 on first try and patch the appliance if necessary
-    # raise an exception on subsequent unsuccessful attempts to access the MiqQE javascript funcs
-    if store.current_appliance.version >= "5.5.5.0":
-        def _patch_recycle_retry():
-            store.current_appliance.patch_with_miqqe()
-            browser().quit()
-            force_navigate(page_name, _tries, *args, **kwargs)
-        try:
-            # latest js diff version always has to be placed here to keep this check current
-            ver = execute_script("return MiqQE_version")
-            if ver < 2:
-                logger.info("Old patch present on appliance; patching appliance")
-                _patch_recycle_retry()
-        except WebDriverException as ex:
-            if 'is not defined' in str(ex):
-                if _tries == 1:
-                    logger.info("MiqQE javascript not defined; patching appliance")
-                    _patch_recycle_retry()
-                else:
-                    raise exceptions.CFMEException(
-                        "Unable to navigate, patching the appliance's javascript failed: {}".format(
-                            str(ex)))
-            else:
-                raise
+    # check for MiqQE javascript patch on first try and patch the appliance if necessary
+    from utils.appliance import current_miqqe_version
+    if store.current_appliance.miqqe_version != current_miqqe_version:
+        store.current_appliance.patch_with_miqqe()
+        browser().quit()
+        force_navigate(page_name, _tries, *args, **kwargs)
 
     # Clear any running "spinnies"
     try:
