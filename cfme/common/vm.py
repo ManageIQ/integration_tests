@@ -32,8 +32,8 @@ pwr_btn = partial(toolbar.select, "Power")
 retire_remove_button = "//span[@id='remove_button']/a/img|//a/img[contains(@src, '/clear')]"
 
 set_ownership_form = Form(fields=[
-    ('user_name', Select("//select[@id='user_name']")),
-    ('group_name', Select("//select[@id='group_name']")),
+    ('user_name', AngularSelect('user_name')),
+    ('group_name', AngularSelect('group_name')),
     ('create_button', form_buttons.save),
     ('reset_button', form_buttons.reset),
     ('cancel_button', form_buttons.cancel)
