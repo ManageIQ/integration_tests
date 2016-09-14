@@ -255,7 +255,8 @@ class CFMENavigateStep(NavigateStep):
         self.post_navigate(_tries)
 
 
-navigate = Navigate()
+navigator = Navigate()
+navigate_to = navigator.navigate
 
 
 class ViaUI(object):
