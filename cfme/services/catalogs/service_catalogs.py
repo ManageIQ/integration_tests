@@ -22,7 +22,12 @@ stack_form = Form(
         ('db_password', Input("param_DBPassword__protected")),
         ('db_root_password', Input("param_DBRootPassword__protected")),
         ('select_instance_type', Select("//select[@id='param_InstanceType']")),
-        ('stack_name', Input("stack_name"))
+        ('stack_name', Input("stack_name")),
+        ('resource_group', Select("//select[@id='resource_group']")),
+        ('vm_name', Input("param_virtualMachineName")),
+        ('vm_user', Input("param_adminUserName")),
+        ('vm_password', Input("param_adminPassword__protected")),
+        ('vm_size', Select("//select[@id='param_virtualMachineSize']"))
     ])
 
 
