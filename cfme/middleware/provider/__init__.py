@@ -66,7 +66,7 @@ properties_form = Form(
 
 @BaseProvider.add_base_type
 class MiddlewareProvider(BaseProvider):
-    in_version = (version.LATEST, version.LATEST)
+    in_version = ('5.7', version.LATEST)
     type_tclass = "middleware"
     page_name = 'middleware'
     string_name = 'Middleware'
