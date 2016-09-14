@@ -30,7 +30,7 @@ from utils import api, conf, datafile, db, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
-from utils.appliance.endpoints.ui import navigate, CFMENavigateStep
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path
 from utils.version import Version, get_stream, pick, LATEST
@@ -1626,7 +1626,7 @@ class IPAppliance(object):
             ssh_client.run_rake_command("evm:automate:reset")
 
 
-@navigate.register(IPAppliance)
+@navigator.register(IPAppliance)
 class LoggedIn(CFMENavigateStep):
     def step(self):
         from cfme.login import login_admin
@@ -1635,7 +1635,7 @@ class LoggedIn(CFMENavigateStep):
         login_admin()
 
 
-@navigate.register(IPAppliance)
+@navigator.register(IPAppliance)
 class Dashboard(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 

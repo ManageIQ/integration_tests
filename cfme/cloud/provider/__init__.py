@@ -21,7 +21,7 @@ from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, Angular
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
 from utils.appliance import get_or_create_current_appliance, CurrentAppliance
-from utils.appliance.endpoints.ui import navigate, CFMENavigateStep
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
@@ -173,7 +173,7 @@ class Provider(Pretty, CloudInfraProvider):
         return {'name_text': kwargs.get('name')}
 
 
-@navigate.register(Provider, 'All')
+@navigator.register(Provider, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
 
@@ -182,7 +182,7 @@ class All(CFMENavigateStep):
         nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
 
 
-@navigate.register(Provider, 'Add')
+@navigator.register(Provider, 'Add')
 class New(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -190,7 +190,7 @@ class New(CFMENavigateStep):
         cfg_btn('Add a New Cloud Provider')
 
 
-@navigate.register(Provider)
+@navigator.register(Provider)
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
