@@ -347,7 +347,7 @@ nav.add_branch("configuration",
                     lambda _: tabs.select_tab("Collect Logs"),
                     {
                         "cfg_diagnostics_server_collect_settings":
-                        lambda _: tb.select("Edit")
+                        lambda _: tb.select("Edit the Log Depot settings for the selected Server")
                     }
                 ],
 
@@ -694,7 +694,13 @@ class ServerLogDepot(Pretty):
         Returns: If it is Never, returns `None`, otherwise :py:class:`utils.timeutil.parsetime`.
         """
         d = cls.elements.last_log_collection.text
-        return None if d.strip().lower() == "never" else parsetime.from_american_with_utc(d.strip())
+        if d.strip().lower() == "never":
+            return None
+        else:
+            try:
+                return parsetime.from_american_with_utc(d.strip())
+            except ValueError:
+                return parsetime.from_iso_with_utc(d.strip())
 
     @classmethod
     def _collect(cls, selection, wait_minutes=4):
