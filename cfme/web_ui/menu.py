@@ -722,6 +722,3 @@ def extend_nav(cls):
     return cls
 
 nav = Menu()
-
-
-

@@ -313,7 +313,7 @@ def set_default_filter(filter_name):
     sel.click("//a[normalize-space(.)='Set Default']")
 
 
-def check_default_filter(filter_name,location):
+def check_default_filter(filter_name, location):
     logout()
     login_admin()
     sel.force_navigate(location)
