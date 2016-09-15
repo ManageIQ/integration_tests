@@ -1,12 +1,13 @@
 import datetime
 import pkgutil
 import importlib
+import time
 from functools import partial
 
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
-    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
+    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException
 )
 from cfme.web_ui import breadcrumbs, summary_title
 from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, Form, Input, Radio
@@ -714,6 +715,25 @@ def _fill_credential(form, cred, validate=None):
             'candu_secret': cred.secret,
             'candu_verify_secret': cred.verify_secret,
             'validate_btn': validate})
+        if validate:
+            exc = None
+            for _ in range(4):
+                # Work around BZ#1375253. Try up to 5 times (we already did once by now)
+                try:
+                    flash.assert_no_errors()
+                except FlashMessageException as e:
+                    # An error happened, so try again
+                    exc = e
+                    time.sleep(1)  # Give it some rest
+                    fill(cred.form.validate_btn, validate)
+                else:
+                    # Success, no error
+                    break
+            else:
+                # Just make it explode with the original exception.
+                # ``exc`` must have some contents by now since at least one except had to happen.
+                raise exc
+
     elif cred.type == 'azure':
         fill(cred.form, {'default_username': cred.principal,
                          'default_password': cred.secret,
@@ -740,7 +760,7 @@ def _fill_credential(form, cred, validate=None):
             'default_secret': cred.secret,
             'default_verify_secret': cred.verify_secret,
             'validate_btn': validate})
-    if validate:
+    if validate and cred.type != 'candu':  # because we already validated it for the specific case
         flash.assert_no_errors()
 
 
