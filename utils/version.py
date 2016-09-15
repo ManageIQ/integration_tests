@@ -175,6 +175,8 @@ class Version(object):
             vstring = str(vstring).strip()
         if vstring in ('master', 'latest', 'upstream'):
             vstring = 'master'
+        if vstring == 'darga-3':
+            vstring = '5.6.1'
 
         components = filter(lambda x: x and x != '.',
                             self.component_re.findall(vstring))
