@@ -183,14 +183,15 @@ def prepare_stack_data(provider, provisioning):
     if provider.type == "azure":
         vm_name = "test" + fauxfactory.gen_alphanumeric()
         vm_user, vm_password, vm_size, resource_group,\
-            user_image, os_type = map(provisioning.get,
+            user_image, os_type, mode = map(provisioning.get,
          ('vm_user', 'vm_password', 'vm_size', 'resource_group',
-        'user_image', 'os_type'))
+        'user_image', 'os_type', 'mode'))
 
         stack_data = {
             'stack_name': stackname,
             'vm_name': vm_name,
             'resource_group': resource_group,
+            'mode': mode,
             'vm_user': vm_user,
             'vm_password': vm_password,
             'vm_size': vm_size

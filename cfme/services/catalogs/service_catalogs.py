@@ -24,6 +24,7 @@ stack_form = Form(
         ('select_instance_type', Select("//select[@id='param_InstanceType']")),
         ('stack_name', Input("stack_name")),
         ('resource_group', Select("//select[@id='resource_group']")),
+        ('mode', Select("//select[@id='deploy_mode']")),
         ('vm_name', Input("param_virtualMachineName")),
         ('vm_user', Input("param_adminUserName")),
         ('vm_password', Input("param_adminPassword__protected")),
