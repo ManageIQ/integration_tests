@@ -25,27 +25,13 @@ class CFMENavigateStep(NavigateStep):
 
         ensure_browser_open()
 
-        def _patch_recycle_retry():
+        # check for MiqQE javascript patch on first try and patch the appliance if necessary
+        from utils.appliance import current_miqqe_version
+        if store.current_appliance.miqqe_version != current_miqqe_version:
             store.current_appliance.patch_with_miqqe()
             browser().quit()
             self.go(_tries)
-        try:
-            # latest js diff version always has to be placed here to keep this check current
-            ver = execute_script("return MiqQE_version")
-            if ver < 2:
-                logger.info("Old patch present on appliance; patching appliance")
-                _patch_recycle_retry()
-        except WebDriverException as ex:
-            if 'is not defined' in str(ex):
-                if _tries == 1:
-                    logger.info("MiqQE javascript not defined; patching appliance")
-                    _patch_recycle_retry()
-                else:
-                    raise exceptions.CFMEException(
-                        "Unable to navigate, patching the appliance's javascript failed: {}".format(
-                            str(ex)))
-            else:
-                raise
+
         try:
             execute_script('miqSparkleOff();')
         except:  # Diaper OK (mfalesni)
