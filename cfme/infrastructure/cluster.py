@@ -4,14 +4,16 @@
 :var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
            Cluster pages.
 """
-from cfme.web_ui.menu import nav
+from functools import partial
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, flash
-from functools import partial
+from cfme.web_ui.menu import nav
+from utils.api import rest_api
+from utils.appliance.endpoints.ui import navigate_to
 from utils.pretty import Pretty
 from utils.providers import get_crud, get_provider_key
 from utils.wait import wait_for
-from utils.api import rest_api
 
 details_page = Region(infoblock_type='detail')
 
@@ -20,7 +22,7 @@ pol_btn = partial(tb.select, 'Policy')
 
 
 def nav_to_cluster_through_provider(context):
-    sel.force_navigate('infrastructure_provider', context=context)
+    navigate_to(context['provider'], 'All')
     list_acc.select('Relationships', 'Clusters', by_title=False, partial=True)
     sel.click(Quadicon(context['cluster'].name, 'cluster'))
 
