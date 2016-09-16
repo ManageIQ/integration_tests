@@ -94,6 +94,16 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
             self.summary.reload()
         return self.summary.relationships.middleware_domains.value
 
+    @variable(alias='db')
+    def num_messaging(self):
+        return self._num_db_generic('middleware_messagings')
+
+    @num_messaging.variant('ui')
+    def num_messaging_ui(self, reload_data=True):
+        if reload_data:
+            self.summary.reload()
+        return self.summary.relationships.middleware_messagings.value
+
     @variable(alias='ui')
     def is_refreshed(self, reload_data=True):
         if reload_data:
