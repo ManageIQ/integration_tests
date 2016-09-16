@@ -227,17 +227,20 @@ class CFMENavigateStep(NavigateStep):
         _tries += 1
         self.pre_navigate(_tries)
         logger.debug("NAVIGATE: Checking if already at {}".format(self._name))
+        here = False
         try:
-            if self.am_i_here():
-                logger.debug("NAVIGATE: Already at {}".format(self._name))
-                return
+            here = self.am_i_here()
         except Exception as e:
             logger.debug("NAVIGATE: Exception raised [{}] whilst checking if already at {}".format(
                 e, self._name))
-        logger.debug("NAVIGATE: I'm not at {}".format(self._name))
-        self.prerequisite()
-        logger.debug("NAVIGATE: Heading to destination {}".format(self._name))
-        self.do_nav(_tries)
+        if here:
+            logger.debug("NAVIGATE: Already at {}".format(self._name))
+        else:
+            logger.debug("NAVIGATE: I'm not at {}".format(self._name))
+            self.prerequisite()
+            logger.debug("NAVIGATE: Heading to destination {}".format(self._name))
+            self.do_nav(_tries)
+        self.resetter()
         self.post_navigate(_tries)
 
 
