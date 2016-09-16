@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from copy import deepcopy
+from copy import copy
 
 from cfme.web_ui import fill
 
@@ -46,7 +46,7 @@ def update(o, **kwargs):
     """
     Update an object and then sync it with an external application.
 
-    It will deepcopy the object into whatever is named in the 'as'
+    It will copy the object into whatever is named in the 'as'
     clause, run the 'with' code block (which presumably alters the
     object).  Then the update() method on the original object will be
     called with a dict containing only changed fields, and kwargs
@@ -59,16 +59,16 @@ def update(o, **kwargs):
 
         with update(myrecord):
            myrecord.lastname = 'Smith'
-           myrecord.address.zipcode = '27707'
 
     """
-    cp = deepcopy(o)
+    cp = copy(o)
 
     # let the block presumably mutate o
-    yield
-
-    # swap the states of o and cp so that cp is the updated one
-    o.__dict__, cp.__dict__ = cp.__dict__, o.__dict__
+    try:
+        yield
+    finally:
+        # swap the states of o and cp so that cp is the updated one
+        o.__dict__, cp.__dict__ = cp.__dict__, o.__dict__
 
     o_updates = updates(o, cp)
     if o_updates:
