@@ -1,28 +1,34 @@
-from store import current_appliance
+from fixtures.pytest_store import store
+from utils import version
+from utils.appliance import provision_appliance
+import pytest
 
 
 def test_set_hostname(request):
-    current_appliance.ap_cli.set_hostname()
-    return_code, output = current_appliance.ssh.run_command(
+    store.current_appliance.ap_cli.set_hostname('test.example.com')
+    return_code, output = store.current_appliance.ssh_client.run_command(
         "cat /etc/hosts | grep test.example.com")
     assert return_code == 0
 
 
-def test_configure_appliance(request):
-    current_appliance.ap_cli.configure_appliance(region, internal, dbhostname, username,
-        password, dbname, key, fetch_key, sshlogin, sshpass)
-    return_code, output = (current_appliance.ssh.run_command(
-        "systemctl status evmserverd | grep running"))
-    assert return_code == 0
+@pytest.yield_fixture
+def provisioned_appliance():
+    ver_to_prov = str(version.current_version())
+    app = provision_appliance(version=ver_to_prov)
 
-# do I still need two tests for configuring appliance now
-# or one with all the options for setting up both?
+    yield app
 
-# def test_configure_appliance_fetch_key(request):
-#    current_appliance.ap_cli.configure_appliance_fetch_key(ip="")
-#    return_code, output = (current_appliance.ssh.run_command
-# ("systemctl status evmserverd | grep running"))
-#    assert return_code == 0
+    app.destroy()
+
+# Work in progress trying to simplify strings
+
+
+def test_configure_appliance_internal_fetch_key(request, provisioned_appliance):
+    app = provisioned_appliance
+    app.ap_cli.configure_appliance_fetch_key(db_configuration)
+    db_configuration = ('-r 0 -i -h localhost -U {} -p {} -d {} -k {} -v -K {} -s {} -a {}')
+    assert app.is_evm_service_running()
+    assert app.is_web_ui_running()
 
 
 def test_configure_ipa(request):

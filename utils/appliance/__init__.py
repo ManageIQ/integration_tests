@@ -67,19 +67,11 @@ class ApplianceConsoleCli(object):
     def run(self, ap_cli_command):
         return self.ssh.run_command("appliance_console_cli {}".format(ap_cli_command))
 
-    def set_hostname(self, hostname):  # set appliance hostname
+    def set_hostname(self, hostname):
         self.run("-H {}".format(hostname))
 
-    def configure_appliance(self, sshlogin, sshpass, password, region=0, internal=True,
-            dbhostname='localhost', username='admin', dbname='vmdb_production', key=True,
-            fetch_key=False):
-        self.run("-r {} -i {} -h {} -U {} -p {} -d {} -k {} -v -K {} -s {} -a {} ".format(
-            region, internal, dbhostname, username, password, dbname, key, fetch_key, sshlogin,
-            sshpass))
-
-    # if fetch key = false ignore sshlogin, sshpass?
-    # internal=true.. how do I get that to relate back to -i (internal=-i {})? also if
-    # internal=true dbhostname will always be localhost (remove option?)
+    def configure_appliance_fetch_key(self, db_configure):
+        self.run("{}".format(db_configure)
 
     def configure_ipa(self, hostname, domain, realm, username, password):
         self.run("-e {} -o {} -l {} -n {} -w {}".format(
