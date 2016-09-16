@@ -334,16 +334,16 @@ class Menu(UINavigate):
                 ('middleware', 'Middleware'): (
                     ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
                         if not toolbar.is_active("Grid View") else None),
-                    ('middleware_domains', 'Middleware Domains',
+                    ('middleware_domains', 'Middleware',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
-                    ('middleware_servers', 'Middleware Servers',
+                    ('middleware_servers', 'Middleware',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
-                    ('middleware_deployments', 'Middleware Deployments',
+                    ('middleware_deployments', 'Middleware',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
-                    ('middleware_datasources', 'Middleware Datasources',
+                    ('middleware_datasources', 'Middleware',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
                     ('middleware_topology', 'Topology'),
