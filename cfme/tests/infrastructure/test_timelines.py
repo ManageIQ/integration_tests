@@ -11,6 +11,7 @@ from utils import testgen
 from utils import version
 from utils.log import logger
 from utils.wait import wait_for
+from selenium.common.exceptions import NoSuchElementException
 
 
 pytestmark = [pytest.mark.tier(2)]
@@ -52,6 +53,7 @@ def test_vm(request, provider, vm_name, setup_provider_modscope):
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+        vm.refresh_relationships()
     return vm
 
 
@@ -63,15 +65,19 @@ def gen_events(delete_fx_provider_event, provider, test_vm):
     mgmt.start_vm(test_vm.name)
 
 
-def count_events(vm_name, nav_step):
+def count_events(vm, nav_step):
     try:
         nav_step()
     except ToolbarOptionGreyedOrUnavailable:
         return 0
+    except NoSuchElementException:
+        vm.rediscover()
+        return 0
+
     events = []
     for event in jstimelines.events():
         data = event.block_info()
-        if vm_name in data.values():
+        if vm.name in data.values():
             events.append(event)
             if len(events) > 0:
                 return len(events)
@@ -90,7 +96,7 @@ def test_provider_event(provider, gen_events, test_vm):
         pytest.sel.force_navigate('infrastructure_provider',
                                   context={'provider': provider})
         toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
+    wait_for(count_events, [test_vm, nav_step], timeout='5m', fail_condition=0,
              message="events to appear")
 
 
@@ -106,7 +112,8 @@ def test_host_event(provider, gen_events, test_vm):
         test_vm.load_details()
         pytest.sel.click(InfoBlock.element('Relationships', 'Host'))
         toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
+
+    wait_for(count_events, [test_vm, nav_step], timeout='10m', fail_condition=0,
              message="events to appear")
 
 
@@ -121,7 +128,8 @@ def test_vm_event(provider, gen_events, test_vm):
     def nav_step():
         test_vm.load_details()
         toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
+
+    wait_for(count_events, [test_vm, nav_step], timeout='3m', fail_condition=0,
              message="events to appear")
 
 
@@ -134,11 +142,12 @@ def test_cluster_event(provider, gen_events, test_vm):
         test_flag: timelines, provision
     """
     def nav_step():
-        test_vm.load_details()
-        pytest.sel.click(InfoBlock.element('Relationships', 'Cluster'))
+        cluster = [cl for cl in provider.get_clusters() if cl.cluster_id == test_vm.cluster_id][-1]
+        pytest.sel.force_navigate('infrastructure_cluster',
+                                  context={'cluster': cluster})
         toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
-             message="events to appear")
+    wait_for(count_events, [test_vm, nav_step], timeout='5m',
+             fail_condition=0, message="events to appear")
 
 
 class TestVmEventRESTAPI(object):
