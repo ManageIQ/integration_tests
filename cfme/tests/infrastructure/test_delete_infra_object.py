@@ -39,7 +39,7 @@ def test_delete_cluster(setup_provider, provider, remove_test):
         test_flag: delete_object
     """
     cluster_name = remove_test['cluster']
-    test_cluster = cluster.Cluster(name=cluster_name)
+    test_cluster = cluster.Cluster(name=cluster_name, provider=provider)
     test_cluster.delete(cancel=False)
     test_cluster.wait_for_delete()
     provider.refresh_provider_relationships()

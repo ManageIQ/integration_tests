@@ -6,14 +6,13 @@
 """
 from functools import partial
 
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, flash
 from cfme.web_ui.menu import nav
-from utils.api import rest_api
+from cfme.fixtures import pytest_selenium as sel
 from utils.appliance.endpoints.ui import navigate_to
+from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, flash
 from utils.pretty import Pretty
-from utils.providers import get_crud, get_provider_key
 from utils.wait import wait_for
+from utils.api import rest_api
 
 details_page = Region(infoblock_type='detail')
 
@@ -24,7 +23,7 @@ pol_btn = partial(tb.select, 'Policy')
 def nav_to_cluster_through_provider(context):
     # TODO: replace this navigation via navmazing and a CFMENavigateStep destination
     navigate_to(context['provider'], 'Details')
-    list_acc.select('Relationships', 'Clusters', by_title=False, partial=True)
+    list_acc.select('Relationships', 'Show all managed Clusters', by_title=True, partial=False)
     sel.click(Quadicon(context['cluster'].name, 'cluster'))
 
 
@@ -48,23 +47,16 @@ class Cluster(Pretty):
         If given a provider_key, it will navigate through ``Infrastructure/Providers`` instead
         of the direct path through ``Infrastructure/Clusters``.
     """
-    pretty_attrs = ['name', 'provider_key']
+    pretty_attrs = ['name', 'provider']
 
-    def __init__(self, name=None, provider_key=None):
+    def __init__(self, name, provider):
         self.name = name
         self._short_name = self.name.split('in')[0].strip()
+        self.provider = provider
 
         col = rest_api().collections
-        cluster = [cl for cl in col.clusters.all if cl.name == self._short_name][-1]
-        self._cluster_id = cluster.id
-        provider_id = cluster.ems_id
-
-        #  fixme: to remove this part when provider_key becomes mandatory field
-        if not provider_key:
-            provider_name = [pr.name for pr in col.providers.all if pr.id == provider_id][-1]
-            provider_key = get_provider_key(provider_name)
-
-        self.provider = get_crud(provider_key)
+        self._id = [cl.id for cl in col.clusters.all if cl.name == self._short_name
+                    and cl.ems_id == self.provider.id][-1]
 
     def _get_context(self):
         context = {'cluster': self}
@@ -84,12 +76,10 @@ class Cluster(Pretty):
         sel.handle_alert(cancel=cancel)
 
     def wait_for_delete(self):
-        sel.force_navigate('infrastructure_clusters')
         wait_for(lambda: not self.exists, fail_condition=False,
                  message="Wait cluster to disappear", num_sec=500, fail_func=sel.refresh)
 
     def wait_for_appear(self):
-        sel.force_navigate('infrastructure_clusters')
         wait_for(lambda: self.exists, fail_condition=False,
                  message="Wait cluster to appear", num_sec=1000, fail_func=sel.refresh)
 
@@ -124,9 +114,9 @@ class Cluster(Pretty):
             return False
 
     @property
-    def cluster_id(self):
+    def id(self):
         """extracts cluster id for this cluster"""
-        return self._cluster_id
+        return self._id
 
     @property
     def short_name(self):
@@ -138,13 +128,3 @@ class Cluster(Pretty):
         tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
         sel.handle_alert(cancel=False)
         flash.assert_message_contain('Cluster / Deployment Role: scan successfully initiated')
-
-
-def get_all_clusters():
-    """Returns list of all clusters"""
-
-    sel.force_navigate('infrastructure_clusters')
-    clusters = []
-    for cluster in Quadicon.all(this_page=True):
-        clusters.append(Cluster(cluster.name))
-    return clusters

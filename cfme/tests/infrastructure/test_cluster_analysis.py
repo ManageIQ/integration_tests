@@ -35,7 +35,7 @@ def test_run_cluster_analysis(request, setup_provider, provider, remove_test, so
         test_flag: cluster_analysis
     """
     cluster_name = remove_test['cluster']
-    test_cluster = cluster.Cluster(name=cluster_name)
+    test_cluster = cluster.Cluster(name=cluster_name, provider=provider)
     wait_for(lambda: test_cluster.exists, delay=10, num_sec=120, fail_func=sel.refresh)
 
     # Initiate analysis
