@@ -8,11 +8,13 @@ from cfme.exceptions import CandidateNotFound
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.accordion as acc
 import cfme.web_ui.flash as flash
-from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table, form_buttons, Input
 from cfme.web_ui import paginator as pg
+from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
+from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 import utils.conf as conf
 from utils.datafile import load_data_file
 from utils.log import logger
@@ -93,36 +95,6 @@ image_tree = partial(acc.tree, "System Image Types", "All System Image Types")
 iso_tree = partial(acc.tree, "ISO Datastores", "All ISO Datastores")
 
 
-nav.add_branch('infrastructure_pxe',
-               {'infrastructure_pxe_servers': [lambda _: pxe_tree(),
-                {'infrastructure_pxe_server_new': lambda _: cfg_btn('Add a New PXE Server'),
-                 'infrastructure_pxe_server': [lambda ctx: pxe_tree(ctx.pxe_server.name),
-                                               {'infrastructure_pxe_server_edit':
-                                                lambda _: cfg_btn('Edit this PXE Server')}]}],
-
-                'infrastructure_pxe_templates': [lambda _: template_tree(),
-                {'infrastructure_pxe_template_new':
-                 lambda _: cfg_btn('Add a New Customization Template'),
-                 'infrastructure_pxe_template':
-                 [lambda ctx: template_tree(ctx.pxe_template.image_type, ctx.pxe_template.name),
-                  {'infrastructure_pxe_template_edit':
-                   lambda _: cfg_btn('Edit this Customization Template')}]}],
-
-                'infrastructure_pxe_image_types': [lambda _: image_tree(),
-                {'infrastructure_pxe_image_type_new':
-                 lambda _: cfg_btn('Add a new System Image Type'),
-                 'infrastructure_pxe_image_type':
-                 [lambda ctx: image_table.click_cell('name', ctx.pxe_image_type.name),
-                  {'infrastructure_pxe_image_type_edit':
-                   lambda _: cfg_btn('Edit this System Image Type')}]}],
-
-                'infrastructure_iso_datastores': [lambda _: iso_tree(),
-                {'infrastructure_iso_datastore_new':
-                 lambda _: cfg_btn('Add a New ISO Datastore'),
-                 'infrastructure_iso_datastore':
-                 lambda ctx: iso_tree(ctx.pxe_iso_datastore.provider)}]})
-
-
 class PXEServer(Updateable, Pretty):
     """Model of a PXE Server object in CFME
 
@@ -138,11 +110,13 @@ class PXEServer(Updateable, Pretty):
         customize_dir: Customization directory for templates.
         menu_filename: Menu filename for iPXE/syslinux menu.
     """
+    appliance = CurrentAppliance()
     pretty_attrs = ['name', 'uri', 'access_url']
 
     def __init__(self, name=None, depot_type=None, uri=None, userid=None, password=None,
                  access_url=None, pxe_dir=None, windows_dir=None, customize_dir=None,
-                 menu_filename=None):
+                 menu_filename=None, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
         self.name = name
         self.depot_type = depot_type
         self.uri = uri
@@ -184,7 +158,7 @@ class PXEServer(Updateable, Pretty):
             refresh (boolean): Whether to run the refresh operation on the PXE server after
                 the add has been completed.
         """
-        sel.force_navigate('infrastructure_pxe_server_new')
+        navigate_to(self, 'Add')
         fill(pxe_properties_form, self._form_mapping(True, **self.__dict__))
         self._submit(cancel, form_buttons.add)
         if not cancel:
@@ -208,7 +182,7 @@ class PXEServer(Updateable, Pretty):
         """
         Checks if the PXE server already exists
         """
-        sel.force_navigate('infrastructure_pxe_servers')
+        navigate_to(self, 'All')
         try:
             pxe_tree(self.name)
             return True
@@ -227,7 +201,7 @@ class PXEServer(Updateable, Pretty):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        sel.force_navigate('infrastructure_pxe_server_edit', context={"pxe_server": self})
+        navigate_to(self, 'Edit')
         fill(pxe_properties_form, self._form_mapping(**updates))
         self._submit(cancel, form_buttons.save)
         name = updates.get('name') or self.name
@@ -245,7 +219,7 @@ class PXEServer(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('infrastructure_pxe_server', context={"pxe_server": self})
+        navigate_to(self, 'Details')
         cfg_btn('Remove this PXE Server from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         if not cancel:
@@ -254,7 +228,7 @@ class PXEServer(Updateable, Pretty):
     def refresh(self, wait=True, timeout=120):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
-        sel.force_navigate('infrastructure_pxe_server', context={"pxe_server": self})
+        navigate_to(self, 'Details')
         ref_time = lambda: pxe_details_page.last_refreshed.text
         last_time = ref_time()
         cfg_btn('Refresh Relationships', invokes_alert=True)
@@ -283,7 +257,7 @@ class PXEServer(Updateable, Pretty):
 
     @get_pxe_image_type.variant('ui')
     def get_pxe_image_type_ui(self, image_name):
-        sel.force_navigate('infrastructure_pxe_servers')
+        navigate_to(self, 'All')
         pxe_tree(self.name, 'PXE Images', image_name)
         return pxe_details_page.pxe_image_type.text
 
@@ -292,10 +266,44 @@ class PXEServer(Updateable, Pretty):
         Function to set the image type of a PXE image
         """
         if self.get_pxe_image_type(image_name) != image_type:
-            sel.force_navigate('infrastructure_pxe_servers')
+            navigate_to(self, 'All')
             pxe_tree(self.name, 'PXE Images', image_name)
             cfg_btn('Edit this PXE Image')
             fill(pxe_image_type_form, {'image_type': image_type}, action=form_buttons.save)
+
+
+@navigator.register(PXEServer, 'All')
+class PXEServerAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Infrastructure', 'PXE')(None)
+        acc.tree("PXE Servers", "All PXE Servers")
+
+
+@navigator.register(PXEServer, 'Add')
+class PXEServerAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New PXE Server')
+
+
+@navigator.register(PXEServer, 'Details')
+class PXEServerDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        acc.tree("PXE Servers", "All PXE Servers", self.obj.name)
+
+
+@navigator.register(PXEServer, 'Edit')
+class PXEServerEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this PXE Server')
 
 
 class CustomizationTemplate(Updateable, Pretty):
@@ -308,10 +316,12 @@ class CustomizationTemplate(Updateable, Pretty):
         script_type: Script type, either Kickstart, Cloudinit or Sysprep.
         script_data: The scripts data.
     """
+    appliance = CurrentAppliance()
     pretty_attrs = ['name', 'image_type']
 
     def __init__(self, name=None, description=None, image_type=None, script_type=None,
-                 script_data=None):
+                 script_data=None, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
         self.name = name
         self.description = description
         self.image_type = image_type
@@ -341,7 +351,7 @@ class CustomizationTemplate(Updateable, Pretty):
             cancel (boolean): Whether to cancel out of the creation.  The cancel is done
                 after all the information present in the CT has been filled in the UI.
         """
-        sel.force_navigate('infrastructure_pxe_template_new')
+        navigate_to(self, 'Add')
         fill(template_properties_form, self._form_mapping(True, **self.__dict__))
         self._submit(cancel, form_buttons.add)
         if not cancel:
@@ -364,7 +374,7 @@ class CustomizationTemplate(Updateable, Pretty):
         """
         Checks if the Customization template already exists
         """
-        sel.force_navigate('infrastructure_pxe_templates')
+        navigate_to(self, 'All')
         try:
             template_tree(self.image_type, self.name)
             return True
@@ -383,7 +393,7 @@ class CustomizationTemplate(Updateable, Pretty):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        sel.force_navigate('infrastructure_pxe_template_edit', context={"pxe_template": self})
+        navigate_to(self, 'Edit')
         fill(template_properties_form, self._form_mapping(**updates))
         self._submit(cancel, form_buttons.save)
         name = updates.get('name') or self.name
@@ -401,11 +411,47 @@ class CustomizationTemplate(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('infrastructure_pxe_template', context={"pxe_template": self})
+        navigate_to(self, 'Details')
         cfg_btn('Remove this Customization Template from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match(
             'Customization Template "{}": Delete successful'.format(self.description))
+
+
+@navigator.register(CustomizationTemplate, 'All')
+class CustomizationTemplateAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Infrastructure', 'PXE')(None)
+        acc.tree("Customization Templates",
+            "All Customization Templates - System Image Types")
+
+
+@navigator.register(CustomizationTemplate, 'Add')
+class CustomizationTemplateAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New Customization Template')
+
+
+@navigator.register(CustomizationTemplate, 'Details')
+class CustomizationTemplateDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        acc.tree("Customization Templates", "All Customization Templates - System Image Types",
+            self.obj.image_type, self.obj.name)
+
+
+@navigator.register(CustomizationTemplate, 'Edit')
+class CustomizationTemplateEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Customization Template')
 
 
 class SystemImageType(Updateable, Pretty):
@@ -415,9 +461,11 @@ class SystemImageType(Updateable, Pretty):
         name: The name of the System Image Type.
         provision_type: The provision type, either Vm or Host.
     """
+    appliance = CurrentAppliance()
     pretty_attrs = ['name', 'provision_type']
 
-    def __init__(self, name=None, provision_type=None):
+    def __init__(self, name=None, provision_type=None, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
         self.name = name
         self.provision_type = provision_type
 
@@ -441,7 +489,7 @@ class SystemImageType(Updateable, Pretty):
             cancel (boolean): Whether to cancel out of the creation.  The cancel is done
                 after all the information present in the SIT has been filled in the UI.
         """
-        sel.force_navigate('infrastructure_pxe_image_type_new')
+        navigate_to(self, 'Add')
         fill(image_properties_form, self._form_mapping(True, **self.__dict__))
         self._submit(cancel, form_buttons.add)
         if not cancel:
@@ -460,7 +508,7 @@ class SystemImageType(Updateable, Pretty):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        sel.force_navigate('infrastructure_pxe_image_type_edit', context={"pxe_image_type": self})
+        navigate_to(self, 'Edit')
         fill(image_properties_form, self._form_mapping(**updates))
         self._submit(cancel, form_buttons.save)
         # No flash message
@@ -473,10 +521,44 @@ class SystemImageType(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('infrastructure_pxe_image_type', context={"pxe_image_type": self})
+        navigate_to(self, 'Details')
         cfg_btn('Remove this System Image Type from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match('System Image Type "{}": Delete successful'.format(self.name))
+
+
+@navigator.register(SystemImageType, 'All')
+class SystemImageTypeAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Infrastructure', 'PXE')(None)
+        acc.tree("System Image Types", "All System Image Types")
+
+
+@navigator.register(SystemImageType, 'Add')
+class SystemImageTypeAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a new System Image Type')
+
+
+@navigator.register(SystemImageType, 'Details')
+class SystemImageTypeDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        image_table.click_cell('name', self.obj.pxe_image_type.name)
+
+
+@navigator.register(SystemImageType, 'Edit')
+class SystemImageTypeEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this System Image Type')
 
 
 class ISODatastore(Updateable, Pretty):
@@ -485,9 +567,11 @@ class ISODatastore(Updateable, Pretty):
     Args:
         provider: Provider name.
     """
+    appliance = CurrentAppliance()
     pretty_attrs = ['provider']
 
-    def __init__(self, provider=None):
+    def __init__(self, provider=None, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
         self.provider = provider
 
     def _form_mapping(self, create=None, **kwargs):
@@ -511,7 +595,7 @@ class ISODatastore(Updateable, Pretty):
             refresh (boolean): Whether to run the refresh operation on the ISO datastore after
                 the add has been completed.
         """
-        sel.force_navigate('infrastructure_iso_datastore_new')
+        navigate_to(self, 'Add')
         fill(iso_properties_form, self._form_mapping(True, **self.__dict__))
         self._submit(cancel, form_buttons.add)
         flash.assert_message_match('ISO Datastore "{}" was added'.format(self.provider))
@@ -539,7 +623,7 @@ class ISODatastore(Updateable, Pretty):
         """
         Checks if the ISO Datastore already exists via UI
         """
-        sel.force_navigate('infrastructure_iso_datastores')
+        navigate_to(self, 'All')
         try:
             iso_tree(self.provider)
             return True
@@ -554,7 +638,7 @@ class ISODatastore(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('infrastructure_iso_datastore', context={"pxe_iso_datastore": self})
+        navigate_to(self, 'Details')
         cfg_btn('Remove this ISO Datastore from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match('ISO Datastore "{}": Delete successful'.format(self.provider))
@@ -562,7 +646,7 @@ class ISODatastore(Updateable, Pretty):
     def refresh(self, wait=True, timeout=120):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
-        sel.force_navigate('infrastructure_iso_datastore', context={"pxe_iso_datastore": self})
+        navigate_to(self, 'Details')
         ref_time = lambda: pxe_details_page.last_refreshed.text
         last_time = ref_time()
         cfg_btn('Refresh Relationships', invokes_alert=True)
@@ -579,7 +663,7 @@ class ISODatastore(Updateable, Pretty):
         """
         Function to set the image type of a PXE image
         """
-        sel.force_navigate('infrastructure_iso_datastores')
+        navigate_to(self, 'All')
         iso_tree(self.provider, 'ISO Images', image_name)
         cfg_btn('Edit this ISO Image')
         fill(iso_image_type_form, {'image_type': image_type})
@@ -588,6 +672,33 @@ class ISODatastore(Updateable, Pretty):
             sel.click(form_buttons.save)
         except:
             sel.click(form_buttons.cancel)
+
+
+@navigator.register(ISODatastore, 'All')
+class ISODatastoreAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Infrastructure', 'PXE')(None)
+        acc.tree("ISO Datastores", "All ISO Datastores")
+
+
+@navigator.register(ISODatastore, 'Add')
+class ISODatastoreAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New ISO Datastore')
+
+
+@navigator.register(ISODatastore, 'Details')
+class ISODatastoreDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        acc.tree("ISO Datastores", "All ISO Datastores", self.obj.provider)
+        image_table.click_cell('name', self.obj.pxe_image_type.name)
 
 
 def get_template_from_config(template_config_name):
@@ -633,8 +744,8 @@ def remove_all_pxe_servers():
     Convenience function to remove all PXE servers
     """
     logger.debug('Removing all PXE servers')
-    sel.force_navigate('infrastructure_pxe_servers')
-    sel.force_navigate('infrastructure_pxe_servers')  # Yes we really do this twice.
+    navigate_to(PXEServer, 'All')
+    navigate_to(PXEServer, 'All')  # Yes we really do this twice.
     if sel.is_displayed(pxe_server_table_exist):
         sel.click(pg.check_all())
         cfg_btn('Remove PXE Servers from the VMDB', invokes_alert=True)
