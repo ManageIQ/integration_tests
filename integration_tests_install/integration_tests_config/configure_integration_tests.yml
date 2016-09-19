@@ -195,7 +195,8 @@
       shell: cd "{{ cfme_vol }}/integration_tests"; git stash
       # when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1)
       become_user: "{{ username }}"
-      when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+      # when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+      when: (git_status is defined) and (git_status.stdout.find('working directory clean') == False # and (not git_repo_exists.changed)
 
     - name: Clone Integration tests repo
       #git: repo="git://github.com/{{ git_account_username}}/cfme_tests.git" dest="{{ cfme_vol }}/cfme_tests" clone=yes update=yes version=master
@@ -213,13 +214,15 @@
     - name: switch branch
       shell: cd "{{ cfme_vol }}/integration_tests"; git checkout "{{ git_active_branch.stdout}}"
       become_user: "{{ username }}"
-      when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+      # when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+      when: (git_status is defined) and (git_status.stdout.find('working directory clean') == False # and (not git_repo_exists.changed)
 
     - name: unstash changes
       shell: cd "{{ cfme_vol }}/integration_tests"; git stash pop
       #when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1) # and (not git_repo_exists.changed)
       become_user: "{{ username }}"
-      when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+      #when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
+      when: (git_status is defined) and (git_status.stdout.find('working directory clean') == False # and (not git_repo_exists.changed)
 
     - name: get basename from url
       set_fact: 
