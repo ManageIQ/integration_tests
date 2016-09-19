@@ -29,6 +29,8 @@ ENV_VARS="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNA
 ENV_VARS_CONF="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn`"
 
 HELPER_FILE="./.helper_file"
+DO_NOT_CHECK="/var/tmp/.dnc"
+STAT="/var/tmp/.docker_registry_check"
 
 
 function log {
@@ -47,9 +49,6 @@ function check_4_new_img {
   GET_LOCAL_DIGEST=`docker inspect ${DOCK_IMG} | sed -n 's/^.*"Id": "\(.[^"]*\).*/\1/gp'`
   log "REMOTE digest is: ${GET_REMOTE_DIGEST}"
   log "LOCAL digest is: ${GET_LOCAL_DIGEST}"
-
-  DO_NOT_CHECK="/var/tmp/.dnc"
-  STAT="/var/tmp/.docker_registry_check"
 
   # Perform check only if file does not exists, if it exists it means user have been notified about new image,
   # and on next init, new image will be pulled.
