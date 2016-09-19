@@ -152,28 +152,30 @@
     # Example just get information about the repository whether or not it has
     # already been cloned locally.
 
-    - name: Chceck if repo exists
+    - name: Check if repo exists locally
       git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" update=no clone=no version=master remote=upstream
       register: git_repo_exists
 
-    - debug: msg="{{ git_repo_exists }}"
-
+    - name: Print if repo exists locally - if it is false it means it was cloned before
+      debug: msg="{{ git_repo_exists.changed }}"
 
     - name: Get active branch
       shell: cd "{{ cfme_vol }}/integration_tests"; git rev-parse --abbrev-ref HEAD
       register: git_active_branch
       when: not git_repo_exists.changed
 
-    - debug: msg="{{ git_active_branch }}"
-      when: not git_repo_exists.changed
+    #- name: Print active git branch
+    #  debug: msg="{{ git_active_branch.stdout_lines }}"
+    #  when: not git_repo_exists.changed
 
     - name: Check if we need to stash
       shell: cd "{{ cfme_vol }}/integration_tests"; git status
-      register: git_status
+      register: git_stash_status
       when: not git_repo_exists.changed
 
-    - debug: msg="{{ git_status }}"
-      when: not git_repo_exists.changed
+    #- name: Print status of branch
+    #  debug: msg="{{ git_stash_status.stdout_lines }}"
+    #  when: not git_repo_exists.changed
     
     - name: update git config
       ini_file: dest="{{ cfme_vol }}/integration_tests/.git/config" section="{{ item.section }}" option="        {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
@@ -191,12 +193,12 @@
       #when: pull_requests_p.key == "y"
       when: pull_requests == "y"
 
-    - name: stash changed
+    - name: We must stash changes - active branch is not clean
       shell: cd "{{ cfme_vol }}/integration_tests"; git stash
       # when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1)
       become_user: "{{ username }}"
       # when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
-      when: (git_status is defined) and (git_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
+      when: (git_stash_status is defined) and (git_stash_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
 
     - name: Clone Integration tests repo
       #git: repo="git://github.com/{{ git_account_username}}/cfme_tests.git" dest="{{ cfme_vol }}/cfme_tests" clone=yes update=yes version=master
@@ -228,7 +230,7 @@
       set_fact: 
         yamls_base: "{{ yaml_repo | basename }}"
 
-    - name: check if repo has been cloned
+    - name: Add username into repo url - regexp
       # git: repo="{{ yaml_repo }}" dest="{{ cfme_vol }}/{{ yamls_base }}" clone=yes
       git: repo="{{ yaml_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
