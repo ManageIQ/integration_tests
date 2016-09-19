@@ -267,7 +267,7 @@ def element(o, **kwargs):
                 raise exceptions.CFMEExceptionOccured(
                     "Element {} not found on page because the following Rails error happened:\n{}"
                     .format(str(o), r_e))
-        raise NoSuchElementException("Element {} not found on page.".format(str(o)))
+        raise NoSuchElementException("Element {} not found on page.".format(o))
     return matches[0]
 
 
@@ -763,7 +763,7 @@ def get_attribute(loc, attr):
 
     Returns: Text describing the attribute of the element.
     """
-    return element(loc).get_attribute(attr)
+    return element(loc).get_attribute(attr).encode("utf-8")
 
 
 @removed
@@ -1272,6 +1272,7 @@ def set_text(loc, text):
     Returns:
         Any text that might have been in the textbox element already
     """
+    text = str(text).decode("utf-8")
     if text is not None:
         el = move_to_element(loc)
         old_text = el.get_attribute('value')

@@ -60,14 +60,14 @@ def get_message_level_up(el):
 def get_message_text(el):
     strong = sel.elements("./strong", root=el)
     if strong:
-        return sel.text(strong[0])
+        return sel.text(strong[0]).encode('utf-8')
     else:
-        return sel.text(el)
+        return sel.text(el).encode('utf-8')
 
 
 @get_message_text.method('5.3')
 def get_message_text_up(el):
-    return sel.text(el)
+    return sel.text(el).encode('utf-8')
 
 
 def message(el):
@@ -143,12 +143,11 @@ def onexception_printall(f):
         try:
             return f(*args, **kwargs)
         except FlashMessageException as e:
-            err_text = str(e)
             messages = get_messages()
             if not messages:
                 raise  # Just reraise the original
             messages = ['{}: {}'.format(message.level, message.message) for message in messages]
-            new_err_text = '{}\nPresent flash messages:\n{}'.format(err_text, '\n'.join(messages))
+            new_err_text = '{}\nPresent flash messages:\n{}'.format(e, '\n'.join(messages))
             raise type(e)(new_err_text)
     return g
 

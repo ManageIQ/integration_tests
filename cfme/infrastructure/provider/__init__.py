@@ -20,8 +20,8 @@ from cfme.web_ui import (
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
+from fixtures.pytest_store import store
 from utils import conf, deferred_verpick, version
-from utils.api import rest_api
 from utils.db import cfmedb
 from utils.log import logger
 from utils.pretty import Pretty
@@ -194,9 +194,9 @@ class Provider(Pretty, CloudInfraProvider):
 
     @variable(alias='rest')
     def num_host(self):
-        provider = rest_api().collections.providers.find_by(name=self.name)[0]
+        provider = store.current_appliance.rest_api.collections.providers.find_by(name=self.name)[0]
         num_host = 0
-        for host in rest_api().collections.hosts:
+        for host in store.current_appliance.rest_api.collections.hosts:
             if host['ems_id'] == provider.id:
                 num_host += 1
         return num_host
@@ -228,9 +228,9 @@ class Provider(Pretty, CloudInfraProvider):
 
     @variable(alias='rest')
     def num_cluster(self):
-        provider = rest_api().collections.providers.find_by(name=self.name)[0]
+        provider = store.current_appliance.rest_api.collections.providers.find_by(name=self.name)[0]
         num_cluster = 0
-        for cluster in rest_api().collections.clusters:
+        for cluster in store.current_appliance.rest_api.collections.clusters:
             if cluster['ems_id'] == provider.id:
                 num_cluster += 1
         return num_cluster

@@ -6,6 +6,7 @@ import random
 import re
 import socket
 import yaml
+from miqclient.api import API as MiqApi  # noqa
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
@@ -26,7 +27,7 @@ from mgmtsystem.virtualcenter import VMWareSystem
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import api, conf, datafile, db, db_queries, ssh, ports
+from utils import conf, datafile, db, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
@@ -155,6 +156,10 @@ class IPAppliance(object):
 
     def __hash__(self):
         return int(hashlib.md5(self.address).hexdigest(), 16)
+
+    @cached_property
+    def rest_logger(self):
+        return create_sublogger('rest-api')
 
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
@@ -322,9 +327,10 @@ class IPAppliance(object):
 
     @cached_property
     def rest_api(self):
-        return api.API(
+        return MiqApi(
             "{}://{}:{}/api".format(self.scheme, self.address, self.ui_port),
-            auth=("admin", "smartvm"))
+            ('admin', 'smartvm'),
+            logger=self.rest_logger)
 
     @cached_property
     def miqqe_version(self):
