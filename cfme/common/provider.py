@@ -20,7 +20,6 @@ from utils.api import rest_api
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
-from utils.signals import fire
 from utils.path import project_path
 from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
@@ -203,7 +202,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         for cred in self.credentials:
             fill(self.credentials[cred].form, self.credentials[cred], validate=validate_credentials)
         self._submit(cancel, self.add_provider_button)
-        fire("providers_changed")
         if not cancel:
             flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
                                                                             self.name))
@@ -239,7 +237,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         cfg_btn('Remove this {} Provider'.format(self.string_name),
             invokes_alert=True)
         sel.handle_alert(cancel=cancel)
-        fire("providers_changed")
         if not cancel:
             flash.assert_message_match(
                 'Delete initiated for 1 {} Provider from the CFME Database'.format(

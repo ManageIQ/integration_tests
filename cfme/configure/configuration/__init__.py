@@ -13,6 +13,7 @@ from cfme.web_ui import (
     MultiFill, Region, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.menu import nav
 from cfme.web_ui.form_buttons import change_stored_password
+from utils.appliance import get_or_create_current_appliance, CurrentAppliance
 from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
@@ -20,14 +21,6 @@ from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
 from utils import version, conf
 from utils.pretty import Pretty
-from utils.signals import fire, on_signal
-from utils import clear_property_cache
-
-
-@on_signal("server_details_changed")
-def invalidate_server_details():
-    clear_property_cache(store.current_appliance,
-                        'configuration_details', 'zone_description')
 
 
 access_tree = partial(accordion.tree, "Access Control")
@@ -781,27 +774,28 @@ class BasicInformation(Updateable, Pretty):
             ('time_zone', Select("select#server_timezone")),
         ]
     )
-    pretty_attrs = ['company_name', 'appliance_name', 'appliance_zone', 'time_zone']
+    pretty_attrs = ['company_name', 'appliance_name', 'appliance_zone', 'time_zone', 'appliance']
 
-    def __init__(self, company_name=None, appliance_name=None, appliance_zone=None, time_zone=None):
+    appliance = CurrentAppliance()
+
+    def __init__(
+            self, company_name=None, appliance_name=None, appliance_zone=None, time_zone=None,
+            appliance=None):
         assert (company_name or appliance_name or appliance_zone or time_zone), \
             "You must provide at least one param!"
-        self.details = dict(
-            company_name=company_name,
-            appliance_name=appliance_name,
-            appliance_zone=appliance_zone,
-            time_zone=time_zone
-        )
+        self.company_name = company_name
+        self.appliance_name = appliance_name
+        self.appliance_zone = appliance_zone
+        self.time_zone = time_zone
+        self.appliance = appliance or get_or_create_current_appliance()
 
     def update(self):
         """ Navigate to a correct page, change details and save.
 
         """
         sel.force_navigate("cfg_settings_currentserver_server")
-        fill(self.basic_information, self.details)
-        sel.click(form_buttons.save)
-        # TODO: Maybe make a cascaded delete on lazycache?
-        fire('server_details_changed')
+        fill(self.basic_information, self, action=form_buttons.save)
+        self.appliance.server_details_changed()
 
 
 class SMTPSettings(Updateable):
