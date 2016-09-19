@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.infrastructure import pxe
+from cfme.infrastructure.pxe import SystemImageType
 import utils.error as error
 from utils.update import update
 
@@ -13,9 +13,9 @@ def test_system_image_type_crud():
     """
     Tests a System Image Type using CRUD operations.
     """
-    sys_image_type = pxe.SystemImageType(
+    sys_image_type = SystemImageType(
         name=fauxfactory.gen_alphanumeric(8),
-        provision_type='Vm')
+        provision_type=SystemImageType.VM_OR_INSTANCE)
     sys_image_type.create()
     with update(sys_image_type):
         sys_image_type.name = sys_image_type.name + "_update"
@@ -26,9 +26,9 @@ def test_duplicate_name_error_validation():
     """
     Tests a System Image for duplicate name.
     """
-    sys_image_type = pxe.SystemImageType(
+    sys_image_type = SystemImageType(
         name=fauxfactory.gen_alphanumeric(8),
-        provision_type='Vm')
+        provision_type=SystemImageType.VM_OR_INSTANCE)
     sys_image_type.create()
     with error.expected('Name has already been taken'):
         sys_image_type.create()
@@ -39,9 +39,9 @@ def test_name_required_error_validation():
     """
     Tests a System Image with no name.
     """
-    sys_image_type = pxe.SystemImageType(
+    sys_image_type = SystemImageType(
         name=None,
-        provision_type='Vm')
+        provision_type=SystemImageType.VM_OR_INSTANCE)
     with error.expected('Name is required'):
         sys_image_type.create()
 
@@ -52,7 +52,7 @@ def test_name_required_error_validation():
 #    """
 #    Tests a System Image name with max characters.
 #    """
-#    sys_image_type = pxe.SystemImageType(
+#    sys_image_type = SystemImageType(
 #        name=fauxfactory.gen_alphanumeric(256),
 #        provision_type='Vm')
 #    sys_image_type.create()

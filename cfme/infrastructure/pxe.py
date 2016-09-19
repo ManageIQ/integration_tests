@@ -13,6 +13,7 @@ from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table,
 from cfme.web_ui import paginator as pg
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
+from utils import version
 from utils.appliance import get_or_create_current_appliance, CurrentAppliance
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 import utils.conf as conf
@@ -220,7 +221,11 @@ class PXEServer(Updateable, Pretty):
         """
 
         navigate_to(self, 'Details')
-        cfg_btn('Remove this PXE Server from the VMDB', invokes_alert=True)
+        if version.current_version() < '5.7':
+            btn_name = 'Remove this PXE Server from the VMDB'
+        else:
+            btn_name = 'Remove this PXE Server'
+        cfg_btn(btn_name, invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         if not cancel:
             flash.assert_message_match('PXE Server "{}": Delete successful'.format(self.name))
@@ -229,14 +234,13 @@ class PXEServer(Updateable, Pretty):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
         navigate_to(self, 'Details')
-        ref_time = lambda: pxe_details_page.last_refreshed.text
-        last_time = ref_time()
+        last_time = pxe_details_page.last_refreshed.text
         cfg_btn('Refresh Relationships', invokes_alert=True)
         sel.handle_alert()
         flash.assert_message_match(
             'PXE Server "{}": Refresh Relationships successfully initiated'.format(self.name))
         if wait:
-            wait_for(lambda lt: lt != ref_time(),
+            wait_for(lambda lt: lt != pxe_details_page.last_refreshed.text,
                      func_args=[last_time], fail_func=sel.refresh, num_sec=timeout,
                      message="pxe refresh")
 
@@ -412,7 +416,11 @@ class CustomizationTemplate(Updateable, Pretty):
         """
 
         navigate_to(self, 'Details')
-        cfg_btn('Remove this Customization Template from the VMDB', invokes_alert=True)
+        if version.current_version() < '5.7':
+            btn_name = 'Remove this Customization Template from the VMDB'
+        else:
+            btn_name = 'Remove this Customization Template'
+        cfg_btn(btn_name, invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match(
             'Customization Template "{}": Delete successful'.format(self.description))
@@ -463,6 +471,8 @@ class SystemImageType(Updateable, Pretty):
     """
     appliance = CurrentAppliance()
     pretty_attrs = ['name', 'provision_type']
+    VM_OR_INSTANCE = "VM and Instance"
+    HOST_OR_NODE = "Host / Node"
 
     def __init__(self, name=None, provision_type=None, appliance=None):
         self.appliance = appliance or get_or_create_current_appliance()
@@ -522,7 +532,11 @@ class SystemImageType(Updateable, Pretty):
         """
 
         navigate_to(self, 'Details')
-        cfg_btn('Remove this System Image Type from the VMDB', invokes_alert=True)
+        if version.current_version() < '5.7':
+            btn_name = 'Remove this System Image Type from the VMDB'
+        else:
+            btn_name = 'Remove this System Image Type'
+        cfg_btn(btn_name, invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match('System Image Type "{}": Delete successful'.format(self.name))
 
@@ -550,7 +564,7 @@ class SystemImageTypeDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        image_table.click_cell('name', self.obj.pxe_image_type.name)
+        image_table.click_cell('name', self.obj.name)
 
 
 @navigator.register(SystemImageType, 'Edit')
@@ -639,7 +653,11 @@ class ISODatastore(Updateable, Pretty):
         """
 
         navigate_to(self, 'Details')
-        cfg_btn('Remove this ISO Datastore from the VMDB', invokes_alert=True)
+        if version.current_version() < '5.7':
+            btn_name = 'Remove this ISO Datastore from the VMDB'
+        else:
+            btn_name = 'Remove this ISO Datastore'
+        cfg_btn(btn_name, invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match('ISO Datastore "{}": Delete successful'.format(self.provider))
 
@@ -647,15 +665,14 @@ class ISODatastore(Updateable, Pretty):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
         navigate_to(self, 'Details')
-        ref_time = lambda: pxe_details_page.last_refreshed.text
-        last_time = ref_time()
+        last_time = pxe_details_page.last_refreshed.text
         cfg_btn('Refresh Relationships', invokes_alert=True)
         sel.handle_alert()
         flash.assert_message_match(
             'ISO Datastore "{}": Refresh Relationships successfully initiated'
             .format(self.provider))
         if wait:
-            wait_for(lambda lt: lt != ref_time(),
+            wait_for(lambda lt: lt != pxe_details_page.last_refreshed.text,
                      func_args=[last_time], fail_func=sel.refresh, num_sec=timeout,
                      message="iso refresh")
 
