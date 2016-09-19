@@ -3,7 +3,7 @@
 from cfme.configure.tasks import is_datastore_analysis_finished
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
-from cfme.web_ui import toolbar, Quadicon, InfoBlock
+from cfme.web_ui import toolbar as tb, Quadicon, InfoBlock
 from utils import conf, testgen
 from utils.blockers import BZ
 from utils.wait import wait_for
@@ -134,7 +134,7 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore, so
     # Initiate analysis
     datastore.run_smartstate_analysis()
     wait_for(lambda: is_datastore_analysis_finished(datastore.name),
-             delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="15m", fail_func=lambda: tb.select('Reload the current display'))
 
     ds_str = "Datastores Type"
     c_datastore = datastore.get_detail('Properties', ds_str)
