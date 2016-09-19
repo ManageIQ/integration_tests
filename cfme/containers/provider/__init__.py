@@ -1,11 +1,15 @@
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region
+    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region, paginator
 )
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
+from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.pretty import Pretty
@@ -83,6 +87,7 @@ prop_region = Region(
 
 @BaseProvider.add_base_type
 class Provider(BaseProvider, Pretty):
+    appliance = CurrentAppliance()
     provider_types = {}
     in_version = ('5.5', version.LATEST)
     type_tclass = "container"
@@ -106,7 +111,8 @@ class Provider(BaseProvider, Pretty):
          '5.6': form_buttons.angular_save})
 
     def __init__(self, name=None, credentials=None, key=None,
-                 zone=None, hostname=None, port=None, provider_data=None):
+                 zone=None, hostname=None, port=None, provider_data=None, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
         if not credentials:
             credentials = {}
         self.name = name
@@ -226,5 +232,86 @@ class Provider(BaseProvider, Pretty):
     @num_image_registry.variant('ui')
     def num_image_registry_ui(self):
         return int(self.get_detail("Relationships", "Image Registries"))
+
+
+@navigator.register(Provider, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Middleware', 'Providers')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("Grid View")
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
+
+
+@navigator.register(Provider, 'Add')
+class Add(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New Middleware Provider')
+
+
+@navigator.register(Provider, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+
+@navigator.register(Provider, 'Edit')
+class Edit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        cfg_btn('Edit Selected Middleware Provider')
+
+
+@navigator.register(Provider, 'EditFromDetails')
+class EditFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Middleware Provider')
+
+
+@navigator.register(Provider, 'EditTags')
+class EditTags(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        pol_btn('Edit Tags')
+
+
+@navigator.register(Provider, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Edit Tags')
+
+
+@navigator.register(Provider, 'TimelinesFromDetails')
+class TimelinesFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
+
+
+@navigator.register(Provider, 'TopologyFromDetails')
+class TopologyFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock('Overview', 'Topology'))
 
 import_all_modules_of('cfme.containers.provider')
