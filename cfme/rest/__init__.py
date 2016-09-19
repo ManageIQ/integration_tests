@@ -168,7 +168,7 @@ def rates(request, rest_api):
     chargeback = rest_api.collections.chargebacks.get(rate_type='Compute')
     data = [{
         'description': 'test_rate_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
-        'rate': 1,
+        'source': 'allocated',
         'group': 'cpu',
         'per_time': 'daily',
         'per_unit': 'megahertz',
