@@ -215,6 +215,9 @@ ALERT_PROFILES = [
     explorer.VMInstanceAlertProfile
 ]
 
+if current_version() >= "5.7":
+    ALERT_PROFILES.append(explorer.MiddlewareServerAlertProfile)
+
 
 @pytest.yield_fixture
 def random_vm_control_policy():
