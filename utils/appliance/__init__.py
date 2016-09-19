@@ -34,7 +34,6 @@ from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path
 from utils.version import Version, get_stream, pick, LATEST
-from utils.signals import fire
 from utils.wait import wait_for
 from utils import clear_property_cache
 
@@ -43,7 +42,6 @@ from .endpoints.ui import ViaUI
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # Do not import the whole stuff around
 if not RUNNING_UNDER_SPROUT:
-    from cfme.configure.configuration import set_server_roles, get_server_roles
     from utils.hosts import setup_providers_hosts_credentials
 
 
@@ -1180,7 +1178,7 @@ class IPAppliance(object):
                 msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
                 log_callback(msg)
                 raise ApplianceException(msg)
-        fire("server_details_changed")
+        self.server_details_changed()
 
     @logger_wrap("Stop EVM Service: {}")
     def stop_evm_service(self, log_callback=None):
@@ -1599,10 +1597,8 @@ class IPAppliance(object):
             self.ssh_client.put_file(temp_ruby.name, dest_ruby)
 
             # Run it
-            result = self.ssh_client.run_rails_command(dest_ruby)
-            if not result.rc:
-                fire('server_details_changed')
-                fire('server_config_changed')
+            if self.ssh_client.run_rails_command(dest_ruby):
+                self.server_details_changed()
             else:
                 raise Exception('Unable to set config')
         else:
@@ -1643,6 +1639,9 @@ class IPAppliance(object):
     def reset_automate_model(self):
         with self.ssh_client as ssh_client:
             ssh_client.run_rake_command("evm:automate:reset")
+
+    def server_details_changed(self):
+        clear_property_cache(self, 'configuration_details', 'zone_description')
 
 
 @navigator.register(IPAppliance)
@@ -1798,6 +1797,7 @@ class Appliance(IPAppliance):
 
     @logger_wrap("Configure fleecing: {}")
     def configure_fleecing(self, log_callback=None):
+        from cfme.configure.configuration import set_server_roles, get_server_roles
         from utils.providers import setup_provider
         with self(browser_steal=True):
             if self.is_on_vsphere:
