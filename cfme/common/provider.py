@@ -14,9 +14,8 @@ from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
 from fixtures.pytest_store import store
-from utils import conf
-from utils import version
-from utils.api import rest_api
+
+from utils import conf, version
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
@@ -315,7 +314,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
     @variable(alias='rest')
     def refresh_provider_relationships(self, from_list_view=False):
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
-        col = rest_api().collections.providers.find_by(name=self.name)
+        col = store.current_appliance.rest_api.collections.providers.find_by(name=self.name)
         try:
             col[0].action.refresh()
         except IndexError:
@@ -335,7 +334,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
     @variable(alias='rest')
     def last_refresh_date(self):
         try:
-            col = rest_api().collections.providers.find_by(name=self.name)[0]
+            col = store.current_appliance.rest_api.collections.providers.find_by(name=self.name)[0]
             return col.last_refresh_date
         except AttributeError:
             return None

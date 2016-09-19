@@ -101,7 +101,7 @@ def get_vm_object(vm_name):
         vm_name: VM name
 
     Returns:
-        If found, :py:class:`utils.api.Entity`
+        If found, returns a REST object
         If not, `None`
     """
     try:
