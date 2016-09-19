@@ -14,7 +14,6 @@ from cfme.infrastructure.host import Host
 
 pytestmark = [pytest.mark.tier(3)]
 
-
 # todo: infrastructure hosts and pools are removed due to changing navigation to navmazing
 # todo: both items have to be put back once navigation change is fully done
 
