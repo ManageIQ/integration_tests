@@ -3,6 +3,7 @@
 import re
 import pytest
 from cfme import login
+from utils.appliance.endpoints.ui import navigate_to
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.reports import CannedSavedReport
@@ -45,7 +46,7 @@ landing_pages = [
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    _setup_a_provider(prov_class="infra", validate=True, check_existing=True)
+    return _setup_a_provider(prov_class="infra", validate=True, check_existing=True)
 
 
 @pytest.yield_fixture(scope="module")
@@ -208,7 +209,7 @@ def test_start_page(request, setup_a_provider, start_page):
 
 
 def test_infraprovider_noquads(request, setup_a_provider, set_infra_provider_quad):
-    sel.force_navigate('infrastructure_providers')
+    navigate_to(setup_a_provider, 'All')
     assert visual.check_image_exists, "Image View Failed!"
 
 
