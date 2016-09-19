@@ -24,7 +24,7 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, deferred_verpick, version
 from utils.api import rest_api
-from utils.appliance import get_or_create_current_appliance
+from utils.appliance import get_or_create_current_appliance, CurrentAppliance
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.log import logger
@@ -159,6 +159,7 @@ class Provider(Pretty, CloudInfraProvider):
         version.LOWEST: form_buttons.save,
         '5.6': form_buttons.angular_save
     })
+    appliance = CurrentAppliance()
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None,
