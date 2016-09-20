@@ -31,7 +31,8 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         myprov.create()
         myprov.num_deployment(method="ui")
     """
-    STATS_TO_MATCH = ['num_server', 'num_domain', 'num_deployment', 'num_datasource']
+    STATS_TO_MATCH = ['num_server', 'num_domain', 'num_deployment', 'num_datasource',
+                      'num_messaging']
     property_tuples = [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'),
                        ('provider_type', 'type')]
     type_name = "hawkular"
