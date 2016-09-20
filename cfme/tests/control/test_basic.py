@@ -210,14 +210,11 @@ ALERT_PROFILES = [
     explorer.ClusterAlertProfile,
     explorer.DatastoreAlertProfile,
     explorer.HostAlertProfile,
+    explorer.MiddlewareServerAlertProfile,
     explorer.ProviderAlertProfile,
     explorer.ServerAlertProfile,
     explorer.VMInstanceAlertProfile
 ]
-
-if current_version() >= "5.7":
-    ALERT_PROFILES.append(explorer.MiddlewareServerAlertProfile)
-
 
 @pytest.yield_fixture
 def random_vm_control_policy():
@@ -278,7 +275,8 @@ def control_policy(request):
     policy.delete()
 
 
-@pytest.yield_fixture(params=ALERT_PROFILES, ids=lambda alert_profile: alert_profile.__name__)
+@pytest.yield_fixture(params=ALERT_PROFILES,
+    ids=lambda alert_profile_class: alert_profile_class.__name__)
 def alert_profile(request):
     alert = explorer.Alert(
         fauxfactory.gen_alphanumeric(),
@@ -500,6 +498,8 @@ def test_control_alert_copy(random_alert, soft_assert):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.uncollectif(lambda alert_profile: alert_profile.TYPE == "Middleware Server" and
+    current_version() < "5.7")
 def test_alert_profile_crud(alert_profile, soft_assert):
     alert_profile.create()
     soft_assert(alert_profile.exists, "The alert profile {} does not exist!".format(
