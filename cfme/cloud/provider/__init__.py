@@ -22,7 +22,7 @@ from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, Angular
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
 from utils.appliance import get_or_create_current_appliance, CurrentAppliance
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
+from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
@@ -182,6 +182,11 @@ class All(CFMENavigateStep):
         from cfme.web_ui.menu import nav
         nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
 
+    def resetter(self):
+        tb.select('Grid View')
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
+
 
 @navigator.register(Provider, 'Add')
 class New(CFMENavigateStep):
@@ -191,18 +196,85 @@ class New(CFMENavigateStep):
         cfg_btn('Add a New Cloud Provider')
 
 
-@navigator.register(Provider)
+@navigator.register(Provider, 'Discover')
+class Discover(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Discover Cloud Providers')
+
+
+@navigator.register(Provider, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, 'cloud_prov'))
+        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+
+@navigator.register(Provider, 'Edit')
+class Edit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        cfg_btn('Edit Selected Cloud Provider')
+
+
+@navigator.register(Provider, 'EditFromDetails')
+class EditFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Cloud Provider')
+
+
+@navigator.register(Provider, 'ManagePolicies')
+class ManagePolicies(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        pol_btn('Manage Policies')
+
+
+@navigator.register(Provider, 'ManagePoliciesFromDetails')
+class ManagePoliciesFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Manage Policies')
+
+
+@navigator.register(Provider, 'EditTags')
+class EditTags(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        pol_btn('Edit Tags')
+
+
+@navigator.register(Provider, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Edit Tags')
+
+
+@navigator.register(Provider, 'Timelines')
+class Timelines(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
 
 
 def get_all_providers(do_not_navigate=False):
     """Returns list of all providers"""
     if not do_not_navigate:
-        sel.force_navigate('clouds_providers')
+        navigate_to(Provider, 'All')
     providers = set([])
     link_marker = "ems_cloud"
     for page in paginator.pages():
@@ -221,7 +293,7 @@ def discover(credential, cancel=False, d_type="Amazon"):
       credential (cfme.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
-    sel.force_navigate('clouds_provider_discover')
+    navigate_to(Provider, 'Discover')
     form_data = {'discover_select': d_type}
     if credential:
         form_data.update({'username': credential.principal,
@@ -233,7 +305,7 @@ def discover(credential, cancel=False, d_type="Amazon"):
 
 
 def wait_for_a_provider():
-    sel.force_navigate('clouds_providers')
+    navigate_to(Provider, 'All')
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
