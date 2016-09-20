@@ -15,7 +15,7 @@ from xml.sax.saxutils import quoteattr, unescape
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import AccordionItemNotFound
-from cfme.web_ui import Tree
+from cfme.web_ui import Tree, BootstrapTreeview
 from utils import version
 
 DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
@@ -91,6 +91,10 @@ def is_active(name):
         raise AccordionItemNotFound("Accordion item '{}' not found!".format(name))
 
 
+DYNATREE = "../../..//div[@class='panel-body']//ul[@class='dynatree-container']"
+TREEVIEW = '../../..//div[contains(@class, "treeview")]'
+
+
 def tree(name, *path):
     """Get underlying Tree() object. And eventually click path.
 
@@ -110,16 +114,17 @@ def tree(name, *path):
             click(name)
     except AccordionItemNotFound:
         click(name)
-    el = sel.element(
-        # | for only single query
-        "|".join([
-            # Current tree for 5.4 (still with dhx)
-            "../../div[contains(@class, 'dhxcont_global_content_area')]//"
-            "ul[@class='dynatree-container']",
-            # Newer accordion tree
-            "../../..//div[@class='panel-body']//ul[@class='dynatree-container']"]),
-        root=sel.element(locate(name)))
-    tree = Tree(el)
+
+    root_element = sel.element(locate(name))
+    if sel.is_displayed(DYNATREE, root=root_element):
+        # Dynatree detected
+        tree = Tree(sel.element(DYNATREE, root=root_element))
+    elif sel.is_displayed(TREEVIEW, root=root_element):
+        # treeview detected
+        el = sel.element(TREEVIEW, root=root_element)
+        tree_id = sel.get_attribute(el, 'id')
+        tree = BootstrapTreeview(tree_id)
+
     if path:
         return tree.click_path(*path)
     else:

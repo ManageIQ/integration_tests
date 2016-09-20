@@ -17,7 +17,6 @@ import cfme.infrastructure.virtual_machines  # NOQA
 import cfme.cloud.instance  # NOQA
 
 
-instances_by_provider_tree = ui.Tree("ul.dynatree-container")
 submit_button = form_buttons.FormButton("Submit")
 
 template_select_form = ui.Form(
