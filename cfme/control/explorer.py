@@ -160,6 +160,7 @@ def _conditions(ugly, nice1, nice2):
         }
     ]
 
+
 nav.add_branch(
     "control_explorer",
     {
@@ -292,6 +293,11 @@ nav.add_branch(
 
         "server_alert_profile": _ap_single_branch("server", "Server"),
         "server_alert_profiles": _ap_multi_branch("server", "Server"),
+
+        "middleware_server_alert_profile": _ap_single_branch(
+            "middleware_server", "Middleware Server"),
+        "middleware_server_alert_profiles": _ap_multi_branch(
+            "middleware_server", "Middleware Server"),
 
         "provider_alert_profile": _ap_single_branch("provider", "Provider"),
         "provider_alert_profiles": _ap_multi_branch("provider", "Provider"),
@@ -983,7 +989,7 @@ class Alert(Updateable, Pretty):
             ("active", Input("enabled_cb")),
             ("based_on", {
                 version.LOWEST: Select("select#miq_alert_db"),
-                "5.5": AngularSelect("miq_alert_db")}),
+                "5.5": AngularSelect("miq_alert_db", exact=True)}),
             ("evaluate", {
                 version.LOWEST: Select("select#exp_name"),
                 "5.5": AngularSelect("exp_name")}),
@@ -1745,6 +1751,11 @@ class DatastoreAlertProfile(BaseAlertProfile):
 class HostAlertProfile(BaseAlertProfile):
     PREFIX = "host"
     TYPE = "Host / Node"
+
+
+class MiddlewareServerAlertProfile(BaseAlertProfile):
+    PREFIX = "middleware_server"
+    TYPE = "Middleware Server"
 
 
 class ProviderAlertProfile(BaseAlertProfile):
