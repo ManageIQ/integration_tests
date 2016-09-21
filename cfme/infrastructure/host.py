@@ -247,6 +247,12 @@ class Host(Updateable, Pretty):
         return IPMI(hostname=self.ipmi_address, username=self.ipmi_credentials.principal,
                     password=self.ipmi_credentials.secret, interface_type=self.interface_type)
 
+    def load_details(self, refresh=False):
+        if not self._on_detail_page():
+            sel.force_navigate('infrastructure_host', context={'host': self})
+        elif refresh:
+            tb.refresh()
+
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
 
@@ -256,8 +262,7 @@ class Host(Updateable, Pretty):
             *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
         Returns: A string representing the contents of the InfoBlock's value.
         """
-        if not self._on_detail_page():
-            sel.force_navigate('infrastructure_host', context={'host': self})
+        self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
 
     def _on_detail_page(self):
