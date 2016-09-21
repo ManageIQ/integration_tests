@@ -8,10 +8,10 @@
 """
 
 from functools import partial
+from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
@@ -29,7 +29,8 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils import deferred_verpick, version
 from utils.pretty import Pretty
-
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance import CurrentAppliance
 
 # Page specific locators
 details_page = Region(infoblock_type='detail')
@@ -86,25 +87,6 @@ pol_btn = partial(tb.select, 'Policy')
 pow_btn = partial(tb.select, 'Power')
 lif_btn = partial(tb.select, 'Lifecycle')
 
-nav.add_branch('infrastructure_hosts',
-             {'infrastructure_host_new': lambda _: cfg_btn(
-                 version.pick({version.LOWEST: 'Add a New Host',
-                               '5.4': 'Add a New item'})),
-              'infrastructure_host_discover': lambda _: cfg_btn(
-                  'Discover Hosts'),
-              'infrastructure_host': [lambda ctx: sel.click(Quadicon(ctx['host'].name,
-                                                                     'host')),
-                                      {'infrastructure_host_edit':
-                                       lambda _: cfg_btn(
-                                           version.pick({version.LOWEST: 'Edit this Host',
-                                                         '5.4': 'Edit this item'})),
-                                       'infrastructure_host_policy_assignment':
-                                       lambda _: pol_btn('Manage Policies'),
-                                       'infrastructure_provision_host':
-                                       lambda _: lif_btn(
-                                           version.pick({version.LOWEST: 'Provision this Host',
-                                                         '5.4': 'Provision this item'}))}]})
-
 
 class Host(Updateable, Pretty):
     """
@@ -128,6 +110,7 @@ class Host(Updateable, Pretty):
         myhost.create()
 
     """
+    appliance = CurrentAppliance()
     pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
 
     forced_saved = deferred_verpick(
@@ -138,8 +121,9 @@ class Host(Updateable, Pretty):
 
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
-                 ipmi_credentials=None, interface_type='lan'):
+                 ipmi_credentials=None, interface_type='lan', appliance=None):
         self.name = name
+        self.quad_name = 'host'
         self.hostname = hostname
         self.ip_address = ip_address
         self.custom_ident = custom_ident
@@ -150,6 +134,7 @@ class Host(Updateable, Pretty):
         self.ipmi_credentials = ipmi_credentials
         self.interface_type = interface_type
         self.db_id = None
+        self.appliance = appliance or CurrentAppliance()
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -188,7 +173,7 @@ class Host(Updateable, Pretty):
            validate_credentials (boolean): Whether to validate credentials - if True and the
                credentials are invalid, an error will be raised.
         """
-        sel.force_navigate('infrastructure_host_new')
+        navigate_to(self, 'Add')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
         fill(credential_form, self.ipmi_credentials, validate=validate_credentials)
@@ -204,7 +189,7 @@ class Host(Updateable, Pretty):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        sel.force_navigate('infrastructure_host_edit', context={'host': self})
+        navigate_to(self, 'Edit')
         change_stored_password()
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
 
@@ -219,12 +204,12 @@ class Host(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         cfg_btn('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
     def execute_button(self, button_group, button, cancel=True):
-        sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         host_btn = partial(tb.select, button_group)
         host_btn(button, invokes_alert=True)
         sel.click(form_buttons.submit)
@@ -234,12 +219,12 @@ class Host(Updateable, Pretty):
         flash.assert_success_message("Service Order was cancelled by the user")
 
     def power_on(self):
-        sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         pow_btn('Power On')
         sel.handle_alert()
 
     def power_off(self):
-        sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         pow_btn('Power Off')
         sel.handle_alert()
 
@@ -256,18 +241,12 @@ class Host(Updateable, Pretty):
             *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
         Returns: A string representing the contents of the InfoBlock's value.
         """
-        if not self._on_detail_page():
-            sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         return details_page.infoblock.text(*ident)
-
-    def _on_detail_page(self):
-        """ Returns ``True`` if on the hosts detail page, ``False`` if not."""
-        return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}")]'.format(self.name))
 
     @property
     def exists(self):
-        sel.force_navigate('infrastructure_hosts')
+        navigate_to(self, 'All')
         for page in paginator.pages():
             if sel.is_displayed(Quadicon(self.name, 'host')):
                 return True
@@ -280,7 +259,7 @@ class Host(Updateable, Pretty):
 
         Returns: ``True`` if credentials are saved and valid; ``False`` otherwise
         """
-        sel.force_navigate('infrastructure_hosts')
+        navigate_to(self, 'All')
         quad = Quadicon(self.name, 'host')
         return 'checkmark' in quad.creds
 
@@ -293,7 +272,7 @@ class Host(Updateable, Pretty):
             assign: Wheter to assign or unassign.
             policy_profile_names: :py:class:`str` with Policy Profile names.
         """
-        sel.force_navigate('infrastructure_host_policy_assignment', context={'host': self})
+        navigate_to(self, 'PolicyAssignment')
         for policy_profile in policy_profile_names:
             if assign:
                 manage_policies_tree.check_node(policy_profile)
@@ -321,7 +300,7 @@ class Host(Updateable, Pretty):
 
     def get_datastores(self):
         """ Gets list of all datastores used by this host"""
-        sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
 
         datastores = set([])
@@ -345,7 +324,7 @@ class Host(Updateable, Pretty):
         Note:
             The host must have valid credentials already set up for this to work.
         """
-        sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
         sel.handle_alert()
         flash.assert_message_contain('"{}": Analysis successfully initiated'.format(self.name))
@@ -366,7 +345,7 @@ class Host(Updateable, Pretty):
             ``True`` if equal, ``False`` otherwise.
         """
         # mark by indexes or mark all
-        sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         list_acc.select('Relationships',
             version.pick({
                 version.LOWEST: 'Show host drift history',
@@ -408,13 +387,82 @@ class Host(Updateable, Pretty):
 
     def tag(self, tag, **kwargs):
         """Tags the system by given tag"""
-        sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         mixins.add_tag(tag, **kwargs)
 
     def untag(self, tag):
         """Removes the selected tag off the system"""
-        sel.force_navigate('infrastructure_host', context={'host': self})
+        navigate_to(self, 'Details')
         mixins.remove_tag(tag)
+
+
+@navigator.register(Host, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Infrastructure', 'Hosts')(None)
+
+    def resetter(self):
+        tb.select("Grid View")
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
+
+
+@navigator.register(Host, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+    def am_i_here(self):
+        return sel.is_displayed(
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}")]'.format(self.obj.name))
+
+    def resetter(self):
+        sel.refresh()
+
+
+@navigator.register(Host, 'Edit')
+class Edit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this item')
+
+
+@navigator.register(Host, 'Add')
+class Add(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New item')
+
+
+@navigator.register(Host, 'Discover')
+class Discover(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Discover items')
+
+
+@navigator.register(Host, 'PolicyAssignment')
+class PolicyAssignment(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Manage Policies')
+
+
+@navigator.register(Host, 'Provision')
+class Provision(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        lif_btn('Provision this item')
 
 
 @fill.method((Form, Host.Credential))
@@ -471,14 +519,14 @@ def get_from_config(provider_config_name):
 
 
 def wait_for_a_host():
-    sel.force_navigate('infrastructure_hosts')
+    navigate_to(Host, 'All')
     logger.info('Waiting for a host to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any host to appear",
              num_sec=1000, fail_func=sel.refresh)
 
 
 def wait_for_host_delete(host):
-    sel.force_navigate('infrastructure_hosts')
+    navigate_to(Host, 'All')
     quad = Quadicon(host.name, 'host')
     logger.info('Waiting for a host to delete...')
     wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
@@ -486,7 +534,7 @@ def wait_for_host_delete(host):
 
 
 def wait_for_host_to_appear(host):
-    sel.force_navigate('infrastructure_hosts')
+    navigate_to(Host, 'All')
     quad = Quadicon(host.name, 'host')
     logger.info('Waiting for a host to appear...')
     wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
@@ -496,7 +544,7 @@ def wait_for_host_to_appear(host):
 def get_all_hosts(do_not_navigate=False):
     """Returns list of all hosts"""
     if not do_not_navigate:
-        sel.force_navigate('infrastructure_hosts')
+        navigate_to(Host, 'All')
     hosts = set([])
     for page in paginator.pages():
         for title in sel.elements(
@@ -513,7 +561,7 @@ def find_quadicon(host, do_not_navigate=False):
     Returns: :py:class:`cfme.web_ui.Quadicon` instance
     """
     if not do_not_navigate:
-        sel.force_navigate('infrastructure_hosts')
+        navigate_to(Host, 'All')
     for page in paginator.pages():
         quadicon = Quadicon(host, "host")
         if sel.is_displayed(quadicon):

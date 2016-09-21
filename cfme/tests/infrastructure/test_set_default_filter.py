@@ -8,6 +8,8 @@ from cfme.infrastructure import host, datastore
 from utils.providers import setup_a_provider
 from utils import version
 from cfme.web_ui import accordion, listaccordion as list_acc
+from utils.appliance.endpoints.ui import navigate_to
+from cfme.infrastructure.host import Host
 
 
 @pytest.fixture(scope="module")
@@ -23,17 +25,17 @@ def test_set_default_host_filter(provider, request):
 
     # Add cleanup finalizer
     def unset_default_host_filter():
-        pytest.sel.force_navigate('infrastructure_hosts')
+        navigate_to(Host, 'All')
         list_acc.select('Filters', 'ALL', by_title=False)
         pytest.sel.click(host.default_host_filter_btn)
     request.addfinalizer(unset_default_host_filter)
 
-    pytest.sel.force_navigate('infrastructure_hosts')
+    navigate_to(Host, 'All')
     list_acc.select('Filters', 'Status / Running', by_title=False)
     pytest.sel.click(host.default_host_filter_btn)
     logout()
     login_admin()
-    pytest.sel.force_navigate('infrastructure_hosts')
+    navigate_to(Host, 'All')
     assert list_acc.is_selected('Filters', 'Status / Running (Default)', by_title=False),\
         'Status / Running filter not set as default'
 
@@ -41,7 +43,7 @@ def test_set_default_host_filter(provider, request):
 def test_clear_host_filter_results(provider):
     """ Test for clearing filter results for hosts."""
 
-    pytest.sel.force_navigate('infrastructure_hosts')
+    navigate_to(Host, 'All')
     list_acc.select('Filters', 'Status / Stopped', by_title=False)
     pytest.sel.click(search_box.clear_advanced_search)
     page_title = pytest.sel.text(host.page_title_loc)
