@@ -130,7 +130,7 @@ class BrowserFactory(object):
     def create(self):
         browser = tries(
             3, WebDriverException,
-            self.webdriver_class, **self.processed_bowser_args())
+            self.webdriver_class, **self.processed_browser_args())
         browser.file_detector = UselessFileDetector()
         browser.maximize_window()
         browser.get(store.base_url)
