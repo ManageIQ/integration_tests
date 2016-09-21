@@ -94,6 +94,11 @@ class Container(SummaryMixin):
                 import_form,
                 {"runtime_name": runtime_name},
             )
+        if not enable_deploy:
+            fill(
+                import_form,
+                {"enable_deployment": enable_deploy}
+            )
         sel.click(import_form.cancel_button if cancel else import_form.deploy_button)
         flash.assert_success_message('Deployment "{}" has been initiated on this server.'
                     .format(runtime_name if runtime_name else os.path.basename(filename)))
@@ -110,29 +115,29 @@ class Deployable(SummaryMixin):
         sel.handle_alert()
         flash.assert_success_message('Undeployment initiated for selected deployment(s)')
 
-    def redeploy(self):
+    def restart(self):
         """
-        Clicks on "Redeploy" menu item and verifies message shown
+        Clicks on "Restart" menu item and verifies message shown
         """
         self.load_details()
-        operations_btn("Redeploy", invokes_alert=True)
+        operations_btn("Restart", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Redeployment initiated for selected deployment(s)')
+        flash.assert_success_message('Restart initiated for selected deployment(s)')
 
-    def stop(self):
+    def disable(self):
         """
-        Clicks on "Stop" menu item and verifies message shown
+        Clicks on "Disable" menu item and verifies message shown
         """
         self.load_details()
-        operations_btn("Stop", invokes_alert=True)
+        operations_btn("Disable", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Stop initiated for selected deployment(s)')
+        flash.assert_success_message('Disable initiated for selected deployment(s)')
 
-    def start(self):
+    def enable(self):
         """
-        Clicks on "Start" menu item and verifies message shown
+        Clicks on "Enable" menu item and verifies message shown
         """
         self.load_details()
-        operations_btn("Start", invokes_alert=True)
+        operations_btn("Enable", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Start initiated for selected deployment(s)')
+        flash.assert_success_message('Enable initiated for selected deployment(s)')

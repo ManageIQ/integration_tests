@@ -4,9 +4,10 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from utils import testgen
+from utils import testgen, providers
 from utils.wait import wait_for
 from utils.version import current_version
+
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
@@ -31,6 +32,35 @@ def vm(request, provider, setup_provider, small_template):
             provider.mgmt.delete_vm(vm_obj.name)
     vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm_obj
+
+
+@pytest.fixture(scope="function")
+def existing_vm(request):
+    """ Fixture will be using for set\unset retirement date for existing vm instead of
+    creation a new one
+    """
+    list_of_existing_providers = providers.existing_providers()
+    if list_of_existing_providers:
+        test_provider = providers.get_crud(list_of_existing_providers[0])
+    else:
+        test_provider = providers.setup_a_provider()
+    all_vms = test_provider.mgmt.list_vm()
+    need_to_create_vm = True
+    for virtual_machine in all_vms:
+        if test_provider.mgmt.is_vm_running(virtual_machine):
+            need_vm = VM.factory(virtual_machine, test_provider)
+            need_to_create_vm = False
+            break
+    if need_to_create_vm:
+        machine_name = 'test_retire_prov_{}'.format(fauxfactory.gen_alpha(length=8).lower())
+        need_vm = VM.factory(machine_name, test_provider)
+        need_vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+
+    @request.addfinalizer
+    def _delete_vm():
+        if need_to_create_vm:
+            test_provider.mgmt.delete_vm(need_vm.name)
+    return need_vm
 
 
 def verify_retirement(vm):
@@ -81,16 +111,13 @@ def test_set_retirement_date(vm):
     verify_retirement(vm)
 
 
-def test_unset_retirement_date(vm):
+def test_set_unset_retirement_date_tomorrow(existing_vm):
     """Tests retirement
 
     Metadata:
         test_flag: retire, provision
     """
-    try:
-        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-        vm.set_retirement_date(tomorrow)
-        vm.set_retirement_date(None)
-        assert vm.get_detail(["Lifecycle", "Retirement Date"]) == "Never"
-    finally:
-        vm.retire()
+    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    existing_vm.set_retirement_date(tomorrow)
+    existing_vm.set_retirement_date(None)
+    assert existing_vm.get_detail(["Lifecycle", "Retirement Date"]) == "Never"

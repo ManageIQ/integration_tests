@@ -4,22 +4,22 @@
 :var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
            Datastores pages.
 """
-
-from cfme.web_ui.menu import nav
+from functools import partial
 
 from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg,
-    flash, InfoBlock, summary_title
+    Quadicon, Region, listaccordion as list_acc, toolbar as tb,
+    flash, InfoBlock, summary_title, fill
 )
 from cfme.web_ui.form_buttons import FormButton
-from functools import partial
+from cfme.web_ui.menu import nav
+from utils import version
+from utils.appliance.endpoints.ui import navigate_to
+from utils.log import logger
 from utils.pretty import Pretty
 from utils.providers import get_crud
 from utils.wait import wait_for
-from utils import version
-from utils.log import logger
 
 
 details_page = Region(infoblock_type='detail')
@@ -33,7 +33,8 @@ pol_btn = partial(tb.select, 'Policy')
 
 
 def nav_to_datastore_through_provider(context):
-    sel.force_navigate('infrastructure_provider', context=context)
+    # TODO: replace this navigation via navmazing and a CFMENavigateStep destination
+    navigate_to(context['provider'], 'All')
     list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
     sel.click(Quadicon(context['datastore'].name, 'datastore'))
 
@@ -166,14 +167,16 @@ class Datastore(Pretty):
     def delete_all_attached_vms(self):
         self.load_details()
         sel.click(details_page.infoblock.element("Relationships", "Managed VMs"))
-        sel.click(pg.check_all())
+        for q in Quadicon.all('vm'):
+            fill(q.checkbox(), True)
         cfg_btn("Remove selected items from the VMDB", invokes_alert=True)
         sel.handle_alert(cancel=False)
 
     def delete_all_attached_hosts(self):
         self.load_details()
         sel.click(details_page.infoblock.element("Relationships", "Hosts"))
-        sel.click(pg.check_all())
+        for q in Quadicon.all('host'):
+            fill(q.checkbox(), True)
         path = version.pick({
             version.LOWEST: "Remove Hosts from the VMDB",
             "5.4": "Remove items from the VMDB"})

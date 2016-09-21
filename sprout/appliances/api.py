@@ -10,7 +10,8 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from appliances.models import Appliance, AppliancePool, Provider, Group, Template, User
+from appliances.models import (
+    Appliance, AppliancePool, Provider, Group, Template, User, GroupShepherd)
 from appliances.tasks import (
     appliance_power_on, appliance_power_off, appliance_suspend, appliance_rename,
     connect_direct_lun, disconnect_direct_lun, mark_appliance_ready, wait_appliance_ready)
@@ -185,8 +186,8 @@ def list_appliances(used=False):
     return result
 
 
-@jsonapi.method
-def num_shepherd_appliances(group, version=None, date=None, provider=None):
+@jsonapi.authenticated_method
+def num_shepherd_appliances(user, group, version=None, date=None, provider=None):
     """Provides number of currently available shepherd appliances."""
     group = Group.objects.get(id=group)
     if provider is not None:
@@ -293,12 +294,15 @@ def pool_exists(id):
         return False
 
 
-@jsonapi.method
-def get_number_free_appliances(group):
+@jsonapi.authenticated_method
+def get_number_free_appliances(user, group):
     """Get number of available appliances to keep in the pool"""
     with transaction.atomic():
         g = Group.objects.get(id=group)
-        return g.template_pool_size
+        return {
+            sg.user_group.name: sg.template_pool_size
+            for sg in
+            GroupShepherd.objects.filter(user_group__in=user.groups.all(), template_group=g)}
 
 
 @jsonapi.authenticated_method

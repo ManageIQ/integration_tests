@@ -2,7 +2,7 @@ from mgmtsystem.rhevm import RHEVMSystem
 from . import Provider, prop_region
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class RHEVMProvider(Provider):
     _properties_region = prop_region
     type_name = "rhevm"
@@ -30,7 +30,7 @@ class RHEVMProvider(Provider):
                 kwargs.get('hostname') if self.credentials.get('candu', None) else None}
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = {
             # The default credentials for controlling the provider

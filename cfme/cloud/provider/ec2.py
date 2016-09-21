@@ -3,7 +3,7 @@ from . import Provider
 import cfme.fixtures.pytest_selenium as sel
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class EC2Provider(Provider):
     type_name = "ec2"
     mgmt_class = EC2System
@@ -19,7 +19,7 @@ class EC2Provider(Provider):
                 'region_select': sel.ByValue(kwargs.get('region'))}
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         return cls(name=prov_config['name'],

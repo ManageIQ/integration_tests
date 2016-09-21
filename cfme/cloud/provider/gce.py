@@ -3,7 +3,7 @@ from . import Provider
 import cfme.fixtures.pytest_selenium as sel
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class GCEProvider(Provider):
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
@@ -20,7 +20,7 @@ class GCEProvider(Provider):
                 'google_project_text': kwargs.get('project')}
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         ser_acc_creds = cls.get_credentials_from_config(
             prov_config['credentials'], cred_type='service_account')
         return cls(name=prov_config['name'],

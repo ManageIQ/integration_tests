@@ -1,15 +1,14 @@
 import pytest
 
-import os
-import fauxfactory
 from cfme.middleware import get_random_list
 from cfme.middleware.deployment import MiddlewareDeployment
-from cfme.middleware.server import MiddlewareServer
 from utils import testgen
 from utils.version import current_version
 from utils.wait import wait_for
-from utils.path import middleware_resources_path
-
+from deployment_methods import deploy, get_server
+from deployment_methods import EAP_PRODUCT_NAME, HAWKULAR_PRODUCT_NAME
+from deployment_methods import RESOURCE_EAR_NAME, RESOURCE_JAR_NAME
+from deployment_methods import RESOURCE_WAR_NAME, RESOURCE_WAR_NAME_NEW
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -17,13 +16,6 @@ pytestmark = [
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
 ITEMS_LIMIT = 5  # when we have big list, limit number of items to test
-
-RESOURCE_WAR_NAME = 'cfme_test_war_middleware.war'
-RESOURCE_JAR_NAME = 'cfme_test_jar_middleware.jar'
-RESOURCE_EAR_NAME = 'cfme_test_ear_middleware.ear'
-
-EAP_PRODUCT_NAME = 'JBoss EAP'
-HAWKULAR_PRODUCT_NAME = 'Hawkular'
 
 
 def test_list_deployments(provider):
@@ -153,14 +145,60 @@ def test_deploy(provider, archive_name):
         * Verified details properties.
     """
     server = get_server(provider, EAP_PRODUCT_NAME)
-    deploy(provider, server, get_resource_path(archive_name))
-    # disable for now as not stable test because of performance issue #10138
-    # _check_deployment_enabled(provider, server, runtime_name)
-    # deployment = _get_deployment_from_list(provider, server, runtime_name)
-    # deployment.validate_properties()
+    runtime_name = deploy(provider, server, archive_name)
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.validate_properties()
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10138'])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+def test_deploy_disabled(provider, archive_name):
+    """Tests Deployment of provided archive into EAP7 server as Disabled
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Invokes 'Add Deployment' toolbar operation
+        * Selects "war" file to upload.
+        * Chose random Runtime Name.
+        * Check "No" for "Enable Deployment".
+        * Checks that notification message is shown.
+        * Refreshes the provider.
+        * Verifies that deployment is shown in list and is Enabled.
+        * Selects deployment to show the details.
+        * Verified details properties.
+    """
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    runtime_name = deploy(provider, server, archive_name, enabled=False)
+    check_deployment_disabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.validate_properties()
+
+
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+def test_restart(provider, archive_name):
+    """Tests Restart of archive from EAP7 server
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Deplays some deployment archive into server.
+        * Select that deployment from deployments list.
+        * Performs "Restart" toolbar operation on it.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently restarted archive is listed and is Enabled.
+    """
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    runtime_name = deploy(provider, server, archive_name)
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.restart()
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.validate_properties()
+
+
 @pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
 def test_undeploy(provider, archive_name):
     """Tests Undeployment of archive from EAP7 server
@@ -173,103 +211,149 @@ def test_undeploy(provider, archive_name):
         * Performs "Undeploy" toolbar operation on it.
         * Refreshes the provider.
         * Lists all deployments on EAP server.
-        * Verified the recently undeployed archive's status is Disabled.
-        * Selects that archive from the list to load details.
-        * Verifies that properties of deplyment's summary page and the status is Disabled.
+        * Verified the recently undeployed archive is not listed anymore.
     """
     server = get_server(provider, EAP_PRODUCT_NAME)
-    runtime_name = deploy(provider, server, get_resource_path(archive_name))
+    runtime_name = deploy(provider, server, archive_name)
     check_deployment_enabled(provider, server, runtime_name)
     deployment = get_deployment_from_list(provider, server, runtime_name)
     deployment.undeploy()
-    check_deployment_disabled(provider, server, runtime_name)
-    deployment = get_deployment_from_list(provider, server, runtime_name)
-    deployment.validate_properties()
+    check_deployment_not_listed(provider, server, runtime_name)
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10138'])
-@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
-def test_redeploy(provider, archive_name):
-    """Tests Redeployment of undeployed archive into EAP7 server
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10583'])
+def test_redeploy(provider):
+    """Tests Redeployment of already deployed archive into EAP7 server
 
     Steps:
         * Get servers list from UI
         * Chooses JBoss EAP server from list
         * Deploys some deployment archive into server.
-        * Undeploys that archive.
         * Refreshes the provider.
         * Lists all deployments on EAP server.
-        * Verified the recently redeployed archive's status is Enabled.
-        * Selects that archive from the list to load details.
-        * Verifies that properties of deplyment's summary page and the status is Enabled.
+        * Verified the recently deployed archive's status is Enabled.
+        * Deploys newer version of the same deployment archive into server.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently deployed archive's status is Enabled.
     """
     server = get_server(provider, EAP_PRODUCT_NAME)
-    runtime_name = deploy(provider, server, get_resource_path(archive_name))
+    runtime_name = deploy(provider, server, RESOURCE_WAR_NAME)
     check_deployment_enabled(provider, server, runtime_name)
-    deployment = get_deployment_from_list(provider, server, runtime_name)
-    deployment.undeploy()
-    check_deployment_disabled(provider, server, runtime_name)
-    deployment.redeploy()
-    # enable when #9876 is fixed
-    # _check_deployment_enabled(provider, server, runtime_name)
-    # deployment = _get_deployment_from_list(provider, server, runtime_name)
-    # deployment.validate_properties()
+    deploy(provider, server, RESOURCE_WAR_NAME_NEW, runtime_name=runtime_name)
+    check_deployment_enabled(provider, server, runtime_name)
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10138'])
-@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
-def test_stop(provider, archive_name):
-    """Tests Stopping of archive from EAP7 server
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10583'])
+def test_redeploy_disabled(provider):
+    """Tests Redeployment of already deployed and disabled archive into EAP7 server
 
     Steps:
         * Get servers list from UI
         * Chooses JBoss EAP server from list
-        * Deploys some deployment archive into server.
-        * Select that deployment from deployments list.
-        * Performs "Stop" toolbar operation on it.
+        * Deploys some deployment archive into server as Disabled.
         * Refreshes the provider.
         * Lists all deployments on EAP server.
-        * Verified the recently stopped archive's status is Disabled.
-        * Selects that archive from the list to load details.
-        * Verifies that properties of deplyment's summary page and the status is Disabled.
+        * Verified the recently deployed archive's status is Disabled.
+        * Deploys newer version of the same deployment archive into server as Disabled.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently deployed archive's status is Disabled.
     """
     server = get_server(provider, EAP_PRODUCT_NAME)
-    runtime_name = deploy(provider, server, get_resource_path(archive_name))
-    check_deployment_enabled(provider, server, runtime_name)
-    deployment = get_deployment_from_list(provider, server, runtime_name)
-    deployment.stop()
+    runtime_name = deploy(provider, server, RESOURCE_WAR_NAME, enabled=False)
     check_deployment_disabled(provider, server, runtime_name)
-    deployment = get_deployment_from_list(provider, server, runtime_name)
-    deployment.validate_properties()
+    deploy(provider, server, RESOURCE_WAR_NAME_NEW,
+        runtime_name=runtime_name, enabled=False)
+    check_deployment_disabled(provider, server, runtime_name)
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10138'])
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10583'])
+def test_redeploy_enable_disabled(provider):
+    """Tests Redeployment and enabling of already deployed and disabled archive into EAP7 server
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Deploys some deployment archive into server as Disabled.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently deployed archive's status is Disabled.
+        * Deploys newer version of the same deployment archive into server as Enabled.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently deployed archive's status is Enabled.
+    """
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    runtime_name = deploy(provider, server, RESOURCE_WAR_NAME, enabled=False)
+    check_deployment_disabled(provider, server, runtime_name)
+    deploy(provider, server, RESOURCE_WAR_NAME_NEW, runtime_name=runtime_name)
+    check_deployment_enabled(provider, server, runtime_name)
+
+
 @pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
-def test_start(provider, archive_name):
+def test_disable_enable(provider, archive_name):
     """Tests Starting of stopped archive into EAP7 server
 
     Steps:
         * Get servers list from UI
         * Chooses JBoss EAP server from list
         * Deploys some deployment archive into server.
-        * Stops that archive.
+        * Select that deployment from deployments list.
+        * Performs "Disable" toolbar operation on it.
         * Refreshes the provider.
         * Lists all deployments on EAP server.
-        * Verified the recently stopped archive's status is Enabled.
+        * Verified the recently disabled archive's status is Disabled.
+        * Selects that archive from the list to load details.
+        * Verifies that properties of deplyment's summary page and the status is Disabled.
+        * Performs "Enable" toolbar operation on it.
+        * Refreshes the provider.
+        * Lists all deployments on EAP server.
+        * Verified the recently enabled archive's status is Enabled.
         * Selects that archive from the list to load details.
         * Verifies that properties of deplyment's summary page and the status is Enabled.
     """
     server = get_server(provider, EAP_PRODUCT_NAME)
-    runtime_name = deploy(provider, server, get_resource_path(archive_name))
+    runtime_name = deploy(provider, server, archive_name)
     check_deployment_enabled(provider, server, runtime_name)
     deployment = get_deployment_from_list(provider, server, runtime_name)
-    deployment.stop()
+    deployment.disable()
     check_deployment_disabled(provider, server, runtime_name)
-    deployment.start()
-    # enable when #10111 is fixed
-    # _check_deployment_enabled(provider, server, runtime_name)
-    # deployment = _get_deployment_from_list(provider, server, runtime_name)
-    # deployment.validate_properties()
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.validate_properties()
+    deployment.enable()
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.validate_properties()
+
+
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10583'])
+def test_disable_upgrade_enable(provider):
+    """Tests Starting of stopped archive into EAP7 server
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Deploys some deployment archive into server.
+        * Disable that archive.
+        * Verified the recently disabled archive's status is Disabled.
+        * Deploys newer version of the same deployment archive into server as Disabled.
+        * Enables that archive.
+        * Verified the recently enabled archive's status is Enabled.
+    """
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    runtime_name = deploy(provider, server, RESOURCE_WAR_NAME)
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.disable()
+    check_deployment_disabled(provider, server, runtime_name)
+    deploy(provider, server, RESOURCE_WAR_NAME_NEW,
+        runtime_name=runtime_name, enabled=False)
+    check_deployment_disabled(provider, server, runtime_name)
+    deployment.enable()
+    check_deployment_enabled(provider, server, runtime_name)
+    deployment = get_deployment_from_list(provider, server, runtime_name)
+    deployment.validate_properties()
 
 
 def get_deployments_set(deployments):
@@ -288,25 +372,6 @@ def get_deployments_statuses(deployments):
     return {deployment.name: deployment.status for deployment in deployments}
 
 
-def deploy(provider, server, file_path):
-    runtime_name = "{}_{}".format(fauxfactory.gen_alpha(8).lower(), os.path.basename(file_path))
-    server.add_deployment(file_path, runtime_name)
-    provider.refresh_provider_relationships(method='ui')
-    return runtime_name
-
-
-def get_server(provider, product):
-    for server in MiddlewareServer.servers(provider=provider):
-        if server.product == product:
-            return server
-    else:
-        raise ValueError('{} server was not found in servers list'.format(provider))
-
-
-def get_resource_path(archive_name):
-    return middleware_resources_path.join(archive_name).strpath
-
-
 def get_deployment_from_list(provider, server, runtime_name):
     for deployment in MiddlewareDeployment.deployments(provider=provider, server=server):
         if deployment.name == runtime_name:
@@ -318,28 +383,42 @@ def get_deployment_from_list(provider, server, runtime_name):
 def check_deployment_appears(provider, server, runtime_name):
     provider.refresh_provider_relationships(method='ui')
     wait_for(lambda: runtime_name in
-             get_deployments_statuses(MiddlewareDeployment.deployments(provider=provider,
-                                                                   server=server)),
-            delay=30, num_sec=1200,
-            message='Deployment {} must be found for server {}'
-            .format(runtime_name, server.name))
+        get_deployments_statuses(
+            MiddlewareDeployment.deployments(provider=provider, server=server)),
+        delay=30, num_sec=1200,
+        message='Deployment {} must be found for server {}'
+        .format(runtime_name, server.name))
+
+
+def check_deployment_not_listed(provider, server, runtime_name):
+    provider.refresh_provider_relationships(method='ui')
+    wait_for(lambda: runtime_name not in
+        get_deployments_statuses(
+            MiddlewareDeployment.deployments(provider=provider, server=server)),
+        delay=30, num_sec=1200,
+        message='Deployment {} must not be found for server {}'
+        .format(runtime_name, server.name))
 
 
 def check_deployment_enabled(provider, server, runtime_name):
     check_deployment_appears(provider, server, runtime_name)
+    provider.refresh_provider_relationships(method='ui')
     wait_for(lambda:
-             get_deployments_statuses(MiddlewareDeployment.deployments(provider=provider,
-                                            server=server))[runtime_name] == 'Enabled',
-            delay=120, num_sec=1800,
-            message='Deployment {} must be Enabled for server {}'
-            .format(runtime_name, server.name))
+        get_deployments_statuses(
+            MiddlewareDeployment.deployments(provider=provider,
+                server=server))[runtime_name] == 'Enabled',
+        delay=120, num_sec=1800,
+        message='Deployment {} must be Enabled for server {}'
+        .format(runtime_name, server.name))
 
 
 def check_deployment_disabled(provider, server, runtime_name):
+    check_deployment_appears(provider, server, runtime_name)
     provider.refresh_provider_relationships(method='ui')
     wait_for(lambda:
-             get_deployments_statuses(MiddlewareDeployment.deployments(provider=provider,
-                                            server=server))[runtime_name] == 'Disabled',
-            delay=120, num_sec=1800,
-            message='Deployment {} must be Disabled for server {}'
-            .format(runtime_name, server.name))
+        get_deployments_statuses(
+            MiddlewareDeployment.deployments(provider=provider,
+                server=server))[runtime_name] == 'Disabled',
+        delay=120, num_sec=1800,
+        message='Deployment {} must be Disabled for server {}'
+        .format(runtime_name, server.name))

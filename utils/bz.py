@@ -201,8 +201,11 @@ def check_fixed_in(fixed_in, version_series):
 
 
 class BugWrapper(object):
-    _copy_matcher = re.compile(
-        r"^\+\+\+ This bug was initially created as a clone of Bug #([0-9]+) \+\+\+")
+    _copy_matchers = map(re.compile, [
+        r'^[+]{3}\s*This bug is a CFME zstream clone. The original bug is:\s*[+]{3}\n[+]{3}\s*'
+        'https://bugzilla.redhat.com/show_bug.cgi\?id=(\d+)\.\s*[+]{3}',
+        r"^\+\+\+ This bug was initially created as a clone of Bug #([0-9]+) \+\+\+"
+    ])
 
     def __init__(self, bugzilla, bug):
         self._bug = bug
@@ -262,11 +265,13 @@ class BugWrapper(object):
             first_comment = self._bug.comments[0]["text"].lstrip()
         except IndexError:
             return None
-        copy_match = self._copy_matcher.match(first_comment)
-        if copy_match is None:
-            return None
+
+        for copy_matcher in self._copy_matchers:
+            copy_match = copy_matcher.match(first_comment)
+            if copy_match is not None:
+                return int(copy_match.groups()[0])
         else:
-            return int(copy_match.groups()[0])
+            return None
 
     @property
     def copies(self):

@@ -11,14 +11,18 @@
 
 from functools import partial
 
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 import cfme.fixtures.pytest_selenium as sel
+from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
-from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
+from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
@@ -51,9 +55,9 @@ properties_form_55 = Form(
                 "5.5": "api_port",
             }
         )),
-        ('azure_subscription_id', Input("subscription")),
+        ('azure_subscription_id', Input("subscription"), {'appeared_in', '5.6'}),
         ('api_version', AngularSelect("api_version"), {"appeared_in": "5.5"}),
-        ('sec_protocol', AngularSelect("security_protocol"), {"appeared_in": "5.5"}),
+        ('sec_protocol', AngularSelect("security_protocol", exact=True), {"appeared_in": "5.5"}),
         ('infra_provider', {
             version.LOWEST: None,
             "5.4": Select("select#provider_id"),
@@ -64,7 +68,9 @@ properties_form_56 = TabStripForm(
     fields=[
         ('type_select', AngularSelect("ems_type")),
         ('name_text', Input("name")),
-        ('region_select', AngularSelect("ems_region")),
+        ('region_select', {
+            version.LOWEST: AngularSelect("ems_region"),
+            '5.7': AngularSelect('provider_region')}),
         ('google_region_select', AngularSelect("ems_preferred_region")),
         ('api_version', AngularSelect("ems_api_version")),
         ('infra_provider', AngularSelect("ems_infra_provider_id")),
@@ -76,13 +82,13 @@ properties_form_56 = TabStripForm(
         "Default": [
             ('hostname_text', Input("default_hostname")),
             ('api_port', Input("default_api_port")),
-            ('sec_protocol', AngularSelect("default_security_protocol")),
+            ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
         ],
         "Events": [
             ('event_selection', Radio('event_stream_selection')),
             ('amqp_hostname_text', Input("amqp_hostname")),
             ('amqp_api_port', Input("amqp_api_port")),
-            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol")),
+            ('amqp_sec_protocol', AngularSelect("amqp_security_protocol", exact=True)),
         ]
     })
 
@@ -114,6 +120,7 @@ nav.add_branch('clouds_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
+@CloudInfraProvider.add_base_type
 class Provider(Pretty, CloudInfraProvider):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
@@ -132,6 +139,8 @@ class Provider(Pretty, CloudInfraProvider):
         myprov.create()
 
     """
+    provider_types = {}
+    in_version = (version.LOWEST, version.LATEST)
     type_tclass = "cloud"
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']
@@ -150,8 +159,10 @@ class Provider(Pretty, CloudInfraProvider):
     save_button = deferred_verpick(
         {version.LOWEST: form_buttons.save,
          '5.5': form_buttons.angular_save})
+    appliance = CurrentAppliance()
 
-    def __init__(self, name=None, credentials=None, zone=None, key=None):
+    def __init__(self, name=None, credentials=None, zone=None, key=None, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
         if not credentials:
             credentials = {}
         self.name = name
@@ -163,10 +174,107 @@ class Provider(Pretty, CloudInfraProvider):
         return {'name_text': kwargs.get('name')}
 
 
+@navigator.register(Provider, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
+
+    def resetter(self):
+        tb.select('Grid View')
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
+
+
+@navigator.register(Provider, 'Add')
+class New(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New Cloud Provider')
+
+
+@navigator.register(Provider, 'Discover')
+class Discover(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Discover Cloud Providers')
+
+
+@navigator.register(Provider, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+
+@navigator.register(Provider, 'Edit')
+class Edit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        cfg_btn('Edit Selected Cloud Provider')
+
+
+@navigator.register(Provider, 'EditFromDetails')
+class EditFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Cloud Provider')
+
+
+@navigator.register(Provider, 'ManagePolicies')
+class ManagePolicies(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        pol_btn('Manage Policies')
+
+
+@navigator.register(Provider, 'ManagePoliciesFromDetails')
+class ManagePoliciesFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Manage Policies')
+
+
+@navigator.register(Provider, 'EditTags')
+class EditTags(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        pol_btn('Edit Tags')
+
+
+@navigator.register(Provider, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Edit Tags')
+
+
+@navigator.register(Provider, 'Timelines')
+class Timelines(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
+
+
 def get_all_providers(do_not_navigate=False):
     """Returns list of all providers"""
     if not do_not_navigate:
-        sel.force_navigate('clouds_providers')
+        navigate_to(Provider, 'All')
     providers = set([])
     link_marker = "ems_cloud"
     for page in paginator.pages():
@@ -185,7 +293,7 @@ def discover(credential, cancel=False, d_type="Amazon"):
       credential (cfme.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
-    sel.force_navigate('clouds_provider_discover')
+    navigate_to(Provider, 'Discover')
     form_data = {'discover_select': d_type}
     if credential:
         form_data.update({'username': credential.principal,
@@ -197,7 +305,7 @@ def discover(credential, cancel=False, d_type="Amazon"):
 
 
 def wait_for_a_provider():
-    sel.force_navigate('clouds_providers')
+    navigate_to(Provider, 'All')
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)

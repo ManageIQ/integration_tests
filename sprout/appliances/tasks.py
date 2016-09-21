@@ -24,7 +24,7 @@ import socket
 
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask,
-    MismatchVersionMailer, User)
+    MismatchVersionMailer, User, GroupShepherd)
 from sprout import settings, redis
 from sprout.irc_bot import send_message
 from sprout.log import create_logger
@@ -52,6 +52,7 @@ VERSION_REGEXPS = [
     r"cfme-(?:nightly-)?(\d)(\d)(\d)(\d{2})-",   # cfme-53111-   -> 5.3.1.11, cfme-53101 -> 5.3.1.1
 ]
 VERSION_REGEXPS = map(re.compile, VERSION_REGEXPS)
+VERSION_REGEXP_UPSTREAM = re.compile(r'^miq-stable-([^-]+)-')
 TRACKERBOT_PAGINATE = 20
 
 
@@ -61,6 +62,10 @@ def retrieve_cfme_appliance_version(template_name):
         match = regexp.search(template_name)
         if match is not None:
             return ".".join(map(str, map(int, match.groups())))
+    else:
+        match = VERSION_REGEXP_UPSTREAM.search(template_name)
+        if match is not None:
+            return match.groups()[0]
 
 
 def trackerbot():
@@ -86,12 +91,14 @@ def logged_task(*args, **kwargs):
         @wraps(task)
         def wrapped_task(self, *args, **kwargs):
             self.logger = create_logger(task)
-            self.logger.info(
-                "Entering with arguments: {} / {}".format(", ".join(map(str, args)), str(kwargs)))
             try:
                 return task(self, *args, **kwargs)
-            finally:
-                self.logger.info("Leaving")
+            except Exception as e:
+                self.logger.error(
+                    "An exception occured when executing with args: %r kwargs: %r",
+                    args, kwargs)
+                self.logger.exception(e)
+                raise
         return shared_task(*args, **kwargs)(wrapped_task)
     return f
 
@@ -114,19 +121,19 @@ def singleton_task(*args, **kwargs):
             lock_id = '{0}-lock-{1}'.format(self.name, digest)
 
             if cache.add(lock_id, 'true', LOCK_EXPIRE):
-                self.logger.info(
-                    "Entering with arguments: {} / {}".format(
-                        ", ".join(map(str, args)), str(kwargs)))
                 try:
                     return task(self, *args, **kwargs)
+                except Exception as e:
+                    self.logger.error(
+                        "An exception occured when executing with args: %r kwargs: %r",
+                        args, kwargs)
+                    self.logger.exception(e)
+                    raise
                 finally:
                     cache.delete(lock_id)
-                    self.logger.info("Leaving")
             elif wait:
                 self.logger.info("Waiting for another instance of the task to end.")
                 self.retry(args=args, countdown=wait_countdown, max_retries=wait_retries)
-            else:
-                self.logger.info("Already running, ignoring.")
 
         return shared_task(*args, **kwargs)(wrapped_task)
     return f
@@ -206,6 +213,8 @@ def poke_trackerbot(self):
     objects = depaginate(tbapi, tbapi.providertemplate().get(limit=TRACKERBOT_PAGINATE))["objects"]
     per_group = {}
     for obj in objects:
+        if obj["template"]["group"]["name"] == 'unknown':
+            continue
         if obj["template"]["group"]["name"] not in per_group:
             per_group[obj["template"]["group"]["name"]] = []
 
@@ -419,10 +428,14 @@ def prepare_template_verify_version(self, template_id):
         return
     if true_version != supposed_version:
         # Check if the difference is not just in the suffixes, which can be the case ...
-        if supposed_version.version == true_version.version:
+        t = str(true_version)
+        s = str(supposed_version)
+        if supposed_version.version == true_version.version or t.startswith(s):
             # The two have same version but different suffixes, apply the suffix to the template obj
+            # OR also a case - when the supposed version is incomplete so we will use the detected
+            # version.
             with transaction.atomic():
-                template.version = str(true_version)
+                template.version = t
                 template.save()
                 if template.parent_template is not None:
                     # In case we have a parent template, update the version there too.
@@ -501,7 +514,7 @@ def prepare_template_finish(self, template_id):
     try:
         if template.temporary_name is None:
             tmp_name = "templatize_{}".format(fauxfactory.gen_alphanumeric(8))
-            Template.objects.get(id=template_id).temporary_name = tmp_name
+            Template.objects.get(id=template_id).temporary_name = tmp_name  # metadata, autosave
         else:
             tmp_name = template.temporary_name
         template.provider_api.mark_as_template(
@@ -572,8 +585,7 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
     if pool.fulfilled:
         for appliance in pool.appliances:
             apply_lease_times.delay(appliance.id, time_minutes)
-        # TODO: Renaming disabled until orphaning and killing resolved
-        # rename_appliances_for_pool.delay(pool.id)
+        rename_appliances_for_pool.delay(pool.id)
         with transaction.atomic():
             pool.finished = True
             pool.save()
@@ -641,9 +653,7 @@ def replace_clone_to_pool(
     if appliance_pool.not_needed_anymore:
         return
     exclude_template = Template.objects.get(id=exclude_template_id)
-    templates = Template.objects.filter(
-        ready=True, exists=True, usable=True, template_group=appliance_pool.group, version=version,
-        date=date).all()
+    templates = appliance_pool.possible_templates
     templates_excluded = filter(lambda tpl: tpl != exclude_template, templates)
     if templates_excluded:
         template = random.choice(templates_excluded)
@@ -680,7 +690,7 @@ def apply_lease_times(self, appliance_id, time_minutes):
     with transaction.atomic():
         appliance = Appliance.objects.get(id=appliance_id)
         appliance.datetime_leased = timezone.now()
-        appliance.leased_until = appliance.datetime_leased + timedelta(minutes=time_minutes)
+        appliance.leased_until = appliance.datetime_leased + timedelta(minutes=int(time_minutes))
         appliance.save()
 
 
@@ -1110,19 +1120,22 @@ def generic_shepherd(self, preconfigured):
     appliances. For each template group, it keeps the last template's appliances spinned up in
     required quantity. If new template comes out of the door, it automatically kills the older
     running template's appliances and spins up new ones. Sorts the groups by the fulfillment."""
-    for grp in sorted(
-            Group.objects.all(), key=lambda g: g.get_fulfillment_percentage(preconfigured)):
+    for gs in sorted(
+            GroupShepherd.objects.all(), key=lambda g: g.get_fulfillment_percentage(preconfigured)):
+        prov_filter = {'provider__user_groups': gs.user_group}
         group_versions = Template.get_versions(
-            template_group=grp, ready=True, usable=True, preconfigured=preconfigured)
+            template_group=gs.template_group, ready=True, usable=True, preconfigured=preconfigured,
+            **prov_filter)
         group_dates = Template.get_dates(
-            template_group=grp, ready=True, usable=True, preconfigured=preconfigured)
+            template_group=gs.template_group, ready=True, usable=True, preconfigured=preconfigured,
+            **prov_filter)
         if group_versions:
             # Downstream - by version (downstream releases)
             version = group_versions[0]
             # Find the latest date (one version can have new build)
             dates = Template.get_dates(
-                template_group=grp, ready=True, usable=True, version=group_versions[0],
-                preconfigured=preconfigured)
+                template_group=gs.template_group, ready=True, usable=True,
+                version=group_versions[0], preconfigured=preconfigured, **prov_filter)
             if not dates:
                 # No template yet?
                 continue
@@ -1140,13 +1153,16 @@ def generic_shepherd(self, preconfigured):
         else:
             continue  # Ignore this group, no templates detected yet
 
+        filter_keep.update(prov_filter)
+        for filt in filters_kill:
+            filt.update(prov_filter)
         # Keeping current appliances
         # Retrieve list of all templates for given group
         # I know joins might be a bit better solution but I'll leave that for later.
         possible_templates = list(
             Template.objects.filter(
-                usable=True, ready=True, template_group=grp, preconfigured=preconfigured,
-                **filter_keep).all())
+                usable=True, ready=True, template_group=gs.template_group,
+                preconfigured=preconfigured, **filter_keep).all())
         # If it can be deployed, it must exist
         possible_templates_for_provision = filter(lambda tpl: tpl.exists, possible_templates)
         appliances = []
@@ -1157,7 +1173,7 @@ def generic_shepherd(self, preconfigured):
         # If we then want to delete some templates, better kill the eldest. status_changed
         # says which one was provisioned when, because nothing else then touches that field.
         appliances.sort(key=lambda appliance: appliance.status_changed)
-        pool_size = grp.template_pool_size if preconfigured else grp.unconfigured_template_pool_size
+        pool_size = gs.template_pool_size if preconfigured else gs.unconfigured_template_pool_size
         if len(appliances) < pool_size and possible_templates_for_provision:
             # There must be some templates in order to run the provisioning
             # Provision ONE appliance at time for each group, that way it is possible to maintain
@@ -1182,16 +1198,19 @@ def generic_shepherd(self, preconfigured):
                 clone_template_to_appliance.delay(appliance.id, None)
         elif len(appliances) > pool_size:
             # Too many appliances, kill the surplus
+            # Only kill those that are visible only for one group. This is necessary so the groups
+            # don't "fight"
             for appliance in appliances[:len(appliances) - pool_size]:
-                self.logger.info("Killing an extra appliance {}/{} in shepherd".format(
-                    appliance.id, appliance.name))
-                Appliance.kill(appliance)
+                if appliance.is_visible_only_in_group(gs.user_group):
+                    self.logger.info("Killing an extra appliance {}/{} in shepherd".format(
+                        appliance.id, appliance.name))
+                    Appliance.kill(appliance)
 
         # Killing old appliances
         for filter_kill in filters_kill:
             for template in Template.objects.filter(
-                    ready=True, usable=True, template_group=grp, preconfigured=preconfigured,
-                    **filter_kill):
+                    ready=True, usable=True, template_group=gs.template_group,
+                    preconfigured=preconfigured, **filter_kill):
                 for a in Appliance.objects.filter(
                         template=template, appliance_pool=None, marked_for_deletion=False):
                     self.logger.info(
@@ -1285,6 +1304,8 @@ def appliance_rename(self, appliance_id, new_name):
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
         return None
+    if not appliance.provider.allow_renaming:
+        return None
     if appliance.name == new_name:
         return None
     with redis.appliances_ignored_when_renaming(appliance.name, new_name):
@@ -1308,14 +1329,18 @@ def rename_appliances_for_pool(self, pool_id):
             if appliance.provider_api.can_rename
         ]
         for appliance in appliances:
-            new_name = "{}-{}-{}".format(
-                appliance_pool.owner.username,
-                appliance_pool.group.id,
-                appliance.template.date.strftime("%y%m%d")
-            )
-            if appliance.template.version:
-                new_name += "-{}".format(appliance.template.version)
-            new_name += "-{}".format(fauxfactory.gen_alphanumeric(length=4))
+            if not appliance.provider.allow_renaming:
+                continue
+            new_name = '{}_'.format(appliance_pool.owner.username)
+            if appliance.version and not appliance.version.startswith('...'):
+                # CFME
+                new_name += 'cfme_{}_'.format(appliance.version.replace('.', ''))
+            else:
+                # MIQ
+                new_name += 'miq_'
+            new_name += '{}_{}'.format(
+                appliance.template.date.strftime("%y%m%d"),
+                fauxfactory.gen_alphanumeric(length=4))
             appliance_rename.apply_async(
                 countdown=10,  # To prevent clogging with the transaction.atomic
                 args=(appliance.id, new_name))
@@ -1360,7 +1385,11 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
 def calculate_provider_management_usage(self, appliance_ids):
     results = {}
     for appliance_id in filter(lambda id: id is not None, appliance_ids):
-        appliance = Appliance.objects.get(id=appliance_id)
+        try:
+            appliance = Appliance.objects.get(id=appliance_id)
+        except ObjectDoesNotExist:
+            # Deleted in meanwhile
+            continue
         for provider in appliance.managed_providers:
             if provider not in results:
                 results[provider] = []
@@ -1618,16 +1647,10 @@ The Sprout™
 @singleton_task()
 def appliances_synchronize_metadata(self):
     for appliance in Appliance.objects.all():
-        appliance_synchronize_metadata.delay(appliance.id)
-
-
-@singleton_task()
-def appliance_synchronize_metadata(self, appliance_id):
-    try:
-        appliance = Appliance.objects.get(id=appliance_id)
-    except ObjectDoesNotExist:
-        return
-    appliance.synchronize_metadata()
+        try:
+            appliance.synchronize_metadata()
+        except ObjectDoesNotExist:
+            return
 
 
 @singleton_task()
@@ -1648,6 +1671,9 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
     """'re'-synchronizes any vms that might be lost during outages."""
     provider = Provider.objects.get(id=provider_id)
     provider_api = provider.api
+    if not hasattr(provider_api, 'list_vm'):
+        # This provider does not have VMs (eg. Hawkular or Openshift)
+        return
     for vm_name in sorted(map(str, provider_api.list_vm())):
         if Appliance.objects.filter(name=vm_name, template__provider=provider).count() != 0:
             continue
@@ -1702,9 +1728,10 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
                 vm_name, 'sprout_pool_group')
             pool_construct['group'] = Group.objects.get(id=group_id)
             try:
-                pool_construct['provider'] = provider_api.get_meta_value(
+                construct_provider_id = provider_api.get_meta_value(
                     vm_name, 'sprout_pool_provider')
-            except KeyError:
+                pool_construct['provider'] = Provider.objects.get(id=construct_provider_id)
+            except (KeyError, ObjectDoesNotExist):
                 # optional
                 pool_construct['provider'] = None
             pool_construct['version'] = provider_api.get_meta_value(

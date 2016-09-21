@@ -6,7 +6,7 @@ from utils.version import current_version
 from . import Provider
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class OpenStackProvider(Provider):
     type_name = "openstack"
     mgmt_class = OpenstackSystem
@@ -60,7 +60,7 @@ class OpenStackProvider(Provider):
         return data_dict
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         creds = {'default': credentials}

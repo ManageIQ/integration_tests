@@ -51,6 +51,15 @@ def get_test_idents(item):
             return (None, None)
 
 
+def get_name(obj):
+    if hasattr(obj, '_param_name'):
+        return getattr(obj, obj._param_name)
+    elif hasattr(obj, 'name'):
+        return obj.name
+    else:
+        return str(obj)
+
+
 class DummyClient(object):
     def fire_hook(self, *args, **kwargs):
         return
@@ -132,6 +141,13 @@ def pytest_runtest_protocol(item):
     tier = item.get_marker('tier')
     if tier:
         tier = tier.args[0]
+
+    try:
+        params = item.callspec.params
+        param_dict = {p: get_name(v) for p, v in params.iteritems()}
+    except:
+        param_dict = {}
+
     # This pre_start_test hook is needed so that filedump is able to make get the test
     # object set up before the logger starts logging. As the logger fires a nested hook
     # to the filedumper, and we can't specify order inriggerlib.
@@ -139,7 +155,7 @@ def pytest_runtest_protocol(item):
                          slaveid=SLAVEID, ip=appliance_ip_address)
     art_client.fire_hook('start_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address,
-                         tier=tier)
+                         tier=tier, param_dict=param_dict)
     yield
 
 

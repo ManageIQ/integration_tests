@@ -32,8 +32,8 @@ pwr_btn = partial(toolbar.select, "Power")
 retire_remove_button = "//span[@id='remove_button']/a/img|//a/img[contains(@src, '/clear')]"
 
 set_ownership_form = Form(fields=[
-    ('user_name', Select("//select[@id='user_name']")),
-    ('group_name', Select("//select[@id='group_name']")),
+    ('user_name', AngularSelect('user_name')),
+    ('group_name', AngularSelect('group_name')),
     ('create_button', form_buttons.save),
     ('reset_button', form_buttons.reset),
     ('cancel_button', form_buttons.cancel)
@@ -614,9 +614,10 @@ class VM(BaseVM):
             return False
 
     def delete_from_provider(self):
+        logger.info("Begin delete_from_provider")
         if self.provider.mgmt.does_vm_exist(self.name):
             try:
-                if self.provider.mgmt.is_vm_suspended(self.name):
+                if self.provider.mgmt.is_vm_suspended(self.name) and self.provider.type != 'azure':
                     logger.debug("Powering up VM %s to shut it down correctly on %s.",
                                 self.name, self.provider.key)
                     self.provider.mgmt.start_vm(self.name)
@@ -629,6 +630,7 @@ class VM(BaseVM):
             # One more check (for the suspended one)
             if self.provider.mgmt.does_vm_exist(self.name):
                 try:
+                    logger.info("Mgmt System delete_vm")
                     return self.provider.mgmt.delete_vm(self.name)
                 except exceptions.VMInstanceNotFound:
                     # Does not exist already

@@ -2,7 +2,7 @@ from . import Provider
 from mgmtsystem.kubernetes import Kubernetes
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class KubernetesProvider(Provider):
     type_name = "kubernetes"
     mgmt_class = Kubernetes
@@ -21,7 +21,7 @@ class KubernetesProvider(Provider):
                 'zone_select': kwargs.get('zone')}
 
     @staticmethod
-    def configloader(prov_config, prov_key):
+    def from_config(prov_config, prov_key):
         token_creds = KubernetesProvider.process_credential_yaml_key(
             prov_config['credentials'], cred_type='token')
         return KubernetesProvider(

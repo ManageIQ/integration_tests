@@ -10,16 +10,15 @@ from collections import Mapping
 
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
-from cfme.web_ui import Quadicon, paginator, toolbar
+from cfme.web_ui import Quadicon, paginator
 from cfme.common.provider import BaseProvider
 from cfme.containers import provider as container_providers  # NOQA
 from cfme.cloud import provider as cloud_providers  # NOQA
 from cfme.infrastructure import provider as infrastructure_providers  # NOQA
 from cfme.middleware import provider as middleware_providers  # NOQA
 from fixtures.prov_filter import filtered
-from utils import conf, version
+from utils import conf
 from utils.log import logger, perflog
-from utils.wait import wait_for
 
 
 providers_data = conf.cfme_data.get("management_systems", {})
@@ -36,7 +35,7 @@ def list_providers(allowed_types=None):
     """
     if not allowed_types:
         allowed_types = [
-            k2 for k in BaseProvider.type_mapping.keys() for k2 in BaseProvider.type_mapping[k]
+            k2 for k in BaseProvider.type_mapping.values() for k2 in k.provider_types.keys()
         ]
     providers = []
     for provider, data in providers_data.items():
@@ -91,8 +90,8 @@ def get_mgmt(provider_key, providers=None, credentials=None):
 
 
 def _get_provider_class_by_type(prov_type):
-    for class_dict in BaseProvider.type_mapping.itervalues():
-        maybe_the_class = class_dict.get(prov_type)
+    for cls in BaseProvider.type_mapping.itervalues():
+        maybe_the_class = cls.provider_types.get(prov_type)
         if maybe_the_class is not None:
             return maybe_the_class
 
@@ -134,7 +133,8 @@ def setup_a_provider(prov_class="infra", prov_type=None, validate=True, check_ex
     """
     if not required_keys:
         required_keys = []
-    potential_providers = list_providers(BaseProvider.type_mapping[prov_class].keys())
+    potential_providers = list_providers(
+        BaseProvider.type_mapping[prov_class].provider_types.keys())
     if prov_type:
         providers = []
         for provider in potential_providers:
@@ -309,16 +309,17 @@ def _setup_providers(prov_class, validate, check_existing):
 
     # Check for existing providers all at once, to prevent reloading
     # the providers page for every provider in cfme_data
-    if not list_providers(BaseProvider.type_mapping[prov_class]):
+    if not list_providers(BaseProvider.type_mapping[prov_class].provider_types.keys()):
         return []
     if check_existing:
         navigate = "{}_providers".format(
-            BaseProvider.type_mapping[prov_class].values()[0].page_name)
+            BaseProvider.type_mapping[prov_class].page_name)
         sel.force_navigate(navigate)
         add_providers = []
-        for provider_key in list_providers(BaseProvider.type_mapping[prov_class].keys()):
+        for provider_key in list_providers(
+                BaseProvider.type_mapping[prov_class].provider_types.keys()):
             provider_name = conf.cfme_data.get('management_systems', {})[provider_key]['name']
-            quad_name = BaseProvider.type_mapping[prov_class].values()[0].quad_name
+            quad_name = BaseProvider.type_mapping[prov_class].quad_name
             quad = Quadicon(provider_name, quad_name)
             for page in paginator.pages():
                 if sel.is_displayed(quad):
@@ -328,7 +329,7 @@ def _setup_providers(prov_class, validate, check_existing):
                 add_providers.append(provider_key)
     else:
         # Add all cloud, infra or container providers unconditionally
-        add_providers = list_providers(BaseProvider.type_mapping[prov_class].keys())
+        add_providers = list_providers(BaseProvider.type_mapping[prov_class].provider_types.keys())
 
     if add_providers:
         logger.info('Providers to be added: %s', ', '.join(add_providers))
@@ -346,62 +347,6 @@ def _setup_providers(prov_class, validate, check_existing):
             provider.validate()
 
     return added_providers
-
-
-def wait_for_no_providers_by_type(prov_class):
-    navigate = "{}_providers".format(BaseProvider.type_mapping[prov_class].values()[0].page_name)
-    sel.force_navigate(navigate)
-    logger.debug('Waiting for all {} providers to disappear...'.format(prov_class))
-    wait_for(
-        lambda: get_paginator_value() == 0, message="Delete all {} providers".format(prov_class),
-        num_sec=1000, fail_func=sel.refresh
-    )
-
-
-def clear_provider_by_type(prov_class, validate=True):
-    string_name = BaseProvider.type_mapping[prov_class].values()[0].string_name
-    navigate = "{}_providers".format(BaseProvider.type_mapping[prov_class].values()[0].page_name)
-    sel.force_navigate(navigate)
-    logger.debug('Checking for existing {} providers...'.format(prov_class))
-    total = paginator.rec_total()
-    if total > 0:
-        logger.info(' Providers exist, so removing all {} providers'.format(prov_class))
-        paginator.results_per_page('100')
-        sel.click(paginator.check_all())
-        toolbar.select(
-            'Configuration', {
-                version.LOWEST: 'Remove {} Providers from the VMDB'.format(string_name),
-                '5.7': 'Remove {} Providers'.format(string_name),
-            },
-            invokes_alert=True)
-        sel.handle_alert()
-        if validate:
-            wait_for_no_providers_by_type(prov_class)
-
-
-def get_paginator_value():
-    return paginator.rec_total()
-
-
-def clear_providers():
-    """Rudely clear all providers on an appliance
-
-    Uses the UI in an attempt to cleanly delete the providers
-    """
-    # Executes the deletes first, then validates in a second pass
-    logger.info('Destroying all appliance providers')
-    perflog.start('utils.providers.clear_providers')
-
-    def do_for_provider_types(op):
-        op('cloud', validate=False)
-        op('infra', validate=False)
-        if version.current_version() > '5.5':
-            op('container', validate=False)
-        if version.current_version() == version.LATEST:
-            op('middleware', validate=False)
-    do_for_provider_types(clear_provider_by_type)
-    do_for_provider_types(wait_for_no_providers_by_type)
-    perflog.stop('utils.providers.clear_providers')
 
 
 def destroy_vm(provider_mgmt, vm_name):
@@ -437,7 +382,7 @@ def get_crud(provider_config_name):
     prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
     prov_type = prov_config.get('type')
 
-    return _get_provider_class_by_type(prov_type).configloader(prov_config, provider_config_name)
+    return _get_provider_class_by_type(prov_type).from_config(prov_config, provider_config_name)
 
 
 class UnknownProvider(Exception):

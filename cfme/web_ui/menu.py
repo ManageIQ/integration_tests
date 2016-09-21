@@ -2,6 +2,7 @@
 import inspect
 from ui_navigate import UINavigate
 
+from cfme.exceptions import MenuItemNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, toolbar
 from lya import AttrDict
@@ -180,6 +181,11 @@ class Menu(UINavigate):
                     ('timelines', 'Timelines'),
                     ('rss', 'RSS')
                 ),
+                ('red_hat_insights', 'Red Hat Insights'): (
+                    ('redhat_insights_dashboard', 'Overview'),
+                    ('rules', 'Rules'),
+                    ('systems', 'Systems')
+                ),
                 ('services', 'Services'): (
                     ('my_services', 'My Services'),
                     ('services_catalogs', 'Catalogs'),
@@ -218,7 +224,8 @@ class Menu(UINavigate):
                     ('infrastructure_virtual_machines', 'Virtual Machines',
                         self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
                     ('infrastructure_resource_pools', 'Resource Pools'),
-                    ('infrastructure_datastores', 'Datastores'),
+                    ('infrastructure_datastores', 'Datastores',
+                        self._tree_func_with_grid("Datastores", "All Datastores")),
                     ('infrastructure_repositories', 'Repositories'),
                     ('infrastructure_pxe', 'PXE'),
                     ('infrastructure_requests', 'Requests'),
@@ -266,6 +273,11 @@ class Menu(UINavigate):
                     ('timelines', 'Timelines'),
                     ('rss', 'RSS')
                 ),
+                ('red_hat_insights', 'Red Hat Insights'): (
+                    ('redhat_insights_dashboard', 'Overview'),
+                    ('rules', 'Rules'),
+                    ('systems', 'Systems')
+                ),
                 ('services', 'Services'): (
                     ('my_services', 'My Services'),
                     ('services_catalogs', 'Catalogs'),
@@ -279,7 +291,6 @@ class Menu(UINavigate):
                         ('clouds_tenants', 'Tenants'),
                         ('clouds_volumes', 'Volumes'),
                         ('clouds_flavors', 'Flavors'),
-                        ('clouds_security_groups', 'Security Groups'),
                         ('clouds_instances', 'Instances',
                             self._tree_func_with_grid(
                                 "Instances by Provider", "Instances by Provider")),
@@ -295,7 +306,8 @@ class Menu(UINavigate):
                         ('infrastructure_virtual_machines', 'Virtual Machines',
                             self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
                         ('infrastructure_resource_pools', 'Resource Pools'),
-                        ('infrastructure_datastores', 'Datastores'),
+                        ('infrastructure_datastores', 'Datastores',
+                            self._tree_func_with_grid("Datastores", "All Datastores")),
                         ('infrastructure_repositories', 'Repositories'),
                         ('infrastructure_pxe', 'PXE'),
                         ('infrastructure_requests', 'Requests'),
@@ -322,16 +334,32 @@ class Menu(UINavigate):
                 ('middleware', 'Middleware'): (
                     ('middleware_providers', 'Providers', lambda: toolbar.select('Grid View')
                         if not toolbar.is_active("Grid View") else None),
-                    ('middleware_servers', 'Middleware Servers',
+                    ('middleware_domains', 'Domains',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
-                    ('middleware_deployments', 'Middleware Deployments',
+                    ('middleware_servers', 'Servers',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
-                    ('middleware_datasources', 'Middleware Datasources',
+                    ('middleware_deployments', 'Deployments',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
+                    ('middleware_datasources', 'Datasources',
+                     lambda: toolbar.select('List View')
+                        if not toolbar.is_active("List View") else None),
+                    ('middleware_messagings', 'Messagings',
                      lambda: toolbar.select('List View')
                         if not toolbar.is_active("List View") else None),
                     ('middleware_topology', 'Topology'),
+                ),
+                ('Networks', 'Networks'): (
+                    ('networks_providers', 'Providers'),
+                    ('networks_networks', 'Networks'),
+                    ('networks_subnets', 'Subnets'),
+                    ('networks_router', 'Network Router'),
+                    ('networks_security_groups', 'Security Groups'),
+                    ('networks_floating_ip', 'Floating IP'),
+                    ('networks_ports', 'Network Ports'),
+                    ('networks_topology', 'Topology'),
                 ),
                 ('control', 'Control'): (
                     ('control_explorer', 'Explorer'),
@@ -380,8 +408,23 @@ class Menu(UINavigate):
             return True
 
     @staticmethod
-    def _try_nav(el):
-        href = sel.get_attribute(el, 'href')
+    def _try_nav(el, toplevel, secondlevel, thirdlevel=None):
+        try:
+            href = sel.get_attribute(el, 'href')
+        except NoSuchElementException as e:
+            # Make our own exception
+            if thirdlevel is None:
+                item = '{} / {}'.format(toplevel, secondlevel)
+            else:
+                item = '{} / {} / {}'.format(toplevel, secondlevel, thirdlevel)
+
+            message = '\n'.join([
+                'An error happened during selecting of the menu item: {}'.format(item),
+                str(e).rstrip(),  # An extra newline at the end.
+            ])
+
+            raise MenuItemNotFound(message)
+
         sel.execute_script('document.location.href = arguments[0];', href)
         sel.wait_for_ajax()
 
@@ -437,13 +480,13 @@ class Menu(UINavigate):
                     inactive_loc = (cls.TOP_LEV_INACTIVE + cls.SECOND_LEV_INACTIVE).format(
                         top_level, second_level)
                 el = "{} | {}".format(active_loc, inactive_loc)
-                cls._try_nav(el)
+                cls._try_nav(el, toplevel, secondlevel)
 
             else:
                 active_loc = cls.TOP_LEV_ACTIVE.format(top_level)
                 inactive_loc = cls.TOP_LEV_INACTIVE.format(top_level)
                 el = "{} | {}".format(active_loc, inactive_loc)
-                cls._try_nav(el)
+                cls._try_nav(el, toplevel, secondlevel)
 
             nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
             cls._try_reset_action(reset_action, _final, nav_fn)
@@ -462,7 +505,7 @@ class Menu(UINavigate):
                     loc = "{}{}".format(loc, loc_to_use).format(arg)
                 else:
                     break
-            cls._try_nav(loc)
+            cls._try_nav(loc, toplevel, secondlevel, thirdlevel)
 
             nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, thirdlevel, reset_action,
                 _final=True)

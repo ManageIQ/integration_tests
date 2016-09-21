@@ -3,7 +3,7 @@ from utils.varmeth import variable
 from mgmtsystem.openshift import Openshift
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class OpenshiftProvider(Provider):
     STATS_TO_MATCH = Provider.STATS_TO_MATCH + ['num_route']
     type_name = "openshift"
@@ -36,7 +36,7 @@ class OpenshiftProvider(Provider):
         return int(self.get_detail("Relationships", "Routes"))
 
     @staticmethod
-    def configloader(prov_config, prov_key):
+    def from_config(prov_config, prov_key):
         token_creds = OpenshiftProvider.process_credential_yaml_key(
             prov_config['credentials'], cred_type='token')
         return OpenshiftProvider(

@@ -59,7 +59,7 @@ import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
 from tempfile import NamedTemporaryFile
-from xml.sax.saxutils import quoteattr
+from xml.sax.saxutils import quoteattr, unescape
 
 from cached_property import cached_property
 from selenium.common import exceptions as sel_exceptions
@@ -144,8 +144,8 @@ class Region(Pretty):
     Note:
 
         When specifying a region title, omit the "Cloudforms Management Engine: " or "ManageIQ: "
-        prefix. They're included on every page, and different for the two versions of the appliance,
-        and :py:meth:`is_displayed` strips them off before checking for equality.
+        prefix. They are included on every page, and different for the two versions of the
+        appliance, and :py:meth:`is_displayed` strips them off before checking for equality.
 
     """
     pretty_attrs = ['title']
@@ -2468,6 +2468,9 @@ class Quadicon(Pretty):
                 return False
         return sel.is_displayed(self._locate_quadrant("e"))  # Image has only 'e'
 
+    @property
+    def href(self):
+        return self.locate().get_attribute('href')
 
 class DHTMLSelect(Select):
     """
@@ -3295,10 +3298,11 @@ class AngularSelect(Pretty):
         if not self.is_open:
             self.open()
         if self.exact:
-            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(quoteattr(text))
+            new_loc = self._loc + '/../div/ul/li/a[normalize-space(.)={}]'.format(
+                unescape(quoteattr(text)))
         else:
             new_loc = self._loc + '/../div/ul/li/a[contains(normalize-space(.), {})]'.format(
-                quoteattr(text))
+                unescape(quoteattr(text)))
         e = sel.element(new_loc)
         sel.execute_script("arguments[0].scrollIntoView();", e)
         sel.click(new_loc)

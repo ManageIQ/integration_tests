@@ -2,7 +2,7 @@ from mgmtsystem.scvmm import SCVMMSystem
 from . import Provider
 
 
-@Provider.add_type_map
+@Provider.add_provider_type
 class SCVMMProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     type_name = "scvmm"
@@ -37,7 +37,7 @@ class SCVMMProvider(Provider):
         return values
 
     @classmethod
-    def configloader(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         if prov_config.get('discovery_range', None):

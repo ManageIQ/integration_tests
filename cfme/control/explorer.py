@@ -81,6 +81,86 @@ def accordion_func(accordion_title, *nodes):
             raise CannotContinueWithNavigation("blank screen bug!")
     return f
 
+
+def _policy(item, type_):
+    branch = {
+        "{}_{}_policy_edit".format(item, type_):
+        lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
+
+        "{}_{}_policy_conditions".format(item, type_):
+        lambda _: cfg_btn("Edit this Policy's Condition assignments"),
+
+        "{}_{}_policy_condition_new".format(item, type_):
+        lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
+
+        "{}_{}_policy_event".format(item, type_):
+        [
+            lambda ctx: events_in_policy_table.click_cell(
+                1, ctx["event_name"]
+            ),
+            {
+                "{}_{}_policy_event_actions".format(item, type_):
+                lambda _: cfg_btn(
+                    "Edit Actions for this Policy Event"
+                ),
+            }
+        ],
+    }
+    if type_ == "control":
+        branch.update({
+            "{}_control_policy_events".format(item):
+            lambda _: cfg_btn("Edit this Policy's Event assignments"),
+        })
+    return [
+        lambda ctx: accordion_func(
+            "Policies", "All Policies", "{} Policies".format(type_.capitalize()),
+            "{} {} Policies".format(" ".join(i.capitalize() for i in item.split("_")),
+                type_.capitalize()),
+            ctx["policy_name"])(None),
+        branch
+    ]
+
+
+def _policies(ugly, nice, type_):
+    return [
+        accordion_func(
+            "Policies", "All Policies", "{} Policies".format(type_.capitalize()),
+            "{} {} Policies".format(
+                " ".join(i.capitalize() for i in ugly.split("_")), type_.capitalize())
+        ),
+        {
+            "{}_{}_policy_new".format(ugly, type_):
+            lambda _: cfg_btn("Add a New {} {} Policy".format(
+                version.pick(nice) if isinstance(nice, dict) else nice, type_.capitalize()))
+        }
+    ]
+
+
+def _condition(ugly, nice):
+    return [
+        lambda ctx: accordion_func(
+            "Conditions", "All Conditions", "{} Conditions".format(
+                version.pick(nice) if isinstance(nice, dict) else nice),
+            ctx["condition_name"])(None),
+        {
+            "{}_condition_edit".format(ugly):
+            lambda _: cfg_btn("Edit this Condition")
+        }
+    ]
+
+
+def _conditions(ugly, nice1, nice2):
+    return [
+        accordion_func("Conditions", "All Conditions", "{} Conditions".format(
+            version.pick(nice1) if isinstance(nice1, dict) else nice1)),
+        {
+            "{}_condition_new".format(ugly):
+            lambda _: cfg_btn("Add a New {} Condition".format(
+                version.pick(nice2) if isinstance(nice2, dict) else nice2))
+        }
+    ]
+
+
 nav.add_branch(
     "control_explorer",
     {
@@ -102,340 +182,75 @@ nav.add_branch(
             }
         ],
 
-        "host_compliance_policy":
-        [
-            lambda ctx: accordion_func(
-                "Policies", "All Policies", "Compliance Policies",
-                "Host Compliance Policies", ctx["policy_name"])(None),
-            {
-                "host_compliance_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
-
-                "host_compliance_policy_events":
-                lambda _: cfg_btn("Edit this Policy's Event assignments"),
-
-                "host_compliance_policy_conditions":
-                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
-
-                "host_compliance_policy_condition_new":
-                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
-
-                "host_compliance_policy_event":
-                [
-                    lambda ctx: events_in_policy_table.click_cell(
-                        1, ctx["event_name"]
-                    ),
-                    {
-                        "host_compliance_policy_event_actions":
-                        lambda _: cfg_btn(
-                            "Edit Actions for this Policy Event"
-                        ),
-                    }
-                ],
-            }
-        ],
-
-        "vm_compliance_policy":
-        [
-            lambda ctx: accordion_func(
-                "Policies", "All Policies", "Compliance Policies",
-                "Vm Compliance Policies", ctx["policy_name"])(None),
-            {
-                "vm_compliance_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
-
-                "vm_compliance_policy_events":
-                lambda _: cfg_btn("Edit this Policy's Event assignments"),
-
-                "vm_compliance_policy_conditions":
-                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
-
-                "vm_compliance_policy_condition_new":
-                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
-
-                "vm_compliance_policy_event":
-                [
-                    lambda ctx: events_in_policy_table.click_cell(
-                        1, ctx["event_name"]
-                    ),
-                    {
-                        "vm_compliance_policy_event_actions":
-                        lambda _: cfg_btn(
-                            "Edit Actions for this Policy Event"
-                        ),
-                    }
-                ],
-            }
-        ],
-
-        "container_image_compliance_policy":
-        [
-            lambda ctx: accordion_func(
-                "Policies", "All Policies", "Compliance Policies",
-                "Container Image Compliance Policies", ctx["policy_name"])(None),
-            {
-                "container_image_compliance_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
-
-                "container_image_compliance_policy_events":
-                lambda _: cfg_btn("Edit this Policy's Event assignments"),
-
-                "container_image_compliance_policy_conditions":
-                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
-
-                "container_image_compliance_policy_condition_new":
-                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
-
-                "container_image_compliance_policy_event":
-                [
-                    lambda ctx: events_in_policy_table.click_cell(
-                        1, ctx["event_name"]
-                    ),
-                    {
-                        "container_image_compliance_policy_event_actions":
-                        lambda _: cfg_btn(
-                            "Edit Actions for this Policy Event"
-                        ),
-                    }
-                ],
-            }
-        ],
-
-        "host_compliance_policies":
-        [
-            accordion_func(
-                "Policies", "All Policies", "Compliance Policies", "Host Compliance Policies"
-            ),
-            {
-                "host_compliance_policy_new":
-                lambda _: cfg_btn("Add a New Host Compliance Policy")
-            }
-        ],
-
-        "vm_compliance_policies":
-        [
-            accordion_func(
-                "Policies", "All Policies", "Compliance Policies", "Vm Compliance Policies"
-            ),
-            {
-                "vm_compliance_policy_new":
-                lambda _: cfg_btn("Add a New Vm Compliance Policy")
-            }
-        ],
-
-        "container_image_compliance_policies":
-        [
-            accordion_func(
-                "Policies", "All Policies", "Compliance Policies",
-                "Container Image Compliance Policies"
-            ),
-            {
-                "container_image_compliance_policy_new":
-                lambda _: cfg_btn("Add a New Container Image Compliance Policy")
-            }
-        ],
-
-        "host_control_policy":
-        [
-            lambda ctx: accordion_func(
-                "Policies", "All Policies", "Control Policies",
-                "Host Control Policies", ctx["policy_name"])(None),
-            {
-                "host_control_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
-
-                "host_control_policy_events":
-                lambda _: cfg_btn("Edit this Policy's Event assignments"),
-
-                "host_control_policy_conditions":
-                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
-
-                "host_control_policy_condition_new":
-                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
-
-                "host_control_policy_event":
-                [
-                    lambda ctx: events_in_policy_table.click_cell(
-                        1, ctx["event_name"]
-                    ),
-                    {
-                        "host_control_policy_event_actions":
-                        lambda _: cfg_btn(
-                            "Edit Actions for this Policy Event"
-                        ),
-                    }
-                ],
-            }
-        ],
-
-        "vm_control_policy":
-        [
-            lambda ctx: accordion_func(
-                "Policies", "All Policies", "Control Policies",
-                "Vm Control Policies", ctx["policy_name"])(None),
-            {
-                "vm_control_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
-
-                "vm_control_policy_events":
-                lambda _: cfg_btn("Edit this Policy's Event assignments"),
-
-                "vm_control_policy_conditions":
-                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
-
-                "vm_control_policy_condition_new":
-                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
-
-                "vm_control_policy_event":
-                [
-                    lambda ctx: events_in_policy_table.click_cell("description", ctx["event_name"]),
-                    {
-                        "vm_control_policy_event_actions":
-                        lambda _: cfg_btn(
-                            "Edit Actions for this Policy Event"
-                        ),
-                    }
-                ],
-            }
-        ],
-
-        "container_image_control_policy":
-        [
-            lambda ctx: accordion_func(
-                "Policies", "All Policies", "Control Policies",
-                "Container Image Control Policies", ctx["policy_name"])(None),
-            {
-                "container_image_control_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
-
-                "container_image_control_policy_events":
-                lambda _: cfg_btn("Edit this Policy's Event assignments"),
-
-                "container_image_control_policy_conditions":
-                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
-
-                "container_image_control_policy_condition_new":
-                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
-
-                "container_image_control_policy_event":
-                [
-                    lambda ctx: events_in_policy_table.click_cell("description", ctx["event_name"]),
-                    {
-                        "container_image_control_policy_event_actions":
-                        lambda _: cfg_btn(
-                            "Edit Actions for this Policy Event"
-                        ),
-                    }
-                ],
-            }
-        ],
-
-        "host_control_policies":
-        [
-            accordion_func(
-                "Policies", "All Policies", "Control Policies", "Host Control Policies"
-            ),
-            {
-                "host_control_policy_new":
-                lambda _: cfg_btn("Add a New Host Control Policy")
-            }
-        ],
-
-        "vm_control_policies":
-        [
-            accordion_func(
-                "Policies", "All Policies", "Control Policies", "Vm Control Policies"
-            ),
-            {
-                "vm_control_policy_new":
-                lambda _: cfg_btn("Add a New Vm Control Policy")
-            }
-        ],
-
-        "container_image_control_policies":
-        [
-            accordion_func(
-                "Policies", "All Policies", "Control Policies",
-                "Container Image Control Policies"
-            ),
-            {
-                "container_image_control_policy_new":
-                lambda _: cfg_btn("Add a New Container Image Control Policy")
-            }
-        ],
+        "host_compliance_policy": _policy("host", "compliance"),
+        "vm_compliance_policy": _policy("vm", "compliance"),
+        "replicator_compliance_policy": _policy("replicator", "compliance"),
+        "pod_compliance_policy": _policy("pod", "compliance"),
+        "container_node_compliance_policy": _policy("container_node", "compliance"),
+        "container_image_compliance_policy": _policy("container_image", "compliance"),
+        "host_compliance_policies": _policies("host", {
+            version.LOWEST: "Host",
+            "5.6": "Host / Node"
+        }, "compliance"),
+        "vm_compliance_policies": _policies("vm", {
+            version.LOWEST: "Vm",
+            "5.6": "VM and Instance"
+        }, "compliance"),
+        "replicator_compliance_policies": _policies("replicator", "Replicator", "compliance"),
+        "pod_compliance_policies": _policies("pod", "Pod", "compliance"),
+        "container_node_compliance_policies": _policies("container_node", "Node", "compliance"),
+        "container_image_compliance_policies": _policies("container_image", {
+            version.LOWEST: "Image",
+            "5.7": "Container Image"
+        }, "compliance"),
+        "host_control_policy": _policy("host", "control"),
+        "vm_control_policy": _policy("vm", "control"),
+        "replicator_control_policy": _policy("replicator", "control"),
+        "pod_control_policy": _policy("pod", "control"),
+        "container_node_control_policy": _policy("container_node", "control"),
+        "container_image_control_policy": _policy("container_image", "control"),
+        "host_control_policies": _policies("host", {
+            version.LOWEST: "Host",
+            "5.6": "Host / Node"
+        }, "control"),
+        "vm_control_policies": _policies("vm", {
+            version.LOWEST: "Vm",
+            "5.6": "VM and Instance"
+        }, "control"),
+        "replicator_control_policies": _policies("replicator", "Replicator", "control"),
+        "pod_control_policies": _policies("pod", "Pod", "control"),
+        "container_node_control_policies": _policies("container_node", "Node", "control"),
+        "container_image_control_policies": _policies("container_image", {
+            version.LOWEST: "Image",
+            "5.7": "Container Image"
+        }, "control"),
 
         "control_explorer_events": accordion_func("Events", "All Events"),
 
         "control_explorer_event":
         lambda ctx: accordion_func("Events", "All Events", ctx["event_name"])(None),
 
-        "container_image_condition":
-        [
-            lambda ctx: accordion_func(
-                "Conditions", "All Conditions", "Container Image Conditions",
-                ctx["condition_name"])(None),
-            {
-                "container_image_condition_edit":
-                lambda _: cfg_btn("Edit this Condition")
-            }
-        ],
-
-        "host_condition":
-        [
-            lambda ctx: accordion_func(
-                "Conditions", "All Conditions", "Host Conditions", ctx["condition_name"])(None),
-            {
-                "host_condition_edit":
-                lambda _: cfg_btn("Edit this Condition")
-            }
-        ],
-
-        "vm_condition":
-        [
-            lambda ctx: accordion_func(
-                "Conditions", "All Conditions",
-                # TODO: This needs to be replace with a deferred call
-                version.pick({
-                    version.LOWEST: "VM Conditions",
-                    "5.4": "All VM and Instance Conditions"}),
-                ctx["condition_name"])(None),
-            {
-                "vm_condition_edit":
-                lambda _: cfg_btn("Edit this Condition")
-            }
-        ],
-
-        "container_image_conditions":
-        [
-            accordion_func("Conditions", "All Conditions", "Container Image Conditions"),
-            {
-                "container_image_condition_new":
-                lambda _: cfg_btn("Add a New Container Image Condition")
-            }
-        ],
-
-        "host_conditions":
-        [
-            accordion_func("Conditions", "All Conditions", "Host Conditions"),
-            {
-                "host_condition_new":
-                lambda _: cfg_btn("Add a New Host Condition")
-            }
-        ],
-
-        "vm_conditions":
-        [
-            lambda ctx: accordion_func("Conditions", "All Conditions",
-                version.pick({
-                    version.LOWEST: "VM Conditions",
-                    "5.4": "All VM and Instance Conditions"}))(None),
-            {
-                "vm_condition_new":
-                lambda _: cfg_btn(version.pick({
-                    version.LOWEST: "Add a New Vm Condition",
-                    "5.4": "Add a New VM Condition"}))
-            }
-        ],
+        "host_condition": _condition("host", "Host"),
+        "vm_condition": _condition("vm", {
+            version.LOWEST: "All VM and Instance",
+            "5.6": "VM and Instance"
+        }),
+        "replicator_condition": _condition("replicator", "Replicator"),
+        "pod_condition": _condition("pod", "Pod"),
+        "container_node_condition": _condition("container_node", "Container Node"),
+        "container_image_condition": _condition("container_image", "Container Image"),
+        "host_conditions": _conditions("host", "Host", {
+            version.LOWEST: "Host",
+            "5.6": "Host / Node"
+        }),
+        "vm_conditions": _conditions("vm", {
+            version.LOWEST: "All VM and Instance",
+            "5.6": "VM and Instance"
+        }, "VM"),
+        "replicator_conditions": _conditions("replicator", "Replicator", "Replicator"),
+        "pod_conditions": _conditions("pod", "Pod", "Pod"),
+        "container_node_conditions": _conditions("container_node", "Container Node", "Node"),
+        "container_image_conditions": _conditions("container_image", "Container Image", "Image"),
 
         "control_explorer_action":
         [
@@ -479,6 +294,11 @@ nav.add_branch(
         "server_alert_profile": _ap_single_branch("server", "Server"),
         "server_alert_profiles": _ap_multi_branch("server", "Server"),
 
+        "middleware_server_alert_profile": _ap_single_branch(
+            "middleware_server", "Middleware Server"),
+        "middleware_server_alert_profiles": _ap_multi_branch(
+            "middleware_server", "Middleware Server"),
+
         "provider_alert_profile": _ap_single_branch("provider", "Provider"),
         "provider_alert_profiles": _ap_multi_branch("provider", "Provider"),
 
@@ -510,25 +330,47 @@ nav.add_branch(
 ###################################################################################################
 class _type_check_object(object):
     """This class is used to check, whether one object can be assigned to another."""
+    TYPES = set()
+
+    @classmethod
+    def register_type(cls, type):
+        cls.TYPES.add(type)
+        return type
+
     def _is_assignable(self, what):
-        if isinstance(self, VMObject):
-            return isinstance(what, VMObject)
-        elif isinstance(self, HostObject):
-            return isinstance(what, HostObject)
-        elif isinstance(self, ContainerImageObject):
-            return isinstance(what, ContainerImageObject)
+        for klass in _type_check_object.TYPES:
+            if isinstance(self, klass):
+                return True
         else:
-            raise TypeError("Wrong object passed!")
+            return False
 
 
-class VMObject(_type_check_object):
-    pass
-
-
+@_type_check_object.register_type
 class HostObject(_type_check_object):
     pass
 
 
+@_type_check_object.register_type
+class VMObject(_type_check_object):
+    pass
+
+
+@_type_check_object.register_type
+class ReplicatorObject(_type_check_object):
+    pass
+
+
+@_type_check_object.register_type
+class PodObject(_type_check_object):
+    pass
+
+
+@_type_check_object.register_type
+class ContainerNodeObject(_type_check_object):
+    pass
+
+
+@_type_check_object.register_type
 class ContainerImageObject(_type_check_object):
     pass
 
@@ -633,22 +475,46 @@ class BaseCondition(Updateable, Pretty):
         flash.assert_no_errors()
 
 
-class VMCondition(BaseCondition, VMObject):
-    PREFIX = "vm_"
-    DELETE_STRING = "Delete this VM and Instance Condition"
-
-
 class HostCondition(BaseCondition, HostObject):
     PREFIX = "host_"
+    PRETTY_NAME = "Host / Node"
     DELETE_STRING = deferred_verpick({
         version.LOWEST: "Delete this Host Condition",
         '5.4': "Delete this Host / Node Condition"
     })
 
 
+class VMCondition(BaseCondition, VMObject):
+    PREFIX = "vm_"
+    PRETTY_NAME = "VM and Instance"
+    DELETE_STRING = "Delete this VM and Instance Condition"
+
+
+class ReplicatorCondition(BaseCondition, ReplicatorObject):
+    PREFIX = "replicator_"
+    PRETTY_NAME = "Replicator"
+    DELETE_STRING = "Delete this Replicator Condition"
+
+
+class PodCondition(BaseCondition, PodObject):
+    PREFIX = "pod_"
+    PRETTY_NAME = "Pod"
+    DELETE_STRING = "Delete this Pod Condition"
+
+
+class ContainerNodeCondition(BaseCondition, ContainerNodeObject):
+    PREFIX = "container_node_"
+    PRETTY_NAME = "Node"
+    DELETE_STRING = "Delete this Node Condition"
+
+
 class ContainerImageCondition(BaseCondition, ContainerImageObject):
     PREFIX = "container_image_"
-    DELETE_STRING = "Delete this Image Condition"
+    PRETTY_NAME = "Image"
+    DELETE_STRING = deferred_verpick({
+        version.LOWEST: "Delete this Image Condition",
+        '5.7': "Delete this Container Image Condition"
+    })
 
 
 class BasePolicy(Updateable, Pretty):
@@ -963,10 +829,43 @@ class VMCompliancePolicy(BasePolicy, VMObject):
         return "VM and Instance Compliance: {}".format(self.description)
 
 
+class ReplicatorCompliancePolicy(BasePolicy, ReplicatorObject):
+    PREFIX = "replicator_compliance_"
+    DELETE_STRING = "Delete this Replicator Policy"
+    COPY_STRING = "Copy this Replicator Policy"
+
+    def __str__(self):
+        return "Replcaitor Compliance: {}".format(self.description)
+
+
+class PodCompliancePolicy(BasePolicy, PodObject):
+    PREFIX = "pod_compliance_"
+    DELETE_STRING = "Delete this Pod Policy"
+    COPY_STRING = "Copy this Pod Policy"
+
+    def __str__(self):
+        return "Pod Compliance: {}".format(self.description)
+
+
+class ContainerNodeCompliancePolicy(BasePolicy, ContainerNodeObject):
+    PREFIX = "container_node_compliance_"
+    DELETE_STRING = "Delete this Node Policy"
+    COPY_STRING = "Copy this Node Policy"
+
+    def __str__(self):
+        return "Container Node Compliance: {}".format(self.description)
+
+
 class ContainerImageCompliancePolicy(BasePolicy, ContainerImageObject):
     PREFIX = "container_image_compliance_"
-    DELETE_STRING = "Delete this Image Policy"
-    COPY_STRING = "Copy this Image Policy"
+    DELETE_STRING = deferred_verpick({
+        version.LOWEST: "Delete this Image Policy",
+        "5.7": "Delete this Container Image Policy"
+    })
+    COPY_STRING = deferred_verpick({
+        version.LOWEST: "Copy this Image Policy",
+        "5.7": "Copy this Container Image Policy"
+    })
 
     def __str__(self):
         return "Container Image Compliance: {}".format(self.description)
@@ -1001,10 +900,43 @@ class VMControlPolicy(BaseControlPolicy, VMObject):
         return "VM and Instance Control: {}".format(self.description)
 
 
+class ReplicatorControlPolicy(BaseControlPolicy, ReplicatorObject):
+    PREFIX = "replicator_control_"
+    DELETE_STRING = "Delete this Replicator Policy"
+    COPY_STRING = "Copy this Replicator Policy"
+
+    def __str__(self):
+        return "Replcaitor Control: {}".format(self.description)
+
+
+class PodControlPolicy(BaseControlPolicy, PodObject):
+    PREFIX = "pod_control_"
+    DELETE_STRING = "Delete this Pod Policy"
+    COPY_STRING = "Copy this Pod Policy"
+
+    def __str__(self):
+        return "Pod Control: {}".format(self.description)
+
+
+class ContainerNodeControlPolicy(BaseControlPolicy, ContainerNodeObject):
+    PREFIX = "container_node_control_"
+    DELETE_STRING = "Delete this Node Policy"
+    COPY_STRING = "Copy this Node Policy"
+
+    def __str__(self):
+        return "Container Node Control: {}".format(self.description)
+
+
 class ContainerImageControlPolicy(BaseControlPolicy, ContainerImageObject):
     PREFIX = "container_image_control_"
-    DELETE_STRING = "Delete this Image Policy"
-    COPY_STRING = "Copy this Image Policy"
+    DELETE_STRING = deferred_verpick({
+        version.LOWEST: "Delete this Image Policy",
+        "5.7": "Delete this Container Image Policy"
+    })
+    COPY_STRING = deferred_verpick({
+        version.LOWEST: "Copy this Image Policy",
+        "5.7": "Copy this Container Image Policy"
+    })
 
     def __str__(self):
         return "Container Image Control: {}".format(self.description)
@@ -1057,7 +989,7 @@ class Alert(Updateable, Pretty):
             ("active", Input("enabled_cb")),
             ("based_on", {
                 version.LOWEST: Select("select#miq_alert_db"),
-                "5.5": AngularSelect("miq_alert_db")}),
+                "5.5": AngularSelect("miq_alert_db", exact=True)}),
             ("evaluate", {
                 version.LOWEST: Select("select#exp_name"),
                 "5.5": AngularSelect("exp_name")}),
@@ -1819,6 +1751,11 @@ class DatastoreAlertProfile(BaseAlertProfile):
 class HostAlertProfile(BaseAlertProfile):
     PREFIX = "host"
     TYPE = "Host / Node"
+
+
+class MiddlewareServerAlertProfile(BaseAlertProfile):
+    PREFIX = "middleware_server"
+    TYPE = "Middleware Server"
 
 
 class ProviderAlertProfile(BaseAlertProfile):

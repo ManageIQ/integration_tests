@@ -65,7 +65,7 @@ myAppliancesApp.controller('EditVmName', function ($scope, $http, $timeout, $win
     $scope.edit = function() {
         if(! $scope.applianceHasUUID) {
             // No change, we can edit only when we have UUID to be 100% sure
-            $window.alert("Appliance " + $scope.applianceOriginalName + " did not receive its UUID yet so it cannot be renamed.")
+            $window.alert("Appliance " + $scope.applianceOriginalName + " did not receive its UUID yet so it cannot be renamed.");
             return;
         }
         $scope.vm = angular.copy($scope.saved);

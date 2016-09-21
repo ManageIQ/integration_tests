@@ -201,14 +201,9 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(seconds=20),
     },
 
-    'check-update': {
-        'task': 'appliances.tasks.check_update',
-        'schedule': timedelta(minutes=15),
-    },
-
     'scavenge-managed-providers': {
         'task': 'appliances.tasks.scavenge_managed_providers',
-        'schedule': timedelta(minutes=30),
+        'schedule': timedelta(minutes=60),
     },
 
     'mailer-version-mismatch': {

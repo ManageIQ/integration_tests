@@ -2,9 +2,9 @@
 {% block title %}Free appliance shepherd{% endblock %}
 {% block body %}
 <h1>Free appliance shepherd</h1>
-    {% for group in groups %}
-        {% with group.configured_shepherd_appliances as appliances %}
-            <h2>{{ group.id }}</h2>
+    {% for shepherd in shepherds %}
+        <h2>{{ shepherd.template_group.id }} | {{ shepherd.user_group.name }}</h2>
+        {% with shepherd.configured_shepherd_appliances as appliances %}
             <h3>Preconfigured appliances ({{ appliances|length }})</h3>
             {% if appliances %}
                 <table class="table table-striped">
@@ -28,10 +28,10 @@
                     </tbody>
                 </table>
             {% else %}
-                <p>Sorry, no shepherd appliances from preconfigured template for {{group.id}}</p>
+                <p>Sorry, no shepherd appliances from preconfigured template for {{ shepherd.template_group.id }} | {{ shepherd.user_group.name }}</p>
             {% endif %}
         {% endwith %}
-        {% with group.unconfigured_shepherd_appliances as appliances %}
+        {% with shepherd.unconfigured_shepherd_appliances as appliances %}
             <h3>Bare appliances ({{ appliances|length }})</h3>
             {% if appliances %}
                 <table class="table table-striped">
@@ -55,7 +55,7 @@
                     </tbody>
                 </table>
             {% else %}
-                <p>Sorry, no shepherd appliances from nonconfigured template for {{group.id}}</p>
+                <p>Sorry, no shepherd appliances from nonconfigured template for {{ shepherd.template_group.id }} | {{ shepherd.user_group.name }}</p>
             {% endif %}
         {% endwith %}
     {% endfor %}

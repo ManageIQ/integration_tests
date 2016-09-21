@@ -8,6 +8,7 @@ TODO: * Multiple expression types entering. (extend the update tests)
 """
 import fauxfactory
 import pytest
+import random
 
 import cfme.fixtures.pytest_selenium as sel
 
@@ -44,82 +45,176 @@ VM_EXPRESSIONS_TO_TEST = [
     # Needs working input/select mutability
 ]
 
+COMPLIANCE_POLICIES = [
+    explorer.HostCompliancePolicy,
+    explorer.VMCompliancePolicy,
+    explorer.ReplicatorCompliancePolicy,
+    explorer.PodCompliancePolicy,
+    explorer.ContainerNodeCompliancePolicy,
+    explorer.ContainerImageCompliancePolicy,
+]
 
-@pytest.yield_fixture
-def random_alert():
-    alert = explorer.Alert(
-        fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
-    )
-    alert.create()
-    yield alert
-    alert.delete()
+CONTROL_POLICIES = [
+    explorer.HostControlPolicy,
+    explorer.VMControlPolicy,
+    explorer.ReplicatorControlPolicy,
+    explorer.PodControlPolicy,
+    explorer.ContainerNodeControlPolicy,
+    explorer.ContainerImageControlPolicy
+]
 
+POLICIES = COMPLIANCE_POLICIES + CONTROL_POLICIES
 
-@pytest.yield_fixture(params=[explorer.VMCompliancePolicy,
-                              explorer.HostCompliancePolicy,
-                              explorer.HostControlPolicy,
-                              explorer.VMControlPolicy],
-                      ids=["VMCompliancePolicy",
-                           "HostCompliancePolicy",
-                           "HostControlPolicy",
-                           "VMControlPolicy"])
-def random_policy(request):
-    policy = request.param(fauxfactory.gen_alphanumeric())
-    policy.create()
-    yield policy
-    policy.delete()
+CONDITIONS = [
+    explorer.HostCondition,
+    explorer.VMCondition,
+    explorer.ReplicatorCondition,
+    explorer.PodCondition,
+    explorer.ContainerNodeCondition,
+    explorer.ContainerImageCondition
+]
 
+POLICIES_AND_CONDITIONS = zip(CONTROL_POLICIES, CONDITIONS)
 
-@pytest.yield_fixture(scope="module")
-def vm_condition_for_expressions():
-    cond = explorer.VMCondition(
-        fauxfactory.gen_alphanumeric(),
-        expression="fill_field(VM and Instance : CPU Limit, =, 20)",
-        scope="fill_count(VM and Instance.Files, >, 150)"
-    )
-    cond.create()
-    yield cond
-    cond.delete()
+EVENTS = [
+    "Datastore Analysis Complete",
+    "Datastore Analysis Request",
+    "Host Auth Changed",
+    "Host Auth Error",
+    "Host Auth Incomplete Credentials",
+    "Host Auth Invalid",
+    "Host Auth Unreachable",
+    "Host Auth Valid",
+    "Provider Auth Changed",
+    "Provider Auth Error",
+    "Provider Auth Incomplete Credentials",
+    "Provider Auth Invalid",
+    "Provider Auth Unreachable",
+    "Provider Auth Valid",
+    "Tag Complete",
+    "Tag Parent Cluster Complete",
+    "Tag Parent Datastore Complete",
+    "Tag Parent Host Complete",
+    "Tag Parent Resource Pool Complete",
+    "Tag Request",
+    "Un-Tag Complete",
+    "Un-Tag Parent Cluster Complete",
+    "Un-Tag Parent Datastore Complete",
+    "Un-Tag Parent Host Complete",
+    "Un-Tag Parent Resource Pool Complete",
+    "Un-Tag Request",
+    "Container Image Compliance Failed",
+    "Container Image Compliance Passed",
+    "Container Node Compliance Failed",
+    "Container Node Compliance Passed",
+    "Host Compliance Failed",
+    "Host Compliance Passed",
+    "Pod Compliance Failed",
+    "Pod Compliance Passed",
+    "Replicator Compliance Failed",
+    "Replicator Compliance Passed",
+    "VM Compliance Failed",
+    "VM Compliance Passed",
+    "Container Image Analysis Complete",
+    "Container Image Discovered",
+    "Container Node Failed Mount",
+    "Container Node Invalid Disk Capacity",
+    "Container Node Not Ready",
+    "Container Node Not Schedulable",
+    "Container Node Ready",
+    "Container Node Rebooted",
+    "Container Node Schedulable",
+    "Pod Deadline Exceeded",
+    "Pod Failed Scheduling",
+    "Pod Failed Sync",
+    "Pod Failed Validation",
+    "Pod Insufficient Free CPU",
+    "Pod Insufficient Free Memory",
+    "Pod Out of Disk",
+    "Pod Scheduled",
+    "Pod hostPort Conflict",
+    "Pod nodeSelector Mismatching",
+    "Replicator Failed Creating Pod",
+    "Replicator Successfully Created Pod",
+    "Host Added to Cluster",
+    "Host Analysis Complete",
+    "Host Analysis Request",
+    "Host Connect",
+    "Host Disconnect",
+    "Host Maintenance Enter Request",
+    "Host Maintenance Exit Request",
+    "Host Provision Complete",
+    "Host Reboot Request",
+    "Host Removed from Cluster",
+    "Host Reset Request",
+    "Host Shutdown Request",
+    "Host Standby Request",
+    "Host Start Request",
+    "Host Stop Request",
+    "Host Vmotion Disable Request",
+    "Host Vmotion Enable Request",
+    "Service Provision Complete",
+    "Service Retire Request",
+    "Service Retired",
+    "Service Retirement Warning",
+    "Service Start Request",
+    "Service Started",
+    "Service Stop Request",
+    "Service Stopped",
+    "VM Clone Complete",
+    "VM Clone Start",
+    "VM Create Complete",
+    "VM Delete (from Disk) Request",
+    "VM Renamed Event",
+    "VM Settings Change",
+    "VM Template Create Complete",
+    "VM Provision Complete",
+    "VM Retire Request",
+    "VM Retired",
+    "VM Retirement Warning",
+    "VM Analysis Complete",
+    "VM Analysis Failure",
+    "VM Analysis Request",
+    "VM Analysis Start",
+    "VM Guest Reboot",
+    "VM Guest Reboot Request",
+    "VM Guest Shutdown",
+    "VM Guest Shutdown Request",
+    "VM Live Migration (VMOTION)",
+    "VM Pause",
+    "VM Pause Request",
+    "VM Power Off",
+    "VM Power Off Request",
+    "VM Power On",
+    "VM Power On Request",
+    "VM Remote Console Connected",
+    "VM Removal from Inventory",
+    "VM Removal from Inventory Request",
+    "VM Reset",
+    "VM Reset Request",
+    "VM Resume",
+    "VM Shelve",
+    "VM Shelve Offload",
+    "VM Shelve Offload Request",
+    "VM Shelve Request",
+    "VM Snapshot Create Complete",
+    "VM Snapshot Create Request",
+    "VM Snapshot Create Started",
+    "VM Standby of Guest",
+    "VM Standby of Guest Request",
+    "VM Suspend",
+    "VM Suspend Request"
+]
 
-
-@pytest.yield_fixture
-def random_vm_condition():
-    cond = explorer.VMCondition(
-        fauxfactory.gen_alphanumeric(),
-        expression="fill_field(VM and Instance : CPU Limit, =, 20)",
-        scope="fill_count(VM and Instance.Files, >, 150)"
-    )
-    cond.create()
-    yield cond
-    cond.delete()
-
-
-@pytest.yield_fixture
-def random_host_condition():
-    if current_version() >= "5.4":
-        expression = "fill_count(Host / Node.Files, >, 150)"
-    else:
-        expression = "fill_count(Host.Files, >, 150)"
-    cond = explorer.HostCondition(
-        fauxfactory.gen_alphanumeric(),
-        expression=expression,
-    )
-    cond.create()
-    yield cond
-    cond.delete()
-
-
-@pytest.yield_fixture
-def container_image_condition():
-    expression = "fill_field(Image : Tag, =, {})".format(fauxfactory.gen_alphanumeric())
-    cond = explorer.ContainerImageCondition(
-        fauxfactory.gen_alphanumeric(),
-        expression=expression,
-    )
-    cond.create()
-    yield cond
-    cond.delete()
-
+ALERT_PROFILES = [
+    explorer.ClusterAlertProfile,
+    explorer.DatastoreAlertProfile,
+    explorer.HostAlertProfile,
+    explorer.MiddlewareServerAlertProfile,
+    explorer.ProviderAlertProfile,
+    explorer.ServerAlertProfile,
+    explorer.VMInstanceAlertProfile
+]
 
 @pytest.yield_fixture
 def random_vm_control_policy():
@@ -138,25 +233,50 @@ def random_host_control_policy():
 
 
 @pytest.yield_fixture
-def random_container_image_control_policy():
-    policy = explorer.ContainerImageControlPolicy(fauxfactory.gen_alphanumeric())
+def random_alert():
+    alert = explorer.Alert(
+        fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
+    )
+    alert.create()
+    yield alert
+    alert.delete()
+
+
+@pytest.fixture(params=POLICIES, ids=lambda policy_class: policy_class.__name__)
+def policy_class(request):
+    return request.param
+
+
+@pytest.yield_fixture(params=POLICIES, ids=lambda policy_class: policy_class.__name__)
+def policy(request):
+    policy = request.param(fauxfactory.gen_alphanumeric())
     policy.create()
     yield policy
     policy.delete()
 
 
-@pytest.yield_fixture(params=[explorer.ClusterAlertProfile,
-                              explorer.DatastoreAlertProfile,
-                              explorer.HostAlertProfile,
-                              explorer.ProviderAlertProfile,
-                              explorer.ServerAlertProfile,
-                              explorer.VMInstanceAlertProfile],
-                      ids=[explorer.ClusterAlertProfile.TYPE,
-                           explorer.DatastoreAlertProfile.TYPE,
-                           explorer.HostAlertProfile.TYPE,
-                           explorer.ProviderAlertProfile.TYPE,
-                           explorer.ServerAlertProfile.TYPE,
-                           explorer.VMInstanceAlertProfile.TYPE])
+@pytest.yield_fixture(scope="module")
+def vm_condition_for_expressions():
+    cond = explorer.VMCondition(
+        fauxfactory.gen_alphanumeric(),
+        expression="fill_field(VM and Instance : CPU Limit, =, 20)",
+        scope="fill_count(VM and Instance.Files, >, 150)"
+    )
+    cond.create()
+    yield cond
+    cond.delete()
+
+
+@pytest.yield_fixture(params=CONTROL_POLICIES, ids=lambda policy_class: policy_class.__name__)
+def control_policy(request):
+    policy = request.param(fauxfactory.gen_alphanumeric())
+    policy.create()
+    yield policy
+    policy.delete()
+
+
+@pytest.yield_fixture(params=ALERT_PROFILES,
+    ids=lambda alert_profile_class: alert_profile_class.__name__)
 def alert_profile(request):
     alert = explorer.Alert(
         fauxfactory.gen_alphanumeric(),
@@ -170,65 +290,46 @@ def alert_profile(request):
     alert.delete()
 
 
-@pytest.mark.tier(2)
-def test_vm_condition_crud(soft_assert):
-    condition = explorer.VMCondition(
-        fauxfactory.gen_alphanumeric(),
-        expression="fill_field(VM and Instance : CPU Limit, =, 20)",
-        scope="fill_count(VM and Instance.Files, >, 150)"
+@pytest.fixture(params=CONDITIONS, ids=lambda condition: condition.__name__)
+def condition(request):
+    condition_class = request.param
+    expression = "fill_field({} : Name, =, {})".format(
+        condition_class.PRETTY_NAME,
+        fauxfactory.gen_alphanumeric()
     )
-    # CR
-    condition.create()
-    soft_assert(condition.exists, "The condition {} does not exist!".format(
-        condition.description
-    ))
-    # U
-    with update(condition):
-        condition.notes = "Modified!"
-    sel.force_navigate("vm_condition_edit", context={"condition_name": condition.description})
-    soft_assert(sel.text(condition.form.notes).strip() == "Modified!", "Modification failed!")
-    # D
-    condition.delete()
-    soft_assert(not condition.exists, "The condition {} exists!".format(
-        condition.description
-    ))
+    scope = "fill_field({} : Name, =, {})".format(
+        condition_class.PRETTY_NAME,
+        fauxfactory.gen_alphanumeric()
+    )
+    cond = condition_class(
+        fauxfactory.gen_alphanumeric(),
+        scope=scope,
+        expression=expression
+    )
+    return cond
 
 
-@pytest.mark.tier(2)
-def test_host_condition_crud(soft_assert):
-    if current_version() >= "5.4":
-        expression = "fill_count(Host / Node.Files, >, 150)"
-    else:
-        expression = "fill_count(Host.Files, >, 150)"
-    condition = explorer.HostCondition(
+@pytest.yield_fixture(params=POLICIES_AND_CONDITIONS, ids=lambda item: item[0].__name__)
+def policy_and_condition(request):
+    condition_class = request.param[1]
+    expression = "fill_field({} : Name, =, {})".format(
+        condition_class.PRETTY_NAME,
+        fauxfactory.gen_alphanumeric()
+    )
+    condition = condition_class(
         fauxfactory.gen_alphanumeric(),
         expression=expression
     )
-    # CR
+    policy = request.param[0](fauxfactory.gen_alphanumeric())
+    policy.create()
     condition.create()
-    soft_assert(condition.exists, "The condition {} does not exist!".format(
-        condition.description
-    ))
-    # U
-    with update(condition):
-        condition.notes = "Modified!"
-    sel.force_navigate("host_condition_edit", context={"condition_name": condition.description})
-    soft_assert(sel.text(condition.form.notes).strip() == "Modified!", "Modification failed!")
-    # D
+    yield policy, condition
+    policy.delete()
     condition.delete()
-    soft_assert(not condition.exists, "The condition {} exists!".format(
-        condition.description
-    ))
 
 
 @pytest.mark.tier(2)
-@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
-def test_container_image_condition_crud(soft_assert):
-    expression = "fill_field(Image : Tag, =, {})".format(fauxfactory.gen_alphanumeric())
-    condition = explorer.ContainerImageCondition(
-        fauxfactory.gen_alphanumeric(),
-        expression=expression
-    )
+def test_condition_crud(condition, soft_assert):
     # CR
     condition.create()
     soft_assert(condition.exists, "The condition {} does not exist!".format(
@@ -238,9 +339,8 @@ def test_container_image_condition_crud(soft_assert):
     with update(condition):
         condition.notes = "Modified!"
     sel.force_navigate(
-        "container_image_condition_edit",
-        context={"condition_name": condition.description}
-    )
+        "{}condition_edit".format(condition.PREFIX),
+        context={"condition_name": condition.description})
     soft_assert(sel.text(condition.form.notes).strip() == "Modified!", "Modification failed!")
     # D
     condition.delete()
@@ -277,89 +377,8 @@ def test_action_crud(soft_assert):
 
 
 @pytest.mark.tier(2)
-def test_vm_control_policy_crud(soft_assert):
-    policy = explorer.VMControlPolicy(fauxfactory.gen_alphanumeric())
-    # CR
-    policy.create()
-    soft_assert(policy.exists, "The policy {} does not exist!".format(
-        policy.description
-    ))
-    # U
-    with update(policy):
-        policy.notes = "Modified!"
-    sel.force_navigate("vm_control_policy_edit", context={"policy_name": policy.description})
-    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
-    # D
-    policy.delete()
-    soft_assert(not policy.exists, "The policy {} exists!".format(
-        policy.description
-    ))
-
-
-@pytest.mark.tier(2)
-def test_vm_compliance_policy_crud(soft_assert):
-    policy = explorer.VMCompliancePolicy(fauxfactory.gen_alphanumeric())
-    # CR
-    policy.create()
-    soft_assert(policy.exists, "The policy {} does not exist!".format(
-        policy.description
-    ))
-    # U
-    with update(policy):
-        policy.notes = "Modified!"
-    sel.force_navigate("vm_compliance_policy_edit", context={"policy_name": policy.description})
-    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
-    # D
-    policy.delete()
-    soft_assert(not policy.exists, "The policy {} exists!".format(
-        policy.description
-    ))
-
-
-@pytest.mark.tier(2)
-def test_host_control_policy_crud(soft_assert):
-    policy = explorer.HostControlPolicy(fauxfactory.gen_alphanumeric())
-    # CR
-    policy.create()
-    soft_assert(policy.exists, "The policy {} does not exist!".format(
-        policy.description
-    ))
-    # U
-    with update(policy):
-        policy.notes = "Modified!"
-    sel.force_navigate("host_control_policy_edit", context={"policy_name": policy.description})
-    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
-    # D
-    policy.delete()
-    soft_assert(not policy.exists, "The policy {} exists!".format(
-        policy.description
-    ))
-
-
-@pytest.mark.tier(2)
-def test_host_compliance_policy_crud(soft_assert):
-    policy = explorer.HostCompliancePolicy(fauxfactory.gen_alphanumeric())
-    # CR
-    policy.create()
-    soft_assert(policy.exists, "The policy {} does not exist!".format(
-        policy.description
-    ))
-    # U
-    with update(policy):
-        policy.notes = "Modified!"
-    sel.force_navigate("host_compliance_policy_edit", context={"policy_name": policy.description})
-    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
-    # D
-    policy.delete()
-    soft_assert(not policy.exists, "The policy {} exists!".format(
-        policy.description
-    ))
-
-
-@pytest.mark.tier(2)
-@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
-def test_container_image_control_policy_crud(soft_assert):
-    policy = explorer.ContainerImageControlPolicy(fauxfactory.gen_alphanumeric())
+def test_policy_crud(policy_class, soft_assert):
+    policy = policy_class(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
     soft_assert(policy.exists, "The policy {} does not exist!".format(
@@ -369,7 +388,7 @@ def test_container_image_control_policy_crud(soft_assert):
     with update(policy):
         policy.notes = "Modified!"
     sel.force_navigate(
-        "container_image_control_policy_edit",
+        "{}policy_edit".format(policy.PREFIX),
         context={"policy_name": policy.description}
     )
     soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
@@ -380,81 +399,32 @@ def test_container_image_control_policy_crud(soft_assert):
     ))
 
 
-@pytest.mark.tier(2)
-@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
-def test_container_image_compliance_policy_crud(soft_assert):
-    policy = explorer.ContainerImageCompliancePolicy(fauxfactory.gen_alphanumeric())
-    # CR
-    policy.create()
-    soft_assert(policy.exists, "The policy {} does not exist!".format(
-        policy.description
-    ))
-    # U
-    with update(policy):
-        policy.notes = "Modified!"
-    sel.force_navigate(
-        "container_image_compliance_policy_edit",
-        context={"policy_name": policy.description})
-    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
-    # D
-    policy.delete()
-    soft_assert(not policy.exists, "The policy {} exists!".format(
-        policy.description
-    ))
-
-
 @pytest.mark.tier(3)
-def test_policies_copy(random_policy, soft_assert):
-    random_policy_copy = random_policy.copy()
+def test_policy_copy(policy, soft_assert):
+    random_policy_copy = policy.copy()
     soft_assert(random_policy_copy.exists, "The {} does not exist!".format(random_policy_copy))
     random_policy_copy.delete()
 
 
 @pytest.mark.tier(3)
-def test_assign_events_to_vm_control_policy(random_vm_control_policy, soft_assert):
-    random_vm_control_policy.assign_events("VM Retired", "VM Clone Start")
-    soft_assert(random_vm_control_policy.is_event_assigned("VM Retired"))
-    soft_assert(random_vm_control_policy.is_event_assigned("VM Clone Start"))
+def test_assign_two_random_events_to_control_policy(control_policy, soft_assert):
+    random_events = random.sample(EVENTS, 2)
+    control_policy.assign_events(*random_events)
+    soft_assert(control_policy.is_event_assigned(random_events[0]))
+    soft_assert(control_policy.is_event_assigned(random_events[1]))
 
 
 @pytest.mark.tier(3)
-def test_assign_events_to_host_control_policy(random_host_control_policy, soft_assert):
-    random_host_control_policy.assign_events("Host Auth Error", "Host Compliance Passed")
-    soft_assert(random_host_control_policy.is_event_assigned("Host Auth Error"))
-    soft_assert(random_host_control_policy.is_event_assigned("Host Compliance Passed"))
-
-
-@pytest.mark.tier(3)
-def test_assign_vm_condition_to_vm_policy(
-        random_vm_control_policy, random_vm_condition, soft_assert):
-    random_vm_control_policy.assign_conditions(random_vm_condition)
-    soft_assert(random_vm_control_policy.is_condition_assigned(random_vm_condition))
-    random_vm_control_policy.assign_conditions()  # unassign
-
-
-@pytest.mark.tier(3)
-def test_assign_host_condition_to_host_policy(
-        random_host_control_policy, random_host_condition, soft_assert):
-    random_host_control_policy.assign_conditions(random_host_condition)
-    soft_assert(random_host_control_policy.is_condition_assigned(random_host_condition))
-    random_host_control_policy.assign_conditions()  # unassign
-
-
-@pytest.mark.tier(3)
-@pytest.mark.skipif(current_version() < "5.6", reason="requires cfme 5.6 and higher")
-def test_assign_events_to_container_image_control_policy(
-        random_container_image_control_policy,
-        container_image_condition,
-        request):
-    """This test checks whether an event is assigned to container image control policy.
+def test_assign_condition_to_control_policy(request, policy_and_condition):
+    """This test checks whether an condition is assigned to a control policy.
     Steps:
-        * Create a container image control policy.
-        * Assign an event to the created policy.
+        * Create a control policy.
+        * Assign a condition to the created policy.
     """
-    random_container_image_control_policy.assign_conditions(
-        container_image_condition)
-    request.addfinalizer(random_container_image_control_policy.assign_conditions)
-    assert random_container_image_control_policy.is_condition_assigned(container_image_condition)
+    policy, condition = policy_and_condition
+    policy.assign_conditions(condition)
+    request.addfinalizer(policy.assign_conditions)
+    assert policy.is_condition_assigned(condition)
 
 
 @pytest.mark.tier(2)
@@ -528,6 +498,8 @@ def test_control_alert_copy(random_alert, soft_assert):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.uncollectif(lambda alert_profile: alert_profile.TYPE == "Middleware Server" and
+    current_version() < "5.7")
 def test_alert_profile_crud(alert_profile, soft_assert):
     alert_profile.create()
     soft_assert(alert_profile.exists, "The alert profile {} does not exist!".format(

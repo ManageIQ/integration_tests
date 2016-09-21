@@ -7,6 +7,7 @@ from cfme.configure.configuration import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTree, flash, form_buttons, mixins, toolbar
 from cfme.web_ui.topology import Topology
+from cfme.web_ui.timelines import Timelines
 from sqlalchemy.orm import aliased
 from utils import attributize_string, version
 from utils.db import cfmedb
@@ -472,3 +473,28 @@ class TopologyMixin(object):
     @cached_property
     def topology(self):
         return Topology(self)
+
+
+class TimelinesMixin(object):
+    """Use this mixin to have simple access to the Timelines page.
+    To use this `TimelinesMixin` you have to implement `load_timelines_page`
+    function, which should take to timelines page
+
+    Sample usage:
+
+    .. code-block:: python
+
+        # Change Timelines showing interval Select
+        timelines.change_interval('Hourly')
+        # Change Timelines showing event group Select
+        timelines.change_event_groups('Application')
+        # Change Level of showed Timelines
+        timelines.change_level('Detail')
+        # Check whether timelines contain particular event
+        # which is generated after provided datetime
+        timelines.contains_event('hawkular_deployment.ok', before_test_date)
+
+    """
+    @cached_property
+    def timelines(self):
+        return Timelines(self)

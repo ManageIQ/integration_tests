@@ -19,30 +19,43 @@ import dateutil.parser
 import requests
 import traceback
 
+from navmazing import NavigateToSibling
+from sentaku import ImplementationContext
 from utils.mgmt_system import RHEVMSystem
 from mgmtsystem.virtualcenter import VMWareSystem
 
-from cfme.common.vm import VM
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import api, conf, datafile, db, trackerbot, db_queries, ssh, ports
+from utils import api, conf, datafile, db, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path
-from utils.providers import get_mgmt, get_crud
 from utils.version import Version, get_stream, pick, LATEST
-from utils.signals import fire
 from utils.wait import wait_for
 from utils import clear_property_cache
+
+from .endpoints.ui import ViaUI
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # Do not import the whole stuff around
 if not RUNNING_UNDER_SPROUT:
-    from cfme.configure.configuration import set_server_roles, get_server_roles
-    from utils.providers import setup_provider
     from utils.hosts import setup_providers_hosts_credentials
+
+
+def _current_miqqe_version():
+    """Parses MiqQE JS patch version from the patch file
+
+    Returns: Version as int
+    """
+    with patches_path.join('miq_application.js.diff').open("r") as f:
+        match = re.search("MiqQE_version = (\d+);", f.read(), flags=0)
+    version = int(match.group(1))
+    return version
+
+current_miqqe_version = _current_miqqe_version()
 
 
 class ApplianceException(Exception):
@@ -59,6 +72,7 @@ class IPAppliance(object):
         browser_streal: If True then then current browser is killed and the new appliance
             is used to generate a new session.
     """
+    _nav_steps = {}
 
     def __init__(self, address=None, browser_steal=False, container=None):
         if address is not None:
@@ -77,6 +91,10 @@ class IPAppliance(object):
         self.browser_steal = browser_steal
         self.container = container
         self._db_ssh_client = None
+
+        self.browser = ViaUI(owner=self)
+        self.sentaku_ctx = ImplementationContext.from_instances(
+            [self.browser])
 
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
@@ -309,6 +327,14 @@ class IPAppliance(object):
             auth=("admin", "smartvm"))
 
     @cached_property
+    def miqqe_version(self):
+        """Returns version of applied JS patch or None if not present"""
+        rc, out = self.ssh_client.run_command('grep "[0-9]\+" /var/www/miq/vmdb/.miqqe_version')
+        if rc == 0:
+            return int(out)
+        return None
+
+    @cached_property
     def address(self):
         # If address wasn't set in __init__, use the hostname from base_url
         if getattr(self, "_url", None) is not None:
@@ -517,7 +543,7 @@ class IPAppliance(object):
         # (local_path, remote_path, md5/None) trio
         autofocus_patch = pick({
             '5.5': 'autofocus.js.diff',
-            LATEST: 'autofocus_upstream.js.diff'
+            '5.7': 'autofocus_57.js.diff'
         })
         patch_args = (
             (str(patches_path.join('miq_application.js.diff')),
@@ -528,24 +554,22 @@ class IPAppliance(object):
              None),
         )
 
-        patched_anything = False
-        ssh_client = self.ssh_client
         for local_path, remote_path, md5 in patch_args:
-            res = ssh_client.patch_file(local_path, remote_path, md5)
-            patched_anything = patched_anything or res
+            self.ssh_client.patch_file(local_path, remote_path, md5)
 
-        if patched_anything:
-            logger.info("Cleaning and precompiling assets")
-            store.current_appliance.precompile_assets()
-            logger.info("Restarting evm service")
-            store.current_appliance.restart_evm_service()
-            logger.info("Waiting for Web UI to start")
-            wait_for(
-                func=store.current_appliance.is_web_ui_running,
-                message='appliance.is_web_ui_running',
-                delay=20,
-                timeout=300)
-            logger.info("Web UI is up and running")
+        self.precompile_assets()
+        self.restart_evm_service()
+        logger.info("Waiting for Web UI to start")
+        wait_for(
+            func=self.is_web_ui_running,
+            message='appliance.is_web_ui_running',
+            delay=20,
+            timeout=300)
+        logger.info("Web UI is up and running")
+        self.ssh_client.run_command(
+            "echo '{}' > /var/www/miq/vmdb/.miqqe_version".format(current_miqqe_version))
+        # Invalidate cached version
+        del self.miqqe_version
 
     @logger_wrap("Work around missing Gem file: {}")
     def workaround_missing_gemfile(self, log_callback=None):
@@ -1154,7 +1178,7 @@ class IPAppliance(object):
                 msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
                 log_callback(msg)
                 raise ApplianceException(msg)
-        fire("server_details_changed")
+        self.server_details_changed()
 
     @logger_wrap("Stop EVM Service: {}")
     def stop_evm_service(self, log_callback=None):
@@ -1533,64 +1557,52 @@ class IPAppliance(object):
     def host_id(self, hostname):
         return db_queries.get_host_id(hostname, db=self.db)
 
-    @cached_property
-    def db_yamls(self):
-        return db.db_yamls(self.db, self.guid)
-
     def get_yaml_config(self, config_name):
-        if self.version >= '5.6':
-            if config_name == 'vmdb':
-                writeout = store.current_appliance.ssh_client.run_rails_command(
-                    '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
-                    '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
-                )
-                if writeout.rc:
-                    logger.error("Config couldn't be found")
-                    logger.error(writeout.output)
-                    raise Exception('Error obtaining config')
-                base_data = store.current_appliance.ssh_client.run_command('cat /tmp/yam_dump.yaml')
-                if base_data.rc:
-                    logger.error("Config couldn't be found")
-                    logger.error(base_data.output)
-                    raise Exception('Error obtaining config')
-                try:
-                    return yaml.load(base_data.output)
-                except:
-                    logger.debug(base_data.output)
-                    raise
-            else:
-                raise Exception('Only [vmdb] config is allowed from 5.6+')
+        if config_name == 'vmdb':
+            writeout = self.ssh_client.run_rails_command(
+                '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
+                '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
+            )
+            if writeout.rc:
+                logger.error("Config couldn't be found")
+                logger.error(writeout.output)
+                raise Exception('Error obtaining config')
+            base_data = self.ssh_client.run_command('cat /tmp/yam_dump.yaml')
+            if base_data.rc:
+                logger.error("Config couldn't be found")
+                logger.error(base_data.output)
+                raise Exception('Error obtaining config')
+            try:
+                return yaml.load(base_data.output)
+            except:
+                logger.debug(base_data.output)
+                raise
         else:
-            return db.get_yaml_config(config_name, self.db)
+            raise Exception('Only [vmdb] config is allowed from 5.6+')
 
     def set_yaml_config(self, config_name, data_dict):
-        if self.version >= '5.6':
-            if config_name == 'vmdb':
-                temp_yaml = NamedTemporaryFile()
-                dest_yaml = '/tmp/conf.yaml'
-                yaml.dump(data_dict, temp_yaml, default_flow_style=False)
-                self.ssh_client.put_file(temp_yaml.name, dest_yaml)
-                # Build and send ruby script
-                dest_ruby = '/tmp/set_conf.rb'
+        if config_name == 'vmdb':
+            temp_yaml = NamedTemporaryFile()
+            dest_yaml = '/tmp/conf.yaml'
+            yaml.dump(data_dict, temp_yaml, default_flow_style=False)
+            self.ssh_client.put_file(temp_yaml.name, dest_yaml)
+            # Build and send ruby script
+            dest_ruby = '/tmp/set_conf.rb'
 
-                ruby_template = data_path.join('utils', 'cfmedb_set_config.rbt')
-                ruby_replacements = {
-                    'config_file': dest_yaml
-                }
-                temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
-                self.ssh_client.put_file(temp_ruby.name, dest_ruby)
+            ruby_template = data_path.join('utils', 'cfmedb_set_config.rbt')
+            ruby_replacements = {
+                'config_file': dest_yaml
+            }
+            temp_ruby = load_data_file(ruby_template.strpath, ruby_replacements)
+            self.ssh_client.put_file(temp_ruby.name, dest_ruby)
 
-                # Run it
-                result = self.ssh_client.run_rails_command(dest_ruby)
-                if not result.rc:
-                    fire('server_details_changed')
-                    fire('server_config_changed')
-                else:
-                    raise Exception('Unable to set config')
+            # Run it
+            if self.ssh_client.run_rails_command(dest_ruby):
+                self.server_details_changed()
             else:
-                raise Exception('Only [vmdb] config is allowed from 5.6+')
+                raise Exception('Unable to set config')
         else:
-            return db.set_yaml_config(config_name, data_dict)
+            raise Exception('Only [vmdb] config is allowed from 5.6+')
 
     def get_yaml_file(self, yaml_path):
         """Get (and parse) a yaml file from the appliance, returning a python data structure"""
@@ -1627,6 +1639,35 @@ class IPAppliance(object):
     def reset_automate_model(self):
         with self.ssh_client as ssh_client:
             ssh_client.run_rake_command("evm:automate:reset")
+
+    def server_details_changed(self):
+        clear_property_cache(self, 'configuration_details', 'zone_description')
+
+
+@navigator.register(IPAppliance)
+class LoggedIn(CFMENavigateStep):
+    def step(self):
+        from cfme.login import login_admin
+        from utils.browser import browser
+        browser()
+        login_admin()
+
+
+@navigator.register(IPAppliance)
+class Dashboard(CFMENavigateStep):
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def am_i_here(self):
+        from cfme.web_ui.menu import nav
+        if self.obj.version < "5.6.0.1":
+            nav.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
+        else:
+            nav.CURRENT_TOP_MENU = "{}{}".format(nav.ROOT, nav.ACTIVE_LEV)
+        nav.is_page_active('Dashboard')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Cloud Intel', 'Dashboard')(None)
 
 
 class Appliance(IPAppliance):
@@ -1670,6 +1711,7 @@ class Appliance(IPAppliance):
         Note:
             Cannot be cached because provider object is unpickable.
         """
+        from utils.providers import get_mgmt
         return get_mgmt(self._provider_name)
 
     @property
@@ -1755,6 +1797,8 @@ class Appliance(IPAppliance):
 
     @logger_wrap("Configure fleecing: {}")
     def configure_fleecing(self, log_callback=None):
+        from cfme.configure.configuration import set_server_roles, get_server_roles
+        from utils.providers import setup_provider
         with self(browser_steal=True):
             if self.is_on_vsphere:
                 self.install_vddk(reboot=True, log_callback=log_callback)
@@ -1788,6 +1832,8 @@ class Appliance(IPAppliance):
             if self.is_on_rhev:
                 from cfme.infrastructure.virtual_machines import Vm  # For Vm.CfmeRelationship
                 log_callback('Setting up CFME VM relationship...')
+                from cfme.common.vm import VM
+                from utils.providers import get_crud
                 vm = VM.factory(self.vm_name, get_crud(self._provider_name))
                 cfme_rel = Vm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server_name()), self.server_id())
@@ -1805,9 +1851,9 @@ class Appliance(IPAppliance):
             Database must be up and running and evm service must be (re)started afterwards
             for the name change to take effect.
         """
-        vmdb_config = db.get_yaml_config('vmdb', self.db)
+        vmdb_config = self.get_yaml_config('vmdb', self.db)
         vmdb_config['server']['name'] = new_name
-        db.set_yaml_config('vmdb', vmdb_config, self.address)
+        self.set_yaml_config('vmdb', vmdb_config, self.address)
         self.name = new_name
 
     def destroy(self):
@@ -1953,6 +1999,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
             return '{}_{}'.format(vm_name_prefix, fauxfactory.gen_alphanumeric(8))
 
     def _get_latest_template():
+        from utils import trackerbot
         api = trackerbot.api()
         stream = get_stream(version)
         template_data = trackerbot.latest_template(api, stream, provider_name)
@@ -1982,7 +2029,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         raise ApplianceException('Either version or template name must be specified')
 
     prov_data = conf.cfme_data.get('management_systems', {})[provider_name]
-
+    from utils.providers import get_mgmt
     provider = get_mgmt(provider_name)
     if not vm_name:
         vm_name = _generate_vm_name()
@@ -2097,3 +2144,8 @@ def get_or_create_current_appliance():
     return stack.top
 
 current_appliance = LocalProxy(get_or_create_current_appliance)
+
+
+class CurrentAppliance(object):
+    def __get__(self, instance, owner):
+        return get_or_create_current_appliance()
