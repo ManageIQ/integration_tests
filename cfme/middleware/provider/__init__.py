@@ -1,12 +1,17 @@
+from navmazing import NavigateToSibling, NavigateToAttribute
+
+from cfme.common.provider import import_all_modules_of
+from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Region, Form, AngularSelect, Input, Quadicon, form_buttons
+    Region, Form, AngularSelect, Input, Quadicon, form_buttons, toolbar as tb, paginator
 )
 from cfme.web_ui.menu import nav
-from cfme.common.provider import BaseProvider
 from utils import version
+from utils.appliance import CurrentAppliance
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.db import cfmedb
-from cfme.common.provider import import_all_modules_of
+
 from .. import cfg_btn, mon_btn, pol_btn
 
 
@@ -82,6 +87,80 @@ class MiddlewareProvider(BaseProvider):
     add_provider_button = form_buttons.FormButton("Add this Middleware Provider")
     save_button = form_buttons.FormButton("Save Changes")
     taggable_type = 'ExtManagementSystem'
+    appliance = CurrentAppliance()
+
+
+@navigator.register(MiddlewareProvider, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Middleware', 'Providers')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("Grid View")
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
+
+
+@navigator.register(MiddlewareProvider, 'Add')
+class Add(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New Middleware Provider')
+
+
+@navigator.register(MiddlewareProvider, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+
+@navigator.register(MiddlewareProvider, 'Edit')
+class Edit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        cfg_btn('Edit Selected Middleware Provider')
+
+
+@navigator.register(MiddlewareProvider, 'EditFromDetails')
+class EditFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Middleware Provider')
+
+
+@navigator.register(MiddlewareProvider, 'EditTags')
+class EditTags(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        pol_btn('Edit Tags')
+
+
+@navigator.register(MiddlewareProvider, 'EditTagsFromDetails')
+class EditTagsFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Edit Tags')
+
+
+@navigator.register(MiddlewareProvider, 'TimelinesFromDetails')
+class TimelinesFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
 
 
 import_all_modules_of('cfme.middleware.provider')
