@@ -9,6 +9,7 @@ from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen, version
+from utils.appliance.endpoints.ui import navigate_to
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -135,8 +136,7 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
 
     request.addfinalizer(cleanup_host)
 
-    pytest.sel.force_navigate('infrastructure_provision_host', context={
-        'host': test_host, })
+    navigate_to(test_host, 'Provision')
 
     note = ('Provisioning host {} on provider {}'.format(prov_host_name, provider.key))
     provisioning_data = {

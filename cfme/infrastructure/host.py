@@ -18,7 +18,7 @@ import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins
+    form_buttons, paginator, Input, mixins, summary_title
 )
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
@@ -30,7 +30,7 @@ from utils.wait import wait_for
 from utils import deferred_verpick, version
 from utils.pretty import Pretty
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
-from utils.appliance import CurrentAppliance
+from utils.appliance import CurrentAppliance, get_or_create_current_appliance
 
 # Page specific locators
 details_page = Region(infoblock_type='detail')
@@ -134,7 +134,7 @@ class Host(Updateable, Pretty):
         self.ipmi_credentials = ipmi_credentials
         self.interface_type = interface_type
         self.db_id = None
-        self.appliance = appliance or CurrentAppliance()
+        self.appliance = appliance or get_or_create_current_appliance()
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -418,11 +418,7 @@ class Details(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
     def am_i_here(self):
-        return sel.is_displayed(
-            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "{}")]'.format(self.obj.name))
-
-    def resetter(self):
-        sel.refresh()
+        return summary_title() == "{} (Summary)".format(self.obj.name)
 
 
 @navigator.register(Host, 'Edit')
