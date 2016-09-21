@@ -1,35 +1,18 @@
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from . import PXEServer
-from utils.appliance import ViaUI, current_appliance
+from utils.appliance import ViaUI
 
 from cfme.exceptions import CandidateNotFound
 from selenium.common.exceptions import NoSuchElementException
 from functools import partial
 import cfme.web_ui.toolbar as tb
 import cfme.web_ui.accordion as acc
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 
 cfg_btn = partial(tb.select, 'Configuration')
 
 pxe_tree = partial(acc.tree, "PXE Servers", "All PXE Servers")
-
-# ** Notice this below. It's hacky. Right now this enables "this" object to work and no other.
-# ** Why did we do it this way?
-# ** Navigation used to be a single object, now, if you look at utils.appliance, it's endpoint
-# ** specific. Meaning that each appliance has a set of endpoint objects and each one of those
-# ** has a Menu object. See utils.appliance for more on this.
-# ** But in order to get this demo to work, we had to graft the tree directly into the menu.
-# ** As the test is only using a single appliance this seemed like the best way to do it.
-# ** As things progress we will need to find a way to get nav endpoint loading to happen to "ALL"
-# ** relevant endpoint objects an once AND, that when new appliance objects are created, and hence
-# ** new endpoint objects are created, they get populated with nav end points that have already
-# ** been loaded. This part is a little tricky. But we have some good ideas (most notably, making
-# ** the menu system entirely deterministic so that it is version agnostic.
-current_appliance.browser.menu.add_branch('infrastructure_pxe',
-               {'infrastructure_pxe_servers': [lambda _: pxe_tree(),
-                {'infrastructure_pxe_server_new': lambda _: cfg_btn('Add a New PXE Server'),
-                 'infrastructure_pxe_server': [lambda ctx: pxe_tree(ctx.pxe_server.name),
-                                               {'infrastructure_pxe_server_edit':
-                                                lambda _: cfg_btn('Edit this PXE Server')}]}],
-                })
 
 
 @PXEServer.exists.external_implementation_for(ViaUI)
@@ -44,7 +27,7 @@ def exists_ux(self):
 
     # ** Notice also how the rest of the UI stuff, like pxe_tree remains unchanged. This is our
     # ** desire, to leave as much of the objects code intact as possible.
-    self.impl.force_navigate('infrastructure_pxe_servers')
+    navigate_to(self, 'All')
     try:
         pxe_tree(self.name)
         return True
@@ -52,3 +35,37 @@ def exists_ux(self):
         return False
     except NoSuchElementException:
         return False
+
+
+@navigator.register(PXEServer, 'All')
+class PXEServerAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Infrastructure', 'PXE')(None)
+        acc.tree("PXE Servers", "All PXE Servers")
+
+
+@navigator.register(PXEServer, 'Add')
+class PXEServerAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New PXE Server')
+
+
+@navigator.register(PXEServer, 'Details')
+class PXEServerDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        acc.tree("PXE Servers", "All PXE Servers", self.obj.name)
+
+
+@navigator.register(PXEServer, 'Edit')
+class PXEServerEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this PXE Server')

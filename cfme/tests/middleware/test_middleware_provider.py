@@ -22,7 +22,7 @@ def test_hawkular_crud(provider):
     """Test provider add with good credentials.
 
     """
-    provider.create(cancel=False, validate_credentials=False)
+    provider.create(cancel=False, validate_credentials=True)
     # UI validation, checks whether data provided from Hawkular provider matches data in UI
     provider.validate_stats(ui=True)
     # DB validation, checks whether data provided from Hawkular provider matches data in DB
@@ -51,13 +51,19 @@ def test_topology(provider):
     Steps:
         * Get topology elements detail
         * Check number of providers on the page
-        * Check number of `Servers`, `Deployments` on topology page
+        * Check number of `Servers`, `Domains`, `Deployments` on topology page
     """
     assert len(provider.topology.elements(element_type='Hawkular')) == 1,\
         "More than one Hawkular providers found"
-    el_hawkular = provider.topology.elements(element_type='Hawkular')[0]
-    assert provider.num_server(method='db') == len(el_hawkular.children), \
+
+    assert provider.num_server(method='db') == \
+        len(provider.topology.elements(element_type='MiddlewareServer')), \
         "Number of server(s) miss match between topology page and in database"
+
+    assert provider.num_domain(method='db') == \
+        len(provider.topology.elements(element_type='MiddlewareDomain')), \
+        "Number of domain(s) miss match between topology page and in database"
+
     assert provider.num_deployment(method='db') == \
         len(provider.topology.elements(element_type='MiddlewareDeployment')) + \
         len(provider.topology.elements(element_type='MiddlewareDeploymentWar')) + \
@@ -72,4 +78,4 @@ def test_authentication(provider):
     """
     provider.recheck_auth_status()
     flash.assert_success_message('Authentication status will be saved'
-        ' and workers will be restarted for this Middleware Provider')
+        ' and workers will be restarted for the selected Middleware Provider')

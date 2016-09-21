@@ -6,6 +6,7 @@ from cfme.middleware.datasource import MiddlewareDatasource
 from cfme.middleware.deployment import MiddlewareDeployment
 from cfme.middleware.domain import MiddlewareDomain
 from cfme.middleware.server_group import MiddlewareServerGroup
+from cfme.middleware.messaging import MiddlewareMessaging
 import cfme.web_ui.flash as flash
 from utils import testgen
 from utils.version import current_version
@@ -20,7 +21,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"],
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
 @pytest.mark.parametrize("objecttype", [MiddlewareDatasource, MiddlewareDeployment,
                                         HawkularProvider, MiddlewareServer,
-                                        MiddlewareDomain])
+                                        MiddlewareDomain, MiddlewareMessaging])
 def test_download_lists_base(filetype, objecttype):
     """ Download the items from base lists. """
     objecttype.download(filetype)
@@ -28,14 +29,16 @@ def test_download_lists_base(filetype, objecttype):
 
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
 @pytest.mark.parametrize("objecttype", [MiddlewareDatasource, MiddlewareDeployment,
-                                        MiddlewareServer, MiddlewareDomain])
+                                        MiddlewareServer, MiddlewareDomain,
+                                        MiddlewareMessaging])
 def test_download_lists_from_provider(provider, filetype, objecttype):
     """ Download the items from providers. """
     objecttype.download(filetype, provider=provider)
 
 
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
-@pytest.mark.parametrize("objecttype", [MiddlewareDatasource, MiddlewareDeployment])
+@pytest.mark.parametrize("objecttype", [MiddlewareDatasource, MiddlewareDeployment,
+                                        MiddlewareMessaging])
 def test_download_lists_from_provider_server(provider, filetype, objecttype):
     """ Download the items from provider's server. """
     objecttype.download(filetype, provider=provider,

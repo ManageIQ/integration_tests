@@ -92,7 +92,6 @@ class ByValue(Pretty):
         return str(self.value)
 
 
-@removed
 class ByText(Pretty):
     pretty_attrs = ['text']
 
@@ -1202,7 +1201,6 @@ class Select(SeleniumSelect, Pretty):
             type(self).__name__, repr(self._loc), repr(self.is_multiple))
 
 
-@removed
 @multidispatch
 def select(loc, o):
     raise NotImplementedError('Unable to select {} in this type: {}'.format(o, loc))

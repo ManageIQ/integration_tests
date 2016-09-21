@@ -138,34 +138,9 @@ Invalidating cached data
 
 In order to speed things up, we cache certain items of data, such as the appliances version and
 configuration details. When these get changed, the cache becomes invalid and we must invalidate
-the cache somehow. It's not as tricky as it sounds. We have created a signals module to help with
-this. You can find the list of used signals in the :py:mod:`utils.signals` file. An example of this would
-be the server name. If the server name is changed. We need to invalidate the cache. To do this, we
-do the following::
-
-    def update(self):
-        """ Navigate to a correct page, change details and save.
-
-        """
-        sel.force_navigate("cfg_settings_currentserver_server")
-        fill(self.basic_information, self.details)
-        # Workaround for issue with form_button staying dimmed.
-        if self.details["appliance_zone"] is not None and current_version() < "5.3":
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/ops/settings_form_field_changed/server',"
-                " data: {'server_zone':'%s'}})" % (self.details["appliance_zone"]))
-        sel.click(form_buttons.save)
-        # TODO: Maybe make a cascaded delete on lazycache?
-        fire('server_details_changed')
-
-Notice the last line in this snippet which fires off the ``server_details_changed`` signal. You as the
-user don't need to care how to invalidate the cache, you just need to let the system know you've done
-it. Any time any one updates the server details using the
-:py:class:`cfme.configure.configuration.BasicInformation` class from the configuration
-module, this signal will automatically be fired, so unless you are doing something out of the ordinary,
-you shouldn't have to worry about it. However the signals are there if you need to. Note that the cache
-invalidation happens on the ``current_appliance`` in the stack. See the :ref:`appliance_stack` section
-for more details.
+the cache somehow. It used to be handled with the ``utils.signals`` module which is now gone. You
+need to call an appropriate method on the appliance object like
+:py:meth:`utils.appliance.IPAppliance.server_details_changed` which invalidates the data.
 
 pytest store
 ------------

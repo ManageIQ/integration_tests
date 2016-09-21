@@ -4,8 +4,7 @@
 :var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
            Datastores pages.
 """
-
-from cfme.web_ui.menu import nav
+from functools import partial
 
 from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
@@ -14,12 +13,13 @@ from cfme.web_ui import (
     flash, InfoBlock, summary_title, fill
 )
 from cfme.web_ui.form_buttons import FormButton
-from functools import partial
+from cfme.web_ui.menu import nav
+from utils import version
+from utils.appliance.endpoints.ui import navigate_to
+from utils.log import logger
 from utils.pretty import Pretty
 from utils.providers import get_crud
 from utils.wait import wait_for
-from utils import version
-from utils.log import logger
 
 
 details_page = Region(infoblock_type='detail')
@@ -33,7 +33,8 @@ pol_btn = partial(tb.select, 'Policy')
 
 
 def nav_to_datastore_through_provider(context):
-    sel.force_navigate('infrastructure_provider', context=context)
+    # TODO: replace this navigation via navmazing and a CFMENavigateStep destination
+    navigate_to(context['provider'], 'All')
     list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
     sel.click(Quadicon(context['datastore'].name, 'datastore'))
 

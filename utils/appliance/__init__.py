@@ -35,7 +35,6 @@ from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path
 from utils.version import Version, get_stream, pick, LATEST
-from utils.signals import fire
 from utils.wait import wait_for
 from utils import clear_property_cache
 
@@ -45,8 +44,20 @@ from .endpoints.db import ViaDB
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 # Do not import the whole stuff around
 if not RUNNING_UNDER_SPROUT:
-    from cfme.configure.configuration import set_server_roles, get_server_roles
     from utils.hosts import setup_providers_hosts_credentials
+
+
+def _current_miqqe_version():
+    """Parses MiqQE JS patch version from the patch file
+
+    Returns: Version as int
+    """
+    with patches_path.join('miq_application.js.diff').open("r") as f:
+        match = re.search("MiqQE_version = (\d+);", f.read(), flags=0)
+    version = int(match.group(1))
+    return version
+
+current_miqqe_version = _current_miqqe_version()
 
 
 class ApplianceException(Exception):
@@ -321,6 +332,14 @@ class IPAppliance(object):
             auth=("admin", "smartvm"))
 
     @cached_property
+    def miqqe_version(self):
+        """Returns version of applied JS patch or None if not present"""
+        rc, out = self.ssh_client.run_command('grep "[0-9]\+" /var/www/miq/vmdb/.miqqe_version')
+        if rc == 0:
+            return int(out)
+        return None
+
+    @cached_property
     def address(self):
         # If address wasn't set in __init__, use the hostname from base_url
         if getattr(self, "_url", None) is not None:
@@ -530,7 +549,7 @@ class IPAppliance(object):
         # (local_path, remote_path, md5/None) trio
         autofocus_patch = pick({
             '5.5': 'autofocus.js.diff',
-            '5.7': 'autofocus_upstream.js.diff'
+            '5.7': 'autofocus_57.js.diff'
         })
         patch_args = (
             (str(patches_path.join('miq_application.js.diff')),
@@ -541,24 +560,22 @@ class IPAppliance(object):
              None),
         )
 
-        patched_anything = False
-        ssh_client = self.ssh_client
         for local_path, remote_path, md5 in patch_args:
-            res = ssh_client.patch_file(local_path, remote_path, md5)
-            patched_anything = patched_anything or res
+            self.ssh_client.patch_file(local_path, remote_path, md5)
 
-        if patched_anything:
-            logger.info("Cleaning and precompiling assets")
-            store.current_appliance.precompile_assets()
-            logger.info("Restarting evm service")
-            store.current_appliance.restart_evm_service()
-            logger.info("Waiting for Web UI to start")
-            wait_for(
-                func=store.current_appliance.is_web_ui_running,
-                message='appliance.is_web_ui_running',
-                delay=20,
-                timeout=300)
-            logger.info("Web UI is up and running")
+        self.precompile_assets()
+        self.restart_evm_service()
+        logger.info("Waiting for Web UI to start")
+        wait_for(
+            func=self.is_web_ui_running,
+            message='appliance.is_web_ui_running',
+            delay=20,
+            timeout=300)
+        logger.info("Web UI is up and running")
+        self.ssh_client.run_command(
+            "echo '{}' > /var/www/miq/vmdb/.miqqe_version".format(current_miqqe_version))
+        # Invalidate cached version
+        del self.miqqe_version
 
     @logger_wrap("Work around missing Gem file: {}")
     def workaround_missing_gemfile(self, log_callback=None):
@@ -1167,7 +1184,7 @@ class IPAppliance(object):
                 msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
                 log_callback(msg)
                 raise ApplianceException(msg)
-        fire("server_details_changed")
+        self.server_details_changed()
 
     @logger_wrap("Stop EVM Service: {}")
     def stop_evm_service(self, log_callback=None):
@@ -1548,7 +1565,7 @@ class IPAppliance(object):
 
     def get_yaml_config(self, config_name):
         if config_name == 'vmdb':
-            writeout = store.current_appliance.ssh_client.run_rails_command(
+            writeout = self.ssh_client.run_rails_command(
                 '"File.open(\'/tmp/yam_dump.yaml\', \'w\') '
                 '{|f| f.write(Settings.to_hash.deep_stringify_keys.to_yaml) }"'
             )
@@ -1556,7 +1573,7 @@ class IPAppliance(object):
                 logger.error("Config couldn't be found")
                 logger.error(writeout.output)
                 raise Exception('Error obtaining config')
-            base_data = store.current_appliance.ssh_client.run_command('cat /tmp/yam_dump.yaml')
+            base_data = self.ssh_client.run_command('cat /tmp/yam_dump.yaml')
             if base_data.rc:
                 logger.error("Config couldn't be found")
                 logger.error(base_data.output)
@@ -1586,10 +1603,8 @@ class IPAppliance(object):
             self.ssh_client.put_file(temp_ruby.name, dest_ruby)
 
             # Run it
-            result = self.ssh_client.run_rails_command(dest_ruby)
-            if not result.rc:
-                fire('server_details_changed')
-                fire('server_config_changed')
+            if self.ssh_client.run_rails_command(dest_ruby):
+                self.server_details_changed()
             else:
                 raise Exception('Unable to set config')
         else:
@@ -1630,6 +1645,9 @@ class IPAppliance(object):
     def reset_automate_model(self):
         with self.ssh_client as ssh_client:
             ssh_client.run_rake_command("evm:automate:reset")
+
+    def server_details_changed(self):
+        clear_property_cache(self, 'configuration_details', 'zone_description')
 
 
 @navigator.register(IPAppliance)
@@ -1785,6 +1803,7 @@ class Appliance(IPAppliance):
 
     @logger_wrap("Configure fleecing: {}")
     def configure_fleecing(self, log_callback=None):
+        from cfme.configure.configuration import set_server_roles, get_server_roles
         from utils.providers import setup_provider
         with self(browser_steal=True):
             if self.is_on_vsphere:

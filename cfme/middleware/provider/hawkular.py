@@ -3,6 +3,7 @@ import re
 from cfme.common import TopologyMixin, TimelinesMixin
 from . import MiddlewareProvider
 from mgmtsystem.hawkular import Hawkular
+from utils.appliance import get_or_create_current_appliance
 from utils.db import cfmedb
 from utils.varmeth import variable
 from . import _get_providers_page, _db_select_query
@@ -31,13 +32,15 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         myprov.create()
         myprov.num_deployment(method="ui")
     """
-    STATS_TO_MATCH = ['num_server', 'num_domain', 'num_deployment', 'num_datasource']
+    STATS_TO_MATCH = ['num_server', 'num_domain', 'num_deployment', 'num_datasource',
+                      'num_messaging']
     property_tuples = [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'),
                        ('provider_type', 'type')]
     type_name = "hawkular"
     mgmt_class = Hawkular
 
-    def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None, **kwargs):
+    def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None,
+            appliance=None, **kwargs):
         self.name = name
         self.hostname = hostname
         self.port = port
@@ -47,6 +50,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         self.credentials = credentials
         self.key = key
         self.db_id = kwargs['db_id'] if 'db_id' in kwargs else None
+        self.appliance = appliance or get_or_create_current_appliance()
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -93,6 +97,16 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         if reload_data:
             self.summary.reload()
         return self.summary.relationships.middleware_domains.value
+
+    @variable(alias='db')
+    def num_messaging(self):
+        return self._num_db_generic('middleware_messagings')
+
+    @num_messaging.variant('ui')
+    def num_messaging_ui(self, reload_data=True):
+        if reload_data:
+            self.summary.reload()
+        return self.summary.relationships.middleware_messagings.value
 
     @variable(alias='ui')
     def is_refreshed(self, reload_data=True):

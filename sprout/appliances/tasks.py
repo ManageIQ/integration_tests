@@ -690,7 +690,7 @@ def apply_lease_times(self, appliance_id, time_minutes):
     with transaction.atomic():
         appliance = Appliance.objects.get(id=appliance_id)
         appliance.datetime_leased = timezone.now()
-        appliance.leased_until = appliance.datetime_leased + timedelta(minutes=time_minutes)
+        appliance.leased_until = appliance.datetime_leased + timedelta(minutes=int(time_minutes))
         appliance.save()
 
 
@@ -1385,7 +1385,11 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
 def calculate_provider_management_usage(self, appliance_ids):
     results = {}
     for appliance_id in filter(lambda id: id is not None, appliance_ids):
-        appliance = Appliance.objects.get(id=appliance_id)
+        try:
+            appliance = Appliance.objects.get(id=appliance_id)
+        except ObjectDoesNotExist:
+            # Deleted in meanwhile
+            continue
         for provider in appliance.managed_providers:
             if provider not in results:
                 results[provider] = []
@@ -1643,16 +1647,10 @@ The Sprout™
 @singleton_task()
 def appliances_synchronize_metadata(self):
     for appliance in Appliance.objects.all():
-        appliance_synchronize_metadata.delay(appliance.id)
-
-
-@singleton_task()
-def appliance_synchronize_metadata(self, appliance_id):
-    try:
-        appliance = Appliance.objects.get(id=appliance_id)
-    except ObjectDoesNotExist:
-        return
-    appliance.synchronize_metadata()
+        try:
+            appliance.synchronize_metadata()
+        except ObjectDoesNotExist:
+            return
 
 
 @singleton_task()
@@ -1673,6 +1671,9 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
     """'re'-synchronizes any vms that might be lost during outages."""
     provider = Provider.objects.get(id=provider_id)
     provider_api = provider.api
+    if not hasattr(provider_api, 'list_vm'):
+        # This provider does not have VMs (eg. Hawkular or Openshift)
+        return
     for vm_name in sorted(map(str, provider_api.list_vm())):
         if Appliance.objects.filter(name=vm_name, template__provider=provider).count() != 0:
             continue
@@ -1727,9 +1728,10 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
                 vm_name, 'sprout_pool_group')
             pool_construct['group'] = Group.objects.get(id=group_id)
             try:
-                pool_construct['provider'] = provider_api.get_meta_value(
+                construct_provider_id = provider_api.get_meta_value(
                     vm_name, 'sprout_pool_provider')
-            except KeyError:
+                pool_construct['provider'] = Provider.objects.get(id=construct_provider_id)
+            except (KeyError, ObjectDoesNotExist):
                 # optional
                 pool_construct['provider'] = None
             pool_construct['version'] = provider_api.get_meta_value(

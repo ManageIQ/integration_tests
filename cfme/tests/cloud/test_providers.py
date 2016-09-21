@@ -15,6 +15,7 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
 from utils import testgen, version
+from utils.appliance.endpoints.ui import navigate_to
 from utils.update import update
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
@@ -121,7 +122,7 @@ def test_type_required_validation(request, soft_assert):
         with error.expected('Type is required'):
             prov.create()
     else:
-        pytest.sel.force_navigate("clouds_provider_new")
+        navigate_to(prov, 'Add')
         fill(prov.properties_form.name_text, "foo")
         soft_assert("ng-invalid-required" in prov.properties_form.type_select.classes)
         soft_assert(not prov.add_provider_button.can_be_clicked)
@@ -297,7 +298,7 @@ def test_api_port_max_character_validation(request):
 def test_openstack_provider_has_api_version():
     """Check whether the Keystone API version field is present for Openstack."""
     prov = Provider()
-    pytest.sel.force_navigate("clouds_provider_new")
+    navigate_to(prov, 'Add')
     fill(prop_region.properties_form, {"type_select": "OpenStack"})
     pytest.sel.wait_for_ajax()
     assert pytest.sel.is_displayed(

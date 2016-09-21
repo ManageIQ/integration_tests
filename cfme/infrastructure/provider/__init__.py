@@ -10,6 +10,8 @@
 """
 from functools import partial
 
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
@@ -22,6 +24,8 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, deferred_verpick, version
 from utils.api import rest_api
+from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.log import logger
 from utils.pretty import Pretty
@@ -155,11 +159,14 @@ class Provider(Pretty, CloudInfraProvider):
         version.LOWEST: form_buttons.save,
         '5.6': form_buttons.angular_save
     })
+    appliance = CurrentAppliance()
 
     def __init__(
-            self, name=None, credentials=None, key=None, zone=None, provider_data=None):
+            self, name=None, credentials=None, key=None, zone=None, provider_data=None,
+            appliance=None):
         if not credentials:
             credentials = {}
+        self.appliance = appliance or get_or_create_current_appliance()
         self.name = name
         self.credentials = credentials
         self.key = key
@@ -286,10 +293,75 @@ class Provider(Pretty, CloudInfraProvider):
         return result
 
 
+@navigator.register(Provider, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Infrastructure', 'Providers')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("Grid View")
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
+
+
+@navigator.register(Provider, 'Add')
+class Add(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a New Infrastructure Provider')
+
+
+@navigator.register(Provider, 'Discover')
+class Discover(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Discover Infrastructure Providers')
+
+
+@navigator.register(Provider, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+
+@navigator.register(Provider, 'ManagePolicies')
+class ManagePolicies(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        pol_btn('Manage Policies')
+
+
+@navigator.register(Provider, 'ManagePoliciesFromDetails')
+class ManagePoliciesFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Manage Policies')
+
+
+@navigator.register(Provider, 'Edit')
+class Edit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+        cfg_btn('Edit Selected Infrastructure Providers')
+
+
 def get_all_providers(do_not_navigate=False):
     """Returns list of all providers"""
     if not do_not_navigate:
-        sel.force_navigate('infrastructure_providers')
+        navigate_to(Provider, 'All')
     providers = set([])
     link_marker = "ems_infra"
     for page in paginator.pages():
@@ -305,12 +377,14 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
     wait for it to finish.
 
     Args:
-        rhvem: Whether to scan for RHEVM providers
+        rhevm: Whether to scan for RHEVM providers
         vmware: Whether to scan for VMware providers
         scvmm: Whether to scan for SCVMM providers
         cancel:  Whether to cancel out of the discover UI.
+        start_ip: String start of the IP range for discovery
+        end_ip: String end of the IP range for discovery
     """
-    sel.force_navigate('infrastructure_provider_discover')
+    navigate_to(Provider, 'Discover')
     form_data = {}
     if rhevm:
         form_data.update({'rhevm_chk': True})
@@ -333,7 +407,7 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
 
 
 def wait_for_a_provider():
-    sel.force_navigate('infrastructure_providers')
+    navigate_to(Provider, 'All')
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)

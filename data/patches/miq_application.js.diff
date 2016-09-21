@@ -7,7 +7,7 @@
 +// ---------------
 +
 +// Initialize MiqQE
-+// Make sure to update version here and in pytest_selenium when changed
++// Make sure to update version when changed
 +var MiqQE = {'autofocus': 0, 'debounce': 0};
 +var MiqQE_version = 2;
 +

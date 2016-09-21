@@ -20,7 +20,6 @@ from utils.api import rest_api
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
-from utils.signals import fire
 from utils.path import project_path
 from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
@@ -198,12 +197,12 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
            validate_credentials (boolean): Whether to validate credentials - if True and the
                credentials are invalid, an error will be raised.
         """
+        # TODO: replace with navigate_to() once implemented for all provider types
         sel.force_navigate('{}_provider_new'.format(self.page_name))
         fill(self.properties_form, self._form_mapping(True, **self.__dict__))
         for cred in self.credentials:
             fill(self.credentials[cred].form, self.credentials[cred], validate=validate_credentials)
         self._submit(cancel, self.add_provider_button)
-        fire("providers_changed")
         if not cancel:
             flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
                                                                             self.name))
@@ -217,6 +216,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
            updates (dict): fields that are changing.
            cancel (boolean): whether to cancel out of the update.
         """
+        # TODO: replace with navigate_to() once implemented for all provider types
         sel.force_navigate('{}_{}'.format(self.page_name, self.edit_page_suffix),
             context={'provider': self})
         fill(self.properties_form, self._form_mapping(**updates))
@@ -239,7 +239,6 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         cfg_btn('Remove this {} Provider'.format(self.string_name),
             invokes_alert=True)
         sel.handle_alert(cancel=cancel)
-        fire("providers_changed")
         if not cancel:
             flash.assert_message_match(
                 'Delete initiated for 1 {} Provider from the CFME Database'.format(
@@ -328,6 +327,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
     def refresh_provider_relationships_ui(self, from_list_view=False):
         """Clicks on Refresh relationships button in provider"""
         if from_list_view:
+            # TODO: replace with navigate_to() once implemented for all provider types
             sel.force_navigate("{}_providers".format(self.page_name))
             sel.check(Quadicon(self.name, self.quad_name).checkbox())
         else:
@@ -413,6 +413,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
             return False
 
     def wait_for_delete(self):
+        # TODO: replace with navigate_to() once implemented for all provider types
         sel.force_navigate('{}_providers'.format(self.page_name))
         quad = Quadicon(self.name, self.quad_name)
         logger.info('Waiting for a provider to delete...')
@@ -437,6 +438,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
         if not self._on_detail_page():
             logger.debug("load_details: not on details already, navigating")
+            # TODO: replace with navigate_to() once implemented for all provider types
             sel.force_navigate('{}_{}'.format(self.page_name, self.detail_page_suffix),
                 context={'provider': self})
         else:
@@ -523,6 +525,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
     def clear_provider_by_type(prov_class, validate=True):
         string_name = prov_class.string_name
         navigate = "{}_providers".format(prov_class.page_name)
+        # TODO: replace with navigate_to() once implemented for all provider types
         sel.force_navigate(navigate)
         logger.debug('Checking for existing {} providers...'.format(prov_class.type_tclass))
         total = paginator.rec_total()
@@ -544,6 +547,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin):
     @staticmethod
     def wait_for_no_providers_by_type(prov_class):
         navigate = "{}_providers".format(prov_class.page_name)
+        # TODO: replace with navigate_to() once implemented for all provider types
         sel.force_navigate(navigate)
         logger.debug('Waiting for all {} providers to disappear...'.format(prov_class.type_tclass))
         wait_for(
@@ -585,6 +589,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
         self.refresh_provider_relationships(from_list_view=True)
 
         def _wait_f():
+            # TODO: replace with navigate_to() once implemented for all provider types
             sel.force_navigate("{}_providers".format(self.page_name))
             q = Quadicon(self.name, self.quad_name)
             creds = q.creds
@@ -605,6 +610,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
 
         Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
         """
+        # TODO: replace with navigate_to() once implemented for all provider types
         sel.force_navigate('{}_provider_policy_assignment'.format(self.page_name),
             context={'provider': self})
         return self._assigned_policy_profiles
@@ -622,6 +628,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
 
         Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
         """
+        # TODO: replace with navigate_to() once implemented for all provider types
         sel.force_navigate('{}_provider_policy_assignment'.format(self.page_name),
             context={'provider': self})
         return self._unassigned_policy_profiles

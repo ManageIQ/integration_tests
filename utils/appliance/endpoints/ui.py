@@ -70,30 +70,11 @@ class ViaUI(object):
         # check for MiqQE javascript patch in 5.6 on first try and patch the appliance if necessary
         # raise an exception on subsequent unsuccessful attempts to access the MiqQE
         # javascript funcs
-        if self.owner.version >= "5.5.5.0":
-            def _patch_recycle_retry():
-                self.owner.patch_with_miqqe()
-                browser().quit()
-                # ** There are a few of these, force_navigates that now reference themselves.
-                self.force_navigate(page_name, _tries, *args, **kwargs)
-            try:
-                # latest js diff version always has to be placed here to keep this check current
-                ver = execute_script("return MiqQE_version")
-                if ver < 2:
-                    logger.info("Old patch present on appliance; patching appliance")
-                    _patch_recycle_retry()
-            except WebDriverException as ex:
-                if 'is not defined' in str(ex):
-                    if _tries == 1:
-                        logger.info("MiqQE javascript not defined; patching appliance")
-                        _patch_recycle_retry()
-                    else:
-                        raise exceptions.CFMEException(
-                            "Unable to navigate, patching the appliance's javascript"
-                            "failed: {}".format(
-                                str(ex)))
-                else:
-                    raise
+        from utils.appliance import current_miqqe_version
+        if self.owner.miqqe_version != current_miqqe_version:
+            self.owner.patch_with_miqqe()
+            browser().quit()
+            self.force_navigate(page_name, _tries, *args, **kwargs)
 
         # Clear any running "spinnies"
         try:
@@ -138,7 +119,7 @@ class ViaUI(object):
                 logger.exception(e)
             # Restart some workers
             logger.warning("Restarting UI and VimBroker workers!")
-            with self.ssh_client as ssh:
+            with self.owner.ssh_client as ssh:
                 # Blow off the Vim brokers and UI workers
                 ssh.run_rails_command("\"(MiqVimBrokerWorker.all + MiqUiWorker.all).each &:kill\"")
             logger.info("Waiting for web UI to come back alive.")
@@ -317,27 +298,13 @@ class CFMENavigateStep(NavigateStep):
 
         ensure_browser_open()
 
-        def _patch_recycle_retry():
+        # check for MiqQE javascript patch on first try and patch the appliance if necessary
+        from utils.appliance import current_miqqe_version
+        if store.current_appliance.miqqe_version != current_miqqe_version:
             store.current_appliance.patch_with_miqqe()
             browser().quit()
             self.go(_tries)
-        try:
-            # latest js diff version always has to be placed here to keep this check current
-            ver = execute_script("return MiqQE_version")
-            if ver < 2:
-                logger.info("Old patch present on appliance; patching appliance")
-                _patch_recycle_retry()
-        except WebDriverException as ex:
-            if 'is not defined' in str(ex):
-                if _tries == 1:
-                    logger.info("MiqQE javascript not defined; patching appliance")
-                    _patch_recycle_retry()
-                else:
-                    raise exceptions.CFMEException(
-                        "Unable to navigate, patching the appliance's javascript failed: {}".format(
-                            str(ex)))
-            else:
-                raise
+
         try:
             execute_script('miqSparkleOff();')
         except:  # Diaper OK (mfalesni)
@@ -533,17 +500,20 @@ class CFMENavigateStep(NavigateStep):
         _tries += 1
         self.pre_navigate(_tries)
         logger.debug("NAVIGATE: Checking if already at {}".format(self._name))
+        here = False
         try:
-            if self.am_i_here():
-                logger.debug("NAVIGATE: Already at {}".format(self._name))
-                return
+            here = self.am_i_here()
         except Exception as e:
             logger.debug("NAVIGATE: Exception raised [{}] whilst checking if already at {}".format(
                 e, self._name))
-        logger.debug("NAVIGATE: I'm not at {}".format(self._name))
-        self.prerequisite()
-        logger.debug("NAVIGATE: Heading to destination {}".format(self._name))
-        self.do_nav(_tries)
+        if here:
+            logger.debug("NAVIGATE: Already at {}".format(self._name))
+        else:
+            logger.debug("NAVIGATE: I'm not at {}".format(self._name))
+            self.prerequisite()
+            logger.debug("NAVIGATE: Heading to destination {}".format(self._name))
+            self.do_nav(_tries)
+        self.resetter()
         self.post_navigate(_tries)
 
 navigator = Navigate()
