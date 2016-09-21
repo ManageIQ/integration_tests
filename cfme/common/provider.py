@@ -17,6 +17,7 @@ from fixtures.pytest_store import store
 from utils import conf
 from utils import version
 from utils.api import rest_api
+from utils.appliance import Navigatable
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
@@ -35,7 +36,7 @@ manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 details_page = Region(infoblock_type='detail')
 
 
-class BaseProvider(Taggable, Updateable, SummaryMixin):
+class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     # List of constants that every non-abstract subclass must have defined
     type_mapping = {}
     STATS_TO_MATCH = []

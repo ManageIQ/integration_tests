@@ -2149,3 +2149,11 @@ current_appliance = LocalProxy(get_or_create_current_appliance)
 class CurrentAppliance(object):
     def __get__(self, instance, owner):
         return get_or_create_current_appliance()
+
+
+class Navigatable(object):
+
+    appliance = CurrentAppliance()
+
+    def __init__(self, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()
