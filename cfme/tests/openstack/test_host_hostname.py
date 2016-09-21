@@ -11,7 +11,7 @@ pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
 def test_host_hostname(provider):
-    provider.summary.relationship.nodes.click()
+    provider.summary.relationships.nodes.click()
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
     for quad in my_quads:

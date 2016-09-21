@@ -11,7 +11,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
                                          scope='module')
 
 
-ROLES = ['Compute', 'Controller', 'BlockStorage', 'SwiftStorage',
+ROLES = ['NovaCompute', 'Controller', 'BlockStorage', 'SwiftStorage',
          'CephStorage']
 
 
