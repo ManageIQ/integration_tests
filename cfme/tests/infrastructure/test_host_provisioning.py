@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.infrastructure import host
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
@@ -10,6 +9,7 @@ from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen, version
+from utils.appliance.endpoints.ui import navigate_to
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -136,8 +136,7 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
 
     request.addfinalizer(cleanup_host)
 
-    pytest.sel.force_navigate('infrastructure_provision_host', context={
-        'host': test_host, })
+    navigate_to(test_host, 'Provision')
 
     note = ('Provisioning host {} on provider {}'.format(prov_host_name, provider.key))
     provisioning_data = {
@@ -172,7 +171,6 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
     assert row.status.text != 'Error'
 
     # Navigate to host details page and verify Provider and cluster names
-    sel.force_navigate('infrastructure_host', context={'host': test_host, })
     assert test_host.get_detail('Relationships', 'Infrastructure Provider') ==\
         provider.name, 'Provider name does not match'
 

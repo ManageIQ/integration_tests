@@ -8,6 +8,8 @@ from utils.providers import setup_a_provider
 from cfme.cloud import instance  # NOQA
 from cfme.infrastructure import virtual_machines  # NOQA
 from cfme.services import workloads  # NOQA
+from utils.appliance.endpoints.ui import navigate_to
+from cfme.infrastructure.host import Host
 
 pytestmark = [pytest.mark.tier(3)]
 
@@ -37,7 +39,7 @@ def test_infrastructurehost_defaultfilters(setup_first_provider):
     filters = [['Infrastructure', 'Hosts', 'Platform / HyperV']]
     df = st.DefaultFilter(name='Platform / HyperV')
     df.update({'filters': [(k, True) for k in filters]})
-    sel.force_navigate('infrastructure_hosts')
+    navigate_to(Host, 'All')
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 

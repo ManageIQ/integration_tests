@@ -5,11 +5,13 @@ import pytest
 from itertools import dropwhile
 
 from cfme.infrastructure import host
+from cfme.infrastructure.host import Host
 from utils.providers import setup_a_provider
 from cfme.web_ui import search
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
 from utils.version import current_version
+from utils.appliance.endpoints.ui import navigate_to
 
 
 @pytest.fixture(scope="module")
@@ -19,7 +21,7 @@ def hosts():
         setup_a_provider(prov_class="infra")
     except Exception:
         pytest.skip("It's not possible to set up any providers, therefore skipping")
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     search.ensure_no_filter_applied()
     return host.get_all_hosts()
 
@@ -61,19 +63,19 @@ def host_with_median_vm(hosts_with_vm_count):
 
 
 def test_can_do_advanced_search():
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     assert search.is_advanced_search_possible(), "Cannot do advanced search here!"
 
 
 @pytest.mark.requires("test_can_do_advanced_search")
 def test_can_open_advanced_search():
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     search.ensure_advanced_search_open()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_without_user_input(hosts, hosts_with_vm_count, host_with_median_vm):
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     median_host, median_vm_count = host_with_median_vm
     # We will filter out hosts with less than median VMs
     more_than_median_hosts = list(dropwhile(lambda h: h[1] <= median_vm_count, hosts_with_vm_count))
@@ -86,7 +88,7 @@ def test_filter_without_user_input(hosts, hosts_with_vm_count, host_with_median_
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input(hosts, hosts_with_vm_count, host_with_median_vm):
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     median_host, median_vm_count = host_with_median_vm
     # We will filter out hosts with less than median VMs
     more_than_median_hosts = list(dropwhile(lambda h: h[1] <= median_vm_count, hosts_with_vm_count))
@@ -100,7 +102,7 @@ def test_filter_with_user_input(hosts, hosts_with_vm_count, host_with_median_vm)
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input_and_cancellation(hosts, hosts_with_vm_count, host_with_median_vm):
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     median_host, median_vm_count = host_with_median_vm
 
     # Set up the filter
@@ -114,7 +116,7 @@ def test_filter_with_user_input_and_cancellation(hosts, hosts_with_vm_count, hos
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_cancel(hosts, hosts_with_vm_count, host_with_median_vm):
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     median_host, median_vm_count = host_with_median_vm
     filter_name = fauxfactory.gen_alphanumeric()
     # Try save filter
@@ -127,7 +129,7 @@ def test_filter_save_cancel(hosts, hosts_with_vm_count, host_with_median_vm):
 @pytest.mark.meta(blockers=[1283554, 1320244])
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_and_load(request, hosts, hosts_with_vm_count, host_with_median_vm):
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     median_host, median_vm_count = host_with_median_vm
     # We will filter out hosts with less than median VMs
     more_than_median_hosts = list(dropwhile(lambda h: h[1] <= median_vm_count, hosts_with_vm_count))
@@ -147,7 +149,7 @@ def test_filter_save_and_load(request, hosts, hosts_with_vm_count, host_with_med
 @pytest.mark.meta(blockers=[1283554, 1320244])
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_and_cancel_load(request, hosts, hosts_with_vm_count, host_with_median_vm):
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     median_host, median_vm_count = host_with_median_vm
 
     filter_name = fauxfactory.gen_alphanumeric()
@@ -156,7 +158,7 @@ def test_filter_save_and_cancel_load(request, hosts, hosts_with_vm_count, host_w
 
     @request.addfinalizer
     def cleanup():
-        pytest.sel.force_navigate("infrastructure_hosts")
+        navigate_to(Host, 'All')
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -170,7 +172,7 @@ def test_filter_save_and_cancel_load(request, hosts, hosts_with_vm_count, host_w
 @pytest.mark.meta(blockers=[1283554, 1320244])
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_and_load_cancel(request, hosts, hosts_with_vm_count, host_with_median_vm):
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     median_host, median_vm_count = host_with_median_vm
 
     filter_name = fauxfactory.gen_alphanumeric()
@@ -179,7 +181,7 @@ def test_filter_save_and_load_cancel(request, hosts, hosts_with_vm_count, host_w
 
     @request.addfinalizer
     def cleanup():
-        pytest.sel.force_navigate("infrastructure_hosts")
+        navigate_to(Host, 'All')
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -195,7 +197,7 @@ def test_filter_save_and_load_cancel(request, hosts, hosts_with_vm_count, host_w
 
 
 def test_quick_search_without_filter(request, hosts, hosts_with_vm_count, host_with_median_vm):
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     search.ensure_no_filter_applied()
     assert_no_cfme_exception()
     median_host, median_vm_count = host_with_median_vm
@@ -210,7 +212,7 @@ def test_quick_search_without_filter(request, hosts, hosts_with_vm_count, host_w
 
 
 def test_quick_search_with_filter(request, hosts, hosts_with_vm_count, host_with_median_vm):
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     median_host, median_vm_count = host_with_median_vm
     search.fill_and_apply_filter(get_expression(False, ">=").format(median_vm_count))
     assert_no_cfme_exception()
@@ -226,7 +228,7 @@ def test_quick_search_with_filter(request, hosts, hosts_with_vm_count, host_with
 
 @pytest.mark.meta(blockers=[1283554, 1320244])
 def test_can_delete_filter():
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter(get_expression(False).format(0), filter_name)
     assert_no_cfme_exception()
@@ -242,13 +244,13 @@ def test_can_delete_filter():
 @pytest.mark.meta(blockers=[1097150, 1283554, 1320244])
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter(get_expression(False).format(0), filter_name)
 
     @request.addfinalizer
     def cleanup():
-        pytest.sel.force_navigate("infrastructure_hosts")
+        navigate_to(Host, 'All')
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -259,7 +261,7 @@ def test_delete_button_should_appear_after_save(request):
 @pytest.mark.meta(blockers=[1097150, 1283554, 1320244])
 def test_cannot_delete_more_than_once(request, nuke_browser_after_test):
     """When Delete button appars, it does not want to go away"""
-    pytest.sel.force_navigate("infrastructure_hosts")
+    navigate_to(Host, 'All')
     filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter(get_expression(False).format(0), filter_name)
 

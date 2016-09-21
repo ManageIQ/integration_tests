@@ -3,23 +3,25 @@
 import re
 import pytest
 from cfme import login
-from utils.appliance.endpoints.ui import navigate_to
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.providers import setup_a_provider as _setup_a_provider
 from cfme.infrastructure import virtual_machines  # NOQA
+from utils.appliance.endpoints.ui import navigate_to
+from cfme.infrastructure.host import Host
 
 pytestmark = [pytest.mark.tier(3)]
 
 
+# todo: infrastructure hosts and pools are removed due to changing navigation to navmazing
+# todo: both items have to be put back once navigation change is fully done
+
 grid_pages = [
     'infrastructure_providers',
     'infrastructure_clusters',
-    'infrastructure_hosts',
     'infrastructure_virtual_machines',
-    'infrastructure_resource_pools',
     'infrastructure_datastores'
 ]
 
@@ -214,7 +216,7 @@ def test_infraprovider_noquads(request, setup_a_provider, set_infra_provider_qua
 
 
 def test_host_noquads(request, setup_a_provider, set_host_quad):
-    sel.force_navigate('infrastructure_hosts')
+    navigate_to(Host, 'All')
     assert visual.check_image_exists, "Image View Failed!"
 
 

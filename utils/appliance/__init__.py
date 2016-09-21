@@ -40,9 +40,6 @@ from utils import clear_property_cache
 from .endpoints.ui import ViaUI
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
-# Do not import the whole stuff around
-if not RUNNING_UNDER_SPROUT:
-    from utils.hosts import setup_providers_hosts_credentials
 
 
 def _current_miqqe_version():
@@ -1826,6 +1823,8 @@ class Appliance(IPAppliance):
 
             # credential hosts
             log_callback('Credentialing hosts...')
+            if not RUNNING_UNDER_SPROUT:
+                from utils.hosts import setup_providers_hosts_credentials
             setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
 
             # if rhev, set relationship
