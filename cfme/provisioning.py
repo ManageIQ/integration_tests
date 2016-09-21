@@ -153,7 +153,7 @@ provisioning_form = tabstrip.TabStripForm(
         ('Hardware', [
             ('num_sockets', {
                 version.LOWEST: ui.Select('select#hardware__number_of_sockets'),
-                '5.5': AngularSelect('environment__ds_filter')}),
+                '5.5': AngularSelect('hardware__number_of_sockets')}),
             ('cores_per_socket', {
                 version.LOWEST: ui.Select('select#hardware__cores_per_socket'),
                 '5.5': AngularSelect('hardware__cores_per_socket')}),
