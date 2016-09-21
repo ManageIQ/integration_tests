@@ -3,13 +3,14 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region, paginator
+    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region, paginator,
+    summary_title
 )
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
 from utils.appliance import get_or_create_current_appliance, CurrentAppliance
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.pretty import Pretty
@@ -129,17 +130,9 @@ class Provider(BaseProvider, Pretty):
         return sel.is_displayed('//div//h1[contains(., "{} (Summary)")]'.format(self.name))
 
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            self.navigate(detail=True)
-        elif refresh:
+        navigate_to(self, 'Details')
+        if refresh:
             tb.refresh()
-
-    def navigate(self, detail=True):
-        if detail is True:
-            if not self._on_detail_page():
-                sel.force_navigate('containers_provider_detail', context={'provider': self})
-        else:
-            sel.force_navigate('containers_provider', context={'provider': self})
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
@@ -148,7 +141,7 @@ class Provider(BaseProvider, Pretty):
             *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
         Returns: A string representing the contents of the InfoBlock's value.
         """
-        self.navigate(detail=True)
+        navigate_to(self, 'Details')
         return details_page.infoblock.text(*ident)
 
     @variable(alias='db')
@@ -240,7 +233,7 @@ class All(CFMENavigateStep):
 
     def step(self):
         from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Providers')(None)
+        nav._nav_to_fn('Compute', 'Containers', 'Providers')(None)
 
     def resetter(self):
         # Reset view and selection
@@ -254,12 +247,19 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New Middleware Provider')
+        if version.current_version() > '5.6':
+            btn = 'Add Existing Containers Provider'
+        else:
+            btn = 'Add a New Containers Provider'
+        cfg_btn(btn)
 
 
 @navigator.register(Provider, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
+
+    def am_i_here(self):
+        return "{} (Summary)".format(self.obj.name) == summary_title()
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
@@ -271,7 +271,7 @@ class Edit(CFMENavigateStep):
 
     def step(self):
         sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
-        cfg_btn('Edit Selected Middleware Provider')
+        cfg_btn('Edit Selected Containers Provider')
 
 
 @navigator.register(Provider, 'EditFromDetails')
@@ -279,7 +279,7 @@ class EditFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn('Edit this Middleware Provider')
+        cfg_btn('Edit this Containers Provider')
 
 
 @navigator.register(Provider, 'EditTags')
