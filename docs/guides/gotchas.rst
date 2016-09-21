@@ -20,12 +20,19 @@ the problem to manifest.
 Selenium is not sending the keys I tell it to, or is filling the box with junk
 ------------------------------------------------------------------------------
 
-If you have a file in the root of your project which has the same name as an item of text that
-you are trying to send to an input element. Selenium tries to be clever and replaces this text
-with a path, representing that file as it believes you are trying to upload it. Currently we
-do not have a way to disable this with the Python bindings, so just be wary of naming files
-that have the same name as text you may want to use further down the line. This was first
-discovered when a menu.php file used to exist in the root dir for checking PXE. When the menu
-filename box was due to be filled in with ``menu.php`` it was instead filled in with
-``/tmp/288762525-2350923r09u2-29u2o3ur23/23982986498264928file/menu.php`` which caused the PXE
-refreshes to fail every time ;)
+This should not be happening now since framework is configured to be more intelligent than Selenium
+and it detects whether the element filled is a file input or not. Because Selenium can be running
+remotely, if you want to upload a file, Selenium first needs to upload the file to the remote
+executor and then it changes the string accordingly. This happens in default Selenium configuration,
+as the :py:class:`selenium.webdriver.remote.file_detector.LocalFileDetector` is used by default for
+all keyboard input. Framework now sets it up so the
+:py:class:`selenium.webdriver.remote.file_detector.UselessFileDetector` is used by default and if
+the element filled is an input with type file, then the file detector is actually used.
+
+When getting the text of the element, Selenium returns an empty string
+----------------------------------------------------------------------
+Stop using the ``.text`` property of the ``WebElement`` and use
+:py:func:`cfme.fixtures.pytest_selenium.text`, which solves this issue. The thing is, when an
+element is eg. obscured, Selenium can't read it. So the ``text`` function first tries to scroll the
+page so the element is visible, and if that does not help, it uses a bit of JavaScript to pull the
+text out.
