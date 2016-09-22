@@ -5,6 +5,7 @@ from cfme.web_ui import flash
 from cfme.automate.buttons import Button, ButtonGroup
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.infrastructure import host
+from utils.appliance.endpoints.ui import navigate_to
 from utils.update import update
 
 pytestmark = [pytest.mark.ignore_stream("upstream"),
@@ -101,6 +102,7 @@ def test_button_avp_displayed(request):
         type=ButtonGroup.VM_INSTANCE)
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
+    navigate_to(buttongroup, 'Details')
     pytest.sel.force_navigate("new_button", context={'buttongroup': buttongroup})
     section_loc = "//*[(self::h3 or self::p) and normalize-space(text())='Attribute/Value Pairs']"
     assert pytest.sel.is_displayed(section_loc),\
