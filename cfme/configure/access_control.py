@@ -7,7 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.form_buttons import change_stored_password
 from cfme.web_ui import AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash, \
-    form_buttons, Input, Table, UpDownSelect
+    form_buttons, Input, Table, UpDownSelect, CFMECheckbox
 from cfme.web_ui.menu import extend_nav, nav
 from utils.log import logger
 from utils.update import Updateable
@@ -415,6 +415,24 @@ class Tenant(Updateable, Pretty):
         parent_tenant: Parent tenant, can be None, can be passed as string or object
     """
     save_changes = form_buttons.FormButton("Save changes")
+
+    # TODO:
+    # Temporary defining elements with "//input" as Input() is not working.Seems to be
+    # with html elements,looking into it.
+    quota_form = Form(
+        fields=[
+            ('cpu_cb', CFMECheckbox('cpu_allocated')),
+            ('cpu_txt', "//input[@id='id_cpu_allocated']"),
+            ('memory_cb', CFMECheckbox('mem_allocated')),
+            ('memory_txt', "//input[@id='id_mem_allocated']"),
+            ('storage_cb', CFMECheckbox('storage_allocated')),
+            ('storage_txt', "//input[@id='id_storage_allocated']"),
+            ('vm_cb', CFMECheckbox('vms_allocated')),
+            ('vm_txt', "//input[@id='id_vms_allocated']"),
+            ('template_cb', CFMECheckbox('templates_allocated')),
+            ('template_txt', "//input[@id='id_templates_allocated']")
+        ])
+
     tenant_form = Form(
         fields=[
             ('name', Input('name')),
@@ -504,6 +522,24 @@ class Tenant(Updateable, Pretty):
         tb_select("Delete this item", invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_success_message('Tenant "{}": Delete successful'.format(self.description))
+
+    def set_quota(self, **kwargs):
+        sel.force_navigate("cfg_tenant_project", context={"tenant": self})
+        tb.select("Configuration", "Manage Quotas")
+        # Workaround - form is appearing after short delay
+        sel.wait_for_element(self.quota_form.cpu_txt)
+        fill(self.quota_form, {'cpu_cb': kwargs.get('cpu_cb'),
+                              'cpu_txt': kwargs.get('cpu'),
+                              'memory_cb': kwargs.get('memory_cb'),
+                              'memory_txt': kwargs.get('memory'),
+                              'storage_cb': kwargs.get('storage_cb'),
+                              'storage_txt': kwargs.get('storage'),
+                              'vm_cb': kwargs.get('vm_cb'),
+                              'vm_txt': kwargs.get('vm'),
+                              'template_cb': kwargs.get('template_cb'),
+                              'template_txt': kwargs.get('template')},
+            action=self.save_changes)
+        flash.assert_success_message('Quotas for Tenant "{}" were saved'.format(self.name))
 
 
 class Project(Tenant):
