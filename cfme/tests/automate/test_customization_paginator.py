@@ -4,6 +4,7 @@ import pytest
 
 from cfme.automate.service_dialogs import ServiceDialog, common
 from cfme.web_ui import paginator
+from utils.appliance.endpoints.ui import navigate_to
 
 
 @pytest.fixture(scope="module")
@@ -50,7 +51,7 @@ def test_paginator(some_dialogs, soft_assert):
         * During the cycling, assert the numbers displayed in the paginator make sense
         * During the cycling, assert the paginator does not get stuck.
     """
-    pytest.sel.force_navigate("service_dialogs")
+    navigate_to(ServiceDialog, 'All')
     paginator.results_per_page(50)
     paginator.results_per_page(5)
     # Now we must have only 5
