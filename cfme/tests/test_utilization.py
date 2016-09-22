@@ -1,15 +1,23 @@
+# -*- coding: utf-8 -*-
+
 import pytest
+import random
 import time
+
 from fixtures.pytest_store import store
 from utils import providers
 from utils import testgen
 from utils import conf
+from utils.blockers import BZ
 from utils.log import logger
-from cfme.configure.configuration import server_roles_enabled, candu
+from cfme.configure.configuration import get_server_roles, set_server_roles, candu
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, None)
+
+def pytest_generate_tests(metafunc):
+    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm'])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 pytestmark = [pytest.mark.tier(1)]
 
@@ -17,17 +25,25 @@ pytestmark = [pytest.mark.tier(1)]
 @pytest.yield_fixture(scope="module")
 def enable_candu():
     try:
-        with server_roles_enabled(
-                'ems_metrics_coordinator', 'ems_metrics_collector', 'ems_metrics_processor'):
-            candu.enable_all()
-            yield
+        original_roles = get_server_roles()
+        new_roles = original_roles.copy()
+        new_roles.update({
+            'ems_metrics_coordinator': True,
+            'ems_metrics_collector': True,
+            'ems_metrics_processor': True,
+            'automate': False,
+            'smartstate': False})
+        set_server_roles(**new_roles)
+        candu.enable_all()
+        yield
     finally:
         candu.disable_all()
+        set_server_roles(**original_roles)
 
 
 # blow away all providers when done - collecting metrics for all of them is
 # too much
-@pytest.yield_fixture
+@pytest.yield_fixture(scope="module")
 def handle_provider(provider):
     try:
         BaseProvider.clear_providers()
@@ -40,7 +56,8 @@ def handle_provider(provider):
         BaseProvider.clear_providers()
 
 
-def test_metrics_collection(handle_provider, provider, enable_candu):
+@pytest.fixture(scope="module")
+def metrics_collection(handle_provider, provider, enable_candu):
     """check the db is gathering collection data for the given provider
 
     Metadata:
@@ -92,3 +109,178 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
 
     if time.time() > start_time + timeout:
         raise Exception("Timed out waiting for metrics to be collected")
+
+
+def get_host_name(provider):
+    cfme_host = random.choice(provider.data["hosts"])
+    return cfme_host.name
+
+
+# Tests to check that specific metrics are being collected
+def test_raw_metric_vm_cpu(metrics_collection, db, provider):
+    metrics_tbl = db['metrics']
+    ems = db['ext_management_systems']
+    vm_name = provider.data['cap_and_util']['chargeback_vm']
+
+    with db.transaction:
+        provs = (
+            db.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == vm_name,
+            ems.name == provider.name)
+        )
+    for record in db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery())):
+        if record.cpu_usagemhz_rate_average is None:
+            pass
+        else:
+            assert record.cpu_usagemhz_rate_average > 0, 'Zero VM CPU Usage'
+            break
+
+
+def test_raw_metric_vm_memory(metrics_collection, db, provider):
+    metrics_tbl = db['metrics']
+    ems = db['ext_management_systems']
+    vm_name = provider.data['cap_and_util']['chargeback_vm']
+
+    with db.transaction:
+        provs = (
+            db.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == vm_name,
+            ems.name == provider.name)
+        )
+    for record in db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery())):
+        if record.derived_memory_used is None:
+            pass
+        else:
+            assert record.derived_memory_used > 0, 'Zero VM Memory usage'
+            break
+
+
+@pytest.mark.meta(
+    blockers=[BZ(1322094, unblock=lambda provider: provider.type != 'rhevm')]
+)
+def test_raw_metric_vm_network(metrics_collection, db, provider):
+    metrics_tbl = db['metrics']
+    ems = db['ext_management_systems']
+    vm_name = provider.data['cap_and_util']['chargeback_vm']
+
+    with db.transaction:
+        provs = (
+            db.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == vm_name,
+            ems.name == provider.name)
+        )
+    for record in db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery())):
+        if record.net_usage_rate_average is None:
+            pass
+        else:
+            assert record.net_usage_rate_average > 0, 'Zero VM Network IO'
+            break
+
+
+@pytest.mark.meta(
+    blockers=[BZ(1322094, unblock=lambda provider: provider.type != 'rhevm')]
+)
+def test_raw_metric_vm_disk(metrics_collection, db, provider):
+    metrics_tbl = db['metrics']
+    ems = db['ext_management_systems']
+    vm_name = provider.data['cap_and_util']['chargeback_vm']
+
+    with db.transaction:
+        provs = (
+            db.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == vm_name,
+            ems.name == provider.name)
+        )
+    for record in db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery())):
+        if record.disk_usage_rate_average is None:
+            pass
+        else:
+            assert record.disk_usage_rate_average > 0, 'Zero VM Disk IO'
+            break
+
+
+def test_raw_metric_host_cpu(metrics_collection, db, provider):
+    metrics_tbl = db['metrics']
+    ems = db['ext_management_systems']
+    host_name = get_host_name(provider)
+
+    with db.transaction:
+        provs = (
+            db.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == host_name,
+            ems.name == provider.name)
+        )
+    for record in db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery())):
+        if record.cpu_usagemhz_rate_average is None:
+            pass
+        else:
+            assert record.cpu_usagemhz_rate_average > 0, 'Zero Host CPU Usage'
+            break
+
+
+def test_raw_metric_host_memory(metrics_collection, db, provider):
+    metrics_tbl = db['metrics']
+    ems = db['ext_management_systems']
+    host_name = get_host_name(provider)
+
+    with db.transaction:
+        provs = (
+            db.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == host_name,
+            ems.name == provider.name)
+        )
+    for record in db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery())):
+        if record.derived_memory_used is None:
+            pass
+        else:
+            assert record.derived_memory_used > 0, 'Zero Host Memory Usage'
+            break
+
+
+def test_raw_metric_host_network(metrics_collection, db, provider):
+    metrics_tbl = db['metrics']
+    ems = db['ext_management_systems']
+    host_name = get_host_name(provider)
+
+    with db.transaction:
+        provs = (
+            db.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == host_name,
+            ems.name == provider.name)
+        )
+    for record in db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery())):
+        if record.net_usage_rate_average is None:
+            pass
+        else:
+            assert record.net_usage_rate_average > 0, 'Zero Host Network IO'
+            break
+
+
+@pytest.mark.meta(
+    blockers=[BZ(1322094, unblock=lambda provider: provider.type != 'rhevm')]
+)
+def test_raw_metric_host_disk(metrics_collection, db, provider):
+    metrics_tbl = db['metrics']
+    ems = db['ext_management_systems']
+    host_name = get_host_name(provider)
+
+    with db.transaction:
+        provs = (
+            db.session.query(metrics_tbl.id)
+            .join(ems, metrics_tbl.parent_ems_id == ems.id)
+            .filter(metrics_tbl.resource_name == host_name,
+            ems.name == provider.name)
+        )
+    for record in db.session.query(metrics_tbl).filter(metrics_tbl.id.in_(provs.subquery())):
+        if record.disk_usage_rate_average is None:
+            pass
+        else:
+            assert record.disk_usage_rate_average > 0, 'Zero Host Disk IO'
+            break
