@@ -1,4 +1,3 @@
-import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
@@ -11,7 +10,7 @@ from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key
 from utils.providers import list_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
+from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -155,7 +154,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         datasources = []
         rows = provider.mgmt.inventory.list_server_datasource()
         for datasource in rows:
-            _server = MiddlewareServer(name=re.sub(r'~~$', '', datasource.path.resource_id[0]),
+            _server = MiddlewareServer(name=get_server_name(datasource.path),
                                        feed=datasource.path.feed_id,
                                        provider=provider)
             _include = False
