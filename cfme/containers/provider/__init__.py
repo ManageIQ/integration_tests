@@ -9,7 +9,7 @@ from cfme.web_ui import (
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
-from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance import Navigatable
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
@@ -88,7 +88,6 @@ prop_region = Region(
 
 @BaseProvider.add_base_type
 class Provider(BaseProvider, Pretty):
-    appliance = CurrentAppliance()
     provider_types = {}
     in_version = ('5.5', version.LATEST)
     type_tclass = "container"
@@ -113,7 +112,7 @@ class Provider(BaseProvider, Pretty):
 
     def __init__(self, name=None, credentials=None, key=None,
                  zone=None, hostname=None, port=None, provider_data=None, appliance=None):
-        self.appliance = appliance or get_or_create_current_appliance()
+        Navigatable.__init__(self, appliance=appliance)
         if not credentials:
             credentials = {}
         self.name = name

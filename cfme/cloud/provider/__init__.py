@@ -21,7 +21,7 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
-from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance import Navigatable
 from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
 from utils.log import logger
 from utils.wait import wait_for
@@ -159,10 +159,9 @@ class Provider(Pretty, CloudInfraProvider):
     save_button = deferred_verpick(
         {version.LOWEST: form_buttons.save,
          '5.5': form_buttons.angular_save})
-    appliance = CurrentAppliance()
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, appliance=None):
-        self.appliance = appliance or get_or_create_current_appliance()
+        Navigatable.__init__(self, appliance=appliance)
         if not credentials:
             credentials = {}
         self.name = name
