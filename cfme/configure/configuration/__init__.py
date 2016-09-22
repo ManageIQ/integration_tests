@@ -13,7 +13,7 @@ from cfme.web_ui import (
     MultiFill, Region, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.menu import nav
 from cfme.web_ui.form_buttons import change_stored_password
-from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance import Navigatable
 from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
@@ -751,7 +751,7 @@ class ServerLogDepot(Pretty):
         cls._collect("Collect current logs")
 
 
-class BasicInformation(Updateable, Pretty):
+class BasicInformation(Updateable, Pretty, Navigatable):
     """ This class represents the "Basic Info" section of the Configuration page.
 
     Args:
@@ -776,8 +776,6 @@ class BasicInformation(Updateable, Pretty):
     )
     pretty_attrs = ['company_name', 'appliance_name', 'appliance_zone', 'time_zone', 'appliance']
 
-    appliance = CurrentAppliance()
-
     def __init__(
             self, company_name=None, appliance_name=None, appliance_zone=None, time_zone=None,
             appliance=None):
@@ -787,7 +785,7 @@ class BasicInformation(Updateable, Pretty):
         self.appliance_name = appliance_name
         self.appliance_zone = appliance_zone
         self.time_zone = time_zone
-        self.appliance = appliance or get_or_create_current_appliance()
+        Navigatable.__init__(self, appliance=appliance)
 
     def update(self):
         """ Navigate to a correct page, change details and save.

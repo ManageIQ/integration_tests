@@ -30,7 +30,7 @@ from utils.wait import wait_for
 from utils import deferred_verpick, version
 from utils.pretty import Pretty
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
-from utils.appliance import CurrentAppliance, get_or_create_current_appliance
+from utils.appliance import Navigatable
 
 # Page specific locators
 details_page = Region(infoblock_type='detail')
@@ -88,7 +88,7 @@ pow_btn = partial(tb.select, 'Power')
 lif_btn = partial(tb.select, 'Lifecycle')
 
 
-class Host(Updateable, Pretty):
+class Host(Updateable, Pretty, Navigatable):
     """
     Model of an infrastructure host in cfme.
 
@@ -110,7 +110,6 @@ class Host(Updateable, Pretty):
         myhost.create()
 
     """
-    appliance = CurrentAppliance()
     pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
 
     forced_saved = deferred_verpick(
@@ -122,6 +121,7 @@ class Host(Updateable, Pretty):
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
                  ipmi_credentials=None, interface_type='lan', appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.quad_name = 'host'
         self.hostname = hostname
@@ -134,7 +134,6 @@ class Host(Updateable, Pretty):
         self.ipmi_credentials = ipmi_credentials
         self.interface_type = interface_type
         self.db_id = None
-        self.appliance = appliance or get_or_create_current_appliance()
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),

@@ -14,7 +14,7 @@ from cfme.web_ui import paginator as pg
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 from utils import version
-from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance import Navigatable
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 import utils.conf as conf
 from utils.datafile import load_data_file
@@ -96,7 +96,7 @@ image_tree = partial(acc.tree, "System Image Types", "All System Image Types")
 iso_tree = partial(acc.tree, "ISO Datastores", "All ISO Datastores")
 
 
-class PXEServer(Updateable, Pretty):
+class PXEServer(Updateable, Pretty, Navigatable):
     """Model of a PXE Server object in CFME
 
     Args:
@@ -111,13 +111,12 @@ class PXEServer(Updateable, Pretty):
         customize_dir: Customization directory for templates.
         menu_filename: Menu filename for iPXE/syslinux menu.
     """
-    appliance = CurrentAppliance()
     pretty_attrs = ['name', 'uri', 'access_url']
 
     def __init__(self, name=None, depot_type=None, uri=None, userid=None, password=None,
                  access_url=None, pxe_dir=None, windows_dir=None, customize_dir=None,
                  menu_filename=None, appliance=None):
-        self.appliance = appliance or get_or_create_current_appliance()
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.depot_type = depot_type
         self.uri = uri
@@ -310,7 +309,7 @@ class PXEServerEdit(CFMENavigateStep):
         cfg_btn('Edit this PXE Server')
 
 
-class CustomizationTemplate(Updateable, Pretty):
+class CustomizationTemplate(Updateable, Pretty, Navigatable):
     """ Model of a Customization Template in CFME
 
     Args:
@@ -320,12 +319,11 @@ class CustomizationTemplate(Updateable, Pretty):
         script_type: Script type, either Kickstart, Cloudinit or Sysprep.
         script_data: The scripts data.
     """
-    appliance = CurrentAppliance()
     pretty_attrs = ['name', 'image_type']
 
     def __init__(self, name=None, description=None, image_type=None, script_type=None,
                  script_data=None, appliance=None):
-        self.appliance = appliance or get_or_create_current_appliance()
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.description = description
         self.image_type = image_type
@@ -462,20 +460,19 @@ class CustomizationTemplateEdit(CFMENavigateStep):
         cfg_btn('Edit this Customization Template')
 
 
-class SystemImageType(Updateable, Pretty):
+class SystemImageType(Updateable, Pretty, Navigatable):
     """Model of a System Image Type in CFME.
 
     Args:
         name: The name of the System Image Type.
         provision_type: The provision type, either Vm or Host.
     """
-    appliance = CurrentAppliance()
     pretty_attrs = ['name', 'provision_type']
     VM_OR_INSTANCE = "VM and Instance"
     HOST_OR_NODE = "Host / Node"
 
     def __init__(self, name=None, provision_type=None, appliance=None):
-        self.appliance = appliance or get_or_create_current_appliance()
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.provision_type = provision_type
 
@@ -575,17 +572,16 @@ class SystemImageTypeEdit(CFMENavigateStep):
         cfg_btn('Edit this System Image Type')
 
 
-class ISODatastore(Updateable, Pretty):
+class ISODatastore(Updateable, Pretty, Navigatable):
     """Model of a PXE Server object in CFME
 
     Args:
         provider: Provider name.
     """
-    appliance = CurrentAppliance()
     pretty_attrs = ['provider']
 
     def __init__(self, provider=None, appliance=None):
-        self.appliance = appliance or get_or_create_current_appliance()
+        Navigatable.__init__(self, appliance=appliance)
         self.provider = provider
 
     def _form_mapping(self, create=None, **kwargs):

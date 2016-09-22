@@ -8,7 +8,6 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.menu import nav
 from utils import version
-from utils.appliance import CurrentAppliance
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.db import cfmedb
 
@@ -87,7 +86,6 @@ class MiddlewareProvider(BaseProvider):
     add_provider_button = form_buttons.FormButton("Add this Middleware Provider")
     save_button = form_buttons.FormButton("Save Changes")
     taggable_type = 'ExtManagementSystem'
-    appliance = CurrentAppliance()
 
 
 @navigator.register(MiddlewareProvider, 'All')
