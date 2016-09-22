@@ -188,7 +188,7 @@ find_form = Form(
         ("skey", AngularSelect("chosen_skey")),
         ("value", "#chosen_value"),
         ("check", AngularSelect("chosen_check")),
-        ("cfield", AngularSelect("chosen_cfield")),
+        ("cfield", AngularSelect("chosen_cfield", exact=True)),
         ("ckey", AngularSelect("chosen_ckey")),
         ("cvalue", Input("chosen_cvalue")),
     ]
