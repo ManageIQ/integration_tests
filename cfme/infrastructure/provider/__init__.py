@@ -24,7 +24,7 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, deferred_verpick, version
 from utils.api import rest_api
-from utils.appliance import get_or_create_current_appliance, CurrentAppliance
+from utils.appliance import Navigatable
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.log import logger
@@ -159,14 +159,13 @@ class Provider(Pretty, CloudInfraProvider):
         version.LOWEST: form_buttons.save,
         '5.6': form_buttons.angular_save
     })
-    appliance = CurrentAppliance()
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None,
             appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         if not credentials:
             credentials = {}
-        self.appliance = appliance or get_or_create_current_appliance()
         self.name = name
         self.credentials = credentials
         self.key = key
