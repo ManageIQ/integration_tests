@@ -23,7 +23,7 @@ pol_btn = partial(tb.select, 'Policy')
 
 def nav_to_cluster_through_provider(context):
     # TODO: replace this navigation via navmazing and a CFMENavigateStep destination
-    navigate_to(context['provider'], 'All')
+    navigate_to(context['provider'], 'Details')
     list_acc.select('Relationships', 'Clusters', by_title=False, partial=True)
     sel.click(Quadicon(context['cluster'].name, 'cluster'))
 
