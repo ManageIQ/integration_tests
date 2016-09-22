@@ -7,77 +7,116 @@ the credentials in the cfme yamls.
 """
 from __future__ import absolute_import
 
+import time
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException
 
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.flash as flash
-from cfme import dashboard, Credential
-from cfme.configure.access_control import User
-from cfme.web_ui import Region, Form, fill, Input
-from utils import conf, version
-from utils.browser import ensure_browser_open, quit
+from cfme import Credential
+from utils import conf
 from utils.log import logger
 from fixtures.pytest_store import store
 
+from widgetastic.widget import Text, View
+from widgetastic_patternfly import Button, Input, FlashMessages
 
-page = Region(
-    # TODO: Make title defer it's resolution
-    title={version.LOWEST: "Dashboard", '5.5': "Login"},
-    locators={
-        'username': Input("user_name"),
-        'password': Input("user_password"),
-        'submit_button': '//a[@id="login"]|//button[normalize-space(.)="Login"]/..',
-        # Login page has an abnormal flash div
-        'flash': '//div[@id="flash_div"]',
-        'logout': '//a[contains(@href, "/logout")]',
-        'update_password': '//a[@title="Update Password"]',
-        'back': '//a[@title="Back"]',
-        'user_new_password': Input("user_new_password"),
-        'user_verify_password': Input("user_verify_password")
-    },
-    identifying_loc='submit_button')
+from . import BaseLoggedInPage
 
-_form_fields = ('username', 'password', 'user_new_password', 'user_verify_password')
-form = Form(
-    fields=[
-        loc for loc
-        in page.locators.items()
-        if loc[0] in _form_fields],
-    identifying_loc='username')
+from utils.appliance.endpoints.ui import navigate_to
 
 
-def click_on_login():
-    """
-    Convenience internal function to click the login locator submit button.
-    """
-    sel.click(page.submit_button)
+class LoginPage(View):
+    flash = FlashMessages('div#flash_text_div')
 
+    class details(View):  # noqa
+        region = Text('.//p[normalize-space(text())="Region:"]/span')
+        zone = Text('.//p[normalize-space(text())="Zone:"]/span')
+        appliance = Text('.//p[normalize-space(text())="Appliance:"]/span')
 
-def _js_auth_fn():
-    # In case clicking on login or hitting enter is broken, this can still let you log in
-    # This shouldn't be used in automation, though.
-    sel.execute_script('miqAjaxAuth();')
+    change_password = Text('.//a[normalize-space(.)="Update password"]')
+    back = Text('.//a[normalize-space(.)="Back"]')
+    username = Input(name='user_name')
+    password = Input(name='user_password')
+    new_password = Input(name='user_new_password')
+    verify_password = Input(name='user_verify_password')
+    login = Button('Login')
+
+    def show_update_password(self):
+        if not self.new_password.is_displayed:
+            self.change_password.click()
+
+    def hide_update_password(self):
+        if self.new_password.is_displayed:
+            self.back.click()
+
+    def default_login(self):
+        self.log_in(
+            self.extra.store.user.credential.principal, self.extra.store.user.credential.secret)
+
+    def submit_login(self, method='click_on_login'):
+        if method == 'click_on_login':
+            self.login.click()
+        elif method == 'press_enter_after_password':
+            self.browser.send_keys(Keys.ENTER, self.password)
+        elif method == '_js_auth_fn':
+            self.browser.execute_script('miqAjaxAuth();')
+        else:
+            raise ValueError('Unknown method {}'.format(method))
+
+    def log_in(self, username, password, method='click_on_login'):
+        self.fill({
+            'username': username,
+            'password': password,
+        })
+        self.submit_login(method)
+
+    def update_password(
+            self, username, password, new_password, verify_password=None,
+            method='click_on_login'):
+        self.show_update_password()
+        self.fill({
+            'username': username,
+            'password': password,
+            'new_password': new_password,
+            'verify_password': verify_password if verify_password is not None else new_password
+        })
+        self.submit_login(method)
+
+    def logged_in_as_user(self, user):
+        return False
+
+    @property
+    def logged_in_as_current_user(self):
+        return False
+
+    @property
+    def current_username(self):
+        return None
+
+    @property
+    def current_fullname(self):
+        return None
+
+    @property
+    def logged_in(self):
+        return not self.logged_out
+
+    @property
+    def logged_out(self):
+        return self.username.is_displayed and self.password.is_displayed and self.login.is_displayed
+
+    @property
+    def is_displayed(self):
+        return self.logged_out
 
 
 def logged_in():
-    ensure_browser_open()
-    with sel.ajax_timeout(90):
-        sel.wait_for_ajax()  # This is called almost everywhere, protects from spinner
-    return sel.is_displayed(dashboard.page.user_dropdown)
+    return store.current_appliance.browser.create_view(BaseLoggedInPage).logged_in
 
 
-def press_enter_after_password():
-    """
-    Convenience function to send a carriange return at the end of the password field.
-    """
-    sel.send_keys(page.password, Keys.RETURN)
+LOGIN_METHODS = ['click_on_login', 'press_enter_after_password', '_js_auth_fn']
 
 
-LOGIN_METHODS = [click_on_login, press_enter_after_password]
-
-
-def login(user, submit_method=_js_auth_fn):
+def login(user, submit_method=LOGIN_METHODS[-1]):
     """
     Login to CFME with the given username and password.
     Optionally, submit_method can be press_enter_after_password
@@ -91,44 +130,31 @@ def login(user, submit_method=_js_auth_fn):
     Raises:
         RuntimeError: If the login fails, ie. if a flash message appears
     """
+    navigate_to(store.current_appliance, 'LoginScreen')
 
     if not user:
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
+        from cfme.configure.access_control import User
         user = User(credential=cred)
 
-    if not logged_in() or user.credential.principal is not current_username():
-        if logged_in():
-            logout()
-        # workaround for strange bug where we are logged out
-        # as soon as we click something on the dashboard
-        sel.sleep(1.0)
+    logged_in_view = store.current_appliance.browser.create_view(BaseLoggedInPage)
+
+    if not logged_in_view.logged_in_as_user(user):
+        if logged_in_view.logged_in:
+            logged_in_view.logout()
+
+        time.sleep(1)
 
         logger.debug('Logging in as user %s', user.credential.principal)
-        try:
-            fill(form, {'username': user.credential.principal, 'password': user.credential.secret})
-        except sel.InvalidElementStateException as e:
-            logger.warning("Got an error. Details follow.")
-            msg = str(e).lower()
-            if "element is read-only" in msg:
-                logger.warning("Got a read-only login form, will reload the browser.")
-                # Reload browser
-                quit()
-                ensure_browser_open()
-                sel.sleep(1.0)
-                sel.wait_for_ajax()
-                # And try filling the form again
-                fill(form, {'username': user.credential.principal,
-                    'password': user.credential.secret})
-            else:
-                logger.warning("Unknown error, reraising.")
-                logger.exception(e)
-                raise
-        with sel.ajax_timeout(90):
-            submit_method()
-        flash.assert_no_errors()
-        user.full_name = _full_name()
+        login_view = store.current_appliance.browser.create_view(LoginPage)
+
+        login_view.log_in(user.credential.principal, user.credential.secret, method=submit_method)
+        logged_in_view.flush_widget_cache()
+        user.full_name = logged_in_view.current_fullname
+        assert logged_in_view.logged_in_as_user
+        logged_in_view.flash.assert_no_error()
         store.user = user
 
 
@@ -139,30 +165,24 @@ def login_admin(**kwargs):
     Args:
         kwargs: A dict of keyword arguments to supply to the :py:meth:`login` method.
     """
-    if current_full_name() != 'Administrator':
-        logout()
-
-        username = conf.credentials['default']['username']
-        password = conf.credentials['default']['password']
-        cred = Credential(principal=username, secret=password)
-        user = User(credential=cred)
-        login(user, **kwargs)
+    username = conf.credentials['default']['username']
+    password = conf.credentials['default']['password']
+    cred = Credential(principal=username, secret=password)
+    from cfme.configure.access_control import User
+    user = User(credential=cred)
+    user.full_name = 'Administrator'
+    login(user, **kwargs)
 
 
 def logout():
     """
     Logs out of CFME.
     """
-    if logged_in():
-        if not sel.is_displayed(page.logout):
-            sel.click(dashboard.page.user_dropdown)
-        sel.click(page.logout, wait_ajax=False)
-        sel.handle_alert(wait=False)
+    logged_in_view = store.current_appliance.browser.create_view(BaseLoggedInPage)
+    if logged_in_view.logged_in:
+        logged_in_view.logout()
+        sel.handle_alert()
         store.user = None
-
-
-def _full_name():
-    return sel.text(dashboard.page.user_dropdown).split('|')[0].strip()
 
 
 def current_full_name():
@@ -170,68 +190,12 @@ def current_full_name():
 
     Returns: the current username.
     """
-    if logged_in():
-        return _full_name()
+    logged_in_view = store.current_appliance.browser.create_view(BaseLoggedInPage)
+    if logged_in_view.logged_in:
+        return logged_in_view.current_fullname
     else:
         return None
 
 
 def current_user():
     return store.user
-
-
-def current_username():
-    u = current_user()
-    return u and u.credential.principal
-
-
-def fill_login_fields(username, password):
-    """ Fills in login information without submitting the form """
-    if logged_in():
-        logout()
-    fill(form, {"username": username, "password": password})
-
-
-def show_password_update_form():
-    """ Shows the password update form """
-    if logged_in():
-        logout()
-    try:
-        sel.click(page.update_password)
-    except ElementNotVisibleException:
-        # Already on password change form
-        pass
-
-
-def update_password(username, password, new_password,
-                    verify_password=None, submit_method=click_on_login):
-    """ Changes user password """
-    if logged_in():
-        logout()
-    show_password_update_form()
-    fill(form, {
-        "username": username,
-        "password": password,
-        "user_new_password": new_password,
-        "user_verify_password": verify_password if verify_password is not None else new_password
-    })
-    submit_method()
-
-
-def close_password_update_form():
-    """ Goes back to main login form on login page """
-    try:
-        sel.click(page.back)
-    except (ElementNotVisibleException, NoSuchElementException):
-        # Already on main login form or not on login page at all
-        pass
-
-
-def clear_fields():
-    """ clears all form fields """
-    fill(form, {
-        "username": "",
-        "password": "",
-        "user_new_password": "",
-        "user_verify_password": ""
-    })

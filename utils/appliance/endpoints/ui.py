@@ -1,4 +1,4 @@
-from utils.log import logger
+from utils.log import logger, create_sublogger
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import (
     is_displayed, ContextWrapper, execute_script, click,
@@ -14,6 +14,66 @@ from utils.browser import quit, ensure_browser_open, browser
 from fixtures.pytest_store import store
 from cfme.web_ui.menu import Menu
 
+from cached_property import cached_property
+from widgetastic.browser import Browser, DefaultPlugin
+from widgetastic.utils import VersionPick
+from utils.browser import manager
+from utils.version import Version
+from utils.wait import wait_for
+
+VersionPick.VERSION_CLASS = Version
+
+
+class MiqBrowserPlugin(DefaultPlugin):
+    ENSURE_PAGE_SAFE = '''\
+        function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
+
+        return {
+            jquery: jQuery.active > 0,
+            prototype: (typeof Ajax === "undefined") ? false : Ajax.activeRequestCount > 0,
+            spinner: (!isHidden(document.getElementById("spinner_div")))
+                && isHidden(document.getElementById("lightbox_div")),
+            document: document.readyState != "complete",
+            autofocus: (typeof checkMiqQE === "undefined") ? false : checkMiqQE('autofocus') > 0,
+            debounce: (typeof checkMiqQE === "undefined") ? false : checkMiqQE('debounce') > 0,
+            miqQE: (typeof checkAllMiqQE === "undefined") ? false : checkAllMiqQE() > 0
+        };
+        '''
+
+    def ensure_page_safe(self, timeout='10s'):
+        # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
+        self.browser.dismiss_any_alerts()
+
+        def _check():
+            result = self.browser.execute_script(self.ENSURE_PAGE_SAFE)
+            # TODO: Logging
+            try:
+                return not any(result.values())
+            except AttributeError:
+                return True
+
+        wait_for(_check, timeout=timeout, delay=0.2)
+
+
+class MiqBrowser(Browser):
+    def __init__(self, selenium, endpoint, extra_objects=None):
+        # (self, selenium, plugin_class=None, logger=None, extra_objects=None)
+        extra_objects = extra_objects or {}
+        extra_objects.update({
+            'appliance': endpoint.owner,
+            'endpoint': endpoint,
+            'store': store,
+        })
+        super(MiqBrowser, self).__init__(
+            selenium,
+            plugin_class=MiqBrowserPlugin,
+            logger=create_sublogger('MiqBrowser'),
+            extra_objects=extra_objects)
+
+    @property
+    def product_version(self):
+        return self.extra_objects['appliance'].version
+
 
 class ViaUI(object):
     """UI implementation using the normal ux"""
@@ -24,6 +84,34 @@ class ViaUI(object):
     def __init__(self, owner):
         self.owner = owner
         self.menu = Menu()
+
+    @cached_property
+    def widgetastic(self):
+        """This gives us a widgetastic browser."""
+        return MiqBrowser(manager.ensure_open(), self)
+
+    def create_view(self, view_class, additional_context=None):
+        """Method that is used to instantiate a Widgetastic View.
+
+        Views may define ``LOCATION`` on them, that implies a :py:meth:`force_navigate` call with
+        ``LOCATION`` as parameter.
+
+        Args:
+            view_class: A view class, subclass of ``widgetastic.widget.View``
+            additional_context: Additional informations passed to the view (user name, VM name, ...)
+                which is also passed to the :py:meth:`force_navigate` in case when navigation is
+                requested.
+
+        Returns:
+            An instance of the ``view_class``
+        """
+        additional_context = additional_context or {}
+        view = view_class(
+            self.widgetastic,
+            additional_context=additional_context,
+            logger=logger)
+
+        return view
 
     # ** Notice our friend force_navigate is here. It used to live in pytest_selenium fixture.
     # ** Funny story! That thing was never a fixture.
@@ -158,27 +246,7 @@ class ViaUI(object):
             self.menu.go_to("dashboard")
             # If there is a rails error past this point, something is really awful
 
-        def _login_func():
-            if not current_user:  # default to admin user
-                login.login_admin()
-            else:  # we recycled and want to log back in
-                login.login(store.user)
-
         try:
-            try:
-                # What we'd like to happen...
-                _login_func()
-            except WebDriverException as e:
-                if "jquery" not in str(e).lower():
-                    raise  # Something unknown happened
-                logger.info("Seems we got a non-CFME page (blank or screwed up)"
-                    "so killing the browser")
-                quit()
-                ensure_browser_open()
-                # And try it again
-                _login_func()
-                # If this failed, no help with that :/
-
             ctx = kwargs.get("context", False)
             if ctx:
                 logger.info('Navigating to %s with context: %s', page_name, ctx)
@@ -289,6 +357,27 @@ class ViaUI(object):
 
 
 class CFMENavigateStep(NavigateStep):
+    VIEW = None
+
+    @cached_property
+    def view(self):
+        if self.VIEW is None:
+            raise AttributeError('{} does not have VIEW specified'.format(type(self).__name__))
+        return self.create_view(self.VIEW)
+
+    @property
+    def appliance(self):
+        return self.obj.appliance
+
+    def create_view(self, *args, **kwargs):
+        return self.appliance.browser.create_view(*args, **kwargs)
+
+    def am_i_here(self):
+        try:
+            return self.view.is_displayed
+        except AttributeError:
+            return False
+
     def pre_navigate(self, _tries=0):
         if _tries > 2:
             # Need at least three tries:
@@ -373,30 +462,9 @@ class CFMENavigateStep(NavigateStep):
         # Includes recycling so you don't need to specify recycle = False
         restart_evmserverd = False
 
-        current_user = store.user
         from cfme import login
 
-        def _login_func():
-            if not current_user:  # default to admin user
-                login.login_admin()
-            else:  # we recycled and want to log back in
-                login.login(store.user)
-
         try:
-            try:
-                # What we'd like to happen...
-                _login_func()
-            except WebDriverException as e:
-                if "jquery" not in str(e).lower():
-                    raise  # Something unknown happened
-                logger.info("Seems we got a non-CFME page (blank "
-                    "or screwed up) so killing the browser")
-                quit()
-                ensure_browser_open()
-                # And try it again
-                _login_func()
-                # If this failed, no help with that :/
-
             self.step()
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
