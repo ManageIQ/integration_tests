@@ -313,6 +313,7 @@ def assign_policy_for_testing(vm, policy_for_testing, provider, policy_profile_n
     provider.unassign_policy_profiles(policy_profile_name)
 
 
+@pytest.mark.tier(3)
 def test_action_start_virtual_machine_after_stopping(
         request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests action 'Start Virtual Machine'
@@ -337,6 +338,7 @@ def test_action_start_virtual_machine_after_stopping(
         pytest.fail("CFME did not power on the VM {}".format(vm.name))
 
 
+@pytest.mark.tier(3)
 def test_action_stop_virtual_machine_after_starting(
         request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests action 'Stop Virtual Machine'
@@ -361,6 +363,7 @@ def test_action_stop_virtual_machine_after_starting(
         pytest.fail("CFME did not power off the VM {}".format(vm.name))
 
 
+@pytest.mark.tier(3)
 def test_action_suspend_virtual_machine_after_starting(
         request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests action 'Suspend Virtual Machine'
@@ -384,6 +387,7 @@ def test_action_suspend_virtual_machine_after_starting(
         pytest.fail("CFME did not suspend the VM {}".format(vm.name))
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1142875])
 def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests action 'Prevent current event from proceeding'
@@ -408,6 +412,7 @@ def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off, vm
         pytest.fail("CFME did not prevent starting of the VM {}".format(vm.name))
 
 
+@pytest.mark.tier(3)
 def test_action_power_on_logged(
         request, assign_policy_for_testing, vm, vm_off, ssh_client, vm_crud_refresh):
     """ This test tests action 'Generate log message'.
@@ -445,6 +450,7 @@ def test_action_power_on_logged(
     wait_for(search_logs, num_sec=180, message="log search")
 
 
+@pytest.mark.tier(3)
 def test_action_power_on_audit(
         request, assign_policy_for_testing, vm, vm_off, ssh_client, vm_crud_refresh):
     """ This test tests action 'Generate Audit Event'.
@@ -482,6 +488,7 @@ def test_action_power_on_audit(
     wait_for(search_logs, num_sec=180, message="log search")
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1333566])
 def test_action_create_snapshot_and_delete_last(
         request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
@@ -527,6 +534,7 @@ def test_action_create_snapshot_and_delete_last(
              message="wait for snapshot deleted", delay=5)
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1333566])
 def test_action_create_snapshots_and_delete_them(
         request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
@@ -581,6 +589,7 @@ def test_action_create_snapshots_and_delete_them(
              message="wait for snapshots to be deleted", delay=5)
 
 
+@pytest.mark.tier(3)
 def test_action_initiate_smartstate_analysis(
         request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
@@ -687,6 +696,7 @@ def test_action_initiate_smartstate_analysis(
 
 
 # Purely custom actions
+@pytest.mark.tier(3)
 def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ Tests action tag
 
@@ -722,6 +732,7 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refr
         pytest.fail("Tags were not assigned!")
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1205496])
 def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ Tests action untag

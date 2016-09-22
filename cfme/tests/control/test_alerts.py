@@ -183,6 +183,7 @@ def vm_crud(provider, vm_name, full_template):
     return VM.factory(vm_name, provider, template_name=full_template["name"])
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(server_roles=["+automate", "+notifier"], blockers=[1266547])
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         vm_name, vm_crud, provider, request, smtp_test, register_event):
@@ -215,6 +216,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     wait_for_alert(smtp_test, alert, delay=16 * 60)
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
 def test_alert_rtp(request, vm_name, smtp_test, provider):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
@@ -248,6 +250,7 @@ def test_alert_rtp(request, vm_name, smtp_test, provider):
         "text": vm_name, "from_address": email})
 
 
+@pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
 def test_alert_timeline_cpu(request, vm_name, provider, ssh, vm_crud):
     """ Tests a custom alert that uses C&U data to trigger an alert. It will run a script that makes
@@ -350,6 +353,7 @@ def test_alert_snmp(request, vm_name, smtp_test, provider, snmp_client):
     wait_for(_snmp_arrived, num_sec=600, delay=15, message="SNMP trap arrived.")
 
 
+@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1231889], automates=[1231889])
 def test_vmware_alarm_selection_does_not_fail():
     """Test the bug that causes CFME UI to explode when VMware Alarm type is selected.

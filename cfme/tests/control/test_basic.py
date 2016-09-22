@@ -399,14 +399,14 @@ def test_policy_crud(policy_class, soft_assert):
     ))
 
 
-@pytest.mark.tier(3)
+@pytest.mark.tier(2)
 def test_policy_copy(policy, soft_assert):
     random_policy_copy = policy.copy()
     soft_assert(random_policy_copy.exists, "The {} does not exist!".format(random_policy_copy))
     random_policy_copy.delete()
 
 
-@pytest.mark.tier(3)
+@pytest.mark.tier(2)
 def test_assign_two_random_events_to_control_policy(control_policy, soft_assert):
     random_events = random.sample(EVENTS, 2)
     control_policy.assign_events(*random_events)
@@ -414,7 +414,7 @@ def test_assign_two_random_events_to_control_policy(control_policy, soft_assert)
     soft_assert(control_policy.is_event_assigned(random_events[1]))
 
 
-@pytest.mark.tier(3)
+@pytest.mark.tier(2)
 def test_assign_condition_to_control_policy(request, policy_and_condition):
     """This test checks whether an condition is assigned to a control policy.
     Steps:
@@ -443,7 +443,7 @@ def test_policy_profile_crud(random_vm_control_policy, random_host_control_polic
     soft_assert(not profile.exists, "The policy profile {} exists!".format(profile.description))
 
 
-@pytest.mark.tier(3)
+@pytest.mark.tier(2)
 # RUBY expression type is no longer supported.
 @pytest.mark.uncollectif(lambda expression: "RUBY" in expression and current_version() >= "5.5")
 @pytest.mark.parametrize(("expression", "verify"), VM_EXPRESSIONS_TO_TEST)
@@ -484,7 +484,7 @@ def test_alert_crud(soft_assert):
     ))
 
 
-@pytest.mark.tier(3)
+@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1303645], automates=[1303645])
 def test_control_alert_copy(random_alert, soft_assert):
     alert_copy = random_alert.copy()
