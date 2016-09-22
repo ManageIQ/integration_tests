@@ -1,6 +1,7 @@
 from functools import partial
 from random import sample
 import os
+import re
 
 from cfme.common import Validatable, SummaryMixin
 from cfme.fixtures import pytest_selenium as sel
@@ -69,6 +70,15 @@ def download(extension):
         download_btn("Download as {}".format(extensions_mapping[extension]))
     except:
         raise ValueError("Unknown extention. check the extentions_mapping")
+
+
+def get_server_name(path):
+    if len(path.resource_id) > 3:
+        # this is the domain mode case, take the server value
+        return re.sub(r'.*server%3D', '', path.resource_id[2])
+    else:
+        # for standalone servers
+        return re.sub(r'~~$', '', path.resource_id[0])
 
 
 class Container(SummaryMixin):

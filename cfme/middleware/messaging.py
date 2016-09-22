@@ -10,7 +10,7 @@ from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key
 from utils.providers import list_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
+from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -160,7 +160,7 @@ class MiddlewareMessaging(MiddlewareBase, Taggable):
         messagings = []
         rows = provider.mgmt.inventory.list_messaging()
         for messaging in rows:
-            _server = MiddlewareServer(name=cls._get_server_name(messaging.path),
+            _server = MiddlewareServer(name=get_server_name(messaging.path),
                                        feed=messaging.path.feed_id,
                                        provider=provider)
             _include = False
@@ -176,15 +176,6 @@ class MiddlewareMessaging(MiddlewareBase, Taggable):
                     provider=provider,
                     messaging_type=re.sub(' \\[.*\\]', '', messaging.name)))
         return messagings
-
-    @classmethod
-    def _get_server_name(cls, path):
-        if len(path.resource_id) > 3:
-            # this is the domain mode case, take the server value
-            return re.sub(r'.*server%3D', '', path.resource_id[2])
-        else:
-            # for standalone servers
-            return re.sub(r'~~$', '', path.resource_id[0])
 
     @classmethod
     def messagings_in_mgmt(cls, provider=None, server=None):
