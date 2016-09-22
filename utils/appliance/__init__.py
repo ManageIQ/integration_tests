@@ -42,9 +42,6 @@ from .endpoints.ui import ViaUI
 from .endpoints.db import ViaDB
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
-# Do not import the whole stuff around
-if not RUNNING_UNDER_SPROUT:
-    from utils.hosts import setup_providers_hosts_credentials
 
 
 def _current_miqqe_version():
@@ -1832,6 +1829,8 @@ class Appliance(IPAppliance):
 
             # credential hosts
             log_callback('Credentialing hosts...')
+            if not RUNNING_UNDER_SPROUT:
+                from utils.hosts import setup_providers_hosts_credentials
             setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
 
             # if rhev, set relationship
@@ -2155,3 +2154,11 @@ current_appliance = LocalProxy(get_or_create_current_appliance)
 class CurrentAppliance(object):
     def __get__(self, instance, owner):
         return get_or_create_current_appliance()
+
+
+class Navigatable(object):
+
+    appliance = CurrentAppliance()
+
+    def __init__(self, appliance=None):
+        self.appliance = appliance or get_or_create_current_appliance()

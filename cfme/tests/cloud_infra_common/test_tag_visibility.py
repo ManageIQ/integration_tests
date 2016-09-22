@@ -68,7 +68,7 @@ def new_user(new_group):
 
 
 @pytest.yield_fixture(scope="module")
-def tagged_vm(new_tag, setup_provider, provider):
+def tagged_vm(new_tag, setup_provider_modscope, provider):
     ownership_vm = provider.data['ownership_vm']
     tag_vm = VM.factory(ownership_vm, provider)
     tag_vm.add_tag(new_tag)
@@ -78,6 +78,6 @@ def tagged_vm(new_tag, setup_provider, provider):
 
 
 @pytest.mark.tier(3)
-def test_tag_vis_vm(request, setup_provider, provider, tagged_vm, new_user):
+def test_tag_vis_vm(request, tagged_vm, new_user):
     with new_user:
         assert tagged_vm.exists, "vm not found"

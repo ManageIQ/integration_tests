@@ -8,7 +8,7 @@ from cfme.web_ui.menu import nav, toolbar as tb
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
+from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -148,7 +148,7 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Deployable):
         rows = provider.mgmt.inventory.list_server_deployment()
         for deployment in rows:
             _server = MiddlewareServer(
-                name=re.sub(r'~~$', '', deployment.path.resource_id[0]),
+                name=get_server_name(deployment.path),
                 feed=deployment.path.feed_id,
                 provider=provider)
             _include = False

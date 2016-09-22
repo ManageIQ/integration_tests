@@ -21,13 +21,13 @@ def minimise_dict(item):
     else:
         return item
 
+# todo: infrastructure hosts and pools are removed due to changing navigation to navmazing
+# todo: both items have to be put back once navigation change is fully done
 
 gtl_params = [
     'Infrastructure Providers/infrastructure_providers',
     'Clusters/infrastructure_clusters',
-    'Hosts/infrastructure_hosts',
     'VMs/infra_vms',
-    'Resource Pools/infrastructure_resource_pools',
     'Datastores/infrastructure_datastores',
     'My Services/my_services',
     'Catalog Items/catalog_items',
@@ -35,10 +35,6 @@ gtl_params = [
     'Templates & Images/service_templates_images'
 ]
 exp_comp_params = [
-    {
-        '5.4': 'Compare/infrastructure_hosts/Configuration/Compare Selected items',
-        '5.3': 'Compare/infrastructure_hosts/Configuration/Compare Selected Hosts'
-    },
     'Compare/infrastructure_virtual_machines/Configuration/Compare Selected items'
 ]
 exp_comp_params = [minimise_dict(item) for item in exp_comp_params]
