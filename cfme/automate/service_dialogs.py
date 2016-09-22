@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 import functools
 
-from cfme.web_ui import menu
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import AngularSelect, Form, Select, SplitTable, accordion,\
     fill, flash, form_buttons, Table, Tree, Input, Region
-from utils.update import Updateable
-from utils.pretty import Pretty
 from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
+from utils.pretty import Pretty
+from utils.update import Updateable
+
 
 accordion_tree = functools.partial(accordion.tree, "Service Dialogs")
 cfg_btn = functools.partial(tb.select, "Configuration")
@@ -76,38 +80,14 @@ common = Region(locators={
         "5.5": Table("//div[@id='list_grid']/table")}})
 
 
-def _all_servicedialogs_add_new(context):
-    cfg_btn('Add a new Dialog')
-    sel.wait_for_element(label_form.label)
-
-menu.nav.add_branch(
-    'automate_customization',
-    {
-        'service_dialogs':
-        [
-            lambda _: accordion.tree("Service Dialogs", "All Dialogs"),
-            {
-                'service_dialog_new': _all_servicedialogs_add_new
-            }
-        ],
-        'service_dialog':
-        [
-            lambda ctx: accordion.tree('Service Dialogs', "All Dialogs", ctx['dialog'].label),
-            {
-                'service_dialog_edit': menu.nav.partial(cfg_btn, "Edit this Dialog")
-            }
-        ]
-    }
-)
-
-
-class ServiceDialog(Updateable, Pretty):
+class ServiceDialog(Updateable, Pretty, Navigatable):
     pretty_attrs = ['label', 'description']
 
     def __init__(self, label=None, description=None,
                  submit=False, cancel=False,
                  tab_label=None, tab_desc=None,
-                 box_label=None, box_desc=None):
+                 box_label=None, box_desc=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.label = label
         self.description = description
         self.submit = submit
@@ -129,7 +109,7 @@ class ServiceDialog(Updateable, Pretty):
             self.element_type(each_element)
 
     def create(self, *element_data):
-        sel.force_navigate('service_dialog_new')
+        navigate_to(self, 'Add')
         fill(label_form, {'label': self.label,
                           'description_text': self.description,
                           'submit_button': self.submit,
@@ -148,14 +128,14 @@ class ServiceDialog(Updateable, Pretty):
         flash.assert_success_message('Dialog "{}" was added'.format(self.label))
 
     def update(self, updates):
-        sel.force_navigate('service_dialog_edit', context={'dialog': self})
+        navigate_to(self, 'Edit')
         fill(label_form, {'name_text': updates.get('name', None),
                           'description_text': updates.get('description', None)})
         sel.click(form_buttons.save)
         flash.assert_no_errors()
 
     def update_element(self, second_element, element_data):
-        sel.force_navigate('service_dialog_edit', context={'dialog': self})
+        navigate_to(self, 'Edit')
         if version.current_version() > "5.5":
             tree = accordion.tree("Dialog")
         else:
@@ -173,7 +153,7 @@ class ServiceDialog(Updateable, Pretty):
         flash.assert_no_errors()
 
     def delete(self, cancel=False):
-        sel.force_navigate('service_dialog', context={'dialog': self})
+        navigate_to(self, 'Details')
         cfg_btn("Remove from the VMDB", invokes_alert=True)
         sel.handle_alert(cancel)
 
@@ -200,11 +180,8 @@ class ServiceDialog(Updateable, Pretty):
             '[contains(normalize-space(.), "{}")]/..'.format(element_data))
 
     def reorder_elements(self, tab, box, *element_data):
-        sel.force_navigate('service_dialog_edit', context={'dialog': self})
-        if version.current_version() > "5.5":
-            tree = accordion.tree("Dialog")
-        else:
-            tree = Tree("dialog_edit_treebox")
+        navigate_to(self, 'Edit')
+        tree = accordion.tree("Dialog")
         tree.click_path(self.label, tab, box)
         list_ele = []
         for each_element in element_data:
@@ -214,3 +191,40 @@ class ServiceDialog(Updateable, Pretty):
         sel.drag_and_drop(ele_1, ele_2)
         sel.click(form_buttons.save)
         flash.assert_no_errors()
+
+
+@navigator.register(ServiceDialog, 'All')
+class ServiceDialogAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Automate', 'Customization')(None)
+
+    def resetter(self):
+        accordion.tree("Service Dialogs", "All Dialogs")
+
+
+@navigator.register(ServiceDialog, 'Add')
+class ServiceDialogNew(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a new Dialog')
+        sel.wait_for_element(label_form.label)
+
+
+@navigator.register(ServiceDialog, 'Details')
+class ServiceDialogDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree('Service Dialogs', "All Dialogs", self.obj.label)
+
+
+@navigator.register(ServiceDialog, 'Edit')
+class ServiceDialogEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn("Edit this Dialog")
