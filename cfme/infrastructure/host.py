@@ -88,7 +88,7 @@ pow_btn = partial(tb.select, 'Power')
 lif_btn = partial(tb.select, 'Lifecycle')
 
 
-class Host(Updateable, Pretty, Navigatable):
+class Host(Updateable, Navigatable, Pretty):
     """
     Model of an infrastructure host in cfme.
 
