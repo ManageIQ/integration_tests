@@ -15,9 +15,10 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.cluster import Cluster
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb, Radio
+    AngularSelect, toolbar as tb, Radio, InfoBlock
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
@@ -31,7 +32,6 @@ from utils.log import logger
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
-
 
 details_page = Region(infoblock_type='detail')
 
@@ -60,10 +60,9 @@ properties_form = Form(
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('api_port', Input("port")),
         ('sec_protocol', {version.LOWEST: Select("select#security_protocol"),
-            '5.5': AngularSelect("security_protocol", exact=True)}),
+                          '5.5': AngularSelect("security_protocol", exact=True)}),
         ('sec_realm', Input("realm"))
     ])
-
 
 properties_form_56 = TabStripForm(
     fields=[
@@ -89,7 +88,6 @@ properties_form_56 = TabStripForm(
         ]
     })
 
-
 prop_region = Region(
     locators={
         'properties_form': {
@@ -106,18 +104,18 @@ pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
 
 nav.add_branch('infrastructure_providers',
-             {'infrastructure_provider_new': lambda _: cfg_btn(
-                 'Add a New Infrastructure Provider'),
-              'infrastructure_provider_discover': lambda _: cfg_btn(
-                  'Discover Infrastructure Providers'),
-              'infrastructure_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
-                                                                         'infra_prov')),
-                                          {'infrastructure_provider_edit':
-                                           lambda _: cfg_btn('Edit this Infrastructure Provider'),
-                                           'infrastructure_provider_policy_assignment':
-                                           lambda _: pol_btn('Manage Policies'),
-                                           'infrastructure_provider_timelines':
-                                           lambda _: mon_btn('Timelines')}]})
+               {'infrastructure_provider_new': lambda _: cfg_btn(
+                   'Add a New Infrastructure Provider'),
+                'infrastructure_provider_discover': lambda _: cfg_btn(
+                    'Discover Infrastructure Providers'),
+                'infrastructure_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
+                                                                           'infra_prov')),
+                                            {'infrastructure_provider_edit':
+                                             lambda _: cfg_btn('Edit this Infrastructure Provider'),
+                                             'infrastructure_provider_policy_assignment':
+                                             lambda _: pol_btn('Manage Policies'),
+                                             'infrastructure_provider_timelines':
+                                             lambda _: mon_btn('Timelines')}]})
 
 
 @CloudInfraProvider.add_base_type
@@ -197,7 +195,7 @@ class Provider(Pretty, CloudInfraProvider):
 
     @num_datastore.variant('ui')
     def num_datastore_ui(self):
-            return int(self.get_detail("Relationships", "Datastores"))
+        return int(self.get_detail("Relationships", "Datastores"))
 
     @variable(alias='rest')
     def num_host(self):
@@ -277,6 +275,13 @@ class Provider(Pretty, CloudInfraProvider):
                  end_ip=self.end_ip)
 
     @property
+    def id(self):
+        """
+        returns current provider id using rest api
+        """
+        return rest_api().collections.providers.find_by(name=self.name)[0].id
+
+    @property
     def hosts(self):
         """Returns list of :py:class:`cfme.infrastructure.host.Host` that should belong to this
         provider according to the YAML
@@ -291,6 +296,16 @@ class Provider(Pretty, CloudInfraProvider):
             )
             result.append(Host(name=host["name"], credentials=cred))
         return result
+
+    def get_clusters(self):
+        """returns the list of clusters belonging to the provider"""
+        web_clusters = []
+        sel.force_navigate('infrastructure_provider', context={'provider': self})
+        sel.click(InfoBlock.element('Relationships', 'Clusters'))
+        icons = Quadicon.all(qtype='cluster')
+        for icon in icons:
+            web_clusters.append(Cluster(icon.name, self))
+        return web_clusters
 
 
 @navigator.register(Provider, 'All')
@@ -366,7 +381,7 @@ def get_all_providers(do_not_navigate=False):
     link_marker = "ems_infra"
     for page in paginator.pages():
         for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
-                "'{}/show')]".format(link_marker)):
+                                  "'{}/show')]".format(link_marker)):
             providers.add(sel.get_attribute(title, "title"))
     return providers
 
@@ -411,5 +426,6 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
+
 
 import_all_modules_of('cfme.infrastructure.provider')
