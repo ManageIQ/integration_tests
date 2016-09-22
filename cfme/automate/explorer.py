@@ -23,10 +23,7 @@ cfg_btn = partial(tb.select, 'Configuration')
 
 
 def datastore_checkbox(name):
-    return version.pick({
-        version.LOWEST: "//img[contains(@src, 'chk') and ../../td[normalize-space(.)={}]]",
-        "5.5": "//input[@type='checkbox' and ../../td[normalize-space(.)={}]]"
-    }).format(quoteattr(name))
+    return "//input[@type='checkbox' and ../../td[normalize-space(.)={}]]".format(quoteattr(name))
 
 
 def table_select(name):
@@ -127,14 +124,10 @@ class TreeNode(pretty.Pretty):
 
 class CopiableTreeNode(TreeNode):
     copy_form = Form(fields=[
-        ("domain", {
-            version.LOWEST: Select("select#domain"),
-            "5.5": AngularSelect("domain")}),
-        ("domain_text_only", {
-            version.LOWEST: "//fieldset[p]//tr[./td[@class='key' and normalize-space(.)="
-                            "'To Domain']]/td[not(@class='key') and not(select)]",
-            "5.5": "//label[contains(@class, 'control-label') and normalize-space(.)='To Domain']/"
-                   "../div/p"}),
+        ("domain", AngularSelect("domain")),
+        ("domain_text_only", (
+            "//label[contains(@class, 'control-label') and normalize-space(.)='To Domain']/"
+            "../div/p")),
         ("override", Input("override_source"))
     ])
 
@@ -446,10 +439,7 @@ class Class(CopiableTreeNode, Updateable):
         path = self.path
         path[-1] = self.name  # override the display_name madness
         path = "/".join(path)
-        if version.current_version() < "5.4":
-            return path
-        else:
-            return "/" + path  # Starts with / from 5.4 onwards because of domains
+        return "/" + path
 
     def create(self, cancel=False, allow_duplicate=False):
         if self.parent is not None and not self.parent.exists():
@@ -557,17 +547,13 @@ class Class(CopiableTreeNode, Updateable):
                             "contains(@href, 'arr_id={}')]/img".format(idx)))])
 
     schema_edit_page = Region(locators={
-        'add_field_btn': {
-            version.LOWEST: "//img[@alt='Equal-green']",
-            "5.5.0.7": "//img[@alt='Equal green']"}})
+        'add_field_btn': "//img[@alt='Equal green']"})
 
     def edit_schema(self, add_fields=None, remove_fields=None):
         sel.force_navigate("automate_explorer_schema_edit", context={'tree_item': self})
         for remove_field in remove_fields or []:
             f = remove_field.get_form()
             fill(f, {}, action=f.remove_entry_button, action_always=True)
-            if version.current_version() < "5.5.0.7":
-                sel.handle_alert()
 
         for add_field in add_fields or []:
             sel.click(self.schema_edit_page.add_field_btn)
@@ -661,9 +647,7 @@ class InstanceFieldsRow(pretty.Pretty):
     Args:
         row_id: Sequential id of the row (begins with 0)
     """
-    table = Table({
-        version.LOWEST: "//div[@id='form_div']//table[@class='style3']",
-        "5.4": "//div[@id='form_div']//table[thead]"})
+    table = Table("//div[@id='form_div']//table[thead]")
     columns = ("value", "on_entry", "on_exit", "on_error", "collect")
     fields = (
         "inst_value_{}", "inst_on_entry_{}", "inst_on_exit_{}",
@@ -698,11 +682,7 @@ class InstanceFields(object):
 
     Only real drawback is that you cannot use `form` when being somewhere else than on the page.
     """
-    fields = {
-        version.LOWEST: "//div[@id='form_div']//table[@class='style3']//td[img]",
-        "5.4": "//div[@id='form_div']//table[thead]//td[img]",
-        "5.5": "//div[@id='class_instances_div']//table//tr/td[./ul[contains(@class, 'icons')]]",
-    }
+    fields = "//div[@id='class_instances_div']//table//tr/td[./ul[contains(@class, 'icons')]]"
 
     @property
     def form(self):
