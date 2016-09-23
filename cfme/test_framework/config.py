@@ -28,7 +28,7 @@ class DeprecatedConfigWrapper(object):
 
     def __getattr__(self, key):
         warnings.warn(
-            'the configuration module %s will be deprecated' % (key,),
+            'the configuration module {} will be deprecated'.format(key),
             category=DeprecationWarning,
             stacklevel=2,
         )
@@ -36,7 +36,7 @@ class DeprecatedConfigWrapper(object):
 
     def __getitem__(self, key):
         warnings.warn(
-            'the configuration module %s will be deprecated' % (key,),
+            'the configuration module {} will be deprecated'.format(key),
             category=DeprecationWarning,
             stacklevel=2,
         )
