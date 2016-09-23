@@ -3,7 +3,9 @@ import fauxfactory
 import pytest
 
 from cfme.automate import provisioning_dialogs
+from cfme.web_ui import accordion
 from utils.update import update
+from utils.appliance.endpoints.ui import navigate_to
 
 
 @pytest.yield_fixture(scope="function")
@@ -33,16 +35,17 @@ def test_provisioning_dialog_crud(dialog):
 
 sort_by_params = []
 for nav_loc, name in provisioning_dialogs.ProvisioningDialog.ALLOWED_TYPES:
-    sort_by_params.append((nav_loc, "Name", "ascending"))
-    sort_by_params.append((nav_loc, "Name", "descending"))
-    sort_by_params.append((nav_loc, "Description", "ascending"))
-    sort_by_params.append((nav_loc, "Description", "descending"))
+    sort_by_params.append((name, "Name", "ascending"))
+    sort_by_params.append((name, "Name", "descending"))
+    sort_by_params.append((name, "Description", "ascending"))
+    sort_by_params.append((name, "Description", "descending"))
 
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1096388])
-@pytest.mark.parametrize(("nav_loc", "by", "order"), sort_by_params)
-def test_provisioning_dialogs_sorting(nav_loc, by, order):
-    pytest.sel.force_navigate("{}_dialogs".format(nav_loc))
+@pytest.mark.parametrize(("name", "by", "order"), sort_by_params)
+def test_provisioning_dialogs_sorting(name, by, order):
+    navigate_to(provisioning_dialogs.ProvisioningDialog, 'All')
+    accordion.tree("Provisioning Dialogs", "All Dialogs", name)
     provisioning_dialogs.dialog_table.sort_by(by, order)
     # When we can get the same comparing function as the PGSQL DB has, we can check

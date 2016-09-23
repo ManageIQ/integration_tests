@@ -11,6 +11,7 @@ from utils.appliance import Navigatable
 from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
 from utils.update import Updateable
 from utils.pretty import Pretty
+from utils import version
 
 
 acc_tree = partial(accordion.tree, "Provisioning Dialogs")
@@ -89,7 +90,11 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
 
     def delete(self, cancel=False):
         navigate_to(self, 'Details')
-        cfg_btn("Remove from the VMDB", invokes_alert=True)
+        if version.current_version() >= '5.7':
+            btn_name = "Remove Dialog"
+        else:
+            btn_name = "Remove from the VMDB"
+        cfg_btn(btn_name, invokes_alert=True)
         sel.handle_alert(cancel)
 
     def change_type(self, new_type):
