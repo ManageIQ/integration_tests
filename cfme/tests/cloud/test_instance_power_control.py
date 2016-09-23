@@ -5,6 +5,7 @@ import pytest
 from cfme.cloud.instance import (EC2Instance, Instance, OpenStackInstance,
                                  AzureInstance)
 from utils import testgen, version
+from utils.blockers import BZ
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError, RefreshTimer
 
@@ -23,7 +24,7 @@ def testing_instance(request, setup_provider, provider):
     """
     instance = Instance.factory("test_inst_pwrctl_{}".format(fauxfactory.gen_alpha(8)), provider)
     if not provider.mgmt.does_vm_exist(instance.name):
-        instance.create_on_provider(allow_skip="default", find_in_cfme=True)
+        instance.create_on_provider(timeout=1000, allow_skip="default", find_in_cfme=True)
         request.addfinalizer(instance.delete_from_provider)
         provider.refresh_provider_relationships()
     elif instance.provider.type == "ec2" and \
@@ -44,16 +45,17 @@ def vm_name(testing_instance):
     return testing_instance.name
 
 
-def wait_for_state_change_time_refresh(instance, state_change_time, timeout=300):
+def wait_for_state_change_time_refresh(instance, provider, state_change_time, timeout=300):
     """ Waits for 'State Changed On' refresh
     """
     def _wait_for_state_refresh():
         instance.load_details()
         return state_change_time != instance.get_detail(
             properties=("Power Management", "State Changed On"))
-
+    refresh_timer = RefreshTimer(time_for_refresh=180)
     try:
-        wait_for(_wait_for_state_refresh, num_sec=timeout, delay=30)
+        wait_for(_wait_for_state_refresh, fail_func=lambda: provider.is_refreshed(refresh_timer),
+                 num_sec=timeout, delay=30)
     except TimedOutError:
         return False
 
@@ -71,7 +73,7 @@ def wait_for_termination(provider, instance):
              num_sec=1000,
              delay=60,
              handle_exception=True)
-    wait_for_state_change_time_refresh(instance, state_change_time, timeout=720)
+    wait_for_state_change_time_refresh(instance, provider, state_change_time, timeout=720)
     if instance.get_detail(('Power Management', 'Power State')) not in \
             {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
         """Wait for one more state change as transitional state also
@@ -79,8 +81,13 @@ def wait_for_termination(provider, instance):
         """
         logger.info("Instance is still powering down. please wait before termination")
         state_change_time = instance.get_detail(('Power Management', 'State Changed On'))
-        wait_for_state_change_time_refresh(instance, state_change_time, timeout=720)
-    if provider.type == 'openstack' and instance.get_detail(('Power Management', 'Power State'))\
+        wait_for_state_change_time_refresh(instance, provider, state_change_time, timeout=720)
+    """
+    Check if VM is in terminated state on provider
+    Openstack and Azure don't have "terminated" state on provider side, so we check Vm state in CFME
+    """
+    if (provider.type == 'openstack' or provider.type == "azure") \
+            and instance.get_detail(('Power Management', 'Power State'))\
             in {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
         return True
 
@@ -212,9 +219,6 @@ def test_start(
         option=testing_instance.START, cancel=False, from_details=True)
     flash.assert_message_contain("Start initiated")
     logger.info("Start initiated Flash message")
-    if provider.type == 'azure':
-        # Adding this as wait_for_vm_state_change doesn't deal with Azure's multiple state changes
-        provider.mgmt.wait_vm_running(testing_instance.name)
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
     soft_assert(
@@ -223,6 +227,8 @@ def test_start(
 
 
 @pytest.mark.long_running
+@pytest.mark.meta(
+    blockers=[BZ(1379071, unblock=lambda provider: provider.type != 'azure')])
 def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
                      verify_vm_running):
     """ Tests instance soft reboot
@@ -238,7 +244,7 @@ def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_
     flash.assert_message_contain(version.pick({
         version.LOWEST: "Restart initiated",
         "5.5": "Restart Guest initiated"}))
-    wait_for_state_change_time_refresh(testing_instance, state_change_time, timeout=720)
+    wait_for_state_change_time_refresh(testing_instance, provider, state_change_time, timeout=720)
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, from_details=True)
     soft_assert(
@@ -261,7 +267,7 @@ def test_hard_reboot(setup_provider_funcscope, provider, testing_instance, soft_
     testing_instance.power_control_from_cfme(
         option=testing_instance.HARD_REBOOT, cancel=False, from_details=True)
     flash.assert_message_contain("Reset initiated")
-    wait_for_state_change_time_refresh(testing_instance, state_change_time, timeout=720)
+    wait_for_state_change_time_refresh(testing_instance, provider, state_change_time, timeout=720)
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, from_details=True)
     soft_assert(
@@ -294,7 +300,7 @@ def test_suspend(
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_unpause(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_paused):
     """ Tests instance unpause
