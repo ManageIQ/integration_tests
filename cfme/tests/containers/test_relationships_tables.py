@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import Pod
 from cfme.containers.service import Service
@@ -7,9 +8,11 @@ from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
 from cfme.containers.image import Image
 from cfme.containers.project import Project
-from utils import testgen
+from cfme.web_ui import InfoBlock, CheckboxTable, toolbar as tb, paginator
+from utils import testgen, version
+from utils.appliance.endpoints.ui import navigate_to
 from utils.version import current_version
-from cfme.web_ui import InfoBlock, CheckboxTable, toolbar as tb
+
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -157,34 +160,53 @@ def test_replicators_rel(provider, rel):
 
 
 @pytest.mark.meta(blockers=[1365878])
-@pytest.mark.parametrize('rel',
-                         ['Containers Provider',
-                          'Image Registry',
-                          'Projects',
-                          'Pods',
-                          'Containers',
-                          'Nodes'])
-def test_images_rel(provider, rel):
+@pytest.mark.parametrize('rel, detailfield', [
+    ('Containers Provider', 'Name'),
+    ('Image Registry', 'Host'),
+    ('Projects', None),
+    ('Pods', None),
+    ('Containers', None),
+    ('Nodes', None)
+])
+def test_images_rel(provider, rel, detailfield):
     """ https://bugzilla.redhat.com/show_bug.cgi?id=1365878
     """
-    sel.force_navigate('containers_images')
-    tb.select('List View')
+    # Nav to provider first
+    navigate_to(provider, 'Details')
+
+    # Then to container images for that provider
+    # Locate Relationships table in provider details
+    images_key = ({
+        version.LOWEST: 'Images',
+        '5.7': 'Container Images'
+    })
+    sel.click(InfoBlock.element('Relationships', version.pick(images_key)))
+
+    # Get the names of all the container images from the table
     list_tbl_image = CheckboxTable(
         table_locator="//div[@id='list_grid']//table")
     ui_images = [r.name.text for r in list_tbl_image.rows()]
 
     for name in ui_images:
-        obj = Image(name, provider)
+        img = Image(name, provider)
+        navigate_to(img, 'Details')
 
-        val = obj.get_detail('Relationships', rel)
+        val = img.get_detail('Relationships', rel)
         assert val != 'Unknown image source'
-        obj.click_element('Relationships', rel)
 
-        try:
+        sel.click(InfoBlock.element('Relationships', rel))
+
+        # Containers Provider and Image Registry are string values
+        # Other rows in the table show the number of the given items
+        if rel in ['Containers Provider', 'Image Registry']:
+            assert val == InfoBlock.text('Properties', detailfield)
+        else:
             val = int(val)
+            # There might be more than 1 page of items
+            if paginator.page_controls_exist():
+                paginator.results_per_page(1000)
             assert len([r for r in list_tbl_image.rows()]) == val
-        except ValueError:
-            assert val == InfoBlock.text('Properties', 'Name')
+
 
 # 9868 #9869
 
