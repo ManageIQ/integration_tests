@@ -27,15 +27,27 @@ class DeprecatedConfigWrapper(object):
         self.configuration = configuration
 
     def __getattr__(self, key):
+        warnings.warn(
+            'the configuration module %s will be deprecated' % (key,),
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
         return self.configuration.get_config(key)
 
     def __getitem__(self, key):
+        warnings.warn(
+            'the configuration module %s will be deprecated' % (key,),
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
         return self.configuration.get_config(key)
 
     def __delitem__(self, key):
         # used in bad logging
-        warnings.warn('clearing configuration is bad', category=Warning)
+        warnings.warn('clearing configuration is bad', stacklevel=2)
 
         del self.configuration.yaycl_config[key]
 
+# for the initial usage we keep a global object
+# later on we want to replace it
 global_configuration = Configuration()
