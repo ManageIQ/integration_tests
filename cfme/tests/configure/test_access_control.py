@@ -262,7 +262,6 @@ def test_description_required_error_validation():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1351897])
 def test_delete_default_group():
     flash_msg = version.pick({
         '5.6': ("EVM Group \"{}\": Error during delete: A read only group cannot be deleted."),
@@ -353,7 +352,6 @@ def test_rolename_duplicate_validation():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1351897])
 def test_delete_default_roles():
     flash_msg = version.pick({
         '5.6': ("Role \"{}\": Error during delete: Cannot delete record "
