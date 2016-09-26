@@ -23,28 +23,6 @@ def test_assinged_roles(provider):
     assert result > 0
 
 
-def test_assinged_tenants(provider):
-    provider.load_details()
-    result = provider.summary.relationships.cloud_tenants.value
-    """
-    todo get the list of tenants from external resource and compare
-    it with result - currently not 0
-    """
-
-    assert result > 0
-
-
-def test_assinged_zones(provider):
-    provider.load_details()
-    result = provider.summary.relationships.availability_zones.value
-    """
-    todo get the list of tenants from external resource and compare
-    it with result - currently not 0
-    """
-
-    assert result > 0
-
-
 def test_nodes(provider):
     provider.load_details()
     result = provider.summary.relationships.nodes.value
@@ -64,7 +42,7 @@ def test_templates(provider):
     it with result - currently  5
     """
 
-    assert result == 5
+    assert result > 0
 
 
 def test_stacks(provider):
