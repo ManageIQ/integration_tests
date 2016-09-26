@@ -405,7 +405,7 @@ class All(CFMENavigateStep):
 
     def step(self):
         from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'Hosts')(None)
+        nav._nav_to_fn('Compute', 'Infrastructure', '/host')(None)
 
     def resetter(self):
         tb.select("Grid View")
