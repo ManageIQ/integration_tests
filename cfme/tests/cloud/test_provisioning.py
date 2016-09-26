@@ -12,8 +12,9 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
+from utils.log import logger
 from utils.update import update
-from utils.wait import wait_for
+from utils.wait import wait_for, RefreshTimer
 
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
@@ -25,17 +26,8 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="function")
-def vm_name(request):
-    vm_name = 'test_image_prov_{}'.format(fauxfactory.gen_alphanumeric())
-    return vm_name
-
-
-@pytest.mark.tier(2)
-def test_provision_from_template(request, setup_provider, provider, vm_name, provisioning):
-    """ Tests instance provision from template
-
-    Metadata:
-        test_flag: provision
+def testing_instance(request, setup_provider, provider, provisioning, vm_name):
+    """ Fixture to prepare instance parameters for provisioning
     """
     image = provisioning['image']['name']
     note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
@@ -50,24 +42,56 @@ def test_provision_from_template(request, setup_provider, provider, vm_name, pro
         'first_name': 'Image',
         'last_name': 'Provisioner',
         'notes': note,
-        'instance_type': provisioning['instance_type'],
-        'availability_zone': provisioning['availability_zone'],
-        'security_groups': [provisioning['security_group']],
-        'guest_keypair': provisioning['guest_keypair']
+        'instance_type': provisioning['instance_type'] if provider.type != "azure" else
+        provisioning['vm_size'],
+        "availability_zone": provisioning["availability_zone"] if provider.type != "azure" else
+        None,
+        'security_groups': [provisioning['security_group']] if provider.type != "azure" else
+        provisioning["network_nsg"],
+        "guest_keypair": provisioning["guest_keypair"] if provider.type != "azure" else None
     }
 
     if isinstance(provider, OpenStackProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
 
     if isinstance(provider, AzureProvider):
-        inst_args['environment__cloud_network'] = provisioning['cloud_network']
-        inst_args['environment__cloud_subnet'] = provisioning['cloud_subnet']
-        inst_args['environment__security_groups'] = provisioning['security_group']
-        inst_args['environment__resource_group'] = provisioning['resource_group']
-        inst_args['hardware__instance_type'] = provisioning['vm_size']
+        inst_args['cloud_network'] = provisioning['virtual_net']
+        inst_args['cloud_subnet'] = provisioning['subnet_range']
+        inst_args['security_groups'] = provisioning['network_nsg']
+        inst_args['resource_groups'] = provisioning['resource_group']
+        inst_args['instance_type'] = provisioning['vm_size']
+        inst_args['admin_username'] = provisioning['vm_user']
+        inst_args['admin_password'] = provisioning['vm_password']
+    return instance, inst_args
 
+
+@pytest.fixture(scope="function")
+def vm_name(request):
+    vm_name = 'test_image_prov_{}'.format(fauxfactory.gen_alphanumeric())
+    return vm_name
+
+
+@pytest.mark.tier(2)
+def test_provision_from_template(request, setup_provider, provider, testing_instance, soft_assert):
+    """ Tests instance provision from template
+
+    Metadata:
+        test_flag: provision
+    """
+    instance, inst_args = testing_instance
     sel.force_navigate("clouds_instances_by_provider")
     instance.create(**inst_args)
+    instance.wait_to_appear(timeout=800)
+    provider.refresh_provider_relationships()
+    logger.info("Refreshing provider relationships and power states")
+    refresh_timer = RefreshTimer(time_for_refresh=300)
+    wait_for(provider.is_refreshed,
+             [refresh_timer],
+             message="is_refreshed",
+             num_sec=1000,
+             delay=60,
+             handle_exception=True)
+    soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
 
 
 @pytest.mark.tier(2)
@@ -105,9 +129,10 @@ def test_provision_from_template_using_rest(
             "vm_name": vm_name,
             "instance_type": flavor_id,
             "request_type": "template",
-            "availability_zone": provisioning["availability_zone"],
+            "availability_zone": provisioning["availability_zone"] if provider.type != "azure" else
+            provisioning["av_set"],
             "security_groups": [provisioning["security_group"]],
-            "guest_keypair": provisioning["guest_keypair"]
+            "guest_keypair": provisioning["guest_keypair"] if provider.type != "azure" else None
         },
         "requester": {
             "user_name": "admin",
@@ -234,7 +259,8 @@ def test_provision_from_template_with_attached_disks(
             'last_name': 'Provisioner',
             'notes': note,
             'instance_type': provisioning['instance_type'],
-            'availability_zone': provisioning['availability_zone'],
+            "availability_zone": provisioning["availability_zone"] if provider.type != "azure" else
+            provisioning["av_set"],
             'security_groups': [provisioning['security_group']],
             'guest_keypair': provisioning['guest_keypair']
         }
@@ -306,7 +332,7 @@ def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
             'last_name': 'Provisioner',
             'notes': note,
             'instance_type': provisioning['instance_type'],
-            'availability_zone': provisioning['availability_zone'],
+            "availability_zone": provisioning["availability_zone"],
             'security_groups': [provisioning['security_group']],
             'guest_keypair': provisioning['guest_keypair']
         }
@@ -381,7 +407,7 @@ def test_provision_with_additional_volume(request, setup_provider, provider, vm_
         'last_name': 'Provisioner',
         'notes': note,
         'instance_type': provisioning['instance_type'],
-        'availability_zone': provisioning['availability_zone'],
+        "availability_zone": provisioning["availability_zone"],
         'security_groups': [provisioning['security_group']],
         'guest_keypair': provisioning['guest_keypair']
     }
