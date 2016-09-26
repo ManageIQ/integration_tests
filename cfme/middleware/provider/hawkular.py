@@ -79,6 +79,16 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         return self.summary.relationships.middleware_servers.value
 
     @variable(alias='db')
+    def num_server_group(self):
+        res = cfmedb().engine.execute(
+            "SELECT count(*) "
+            "FROM ext_management_systems, middleware_domains, middleware_server_groups "
+            "WHERE middleware_domains.ems_id=ext_management_systems.id "
+            "AND middleware_domains.id=middleware_server_groups.domain_id "
+            "AND ext_management_systems.name='{0}'".format(self.name))
+        return int(res.first()[0])
+
+    @variable(alias='db')
     def num_datasource(self):
         return self._num_db_generic('middleware_datasources')
 
@@ -92,7 +102,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
     def num_domain(self):
         return self._num_db_generic('middleware_domains')
 
-    @num_server.variant('ui')
+    @num_domain.variant('ui')
     def num_domain_ui(self, reload_data=True):
         if reload_data:
             self.summary.reload()
