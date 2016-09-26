@@ -14,14 +14,12 @@ from cfme.infrastructure.host import Host
 
 pytestmark = [pytest.mark.tier(3)]
 
-# todo: infrastructure hosts and pools are removed due to changing navigation to navmazing
-# todo: both items have to be put back once navigation change is fully done
+# todo: infrastructure hosts, pools, stores, cluster are removed due to changing
+# navigation to navmazing. all items have to be put back once navigation change is fully done
 
 grid_pages = [
     'infrastructure_providers',
-    'infrastructure_clusters',
     'infrastructure_virtual_machines',
-    'infrastructure_datastores'
 ]
 
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327

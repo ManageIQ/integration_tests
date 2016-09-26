@@ -12,6 +12,7 @@ from utils import version
 from utils.log import logger
 from utils.wait import wait_for
 from selenium.common.exceptions import NoSuchElementException
+from utils.appliance.endpoints.ui import navigate_to
 
 
 pytestmark = [pytest.mark.tier(2)]
@@ -148,8 +149,7 @@ def test_cluster_event(provider, gen_events, test_vm):
         try:
             all_clusters = provider.get_clusters()
             cluster = [cl for cl in all_clusters if cl.id == test_vm.cluster_id][-1]
-            pytest.sel.force_navigate('infrastructure_cluster',
-                                      context={'cluster': cluster})
+            navigate_to(cluster, 'Details')
             toolbar.select('Monitoring', 'Timelines')
         except IndexError:
             logger.error("the following clusters were "
