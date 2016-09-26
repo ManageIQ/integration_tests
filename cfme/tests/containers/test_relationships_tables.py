@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import Pod
 from cfme.containers.service import Service
 from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
 from cfme.containers.image import Image
 from cfme.containers.project import Project
-from cfme.web_ui import InfoBlock, CheckboxTable, toolbar as tb, paginator
+from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import InfoBlock, CheckboxTable, paginator, toolbar as tb
 from utils import testgen, version
 from utils.appliance.endpoints.ui import navigate_to
+from utils.log import logger
 from utils.version import current_version
 
 
@@ -96,16 +97,19 @@ def test_services_rel(provider, rel):
 # 9965 #9962
 
 
-@pytest.mark.parametrize('rel',
-                         ['Containers Provider',
-                          'Routes',
-                          'Services',
-                          'Replicators',
-                          'Pods',
-                          'Containers'])
+@pytest.mark.parametrize('rel', [
+    'Containers Provider',
+    'Routes',
+    'Services',
+    'Replicators',
+    'Pods',
+    'Containers'
+])
 def test_nodes_rel(provider, rel):
-    sel.force_navigate('containers_nodes')
-    tb.select('List View')
+    navigate_to(provider, 'Details')
+
+    sel.click(InfoBlock.element('Relationships', 'Nodes'))
+
     list_tbl_node = CheckboxTable(
         table_locator="//div[@id='list_grid']//table")
     ui_nodes = [r.name.text for r in list_tbl_node.rows()]
@@ -115,17 +119,28 @@ def test_nodes_rel(provider, rel):
         [obj.name for obj in mgmt_objs]), 'Missing objects'
 
     for name in ui_nodes:
-        obj = Node(name, provider)
+        node = Node(name, provider)
 
-        val = obj.get_detail('Relationships', rel)
+        val = node.get_detail('Relationships', rel)
         if val == '0':
+            # the row can't be clicked when there are no items, and has class 'no-hover'
+            logger.info('No items for node relationship: {}'.format(rel))
             continue
-        obj.click_element('Relationships', rel)
+        # Should already be here, but just in case
+        navigate_to(node, 'Details')
+        sel.click(InfoBlock.element('Relationships', rel))
 
         try:
             val = int(val)
+            # best effort to include all items from rel in one page
+            if paginator.page_controls_exist():
+                logger.info('Setting results per page to 1000 for {}'.format(rel))
+                paginator.results_per_page(1000)
+            else:
+                logger.warning('Unable to increase results per page, '
+                               'assertion against number of rows may fail.')
             assert len([r for r in list_tbl_node.rows()]) == val
-        except ValueError:
+        except ValueError:  # if the conversion to integer failed, its a non-scalar relationship
             assert val == InfoBlock.text('Properties', 'Name')
 
 

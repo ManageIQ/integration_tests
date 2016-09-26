@@ -1,15 +1,15 @@
 import pytest
+import time
+
+from cfme.containers.container import Container, list_tbl as list_tbl_containers
+from cfme.containers.image_registry import ImageRegistry, list_tbl as list_tbl_image_registrys
+from cfme.containers.pod import Pod, list_tbl as list_tbl_pods
+from cfme.containers.project import Project, list_tbl as list_tbl_projects
+from cfme.containers.route import Route, list_tbl as list_tbl_routes
+from cfme.containers.service import Service, list_tbl as list_tbl_services
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import StatusBox, Quadicon
 from utils import testgen
-import time
-from cfme.containers.node import Node, list_tbl as list_tbl_nodes
-from cfme.containers.pod import Pod, list_tbl as list_tbl_pods
-from cfme.containers.container import Container, list_tbl as list_tbl_containers
-from cfme.containers.project import Project, list_tbl as list_tbl_projects
-from cfme.containers.image_registry import ImageRegistry, list_tbl as list_tbl_image_registrys
-from cfme.containers.service import Service, list_tbl as list_tbl_services
-from cfme.containers.route import Route, list_tbl as list_tbl_routes
 from utils.version import current_version
 from cfme.containers.provider import ContainersProvider
 
@@ -24,7 +24,7 @@ pytest_generate_tests = testgen.generate(
 # TEST_DATAS: Referenced from: Menu.sections()
 # TODO: Refactor to container objects with valid navmazing destinations
 TEST_DATAS = [
-    (Node, 'containers_nodes', 'Nodes', list_tbl_nodes),
+    # (Node, 'containers_nodes', 'Nodes', list_tbl_nodes),
     (Container, 'containers_containers', 'Containers', list_tbl_containers),
     (ImageRegistry, 'containers_image_registries', 'Registries', list_tbl_image_registrys),
     (Project, 'containers_projects', 'Projects', list_tbl_projects),
