@@ -19,6 +19,7 @@ def check_logged_out():
         login.logout()
 
 
+@pytest.mark.requirement('drift')
 @pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.smoke
