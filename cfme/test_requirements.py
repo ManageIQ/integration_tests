@@ -1,17 +1,18 @@
-"""
-    this module contains predefines
-    pytest markers for
-    cfme product requirements
+"""Test requirements mapping
 
-    please import the module instead of elements, i.e.::
+This module contains predefined pytest markers for CFME product requirements.
 
-        from cfme import test_requirements
+Please import the module instead of elements:
 
-        pytestmark = [test_requirements.alert]
+.. code-block:: python
 
-        @test_requirments.quota
-        def test_quota_alert():
-            pass
+    from cfme import test_requirements
+
+    pytestmark = [test_requirements.alert]
+
+    @test_requirments.quota
+    def test_quota_alert():
+        pass
 
 """
 
