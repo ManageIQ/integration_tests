@@ -15,13 +15,15 @@ from utils.providers import existing_providers, get_crud
 from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
+from cfme import test_requirements
 
 
 pytestmark = [
     pytest.mark.long_running,
     pytest.mark.meta(server_roles=["+automate", "+notifier"]),
     pytest.mark.usefixtures("provider", "full_template"),
-    pytest.mark.tier(3)
+    pytest.mark.tier(3),
+    test_requirements.alerts
 ]
 
 CANDU_PROVIDER_TYPES = {"virtualcenter"}  # TODO: rhevm

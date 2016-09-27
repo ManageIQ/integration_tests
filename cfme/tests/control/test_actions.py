@@ -31,6 +31,7 @@ from utils.version import current_version, pick, LOWEST
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
+from cfme import test_requirements
 
 
 class VMWrapper(Pretty):
@@ -90,7 +91,8 @@ pytestmark = [
             unblock=lambda provider: not isinstance(provider.mgmt, mgmtsystem.scvmm.SCVMMSystem))
     ]),
     pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    test_requirements.control
 ]
 
 

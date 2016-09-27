@@ -17,6 +17,7 @@ from utils.log import logger
 from utils.update import update
 from utils.wait import wait_for
 from urlparse import urlparse
+from cfme import test_requirements
 
 PREFIX = "test_compliance_"
 
@@ -25,7 +26,8 @@ pytestmark = [
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles=["+automate", "+smartstate", "+smartproxy"]),
     pytest.mark.uncollectif(lambda provider: provider.type in {"scvmm"}),
-    pytest.mark.tier(3)
+    pytest.mark.tier(3),
+    test_requirements.control
 ]
 
 

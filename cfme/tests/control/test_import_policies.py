@@ -7,6 +7,12 @@ from utils.path import data_path
 from cfme.web_ui import flash
 from utils import error
 from utils.version import current_version
+from cfme import test_requirements
+
+pytestmark = [
+    test_requirements.control,
+    pytest.mark.tier(3)
+]
 
 
 @pytest.fixture(scope="module")
@@ -19,14 +25,12 @@ def import_invalid_yaml_file(request):
     return data_path.join("ui/control/invalid.yaml").realpath().strpath
 
 
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1106456, 1198111], automates=[1198111])
 def test_import_policies(import_policy_file):
     import_export.import_file(import_policy_file)
     flash.assert_no_errors()
 
 
-@pytest.mark.tier(3)
 def test_control_import_invalid_yaml_file(import_invalid_yaml_file):
     if current_version() < "5.5":
         error_message = ("Error during 'Policy Import': undefined method `collect' "

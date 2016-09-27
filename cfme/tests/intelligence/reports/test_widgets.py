@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-""""""
 import fauxfactory
 import pytest
 
@@ -8,6 +7,7 @@ from cfme.dashboard import Widget
 from cfme.intelligence.reports.widgets import MenuWidget, ReportWidget, RSSFeedWidget, ChartWidget
 from cfme.intelligence.reports.dashboards import DefaultDashboard
 from utils.update import update
+from cfme import test_requirements
 
 
 @pytest.fixture(scope="module")
@@ -63,6 +63,7 @@ def custom_widgets(request):
     return ws
 
 
+@test_requirements.dashboard
 @pytest.mark.tier(3)
 def test_widgets_on_dashboard(request, dashboard, default_widgets, custom_widgets, soft_assert):
     with update(dashboard):
