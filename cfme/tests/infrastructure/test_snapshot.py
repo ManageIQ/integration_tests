@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from cfme import test_requirements
 from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
 from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
@@ -15,7 +16,8 @@ from utils.wait import wait_for
 
 
 pytestmark = [pytest.mark.long_running,
-              pytest.mark.tier(2)]
+              pytest.mark.tier(2),
+              test_requirements.snapshot]
 
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
