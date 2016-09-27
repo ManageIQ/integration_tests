@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from cfme import test_requirements
 from cfme.configure.tasks import is_datastore_analysis_finished
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
@@ -9,6 +10,7 @@ from utils.blockers import BZ
 from utils.wait import wait_for
 import pytest
 
+pytestmark = [test_requirements.smartstate]
 DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
 PROVIDER_TYPES = ('virtualcenter', 'rhevm')
 
