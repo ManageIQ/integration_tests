@@ -4,11 +4,14 @@ import pytest
 from cfme.common.vm import VM
 from cfme.services import requests
 from cfme.web_ui import flash
+from cfme import test_requirements
+
 from utils.wait import wait_for
 from utils import testgen
 
 pytestmark = [
-    pytest.mark.meta(server_roles="+automate")
+    pytest.mark.meta(server_roles="+automate"),
+    test_requirements.vm_migrate,
 ]
 
 
