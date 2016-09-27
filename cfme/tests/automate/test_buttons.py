@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from cfme import test_requirements
 from cfme.web_ui import flash
 from cfme.automate.buttons import Button, ButtonGroup
 from cfme.automate.service_dialogs import ServiceDialog
@@ -8,8 +9,9 @@ from cfme.infrastructure import host
 from utils.appliance.endpoints.ui import navigate_to
 from utils.update import update
 
-pytestmark = [pytest.mark.ignore_stream("upstream"),
-              pytest.mark.usefixtures('uses_infra_providers')]
+pytestmark = [
+    test_requirements.automate,
+    pytest.mark.usefixtures('uses_infra_providers')]
 
 
 @pytest.yield_fixture(scope="function")

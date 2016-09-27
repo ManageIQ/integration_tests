@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.automate import provisioning_dialogs
 from cfme.web_ui import accordion
 from utils.update import update
@@ -20,6 +21,7 @@ def dialog():
         dlg.delete()
 
 
+@test_requirements.automate
 @pytest.mark.tier(3)
 def test_provisioning_dialog_crud(dialog):
     dialog.create()
@@ -33,6 +35,7 @@ def test_provisioning_dialog_crud(dialog):
     dialog.delete()
     assert not dialog.exists
 
+
 sort_by_params = []
 for nav_loc, name in provisioning_dialogs.ProvisioningDialog.ALLOWED_TYPES:
     sort_by_params.append((name, "Name", "ascending"))
@@ -41,6 +44,7 @@ for nav_loc, name in provisioning_dialogs.ProvisioningDialog.ALLOWED_TYPES:
     sort_by_params.append((name, "Description", "descending"))
 
 
+@test_requirements.general_ui
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1096388])
 @pytest.mark.parametrize(("name", "by", "order"), sort_by_params)

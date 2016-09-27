@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.automate.service_dialogs import ServiceDialog, common
 from cfme.web_ui import paginator
 from utils.appliance.endpoints.ui import navigate_to
@@ -34,6 +35,7 @@ def get_relevant_rows(table):
     return result
 
 
+@test_requirements.general_ui
 @pytest.mark.meta(blocks=[1125230, 1205235])
 @pytest.mark.tier(3)
 def test_paginator(some_dialogs, soft_assert):

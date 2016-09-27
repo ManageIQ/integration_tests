@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from cfme import test_requirements
 from cfme.automate.explorer import Class
+from cfme.tests import automate as ta
+from utils import error
 from utils.update import update
-import utils.error as error
-import cfme.tests.automate as ta
+
+
+pytestmark = [test_requirements.automate]
 
 
 @pytest.fixture(scope="module")

@@ -5,6 +5,7 @@ import pytest
 
 from textwrap import dedent
 
+from cfme import test_requirements
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.automate.explorer import Namespace, Class, Instance, Domain, Method
 from cfme.common.vm import VM
@@ -15,6 +16,7 @@ from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
+    test_requirements.automate,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.tier(3)]
