@@ -7,6 +7,7 @@ import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme import login
+from cfme import test_requirements
 from cfme.configure.access_control import set_group_order
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
@@ -29,7 +30,8 @@ def setup_first_provider():
 
 # due to pytest.mark.meta(blockers=[1035399]), non admin users can't login
 # with no providers added
-pytestmark = [pytest.mark.usefixtures("setup_first_provider")]
+pytestmark = [test_requirements.rbac,
+              pytest.mark.usefixtures("setup_first_provider")]
 
 
 def new_credential():
