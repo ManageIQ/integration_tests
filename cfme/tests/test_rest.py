@@ -3,6 +3,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme import Credential
 from cfme.configure.access_control import User, Group
 from cfme.login import login, login_admin
@@ -11,6 +12,8 @@ from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 from utils import testgen, conf, version
 
+
+pytestmark = [test_requirements.rest]
 
 pytest_generate_tests = testgen.generate(
     testgen.provider_by_type,

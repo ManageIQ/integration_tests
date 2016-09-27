@@ -1,8 +1,12 @@
 import pytest
+from cfme import test_requirements
 from cfme.rest import automation_requests_data as _automation_requests_data
 from cfme.rest import a_provider as _a_provider
 from cfme.rest import vm as _vm
 from utils.wait import wait_for
+
+
+pytestmark = [test_requirements.rest]
 
 
 @pytest.fixture(scope="module")

@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.rest import a_provider as _a_provider
 from cfme.rest import vm as _vm
 from utils.wait import wait_for
+
+
+pytestmark = [test_requirements.provision]
 
 
 @pytest.fixture(scope="function")

@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import Credential
+from cfme import test_requirements
 from cfme.configure.access_control import User
 from cfme.login import login, login_admin
 from cfme.rest import groups as _groups
@@ -12,7 +13,11 @@ from cfme.rest import users as _users
 from utils.wait import wait_for
 from utils import error
 
-pytestmark = [pytest.mark.ignore_stream("5.4")]
+
+pytestmark = [
+    pytest.mark.ignore_stream("5.4"),
+    test_requirements.auth
+]
 
 
 class TestTenantsViaREST(object):
