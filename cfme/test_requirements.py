@@ -1,3 +1,20 @@
+"""
+    this module contains predefines
+    pytest markers for
+    cfme product requirements
+
+    please import the module instead of elements, i.e.::
+
+        from cfme import test_requirements
+
+        pytestmark = [test_requirements.alert]
+
+        @test_requirments.quota
+        def test_quota_alert():
+            pass
+
+"""
+
 import pytest
 
 alert = pytest.mark.requirement("alert")
