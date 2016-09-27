@@ -5,6 +5,7 @@ import pytest
 
 from datetime import timedelta
 
+from cfme import test_requirements
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.common.vm import VM
 from cfme.web_ui import toolbar
@@ -14,6 +15,7 @@ from utils.wait import wait_for
 
 
 pytestmark = [
+    test_requirements.automate,
     pytest.mark.meta(server_roles="+automate"),
 ]
 
