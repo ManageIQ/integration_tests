@@ -2,9 +2,12 @@
 # of different views such as grid view, tile view
 # and list view
 import pytest
+
+from cfme.containers.image import Image
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from utils import testgen
+from utils.appliance.endpoints.ui import navigate_to
 from utils.version import current_version
 
 
@@ -67,7 +70,7 @@ def test_nodes_views():
 
 
 def test_images_views():
-    sel.force_navigate('containers_images')
+    navigate_to(Image, 'All')
     tb.select('Grid View')
     assert tb.is_active('Grid View'), "Images grid view setting failed"
     tb.select('Tile View')
