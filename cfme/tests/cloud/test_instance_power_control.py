@@ -4,6 +4,7 @@ import cfme.web_ui.flash as flash
 import pytest
 from cfme.cloud.instance import (EC2Instance, Instance, OpenStackInstance,
                                  AzureInstance, GCEInstance)
+from cfme import test_requirements
 from utils import testgen, version
 from utils.blockers import BZ
 from utils.log import logger
@@ -17,7 +18,7 @@ def pytest_generate_tests(metafunc):
         required_fields=[('test_power_control', True)])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
 
-pytestmark = [pytest.mark.tier(2)]
+pytestmark = [pytest.mark.tier(2), pytest.mark.long_running, test_requirements.power]
 
 
 @pytest.fixture(scope="function")
@@ -155,7 +156,6 @@ def check_power_options(soft_assert, instance, power_state):
             "{} must not be available in current power state - {} ".format(pwr_option, power_state))
 
 
-@pytest.mark.long_running
 def test_quadicon_terminate_cancel(setup_provider_funcscope, provider, testing_instance,
                                    verify_vm_running, soft_assert):
     """ Tests terminate cancel
@@ -169,7 +169,6 @@ def test_quadicon_terminate_cancel(setup_provider_funcscope, provider, testing_i
     soft_assert('currentstate-on' in testing_instance.find_quadicon().state)
 
 
-@pytest.mark.long_running
 def test_quadicon_terminate(setup_provider_funcscope, provider, testing_instance,
                             verify_vm_running, soft_assert):
     """ Tests terminate instance
@@ -187,7 +186,6 @@ def test_quadicon_terminate(setup_provider_funcscope, provider, testing_instance
     soft_assert(wait_for_termination(provider, testing_instance), "Instance still exists")
 
 
-@pytest.mark.long_running
 @pytest.mark.uncollectif(lambda provider: provider.type == 'openstack')
 def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_running):
     """ Tests instance stop
@@ -210,7 +208,6 @@ def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert,
         message="mgmt system check - instance stopped")
 
 
-@pytest.mark.long_running
 def test_start(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_stopped):
     """ Tests instance start
@@ -232,7 +229,6 @@ def test_start(
         "instance is not running")
 
 
-@pytest.mark.long_running
 @pytest.mark.meta(
     blockers=[BZ(1379071, unblock=lambda provider: provider.type != 'azure')])
 def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
@@ -270,7 +266,6 @@ def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_
         "instance is not running")
 
 
-@pytest.mark.long_running
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_hard_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
                      verify_vm_running):
@@ -293,7 +288,6 @@ def test_hard_reboot(setup_provider_funcscope, provider, testing_instance, soft_
         "instance is not running")
 
 
-@pytest.mark.long_running
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
 def test_suspend(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_running):
@@ -317,7 +311,6 @@ def test_suspend(
         "instance is still running")
 
 
-@pytest.mark.long_running
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_unpause(
         setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_paused):
@@ -339,7 +332,6 @@ def test_unpause(
         "instance is not running")
 
 
-@pytest.mark.long_running
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
 def test_resume(setup_provider_funcscope, provider, testing_instance, soft_assert,
                 verify_vm_suspended):
@@ -361,7 +353,6 @@ def test_resume(setup_provider_funcscope, provider, testing_instance, soft_asser
         "instance is not running")
 
 
-@pytest.mark.long_running
 def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_assert,
                    verify_vm_running):
     """ Tests instance terminate
