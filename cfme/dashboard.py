@@ -92,10 +92,7 @@ class Widget(Pretty):
         "5.6": "//div[@id='{}']//div[contains(@class, 'card-pf-footer')]"
     })
     _zoom = "//div[@id='{}']//a[@title='Zoom in on this chart']"
-    _zoomed_name = deferred_verpick({
-        version.LOWEST: "//div[@id='lightbox_div']//span[contains(@class, 'modtitle_text')]",
-        "5.5": "//div[@id='lightbox_div']//h3"
-    })
+    _zoomed_name = "//div[@id='lightbox_div']//h2[contains(@class, 'card-pf-title')]"
     _zoomed_close = deferred_verpick({
         version.LOWEST: "//div[@id='lightbox_div']//a[@title='Close']",
         "5.5": "//div[@id='lightbox_div']//a[@title='Close']/i"
@@ -166,7 +163,10 @@ class Widget(Pretty):
             if time.lower() == "never":
                 result[name.strip().lower()] = None
             else:
-                result[name.strip().lower()] = parsetime.from_american_minutes(time.strip())
+                try:
+                    result[name.strip().lower()] = parsetime.from_american_minutes(time.strip())
+                except ValueError:
+                    result[name.strip().lower()] = parsetime.from_long_date_format(time.strip())
         return result
 
     @property
@@ -199,11 +199,8 @@ class Widget(Pretty):
 
     def _click_menu_button_by_loc(self, loc):
         self.close_zoom()
-        try:
-            self.open_dropdown_menu()
-            sel.click(loc.format(self._div_id))
-        finally:
-            self.close_dropdown_menu()
+        self.open_dropdown_menu()
+        sel.click(loc.format(self._div_id))
 
     def remove(self, cancel=False):
         """Remove this Widget."""
@@ -305,7 +302,7 @@ class Widget(Pretty):
         if not sel.is_displayed(self._menu_opener.format(self._div_id)):
             return  # Not a 5.5+
         if self.is_dropdown_menu_opened:
-            sel.click("//a[contains(@class, 'navbar-brand')]/img")
+            sel.click(self._menu_opener.format(self._div_id))
             wait_for(
                 lambda: not self.is_dropdown_menu_opened,
                 num_sec=10, delay=0.2, message="widget dropdown menu closed")
@@ -318,10 +315,8 @@ class BaseWidgetContent(Pretty):
     pretty_attrs = ['widget_box_id']
 
     def __init__(self, widget_box_id):
-        self.root = lambda: sel.element(version.pick({
-            version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modbox')]",
-            '5.5': "//div[@id='{}']//div[contains(@class, 'panel-body')]"
-        }).format(widget_box_id))
+        self.root = lambda: sel.element(
+            "//div[@id='{}']//div[contains(@class, 'card-pf-body')]".format(widget_box_id))
 
     @property
     def data(self):

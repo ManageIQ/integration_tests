@@ -50,7 +50,7 @@ def test_widgets_operation(request):
         if widget.can_zoom:
             widget.zoom()
             assert Widget.is_zoomed()
-            assert widget.name == Widget.get_zoomed_name()
+            assert Widget.get_zoomed_name() in widget.name
             Widget.close_zoom()
             assert not Widget.is_zoomed()
         widget.footer
