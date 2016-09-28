@@ -10,6 +10,7 @@ from utils import version
 from cfme.web_ui import accordion, listaccordion as list_acc
 from utils.appliance.endpoints.ui import navigate_to
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.datastore import Datastore
 
 
 @pytest.fixture(scope="module")
@@ -56,17 +57,17 @@ def test_set_default_datastore_filter(provider, request):
 
     # Add cleanup finalizer
     def unset_default_datastore_filter():
-        pytest.sel.force_navigate('infrastructure_datastores')
+        navigate_to(Datastore, 'All')
         list_acc.select('Filters', 'ALL', by_title=False)
         pytest.sel.click(datastore.default_datastore_filter_btn)
     request.addfinalizer(unset_default_datastore_filter)
 
-    pytest.sel.force_navigate('infrastructure_datastores')
+    navigate_to(Datastore, 'All')
     list_acc.select('Filters', 'Store Type / NFS', by_title=False)
     pytest.sel.click(datastore.default_datastore_filter_btn)
     logout()
     login_admin()
-    pytest.sel.force_navigate('infrastructure_datastores')
+    navigate_to(Datastore, 'All')
     assert list_acc.is_selected('Filters', 'Store Type / NFS (Default)', by_title=False),\
         'Store Type / NFS not set as default'
 
@@ -82,7 +83,7 @@ def test_clear_datastore_filter_results(provider):
         expected_page_title = 'Datastores'
         datastore_select = lambda: list_acc.select('Filters', 'Store Type / VMFS', by_title=False)
 
-    pytest.sel.force_navigate('infrastructure_datastores')
+    navigate_to(Datastore, 'All')
     datastore_select()
     pytest.sel.click(search_box.clear_advanced_search)
     page_title = pytest.sel.text(datastore.page_title_loc)
