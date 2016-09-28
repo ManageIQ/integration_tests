@@ -18,7 +18,9 @@ from utils.providers import setup_a_provider
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
-pytestmark = [pytest.mark.long_running]
+from cfme import test_requirements
+
+pytestmark = [pytest.mark.long_running, test_requirements.distributed]
 
 
 @pytest.fixture

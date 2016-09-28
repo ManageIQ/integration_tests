@@ -3,6 +3,7 @@
 import pytest
 import time
 
+from cfme import test_requirements
 from fixtures.pytest_store import store
 from utils import providers
 from utils import testgen
@@ -21,7 +22,11 @@ from cfme.exceptions import FlashMessageException
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['cloud',
     'container', 'middleware'], scope="module")
 
-pytestmark = [pytest.mark.tier(1)]
+
+pytestmark = [
+    pytest.mark.tier(1),
+    test_requirements.c_and_u
+]
 
 
 @pytest.yield_fixture(scope="module")

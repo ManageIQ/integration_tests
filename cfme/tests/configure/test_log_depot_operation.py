@@ -12,11 +12,15 @@ from utils.timeutil import parsetime
 from utils import conf, testgen
 from utils.ftp import FTPClient
 from utils.path import log_path
+from cfme import test_requirements
 from cfme.configure import configuration as configure
 from cfme.web_ui import toolbar
 from utils.virtual_machines import deploy_template
 from utils.providers import get_mgmt
 from utils.blockers import BZ
+
+
+pytestmark = [test_requirements.log_depot]
 
 
 def pytest_generate_tests(metafunc):

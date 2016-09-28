@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from utils.update import update
-from utils import error
+
+from cfme import test_requirements
 from cfme.automate.service_dialogs import ServiceDialog
+from utils import error
+from utils.update import update
 
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [test_requirements.automate, pytest.mark.tier(3)]
 
 
 def test_create_service_dialog():

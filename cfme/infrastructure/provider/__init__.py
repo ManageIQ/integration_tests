@@ -15,9 +15,10 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.cluster import Cluster
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb, Radio
+    AngularSelect, toolbar as tb, Radio, InfoBlock
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
@@ -31,7 +32,6 @@ from utils.log import logger
 from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
-
 
 details_page = Region(infoblock_type='detail')
 
@@ -276,6 +276,13 @@ class Provider(Pretty, CloudInfraProvider):
                  end_ip=self.end_ip)
 
     @property
+    def id(self):
+        """
+        returns current provider id using rest api
+        """
+        return rest_api().collections.providers.find_by(name=self.name)[0].id
+
+    @property
     def hosts(self):
         """Returns list of :py:class:`cfme.infrastructure.host.Host` that should belong to this
         provider according to the YAML
@@ -290,6 +297,16 @@ class Provider(Pretty, CloudInfraProvider):
             )
             result.append(Host(name=host["name"], credentials=cred))
         return result
+
+    def get_clusters(self):
+        """returns the list of clusters belonging to the provider"""
+        web_clusters = []
+        navigate_to(self, 'Details')
+        sel.click(InfoBlock.element('Relationships', 'Clusters'))
+        icons = Quadicon.all(qtype='cluster')
+        for icon in icons:
+            web_clusters.append(Cluster(icon.name, self))
+        return web_clusters
 
 
 @navigator.register(Provider, 'All')
@@ -410,5 +427,6 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
+
 
 import_all_modules_of('cfme.infrastructure.provider')

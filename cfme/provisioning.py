@@ -17,7 +17,6 @@ import cfme.infrastructure.virtual_machines  # NOQA
 import cfme.cloud.instance  # NOQA
 
 
-instances_by_provider_tree = ui.Tree("ul.dynatree-container")
 submit_button = form_buttons.FormButton("Submit")
 
 template_select_form = ui.Form(
@@ -107,12 +106,12 @@ provisioning_form = tabstrip.TabStripForm(
             ('virtual_private_cloud', {
                 version.LOWEST: ui.Select('select#environment__cloud_network'),
                 '5.5': AngularSelect('environment__cloud_network')}),
-            ('cloud_subnet', {
-                version.LOWEST: ui.Select('select#environment__cloud_subnet'),
-                '5.5': AngularSelect('environment__cloud_subnet')}),
             ('cloud_network', {
                 version.LOWEST: ui.Select('select#environment__cloud_network'),
                 '5.5': AngularSelect('environment__cloud_network')}),
+            ('cloud_subnet', {
+                version.LOWEST: ui.Select('select#environment__cloud_subnet'),
+                '5.5': AngularSelect('environment__cloud_subnet')}),
             ('security_groups', {
                 version.LOWEST: ui.Select('select#environment__security_groups'),
                 '5.5': AngularSelect('environment__security_groups')}),
@@ -206,6 +205,10 @@ provisioning_form = tabstrip.TabStripForm(
             # Cloud
             ('computer_name', ui.Input('customize__linux_host_name')),
             ('domain_name', ui.Input('customize__linux_domain_name')),
+
+            # Azure
+            ('admin_username', ui.Input('customize__root_username')),
+            ('admin_password', ui.Input('customize__root_password')),
 
             # Infra
             ('linux_host_name', ui.Input('customize__linux_host_name')),

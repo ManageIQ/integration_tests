@@ -2,10 +2,12 @@
 """This test contains necessary smoke tests for the Automate."""
 import pytest
 
+from cfme import test_requirements
 from cfme.automate.explorer import Domain
 from utils import db_queries as dbq
 
 pytestmark = [
+    test_requirements.automate,
     pytest.mark.smoke,
     pytest.mark.tier(2),
     pytest.mark.ignore_stream(("upstream", {"domain_name": "RedHat"}))

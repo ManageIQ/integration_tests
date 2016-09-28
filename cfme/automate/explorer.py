@@ -7,7 +7,7 @@ from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
-from cfme.web_ui import Form, Table, Tree, UpDownSelect, fill, Select, ScriptBox, DHTMLSelect,\
+from cfme.web_ui import Form, Table, UpDownSelect, fill, Select, ScriptBox, DHTMLSelect,\
     Region, form_buttons, accordion, Input, AngularSelect
 import cfme.exceptions as exceptions
 from utils.update import Updateable
@@ -17,8 +17,6 @@ import re
 from utils.log import logger
 from utils import classproperty, pretty
 from utils.wait import wait_for
-
-tree = Tree('//ul//a[@title="Datastore"]/../../..')
 
 datastore_tree = partial(accordion.tree, "Datastore", "Datastore")
 cfg_btn = partial(tb.select, 'Configuration')
@@ -41,13 +39,14 @@ def open_order_dialog_func(_):
     datastore_tree()
     cfg_btn("Edit Priority Order of Domains")
 
+
 nav.add_branch(
     'automate_explorer',
     {
         'automate_explorer_tree_path':
         [lambda context:
             context.tree_item.navigate_tree() if context.tree_item is not None
-            else tree.click_path('Datastore'),
+            else datastore_tree(),
          {
              'automate_explorer_table_select':
              [lambda ctx: table_select(ctx['table_item'].name_in_table),
@@ -116,7 +115,7 @@ class TreeNode(pretty.Pretty):
         return ["Datastore"] + self.path
 
     def navigate_tree(self):
-        return tree.click_path(*self.nav_path)
+        return accordion.tree('Datastore', *self.nav_path)
 
     def nav_edit(self):
         dp_length = 2
@@ -247,7 +246,7 @@ class Domain(TreeNode, Updateable):
 
     def _nav_orig(self):
         try:
-            tree.click_path(*self.nav_path)
+            accordion.tree('Datastore', *self.nav_path)
             return True, None
         except exceptions.CandidateNotFound as e:
             return False, e
@@ -256,7 +255,7 @@ class Domain(TreeNode, Updateable):
         path = self.nav_path
         path[-1] = path[-1] + " (Locked)"  # Try the Locked version
         try:
-            tree.click_path(*path)
+            accordion.tree('Datastore', *path)
             return True, None
         except exceptions.CandidateNotFound as e:
             return False, e
@@ -265,7 +264,7 @@ class Domain(TreeNode, Updateable):
         path = self.nav_path
         path[-1] = path[-1] + " (Disabled)"  # Try the Locked version
         try:
-            tree.click_path(*path)
+            accordion.tree('Datastore', *path)
             return True, None
         except exceptions.CandidateNotFound as e:
             return False, e

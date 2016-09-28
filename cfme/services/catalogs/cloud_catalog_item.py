@@ -17,7 +17,6 @@ from utils.pretty import Pretty
 
 
 tb_select = functools.partial(tb.select, "Configuration")
-catalog_item_tree = web_ui.Tree('//div[@id="sandt_treebox"]//ul')
 dynamic_tree = Tree("//div[@id='basic_info_div']//ul[@class='dynatree-container']")
 
 template_select_form = Form(

@@ -176,3 +176,10 @@ If you get seemingly random SSH errors coming from :py:mod:`utils.appliance`, yo
         success("!")
 
 Until we come with a better solution, this will bite us from time to time when we forget about it.
+
+
+Marking your tests with associated product requirements
+=======================================================
+
+.. automodule:: cfme.test_requirements
+    :members:

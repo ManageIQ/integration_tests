@@ -4,6 +4,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
 from cfme.configure import configuration
@@ -23,7 +24,7 @@ from utils.blockers import GH, BZ
 
 pytestmark = [pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:6939"],
                                unblock=lambda provider: provider.type != 'rhevm'),
-              pytest.mark.tier(3)]
+              pytest.mark.tier(3), test_requirements.smartstate]
 
 WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows'}
 

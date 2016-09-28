@@ -6,17 +6,18 @@
 """
 from functools import partial
 
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Region, listaccordion as list_acc, toolbar as tb,
-    flash, InfoBlock, summary_title, fill
+    flash, InfoBlock, summary_title, fill, paginator
 )
 from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui.menu import nav
 from utils import version
-from utils.appliance.endpoints.ui import navigate_to
-from utils.log import logger
+from utils.appliance import Navigatable
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
 from utils.providers import get_crud
 from utils.wait import wait_for
@@ -31,24 +32,11 @@ default_datastore_filter_btn = FormButton('Set the current filter as my default'
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 
-
-def nav_to_datastore_through_provider(context):
-    # TODO: replace this navigation via navmazing and a CFMENavigateStep destination
-    navigate_to(context['provider'], 'All')
-    list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
-    sel.click(Quadicon(context['datastore'].name, 'datastore'))
+# todo: to make provider a mandatory param.
+# maybe it might be better of getting this param from db or appliance w/o making it mandatory.
 
 
-nav.add_branch(
-    'infrastructure_datastores', {
-        'infrastructure_datastore':
-        lambda ctx: sel.click(Quadicon(ctx['datastore'].name, 'datastore'))
-        if 'provider' not in ctx else nav_to_datastore_through_provider(ctx)
-    }
-)
-
-
-class Datastore(Pretty):
+class Datastore(Pretty, Navigatable):
     """ Model of an infrastructure datastore in cfme
 
     Args:
@@ -61,19 +49,15 @@ class Datastore(Pretty):
     """
     pretty_attrs = ['name', 'provider_key']
 
-    def __init__(self, name=None, provider_key=None, type=None):
+    def __init__(self, name=None, provider_key=None, type=None, appliance=None):
+        Navigatable.__init__(self, appliance)
         self.name = name
         self.type = type
+        self.quad_name = 'datastore'
         if provider_key:
             self.provider = get_crud(provider_key)
         else:
             self.provider = None
-
-    def _get_context(self):
-        context = {'datastore': self}
-        if self.provider:
-            context['provider'] = self.provider
-        return context
 
     def delete(self, cancel=True):
         """
@@ -85,28 +69,25 @@ class Datastore(Pretty):
         Note:
             Datastore must have 0 hosts and 0 VMs for this to work.
         """
-        sel.force_navigate('infrastructure_datastore', context=self._get_context())
+        self.load_details()
         cfg_btn('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
     def wait_for_delete(self):
-        sel.force_navigate('infrastructure_datastores')
         wait_for(lambda: not self.exists, fail_condition=False,
              message="Wait datastore to disappear", num_sec=500, fail_func=sel.refresh)
 
     def wait_for_appear(self):
-        sel.force_navigate('infrastructure_datastores')
         wait_for(lambda: self.exists, fail_condition=False,
              message="Wait datastore to appear", num_sec=1000, fail_func=sel.refresh)
 
-    def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            logger.debug("load_details: not on details already, navigating")
-            sel.force_navigate('infrastructure_datastore', context=self._get_context())
+    def load_details(self):
+        # todo: to remove this context related functionality along with making provider
+        # param mandatory
+        if not self.provider:
+            navigate_to(self, 'Details')
         else:
-            logger.debug("load_details: already on details, refreshing")
-            if refresh:
-                tb.refresh()
+            navigate_to(self, 'DetailsFromProvider')
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
@@ -120,23 +101,13 @@ class Datastore(Pretty):
         self.load_details()
         return details_page.infoblock.text(*ident)
 
-    def _on_detail_page(self):
-        """ Returns ``True`` if on the datastore detail page, ``False`` if not."""
-        title = version.pick({
-            version.LOWEST: '{} ({})'.format(self.name, "Datastore"),
-            "5.6": '{} "{}"'.format("Datastore", self.name)})
-        try:
-            return summary_title() == title
-        except AttributeError:
-            return False
-
     def get_hosts(self):
         """ Returns names of hosts (from quadicons) that use this datastore
 
         Returns: List of strings with names or `[]` if no hosts found.
         """
         if not self._on_hosts_page():
-            sel.force_navigate('infrastructure_datastore', context=self._get_context())
+            self.load_details()
             try:
                 sel.click(details_page.infoblock.element("Relationships", "Hosts"))
             except sel.NoSuchElementException:
@@ -153,7 +124,7 @@ class Datastore(Pretty):
         Returns: List of strings with names or `[]` if no vms found.
         """
         if not self._on_vms_page():
-            sel.force_navigate('infrastructure_datastore', context=self._get_context())
+            self.load_details()
             try:
                 list_acc.select('Relationships', "VMs", by_title=False, partial=True)
             except (sel.NoSuchElementException, ListAccordionLinkNotFound):
@@ -194,7 +165,7 @@ class Datastore(Pretty):
     @property
     def exists(self):
         try:
-            sel.force_navigate('infrastructure_datastore', context=self._get_context())
+            self.load_details()
             quad = Quadicon(self.name, 'datastore')
             if sel.is_displayed(quad):
                 return True
@@ -207,15 +178,61 @@ class Datastore(Pretty):
         Note:
             The host must have valid credentials already set up for this to work.
         """
-        sel.force_navigate('infrastructure_datastore', context={
-            'datastore': self, 'provider': self.provider})
+        self.load_details()
         tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
         sel.handle_alert()
         flash.assert_message_contain('"{}": scan successfully initiated'.format(self.name))
 
 
+@navigator.register(Datastore, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Infrastructure', 'Datastores')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("Grid View")
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
+
+
+@navigator.register(Datastore, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+    def am_i_here(self):
+        title = version.pick({version.LOWEST: '{} ({})'.format(self.obj.name, "Datastore"),
+                             "5.6": '{} "{}"'.format("Datastore", self.obj.name)})
+        try:
+            return summary_title() == title
+        except AttributeError:
+            return False
+
+
+@navigator.register(Datastore, 'DetailsFromProvider')
+class DetailsFromProvider(CFMENavigateStep):
+    def step(self):
+        navigate_to(self.obj.provider, 'Details')
+        list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
+        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+    def am_i_here(self):
+        title = version.pick({version.LOWEST: '{} ({})'.format(self.obj.name, "Datastore"),
+                              "5.6": '{} "{}"'.format("Datastore", self.obj.name)})
+        try:
+            return summary_title() == title
+        except AttributeError:
+            return False
+
+
 def get_all_datastores(do_not_navigate=False):
     """Returns names (from quadicons) of all datastores"""
     if not do_not_navigate:
-        sel.force_navigate('infrastructure_datastores')
+        navigate_to(Datastore, 'All')
     return [q.name for q in Quadicon.all("datastore")]

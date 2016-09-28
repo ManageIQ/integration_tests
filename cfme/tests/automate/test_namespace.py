@@ -4,13 +4,16 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.automate.explorer import Namespace, Domain
+from cfme.tests import automate as ta
+from cfme.tests.configure import test_access_control as tac
+from utils import error, version
 from utils.providers import setup_a_provider
 from utils.update import update
-from utils import version
-import utils.error as error
-import cfme.tests.configure.test_access_control as tac
-import cfme.tests.automate as ta
+
+
+pytestmark = [test_requirements.automate]
 
 
 @pytest.fixture(scope="module")

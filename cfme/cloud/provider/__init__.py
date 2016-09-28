@@ -81,8 +81,8 @@ properties_form_56 = TabStripForm(
     tab_fields={
         "Default": [
             ('hostname_text', Input("default_hostname")),
-            ('api_port', Input("default_api_port")),
             ('sec_protocol', AngularSelect("default_security_protocol", exact=True)),
+            ('api_port', Input("default_api_port")),
         ],
         "Events": [
             ('event_selection', Radio('event_stream_selection')),

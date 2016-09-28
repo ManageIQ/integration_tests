@@ -51,8 +51,13 @@ def test_topology(provider):
     Steps:
         * Get topology elements detail
         * Check number of providers on the page
-        * Check number of `Servers`, `Domains`, `Deployments` on topology page
+        * Check number of `Servers`, `Domains`, `Messagings`,
+        * `Datasources`, `Server Groups`, `Deployments` on topology page
     """
+
+    # reload topology page to make sure all elements are loaded
+    provider.topology.reload()
+
     assert len(provider.topology.elements(element_type='Hawkular')) == 1,\
         "More than one Hawkular providers found"
 
@@ -60,9 +65,21 @@ def test_topology(provider):
         len(provider.topology.elements(element_type='MiddlewareServer')), \
         "Number of server(s) miss match between topology page and in database"
 
+    assert provider.num_messaging(method='db') == \
+        len(provider.topology.elements(element_type='MiddlewareMessaging')), \
+        "Number of messaging(s) miss match between topology page and in database"
+
+    assert provider.num_datasource(method='db') == \
+        len(provider.topology.elements(element_type='MiddlewareDatasource')), \
+        "Number of datasource(s) miss match between topology page and in database"
+
     assert provider.num_domain(method='db') == \
         len(provider.topology.elements(element_type='MiddlewareDomain')), \
         "Number of domain(s) miss match between topology page and in database"
+
+    assert provider.num_server_group(method='db') == \
+        len(provider.topology.elements(element_type='MiddlewareServerGroup')), \
+        "Number of server_group(s) miss match between topology page and in database"
 
     assert provider.num_deployment(method='db') == \
         len(provider.topology.elements(element_type='MiddlewareDeployment')) + \

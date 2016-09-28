@@ -3,7 +3,6 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.infrastructure.cluster import get_all_clusters
 from cfme.rest import a_provider as _a_provider
 from cfme.rest import vm as _vm
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
@@ -13,6 +12,7 @@ from utils import version
 from utils.log import logger
 from utils.wait import wait_for
 from selenium.common.exceptions import NoSuchElementException
+from utils.appliance.endpoints.ui import navigate_to
 
 
 pytestmark = [pytest.mark.tier(2)]
@@ -143,10 +143,17 @@ def test_cluster_event(provider, gen_events, test_vm):
         test_flag: timelines, provision
     """
     def nav_step():
-        cluster = [cl for cl in get_all_clusters() if cl.cluster_id == test_vm.cluster_id][-1]
-        pytest.sel.force_navigate('infrastructure_cluster',
-                                  context={'cluster': cluster})
-        toolbar.select('Monitoring', 'Timelines')
+        # fixme: sometimes get_clusters doesn't return all found clusters
+        # fixme: this try/except statement tries to avoid this
+        all_clusters = []
+        try:
+            all_clusters = provider.get_clusters()
+            cluster = [cl for cl in all_clusters if cl.id == test_vm.cluster_id][-1]
+            navigate_to(cluster, 'Details')
+            toolbar.select('Monitoring', 'Timelines')
+        except IndexError:
+            logger.error("the following clusters were "
+                         "found for provider {p}: {cl} ".format(p=provider.name, cl=all_clusters))
     wait_for(count_events, [test_vm, nav_step], timeout='5m',
              fail_condition=0, message="events to appear")
 
