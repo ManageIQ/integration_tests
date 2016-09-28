@@ -2,6 +2,7 @@
 """This module operates the `Advanced search` box located on multiple pages."""
 import re
 from functools import partial
+import base64
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import expression_editor as exp_ed
@@ -9,6 +10,7 @@ from cfme.web_ui import Input, Region, Select, fill
 from cfme.web_ui.form_buttons import FormButton
 from utils.version import current_version
 from utils.wait import wait_for
+from utils.log import logger
 
 
 search_box = Region(
@@ -26,11 +28,18 @@ search_box = Region(
         toggle_advanced="(//button | //a)[@id='adv_search']",
 
         # Container for the advanced search box
+        # class changes when visible or hidden, first locator does not indicate visibility
         advanced_search_box="//div[@id='advsearchModal']//div[@class='modal-content']",
+        advanced_search_box_visible="//div[@id='advsearchModal' and @class='modal fade in']//div[@class='modal-content']",
+
+        load_filter_loc='//button[(normalize-space(@alt)="Load a filter")]',
+        load_filter_disabled_loc='//button[(normalize-space(@alt)="No saved filters or report '
+                                 'filters are available to load")]',
 
         # Buttons on main view
         apply_filter_button=FormButton("Apply the current filter"),
         load_filter_button=FormButton("Load a filter"),
+        load_filter_disabled_button=FormButton("No saved filters or report filters are available to load"),
         delete_filter_button=FormButton("Delete the filter named", partial_alt=True),
         save_filter_button=FormButton("Save the current filter"),
         reset_filter_button=FormButton("Reset the filter"),
@@ -93,7 +102,7 @@ def has_quick_search_box():
 
 def is_advanced_search_opened():
     """Checks whether the advanced search box is currently opened"""
-    return sel.is_displayed(search_box.advanced_search_box)
+    return sel.is_displayed(search_box.advanced_search_box_visible)
 
 
 def is_advanced_search_possible():
@@ -125,18 +134,61 @@ def ensure_advanced_search_open():
     If it is opened but not in the default view (expression editor), close it and open again to
     ensure the default view is present.
     """
+    logger.critical('DEBUG: STARTING ENSURE_ADV_SEARCH_OPEN')
     if not is_advanced_search_possible():
         raise Exception("Advanced search is not possible in this location!")
     if not is_advanced_search_opened():
+        logger.debug('search::ensure_: clicking toggle_advanced')
         sel.click(search_box.toggle_advanced)   # Open
-    elif not sel.is_displayed(search_box.load_filter_button):   # If we aren't in default view
+
+    logger.debug('search::ensure_: filter button displayed? {}'.format(
+        sel.is_displayed(search_box.load_filter_loc)))
+
+    logger.debug('search::ensure_: filter disabled button displayed? {}'.format(
+        sel.is_displayed(search_box.load_filter_disabled_loc)))
+
+    if not sel.is_displayed(search_box.load_filter_loc)\
+            or not sel.is_displayed(search_box.load_filter_disabled_loc):
+        # If we aren't in default view
+        logger.debug('search::ensure_: load_filter_button not displayed')
         if current_version() >= "5.4":
+            logger.debug('search::ensure_: clicking close_button')
             sel.click(search_box.close_button)
         else:
             sel.click(search_box.toggle_advanced)   # Close
+        logger.debug('search::ensure_: waiting for is_adv_search_open to be closed')
+
+        # wait for advanced search to be closed
         wait_for(is_advanced_search_opened, fail_condition=True, num_sec=5)
+
+        shot = sel.take_screenshot()
+        # DEBUG TODO: remove this
+        with open('/home/mshriver/Pictures/screenshot-preClick2.png', 'wb') as png:
+            if not shot.error:
+                png.write(base64.b64decode(shot.png))
+
+
+        toggleDisplay = sel.is_displayed(search_box.toggle_advanced)
+        logger.debug('search::ensure_: toggle displayed? {}'.format(toggleDisplay))
+        logger.debug('search::ensure_: clicking toggle_advanced(2)')
         sel.click(search_box.toggle_advanced)   # And open to see the default view
-    wait_for(is_advanced_search_opened, fail_condition=False, num_sec=5)
+
+        toggleDisplay = sel.is_displayed(search_box.toggle_advanced)
+        logger.debug('search::ensure_: toggle displayed(2)? {}'.format(toggleDisplay))
+
+        shot = sel.take_screenshot()
+        # DEBUG TODO: remove this
+        with open('/home/mshriver/Pictures/screenshot-preFinalWait.png', 'wb') as png:
+            if not shot.error:
+                png.write(base64.b64decode(shot.png))
+
+    logger.debug('search::ensure_: search open? {}'.format(is_advanced_search_opened()))
+    if not is_advanced_search_opened():
+        logger.debug('search::ensure_: clicking toggle_advanced(3)')
+        sel.click(search_box.toggle_advanced)  # And open to see the default view
+
+    logger.debug('search::ensure_: final wait for is_advanced_search_open')
+    wait_for(is_advanced_search_opened, fail_condition=False, num_sec=6)
 
 
 def reset_filter():
@@ -217,12 +269,27 @@ def load_filter(saved_filter=None, report_filter=None, cancel=False):
         saved_filter: `Choose a saved XYZ filter`
         report_filter: `Choose a XYZ report filter`
     """
+    logger.critical('DEBUG: START LOAD FILTER')
+    logger.debug('search::load_filter: calling ensure search open')
+    ensure_advanced_search_open()
+    if sel.is_displayed(search_box.load_filter_disabled_button):
+        raise DisabledButtonException('Load Filter button disabled, '
+            'cannot load filter: {}'.format(saved_filter))
     assert saved_filter is not None or report_filter is not None, "At least 1 param required!"
     assert (saved_filter is not None) ^ (report_filter is not None), "You must provide just one!"
-    ensure_advanced_search_open()
+
+    logger.debug('search::load_filter: search should be open, clicking load_filter')
+    shot = sel.take_screenshot()
+    # DEBUG TODO: remove this
+    with open('/home/mshriver/Pictures/screenshot-preClickLoad.png', 'wb') as png:
+        if not shot.error:
+            png.write(base64.b64decode(shot.png))
+
+
     sel.click(search_box.load_filter_button)
     # We apply it to the whole form but it will fill only one of the selects
     if saved_filter is not None:
+        logger.debug('search::load_filter: filling with {}'.format(saved_filter))
         fill(search_box.saved_filter, saved_filter)
     else:   # No other check needed, covered by those two asserts
         fill(search_box.report_filter, report_filter)
@@ -296,3 +363,9 @@ def fill_and_apply_filter(expression_program, fill_callback=None, cancel_on_user
     sel.click(search_box.apply_filter_button)
     _process_user_filling(fill_callback, cancel_on_user_filling)
     ensure_advanced_search_closed()
+
+
+class DisabledButtonException(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+
