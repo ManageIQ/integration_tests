@@ -71,7 +71,9 @@ properties_form_56 = TabStripForm(
         ('region_select', {
             version.LOWEST: AngularSelect("ems_region"),
             '5.7': AngularSelect('provider_region')}),
-        ('google_region_select', AngularSelect("ems_preferred_region")),
+        ('google_region_select', {
+            version.LOWEST: AngularSelect("ems_preferred_region"),
+            '5.7': AngularSelect('provider_region')}),
         ('api_version', AngularSelect("ems_api_version")),
         ('infra_provider', AngularSelect("ems_infra_provider_id")),
         ('google_project_text', Input("project")),
