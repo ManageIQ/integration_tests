@@ -4,11 +4,12 @@ from cfme.common import SummaryMixin, Taggable
 from cfme.web_ui import (Quadicon, flash, Form, Input, form_buttons, fill, AngularSelect,
      CheckboxTable)
 from functools import partial
-from cfme.web_ui import toolbar as tb
+from cfme.web_ui import toolbar as tb, mixins
 from utils.wait import wait_for
 
 
 cfg_btn = partial(tb.select, "Configuration")
+pol_btn = partial(tb.select, 'Policy')
 keypair_form = Form(
     fields=[
         ('name', Input("name")),
@@ -31,6 +32,7 @@ class KeyPair(Taggable, SummaryMixin):
         self.name = name
 
     def delete(self):
+        """ Delete given keypair """
         sel.force_navigate('clouds_key_pairs', context={'keypairs': self.name})
         keypair_tbl.select_row_by_cells({'Name': self.name})
         cfg_btn('Remove selected Key Pairs', invokes_alert=True)
@@ -44,7 +46,7 @@ class KeyPair(Taggable, SummaryMixin):
             message="Wait keypairs to disappear", num_sec=500, fail_func=sel.refresh)
 
     def create(self, cancel=False):
-        """Create new keypair"""
+        """ Create new keypair """
         sel.force_navigate('clouds_key_pairs', context={'keypairs': self.name})
         cfg_btn('Add a new Key Pair')
         fill(keypair_form, {'name': self.name}, action=keypair_form.save_button)
@@ -52,3 +54,17 @@ class KeyPair(Taggable, SummaryMixin):
             flash.assert_message_match('Creating Key Pair {}'.format(self.name))
         else:
             flash.assert_message_match('Add of new Key Pair was cancelled by the user')
+
+    def add_tag(self, tag):
+        """ Add a tag to keypair """
+        sel.force_navigate('clouds_key_pairs', context={'keypairs': self.name})
+        keypair_tbl.select_row_by_cells({'Name': self.name})
+        pol_btn("Edit Tags")
+        mixins.add_tag(tag)
+
+    def remove_tag(self, tag):
+        """ Remove a tag from keypair """
+        sel.force_navigate('clouds_key_pairs', context={'keypairs': self.name})
+        keypair_tbl.select_row_by_cells({'Name': self.name})
+        pol_btn("Edit Tags")
+        mixins.remove_tag(tag)
