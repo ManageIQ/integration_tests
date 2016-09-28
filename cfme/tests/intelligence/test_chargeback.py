@@ -14,20 +14,20 @@ pytestmark = [pytest.mark.tier(3)]
 
 def new_compute_rate():
     return cb.ComputeRate(description='cb' + fauxfactory.gen_alphanumeric(),
-                          cpu_alloc=(1000, cb.DAILY),
-                          disk_io=(10, cb.DAILY),
-                          compute_fixed_1=(100, cb.MONTHLY),
-                          compute_fixed_2=(200, cb.DAILY),
-                          mem_alloc=(10000, cb.MONTHLY),
-                          mem_used=(4000, cb.WEEKLY),
-                          net_io=(6000, cb.WEEKLY))
+                          cpu_alloc=(1000, cb.HOURLY),
+                          disk_io=(10, cb.HOURLY),
+                          compute_fixed_1=(100, cb.HOURLY),
+                          compute_fixed_2=(200, cb.HOURLY),
+                          mem_alloc=(10000, cb.HOURLY),
+                          mem_used=(4000, cb.HOURLY),
+                          net_io=(6000, cb.HOURLY))
 
 
 def new_storage_rate():
     return cb.StorageRate(description='cb' + fauxfactory.gen_alphanumeric(),
-                          storage_fixed_2=(4000, cb.MONTHLY),
-                          storage_alloc=(2000, cb.DAILY),
-                          storage_used=(6000, cb.DAILY))
+                          storage_fixed_2=(4000, cb.HOURLY),
+                          storage_alloc=(2000, cb.HOURLY),
+                          storage_used=(6000, cb.HOURLY))
 
 
 def test_add_new_compute_chargeback():
@@ -58,13 +58,13 @@ def test_edit_compute_chargeback():
     ccb.create()
     with update(ccb):
         ccb.description = ccb.description + "-edited"
-        ccb.cpu_alloc = (5000, cb.DAILY)
-        ccb.disk_io = (10, cb.WEEKLY)
-        ccb.compute_fixed_1 = (200, cb.WEEKLY)
-        ccb.compute_fixed_2 = (100, cb.DAILY)
+        ccb.cpu_alloc = (5000, cb.HOURLY)
+        ccb.disk_io = (10, cb.HOURLY)
+        ccb.compute_fixed_1 = (200, cb.HOURLY)
+        ccb.compute_fixed_2 = (100, cb.HOURLY)
         ccb.mem_alloc = (1, cb.HOURLY)
-        ccb.mem_used = (2000, cb.WEEKLY)
-        ccb.net_io = (4000, cb.DAILY)
+        ccb.mem_used = (2000, cb.HOURLY)
+        ccb.net_io = (4000, cb.HOURLY)
     flash.assert_message_match('Chargeback Rate "{}" was saved'.format(ccb.description))
 
 
@@ -74,9 +74,9 @@ def test_edit_storage_chargeback():
     scb.create()
     with update(scb):
         scb.description = scb.description + "-edited"
-        scb.storage_fixed_2 = (2000, cb.MONTHLY)
-        scb.storage_alloc = (3000, cb.WEEKLY)
-        scb.storage_used = (6000, cb.MONTHLY)
+        scb.storage_fixed_2 = (2000, cb.HOURLY)
+        scb.storage_alloc = (3000, cb.HOURLY)
+        scb.storage_used = (6000, cb.HOURLY)
     flash.assert_message_match('Chargeback Rate "{}" was saved'.format(scb.description))
 
 
@@ -85,7 +85,7 @@ def test_delete_compute_chargeback():
     ccb = new_compute_rate()
     ccb.create()
     ccb.delete()
-    flash.assert_message_match('The selected Chargeback Rate was deleted')
+    flash.assert_message_match('Chargeback Rate "{}": Delete successful'.format(ccb.description))
 
 
 @pytest.mark.tier(3)
@@ -93,7 +93,7 @@ def test_delete_storage_chargeback():
     scb = new_storage_rate()
     scb.create()
     scb.delete()
-    flash.assert_message_match('The selected Chargeback Rate was deleted')
+    flash.assert_message_match('Chargeback Rate "{}": Delete successful'.format(scb.description))
 
 
 class TestRatesViaREST(object):
