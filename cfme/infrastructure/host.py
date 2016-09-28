@@ -204,7 +204,11 @@ class Host(Updateable, Pretty, Navigatable):
         """
 
         navigate_to(self, 'Details')
-        cfg_btn('Remove from the VMDB', invokes_alert=True)
+        if version.current_version() >= '5.7':
+            btn_name = "Remove item"
+        else:
+            btn_name = "Remove from the VMDB"
+        cfg_btn(btn_name, invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
     def execute_button(self, button_group, button, cancel=True):
@@ -401,7 +405,7 @@ class All(CFMENavigateStep):
 
     def step(self):
         from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'Hosts')(None)
+        nav._nav_to_fn('Compute', 'Infrastructure', '/host')(None)
 
     def resetter(self):
         tb.select("Grid View")

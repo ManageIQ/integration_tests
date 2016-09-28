@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 import cfme.configure.access_control as ac
+from cfme import test_requirements
 from cfme.configure.access_control import Tenant
 from cfme.fixtures import pytest_selenium as sel
 from cfme.automate import explorer as automate
@@ -13,6 +14,7 @@ from utils import testgen, version
 from utils.wait import wait_for
 
 pytestmark = [
+    test_requirements.quota,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers')
 ]

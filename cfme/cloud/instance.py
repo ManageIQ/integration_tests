@@ -2,7 +2,6 @@
 from cfme.common.vm import VM, Template
 from cfme.exceptions import InstanceNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.services import requests
 from cfme.web_ui import (
     accordion, fill, flash, paginator, toolbar, CheckboxTree, Region, Tree, Quadicon)
 from cfme.web_ui.menu import extend_nav
@@ -240,12 +239,6 @@ class OpenStackInstance(Instance):
             flash.assert_success_message(
                 "VM Provision Request was Submitted, you will be notified when your VMs are ready")
 
-        row_description = 'Provision from [{}] to [{}]'.format(self.template_name, self.name)
-        cells = {'Description': row_description}
-        row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=600, delay=20)
-        assert row.last_message.text == 'Vm Provisioned Successfully'
-
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
 
@@ -347,12 +340,6 @@ class EC2Instance(Instance):
             flash.assert_success_message(
                 "VM Provision Request was Submitted, you will be notified when your VMs are ready")
 
-        row_description = 'Provision from [{}] to [{}]'.format(self.template_name, self.name)
-        cells = {'Description': row_description}
-        row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=900, delay=20)
-        assert row.last_message.text == 'Vm Provisioned Successfully'
-
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
 
@@ -445,12 +432,6 @@ class AzureInstance(Instance):
             sel.click(provisioning_form.submit_button)
             flash.assert_success_message(
                 "VM Provision Request was Submitted, you will be notified when your VMs are ready")
-
-        row_description = 'Provision from [{}] to [{}]'.format(self.template_name, self.name)
-        cells = {'Description': row_description}
-        row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=900, delay=20)
-        assert row.last_message.text == 'Vm Provisioned Successfully'
 
     def power_control_from_provider(self, option):
         """Power control the instance from the provider

@@ -1,7 +1,12 @@
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Quadicon
-from utils import testgen
+
 import pytest
+
+from cfme.web_ui import Quadicon
+from cfme.infrastructure.cluster import Cluster
+
+from utils import testgen
+from utils.appliance.endpoints.ui import navigate_to
+
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type,
                                          ['openstack-infra'],
@@ -13,7 +18,7 @@ ROLES = ['Compute', 'Controller', 'BlockStorage', 'SwiftStorage',
 
 @pytest.mark.usefixtures("setup_provider_modscope")
 def test_roles_name(provider):
-    sel.force_navigate("infrastructure_clusters")
+    navigate_to(Cluster, 'All')
     my_roles_quads = list(Quadicon.all())
     result = True
     while result:

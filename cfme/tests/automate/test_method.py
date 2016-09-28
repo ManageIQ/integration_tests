@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
+from cfme import test_requirements
 from cfme.automate.explorer import Namespace, Class, Method, Domain
+from utils import error
 from utils.update import update
-import utils.error as error
+
+
+pytestmark = [test_requirements.automate]
 
 
 def _make_namespace(domain):

@@ -7,6 +7,7 @@ import uuid
 import pytest
 
 import utils.error as error
+import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, wait_for_a_provider,
@@ -14,11 +15,16 @@ from cfme.cloud.provider import (discover, wait_for_a_provider,
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
-from utils import testgen, version
+from utils import testgen, version, providers
 from utils.appliance.endpoints.ui import navigate_to
 from utils.update import update
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
+
+
+@pytest.fixture(scope="module")
+def setup_a_provider():
+    return providers.setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
 
 
 @pytest.mark.tier(3)
@@ -233,14 +239,14 @@ def test_password_max_character_validation():
 
 
 @pytest.mark.tier(3)
-def test_name_max_character_validation(request):
+def test_name_max_character_validation(request, setup_a_provider):
     """Test to validate max character for name field"""
-    prov = EC2Provider(
-        name=fauxfactory.gen_alphanumeric(255),
-        region='us-east-1')
-
-    request.addfinalizer(prov.delete_if_exists)
-    prov.create()
+    provider = setup_a_provider
+    request.addfinalizer(lambda: provider.delete_if_exists(cancel=False))
+    name = fauxfactory.gen_alphanumeric(255)
+    provider.update({'name': name})
+    provider.name = name
+    assert provider.exists
 
 
 @pytest.mark.tier(3)
@@ -248,35 +254,14 @@ def test_hostname_max_character_validation(request):
     """Test to validate max character for hostname field"""
     prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(255),
-        ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
-
-    request.addfinalizer(prov.delete_if_exists)
-    prov.create()
-
-
-@pytest.mark.tier(3)
-def test_ip_max_valid_character_validation(request):
-    """Test to validate max character for ip address field with valid ip address"""
-    prov = OpenStackProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
-
-    request.addfinalizer(prov.delete_if_exists)
-    prov.create()
-
-
-@pytest.mark.tier(3)
-def test_ip_max_invalid_character_validation(request):
-    """Test to validate max character for ip address field using random string"""
-    prov = OpenStackProvider(
-        name=fauxfactory.gen_alphanumeric(5),
-        hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=fauxfactory.gen_alphanumeric(15))
-
-    request.addfinalizer(prov.delete_if_exists)
-    prov.create()
+        hostname=fauxfactory.gen_alphanumeric(256),
+        ip_address='10.10.10.13')
+    try:
+        prov.create()
+    except FlashMessageException:
+        element = sel.move_to_element(prov.properties_form.locators["hostname_text"])
+        text = element.get_attribute('value')
+        assert text == prov.hostname[0:255]
 
 
 @pytest.mark.tier(3)
@@ -285,11 +270,14 @@ def test_api_port_max_character_validation(request):
     prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
-        api_port=fauxfactory.gen_alphanumeric(15))
-
-    request.addfinalizer(prov.delete_if_exists)
-    prov.create()
+        ip_address='10.10.10.15',
+        api_port=fauxfactory.gen_alphanumeric(16))
+    try:
+        prov.create()
+    except FlashMessageException:
+        element = sel.move_to_element(prov.properties_form.locators["api_port"])
+        text = element.get_attribute('value')
+        assert text == prov.api_port[0:15]
 
 
 @pytest.mark.tier(3)

@@ -10,7 +10,7 @@ function xpath(root, xpath) {
 }
 """
 
-in_flight = """
+in_flight = jsmin("""
 function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
 
 return {
@@ -24,7 +24,7 @@ return {
     debounce: (typeof checkMiqQE === "undefined") ? 0 : checkMiqQE('debounce'),
     miqQE: (typeof checkAllMiqQE === "undefined") ? 0 : checkAllMiqQE()
 };
-"""
+""")
 
 update_retirement_date_function_script = """\
 function updateDate(newValue) {

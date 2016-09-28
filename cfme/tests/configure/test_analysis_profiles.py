@@ -5,7 +5,6 @@ import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme.configure.configuration import HostAnalysisProfile, VMAnalysisProfile
 from cfme.web_ui import Table, flash, toolbar as tb
-from utils.blockers import BZ
 from utils.update import update
 
 
@@ -41,7 +40,6 @@ def test_host_analysis_profile_crud():
     p.delete()
 
 
-@pytest.mark.meta(blockers=[BZ(1263073, forced_streams=["5.4", "5.5"])])
 def test_vmanalysis_profile_description_validation():
     """ Test to validate description in vm profiles"""
     p = VMAnalysisProfile(
@@ -53,7 +51,7 @@ def test_vmanalysis_profile_description_validation():
 def test_analysis_profile_duplicate_name():
     """ Test to validate duplicate profiles name."""
     p = VMAnalysisProfile(
-        fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric(), files=["asdf", "dfg"])
+        fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric(), categories=["check_system"])
     p.create()
     with error.expected("Name has already been taken"):
         p.create()
