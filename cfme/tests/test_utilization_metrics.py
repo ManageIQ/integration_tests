@@ -16,7 +16,8 @@ from cfme.exceptions import FlashMessageException
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm'])
+    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm',
+        'ec2', 'rhos'])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 pytestmark = [pytest.mark.tier(1)]
@@ -138,8 +139,12 @@ def query_metric_db(db, provider, metric, vm_name=None, host_name=None):
 # Tests to check that specific metrics are being collected
 def test_raw_metric_vm_cpu(metrics_collection, db, provider):
     vm_name = provider.data['cap_and_util']['chargeback_vm']
-    query = query_metric_db(db, provider, 'cpu_usagemhz_rate_average',
-        vm_name)
+    if provider.category == "infra":
+        query = query_metric_db(db, provider, 'cpu_usagemhz_rate_average',
+            vm_name)
+    elif provider.category == "cloud":
+        query = query_metric_db(db, provider, 'cpu_usage_rate_average',
+            vm_name)
 
     for record in query:
         if record.cpu_usagemhz_rate_average is None:
@@ -149,6 +154,8 @@ def test_raw_metric_vm_cpu(metrics_collection, db, provider):
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.type == 'ec2')
 def test_raw_metric_vm_memory(metrics_collection, db, provider):
     vm_name = provider.data['cap_and_util']['chargeback_vm']
     query = query_metric_db(db, provider, 'derived_memory_used',
@@ -194,6 +201,8 @@ def test_raw_metric_vm_disk(metrics_collection, db, provider):
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.category == 'cloud')
 def test_raw_metric_host_cpu(metrics_collection, db, provider):
     host_name = get_host_name(provider)
     query = query_metric_db(db, provider, 'cpu_usagemhz_rate_average',
@@ -207,6 +216,8 @@ def test_raw_metric_host_cpu(metrics_collection, db, provider):
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.category == 'cloud')
 def test_raw_metric_host_memory(metrics_collection, db, provider):
     host_name = get_host_name(provider)
     query = query_metric_db(db, provider, 'derived_memory_used',
@@ -220,6 +231,8 @@ def test_raw_metric_host_memory(metrics_collection, db, provider):
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.category == 'cloud')
 def test_raw_metric_host_network(metrics_collection, db, provider):
     host_name = get_host_name(provider)
     query = query_metric_db(db, provider, 'net_usage_rate_average',
@@ -233,6 +246,8 @@ def test_raw_metric_host_network(metrics_collection, db, provider):
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: provider.category == 'cloud')
 @pytest.mark.meta(
     blockers=[BZ(1322094, unblock=lambda provider: provider.type != 'rhevm')]
 )
