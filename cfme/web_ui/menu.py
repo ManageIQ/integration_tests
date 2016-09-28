@@ -293,6 +293,7 @@ class Menu(UINavigate):
                         ('clouds_instances', 'Instances',
                             self._tree_func_with_grid(
                                 "Instances by Provider", "Instances by Provider")),
+                        ('clouds_instances_no_tree', 'Instances'),
                         ('clouds_stacks', 'Stacks'),
                         ('clouds_key_pairs', 'Key Pairs'),
                         ('clouds_object_stores', 'Object Stores'),
@@ -304,11 +305,14 @@ class Menu(UINavigate):
                         ('infrastructure_hosts', "/host"),
                         ('infrastructure_virtual_machines', 'Virtual Machines',
                             self._tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
+                        ('infrastructure_virtual_machines_no_tree', 'Virtual Machines'),
                         ('infrastructure_resource_pools', 'Resource Pools'),
                         ('infrastructure_datastores', 'Datastores',
                             self._tree_func_with_grid("Datastores", "All Datastores")),
+                        ('infrastructure_datastores_no_tree', 'Datastores'),
                         ('infrastructure_pxe', 'PXE'),
                         ('infrastructure_requests', 'Requests'),
+                        ('infrastructure_networking', 'Networking'),
                         # ('infrastructure_config_management', 'Configuration Management')
                     ),
                     ('containers', 'Containers'): (
@@ -387,6 +391,9 @@ class Menu(UINavigate):
             }
         if version.current_version() >= '5.7':
             del sections[('configure', 'Settings')]
+            sections[('n_configuration', 'Configuration')] = (
+                ('infrastructure_config_management', 'Management'),
+            )
         return sections
 
     def is_page_active(self, toplevel, secondlevel=None, thirdlevel=None):
