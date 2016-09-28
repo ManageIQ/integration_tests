@@ -3,16 +3,18 @@ import fauxfactory
 import cfme.web_ui.flash as flash
 import pytest
 from cfme.cloud.instance import (EC2Instance, Instance, OpenStackInstance,
-                                 AzureInstance)
+                                 AzureInstance, GCEInstance)
 from utils import testgen, version
 from utils.blockers import BZ
 from utils.log import logger
+from utils.generators import random_vm_name
 from utils.wait import wait_for, TimedOutError, RefreshTimer
 
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['azure', 'ec2', 'openstack'], required_fields=[('test_power_control', True)])
+        metafunc, ['azure', 'ec2', 'openstack', 'gce'],
+        required_fields=[('test_power_control', True)])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
 
 pytestmark = [pytest.mark.tier(2)]
@@ -22,7 +24,7 @@ pytestmark = [pytest.mark.tier(2)]
 def testing_instance(request, setup_provider, provider):
     """ Fixture to provision instance on the provider
     """
-    instance = Instance.factory("test_inst_pwrctl_{}".format(fauxfactory.gen_alpha(8)), provider)
+    instance = Instance.factory(random_vm_name('pwr-ctrl'), provider)
     if not provider.mgmt.does_vm_exist(instance.name):
         instance.create_on_provider(timeout=1000, allow_skip="default", find_in_cfme=True)
         request.addfinalizer(instance.delete_from_provider)
@@ -82,16 +84,11 @@ def wait_for_termination(provider, instance):
         logger.info("Instance is still powering down. please wait before termination")
         state_change_time = instance.get_detail(('Power Management', 'State Changed On'))
         wait_for_state_change_time_refresh(instance, provider, state_change_time, timeout=720)
-    """
-    Check if VM is in terminated state on provider
-    Openstack and Azure don't have "terminated" state on provider side, so we check Vm state in CFME
-    """
-    if (provider.type == 'openstack' or provider.type == "azure") \
-            and instance.get_detail(('Power Management', 'Power State'))\
-            in {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
-        return True
-
-    elif provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted']):
+    if provider.type == 'ec2':
+        return True if provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted'])\
+            else False
+    elif instance.get_detail(('Power Management', 'Power State')) in \
+            {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
         return True
     else:
         logger.info("Instance is still running")
@@ -103,7 +100,8 @@ def check_power_options(soft_assert, instance, power_state):
     """
     must_be_available = {
         AzureInstance: {
-            'on': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.TERMINATE],
+            'on': [AzureInstance.STOP, AzureInstance.SUSPEND, AzureInstance.SOFT_REBOOT,
+                   AzureInstance.TERMINATE],
             'off': [AzureInstance.START, AzureInstance.TERMINATE]
         },
         EC2Instance: {
@@ -118,6 +116,10 @@ def check_power_options(soft_assert, instance, power_state):
                 OpenStackInstance.TERMINATE
             ],
             'off': [OpenStackInstance.START, OpenStackInstance.TERMINATE]
+        },
+        GCEInstance: {
+            'on': [GCEInstance.STOP, GCEInstance.SOFT_REBOOT, GCEInstance.TERMINATE],
+            'off': [GCEInstance.START, GCEInstance.TERMINATE]
         }
     }
     mustnt_be_available = {
@@ -136,6 +138,10 @@ def check_power_options(soft_assert, instance, power_state):
                 OpenStackInstance.SOFT_REBOOT,
                 OpenStackInstance.HARD_REBOOT
             ]
+        },
+        GCEInstance: {
+            'on': [GCEInstance.START],
+            'off': [GCEInstance.STOP, GCEInstance.SOFT_REBOOT]
         }
     }
 
@@ -182,7 +188,7 @@ def test_quadicon_terminate(setup_provider_funcscope, provider, testing_instance
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider: provider.type != 'ec2' and provider.type != 'azure')
+@pytest.mark.uncollectif(lambda provider: provider.type == 'openstack')
 def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_running):
     """ Tests instance stop
 
@@ -245,8 +251,20 @@ def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_
         version.LOWEST: "Restart initiated",
         "5.5": "Restart Guest initiated"}))
     wait_for_state_change_time_refresh(testing_instance, provider, state_change_time, timeout=720)
+    if provider.type == 'gce' \
+            and testing_instance.get_detail(('Power Management', 'Power State')) \
+            == testing_instance.STATE_UNKNOWN:
+        """Wait for one more state change as transitional state also
+        changes "State Changed On" time on GCE provider
+        """
+        logger.info("Instance is still in \"{}\" state. please wait "
+                    "before CFME will show correct state".format(testing_instance.get_detail((
+                        'Power Management', 'Power State'))))
+        state_change_time = testing_instance.get_detail(('Power Management', 'State Changed On'))
+        wait_for_state_change_time_refresh(testing_instance,
+                                           provider, state_change_time, timeout=720)
     testing_instance.wait_for_vm_state_change(
-        desired_state=testing_instance.STATE_ON, from_details=True)
+        desired_state=testing_instance.STATE_ON, timeout=600, from_details=True)
     soft_assert(
         provider.mgmt.is_vm_running(testing_instance.name),
         "instance is not running")
