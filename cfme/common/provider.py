@@ -582,6 +582,7 @@ def get_paginator_value():
 class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
     vm_name = ""
     template_name = ""
+    volume_name = "Cloud volumes"
     detail_page_suffix = 'provider'
     edit_page_suffix = 'provider_edit'
     refresh_text = "Refresh Relationships and Power States"
@@ -688,6 +689,18 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
             return False
         else:
             sel.click(details_page.infoblock.element("Relationships", self.vm_name))
+            return True
+
+    def load_all_provider_volumes(self):
+        """ Loads the list of volumes are running under the provider.
+        If it could click through the link in infoblock, returns ``True``. If it sees that the
+        number of volumes is 0, it returns ``False``.
+        """
+        self.load_details()
+        if details_page.infoblock.text("Relationships", self.volume_name) == "0":
+            return False
+        else:
+            sel.click(details_page.infoblock.element("Relationships", self.volume_name))
             return True
 
     def load_all_provider_images(self):
