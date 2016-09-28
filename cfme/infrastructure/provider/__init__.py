@@ -301,7 +301,7 @@ class Provider(Pretty, CloudInfraProvider):
     def get_clusters(self):
         """returns the list of clusters belonging to the provider"""
         web_clusters = []
-        sel.force_navigate('infrastructure_provider', context={'provider': self})
+        navigate_to(self, 'Details')
         sel.click(InfoBlock.element('Relationships', 'Clusters'))
         icons = Quadicon.all(qtype='cluster')
         for icon in icons:

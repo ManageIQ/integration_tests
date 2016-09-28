@@ -13,15 +13,13 @@ def setup_first_provider():
     providers.setup_a_provider(prov_class="infra", validate=True, check_existing=True)
     providers.setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
 
-# todo: infrastructure hosts is removed from this list until everything is moved to navmazing
-# todo: it has to be put back once navigation movement is done
+# todo: infrastructure hosts, stores, clusters are removed from this list
+# until everything is moved to navmazing. it has to be put back once navigation movement is done
 
 pytestmark = [
     pytest.mark.parametrize("location", [
         # Infrastructure
         "infrastructure_providers",
-        "infrastructure_clusters",
-        "infrastructure_datastores",
         "infra_vms",
         "infra_templates",
 
