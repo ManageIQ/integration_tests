@@ -2,6 +2,7 @@
 
 import pytest
 
+from cfme import test_requirements
 from cfme.configure import tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host as host_obj
@@ -9,7 +10,10 @@ from cfme.web_ui import DriftGrid, toolbar as tb, tabstrip as tabs
 from utils import error, testgen
 from utils.wait import wait_for
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [
+    test_requirements.drift,
+    pytest.mark.tier(3)
+]
 
 
 def pytest_generate_tests(metafunc):

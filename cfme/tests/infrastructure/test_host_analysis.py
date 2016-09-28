@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.configure.tasks import is_host_analysis_finished
 from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.infrastructure import host
@@ -11,7 +12,10 @@ from utils import version
 from utils.update import update
 from utils.wait import wait_for
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [
+    test_requirements.smartstate,
+    pytest.mark.tier(3)
+]
 HOST_TYPES = ('rhev', 'rhel', 'esx', 'esxi')
 
 
