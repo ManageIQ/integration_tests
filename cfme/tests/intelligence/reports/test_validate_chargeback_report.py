@@ -7,6 +7,7 @@ import pytest
 import re
 
 from cfme import Credential
+from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.configure.configuration import get_server_roles, set_server_roles, candu
 from cfme.intelligence.reports.reports import CustomReport
@@ -15,7 +16,11 @@ from utils.log import logger
 from utils import testgen, version
 from utils.wait import wait_for
 
-pytestmark = [pytest.mark.tier(2)]
+
+pytestmark = [
+    pytest.mark.tier(2),
+    test_requirements.chargeback
+]
 
 
 def pytest_generate_tests(metafunc):

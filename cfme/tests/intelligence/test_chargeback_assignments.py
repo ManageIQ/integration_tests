@@ -5,10 +5,15 @@ import cfme.web_ui.flash as flash
 import pytest
 import random
 
+from cfme import test_requirements
 from utils.providers import setup_a_provider
 from utils import version
 
-pytestmark = [pytest.mark.tier(3)]
+
+pytestmark = [
+    pytest.mark.tier(3),
+    test_requirements.chargeback
+]
 
 
 @pytest.fixture(scope="module")

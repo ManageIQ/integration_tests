@@ -3,13 +3,18 @@ import fauxfactory
 import pytest
 import cfme.intelligence.chargeback as cb
 import cfme.web_ui.flash as flash
+import utils.error as error
+
+from cfme import test_requirements
 from cfme.rest import rates as _rates
 from utils.update import update
 from utils.wait import wait_for
-import utils.error as error
 
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [
+    pytest.mark.tier(3),
+    test_requirements.chargeback
+]
 
 
 def new_compute_rate():
