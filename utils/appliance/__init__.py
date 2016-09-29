@@ -62,10 +62,10 @@ class ApplianceConsoleCli(object):
 
     def __init__(self, appliance):
         self.appliance = appliance
-        self.ssh = appliance.ssh_client
 
     def run(self, ap_cli_command):
-        return self.ssh.run_command("appliance_console_cli {}".format(ap_cli_command))
+        return self.appliance.ssh_client.run_command(
+            "appliance_console_cli {}".format(ap_cli_command))
 
     def set_hostname(self, hostname):
         self.run("-H {}".format(hostname))
@@ -75,9 +75,9 @@ class ApplianceConsoleCli(object):
         self.run("-r {} -i -h {} -U {} -p {} -d {} -v -K {} -s {} -a {} ".format(
             region, dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass))
 
-    def configure_ipa(self, hostname, domain, realm, username, password):
-        self.run("-e {} -o {} -l {} -n {} -w {}".format(
-            hostname, domain, realm, username, password))
+    def configure_ipa(self, ipaserver, username, password, domain, realm):
+        return self.run("-e {} -n {} -w {} -o {} -l {}".format(
+            ipaserver, username, password, domain, realm))
 
     def uninstall_ipa_client(self):
         self.run("--uninstall-ipa")
