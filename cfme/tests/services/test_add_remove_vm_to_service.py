@@ -8,11 +8,14 @@ from cfme.services import requests
 from cfme.services.catalogs.myservice import MyService
 from cfme.automate.simulation import simulate
 from cfme.automate.explorer import Domain, Namespace, Class, Method
+from cfme import test_requirements
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
 
+
 pytestmark = [
+    test_requirements.service,
     pytest.mark.usefixtures("vm_name"),
     pytest.mark.usefixtures("catalog_item"),
     pytest.mark.usefixtures('uses_infra_providers'),

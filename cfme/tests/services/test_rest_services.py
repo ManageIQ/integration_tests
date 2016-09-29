@@ -7,12 +7,14 @@ from cfme.rest import dialog as _dialog
 from cfme.rest import services as _services
 from cfme.rest import service_catalogs as _service_catalogs
 from cfme.rest import service_templates as _service_templates
+from cfme import test_requirements
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
 from utils import error, version
 
 
-pytestmark = [pytest.mark.tier(2)]
+pytestmark = [test_requirements.service,
+              pytest.mark.tier(2)]
 
 
 class TestServiceRESTAPI(object):

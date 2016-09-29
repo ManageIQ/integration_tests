@@ -5,6 +5,7 @@ from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.myservice import MyService
 from cfme.services import requests
+from cfme import test_requirements
 from datetime import datetime
 from utils import testgen
 from utils.log import logger
@@ -17,6 +18,7 @@ pytestmark = [
     pytest.mark.usefixtures("vm_name", "catalog_item"),
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.long_running,
+    test_requirements.service,
     pytest.mark.tier(2)
 ]
 

@@ -9,6 +9,7 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services import requests
+from cfme import test_requirements
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
@@ -17,6 +18,7 @@ from utils.conf import cfme_data
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('vm_name', 'uses_infra_providers'),
+    test_requirements.service,
     pytest.mark.tier(2)
 ]
 

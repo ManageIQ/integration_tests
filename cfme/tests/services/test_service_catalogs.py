@@ -8,6 +8,7 @@ from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
+from cfme import test_requirements
 from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen
@@ -16,6 +17,7 @@ from utils.blockers import BZ
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('vm_name', 'catalog_item', 'uses_infra_providers'),
+    test_requirements.service,
     pytest.mark.long_running
 ]
 

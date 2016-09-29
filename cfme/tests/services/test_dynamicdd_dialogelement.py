@@ -7,9 +7,11 @@ from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer import Domain, Namespace, Class, Method, Instance
+from cfme import test_requirements
 
 pytestmark = [
     pytest.mark.long_running,
+    test_requirements.service,
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles="+automate")
 ]
