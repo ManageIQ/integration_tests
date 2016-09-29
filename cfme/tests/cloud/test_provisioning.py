@@ -10,6 +10,7 @@ from cfme.automate import explorer as automate
 from cfme.cloud.instance import Instance
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.gce import GCEProvider
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.log import logger
@@ -54,6 +55,10 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
     if isinstance(provider, OpenStackProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
 
+    if isinstance(provider, GCEProvider):
+        inst_args['cloud_network'] = provisioning['cloud_network']
+        inst_args['boot_disk_size'] = provisioning['boot_disk_size']
+
     if isinstance(provider, AzureProvider):
         inst_args['cloud_network'] = provisioning['virtual_net']
         inst_args['cloud_subnet'] = provisioning['subnet_range']
@@ -66,8 +71,11 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
 
 
 @pytest.fixture(scope="function")
-def vm_name(request):
-    vm_name = 'test_image_prov_{}'.format(fauxfactory.gen_alphanumeric())
+def vm_name(request, provider):
+    if isinstance(provider, GCEProvider):
+        vm_name = 'test-image-prov-{}'.format(fauxfactory.gen_alphanumeric().lower())
+    else:
+        vm_name = 'test_image_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
@@ -107,7 +115,7 @@ def test_provision_from_template_using_rest(
     image_guid = rest_api.collections.templates.find_by(name=provisioning['image']['name'])[0].guid
     instance_type = (
         provisioning['instance_type'].split(":")[0].strip()
-        if ":" in provisioning['instance_type'] and provider.type == "ec2"
+        if ":" in provisioning['instance_type'] and provider.type in ["ec2", "gce"]
         else provisioning['instance_type'])
     flavors = rest_api.collections.flavors.find_by(name=instance_type)
     assert len(flavors) > 0
@@ -151,6 +159,11 @@ def test_provision_from_template_using_rest(
         }
     }
 
+    if isinstance(provider, GCEProvider):
+        provision_data['vm_fields']['cloud_network'] = provisioning['cloud_network']
+        provision_data['vm_fields']['boot_disk_size'] = provisioning['boot_disk_size']
+        provision_data['vm_fields']['zone'] = provisioning['availability_zone']
+        provision_data['vm_fields']['region'] = 'us-central1'
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
     request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
