@@ -1,7 +1,7 @@
 import cfme.configure.access_control as ac
 import fauxfactory
 import pytest
-from cfme import Credential, login
+from cfme import Credential, login, test_requirements
 from cfme.common.vm import VM
 from cfme.configure.configuration import Tag, Category
 from utils import testgen
@@ -10,6 +10,8 @@ from utils import testgen
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.all_providers(metafunc, required_fields=['ownership_vm'])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+
+pytestmark = [test_requirements.tag]
 
 
 @pytest.yield_fixture(scope="module")
