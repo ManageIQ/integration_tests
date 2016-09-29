@@ -43,7 +43,7 @@ from utils.path import log_path
 from utils.log import logger
 from utils.wait import wait_for
 from utils.pretty import Pretty
-from utils.deprecation import removed_in_fw30, removed_class_in_fw30
+from utils.deprecation import removed_in_fw30
 
 from threading import local
 _thread_local = local()
@@ -74,7 +74,6 @@ if WebElement.__repr__ is not __repr__:
     WebElement.__repr__ = __repr__
 
 
-@removed_class_in_fw30
 class ByValue(Pretty):
     pretty_attrs = ['value']
 
@@ -88,7 +87,6 @@ class ByValue(Pretty):
         return str(self.value)
 
 
-@removed_class_in_fw30
 class ByText(Pretty):
     pretty_attrs = ['text']
 
