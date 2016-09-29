@@ -106,34 +106,24 @@ class Datastore(Pretty, Navigatable):
 
         Returns: List of strings with names or `[]` if no hosts found.
         """
-        if not self._on_hosts_page():
-            self.load_details()
-            try:
-                sel.click(details_page.infoblock.element("Relationships", "Hosts"))
-            except sel.NoSuchElementException:
-                sel.click(InfoBlock('Relationships', 'Hosts'))
+        self.load_details()
+        try:
+            sel.click(details_page.infoblock.element("Relationships", "Hosts"))
+        except sel.NoSuchElementException:
+            sel.click(InfoBlock('Relationships', 'Hosts'))
         return [q.name for q in Quadicon.all("host")]
-
-    def _on_hosts_page(self):
-        """ Returns ``True`` if on the datastore hosts page, ``False`` if not."""
-        return summary_title() == '{} ({})'.format(self.name, "All Registered Hosts")
 
     def get_vms(self):
         """ Returns names of VMs (from quadicons) that use this datastore
 
         Returns: List of strings with names or `[]` if no vms found.
         """
-        if not self._on_vms_page():
-            self.load_details()
-            try:
-                list_acc.select('Relationships', "VMs", by_title=False, partial=True)
-            except (sel.NoSuchElementException, ListAccordionLinkNotFound):
-                sel.click(InfoBlock('Relationships', 'Managed VMs'))
+        self.load_details()
+        try:
+            list_acc.select('Relationships', "VMs", by_title=False, partial=True)
+        except (sel.NoSuchElementException, ListAccordionLinkNotFound):
+            sel.click(InfoBlock('Relationships', 'Managed VMs'))
         return [q.name for q in Quadicon.all("vm")]
-
-    def _on_vms_page(self):
-        """ Returns ``True`` if on the datastore vms page, ``False`` if not."""
-        return summary_title() == '{} ({})'.format(self.name, "All Registered VMs")
 
     def delete_all_attached_vms(self):
         self.load_details()
