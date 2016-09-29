@@ -70,8 +70,10 @@ class ApplianceConsoleCli(object):
     def set_hostname(self, hostname):
         self.run("-H {}".format(hostname))
 
-    def configure_appliance_fetch_key(self, db_configure):
-        self.run("{}".format(db_configure)
+    def configure_appliance_internal_fetch_key(self, sshlogin, sshpass, password, region,
+            dbhostname, username, dbname, fetch_key):
+        self.run("-r {} -i -h {} -U {} -p {} -d {} -v -K {} -s {} -a {} ".format(
+            region, dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass))
 
     def configure_ipa(self, hostname, domain, realm, username, password):
         self.run("-e {} -o {} -l {} -n {} -w {}".format(
