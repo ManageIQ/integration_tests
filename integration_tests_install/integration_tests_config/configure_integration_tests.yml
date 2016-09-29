@@ -56,8 +56,8 @@
 
     - name: "1)"
       # https://gist.githubusercontent.com/confiks/6d7b0ee3e137df01b758/raw/6b31d61151c4199e5121c34c841f7168850a6071/ask_key.py
-      # action: custom_prompt prompt="{{ pull_requests_question }} - [{{ pull_requests }}]:" accepted_keys="{{ pull_requests_accepted_keys }}"
-      action: custom_prompt prompt="{{ pull_requests_question }}:" accepted_keys="{{ pull_requests_accepted_keys }}"
+      # action: custom_prompt prompt="{{ pull_requests_question }} - [{{ pull_requests }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      action: custom_prompt prompt="{{ pull_requests_question }}:" accepted_keys="{{ accepted_keys_yn }}"
       register: pull_requests_p
 
     - name: "2)"
@@ -81,27 +81,53 @@
       register: gpg_public_key_p
       when: pull_requests_p.key != "n"
     
-    - name: "6)"
-      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:"
-      register: yaml_repo_p
+    - name: "6)"   
+      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      register: yaml_external_repo
       when: pull_requests_p.key != "n"
     
     - name: "7)"
-      action: custom_prompt prompt="{{ yaml_repo_username_question }} - [{{ yaml_repo_username }}]:"
-      register: yaml_repo_username_p
-      when: pull_requests_p.key != "n"
+      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:"
+      register: yaml_repo_p
+      when: pull_requests_p.key != "n" and yaml_external_repo is defined 
     
     - name: "8)"
-      action: custom_prompt prompt="{{ yaml_key_password_question }} - [{{ yaml_key_password }}]:"
-      register: yaml_key_password_p
-      when: pull_requests_p.key != "n"
+      action: custom_prompt prompt="{{ yaml_repo_username_question }} - [{{ yaml_repo_username }}]:"
+      register: yaml_repo_username_p
+      when: pull_requests_p.key != "n" and yaml_external_repo is defined 
     
     - name: "9)"
+      action: custom_prompt prompt="{{ yaml_key_password_question }} - [{{ yaml_key_password }}]:"
+      register: yaml_key_password_p
+      when: pull_requests_p.key != "n" and yaml_external_repo is defined 
+    
+    - name: "10)"   
+      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      register: yaml_local_repo
+      when: pull_requests_p.key != "n"
+    
+    - name: "10)"   
+      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:"
+      register: yaml_local_repo_p
+      when: pull_requests_p.key != "n"
+
+    #- name: "6) 7) 8) nested loop"
+    #  action: custom_prompt prompt="{{ item.value }}" "{{ item.accepted_keys }}"="{{ item.accepted_key|default('') }}"
+    #  register: "{{ item.key }}"
+    #  with_items:
+    #    - { key: 'yaml_question', value: "Would you like to define repo with yaml files?", accepted_keys: "[y, n]" }
+    #    - { key: 'yaml_repo_p', value: "{{ yaml_repo_question }} - [{{ yaml_repo }}]:" }
+    #    - { key: 'yaml_repo_username_p', value: "{{ yaml_repo_username_question }} - [{{ yaml_repo_username }}]:" } 
+    #    - { key: 'yaml_key_password_p', value: "{{ yaml_key_password_question }} - [{{ yaml_key_password }}]:" }
+    #  until: yaml_question == 'n' 
+    #  #until: item.key == 'y' 
+
+    - name: "12)"
       action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
       register: base_url_p
       when: pull_requests_p.key != "n"
 
-    - name: "10)"
+    - name: "13)"
       action: custom_prompt prompt="{{ browser_question }} - [[ {{browser}} ]]" accepted_keys="{{browser_accepted_keys}}" 
       register: browser_p
  

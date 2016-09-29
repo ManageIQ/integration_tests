@@ -5,7 +5,8 @@ vars_config: "{{ cfme_vol }}/.vars_config.yml"
 # Ask user if he will be creating new PRs or just run tests
 pull_requests:
 pull_requests_question: "Are you going to create new Pull Requests against integration_tests master? Type \"y\" or \"n\""
-pull_requests_accepted_keys: ['y', 'n']
+
+accepted_keys_yn: ['y', 'n']
 
 # name of github personal account
 git_account_username:
@@ -22,7 +23,7 @@ gpg_public_key_question: "Type your GPG key hash:"
 git_email:
 git_email_question: "Type email address you want to use in your git config:"
 
-# yaml repo
+# yaml external repo
 yaml_repo:
 yaml_repo_question: "Type URL of repository where your yaml files are located:"
 
@@ -33,6 +34,10 @@ yaml_repo_username_question: "Type username which has permissions to clone yamls
 # yaml key string, used if yamls are encrypted
 yaml_key_password:
 yaml_key_password_question: "Type your yaml key (if you do not have any, just press ENTER)"
+
+# yaml local repo
+yaml_local_repo:
+yaml_local_repo_question: "Type URL of repository where your yaml files are located:"
 
 base_url:
 base_url_question: "Type IP address or resolvable name of your appliance tests will be executed against:"

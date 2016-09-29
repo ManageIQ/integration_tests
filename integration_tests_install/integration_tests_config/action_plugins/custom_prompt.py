@@ -89,6 +89,10 @@ class ActionModule(ActionBase):
                 elif key in self._task.args["accepted_keys"]:
                     result["key"] = key
                     break
+                elif '[0-9]' in self._task.args["accepted_keys"]:
+                    int(key)
+                    result["key"] = key
+                    break
         elif "accepted_keys "not in self._task.args:
             key = self._connection._new_stdin.readline().strip('\n')
             if key == '\x03':
