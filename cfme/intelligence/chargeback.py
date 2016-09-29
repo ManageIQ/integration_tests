@@ -28,27 +28,45 @@ class RateFormItem(Pretty):
         self.unit_select_loc = unit_select_loc
 
 
-def _mkitem(index):
-    return RateFormItem((By.CSS_SELECTOR, "input#rate_" + str(index)),
-                        Select((By.CSS_SELECTOR, "select#per_time_" + str(index))))
+def _mkitem(field, index1, index2=0):
+    return RateFormItem((By.CSS_SELECTOR, "input#{}_{}_{}".format(field, index1, index2)),
+                        Select((By.CSS_SELECTOR, "select#per_time_" + str(index1))))
 
 rate_form = Form(
     fields=[
         ('description', (By.CSS_SELECTOR, "input#description")),
-        # Compute form items
-        ('cpu_alloc', _mkitem(0)),
-        ('cpu_used', _mkitem(1)),
-        ('disk_io', _mkitem(2)),
-        ('compute_fixed_1', _mkitem(3)),
-        ('compute_fixed_2', _mkitem(4)),
-        ('mem_alloc', _mkitem(5)),
-        ('mem_used', _mkitem(6)),
-        ('net_io', _mkitem(7)),
+        # Compute form items fixed
+        ('cpu_alloc', _mkitem("fixed_rate", 0)),
+        ('cpu_used', _mkitem("fixed_rate", 1)),
+        ('cpu_cores_used', _mkitem("fixed_rate", 2)),
+        ('disk_io', _mkitem("fixed_rate", 3)),
+        ('compute_fixed_1', _mkitem("fixed_rate", 4)),
+        ('compute_fixed_2', _mkitem("fixed_rate", 5)),
+        ('mem_alloc', _mkitem("fixed_rate", 6)),
+        ('mem_used', _mkitem("fixed_rate", 7)),
+        ('net_io', _mkitem("fixed_rate", 8)),
+        ('net_io_2', _mkitem("fixed_rate", 8, 1)),
+        # Compute form items variable
+        ('cpu_alloc_var', _mkitem("variable_rate", 0)),
+        ('cpu_used_var', _mkitem("variable_rate", 1)),
+        ('cpu_cores_used_var', _mkitem("variable_rate", 2)),
+        ('disk_io_var', _mkitem("variable_rate", 3)),
+        ('compute_fixed_1_var', _mkitem("variable_rate", 4)),
+        ('compute_fixed_2_var', _mkitem("variable_rate", 5)),
+        ('mem_alloc_var', _mkitem("variable_rate", 6)),
+        ('mem_used_var', _mkitem("variable_rate", 7)),
+        ('net_io_var', _mkitem("variable_rate", 8)),
+        ('net_io_2_var', _mkitem("variable_rate", 8, 1)),
         # Storage form items
-        ('storage_fixed_1', _mkitem(0)),
-        ('storage_fixed_2', _mkitem(1)),
-        ('storage_alloc', _mkitem(2)),
-        ('storage_used', _mkitem(3)),
+        ('storage_fixed_1', _mkitem("fixed_rate", 0)),
+        ('storage_fixed_2', _mkitem("fixed_rate", 1)),
+        ('storage_alloc', _mkitem("fixed_rate", 2)),
+        ('storage_used', _mkitem("fixed_rate", 3)),
+        # Storage form items variable
+        ('storage_fixed_1_var', _mkitem("variable_rate", 0)),
+        ('storage_fixed_2_var', _mkitem("variable_rate", 1)),
+        ('storage_alloc_var', _mkitem("variable_rate", 2)),
+        ('storage_used_var', _mkitem("variable_rate", 3)),
         ('add_button', form_buttons.add),
         ('save_button', form_buttons.save),
         ('reset_button', form_buttons.reset),
