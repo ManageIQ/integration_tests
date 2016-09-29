@@ -704,9 +704,10 @@ def text_content(loc, **kwargs):
 
     Returns: A string containing the text of the element.
     """
-    return execute_script(
+    text = execute_script(
         "return arguments[0].textContent || arguments[0].innerText;",
-        element(loc, **kwargs)).strip()
+        element(loc, **kwargs))
+    return text.strip() if text is not None else ""
 
 
 @removed
