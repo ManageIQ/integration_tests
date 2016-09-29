@@ -11,7 +11,6 @@ from utils import version
 @pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
-@pytest.mark.smoke
 def test_zone_crud(soft_assert):
     zone = conf.Zone(
         name=fauxfactory.gen_alphanumeric(5),
