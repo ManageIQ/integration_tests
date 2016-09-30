@@ -1873,7 +1873,7 @@ def create_docker_vm(self, group_id, provider_id, version, date, pull_url):
             template_group=group, provider=provider,
             container='cfme', name=new_name, original_name=new_name, version=version, date=date,
             ready=False, exists=False, usable=True, preconfigured=True)
-        new_template.create()
+        new_template.save()
 
     workflow = chain(
         prepare_template_deploy.si(new_template.id),
