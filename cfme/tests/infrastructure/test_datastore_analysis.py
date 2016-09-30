@@ -64,6 +64,7 @@ def get_host_data_by_name(provider_key, host_name):
     blockers=[
         BZ(1091033, unblock=lambda datastore: datastore.type != 'iscsi'),
         BZ(1180467, unblock=lambda provider: provider.type != 'rhevm'),
+        BZ(1380707)
     ]
 )
 def test_run_datastore_analysis(request, setup_provider, provider, datastore, soft_assert):
