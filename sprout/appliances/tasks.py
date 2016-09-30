@@ -1846,7 +1846,7 @@ def process_docker_images_from_url_group(self, group_id, version, docker_version
     # "-20160624221308"
     date = docker_version.rsplit('-', 1)[-1]
     try:
-        date = datetime.strptime(date, '%Y%m%d%H%M%S')  # noqa
+        date = datetime.strptime(date, '%Y%m%d%H%M%S').date()  # noqa
     except AttributeError:
         raise ValueError('Could not parse date from {}'.format(docker_version))
     for provider in Provider.objects.exclude(container_base_template=None):
