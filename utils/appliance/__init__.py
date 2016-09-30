@@ -213,33 +213,41 @@ class IPAppliance(object):
         """Prepares the VM to be "generalized" for saving as a template."""
         with self.ssh_client as ssh_client:
             # Seals the VM in order to work when spawned again.
-            ssh_client.run_command("rm -rf /etc/ssh/ssh_host_*")
-            if ssh_client.run_command("grep '^HOSTNAME' /etc/sysconfig/network").rc == 0:
+            ssh_client.run_command("rm -rf /etc/ssh/ssh_host_*", ensure_host=True)
+            if ssh_client.run_command(
+                    "grep '^HOSTNAME' /etc/sysconfig/network", ensure_host=True).rc == 0:
                 # Replace it
                 ssh_client.run_command(
                     "sed -i -r -e 's/^HOSTNAME=.*$/HOSTNAME=localhost.localdomain/' "
-                    "/etc/sysconfig/network")
+                    "/etc/sysconfig/network", ensure_host=True)
             else:
                 # Set it
                 ssh_client.run_command(
-                    "echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network")
+                    "echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network",
+                    ensure_host=True)
             ssh_client.run_command(
-                "sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
+                "sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0",
+                ensure_host=True)
             ssh_client.run_command(
-                "sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
-            ssh_client.run_command("rm -f /etc/udev/rules.d/70-*")
+                "sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0",
+                ensure_host=True)
+            ssh_client.run_command("rm -f /etc/udev/rules.d/70-*", ensure_host=True)
             # Fix SELinux things
-            ssh_client.run_command("restorecon -R /etc/sysconfig/network-scripts")
-            ssh_client.run_command("restorecon /etc/sysconfig/network")
+            ssh_client.run_command("restorecon -R /etc/sysconfig/network-scripts", ensure_host=True)
+            ssh_client.run_command("restorecon /etc/sysconfig/network", ensure_host=True)
             # Stop the evmserverd and move the logs somewhere
-            ssh_client.run_command("service evmserverd stop")
-            ssh_client.run_command("mkdir -p /var/www/miq/vmdb/log/preconfigure-logs")
+            ssh_client.run_command("service evmserverd stop", ensure_host=True)
+            ssh_client.run_command("mkdir -p /var/www/miq/vmdb/log/preconfigure-logs",
+                ensure_host=True)
             ssh_client.run_command(
-                "mv /var/www/miq/vmdb/log/*.log /var/www/miq/vmdb/log/preconfigure-logs/")
+                "mv /var/www/miq/vmdb/log/*.log /var/www/miq/vmdb/log/preconfigure-logs/",
+                ensure_host=True)
             ssh_client.run_command(
-                "mv /var/www/miq/vmdb/log/*.gz /var/www/miq/vmdb/log/preconfigure-logs/")
+                "mv /var/www/miq/vmdb/log/*.gz /var/www/miq/vmdb/log/preconfigure-logs/",
+                ensure_host=True)
             # Reduce swapping, because it can do nasty things to our providers
-            ssh_client.run_command('echo "vm.swappiness = 1" >> /etc/sysctl.conf')
+            ssh_client.run_command('echo "vm.swappiness = 1" >> /etc/sysctl.conf',
+                ensure_host=True)
 
     @property
     def managed_providers(self):
