@@ -3,16 +3,16 @@
 import fauxfactory
 import pytest
 
-from cfme.fixtures import pytest_selenium as sel
 from cfme.dashboard import Widget
 from cfme.intelligence.reports.widgets import MenuWidget, ReportWidget, RSSFeedWidget, ChartWidget
 from cfme.intelligence.reports.dashboards import DefaultDashboard
+from utils.appliance.endpoints.ui import navigate_to
 from utils.update import update
 
 
 @pytest.fixture(scope="module")
 def default_widgets():
-    sel.force_navigate("reports_default_dashboard_edit")
+    navigate_to(DefaultDashboard, 'Details')
     return DefaultDashboard.form.widgets.selected_items
 
 
