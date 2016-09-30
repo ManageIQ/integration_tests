@@ -19,6 +19,7 @@ from utils import conf
 from utils import version
 from utils.api import rest_api
 from utils.appliance import Navigatable
+from utils.appliance.endpoints.ui import navigate_to
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
@@ -199,8 +200,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
            validate_credentials (boolean): Whether to validate credentials - if True and the
                credentials are invalid, an error will be raised.
         """
-        # TODO: replace with navigate_to() once implemented for all provider types
-        sel.force_navigate('{}_provider_new'.format(self.page_name))
+        navigate_to(self, 'Add')
         fill(self.properties_form, self._form_mapping(True, **self.__dict__))
         for cred in self.credentials:
             fill(self.credentials[cred].form, self.credentials[cred], validate=validate_credentials)
@@ -218,9 +218,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
            updates (dict): fields that are changing.
            cancel (boolean): whether to cancel out of the update.
         """
-        # TODO: replace with navigate_to() once implemented for all provider types
-        sel.force_navigate('{}_{}'.format(self.page_name, self.edit_page_suffix),
-            context={'provider': self})
+        navigate_to(self, 'Edit')
         fill(self.properties_form, self._form_mapping(**updates))
         for cred in self.credentials:
             fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
@@ -329,11 +327,10 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def refresh_provider_relationships_ui(self, from_list_view=False):
         """Clicks on Refresh relationships button in provider"""
         if from_list_view:
-            # TODO: replace with navigate_to() once implemented for all provider types
-            sel.force_navigate("{}_providers".format(self.page_name))
+            navigate_to(self, 'All')
             sel.check(Quadicon(self.name, self.quad_name).checkbox())
         else:
-            self.load_details()
+            navigate_to(self, 'Details')
         tb.select("Configuration", self.refresh_text, invokes_alert=True)
         sel.handle_alert(cancel=False)
 
@@ -415,8 +412,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             return False
 
     def wait_for_delete(self):
-        # TODO: replace with navigate_to() once implemented for all provider types
-        sel.force_navigate('{}_providers'.format(self.page_name))
+        navigate_to(self, 'All')
         quad = Quadicon(self.name, self.quad_name)
         logger.info('Waiting for a provider to delete...')
         wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
@@ -438,15 +434,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
-        if not self._on_detail_page():
-            logger.debug("load_details: not on details already, navigating")
-            # TODO: replace with navigate_to() once implemented for all provider types
-            sel.force_navigate('{}_{}'.format(self.page_name, self.detail_page_suffix),
-                context={'provider': self})
-        else:
-            logger.debug("load_details: already on details, refreshing")
-            if refresh:
-                tb.refresh()
+        navigate_to(self, 'Details')
+        if refresh:
+            tb.refresh()
 
     def get_detail(self, *ident, **kwargs):
         """ Gets details from the details infoblock
@@ -526,9 +516,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     @staticmethod
     def clear_provider_by_type(prov_class, validate=True):
         string_name = prov_class.string_name
-        navigate = "{}_providers".format(prov_class.page_name)
-        # TODO: replace with navigate_to() once implemented for all provider types
-        sel.force_navigate(navigate)
+        navigate_to(prov_class, 'All')
         logger.debug('Checking for existing {} providers...'.format(prov_class.type_tclass))
         total = paginator.rec_total()
         if total > 0:
@@ -548,9 +536,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @staticmethod
     def wait_for_no_providers_by_type(prov_class):
-        navigate = "{}_providers".format(prov_class.page_name)
-        # TODO: replace with navigate_to() once implemented for all provider types
-        sel.force_navigate(navigate)
+        navigate_to(prov_class, 'All')
         logger.debug('Waiting for all {} providers to disappear...'.format(prov_class.type_tclass))
         wait_for(
             lambda: get_paginator_value() == 0, message="Delete all {} providers".format(
@@ -591,8 +577,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
         self.refresh_provider_relationships(from_list_view=True)
 
         def _wait_f():
-            # TODO: replace with navigate_to() once implemented for all provider types
-            sel.force_navigate("{}_providers".format(self.page_name))
+            navigate_to(self, 'All')
             q = Quadicon(self.name, self.quad_name)
             creds = q.creds
             return "checkmark" in creds
@@ -612,9 +597,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
 
         Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
         """
-        # TODO: replace with navigate_to() once implemented for all provider types
-        sel.force_navigate('{}_provider_policy_assignment'.format(self.page_name),
-            context={'provider': self})
+        navigate_to(self, 'ManagePolicies')
         return self._assigned_policy_profiles
 
     @property
@@ -630,9 +613,7 @@ class CloudInfraProvider(BaseProvider, PolicyProfileAssignable):
 
         Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
         """
-        # TODO: replace with navigate_to() once implemented for all provider types
-        sel.force_navigate('{}_provider_policy_assignment'.format(self.page_name),
-            context={'provider': self})
+        navigate_to(self, 'ManagePolicies')
         return self._unassigned_policy_profiles
 
     @property
