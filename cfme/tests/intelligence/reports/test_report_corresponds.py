@@ -7,6 +7,7 @@ import utils
 from cfme.intelligence.reports.reports import CustomReport
 from utils.providers import get_mgmt_by_name, setup_a_provider
 from utils.version import since_date_or_version
+from cfme import test_requirement
 
 
 @pytest.fixture(scope="module")
@@ -41,6 +42,7 @@ def report_vms(setup_first_provider):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1244715])
+@test_requirement.reports
 def test_custom_vm_report(soft_assert, report_vms):
     if since_date_or_version(version="5.4.0.0.25"):
         cluster = "Cluster / Deployment Role Name"

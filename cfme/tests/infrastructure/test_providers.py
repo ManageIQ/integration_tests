@@ -14,7 +14,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen, providers, version
 from utils.update import update
-
+from cfme import test_requirement
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
 
@@ -26,6 +26,7 @@ def setup_a_provider():
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
+@test_requirement.provider_discovery
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None)
@@ -34,6 +35,7 @@ def test_empty_discovery_form_validation():
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
+@test_requirement.provider_discovery
 def test_discovery_cancelled_validation():
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, cancel=True)
@@ -42,6 +44,7 @@ def test_discovery_cancelled_validation():
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
+@test_requirement.provider_discovery
 def test_add_cancelled_validation():
     """Tests that the flash message is correct when add is cancelled."""
     prov = VMwareProvider()
@@ -55,6 +58,7 @@ def test_add_cancelled_validation():
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
+@test_requirement.provider_discovery
 def test_type_required_validation():
     """Test to validate type while adding a provider"""
     prov = Provider()
@@ -70,6 +74,7 @@ def test_type_required_validation():
 
 
 @pytest.mark.tier(3)
+@test_requirement.provider_discovery
 def test_name_required_validation():
     """Tests to validate the name while adding a provider"""
     prov = VMwareProvider(
@@ -90,6 +95,7 @@ def test_name_required_validation():
 
 
 @pytest.mark.tier(3)
+@test_requirement.provider_discovery
 def test_host_name_required_validation():
     """Test to validate the hostname while adding a provider"""
     prov = VMwareProvider(
@@ -124,6 +130,7 @@ def test_ip_required_validation():
 
 
 @pytest.mark.tier(3)
+@test_requirement.provider_discovery
 def test_name_max_character_validation(request, setup_a_provider):
     """Test to validate max character for name field"""
     provider = setup_a_provider
@@ -135,6 +142,7 @@ def test_name_max_character_validation(request, setup_a_provider):
 
 
 @pytest.mark.tier(3)
+@test_requirement.provider_discovery
 def test_host_name_max_character_validation():
     """Test to validate max character for host name field"""
     prov = VMwareProvider(
@@ -150,6 +158,7 @@ def test_host_name_max_character_validation():
 
 
 @pytest.mark.tier(3)
+@test_requirement.provider_discovery
 def test_api_port_max_character_validation():
     """Test to validate max character for api port field"""
     prov = RHEVMProvider(
@@ -167,6 +176,7 @@ def test_api_port_max_character_validation():
 
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
+@test_requirement.provider_discovery
 def test_providers_discovery(request, provider):
     """Tests provider discovery
 
@@ -181,6 +191,7 @@ def test_providers_discovery(request, provider):
 
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_infra_providers')
+@test_requirement.provider_discovery
 def test_provider_add_with_bad_credentials(provider):
     """Tests provider add with bad credentials
 
@@ -207,6 +218,7 @@ def test_provider_add_with_bad_credentials(provider):
 
 @pytest.mark.usefixtures('has_no_infra_providers')
 @pytest.mark.tier(1)
+@test_requirement.provider_discovery
 def test_provider_crud(provider):
     """Tests provider add with good credentials
 
