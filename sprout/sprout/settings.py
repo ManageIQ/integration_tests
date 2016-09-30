@@ -45,15 +45,16 @@ INSTALLED_APPS = (
     'django_object_actions',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
+]
+
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
@@ -234,6 +235,11 @@ CELERYBEAT_SCHEDULE = {
     'synchronize-appliances-metadata': {
         'task': 'appliances.tasks.appliances_synchronize_metadata',
         'schedule': timedelta(minutes=45),
+    },
+
+    'delete-suggested-templates': {
+        'task': 'appliances.tasks.delete_suggested_templates',
+        'schedule': timedelta(days=1),
     }
 }
 

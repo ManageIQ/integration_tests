@@ -2,8 +2,8 @@
 {% block title %}Providers{% endblock %}
 {% block body %}
 <ul class="nav nav-tabs">
-{% for group in groups %}
-    <li {% if group.id == group_id %}class="active"{% endif %}><a href={% url 'group_templates' group.id %}>{{group.id}} ({{ group.existing_templates|length }})</a></li>
+{% for group_ in groups %}
+    <li {% if group_.id == group_id %}class="active"{% endif %}><a href={% url 'group_templates' group_.id %}>{{group_.id}} ({{ group_.existing_templates|length }})</a> </li>
 {% endfor %}
 </ul>
 
@@ -15,6 +15,7 @@
         <th>Provider</th>
         <th>Name</th>
         <th>Configured</th>
+        <th>Keep?</th>
         <th>Actions</th>
     </thead>
     <tbody>
@@ -29,7 +30,8 @@
                 {{ template.name }} {% if template.parent_template and template.parent_template.exists_and_ready %}(<a href="#{{ template.parent_template.id }}">parent</a>){% endif %}
                 {% if template.suggested_delete %}</strong>{% endif %}
             </td>
-            <td><span class="glyphicon glyphicon-{% if template.preconfigured %}ok{% else %}remove{% endif %}"></span></td>
+            <td><input type="checkbox" disabled {% if template.preconfigured %}checked{% endif %}></td>
+            <td><input type="checkbox" class="keep_template" value="true" data-tid={{ template.id }} {% if template.keep %}checked{% endif %}></td>
             <td>
                 {% if template.suggested_delete %}
                     <button class="btn btn-danger btn-xs delete-template" data-template="{{ template.id }}" id="button-{{ template.id }}"><span class="glyphicon glyphicon-trash"></span> Delete from provider</button>
@@ -42,6 +44,10 @@
         {% endfor %}
     </tbody>
 </table>
+
+<button class="btn btn-success btn-xs {% if not group.suggested_templates_delete %}disabled{% endif %}" id='deleting_disable'><span class="glyphicon glyphicon-trash"></span> Disable template deletion</button>
+<button class="btn btn-danger btn-xs {% if group.suggested_templates_delete %}disabled{% endif %}" id='deleting_enable'><span class="glyphicon glyphicon-trash"></span> Enable template deletion</button>
+
 
 <script type="text/javascript">
 $(document).ready(function() {
@@ -73,6 +79,67 @@ $(document).ready(function() {
             $("#button-" + template).show();
         });
     }
+
+    $("#deleting_enable").click(function() {
+        var e = $(this);
+        if(e.hasClass('disabled')) return;
+        e.addClass('disabled');
+        if(!$("#deleting_disable").hasClass('disabled'))
+            $("#deleting_disable").addClass('disabled');
+        // Stuff is blocked now, kick off the ajax request
+        $.ajax({
+            type: "POST",
+            url: "{% url 'enable_group_template_deletion' group.id %}",
+            dataType: 'html'
+        }).done(function(data) {
+            $("#deleting_disable").removeClass('disabled');
+        }).fail(function(xhr, textStatus, errorThrown) {
+            addAlert("danger", "Error during template deletion enable: " + xhr.responseText);
+            e.removeClass('disabled');
+        })
+    });
+
+    $("#deleting_disable").click(function() {
+        var e = $(this);
+        if(e.hasClass('disabled')) return;
+        e.addClass('disabled');
+        if(!$("#deleting_enable").hasClass('disabled'))
+            $("#deleting_enable").addClass('disabled');
+        // Stuff is blocked now, kick off the ajax request
+        $.ajax({
+            type: "POST",
+            url: "{% url 'disable_group_template_deletion' group.id %}",
+            dataType: 'html'
+        }).done(function(data) {
+            $("#deleting_enable").removeClass('disabled');
+        }).fail(function(xhr, textStatus, errorThrown) {
+            addAlert("danger", "Error during template deletion disable: " + xhr.responseText);
+            e.removeClass('disabled');
+        })
+    });
+
+    $(".keep_template").click(function() {
+        var e = $(this);
+        if(e.hasClass('disabled')) return;
+        e.addClass('disabled');
+        var template_id = e.attr('data-tid');
+        if(e.is(":checked")) {
+            var url = "{% url 'template_keep_enable' %}";
+        } else {
+            var url = "{% url 'template_keep_disable' %}";
+        }
+        $.ajax({
+            type: "POST",
+            url: url,
+            dataType: "html",
+            data: {template_id: template_id}
+        }).done(function(data) {
+            e.removeClass('disabled');
+        }).fail(function(xhr, textStatus, errorThrown) {
+            addAlert("danger", "Error during template deletion disable: " + xhr.responseText);
+            e.removeClass('disabled');
+        });
+    });
 
     $(".spinner").hide();
     // Template deletion

@@ -1772,3 +1772,11 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
 
         # And now, refresh!
         refresh_appliances_provider.delay(provider.id)
+
+
+@singleton_task()
+def delete_suggested_templates(self):
+    for template in Template.objects.filter(
+            template_group__suggested_templates_delete=True, suggested_delete=True, keep=False):
+        if template.can_be_deleted:
+            delete_template_from_provider.delay(template.id)
