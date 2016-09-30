@@ -1880,7 +1880,8 @@ def create_docker_vm(self, group_id, provider_id, version, date, pull_url):
         new_name = docker_vm_name(version, date)
         new_template = Template(
             template_group=group, provider=provider,
-            container='cfme', name=new_name, original_name=new_name, version=version, date=date,
+            container='cfme', name=new_name, original_name=provider.container_base_template,
+            version=version, date=date,
             ready=False, exists=False, usable=True, preconfigured=True)
         new_template.save()
 
