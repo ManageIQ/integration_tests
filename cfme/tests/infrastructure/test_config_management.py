@@ -1,11 +1,11 @@
 import fauxfactory
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.configure.configuration import Category, Tag
 from utils import error, version
 from utils.update import update
 from utils.testgen import config_managers, generate
 from utils.blockers import BZ
+from utils.appliance.endpoints.ui import navigate_to
 
 
 pytest_generate_tests = generate(config_managers)
@@ -63,8 +63,7 @@ def tag(category):
         unblock=lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
 ])
 def test_config_manager_detail_config_btn(request, config_manager):
-    sel.force_navigate('infrastructure_config_manager_refresh_detail',
-        context={'manager': config_manager})
+    navigate_to(config_manager, 'RefreshRelationshipsFromDetails')
 
 
 @pytest.mark.tier(2)
