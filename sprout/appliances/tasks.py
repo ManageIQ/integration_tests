@@ -410,7 +410,10 @@ def prepare_template_deploy(self, template_id):
             template.set_status("Waiting for deployment to be finished.")
             template.provider_api.wait_vm_running(template.name)
     except Exception as e:
-        template.set_status("Could not properly deploy the template. Retrying.")
+        template.set_status(
+            "Could not properly deploy the template. Retrying. {}: {}".format(
+                type(e).__name__, str(e)))
+        self.logger.exception(e)
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
     else:
         template.set_status("Template deployed.")
@@ -1858,6 +1861,13 @@ def process_docker_images_from_url_group(self, group_id, version, docker_version
             create_docker_vm.delay(group.id, provider.id, version, date, pull_url)
 
 
+def docker_vm_name(version, date):
+    return 'docker-{}-{}-{}'.format(
+        re.sub(r'[^0-9a-z]', '', version.lower()),
+        re.sub(r'[^0-9]', '', str(date)),
+        fauxfactory.gen_alphanumeric(length=4).lower())
+
+
 @singleton_task()
 def create_docker_vm(self, group_id, provider_id, version, date, pull_url):
     group = Group.objects.get(id=group_id)
@@ -1867,8 +1877,7 @@ def create_docker_vm(self, group_id, provider_id, version, date, pull_url):
             self.retry(
                 args=(group_id, provider_id, version, date, pull_url), countdown=60, max_retries=60)
 
-        new_name = 'cfme_docker_{}_{}_{}'.format(
-            version, str(date).replace('-', ''), fauxfactory.gen_alpha(length=4))
+        new_name = docker_vm_name(version, date)
         new_template = Template(
             template_group=group, provider=provider,
             container='cfme', name=new_name, original_name=new_name, version=version, date=date,
