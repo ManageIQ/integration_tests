@@ -4,6 +4,7 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
+from cfme import test_requirements
 from utils import testgen
 from utils.wait import wait_for
 
@@ -11,6 +12,8 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('vm_name', 'uses_infra_providers', 'catalog_item'),
     pytest.mark.long_running,
+    test_requirements.service,
+    pytest.mark.tier(3)
 ]
 
 
@@ -18,7 +21,6 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcent
     scope="module")
 
 
-@pytest.mark.tier(3)
 def test_copy_request(setup_provider, provider, catalog_item, request):
     """Automate BZ 1194479"""
     vm_name = catalog_item.provisioning_data["vm_name"]

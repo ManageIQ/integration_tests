@@ -10,12 +10,14 @@ from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services import requests
 from cfme.exceptions import CandidateNotFound
 from cfme.web_ui import flash
+from cfme import test_requirements
 from utils import error
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version
 
 pytestmark = [
+    test_requirements.service,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.tier(2)

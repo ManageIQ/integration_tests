@@ -5,9 +5,11 @@ import pytest
 from utils.update import update
 import utils.error as error
 import cfme.tests.configure.test_access_control as tac
+from cfme import test_requirements
+
+pytestmark = [test_requirements.service, pytest.mark.tier(2)]
 
 
-@pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_catalog_crud():
     cat = Catalog(name=fauxfactory.gen_alphanumeric(),
@@ -18,7 +20,6 @@ def test_catalog_crud():
     cat.delete()
 
 
-@pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_catalog_duplicate_name():
     cat = Catalog(name=fauxfactory.gen_alphanumeric(),
@@ -29,7 +30,6 @@ def test_catalog_duplicate_name():
     cat.delete()
 
 
-@pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_permissions_catalog_add(setup_cloud_providers):
     """ Tests that a catalog can be added only with the right permissions"""

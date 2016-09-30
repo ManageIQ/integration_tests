@@ -9,12 +9,14 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
+from cfme import test_requirements
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
 
 
 pytestmark = [
+    test_requirements.service,
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.tier(2)
 ]

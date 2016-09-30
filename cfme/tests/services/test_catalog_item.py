@@ -9,8 +9,10 @@ from utils import error
 from utils.update import update
 from utils.blockers import BZ
 import cfme.tests.configure.test_access_control as tac
+from cfme import test_requirements
 
-pytestmark = [pytest.mark.tier(3)]
+
+pytestmark = [test_requirements.service, pytest.mark.tier(3)]
 
 
 @pytest.yield_fixture(scope="function")

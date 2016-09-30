@@ -9,8 +9,10 @@ from utils import testgen, version
 from utils.log import logger
 from utils.wait import wait_for
 from cfme.services import requests
+from cfme import test_requirements
 
 pytestmark = [
+    test_requirements.service,
     pytest.mark.ignore_stream("5.5"),
     pytest.mark.tier(2)]
 

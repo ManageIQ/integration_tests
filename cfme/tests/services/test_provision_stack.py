@@ -9,6 +9,7 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.myservice import MyService
 from cfme.services import requests
 from cfme.cloud.stack import Stack
+from cfme import test_requirements
 from utils import testgen, version
 from utils.log import logger
 from utils.wait import wait_for
@@ -17,6 +18,7 @@ from utils.wait import wait_for
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("upstream"),
+    test_requirements.stack,
     pytest.mark.tier(2)
 ]
 

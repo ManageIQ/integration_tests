@@ -9,6 +9,7 @@ from cfme.login import login_admin
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash
+from cfme import test_requirements
 from utils.browser import browser
 from utils.providers import setup_a_provider
 from utils.wait import wait_for
@@ -17,6 +18,7 @@ from fixtures.pytest_store import store
 
 pytestmark = [
     pytest.mark.meta(server_roles="-automate"),  # To prevent the provisioning itself.
+    test_requirements.service
 ]
 
 

@@ -6,9 +6,10 @@ from utils import testgen, error
 from utils.update import update
 from cfme.web_ui import mixins
 from cfme.fixtures import pytest_selenium as sel
+from cfme import test_requirements
 
 
-pytestmark = [pytest.mark.tier(2)]
+pytestmark = [test_requirements.stack, pytest.mark.tier(2)]
 
 METHOD_TORSO = """
 {  "AWSTemplateFormatVersion" : "2010-09-09",
