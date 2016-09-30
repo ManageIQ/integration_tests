@@ -4,6 +4,7 @@ import pytest
 import random
 import time
 
+from cfme import test_requirements
 from fixtures.pytest_store import store
 from utils import providers
 from utils import testgen
@@ -19,7 +20,10 @@ def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm'])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
-pytestmark = [pytest.mark.tier(1)]
+pytestmark = [
+    pytest.mark.tier(1),
+    test_requirements.c_and_u
+]
 
 
 @pytest.yield_fixture(scope="module")
