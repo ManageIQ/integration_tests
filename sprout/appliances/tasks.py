@@ -9,17 +9,21 @@ import random
 import re
 import command
 import yaml
+from contextlib import closing
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from celery import chain, chord, shared_task
 from celery.exceptions import MaxRetriesExceededError
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import wraps
+from lxml import etree
 from novaclient.exceptions import OverLimit as OSOverLimit
 from paramiko import SSHException
+from urllib2 import urlopen, HTTPError
 import socket
 
 from appliances.models import (
@@ -416,7 +420,7 @@ def prepare_template_deploy(self, template_id):
 def prepare_template_verify_version(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Verifying version.")
-    appliance = CFMEAppliance(template.provider_name, template.name)
+    appliance = CFMEAppliance(template.provider_name, template.name, container=template.container)
     appliance.ipapp.wait_for_ssh()
     try:
         true_version = appliance.version
@@ -467,7 +471,7 @@ def prepare_template_verify_version(self, template_id):
 def prepare_template_configure(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Customization started.")
-    appliance = CFMEAppliance(template.provider_name, template.name)
+    appliance = CFMEAppliance(template.provider_name, template.name, container=template.container)
     try:
         appliance.configure(
             setup_fleece=False,
@@ -555,7 +559,7 @@ def prepare_template_delete_on_error(self, template_id):
                 [template.temporary_name], timeout='5m', delay=10)
         template.delete()
     except Exception as e:
-        self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
+        self.retry(args=(template_id,), exc=e, countdown=60, max_retries=5)
 
 
 @logged_task()
@@ -637,6 +641,7 @@ def process_delayed_provision_tasks(self):
                 # Try freeing up some space in provider
                 for provider in task.pool.possible_providers:
                     appliances = provider.free_shepherd_appliances.exclude(
+                        task.pool.appliance_container_q,
                         **task.pool.appliance_filter_params)
                     if appliances:
                         Appliance.kill(random.choice(appliances))
@@ -859,6 +864,10 @@ def appliance_power_on(self, appliance_id):
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.set_power_state(Appliance.Power.ON)
                 appliance.save()
+            if appliance.containerized:
+                with appliance.ssh as ssh:
+                    # Fire up the container
+                    ssh.run_command('cfme-start')
             return
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
@@ -1125,22 +1134,23 @@ def generic_shepherd(self, preconfigured):
         prov_filter = {'provider__user_groups': gs.user_group}
         group_versions = Template.get_versions(
             template_group=gs.template_group, ready=True, usable=True, preconfigured=preconfigured,
-            **prov_filter)
+            container=None, **prov_filter)
         group_dates = Template.get_dates(
             template_group=gs.template_group, ready=True, usable=True, preconfigured=preconfigured,
-            **prov_filter)
+            container=None, **prov_filter)
         if group_versions:
             # Downstream - by version (downstream releases)
             version = group_versions[0]
             # Find the latest date (one version can have new build)
             dates = Template.get_dates(
                 template_group=gs.template_group, ready=True, usable=True,
-                version=group_versions[0], preconfigured=preconfigured, **prov_filter)
+                version=group_versions[0], preconfigured=preconfigured, container=None,
+                **prov_filter)
             if not dates:
                 # No template yet?
                 continue
             date = dates[0]
-            filter_keep = {"version": version, "date": date}
+            filter_keep = {"version": version, "date": date, 'container': None}
             filters_kill = []
             for kill_date in dates[1:]:
                 filters_kill.append({"version": version, "date": kill_date})
@@ -1148,7 +1158,7 @@ def generic_shepherd(self, preconfigured):
                 filters_kill.append({"version": kill_version})
         elif group_dates:
             # Upstream - by date (upstream nightlies)
-            filter_keep = {"date": group_dates[0]}
+            filter_keep = {"date": group_dates[0], 'container': None}
             filters_kill = [{"date": v} for v in group_dates[1:]]
         else:
             continue  # Ignore this group, no templates detected yet
@@ -1210,7 +1220,8 @@ def generic_shepherd(self, preconfigured):
         for filter_kill in filters_kill:
             for template in Template.objects.filter(
                     ready=True, usable=True, template_group=gs.template_group,
-                    preconfigured=preconfigured, **filter_kill):
+                    preconfigured=preconfigured, container=None, **filter_kill):
+
                 for a in Appliance.objects.filter(
                         template=template, appliance_pool=None, marked_for_deletion=False):
                     self.logger.info(
@@ -1772,3 +1783,119 @@ def synchronize_untracked_vms_in_provider(self, provider_id):
 
         # And now, refresh!
         refresh_appliances_provider.delay(provider.id)
+
+
+@singleton_task()
+def read_docker_images_from_url(self):
+    for group in Group.objects.exclude(templates_url=None):
+        read_docker_images_from_url_group.delay(group.id)
+
+
+@singleton_task()
+def read_docker_images_from_url_group(self, group_id):
+    group = Group.objects.get(id=group_id)
+    with closing(urlopen(group.templates_url)) as http:
+        root = etree.parse(http, parser=etree.HTMLParser()).getroot()
+
+    result = set()
+    for link in root.xpath('//a[../../td/img[contains(@src, "folder")]]'):
+        try:
+            href = link.attrib['href']
+        except KeyError:
+            continue
+        url = group.templates_url + href
+        version_with_suffix = href.rstrip('/')  # Does not contain the last digit
+        try:
+            with closing(urlopen(url + 'cfme-docker')) as http:
+                cfme_docker = http.read().strip()
+        except HTTPError:
+            self.logger.info('Skipping {} (no docker)'.format(url))
+            continue
+
+        try:
+            with closing(urlopen(url + 'version')) as http:
+                cfme_version = http.read().strip()
+                if '-' in version_with_suffix:
+                    # Use the suffix from the folder name
+                    suffix = version_with_suffix.rsplit('-', 1)[-1]
+                    cfme_version = '{}-{}'.format(cfme_version, suffix)
+        except HTTPError:
+            self.logger.info('Skipping {} (no version)'.format(url))
+            continue
+
+        cfme_docker = re.split(r'\s+', cfme_docker)
+        if len(cfme_docker) == 2:
+            pull_url, latest_mapping = cfme_docker
+            latest = re.sub(r'^\(latest=([^)]+)\)$', '\\1', latest_mapping)
+            proper_pull_url = re.sub(r':latest$', ':{}'.format(latest), pull_url)
+        elif cfme_docker and cfme_docker[0].lower().strip() == 'tags:':
+            # Multiple tags, take the longest
+            proper_pull_url = sorted(filter(None, cfme_docker[1:]), key=len, reverse=True)[0]
+        else:
+            self.logger.info('Skipping: unknown format: {}'.format(str(cfme_docker)))
+            continue
+        if cfme_version in result:
+            continue
+        process_docker_images_from_url_group.delay(group.id, cfme_version, latest, proper_pull_url)
+        result.add(cfme_version)
+
+
+@singleton_task()
+def process_docker_images_from_url_group(self, group_id, version, docker_version, pull_url):
+    group = Group.objects.get(id=group_id)
+    # "-20160624221308"
+    date = docker_version.rsplit('-', 1)[-1]
+    try:
+        date = datetime.strptime(date, '%Y%m%d%H%M%S')  # noqa
+    except AttributeError:
+        raise ValueError('Could not parse date from {}'.format(docker_version))
+    for provider in Provider.objects.exclude(container_base_template=None):
+        try:
+            Template.objects.get(
+                ~Q(container=None), template_group=group, provider=provider, version=version,
+                date=date, preconfigured=True)
+        except ObjectDoesNotExist:
+            create_docker_vm.delay(group.id, provider.id, version, date, pull_url)
+
+
+@singleton_task()
+def create_docker_vm(self, group_id, provider_id, version, date, pull_url):
+    group = Group.objects.get(id=group_id)
+    provider = Provider.objects.get(id=provider_id)
+    with transaction.atomic():
+        if provider.remaining_configuring_slots < 1:
+            self.retry(
+                args=(group_id, provider_id, version, date, pull_url), countdown=60, max_retries=60)
+
+        new_name = 'cfme_docker_{}_{}_{}'.format(
+            version, str(date).replace('-', ''), fauxfactory.gen_alpha(length=4))
+        new_template = Template(
+            template_group=group, provider=provider,
+            container='cfme', name=new_name, original_name=new_name, version=version, date=date,
+            ready=False, exists=False, usable=True, preconfigured=True)
+        new_template.create()
+
+    workflow = chain(
+        prepare_template_deploy.si(new_template.id),
+        configure_docker_template.si(new_template.id, pull_url),
+        prepare_template_seal.si(new_template.id),
+        prepare_template_poweroff.si(new_template.id),
+        prepare_template_finish.si(new_template.id),
+    )
+    workflow.link_error(prepare_template_delete_on_error.si(new_template.id))
+    workflow()
+
+
+@singleton_task()
+def configure_docker_template(self, template_id, pull_url):
+    template = Template.objects.get(id=template_id)
+    template.set_status("Waiting for SSH.")
+    appliance = CFMEAppliance(template.provider_name, template.name, container=template.container)
+    appliance.ipapp.wait_for_ssh()
+    with appliance.ipapp.ssh_client as ssh:
+        template.set_status("Setting the pull URL.")
+        ssh.run_command(
+            'echo "export CFME_URL={}" > /etc/cfme_pull_url'.format(pull_url), ensure_host=True)
+        template.set_status("Pulling the {}.".format(pull_url))
+        ssh.run_command('docker pull {}'.format(pull_url), ensure_host=True)
+        template.set_status('Pulling finished.')

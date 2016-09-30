@@ -41,7 +41,7 @@
 {% for pool in pools %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
         <div class="panel-heading">
-            <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.yum_update %} with YUM updated appliances{% endif %}
+            <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.yum_update %} with YUM updated appliances{% endif %}{% if pool.is_container %} (containers){% endif %}
             {% if not pool.finished %}
             - D: {{ pool.num_delayed_provisioning_tasks }}, Q: {{ pool.num_provisioning_tasks_before }}, PS: {{ pool.num_possible_provisioning_slots }}, AS: {{ pool.num_possible_appliance_slots}}, SA: {{ pool.num_shepherd_appliances }}
             {% endif %}</strong>
@@ -256,6 +256,16 @@
                 </div>
             </div>
             <div class="form-group">
+                <label for="container" class="col-md-2 control-label">Container?:</label>
+                <div class="col-md-4">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" class="form-control" id="container" name="container" value="true">
+                      </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
                 <label for="yum_update" class="col-md-2 control-label">YUM updated?:</label>
                 <div class="col-md-4">
                     <div class="checkbox">
@@ -335,7 +345,7 @@
                 $.ajax({
                         type: "POST",
                         url: "{% url 'versions_for_group' %}",
-                        data: {stream: $('select#stream').val(), preconfigured: $("#preconfigured").is(":checked")},
+                        data: {stream: $('select#stream').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
                         dataType: 'html'
                  }).done(function(data){
                     $('select#version').html(data);
@@ -345,11 +355,20 @@
             $('#preconfigured').change(function(){
                 $("select#stream").trigger("change");  // a bit stupid but no better idea right now
             });
+            $('#container').change(function(){
+                if($("#container").is(":checked")){
+                    $('#preconfigured').prop('checked', true);
+                    $('#preconfigured').prop('disabled', true);
+                } else {
+                    $('#preconfigured').prop('disabled', false);
+                }
+                $("select#stream").trigger("change");  // a bit stupid but no better idea right now
+            });
             $('select#version').change(function(){
                 $.ajax({
                         type: "POST",
                         url: "{% url 'date_for_group_and_version' %}",
-                        data: {stream: $('select#stream').val(), version: $('select#version').val(), preconfigured: $("#preconfigured").is(":checked")},
+                        data: {stream: $('select#stream').val(), version: $('select#version').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
                         dataType: 'html'
                  }).done(function(data){
                     $('select#date').html(data);
@@ -360,7 +379,7 @@
                 $.ajax({
                         type: "POST",
                         url: "{% url 'providers_for_date_group_and_version' %}",
-                        data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked")},
+                        data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked"), container: $("#container").is(":checked")},
                         dataType: 'html'
                  }).done(function(data){
                     $('select#provider').html(data);
