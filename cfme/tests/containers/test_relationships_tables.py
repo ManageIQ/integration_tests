@@ -35,7 +35,6 @@ def test_relationships_tables(provider, cls):
              in the Relationships table also appears in the Properties table,
             or to the page where the number of rows is equal to the number
            that is displayed in the Relationships table.
-
     """
     navigate_to(cls, 'All')
     tb.select('List View')

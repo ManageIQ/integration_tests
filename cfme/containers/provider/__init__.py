@@ -27,27 +27,27 @@ nav.add_branch(
         'containers_provider_new':
             lambda _: cfg_btn('Add a New Containers Provider'),
         'containers_provider':
-        [
-            lambda ctx: sel.check(Quadicon(ctx['provider'].name, None).checkbox),
-            {
-                'containers_provider_edit':
-                lambda _: cfg_btn('Edit Selected Containers Provider'),
-                'containers_provider_edit_tags':
-                lambda _: pol_btn('Edit Tags')
-            }],
+            [
+                lambda ctx: sel.check(Quadicon(ctx['provider'].name, None).checkbox),
+                {
+                    'containers_provider_edit':
+                        lambda _: cfg_btn('Edit Selected Containers Provider'),
+                    'containers_provider_edit_tags':
+                        lambda _: pol_btn('Edit Tags')
+                }],
         'containers_provider_detail':
-        [
-            lambda ctx: sel.click(Quadicon(ctx['provider'].name, None)),
-            {
-                'containers_provider_edit_detail':
-                lambda _: cfg_btn('Edit this Containers Provider'),
-                'containers_provider_timelines_detail':
-                lambda _: mon_btn('Timelines'),
-                'containers_provider_edit_tags_detail':
-                lambda _: pol_btn('Edit Tags'),
-                'containers_provider_topology_detail':
-                lambda _: sel.click(InfoBlock('Overview', 'Topology'))
-            }]
+            [
+                lambda ctx: sel.click(Quadicon(ctx['provider'].name, None)),
+                {
+                    'containers_provider_edit_detail':
+                        lambda _: cfg_btn('Edit this Containers Provider'),
+                    'containers_provider_timelines_detail':
+                        lambda _: mon_btn('Timelines'),
+                    'containers_provider_edit_tags_detail':
+                        lambda _: pol_btn('Edit Tags'),
+                    'containers_provider_topology_detail':
+                        lambda _: sel.click(InfoBlock('Overview', 'Topology'))
+                }]
     }
 )
 
@@ -162,7 +162,10 @@ class ContainersProvider(BaseProvider, Pretty):
 
     @num_service.variant('ui')
     def num_service_ui(self):
-        return int(self.get_detail("Relationships", "Services"))
+        if version.current_version() < "5.7":
+            return int(self.get_detail("Relationships", "Services"))
+        else:
+            return int(self.get_detail("Relationships", "Container Services"))
 
     @variable(alias='db')
     def num_replication_controller(self):
@@ -220,7 +223,10 @@ class ContainersProvider(BaseProvider, Pretty):
 
     @num_image.variant('ui')
     def num_image_ui(self):
-        return int(self.get_detail("Relationships", "Images"))
+        if version.current_version() < "5.7":
+            return int(self.get_detail("Relationships", "Images"))
+        else:
+            return int(self.get_detail("Relationships", "Container Images"))
 
     @variable(alias='db')
     def num_image_registry(self):
