@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
 # from cfme.configure.tasks import is_cluster_analysis_finished
+from cfme import test_requirements
 from cfme.infrastructure import cluster
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.wait import wait_for
+
+pytestmark = [test_requirements.smartstate]
 
 
 def pytest_generate_tests(metafunc):
