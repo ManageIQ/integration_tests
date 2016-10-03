@@ -12,12 +12,14 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.fixtures import pytest_selenium as sel
+from cfme import test_requirements
 from utils import testgen
 from utils.log import logger
 from utils.update import update
 from utils.wait import wait_for, RefreshTimer
 
-pytestmark = [pytest.mark.meta(server_roles="+automate")]
+pytestmark = [pytest.mark.meta(server_roles="+automate"),
+              test_requirements.provision, pytest.mark.tier(2)]
 
 
 def pytest_generate_tests(metafunc):
@@ -79,7 +81,6 @@ def vm_name(request, provider):
     return vm_name
 
 
-@pytest.mark.tier(2)
 def test_provision_from_template(request, setup_provider, provider, testing_instance, soft_assert):
     """ Tests instance provision from template
 
@@ -102,7 +103,6 @@ def test_provision_from_template(request, setup_provider, provider, testing_inst
     soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
 
 
-@pytest.mark.tier(2)
 def test_provision_from_template_using_rest(
         request, setup_provider, provider, vm_name, rest_api, provisioning):
     """ Tests provisioning from a template using the REST API.
@@ -222,7 +222,6 @@ def copy_domains(domain):
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
@@ -293,7 +292,6 @@ def test_provision_from_template_with_attached_disks(
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1160342])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
@@ -363,7 +361,6 @@ def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.tier(2)
 @pytest.mark.meta(blockers=[1186413])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_provision_with_additional_volume(request, setup_provider, provider, vm_name,
