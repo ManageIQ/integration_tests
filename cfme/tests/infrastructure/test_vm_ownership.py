@@ -1,9 +1,14 @@
 import pytest
+from cfme import test_requirements
 from cfme.rest import a_provider as _a_provider
 from cfme.rest import vm as _vm
 from utils import version
 
-pytestmark = [pytest.mark.meta(blockers=[1276135])]
+
+pytestmark = [
+    test_requirements.ownership,
+    pytest.mark.meta(blockers=[1276135])
+]
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')

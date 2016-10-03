@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.common.vm import VM
 from utils import testgen
 from utils.version import current_version
@@ -9,6 +10,7 @@ from utils.wait import wait_for
 
 
 pytestmark = [
+    test_requirements.power,
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
     pytest.mark.tier(2)
 ]

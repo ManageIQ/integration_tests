@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.rest import a_provider as _a_provider
 from cfme.rest import mark_vm_as_template
 from cfme.rest import vm as _vm
 from utils import error
 
-pytestmark = [pytest.mark.ignore_stream("5.4")]
+pytestmark = [pytest.mark.ignore_stream("5.4"), test_requirements.rest]
 
 
 @pytest.fixture(scope="module")

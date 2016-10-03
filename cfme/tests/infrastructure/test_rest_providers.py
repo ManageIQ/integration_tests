@@ -1,12 +1,16 @@
 import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.configure.configuration import server_roles_disabled
 from cfme.rest import a_provider as _a_provider
 from utils.virtual_machines import deploy_template
 from utils.version import current_version
 from utils.wait import wait_for
 from cfme import test_requirement
+
+
+pytestmark = [test_requirements.rest]
 
 
 @pytest.fixture(scope='module')
