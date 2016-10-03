@@ -113,6 +113,9 @@ class Instance(VM):
     QUADICON_TYPE = "instance"
     VM_TYPE = "Instance"
 
+    REMOVE_SINGLE = {version.LOWEST: "Remove from the VMDB",
+            '5.6': 'Remove Instance'}
+
     def create(self):
         """Provisions an instance with the given properties through CFME
         """
