@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
 from utils import testgen
-from cfme import test_requirement
+from cfme import test_requirements
+from utils.generators import random_vm_name
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider'),
@@ -33,15 +33,14 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm_crud(provider, small_template):
-    return VM.factory(
-        'test_genealogy_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
-        provider, template_name=small_template)
+    return VM.factory(random_vm_name(context='genealogy'), provider,
+                      template_name=small_template)
 
 
 # uncollected above in pytest_generate_tests
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:473"])
 @pytest.mark.parametrize("from_edit", [True, False], ids=["via_edit", "via_summary"])
-@test_requirement.genealogy_vm
+@test_requirements.genealogy
 @pytest.mark.uncollectif(
     lambda provider, from_edit: provider.type_tclass == "cloud" and not from_edit)
 def test_vm_genealogy_detected(
