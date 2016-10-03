@@ -1219,6 +1219,11 @@ def fill_text(textbox, val):
     return (sel.set_text, val)
 
 
+@fill_tag.method((Anything, 'number'))
+def fill_number(bmbox, val):
+    return (sel.set_text, val)
+
+
 @fill_tag.method((Anything, 'password'))
 def fill_password(pwbox, password):
     return (sel.set_text, "********")

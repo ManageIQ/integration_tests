@@ -3,7 +3,10 @@ from cfme.common import Taggable
 from cfme.exceptions import MiddlewareServerNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties, Container
-from cfme.web_ui import CheckboxTable, paginator
+from cfme.web_ui import (
+    CheckboxTable, paginator, Form, Input, fill
+)
+from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
@@ -57,6 +60,15 @@ nav.add_branch(
     'middleware_servers', {
         'middleware_server': lambda ctx: list_tbl.select_row('Server Name', ctx['name']),
     }
+)
+
+timeout_form = Form(
+    fields=[
+        ("timeout", Input("timeout", use_id=True)),
+        ('suspend_button', FormButton("Suspend")),
+        ('shutdown_button', FormButton("Shutdown")),
+        ('cancel_button', FormButton("Cancel"))
+    ]
 )
 
 
@@ -260,20 +272,28 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
                 return mgmt_srv.value['Server State'] == 'running'
         raise MiddlewareServerNotFound("Server '{}' not found in MGMT!".format(self.name))
 
-    def shutdown_server(self):
+    def shutdown_server(self, timeout=10, cancel=False):
         self.load_details(refresh=True)
         pwr_btn("Gracefully shutdown Server", invokes_alert=True)
-        sel.handle_alert()
+        fill(
+            timeout_form,
+            {"timeout": timeout},
+        )
+        sel.click(timeout_form.cancel_button if cancel else timeout_form.shutdown_button)
 
     def restart_server(self):
         self.load_details(refresh=True)
         pwr_btn("Restart Server", invokes_alert=True)
         sel.handle_alert()
 
-    def suspend_server(self):
+    def suspend_server(self, timeout=10, cancel=False):
         self.load_details(refresh=True)
         pwr_btn("Suspend Server", invokes_alert=True)
-        sel.handle_alert()
+        fill(
+            timeout_form,
+            {"timeout": timeout},
+        )
+        sel.click(timeout_form.cancel_button if cancel else timeout_form.suspend_button)
 
     def resume_server(self):
         self.load_details(refresh=True)
