@@ -17,8 +17,12 @@ from utils.update import update
 from utils.version import current_version
 from cfme.web_ui import flash
 from cfme.web_ui import expression_editor
+from cfme import test_requirements
 
-pytestmark = [pytest.mark.long_running]
+pytestmark = [
+    pytest.mark.long_running,
+    test_requirements.control
+]
 
 VM_EXPRESSIONS_TO_TEST = [
     (

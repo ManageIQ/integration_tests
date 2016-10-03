@@ -4,6 +4,7 @@ import pytest
 
 from cfme.control.explorer import PolicyProfile, VMControlPolicy
 from cfme.control.import_export import export_form
+from cfme import test_requirements
 
 
 @pytest.fixture(scope="module")
@@ -17,6 +18,7 @@ def policy_profile(request):
     return profile
 
 
+@test_requirements.control
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202229], automates=[1202229])
 def test_policy_profiles_listed(policy_profile):

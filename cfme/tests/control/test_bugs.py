@@ -9,6 +9,13 @@ from utils.version import current_version
 from utils.log import logger
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
+from cfme import test_requirements
+
+
+pytestmark = [
+    test_requirements.control,
+    pytest.mark.tier(3)
+]
 
 
 @pytest.fixture(scope="module")
@@ -29,7 +36,6 @@ def vmware_vm(request, vmware_provider):
     return vm
 
 
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1155284])
 def test_scope_windows_registry_stuck(request, setup_a_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
@@ -57,7 +63,6 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
     vm.unassign_policy_profiles(profile.description)
 
 
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1209538], automates=[1209538])
 @pytest.mark.skipif(current_version() > "5.5", reason="requires cfme 5.5 and lower")
 def test_folder_field_scope(request, vmware_provider, vmware_vm):
@@ -133,7 +138,6 @@ def test_folder_field_scope(request, vmware_provider, vmware_vm):
         message="vm be tagged")
 
 
-@pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1243357], automates=[1243357])
 def test_invoke_custom_automation(request):
     """This test tests a bug that caused the ``Invoke Custom Automation`` fields to disappear.
