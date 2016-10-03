@@ -431,6 +431,25 @@ class GCEInstance(Instance):
             flash.assert_success_message(
                 "VM Provision Request was Submitted, you will be notified when your VMs are ready")
 
+    def power_control_from_provider(self, option):
+        """Power control the instance from the provider
+
+        Args:
+            option: power control action to take against instance
+        Raises:
+            OptionNotAvailable: option param must have proper value
+        """
+        if option == GCEInstance.START:
+            self.provider.mgmt.start_vm(self.name)
+        elif option == GCEInstance.STOP:
+            self.provider.mgmt.stop_vm(self.name)
+        elif option == GCEInstance.RESTART:
+            self.provider.mgmt.restart_vm(self.name)
+        elif option == GCEInstance.TERMINATE:
+            self.provider.mgmt.delete_vm(self.name)
+        else:
+            raise OptionNotAvailable(option + " is not a supported action")
+
 
 @VM.register_for_provider_type("azure")
 class AzureInstance(Instance):
