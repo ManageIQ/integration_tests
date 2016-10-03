@@ -1,12 +1,13 @@
 import fauxfactory
 import pytest
+from cfme import test_requirements
 from cfme.cloud.keypairs import KeyPair
 from utils import testgen
 from utils.version import current_version
 from utils.providers import setup_a_provider as _setup_a_provider
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda: current_version() > '5.7')
+    pytest.mark.uncollectif(lambda: current_version() > '5.7', test_requirements.provision)
 ]
 
 pytestmark = [pytest.mark.usefixtures("setup_a_provider")]
@@ -37,4 +38,23 @@ def test_keypair_crud():
     """
     keypair = KeyPair(name=fauxfactory.gen_alphanumeric())
     keypair.create()
+    keypair.delete()
+
+
+def test_edit_tags(tag):
+    """ This will test whether it will assign tags and remove the tags.
+
+    Prerequisites:
+        * Keypair must be added
+
+    Steps:
+        * Provide Keypair name.
+        * Select the Keypair and assign the tags.
+        * Also delete the tag which is assign in previous step.
+    """
+    tag = ('Department', 'Accounting')
+    keypair = KeyPair(name=fauxfactory.gen_alphanumeric())
+    keypair.create()
+    keypair.add_tag(tag)
+    keypair.remove_tag(tag)
     keypair.delete()
