@@ -8,7 +8,7 @@ from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.net import ip_address, resolve_hostname
 from utils.providers import get_mgmt_by_name, setup_a_provider as _setup_a_provider
 from utils import version
-from cfme import test_requirement
+from cfme import test_requirements
 provider_props = partial(details_page.infoblock.text, "Properties")
 
 
@@ -18,7 +18,7 @@ def setup_a_provider():
 
 
 @pytest.mark.tier(3)
-@test_requirement.reports
+@test_requirements.report
 def test_providers_summary(soft_assert, setup_a_provider):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
@@ -52,7 +52,7 @@ def test_providers_summary(soft_assert, setup_a_provider):
 
 
 @pytest.mark.tier(3)
-@test_requirement.reports
+@test_requirements.report
 def test_cluster_relationships(soft_assert, setup_a_provider):
     path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
     report = CannedSavedReport.new(path)
