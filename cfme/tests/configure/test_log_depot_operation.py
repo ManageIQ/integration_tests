@@ -234,8 +234,11 @@ def depot_configured(request, depot_type, depot_machine_folder, depot_credential
 
 @pytest.mark.tier(3)
 @pytest.mark.nondestructive
-@pytest.mark.meta(blockers=BZ(1341502, unblock=lambda depot_type: depot_type != "anon_ftp",
-                              forced_streams=["5.6", "upstream"]))
+@pytest.mark.meta(blockers=[BZ(1341502, unblock=lambda depot_type: depot_type != "anon_ftp",
+                            forced_streams=["5.6", "upstream"]),
+                            BZ(1380781, forced_streams=["5.7"])
+                            ]
+                  )
 def test_collect_log_depot(depot_type, depot_machine_folder, depot_credentials, depot_ftp,
                            depot_configured, soft_assert, depot_machine_ip,
                            request):
@@ -316,6 +319,7 @@ def test_collect_log_depot(depot_type, depot_machine_folder, depot_credentials, 
                         datetimes[i][2], datetimes[i + 1][2]))
 
 
+@pytest.mark.meta(blockers=[BZ(1380781, forced_streams=["5.7"])])
 @pytest.mark.tier(3)
 def test_collect_unconfigured(request, soft_assert):
     """ Test checking is collect button enable and disable after log depot was configured
