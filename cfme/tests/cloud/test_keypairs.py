@@ -9,12 +9,11 @@ pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() > '5.7')
 ]
 
-pytestmark = [pytest.mark.usefixtures("setup_a_provider")]
-
 
 @pytest.fixture(scope="module")
-def setup_a_provider():
-    _setup_a_provider(prov_class="cloud", prov_type="openstack", validate=True, check_existing=True)
+def a_provider():
+    return _setup_a_provider(
+        prov_class="cloud", prov_type="openstack", validate=True, check_existing=True)
 
 
 def pytest_generate_tests(metafunc):
@@ -24,7 +23,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.mark.tier(3)
-def test_keypair_crud():
+def test_keypair_crud(a_provider):
     """ This will test whether it will create new Keypair and then deletes it.
 
     Prerequisites:
@@ -35,6 +34,6 @@ def test_keypair_crud():
         * Select Cloud Provider.
         * Also delete it.
     """
-    keypair = KeyPair(name=fauxfactory.gen_alphanumeric())
+    keypair = KeyPair(name=fauxfactory.gen_alphanumeric(), provider=a_provider)
     keypair.create()
     keypair.delete()
