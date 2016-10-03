@@ -11,7 +11,7 @@ from cfme.intelligence.reports.widgets import ChartWidget, MenuWidget, ReportWid
 from utils.path import data_path
 from utils.update import update
 from utils import version
-from cfme import test_requirement
+from cfme import test_requirements
 
 
 report_crud_dir = data_path.join("reports_crud")
@@ -57,7 +57,7 @@ def schedule(request):
 
 
 @pytest.mark.tier(3)
-@test_requirement.reports
+@test_requirements.report
 def test_custom_report_crud(custom_report):
     custom_report.create()
     with update(custom_report):
@@ -70,7 +70,7 @@ def test_custom_report_crud(custom_report):
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1202412])
-@test_requirement.reports
+@test_requirements.report
 def test_schedule_crud(schedule):
     schedule.create()
     with update(schedule):
@@ -182,7 +182,7 @@ def test_dashboard_crud():
 
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-@test_requirement.reports
+@test_requirements.report
 def test_run_report(rest_api):
     report = rest_api.collections.reports.get(name='VM Disk Usage')
     response = report.action.run()
@@ -200,7 +200,7 @@ def test_run_report(rest_api):
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-@test_requirement.reports
+@test_requirements.report
 def test_import_report(rest_api):
     menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
     data = {
