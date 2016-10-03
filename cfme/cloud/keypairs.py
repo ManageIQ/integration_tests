@@ -30,9 +30,10 @@ class KeyPair(Taggable, SummaryMixin, Navigatable):
         name: Name of Keypairs.
     """
 
-    def __init__(self, name=None, appliance=None):
+    def __init__(self, name, provider, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
+        self.provider = provider
 
     def delete(self):
         navigate_to(self, 'All')
@@ -51,7 +52,8 @@ class KeyPair(Taggable, SummaryMixin, Navigatable):
         """Create new keypair"""
         navigate_to(self, 'All')
         cfg_btn('Add a new Key Pair')
-        fill(keypair_form, {'name': self.name}, action=keypair_form.save_button)
+        fill(keypair_form, {'name': self.name, 'provider': self.provider.name},
+             action=keypair_form.save_button)
         if not cancel:
             flash.assert_message_match('Creating Key Pair {}'.format(self.name))
         else:
