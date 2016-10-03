@@ -1,7 +1,7 @@
 import cfme.configure.access_control as ac
 import fauxfactory
 import pytest
-from cfme import Credential, login
+from cfme import Credential, login, test_requirements
 from cfme.common.vm import VM
 from utils import testgen
 
@@ -12,6 +12,7 @@ def pytest_generate_tests(metafunc):
 
 
 pytestmark = [
+    test_requirements.ownership,
     pytest.mark.tier(3)
 ]
 

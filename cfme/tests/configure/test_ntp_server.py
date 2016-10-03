@@ -1,3 +1,4 @@
+from cfme import test_requirements
 from cfme.configure import configuration
 from datetime import datetime, timedelta
 from fixtures.pytest_store import store
@@ -7,6 +8,9 @@ from utils.log import logger
 from utils.wait import wait_for
 import fauxfactory
 import pytest
+
+
+pytestmark = [test_requirements.configuration]
 
 
 def appliance_date():
