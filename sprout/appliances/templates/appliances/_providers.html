@@ -1,4 +1,8 @@
-<option value="any">Any provider (recommended option!) ({{ total_provisioning_slots }}:{{ total_appliance_slots }}:{{ total_shepherd_slots }})</option>
-{% for key, provider in render_providers.items %}
-<option value="{{ key }}">{{ key }} ({{ provider.object.remaining_provisioning_slots }}:{{ provider.object.remaining_appliance_slots }}:{{ provider.shepherd_count }})</option>
-{% endfor %}
+{% if render_providers %}
+    <option value="any">Any provider (recommended option!) ({{ total_provisioning_slots }}:{{ total_appliance_slots }}:{{ total_shepherd_slots }})</option>
+    {% for key, provider in render_providers.items %}
+        <option value="{{ key }}">{{ key }} ({{ provider.object.remaining_provisioning_slots }}:{{ provider.object.remaining_appliance_slots }}:{{ provider.shepherd_count }})</option>
+    {% endfor %}
+{% else %}
+    <option value="<None>">No provider with such template available!</option>
+{% endif %}
