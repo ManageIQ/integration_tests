@@ -8,7 +8,7 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from utils import testgen
 from utils.log import logger
 from utils.wait import TimedOutError
-from cfme import test_requirement
+from cfme import test_requirements
 
 
 def pytest_generate_tests(metafunc):
@@ -54,7 +54,7 @@ def wait_for_vm_state_changes(vm, timeout=600):
 
 
 @pytest.mark.tier(2)
-@test_requirement.relation_discovery
+@test_requirements.relation_discovery
 def test_vm_discovery(request, setup_provider, provider, vm_crud):
     """ Tests whether cfme will discover a vm change (add/delete) without being manually refreshed.
 

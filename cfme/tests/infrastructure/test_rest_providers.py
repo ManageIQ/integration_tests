@@ -7,7 +7,6 @@ from cfme.rest import a_provider as _a_provider
 from utils.virtual_machines import deploy_template
 from utils.version import current_version
 from utils.wait import wait_for
-from cfme import test_requirement
 
 
 pytestmark = [test_requirements.rest]
@@ -93,7 +92,7 @@ def test_provider_edit(request, a_provider, rest_api):
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["delete_from_detail", "delete_from_collection"])
-@test_requirement.provider_discovery
+@test_requirements.provider_discovery
 def test_provider_crud(request, rest_api, from_detail):
     """Test the CRUD on provider using REST API.
     Steps:
