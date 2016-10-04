@@ -32,13 +32,17 @@ class FormButton(Pretty):
         TYPE_CONDITION = (
             "(contains(@class, 'button') or contains(@class, 'btn') or contains(@src, 'button'))"
         )
-        DIMMED = "(contains(@class, 'dimmed') or contains(@class, 'disabled'))"
+        DIMMED = "(contains(@class, 'dimmed') " \
+                "or contains(@class, 'disabled') " \
+                "or contains(@class, 'btn-disabled'))"
         NOT_DIMMED = "not{}".format(DIMMED)
         IS_DISPLAYED = (
             "not(ancestor::*[contains(@style, 'display:none') "
             "or contains(@style, 'display: none')])")
         ON_CURRENT_TAB = (
             "not(ancestor::div[contains(@class, 'tab-pane') and not(contains(@class, 'active'))])")
+
+        
 
     def __init__(self, alt, dimmed_alt=None, force_click=False, partial_alt=False, ng_click=None):
         self._alt = alt
