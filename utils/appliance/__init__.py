@@ -1413,7 +1413,7 @@ class IPAppliance(object):
                      fail_condition=None,
                      delay=5,
                      num_sec=120)
-            return self.get_host_address()
+            return self.get_host_address().strip()
         except Exception as e:
             logger.exception(e)
             self.log.error('waiting for host address from yaml_config timedout')
@@ -1424,25 +1424,32 @@ class IPAppliance(object):
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
         try:
-            db = self.wait_for_host_address()
-            if db is None:
-                return self.address
+            db = self.get_yaml_file(
+                '/var/www/miq/vmdb/config/database.yml')['production']['host']
             db = db.strip()
-            ip_addr = self.ssh_client.run_command('ip address show')
-            if db in ip_addr.output or db.startswith('127') or 'localhost' in db:
-                # address is local, use the appliance address
+            return db
+        except (IOError, KeyError):
+            try:
+                db = self.wait_for_host_address()
                 return self.address
-            else:
-                return db
-        except (IOError, KeyError) as exc:
-            self.log.error('Unable to pull database address from appliance')
-            self.log.exception(exc)
-            return self.address
+                ip_addr = self.ssh_client.run_command('ip address show')
+                if db in ip_addr.output or db.startswith('127') or 'localhost' in db:
+                    # address is local, use the appliance address
+                    return self.address
+                else:
+                    return db
+            except (IOError, KeyError) as exc:
+                self.log.error('Unable to pull database address from appliance')
+                self.log.exception(exc)
+                return self.address
 
     @cached_property
     def db(self):
         # slightly crappy: anything that changes self.db_address should also del(self.db)
-        return db.Db(self.db_address)
+        creds = None
+        if not self.is_db_internal:
+            creds = conf.credentials['external_db']
+        return db.Db(self.db_address, credentials=creds)
 
     @property
     def is_db_enabled(self):
