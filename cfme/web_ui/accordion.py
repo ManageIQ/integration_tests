@@ -17,6 +17,8 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import AccordionItemNotFound
 from cfme.web_ui import Tree, BootstrapTreeview
 from utils import version
+from utils.log import logger
+from utils.wait import wait_for
 
 DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
 DHX_LABEL = '*[contains(@class, "dhx_acc_item_label") or contains(@data-remote, "true")]'
@@ -93,6 +95,7 @@ def is_active(name):
 
 DYNATREE = "../../..//div[@class='panel-body']//ul[@class='dynatree-container']"
 TREEVIEW = '../../..//div[contains(@class, "treeview")]'
+ANY_TREE = '|'.join([DYNATREE, TREEVIEW])
 
 
 def tree(name, *path):
@@ -111,19 +114,27 @@ def tree(name, *path):
     """
     try:
         if not is_active(name):
+            logger.debug('Clicking accordion item %s because it is not active.', name)
             click(name)
     except AccordionItemNotFound:
+        logger.debug('Clicking accordion item %s because AccordionItemNotFound raised.', name)
         click(name)
 
-    root_element = sel.element(locate(name))
-    if sel.is_displayed(DYNATREE, root=root_element):
+    locator = locate(name)
+    # Wait a bit for any of the trees to appear
+    wait_for(
+        lambda: sel.is_displayed(ANY_TREE, root=locator),
+        quiet=True, silent_failure=True, delay=0.2, timeout=5)
+    if sel.is_displayed(DYNATREE, root=locator):
         # Dynatree detected
-        tree = Tree(sel.element(DYNATREE, root=root_element))
-    elif sel.is_displayed(TREEVIEW, root=root_element):
+        tree = Tree(sel.element(DYNATREE, root=locator))
+    elif sel.is_displayed(TREEVIEW, root=locator):
         # treeview detected
-        el = sel.element(TREEVIEW, root=root_element)
+        el = sel.element(TREEVIEW, root=locator)
         tree_id = sel.get_attribute(el, 'id')
         tree = BootstrapTreeview(tree_id)
+    else:
+        raise TypeError('None of the supported trees was detected.')
 
     if path:
         return tree.click_path(*path)
