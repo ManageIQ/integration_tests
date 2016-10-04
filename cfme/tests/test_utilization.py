@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
+
 import pytest
 import time
+
+from cfme import test_requirements
 from fixtures.pytest_store import store
 from utils import providers
 from utils import testgen
@@ -9,9 +13,20 @@ from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, None)
 
-pytestmark = [pytest.mark.tier(1)]
+# Tests for vmware and rhev providers have been moved to cfme/tests/test_utilization_metrics.py.
+# Also, this test just verifies that C&U/perf data is being collected, whereas the tests in
+# test_utilization_metrics.py go a step further and verify that specific performance metrics are
+# being collected.Eventually, support should be added to verify that specific metrics are being
+# collected for *all* providers.
+pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['cloud',
+    'container', 'middleware'], scope="module")
+
+
+pytestmark = [
+    pytest.mark.tier(1),
+    test_requirements.c_and_u
+]
 
 
 @pytest.yield_fixture(scope="module")
@@ -25,7 +40,7 @@ def enable_candu():
         candu.disable_all()
 
 
-# blow away all providers when done - collecting metrics for all of them is
+# Blow away all providers when done - collecting metrics for all of them is
 # too much
 @pytest.yield_fixture
 def handle_provider(provider):
@@ -41,7 +56,7 @@ def handle_provider(provider):
 
 
 def test_metrics_collection(handle_provider, provider, enable_candu):
-    """check the db is gathering collection data for the given provider
+    """Check the db is gathering collection data for the given provider
 
     Metadata:
         test_flag: metrics_collection
