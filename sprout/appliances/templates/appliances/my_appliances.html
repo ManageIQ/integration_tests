@@ -318,7 +318,7 @@
                 <input type="hidden" id="expiration" name="expiration" ng-model="expiration" value="{[{ expiration }]}"> <strong> = {[{ expiration }]} minutes</strong>
               </div>
             </div>
-            <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
+            <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')" id="submit_button"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
         </form>
         <script type="text/javascript">
         $(document).ready(function() {
@@ -383,9 +383,19 @@
                         dataType: 'html'
                  }).done(function(data){
                     $('select#provider').html(data);
+                    if($("#provider").find("option").length <= 1) {
+                        // No providers available
+                        $("#submit_button")[0].disabled = true;
+                    } else {
+                        // Providers available
+                        $("#submit_button")[0].disabled = false;
+                    }
                     $("select#provider").trigger("change");
                  });
             });
+
+            // Initialize the button
+            $("select#stream").trigger("change");
         });
         </script>
     {% else %}

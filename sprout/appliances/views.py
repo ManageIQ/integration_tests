@@ -551,6 +551,11 @@ def request_pool(request):
         preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
         yum_update = request.POST.get("yum_update", "false").lower() == "true"
         container = request.POST.get("container", "false").lower() == "true"
+        if container:
+            # Container is preconfigured only
+            # We need to do this as the disabled checkbox for Preconfigured seems to not return
+            # the proper value.
+            preconfigured = True
         count = int(request.POST["count"])
         lease_time = int(request.POST.get("expiration", 60))
         pool_id = AppliancePool.create(
@@ -558,7 +563,7 @@ def request_pool(request):
             yum_update, container).id
         messages.success(request, "Pool requested - id {}".format(pool_id))
     except Exception as e:
-        messages.warning(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
+        messages.warning(request, "{}: {}".format(type(e).__name__, e))
     return go_back_or_home(request)
 
 
