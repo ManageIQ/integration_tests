@@ -4,6 +4,7 @@ import pytest
 from cfme import Credential, login, test_requirements
 from cfme.common.vm import VM
 from utils import testgen
+from utils.blockers import BZ
 
 
 def pytest_generate_tests(metafunc):
@@ -13,6 +14,7 @@ def pytest_generate_tests(metafunc):
 
 pytestmark = [
     test_requirements.ownership,
+    pytest.mark.meta(blockers=[BZ(1380781, forced_streams=["5.7"])]),
     pytest.mark.tier(3)
 ]
 
@@ -128,10 +130,10 @@ def test_group_ownership_on_user_only_role(request, user2, setup_provider, provi
     group_ownership_vm = VM.factory(ownership_vm, provider)
     group_ownership_vm.set_ownership(group=user2.group.description)
     with user2:
-        assert group_ownership_vm.exists, "vm not found"
-    group_ownership_vm.unset_ownership()
+        assert not group_ownership_vm.exists, "vm not found"
+    group_ownership_vm.set_ownership(user=user2.name)
     with user2:
-        assert not group_ownership_vm.exists, "vm exists"
+        assert group_ownership_vm.exists, "vm exists"
 
 
 def test_group_ownership_on_user_or_group_role(
