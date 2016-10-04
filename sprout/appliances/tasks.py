@@ -868,7 +868,7 @@ def appliance_power_on(self, appliance_id):
                 appliance.set_power_state(Appliance.Power.ON)
                 appliance.save()
             if appliance.containerized:
-                with appliance.ssh as ssh:
+                with appliance.ssh_client as ssh:
                     # Fire up the container
                     ssh.run_command('cfme-start', ensure_host=True)
             return
