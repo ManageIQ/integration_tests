@@ -5,13 +5,15 @@ import time
 
 from cfme import test_requirements
 from fixtures.pytest_store import store
+
+from cfme.configure.configuration import server_roles_enabled, candu
+from cfme.common.provider import BaseProvider
+from cfme.exceptions import FlashMessageException
 from utils import providers
 from utils import testgen
 from utils import conf
 from utils.log import logger
-from cfme.configure.configuration import server_roles_enabled, candu
-from cfme.common.provider import BaseProvider
-from cfme.exceptions import FlashMessageException
+from utils.version import current_version
 
 
 # Tests for vmware and rhev providers have been moved to cfme/tests/test_utilization_metrics.py.
@@ -55,6 +57,8 @@ def handle_provider(provider):
         BaseProvider.clear_providers()
 
 
+@pytest.mark.uncollectif(
+    lambda provider: current_version() < "5.7" and provider.type == 'gce')
 def test_metrics_collection(handle_provider, provider, enable_candu):
     """Check the db is gathering collection data for the given provider
 
