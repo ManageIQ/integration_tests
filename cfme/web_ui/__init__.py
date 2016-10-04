@@ -881,10 +881,13 @@ class SplitTable(Table):
 
 class SortTable(Table):
     """This table is the same as :py:class:`Table`, but with added sorting functionality."""
+    SORT_CELL = './th[./div/i[contains(@class, "fa-sort")] or contains(@class, "sorting_")]'
+    SORT_LINK = './th/a[normalize-space(.)={}]'
+
     @property
     def _sort_by_cell(self):
         try:
-            return sel.element("./th[contains(@class, 'sorting_')]", root=self.header_row)
+            return sel.element(self.SORT_CELL, root=self.header_row)
         except NoSuchElementException:
             return None
 
@@ -906,11 +909,16 @@ class SortTable(Table):
         cell = self._sort_by_cell
         if cell is None:
             return None
-
-        cls = sel.get_attribute(cell, "class")
-        if "sorting_asc" in cls:
+        try:
+            # Newer type
+            el = sel.element('./div/i[contains(@class, "fa-sort")]', root=cell)
+        except NoSuchElementException:
+            # Older type
+            el = cell
+        cls = sel.get_attribute(el, "class")
+        if "fa-sort-asc" in cls or 'sorting_asc' in cls:
             return "ascending"
-        elif "sorting_desc" in cls:
+        elif "fa-sort-desc" in cls or 'sorting_desc' in cls:
             return "descending"
         else:
             return None
@@ -921,7 +929,7 @@ class SortTable(Table):
         Args:
             text: Header cell text.
         """
-        sel.click(sel.element("./th/a[normalize-space(.)='{}']".format(text), root=self.header_row))
+        sel.click(sel.element(self.SORT_LINK.format(quoteattr(text)), root=self.header_row))
 
     def sort_by(self, header, order):
         """Sorts the table by given conditions
