@@ -870,7 +870,7 @@ def appliance_power_on(self, appliance_id):
             if appliance.containerized:
                 with appliance.ssh as ssh:
                     # Fire up the container
-                    ssh.run_command('cfme-start')
+                    ssh.run_command('cfme-start', ensure_host=True)
             return
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
