@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+from cfme import test_requirements
 from cfme.configure import settings as st
 from cfme.fixtures import pytest_selenium as sel
 from utils.blockers import BZ
@@ -11,7 +12,8 @@ from cfme.services import workloads  # NOQA
 from utils.appliance.endpoints.ui import navigate_to
 from cfme.infrastructure.host import Host
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3),
+              test_requirements.settings]
 
 
 @pytest.fixture(scope="module")

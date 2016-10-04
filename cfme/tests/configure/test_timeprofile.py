@@ -4,8 +4,10 @@ import cfme.configure.settings as st
 import pytest
 import utils.error as error
 from utils.update import update
+from cfme import test_requirements
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3),
+              test_requirements.settings]
 
 
 def new_timeprofile():

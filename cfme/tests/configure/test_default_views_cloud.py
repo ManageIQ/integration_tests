@@ -2,6 +2,7 @@
 
 import pytest
 import re
+from cfme import test_requirements
 from cfme.fixtures import pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import ButtonGroup, form_buttons, Quadicon
@@ -9,7 +10,8 @@ from utils.providers import setup_a_provider as _setup_a_provider
 from cfme.configure import settings  # NOQA
 from cfme.cloud import instance  # NOQA
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3),
+              test_requirements.settings]
 
 
 gtl_params = [
