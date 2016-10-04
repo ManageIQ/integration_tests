@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import ColorGroup, form_buttons
 from utils import version
 from cfme.configure import settings  # NOQA
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3),
+              test_requirements.settings]
 
 colors = [
     'Orange',

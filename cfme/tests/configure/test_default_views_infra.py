@@ -3,6 +3,7 @@
 import pytest
 import re
 from cfme.fixtures import pytest_selenium as sel
+from cfme import test_requirements
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import ButtonGroup, form_buttons, Quadicon
 from utils.providers import setup_a_provider as _setup_a_provider
@@ -12,7 +13,8 @@ from cfme.services.catalogs import catalog_item  # NOQA
 from cfme.services import workloads  # NOQA
 from cfme.intelligence.reports.reports import CannedSavedReport
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3),
+              test_requirements.settings]
 
 
 def minimise_dict(item):

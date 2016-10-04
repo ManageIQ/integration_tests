@@ -3,6 +3,7 @@
 import re
 import pytest
 from cfme import login
+from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.reports import CannedSavedReport
@@ -13,7 +14,8 @@ from utils.appliance.endpoints.ui import navigate_to
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import Datastore
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3),
+              test_requirements.settings]
 
 # todo: infrastructure hosts, pools, stores, cluster are removed due to changing
 # navigation to navmazing. all items have to be put back once navigation change is fully done
