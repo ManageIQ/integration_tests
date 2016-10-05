@@ -542,7 +542,7 @@ class IPAppliance(object):
 
     @logger_wrap("Patch appliance with MiqQE js: {}")
     def patch_with_miqqe(self, log_callback=None):
-        if self.version < "5.5.5.0":
+        if self.version < "5.5.5.0" or self.version > "5.7.0.3":
             return
 
         # (local_path, remote_path, md5/None) trio
