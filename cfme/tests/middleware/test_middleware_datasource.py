@@ -1,4 +1,5 @@
 import pytest
+
 from cfme.middleware import get_random_list
 from cfme.middleware.datasource import MiddlewareDatasource
 from utils import testgen
@@ -7,8 +8,11 @@ from deployment_methods import get_server
 from deployment_methods import HAWKULAR_PRODUCT_NAME
 from deployment_methods import EAP_PRODUCT_NAME
 from datasource_methods import get_datasources_set
-from datasource_methods import ORACLE_12C, DB2_105, MSSQL_2014, MYSQL_57
-from datasource_methods import POSTGRESPLUS_94, POSTGRESQL_94, SYBASE_157
+from datasource_methods import ORACLE_12C_DS, DB2_105_DS, MSSQL_2014_DS, MYSQL_57_DS
+from datasource_methods import POSTGRESPLUS_94_DS, POSTGRESQL_94_DS, SYBASE_157_DS
+from datasource_methods import ORACLE_12C_RAC_DS
+from dballocator_methods import db_allocate
+from dballocator_methods import DS_USERNAME_PROP, DS_URL_PROP, DS_PASSWORD_PROP
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -17,13 +21,14 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
 ITEMS_LIMIT = 2  # when we have big list, limit number of items to test
 
-DATASOURCES = [ORACLE_12C,
-               DB2_105,
-               MSSQL_2014,
-               MYSQL_57,
-               POSTGRESPLUS_94,
-               POSTGRESQL_94,
-               SYBASE_157]
+DATASOURCES = [ORACLE_12C_DS,
+               ORACLE_12C_RAC_DS,
+               DB2_105_DS,
+               MSSQL_2014_DS,
+               MYSQL_57_DS,
+               POSTGRESPLUS_94_DS,
+               POSTGRESQL_94_DS,
+               SYBASE_157_DS]
 
 
 def test_list_datasources():
@@ -126,8 +131,10 @@ def test_datasource_details(provider):
 @pytest.mark.parametrize("datasource_params", DATASOURCES)
 def test_create_delete_datasource(provider, datasource_params):
     """Tests datasource creation and deletion on EAP server
+    Method is executed for all database types
 
     Steps:
+        * Allocates Database via DBAllocator tool.
         * Get servers list from UI
         * Chooses JBoss EAP server from list
         * Invokes 'Add Datasource' toolbar operation
@@ -148,12 +155,16 @@ def test_create_delete_datasource(provider, datasource_params):
         * Checks if newly created datasource is listed. Selects it.
         * Deletes that Datasource via UI operation.
         * Checks whether resource is deleted.
+        * Deallocated allocated Database in DBAllocator tool.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
-    server.add_datasource(datasource_params[0], datasource_params[1], datasource_params[2],
-            datasource_params[3], datasource_params[4], datasource_params[5],
-            datasource_params[6], datasource_params[7], datasource_params[8])
-    # TODO uncomment when BZ#1383414 is fixes
-    # resource = get_datasource_from_list(provider, datasource_params[1])
-    # resource.delete()
-    # check_datasource_not_listed(provider, datasource.name)
+    with db_allocate(datasource_params[9]) as db_metadata:
+        server = get_server(provider, EAP_PRODUCT_NAME)
+        server.add_datasource(datasource_params[0], datasource_params[1], datasource_params[2],
+                    datasource_params[3], datasource_params[4], datasource_params[5],
+                    db_metadata[DS_URL_PROP].replace("\\", ""),
+                    db_metadata[DS_USERNAME_PROP],
+                    db_metadata[DS_PASSWORD_PROP])
+        # TODO uncomment when BZ#1383414 is fixes
+        # resource = get_datasource_from_list(provider, datasource_params[1])
+        # resource.delete()
+        # check_datasource_not_listed(provider, datasource.name)

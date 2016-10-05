@@ -622,5 +622,8 @@ resources:
      databases:
         jdbc_drivers:
             jdbc_drivers_url: jdbc driver file url
+        db_allocator:
+            db_allocate_url: url for allocation
+            db_deallocate_url: url for deallocation
 
 cfme_annotations_path: data/testcase_tiers_and_types.csv

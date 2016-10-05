@@ -16,15 +16,17 @@ PROPERTIES[3] jdbc driver class.
 PROPERTIES[4] major version of driver.
 PROPERTIES[5] minor version of driver.
 """
-DB2_105 = ['db2-105', 'db2', 'com.ibm', 'com.ibm.db2.jcc.DB2Driver', '', '']
-MSSQL_2014 = ['mssql2014', 'mssql', 'com.microsoft',
+DB2_105_JDBC = ['db2-105', 'db2', 'com.ibm', 'com.ibm.db2.jcc.DB2Driver', '', '']
+MSSQL_2014_JDBC = ['mssql2014', 'mssql', 'com.microsoft',
               'com.microsoft.sqlserver.jdbc.SQLServerDriver', '', '']
-MYSQL_57 = ['mysql57', 'mysql', 'com.mysql', 'com.mysql.jdbc.Driver', '5', '1']
-POSTGRESPLUS_94 = ['postgresplus94', 'edb', 'com.edb', 'com.edb.Driver', '', '']
-POSTGRESQL_94 = ['postgresql94', 'postgresql', 'org.postgresql', 'org.postgresql.Driver', '', '']
-SYBASE_157 = ['sybase157', 'sybase', 'com.sybase', 'com.sybase.jdbc4.jdbc.SybDriver', '', '']
-ORACLE_12C = ['oracle12c', 'oracle12c', 'com.oracle', 'oracle.jdbc.OracleDriver', '', '']
-MARIADB10 = ['mariadb10', 'mariadb10', 'org.mariadb', 'org.mariadb.jdbc.Driver', '', '']
+MYSQL_57_JDBC = ['mysql57', 'mysql', 'com.mysql', 'com.mysql.jdbc.Driver', '5', '1']
+POSTGRESPLUS_94_JDBC = ['postgresplus94', 'edb', 'com.edb', 'com.edb.Driver', '', '']
+POSTGRESQL_94_JDBC = ['postgresql94', 'postgresql', 'org.postgresql',
+                      'org.postgresql.Driver', '', '']
+SYBASE_157_JDBC = ['sybase157', 'sybase', 'com.sybase',
+                   'com.sybase.jdbc4.jdbc.SybDriver', '', '']
+ORACLE_12C_JDBC = ['oracle12c', 'oracle12c', 'com.oracle', 'oracle.jdbc.OracleDriver', '', '']
+MARIADB10_JDBC = ['mariadb10', 'mariadb10', 'org.mariadb', 'org.mariadb.jdbc.Driver', '', '']
 
 
 def download_jdbc_driver(database_name):
