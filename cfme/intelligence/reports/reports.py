@@ -6,27 +6,20 @@ Extensively uses :py:mod:`cfme.intelligence.reports.ui_elements`
 from functools import partial
 
 from cached_property import cached_property
-
+from navmazing import NavigateToSibling, NavigateToAttribute, NavigateToObject
 from cfme.fixtures import pytest_selenium as sel
-from fixtures.pytest_store import store
 from cfme.intelligence.reports.ui_elements import (ColumnHeaderFormatTable, ColumnStyleTable,
     RecordGrouper)
 from cfme.web_ui import (CAndUGroupTable, Form, Table, Select, ShowingInputs, accordion, fill,
     flash, form_buttons, paginator, table_in_object, tabstrip, toolbar)
 from cfme.web_ui.expression_editor import Expression
-from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from cfme.web_ui.multibox import MultiBoxSelect
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
-
-
-def get_report_name(o):
-    if isinstance(o, CustomReport):
-        return o.menu_name
-    else:
-        return str(o)
+from utils.appliance import Navigatable
+from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
 
 
 def reload_view():
@@ -38,76 +31,6 @@ def reload_view():
 
 cfg_btn = partial(toolbar.select, "Configuration")
 download_btn = partial(toolbar.select, "Download")
-
-nav.add_branch(
-    "reports",
-    {
-        "reports_all":
-        [
-            lambda ctx: accordion.tree("Reports", "All Reports"),
-            {
-                "report_add":
-                lambda ctx: cfg_btn("Add a new Report"),
-            }
-        ],
-
-        "report_canned":
-        [
-            lambda ctx: accordion.tree("Reports", "All Reports", *ctx["path"]),
-            {
-                "report_canned_info":
-                [
-                    lambda ctx: tabstrip.select_tab("Report Info"),
-                    {
-                        # Empty for now
-                    },
-                ],
-
-                "report_canned_saved": lambda ctx: tabstrip.select_tab("Saved Reports"),
-            }
-        ],
-
-        "reports_custom":
-        lambda ctx: accordion.tree(
-            "Reports", "All Reports", "{} (All EVM Groups)".format(
-                store.current_appliance.get_yaml_config("vmdb")["server"]["company"]
-            ), "Custom",
-        ),
-
-        "report_custom":
-        [
-            lambda ctx: accordion.tree(
-                "Reports", "All Reports", "{} (All EVM Groups)".format(
-                    store.current_appliance.get_yaml_config("vmdb")["server"]["company"]
-                ), "Custom",
-                get_report_name(ctx["report"])
-            ),
-            {
-                "report_custom_info":
-                [
-                    lambda ctx: tabstrip.select_tab("Report Info"),
-                    {
-                        "report_custom_edit": lambda ctx: cfg_btn("Edit this Report"),
-                    },
-                ],
-
-                "report_custom_saved": lambda ctx: tabstrip.select_tab("Saved Reports"),
-            }
-        ],
-
-        "saved_report_custom":
-        lambda ctx: accordion.tree(
-            "Reports", "All Reports", "{} (All EVM Groups)".format(
-                store.current_appliance.get_yaml_config("vmdb")["server"]["company"]),
-            "Custom", get_report_name(ctx["report"]), ctx["datetime"]
-        ),
-
-        "saved_report_canned":
-        lambda ctx: accordion.tree(
-            "Reports", *(["All Reports"] + ctx["path"] + [ctx["datetime"]])
-        ),
-    }
-)
 
 
 # I like this but it will have to go away later
@@ -122,7 +45,7 @@ def tag(tag_name, **kwargs):
 
 input = partial(tag, "input")
 select = lambda **kwargs: Select(tag("select", **kwargs))
-img = partial(tag, "img")
+button = partial(tag, "button")
 table = partial(tag, "table")
 
 report_form = TabStripForm(
@@ -137,8 +60,8 @@ report_form = TabStripForm(
             ("report_fields", MultiBoxSelect(
                 select(id="available_fields"),
                 select(id="selected_fields"),
-                img(alt="Move selected fields up"),
-                img(alt="Move selected fields down"),
+                button(alt="Move selected fields up"),
+                button(alt="Move selected fields down"),
             )),
             ("cancel_after", select(id="chosen_queue_timeout")),
         ],
@@ -206,7 +129,7 @@ report_form = TabStripForm(
 records_table = Table("//div[@id='records_div']//table[thead]")
 
 
-class CustomReport(Updateable):
+class CustomReport(Updateable, Navigatable):
     _default_dict = {
         "menu_name": None,
         "title": None,
@@ -234,8 +157,10 @@ class CustomReport(Updateable):
         "show_event_count": None
     }
 
-    def __init__(self, **values):
-        # We will override the original dict
+    def __init__(self, appliance=None, **values):
+        Navigatable.__init__(self, appliance=appliance)
+        # We will override the
+        #  original dict
         self.__dict__ = dict(self._default_dict)
         self.__dict__.update(values)
         # We need to pass the knowledge whether it is a candu report
@@ -245,23 +170,23 @@ class CustomReport(Updateable):
             self.is_candu = False
 
     def create(self, cancel=False):
-        sel.force_navigate("report_add")
+        navigate_to(self, 'New')
         fill(report_form, self, action=form_buttons.cancel if cancel else form_buttons.add)
         flash.assert_no_errors()
 
     def update(self, updates):
-        sel.force_navigate("report_custom_edit", context={"report": self})
+        navigate_to(self, 'Edit')
         fill(report_form, updates, action=form_buttons.save)
         flash.assert_no_errors()
 
     def delete(self, cancel=False):
-        sel.force_navigate("report_custom_info", context={"report": self})
+        navigate_to(self, 'Details')
         toolbar.select("Configuration", "Delete this Report from the Database", invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
     def get_saved_reports(self):
-        sel.force_navigate("report_custom_saved", context={"report": self})
+        navigate_to(self, 'Saved')
         results = []
         try:
             for page in paginator.pages():
@@ -275,7 +200,7 @@ class CustomReport(Updateable):
         return results
 
     def queue(self, wait_for_finish=False):
-        sel.force_navigate("report_custom_info", context={"report": self})
+        navigate_to(self, 'Details')
         toolbar.select("Queue")
         flash.assert_no_errors()
         if wait_for_finish:
@@ -297,7 +222,57 @@ class CustomReport(Updateable):
             )
 
 
-class CustomSavedReport(Updateable, Pretty):
+@navigator.register(CustomReport, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Cloud Intel', 'Reports')(None)
+        accordion.tree("Reports", "All Reports")
+
+
+@navigator.register(CustomReport, 'New')
+class New(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn("Add a new Report")
+
+
+@navigator.register(CustomReport, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree(
+            "Reports", "All Reports", "{} (All EVM Groups)".format(
+                self.obj.appliance.company_name), "Custom",
+            self.obj.menu_name)
+        tabstrip.select_tab("Report Info")
+
+
+@navigator.register(CustomReport, 'Edit')
+class Edit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn("Edit this Report")
+
+
+@navigator.register(CustomReport, 'Saved')
+class Saved(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        accordion.tree(
+            "Reports", "All Reports", "{} (All EVM Groups)".format(
+                self.obj.appliance.company_name), "Custom",
+            self.obj.menu_name)
+        tabstrip.select_tab("Saved Reports")
+
+
+class CustomSavedReport(Updateable, Pretty, Navigatable):
     """Custom Saved Report. Enables us to retrieve data from the table.
 
     Args:
@@ -310,18 +285,11 @@ class CustomSavedReport(Updateable, Pretty):
 
     pretty_attrs = ['report', 'datetime']
 
-    def __init__(self, report, datetime, candu=False):
+    def __init__(self, report, datetime, candu=False, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.report = report
         self.datetime = datetime
         self.candu = candu
-
-    def navigate(self):
-        if not self._on_report_page:
-            return sel.force_navigate(
-                "saved_report_custom", context={"report": self.report, "datetime": self.datetime}
-            )
-        else:
-            return True
 
     @property
     def _table(self):
@@ -331,14 +299,6 @@ class CustomSavedReport(Updateable, Pretty):
         else:
             return Table(self._table_loc)
 
-    @property
-    def _on_report_page(self):
-        return sel.is_displayed(
-            "//div[@class='dhtmlxInfoBarLabel' and contains(., 'Saved Report \"{} {}')]".format(
-                self.report.title, self.datetime
-            )
-        )
-
     @cached_property
     def data(self):
         """Retrieves data from the saved report.
@@ -346,7 +306,7 @@ class CustomSavedReport(Updateable, Pretty):
         Returns: :py:class:`SavedReportData` if it is not a candu report. If it is, then it returns
             a list of groups in the table.
         """
-        self.navigate()
+        navigate_to(self, "Details")
         if isinstance(self._table, CAndUGroupTable):
             return list(self._table.groups())
         try:
@@ -363,7 +323,7 @@ class CustomSavedReport(Updateable, Pretty):
             return SavedReportData(headers, body)
 
     def download(self, extension):
-        self.navigate()
+        navigate_to(self, "Details")
         extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
         try:
             download_btn("Download as {}".format(extensions_mapping[extension]))
@@ -371,7 +331,25 @@ class CustomSavedReport(Updateable, Pretty):
             raise ValueError("Unknown extention. check the extentions_mapping")
 
 
-class CannedSavedReport(CustomSavedReport):
+@navigator.register(CustomSavedReport, 'Details')
+class SavedDetails(CFMENavigateStep):
+    prerequisite = NavigateToObject(CustomReport, 'All')
+
+    def step(self):
+        accordion.tree(
+            "Reports", "All Reports", "{} (All EVM Groups)".format(
+                self.obj.appliance.company_name),
+            "Custom", self.obj.report.menu_name)
+
+    def am_i_here(self):
+        return sel.is_displayed(
+            "//div[@class='dhtmlxInfoBarLabel' and contains(., 'Saved Report \"{} {}')]".format(
+                self.obj.report.title, self.obj.datetime
+            )
+        )
+
+
+class CannedSavedReport(CustomSavedReport, Navigatable):
     """As we cannot create or edit canned reports, we don't know their titles and so, so we
     need to change the navigation a little bit for it to work correctly.
 
@@ -380,19 +358,93 @@ class CannedSavedReport(CustomSavedReport):
         datetime: Datetime of "Run At" of the report. That's what :py:func:`queue_canned_report`
             returns.
     """
-    def __init__(self, path_to_report, datetime, candu=False):
+    def __init__(self, path_to_report, datetime, candu=False, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.path = path_to_report
         self.datetime = datetime
         self.candu = candu
 
     def navigate(self):
-        return sel.force_navigate(
-            "saved_report_canned", context={"path": self.path, "datetime": self.datetime}
-        )
+        navigate_to(self, "Details")
 
     @classmethod
     def new(cls, path):
-        return cls(path, queue_canned_report(*path))
+        return cls(path, cls.queue_canned_report(path))
+
+    @classmethod
+    def queue_canned_report(cls, path):
+        """Queue report from selection of pre-prepared reports.
+
+        Args:
+            *path: Path in tree after All Reports
+        Returns: Value of Run At in the table so the run can be then checked.
+        """
+        cls.path = path
+        navigate_to(cls, "Info")
+        toolbar.select("Queue")
+        flash.assert_no_errors()
+        tabstrip.select_tab("Saved Reports")
+        queued_at = sel.text(list(records_table.rows())[0].queued_at)
+
+        def _get_state():
+            row = records_table.find_row("queued_at", queued_at)
+            status = sel.text(row.status).strip().lower()
+            assert status != "error", sel.text(row)
+            return status == "finished"
+
+        wait_for(
+            _get_state,
+            delay=1,
+            message="wait for report generation finished",
+            fail_func=reload_view
+        )
+        return sel.text(list(records_table.rows())[0].run_at).encode("utf-8")
+
+    def get_saved_canned_reports(self, *path):
+        navigate_to(self, "Saved")
+        results = []
+        try:
+            for page in paginator.pages():
+                for row in records_table.rows():
+                    results.append(
+                        CannedSavedReport(path, sel.text(row.run_at).encode("utf-8"))
+                    )
+        except sel.NoSuchElementException:
+            pass
+        return results
+
+
+@navigator.register(CannedSavedReport, 'Details')
+class CannedSavedDetails(CFMENavigateStep):
+    prerequisite = NavigateToObject(CustomReport, 'All')
+
+    def step(self):
+        accordion.tree(
+            "Reports", *(["All Reports"] + self.obj.path + [self.obj.datetime]))
+
+
+@navigator.register(CannedSavedReport, 'Path')
+class CannedPath(CFMENavigateStep):
+    prerequisite = NavigateToObject(CustomReport, 'All')
+
+    def step(self):
+        accordion.tree("Reports", *(["All Reports"] + self.obj.path))
+
+
+@navigator.register(CannedSavedReport, 'Info')
+class CannedInfo(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Path')
+
+    def step(self):
+        tabstrip.select_tab("Report Info")
+
+
+@navigator.register(CannedSavedReport, 'Saved')
+class CannedSave(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Path')
+
+    def step(self):
+        tabstrip.select_tab("Saved Reports")
 
 
 class SavedReportData(Pretty):
@@ -425,45 +477,3 @@ class SavedReportData(Pretty):
             return self.find_row(column, value)[cell]
         except TypeError:
             return None
-
-
-def queue_canned_report(*path):
-    """Queue report from selection of pre-prepared reports.
-
-    Args:
-        *path: Path in tree after All Reports
-    Returns: Value of Run At in the table so the run can be then checked.
-    """
-    sel.force_navigate("report_canned_info", context={"path": path})
-    toolbar.select("Queue")
-    flash.assert_no_errors()
-    tabstrip.select_tab("Saved Reports")
-    queued_at = sel.text(list(records_table.rows())[0].queued_at)
-
-    def _get_state():
-        row = records_table.find_row("queued_at", queued_at)
-        status = sel.text(row.status).strip().lower()
-        assert status != "error", sel.text(row)
-        return status == "finished"
-
-    wait_for(
-        _get_state,
-        delay=1,
-        message="wait for report generation finished",
-        fail_func=reload_view
-    )
-    return sel.text(list(records_table.rows())[0].run_at).encode("utf-8")
-
-
-def get_saved_canned_reports(*path):
-    sel.force_navigate("report_canned_saved", context={"path": path})
-    results = []
-    try:
-        for page in paginator.pages():
-            for row in records_table.rows():
-                results.append(
-                    CannedSavedReport(path, sel.text(row.run_at).encode("utf-8"))
-                )
-    except sel.NoSuchElementException:
-        pass
-    return results
