@@ -307,3 +307,7 @@ class UsingSharedTables(CFMEException):
 
 class MenuItemNotFound(CFMEException):
     """Raised during navigation of certain menu item was not found."""
+
+
+class DestinationNotFound(CFMEException):
+    """Raised during navigation where the navigator destination is not found"""
