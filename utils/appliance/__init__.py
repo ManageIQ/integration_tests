@@ -1652,10 +1652,10 @@ class IPAppliance(object):
 @navigator.register(IPAppliance)
 class LoggedIn(CFMENavigateStep):
     def step(self):
-        from cfme.login import login_admin
+        from cfme.login import login
         from utils.browser import browser
         browser()
-        login_admin()
+        login(store.user)
 
 
 @navigator.register(IPAppliance)
