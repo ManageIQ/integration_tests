@@ -9,7 +9,6 @@ from cfme.containers.container import Container, list_tbl as list_tbl_containers
 from cfme.containers.project import Project, list_tbl as list_tbl_projects
 from cfme.containers.image_registry import ImageRegistry, list_tbl as list_tbl_image_registrys
 from cfme.containers.service import Service, list_tbl as list_tbl_services
-from cfme.containers.image import Image, list_tbl as list_tbl_images
 from cfme.containers.route import Route, list_tbl as list_tbl_routes
 from utils.version import current_version
 from cfme.containers.provider import Provider
@@ -23,6 +22,7 @@ pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
 # TEST_DATAS: Referenced from: Menu.sections()
+# TODO: Refactor to container objects with valid navmazing destinations
 TEST_DATAS = [
     (Node, 'containers_nodes', 'Nodes', list_tbl_nodes),
     (Container, 'containers_containers', 'Containers', list_tbl_containers),
@@ -30,7 +30,7 @@ TEST_DATAS = [
     (Project, 'containers_projects', 'Projects', list_tbl_projects),
     (Pod, 'containers_pods', 'Pods', list_tbl_pods),
     (Service, 'containers_services', 'Services', list_tbl_services),
-    (Image, 'containers_images', 'Images', list_tbl_images),
+    # (Image, 'containers_images', 'Images', list_tbl_images),
     (Route, 'containers_routes', 'Routes', list_tbl_routes),
     (Provider, 'containers_providers', 'Providers')
 ]
