@@ -178,10 +178,7 @@ def server_zone_description():
 
 
 def server_region_string():
-    if store.current_appliance.is_downstream:
-        return "CFME Region: Region {} [{}]".format(*server_region_pair())
-    else:
-        return "ManageIQ Region: Region {} [{}]".format(*server_region_pair())
+    return store.current_appliance.server_region_string()
 
 
 nav.add_branch("configuration",
