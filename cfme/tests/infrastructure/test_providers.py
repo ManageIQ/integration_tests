@@ -26,7 +26,7 @@ def setup_a_provider():
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None)

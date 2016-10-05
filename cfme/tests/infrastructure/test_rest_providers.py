@@ -92,7 +92,7 @@ def test_provider_edit(request, a_provider, rest_api):
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["delete_from_detail", "delete_from_collection"])
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_provider_crud(request, rest_api, from_detail):
     """Test the CRUD on provider using REST API.
     Steps:

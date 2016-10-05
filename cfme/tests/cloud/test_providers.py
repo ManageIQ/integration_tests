@@ -28,7 +28,7 @@ def setup_a_provider():
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
     discover(None, d_type="Amazon")
@@ -38,7 +38,7 @@ def test_empty_discovery_form_validation():
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_discovery_cancelled_validation():
     """ Tests that the flash message is correct when discovery is cancelled."""
     discover(None, cancel=True, d_type="Amazon")
@@ -49,7 +49,7 @@ def test_discovery_cancelled_validation():
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_add_cancelled_validation(request):
     """Tests that the flash message is correct when add is cancelled."""
     prov = EC2Provider()
@@ -74,7 +74,7 @@ def test_password_mismatch_validation():
 @pytest.mark.tier(3)
 @pytest.mark.uncollect()
 @pytest.mark.usefixtures('has_no_cloud_providers')
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_providers_discovery_amazon():
     # This test was being uncollected anyway, and needs to be parametrized and not directory call
     # out to specific credential keys
@@ -86,7 +86,7 @@ def test_providers_discovery_amazon():
 
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_cloud_providers')
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_provider_add_with_bad_credentials(provider):
     """ Tests provider add with bad credentials
 
@@ -103,7 +103,7 @@ def test_provider_add_with_bad_credentials(provider):
 
 @pytest.mark.tier(2)
 @pytest.mark.usefixtures('has_no_cloud_providers')
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_provider_crud(provider):
     """ Tests provider add with good credentials
 
@@ -125,7 +125,7 @@ def test_provider_crud(provider):
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_type_required_validation(request, soft_assert):
     """Test to validate type while adding a provider"""
     prov = Provider()
@@ -142,7 +142,7 @@ def test_type_required_validation(request, soft_assert):
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_name_required_validation(request):
     """Tests to validate the name while adding a provider"""
     prov = EC2Provider(
@@ -179,7 +179,7 @@ def test_region_required_validation(request, soft_assert):
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_host_name_required_validation(request):
     """Test to validate the hostname while adding a provider"""
     prov = OpenStackProvider(
@@ -248,7 +248,7 @@ def test_password_max_character_validation():
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_name_max_character_validation(request, setup_a_provider):
     """Test to validate max character for name field"""
     provider = setup_a_provider
@@ -275,7 +275,7 @@ def test_hostname_max_character_validation(request):
 
 
 @pytest.mark.tier(3)
-@test_requirements.provider_discovery
+@test_requirements.discovery
 def test_api_port_max_character_validation(request):
     """Test to validate max character for api port field"""
     prov = OpenStackProvider(
