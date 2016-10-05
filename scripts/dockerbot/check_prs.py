@@ -202,7 +202,7 @@ def vm_reaper():
     task has completed, then the VM is cleaned up and then the docker container. If both of
     these operations occur, then the cleanup is set to True.
     """
-    tasks = tapi.task().get(cleanup=False)['objects']
+    tasks = tapi.task().get(cleanup=False, limit=0)['objects']
     for task in tasks:
         if task['result'] in ["failed", "passed", "invalid"]:
             vm_cleanup = False
