@@ -4,20 +4,19 @@ from copy import copy
 from functools import partial
 
 from selenium.webdriver.common.by import By
-
+from navmazing import NavigateToSibling, NavigateToAttribute
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons
-from cfme.web_ui.menu import nav
+from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons, summary_title
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.version import LOWEST
+from utils.appliance import Navigatable
+from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
 
 assignment_tree = Tree("//div[@id='cb_assignments_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")
-tb_select_new_chargeback = nav.fn(partial(tb_select, "Add a new Chargeback Rate"))
-tb_select_edit_chargeback = nav.fn(partial(tb_select, "Edit this Chargeback Rate"))
 
 
 class RateFormItem(Pretty):
@@ -127,26 +126,6 @@ assign_form = Form(
         })),
         ('save_button', form_buttons.save)])
 
-nav.add_branch(
-    "chargeback", {
-        "chargeback_rates_compute": [
-            lambda _: accordion.tree("Rates", "Rates", "Compute"),
-            {"chargeback_rates_compute_new": tb_select_new_chargeback}],
-        "chargeback_rates_compute_named": [
-            lambda d: accordion.tree("Rates", "Rates", "Compute", d["chargeback"].description),
-            {"chargeback_rates_compute_edit": tb_select_edit_chargeback}],
-        "chargeback_rates_storage": [
-            lambda _: accordion.tree("Rates", "Rates", "Storage"),
-            {"chargeback_rates_storage_new": tb_select_new_chargeback}],
-        "chargeback_rates_storage_named": [
-            lambda d: accordion.tree("Rates", "Rates", "Storage", d["chargeback"].description),
-            {"chargeback_rates_storage_edit": tb_select_edit_chargeback}],
-        "chargeback_assignments_compute": lambda _: accordion.tree("Assignments", "Assignments",
-            "Compute"),
-        "chargeback_assignments_storage": lambda _: accordion.tree("Assignments", "Assignments",
-            "Storage"),
-    })
-
 
 HOURLY = 'hourly'
 DAILY = 'daily'
@@ -166,7 +145,7 @@ def _fill_assignform(rf, value):
     fill(rf.rate_loc, value)
 
 
-class ComputeRate(Updateable, Pretty):
+class ComputeRate(Updateable, Pretty, Navigatable):
     pretty_attrs = ['description']
 
     def __init__(self, description=None,
@@ -177,8 +156,9 @@ class ComputeRate(Updateable, Pretty):
                  compute_fixed_2=None,
                  mem_alloc=None,
                  mem_used=None,
-                 net_io=None
-                 ):
+                 net_io=None,
+                 appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.cpu_alloc = cpu_alloc
         self.cpu_used = cpu_used
@@ -190,7 +170,7 @@ class ComputeRate(Updateable, Pretty):
         self.net_io = net_io
 
     def create(self):
-        sel.force_navigate('chargeback_rates_compute_new')
+        navigate_to(self, 'New')
         fill(rate_form,
             {'description': self.description,
              'cpu_alloc': self.cpu_alloc,
@@ -205,7 +185,7 @@ class ComputeRate(Updateable, Pretty):
         flash.assert_no_errors()
 
     def update(self, updates):
-        sel.force_navigate('chargeback_rates_compute_edit', context={'chargeback': self})
+        navigate_to(self, 'Edit')
         fill(rate_form,
             {'description': updates.get('description'),
              'cpu_alloc': updates.get('cpu_alloc'),
@@ -220,20 +200,62 @@ class ComputeRate(Updateable, Pretty):
         flash.assert_no_errors()
 
     def delete(self):
-        sel.force_navigate('chargeback_rates_compute_named', context={'chargeback': self})
+        navigate_to(self, 'Details')
         tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
 
 
-class StorageRate(Updateable, Pretty):
+@navigator.register(ComputeRate, 'All')
+class ComputeRateAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Cloud Intel', 'Chargeback')(None)
+        accordion.tree("Rates", "Rates", "Compute")
+
+    def am_i_here(self):
+        return summary_title() == "Compute Chargeback Rates"
+
+
+@navigator.register(ComputeRate, 'New')
+class ComputeRateNew(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb_select("Add a new Chargeback Rate")
+
+
+@navigator.register(ComputeRate, 'Details')
+class ComputeRateDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Rates", "Rates", "Compute", self.obj.description)
+
+    def am_i_here(self):
+        return summary_title() == 'Compute Chargeback Rate "{}"'.format(self.obj.description)
+
+
+@navigator.register(ComputeRate, 'Edit')
+class ComputeRateEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb_select("Edit this Chargeback Rate")
+
+
+class StorageRate(Updateable, Pretty, Navigatable):
     pretty_attrs = ['description']
 
     def __init__(self, description=None,
                  storage_fixed_1=None,
                  storage_fixed_2=None,
                  storage_alloc=None,
-                 storage_used=None):
+                 storage_used=None,
+                 appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.storage_fixed_1 = storage_fixed_1
         self.storage_fixed_2 = storage_fixed_2
@@ -241,7 +263,7 @@ class StorageRate(Updateable, Pretty):
         self.storage_used = storage_used
 
     def create(self):
-        sel.force_navigate('chargeback_rates_storage_new')
+        navigate_to(self, 'New')
         fill(rate_form,
             {'description': self.description,
              'storage_fixed_1': self.storage_fixed_1,
@@ -251,7 +273,7 @@ class StorageRate(Updateable, Pretty):
             action=rate_form.add_button)
 
     def update(self, updates):
-        sel.force_navigate('chargeback_rates_storage_edit', context={'chargeback': self})
+        navigate_to(self, 'Edit')
         fill(rate_form,
             {'description': updates.get('description'),
              'storage_fixed_1': updates.get('storage_fixed_1'),
@@ -261,13 +283,53 @@ class StorageRate(Updateable, Pretty):
             action=rate_form.save_button)
 
     def delete(self):
-        sel.force_navigate('chargeback_rates_storage_named', context={'chargeback': self})
+        navigate_to(self, 'Details')
         tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
 
 
-class Assign(Updateable, Pretty):
+@navigator.register(StorageRate, 'All')
+class StorageRateAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Cloud Intel', 'Chargeback')(None)
+        accordion.tree("Rates", "Rates", "Storage")
+
+    def am_i_here(self):
+        return summary_title() == 'Storage Chargeback Rates'
+
+
+@navigator.register(StorageRate, 'New')
+class StorageRateNew(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb_select("Add a new Chargeback Rate")
+
+
+@navigator.register(StorageRate, 'Details')
+class StorageRateDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Rates", "Rates", "Storage", self.obj.description)
+
+    def am_i_here(self):
+        return summary_title() == 'Storage Chargeback Rate "{}"'.format(self.obj.description)
+
+
+@navigator.register(StorageRate, 'Edit')
+class StorageRateEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb_select("Edit this Chargeback Rate")
+
+
+class Assign(Updateable, Pretty, Navigatable):
     """
     Model of Chargeback Assignment page in cfme.
 
@@ -291,14 +353,15 @@ class Assign(Updateable, Pretty):
     """
     def __init__(self, assign_to=None,
                  tag_category=None,
-                 selections=None
-                 ):
+                 selections=None,
+                 appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.assign_to = assign_to
         self.tag_category = tag_category
         self.selections = selections
 
     def storageassign(self):
-        sel.force_navigate('chargeback_assignments_storage', context={'chargeback': self})
+        navigate_to(self, 'Storage')
         fill(assign_form,
             {'assign_to': self.assign_to,
              'tag_category': self.tag_category,
@@ -307,10 +370,42 @@ class Assign(Updateable, Pretty):
         flash.assert_no_errors()
 
     def computeassign(self):
-        sel.force_navigate('chargeback_assignments_compute', context={'chargeback': self})
+        navigate_to(self, 'Compute')
         fill(assign_form,
             {'assign_to': self.assign_to,
              'tag_category': self.tag_category,
              'selections': self.selections},
             action=assign_form.save_button)
         flash.assert_no_errors()
+
+
+@navigator.register(Assign, 'All')
+class AssignAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Cloud Intel', 'Chargeback')(None)
+        accordion.tree("Rates", "Rates", "Storage")
+
+
+@navigator.register(Assign, 'Storage')
+class AssignStorage(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Assignments", "Assignments", "Storage")
+
+    def am_i_here(self):
+        return summary_title() == 'Storage Rate Assignments'
+
+
+@navigator.register(Assign, 'Compute')
+class AssignCompute(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Assignments", "Assignments", "Compute")
+
+    def am_i_here(self):
+        return summary_title() == 'Compute Rate Assignments'
