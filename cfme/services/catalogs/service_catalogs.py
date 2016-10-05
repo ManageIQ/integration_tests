@@ -33,10 +33,14 @@ stack_form = Form(
         ('stack_name', Input("stack_name")),
         ('resource_group', Select("//select[@id='resource_group']")),
         ('mode', Select("//select[@id='deploy_mode']")),
+        ('user_image', Select("//select[@id='param_userImageName']")),
+        ('os_type', Select("//select[@id='param_operatingSystemType']")),
         ('vm_name', Input("param_virtualMachineName")),
         ('vm_user', Input("param_adminUserName")),
         ('vm_password', Input("param_adminPassword__protected")),
-        ('vm_size', Select("//select[@id='param_virtualMachineSize']"))
+        ('vm_size', Select("//select[@id='param_virtualMachineSize']")),
+        ('key_size', Select("//select[@id='param_InstanceType']")),
+        ('ssh_location', Input("param_SSHLocation"))
     ])
 
 
