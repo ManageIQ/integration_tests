@@ -54,7 +54,7 @@ def wait_for_vm_state_changes(vm, timeout=600):
 
 
 @pytest.mark.tier(2)
-@test_requirements.relation_discovery
+@test_requirements.discovery
 def test_vm_discovery(request, setup_provider, provider, vm_crud):
     """ Tests whether cfme will discover a vm change (add/delete) without being manually refreshed.
 
