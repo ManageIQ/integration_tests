@@ -1554,6 +1554,13 @@ class IPAppliance(object):
         except TypeError:
             return None
 
+    def server_region_string(self):
+        r = self.server_region()
+        if self.is_downstream:
+            return "CFME Region: Region {} [{}]".format(r, r)
+        else:
+            return "ManageIQ Region: Region {} [{}]".format(r, r)
+
     @cached_property
     def zone_description(self):
         return db_queries.get_zone_description(self.server_zone_id(), db=self.db)
