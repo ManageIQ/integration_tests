@@ -3,7 +3,7 @@ from functools import partial
 from collections import OrderedDict
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
-    flash, form_buttons, menu, tabstrip, DHTMLSelect, Input, Tree, AngularSelect
+    flash, form_buttons, menu, tabstrip, DHTMLSelect, Input, Tree, AngularSelect, BootstrapTreeview
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -14,6 +14,7 @@ cfg_btn = partial(tb.select, "Configuration")
 accordion_tree = partial(accordion.tree, "Catalog Items")
 policy_btn = partial(tb.select, "Policy")
 dynamic_tree = Tree("//div[@id='basic_info_div']//ul[@class='dynatree-container']")
+entry_tree = BootstrapTreeview('automate_treebox')
 
 template_select_form = Form(
     fields=[
@@ -238,8 +239,12 @@ class CatalogItem(Updateable, Pretty):
                                'select_config_template': self.config_template})
         if self.item_type != "Orchestration" and self.item_type != "AnsibleTower":
             sel.click(basic_info_form.field_entry_point)
-            dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
-                                    "StateMachines", "ServiceProvision_Template", "default")
+            if version.current_version() < "5.7":
+                dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
+                                     "StateMachines", "ServiceProvision_Template", "default")
+            else:
+                entry_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
+                                     "StateMachines", "ServiceProvision_Template", "default")
             sel.click(basic_info_form.apply_btn)
         if self.catalog_name is not None and self.provisioning_data is not None:
             tabstrip.select_tab("Request Info")
