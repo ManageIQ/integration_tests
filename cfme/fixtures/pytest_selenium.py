@@ -994,7 +994,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     # check for MiqQE javascript patch on first try and patch the appliance if necessary
     from utils.appliance import current_miqqe_version
-    if store.current_appliance.miqqe_version != current_miqqe_version:
+    if not (version.current_version() < "5.5.5.0" or version.current_version() > "5.7.0.3") and\
+            (store.current_appliance.miqqe_version != current_miqqe_version):
         store.current_appliance.patch_with_miqqe()
         browser().quit()
         force_navigate(page_name, _tries, *args, **kwargs)
