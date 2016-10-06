@@ -6,6 +6,7 @@ from selenium.common.exceptions import (
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
 
+from utils import version
 from utils.log import logger
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import (
@@ -27,7 +28,8 @@ class CFMENavigateStep(NavigateStep):
 
         # check for MiqQE javascript patch on first try and patch the appliance if necessary
         from utils.appliance import current_miqqe_version
-        if store.current_appliance.miqqe_version != current_miqqe_version:
+        if not (version.current_version() < "5.5.5.0" or version.current_version() > "5.7.0.3") \
+                and (store.current_appliance.miqqe_version != current_miqqe_version):
             store.current_appliance.patch_with_miqqe()
             browser().quit()
             self.go(_tries)
