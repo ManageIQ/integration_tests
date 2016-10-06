@@ -14,7 +14,9 @@ from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
 
-from configuration import server_region_string
+
+def server_region_string():
+    return store.current_appliance.server_region_string()
 
 tb_select = partial(tb.select, "Configuration")
 pol_btn = partial(tb.select, "Policy")

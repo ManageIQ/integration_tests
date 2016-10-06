@@ -4,6 +4,7 @@ import pytest
 
 import cfme.web_ui.flash as flash
 import cfme.configure.configuration as conf
+from fixtures.pytest_store import store
 from utils.update import update
 from utils import version
 
@@ -61,6 +62,6 @@ def test_zone_change_appliance_zone(request):
     zone.create()
     basic_info = conf.BasicInformation(appliance_zone=zone.name)
     basic_info.update()
-    assert zone.description == conf.server_zone_description()
+    assert zone.description == store.current_appliance.zone_description
     basic_info = conf.BasicInformation(appliance_zone="default")
     basic_info.update()
