@@ -1,6 +1,7 @@
 from functools import partial
-from navmazing import NavigateToSibling, NavigateToAttribute
 from cached_property import cached_property
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 
 import cfme
 import cfme.fixtures.pytest_selenium as sel
@@ -8,24 +9,22 @@ import cfme.web_ui.flash as flash
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
-    accordion, Quadicon, Form, Input, fill, form_buttons, mixins, SplitTable, Table, Region,
-    AngularSelect, Select, summary_title
+    accordion, Quadicon, Form, Input, fill, form_buttons, mixins, Table, Region,
+    AngularSelect, summary_title, browser_title, controller_name
 )
 from utils import version, conf
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance import Navigatable
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.wait import wait_for
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
-from utils.appliance import Navigatable
 
 
 properties_form = Form(
     fields=[
         ('name_text', Input('name')),
-        ('type_select', {
-            version.LOWEST: Select("select#provtype"),
-            '5.6': AngularSelect("provider_type")}),
+        ('type_select', AngularSelect("provider_type")),
         ('url_text', Input('url')),
         ('ssl_checkbox', Input('verify_ssl'))
     ])
@@ -39,26 +38,23 @@ credential_form = Form(
     ])
 
 
-def cfm_mgr_split_table():
-    return SplitTable(header_data=("//div[@id='list_grid']/div[@class='xhdr']/table/tbody", 1),
-                      body_data=("//div[@id='list_grid']/div[@class='objbox']/table/tbody", 1),)
-
-
 def cfm_mgr_table():
     return Table("//div[@id='main_div']//div[@id='list_grid']/table")
 
 
 page = Region(locators={
-    'list_table_config_profiles': {
-        version.LOWEST: cfm_mgr_split_table(),
-        "5.5": cfm_mgr_table()},
-    'list_table_config_systems': {
-        version.LOWEST: cfm_mgr_split_table(),
-        "5.5": cfm_mgr_table()}})
+    'list_table_config_profiles': cfm_mgr_table(),
+    'list_table_config_systems': cfm_mgr_table()})
 
 add_manager_btn = form_buttons.FormButton('Add')
 edit_manager_btn = form_buttons.FormButton('Save changes')
 cfg_btn = partial(tb.select, 'Configuration')
+
+
+def match_page(title):
+    return all((summary_title() == title,
+               browser_title() == 'Red Hat Satellite Provider',
+               controller_name() == 'provider_foreman'))
 
 
 class ConfigManager(Updateable, Pretty, Navigatable):
@@ -88,17 +84,10 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         self.key = key or name
 
     def _form_mapping(self, create=None, **kwargs):
-        return version.pick({
-            version.LOWEST: {
-                'name_text': kwargs.get('name'),
-                'url_text': kwargs.get('url'),
-                'ssl_checkbox': kwargs.get('ssl')},
-            '5.6': {
-                'name_text': kwargs.get('name'),
+        return {'name_text': kwargs.get('name'),
                 'type_select': create and self.type,
                 'url_text': kwargs.get('url'),
                 'ssl_checkbox': kwargs.get('ssl')}
-        })
 
     class Credential(cfme.Credential, Updateable):
         pass
@@ -178,6 +167,8 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         if not cancel:
             flash.assert_message_match('{} Provider "{}" was updated'.format(self.type, name))
 
+        self.__dict__.update(**updates)
+
     def delete(self, cancel=False, wait_deleted=True, force=False):
         """Deletes the manager through UI
 
@@ -191,37 +182,40 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         """
         if not force and not self.exists:
             return
-        navigate_to(self, 'Remove')
+        navigate_to(self, 'All')
+        sel.check(Quadicon(self.quad_name, None).checkbox())
+        item_text = version.pick({'5.6': 'Remove selected items from the VMDB',
+                                  '5.7': 'Remove selected items',
+                                  version.LATEST: 'Remove selected items'})
+        cfg_btn(item_text, invokes_alert=True)
+
         sel.handle_alert(cancel)
         if not cancel:
-            flash_msg = version.pick({
-                version.LOWEST: 'Delete initiated for 1 Provider from the CFME Database',
-                '5.6': 'Delete initiated for 1 provider'
-            })
+            flash_msg = 'Delete initiated for 1 provider'
             flash.assert_message_match(flash_msg)
             if wait_deleted:
                 wait_for(func=lambda: self.exists, fail_condition=True, delay=15, num_sec=60)
 
     @property
     def _refresh_flash_msg(self):
-        return version.pick({
-            version.LOWEST: 'Refresh {0} initiated for 1 Provider ({0}) from the CFME Database'
-            .format(self.type),
-            '5.6': 'Refresh Provider initiated for 1 provider ({})'.format(self.type)
-        })
+        return 'Refresh Provider initiated for 1 provider ({})'.format(self.type)
 
     @property
     def exists(self):
         """Returns whether the manager exists in the UI or not"""
         navigate_to(self, 'All')
         if (Quadicon.any_present() and
-                Quadicon('{} Configuration Manager'.format(self.name), None).exists):
+                Quadicon(self.quad_name, None).exists):
             return True
         return False
 
     def refresh_relationships(self, cancel=False):
         """Refreshes relationships and power states of this manager"""
-        navigate_to(self, 'RefreshRelationships')
+        navigate_to(self, 'All')
+
+        sel.check(Quadicon(self.quad_name, None).checkbox())
+        cfg_btn('Refresh Relationships and Power states', invokes_alert=True)
+
         sel.handle_alert(cancel)
         if not cancel:
             flash.assert_message_match(self._refresh_flash_msg)
@@ -260,6 +254,10 @@ class ConfigManager(Updateable, Pretty, Navigatable):
             credentials=cls.Credential(
                 principal=creds['username'], secret=creds['password']),
             key=key)
+
+    @property
+    def quad_name(self):
+        return '{} Configuration Manager'.format(self.name)
 
 
 def get_config_manager_from_config(cfg_mgr_key):
@@ -301,11 +299,8 @@ class ConfigProfile(Pretty):
         """Returns 'ConfigSystem' objects that are active under this profile"""
         navigate_to(self, 'Description')
         # ajax wait doesn't work here
-        _title_loc = version.pick({'5.4':
-                        "//div[contains(@class, 'dhtmlxInfoBarLabel')"
-                        " and contains(normalize-space(text()), 'Configured Systems')]",
-                    '5.5': "//span[contains(@id, 'explorer_title_text')"
-                            " and contains(normalize-space(text()), 'Configured Systems')]"})
+        _title_loc = "//span[contains(@id, 'explorer_title_text') " \
+                     "and contains(normalize-space(text()), 'Configured Systems')]"
         sel.wait_for_element(_title_loc)
 
         # Unassigned config profile has no tabstrip
@@ -313,7 +308,7 @@ class ConfigProfile(Pretty):
             tabs.select_tab("Configured Systems")
 
         if sel.is_displayed(page.list_table_config_systems):
-            row_key = version.pick({version.LOWEST: 'host name', '5.5': 'hostname'})
+            row_key = 'hostname'
             return [ConfigSystem(row[row_key].text, self) for row in
                     page.list_table_config_systems.rows()]
         return list()
@@ -444,25 +439,22 @@ class AnsibleTower(ConfigManager):
 
 @navigator.register(ConfigManager, 'All')
 class MgrAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
         nav._nav_to_fn('Configuration', 'Configuration Management')(None)
 
     def resetter(self):
-        accordion.tree('Providers',
-                       version.pick({version.LOWEST: 'All Red Hat Satellite Providers',
-                                     '5.6': 'All Configuration Manager Providers'}))
-
+        accordion.tree('Providers', 'All Configuration Manager Providers')
         tb.select('Grid View')
 
     def am_i_here(self):
-        return summary_title() == 'All Configuration Management Providers'
+        return match_page('All Configuration Management Providers')
 
 
 @navigator.register(ConfigManager, 'Add')
-class Add(CFMENavigateStep):
+class MgrAdd(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -470,101 +462,64 @@ class Add(CFMENavigateStep):
 
 
 @navigator.register(ConfigManager, 'Edit')
-class Edit(CFMENavigateStep):
+class MgrEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.check(Quadicon('{} Configuration Manager'.format(self.obj.name), None).checkbox())
-        cfg_btn('Edit this Provider')
-
-
-@navigator.register(ConfigManager, 'RefreshRelationships')
-class RefreshRelationships(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        sel.check(Quadicon('{} Configuration Manager'.format(self.obj.name), None).checkbox())
-        cfg_btn('Refresh Relationships and Power states', invokes_alert=True)
-
-
-@navigator.register(ConfigManager, 'Remove')
-class Remove(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        sel.check(Quadicon('{} Configuration Manager'.format(self.obj.name), None).checkbox())
-        cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
+        sel.check(Quadicon(self.obj.quad_name, None).checkbox())
+        cfg_btn('Edit Selected item')
 
 
 @navigator.register(ConfigManager, 'Details')
-class Details(CFMENavigateStep):
+class MgrDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        sel.click(Quadicon('{} Configuration Manager'.format(self.obj.name), None))
+        sel.click(Quadicon(self.obj.quad_name, None))
 
     def am_i_here(self):
-        return summary_title() in ('Configuration Profiles under Red Hat Satellite '
-                                   'Provider "{} Configuration Manager"'.format(self.obj.name),
-                                   'Inventory Groups under Ansible Tower Provider'
-                                   ' "{} Configuration Manager"'.format(self.obj.name))
+        return match_page(('Configuration Profiles under Red Hat Satellite '
+                           'Provider "{} Configuration Manager"'.format(self.obj.name),
+                           'Inventory Groups under Ansible Tower Provider'
+                           ' "{} Configuration Manager"'.format(self.obj.name)))
 
 
 @navigator.register(ConfigManager, 'EditFromDetails')
-class EditFromDetails(CFMENavigateStep):
+class MgrEditFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
         cfg_btn('Edit this Provider')
 
 
-@navigator.register(ConfigManager, 'RefreshRelationshipsFromDetails')
-class RefreshRelationshipsFromDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        cfg_btn('Refresh Relationships and Power states', invokes_alert=True)
-
-
 # todo: not sure whether this works or not. it seems it wasn't used for a long time
-@navigator.register(ConfigProfile, 'Description')
-class Description(CFMENavigateStep):
+@navigator.register(ConfigProfile, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('manager', 'Details')
 
     def step(self):
-        navigate_to(self.obj.manager, 'Details')
         tb.select('List View'),
         page.list_table_config_profiles.click_cell('Description', self.obj.name)
 
 
-@navigator.register(ConfigManager, 'RemoveFromDetails')
-class RemoveFromDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
-
-
 @navigator.register(ConfigSystem, 'All')
 class SysAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
         nav._nav_to_fn('Configuration', 'Configuration Management')(None)
 
     def resetter(self):
-        accordion.tree('Configured Systems',
-                       version.pick({version.LOWEST: 'All Red Hat Satellite Configured Systems',
-                                     '5.6': 'All Configured Systems'}))
-
+        accordion.tree('Configured Systems', 'All Configured Systems')
         tb.select('Grid View')
 
     def am_i_here(self):
-        return summary_title() == 'All Configured Systems'
+        return match_page('All Configured Systems')
 
 
 @navigator.register(ConfigSystem, 'Provision')
-class Provision(CFMENavigateStep):
+class SysProvision(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -573,7 +528,7 @@ class Provision(CFMENavigateStep):
 
 
 @navigator.register(ConfigSystem, 'EditTags')
-class EditTags(CFMENavigateStep):
+class SysEditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):

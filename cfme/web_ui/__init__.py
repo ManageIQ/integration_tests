@@ -185,10 +185,7 @@ class Region(Pretty):
             return True
 
         # All page titles have a prefix; strip it off
-        try:
-            browser_title = browser().title.split(': ', 1)[1]
-        except IndexError:
-            browser_title = None
+        window_title = browser_title()
 
         if self.identifying_loc and sel.is_displayed(
                 self.locators[self.identifying_loc], _no_deeper=True):
@@ -204,10 +201,10 @@ class Region(Pretty):
             # If we don't have a title we can't match it, and some Regions are multi-page
             # so we can't have a title set.
             title_match = True
-        elif self.title and browser_title == self.title:
+        elif self.title and window_title == self.title:
             title_match = True
         else:
-            logger.info("Title %s doesn't match expected title %s", browser_title, self.title)
+            logger.info("Title %s doesn't match expected title %s", window_title, self.title)
             title_match = False
         return title_match and ident_match
 
@@ -2819,6 +2816,7 @@ class Quadicon(Pretty):
     def href(self):
         return self.locate().get_attribute('href')
 
+
 class DHTMLSelect(Select):
     """
     A special Select object for CFME's icon enhanced DHTMLx Select elements.
@@ -3976,6 +3974,27 @@ def summary_title():
         return sel.text_sane(SUMMARY_TITLE_LOCATORS)
     except sel.NoSuchElementException:
         return None
+
+
+def browser_title():
+    """Returns a title of the page.
+
+    Returns:
+        :py:class:`str` if present, :py:class:`NoneType` otherwise.
+    """
+    try:
+        return browser().title.split(': ', 1)[1]
+    except IndexError:
+        return None
+
+
+def controller_name():
+    """Returns a title of the page.
+
+    Returns:
+        :py:class:`str` if present, :py:class:`NoneType` otherwise.
+    """
+    return sel.execute_script('return ManageIQ.controller;')
 
 
 class StatusBox(object):
