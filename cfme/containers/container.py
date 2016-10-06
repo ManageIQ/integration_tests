@@ -58,3 +58,13 @@ class Container(Taggable, SummaryMixin):
         """
         self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
+
+    @staticmethod
+    def get_container_names():
+        sel.force_navigate('containers_containers')
+        return map(lambda r: r.name.text, list_tbl.rows())
+
+    @staticmethod
+    def get_pod_names():
+        sel.force_navigate('containers_containers')
+        return map(lambda r: r.pod_name.text, list_tbl.rows())

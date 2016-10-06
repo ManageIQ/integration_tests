@@ -1,67 +1,69 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
-from navmazing import NavigateToSibling, NavigateToAttribute
-
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, summary_title, InfoBlock
-from utils.appliance.endpoints.ui import CFMENavigateStep, navigator, navigate_to
-from utils.appliance import Navigatable
+from cfme.web_ui import toolbar as tb, CheckboxTable
+from cfme.web_ui.menu import nav
+from . import details_page
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
+nav.add_branch(
+    'containers_images',
+    {
+        'containers_image':
+        lambda ctx: list_tbl.select_row_by_cells(
+            {'Name': ctx['image'].name, 'Provider': ctx['image'].provider.name}),
 
-def match_title_and_controller():
-    title_match = sel.execute_script('return document.title;') == 'CFME: Images'
-    controller_match = sel.execute_script('return ManageIQ.controller;') == 'container_image'
-    return title_match and controller_match
+        'containers_image_detail':
+        lambda ctx: list_tbl.click_row_by_cells(
+            {'Name': ctx['image'].name, 'Provider': ctx['image'].provider.name}),
+    }
+)
 
 
-class Image(Taggable, SummaryMixin, Navigatable):
+class Image(Taggable, SummaryMixin):
 
-    def __init__(self, name, provider, appliance=None):
+    def __init__(self, name, provider):
         self.name = name
         self.provider = provider
-        Navigatable.__init__(self, appliance=appliance)
 
-    # TODO: remove load_details and dynamic usage from cfme.common.Summary when nav is more complete
+    def _on_detail_page(self):
+        return sel.is_displayed(
+            '//div//h1[contains(., "{} (Summary)")]'.format(self.name))
+
     def load_details(self, refresh=False):
-        navigate_to(self, 'Details')
-        if refresh:
+        if not self._on_detail_page():
+            self.navigate(detail=True)
+        elif refresh:
             tb.refresh()
+
+    def click_element(self, *ident):
+        self.load_details(refresh=True)
+        return sel.click(details_page.infoblock.element(*ident))
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
+
         Args:
-            *ident: Table name and Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the summary's value.
+            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+        Returns: A string representing the contents of the InfoBlock's value.
         """
-        navigate_to(self, 'Details')
-        return InfoBlock.text(*ident)
+        self.load_details(refresh=True)
+        return details_page.infoblock.text(*ident)
 
+    def navigate(self, detail=True):
+        if detail is True:
+            if not self._on_detail_page():
+                sel.force_navigate(
+                    'containers_image_detail', context={
+                        'image': self})
+        else:
+            sel.force_navigate(
+                'containers_image', context={
+                    'image': self})
 
-@navigator.register(Image, 'All')
-class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Containers', 'Container Images')(None)
-
-    def resetter(self):
-        tb.select('Grid View')
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
-
-
-@navigator.register(Image, 'Details')
-class Details(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def am_i_here(self):
-        summary_match = summary_title() == '{} (Summary)'.format(self.obj.name)
-        return summary_match and match_title_and_controller()
-
-    def step(self):
-        tb.select('List View')
-        list_tbl.click_row_by_cells({'Name': self.obj.name})
+    @staticmethod
+    def get_names():
+        sel.force_navigate('containers_images')
+        return map(lambda r: r.name.text, list_tbl.rows())
