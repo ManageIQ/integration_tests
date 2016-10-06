@@ -354,6 +354,21 @@ class IPAppliance(object):
         parsed_url = urlparse(self.url)
         return parsed_url.hostname
 
+    @cached_property
+    def product_name(self):
+        try:
+            # We need to print to a file here because the deprecation warnings make it hard
+            # to get robust output and they do not seem to go to stderr
+            result = self.ssh_client.run_rails_command(
+                '"File.open(\'/tmp/product_name.txt\', \'w\') '
+                '{|f| f.write(I18n.t(\'product.name\')) }"')
+            result = self.ssh_client.run_command('cat /tmp/product_name.txt')
+            return result.output
+        except:
+            logger.error(
+                "Couldn't fetch the product name from appliance, using ManageIQ as default")
+            return 'ManageIQ'
+
     @property
     def ui_port(self):
         parsed_url = urlparse(self.url)
@@ -1556,10 +1571,8 @@ class IPAppliance(object):
 
     def server_region_string(self):
         r = self.server_region()
-        if self.is_downstream:
-            return "CFME Region: Region {} [{}]".format(r, r)
-        else:
-            return "ManageIQ Region: Region {} [{}]".format(r, r)
+        return "{} Region: Region {} [{}]".format(
+            self.product_name, r, r)
 
     @cached_property
     def zone_description(self):
