@@ -146,23 +146,6 @@ classification_table = Table("//div[@id='classification_entries_div']/table")
 zones_table = Table("//div[@id='settings_list']/table")
 
 
-def server_region():
-    return store.current_appliance.server_region()
-
-
-def server_region_pair():
-    r = server_region()
-    return r, r
-
-
-def server_name():
-    return store.current_appliance.server_name()
-
-
-def server_id():
-    return store.current_appliance.server_id()
-
-
 def add_tag(cat_name):
     fill(tag_form, {'category': cat_name})
     sel.click(tag_form.new)
@@ -173,19 +156,11 @@ def edit_tag(cat_name, tag_name):
     classification_table.click_cell('name', tag_name)
 
 
-def server_zone_description():
-    return store.current_appliance.zone_description
-
-
-def server_region_string():
-    return store.current_appliance.server_region_string()
-
-
 nav.add_branch("configuration",
     {
         "cfg_settings_region":
         [
-            lambda _: settings_tree(server_region_string()),
+            lambda _: settings_tree(store.current_appliance.server_region_string()),
             {
                 "cfg_settings_region_details":
                 lambda _: tabs.select_tab("Details"),
@@ -229,7 +204,8 @@ nav.add_branch("configuration",
         ],
 
         "cfg_analysis_profiles": [
-            lambda _: settings_tree(server_region_string(), "Analysis Profiles"),
+            lambda _: settings_tree(store.current_appliance.server_region_string(),
+                "Analysis Profiles"),
             {
                 "host_analysis_profile_add": lambda _: tb.select(
                     "Configuration", "Add Host Analysis Profile"),
@@ -240,7 +216,8 @@ nav.add_branch("configuration",
 
         "cfg_analysis_profile": [
             lambda ctx:
-            settings_tree(server_region_string(), "Analysis Profiles", str(ctx.analysis_profile)),
+            settings_tree(store.current_appliance.server_region_string(),
+                "Analysis Profiles", str(ctx.analysis_profile)),
             {
                 "analysis_profile_edit":
                 lambda _: tb.select("Configuration", "Edit this Analysis Profile"),
@@ -249,7 +226,7 @@ nav.add_branch("configuration",
 
         "cfg_settings_defaultzone":
         lambda _: settings_tree(
-            server_region_string(),
+            store.current_appliance.server_region_string(),
             "Zones",
             "Zone: Default Zone (current)",
         ),
@@ -257,7 +234,7 @@ nav.add_branch("configuration",
         "cfg_settings_zones":
         [
             lambda _: settings_tree(
-                server_region_string(),
+                store.current_appliance.server_region_string(),
                 "Zones"),
             {
                 "cfg_settings_zone":
@@ -274,7 +251,7 @@ nav.add_branch("configuration",
         "cfg_settings_schedules":
         [
             lambda _: settings_tree(
-                server_region_string(),
+                store.current_appliance.server_region_string(),
                 "Schedules"),
             {
                 "cfg_settings_schedule":
@@ -291,10 +268,11 @@ nav.add_branch("configuration",
         "cfg_settings_currentserver":
         [
             lambda _: settings_tree(
-                server_region_string(),
+                store.current_appliance.server_region_string(),
                 "Zones",
-                "Zone: {} (current)".format(server_zone_description()),
-                "Server: {} [{}] (current)".format(server_name(), server_id())
+                "Zone: {} (current)".format(store.current_appliance.zone_description),
+                "Server: {} [{}] (current)".format(store.current_appliance.server_name(),
+                    store.current_appliance.server_id())
             ),
             {
                 "cfg_settings_currentserver_server":
@@ -325,9 +303,10 @@ nav.add_branch("configuration",
         "cfg_diagnostics_currentserver":
         [
             lambda _: diagnostics_tree(
-                server_region_string(),
+                store.current_appliance.server_region_string(),
                 "Zone: Default Zone (current)",
-                "Server: {} [{}] (current)".format(server_name(), server_id())
+                "Server: {} [{}] (current)".format(store.current_appliance.server_name(),
+                    store.current_appliance.server_id())
             ),
             {
                 "cfg_diagnostics_server_summary":
@@ -364,7 +343,7 @@ nav.add_branch("configuration",
         "cfg_diagnostics_defaultzone":
         [
             lambda _: diagnostics_tree(
-                server_region_string(),
+                store.current_appliance.server_region_string(),
                 "Zone: Default Zone (current)",
             ),
             {
@@ -386,7 +365,7 @@ nav.add_branch("configuration",
         ],
         "cfg_diagnostics_region":
         [
-            lambda _: diagnostics_tree(server_region_string()),
+            lambda _: diagnostics_tree(store.current_appliance.server_region_string()),
             {
                 "cfg_diagnostics_region_zones":
                 lambda _: tabs.select_tab("Zones"),
@@ -1950,9 +1929,9 @@ def set_ntp_servers(*servers):
     if servers:
         flash.assert_message_match(
             "Configuration settings saved for CFME Server \"{} [{}]\" in Zone \"{}\"".format(
-                server_name(),
-                server_id(),
-                server_zone_description().partition(' ')[0].lower()))
+                store.current_appliance.server_name(),
+                store.current_appliance.server_id(),
+                store.current_appliance.zone_description.partition(' ')[0].lower()))
 
 
 def get_ntp_servers():
