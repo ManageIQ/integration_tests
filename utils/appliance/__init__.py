@@ -178,6 +178,7 @@ class IPAppliance(object):
             configure_function = pick({
                 '5.2': self._configure_5_2,
                 '5.3': self._configure_5_3,
+                'darga-4.1': self._configure_upstream,
                 LATEST: self._configure_upstream,
             })
             configure_function(log_callback=log_callback)
