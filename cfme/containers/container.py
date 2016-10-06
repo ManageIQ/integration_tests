@@ -3,7 +3,7 @@ from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb
 from cfme.web_ui.menu import nav
-from . import details_page
+from cfme.configure import details_page
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
@@ -58,3 +58,13 @@ class Container(Taggable, SummaryMixin):
         """
         self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
+
+    @staticmethod
+    def get_container_names():
+        sel.force_navigate('containers_containers')
+        return map(lambda r: r.name.text, list_tbl.rows())
+
+    @staticmethod
+    def get_pod_names():
+        sel.force_navigate('containers_containers')
+        return map(lambda r: r.pod_name.text, list_tbl.rows())
