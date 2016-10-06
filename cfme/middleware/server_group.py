@@ -1,15 +1,20 @@
+from navmazing import NavigateToSibling
+
 import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
-from cfme.web_ui import CheckboxTable, paginator
+from cfme.web_ui import CheckboxTable, paginator, InfoBlock
 from cfme.web_ui.menu import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.db import cfmedb
 from utils.varmeth import variable
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
 from cfme.middleware.domain import MiddlewareDomain
+from cfme.exceptions import MiddlewareDomainNotFound
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -32,13 +37,10 @@ def _db_select_query(domain, name=None, feed=None):
 
 
 def _get_server_groups_page(domain):
-    domain.summary.reload()
-    if domain.summary.relationships.middleware_server_groups.value == 0:
-        return
-    domain.summary.relationships.middleware_server_groups.click()
+    navigate_to(domain, 'DomainServerGroups')
 
 
-class MiddlewareServerGroup(MiddlewareBase, Taggable):
+class MiddlewareServerGroup(MiddlewareBase, Taggable, Navigatable):
     """
     MiddlewareServerGroup class provides actions and details on Server Group page.
     Class method available to get existing server groups list
@@ -57,10 +59,11 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable):
         myservergroups = MiddlewareServerGroup.server_groups()
 
     """
-    property_tuples = [('name', 'name'), ('profile', 'profile')]
+    property_tuples = [('name', 'Name'), ('profile', 'Profile')]
     taggable_type = 'MiddlewareServerGroup'
 
-    def __init__(self, name, domain, **kwargs):
+    def __init__(self, name, domain, appliance=None, **kwargs):
+        Navigatable.__init__(self, appliance=appliance)
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -132,20 +135,8 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable):
                    for hdr in sel.elements("//thead/tr/th") if hdr.text]
         return headers
 
-    def _on_detail_page(self):
-        """Override existing `_on_detail_page` and return `False` always.
-        There is no uniqueness on summary page of this resource.
-        Refer: https://github.com/ManageIQ/manageiq/issues/9046
-        """
-        return False
-
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            _get_server_groups_page(domain=self.domain)
-            if self.feed:
-                list_tbl.click_row_by_cells({'Server Group Name': self.name, 'Feed': self.feed})
-            else:
-                list_tbl.click_row_by_cells({'Server Group Name': self.name})
+        navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_sgr = self.server_group(method='db')
             self.db_id = tmp_sgr.db_id
@@ -154,7 +145,7 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable):
 
     @variable(alias='ui')
     def server_group(self):
-        self.summary.reload()
+        self.load_details(refresh=True)
         return self
 
     @server_group.variant('mgmt')
@@ -195,3 +186,29 @@ class MiddlewareServerGroup(MiddlewareBase, Taggable):
     def download(cls, extension, domain):
         _get_server_groups_page(domain)
         download(extension)
+
+
+@navigator.register(MiddlewareServerGroup, 'Details')
+class Details(CFMENavigateStep):
+    def prerequisite(self):
+        if not self.obj.domain:
+            raise MiddlewareDomainNotFound(
+                "Middleware Domain is not found in provided Server Group")
+        navigate_to(self.obj.domain, 'DomainServerGroups')
+
+    def step(self):
+        if self.obj.feed:
+            list_tbl.click_row_by_cells({'Server Group Name': self.obj.name,
+                                         'Domain Name': self.obj.domain.name,
+                                         'Feed': self.obj.feed})
+        else:
+            list_tbl.click_row_by_cells({'Server Group Name': self.obj.name,
+                                         'Domain Name': self.obj.domain.name})
+
+
+@navigator.register(MiddlewareServerGroup, 'ServerGroupServers')
+class ServerGroupServers(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Servers'))

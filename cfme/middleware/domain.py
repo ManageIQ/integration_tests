@@ -1,11 +1,14 @@
+from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common import Taggable
 from cfme.exceptions import MiddlewareDomainNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
-from cfme.web_ui import CheckboxTable, paginator
-from cfme.web_ui.menu import nav, toolbar as tb
+from cfme.web_ui import CheckboxTable, paginator, InfoBlock
+from cfme.web_ui.menu import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_providers
 from utils.varmeth import variable
@@ -34,21 +37,12 @@ def _db_select_query(name=None, feed=None, provider=None):
 
 def _get_domains_page(provider):
     if provider:  # if provider instance is provided navigate through provider's domains page
-        provider.summary.reload()
-        if provider.summary.relationships.middleware_domains.value == 0:
-            return
-        provider.summary.relationships.middleware_domains.click()
+        navigate_to(provider, 'ProviderDomains')
     else:  # if None(provider) given navigate through all middleware domains page
-        sel.force_navigate('middleware_domains')
-
-nav.add_branch(
-    'middleware_domains', {
-        'middleware_domain': lambda ctx: list_tbl.select_row('Domain Name', ctx['name']),
-    }
-)
+        navigate_to(MiddlewareDomain, 'All')
 
 
-class MiddlewareDomain(MiddlewareBase, Taggable):
+class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
     """
     MiddlewareDomain class provides actions and details on Domain page.
     Class method available to get existing domains list
@@ -67,10 +61,11 @@ class MiddlewareDomain(MiddlewareBase, Taggable):
         mydomains = MiddlewareDomain.domains()
 
     """
-    property_tuples = [('name', 'name')]
+    property_tuples = [('name', 'Name')]
     taggable_type = 'MiddlewareDomain'
 
-    def __init__(self, name, provider=None, **kwargs):
+    def __init__(self, name, provider=None, appliance=None, **kwargs):
+        Navigatable.__init__(self, appliance=appliance)
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -146,20 +141,8 @@ class MiddlewareDomain(MiddlewareBase, Taggable):
         else:
             return cls._domains_in_mgmt(provider)
 
-    def _on_detail_page(self):
-        """Override existing `_on_detail_page` and return `False` always.
-        There is no uniqueness on summary page of this resource.
-        Refer: https://github.com/ManageIQ/manageiq/issues/9046
-        """
-        return False
-
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            _get_domains_page(self.provider)
-            if self.feed:
-                list_tbl.click_row_by_cells({'Domain Name': self.name, 'Feed': self.feed})
-            else:
-                list_tbl.click_row_by_cells({'Domain Name': self.name})
+        navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_dmn = self.domain(method='db')
             self.db_id = tmp_dmn.db_id
@@ -168,7 +151,7 @@ class MiddlewareDomain(MiddlewareBase, Taggable):
 
     @variable(alias='ui')
     def domain(self):
-        self.summary.reload()
+        self.load_details(refresh=True)
         return self
 
     @domain.variant('mgmt')
@@ -229,3 +212,36 @@ class MiddlewareDomain(MiddlewareBase, Taggable):
     def download(cls, extension, provider=None):
         _get_domains_page(provider)
         download(extension)
+
+
+@navigator.register(MiddlewareDomain, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Middleware', 'Domains')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("List View")
+
+
+@navigator.register(MiddlewareDomain, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        if self.obj.feed:
+            list_tbl.click_row_by_cells({'Domain Name': self.obj.name,
+                                         'Feed': self.obj.feed})
+        else:
+            list_tbl.click_row_by_cells({'Domain Name': self.obj.name})
+
+
+@navigator.register(MiddlewareDomain, 'DomainServerGroups')
+class DomainServerGroups(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Server Groups'))

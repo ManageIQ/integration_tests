@@ -1,15 +1,19 @@
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 import re
 from cfme.common import Taggable
 from cfme.exceptions import MiddlewareServerNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties, Container
 from cfme.web_ui import (
-    CheckboxTable, paginator, Form, Input, fill
+    CheckboxTable, paginator, Form, Input, fill, InfoBlock
 )
 from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui.menu import nav, toolbar as tb
+from cfme.web_ui.menu import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_providers
 from utils.varmeth import variable
@@ -46,24 +50,12 @@ def _db_select_query(name=None, feed=None, provider=None, server_group=None,
 
 def _get_servers_page(provider=None, server_group=None):
     if provider:  # if provider instance is provided navigate through provider's servers page
-        provider.summary.reload()
-        if provider.summary.relationships.middleware_servers.value == 0:
-            return
-        provider.summary.relationships.middleware_servers.click()
+        navigate_to(provider, 'ProviderServers')
     elif server_group:
         # if server group instance is provided navigate through it's servers page
-        server_group.summary.reload()
-        if server_group.summary.relationships.middleware_servers.value == 0:
-            return
-        server_group.summary.relationships.middleware_servers.click()
+        navigate_to(server_group, 'ServerGroupServers')
     else:  # if None(provider) given navigate through all middleware servers page
-        sel.force_navigate('middleware_servers')
-
-nav.add_branch(
-    'middleware_servers', {
-        'middleware_server': lambda ctx: list_tbl.select_row('Server Name', ctx['name']),
-    }
-)
+        navigate_to(MiddlewareServer, 'All')
 
 timeout_form = Form(
     fields=[
@@ -75,7 +67,7 @@ timeout_form = Form(
 )
 
 
-class MiddlewareServer(MiddlewareBase, Taggable, Container):
+class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable):
     """
     MiddlewareServer class provides actions and details on Server page.
     Class method available to get existing servers list
@@ -96,11 +88,12 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
         myservers = MiddlewareServer.servers()
 
     """
-    property_tuples = [('name', 'name'), ('feed', 'feed'),
-                       ('bound_address', 'bind_address')]
+    property_tuples = [('name', 'Name'), ('feed', 'Feed'),
+                       ('bound_address', 'Bind Address')]
     taggable_type = 'MiddlewareServer'
 
-    def __init__(self, name, provider=None, **kwargs):
+    def __init__(self, name, provider=None, appliance=None, **kwargs):
+        Navigatable.__init__(self, appliance=appliance)
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -195,22 +188,8 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
         server_mgmt = server.server(method='mgmt')
         return getattr(server_mgmt, attributize_string('Server Group'), None) == server_group.name
 
-    def _on_detail_page(self):
-        """Override existing `_on_detail_page` and return `False` always.
-        There is no uniqueness on summary page of this resource.
-        Refer: https://github.com/ManageIQ/manageiq/issues/9046
-        """
-        return False
-
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            _get_servers_page(self.provider)
-            if self.feed:
-                list_tbl.click_row_by_cells({'Server Name': self.name, 'Feed': self.feed})
-            elif self.hostname:
-                list_tbl.click_row_by_cells({'Server Name': self.name, 'Host Name': self.hostname})
-            else:
-                list_tbl.click_row_by_cells({'Server Name': self.name})
+        navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_ser = self.server(method='db')
             self.db_id = tmp_ser.db_id
@@ -219,7 +198,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
 
     @variable(alias='ui')
     def server(self):
-        self.summary.reload()
+        self.load_details(refresh=False)
         return self
 
     @server.variant('mgmt')
@@ -255,8 +234,8 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
 
     @variable(alias='ui')
     def is_running(self):
-        self.summary.reload()
-        return self.summary.properties.server_state.text_value == 'Running'
+        self.load_details(refresh=True)
+        return self.get_detail("Properties", "Server State") == 'Running'
 
     @variable(alias='db')
     def is_suspended(self):
@@ -268,18 +247,18 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
 
     @variable(alias='ui')
     def is_starting(self):
-        self.summary.reload()
-        return self.summary.properties.server_state.text_value == 'Starting'
+        self.load_details(refresh=True)
+        return self.get_detail("Properties", "Server State") == 'Starting'
 
     @variable(alias='ui')
     def is_stopping(self):
-        self.summary.reload()
-        return self.summary.properties.server_state.text_value == 'Stopping'
+        self.load_details(refresh=True)
+        return self.get_detail("Properties", "Server State") == 'Stopping'
 
     @variable(alias='ui')
     def is_stopped(self):
-        self.summary.reload()
-        return self.summary.properties.server_state.text_value == 'Stopped'
+        self.load_details(refresh=True)
+        return self.get_detail("Properties", "Server State") == 'Stopped'
 
     def shutdown_server(self, timeout=10, cancel=False):
         self.load_details(refresh=True)
@@ -337,3 +316,55 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
     def download(cls, extension, provider=None, server_group=None):
         _get_servers_page(provider, server_group)
         download(extension)
+
+
+@navigator.register(MiddlewareServer, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Middleware', 'Servers')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("List View")
+
+
+@navigator.register(MiddlewareServer, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        if self.obj.feed:
+            list_tbl.click_row_by_cells({'Server Name': self.obj.name,
+                                         'Feed': self.obj.feed})
+        elif self.obj.hostname:
+            list_tbl.click_row_by_cells({'Server Name': self.obj.name,
+                                         'Host Name': self.obj.hostname})
+        else:
+            list_tbl.click_row_by_cells({'Server Name': self.obj.name})
+
+
+@navigator.register(MiddlewareServer, 'ServerDatasources')
+class ServerDatasources(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Datasources'))
+
+
+@navigator.register(MiddlewareServer, 'ServerDeployments')
+class ServerDeployments(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Deployments'))
+
+
+@navigator.register(MiddlewareServer, 'ServerMessagings')
+class ServerMessagings(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Messagings'))
