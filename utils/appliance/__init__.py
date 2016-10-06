@@ -1575,6 +1575,10 @@ class IPAppliance(object):
             self.product_name, r, r)
 
     @cached_property
+    def company_name(self):
+        return self.get_yaml_config("vmdb")["server"]["company"]
+
+    @cached_property
     def zone_description(self):
         return db_queries.get_zone_description(self.server_zone_id(), db=self.db)
 

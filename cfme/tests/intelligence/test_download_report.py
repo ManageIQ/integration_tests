@@ -2,7 +2,7 @@
 import pytest
 import os
 import shutil
-from cfme.intelligence.reports import reports
+from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
 from utils import browser
@@ -38,7 +38,7 @@ def needs_firefox():
 @pytest.fixture(scope="module")
 def report():
     path = ["Configuration Management", "Virtual Machines", "Hardware Information for VMs"]
-    return reports.CannedSavedReport(path, reports.queue_canned_report(*path))
+    return CannedSavedReport(path, CannedSavedReport.queue_canned_report(path))
 
 
 # TODO Prevent Firefox from popping up "Save file" in order to add 'pdf' parametrization
