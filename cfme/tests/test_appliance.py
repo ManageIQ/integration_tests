@@ -3,6 +3,7 @@
 
 import pytest
 
+from fixtures.pytest_store import store
 from utils import db, version
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
@@ -43,6 +44,13 @@ def _rpms_present_packages():
         return not any(package_tests)
 
     return filter(package_filter, possible_packages)
+
+
+def test_product_name():
+    if store.current_appliance.is_downstream:
+        assert store.current_appliance.product_name == 'CFME'
+    else:
+        assert store.current_appliance.product_name == 'ManageIQ'
 
 
 @pytest.mark.ignore_stream("upstream")
