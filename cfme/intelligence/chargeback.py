@@ -208,7 +208,7 @@ class ComputeRate(Updateable, Pretty, Navigatable):
 
 @navigator.register(ComputeRate, 'All')
 class ComputeRateAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
@@ -291,7 +291,7 @@ class StorageRate(Updateable, Pretty, Navigatable):
 
 @navigator.register(StorageRate, 'All')
 class StorageRateAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
@@ -381,7 +381,7 @@ class Assign(Updateable, Pretty, Navigatable):
 
 @navigator.register(Assign, 'All')
 class AssignAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav

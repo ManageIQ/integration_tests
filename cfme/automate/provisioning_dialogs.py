@@ -107,7 +107,7 @@ class ProvisioningDialog(Updateable, Pretty, Navigatable):
 
 @navigator.register(ProvisioningDialog, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav

@@ -201,7 +201,7 @@ class User(Updateable, Pretty, Navigatable):
 
 @navigator.register(User, 'All')
 class UserAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'Configuration')
+    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
         accordion.tree("Access Control", server_region_string(), "Users")
@@ -318,7 +318,7 @@ class Group(Updateable, Pretty, Navigatable):
 
 @navigator.register(Group, 'All')
 class GroupAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'Configuration')
+    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
         accordion.tree("Access Control", server_region_string(), "Groups")
@@ -424,7 +424,7 @@ class Role(Updateable, Pretty, Navigatable):
 
 @navigator.register(Role, 'All')
 class RoleAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'Configuration')
+    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
         accordion.tree("Access Control", server_region_string(), "Roles")
