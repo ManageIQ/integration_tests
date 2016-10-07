@@ -16,6 +16,8 @@ from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
 from cfme import test_requirements
+from urlparse import urlparse
+from fixtures.pytest_store import store
 
 
 pytestmark = [
@@ -27,6 +29,7 @@ pytestmark = [
 ]
 
 CANDU_PROVIDER_TYPES = {"virtualcenter"}  # TODO: rhevm
+SNMP = [("v1", "1"), ("v2", "info")]
 
 
 def pytest_generate_tests(metafunc):
@@ -141,35 +144,88 @@ def initialize_provider(provider, setup_provider_modscope):
             candu.disable_all()
 
 
-@pytest.fixture(scope="function")
-def vm_name(request, initialize_provider, full_template):
-    name = "test_alerts_{}".format(fauxfactory.gen_alpha())
+@pytest.fixture(scope="module")
+def match_string():
+    return fauxfactory.gen_alpha(length=8)
 
-    @request.addfinalizer
-    def _cleanup_vm():
-        try:
-            if initialize_provider.mgmt.does_vm_exist(name):
-                initialize_provider.mgmt.delete_vm(name)
-            initialize_provider.refresh_provider_relationships()
-        except Exception as e:
-            logger.exception(e)
-    vm_obj = VM.factory(name, initialize_provider, template_name=full_template["name"])
-    vm_obj.create_on_provider(allow_skip="default")
-    initialize_provider.mgmt.start_vm(vm_obj.name)
-    initialize_provider.mgmt.wait_vm_running(vm_obj.name)
-    # In order to have seamless SSH connection
-    vm_ip, _ = wait_for(
-        lambda: initialize_provider.mgmt.current_ip_address(vm_obj.name),
-        num_sec=300, delay=5, fail_condition={None}, message="wait for testing VM IP address.")
-    wait_for(
-        net_check, [ports.SSH, vm_ip], {"force": True},
-        num_sec=300, delay=5, message="testing VM's SSH available")
-    if not vm_obj.exists:
-        initialize_provider.refresh_provider_relationships()
-        vm_obj.wait_to_appear()
-    if initialize_provider.type in CANDU_PROVIDER_TYPES:
-        vm_obj.wait_candu_data_available(timeout=20 * 60)
-    return name
+
+@pytest.yield_fixture(params=SNMP, ids=lambda snmp: "snmp_{}".format(snmp[0]))
+def alert(request, match_string):
+    logger.info(request.param)
+    version, trap_id = request.param
+    alert = explorer.Alert(
+        "Trigger by VM Power On {}".format(fauxfactory.gen_alpha(length=4)),
+        active=True,
+        based_on="VM and Instance",
+        driving_event="VM Operation: VM Power On",
+        notification_frequency="1 Minute",
+        snmp_trap={
+            "hosts": "127.0.0.1",
+            "version": version,
+            "id": trap_id,
+            "traps": [
+                ("1.2.3", "OctetString", "{}".format(match_string))
+            ]
+        },
+    )
+    alert.create()
+    yield alert
+    alert.delete()
+
+
+@pytest.fixture(scope="module")
+def ssh_appliance():
+    return SSHClient(
+        username=credentials['ssh']['username'],
+        password=credentials['ssh']['password'],
+        hostname=urlparse(store.base_url).netloc
+    )
+
+
+@pytest.yield_fixture(scope="module")
+def snmp(ssh_appliance):
+    ssh_appliance.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
+    ssh_appliance.run_command("systemctl start snmptrapd.service")
+    yield
+    ssh_appliance.run_command("systemctl stop snmptrapd.service")
+    ssh_appliance.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
+
+
+
+@pytest.fixture(scope="module")
+def vm_name():
+    return "test_alerts_{}".format(fauxfactory.gen_alpha())
+
+
+# @pytest.fixture(scope="function")
+# def vm_name(request, initialize_provider, full_template):
+#     name = "test_alerts_{}".format(fauxfactory.gen_alpha())
+
+#     @request.addfinalizer
+#     def _cleanup_vm():
+#         try:
+#             if initialize_provider.mgmt.does_vm_exist(name):
+#                 initialize_provider.mgmt.delete_vm(name)
+#             initialize_provider.refresh_provider_relationships()
+#         except Exception as e:
+#             logger.exception(e)
+#     vm_obj = VM.factory(name, initialize_provider, template_name=full_template["name"])
+#     vm_obj.create_on_provider(allow_skip="default")
+#     initialize_provider.mgmt.start_vm(vm_obj.name)
+#     initialize_provider.mgmt.wait_vm_running(vm_obj.name)
+#     # In order to have seamless SSH connection
+#     vm_ip, _ = wait_for(
+#         lambda: initialize_provider.mgmt.current_ip_address(vm_obj.name),
+#         num_sec=300, delay=5, fail_condition={None}, message="wait for testing VM IP address.")
+#     wait_for(
+#         net_check, [ports.SSH, vm_ip], {"force": True},
+#         num_sec=300, delay=5, message="testing VM's SSH available")
+#     if not vm_obj.exists:
+#         initialize_provider.refresh_provider_relationships()
+#         vm_obj.wait_to_appear()
+#     if initialize_provider.type in CANDU_PROVIDER_TYPES:
+#         vm_obj.wait_candu_data_available(timeout=20 * 60)
+#     return name
 
 
 @pytest.fixture(scope="function")
@@ -298,58 +354,30 @@ def test_alert_timeline_cpu(request, vm_name, provider, ssh, vm_crud):
     wait_for(_timeline_event_present, num_sec=30 * 60, delay=15, message="timeline event present")
 
 
-@pytest.mark.skipif(True, reason="SNMP hogs the tests.")
-@pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
-def test_alert_snmp(request, vm_name, smtp_test, provider, snmp_client):
-    """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
-    zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
-    alerts. It uses SNMP v2.
+def test_alert_snmp(request, alert, match_string, vm, vm_name, snmp, ssh_appliance,
+    vm_crud_refresh):
+    """ Tests a custom alert that send snmp notifications triggered by VM Power On event.
 
     Metadata:
-        test_flag: alerts, provision, metrics_collection
+        test_flag: alerts, provision
     """
-    alert = explorer.Alert(
-        "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
-        active=True,
-        based_on="VM and Instance",
-        evaluate=(
-            "Real Time Performance",
-            {
-                "performance_field": "CPU - % Used",
-                "performance_field_operator": ">",
-                "performance_field_value": "0",
-                "performance_trend": "Don't Care",
-                "performance_time_threshold": "3 Minutes",
-            }),
-        notification_frequency="5 Minutes",
-        snmp_trap={
-            "hosts": "127.0.0.1",  # The client lives on the appliance due to network reasons
-            "version": "v2",
-            "id": "1",
-            "traps": [
-                ("1.2.3", "Integer", "1")]},
-    )
-    alert.create()
-    request.addfinalizer(alert.delete)
-
-    setup_for_alerts(request, [alert])
+    setup_for_alerts(request, [alert], vm_name=vm_name)
+    # Stop the VM
+    vm.stop_vm()
+    vm_crud_refresh()
+    vm.start_vm()
 
     def _snmp_arrived():
-        # TODO: More elaborate checking
-        for trap in snmp_client.get_all():
-            if trap["source_ip"] != "127.0.0.1":
-                continue
-            if trap["trap_version"] != 2:
-                continue
-            if trap["oid"] != "1.0":
-                continue
-            for var in trap["vars"]:
-                if var["name"] == "1.2.3" and var["oid"] == "1.2.3" and var["value"] == "1":
-                    return True
+        rc, stdout = ssh_appliance.run_command(
+            "journalctl /usr/sbin/snmptrapd | grep {}".format(match_string))
+        if rc != 0:
+            return False
+        elif stdout:
+            return True
         else:
             return False
 
-    wait_for(_snmp_arrived, num_sec=600, delay=15, message="SNMP trap arrived.")
+    wait_for(_snmp_arrived, num_sec=300, delay=15, message="SNMP trap arrived.")
 
 
 @pytest.mark.meta(blockers=[1231889], automates=[1231889])

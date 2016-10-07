@@ -60,7 +60,7 @@ class SNMPTrapField(Pretty):
 
     @property
     def type(self):
-        return sel.text(sel.type_loc.first_selected_option)
+        return sel.text(self.type_loc.first_selected_option)
 
     @type.setter
     def type(self, value):
