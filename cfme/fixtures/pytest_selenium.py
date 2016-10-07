@@ -1032,7 +1032,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     restart_evmserverd = False
 
     # remember the current user, if any
-    current_user = store.user
+    current_user = store.current_appliance.user
 
     # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right here
     if (
@@ -1102,7 +1102,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         if not current_user:  # default to admin user
             login.login_admin()
         else:  # we recycled and want to log back in
-            login.login(store.user)
+            login.login(store.current_appliance.user)
 
     try:
         try:

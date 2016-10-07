@@ -100,14 +100,14 @@ class CFMENavigateStep(NavigateStep):
         # Includes recycling so you don't need to specify recycle = False
         restart_evmserverd = False
 
-        current_user = store.user
+        current_user = store.current_appliance.user
         from cfme import login
 
         def _login_func():
             if not current_user:  # default to admin user
                 login.login_admin()
             else:  # we recycled and want to log back in
-                login.login(store.user)
+                login.login(store.current_appliance.user)
 
         try:
             try:
