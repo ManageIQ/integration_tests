@@ -202,13 +202,18 @@ def versions_for_group(request):
         except ObjectDoesNotExist:
             versions = []
         else:
-            versions = Template.get_versions(
-                container_q,
-                template_group=group, ready=True, usable=True, exists=True,
-                preconfigured=preconfigured, provider__working=True, provider__disabled=False,
-                provider__user_groups__in=request.user.groups.all())
+            versions = [
+                (version, Template.ga_version(version))
+                for version in Template.get_versions(
+                    container_q,
+                    template_group=group, ready=True, usable=True, exists=True,
+                    preconfigured=preconfigured, provider__working=True, provider__disabled=False,
+                    provider__user_groups__in=request.user.groups.all())]
             if versions:
-                latest_version = versions[0]
+                if versions[0][1]:
+                    latest_version = '{} (GA)'.format(versions[0][0])
+                else:
+                    latest_version = versions[0][0]
 
     return render(request, 'appliances/_versions.html', locals())
 

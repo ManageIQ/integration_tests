@@ -26,7 +26,7 @@
             <td><a href="{% url 'specific_provider' provider.id %}#template-{{ template.id }}">{{ provider.id }}</a></td>
             <td>
                 {% if template.suggested_delete %}<strong>{% endif %}
-                {{ template.name }} {% if template.parent_template and template.parent_template.exists_and_ready %}(<a href="#{{ template.parent_template.id }}">parent</a>){% endif %}
+                {{ template.name }}{% if template.ga_released %}<strong> (GA)</strong>{% endif %}{% if template.parent_template and template.parent_template.exists_and_ready %} (<a href="#{{ template.parent_template.id }}">parent</a>){% endif %}
                 {% if template.suggested_delete %}</strong>{% endif %}
             </td>
             <td><span class="glyphicon glyphicon-{% if template.preconfigured %}ok{% else %}remove{% endif %}"></span></td>

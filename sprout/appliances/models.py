@@ -571,6 +571,10 @@ class Template(MetadataMixin):
         dates.sort(reverse=True)
         return dates
 
+    @classmethod
+    def ga_version(cls, version):
+        return bool(cls.objects.filter(version=version, ga_released=True))
+
     def __unicode__(self):
         return "{} {}:{} @ {}".format(
             type(self).__name__, self.version, self.name, self.provider.id)
