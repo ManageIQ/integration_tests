@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """This module tests various ways how to set up the provisioning using the provisioning dialog."""
-import fauxfactory
-import pytest
 import re
 from datetime import datetime, timedelta
 
+import fauxfactory
+import pytest
+from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.provisioning import provisioning_form
@@ -12,14 +13,16 @@ from cfme.services import requests
 from cfme.web_ui import InfoBlock, fill, flash
 from utils import mgmt_system, testgen
 from utils.blockers import BZ
+from utils.generators import random_vm_name
 from utils.log import logger
+from utils.version import current_version
 from utils.wait import wait_for, TimedOutError
-
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
     pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.long_running,
+    test_requirements.provision,
     pytest.mark.meta(blockers=[
         BZ(
             1265466,
@@ -38,6 +41,12 @@ def pytest_generate_tests(metafunc):
             ['provisioning', 'datastore']
         ])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+
+
+@pytest.fixture(scope="function")
+def vm_name():
+    vm_name = random_vm_name('provd')
+    return vm_name
 
 
 @pytest.fixture(scope="function")
@@ -66,7 +75,7 @@ def prov_data(provisioning, provider):
 
 
 @pytest.fixture(scope="function")
-def provisioner(request, setup_provider, provider):
+def provisioner(request, setup_provider, provider, vm_name):
 
     def _provisioner(template, provisioning_data, delayed=None):
         pytest.sel.force_navigate('infrastructure_provision_vms', context={
@@ -74,7 +83,6 @@ def provisioner(request, setup_provider, provider):
             'template_name': template,
         })
 
-        vm_name = provisioning_data["vm_name"]
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         flash.assert_no_errors()
 
@@ -98,13 +106,13 @@ def provisioner(request, setup_provider, provider):
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=900, delay=20)
-        assert row.last_message.text == 'Vm Provisioned Successfully'
+        assert 'Successfully' in row.last_message.text and row.status.text != 'Error'
         return VM.factory(vm_name, provider)
 
     return _provisioner
 
 
-def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data):
+def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data, vm_name):
     """ Tests change RAM and CPU in provisioning dialog.
 
     Prerequisities:
@@ -119,18 +127,21 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data):
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
-    prov_data["num_sockets"] = "4"
-    prov_data["cores_per_socket"] = "1"
+    prov_data["vm_name"] = vm_name
+    if provider.type == "scvmm" and current_version() == "5.6":
+        prov_data["num_cpus"] = "4"
+    else:
+        prov_data["num_sockets"] = "4"
+        prov_data["cores_per_socket"] = "1" if provider.type != "scvmm" else None
     prov_data["memory"] = "4096"
     template_name = provider.data['provisioning']['template']
-
     vm = provisioner(template_name, prov_data)
 
     # Go to the VM info
     data = vm.get_detail(properties=("Properties", "Container")).strip()
     # No longer possible to use version pick because of cherrypicking?
     regexes = map(re.compile, [
+        r"^[^(]*(\d+) CPUs?.*, ([^)]+)[^)]*$",
         r"^[^(]*\((\d+) CPUs?, ([^)]+)\)[^)]*$",
         r"^.*?(\d+) CPUs? .*?(\d+ MB)$"])
     for regex in regexes:
@@ -145,14 +156,16 @@ def test_change_cpu_ram(provisioner, soft_assert, provider, prov_data):
 
 
 # Special parametrization in testgen above
-@pytest.mark.meta(blockers=[1209847])
+@pytest.mark.meta(blockers=[1209847, 1380782])
 @pytest.mark.parametrize("disk_format", ["thin", "thick", "preallocated"])
 @pytest.mark.uncollectif(lambda provider, disk_format:
                          (provider.type == "rhevm" and disk_format == "thick") or
                          (provider.type != "rhevm" and disk_format == "preallocated") or
                          # Temporarily, our storage domain cannot handle preallocated disks
-                         (provider.type == "rhevm" and disk_format == "preallocated"))
-def test_disk_format_select(provisioner, disk_format, provider, prov_data):
+                         (provider.type == "rhevm" and disk_format == "preallocated") or
+                         (provider.type == "scvmm") or
+                         (provider.key == "vsphere55" and disk_format == "thick"))
+def test_disk_format_select(provisioner, disk_format, provider, prov_data, vm_name):
     """ Tests disk format selection in provisioning dialog.
 
     Prerequisities:
@@ -168,7 +181,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data):
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
+    prov_data["vm_name"] = vm_name
     prov_data["disk_format"] = disk_format
     template_name = provider.data['provisioning']['template']
 
@@ -185,7 +198,7 @@ def test_disk_format_select(provisioner, disk_format, provider, prov_data):
 
 
 @pytest.mark.parametrize("started", [True, False])
-def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started):
+def test_power_on_or_off_after_provision(provisioner, prov_data, provider, started, vm_name):
     """ Tests setting the desired power state after provisioning.
 
     Prerequisities:
@@ -201,7 +214,6 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
     Metadata:
         test_flag: provision
     """
-    vm_name = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["vm_name"] = vm_name
     prov_data["power_on"] = started
     template_name = provider.data['provisioning']['template']
@@ -215,7 +227,7 @@ def test_power_on_or_off_after_provision(provisioner, prov_data, provider, start
     )
 
 
-def test_tag(provisioner, prov_data, provider):
+def test_tag(provisioner, prov_data, provider, vm_name):
     """ Tests tagging VMs using provisioning dialogs.
 
     Prerequisities:
@@ -231,7 +243,7 @@ def test_tag(provisioner, prov_data, provider):
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
+    prov_data["vm_name"] = vm_name
     prov_data["apply_tags"] = [(["Service Level *", "Gold"], True)]
     template_name = provider.data['provisioning']['template']
 
@@ -243,7 +255,7 @@ def test_tag(provisioner, prov_data, provider):
 
 
 @pytest.mark.meta(blockers=[1204115])
-def test_provisioning_schedule(provisioner, provider, prov_data):
+def test_provisioning_schedule(provisioner, provider, prov_data, vm_name):
     """ Tests provision scheduling.
 
     Prerequisities:
@@ -258,7 +270,7 @@ def test_provisioning_schedule(provisioner, provider, prov_data):
         test_flag: provision
     """
     now = datetime.utcnow()
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
+    prov_data["vm_name"] = vm_name
     prov_data["schedule_type"] = "schedule"
     prov_data["provision_date"] = now.strftime("%m/%d/%Y")
     STEP = 5

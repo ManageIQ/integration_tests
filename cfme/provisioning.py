@@ -157,6 +157,7 @@ provisioning_form = tabstrip.TabStripForm(
             ('cores_per_socket', {
                 version.LOWEST: ui.Select('select#hardware__cores_per_socket'),
                 '5.5': AngularSelect('hardware__cores_per_socket')}),
+            ('num_cpus', AngularSelect('hardware__number_of_cpus')),
             ('memory', {
                 version.LOWEST: ui.Select('select#hardware__vm_memory'),
                 '5.5': AngularSelect('hardware__vm_memory')}),
