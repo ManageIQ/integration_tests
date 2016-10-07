@@ -1708,6 +1708,19 @@ class Dashboard(CFMENavigateStep):
         nav._nav_to_fn('Cloud Intel', 'Dashboard')(None)
 
 
+@navigator.register(IPAppliance)
+class Configuration(CFMENavigateStep):
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        if self.obj.version > '5.7':
+            from cfme.dashboard import click_top_right
+            click_top_right('Configuration')
+        else:
+            from cfme.web_ui.menu import nav
+            nav._nav_to_fn('Settings', 'Configuration')(None)
+
+
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
 

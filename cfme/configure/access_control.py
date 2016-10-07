@@ -1,18 +1,22 @@
 from functools import partial
+
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from cfme import Credential
-from fixtures.pytest_store import store
-import cfme
 from cfme.exceptions import CandidateNotFound
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
+from cfme.web_ui import (AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
+    form_buttons, Input, Table, UpDownSelect, CFMECheckbox)
 from cfme.web_ui.form_buttons import change_stored_password
-from cfme.web_ui import AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash, \
-    form_buttons, Input, Table, UpDownSelect, CFMECheckbox
 from cfme.web_ui.menu import extend_nav, nav
-from utils.log import logger
-from utils.update import Updateable
+from fixtures.pytest_store import store
 from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.log import logger
 from utils.pretty import Pretty
+from utils.update import Updateable
 
 
 def server_region_string():
@@ -38,67 +42,6 @@ group_order_selector = UpDownSelect(
 nav.add_branch(
     'configuration',
     {
-        'cfg_accesscontrol_users':
-        [
-            lambda d: accordion.tree("Access Control", server_region_string(), "Users"),
-            {
-                'cfg_accesscontrol_user_add':
-                lambda d: tb_select("Add a new User")
-            }
-        ],
-
-        'cfg_accesscontrol_user_ed':
-        [
-            lambda ctx:
-            accordion.tree("Access Control", server_region_string(), "Users", ctx.user.name),
-            {
-                'cfg_accesscontrol_user_edit':
-                lambda d: tb_select('Edit this User')
-            }
-        ],
-
-        'cfg_accesscontrol_groups':
-        [
-            lambda d: accordion.tree("Access Control", server_region_string(), "Groups"),
-            {
-                'cfg_accesscontrol_group_add':
-                lambda d: tb_select("Add a new Group"),
-
-                'cfg_accesscontrol_group_edit_seq':
-                lambda d: tb_select('Edit Sequence of User Groups for LDAP Look Up')
-            }
-        ],
-
-        'cfg_accesscontrol_group_ed':
-        [
-            lambda ctx: accordion.tree(
-                "Access Control", server_region_string(), "Groups", ctx.group.description),
-            {
-                'cfg_accesscontrol_group_edit':
-                lambda d: tb_select('Edit this Group')
-            }
-        ],
-
-
-        'cfg_accesscontrol_Roles':
-        [
-            lambda d: accordion.tree("Access Control", server_region_string(), "Roles"),
-            {
-                'cfg_accesscontrol_role_add':
-                lambda d: tb_select("Add a new Role")
-            }
-        ],
-
-        'cfg_accesscontrol_role_ed':
-        [
-            lambda ctx:
-            accordion.tree("Access Control", server_region_string(), "Roles", ctx.role.name),
-            {
-                'cfg_accesscontrol_role_edit':
-                lambda d: tb_select('Edit this Role')
-            }
-        ],
-
         'chargeback_assignments':
         nav.fn(partial(accordion.click, "Assignments"))
     }
@@ -136,7 +79,7 @@ def simple_user(userid, password):
     return User(name=userid, credential=creds)
 
 
-class User(Updateable, Pretty):
+class User(Updateable, Pretty, Navigatable):
     user_form = Form(
         fields=[
             ('name_txt', Input('name')),
@@ -152,8 +95,9 @@ class User(Updateable, Pretty):
 
     pretty_attrs = ['name', 'group']
 
-    def __init__(self, name=None, credential=None, email=None,
-                 group=None, cost_center=None, value_assign=None):
+    def __init__(self, name=None, credential=None, email=None, group=None, cost_center=None,
+            value_assign=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.credential = credential
         self.email = email
@@ -179,7 +123,7 @@ class User(Updateable, Pretty):
             self._restore_user = None
 
     def create(self):
-        sel.force_navigate('cfg_accesscontrol_user_add')
+        navigate_to(self, 'Add')
         fill(self.user_form, {'name_txt': self.name,
                               'userid_txt': self.credential.principal,
                               'password_txt': self.credential.secret,
@@ -191,7 +135,7 @@ class User(Updateable, Pretty):
         flash.assert_success_message('User "{}" was saved'.format(self.name))
 
     def update(self, updates):
-        sel.force_navigate("cfg_accesscontrol_user_edit", context={"user": self})
+        navigate_to(self, 'Edit')
         change_stored_password()
         fill(self.user_form, {'name_txt': updates.get('name'),
                               'userid_txt': updates.get('credential').principal,
@@ -205,10 +149,10 @@ class User(Updateable, Pretty):
             'User "{}" was saved'.format(updates.get('name', self.name)))
 
     def copy(self):
-        sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
+        navigate_to(self, 'Details')
         tb.select('Configuration', 'Copy this User to a new User')
         new_user = User(name=self.name + "copy",
-                        credential=cfme.Credential(principal='redhat', secret='redhat'))
+                        credential=Credential(principal='redhat', secret='redhat'))
         change_stored_password()
         fill(self.user_form, {'name_txt': new_user.name,
                               'userid_txt': new_user.credential.principal,
@@ -219,13 +163,13 @@ class User(Updateable, Pretty):
         return new_user
 
     def delete(self):
-        sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
+        navigate_to(self, 'Details')
         tb.select('Configuration', 'Delete this User', invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('EVM User "{}": Delete successful'.format(self.name))
 
     def edit_tags(self, tag, value):
-        sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
+        navigate_to(self, 'Details')
         pol_btn("Edit 'My Company' Tags for this User", invokes_alert=True)
         fill(edit_tags_form, {'select_tag': tag,
                               'select_value': value},
@@ -233,7 +177,7 @@ class User(Updateable, Pretty):
         flash.assert_success_message('Tag edits were successfully saved')
 
     def remove_tag(self, tag, value):
-        sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
+        navigate_to(self, 'Details')
         pol_btn("Edit 'My Company' Tags for this User", invokes_alert=True)
         row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
             partial_check=True)
@@ -244,7 +188,7 @@ class User(Updateable, Pretty):
     @property
     def exists(self):
         try:
-            sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
+            navigate_to(self, 'Details')
         except CandidateNotFound:
             return False
         else:
@@ -255,7 +199,39 @@ class User(Updateable, Pretty):
         return self.credential.principal
 
 
-class Group(Updateable, Pretty):
+@navigator.register(User, 'All')
+class UserAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'Configuration')
+
+    def step(self):
+        accordion.tree("Access Control", server_region_string(), "Users")
+
+
+@navigator.register(User, 'Add')
+class UserAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb_select("Add a new User")
+
+
+@navigator.register(User, 'Details')
+class UserDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Access Control", server_region_string(), "Users", self.obj.name)
+
+
+@navigator.register(User, 'Edit')
+class UserEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb_select('Edit this User')
+
+
+class Group(Updateable, Pretty, Navigatable):
     group_form = Form(
         fields=[
             ('ldap_groups_for_user', Select("//*[@id='ldap_groups_user']")),
@@ -271,8 +247,9 @@ class Group(Updateable, Pretty):
         ])
     pretty_attrs = ['description', 'role']
 
-    def __init__(self, description=None, role=None, tenant="My Company",
-                 user_to_lookup=None, ldap_credentials=None):
+    def __init__(self, description=None, role=None, tenant="My Company", user_to_lookup=None,
+            ldap_credentials=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.role = role
         self.tenant = tenant
@@ -280,7 +257,7 @@ class Group(Updateable, Pretty):
         self.user_to_lookup = user_to_lookup
 
     def create(self):
-        sel.force_navigate('cfg_accesscontrol_group_add')
+        navigate_to(self, 'Add')
         fill(self.group_form, {'description_txt': self.description,
                                'role_select': self.role,
                                'group_tenant': self.tenant},
@@ -288,7 +265,7 @@ class Group(Updateable, Pretty):
         flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def retrieve_ldap_user_groups(self):
-        sel.force_navigate('cfg_accesscontrol_group_add')
+        navigate_to(self, 'Add')
         fill(self.group_form, {'lookup_ldap_groups_chk': True,
                                'user_to_look_up': self.user_to_lookup,
                                'username': self.ldap_credentials.principal,
@@ -307,7 +284,7 @@ class Group(Updateable, Pretty):
         flash.assert_success_message('Group "{}" was saved'.format(self.description))
 
     def update(self, updates):
-        sel.force_navigate("cfg_accesscontrol_group_edit", context={"group": self})
+        navigate_to(self, 'Edit')
         fill(self.group_form, {'description_txt': updates.get('description'),
                                'role_select': updates.get('role'),
                                'group_tenant': updates.get('tenant')},
@@ -316,13 +293,13 @@ class Group(Updateable, Pretty):
             'Group "{}" was saved'.format(updates.get('description', self.description)))
 
     def delete(self):
-        sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": self})
+        navigate_to(self, 'Details')
         tb_select('Delete this Group', invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('EVM Group "{}": Delete successful'.format(self.description))
 
     def edit_tags(self, tag, value):
-        sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": self})
+        navigate_to(self, 'Details')
         pol_btn("Edit 'My Company' Tags for this Group", invokes_alert=True)
         fill(edit_tags_form, {'select_tag': tag,
                               'select_value': value},
@@ -330,7 +307,7 @@ class Group(Updateable, Pretty):
         flash.assert_success_message('Tag edits were successfully saved')
 
     def remove_tag(self, tag, value):
-        sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": self})
+        navigate_to(self, 'Details')
         pol_btn("Edit 'My Company' Tags for this Group", invokes_alert=True)
         row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
             partial_check=True)
@@ -339,8 +316,48 @@ class Group(Updateable, Pretty):
         flash.assert_success_message('Tag edits were successfully saved')
 
 
+@navigator.register(Group, 'All')
+class GroupAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'Configuration')
+
+    def step(self):
+        accordion.tree("Access Control", server_region_string(), "Groups")
+
+
+@navigator.register(Group, 'Add')
+class GroupAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb_select("Add a new Group")
+
+
+@navigator.register(Group, 'EditGroupSequence')
+class EditGroupSequence(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb_select('Edit Sequence of User Groups for LDAP Look Up')
+
+
+@navigator.register(Group, 'Details')
+class GroupDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Access Control", server_region_string(), "Groups", self.obj.description)
+
+
+@navigator.register(Group, 'Edit')
+class GroupEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb_select('Edit this Group')
+
+
 def get_group_order():
-    sel.force_navigate("cfg_accesscontrol_group_edit_seq")
+    navigate_to(Group, 'EditGroupSequence')
     return group_order_selector.get_items()
 
 
@@ -354,7 +371,7 @@ def set_group_order(items):
     sel.click(form_buttons.save)
 
 
-class Role(Updateable, Pretty):
+class Role(Updateable, Pretty, Navigatable):
     form = Form(
         fields=[
             ('name_txt', Input('name')),
@@ -365,13 +382,14 @@ class Role(Updateable, Pretty):
         ])
     pretty_attrs = ['name', 'product_features']
 
-    def __init__(self, name=None, vm_restriction=None, product_features=None):
+    def __init__(self, name=None, vm_restriction=None, product_features=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.vm_restriction = vm_restriction
         self.product_features = product_features or []
 
     def create(self):
-        sel.force_navigate('cfg_accesscontrol_role_add')
+        navigate_to(self, 'Add')
         fill(self.form, {'name_txt': self.name,
                          'vm_restriction_select': self.vm_restriction,
                          'product_features_tree': self.product_features},
@@ -379,7 +397,7 @@ class Role(Updateable, Pretty):
         flash.assert_success_message('Role "{}" was saved'.format(self.name))
 
     def update(self, updates):
-        sel.force_navigate("cfg_accesscontrol_role_edit", context={"role": self})
+        navigate_to(self, 'Edit')
         fill(self.form, {'name_txt': updates.get('name'),
                          'vm_restriction_select': updates.get('vm_restriction'),
                          'product_features_tree': updates.get('product_features')},
@@ -387,7 +405,7 @@ class Role(Updateable, Pretty):
         flash.assert_success_message('Role "{}" was saved'.format(updates.get('name', self.name)))
 
     def delete(self):
-        sel.force_navigate("cfg_accesscontrol_role_ed", context={"role": self})
+        navigate_to(self, 'Details')
         tb_select('Delete this Role', invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('Role "{}": Delete successful'.format(self.name))
@@ -395,7 +413,7 @@ class Role(Updateable, Pretty):
     def copy(self, name=None):
         if not name:
             name = self.name + "copy"
-        sel.force_navigate("cfg_accesscontrol_role_ed", context={"role": self})
+        navigate_to(self, 'Details')
         tb.select('Configuration', 'Copy this Role to a new Role')
         new_role = Role(name=name)
         fill(self.form, {'name_txt': new_role.name},
@@ -404,7 +422,39 @@ class Role(Updateable, Pretty):
         return new_role
 
 
-class Tenant(Updateable, Pretty):
+@navigator.register(Role, 'All')
+class RoleAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'Configuration')
+
+    def step(self):
+        accordion.tree("Access Control", server_region_string(), "Roles")
+
+
+@navigator.register(Role, 'Add')
+class RoleAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb_select("Add a new Role")
+
+
+@navigator.register(Role, 'Details')
+class RoleDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Access Control", server_region_string(), "Roles", self.obj.name)
+
+
+@navigator.register(Role, 'Edit')
+class RoleEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb_select('Edit this Role')
+
+
+class Tenant(Updateable, Pretty, Navigatable):
     """ Class representing CFME tenants in the UI.
     * Kudos to mfalesni *
 
@@ -446,7 +496,9 @@ class Tenant(Updateable, Pretty):
     def get_root_tenant(cls):
         return cls(name="My Company", _default=True)
 
-    def __init__(self, name=None, description=None, parent_tenant=None, _default=False):
+    def __init__(self, name=None, description=None, parent_tenant=None, _default=False,
+            appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.description = description
         self.parent_tenant = parent_tenant
