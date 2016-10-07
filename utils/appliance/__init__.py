@@ -556,10 +556,16 @@ class IPAppliance(object):
             log_callback(msg)
             raise Exception(msg)
 
+    @property
+    def is_miqqe_patch_candidate(self):
+        return not (self.version < "5.6" or self.version > "5.7.0.3")
+
+    @property
+    def miqqe_patch_applied(self):
+        return self.miqqe_version == current_miqqe_version
+
     @logger_wrap("Patch appliance with MiqQE js: {}")
     def patch_with_miqqe(self, log_callback=None):
-        if self.version < "5.5.5.0" or self.version > "5.7.0.3":
-            return
 
         # (local_path, remote_path, md5/None) trio
         autofocus_patch = pick({

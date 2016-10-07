@@ -281,11 +281,14 @@ def wait_until(f, msg="Webdriver wait timed out", timeout=120.0):
 
 
 @removed
-def in_flight():
+def in_flight(script):
     """Check remaining (running) ajax requests
 
     The element visibility check is complex because lightbox_div invokes visibility
     of spinner_div although it is not visible.
+
+    Args:
+        script: Script (string) to execute
 
     Returns:
         Dictionary of js-related keys and booleans as its values, depending on status.
@@ -293,12 +296,12 @@ def in_flight():
         The values are: ``True`` if running, ``False`` otherwise.
     """
     try:
-        return execute_script(js.in_flight)
+        return execute_script(script)
     except UnexpectedAlertPresentException:
         raise
     except Exception:
         sleep(0.5)
-        return execute_script(js.in_flight)
+        return execute_script(script)
 
 
 @removed
@@ -318,23 +321,38 @@ def wait_for_ajax():
         """
         prev_log_msg = _thread_local.ajax_log_msg
 
-        try:
-            running = in_flight()
-        except Exception as e:
-            # if jQuery in error message, a non-cfme page (proxy error) is displayed
-            # should be handled by something else
-            if "jquery" not in str(e).lower():
-                raise
-            return True
-        anything_in_flight = False
-        anything_in_flight |= running["jquery"] > 0
-        anything_in_flight |= running["prototype"] > 0
-        anything_in_flight |= running["spinner"]
-        anything_in_flight |= running["document"] != "complete"
-        anything_in_flight |= running["autofocus"] > 0
-        anything_in_flight |= running["debounce"] > 0
-        anything_in_flight |= running["miqQE"] > 0
-        log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
+        # 5.5.z and 5.7.0.4+
+        if not store.current_appliance.is_miqqe_patch_candidate:
+            try:
+                anything_in_flight = in_flight("return ManageIQ.qe.anythingInFlight()")
+            except Exception as e:
+                # if jQuery in error message, a non-cfme page (proxy error) is displayed
+                # should be handled by something else
+                if "jquery" not in str(e).lower():
+                    raise
+                return True
+            running = execute_script("return ManageIQ.qe.inFlight()")
+            log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
+        # 5.6.z, 5.7.0.{1,2,3}
+        else:
+            try:
+                running = in_flight(js.in_flight)
+            except Exception as e:
+                # if jQuery in error message, a non-cfme page (proxy error) is displayed
+                # should be handled by something else
+                if "jquery" not in str(e).lower():
+                    raise
+                return True
+            anything_in_flight = False
+            anything_in_flight |= running["jquery"] > 0
+            anything_in_flight |= running["prototype"] > 0
+            anything_in_flight |= running["spinner"]
+            anything_in_flight |= running["document"] != "complete"
+            anything_in_flight |= running["autofocus"] > 0
+            anything_in_flight |= running["debounce"] > 0
+            anything_in_flight |= running["miqQE"] > 0
+            log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
+
         # Log the message only if it's different from the last one
         if prev_log_msg != log_msg:
             _thread_local.ajax_log_msg = log_msg
@@ -993,9 +1011,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     ensure_browser_open()
 
     # check for MiqQE javascript patch on first try and patch the appliance if necessary
-    from utils.appliance import current_miqqe_version
-    if not (version.current_version() < "5.5.5.0" or version.current_version() > "5.7.0.3") and\
-            (store.current_appliance.miqqe_version != current_miqqe_version):
+    if store.current_appliance.is_miqqe_patch_candidate and \
+            not store.current_appliance.miqqe_patch_applied:
         store.current_appliance.patch_with_miqqe()
         browser().quit()
         force_navigate(page_name, _tries, *args, **kwargs)
