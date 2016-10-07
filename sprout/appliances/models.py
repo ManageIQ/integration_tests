@@ -532,7 +532,7 @@ class Template(MetadataMixin):
 
     @property
     def can_be_deleted(self):
-        return self.exists and len(self.appliances) == 0
+        return self.exists and len(self.appliances) == 0 and not self.ga_released
 
     @property
     def appliances(self):
