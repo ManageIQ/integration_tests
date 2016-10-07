@@ -264,6 +264,7 @@ def poke_trackerbot(self):
         if not provider.provider_data.get("use_for_sprout", False):
             continue
         template_name = template["template"]["name"]
+        ga_released = template['template']['ga_released']
         date = parse_template(template_name).datestamp
         if not date:
             # Not a CFME/MIQ template, ignore it.
@@ -274,6 +275,9 @@ def poke_trackerbot(self):
             original_template = Template.objects.get(
                 provider=provider, template_group=group, original_name=template_name,
                 name=template_name, preconfigured=False)
+            if original_template.ga_released != ga_released:
+                original_template.ga_released = ga_released
+                original_template.save()
         except ObjectDoesNotExist:
             if template_name in provider.templates:
                 date = parse_template(template_name).datestamp
@@ -298,9 +302,12 @@ def poke_trackerbot(self):
                     self.logger.info("Created a new template #{}".format(tpl.id))
         # Preconfigured one
         try:
-            Template.objects.get(
+            preconfigured_template = Template.objects.get(
                 provider=provider, template_group=group, original_name=template_name,
                 preconfigured=True)
+            if preconfigured_template.ga_released != ga_released:
+                preconfigured_template.ga_released = ga_released
+                preconfigured_template.save()
         except ObjectDoesNotExist:
             if template_name in provider.templates:
                 original_id = original_template.id if original_template is not None else None
