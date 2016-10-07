@@ -494,6 +494,7 @@ class Template(MetadataMixin):
         help_text=(
             'Whether the appliance is located in a container in the VM. '
             'This then specifies the container name.'))
+    ga_released = models.BooleanField(default=False)
 
     @property
     def provider_api(self):
