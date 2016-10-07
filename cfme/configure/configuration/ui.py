@@ -1,6 +1,5 @@
 from . import Server
 
-from navmazing import NavigateToSibling
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from fixtures.pytest_store import store
 

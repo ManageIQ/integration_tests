@@ -2,25 +2,27 @@
 import fauxfactory
 import pytest
 import traceback
-import cfme.configure.access_control as ac
+from cfme.configure.access_control import User, Group, Role, Tenant, Project
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme import login
 from cfme import test_requirements
 from cfme.configure.access_control import set_group_order
+from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
+from utils.appliance.endpoints.ui import navigate_to
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
 from utils import version
 
 records_table = Table("//div[@id='main_div']//table")
-usergrp = ac.Group(description='EvmGroup-user')
+usergrp = Group(description='EvmGroup-user')
 group_table = Table("//div[@id='main_div']//table")
 
 
@@ -39,22 +41,25 @@ def new_credential():
 
 
 def new_user(group=usergrp):
-    return ac.User(name='user' + fauxfactory.gen_alphanumeric(),
-                   credential=new_credential(),
-                   email='xyz@redhat.com',
-                   group=group,
-                   cost_center='Workload',
-                   value_assign='Database')
+    return User(
+        name='user' + fauxfactory.gen_alphanumeric(),
+        credential=new_credential(),
+        email='xyz@redhat.com',
+        group=group,
+        cost_center='Workload',
+        value_assign='Database')
 
 
 def new_group(role='EvmRole-approver'):
-    return ac.Group(description='grp' + fauxfactory.gen_alphanumeric(),
-                    role=role)
+    return Group(
+        description='grp' + fauxfactory.gen_alphanumeric(),
+        role=role)
 
 
 def new_role():
-    return ac.Role(name='rol' + fauxfactory.gen_alphanumeric(),
-                   vm_restriction='None')
+    return Role(
+        name='rol' + fauxfactory.gen_alphanumeric(),
+        vm_restriction='None')
 
 
 def get_tag():
@@ -80,7 +85,7 @@ def test_user_login():
     user.create()
     try:
         with user:
-            sel.force_navigate('dashboard')
+            navigate_to(Dashboard, 'Main')
     finally:
         login.login_admin()
 
@@ -92,12 +97,12 @@ def test_user_duplicate_name():
     with error.expected("Userid has already been taken"):
         nu.create()
 
-group_user = ac.Group("EvmGroup-user")
+group_user = Group("EvmGroup-user")
 
 
 @pytest.mark.tier(3)
 def test_username_required_error_validation():
-    user = ac.User(
+    user = User(
         name=None,
         credential=new_credential(),
         email='xyz@redhat.com',
@@ -108,7 +113,7 @@ def test_username_required_error_validation():
 
 @pytest.mark.tier(3)
 def test_userid_required_error_validation():
-    user = ac.User(
+    user = User(
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=Credential(principal=None, secret='redhat'),
         email='xyz@redhat.com',
@@ -119,7 +124,7 @@ def test_userid_required_error_validation():
 
 @pytest.mark.tier(3)
 def test_user_password_required_error_validation():
-    user = ac.User(
+    user = User(
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret=None),
         email='xyz@redhat.com',
@@ -134,7 +139,7 @@ def test_user_password_required_error_validation():
 
 @pytest.mark.tier(3)
 def test_user_group_error_validation():
-    user = ac.User(
+    user = User(
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='xyz@redhat.com',
@@ -145,7 +150,7 @@ def test_user_group_error_validation():
 
 @pytest.mark.tier(3)
 def test_user_email_error_validation():
-    user = ac.User(
+    user = User(
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='xyzdhat.com',
@@ -169,7 +174,7 @@ def test_user_remove_tag():
     user.create()
     user.edit_tags("Department", "Engineering")
     user.remove_tag("Department", "Engineering")
-    sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": user})
+    navigate_to(user, 'Edit')
     assert get_tag() != "Department: Engineering", "Remove User tag failed"
     user.delete()
 
@@ -182,8 +187,8 @@ def test_delete_default_user():
         * Login as Administrator user
         * Try deleting the user
     """
-    user = ac.User(name='Administrator')
-    sel.force_navigate("cfg_accesscontrol_users")
+    user = User(name='Administrator')
+    navigate_to(User, 'All')
     column = version.pick({version.LOWEST: "Name",
         "5.4": "Full Name"})
     row = records_table.find_row_by_cells({column: user.name})
@@ -204,8 +209,8 @@ def test_current_user_login_delete(request):
         * Login with the new user
         * Try deleting the user
     """
-    group_user = ac.Group("EvmGroup-super_administrator")
-    user = ac.User(
+    group_user = Group("EvmGroup-super_administrator")
+    user = User(
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='xyz@redhat.com',
@@ -249,7 +254,7 @@ def test_group_edit_tag():
 def test_group_remove_tag():
     group = new_group()
     group.create()
-    sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": group})
+    navigate_to(group, 'Edit')
     group.edit_tags("Department", "Engineering")
     group.remove_tag("Department", "Engineering")
     assert get_tag() != "Department: Engineering", "Remove Group tag failed"
@@ -258,7 +263,7 @@ def test_group_remove_tag():
 
 @pytest.mark.tier(3)
 def test_description_required_error_validation():
-    group = ac.Group(description=None, role='EvmRole-approver')
+    group = Group(description=None, role='EvmRole-approver')
     with error.expected("Description can't be blank"):
         group.create()
 
@@ -269,8 +274,8 @@ def test_delete_default_group():
         '5.6': ("EVM Group \"{}\": Error during delete: A read only group cannot be deleted."),
         '5.5': ("EVM Group \"{}\": Error during \'destroy\': A read only group cannot be deleted.")
     })
-    group = ac.Group(description='EvmGroup-administrator')
-    sel.force_navigate("cfg_accesscontrol_groups")
+    group = Group(description='EvmGroup-administrator')
+    navigate_to(Group, 'All')
     row = group_table.find_row_by_cells({'Name': group.description})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
     tb.select('Configuration', 'Delete selected Groups', invokes_alert=True)
@@ -294,8 +299,8 @@ def test_delete_group_with_assigned_user():
 @pytest.mark.tier(3)
 def test_edit_default_group():
     flash_msg = 'Read Only EVM Group "{}" can not be edited'
-    group = ac.Group(description='EvmGroup-approver')
-    sel.force_navigate("cfg_accesscontrol_groups")
+    group = Group(description='EvmGroup-approver')
+    navigate_to(Group, 'All')
     row = group_table.find_row_by_cells({'Name': group.description})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
     tb.select('Configuration', 'Edit the selected Group')
@@ -315,7 +320,7 @@ def test_edit_sequence_usergroups(request):
     group = new_group()
     group.create()
     request.addfinalizer(group.delete)
-    sel.force_navigate("cfg_accesscontrol_groups")
+    navigate_to(Group, 'All')
     row = group_table.find_row_by_cells({'Name': group.description})
     original_sequence = sel.text(row.sequence)
     set_group_order([group.description])
@@ -338,7 +343,7 @@ def test_role_crud():
 
 @pytest.mark.tier(3)
 def test_rolename_required_error_validation():
-    role = ac.Role(
+    role = Role(
         name=None,
         vm_restriction='Only User Owned')
     with error.expected("Name can't be blank"):
@@ -360,15 +365,15 @@ def test_delete_default_roles():
             "because of dependent entitlements"),
         '5.5': ("Role \"{}\": Error during \'destroy\': Cannot delete record "
             "because of dependent miq_groups")})
-    role = ac.Role(name='EvmRole-approver')
+    role = Role(name='EvmRole-approver')
     with error.expected(flash_msg.format(role.name)):
         role.delete()
 
 
 @pytest.mark.tier(3)
 def test_edit_default_roles():
-    role = ac.Role(name='EvmRole-auditor')
-    sel.force_navigate("cfg_accesscontrol_role_edit", context={"role": role})
+    role = Role(name='EvmRole-auditor')
+    navigate_to(role, 'Edit')
     flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
 
 
@@ -437,10 +442,10 @@ def test_permission_edit(request, product_features, action):
     product_features = version.pick(product_features)
     request.addfinalizer(login.login_admin)
     role_name = fauxfactory.gen_alphanumeric()
-    role = ac.Role(name=role_name,
-                  vm_restriction=None,
-                  product_features=[(['Everything'], False)] +    # role_features
-                                   [(k, True) for k in product_features])
+    role = Role(name=role_name,
+        vm_restriction=None,
+        product_features=[(['Everything'], False)] +    # role_features
+            [(k, True) for k in product_features])
     role.create()
     group = new_group(role=role.name)
     group.create()
@@ -469,9 +474,9 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
 
     """
     name = name or fauxfactory.gen_alphanumeric()
-    return lambda: ac.Role(name=name,
-                           vm_restriction=vm_restriction,
-                           product_features=product_features)
+    return lambda: Role(name=name,
+        vm_restriction=vm_restriction,
+        product_features=product_features)
 
 
 def _go_to(dest):
@@ -616,9 +621,9 @@ def test_permissions_vm_provisioning():
 # @pytest.mark.meta(blockers=[1154112])
 # def test_user_add_button_should_be_disabled_without_group(soft_assert):
 #     from cfme.web_ui import fill, form_buttons
-#     sel.force_navigate('cfg_accesscontrol_user_add')
+#     navigate_to(User, 'Add')
 #     pw = fauxfactory.gen_alphanumeric()
-#     fill(ac.User.user_form, {
+#     fill(User.user_form, {
 #         "name_txt": fauxfactory.gen_alphanumeric(),
 #         "userid_txt": fauxfactory.gen_alphanumeric(),
 #         "password_txt": pw,
@@ -630,7 +635,7 @@ def test_permissions_vm_provisioning():
 
 @pytest.mark.tier(2)
 def test_user_change_password(request):
-    user = ac.User(
+    user = User(
         name="user {}".format(fauxfactory.gen_alphanumeric()),
         credential=Credential(
             principal="user_principal_{}".format(fauxfactory.gen_alphanumeric()),
@@ -675,7 +680,7 @@ def test_superadmin_tenant_crud(request):
         * Update name of tenat
         * Delete tenant
     """
-    tenant = ac.Tenant(
+    tenant = Tenant(
         name='tenant1' + fauxfactory.gen_alphanumeric(),
         description='tenant1 description')
 
@@ -708,10 +713,10 @@ def test_superadmin_tenant_project_crud(request):
         * Delete project
         * Delete tenant
     """
-    tenant = ac.Tenant(
+    tenant = Tenant(
         name='tenant1' + fauxfactory.gen_alphanumeric(),
         description='tenant1 description')
-    project = ac.Project(
+    project = Project(
         name='project1' + fauxfactory.gen_alphanumeric(),
         description='project1 description',
         parent_tenant=tenant)
@@ -759,7 +764,7 @@ def test_superadmin_child_tenant_crud(request, number_of_childrens):
                 tenant.delete()
 
     for i in range(1, number_of_childrens + 1):
-        new_tenant = ac.Tenant(
+        new_tenant = Tenant(
             name="tenant{}_{}".format(i, fauxfactory.gen_alpha(4)),
             description=fauxfactory.gen_alphanumeric(16),
             parent_tenant=tenant)
