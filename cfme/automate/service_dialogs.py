@@ -6,7 +6,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import AngularSelect, Form, Select, SplitTable, accordion,\
-    fill, flash, form_buttons, Table, Tree, Input, Region
+    fill, flash, form_buttons, Table, Tree, Input, Region, BootstrapTreeview
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
@@ -23,13 +23,8 @@ text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table[@class='st
 text_area_table = Table({version.LOWEST: "//div[@id='dialog_field_div']/fieldset/table"
                         "[@class='style1']",
                     '5.5': "//div[@id='dialog_field_div']/div[@class='form-horizontal']"})
-dynamic_tree = Tree({version.LOWEST: "//div[@class='dhxcont_global_content_area']"
-                                     "[not(contains(@style, 'display: none'))]/div/div/div/div/div"
-                                     "/fieldset/div/ul[@class='dynatree-container']",
-                    '5.4': "//div[@class='dhxcont_global_content_area']"
-                           "[not(contains(@style, 'display: none'))]/div/div/div/div/div/div"
-                           "/div/div/div/ul[@class='dynatree-container']",
-                    '5.5': "//div[@class='modal-content']/div/div/ul[@class='dynatree-container']"})
+dynamic_tree = Tree("//div[@class='modal-content']/div/div/ul[@class='dynatree-container']")
+bt_tree = BootstrapTreeview('automate_treebox')
 
 label_form = Form(fields=[
     ('label', Input("label")),
@@ -169,7 +164,10 @@ class ServiceDialog(Updateable, Pretty, Navigatable):
             else:
                 node1 = "InspectMe"
                 sel.click(element_form.field_entry_point)
-                dynamic_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
+                if version.current_version() < "5.7":
+                    dynamic_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
+                else:
+                    bt_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
                 sel.click(element_form.apply_btn)
                 fill(element_form, {'field_show_refresh_button': True})
         if choose_type == "Text Area Box":

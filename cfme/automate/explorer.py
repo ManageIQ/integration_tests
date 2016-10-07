@@ -169,7 +169,9 @@ class CopiableTreeNode(TreeNode):
                     "There is only one domain to select and that is {}".format(domain_selected))
             fill(self.copy_form, {"override": True})
         sel.click(self.copy_button)
-        flash.assert_message_match("Copy selected Automate {} was saved".format(self.class_name))
+        if version.current_version() < "5.7":
+            flash.assert_message_match("Copy selected Automate {} was saved".
+                format(self.class_name))
 
         # Bunch'o functions that copy the chain to the domain and change domain's name
         def _change_path_in_namespace(o, new_domain_name):
