@@ -89,6 +89,12 @@ class IPAppliance(object):
         self.container = container
         self._db_ssh_client = None
 
+        username = conf.credentials['default']['username']
+        password = conf.credentials['default']['password']
+        from cfme.configure.access_control import User, Credential
+        cred = Credential(principal=username, secret=password)
+        self.user = User(credential=cred, appliance=self)
+
         from cfme.configure.configuration import Server
         self.server = Server(appliance=self)
         self.browser = ViaUI(owner=self)
@@ -1688,7 +1694,7 @@ class LoggedIn(CFMENavigateStep):
         from cfme.login import login
         from utils.browser import browser
         browser()
-        login(store.user)
+        login(self.obj.user)
 
 
 @navigator.register(IPAppliance)

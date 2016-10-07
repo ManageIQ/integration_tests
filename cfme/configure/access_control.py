@@ -107,19 +107,19 @@ class User(Updateable, Pretty, Navigatable):
         self._restore_user = None
 
     def __enter__(self):
-        if self._restore_user != store.user:
+        if self._restore_user != self.appliance.user:
             from cfme.login import logout
             logger.info('Switching to new user: %s', self.credential.principal)
-            self._restore_user = store.user
+            self._restore_user = self.appliance.user
             logout()
-            store.user = self
+            self.appliance.user = self
 
     def __exit__(self, *args, **kwargs):
-        if self._restore_user != store.user:
+        if self._restore_user != self.appliance.user:
             from cfme.login import logout
             logger.info('Restoring to old user: %s', self._restore_user.credential.principal)
             logout()
-            store.user = self._restore_user
+            self.appliance.user = self._restore_user
             self._restore_user = None
 
     def create(self):

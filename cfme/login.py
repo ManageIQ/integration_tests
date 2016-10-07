@@ -129,7 +129,7 @@ def login(user, submit_method=_js_auth_fn):
             submit_method()
         flash.assert_no_errors()
         user.full_name = _full_name()
-        store.user = user
+        store.current_appliance.user = user
 
 
 def login_admin(**kwargs):
@@ -158,7 +158,7 @@ def logout():
             sel.click(dashboard.page.user_dropdown)
         sel.click(page.logout, wait_ajax=False)
         sel.handle_alert(wait=False)
-        store.user = None
+        store.current_appliance.user = None
 
 
 def _full_name():
@@ -177,7 +177,7 @@ def current_full_name():
 
 
 def current_user():
-    return store.user
+    return store.current_appliance.user
 
 
 def current_username():
