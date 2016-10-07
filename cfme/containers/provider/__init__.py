@@ -251,11 +251,10 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        if version.current_version() > '5.6':
-            btn = 'Add Existing Containers Provider'
-        else:
-            btn = 'Add a New Containers Provider'
-        cfg_btn(btn)
+        cfg_btn(version.pick({
+            version.LOWEST: 'Add a New Containers Provider',
+            '5.7': 'Add Existing Containers Provider'
+        }))
 
 
 @navigator.register(ContainersProvider, 'Details')
