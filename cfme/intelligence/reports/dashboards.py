@@ -58,6 +58,23 @@ class Dashboard(Updateable, Pretty, Navigatable):
         flash.assert_no_errors()
 
 
+@navigator.register(Dashboard, 'Main')
+class DashboardPage(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def am_i_here(self):
+        from cfme.web_ui.menu import nav
+        if self.obj.appliance.version < "5.6.0.1":
+            nav.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
+        else:
+            nav.CURRENT_TOP_MENU = "{}{}".format(nav.ROOT, nav.ACTIVE_LEV)
+        nav.is_page_active('Dashboard')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Cloud Intel', 'Dashboard')(None)
+
+
 @navigator.register(Dashboard, 'All')
 class DashboardAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance', 'LoggedIn')

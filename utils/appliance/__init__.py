@@ -89,6 +89,8 @@ class IPAppliance(object):
         self.container = container
         self._db_ssh_client = None
 
+        from cfme.configure.configuration import Server
+        self.server = Server(appliance=self)
         self.browser = ViaUI(owner=self)
         self.sentaku_ctx = ImplementationContext.from_instances(
             [self.browser])
