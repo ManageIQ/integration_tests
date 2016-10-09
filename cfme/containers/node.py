@@ -57,3 +57,8 @@ class Node(Taggable, SummaryMixin):
                 sel.force_navigate('containers_node_detail', context={'node': self})
         else:
             sel.force_navigate('containers_node', context={'node': self})
+
+    @staticmethod
+    def get_names():
+        sel.force_navigate('containers_nodes')
+        return map(lambda r: r.name.text, list_tbl.rows())

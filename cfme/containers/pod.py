@@ -58,3 +58,8 @@ class Pod(Taggable, SummaryMixin):
                 sel.force_navigate('containers_pod_detail', context={'pod': self})
         else:
             sel.force_navigate('containers_pod', context={'pod': self})
+
+    @staticmethod
+    def get_names():
+        sel.force_navigate('containers_containers')
+        return map(lambda r: r.pod_name.text, list_tbl.rows())

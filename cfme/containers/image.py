@@ -39,6 +39,11 @@ class Image(Taggable, SummaryMixin, Navigatable):
         navigate_to(self, 'Details')
         return InfoBlock.text(*ident)
 
+    @staticmethod
+    def get_names():
+        sel.force_navigate('containers_images')
+        return map(lambda r: r.name.text, list_tbl.rows())
+
 
 @navigator.register(Image, 'All')
 class All(CFMENavigateStep):
