@@ -9,6 +9,8 @@ from cfme.web_ui import Input, Region, Select, fill
 from cfme.web_ui.form_buttons import FormButton
 from utils.version import current_version
 from utils.wait import wait_for
+from xml.sax.saxutils import quoteattr, unescape
+from cfme.login import login_admin, logout
 
 
 search_box = Region(
@@ -59,6 +61,9 @@ search_box = Region(
 
         # On the main page, this link clears the filters
         clear_advanced_search="//a[contains(@href, 'adv_search_clear')]",
+
+        # On the main page, this link opens My Filters tree
+        open_my_filters="//a[normalize-space(.)='My Filters']"
     )
 )
 
@@ -296,3 +301,21 @@ def fill_and_apply_filter(expression_program, fill_callback=None, cancel_on_user
     sel.click(search_box.apply_filter_button)
     _process_user_filling(fill_callback, cancel_on_user_filling)
     ensure_advanced_search_closed()
+
+
+def select_filter(filter_name):
+    sel.click(search_box.open_my_filters)
+    sel.click("//ul//a[normalize-space(.)={}]".format(unescape(quoteattr(filter_name))))
+
+
+def set_default_filter(filter_name):
+    select_filter(filter_name)
+    sel.click("//a[normalize-space(.)='Set Default']")
+
+
+def check_default_filter(filter_name, location):
+    logout()
+    login_admin()
+    sel.force_navigate(location)
+    sel.elements("//li[@class='active']/a[normalize-space(.)='{} (Default)']".format(unescape(
+        quoteattr(filter_name))))
