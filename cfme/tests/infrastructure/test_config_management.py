@@ -1,6 +1,5 @@
 import fauxfactory
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.configure.configuration import Category, Tag
 from utils import error, version
 from utils.update import update
@@ -63,8 +62,7 @@ def tag(category):
         unblock=lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
 ])
 def test_config_manager_detail_config_btn(request, config_manager):
-    sel.force_navigate('infrastructure_config_manager_refresh_detail',
-        context={'manager': config_manager})
+    config_manager.refresh_relationships()
 
 
 @pytest.mark.tier(2)
@@ -95,12 +93,12 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.url = "invalid_url"
     if config_manager_obj.type == "Ansible Tower":
-        invalid_url_error = 'both URI are relative'
+        error_message = 'getaddrinfo: Name or service not known'
     else:
-        invalid_url_error = 'getaddrinfo: Name or service not known'
-
-    error_message = version.pick({'5.4': 'bad hostname',
-                                  '5.5': invalid_url_error})
+        # BZ about bad text is raised 1382671
+        error_message = 'Could not load data from invalid_url - is your server down? - was ' \
+                        'rake apipie:cache run when using apipie cache? ' \
+                        '(typical production settings)'
 
     with error.expected(error_message):
         if config_manager_obj.type == "Ansible Tower":
@@ -116,7 +114,7 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
 def test_config_manager_add_invalid_creds(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.credentials.principal = 'invalid_user'
-    with error.expected('401'):
+    with error.expected('Invalid username/password'):
         if config_manager_obj.type == "Ansible Tower":
             config_manager_obj.create(validate=False)
         else:
