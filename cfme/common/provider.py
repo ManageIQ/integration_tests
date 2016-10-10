@@ -2,6 +2,7 @@ import datetime
 import pkgutil
 import importlib
 from functools import partial
+import warnings 
 
 from navmazing import NavigateToAttribute
 
@@ -44,8 +45,10 @@ details_page = Region(infoblock_type='detail')
 
 
 class ProviderList(Navigatable):
-    def __init__(self):
-        pass
+    def __init__(self, provider_type_class, appliance=None):
+        Navigatable.__init__(self, appliance)
+        self.provider_type_class = provider_type_class
+        self.NAVTREE_LOCATION = provider_type_class.NAVTREE_LOCATION
 
 
 class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
@@ -157,6 +160,10 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     @property
     def mgmt(self):
         return self.get_mgmt_system()
+
+    @property
+    def collection(self):
+        return ProviderList(type(self), self.appliance)
 
     @property
     def type(self):
@@ -530,7 +537,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     @staticmethod
     def clear_provider_by_type(prov_class, validate=True):
         string_name = prov_class.string_name
-        navigate_to(prov_class, 'All')
+        navigate_to(ProviderList(prov_class), 'All')
         logger.debug('Checking for existing {} providers...'.format(prov_class.type_tclass))
         total = paginator.rec_total()
         if total > 0:
@@ -550,7 +557,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @staticmethod
     def wait_for_no_providers_by_type(prov_class):
-        navigate_to(prov_class, 'All')
+        navigate_to(ProviderList(prov_class), 'All')
         logger.debug('Waiting for all {} providers to disappear...'.format(prov_class.type_tclass))
         wait_for(
             lambda: get_paginator_value() == 0, message="Delete all {} providers".format(
@@ -786,8 +793,9 @@ def import_all_modules_of(loc):
         importlib.import_module('{}.{}'.format(loc, name))
 
 
-@navigator.register(BaseProvider, 'All')
-class All(CFMENavigateStep):
+
+@navigator.register(ProviderList, 'All')
+class ProviderListing(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
 
     def step(self):
@@ -799,3 +807,24 @@ class All(CFMENavigateStep):
         tb.select("Grid View")
         sel.check(paginator.check_all())
         sel.uncheck(paginator.check_all())
+
+
+@navigator.register(BaseProvider, 'All')
+class All(CFMENavigateStep):
+    @property
+    def prereqisite(self):
+        if isinstance(self.ob, type):
+            return self.prereqisite_type
+        else:
+            return self.prerequisite_instance
+
+    prerequisite_instance = NavigateToAttribute('collection', 'All')
+
+    def prerequisite_type(self):
+        navigate_to(ProviderList(self.obj, self.obj.appliance), 'All')
+
+    def step(self):
+        warnings.warn(
+            "using deprecated 'All' Navigation of Providers",
+            category=DeprecationWarning,
+        )
