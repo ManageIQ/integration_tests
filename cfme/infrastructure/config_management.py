@@ -185,13 +185,14 @@ class ConfigManager(Updateable, Pretty, Navigatable):
         navigate_to(self, 'All')
         sel.check(Quadicon(self.quad_name, None).checkbox())
         item_text = version.pick({'5.6': 'Remove selected items from the VMDB',
-                                  '5.7': 'Remove selected items',
-                                  version.LATEST: 'Remove selected items'})
+                                  '5.7': 'Remove selected items'})
         cfg_btn(item_text, invokes_alert=True)
 
         sel.handle_alert(cancel)
         if not cancel:
-            flash_msg = 'Delete initiated for 1 provider'
+            flash_msg = version.pick({'5.6': 'Delete initiated for 1 provider',
+                                      '5.7': 'Delete initiated for 1 Provider'})
+
             flash.assert_message_match(flash_msg)
             if wait_deleted:
                 wait_for(func=lambda: self.exists, fail_condition=True, delay=15, num_sec=60)
@@ -297,7 +298,7 @@ class ConfigProfile(Pretty):
     @property
     def systems(self):
         """Returns 'ConfigSystem' objects that are active under this profile"""
-        navigate_to(self, 'Description')
+        navigate_to(self, 'Details')
         # ajax wait doesn't work here
         _title_loc = "//span[contains(@id, 'explorer_title_text') " \
                      "and contains(normalize-space(text()), 'Configured Systems')]"
