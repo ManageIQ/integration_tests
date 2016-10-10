@@ -204,6 +204,20 @@ class SSHClient(paramiko.SSHClient):
     def run_command(
             self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
             ensure_user=False):
+        """Run a command over SSH.
+
+        Args:
+            command: The command. Supports taking dicts as version picking.
+            timeout: Timeout after which the command execution fails.
+            reraise: Does not muffle the paramiko exceptions in the log.
+            ensure_host: Ensure that the command is run on the machine with the IP given, not any
+                container or such that we might be using by default.
+            ensure_user: Ensure that the command is run as the user we logged in, so in case we are
+                not root, setting this to True will prevent from running sudo.
+
+        Returns:
+            A :py:class:`SSHResult` instance.
+        """
         if isinstance(command, dict):
             command = version.pick(command)
         logger.info("Running command `%s`", command)
