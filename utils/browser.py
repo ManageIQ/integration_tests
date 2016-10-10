@@ -127,13 +127,14 @@ class BrowserFactory(object):
     def processed_browser_args(self):
         return self.browser_kwargs
 
-    def create(self):
+    def create(self, url_key):
         browser = tries(
             3, WebDriverException,
             self.webdriver_class, **self.processed_browser_args())
         browser.file_detector = UselessFileDetector()
         browser.maximize_window()
-        browser.get(store.base_url)
+        browser.get(url_key)
+        browser.url_key = url_key
         return browser
 
 
@@ -165,11 +166,11 @@ class WharfFactory(BrowserFactory):
             command_executor=command_executor,
         )
 
-    def create(self):
+    def create(self, url_key):
         for i in range(10):
             try:
                 self.wharf.checkout()
-                return super(WharfFactory, self).create()
+                return super(WharfFactory, self).create(url_key)
             except urllib2.URLError as ex:
                 # connection to selenum was refused for unknown reasons
                 logger.error('URLError connecting to selenium; recycling container. URLError:')
@@ -186,6 +187,9 @@ class BrowserManager(object):
         self.factory = browser_factory
         self.browser = None
 
+    def coerce_url_key(self, key):
+        return key or store.base_url
+
     @classmethod
     def from_conf(cls, browser_conf):
         webdriver_name = browser_conf.get('webdriver', 'Firefox')
@@ -200,7 +204,7 @@ class BrowserManager(object):
         else:
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
-    def _is_running(self):
+    def _is_running(self, url_key):
         try:
             self.browser.current_url
         except UnexpectedAlertPresentException:
@@ -214,14 +218,15 @@ class BrowserManager(object):
             return False
         return True
 
-    def ensure_open(self):
-        if self.browser is None:
-            return self.start()
+    def ensure_open(self, url_key):
+        url_key = self.coerce_url_key(url_key)
+        if self.browser is None or self.browser.url_key != url_key:
+            return self.start(url_key=url_key)
 
         if self._is_running():
             self.factory.renew()
         else:
-            self.start()
+            self.start(url_key=url_key)
         return self.browser
 
     def quit(self):
@@ -234,15 +239,17 @@ class BrowserManager(object):
         finally:
             self.browser = None
 
-    def start(self):
+    def start(self, url_key=None):
+        url_key = self.coerce_url_key(url_key)
         if self.browser is not None:
             self.quit()
-        return self.open_fresh()
+        return self.open_fresh(url_key=url_key)
 
-    def open_fresh(self):
+    def open_fresh(self, url_key=None):
+        url_key = self.coerce_url_key(url_key)
         assert self.browser is None
 
-        self.browser = self.factory.create()
+        self.browser = self.factory.create(url_key=url_key)
         return self.browser
 
 
@@ -264,7 +271,7 @@ def browser():
     return manager.browser
 
 
-def ensure_browser_open():
+def ensure_browser_open(url_key=None):
     """Ensures that there is a browser instance currently open
 
     Will reuse an existing browser or start a new one as-needed
@@ -274,10 +281,10 @@ def ensure_browser_open():
         The current browser instance.
 
     """
-    return manager.ensure_open()
+    return manager.ensure_open(url_key=url_key)
 
 
-def start():
+def start(url_key=None):
     """Starts a new web browser
 
     If a previous browser was open, it will be closed before starting the new browser
@@ -285,7 +292,7 @@ def start():
     Args:
     """
     # Try to clean up an existing browser session if starting a new one
-    return manager.start()
+    return manager.start(url_key=url_key)
 
 
 def quit():
@@ -300,4 +307,4 @@ def quit():
     manager.quit()
 
 
-atexit.register(quit)
+atexit.register(manager.quit)
