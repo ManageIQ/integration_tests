@@ -241,8 +241,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         sel.handle_alert(cancel=cancel)
         if not cancel:
             flash.assert_message_match(
-                'Delete initiated for 1 {} Provider from the CFME Database'.format(
-                    self.string_name))
+                'Delete initiated for 1 {} Provider from the {} Database'.format(
+                    self.string_name, self.appliance.product_name))
 
     def delete_if_exists(self, *args, **kwargs):
         """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``"""
