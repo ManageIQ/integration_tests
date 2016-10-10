@@ -208,6 +208,7 @@ class SSHClient(paramiko.SSHClient):
             command = version.pick(command)
         logger.info("Running command `%s`", command)
         command_changed = False
+        uses_sudo = False
         if self.is_container and not ensure_host:
             command = 'docker exec {} bash -c {}'.format(self._container, quote(
                 'source /etc/default/evm; ' + command))
@@ -217,16 +218,16 @@ class SSHClient(paramiko.SSHClient):
             # We need sudo
             command = 'sudo bash -c {}'.format(quote(command))
             command_changed = True
+            uses_sudo = True
 
         if command_changed:
             logger.info("Actually running command `%s`", command)
-        template = '{}\n'
-        command = template.format(command)
+        command = command + '\n'
 
-        output = ''
+        output = []
         try:
             session = self.get_transport().open_session()
-            if command.startswith('sudo '):
+            if uses_sudo:
                 # We need a pseudo-tty for sudo
                 session.get_pty()
             if timeout:
@@ -237,20 +238,20 @@ class SSHClient(paramiko.SSHClient):
             while True:
                 if session.recv_ready:
                     for line in stdout:
-                        output += line
+                        output.append(line)
                         if self._streaming:
                             sys.stdout.write(line)
 
                 if session.recv_stderr_ready:
                     for line in stderr:
-                        output += line
+                        output.append(line)
                         if self._streaming:
                             sys.stderr.write(line)
 
                 if session.exit_status_ready():
                     break
             exit_status = session.recv_exit_status()
-            return SSHResult(exit_status, output)
+            return SSHResult(exit_status, ''.join(output))
         except paramiko.SSHException as exc:
             if reraise:
                 raise
@@ -259,7 +260,7 @@ class SSHClient(paramiko.SSHClient):
         except socket.timeout as e:
             logger.error("Command `%s` timed out.", command)
             logger.exception(e)
-            logger.error("Output of the command before it failed was:\n%s", output)
+            logger.error("Output of the command before it failed was:\n%s", ''.join(output))
             raise
 
         # Returning two things so tuple unpacking the return works even if the ssh client fails
