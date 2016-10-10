@@ -20,7 +20,8 @@ grid_pages = [
     'clouds_volumes',
     'clouds_flavors',
     'clouds_instances',
-    'clouds_stacks',
+    # TODO cloud_stacks removed from list due to navmazing integration.
+    # Refactor when all grid pages have navmazing destinations
     'clouds_key_pairs',
     'clouds_object_stores',
 ]
@@ -88,6 +89,7 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
+    # TODO replace with utils.appliance.endpoints.ui.navigate_to when all grid_pages support it
     sel.force_navigate(page)
     tb.select('Grid View')
     if paginator.rec_total() is not None:

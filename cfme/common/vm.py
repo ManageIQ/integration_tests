@@ -145,8 +145,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     TO_OPEN_EDIT = None  # Name of the item in Configuration that puts you in the form
     QUADICON_TYPE = "vm"
     # Titles of the delete buttons in configuration
-    REMOVE_MULTI = "Remove selected items from the VMDB"    # For multiple items
-    REMOVE_SINGLE = "Remove from the VMDB"                  # For single item
+    REMOVE_SELECTED = {version.LOWEST: 'Remove selected items from the VMDB',
+            '5.6': 'Remove selected items'}
+    REMOVE_SINGLE = {version.LOWEST: "Remove from the VMDB",
+            '5.6': 'Remove Virtual Machine'}
 
     ###
     # Shared behaviour
@@ -249,12 +251,13 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             cancel: Whether to cancel the action in the alert.
             from_details: Whether to use the details view or list view.
         """
+
         if from_details:
             self.load_details(refresh=True)
             cfg_btn(self.REMOVE_SINGLE, invokes_alert=True)
         else:
             self.find_quadicon(mark=True)
-            cfg_btn(self.REMOVE_MULTI, invokes_alert=True)
+            cfg_btn(self.REMOVE_SELECTED, invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
     @property
