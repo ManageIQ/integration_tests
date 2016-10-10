@@ -426,7 +426,7 @@ class CustomizationTemplate(Updateable, Pretty, Navigatable):
 
 @navigator.register(CustomizationTemplate, 'All')
 class CustomizationTemplateAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
@@ -540,7 +540,7 @@ class SystemImageType(Updateable, Pretty, Navigatable):
 
 @navigator.register(SystemImageType, 'All')
 class SystemImageTypeAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
@@ -689,7 +689,7 @@ class ISODatastore(Updateable, Pretty, Navigatable):
 
 @navigator.register(ISODatastore, 'All')
 class ISODatastoreAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav

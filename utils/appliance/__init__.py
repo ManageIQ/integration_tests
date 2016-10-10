@@ -19,7 +19,7 @@ import dateutil.parser
 import requests
 import traceback
 
-from navmazing import NavigateToSibling
+from navmazing import NavigateToAttribute
 from sentaku import ImplementationContext
 from utils.mgmt_system import RHEVMSystem
 from mgmtsystem.virtualcenter import VMWareSystem
@@ -1689,17 +1689,8 @@ class IPAppliance(object):
 
 
 @navigator.register(IPAppliance)
-class LoggedIn(CFMENavigateStep):
-    def step(self):
-        from cfme.login import login
-        from utils.browser import browser
-        browser()
-        login(self.obj.user)
-
-
-@navigator.register(IPAppliance)
 class Dashboard(CFMENavigateStep):
-    prerequisite = NavigateToSibling('LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def am_i_here(self):
         from cfme.web_ui.menu import nav
@@ -1716,7 +1707,7 @@ class Dashboard(CFMENavigateStep):
 
 @navigator.register(IPAppliance)
 class Configuration(CFMENavigateStep):
-    prerequisite = NavigateToSibling('LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         if self.obj.version > '5.7':

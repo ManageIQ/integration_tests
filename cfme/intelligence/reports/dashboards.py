@@ -60,7 +60,7 @@ class Dashboard(Updateable, Pretty, Navigatable):
 
 @navigator.register(Dashboard, 'Main')
 class DashboardPage(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def am_i_here(self):
         from cfme.web_ui.menu import nav
@@ -77,7 +77,7 @@ class DashboardPage(CFMENavigateStep):
 
 @navigator.register(Dashboard, 'All')
 class DashboardAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
@@ -152,7 +152,7 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
 
 @navigator.register(DefaultDashboard, 'All')
 class DefaultDashboardAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
