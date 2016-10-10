@@ -141,6 +141,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
         myprov.create()
 
     """
+    NAVTREE_LOCATION = 'Compute', 'Clouds', 'Providers'
     provider_types = {}
     in_version = (version.LOWEST, version.LATEST)
     type_tclass = "cloud"
@@ -173,20 +174,6 @@ class CloudProvider(Pretty, CloudInfraProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
-
-
-@navigator.register(CloudProvider, 'All')
-class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
-
-    def resetter(self):
-        tb.select('Grid View')
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
 
 
 @navigator.register(CloudProvider, 'Add')

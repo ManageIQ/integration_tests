@@ -87,21 +87,6 @@ class MiddlewareProvider(BaseProvider):
     taggable_type = 'ExtManagementSystem'
 
 
-@navigator.register(MiddlewareProvider, 'All')
-class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Providers')(None)
-
-    def resetter(self):
-        # Reset view and selection
-        tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
-
-
 @navigator.register(MiddlewareProvider, 'Add')
 class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')

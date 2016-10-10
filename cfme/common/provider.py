@@ -3,6 +3,9 @@ import pkgutil
 import importlib
 from functools import partial
 
+from navmazing import NavigateToAttribute
+
+
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
@@ -28,6 +31,9 @@ from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
 
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
+
+
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -37,9 +43,17 @@ manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 details_page = Region(infoblock_type='detail')
 
 
+class ProviderList(Navigatable):
+    def __init__(self):
+        pass
+
+
 class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     # List of constants that every non-abstract subclass must have defined
     type_mapping = {}
+    #: position in the navigation tree, subclasses must set this to a tuple
+    NAVTREE_LOCATION = None
+
     STATS_TO_MATCH = []
     string_name = ""
     page_name = ""
@@ -770,3 +784,18 @@ def import_all_modules_of(loc):
     path = project_path.join('{}'.format(loc.replace('.', '/'))).strpath
     for _, name, _ in pkgutil.iter_modules([path]):
         importlib.import_module('{}.{}'.format(loc, name))
+
+
+@navigator.register(BaseProvider, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn(*self.obj.NAVTREE_LOCATION)(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("Grid View")
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
