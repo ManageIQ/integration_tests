@@ -2,7 +2,7 @@ import datetime
 import pkgutil
 import importlib
 from functools import partial
-import warnings 
+import warnings
 
 from navmazing import NavigateToAttribute
 

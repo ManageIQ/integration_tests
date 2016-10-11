@@ -11,7 +11,7 @@
 
 from functools import partial
 
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToSibling
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of

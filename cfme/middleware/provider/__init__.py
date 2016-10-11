@@ -1,10 +1,10 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToSibling
 
 from cfme.common.provider import import_all_modules_of
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Region, Form, AngularSelect, Input, Quadicon, form_buttons, toolbar as tb, paginator
+    Region, Form, AngularSelect, Input, Quadicon, form_buttons
 )
 from cfme.web_ui.menu import nav
 from utils import version

@@ -5,7 +5,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region, paginator,
+    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region,
     match_location
 )
 from cfme.web_ui.menu import nav
