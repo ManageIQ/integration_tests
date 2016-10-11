@@ -191,6 +191,9 @@ provisioning_form = tabstrip.TabStripForm(
                 version.LOWEST: ui.Select('select#hardware__monitoring'),
                 '5.5': AngularSelect('hardware__monitoring')}),
             ('boot_disk_size', AngularSelect('hardware__boot_disk_size')),
+            # GCE
+            ('is_preemtible', {version.LOWEST: None,
+                              '5.7': ui.Input('hardware__is_preemptible')})
         ]),
 
         ('Customize', [
