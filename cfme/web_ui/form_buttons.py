@@ -32,7 +32,9 @@ class FormButton(Pretty):
         TYPE_CONDITION = (
             "(contains(@class, 'button') or contains(@class, 'btn') or contains(@src, 'button'))"
         )
-        DIMMED = "(contains(@class, 'dimmed') or contains(@class, 'disabled'))"
+        DIMMED = "(contains(@class, 'dimmed') " \
+            "or contains(@class, 'disabled') " \
+            "or contains(@class, 'btn-disabled'))"
         NOT_DIMMED = "not{}".format(DIMMED)
         IS_DISPLAYED = (
             "not(ancestor::*[contains(@style, 'display:none') "
