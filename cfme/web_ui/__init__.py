@@ -1669,13 +1669,15 @@ class BootstrapTreeview(object):
     Args:
         tree_id: Id of the tree, the closest div to the root ``ul`` element.
     """
-    ROOT_ITEM = './ul/li[1]'
+    ROOT_ITEMS = './ul/li[not(./span[contains(@class, "indent")])]'
+    ROOT_ITEMS_WITH_TEXT = (
+        './ul/li[not(./span[contains(@class, "indent")]) and contains(normalize-space(.), {text})]')
     SELECTED_ITEM = './ul/li[contains(@class, "node-selected")]'
     CHILD_ITEMS = (
-        './ul/li[starts-with(@data-nodeid, {id}) and not(@data-nodeid={id})'
+        './ul/li[starts-with(@data-nodeid, {id})'
         ' and count(./span[contains(@class, "indent")])={indent}]')
     CHILD_ITEMS_TEXT = (
-        './ul/li[starts-with(@data-nodeid, {id}) and not(@data-nodeid={id})'
+        './ul/li[starts-with(@data-nodeid, {id})'
         ' and contains(normalize-space(.), {text})'
         ' and count(./span[contains(@class, "indent")])={indent}]')
     ITEM_BY_NODEID = './ul/li[@data-nodeid={}]'
@@ -1696,17 +1698,16 @@ class BootstrapTreeview(object):
         Returns:
             The name of the image without the hash, path and extension.
         """
-        image_node = sel.element('./span[contains(@class, "node-image")]', root=item)
+        try:
+            image_node = sel.element('./span[contains(@class, "node-image")]', root=item)
+        except NoSuchElementException:
+            return None
         style = sel.get_attribute(image_node, 'style')
         image_href = re.search(r'url\("([^"]+)"\)', style).groups()[0]
         return re.search(r'/([^/]+)-[0-9a-f]+\.png$', image_href).groups()[0]
 
     def locate(self):
         return '#{}'.format(self.tree_id)
-
-    @property
-    def root_item(self):
-        return sel.element(self.ROOT_ITEM, root=self)
 
     @property
     def selected_item(self):
@@ -1752,17 +1753,23 @@ class BootstrapTreeview(object):
     def get_expand_arrow(cls, item):
         return sel.element(cls.IS_EXPANDABLE, root=item)
 
-    def child_items(self, item):
-        nodeid = unescape(quoteattr(self.get_nodeid(item)))
-        node_indents = self.indents(item)
-        return sel.elements(self.CHILD_ITEMS.format(id=nodeid, indent=node_indents + 1), root=self)
+    def child_items(self, item=None):
+        if item is not None:
+            nodeid = unescape(quoteattr(self.get_nodeid(item) + '.'))
+            node_indents = self.indents(item) + 1
+            return sel.elements(self.CHILD_ITEMS.format(id=nodeid, indent=node_indents), root=self)
+        else:
+            return sel.elements(self.ROOT_ITEMS, root=self)
 
     def child_items_with_text(self, item, text):
-        nodeid = unescape(quoteattr(self.get_nodeid(item)))
         text = unescape(quoteattr(text))
-        node_indents = self.indents(item)
-        return sel.elements(
-            self.CHILD_ITEMS_TEXT.format(id=nodeid, text=text, indent=node_indents + 1), root=self)
+        if item is not None:
+            nodeid = unescape(quoteattr(self.get_nodeid(item) + '.'))
+            node_indents = self.indents(item) + 1
+            return sel.elements(
+                self.CHILD_ITEMS_TEXT.format(id=nodeid, text=text, indent=node_indents), root=self)
+        else:
+            return sel.elements(self.ROOT_ITEMS_WITH_TEXT.format(text=text), root=self)
 
     def get_item_by_nodeid(self, nodeid):
         nodeid_q = unescape(quoteattr(nodeid))
@@ -1883,24 +1890,13 @@ class BootstrapTreeview(object):
         """
         sel.wait_for_ajax()
         logger.info('Expanding path %s on tree %s', self.pretty_path(path), self.tree_id)
-        node = self.root_item
-        step = path[0]
-        steps_tried = [step]
-        image, step = self._process_step(step)
-        path = path[1:]
-        if not self.validate_node(node, step, image):
-            raise exceptions.CandidateNotFound({
-                'message':
-                    'Could not find the item {} in Boostrap tree {}'.format(
-                        self.pretty_path(steps_tried),
-                        self.tree_id),
-                'path': path,
-                'cause': 'Root node did not match {}'.format(self._repr_step(image, step))})
+        node = None
+        steps_tried = []
 
         for step in path:
             steps_tried.append(step)
             image, step = self._process_step(step)
-            if not self.expand_node(self.get_nodeid(node)):
+            if node is not None and not self.expand_node(self.get_nodeid(node)):
                 raise exceptions.CandidateNotFound({
                     'message':
                         'Could not find the item {} in Boostrap tree {}'.format(
@@ -1940,14 +1936,11 @@ class BootstrapTreeview(object):
         return node
 
     def read_contents(self, nodeid=None, include_images=False, collapse_after_read=False):
-        if nodeid is None:
-            return self.read_contents(
-                nodeid=self.get_nodeid(self.root_item),
-                include_images=include_images,
-                collapse_after_read=collapse_after_read)
-
-        item = self.get_item_by_nodeid(nodeid)
-        self.expand_node(nodeid)
+        if nodeid is not None:
+            item = self.get_item_by_nodeid(nodeid)
+            self.expand_node(nodeid)
+        else:
+            item = None
         result = []
 
         for child_item in self.child_items(item):
@@ -1957,15 +1950,19 @@ class BootstrapTreeview(object):
                     include_images=include_images,
                     collapse_after_read=collapse_after_read))
 
-        if collapse_after_read:
+        if collapse_after_read and nodeid is not None:
             self.collapse_node(nodeid)
 
-        if include_images:
+        if include_images and item is not None:
             this_item = (self.image_getter(item), sel.text(item))
-        else:
+        elif item is not None:
             this_item = sel.text(item)
-        if result:
+        else:
+            this_item = None
+        if result and this_item is not None:
             return [this_item, result]
+        elif result:
+            return result
         else:
             return this_item
 
