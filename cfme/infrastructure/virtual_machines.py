@@ -17,10 +17,11 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
     paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, match_location,
-    BootstrapTreeview
+    BootstrapTreeview, summary_title
 )
+
 from utils.api import rest_api
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
@@ -169,7 +170,7 @@ class Vm(BaseVM):
 
         def revert_to(self, cancel=False):
             self._nav_to_snapshot_mgmt()
-            snapshot_tree.click_path(*snapshot_tree.find_path_to(re.compile(self.name)))
+            self.snapshot_tree.click_path(*self.snapshot_tree.find_path_to(re.compile(self.name)))
             toolbar.select('Revert to selected snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             flash.assert_message_match('Revert To Snapshot initiated for 1 VM and Instance from '
