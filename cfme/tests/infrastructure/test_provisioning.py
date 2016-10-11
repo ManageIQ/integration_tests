@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.provisioning import do_vm_provisioning
 from cfme.services import requests
 from cfme.web_ui import fill
 from utils import normalize_text, testgen
 from utils.blockers import BZ
+from utils.generators import random_vm_name
 from utils.log import logger
 from utils.mgmt_system import RHEVMSystem
 from utils.wait import wait_for
@@ -20,7 +21,8 @@ pytestmark = [
             1265466,
             unblock=lambda provider: not isinstance(provider.mgmt, RHEVMSystem))
     ]),
-    pytest.mark.tier(2)
+    pytest.mark.tier(2),
+    test_requirements.provision
 ]
 
 
@@ -37,7 +39,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_tmpl_prov_{}'.format(fauxfactory.gen_alphanumeric())
+    vm_name = random_vm_name('provt')
     return vm_name
 
 
