@@ -266,6 +266,18 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         except VmOrInstanceNotFound:
             return False
 
+    @property
+    def is_retired(self):
+        """"Check retirement status of vm"""
+        self.summary.reload()
+        if self.summary.lifecycle.retirement_date.text_value.lower() != 'never':
+            try:
+                return self.summary.lifecycle.retirement_state.text_value.lower() == 'retired'
+            except AttributeError:
+                return False
+        else:
+            return False
+
     def find_quadicon(
             self, do_not_navigate=False, mark=False, refresh=True, from_any_provider=False,
             use_search=True):
@@ -426,7 +438,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         date_str = self.get_detail(properties=("Lifecycle", "Retirement Date")).strip()
         if date_str.lower() == "never":
             return None
-        return parsetime.from_american_date_only(date_str)
+        if version.current_version() < "5.7":
+            return parsetime.from_american_date_only(date_str).to_american_date_only()
+        else:
+            return parsetime.from_american_minutes_with_utc(date_str).to_american_date_only()
 
     def smartstate_scan(self, cancel=False, from_details=False):
         """Initiates fleecing from the UI.
@@ -519,7 +534,7 @@ class VM(BaseVM):
             version.LOWEST: date_retire_element,
             "5.5": AngularCalendarInput(
                 "retirement_date", "//label[contains(normalize-space(.), 'Retirement Date')]")}),
-        ('warn', sel.Select("select#retirement_warn"))
+        ('warn', AngularSelect('retirementWarning'))
     ])
 
     def retire(self):

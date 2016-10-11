@@ -5,6 +5,7 @@ import pytest
 
 from cfme.common.vm import VM
 from utils import testgen, providers
+from utils.timeutil import parsetime
 from utils.wait import wait_for
 from utils.version import current_version
 
@@ -69,25 +70,16 @@ def verify_retirement(vm):
         wait_for(lambda: vm.exists is False, delay=30, num_sec=360,
                  message="Wait for VM {} removed from provider".format(vm.name))
     else:
-        today = datetime.date.today()
-
         # wait for the info block showing a date as retired date
-        @pytest.wait_for(delay=30, timeout='5m')
-        def retirement_date_present():
-            vm.summary.reload()
-            return vm.summary.lifecycle.retirement_date.text_value.lower() != 'never'
-
-        # wait for the state to change
-        @pytest.wait_for(delay=15, timeout='6m')
-        def wait_for_retired():
-            vm.summary.reload()
-            return vm.summary.lifecycle.retirement_state.text_value.lower() == 'retired'
+        wait_for(lambda: vm.is_retired, delay=30, num_sec=720,
+                 message="Wait until VM {} will be retired".format(vm.name))
 
         assert vm.summary.power_management.power_state.text_value in {'off', 'suspended', 'unknown'}
 
         # make sure retirement date is today
-        retirement_date = vm.summary.lifecycle.retirement_date.text_value.lower()
-        assert datetime.datetime.strptime(retirement_date, "%m/%d/%y").date() == today
+        retirement_date = vm.retirement_date
+        today = parsetime.now().to_american_date_only()
+        assert retirement_date == today
 
 
 @pytest.mark.meta(blockers=[1337697])
@@ -107,7 +99,7 @@ def test_set_retirement_date(vm):
     Metadata:
         test_flag: retire, provision
     """
-    vm.set_retirement_date(datetime.date.today())
+    vm.set_retirement_date(datetime.datetime.now(), warn="1 Week before retirement")
     verify_retirement(vm)
 
 
