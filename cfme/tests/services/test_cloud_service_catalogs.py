@@ -59,14 +59,16 @@ def catalog():
     yield catalog
 
 
-@pytest.mark.meta(blockers=[1344103, 1367176])
+@pytest.mark.uncollectif(lambda provider: provider.type == 'gce')
 def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, provisioning):
     """Tests cloud catalog item
 
     Metadata:
         test_flag: provision
     """
-    vm_name = 'test_servicecatalog-{}'.format(fauxfactory.gen_alphanumeric())
+    vm_name = 'test{}'.format(fauxfactory.gen_alphanumeric())
+    # GCE accepts only lowercase letters in VM name
+    vm_name = vm_name.lower()
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     image = provisioning['image']['name']
     item_name = fauxfactory.gen_alphanumeric()
@@ -95,7 +97,8 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
             availability_zone=provisioning['availability_zone'],
             cloud_tenant=provisioning['cloud_tenant'],
             cloud_network=provisioning['cloud_network'],
-            guest_keypair=provisioning['guest_keypair']
+            guest_keypair=provisioning['guest_keypair'],
+            boot_disk_size=provisioning['boot_disk_size']
         )
     data.update(updates)
     cloud_catalog_item = cct.Instance(**data)
@@ -108,4 +111,4 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=1000, delay=20)
-    assert row.last_message.text == 'Request complete'
+    assert row.request_state.text == 'Finished'

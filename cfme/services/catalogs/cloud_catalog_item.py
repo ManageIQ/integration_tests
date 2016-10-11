@@ -10,7 +10,7 @@ import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from cfme.provisioning import provisioning_form as request_form
 from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill,\
-    flash, form_buttons, Input, Tree, AngularSelect
+    flash, form_buttons, Input, Tree, AngularSelect, BootstrapTreeview
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
@@ -18,6 +18,7 @@ from utils.pretty import Pretty
 
 tb_select = functools.partial(tb.select, "Configuration")
 dynamic_tree = Tree("//div[@id='basic_info_div']//ul[@class='dynatree-container']")
+entry_tree = BootstrapTreeview('automate_treebox')
 
 template_select_form = Form(
     fields=[
@@ -90,7 +91,7 @@ class Instance(Updateable, Pretty):
                  instance_type=None, availability_zone=None, cloud_tenant=None, cloud_network=None,
                  security_groups=None, virtual_private_cloud=None, resource_group=None,
                  cloud_subnet=None, provider=None,
-                 provider_mgmt=None, guest_keypair=None):
+                 provider_mgmt=None, guest_keypair=None, boot_disk_size=None):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -110,6 +111,7 @@ class Instance(Updateable, Pretty):
         self.provider = provider
         self.provider_mgmt = provider_mgmt
         self.guest_keypair = guest_keypair
+        self.boot_disk_size = boot_disk_size
 
     def create(self):
         domain = "ManageIQ (Locked)"
@@ -122,7 +124,12 @@ class Instance(Updateable, Pretty):
                                'select_dialog': self.dialog})
         if self.item_type != "Orchestration":
             sel.click(basic_info_form.field_entry_point)
-            dynamic_tree.click_path("Datastore", domain, "Service", "Provisioning",
+
+            if version.current_version() < "5.7":
+                dynamic_tree.click_path("Datastore", domain, "Service", "Provisioning",
+                                    "StateMachines", "ServiceProvision_Template", "default")
+            else:
+                entry_tree.click_path("Datastore", domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
             sel.click(basic_info_form.apply_btn)
         tabstrip.select_tab("Request Info")
@@ -141,6 +148,7 @@ class Instance(Updateable, Pretty):
             'availability_zone': self.availability_zone,
             'cloud_tenant': self.cloud_tenant,
             'cloud_network': self.cloud_network,
+            'boot_disk_size': self.boot_disk_size,
             'resource_groups': self.resource_group,
             'virtual_private_cloud': self.virtual_private_cloud,
             'cloud_subnet': self.cloud_subnet,
