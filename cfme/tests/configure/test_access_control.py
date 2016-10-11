@@ -11,7 +11,7 @@ from cfme import test_requirements
 from cfme.configure.access_control import set_group_order
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.exceptions import OptionNotAvailable
-from cfme.infrastructure import virtual_machines
+from cfme.infrastructure import virtual_machines as vms
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
@@ -405,24 +405,24 @@ def test_assign_user_to_new_group():
 
 def _test_vm_provision():
     logger.info("Checking for provision access")
-    sel.force_navigate("infra_vms")
-    virtual_machines.lcl_btn("Provision VMs")
+    navigate_to(vms.Vm, 'VMsOnly')
+    vms.lcl_btn("Provision VMs")
 
 
 def _test_vm_power_on():
     """Ensures power button is shown for a VM"""
     logger.info("Checking for power button")
-    vm_name = virtual_machines.Vm.get_first_vm_title()
+    vm_name = vms.Vm.get_first_vm_title()
     logger.debug("VM " + vm_name + " selected")
-    if not virtual_machines.is_pwr_option_visible(vm_name, option=virtual_machines.Vm.POWER_ON):
+    if not vms.is_pwr_option_visible(vm_name, option=vms.Vm.POWER_ON):
         raise OptionNotAvailable("Power button does not exist")
 
 
 def _test_vm_removal():
     logger.info("Testing for VM removal permission")
-    vm_name = virtual_machines.get_first_vm()
+    vm_name = vms.get_first_vm()
     logger.debug("VM " + vm_name + " selected")
-    virtual_machines.remove(vm_name, cancel=True)
+    vms.remove(vm_name, cancel=True)
 
 
 @pytest.mark.tier(3)
@@ -589,7 +589,7 @@ def test_permissions_vm_provisioning():
 # This test is disabled until it has been rewritten
 # def test_permissions_vm_power_on_access():
 #    # Ensure VMs exist
-#    if not virtual_machines.get_number_of_vms():
+#    if not vms.get_number_of_vms():
 #        logger.debug("Setting up providers")
 #        setup_first_provider()
 #        logger.debug("Providers setup")
@@ -605,7 +605,7 @@ def test_permissions_vm_provisioning():
 # This test is disabled until it has been rewritten
 # def test_permissions_vm_remove():
 #    # Ensure VMs exist
-#    if not virtual_machines.get_number_of_vms():
+#    if not vms.get_number_of_vms():
 #        logger.debug("Setting up providers")
 #        setup_infrastructure_providers()
 #        logger.debug("Providers setup")

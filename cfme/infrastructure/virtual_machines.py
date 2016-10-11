@@ -3,26 +3,33 @@
 quadicon lists, and VM details page.
 """
 import fauxfactory
+from functools import partial
 import re
+from selenium.common.exceptions import NoSuchElementException
+
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
-from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable
+from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable, DestinationNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
+import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
-    paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, summary_title,
+    paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, match_location,
     BootstrapTreeview
 )
-from cfme.web_ui.menu import extend_nav
-from functools import partial
-from selenium.common.exceptions import NoSuchElementException
 from utils.api import rest_api
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
-import cfme.web_ui.toolbar as tb
 
+
+# for provider specific vm/template page
+QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
+                          " or contains(@href, '/show/')]")
 
 cfg_btn = partial(toolbar.select, 'Configuration')
 pol_btn = partial(toolbar.select, 'Policy')
@@ -58,100 +65,27 @@ retirement_date_form = Form(fields=[
 
 retire_remove_button = "//span[@id='remove_button']/a/img"
 
-vm_templates_tree = partial(accordion.tree, "VMs & Templates")
-vms_tree = partial(accordion.tree, "VMs")
-templates_tree = partial(accordion.tree, "Templates")
-
-drift_table = CheckboxTable({
-    version.LOWEST: "//table[@class='style3']",
-    "5.4": "//th[normalize-space(.)='Timestamp']/ancestor::table[1]"
-})
+match_page = partial(match_location, controller='vm_infra', title='Virtual Machines')
 
 
-@extend_nav
-class infrastructure_virtual_machines:
-    def infra_vm_and_templates(_):
-        vm_templates_tree("All VMs & Templates")
-
-    def vm_templates_provider_branch(ctx):
-        vm_templates_tree("All VMs & Templates", ctx["provider_name"])
-
-    def datacenter_branch(ctx):
-        vm_templates_tree("All VMs & Templates", ctx["provider_name"], ctx["datacenter_name"])
-
-    def infra_vm_obj(ctx):
-        vm_templates_tree(
-            "All VMs & Templates", ctx["provider_name"], ctx["datacenter_name"], ctx["vm_name"])
-
-    def vm_templates_archived_branch(ctx):
-        vm_templates_tree("All VMs & Templates", "<Archived>")
-
-    def infra_archive_obj(ctx):
-        vm_templates_tree("All VMs & Templates", "<Archived>", ctx["archive_name"])
-
-    def vm_templates_orphaned_branch(ctx):
-        vm_templates_tree("All VMs & Templates", "<Orphaned>")
-
-    def infra_orphan_obj(ctx):
-        vm_templates_tree("All VMs & Templates", "<Orphaned>", ctx["orphan_name"])
-
-    class infra_vms:
-        def navigate(_):
-            vms_tree("All VMs")
-
-        def infra_vm_by_name(ctx):
-            sel.click(ctx['vm'].find_quadicon(do_not_navigate=True))
-
-    def infra_vms_filter_folder(ctx):
-        vms_tree("All VMs", ctx["folder_name"])
-
-    def infra_vms_filter(ctx):
-        vms_tree("All VMs", ctx["folder_name"], ctx["filter_name"])
-
-    def infra_templates(_):
-        templates_tree("All Templates")
-        toolbar.select('Grid View')
-
-    def infra_templates_filter_folder(ctx):
-        templates_tree("All Templates", ctx["folder_name"])
-
-    def infra_templates_filter(ctx):
-        templates_tree("All Templates", ctx["folder_name"], ctx["filter_name"])
+def nav_to_vms():
+    from cfme.web_ui.menu import nav
+    nav._nav_to_fn('Compute', 'Infrastructure', '/vm_infra/explorer')(None)
 
 
-class Common(object):
-    """Stuff shared for bot hVM and Template."""
-    def on_details(self, force=False):
-        """A function to determine if the browser is already on the proper vm details page.
-        """
-        title = '{} "{}"'.format(
-            "VM and Instance" if self.is_vm else "VM Template and Image", self.name)
-        present_title = summary_title()
-        if present_title is None or title not in present_title:
-            if not force:
-                return False
-            else:
-                self.load_details()
-                return True
+def reset_page():
+    tb.select("Grid View")
+    if paginator.page_controls_exist():
+        # paginator.results_per_page(1000)
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
 
-        pattern = r'("[A-Za-z0-9_\./\\-]*")'
-        m = re.search(pattern, present_title)
 
-        if not force:
-            return self.name == m.group().replace('"', '')
-        else:
-            if self.name != m.group().replace('"', ''):
-                self._load_details()
-            else:
-                return False
-
-    @property
-    def genealogy(self):
-        return Genealogy(self)
+drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
 
 
 @BaseVM.register_for_provider_type("infra")
-class Vm(BaseVM, Common):
+class Vm(BaseVM):
     """Represents a VM in CFME
 
     Args:
@@ -222,38 +156,24 @@ class Vm(BaseVM, Common):
             toolbar.select('Delete Snapshots', 'Delete Selected Snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             if not cancel:
-                if version.current_version() >= "5.5":
-                    flash.assert_message_match(
-                        'Remove Snapshot initiated for 1 VM and Instance from the CFME Database')
-                else:
-                    flash.assert_message_match(
-                        'Delete Snapshot initiated for 1 VM and Instance from the CFME Database')
+                flash.assert_message_match('Remove Snapshot initiated for 1 '
+                                           'VM and Instance from the CFME Database')
 
         def delete_all(self, cancel=False):
             self._nav_to_snapshot_mgmt()
             toolbar.select('Delete Snapshots', 'Delete All Existing Snapshots', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
             if not cancel:
-                if version.current_version() >= "5.5":
-                    flash.assert_message_match(
-                        'Remove All Snapshots initiated for 1 VM and Instance from the '
-                        'CFME Database')
-                else:
-                    flash.assert_message_match(
-                        'Delete All Snapshots initiated for 1 VM and Instance from the CFME '
-                        'Database')
+                flash.assert_message_match('Remove All Snapshots initiated for 1 VM and '
+                                           'Instance from the CFME Database')
 
         def revert_to(self, cancel=False):
             self._nav_to_snapshot_mgmt()
             snapshot_tree.click_path(*snapshot_tree.find_path_to(re.compile(self.name)))
             toolbar.select('Revert to selected snapshot', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
-            if version.current_version() >= "5.5":
-                flash.assert_message_match(
-                    'Revert To Snapshot initiated for 1 VM and Instance from the CFME Database')
-            else:
-                flash.assert_message_match(
-                    'Revert To A Snapshot initiated for 1 VM and Instance from the CFME Database')
+            flash.assert_message_match('Revert To Snapshot initiated for 1 VM and Instance from '
+                                       'the CFME Database')
 
     # POWER CONTROL OPTIONS
     SUSPEND = "Suspend"
@@ -294,8 +214,7 @@ class Vm(BaseVM, Common):
 
     def migrate_vm(self, email=None, first_name=None, last_name=None,
                    host_name=None, datastore_name=None):
-        sel.force_navigate("infra_vm_by_name", context={'vm': self})
-        lcl_btn("Migrate this VM")
+        navigate_to(self, 'Migrate')
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
@@ -315,8 +234,7 @@ class Vm(BaseVM, Common):
 
     def clone_vm(self, email=None, first_name=None, last_name=None,
                  vm_name=None, provision_type=None):
-        sel.force_navigate("infra_vm_by_name", context={'vm': self})
-        lcl_btn("Clone this VM")
+        navigate_to(self, 'Clone')
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
@@ -394,6 +312,10 @@ class Vm(BaseVM, Common):
             "//td[@class='key' and normalize-space(.)='Description']/.."
             "/td[not(contains(@class, 'key'))]"])
         return sel.text(l).strip()
+
+    @property
+    def genealogy(self):
+        return Genealogy(self)
 
     def get_vm_via_rest(self):
         return rest_api().collections.vms.get(name=self.name)
@@ -517,8 +439,12 @@ class Vm(BaseVM, Common):
 
 
 @BaseTemplate.register_for_provider_type("infra")
-class Template(BaseTemplate, Common):
+class Template(BaseTemplate):
     REMOVE_MULTI = "Remove Templates from the VMDB"
+
+    @property
+    def genealogy(self):
+        return Genealogy(self)
 
 
 class Genealogy(object):
@@ -606,6 +532,7 @@ class Genealogy(object):
 ###
 # Multi-object functions
 #
+# todo: to check and probably remove this function. it might be better off refactoring whole file
 def _method_setup(vm_names, provider_crud=None):
     """ Reduces some redundant code shared between methods """
     if isinstance(vm_names, basestring):
@@ -614,7 +541,7 @@ def _method_setup(vm_names, provider_crud=None):
     if provider_crud:
         provider_crud.load_all_provider_vms()
     else:
-        sel.force_navigate('infra_vms')
+        navigate_to(Vm, 'VMsOnly')
     if paginator.page_controls_exist():
         paginator.results_per_page(1000)
     for vm_name in vm_names:
@@ -629,7 +556,7 @@ def find_quadicon(vm_name, do_not_navigate=False):
     Returns: :py:class:`cfme.web_ui.Quadicon` instance
     """
     if not do_not_navigate:
-        sel.force_navigate('infra_vms')
+        navigate_to(Vm, 'VMsOnly')
     if not paginator.page_controls_exist():
         raise VmNotFound("VM '{}' not found in UI!".format(vm_name))
 
@@ -744,7 +671,7 @@ def perform_smartstate_analysis(vm_names, provider_crud=None, cancel=True):
 def get_all_vms(do_not_navigate=False):
     """Returns list of all vms"""
     if not do_not_navigate:
-        sel.force_navigate('infra_vms')
+        navigate_to(Vm, 'VMsOnly')
     return [q.name for q in Quadicon.all("vm")]
 
 
@@ -755,10 +682,208 @@ def get_number_of_vms(do_not_navigate=False):
     """
     logger.info("Getting number of vms")
     if not do_not_navigate:
-        sel.force_navigate('infra_vms')
+        navigate_to(Vm, 'VMsOnly')
     if not paginator.page_controls_exist():
         logger.debug("No page controls")
         return 0
     total = paginator.rec_total()
     logger.debug("Number of VMs: %s", total)
     return int(total)
+
+
+@navigator.register(Template, 'All')
+@navigator.register(Vm, 'All')
+class VmAllWithTemplates(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self, *args, **kwargs):
+        nav_to_vms()
+        accordion.tree('VMs & Templates', 'All VMs & Templates')
+
+    def resetter(self, *args, **kwargs):
+        reset_page()
+
+    def am_i_here(self, *args, **kwargs):
+            return match_page(summary='All VMs & Templates')
+
+
+@navigator.register(Template, 'AllForProvider')
+@navigator.register(Vm, 'AllForProvider')
+class VmAllWithTemplatesForProvider(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        if 'provider' in kwargs:
+            provider = kwargs['provider'].name
+        elif self.obj.provider:
+            provider = self.obj.provider.name
+        else:
+            raise DestinationNotFound("the destination isn't found")
+        accordion.tree('VMs & Templates', 'All VMs & Templates', provider)
+
+    def resetter(self, *args, **kwargs):
+        reset_page()
+
+    def am_i_here(self, *args, **kwargs):
+        if 'provider' in kwargs:
+            provider = kwargs['provider'].name
+        elif self.obj.provider:
+            provider = self.obj.provider.name
+        else:
+            raise DestinationNotFound("the destination isn't found")
+        return match_page(summary='VM or Templates under Provider "{}"'.format(provider))
+
+
+@navigator.register(Template, 'AllForDatacenter')
+@navigator.register(Vm, 'AllForDatacenter')
+class VmAllWithTemplatesForDatacenter(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        if ('provider' in kwargs or self.obj.provider) and \
+           ('datacenter_name' in kwargs or self.obj.datacenter):
+            # todo: to obtain datacenter from db (ems_folders)
+            # currently, it's unclear how it is tied up with vms
+            try:
+                provider = kwargs['provider'].name
+            except KeyError:
+                provider = self.obj.provider.name
+            try:
+                datacenter = kwargs['datacenter_name']
+            except KeyError:
+                datacenter = self.obj.datacenter
+        else:
+            raise DestinationNotFound("the destination isn't found")
+        accordion.tree('VMs & Templates', 'All VMs & Templates', provider, datacenter)
+
+    def resetter(self, *args, **kwargs):
+        reset_page()
+
+    def am_i_here(self, *args, **kwargs):
+        if 'datacenter_name' in kwargs:
+            datacenter = kwargs['datacenter_name']
+        elif self.obj.datacenter:
+            datacenter = self.obj.datacenter
+        else:
+            raise DestinationNotFound("the destination isn't found")
+        return match_page(summary='VM or Templates under Folder "{}"'.format(datacenter))
+
+
+@navigator.register(Template, 'AllOrphaned')
+@navigator.register(Vm, 'AllOrphaned')
+class VmAllWithTemplatesOrphaned(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        accordion.tree('VMs & Templates', 'All VMs & Templates', '<Orphaned>')
+
+    def resetter(self, *args, **kwargs):
+        reset_page()
+
+    def am_i_here(self, *args, **kwargs):
+            return match_page(summary='Orphaned VM or Templates')
+
+
+@navigator.register(Template, 'AllArchived')
+@navigator.register(Vm, 'AllArchived')
+class VmAllWithTemplatesArchived(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        accordion.tree('VMs & Templates', 'All VMs & Templates', '<Archived>')
+
+    def resetter(self, *args, **kwargs):
+        reset_page()
+
+    def am_i_here(self, *args, **kwargs):
+            return match_page(summary='Archived VM or Templates')
+
+
+@navigator.register(Template, 'Details')
+@navigator.register(Vm, 'Details')
+class VmAllWithTemplatesDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        sel.click(self.obj.find_quadicon(do_not_navigate=True))
+
+    def am_i_here(self, *args, **kwargs):
+            return match_page(summary='VM and Instance "{}"'.format(self.obj.name))
+
+
+@navigator.register(Vm, 'VMsOnly')
+class VmAll(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        vms = partial(accordion.tree, 'VMs', 'All VMs')
+        if 'filter_folder' not in kwargs:
+            vms()
+        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
+            vms(kwargs['filter_folder'], kwargs['filter_name'])
+        else:
+            raise DestinationNotFound("the destination isn't found")
+
+    def resetter(self, *args, **kwargs):
+        reset_page()
+
+    def am_i_here(self, *args, **kwargs):
+        if 'filter_folder' not in kwargs:
+            return match_page(summary='All VMs')
+        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
+            return match_page(summary='All Virtual Machines - '
+                                      'Filtered by "{}"'.format(kwargs['filter_name']))
+
+
+@navigator.register(Vm, 'VMsOnlyDetails')
+class VmDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('VMsOnly')
+
+    def step(self, *args, **kwargs):
+        sel.click(self.obj.find_quadicon(do_not_navigate=True))
+
+    def am_i_here(self, *args, **kwargs):
+        return match_page(summary='Virtual Machine "{}"'.format(self.obj.name))
+
+
+@navigator.register(Vm, 'Migrate')
+class VmMigrate(CFMENavigateStep):
+    prerequisite = NavigateToSibling('VMsOnlyDetails')
+
+    def step(self, *args, **kwargs):
+        lcl_btn("Migrate this VM")
+
+    def am_i_here(self, *args, **kwargs):
+        return match_page(summary='Migrate Virtual Machine')
+
+
+@navigator.register(Vm, 'Clone')
+class VmClone(CFMENavigateStep):
+    prerequisite = NavigateToSibling('VMsOnlyDetails')
+
+    def step(self, *args, **kwargs):
+        lcl_btn("Clone this VM")
+
+    def am_i_here(self, *args, **kwargs):
+        return match_page(summary='Clone Virtual Machine')
+
+
+@navigator.register(Template, 'TemplatesOnly')
+class TemplatesAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self, *args, **kwargs):
+        nav_to_vms()
+        templates = partial(accordion.tree, 'Templates', 'All Templates')
+        if 'filter_folder' not in kwargs:
+            templates()
+        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
+            templates(kwargs['filter_folder'], kwargs['filter_name'])
+        else:
+            raise DestinationNotFound("the destination isn't found")
+
+    def resetter(self, *args, **kwargs):
+        reset_page()
+
+    def am_i_here(self, *args, **kwargs):
+        return match_page(summary='Template "{}"'.format(self.obj.name))

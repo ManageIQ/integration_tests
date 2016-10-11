@@ -2,9 +2,11 @@
 import fauxfactory
 import pytest
 
+from cfme.base import Server
 from cfme.common.vm import VM
 from cfme.control.explorer import PolicyProfile, VMCompliancePolicy, Action, VMControlPolicy
 from cfme.infrastructure.virtual_machines import Vm
+from utils.appliance.endpoints.ui import navigate_to
 from utils.version import current_version
 from utils.log import logger
 from utils.providers import setup_a_provider as _setup_a_provider
@@ -57,8 +59,8 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
     vm = VM.factory(Vm.get_first_vm_title(provider=setup_a_provider), setup_a_provider)
     vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
-    pytest.sel.force_navigate("dashboard")
-    pytest.sel.force_navigate("infrastructure_virtual_machines")
+    navigate_to(Server, 'Dashboard')
+    navigate_to(Vm, 'All')
     assert "except" not in pytest.sel.title().lower()
     vm.unassign_policy_profiles(profile.description)
 
