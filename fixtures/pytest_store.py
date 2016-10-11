@@ -76,21 +76,12 @@ class Store(object):
         # Stash of the "real" terminal reporter once we get it,
         # so we don't have to keep going through pluginmanager
         self._terminalreporter = None
-        self._user = None
         #: hack variable until we get a more sustainable solution
         self.ssh_clients_to_close = []
 
     @property
     def has_config(self):
         return self.config is not None
-
-    @property
-    def user(self):
-        return self._user
-
-    @user.setter
-    def user(self, value):
-        self._user = value
 
     @property
     def base_url(self):
