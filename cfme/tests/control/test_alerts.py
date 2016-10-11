@@ -355,7 +355,7 @@ def test_alert_timeline_cpu(request, vm_name, provider, ssh, vm_crud):
 
 
 def test_alert_snmp(request, alert, match_string, vm, vm_name, snmp, ssh_appliance,
-    vm_crud_refresh):
+                    vm_crud_refresh):
     """ Tests a custom alert that send snmp notifications triggered by VM Power On event.
 
     Metadata:
