@@ -218,12 +218,12 @@ class BrowserManager(object):
             return False
         return True
 
-    def ensure_open(self, url_key):
+    def ensure_open(self, url_key=None):
         url_key = self.coerce_url_key(url_key)
         if self.browser is None or self.browser.url_key != url_key:
             return self.start(url_key=url_key)
 
-        if self._is_running():
+        if self._is_running(url_key):
             self.factory.renew()
         else:
             self.start(url_key=url_key)
