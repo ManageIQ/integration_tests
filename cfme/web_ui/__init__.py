@@ -1676,7 +1676,7 @@ class BootstrapTreeview(object):
         ' and count(./span[contains(@class, "indent")])={indent}]')
     CHILD_ITEMS_TEXT = (
         './ul/li[starts-with(@data-nodeid, {id}) and not(@data-nodeid={id})'
-        ' and contains(normalize-space(text()), {text})'
+        ' and contains(normalize-space(.), {text})'
         ' and count(./span[contains(@class, "indent")])={indent}]')
     ITEM_BY_NODEID = './ul/li[@data-nodeid={}]'
     IS_EXPANDABLE = './span[contains(@class, "expand-icon")]'
