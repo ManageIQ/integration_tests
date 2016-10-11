@@ -16,7 +16,8 @@ from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
 from cfme import test_requirements
-
+from urlparse import urlparse
+from fixtures.pytest_store import store
 
 pytestmark = [
     pytest.mark.long_running,
@@ -185,6 +186,24 @@ def vm_crud(provider, vm_name, full_template):
     return VM.factory(vm_name, provider, template_name=full_template["name"])
 
 
+@pytest.fixture(scope="module")
+def ssh_appliance():
+    return SSHClient(
+        username=credentials['ssh']['username'],
+        password=credentials['ssh']['password'],
+        hostname=urlparse(store.base_url).netloc
+    )
+
+
+@pytest.yield_fixture(scope="module")
+def snmp(ssh_appliance):
+    ssh_appliance.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
+    ssh_appliance.run_command("systemctl start snmptrapd.service")
+    yield
+    ssh_appliance.run_command("systemctl stop snmptrapd.service")
+    ssh_appliance.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
+
+
 @pytest.mark.meta(server_roles=["+automate", "+notifier"], blockers=[1266547])
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         vm_name, vm_crud, provider, request, smtp_test, register_event):
@@ -298,9 +317,8 @@ def test_alert_timeline_cpu(request, vm_name, provider, ssh, vm_crud):
     wait_for(_timeline_event_present, num_sec=30 * 60, delay=15, message="timeline event present")
 
 
-@pytest.mark.skipif(True, reason="SNMP hogs the tests.")
 @pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
-def test_alert_snmp(request, vm_name, smtp_test, provider, snmp_client):
+def test_alert_snmp(request, vm_name, snmp, ssh_appliance, provider):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
     alerts. It uses SNMP v2.
@@ -308,6 +326,7 @@ def test_alert_snmp(request, vm_name, smtp_test, provider, snmp_client):
     Metadata:
         test_flag: alerts, provision, metrics_collection
     """
+    match_string = fauxfactory.gen_alpha(length=8)
     alert = explorer.Alert(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
@@ -323,11 +342,11 @@ def test_alert_snmp(request, vm_name, smtp_test, provider, snmp_client):
             }),
         notification_frequency="5 Minutes",
         snmp_trap={
-            "hosts": "127.0.0.1",  # The client lives on the appliance due to network reasons
+            "hosts": "127.0.0.1",
             "version": "v2",
-            "id": "1",
+            "id": "info",
             "traps": [
-                ("1.2.3", "Integer", "1")]},
+                ("1.2.3", "OctetString", "{}".format(match_string))]},
     )
     alert.create()
     request.addfinalizer(alert.delete)
@@ -335,17 +354,12 @@ def test_alert_snmp(request, vm_name, smtp_test, provider, snmp_client):
     setup_for_alerts(request, [alert])
 
     def _snmp_arrived():
-        # TODO: More elaborate checking
-        for trap in snmp_client.get_all():
-            if trap["source_ip"] != "127.0.0.1":
-                continue
-            if trap["trap_version"] != 2:
-                continue
-            if trap["oid"] != "1.0":
-                continue
-            for var in trap["vars"]:
-                if var["name"] == "1.2.3" and var["oid"] == "1.2.3" and var["value"] == "1":
-                    return True
+        rc, stdout = ssh_appliance.run_command(
+            "journalctl /usr/sbin/snmptrapd | grep {}".format(match_string))
+        if rc != 0:
+            return False
+        elif stdout:
+            return True
         else:
             return False
 
