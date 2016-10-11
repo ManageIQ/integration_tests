@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import sentaku
-
 from contextlib import contextmanager
 from functools import partial
 from cached_property import cached_property
@@ -2145,12 +2143,3 @@ def get_replication_backlog(navigate=True):
     if navigate:
         sel.force_navigate("cfg_diagnostics_region_replication")
     return int(replication_process.current_backlog.text)
-
-
-class Server(Navigatable, sentaku.Element):
-    def __init__(self, appliance):
-        Navigatable.__init__(self, appliance=appliance)
-
-
-from . import ui, ssui  # NOQA last for import cycles
-sentaku.register_external_implementations_in(ui, ssui)

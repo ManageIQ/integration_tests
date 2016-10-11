@@ -95,7 +95,7 @@ class IPAppliance(object):
         cred = Credential(principal=username, secret=password)
         self.user = User(credential=cred, appliance=self)
 
-        from cfme.configure.configuration import Server
+        from cfme.base import Server
         self.server = Server(appliance=self)
         self.browser = ViaUI(owner=self)
         self.sentaku_ctx = ImplementationContext.from_instances(
@@ -1702,19 +1702,6 @@ class Dashboard(CFMENavigateStep):
     def step(self):
         from cfme.web_ui.menu import nav
         nav._nav_to_fn('Cloud Intel', 'Dashboard')(None)
-
-
-@navigator.register(IPAppliance)
-class Configuration(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        if self.obj.version > '5.7':
-            from cfme.dashboard import click_top_right
-            click_top_right('Configuration')
-        else:
-            from cfme.web_ui.menu import nav
-            nav._nav_to_fn('Settings', 'Configuration')(None)
 
 
 class Appliance(IPAppliance):
