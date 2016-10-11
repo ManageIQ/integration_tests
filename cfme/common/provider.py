@@ -793,10 +793,9 @@ def import_all_modules_of(loc):
         importlib.import_module('{}.{}'.format(loc, name))
 
 
-
 @navigator.register(ProviderList, 'All')
 class ProviderListing(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
         from cfme.web_ui.menu import nav
