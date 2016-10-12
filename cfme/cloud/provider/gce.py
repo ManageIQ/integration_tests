@@ -1,10 +1,10 @@
 from mgmtsystem.google import GoogleCloudSystem
-from . import Provider
+from . import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
 
 
-@Provider.add_provider_type
-class GCEProvider(Provider):
+@CloudProvider.add_provider_type
+class GCEProvider(CloudProvider):
     type_name = "gce"
     mgmt_class = GoogleCloudSystem
 

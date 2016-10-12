@@ -1,9 +1,9 @@
 from mgmtsystem.virtualcenter import VMWareSystem
-from . import Provider
+from . import InfraProvider
 
 
-@Provider.add_provider_type
-class VMwareProvider(Provider):
+@InfraProvider.add_provider_type
+class VMwareProvider(InfraProvider):
     type_name = "virtualcenter"
     mgmt_class = VMWareSystem
 

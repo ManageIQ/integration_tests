@@ -11,7 +11,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, wait_for_a_provider,
-    Provider, prop_region)
+    CloudProvider, prop_region)
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
@@ -128,7 +128,7 @@ def test_provider_crud(provider):
 @test_requirements.discovery
 def test_type_required_validation(request, soft_assert):
     """Test to validate type while adding a provider"""
-    prov = Provider()
+    prov = CloudProvider()
 
     request.addfinalizer(prov.delete_if_exists)
     if version.current_version() < "5.5":
@@ -296,7 +296,7 @@ def test_api_port_max_character_validation(request):
 @pytest.mark.meta(blockers=[1278036])
 def test_openstack_provider_has_api_version():
     """Check whether the Keystone API version field is present for Openstack."""
-    prov = Provider()
+    prov = CloudProvider()
     navigate_to(prov, 'Add')
     fill(prop_region.properties_form, {"type_select": "OpenStack"})
     pytest.sel.wait_for_ajax()

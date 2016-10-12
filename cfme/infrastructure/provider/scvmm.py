@@ -1,9 +1,9 @@
 from mgmtsystem.scvmm import SCVMMSystem
-from . import Provider
+from . import InfraProvider
 
 
-@Provider.add_provider_type
-class SCVMMProvider(Provider):
+@InfraProvider.add_provider_type
+class SCVMMProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     type_name = "scvmm"
     mgmt_class = SCVMMSystem

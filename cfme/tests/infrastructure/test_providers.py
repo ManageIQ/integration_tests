@@ -9,7 +9,7 @@ import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
-from cfme.infrastructure.provider import discover, wait_for_a_provider, Provider
+from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen, providers, version
@@ -61,7 +61,7 @@ def test_add_cancelled_validation():
 @test_requirements.provider_discovery
 def test_type_required_validation():
     """Test to validate type while adding a provider"""
-    prov = Provider()
+    prov = InfraProvider()
     err = version.pick(
         {version.LOWEST: 'Type is required',
          '5.6': FlashMessageException})
@@ -185,7 +185,7 @@ def test_providers_discovery(request, provider):
     """
     provider.discover()
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
-    request.addfinalizer(lambda: BaseProvider.clear_provider_by_type(Provider))
+    request.addfinalizer(lambda: BaseProvider.clear_provider_by_type(InfraProvider))
     wait_for_a_provider()
 
 

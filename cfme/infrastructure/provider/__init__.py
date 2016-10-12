@@ -121,7 +121,7 @@ nav.add_branch('infrastructure_providers',
 
 
 @CloudInfraProvider.add_base_type
-class Provider(Pretty, CloudInfraProvider):
+class InfraProvider(Pretty, CloudInfraProvider):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -309,7 +309,7 @@ class Provider(Pretty, CloudInfraProvider):
         return web_clusters
 
 
-@navigator.register(Provider, 'All')
+@navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
@@ -324,7 +324,7 @@ class All(CFMENavigateStep):
         sel.uncheck(paginator.check_all())
 
 
-@navigator.register(Provider, 'Add')
+@navigator.register(InfraProvider, 'Add')
 class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -332,7 +332,7 @@ class Add(CFMENavigateStep):
         cfg_btn('Add a New Infrastructure Provider')
 
 
-@navigator.register(Provider, 'Discover')
+@navigator.register(InfraProvider, 'Discover')
 class Discover(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -340,7 +340,7 @@ class Discover(CFMENavigateStep):
         cfg_btn('Discover Infrastructure Providers')
 
 
-@navigator.register(Provider, 'Details')
+@navigator.register(InfraProvider, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -348,7 +348,7 @@ class Details(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
 
-@navigator.register(Provider, 'ManagePolicies')
+@navigator.register(InfraProvider, 'ManagePolicies')
 class ManagePolicies(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -357,7 +357,7 @@ class ManagePolicies(CFMENavigateStep):
         pol_btn('Manage Policies')
 
 
-@navigator.register(Provider, 'ManagePoliciesFromDetails')
+@navigator.register(InfraProvider, 'ManagePoliciesFromDetails')
 class ManagePoliciesFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
@@ -365,7 +365,7 @@ class ManagePoliciesFromDetails(CFMENavigateStep):
         pol_btn('Manage Policies')
 
 
-@navigator.register(Provider, 'Edit')
+@navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -377,7 +377,7 @@ class Edit(CFMENavigateStep):
 def get_all_providers(do_not_navigate=False):
     """Returns list of all providers"""
     if not do_not_navigate:
-        navigate_to(Provider, 'All')
+        navigate_to(InfraProvider, 'All')
     providers = set([])
     link_marker = "ems_infra"
     for page in paginator.pages():
@@ -400,7 +400,7 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
         start_ip: String start of the IP range for discovery
         end_ip: String end of the IP range for discovery
     """
-    navigate_to(Provider, 'Discover')
+    navigate_to(InfraProvider, 'Discover')
     form_data = {}
     if rhevm:
         form_data.update({'rhevm_chk': True})
@@ -423,7 +423,7 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
 
 
 def wait_for_a_provider():
-    navigate_to(Provider, 'All')
+    navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
