@@ -145,7 +145,7 @@ def test_azone_event(setup_provider, provider, gen_events, test_instance):
 
 
 @pytest.mark.meta(
-    blockers=BZ(1281746, unblock=lambda provider: provider.type != 'openstack'),
+    blockers=[BZ(1281746, unblock=lambda provider: provider.type != 'openstack')]
 )
 @pytest.mark.uncollectif(
     lambda provider: current_version() < "5.4" and provider.type != 'openstack')

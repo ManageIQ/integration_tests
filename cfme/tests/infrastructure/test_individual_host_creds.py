@@ -50,7 +50,7 @@ def test_host_good_creds(request, setup_provider, provider):
 
 
 @pytest.mark.meta(
-    blockers=BZ(1310910, unblock=lambda provider: provider.type != 'rhevm'),
+    blockers=[BZ(1310910, unblock=lambda provider: provider.type != 'rhevm')]
 )
 def test_host_bad_creds(request, setup_provider, provider):
     """
