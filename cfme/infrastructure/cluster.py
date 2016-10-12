@@ -11,7 +11,7 @@ from cfme.fixtures import pytest_selenium as sel
 from utils.appliance.endpoints.ui import navigate_to, navigator, CFMENavigateStep
 from utils.appliance import Navigatable
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, flash, \
-    paginator, summary_title
+    paginator, match_location
 from utils.pretty import Pretty
 from utils.wait import wait_for
 from utils.api import rest_api
@@ -21,6 +21,8 @@ details_page = Region(infoblock_type='detail')
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
+match_page = partial(match_location, controller='ems_cluster',
+                     title='Clusters')
 
 # todo: since Cluster always requires provider, it will use only one way to get to Cluster Detail's
 # page. But we need to fix this in the future.
@@ -130,7 +132,7 @@ class Details(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
     def am_i_here(self):
-        return summary_title() == "{} (Summary)".format(self.obj.name)
+        return match_page(summary="{} (Summary)".format(self.obj.name))
 
 
 @navigator.register(Cluster, 'DetailsFromProvider')
@@ -141,4 +143,4 @@ class DetailsFromProvider(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
     def am_i_here(self):
-        return summary_title() == "{} (Summary)".format(self.obj.name)
+        return match_page(summary="{} (Summary)".format(self.obj.name))

@@ -8,7 +8,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons, summary_title
+from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons, match_location
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.version import LOWEST
@@ -17,6 +17,9 @@ from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateSte
 
 assignment_tree = Tree("//div[@id='cb_assignments_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")
+
+match_page = partial(match_location, controller='chargeback',
+                     title='Chargeback')
 
 
 class RateFormItem(Pretty):
@@ -216,7 +219,7 @@ class ComputeRateAll(CFMENavigateStep):
         accordion.tree("Rates", "Rates", "Compute")
 
     def am_i_here(self):
-        return summary_title() == "Compute Chargeback Rates"
+        return match_page(summary="Compute Chargeback Rates")
 
 
 @navigator.register(ComputeRate, 'New')
@@ -235,7 +238,7 @@ class ComputeRateDetails(CFMENavigateStep):
         accordion.tree("Rates", "Rates", "Compute", self.obj.description)
 
     def am_i_here(self):
-        return summary_title() == 'Compute Chargeback Rate "{}"'.format(self.obj.description)
+        return match_page(summary='Compute Chargeback Rate "{}"'.format(self.obj.description))
 
 
 @navigator.register(ComputeRate, 'Edit')
@@ -299,7 +302,7 @@ class StorageRateAll(CFMENavigateStep):
         accordion.tree("Rates", "Rates", "Storage")
 
     def am_i_here(self):
-        return summary_title() == 'Storage Chargeback Rates'
+        return match_page(summary='Storage Chargeback Rates')
 
 
 @navigator.register(StorageRate, 'New')
@@ -318,7 +321,7 @@ class StorageRateDetails(CFMENavigateStep):
         accordion.tree("Rates", "Rates", "Storage", self.obj.description)
 
     def am_i_here(self):
-        return summary_title() == 'Storage Chargeback Rate "{}"'.format(self.obj.description)
+        return match_page(summary='Storage Chargeback Rate "{}"'.format(self.obj.description))
 
 
 @navigator.register(StorageRate, 'Edit')
@@ -397,7 +400,7 @@ class AssignStorage(CFMENavigateStep):
         accordion.tree("Assignments", "Assignments", "Storage")
 
     def am_i_here(self):
-        return summary_title() == 'Storage Rate Assignments'
+        return match_page(summary='Storage Rate Assignments')
 
 
 @navigator.register(Assign, 'Compute')
@@ -408,4 +411,4 @@ class AssignCompute(CFMENavigateStep):
         accordion.tree("Assignments", "Assignments", "Compute")
 
     def am_i_here(self):
-        return summary_title() == 'Compute Rate Assignments'
+        return match_page(summary='Compute Rate Assignments')
