@@ -61,6 +61,9 @@ def kwargify(f):
 
 @plugin("blockers", ["blockers"])
 def resolve_blockers(item, blockers):
+    if not isinstance(blockers, (list, tuple, set)):
+        raise ValueError("Type of the 'blockers' parameter must be one of: list, tuple, set")
+
     # Prepare the global env for the kwarg insertion
     global_env = dict(
         appliance_version=version.current_version(),
@@ -78,8 +81,6 @@ def resolve_blockers(item, blockers):
 
     # Check blockers
     use_blockers = []
-    if not isinstance(blockers, (list, tuple, set)):
-        blockers = [blockers]
     # Bugzilla shortcut
     blockers = map(lambda b: "BZ#{}".format(b) if isinstance(b, int) else b, blockers)
     for blocker in map(Blocker.parse, blockers):
