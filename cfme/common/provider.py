@@ -811,9 +811,9 @@ class ProviderListing(CFMENavigateStep):
 @navigator.register(BaseProvider, 'All')
 class All(CFMENavigateStep):
     @property
-    def prereqisite(self):
+    def prerequisite(self):
         if isinstance(self.ob, type):
-            return self.prereqisite_type
+            return self.prerequisite_type
         else:
             return self.prerequisite_instance
 
