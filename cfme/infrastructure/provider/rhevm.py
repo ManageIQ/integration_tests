@@ -1,9 +1,9 @@
 from mgmtsystem.rhevm import RHEVMSystem
-from . import Provider, prop_region
+from . import InfraProvider, prop_region
 
 
-@Provider.add_provider_type
-class RHEVMProvider(Provider):
+@InfraProvider.add_provider_type
+class RHEVMProvider(InfraProvider):
     _properties_region = prop_region
     type_name = "rhevm"
     mgmt_class = RHEVMSystem

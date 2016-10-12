@@ -11,7 +11,7 @@ from cfme.containers.image_registry import ImageRegistry, list_tbl as list_tbl_i
 from cfme.containers.service import Service, list_tbl as list_tbl_services
 from cfme.containers.route import Route, list_tbl as list_tbl_routes
 from utils.version import current_version
-from cfme.containers.provider import Provider
+from cfme.containers.provider import ContainersProvider
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -32,7 +32,7 @@ TEST_DATAS = [
     (Service, 'containers_services', 'Services', list_tbl_services),
     # (Image, 'containers_images', 'Images', list_tbl_images),
     (Route, 'containers_routes', 'Routes', list_tbl_routes),
-    (Provider, 'containers_providers', 'Providers')
+    (ContainersProvider, 'containers_providers', 'Providers')
 ]
 #   CMP-9521
 
@@ -57,7 +57,7 @@ def test_data_integrity_for_topology(test_data):
     section_values[test_data[0]] = int(status_box.value())
     sel.force_navigate(test_data[1])
     if section_values[test_data[0]] > 0:
-        if test_data[0] is Provider:
+        if test_data[0] is ContainersProvider:
             assert len(map(lambda i: i, Quadicon.all())) == section_values[test_data[0]]
         else:
             assert len(map(lambda r: r, test_data[3].rows())

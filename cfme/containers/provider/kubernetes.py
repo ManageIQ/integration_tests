@@ -1,9 +1,9 @@
-from . import Provider
+from . import ContainersProvider
 from mgmtsystem.kubernetes import Kubernetes
 
 
-@Provider.add_provider_type
-class KubernetesProvider(Provider):
+@ContainersProvider.add_provider_type
+class KubernetesProvider(ContainersProvider):
     type_name = "kubernetes"
     mgmt_class = Kubernetes
 

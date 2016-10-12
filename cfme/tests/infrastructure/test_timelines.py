@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.infrastructure.provider import Provider
+from cfme.infrastructure.provider import InfraProvider
 from cfme.rest import a_provider as _a_provider
 from cfme.rest import vm as _vm
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
@@ -48,7 +48,7 @@ def vm_name():
 @pytest.fixture(scope="module")
 def test_vm(request, provider, vm_name, setup_provider_modscope):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    navigate_to(Provider, 'All')
+    navigate_to(InfraProvider, 'All')
     vm = VM.factory(vm_name, provider)
 
     request.addfinalizer(vm.delete_from_provider)

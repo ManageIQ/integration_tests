@@ -3,11 +3,11 @@ from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 
 from utils.version import current_version
 
-from . import Provider
+from . import CloudProvider
 
 
-@Provider.add_provider_type
-class OpenStackProvider(Provider):
+@CloudProvider.add_provider_type
+class OpenStackProvider(CloudProvider):
     type_name = "openstack"
     mgmt_class = OpenstackSystem
 

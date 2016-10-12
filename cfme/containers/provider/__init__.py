@@ -87,7 +87,7 @@ prop_region = Region(
 
 
 @BaseProvider.add_base_type
-class Provider(BaseProvider, Pretty):
+class ContainersProvider(BaseProvider, Pretty):
     provider_types = {}
     in_version = ('5.5', version.LATEST)
     type_tclass = "container"
@@ -226,7 +226,7 @@ class Provider(BaseProvider, Pretty):
         return int(self.get_detail("Relationships", "Image Registries"))
 
 
-@navigator.register(Provider, 'All')
+@navigator.register(ContainersProvider, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
@@ -241,7 +241,7 @@ class All(CFMENavigateStep):
         sel.uncheck(paginator.check_all())
 
 
-@navigator.register(Provider, 'Add')
+@navigator.register(ContainersProvider, 'Add')
 class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -253,7 +253,7 @@ class Add(CFMENavigateStep):
         cfg_btn(btn)
 
 
-@navigator.register(Provider, 'Details')
+@navigator.register(ContainersProvider, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -264,7 +264,7 @@ class Details(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
 
-@navigator.register(Provider, 'Edit')
+@navigator.register(ContainersProvider, 'Edit')
 class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -273,7 +273,7 @@ class Edit(CFMENavigateStep):
         cfg_btn('Edit Selected Containers Provider')
 
 
-@navigator.register(Provider, 'EditFromDetails')
+@navigator.register(ContainersProvider, 'EditFromDetails')
 class EditFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
@@ -281,7 +281,7 @@ class EditFromDetails(CFMENavigateStep):
         cfg_btn('Edit this Containers Provider')
 
 
-@navigator.register(Provider, 'EditTags')
+@navigator.register(ContainersProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -290,7 +290,7 @@ class EditTags(CFMENavigateStep):
         pol_btn('Edit Tags')
 
 
-@navigator.register(Provider, 'EditTagsFromDetails')
+@navigator.register(ContainersProvider, 'EditTagsFromDetails')
 class EditTagsFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
@@ -298,7 +298,7 @@ class EditTagsFromDetails(CFMENavigateStep):
         pol_btn('Edit Tags')
 
 
-@navigator.register(Provider, 'TimelinesFromDetails')
+@navigator.register(ContainersProvider, 'TimelinesFromDetails')
 class TimelinesFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
@@ -306,7 +306,7 @@ class TimelinesFromDetails(CFMENavigateStep):
         mon_btn('Timelines')
 
 
-@navigator.register(Provider, 'TopologyFromDetails')
+@navigator.register(ContainersProvider, 'TopologyFromDetails')
 class TopologyFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 

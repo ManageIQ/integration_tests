@@ -1,10 +1,10 @@
 from utils.version import pick
 from mgmtsystem.azure import AzureSystem
-from . import Provider
+from . import CloudProvider
 
 
-@Provider.add_provider_type
-class AzureProvider(Provider):
+@CloudProvider.add_provider_type
+class AzureProvider(CloudProvider):
     type_name = "azure"
     mgmt_class = AzureSystem
 

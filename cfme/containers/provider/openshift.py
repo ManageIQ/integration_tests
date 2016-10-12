@@ -1,11 +1,11 @@
-from . import Provider
+from . import ContainersProvider
 from utils.varmeth import variable
 from mgmtsystem.openshift import Openshift
 
 
-@Provider.add_provider_type
-class OpenshiftProvider(Provider):
-    STATS_TO_MATCH = Provider.STATS_TO_MATCH + ['num_route']
+@ContainersProvider.add_provider_type
+class OpenshiftProvider(ContainersProvider):
+    STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + ['num_route']
     type_name = "openshift"
     mgmt_class = Openshift
 

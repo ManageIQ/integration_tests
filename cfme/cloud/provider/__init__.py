@@ -123,7 +123,7 @@ nav.add_branch('clouds_providers',
 
 
 @CloudInfraProvider.add_base_type
-class Provider(Pretty, CloudInfraProvider):
+class CloudProvider(Pretty, CloudInfraProvider):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
 
@@ -175,7 +175,7 @@ class Provider(Pretty, CloudInfraProvider):
         return {'name_text': kwargs.get('name')}
 
 
-@navigator.register(Provider, 'All')
+@navigator.register(CloudProvider, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
@@ -189,7 +189,7 @@ class All(CFMENavigateStep):
         sel.uncheck(paginator.check_all())
 
 
-@navigator.register(Provider, 'Add')
+@navigator.register(CloudProvider, 'Add')
 class New(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -197,7 +197,7 @@ class New(CFMENavigateStep):
         cfg_btn('Add a New Cloud Provider')
 
 
-@navigator.register(Provider, 'Discover')
+@navigator.register(CloudProvider, 'Discover')
 class Discover(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -205,7 +205,7 @@ class Discover(CFMENavigateStep):
         cfg_btn('Discover Cloud Providers')
 
 
-@navigator.register(Provider, 'Details')
+@navigator.register(CloudProvider, 'Details')
 class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -213,7 +213,7 @@ class Details(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
 
-@navigator.register(Provider, 'Edit')
+@navigator.register(CloudProvider, 'Edit')
 class Edit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -222,7 +222,7 @@ class Edit(CFMENavigateStep):
         cfg_btn('Edit Selected Cloud Provider')
 
 
-@navigator.register(Provider, 'EditFromDetails')
+@navigator.register(CloudProvider, 'EditFromDetails')
 class EditFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
@@ -230,7 +230,7 @@ class EditFromDetails(CFMENavigateStep):
         cfg_btn('Edit this Cloud Provider')
 
 
-@navigator.register(Provider, 'ManagePolicies')
+@navigator.register(CloudProvider, 'ManagePolicies')
 class ManagePolicies(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -239,7 +239,7 @@ class ManagePolicies(CFMENavigateStep):
         pol_btn('Manage Policies')
 
 
-@navigator.register(Provider, 'ManagePoliciesFromDetails')
+@navigator.register(CloudProvider, 'ManagePoliciesFromDetails')
 class ManagePoliciesFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
@@ -247,7 +247,7 @@ class ManagePoliciesFromDetails(CFMENavigateStep):
         pol_btn('Manage Policies')
 
 
-@navigator.register(Provider, 'EditTags')
+@navigator.register(CloudProvider, 'EditTags')
 class EditTags(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
@@ -256,7 +256,7 @@ class EditTags(CFMENavigateStep):
         pol_btn('Edit Tags')
 
 
-@navigator.register(Provider, 'EditTagsFromDetails')
+@navigator.register(CloudProvider, 'EditTagsFromDetails')
 class EditTagsFromDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
@@ -264,7 +264,7 @@ class EditTagsFromDetails(CFMENavigateStep):
         pol_btn('Edit Tags')
 
 
-@navigator.register(Provider, 'Timelines')
+@navigator.register(CloudProvider, 'Timelines')
 class Timelines(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
@@ -275,7 +275,7 @@ class Timelines(CFMENavigateStep):
 def get_all_providers(do_not_navigate=False):
     """Returns list of all providers"""
     if not do_not_navigate:
-        navigate_to(Provider, 'All')
+        navigate_to(CloudProvider, 'All')
     providers = set([])
     link_marker = "ems_cloud"
     for page in paginator.pages():
@@ -294,7 +294,7 @@ def discover(credential, cancel=False, d_type="Amazon"):
       credential (cfme.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
-    navigate_to(Provider, 'Discover')
+    navigate_to(CloudProvider, 'Discover')
     form_data = {'discover_select': d_type}
     if credential:
         form_data.update({'username': credential.principal,
@@ -306,7 +306,7 @@ def discover(credential, cancel=False, d_type="Amazon"):
 
 
 def wait_for_a_provider():
-    navigate_to(Provider, 'All')
+    navigate_to(CloudProvider, 'All')
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
