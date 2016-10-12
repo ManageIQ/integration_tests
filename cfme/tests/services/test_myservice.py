@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+import pytest
 from datetime import datetime
 
-import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -11,6 +11,7 @@ from cfme.services.myservice import MyService
 from cfme.web_ui import toolbar as tb
 from utils import browser, testgen, version
 from utils.browser import ensure_browser_open
+from utils.events import EventBuilder
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -68,8 +69,10 @@ def test_retire_service(provider, myservice, register_event):
     Metadata:
         test_flag: provision
     """
+    event = EventBuilder().new_event(target_type='Service', target_name=myservice.service_name,
+                                     event_type='service_retired')
+    register_event(event)
     myservice.retire()
-    register_event('Service', myservice.service_name, 'service_retired')
 
 
 def test_retire_service_on_date(myservice):

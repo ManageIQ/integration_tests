@@ -10,6 +10,7 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
+from utils.events import EventBuilder
 from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen
@@ -39,6 +40,12 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
+
+    event = EventBuilder().new_event(target_type='Service',
+                                     target_name=catalog_item.name,
+                                     event_type='service_provisioned')
+    register_event(event)
+
     service_catalogs = ServiceCatalogs(catalog_item.name)
     service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
@@ -47,7 +54,6 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=1400, delay=20)
     assert row.request_state.text == 'Finished'
-    register_event('Service', catalog_item.name, 'service_provisioned')
 
 
 @pytest.mark.tier(2)

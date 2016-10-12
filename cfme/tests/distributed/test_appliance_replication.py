@@ -2,17 +2,21 @@
 import fauxfactory
 import pytest
 
+from functools import partial
+from time import sleep
+from urlparse import urlparse
+
 import cfme.web_ui.flash as flash
 from cfme.common.vm import VM
 from cfme.configure import configuration as conf
 from cfme.infrastructure.provider import wait_for_a_provider
 import cfme.fixtures.pytest_selenium as sel
-from time import sleep
-from urlparse import urlparse
+
 from utils import db, version
 from utils.appliance import provision_appliance, current_appliance
 from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
+from utils.events import EventBuilder
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.ssh import SSHClient
@@ -349,8 +353,14 @@ def test_distributed_vm_power_control(request, test_vm, vmware_provider, verify_
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
+
+    builder = EventBuilder()
+    base_evt = partial(builder.new_event, target_type='VmOrTemplate', target_name=test_vm.name)
+
     with appl2.ipapp:
-        register_event('VmOrTemplate', test_vm.name, ['request_vm_poweroff', 'vm_poweroff'])
+        register_event(base_evt(event_type='vm_poweroff'),
+                       base_evt(event_type='request_vm_poweroff'))
+
         test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
         flash.assert_message_contain("Stop initiated")
         navigate_to(test_vm.provider, 'Details')
