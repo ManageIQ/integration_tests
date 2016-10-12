@@ -2,112 +2,19 @@
 """Module handling Dashboard Widgets accordion.
 
 """
-from xml.sax.saxutils import quoteattr
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import ExternalRSSFeed, MenuShortcuts, Timer
 from cfme.web_ui import (
     CheckboxSelect, Form, InfoBlock, Select, ShowingInputs, accordion, fill, toolbar, Input)
-from cfme.web_ui import flash, form_buttons
-from cfme.web_ui.menu import nav
+from navmazing import NavigateToAttribute, NavigateToSibling
+from cfme.web_ui import flash, form_buttons, summary_title
 from utils import version
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.wait import wait_for
-
-
-nav.add_branch(
-    "reports",
-    {
-        "reports_widgets_menus":
-        [
-            lambda _: accordion.tree("Dashboard Widgets", "All Widgets", "Menus"),
-            {
-                "reports_widgets_menu_add":
-                lambda _: toolbar.select("Configuration", "Add a new Widget")
-            }
-        ],
-
-        "reports_widgets_menu":
-        [
-            lambda ctx:
-            accordion.tree("Dashboard Widgets", "All Widgets", "Menus", ctx["widget"].title),
-            {
-                "reports_widgets_menu_delete":
-                lambda _: toolbar.select("Configuration", "Delete this Widget from the Database"),
-
-                "reports_widgets_menu_edit":
-                lambda _: toolbar.select("Configuration", "Edit this Widget"),
-            }
-        ],
-
-        "reports_widgets_reports":
-        [
-            lambda _: accordion.tree("Dashboard Widgets", "All Widgets", "Reports"),
-            {
-                "reports_widgets_report_add":
-                lambda _: toolbar.select("Configuration", "Add a new Widget")
-            }
-        ],
-
-        "reports_widgets_report":
-        [
-            lambda ctx:
-            accordion.tree("Dashboard Widgets", "All Widgets", "Reports", ctx["widget"].title),
-            {
-                "reports_widgets_report_delete":
-                lambda _: toolbar.select("Configuration", "Delete this Widget from the Database"),
-
-                "reports_widgets_report_edit":
-                lambda _: toolbar.select("Configuration", "Edit this Widget"),
-            }
-        ],
-
-        "reports_widgets_charts":
-        [
-            lambda _: accordion.tree("Dashboard Widgets", "All Widgets", "Charts"),
-            {
-                "reports_widgets_chart_add":
-                lambda _: toolbar.select("Configuration", "Add a new Widget")
-            }
-        ],
-
-        "reports_widgets_chart":
-        [
-            lambda ctx:
-            accordion.tree("Dashboard Widgets", "All Widgets", "Charts", ctx["widget"].title),
-            {
-                "reports_widgets_chart_delete":
-                lambda _: toolbar.select("Configuration", "Delete this Widget from the Database"),
-
-                "reports_widgets_chart_edit":
-                lambda _: toolbar.select("Configuration", "Edit this Widget"),
-            }
-        ],
-
-        "reports_widgets_rss_feeds":
-        [
-            lambda _: accordion.tree("Dashboard Widgets", "All Widgets", "RSS Feeds"),
-            {
-                "reports_widgets_rss_feed_add":
-                lambda _: toolbar.select("Configuration", "Add a new Widget")
-            }
-        ],
-
-        "reports_widgets_rss_feed":
-        [
-            lambda ctx:
-            accordion.tree("Dashboard Widgets", "All Widgets", "RSS Feeds", ctx["widget"].title),
-            {
-                "reports_widgets_rss_feed_delete":
-                lambda _: toolbar.select("Configuration", "Delete this Widget from the Database"),
-
-                "reports_widgets_rss_feed_edit":
-                lambda _: toolbar.select("Configuration", "Edit this Widget"),
-            }
-        ],
-    }
-)
+from utils.appliance import Navigatable
+from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
 
 
 visibility_obj = ShowingInputs(
@@ -119,27 +26,24 @@ visibility_obj = ShowingInputs(
 )
 
 
-class Widget(Updateable, Pretty):
+class Widget(Updateable, Pretty, Navigatable):
     TITLE = None
     DETAIL_PAGE = None
     WAIT_STATES = {"Queued", "Running"}
     status_info = InfoBlock("Status")
 
-    @property
-    def on_widget_page(self):
-        return sel.is_displayed(
-            "//div[contains(@class, 'dhtmlxPolyInfoBar')]"
-            "/div[contains(@class, 'dhtmlxInfoBarLabel') and normalize-space(.)={}]".format(
-                quoteattr("{} Widget \"{}\"".format(self.TITLE, self.title))))
+    def __init__(self, title, description=None, active=None, shortcuts=None, visibility=None,
+                 appliance=None):
+        Navigatable.__init__(self, appliance)
+        self.title = title
+        self.description = description
+        self.active = active
+        self.shortcuts = shortcuts
+        self.visibility = visibility
 
-    def go_to_detail(self):
-        if self.on_widget_page:
-            toolbar.select("Reload current display")
-        else:
-            sel.force_navigate(type(self).DETAIL_PAGE, context={"widget": self})
 
     def generate(self, wait=True, **kwargs):
-        self.go_to_detail()
+        navigate_to(self, 'Details')
         toolbar.select("Configuration", "Generate Widget content now", invokes_alert=True)
         sel.handle_alert()
         flash.assert_message_match("Content generation for this Widget has been initiated")
@@ -153,7 +57,7 @@ class Widget(Updateable, Pretty):
             num_sec=timeout, delay=5, fail_condition=lambda result: result != "Complete")
 
     def check_status(self):
-        self.go_to_detail()
+        navigate_to(self, 'Details')
         return self.status_info("Current Status").text
 
     @classmethod
@@ -173,6 +77,62 @@ class Widget(Updateable, Pretty):
             raise ValueError(t)
         return MAPPING[t](*args, **kwargs)
 
+    def create(self, cancel=False):
+        navigate_to(self, 'Add')
+        fill(self.form, self.__dict__, action=form_buttons.cancel if cancel else form_buttons.add)
+        flash.assert_no_errors()
+
+    def update(self, updates):
+        navigate_to(self, 'Edit')
+        fill(self.form, updates, action=form_buttons.save)
+        flash.assert_no_errors()
+
+    def delete(self, cancel=False):
+        navigate_to(self, 'Details')
+        toolbar.select("Configuration", "Delete this Widget from the Database", invokes_alert=True)
+        sel.handle_alert(cancel)
+        flash.assert_no_errors()
+
+
+@navigator.register(Widget, 'All')
+class WidgetsAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Cloud Intel', 'Reports')(None)
+        accordion.tree("Dashboard Widgets", "All Widgets", self.obj.TITLE)
+
+    def am_i_here(self, *args, **kwargs):
+        return summary_title() == "{} Widgets".format(self.obj.TITLE[:-1])
+
+
+@navigator.register(Widget, 'Details')
+class WidgetsDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Dashboard Widgets", "All Widgets", "Menus", self.obj.title)
+
+    def am_i_here(self, *args, **kwargs):
+        return summary_title() == "{} Widget \"{}\"".format(self.obj.TITLE[:-1], self.obj.title)
+
+
+@navigator.register(Widget, 'Add')
+class WidgetsAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        toolbar.select("Configuration", "Add a new Widget")
+
+
+@navigator.register(Widget, 'Edit')
+class WidgetsEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        toolbar.select("Configuration", "Edit this Widget")
+
 
 class MenuWidget(Widget):
     form = Form(fields=[
@@ -182,9 +142,8 @@ class MenuWidget(Widget):
         ("shortcuts", MenuShortcuts("add_shortcut")),
         ("visibility", visibility_obj),
     ])
-    TITLE = "Menu"
+    TITLE = "Menus"
     pretty_attrs = ['description', 'shortcuts', 'visibility']
-    DETAIL_PAGE = "reports_widgets_menu"
 
     def __init__(self, title, description=None, active=None, shortcuts=None, visibility=None):
         self.title = title
@@ -192,22 +151,6 @@ class MenuWidget(Widget):
         self.active = active
         self.shortcuts = shortcuts
         self.visibility = visibility
-
-    def create(self, cancel=False):
-        sel.force_navigate("reports_widgets_menu_add")
-        fill(self.form, self.__dict__, action=form_buttons.cancel if cancel else form_buttons.add)
-        flash.assert_no_errors()
-
-    def update(self, updates):
-        sel.force_navigate("reports_widgets_menu_edit", context={"widget": self})
-        fill(self.form, updates, action=form_buttons.save)
-        flash.assert_no_errors()
-
-    def delete(self, cancel=False):
-        self.go_to_detail()
-        toolbar.select("Configuration", "Delete this Widget from the Database", invokes_alert=True)
-        sel.handle_alert(cancel)
-        flash.assert_no_errors()
 
 
 class ReportWidget(Widget):
@@ -232,9 +175,8 @@ class ReportWidget(Widget):
         ("timer", Timer()),
         ("visibility", visibility_obj),
     ])
-    TITLE = "Report"
+    TITLE = "Reports"
     pretty_attrs = ['description', 'filter', 'visibility']
-    DETAIL_PAGE = "reports_widgets_report"
 
     def __init__(self,
             title, description=None, active=None, filter=None, columns=None, rows=None, timer=None,
@@ -248,22 +190,6 @@ class ReportWidget(Widget):
         self.timer = timer
         self.visibility = visibility
 
-    def create(self, cancel=False):
-        sel.force_navigate("reports_widgets_report_add")
-        fill(self.form, self.__dict__, action=form_buttons.cancel if cancel else form_buttons.add)
-        flash.assert_no_errors()
-
-    def update(self, updates):
-        sel.force_navigate("reports_widgets_report_edit", context={"widget": self})
-        fill(self.form, updates, action=form_buttons.save)
-        flash.assert_no_errors()
-
-    def delete(self, cancel=False):
-        self.go_to_detail()
-        toolbar.select("Configuration", "Delete this Widget from the Database", invokes_alert=True)
-        sel.handle_alert(cancel)
-        flash.assert_no_errors()
-
 
 class ChartWidget(Widget):
     form = Form(fields=[
@@ -274,9 +200,8 @@ class ChartWidget(Widget):
         ("timer", Timer()),
         ("visibility", visibility_obj),
     ])
-    TITLE = "Chart"
+    TITLE = "Charts"
     pretty_attrs = ['title', 'description', 'filter', 'visibility']
-    DETAIL_PAGE = "reports_widgets_chart"
 
     def __init__(self,
             title, description=None, active=None, filter=None, timer=None, visibility=None):
@@ -286,22 +211,6 @@ class ChartWidget(Widget):
         self.filter = filter
         self.timer = timer
         self.visibility = visibility
-
-    def create(self, cancel=False):
-        sel.force_navigate("reports_widgets_chart_add")
-        fill(self.form, self.__dict__, action=form_buttons.cancel if cancel else form_buttons.add)
-        flash.assert_no_errors()
-
-    def update(self, updates):
-        sel.force_navigate("reports_widgets_chart_edit", context={"widget": self})
-        fill(self.form, updates, action=form_buttons.save)
-        flash.assert_no_errors()
-
-    def delete(self, cancel=False):
-        self.go_to_detail()
-        toolbar.select("Configuration", "Delete this Widget from the Database", invokes_alert=True)
-        sel.handle_alert(cancel)
-        flash.assert_no_errors()
 
 
 class RSSFeedWidget(Widget):
@@ -316,9 +225,8 @@ class RSSFeedWidget(Widget):
         ("timer", Timer()),
         ("visibility", visibility_obj),
     ])
-    TITLE = "RSS Feed"
+    TITLE = "RSS Feeds"
     pretty_attrs = ['title', 'description', 'type', 'feed', 'visibility']
-    DETAIL_PAGE = "reports_widgets_rss_feed"
 
     def __init__(self,
             title, description=None, active=None, type=None, feed=None, external=None, rows=None,
@@ -332,19 +240,3 @@ class RSSFeedWidget(Widget):
         self.rows = rows
         self.timer = timer
         self.visibility = visibility
-
-    def create(self, cancel=False):
-        sel.force_navigate("reports_widgets_rss_feed_add")
-        fill(self.form, self.__dict__, action=form_buttons.cancel if cancel else form_buttons.add)
-        flash.assert_no_errors()
-
-    def update(self, updates):
-        sel.force_navigate("reports_widgets_rss_feed_edit", context={"widget": self})
-        fill(self.form, updates, action=form_buttons.save)
-        flash.assert_no_errors()
-
-    def delete(self, cancel=False):
-        self.go_to_detail()
-        toolbar.select("Configuration", "Delete this Widget from the Database", invokes_alert=True)
-        sel.handle_alert(cancel)
-        flash.assert_no_errors()
