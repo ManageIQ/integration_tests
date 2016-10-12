@@ -19,7 +19,6 @@ import dateutil.parser
 import requests
 import traceback
 
-from navmazing import NavigateToAttribute
 from sentaku import ImplementationContext
 from utils.mgmt_system import RHEVMSystem
 from mgmtsystem.virtualcenter import VMWareSystem
@@ -30,7 +29,6 @@ from utils import api, conf, datafile, db, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, patches_path, scripts_path
 from utils.version import Version, get_stream, pick, LATEST
@@ -38,6 +36,7 @@ from utils.wait import wait_for
 from utils import clear_property_cache
 
 from .endpoints.ui import ViaUI
+
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 
@@ -93,13 +92,17 @@ class IPAppliance(object):
         password = conf.credentials['default']['password']
         from cfme.configure.access_control import User, Credential
         cred = Credential(principal=username, secret=password)
-        self.user = User(credential=cred, appliance=self)
+        self.user = User(credential=cred, appliance=self, name='Administrator')
 
         from cfme.base import Server
         self.server = Server(appliance=self)
         self.browser = ViaUI(owner=self)
         self.sentaku_ctx = ImplementationContext.from_instances(
             [self.browser])
+
+    @property
+    def appliance(self):
+        return self
 
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
@@ -1687,23 +1690,6 @@ class IPAppliance(object):
         clear_property_cache(self, 'configuration_details', 'zone_description')
 
 
-@navigator.register(IPAppliance)
-class Dashboard(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        from cfme.web_ui.menu import nav
-        if self.obj.version < "5.6.0.1":
-            nav.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
-        else:
-            nav.CURRENT_TOP_MENU = "{}{}".format(nav.ROOT, nav.ACTIVE_LEV)
-        nav.is_page_active('Dashboard')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Dashboard')(None)
-
-
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm
 
@@ -2193,3 +2179,11 @@ class Navigatable(object):
 
     def __init__(self, appliance=None):
         self.appliance = appliance or get_or_create_current_appliance()
+
+    @property
+    def browser(self):
+        return self.appliance.browser.widgetastic
+
+    def create_view(self, view_class, o=None):
+        return self.appliance.browser.create_view(
+            view_class, additional_context={'object': o or self})

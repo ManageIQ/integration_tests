@@ -12,6 +12,8 @@ from utils.timeutil import parsetime
 from utils.pretty import Pretty
 from utils.wait import wait_for
 
+from . import BaseLoggedInPage
+
 page = Region(
     title="Dashboard",
     locators={
@@ -28,6 +30,14 @@ page = Region(
         }
     },
     identifying_loc='reset_widgets_button')
+
+
+class DashboardView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Cloud Intel', 'Dashboard'])
 
 
 def click_top_right(item):

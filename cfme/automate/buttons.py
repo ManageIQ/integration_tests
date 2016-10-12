@@ -1,38 +1,97 @@
 # -*- coding: utf-8 -*-
+import re
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from functools import partial
-from cfme import web_ui as ui
-from cfme.exceptions import CandidateNotFound
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, accordion, fill, flash, form_buttons, DHTMLSelect, AngularSelect
-from cfme.web_ui import toolbar as tb
+from widgetastic.widget import Text, Checkbox
+from widgetastic.utils import VersionPick
+from widgetastic_manageiq import SummaryFormItem
+from widgetastic_patternfly import BootstrapSelect, Button, Input
+
+from widgetastic_patternfly import CandidateNotFound
 from utils.appliance import Navigatable
 from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
 from utils.update import Updateable
-from utils import deferred_verpick, version
+from utils import version
 
-cfg_btn = partial(tb.select, "Configuration")
-buttons_tree = partial(accordion.tree, "Buttons", "Object Types")
+from . import AutomateCustomizationView
 
-button_group_form = Form(
-    fields=[
-        ('btn_group_text', ui.Input('name')),
-        ('btn_group_hvr_text', ui.Input('description')),
-        ('add_button', form_buttons.add),
-        ('save_button', form_buttons.save)
-    ])
 
-button_form = Form(
-    fields=[
-        ('btn_text', ui.Input('name')),
-        ('btn_hvr_text', ui.Input('description')),
-        ('select_dialog', ui.Select('select#dialog_id')),
-        ('system_process', ui.Select('select#instance_name')),
-        ('request', ui.Input('object_request')),
-        ('add_button', form_buttons.add),
-        ('save_button', form_buttons.save)
-    ])
+class ButtonsAllView(AutomateCustomizationView):
+    title = Text('#explorer_title_text')
+
+    @property
+    def is_displayed(self):
+        return super(ButtonsAllView, self).is_displayed and self.title.text == 'All Object Types'
+
+
+class ButtonGroupObjectTypeView(AutomateCustomizationView):
+    title = Text('#explorer_title_text')
+
+    @property
+    def is_displayed(self):
+        return (
+            super(ButtonGroupObjectTypeView, self).is_displayed and
+            self.title.text == 'Button Groups' and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
+
+
+class ButtonGroupDetailView(AutomateCustomizationView):
+    title = Text('#explorer_title_text')
+
+    text = SummaryFormItem(
+        'Basic Information', 'Button Text',
+        text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
+    hover = SummaryFormItem('Basic Information', 'Button Hover Text')
+
+    @property
+    def is_displayed(self):
+        return (
+            super(ButtonGroupDetailView, self).is_displayed and
+            self.title.text == 'Button Group "{}"'.format(self.context['object'].text) and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == [
+                'Object Types', self.context['object'].type, self.context['object'].text])
+
+
+class ButtonGroupFormCommon(AutomateCustomizationView):
+    text = Input(name='name')
+    display = Checkbox(name='display')
+    hover = Input(name='description')
+    image = BootstrapSelect('button_image')
+
+    cancel_button = Button('Cancel')
+
+
+class NewButtonGroupView(ButtonGroupFormCommon):
+    title = Text('#explorer_title_text')
+
+    add_button = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return (
+            super(NewButtonGroupView, self).is_displayed and
+            self.title.text == 'Adding a new Buttons Group' and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
+
+
+class EditButtonGroupView(ButtonGroupFormCommon):
+    title = Text('#explorer_title_text')
+
+    save_button = Button(title='Save Changes')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return (
+            super(EditButtonGroupView, self).is_displayed and
+            self.title.text.startswith('Editing Buttons Group') and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == [
+                'Object Types', self.context['object'].type, self.context['object'].text])
 
 
 class ButtonGroup(Updateable, Navigatable):
@@ -45,7 +104,7 @@ class ButtonGroup(Updateable, Navigatable):
     """
     CLUSTER = "Cluster"
     DATASTORE = "Datastore"
-    HOST = deferred_verpick({
+    HOST = VersionPick({
         version.LOWEST: "Host",
         '5.4': "Host / Node"}
     )
@@ -61,30 +120,46 @@ class ButtonGroup(Updateable, Navigatable):
         self.type = type
 
     def create(self):
-        navigate_to(self, 'Add')
-
-        fill(button_group_form, {'btn_group_text': self.text,
-                                 'btn_group_hvr_text': self.hover})
-        if version.current_version() < "5.5":
-            select = DHTMLSelect("div#button_div")
-        else:
-            select = AngularSelect("button_image")
-        select.select_by_value(1)
-        sel.click(button_group_form.add_button)
-        flash.assert_success_message('Buttons Group "{}" was added'.format(self.hover))
+        view = navigate_to(self, 'Add')
+        view.fill({
+            'text': self.text,
+            'hover': self.hover,
+            'image': 'Button Image 1',
+        })
+        view.add_button.click()
+        view = self.create_view(ButtonGroupObjectTypeView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        view.flash.assert_message('Buttons Group "{}" was added'.format(self.hover))
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        edited_hvr_text = updates.get('hover', None)
-        fill(button_group_form, {'btn_group_hvr_text': edited_hvr_text})
-        sel.click(button_group_form.save_button)
-        flash.assert_success_message('Buttons Group "{}" was saved'.format(edited_hvr_text))
+        view = navigate_to(self, 'Edit')
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(ButtonGroupDetailView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            view.flash.assert_message(
+                'Buttons Group "{}" was saved'.format(updates.get('hover', self.hover)))
+        else:
+            view.flash.assert_message(
+                'Edit of Buttons Group "{}" was cancelled by the user'.format(self.text))
 
-    def delete(self):
-        navigate_to(self, 'Details')
-        cfg_btn("Remove this Button Group", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('Buttons Group "{}": Delete successful'.format(self.hover))
+    def delete(self, cancel=False):
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Remove this Button Group', handle_alert=not cancel)
+        if cancel:
+            assert view.is_displayed
+            view.flash.assert_no_error()
+        else:
+            view = self.create_view(ButtonGroupObjectTypeView)
+            assert view.is_displayed
+            view.flash.assert_no_error()
+            view.flash.assert_message('Buttons Group "{}": Delete successful'.format(self.hover))
 
     @property
     def exists(self):
@@ -101,40 +176,125 @@ class ButtonGroup(Updateable, Navigatable):
 
 @navigator.register(ButtonGroup, 'All')
 class ButtonGroupAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = ButtonsAllView
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Automate', 'Customization')(None)
+        self.view.buttons.tree.click_path('Object Types')
 
-    def resetter(self):
-        accordion.tree("Buttons", "Object Types")
+
+@navigator.register(ButtonGroup, 'ObjectType')
+class ButtonGroupObjectType(CFMENavigateStep):
+    VIEW = ButtonGroupObjectTypeView
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
+
+    def step(self):
+        self.view.buttons.tree.click_path('Object Types', self.obj.type)
 
 
 @navigator.register(ButtonGroup, 'Add')
 class ButtonGroupNew(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    VIEW = NewButtonGroupView
+    prerequisite = NavigateToSibling('ObjectType')
 
     def step(self):
-        accordion.tree("Buttons", "Object Types", self.obj.type)
-        cfg_btn('Add a new Button Group')
-        sel.wait_for_element(button_group_form.btn_group_text)
+        self.view.configuration.item_select('Add a new Button Group')
 
 
 @navigator.register(ButtonGroup, 'Details')
 class ButtonGroupDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    VIEW = ButtonGroupDetailView
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self):
-        accordion.tree("Buttons", "Object Types", self.obj.type, self.obj.text)
+        self.view.buttons.tree.click_path(
+            'Object Types', self.obj.type, self.obj.text)
 
 
 @navigator.register(ButtonGroup, 'Edit')
 class ButtonGroupEdit(CFMENavigateStep):
+    VIEW = EditButtonGroupView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn("Edit this Button Group")
+        self.view.configuration.item_select('Edit this Button Group')
+
+
+# Button
+class ButtonFormCommon(AutomateCustomizationView):
+    text = Input(name='name')
+    display = Checkbox(name='display')
+    hover = Input(name='description')
+    image = BootstrapSelect('button_image')
+    dialog = BootstrapSelect('dialog_id')
+    system = BootstrapSelect('instance_name')
+    message = Input(name='object_message')
+    request = Input(name='object_request')
+    # TODO: AVP and Visibility
+
+    cancel = Button('Cancel')
+
+
+class NewButtonView(ButtonFormCommon):
+    title = Text('#explorer_title_text')
+
+    add_button = Button('Add')
+
+    @property
+    def is_displayed(self):
+        return (
+            super(NewButtonView, self).is_displayed and
+            self.title.text == 'Adding a new Button' and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == [
+                'Object Types', self.context['object'].group.type,
+                self.context['object'].group.text])
+
+
+class EditButtonView(ButtonFormCommon):
+    title = Text('#explorer_title_text')
+
+    save_button = Button(title='Save Changes')
+    reset_button = Button('Reset')
+
+    @property
+    def is_displayed(self):
+        return (
+            super(EditButtonView, self).is_displayed and
+            # TODO: vvv BUG
+            self.title.text.startswith('Adding a new Button') and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == [
+                'Object Types', self.context['object'].group.type,
+                self.context['object'].group.text, self.context['object'].text])
+
+
+class ButtonDetailView(AutomateCustomizationView):
+    title = Text('#explorer_title_text')
+
+    text = SummaryFormItem(
+        'Basic Information', 'Button Text',
+        text_filter=lambda text: re.sub(r'\s+Display on Button\s*$', '', text))
+    hover = SummaryFormItem('Basic Information', 'Button Hover Text')
+    dialog = SummaryFormItem('Basic Information', 'Dialog')
+
+    system = SummaryFormItem('Object Details', 'System/Process/')
+    message = SummaryFormItem('Object Details', 'Message')
+    request = SummaryFormItem('Object Details', 'Request')
+
+    type = SummaryFormItem('Object Attribute', 'Type')
+
+    show = SummaryFormItem('Visibility', 'Show')
+
+    @property
+    def is_displayed(self):
+        return (
+            super(ButtonDetailView, self).is_displayed and
+            self.title.text == 'Button "{}"'.format(self.context['object'].text) and
+            self.buttons.is_opened and
+            self.buttons.tree.currently_selected == [
+                'Object Types', self.context['object'].group.type,
+                self.context['object'].group.text, self.context['object'].text])
 
 
 class Button(Updateable, Navigatable):
@@ -160,32 +320,49 @@ class Button(Updateable, Navigatable):
         self.request = request
 
     def create(self):
-        navigate_to(self, 'Add')
-        fill(button_form, {'btn_text': self.text,
-                           'btn_hvr_text': self.hover})
-        if version.current_version() < "5.5":
-            select = DHTMLSelect("div#button_div")
-        else:
-            select = AngularSelect("button_image")
-        select.select_by_value(2)
-        fill(button_form, {'select_dialog': self.dialog.label if self.dialog is not None else None,
-                           'system_process': self.system,
-                           'request': self.request})
-        sel.click(button_form.add_button)
-        flash.assert_success_message('Button "{}" was added'.format(self.hover))
+        view = navigate_to(self, 'Add')
+        view.fill({
+            'text': self.text,
+            'hover': self.hover,
+            'dialog': self.dialog,
+            'system': self.system,
+            'request': self.request,
+            'image': 'Button Image 1'
+        })
+        view.add_button.click()
+        view = self.create_view(ButtonGroupDetailView, self.group)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        view.flash.assert_message('Button "{}" was added'.format(self.hover))
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        edited_hover = updates.get('hover', None)
-        fill(button_form, {'btn_hvr_text': edited_hover})
-        sel.click(button_form.save_button)
-        flash.assert_success_message('Button "{}" was saved'.format(edited_hover))
+        view = navigate_to(self, 'Edit')
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(ButtonDetailView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            view.flash.assert_message(
+                'Button "{}" was saved'.format(updates.get('hover', self.hover)))
+        else:
+            view.flash.assert_message(
+                'Edit of Button "{}" was cancelled by the user'.format(self.text))
 
-    def delete(self):
-        navigate_to(self, 'Details')
-        cfg_btn("Remove this Button", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('Button "{}": Delete successful'.format(self.hover))
+    def delete(self, cancel=False):
+        view = navigate_to(self, 'Details')
+        view.configuration.item_select('Remove this Button', handle_alert=not cancel)
+        if cancel:
+            assert view.is_displayed
+            view.flash.assert_no_error()
+        else:
+            view = self.create_view(ButtonGroupDetailView, self.group)
+            assert view.is_displayed
+            view.flash.assert_no_error()
+            view.flash.assert_message('Button "{}": Delete successful'.format(self.hover))
 
     @property
     def exists(self):
@@ -202,38 +379,37 @@ class Button(Updateable, Navigatable):
 
 @navigator.register(Button, 'All')
 class ButtonAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = ButtonsAllView
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Automate', 'Customization')(None)
-
-    def resetter(self):
-        accordion.tree("Buttons", "Object Types")
+        self.view.buttons.tree.click_path('Object Types')
 
 
 @navigator.register(Button, 'Add')
 class ButtonNew(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    VIEW = NewButtonView
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self):
-        accordion.tree("Buttons", "Object Types", self.obj.group.type, self.obj.group.text)
-        cfg_btn('Add a new Button')
-        sel.wait_for_element(button_form.btn_text)
+        self.view.buttons.tree.click_path("Object Types", self.obj.group.type, self.obj.group.text)
+        self.view.configuration.item_select('Add a new Button')
 
 
 @navigator.register(Button, 'Details')
 class ButtonDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    VIEW = ButtonDetailView
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateCustomization')
 
     def step(self):
-        accordion.tree(
-            "Buttons", "Object Types", self.obj.group.type, self.obj.group.text, self.obj.text)
+        self.view.buttons.tree.click_path(
+            "Object Types", self.obj.group.type, self.obj.group.text, self.obj.text)
 
 
 @navigator.register(Button, 'Edit')
 class ButtonEdit(CFMENavigateStep):
+    VIEW = EditButtonView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        cfg_btn("Edit this Button")
+        self.view.configuration.item_select('Edit this Button')

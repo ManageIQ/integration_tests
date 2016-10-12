@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+import json
+import time
+from jsmin import jsmin
+
+from utils.log import logger, create_sublogger
+from cfme import exceptions
+from cfme.fixtures.pytest_selenium import (
+    is_displayed, execute_script, click,
+    get_rails_error, handle_alert, elements, text)
 from time import sleep
 
 from navmazing import Navigate, NavigateStep
@@ -6,16 +16,124 @@ from selenium.common.exceptions import (
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
 
-from utils.log import logger
-from cfme import exceptions
-from cfme.fixtures.pytest_selenium import (
-    is_displayed, execute_script, click,
-    get_rails_error, handle_alert, elements, text)
 from utils.browser import quit, ensure_browser_open, browser
 from fixtures.pytest_store import store
 
+from cached_property import cached_property
+from widgetastic.browser import Browser, DefaultPlugin
+from widgetastic.utils import VersionPick
+from utils.version import Version
+from utils.wait import wait_for
+
+VersionPick.VERSION_CLASS = Version
+
+
+class MiqBrowserPlugin(DefaultPlugin):
+    ENSURE_PAGE_SAFE = jsmin('''\
+        function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
+
+        try {
+            return ! ManageIQ.qe.anythingInFlight();
+        } catch(err) {
+            return (
+                ((typeof $ === "undefined") ? true : $.active < 1) &&
+                (
+                    !((!isHidden(document.getElementById("spinner_div"))) &&
+                    isHidden(document.getElementById("lightbox_div")))) &&
+                document.readyState == "complete" &&
+                ((typeof checkMiqQE === "undefined") ? true : checkMiqQE('autofocus') < 1) &&
+                ((typeof checkMiqQE === "undefined") ? true : checkMiqQE('debounce') < 1) &&
+                ((typeof checkAllMiqQE === "undefined") ? true : checkAllMiqQE() < 1)
+            );
+        }
+        ''')
+
+    OBSERVED_FIELD_MARKERS = (
+        'data-miq_observe',
+        'data-miq_observe_date',
+        'data-miq_observe_checkbox',
+    )
+    DEFAULT_WAIT = .8
+
+    def ensure_page_safe(self, timeout='10s'):
+        # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
+        self.browser.dismiss_any_alerts()
+
+        def _check():
+            result = self.browser.execute_script(self.ENSURE_PAGE_SAFE)
+            # TODO: Logging
+            return bool(result)
+
+        wait_for(_check, timeout=timeout, delay=0.2, silent_failure=True)
+
+    def after_keyboard_input(self, element, keyboard_input):
+        observed_field_attr = None
+        for attr in self.OBSERVED_FIELD_MARKERS:
+            observed_field_attr = self.browser.get_attribute(attr, element)
+            if observed_field_attr is not None:
+                break
+        else:
+            return
+
+        try:
+            attr_dict = json.loads(observed_field_attr)
+            interval = float(attr_dict.get('interval', self.DEFAULT_WAIT))
+            # Pad the detected interval, as with default_wait
+            interval += .1
+        except (TypeError, ValueError):
+            # ValueError and TypeError happens if the attribute value couldn't be decoded as JSON
+            # ValueError also happens if interval couldn't be coerced to float
+            # In either case, we've detected an observed text field and should wait
+            self.logger.warning('could not parse %r', observed_field_attr)
+            interval = self.DEFAULT_WAIT
+
+        self.logger.debug('observed field detected, pausing for %.1f seconds', interval)
+        time.sleep(interval)
+        self.browser.plugin.ensure_page_safe()
+
+
+class MiqBrowser(Browser):
+    def __init__(self, selenium, endpoint, extra_objects=None):
+        # (self, selenium, plugin_class=None, logger=None, extra_objects=None)
+        extra_objects = extra_objects or {}
+        extra_objects.update({
+            'appliance': endpoint.owner,
+            'endpoint': endpoint,
+            'store': store,
+        })
+        super(MiqBrowser, self).__init__(
+            selenium,
+            plugin_class=MiqBrowserPlugin,
+            logger=create_sublogger('MiqBrowser'),
+            extra_objects=extra_objects)
+
+    @property
+    def product_version(self):
+        return self.extra_objects['appliance'].version
+
 
 class CFMENavigateStep(NavigateStep):
+    VIEW = None
+
+    @cached_property
+    def view(self):
+        if self.VIEW is None:
+            raise AttributeError('{} does not have VIEW specified'.format(type(self).__name__))
+        return self.create_view(self.VIEW, additional_context={'object': self.obj})
+
+    @property
+    def appliance(self):
+        return self.obj.appliance
+
+    def create_view(self, *args, **kwargs):
+        return self.appliance.browser.create_view(*args, **kwargs)
+
+    def am_i_here(self):
+        try:
+            return self.view.is_displayed
+        except (AttributeError, NoSuchElementException):
+            return False
+
     def pre_navigate(self, _tries=0):
         if _tries > 2:
             # Need at least three tries:
@@ -100,30 +218,9 @@ class CFMENavigateStep(NavigateStep):
         # Includes recycling so you don't need to specify recycle = False
         restart_evmserverd = False
 
-        current_user = store.current_appliance.user
         from cfme import login
 
-        def _login_func():
-            if not current_user:  # default to admin user
-                login.login_admin()
-            else:  # we recycled and want to log back in
-                login.login(store.current_appliance.user)
-
         try:
-            try:
-                # What we'd like to happen...
-                _login_func()
-            except WebDriverException as e:
-                if "jquery" not in str(e).lower():
-                    raise  # Something unknown happened
-                logger.info("Seems we got a non-CFME page (blank "
-                    "or screwed up) so killing the browser")
-                quit()
-                ensure_browser_open()
-                # And try it again
-                _login_func()
-                # If this failed, no help with that :/
-
             self.step()
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
@@ -242,6 +339,8 @@ class CFMENavigateStep(NavigateStep):
             self.do_nav(_tries)
         self.resetter()
         self.post_navigate(_tries)
+        if self.VIEW is not None:
+            return self.view
 
 
 navigator = Navigate()
@@ -256,3 +355,31 @@ class ViaUI(object):
     # ** little. It's more an organizational level thing.
     def __init__(self, owner):
         self.owner = owner
+
+    @cached_property
+    def widgetastic(self):
+        """This gives us a widgetastic browser."""
+        return MiqBrowser(ensure_browser_open(), self)
+
+    def create_view(self, view_class, additional_context=None):
+        """Method that is used to instantiate a Widgetastic View.
+
+        Views may define ``LOCATION`` on them, that implies a :py:meth:`force_navigate` call with
+        ``LOCATION`` as parameter.
+
+        Args:
+            view_class: A view class, subclass of ``widgetastic.widget.View``
+            additional_context: Additional informations passed to the view (user name, VM name, ...)
+                which is also passed to the :py:meth:`force_navigate` in case when navigation is
+                requested.
+
+        Returns:
+            An instance of the ``view_class``
+        """
+        additional_context = additional_context or {}
+        view = view_class(
+            self.widgetastic,
+            additional_context=additional_context,
+            logger=logger)
+
+        return view

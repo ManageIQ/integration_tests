@@ -13,6 +13,8 @@ from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateSte
 from utils.pretty import Pretty
 from utils.update import Updateable
 
+from widgetastic.utils import Fillable
+
 
 accordion_tree = functools.partial(accordion.tree, "Service Dialogs")
 cfg_btn = functools.partial(tb.select, "Configuration")
@@ -75,7 +77,7 @@ common = Region(locators={
         "5.5": Table("//div[@id='list_grid']/table")}})
 
 
-class ServiceDialog(Updateable, Pretty, Navigatable):
+class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
     pretty_attrs = ['label', 'description']
 
     def __init__(self, label=None, description=None,
@@ -91,6 +93,9 @@ class ServiceDialog(Updateable, Pretty, Navigatable):
         self.tab_desc = tab_desc
         self.box_label = box_label
         self.box_desc = box_desc
+
+    def as_fill_value(self):
+        return self.label
 
     def add_element(self, *element_data):
         for each_element in element_data:

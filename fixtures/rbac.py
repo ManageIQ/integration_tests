@@ -91,7 +91,8 @@ depending on if the test was run against *rhos* or *ec2*.
 
 """
 from utils.log import logger
-from cfme.login import logout, User
+from cfme.configure.access_control import User
+from cfme.login import logout
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from cfme.fixtures.pytest_selenium import take_screenshot
 import pytest
