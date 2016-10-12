@@ -202,8 +202,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         navigate_to(self, 'Add')
         fill(self.properties_form, self._form_mapping(True, **self.__dict__))
-        for cred in self.credentials:
-            fill(self.credentials[cred].form, self.credentials[cred], validate=validate_credentials)
+        if hasattr(self, 'endpoints'):
+            for _, endpoint in self.endpoints.iteritems():
+                endpoint.fill(validate=True)
+        else:
+            for cred in self.credentials:
+                fill(self.credentials[cred].form, self.credentials[cred],
+                     validate=validate_credentials)
         self._submit(cancel, self.add_provider_button)
         if not cancel:
             flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
@@ -220,9 +225,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """
         navigate_to(self, 'Edit')
         fill(self.properties_form, self._form_mapping(**updates))
-        for cred in self.credentials:
-            fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
-                 validate=validate_credentials)
+        if hasattr(self, 'endpoints'):
+            for _, endpoint in self.endpoints.iteritems():
+                endpoint.fill(validate=True, change_stored=True)
+        else:
+            for cred in self.credentials:
+                fill(self.credentials[cred].form, updates.get('credentials', {}).get(cred, None),
+                     validate=validate_credentials)
         self._submit(cancel, self.save_button)
         name = updates.get('name', self.name)
         if not cancel:
@@ -479,6 +488,10 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             token=token)
 
     @classmethod
+    def get_raw_credentials(cls, credential_config_name):
+        return conf.credentials[credential_config_name]
+
+    @classmethod
     def get_credentials_from_config(cls, credential_config_name, cred_type=None):
         """Retrieves the credential by its name from the credentials yaml.
 
@@ -489,7 +502,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         Returns:
             A :py:class:`BaseProvider.Credential` instance.
         """
-        creds = conf.credentials[credential_config_name]
+        creds = cls.get_raw_credentials(credential_config_name)
         return cls.get_credentials(creds, cred_type=cred_type)
 
     @classmethod
