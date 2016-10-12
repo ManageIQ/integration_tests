@@ -5,11 +5,11 @@ from urlparse import urlparse
 from cached_property import cached_property
 from cfme.configure.configuration import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTree, flash, form_buttons, mixins, toolbar
+from cfme.web_ui import CheckboxTree, BootstrapTreeview, flash, form_buttons, mixins, toolbar
 from cfme.web_ui.topology import Topology
 from cfme.web_ui.timelines import Timelines
 from sqlalchemy.orm import aliased
-from utils import attributize_string, version
+from utils import attributize_string, version, deferred_verpick
 from utils.db import cfmedb
 from utils.units import Unit
 from utils.varmeth import variable
@@ -21,7 +21,10 @@ class PolicyProfileAssignable(object):
     """This class can be inherited by anything that provider load_details method.
 
     It provides functionality to assign and unassign Policy Profiles"""
-    manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
+    manage_policies_tree = deferred_verpick({
+        version.LOWEST: CheckboxTree("//div[@id='protect_treebox']/ul"),
+        "5.7": BootstrapTreeview("protectbox")
+    })
 
     @property
     def assigned_policy_profiles(self):
@@ -71,9 +74,6 @@ class PolicyProfileAssignable(object):
                 self.manage_policies_tree.check_node(policy_profile)
             else:
                 self.manage_policies_tree.uncheck_node(policy_profile)
-        sel.move_to_element({
-            version.LOWEST: '#tP',
-            "5.5": "//h3[1]"})
         form_buttons.save()
         flash.assert_no_errors()
 
