@@ -103,6 +103,8 @@ class Filedump(ArtifactorBasePlugin):
                 with open(filename) as f:
                     data = f.read()
                 for word in words:
+                    if not isinstance(word, basestring):
+                        word = str(word)
                     data = data.replace(word, "*" * len(word))
                 with open(filename, "w") as f:
                     f.write(data)
