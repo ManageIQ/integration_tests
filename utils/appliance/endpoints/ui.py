@@ -16,7 +16,7 @@ from selenium.common.exceptions import (
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
 
-from utils.browser import quit, ensure_browser_open, browser
+from utils.browser import manager
 from fixtures.pytest_store import store
 
 from cached_property import cached_property
@@ -24,7 +24,7 @@ from widgetastic.browser import Browser, DefaultPlugin
 from widgetastic.utils import VersionPick
 from utils.version import Version
 from utils.wait import wait_for
-
+from werkzeug.local import Local
 VersionPick.VERSION_CLASS = Version
 
 
@@ -92,8 +92,7 @@ class MiqBrowserPlugin(DefaultPlugin):
 
 
 class MiqBrowser(Browser):
-    def __init__(self, selenium, endpoint, extra_objects=None):
-        # (self, selenium, plugin_class=None, logger=None, extra_objects=None)
+    def __init__(self, endpoint, extra_objects=None):
         extra_objects = extra_objects or {}
         extra_objects.update({
             'appliance': endpoint.owner,
@@ -101,7 +100,7 @@ class MiqBrowser(Browser):
             'store': store,
         })
         super(MiqBrowser, self).__init__(
-            selenium,
+            Local(manager.ensure_open),
             plugin_class=MiqBrowserPlugin,
             logger=create_sublogger('MiqBrowser'),
             extra_objects=extra_objects)
@@ -359,7 +358,7 @@ class ViaUI(object):
     @cached_property
     def widgetastic(self):
         """This gives us a widgetastic browser."""
-        return MiqBrowser(ensure_browser_open(), self)
+        return MiqBrowser(self)
 
     def create_view(self, view_class, additional_context=None):
         """Method that is used to instantiate a Widgetastic View.
