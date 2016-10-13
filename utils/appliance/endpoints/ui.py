@@ -57,7 +57,6 @@ class MiqBrowserPlugin(DefaultPlugin):
 
     def ensure_page_safe(self, timeout='10s'):
         # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
-        self.browser.dismiss_any_alerts()
 
         def _check():
             result = self.browser.execute_script(self.ENSURE_PAGE_SAFE)
@@ -323,6 +322,7 @@ class CFMENavigateStep(NavigateStep):
     def go(self, _tries=0):
         _tries += 1
         self.pre_navigate(_tries)
+        self.appliance.browser.widgetastic.dismiss_any_alerts()
         logger.debug("NAVIGATE: Checking if already at {}".format(self._name))
         here = False
         try:
