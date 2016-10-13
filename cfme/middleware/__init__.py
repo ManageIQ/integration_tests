@@ -14,6 +14,7 @@ mon_btn = partial(tb.select, 'Monitoring')
 pol_btn = partial(tb.select, 'Policy')
 pwr_btn = partial(tb.select, 'Power')
 download_btn = partial(tb.select, "Download")
+download_summary_btn = partial(tb.select, "Download summary in PDF format")
 deploy_btn = partial(tb.select, 'Deployments')
 operations_btn = partial(tb.select, 'Operations')
 auth_btn = partial(tb.select, 'Authentication')
@@ -32,6 +33,9 @@ class MiddlewareBase(Validatable):
         ensure_browser_open()
         return sel.is_displayed('//h1[contains(., "{} (Summary)")]'.format(self.name))
 
+    def download_summary(self):
+        self.summary.reload()
+        download_summary_btn()
 
 import_form = Form(
     fields=[
@@ -65,7 +69,7 @@ def parse_properties(props):
 
 
 def download(extension):
-    extensions_mapping = {'txt': 'Text', 'csv': 'CSV'}
+    extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
     try:
         download_btn("Download as {}".format(extensions_mapping[extension]))
     except:
