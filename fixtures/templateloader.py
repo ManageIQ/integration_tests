@@ -9,7 +9,7 @@ TEMPLATES = {}
 
 
 def pytest_configure():
-    if store.parallelizer_role == 'master' or 'url' not in trackerbot.conf:
+    if store.parallelizer_role == 'master' or trackerbot.conf.get('url') is None:
         return
 
     write_line("Loading templates from trackerbot")
