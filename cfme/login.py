@@ -131,7 +131,7 @@ def login(user, submit_method=LOGIN_METHODS[-1]):
     """
     # Circular import
     from utils.appliance.endpoints.ui import navigate_to
-    navigate_to(store.current_appliance, 'LoginScreen')
+    navigate_to(store.current_appliance.screen, 'LoginScreen')
 
     if not user:
         username = conf.credentials['default']['username']
