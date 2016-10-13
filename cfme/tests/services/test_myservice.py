@@ -49,13 +49,13 @@ def myservice(setup_provider, provider, catalog_item, request):
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs.order(catalog_item.catalog.name, catalog_item)
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=2000, delay=20)
-    assert row.last_message.text == 'Request complete'
+    assert row.request_state.text == 'Finished'
     return MyService(catalog_item.name, vm_name)
 
 
