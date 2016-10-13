@@ -24,7 +24,7 @@ from widgetastic.browser import Browser, DefaultPlugin
 from widgetastic.utils import VersionPick
 from utils.version import Version
 from utils.wait import wait_for
-from werkzeug.local import Local
+from werkzeug.local import LocalProxy
 VersionPick.VERSION_CLASS = Version
 
 
@@ -100,7 +100,7 @@ class MiqBrowser(Browser):
             'store': store,
         })
         super(MiqBrowser, self).__init__(
-            Local(manager.ensure_open),
+            LocalProxy(manager.ensure_open),
             plugin_class=MiqBrowserPlugin,
             logger=create_sublogger('MiqBrowser'),
             extra_objects=extra_objects)
@@ -139,13 +139,13 @@ class CFMENavigateStep(NavigateStep):
             # 2: Everything should work. If not, NavigationError.
             raise exceptions.NavigationError(self.obj._name)
 
-        ensure_browser_open()
+        manager.ensure_open()
 
         # check for MiqQE javascript patch on first try and patch the appliance if necessary
         if store.current_appliance.is_miqqe_patch_candidate and \
                 not store.current_appliance.miqqe_patch_applied:
             store.current_appliance.patch_with_miqqe()
-            browser().quit()
+            manager.quit()
             self.go(_tries)
 
         try:
@@ -185,8 +185,8 @@ class CFMENavigateStep(NavigateStep):
             logger.info("Waiting for web UI to come back alive.")
             sleep(10)   # Give it some rest
             store.current_appliance.wait_for_web_ui()
-            quit()
-            ensure_browser_open()
+            manager.quit()
+            manager.ensure_open()
             self.go(_tries)
 
         # Same with rails errors
@@ -203,8 +203,8 @@ class CFMENavigateStep(NavigateStep):
                 'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
             logger.debug('Managed Providers:')
             logger.debug(store.current_appliance.managed_providers)
-            quit()  # Refresh the session, forget loaded summaries, ...
-            ensure_browser_open()
+            manager.quit()  # Refresh the session, forget loaded summaries, ...
+            manager.ensure_open()
             self.go(_tries)
             # If there is a rails error past this point, something is really awful
 
@@ -288,7 +288,7 @@ class CFMENavigateStep(NavigateStep):
                 logger.exception("Rails exception before force_navigate started!: %s:%s at %s",
                     text("//body/div[@class='dialog']/h1").encode("utf-8"),
                     text("//body/div[@class='dialog']/p").encode("utf-8"),
-                    browser().current_url
+                    getattr(manager.browser, 'current_url', "error://dead-browser")
                 )
                 recycle = True
             elif elements("//ul[@id='maintab']/li[@class='inactive']") and not\
@@ -313,7 +313,7 @@ class CFMENavigateStep(NavigateStep):
             store.current_appliance.wait_for_web_ui()
 
         if recycle or restart_evmserverd:
-            browser().quit()  # login.current_user() will be retained for next login
+            manager.quit()  # login.current_user() will be retained for next login
             logger.debug('browser killed on try {}'.format(_tries))
             # If given a "start" nav destination, it won't be valid after quitting the browser
             self.go(_tries)
