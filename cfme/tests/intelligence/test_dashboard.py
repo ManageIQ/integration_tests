@@ -6,11 +6,11 @@ from collections import namedtuple
 from random import sample
 
 from cfme import dashboard
-from cfme.fixtures import pytest_selenium as sel
 from cfme.dashboard import Widget
 from cfme.intelligence.reports.dashboards import Dashboard, DefaultDashboard
 from utils.blockers import BZ
 from cfme import test_requirements
+from utils.appliance.endpoints.ui import navigate_to
 
 
 pytestmark = [
@@ -40,7 +40,7 @@ def widgets():
 
 @pytest.mark.meta(blockers=[1202394])
 def test_widgets_operation(request):
-    sel.force_navigate("dashboard")
+    navigate_to(Dashboard, 'All')
     request.addfinalizer(lambda: Widget.close_zoom())
     for widget in Widget.all():
         widget.minimize()
@@ -109,7 +109,7 @@ def test_verify_rss_links(widgets_generated):
         * Loop through all the links in a widget
         * Try making a request on the provided URLs, should make sense
     """
-    pytest.sel.force_navigate("dashboard")
+    navigate_to(Dashboard, 'All')
     for widget in Widget.by_type("rss_widget"):
         for desc, date, url in widget.content.data:
             assert url is not None, "Widget {}, line {} - no URL!".format(

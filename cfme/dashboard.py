@@ -7,10 +7,12 @@ import re
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Region, Table, tabstrip, toolbar
 from cfme.web_ui.menu import nav
+from cfme.intelligence.reports.dashboards import Dashboard
 from utils import deferred_verpick, version
 from utils.timeutil import parsetime
 from utils.pretty import Pretty
 from utils.wait import wait_for
+from utils.appliance.endpoints.ui import navigate_to
 
 from . import BaseLoggedInPage
 
@@ -68,7 +70,7 @@ def reset_widgets(cancel=False):
 
 def dashboards():
     """Returns a generator that iterates through the available dashboards"""
-    sel.force_navigate("dashboard")
+    navigate_to(Dashboard, 'All')
     # We have to click any other of the tabs (glitch)
     # Otherwise the first one is not displayed (O_O)
     tabstrip.select_tab(tabstrip.get_all_tabs()[-1])
@@ -256,7 +258,7 @@ class Widget(Pretty):
     @classmethod
     def all(cls):
         """Returns objects with all Widgets currently present."""
-        sel.force_navigate('dashboard')
+        navigate_to(Dashboard, 'All')
         result = []
         for el in sel.elements(cls._all):
             result.append(cls(sel.get_attribute(el, "id")))
