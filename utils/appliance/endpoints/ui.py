@@ -24,7 +24,6 @@ from widgetastic.browser import Browser, DefaultPlugin
 from widgetastic.utils import VersionPick
 from utils.version import Version
 from utils.wait import wait_for
-from werkzeug.local import LocalProxy
 VersionPick.VERSION_CLASS = Version
 
 
@@ -92,7 +91,7 @@ class MiqBrowserPlugin(DefaultPlugin):
 
 
 class MiqBrowser(Browser):
-    def __init__(self, endpoint, extra_objects=None):
+    def __init__(self, selenium, endpoint, extra_objects=None):
         extra_objects = extra_objects or {}
         extra_objects.update({
             'appliance': endpoint.owner,
@@ -100,7 +99,7 @@ class MiqBrowser(Browser):
             'store': store,
         })
         super(MiqBrowser, self).__init__(
-            LocalProxy(manager.ensure_open),
+            selenium,
             plugin_class=MiqBrowserPlugin,
             logger=create_sublogger('MiqBrowser'),
             extra_objects=extra_objects)
@@ -355,10 +354,10 @@ class ViaUI(object):
     def __init__(self, owner):
         self.owner = owner
 
-    @cached_property
+    @property
     def widgetastic(self):
         """This gives us a widgetastic browser."""
-        return MiqBrowser(self)
+        return MiqBrowser(manager.ensure_open(), self)
 
     def create_view(self, view_class, additional_context=None):
         """Method that is used to instantiate a Widgetastic View.
