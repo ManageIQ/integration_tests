@@ -94,6 +94,12 @@ def template_name(image_link, image_ts, checksum_link, version=None):
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-vvvv-yyyymmddhhmm
             return "miq-nightly-{}-{}".format(version, result[0])
         elif "stable" in image_link:
+            if 'euwe' in image_link:
+                pattern = re.compile(r'[^\d]*?-euwe-(.*)-(?P<year>\d{4})(?P<month>\d{2})('
+                                     r'?P<day>\d{2})')
+                result = pattern.findall(image_name)
+                return "miq-stable-euwe-{}-{}{}{}".format(result[0][0], result[0][1], result[0][2],
+                                                      result[0][3])
             return "miq-stable-{}-{}".format(result[0][0], result[0][2])
         else:
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
