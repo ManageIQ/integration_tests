@@ -61,10 +61,10 @@ nav.add_branch(
 
 properties_form = Form(
     fields=[
-        ('type_select', AngularSelect('server_emstype')),
+        ('type_select', AngularSelect('emstype')),
         ('name_text', Input('name')),
-        ('hostname_text', Input('hostname')),
-        ('port_text', Input('port'))
+        ('hostname_text', Input('default_hostname')),
+        ('port_text', Input('default_api_port'))
     ])
 
 
@@ -75,16 +75,15 @@ class MiddlewareProvider(BaseProvider):
     page_name = 'middleware'
     string_name = 'Middleware'
     provider_types = {}
-    STATS_TO_MATCH = ['num_server', 'num_deployment', 'num_datasource']
-    property_tuples = [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'),
-                       ('provider_type', 'type')]
+    STATS_TO_MATCH = []
+    property_tuples = []
     detail_page_suffix = 'provider_detail'
     edit_page_suffix = 'provider_edit_detail'
     refresh_text = "Refresh items and relationships"
     quad_name = None
     _properties_form = properties_form
-    add_provider_button = form_buttons.FormButton("Add this Middleware Provider")
-    save_button = form_buttons.FormButton("Save Changes")
+    add_provider_button = form_buttons.FormButton("Add")
+    save_button = form_buttons.FormButton("Save changes")
     taggable_type = 'ExtManagementSystem'
 
 
