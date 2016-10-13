@@ -19,6 +19,7 @@ from selenium.common.exceptions import (
 from utils.browser import manager
 from fixtures.pytest_store import store
 
+from werkzeug.local import LocalProxy
 from cached_property import cached_property
 from widgetastic.browser import Browser, DefaultPlugin
 from widgetastic.utils import VersionPick
@@ -354,10 +355,10 @@ class ViaUI(object):
     def __init__(self, owner):
         self.owner = owner
 
-    @property
+    @cached_property
     def widgetastic(self):
         """This gives us a widgetastic browser."""
-        return MiqBrowser(manager.ensure_open(), self)
+        return MiqBrowser(LocalProxy(manager.ensure_open), self)
 
     def create_view(self, view_class, additional_context=None):
         """Method that is used to instantiate a Widgetastic View.
