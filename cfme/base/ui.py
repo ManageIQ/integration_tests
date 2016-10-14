@@ -39,9 +39,7 @@ class LoggedIn(CFMENavigateStep):
 
     def step(self):
         login_view = self.create_view(LoginPage)
-        login_view.log_in(
-            self.obj.appliance.user.credential.principal,
-            self.obj.appliance.user.credential.secret)
+        login_view.log_in(self.obj.appliance.user)
 
 
 @navigator.register(Server)
