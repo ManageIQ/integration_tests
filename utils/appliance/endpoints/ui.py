@@ -262,7 +262,7 @@ class CFMENavigateStep(NavigateStep):
             # If the page is blocked, then recycle...
             if (
                     wt.is_displayed("//div[@id='blocker_div' or @id='notification']") or
-                    is_displayed(".modal-backdrop.fade.in")):
+                    wt.is_displayed(".modal-backdrop.fade.in")):
                 logger.warning("Page was blocked with blocker div, recycling.")
                 recycle = True
             elif cfme_exc.is_cfme_exception():
@@ -287,9 +287,9 @@ class CFMENavigateStep(NavigateStep):
                 recycle = True
             elif wt.is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
                 # Rails exception detection
-                logger.exception("Rails exception before force_navigate started!: %s:%s at %s",
-                    wt.text("//body/div[@class='dialog']/h1").encode("utf-8"),
-                    wt.text("//body/div[@class='dialog']/p").encode("utf-8"),
+                logger.exception("Rails exception before force_navigate started!: %r:%r at %r",
+                    wt.text("//body/div[@class='dialog']/h1"),
+                    wt.text("//body/div[@class='dialog']/p"),
                     getattr(manager.browser, 'current_url', "error://dead-browser")
                 )
                 recycle = True
