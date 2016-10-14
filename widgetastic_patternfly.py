@@ -132,10 +132,16 @@ class FlashMessages(Widget):
         self.logger.info('asserting there are no error messages')
         for message in self.messages:
             if message.type not in {'success', 'info'}:
+                self.logger.error('%s: %r', message.type, message.text)
                 raise AssertionError('assert_no_error: {}: {}'.format(message.type, message.text))
+            else:
+                self.logger.info('%s: %r', message.type, message.text)
 
     def assert_message(self, text, t=None):
-        self.logger.info('asserting the message %r of type %r is present', text, t)
+        if t is not None:
+            self.logger.info('asserting the message %r of type %r is present', text, t)
+        else:
+            self.logger.info('asserting the message %r is present', text)
         for message in self.messages:
             if message.text == text:
                 if t is not None:

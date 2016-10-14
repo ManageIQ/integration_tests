@@ -5,9 +5,7 @@ from jsmin import jsmin
 
 from utils.log import logger, create_sublogger
 from cfme import exceptions
-from cfme.fixtures.pytest_selenium import (
-    is_displayed, execute_script, click,
-    get_rails_error, handle_alert, elements, text)
+from cfme.fixtures.pytest_selenium import get_rails_error
 from time import sleep
 
 from navmazing import Navigate, NavigateStep
@@ -16,7 +14,7 @@ from selenium.common.exceptions import (
     InvalidElementStateException, WebDriverException, UnexpectedAlertPresentException,
     NoSuchElementException, StaleElementReferenceException)
 
-from utils.browser import quit, ensure_browser_open, browser
+from utils.browser import manager
 from fixtures.pytest_store import store
 
 from cached_property import cached_property
@@ -24,7 +22,6 @@ from widgetastic.browser import Browser, DefaultPlugin
 from widgetastic.utils import VersionPick
 from utils.version import Version
 from utils.wait import wait_for
-
 VersionPick.VERSION_CLASS = Version
 
 
@@ -93,7 +90,6 @@ class MiqBrowserPlugin(DefaultPlugin):
 
 class MiqBrowser(Browser):
     def __init__(self, selenium, endpoint, extra_objects=None):
-        # (self, selenium, plugin_class=None, logger=None, extra_objects=None)
         extra_objects = extra_objects or {}
         extra_objects.update({
             'appliance': endpoint.owner,
@@ -140,17 +136,18 @@ class CFMENavigateStep(NavigateStep):
             # 2: Everything should work. If not, NavigationError.
             raise exceptions.NavigationError(self.obj._name)
 
-        ensure_browser_open()
+        self.appliance.browser.open_browser()
 
         # check for MiqQE javascript patch on first try and patch the appliance if necessary
-        if store.current_appliance.is_miqqe_patch_candidate and \
-                not store.current_appliance.miqqe_patch_applied:
-            store.current_appliance.patch_with_miqqe()
-            browser().quit()
+        if self.appliance.is_miqqe_patch_candidate and not self.appliance.miqqe_patch_applied:
+            self.appliance.patch_with_miqqe()
+            self.appliance.browser.quit_browser()
             self.go(_tries)
 
+        wt = self.appliance.browser.widgetastic
+
         try:
-            execute_script('miqSparkleOff();')
+            wt.execute_script('miqSparkleOff();')
         except:  # Diaper OK (mfalesni)
             # miqSparkleOff undefined, so it's definitely off.
             pass
@@ -158,36 +155,35 @@ class CFMENavigateStep(NavigateStep):
         # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right
         # here
         if (
-                is_displayed("//div[@id='blocker_div' or @id='notification']", _no_deeper=True)
-                or is_displayed(".modal-backdrop.fade.in", _no_deeper=True)):
+                wt.is_displayed("//div[@id='blocker_div' or @id='notification']") or
+                wt.is_displayed(".modal-backdrop.fade.in")):
             logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
-            quit()
+            self.appliance.browser.quit_browser()
             self.go(_tries)
 
         # Check if modal window is displayed
-        if (is_displayed(
-                "//div[contains(@class, 'modal-dialog') and contains(@class, 'modal-lg')]",
-                _no_deeper=True)):
+        if (wt.is_displayed(
+                "//div[contains(@class, 'modal-dialog') and contains(@class, 'modal-lg')]")):
             logger.warning("Modal window was open; closing the window")
-            click("//button[contains(@class, 'close') and contains(@data-dismiss, 'modal')]")
+            wt.click("//button[contains(@class, 'close') and contains(@data-dismiss, 'modal')]")
 
         # Check if jQuery present
         try:
-            execute_script("jQuery")
+            wt.execute_script("jQuery")
         except Exception as e:
             if "jQuery" not in str(e):
                 logger.error("Checked for jQuery but got something different.")
                 logger.exception(e)
             # Restart some workers
             logger.warning("Restarting UI and VimBroker workers!")
-            with store.current_appliance.ssh_client as ssh:
+            with self.appliance.ssh_client as ssh:
                 # Blow off the Vim brokers and UI workers
                 ssh.run_rails_command("\"(MiqVimBrokerWorker.all + MiqUiWorker.all).each &:kill\"")
             logger.info("Waiting for web UI to come back alive.")
             sleep(10)   # Give it some rest
-            store.current_appliance.wait_for_web_ui()
-            quit()
-            ensure_browser_open()
+            self.appliance.wait_for_web_ui()
+            self.appliance.browser.quit_browser()
+            self.appliance.browser.open_browser()
             self.go(_tries)
 
         # Same with rails errors
@@ -204,8 +200,8 @@ class CFMENavigateStep(NavigateStep):
                 'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
             logger.debug('Managed Providers:')
             logger.debug(store.current_appliance.managed_providers)
-            quit()  # Refresh the session, forget loaded summaries, ...
-            ensure_browser_open()
+            self.appliance.browser.quit_browser()
+            self.appliance.browser.open_browser()
             self.go(_tries)
             # If there is a rails error past this point, something is really awful
 
@@ -219,6 +215,8 @@ class CFMENavigateStep(NavigateStep):
 
         from cfme import login
 
+        wt = self.appliance.browser.widgetastic
+
         try:
             self.step()
         except (KeyboardInterrupt, ValueError):
@@ -228,7 +226,7 @@ class CFMENavigateStep(NavigateStep):
         except UnexpectedAlertPresentException:
             if _tries == 1:
                 # There was an alert, accept it and try again
-                handle_alert(wait=0)
+                wt.handle_alert(wait=0)
                 self.go(_tries)
             else:
                 # There was still an alert when we tried again, shoot the browser in the head
@@ -260,40 +258,40 @@ class CFMENavigateStep(NavigateStep):
                 recycle = True
             # If the page is blocked, then recycle...
             if (
-                    is_displayed("//div[@id='blocker_div' or @id='notification']", _no_deeper=True)
-                    or is_displayed(".modal-backdrop.fade.in", _no_deeper=True)):
+                    wt.is_displayed("//div[@id='blocker_div' or @id='notification']") or
+                    wt.is_displayed(".modal-backdrop.fade.in")):
                 logger.warning("Page was blocked with blocker div, recycling.")
                 recycle = True
             elif cfme_exc.is_cfme_exception():
                 logger.exception("CFME Exception before force_navigate started!: {}".format(
                     cfme_exc.cfme_exception_text()))
                 recycle = True
-            elif is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
+            elif wt.is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
                 # 502
                 logger.exception("Proxy error detected. Killing browser and restarting evmserverd.")
-                req = elements("/html/body/p[1]//a")
-                req = text(req[0]) if req else "No request stated"
-                reason = elements("/html/body/p[2]/strong")
-                reason = text(reason[0]) if reason else "No reason stated"
+                req = wt.elements("/html/body/p[1]//a")
+                req = wt.text(req[0]) if req else "No request stated"
+                reason = wt.elements("/html/body/p[2]/strong")
+                reason = wt.text(reason[0]) if reason else "No reason stated"
                 logger.info("Proxy error: {} / {}".format(req, reason))
                 restart_evmserverd = True
-            elif is_displayed("//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
+            elif wt.is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
                 # 503 and similar sort of errors
-                title = text("//body/h1")
-                body = text("//body/p")
+                title = wt.text("//body/h1")
+                body = wt.text("//body/p")
                 logger.exception("Application error {}: {}".format(title, body))
                 sleep(5)  # Give it a little bit of rest
                 recycle = True
-            elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]", _no_deeper=True):
+            elif wt.is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
                 # Rails exception detection
-                logger.exception("Rails exception before force_navigate started!: %s:%s at %s",
-                    text("//body/div[@class='dialog']/h1").encode("utf-8"),
-                    text("//body/div[@class='dialog']/p").encode("utf-8"),
-                    browser().current_url
+                logger.exception("Rails exception before force_navigate started!: %r:%r at %r",
+                    wt.text("//body/div[@class='dialog']/h1"),
+                    wt.text("//body/div[@class='dialog']/p"),
+                    getattr(manager.browser, 'current_url', "error://dead-browser")
                 )
                 recycle = True
-            elif elements("//ul[@id='maintab']/li[@class='inactive']") and not\
-                    elements("//ul[@id='maintab']/li[@class='active']/ul/li"):
+            elif wt.elements("//ul[@id='maintab']/li[@class='inactive']") and not\
+                    wt.elements("//ul[@id='maintab']/li[@class='active']/ul/li"):
                 # If upstream and is the bottom part of menu is not displayed
                 logger.exception("Detected glitch from BZ#1112574. HEADSHOT!")
                 recycle = True
@@ -310,19 +308,19 @@ class CFMENavigateStep(NavigateStep):
 
         if restart_evmserverd:
             logger.info("evmserverd restart requested")
-            store.current_appliance.restart_evm_service()
-            store.current_appliance.wait_for_web_ui()
+            self.appliance.restart_evm_service()
+            self.appliance.wait_for_web_ui()
 
         if recycle or restart_evmserverd:
-            browser().quit()  # login.current_user() will be retained for next login
+            self.appliance.browser.quit_browser()
             logger.debug('browser killed on try {}'.format(_tries))
             # If given a "start" nav destination, it won't be valid after quitting the browser
             self.go(_tries)
 
     def go(self, _tries=0):
         _tries += 1
-        self.pre_navigate(_tries)
         self.appliance.browser.widgetastic.dismiss_any_alerts()
+        self.pre_navigate(_tries)
         logger.debug("NAVIGATE: Checking if already at {}".format(self._name))
         here = False
         try:
@@ -356,10 +354,26 @@ class ViaUI(object):
     def __init__(self, owner):
         self.owner = owner
 
+    @property
+    def appliance(self):
+        return self.owner
+
     @cached_property
     def widgetastic(self):
         """This gives us a widgetastic browser."""
-        return MiqBrowser(ensure_browser_open(), self)
+        # TODO: Make this a property that could watch for browser change?
+        return MiqBrowser(self.open_browser(), self)
+
+    def open_browser(self):
+        # TODO: self.appliance.server.address() instead of None
+        return manager.ensure_open(url_key=None)
+
+    def quit_browser(self):
+        manager.quit()
+        try:
+            del self.widgetastic
+        except AttributeError:
+            pass
 
     def create_view(self, view_class, additional_context=None):
         """Method that is used to instantiate a Widgetastic View.

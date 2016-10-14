@@ -10,7 +10,6 @@ from __future__ import absolute_import
 import time
 from selenium.webdriver.common.keys import Keys
 
-import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from utils import conf
 from utils.log import logger
@@ -46,10 +45,14 @@ class LoginPage(View):
         if self.new_password.is_displayed:
             self.back.click()
 
-    def default_login(self):
-        self.log_in(
-            self.extra.appliance.user.credential.principal,
-            self.extra.appliance.user.credential.secret)
+    def login_admin(self, **kwargs):
+        username = conf.credentials['default']['username']
+        password = conf.credentials['default']['password']
+        cred = Credential(principal=username, secret=password)
+        from cfme.configure.access_control import User
+        user = User(credential=cred)
+        user.name = 'Administrator'
+        return self.log_in(user, **kwargs)
 
     def submit_login(self, method='click_on_login'):
         if method == 'click_on_login':
@@ -60,13 +63,16 @@ class LoginPage(View):
             self.browser.execute_script('miqAjaxAuth();')
         else:
             raise ValueError('Unknown method {}'.format(method))
+        if self.flash.is_displayed:
+            self.flash.assert_no_error()
 
-    def log_in(self, username, password, method='click_on_login'):
+    def log_in(self, user, method='click_on_login'):
         self.fill({
-            'username': username,
-            'password': password,
+            'username': user.credential.principal,
+            'password': user.credential.secret,
         })
         self.submit_login(method)
+        self.extra.appliance.user = user
 
     def update_password(
             self, username, password, new_password, verify_password=None,
@@ -131,7 +137,7 @@ def login(user, submit_method=LOGIN_METHODS[-1]):
     """
     # Circular import
     from utils.appliance.endpoints.ui import navigate_to
-    navigate_to(store.current_appliance.server, 'LoginScreen')
+    login_view = navigate_to(store.current_appliance.server, 'LoginScreen')
 
     if not user:
         username = conf.credentials['default']['username']
@@ -139,6 +145,7 @@ def login(user, submit_method=LOGIN_METHODS[-1]):
         cred = Credential(principal=username, secret=password)
         from cfme.configure.access_control import User
         user = User(credential=cred)
+        user.name = 'Administrator'
 
     logged_in_view = store.current_appliance.browser.create_view(BaseLoggedInPage)
 
@@ -149,9 +156,9 @@ def login(user, submit_method=LOGIN_METHODS[-1]):
         time.sleep(1)
 
         logger.debug('Logging in as user %s', user.credential.principal)
-        login_view = store.current_appliance.browser.create_view(LoginPage)
+        login_view.flush_widget_cache()
 
-        login_view.log_in(user.credential.principal, user.credential.secret, method=submit_method)
+        login_view.log_in(user, method=submit_method)
         logged_in_view.flush_widget_cache()
         user.name = logged_in_view.current_fullname
         assert logged_in_view.logged_in_as_user
@@ -182,7 +189,6 @@ def logout():
     logged_in_view = store.current_appliance.browser.create_view(BaseLoggedInPage)
     if logged_in_view.logged_in:
         logged_in_view.logout()
-        sel.handle_alert()
         store.current_appliance.user = None
 
 
