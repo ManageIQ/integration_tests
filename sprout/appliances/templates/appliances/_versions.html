@@ -1,4 +1,4 @@
 <option value="latest">{% if group %}Latest for {{ group.id }}{% else %}Latest{%endif %}{% if latest_version %} [{{ latest_version }}]{% endif %}</option>
-{% for version in versions %}
-<option value="{{version}}">{{ version }}</option>
+{% for version, ga in versions %}
+<option value="{{version}}">{{ version }}{% if ga %} (GA){% endif %}</option>
 {% endfor %}

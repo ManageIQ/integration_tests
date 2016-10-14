@@ -494,6 +494,7 @@ class Template(MetadataMixin):
         help_text=(
             'Whether the appliance is located in a container in the VM. '
             'This then specifies the container name.'))
+    ga_released = models.BooleanField(default=False)
 
     @property
     def provider_api(self):
@@ -531,7 +532,7 @@ class Template(MetadataMixin):
 
     @property
     def can_be_deleted(self):
-        return self.exists and len(self.appliances) == 0
+        return self.exists and len(self.appliances) == 0 and not self.ga_released
 
     @property
     def appliances(self):
@@ -569,6 +570,10 @@ class Template(MetadataMixin):
             cls.objects.filter(*filters, **kwfilters).values('date').distinct())
         dates.sort(reverse=True)
         return dates
+
+    @classmethod
+    def ga_version(cls, version):
+        return bool(cls.objects.filter(version=version, ga_released=True))
 
     def __unicode__(self):
         return "{} {}:{} @ {}".format(
