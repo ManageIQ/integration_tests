@@ -70,11 +70,11 @@ def main(**kwargs):
         credentials =\
             {'username': provider_dict['username'],
              'password': provider_dict['password'],
-             'tenant': provider_dict['template_upload'].get('tenant_admin', None),
+             'tenant': provider_dict['template_upload'].get('tenant_admin', 'admin'),
              'auth_url': provider_dict.get('auth_url', None),
              }
         provider = get_mgmt(kwargs['provider'], providers=providers, credentials=credentials)
-        flavors = provider_dict['template_upload'].get('flavors', [])
+        flavors = provider_dict['template_upload'].get('flavors', ['m1.medium'])
         provider_type = provider_data['management_systems'][kwargs['provider']]['type']
         deploy_args = {
             'vm_name': kwargs['vm_name'],

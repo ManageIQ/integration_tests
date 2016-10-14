@@ -59,6 +59,7 @@ def make_export(username, password, tenant_id, auth_url):
 def upload_qc2_file(ssh_client, image_url, template_name, export, provider):
     try:
         command = ['glance']
+        command.append("--os-image-api-version 1")
         command.append("image-create")
         command.append("--copy-from {}".format(image_url))
         command.append("--name {}".format(template_name))
