@@ -5,9 +5,7 @@ from jsmin import jsmin
 
 from utils.log import logger, create_sublogger
 from cfme import exceptions
-from cfme.fixtures.pytest_selenium import (
-    is_displayed, execute_script, click,
-    get_rails_error, handle_alert, elements, text)
+from cfme.fixtures.pytest_selenium import get_rails_error
 from time import sleep
 
 from navmazing import Navigate, NavigateStep
@@ -19,7 +17,6 @@ from selenium.common.exceptions import (
 from utils.browser import manager
 from fixtures.pytest_store import store
 
-from werkzeug.local import LocalProxy
 from cached_property import cached_property
 from widgetastic.browser import Browser, DefaultPlugin
 from widgetastic.utils import VersionPick
