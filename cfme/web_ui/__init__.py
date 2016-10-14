@@ -2580,7 +2580,6 @@ class Quadicon(Pretty):
       * c. **no_host** - Number of hosts
       * d. **avail_space** - Available space
 
-    * **repository** - *from the infra/repositories page* - has no quads
     * **cluster** - *from the infra/cluster page* - has no quads
     * **resource_pool** - *from the infra/resource_pool page* - has no quads
     * **stack** - *from the clouds/stacks page* - has no quads
@@ -2630,7 +2629,6 @@ class Quadicon(Pretty):
             "avail_space": ("d", 'img'),
         },
         "cluster": {},
-        "repository": {},
         "resource_pool": {},
         "template": {
             "os": ("a", 'img'),

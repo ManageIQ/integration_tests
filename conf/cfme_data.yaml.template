@@ -262,7 +262,6 @@ group_roles:
                 - virtual_machines
                 - resource_pools
                 - datastores
-                - repositories
                 - pxe
                 - requests
             control:
@@ -306,7 +305,6 @@ group_roles:
                 - virtual_machines
                 - resource_pools
                 - datastores
-                - repositories
                 - requests
             control:
                 - explorer
@@ -335,7 +333,6 @@ group_roles:
                 - virtual_machines
                 - resource_pools
                 - datastores
-                - repositories
             control:
                 - explorer
                 - simulation
@@ -377,7 +374,6 @@ group_roles:
                 - virtual_machines
                 - resource_pools
                 - datastores
-                - repositories
             configure:
                 - my_settings
                 - tasks
@@ -401,7 +397,6 @@ group_roles:
                 - virtual_machines
                 - resource_pools
                 - datastores
-                - repositories
             control:
                 - explorer
                 - simulation
@@ -436,7 +431,6 @@ group_roles:
                 - virtual_machines
                 - resource_pools
                 - datastores
-                - repositories
                 - pxe
                 - requests
             control:
@@ -480,7 +474,6 @@ group_roles:
                 - virtual_machines
                 - resource_pools
                 - datastores
-                - repositories
             control:
                 - explorer
                 - simulation
@@ -508,7 +501,6 @@ group_roles:
                 - virtual_machines
                 - resource_pools
                 - datastores
-                - repositories
             configure:
                 - my_settings
                 - tasks
