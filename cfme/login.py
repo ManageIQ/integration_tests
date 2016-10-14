@@ -46,10 +46,19 @@ class LoginPage(View):
         if self.new_password.is_displayed:
             self.back.click()
 
-    def default_login(self):
-        self.log_in(
-            self.extra.appliance.user.credential.principal,
-            self.extra.appliance.user.credential.secret)
+    def login_admin(self, method='click_on_login'):
+        username = conf.credentials['default']['username']
+        password = conf.credentials['default']['password']
+        cred = Credential(principal=username, secret=password)
+        from cfme.configure.access_control import User
+        user = User(credential=cred)
+        user.name = 'Administrator'
+        self.fill({
+            'username': username,
+            'password': password,
+        })
+        self.submit_login(method)
+        self.extra.appliance.user = user
 
     def submit_login(self, method='click_on_login'):
         if method == 'click_on_login':
@@ -60,6 +69,8 @@ class LoginPage(View):
             self.browser.execute_script('miqAjaxAuth();')
         else:
             raise ValueError('Unknown method {}'.format(method))
+        if self.flash.is_displayed:
+            self.flash.assert_no_error()
 
     def log_in(self, username, password, method='click_on_login'):
         self.fill({
@@ -182,7 +193,6 @@ def logout():
     logged_in_view = store.current_appliance.browser.create_view(BaseLoggedInPage)
     if logged_in_view.logged_in:
         logged_in_view.logout()
-        sel.handle_alert()
         store.current_appliance.user = None
 
 

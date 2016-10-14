@@ -1,22 +1,11 @@
 import pytest
-from cfme import dashboard, login, Credential
+from cfme import BaseLoggedInPage, login, Credential
 from cfme.configure.access_control import User
-from utils import browser, conf, error
+from utils import conf, error
+from utils.appliance import get_or_create_current_appliance
+from utils.appliance.endpoints.ui import navigate_to
 
 pytestmark = pytest.mark.usefixtures('browser')
-
-
-@pytest.yield_fixture(scope="function")
-def check_logged_out():
-    if browser.browser() is not None:
-        browser.quit()
-        browser.ensure_browser_open()
-        login.logout()
-    yield
-    if browser.browser() is not None:
-        browser.quit()
-        browser.ensure_browser_open()
-        login.logout()
 
 
 @pytest.mark.requirement('drift')
@@ -25,26 +14,30 @@ def check_logged_out():
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "method", login.LOGIN_METHODS)
-@pytest.mark.usefixtures("check_logged_out")
 def test_login(method):
     """ Tests that the appliance can be logged into and shows dashboard page. """
-    pytest.sel.get(pytest.sel.base_url())
-    assert not pytest.sel.is_displayed(dashboard.page.user_dropdown)
-    login.login_admin(submit_method=method)
-    assert pytest.sel.is_displayed(dashboard.page.user_dropdown), "Could not determine if logged in"
-    login.logout()
-    assert login.page.is_displayed()
+    appliance = get_or_create_current_appliance()
+
+    login_page = navigate_to(appliance.server, 'LoginScreen')
+    assert login_page.is_displayed
+    login_page.login_admin(method=method)
+    logged_in_page = appliance.browser.create_view(BaseLoggedInPage)
+    assert logged_in_page.is_displayed
+    logged_in_page.logout()
+    login_page.flush_widget_cache()
+    assert login_page.is_displayed
 
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_bad_password(request):
     """ Tests logging in with a bad password. """
-    request.addfinalizer(login.login_admin)
-    pytest.sel.get(pytest.sel.base_url())
-    creds = Credential(principal=conf.credentials['default']['username'], secret="badpassword@#$")
-    user = User(credential=creds)
+    appliance = get_or_create_current_appliance()
+
+    request.addfinalizer(lambda: navigate_to(appliance.server, 'LoginScreen'))
+
+    login_page = navigate_to(appliance.server, 'LoginScreen')
 
     with error.expected("Sorry, the username or password you entered is incorrect."):
-        login.login(user)
-        assert login.page.is_displayed()
+        login_page.log_in(conf.credentials['default']['username'], "badpassword@#$")
+        assert login.page.is_displayed

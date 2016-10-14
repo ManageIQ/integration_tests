@@ -322,8 +322,8 @@ class CFMENavigateStep(NavigateStep):
 
     def go(self, _tries=0):
         _tries += 1
-        self.pre_navigate(_tries)
         self.appliance.browser.widgetastic.dismiss_any_alerts()
+        self.pre_navigate(_tries)
         logger.debug("NAVIGATE: Checking if already at {}".format(self._name))
         here = False
         try:
