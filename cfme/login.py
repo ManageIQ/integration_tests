@@ -46,19 +46,14 @@ class LoginPage(View):
         if self.new_password.is_displayed:
             self.back.click()
 
-    def login_admin(self, method='click_on_login'):
+    def login_admin(self, **kwargs):
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
         from cfme.configure.access_control import User
         user = User(credential=cred)
         user.name = 'Administrator'
-        self.fill({
-            'username': username,
-            'password': password,
-        })
-        self.submit_login(method)
-        self.extra.appliance.user = user
+        return self.log_in(user, **kwargs)
 
     def submit_login(self, method='click_on_login'):
         if method == 'click_on_login':
@@ -72,12 +67,13 @@ class LoginPage(View):
         if self.flash.is_displayed:
             self.flash.assert_no_error()
 
-    def log_in(self, username, password, method='click_on_login'):
+    def log_in(self, user, method='click_on_login'):
         self.fill({
-            'username': username,
-            'password': password,
+            'username': user.credential.principal,
+            'password': user.credential.secret,
         })
         self.submit_login(method)
+        self.extra.appliance.user = user
 
     def update_password(
             self, username, password, new_password, verify_password=None,

@@ -38,6 +38,12 @@ def test_bad_password(request):
 
     login_page = navigate_to(appliance.server, 'LoginScreen')
 
+    username = conf.credentials['default']['username']
+    password = "badpassword@#$"
+    cred = Credential(principal=username, secret=password)
+    user = User(credential=cred)
+    user.name = 'Administrator'
+
     with error.expected("Sorry, the username or password you entered is incorrect."):
-        login_page.log_in(conf.credentials['default']['username'], "badpassword@#$")
+        login_page.log_in(user)
         assert login.page.is_displayed
