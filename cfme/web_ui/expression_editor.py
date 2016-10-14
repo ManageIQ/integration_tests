@@ -166,7 +166,7 @@ count_form = Form(
     fields=[
         ("type", AngularSelect("chosen_typ")),
         ("count", AngularSelect("chosen_count")),
-        ("key", AngularSelect("chosen_key")),
+        ("key", AngularSelect("chosen_key", exact=True)),
         ("value", Input("chosen_value")),
         ("user_input", Input("user_input")),
     ]
