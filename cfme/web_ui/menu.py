@@ -226,7 +226,6 @@ class Menu(UINavigate):
                     ('infrastructure_resource_pools', 'Resource Pools'),
                     ('infrastructure_datastores', 'Datastores',
                         self._tree_func_with_grid("Datastores", "All Datastores")),
-                    ('infrastructure_repositories', 'Repositories'),
                     ('infrastructure_pxe', 'PXE'),
                     ('infrastructure_requests', 'Requests'),
                 ),
@@ -308,7 +307,6 @@ class Menu(UINavigate):
                         ('infrastructure_resource_pools', 'Resource Pools'),
                         ('infrastructure_datastores', 'Datastores',
                             self._tree_func_with_grid("Datastores", "All Datastores")),
-                        ('infrastructure_repositories', 'Repositories'),
                         ('infrastructure_pxe', 'PXE'),
                         ('infrastructure_requests', 'Requests'),
                         # ('infrastructure_config_management', 'Configuration Management')
