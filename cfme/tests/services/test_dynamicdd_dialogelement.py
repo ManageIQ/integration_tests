@@ -3,10 +3,10 @@ import fauxfactory
 import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.automate.explorer import Domain, Namespace, Class, Method, Instance
 from cfme import test_requirements
 
 pytestmark = [
@@ -69,42 +69,29 @@ def catalog():
 
 @pytest.fixture(scope="function")
 def copy_domain(request):
-    domain = Domain(name="new_domain", enabled=True)
-    domain.create()
-    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
+    domain = DomainCollection().create(name="new_domain", enabled=True)
+    request.addfinalizer(domain.delete_if_exists)
     return domain
 
 
 @pytest.fixture(scope="function")
 def create_method(request, copy_domain):
-    method = Method(
-        name="InspectMe",
-        data=METHOD_TORSO,
-        cls=Class(
-            name="Request",
-            namespace=Namespace(
-                name="System",
-                parent=copy_domain
-            )
-        )
-    )
-    method.create()
-    return method
+    return copy_domain\
+        .namespaces.instantiate(name='System')\
+        .classes.instantiate(name='Request')\
+        .methods.create(
+            name='InspectMe',
+            location='inline',
+            script=METHOD_TORSO)
 
 
 @pytest.fixture(scope="function")
 def copy_instance(request, copy_domain):
-    miq_domain = Domain(name="ManageIQ (Locked)", enabled=True)
-    instance = Instance(
-        name="InspectMe",
-        cls=Class(
-            name="Request",
-            namespace=Namespace(
-                name="System",
-                parent=miq_domain
-            )
-        )
-    )
+    miq_domain = DomainCollection().instantiate(name='ManageIQ')
+    instance = miq_domain\
+        .namespaces.instantiate(name='System')\
+        .classes.instantiate(name='Request')\
+        .instances.instantiate(name='InspectMe')
     instance.copy_to(copy_domain)
 
 

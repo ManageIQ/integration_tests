@@ -4,6 +4,7 @@ from datetime import date
 from jsmin import jsmin
 from selenium.common.exceptions import WebDriverException
 from math import ceil
+from wait_for import wait_for
 
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.log import logged
@@ -147,60 +148,6 @@ class DynaTree(Widget):
     }
     """)
 
-    # This function searches for specified node by path. If it faces an ajax load, it returns false.
-    # If it does not return false, the result is complete.
-    FIND_LEAF = jsmin(TREE_GET_ROOT + GET_LEVEL_NAME + EXPANDABLE + """\
-    function find_leaf(root, path, by_id) {
-        if(path.length == 0)
-            return null;
-        if(by_id === undefined)
-            by_id = false;
-        var item = get_root(root);
-        if(typeof item.childList === "undefined")
-            throw "CANNOT FIND TREE /" + root + "/";
-        var i;  // The start of matching for path. Because in one case, we already matched 1st
-        var lname = get_level_name(item, by_id);
-        if(item.childList.length == 1 && lname === null) {
-            item = item.childList[0];
-            i = 1;
-            if(get_level_name(item, by_id) != path[0])
-                throw "TREEITEM /" + path[0] + "/ NOT FOUND IN THE TREE";
-        } else if(lname === null) {
-            i = 0;
-        } else {
-            if(lname != path[0])
-                throw "TREEITEM /" + path[0] + "/ NOT FOUND IN THE TREE";
-            item = item.childList[0];
-            i = 1;
-        }
-        for(; i < path.length; i++) {
-            var last = (i + 1) == path.length;
-            var step = path[i];
-            var found = false;
-            if(expandable(item) && (!item.bExpanded)) {
-                item.expand();
-                if(item.childList === null)
-                    return false;  //We need to do wait_for_ajax and then repeat.
-            }
-
-            for(var j = 0; j < (item.childList || []).length; j++) {
-                var nextitem = item.childList[j];
-                var nextitem_name = get_level_name(nextitem, by_id);
-                if(nextitem_name == step) {
-                    found = true;
-                    item = nextitem;
-                    break;
-                }
-            }
-
-            if(!found)
-                throw "TREEITEM /" + step + "/ NOT FOUND IN THE TREE";
-        }
-
-        return xpath(item.li, "./span/a");
-    }
-    """)
-
     def __init__(self, parent, tree_id=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self._tree_id = tree_id
@@ -255,6 +202,52 @@ class DynaTree(Widget):
                 by_id)
         return result
 
+    @staticmethod
+    def _construct_xpath(path, by_id=False):
+        items = []
+        for item in path:
+            if by_id:
+                items.append('ul/li[@id={}]'.format(quote(item)))
+            else:
+                items.append('ul/li[./span/a[normalize-space(.)={}]]'.format(quote(item)))
+
+        return './' + '/'.join(items)
+
+    def _item_expanded(self, id):
+        span = self.browser.element('.//li[@id={}]/span'.format(quote(id)), parent=self)
+        return 'dynatree-expanded' in self.browser.get_attribute('class', span)
+
+    def _item_expandable(self, id):
+        return bool(
+            self.browser.elements(
+                './/li[@id={}]/span/span[contains(@class, "dynatree-expander")]'.format(quote(id)),
+                parent=self))
+
+    def _click_expander(self, id):
+        expander = self.browser.element(
+            './/li[@id={}]/span/span[contains(@class, "dynatree-expander")]'.format(quote(id)),
+            parent=self)
+        return self.browser.click(expander)
+
+    def expand_id(self, id):
+        self.browser.plugin.ensure_page_safe()
+        if not self._item_expanded(id) and self._item_expandable(id):
+            self.logger.debug('expanding node %r', id)
+            self._click_expander(id)
+            wait_for(lambda: self._item_expanded(id), num_sec=15, delay=0.5)
+
+    def child_items(self, id, ids=False):
+        self.expand_id(id)
+        items = self.browser.elements('.//li[@id={}]/ul/li'.format(quote(id)), parent=self)
+        result = []
+        for item in items:
+            if ids:
+                result.append(self.browser.get_attribute('id', item))
+            else:
+                text_item = self.browser.element('./span/a', parent=item)
+                result.append(self.browser.text(text_item))
+        return result
+
     def expand_path(self, *path, **kwargs):
         """ Exposes a path.
 
@@ -268,45 +261,43 @@ class DynaTree(Widget):
 
         """
         by_id = kwargs.pop("by_id", False)
-        result = False
+        current_path = []
+        last_id = None
+        node = None
 
-        # Ensure we pass str to the javascript. This handles objects that represent themselves
-        # using __str__ and generally, you should only pass str because that is what makes sense
-        path = map(str, path)
-
-        # We sometimes have to wait for ajax. In that case, JS function returns false
-        # Then we repeat and wait. It does not seem completely possible to wait for the data in JS
-        # as it runs on one thread it appears. So this way it will try to drill multiple times
-        # each time deeper and deeper :)
-        while result is False:
-            self.browser.plugin.ensure_page_safe()
-            try:
-                result = self.browser.execute_script(
-                    "{} return find_leaf(arguments[0],arguments[1],arguments[2]);".format(
-                        self.FIND_LEAF),
-                    self.__locator__(),
-                    path,
-                    by_id)
-            except WebDriverException as e:
-                text = str(e)
-                match = re.search(r"TREEITEM /(.*?)/ NOT FOUND IN THE TREE", text)
-                if match is not None:
-                    item = match.groups()[0]
+        for item in path:
+            if last_id is None:
+                last_id = self.browser.get_attribute(
+                    'id', self.browser.element('./ul/li', parent=self))
+            self.expand_id(last_id)
+            if isinstance(item, re._pattern_type):
+                self.logger.debug('Looking for regexp %r in path %r', item.pattern, current_path)
+                for child_item in self.child_items(last_id, ids=by_id):
+                    if item.match(child_item) is not None:
+                        # found
+                        item = child_item
+                        break
+                else:
                     raise CandidateNotFound(
-                        {'message': "{}: could not be found in the tree.".format(item),
-                         'path': path,
-                         'cause': e})
-                match = re.search(r"^CANNOT FIND TREE /(.*?)/$", text)
-                if match is not None:
-                    tree_id = match.groups()[0]
-                    raise NoSuchElementException(
-                        "Tree {} / {} not found.".format(tree_id, self.locator))
-                # Otherwise ...
-                raise CandidateNotFound({
-                    'message': 'Something else happened!',
-                    'path': path,
-                    'cause': e})
-        return result
+                        {'message': "r{!r}: could not be found in the tree.".format(item.pattern),
+                         'path': current_path,
+                         'cause': None})
+            current_path.append(item)
+            xpath = self._construct_xpath(current_path, by_id=by_id)
+            try:
+                node = self.browser.element(xpath, parent=self)
+            except NoSuchElementException:
+                raise CandidateNotFound(
+                    {'message': "{}: could not be found in the tree.".format(item),
+                     'path': current_path,
+                     'cause': None})
+
+            last_id = self.browser.get_attribute('id', node)
+
+        if node is not None:
+            self.expand_id(last_id)
+
+        return self.browser.element('./span/a', parent=node)
 
     def click_path(self, *path, **kwargs):
         """ Exposes a path and then clicks it.
@@ -320,10 +311,6 @@ class DynaTree(Widget):
         Returns: The leaf web element.
 
         """
-        # Ensure we pass str to the javascript. This handles objects that represent themselves
-        # using __str__ and generally, you should only pass str because that is what makes sense
-        path = map(str, path)
-
         leaf = self.expand_path(*path, **kwargs)
         self.logger.info("Path %r yielded menuitem %r", path, self.browser.text(leaf))
         if leaf is not None:
@@ -735,9 +722,19 @@ class ScriptBox(Widget):
             self.item_name = 'ManageIQ.editor'
         return self.item_name
 
-    def fill(self, values):
-        self.browser.execute_script('{}.setValue(arguments[0]);'.format(self.name), values)
+    @property
+    def script(self):
+        return self.browser.execute_script('{}.getValue();'.format(self.name))
+
+    def fill(self, value):
+        if self.script == value:
+            return False
+        self.browser.execute_script('{}.setValue(arguments[0]);'.format(self.name), value)
         self.browser.execute_script('{}.save();'.format(self.name))
+        return True
+
+    def read(self):
+        return self.script
 
     def get_value(self):
         script = self.browser.execute_script('return {}.getValue();'.format(self.name))
@@ -1135,3 +1132,75 @@ class Search(View):
     @logged(log_result=True)
     def is_empty(self):
         return not bool(self.search_text.value)
+
+
+class UpDownSelect(View):
+    """Multiselect with two arrows (up/down) next to it. Eg. in AE/Domain priority selection.
+
+    Args:
+        select_loc: Locator for the select box (without Select element wrapping)
+        up_loc: Locator of the Move Up arrow.
+        down_loc: Locator with Move Down arrow.
+    """
+
+    select = Select(ParametrizedLocator('{@select_loc}'))
+    up = Text(ParametrizedLocator('{@up_loc}'))
+    down = Text(ParametrizedLocator('{@down_loc}'))
+
+    def __init__(self, parent, select_loc, up_loc, down_loc, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.select_loc = select_loc
+        self.up_loc = up_loc
+        self.down_loc = down_loc
+
+    @property
+    def is_displayed(self):
+        return self.select.is_displayed and self.up.is_displayed and self.down.is_displayed
+
+    def read(self):
+        return self.items
+
+    @property
+    def items(self):
+        return [option.text for option in self.select.all_options]
+
+    def move_up(self, item):
+        item = str(item)
+        assert item in self.items
+        self.select.deselect_all()
+        self.select.select_by_visible_text(item)
+        self.up.click()
+
+    def move_down(self, item):
+        item = str(item)
+        assert item in self.items
+        self.select.deselect_all()
+        self.select.select_by_visible_text(item)
+        self.down.click()
+
+    def move_top(self, item):
+        item = str(item)
+        assert item in self.items()
+        self.select.deselect_all()
+        while item != self.items[0]:
+            self.select.select_by_visible_text(item)
+            self.up.click()
+
+    def move_bottom(self, item):
+        item = str(item)
+        assert item in self.items()
+        self.select.deselect_all()
+        while item != self.items()[-1]:
+            self.select.select_by_visible_text(item)
+            self.down.click()
+
+    def fill(self, items):
+        if not isinstance(items, (list, tuple)):
+            items = [items]
+        current_items = self.items[:len(items)]
+        if current_items == items:
+            return False
+        items = map(str, items)
+        for item in reversed(items):  # reversed because every new item at top pushes others down
+            self.move_top(item)
+        return True

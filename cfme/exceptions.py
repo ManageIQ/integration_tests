@@ -345,3 +345,7 @@ class MenuItemNotFound(CFMEException):
 
 class DestinationNotFound(CFMEException):
     """Raised during navigation where the navigator destination is not found"""
+
+
+class ItemNotFound(CFMEException):
+    """Raised when an item is not found in general."""

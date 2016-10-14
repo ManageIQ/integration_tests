@@ -464,19 +464,24 @@ class Tab(View, ClickableMixin):
     """
     TAB_NAME = None
     INDIRECT = True
+    ROOT = ParametrizedLocator(
+        './/ul[contains(@class, "nav-tabs")]/li[normalize-space(.)={@tab_name|quote}]')
 
     @property
     def tab_name(self):
         return self.TAB_NAME or type(self).__name__.capitalize()
 
-    def __locator__(self):
-        return '//li[normalize-space(.)={}]'.format(quote(self.tab_name))
-
     def is_active(self):
         return 'active' in self.browser.classes(self)
 
+    def is_disabled(self):
+        return 'disabled' in self.browser.classes(self)
+
     def select(self):
         if not self.is_active():
+            if self.is_disabled():
+                raise ValueError(
+                    'The tab {} you are trying to select is disabled'.format(self.tab_name))
             self.logger.info('opened the tab %s', self.tab_name)
             self.click()
 
@@ -485,7 +490,7 @@ class Tab(View, ClickableMixin):
         self.select()
 
     def __repr__(self):
-        return '<{} {!r}>'.format(type(self).__name__, self.tab_name)
+        return '<Tab {!r}>'.format(self.tab_name)
 
 
 class Accordion(View, ClickableMixin):

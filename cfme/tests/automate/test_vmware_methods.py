@@ -7,7 +7,7 @@ from textwrap import dedent
 
 from cfme import test_requirements
 from cfme.automate.buttons import ButtonGroup, Button
-from cfme.automate.explorer import Namespace, Class, Instance, Domain, Method
+from cfme.automate.explorer.domain import DomainCollection
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import flash, toolbar
@@ -29,21 +29,27 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 
+@pytest.fixture(scope="module")
+def domain_collection():
+    return DomainCollection()
+
+
 @pytest.yield_fixture(scope="module")
-def domain(request):
-    domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
-    domain.create()
+def domain(request, domain_collection):
+    domain = domain_collection.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
     yield domain
-    if domain.exists():
+    if domain.exists:
         domain.delete()
 
 
 @pytest.fixture(scope="module")
 def cls(request, domain):
-    original_class = Class(
-        name='Request', namespace=Namespace(name='System', domain=Domain(name='ManageIQ (Locked)')))
-    return original_class.copy_to(domain)
-    # No finalizer because whole domain will get nuked
+    original_class = domain.collection\
+        .instantiate(name='ManageIQ')\
+        .namespaces.instantiate(name='System')\
+        .classes.instantiate(name='Request')
+    original_class.copy_to(domain=domain)
+    return domain.namespaces.instantiate(name='System').classes.instantiate(name='Request')
 
 
 @pytest.yield_fixture(scope="module")
@@ -92,38 +98,27 @@ def test_vmware_vimapi_hotadd_disk(
     Metadata:
         test_flag: hotdisk, provision
     """
-    meth = Method(
+    meth = cls.methods.create(
         name='load_value_{}'.format(fauxfactory.gen_alpha()),
-        data=dedent('''\
+        script=dedent('''\
             # Sets the capacity of the new disk.
 
             $evm.root['size'] = 1  # GB
             exit MIQ_OK
-            '''),
-        cls=cls)
+            '''))
 
-    @request.addfinalizer
-    def _remove_method():
-        if meth.exists():
-            meth.delete()
-
-    meth.create()
+    request.addfinalizer(meth.delete_if_exists)
 
     # Instance that calls the method and is accessible from the button
-    instance = Instance(
+    instance = cls.instances.create(
         name="VMware_HotAdd_Disk_{}".format(fauxfactory.gen_alpha()),
-        values={
-            "meth4": meth.name,  # To get the value
-            "rel5": "/Integration/VMware/VimApi/VMware_HotAdd_Disk",
+        fields={
+            "meth4": {'value': meth.name},  # To get the value
+            "rel5": {'value': "/Integration/VMware/VimApi/VMware_HotAdd_Disk"},
         },
-        cls=cls
     )
 
-    @request.addfinalizer
-    def _remove_instance():
-        if instance.exists():
-            instance.delete()
-    instance.create()
+    request.addfinalizer(instance.delete_if_exists)
 
     # Button that will invoke the dialog and action
     button_name = fauxfactory.gen_alphanumeric()

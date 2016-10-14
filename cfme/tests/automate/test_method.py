@@ -3,65 +3,75 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.explorer import Namespace, Class, Method, Domain
 from utils import error
 from utils.update import update
+
+from cfme.automate.explorer.domain import DomainCollection
 
 
 pytestmark = [test_requirements.automate]
 
 
-def _make_namespace(domain):
-    name = fauxfactory.gen_alphanumeric(8)
-    description = fauxfactory.gen_alphanumeric(32)
-    ns = Namespace(name=name, description=description, parent=domain)
-    ns.create()
-    return ns
-
-
-def _make_class(domain):
-    name = fauxfactory.gen_alphanumeric(8)
-    description = fauxfactory.gen_alphanumeric(32)
-    cls = Class(name=name, description=description, namespace=_make_namespace(domain))
-    cls.create()
-    return cls
+@pytest.yield_fixture(scope='module')
+def domain():
+    dc = DomainCollection()
+    d = dc.create(
+        name='test_{}'.format(fauxfactory.gen_alpha()),
+        description='desc_{}'.format(fauxfactory.gen_alpha()),
+        enabled=True)
+    yield d
+    d.delete()
 
 
 @pytest.fixture(scope="module")
-def domain(request):
-    domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
-    domain.create()
-    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
-    return domain
+def namespace(request, domain):
+    return domain.namespaces.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
 
 
-@pytest.fixture(scope='module')
-def a_class(domain):
-    return _make_class(domain)
-
-
-@pytest.fixture
-def a_method(a_class):
-    return Method(name=fauxfactory.gen_alphanumeric(8),
-                  data="foo.bar()",
-                  cls=a_class)
+@pytest.fixture(scope="module")
+def klass(request, namespace):
+    return namespace.classes.create(
+        name=fauxfactory.gen_alpha(),
+        display_name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
 
 
 @pytest.mark.tier(2)
-def test_method_crud(a_method):
-    a_method.create()
-    origname = a_method.name
-    with update(a_method):
-        a_method.name = fauxfactory.gen_alphanumeric(8)
-        a_method.data = "bar"
-    with update(a_method):
-        a_method.name = origname
-    a_method.delete()
-    assert not a_method.exists()
+def test_method_crud(request, klass):
+    method = klass.methods.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        location='inline',
+        script='$evm.log(:info, ":P")',
+    )
+    assert method.exists
+    origname = method.name
+    with update(method):
+        method.name = fauxfactory.gen_alphanumeric(8)
+        method.script = "bar"
+    assert method.exists
+    with update(method):
+        method.name = origname
+    assert method.exists
+    method.delete()
+    assert not method.exists
 
 
 @pytest.mark.tier(2)
-def test_duplicate_method_disallowed(a_method):
-    a_method.create()
+def test_duplicate_method_disallowed(request, klass):
+    name = fauxfactory.gen_alpha()
+    klass.methods.create(
+        name=name,
+        location='inline',
+        script='$evm.log(:info, ":P")',
+    )
     with error.expected("Name has already been taken"):
-        a_method.create(allow_duplicate=True)
+        klass.methods.create(
+            name=name,
+            location='inline',
+            script='$evm.log(:info, ":P")',
+        )
