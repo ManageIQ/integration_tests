@@ -249,6 +249,8 @@ def browse_directory(dir_url):
     vsphere_image_name = vsphere_pattern.findall(string_from_url)
     google_pattern = re.compile(r'<a href="?\'?([^"\']*gce[^"\'>]*)')
     google_image_name = google_pattern.findall(string_from_url)
+    ec2_pattern = re.compile(r'<a href="?\'?([^"\']*ec2[^"\'>]*)')
+    ec2_image_name = ec2_pattern.findall(string_from_url)
 
     if len(rhevm_image_name) is not 0:
         name_dict['template_upload_rhevm'] = rhevm_image_name[0]
@@ -260,6 +262,8 @@ def browse_directory(dir_url):
         name_dict['template_upload_vsphere'] = vsphere_image_name[0]
     if len(google_image_name) is not 0:
         name_dict['template_upload_gce'] = google_image_name[0]
+    if len(ec2_image_name) is not 0:
+        name_dict['template_upload_ec2'] = ec2_image_name[0]
 
     if not dir_url.endswith('/'):
         dir_url = dir_url + '/'
@@ -340,6 +344,10 @@ def main():
                 continue
         elif provider_type == 'google':
             module = 'template_upload_gce'
+            if module not in dir_files.iterkeys():
+                continue
+        elif provider_type == 'ec2':
+            module = 'template_upload_ec2'
             if module not in dir_files.iterkeys():
                 continue
         kwargs['stream'] = stream
