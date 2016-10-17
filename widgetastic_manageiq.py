@@ -5,9 +5,14 @@ from selenium.common.exceptions import WebDriverException
 
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
-from widgetastic.widget import Widget, do_not_read_this_widget
+from widgetastic.widget import (
+    Table as VanillaTable,
+    TableColumn as VanillaTableColumn,
+    TableRow as VanillaTableRow,
+    Widget,
+    do_not_read_this_widget)
 from widgetastic.xpath import quote
-from widgetastic_patternfly import CandidateNotFound, BootstrapTreeview
+from widgetastic_patternfly import Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview
 
 
 class DynaTree(Widget):
@@ -355,3 +360,68 @@ class SummaryFormItem(Widget):
         if text is None:
             do_not_read_this_widget()
         return text
+
+
+# ManageIQ table objects definition
+class TableColumn(VanillaTableColumn):
+    @property
+    def checkbox(self):
+        try:
+            return self.browser.element('./input[@type="checkbox"]', parent=self)
+        except NoSuchElementException:
+            return None
+
+    @property
+    def checked(self):
+        checkbox = self.checkbox
+        if checkbox is None:
+            return None
+        return self.browser.is_selected(checkbox)
+
+    def check(self):
+        if not self.checked:
+            self.browser.click(self.checkbox)
+
+    def uncheck(self):
+        if self.checked:
+            self.browser.click(self.checkbox)
+
+
+class TableRow(VanillaTableRow):
+    Column = TableColumn
+
+
+class Table(VanillaTable):
+    CHECKBOX_ALL = '|'.join([
+        './thead/tr/th[1]/input[contains(@class, "checkall")]',
+        './tr/th[1]/input[contains(@class, "checkall")]'])
+    Row = TableRow
+
+    @property
+    def checkbox_all(self):
+        try:
+            return self.browser.element(self.CHECKBOX_ALL, parent=self)
+        except NoSuchElementException:
+            return None
+
+    @property
+    def all_checked(self):
+        checkbox = self.checkbox_all
+        if checkbox is None:
+            return None
+        return self.browser.is_selected(checkbox)
+
+    def check_all(self):
+        if not self.all_checked:
+            self.browser.click(self.checkbox_all)
+
+    def uncheck_all(self):
+        self.check_all()
+        self.browser.click(self.checkbox_all)
+
+
+class Accordion(PFAccordion):
+    @property
+    def is_dimmed(self):
+        return bool(
+            self.browser.elements('.//div[contains(@id, "tree") and contains(@class, "dimmed")]'))

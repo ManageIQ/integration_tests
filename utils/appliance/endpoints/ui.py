@@ -60,7 +60,7 @@ class MiqBrowserPlugin(DefaultPlugin):
             # TODO: Logging
             return bool(result)
 
-        wait_for(_check, timeout=timeout, delay=0.2, silent_failure=True)
+        wait_for(_check, timeout=timeout, delay=0.2, silent_failure=True, very_quiet=True)
 
     def after_keyboard_input(self, element, keyboard_input):
         observed_field_attr = None

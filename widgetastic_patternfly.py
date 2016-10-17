@@ -492,7 +492,14 @@ class Accordion(View, ClickableMixin):
     @property
     def is_opened(self):
         attr = self.browser.get_attribute('aria-expanded', self)
-        return attr is not None and attr.lower().strip() == 'true'
+        if attr is None:
+            # Try other way
+            panel = self.browser.element(
+                '../../../div[contains(@class, "panel-collapse")]', parent=self)
+            classes = self.browser.classes(panel)
+            return 'collapse' in classes and 'in' in classes
+        else:
+            return attr.lower().strip() == 'true'
 
     @property
     def is_closed(self):
@@ -1107,6 +1114,7 @@ class Dropdown(Widget):
             self.browser.click(self.item_element(item), ignore_ajax=handle_alert is not None)
             if handle_alert is not None:
                 self.browser.handle_alert(cancel=not handle_alert, wait=10.0)
+                self.browser.plugin.ensure_page_safe()
         finally:
             try:
                 self.close(ignore_nonpresent=True)
