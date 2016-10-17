@@ -15,6 +15,7 @@ from selenium import webdriver
 from selenium.common.exceptions import UnexpectedAlertPresentException, WebDriverException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.remote.file_detector import UselessFileDetector
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from cached_property import cached_property
 
@@ -108,14 +109,17 @@ class BrowserFactory(object):
         self.webdriver_class = webdriver_class
         self.browser_kwargs = browser_kwargs
 
-        if webdriver_class is not webdriver.Remote:
+        if webdriver_class is webdriver.Firefox:
+            browser_kwargs['firefox_profile'] = self._firefox_profile
+            # latest selenium > 3, uses new marionette driver but we don't need it atm
+            caps = DesiredCapabilities.FIREFOX.copy()
+            caps.update(browser_kwargs.pop('desired_capabilities', None))
+            browser_kwargs['capabilities'] = caps
+        elif webdriver_class is not webdriver.Remote:
             # desired_capabilities is only for Remote driver, but can sneak in
             browser_kwargs.pop('desired_capabilities', None)
         elif browser_kwargs['desired_capabilities']['browserName'] == 'firefox':
             browser_kwargs['browser_profile'] = self._firefox_profile
-
-        if webdriver_class is webdriver.Firefox:
-            browser_kwargs['firefox_profile'] = self._firefox_profile
 
     @cached_property
     def _firefox_profile(self):
