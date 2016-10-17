@@ -21,6 +21,7 @@ class parsetime(_datetime):  # NOQA
     _american_date_only_format = "%m/%d/%y"
     _iso_date_only_format = "%Y-%m-%d"
     _request_format = "%Y-%m-%d-%H-%M-%S"
+    _long_date_format = "%B %d, %Y %H:%M"
 
     @classmethod
     def _parse(cls, fmt, time_string):
@@ -158,6 +159,27 @@ class parsetime(_datetime):  # NOQA
         Returns: :py:class`str` object
         """
         return self.strftime(self._request_format)
+
+    @classmethod
+    def from_long_date_format(cls, time_string):
+        """ Convert the string representation of the time into parsetime()
+
+                Format here is '%B %d, %Y %H:%M'.
+
+                Args:
+                    time_string: String with time to parse
+                Returns: :py:class`utils.timeutil.datetime()` object
+                """
+        return cls._parse(cls._long_date_format, time_string)
+
+    def to_long_date_format(self):
+        """ Convert the this object to string representation in http request.
+
+                Format here is '%B %d, %Y %H:%M'
+
+                Returns: :py:class`str` object
+                """
+        return self.strftime(self._long_date_format)
 
 
 def nice_seconds(t_s):
