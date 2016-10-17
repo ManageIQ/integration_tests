@@ -203,7 +203,25 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         navigate_to(self, 'Add')
         fill(self.properties_form, self._form_mapping(True, **self.__dict__))
         for cred in self.credentials:
-            fill(self.credentials[cred].form, self.credentials[cred], validate=validate_credentials)
+            # dajo - temporarily skipping candu verification due to bz1385436
+            if self.data.type == 'rhevm' and cred == 'candu':
+                success = False
+                import time
+                for i in range(7):
+                    fill(self.credentials[cred].form, self.credentials[cred],
+                         validate=True)
+                    for item in flash.get_all_messages():
+                        if 'Credential validation was successful' in item.message:
+                            success = True
+                            break
+                    if success:
+                        break
+                    time.sleep(1)
+            else:
+                fill(self.credentials[cred].form, self.credentials[cred],
+                     validate=validate_credentials)
+        #import pdb
+        #pdb.set_trace()
         self._submit(cancel, self.add_provider_button)
         if not cancel:
             flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
