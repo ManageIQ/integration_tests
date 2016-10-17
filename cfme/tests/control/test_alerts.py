@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
@@ -11,7 +12,6 @@ from utils import ports, testgen
 from utils.conf import credentials
 from utils.log import logger
 from utils.net import net_check
-from utils.providers import existing_providers, get_crud
 from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
@@ -118,16 +118,12 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         request.addfinalizer(lambda: provider.unassign_policy_profiles(policy_profile.description))
 
 
-# TODO: When we get rest, just nuke all providers, and add our one, no need to target delete
 @pytest.yield_fixture(scope="module")
-def initialize_provider(provider, setup_provider_modscope):
-    # Remove other providers
-    for provider_key in existing_providers():
-        if provider_key == provider.key:
-            continue
-        provider_to_delete = get_crud(provider_key)
-        if provider_to_delete.exists:
-            provider_to_delete.delete(cancel=False)
+def initialize_provider(provider):
+    # Remove all providers
+    BaseProvider.clear_providers()
+    # Setup the provider we want
+    provider.create(validate_credentials=True, validate_inventory=True, check_existing=True)
     # Take care of C&U settings
     if provider.type not in CANDU_PROVIDER_TYPES:
         yield provider

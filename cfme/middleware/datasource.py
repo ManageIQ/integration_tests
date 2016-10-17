@@ -9,7 +9,7 @@ from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key
+from utils.providers import get_crud, get_crud_by_name
 from utils.providers import list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
@@ -123,7 +123,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
         _provider = provider
         for datasource in rows:
             if strict:
-                _provider = get_crud(get_provider_key(datasource.provider_name))
+                _provider = get_crud_by_name(datasource.provider_name)
             _server = MiddlewareServer(
                 name=datasource.server_name,
                 feed=datasource.feed,

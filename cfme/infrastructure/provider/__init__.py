@@ -128,7 +128,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     """
     provider_types = {}
     in_version = (version.LOWEST, version.LATEST)
-    type_tclass = "infra"
+    category = "infra"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
@@ -156,7 +156,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
-        self.vm_name = version.pick({
+        self.vm_name = deferred_verpick({
             version.LOWEST: "VMs",
             '5.5': "VMs and Instances",
             '5.8': "Virtual Machines"})  # TODO: If it lands in some 5.7.x, change this version!

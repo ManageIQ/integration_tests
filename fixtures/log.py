@@ -44,7 +44,9 @@ def pytest_runtest_logreport(report):
             try:
                 logger().info(
                     "Managed providers: {}".format(
-                        ", ".join(pytest.store.current_appliance.managed_providers)))
+                        ", ".join([
+                            prov.key for prov in pytest.store.current_appliance.managed_providers]))
+                )
             except KeyError as ex:
                 if 'ext_management_systems' in ex.msg:
                     logger().warning("Unable to query ext_management_systems table; DB issue")

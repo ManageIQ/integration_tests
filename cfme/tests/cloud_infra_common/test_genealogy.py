@@ -4,6 +4,9 @@ import pytest
 from cfme.common.vm import VM
 from utils import testgen
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from utils.generators import random_vm_name
 
 pytestmark = [
@@ -22,7 +25,7 @@ def pytest_generate_tests(metafunc):
         args = dict(zip(argnames, argvalue_tuple))
 
         if metafunc.function in {test_vm_genealogy_detected} \
-                and args["provider"].type in {"scvmm", "rhevm"}:
+                and args["provider"].one_of(SCVMMProvider, RHEVMProvider):
             continue
 
         new_idlist.append(idlist[i])
@@ -42,7 +45,7 @@ def vm_crud(provider, small_template):
 @pytest.mark.parametrize("from_edit", [True, False], ids=["via_edit", "via_summary"])
 @test_requirements.genealogy
 @pytest.mark.uncollectif(
-    lambda provider, from_edit: provider.type_tclass == "cloud" and not from_edit)
+    lambda provider, from_edit: provider.one_of(CloudProvider) and not from_edit)
 def test_vm_genealogy_detected(
         request, setup_provider, provider, small_template, soft_assert, from_edit, vm_crud):
     """Tests vm genealogy from what CFME can detect.
