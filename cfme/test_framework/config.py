@@ -35,6 +35,11 @@ class Configuration(object):
             self.yaycl_config = yaycl.Config(config_dir=config_dir)
 
     def get_config(self, name):
+        """returns a yaycl config object
+
+        :param name: name of the configuration object
+        """
+
         if self.yaycl_config is None:
             raise RuntimeError('cfme configuration was not initialized')
         return getattr(self.yaycl_config, name)
