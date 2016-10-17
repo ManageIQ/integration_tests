@@ -6,16 +6,18 @@ import pytest
 
 from textwrap import dedent
 
+from cfme import test_requirements
 from cfme.automate import explorer as automate
 from cfme.cloud.instance import Instance
-from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
-from cfme import test_requirements
 from utils import testgen
+from utils.generators import random_vm_name
 from utils.log import logger
 from utils.update import update
+from utils.version import current_version
 from utils.wait import wait_for, RefreshTimer
 
 pytestmark = [pytest.mark.meta(server_roles="+automate"),
@@ -60,6 +62,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
     if isinstance(provider, GCEProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
         inst_args['boot_disk_size'] = provisioning['boot_disk_size']
+        inst_args['is_preemtible'] = True if current_version() >= "5.7" else None
 
     if isinstance(provider, AzureProvider):
         inst_args['cloud_network'] = provisioning['virtual_net']
@@ -74,11 +77,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
 
 @pytest.fixture(scope="function")
 def vm_name(request, provider):
-    if isinstance(provider, GCEProvider):
-        vm_name = 'test-image-prov-{}'.format(fauxfactory.gen_alphanumeric().lower())
-    else:
-        vm_name = 'test_image_prov_{}'.format(fauxfactory.gen_alphanumeric())
-    return vm_name
+    return random_vm_name('prov')
 
 
 def test_provision_from_template(request, setup_provider, provider, testing_instance, soft_assert):
@@ -100,6 +99,9 @@ def test_provision_from_template(request, setup_provider, provider, testing_inst
              num_sec=1000,
              delay=60,
              handle_exception=True)
+    if provider.type == 'gce' and current_version() >= "5.7":
+        soft_assert('Yes' in instance.get_detail(
+            properties=("Properties", "Preemptible")), "GCE Instance isn't Preemptible")
     soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
 
 
