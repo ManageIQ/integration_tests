@@ -830,6 +830,8 @@ class BootstrapTreeview(Widget):
             step = step[1]
         else:
             image = None
+        if not isinstance(step, six.string_types + (re._pattern_type,)):
+            step = str(step)
         return image, step
 
     @staticmethod
