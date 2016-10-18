@@ -1999,6 +1999,49 @@ class BootstrapTreeview(object):
             return False
         return self.is_checked(leaf)
 
+    def find_path_to(self, target, exact=False):
+        """ Method used to look up the exact path to an item we know only by its regexp or partial
+        description.
+
+        Expands whole tree during the execution.
+
+        Args:
+            target: Item searched for. Can be regexp made by
+                :py:func:`re.compile <python:re.compile>`,
+                otherwise it is taken as a string for `in` matching.
+            exact: Useful in string matching. If set to True, it matches the exact string.
+                Default is False.
+        Returns: :py:class:`list` with path to that item.
+        """
+        if not isinstance(target, re._pattern_type):
+            if exact:
+                target = re.compile(r"^{}$".format(re.escape(str(target))))
+            else:
+                target = re.compile(r".*?{}.*?".format(re.escape(str(target))))
+
+        def _find_in_tree(t, p=None):
+            if p is None:
+                p = []
+            for item in t:
+                if isinstance(item, list):
+                    if target.match(item[0]) is None:
+                        subtree = _find_in_tree(item[1], p + [item[0]])
+                        if subtree is not None:
+                            return subtree
+                    else:
+                        return p + [item[0]]
+                else:
+                    if target.match(item) is not None:
+                        return p + [item]
+            else:
+                return None
+
+        result = _find_in_tree(self.read_contents())
+        if result is None:
+            raise NameError("{} not found in tree".format(target.pattern))
+        else:
+            return result
+
 
 class Tree(Pretty):
     """ A class directed at CFME Tree elements
