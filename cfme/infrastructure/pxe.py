@@ -711,7 +711,6 @@ class ISODatastoreDetails(CFMENavigateStep):
 
     def step(self):
         acc.tree("ISO Datastores", "All ISO Datastores", self.obj.provider)
-        image_table.click_cell('name', self.obj.pxe_image_type.name)
 
 
 def get_template_from_config(template_config_name):
