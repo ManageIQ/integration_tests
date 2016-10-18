@@ -273,7 +273,10 @@ class CatalogItem(Updateable, Pretty):
     def delete(self):
         sel.force_navigate('catalog_item', context={'catalog': self.catalog,
                                                     'catalog_item': self})
-        cfg_btn("Remove Item from the VMDB", invokes_alert=True)
+        if version.current_version() < "5.7":
+            cfg_btn("Remove Item from the VMDB", invokes_alert=True)
+        else:
+            cfg_btn("Remove Catalog Item", invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('The selected Catalog Item was deleted')
 

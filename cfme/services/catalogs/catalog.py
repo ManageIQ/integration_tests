@@ -9,6 +9,8 @@ from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.blockers import BZ
+from utils.version import current_version
+
 
 cfg_btn = partial(tb.select, "Configuration")
 catalog_tree = partial(accordion.tree, "Catalogs")
@@ -95,7 +97,10 @@ class Catalog(Updateable, Pretty):
 
     def delete(self):
         sel.force_navigate('catalog', context={'catalog': self})
-        cfg_btn("Remove Item from the VMDB", invokes_alert=True)
+        if current_version() < "5.7":
+            cfg_btn("Remove Item from the VMDB", invokes_alert=True)
+        else:
+            cfg_btn("Remove Catalog", invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message(
             'Catalog "{}": Delete successful'.format(self.description or self.name))
