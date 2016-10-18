@@ -210,7 +210,12 @@ def test_provider_add_with_bad_credentials(provider):
         error_message = version.pick(
             {'5.4': '401 Unauthorized',
              '5.5': 'Credential validation was not successful: '
-                'Login failed due to a bad username or password.'}
+                'Login failed due to a bad username or password.',
+             '5.6': 'Credential validation was not successful: '
+                'Incorrect user name or password.',
+             '5.7': 'Credential validation was not successful: '
+                'Unauthorized'
+        }
         )
         with error.expected(error_message):
             provider.create(validate_credentials=True)
