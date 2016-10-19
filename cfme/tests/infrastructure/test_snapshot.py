@@ -46,21 +46,32 @@ def test_vm(setup_provider_modscope, provider, vm_name):
     return vm
 
 
-def new_snapshot(test_vm):
-    new_snapshot = Vm.Snapshot(
-        name="snpshot_" + fauxfactory.gen_alphanumeric(8),
-        description="snapshot", memory=False, parent_vm=test_vm)
+def new_snapshot(test_vm, has_name=True):
+    if has_name:
+        new_snapshot = Vm.Snapshot(
+            name="snpshot_" + fauxfactory.gen_alphanumeric(8),
+            description="snapshot", memory=False, parent_vm=test_vm
+        )
+    else:
+        new_snapshot = Vm.Snapshot(
+            description="snapshot_" + fauxfactory.gen_alphanumeric(8),
+            memory=False, parent_vm=test_vm
+        )
     return new_snapshot
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter'
+                                          and provider.type != 'rhevm')
 def test_snapshot_crud(test_vm, provider):
     """Tests snapshot crud
 
     Metadata:
         test_flag: snapshot, provision
     """
-    snapshot = new_snapshot(test_vm)
+    if provider.type == 'rhevm':
+        snapshot = new_snapshot(test_vm, has_name=False)
+    else:
+        snapshot = new_snapshot(test_vm)
     snapshot.create()
     snapshot.delete()
 

@@ -44,7 +44,7 @@ manage_policies_page = Region(
 snapshot_form = Form(
     fields=[
         ('name', Input('name')),
-        ('descrition', Input('description')),
+        ('description', Input('description')),
         ('snapshot_memory', Input('snap_memory')),
         ('create_button', create_button),
         ('cancel_button', form_buttons.cancel)
@@ -181,14 +181,13 @@ class Vm(BaseVM, Common):
         def does_snapshot_exist(self):
             self._nav_to_snapshot_mgmt()
             try:
-                self.snapshot_tree.find_path_to(re.compile(r".*?\(Active\)$"))
+                if self.name is not None:
+                    self.snapshot_tree.find_path_to(re.compile(self.name + r".*?"))
+                else:
+                    self.snapshot_tree.find_path_to(re.compile(self.description + r".*?"))
                 return True
             except CandidateNotFound:
-                try:
-                    self.snapshot_tree.find_path_to(re.compile(self.name))
-                    return True
-                except CandidateNotFound:
-                    return False
+                return False
             except NoSuchElementException:
                 return False
 
@@ -204,11 +203,17 @@ class Vm(BaseVM, Common):
         def create(self):
             self._nav_to_snapshot_mgmt()
             toolbar.select('Create a new snapshot for this VM')
-            fill(snapshot_form, {'name': self.name,
-                                 'description': self.description,
-                                 'snapshot_memory': self.memory
-                                 },
-                 action=snapshot_form.create_button)
+            if self.name is not None:
+                fill(snapshot_form, {'name': self.name,
+                                     'description': self.description,
+                                     'snapshot_memory': self.memory
+                                     },
+                     action=snapshot_form.create_button)
+            else:
+                fill(snapshot_form, {'description': self.description,
+                                     'snapshot_memory': self.memory
+                                     },
+                     action=snapshot_form.create_button)
             wait_for(self.does_snapshot_exist, num_sec=300, delay=20, fail_func=sel.refresh)
 
         def delete(self, cancel=False):
