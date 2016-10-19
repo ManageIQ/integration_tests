@@ -13,7 +13,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import AngularSelect, Calendar, Form, Region, Table, Select, fill
-from utils import deferred_verpick, version
+from utils import version
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -640,15 +640,8 @@ def _fill_dws_str(dws, s):
 
 class FolderManager(Pretty):
     """Class used in Reports/Edit Reports menus."""
-    _fields = deferred_verpick({
-        version.LOWEST:
-        ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr/td",
-        "5.5.0.7": ".//div[@id='folder_grid']/ul/li"})
-    _field = deferred_verpick({
-        version.LOWEST:
-        ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr"
-        "/td[normalize-space(.)='{}']",
-        "5.5.0.7": ".//div[@id='folder_grid']/ul/li[normalize-space(.)='{}']"})
+    _fields = ".//div[@id='folder_grid']/div/div/div"
+    _field = ".//div[@id='folder_grid']/div/div/div[normalize-space(.)='{}']"
     pretty_attrs = ['root']
 
     # Keep the number of items in versions the same as buttons' and actions' values!
@@ -683,7 +676,7 @@ class FolderManager(Pretty):
         raise cls._BailOut()
 
     def _click_button(self, alt):
-        sel.click(sel.element(".//img[@alt='{}']".format(alt), root=self.root))
+        sel.click(sel.element(".//button[contains(.,'{}')]".format(alt), root=self.root))
 
     def _click_button_i(self, klass):
         sel.click(sel.element("i.{}".format(klass), root=self.root))
@@ -704,10 +697,10 @@ class FolderManager(Pretty):
         return _click_function
 
     def commit(self):
-        self._click_button("Commit expression element changes")
+        self._click_button("Commit")
 
     def discard(self):
-        self._click_button("Discard expression element changes")
+        self._click_button("Discard")
 
     @property
     def _all_fields(self):

@@ -4,6 +4,7 @@ import random
 
 from cfme.intelligence.reports import menus
 from cfme.web_ui import Tree, accordion
+from utils.blockers import BZ
 
 # EvmGroup-super_administrator -> user `admin`
 # If we add more, will need relogin + user creation
@@ -27,7 +28,7 @@ def on_finish_default(group):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1101250, 1132118])
+@pytest.mark.meta(blockers=[BZ(1384518, forced_streams=["5.7", "upstream"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_top_level(group, on_finish_default):
     # Shuffle the order
@@ -43,7 +44,7 @@ def test_shuffle_top_level(group, on_finish_default):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1101250, 1132118])
+@pytest.mark.meta(blockers=[BZ(1384518, forced_streams=["5.7", "upstream"])])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_first_level(group, on_finish_default):
     # Find a folder

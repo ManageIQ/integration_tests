@@ -20,6 +20,8 @@ from utils.wait import wait_for
 from utils.pretty import Pretty
 from utils.appliance import Navigatable
 from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
+from utils import version
+from utils.timeutil import parsetime
 
 
 def reload_view():
@@ -211,7 +213,8 @@ class CustomReport(Updateable, Navigatable):
                 row = records_table.find_row("queued_at", queued_at)
                 status = sel.text(row.status).strip().lower()
                 assert status != "error", sel.text(row)
-                return status == "finished"
+                return status == version.pick({"5.6": "finished",
+                                               "5.7": "complete"})
 
             wait_for(
                 _get_state,
@@ -265,10 +268,6 @@ class Saved(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        accordion.tree(
-            "Reports", "All Reports", "{} (All EVM Groups)".format(
-                self.obj.appliance.company_name), "Custom",
-            self.obj.menu_name)
         tabstrip.select_tab("Saved Reports")
 
 
@@ -290,6 +289,8 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
         self.report = report
         self.datetime = datetime
         self.candu = candu
+        self.datetime_in_tree = version.pick({"5.6": self.datetime,
+                        "5.7": parsetime.from_american_with_utc(self.datetime).to_iso_with_utc()})
 
     @property
     def _table(self):
@@ -339,12 +340,12 @@ class SavedDetails(CFMENavigateStep):
         accordion.tree(
             "Reports", "All Reports", "{} (All EVM Groups)".format(
                 self.obj.appliance.company_name),
-            "Custom", self.obj.report.menu_name)
+            "Custom", self.obj.report.menu_name, self.obj.datetime_in_tree)
 
     def am_i_here(self):
         return sel.is_displayed(
             "//div[@class='dhtmlxInfoBarLabel' and contains(., 'Saved Report \"{} {}')]".format(
-                self.obj.report.title, self.obj.datetime
+                self.obj.report.title, self.obj.datetime_in_tree
             )
         )
 
@@ -390,7 +391,8 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
             row = records_table.find_row("queued_at", queued_at)
             status = sel.text(row.status).strip().lower()
             assert status != "error", sel.text(row)
-            return status == "finished"
+            return status == version.pick({"5.6": "finished",
+                                           "5.7": "complete"})
 
         wait_for(
             _get_state,
@@ -420,7 +422,7 @@ class CannedSavedDetails(CFMENavigateStep):
 
     def step(self):
         accordion.tree(
-            "Reports", *(["All Reports"] + self.obj.path + [self.obj.datetime]))
+            "Reports", *(["All Reports"] + self.obj.path + [self.obj.datetime_in_tree]))
 
 
 @navigator.register(CannedSavedReport, 'Path')
