@@ -12,6 +12,7 @@ from cfme.intelligence.rss import RSSView
 from cfme.exceptions import ZoneNotFound, DestinationNotFound
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.login import LoginPage
+from cfme.infrastructure.provider import InfraProvidersView
 
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
 from utils import version
@@ -833,3 +834,12 @@ class AutomateSimulation(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select('Automate', 'Simulation')
+
+
+@navigator.register(Server)
+class InfraProviders(CFMENavigateStep):
+    VIEW = InfraProvidersView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select('Compute', 'Infrastructure', 'Providers')

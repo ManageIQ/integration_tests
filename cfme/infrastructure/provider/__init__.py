@@ -11,6 +11,8 @@
 from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from widgetastic.widget import View
+from widgetastic_patternfly import Dropdown, Paginator
 
 from cached_property import cached_property
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
@@ -32,8 +34,8 @@ from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
 
-details_page = Region(infoblock_type='detail')
 
+details_page = Region(infoblock_type='detail')
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
 
 # Forms
@@ -105,6 +107,28 @@ manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
+
+
+class InfraProvidersView(BaseLoggedInPage):
+
+    configuration = Dropdown('Configuration')
+    policy = Dropdown('Policy')
+    monitoring = Dropdown('Monitoring')
+
+    @property
+    def is_displayed(self):
+        return all((self.logged_in_as_current_user,
+                    self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'],
+                    match_page('Infrastructure Providers')))
+
+    @View.nested
+    class paginator(Paginator):
+        pass
+
+
+class InfraProviderAddForm(InfraProvidersView):
+
+    pass
 
 
 @CloudInfraProvider.add_base_type
@@ -301,8 +325,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
         return web_clusters
 
 
-@navigator.register(InfraProvider, 'All')
+@navigator.register(InfraProvider)
 class All(CFMENavigateStep):
+    VIEW = InfraProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def am_i_here(self):
@@ -393,13 +418,15 @@ class Templates(CFMENavigateStep):
 def get_all_providers(do_not_navigate=False):
     """Returns list of all providers"""
     if not do_not_navigate:
-        navigate_to(InfraProvider, 'All')
+        providers_view = navigate_to(InfraProvider, 'All')
     providers = set([])
     link_marker = "ems_infra"
-    for page in paginator.pages():
-        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
-                "'{}/show')]".format(link_marker)):
-            providers.add(sel.get_attribute(title, "title"))
+    # todo: create paginator widget
+    # for page in paginator.pages():
+    #     for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
+    #             "'{}/show')]".format(link_marker)):
+    #         providers.add(sel.get_attribute(title, "title"))
+    providers_view.paginator.check_all()
     return providers
 
 
@@ -441,6 +468,7 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
 def wait_for_a_provider():
     navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
+    # todo: replace by paginator widget
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
 

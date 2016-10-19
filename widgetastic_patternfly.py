@@ -9,7 +9,8 @@ from cached_property import cached_property
 from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresentException
 from widgetastic.log import call_sig
 from widgetastic.utils import ParametrizedLocator
-from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget
+from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget, \
+    BaseInput
 from widgetastic.xpath import quote
 
 from wait_for import wait_for, wait_for_decorator
@@ -1159,3 +1160,110 @@ class Dropdown(Widget):
 
     def __repr__(self):
         return '{}({!r})'.format(type(self).__name__, self.text)
+
+
+class Dropup(Dropdown):
+    """Represents the Patternfly/Bootstrap dropup.
+
+    Args:
+        text: Text of the button, can be the inner text or the title attribute.
+    """
+    BUTTON_DIV_LOCATOR = (
+        './/div[contains(@class, "dropup") and ./button[normalize-space(.)={0} or '
+        'normalize-space(@title)={0}]]')
+
+    def __init__(self, parent, text, logger=None):
+        super(Dropup, self).__init__(parent, text=text, logger=logger)
+        self.text = text
+
+
+class CheckBox(BaseInput):
+    """A PatternFly/Bootstrap checkbox
+
+    .. code-block:: python
+
+        CheckBox('Show Detailed Events')
+        CheckBox('1').is_checked
+        CheckBox('2').check()
+        CheckBox('2').uncheck()
+    """
+
+    def __init__(self, parent, name=None, id=None, logger=None):
+        super(CheckBox, self).__init__(parent, name=name, id=id, logger=logger)
+
+    def __locator__(self):
+        return super(CheckBox, self).__locator__() + '[@type="checkbox"]'
+
+    @property
+    def is_checked(self):
+        return self.browser.element(self).is_selected()
+
+    def check(self):
+        if not self.is_checked:
+            self.browser.element(self).click()
+
+    def uncheck(self):
+        if self.is_checked:
+            self.browser.element(self).click()
+
+
+class Paginator(View):
+    """
+    Paginator
+    """
+    check_all_items = CheckBox(id='masterToggle')
+    sort_ctl = Dropdown(text='sort_choice')
+    items_on_page = Dropup(text='ppsetting')
+
+    def __locator__(self):
+        return './/div[contains(@id, "paging_div")'
+
+    @property
+    def exists(self):
+        cur_view = self.browser.element(self.__locator__(), parent=self)
+        return False not in self.browser.classes(cur_view)
+
+    def check_all(self):
+        if not self.check_all_items.is_checked:
+            self.check_all_items.check()
+        else:
+            self.check_all_items.uncheck()
+            self.check_all_items.check()
+
+    def uncheck_all(self):
+        if self.check_all_items.is_checked:
+            self.check_all_items.uncheck()
+        else:
+            self.check_all_items.check()
+            self.check_all_items.uncheck()
+
+    def sort_by(self, value):
+        self.sort_ctl.item_select(self.sort_ctl.item_element(value))
+
+    def sorted_by(self):
+        # todo: add this when it is required
+        pass
+
+    def items_per_page(self):
+        pass
+
+    def current_page(self):
+        pass
+
+    def next_page(self):
+        '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])'
+        '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
+        pass
+
+    def prev_page(self):
+        _next = '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
+        _previous = '//img[@alt="Previous"]|//li[contains(@class, "prev")]/span'
+        _first = '//img[@alt="First"]|//li[contains(@class, "first")]/span'
+        _last = '//img[@alt="Last"]|//li[contains(@class, "last")]/span'
+        pass
+
+    def first_page(self):
+        pass
+
+    def last_page(self):
+        pass
