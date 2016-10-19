@@ -3,6 +3,7 @@
 # and list view
 import pytest
 
+from cfme.containers.container import Container
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
@@ -44,8 +45,7 @@ def test_replicators_views():
 
 
 def test_containers_views():
-    # TODO: navigate_to(Container, 'All') once ready
-    sel.force_navigate('containers_containers')
+    navigate_to(Container, 'All')
     tb.select('Grid View')
     assert tb.is_active('Grid View'), "Containers grid view setting failed"
     tb.select('Tile View')

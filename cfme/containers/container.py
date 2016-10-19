@@ -1,50 +1,32 @@
 # -*- coding: utf-8 -*-
+from functools import partial
+
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb
-from cfme.web_ui.menu import nav
-from . import details_page
+from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location, accordion
+from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from . import details_page, pol_btn, mon_btn
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
-nav.add_branch(
-    'containers_containers',
-    {
-        'containers_container':
-        lambda ctx: list_tbl.select_row_by_cells(
-            {'Name': ctx['container'].name, 'Pod Name': ctx['container'].pod.name}),
-
-        'containers_container_detail':
-        lambda ctx: list_tbl.click_row_by_cells(
-            {'Name': ctx['container'].name, 'Pod Name': ctx['container'].pod.name}),
-    }
-)
+match_page = partial(match_location, controller='container', title='Containers')
 
 
-class Container(Taggable, SummaryMixin):
+class Container(Taggable, SummaryMixin, Navigatable):
 
-    def __init__(self, name, pod):
+    def __init__(self, name, pod, appliance=None):
         self.name = name
         self.pod = pod
-
-    def _on_detail_page(self):
-        return sel.is_displayed(
-            '//div//h1[contains(., "{} (Summary)")]'.format(self.name))
+        Navigatable.__init__(self, appliance=appliance)
 
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            self.navigate(detail=True)
-        elif refresh:
+        navigate_to(self, 'Details')
+        if refresh:
             tb.refresh()
-
-    def navigate(self, detail=True):
-        if detail is True:
-            if not self._on_detail_page():
-                sel.force_navigate(
-                    'containers_container_detail', context={
-                        'container': self, 'pod': self.pod})
-        else:
-            sel.force_navigate('containers_container', context={'container': self})
 
     def click_element(self, *ident):
         self.load_details(refresh=True)
@@ -58,3 +40,58 @@ class Container(Taggable, SummaryMixin):
         """
         self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
+
+
+@navigator.register(Container, 'All')
+class ContainerAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def am_i_here(self):
+        return match_page(summary='All Containers')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Containers', 'Containers')(None)
+
+    def resetter(self):
+        accordion.tree('Containers', version.pick({
+            version.LOWEST: 'All Containers',
+            '5.7': 'All Containers (by Pods)',
+        }))
+        tb.select('List View')
+        if paginator.page_controls_exist():
+            sel.check(paginator.check_all())
+            sel.uncheck(paginator.check_all())
+
+
+@navigator.register(Container, 'Details')
+class ContainerDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb.select('List View')
+        list_tbl.click_row_by_cells({'Name': self.obj.name, 'Pod Name': self.obj.pod})
+
+
+@navigator.register(Container, 'EditTags')
+class ContainerEditTags(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        pol_btn('Edit Tags')
+
+
+@navigator.register(Container, 'Timelines')
+class ContainerTimeLines(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
+
+
+@navigator.register(Container, 'Utilization')
+class ContainerUtilization(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Utilization')

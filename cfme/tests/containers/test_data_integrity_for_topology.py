@@ -1,7 +1,7 @@
 import pytest
 import time
 
-# from cfme.containers.container import Container
+from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.pod import Pod
 from cfme.containers.project import Project
@@ -29,8 +29,8 @@ pytest_generate_tests = testgen.generate(
 DataSet = namedtuple('DataSet', ['object', 'name'])
 
 # TODO: add the following to the list once possible:
-#     DataSet(Container, 'Containers')
 DATA_SETS = [
+    DataSet(Container, 'Containers'),
     DataSet(Node, 'Nodes'),
     DataSet(Project, 'Projects'),
     DataSet(Pod, 'Pods'),
