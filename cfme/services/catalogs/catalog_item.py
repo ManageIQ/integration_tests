@@ -237,7 +237,7 @@ class CatalogItem(Updateable, Pretty):
                                'select_orch_template': self.orch_template,
                                'select_provider': self.provider_type,
                                'select_config_template': self.config_template})
-        if self.item_type != "Orchestration" and self.item_type != "AnsibleTower":
+        if sel.text(basic_info_form.field_entry_point) == "":
             sel.click(basic_info_form.field_entry_point)
             if version.current_version() < "5.7":
                 dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
@@ -329,7 +329,7 @@ class CatalogBundle(Updateable, Pretty):
     pretty_attrs = ['name', 'catalog', 'dialog']
 
     def __init__(self, name=None, description=None,
-                 display_in=False, catalog=None,
+                 display_in=None, catalog=None,
                  dialog=None):
         self.name = name
         self.description = description
@@ -348,11 +348,15 @@ class CatalogBundle(Updateable, Pretty):
                                'display_checkbox': self.display_in,
                                'select_catalog': str(self.catalog),
                                'select_dialog': str(self.dialog)})
-        if current_version().is_in_series("5.3"):
-            sel.click(basic_info_form.field_entry_point)
-            dynamic_tree.click_path("Datastore", domain, "Service", "Provisioning",
-                                    "StateMachines", "ServiceProvision_Template", "default")
-            sel.click(basic_info_form.apply_btn)
+        sel.click(basic_info_form.field_entry_point)
+        if sel.text(basic_info_form.field_entry_point) == "":
+            if version.current_version() < "5.7":
+                dynamic_tree.click_path("Datastore", domain, "Service", "Provisioning",
+                    "StateMachines", "ServiceProvision_Template", "default")
+            else:
+                entry_tree.click_path("Datastore", domain, "Service", "Provisioning",
+                    "StateMachines", "ServiceProvision_Template", "default")
+        sel.click(basic_info_form.apply_btn)
         tabstrip.select_tab("Resources")
         for cat_item in cat_items:
             fill(resources_form, {'choose_resource': cat_item})
