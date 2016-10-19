@@ -258,7 +258,7 @@ class Widget(Pretty):
     @classmethod
     def all(cls):
         """Returns objects with all Widgets currently present."""
-        navigate_to(Dashboard, 'All')
+        navigate_to(Dashboard, 'Main')
         result = []
         for el in sel.elements(cls._all):
             result.append(cls(sel.get_attribute(el, "id")))
