@@ -158,7 +158,5 @@ def test_drag_and_drop_widget_to_the_bottom_of_another_column(widgets, soft_asse
     old_widgets_ids_list = widgets.all_widgets_ids
     first_widget.drag_and_drop(second_widget)
     new_widgets_ids_list = [widget._div_id for widget in Widget.all()]
-    popped_widget_id = old_widgets_ids_list.pop(0)
-    # an index of widget below of which we want to put the left upper widget is 4
-    old_widgets_ids_list.insert(4, popped_widget_id)
-    soft_assert(old_widgets_ids_list == new_widgets_ids_list, "Drag and drop failed.")
+    soft_assert(old_widgets_ids_list.index(first_widget._div_id) ==
+                new_widgets_ids_list.index(second_widget._div_id), "Drag and drop failed.")
