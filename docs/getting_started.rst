@@ -30,7 +30,8 @@ file, place it in the ``cfme_tests`` repository (along ``conftest.py``):
 
   . ./.cfme_tests/bin/activate
   python scripts/disable-bytecode.py
-  PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt
+  pip install --upgrade pip
+  PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt --no-cache-dir
   echo "Run '. ./.cfme_tests/bin/activate' to load the virtualenv"
 
 Detailed steps (manual environment setup):
