@@ -66,6 +66,7 @@ from selenium.common import exceptions as sel_exceptions
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.remote.file_detector import LocalFileDetector
 from multimethods import multimethod, multidispatch, Anything
+from widgetastic.xpath import quote
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions, js
@@ -3990,6 +3991,24 @@ def controller_name():
         :py:class:`str` if present, :py:class:`NoneType` otherwise.
     """
     return sel.execute_script('return ManageIQ.controller;')
+
+
+def match_location(controller=None, title=None, summary=None):
+    """Does exact match of passed data
+
+        Returns:
+        :py:class:`bool`
+    """
+    result = []
+    if controller:
+        result.append(controller_name() == controller)
+    if title:
+        result.append(browser_title() == title)
+    if summary:
+        result.append((summary_title() == summary) or
+                      (sel.is_displayed('//h3[normalize-space(.) = {}]'.format(quote(summary)))))
+
+    return all(result)
 
 
 class StatusBox(object):

@@ -12,7 +12,7 @@ from cfme.exceptions import CandidateNotFound, ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Region, listaccordion as list_acc, toolbar as tb,
-    flash, InfoBlock, summary_title, fill, paginator
+    flash, InfoBlock, match_location, fill, paginator, accordion
 )
 from cfme.web_ui.form_buttons import FormButton
 from utils import version
@@ -31,6 +31,9 @@ default_datastore_filter_btn = FormButton('Set the current filter as my default'
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
+
+match_page = partial(match_location, controller='storage',
+                     title='Datastores')
 
 # todo: to make provider a mandatory param.
 # maybe it might be better of getting this param from db or appliance w/o making it mandatory.
@@ -184,6 +187,7 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
+        accordion.tree('Datastores', 'All Datastores')
         tb.select("Grid View")
         sel.check(paginator.check_all())
         sel.uncheck(paginator.check_all())
@@ -197,12 +201,7 @@ class Details(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
     def am_i_here(self):
-        title = version.pick({version.LOWEST: '{} ({})'.format(self.obj.name, "Datastore"),
-                             "5.6": '{} "{}"'.format("Datastore", self.obj.name)})
-        try:
-            return summary_title() == title
-        except AttributeError:
-            return False
+        return match_page(summary='{} "{}"'.format("Datastore", self.obj.name))
 
 
 @navigator.register(Datastore, 'DetailsFromProvider')
@@ -213,12 +212,7 @@ class DetailsFromProvider(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
     def am_i_here(self):
-        title = version.pick({version.LOWEST: '{} ({})'.format(self.obj.name, "Datastore"),
-                              "5.6": '{} "{}"'.format("Datastore", self.obj.name)})
-        try:
-            return summary_title() == title
-        except AttributeError:
-            return False
+        return match_page(summary='{} "{}"'.format("Datastore", self.obj.name))
 
 
 def get_all_datastores(do_not_navigate=False):

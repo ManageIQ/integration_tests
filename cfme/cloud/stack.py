@@ -7,7 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme import web_ui as ui
 from cfme.exceptions import DestinationNotFound
 from cfme.web_ui import Quadicon, flash, Form, fill, form_buttons, paginator, toolbar as tb, \
-    summary_title, accordion
+    match_location, accordion
 from cfme.exceptions import CFMEException, FlashMessageException
 from utils.appliance import Navigatable
 from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
@@ -25,11 +25,8 @@ edit_tags_form = Form(
         ("select_value", ui.Select("select#tag_add"))
     ])
 
-
-def match_title_and_controller():
-    title_match = sel.execute_script('return document.title;') == 'CFME: Stacks'
-    controller_match = sel.execute_script('return ManageIQ.controller;') == 'orchestration_stack'
-    return title_match and controller_match
+match_page = partial(match_location, controller='orchestration_stack',
+                     title='Stacks')
 
 
 class Stack(Pretty, Navigatable):
@@ -113,11 +110,10 @@ class Stack(Pretty, Navigatable):
 
 @navigator.register(Stack, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def am_i_here(self):
-        summary_match = summary_title() == 'Orchestration Stacks'
-        return match_title_and_controller() and summary_match
+        return match_page(summary='Orchestration Stacks')
 
     def step(self):
         from cfme.web_ui.menu import nav
@@ -134,8 +130,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def am_i_here(self):
-        summary_match = summary_title() == '{} (Summary)'.format(self.obj.name)
-        return match_title_and_controller() and summary_match
+        return match_page(summary='{} (Summary)'.format(self.obj.name))
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
@@ -155,8 +150,7 @@ class RelationshipsSecurityGroups(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def am_i_here(self):
-        summary_match = summary_title() == '{} (All Security Groups)'.format(self.obj.name)
-        return match_title_and_controller() and summary_match
+        return match_page(summary='{} (All Security Groups)'.format(self.obj.name))
 
     def step(self):
         accordion.click('Relationships')
@@ -169,8 +163,7 @@ class RelationshipParameters(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def am_i_here(self):
-        summary_match = summary_title() == '{} (Parameters)'.format(self.obj.name)
-        return match_title_and_controller() and summary_match
+        return match_page(summary='{} (Parameters)'.format(self.obj.name))
 
     def step(self):
         accordion.click('Relationships')
@@ -183,8 +176,7 @@ class RelationshipOutputs(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def am_i_here(self):
-        summary_match = summary_title() == '{} (Outputs)'.format(self.obj.name)
-        return match_title_and_controller() and summary_match
+        return match_page(summary='{} (Outputs)'.format(self.obj.name))
 
     def step(self):
         accordion.click('Relationships')
@@ -197,8 +189,7 @@ class RelationshipResources(CFMENavigateStep):
     prerequisite = NavigateToSibling('Details')
 
     def am_i_here(self):
-        summary_match = summary_title() == '{} (Resources)'.format(self.obj.name)
-        return match_title_and_controller() and summary_match
+        return match_page(summary='{} (Resources)'.format(self.obj.name))
 
     def step(self):
         accordion.click('Relationships')

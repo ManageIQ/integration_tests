@@ -7,7 +7,7 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Quadicon, Region, toolbar as tb, paginator, summary_title
+from cfme.web_ui import Quadicon, Region, toolbar as tb, paginator, match_location
 from functools import partial
 from utils.pretty import Pretty
 from utils.providers import get_crud
@@ -21,6 +21,8 @@ details_page = Region(infoblock_type='detail')
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 
+match_page = partial(match_location, controller='resource_pool',
+                     title='Resource Pools')
 
 class ResourcePool(Pretty, Navigatable):
     """ Model of an infrastructure Resource pool in cfme
@@ -116,7 +118,7 @@ class Details(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
     def am_i_here(self):
-        return summary_title() == "{} (Summary)".format(self.obj.name)
+        return match_page(summary="{} (Summary)".format(self.obj.name))
 
 
 def get_all_resourcepools(do_not_navigate=False):

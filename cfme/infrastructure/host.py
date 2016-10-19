@@ -18,7 +18,7 @@ import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins, summary_title
+    form_buttons, paginator, Input, mixins, match_location
 )
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
@@ -86,6 +86,9 @@ cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 pow_btn = partial(tb.select, 'Power')
 lif_btn = partial(tb.select, 'Lifecycle')
+
+match_page = partial(match_location, controller='host',
+                     title='Hosts')
 
 
 class Host(Updateable, Pretty, Navigatable):
@@ -421,7 +424,7 @@ class Details(CFMENavigateStep):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
 
     def am_i_here(self):
-        return summary_title() == "{} (Summary)".format(self.obj.name)
+        return match_page(summary="{} (Summary)".format(self.obj.name))
 
 
 @navigator.register(Host, 'Edit')

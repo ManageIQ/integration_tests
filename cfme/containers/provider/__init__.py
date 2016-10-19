@@ -1,10 +1,12 @@
+from functools import partial
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region, paginator,
-    summary_title
+    match_location
 )
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
@@ -84,6 +86,9 @@ prop_region = Region(
         }
     }
 )
+
+match_page = partial(match_location, controller='ems_container',
+                     title='Containers Providers')
 
 
 @BaseProvider.add_base_type
@@ -258,7 +263,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def am_i_here(self):
-        return "{} (Summary)".format(self.obj.name) == summary_title()
+        return match_page(summary="{} (Summary)".format(self.obj.name))
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))

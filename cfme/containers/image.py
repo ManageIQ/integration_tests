@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
+from functools import partial
+
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, summary_title, InfoBlock
+from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, match_location, InfoBlock
 from utils.appliance.endpoints.ui import CFMENavigateStep, navigator, navigate_to
 from utils.appliance import Navigatable
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
 
-def match_title_and_controller():
-    title_match = sel.execute_script('return document.title;') == 'CFME: Images'
-    controller_match = sel.execute_script('return ManageIQ.controller;') == 'container_image'
-    return title_match and controller_match
+match_page = partial(match_location, controller='container_image',
+                     title='Images')
 
 
 class Image(Taggable, SummaryMixin, Navigatable):
@@ -59,8 +59,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def am_i_here(self):
-        summary_match = summary_title() == '{} (Summary)'.format(self.obj.name)
-        return summary_match and match_title_and_controller()
+        return match_page(summary='{} (Summary)'.format(self.obj.name))
 
     def step(self):
         tb.select('List View')

@@ -10,7 +10,7 @@ import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     accordion, Quadicon, Form, Input, fill, form_buttons, mixins, Table, Region,
-    AngularSelect, summary_title, browser_title, controller_name
+    AngularSelect, match_location
 )
 from utils import version, conf
 from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
@@ -51,10 +51,8 @@ edit_manager_btn = form_buttons.FormButton('Save changes')
 cfg_btn = partial(tb.select, 'Configuration')
 
 
-def match_page(title):
-    return all((summary_title() == title,
-               browser_title() == 'Red Hat Satellite Provider',
-               controller_name() == 'provider_foreman'))
+match_page = partial(match_location, controller='provider_foreman',
+                     title='Red Hat Satellite Provider')
 
 
 class ConfigManager(Updateable, Pretty, Navigatable):
@@ -479,10 +477,10 @@ class MgrDetails(CFMENavigateStep):
         sel.click(Quadicon(self.obj.quad_name, None))
 
     def am_i_here(self):
-        return match_page(('Configuration Profiles under Red Hat Satellite '
-                           'Provider "{} Configuration Manager"'.format(self.obj.name),
-                           'Inventory Groups under Ansible Tower Provider'
-                           ' "{} Configuration Manager"'.format(self.obj.name)))
+        return any((match_page(summary='Configuration Profiles under Red Hat Satellite '
+                                       'Provider "{} Configuration Manager"'.format(self.obj.name)),
+                    match_page(summary='Inventory Groups under Ansible Tower Provider'
+                                       ' "{} Configuration Manager"'.format(self.obj.name))))
 
 
 @navigator.register(ConfigManager, 'EditFromDetails')
@@ -516,7 +514,7 @@ class SysAll(CFMENavigateStep):
         tb.select('Grid View')
 
     def am_i_here(self):
-        return match_page('All Configured Systems')
+        return match_page(summary='All Configured Systems')
 
 
 @navigator.register(ConfigSystem, 'Provision')
