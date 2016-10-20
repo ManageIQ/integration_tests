@@ -13,7 +13,7 @@ from utils import version
 from utils.log import logger
 from utils.wait import wait_for
 from selenium.common.exceptions import NoSuchElementException
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [pytest.mark.tier(2)]

@@ -5,7 +5,7 @@ import pytest
 from cfme import test_requirements
 from cfme.automate.service_dialogs import ServiceDialog, common
 from cfme.web_ui import paginator
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.fixture(scope="module")

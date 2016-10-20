@@ -13,7 +13,7 @@ from cfme.web_ui import (
     AngularSelect, match_location
 )
 from utils import version, conf
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
 from utils.log import logger
 from utils.pretty import Pretty

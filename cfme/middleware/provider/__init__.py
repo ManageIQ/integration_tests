@@ -8,7 +8,7 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.menu import nav
 from utils import version
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from utils.db import cfmedb
 
 from .. import cfg_btn, mon_btn, pol_btn

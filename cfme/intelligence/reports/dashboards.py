@@ -10,7 +10,7 @@ from utils import version
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class Dashboard(Updateable, Pretty, Navigatable):

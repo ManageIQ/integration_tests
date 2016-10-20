@@ -141,7 +141,7 @@ def login(user, submit_method=LOGIN_METHODS[-1]):
         RuntimeError: If the login fails, ie. if a flash message appears
     """
     # Circular import
-    from utils.appliance.endpoints.ui import navigate_to
+    from utils.appliance.implementations.ui import navigate_to
     login_view = navigate_to(store.current_appliance.server, 'LoginScreen')
 
     if not user:

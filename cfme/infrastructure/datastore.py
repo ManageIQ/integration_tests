@@ -17,7 +17,7 @@ from cfme.web_ui import (
 from cfme.web_ui.form_buttons import FormButton
 from utils import version
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.pretty import Pretty
 from utils.providers import get_crud
 from utils.wait import wait_for

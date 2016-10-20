@@ -9,7 +9,7 @@ from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 # TODO: we should not call out to utils here, but maybe rather have an infra setup provider fixture
 from utils.providers import setup_a_provider
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui import search
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)

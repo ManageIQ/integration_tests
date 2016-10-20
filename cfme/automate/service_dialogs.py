@@ -9,7 +9,7 @@ from cfme.web_ui import AngularSelect, Form, Select, SplitTable, accordion,\
     fill, flash, form_buttons, Table, Tree, Input, Region, BootstrapTreeview
 from utils import version
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
 from utils.update import Updateable
 

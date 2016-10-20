@@ -6,7 +6,7 @@ from cfme.web_ui import flash
 from cfme.automate.buttons import Button, ButtonGroup
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.infrastructure import host
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 
 pytestmark = [test_requirements.automate, pytest.mark.usefixtures('uses_infra_providers')]

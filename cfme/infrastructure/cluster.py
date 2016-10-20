@@ -8,7 +8,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.fixtures import pytest_selenium as sel
-from utils.appliance.endpoints.ui import navigate_to, navigator, CFMENavigateStep
+from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from utils.appliance import Navigatable
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, flash, \
     paginator, match_location

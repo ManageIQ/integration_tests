@@ -13,7 +13,7 @@ from cfme.web_ui.menu import extend_nav, nav
 from fixtures.pytest_store import store
 from utils import version
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable

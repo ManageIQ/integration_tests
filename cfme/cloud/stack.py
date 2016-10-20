@@ -10,7 +10,7 @@ from cfme.web_ui import Quadicon, flash, Form, fill, form_buttons, paginator, to
     match_location, accordion
 from cfme.exceptions import CFMEException, FlashMessageException
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.pretty import Pretty
 from utils.wait import wait_for
 

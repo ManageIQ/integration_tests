@@ -12,7 +12,7 @@ from utils import deferred_verpick, version
 from utils.timeutil import parsetime
 from utils.pretty import Pretty
 from utils.wait import wait_for
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 
 from . import BaseLoggedInPage
 

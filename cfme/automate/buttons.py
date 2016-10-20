@@ -10,7 +10,7 @@ from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from widgetastic_patternfly import CandidateNotFound
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.update import Updateable
 from utils import version
 

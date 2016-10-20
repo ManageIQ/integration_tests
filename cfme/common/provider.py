@@ -19,7 +19,7 @@ from utils import conf
 from utils import version
 from utils.api import rest_api
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
