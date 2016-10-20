@@ -56,7 +56,7 @@ class MiqBrowserPlugin(DefaultPlugin):
         # THIS ONE SHOULD ALWAYS USE JAVASCRIPT ONLY, NO OTHER SELENIUM INTERACTION
 
         def _check():
-            result = self.browser.execute_script(self.ENSURE_PAGE_SAFE)
+            result = self.browser.execute_script(self.ENSURE_PAGE_SAFE, silent=True)
             # TODO: Logging
             return bool(result)
 
@@ -103,8 +103,15 @@ class MiqBrowser(Browser):
             extra_objects=extra_objects)
 
     @property
+    def appliance(self):
+        return self.extra_objects['appliance']
+
+    def create_view(self, *args, **kwargs):
+        return self.appliance.browser.create_view(*args, **kwargs)
+
+    @property
     def product_version(self):
-        return self.extra_objects['appliance'].version
+        return self.appliance.version
 
 
 class CFMENavigateStep(NavigateStep):

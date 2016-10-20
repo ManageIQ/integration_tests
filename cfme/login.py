@@ -50,8 +50,7 @@ class LoginPage(View):
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
         from cfme.configure.access_control import User
-        user = User(credential=cred)
-        user.name = 'Administrator'
+        user = User(credential=cred, name='Administrator')
         return self.log_in(user, **kwargs)
 
     def submit_login(self, method='click_on_login'):
@@ -72,6 +71,12 @@ class LoginPage(View):
             'password': user.credential.secret,
         })
         self.submit_login(method)
+        logged_in_view = self.browser.create_view(BaseLoggedInPage)
+        if logged_in_view.logged_in and user.name is None:
+            name = logged_in_view.current_fullname
+            self.logger.info(
+                'setting the appliance.user.name to %r because it was not specified', name)
+            user.name = name
         self.extra.appliance.user = user
 
     def update_password(
@@ -144,8 +149,7 @@ def login(user, submit_method=LOGIN_METHODS[-1]):
         password = conf.credentials['default']['password']
         cred = Credential(principal=username, secret=password)
         from cfme.configure.access_control import User
-        user = User(credential=cred)
-        user.name = 'Administrator'
+        user = User(credential=cred, name='Administrator')
 
     logged_in_view = store.current_appliance.browser.create_view(BaseLoggedInPage)
 
