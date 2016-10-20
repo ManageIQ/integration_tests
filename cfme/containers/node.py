@@ -1,59 +1,100 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
+from functools import partial
+from navmazing import NavigateToAttribute, NavigateToSibling
+
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb
-from cfme.web_ui.menu import nav
-from . import details_page
+from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, InfoBlock, match_location
+from utils.appliance import Navigatable
+from utils.appliance.endpoints.ui import CFMENavigateStep, navigator, navigate_to
+from . import pol_btn, mon_btn
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
-nav.add_branch(
-    'containers_nodes',
-    {
-        'containers_node':
-        lambda ctx: list_tbl.select_row_by_cells(
-            {'Name': ctx['node'].name, 'Provider': ctx['node'].provider.name}),
-
-        'containers_node_detail':
-        lambda ctx: list_tbl.click_row_by_cells(
-            {'Name': ctx['node'].name, 'Provider': ctx['node'].provider.name}),
-    }
-)
+match_page = partial(match_location, controller='container_node', title='Nodes')
 
 
-class Node(Taggable, SummaryMixin):
+class Node(Taggable, SummaryMixin, Navigatable):
 
-    def __init__(self, name, provider):
+    def __init__(self, name, provider, appliance=None):
         self.name = name
         self.provider = provider
-
-    def _on_detail_page(self):
-        return sel.is_displayed(
-            '//div//h1[contains(., "{} (Summary)")]'.format(self.name))
+        Navigatable.__init__(self, appliance=appliance)
 
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            self.navigate(detail=True)
-        elif refresh:
+        navigate_to(self, 'Details')
+        if refresh:
             tb.refresh()
-
-    def click_element(self, *ident):
-        self.load_details(refresh=True)
-        return sel.click(details_page.infoblock.element(*ident))
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
         Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the InfoBlock's value.
+            *ident: Table name and Key name, e.g. "Relationships", "Images"
+        Returns: A string representing the contents of the summary's value.
         """
-        self.load_details(refresh=True)
-        return details_page.infoblock.text(*ident)
+        self.load_details(refresh=False)
+        return InfoBlock.text(*ident)
 
-    def navigate(self, detail=True):
-        if detail is True:
-            if not self._on_detail_page():
-                sel.force_navigate('containers_node_detail', context={'node': self})
-        else:
-            sel.force_navigate('containers_node', context={'node': self})
+
+@navigator.register(Node, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def am_i_here(self):
+        return match_page(summary='Nodes')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Compute', 'Containers', 'Container Nodes')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("List View")
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
+
+
+@navigator.register(Node, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def am_i_here(self):
+        return match_page(summary='{} (Summary)'.format(self.obj.name))
+
+    def step(self):
+        # Assuming default list view from prerequisite
+        list_tbl.click_row_by_cells({'Name': self.obj.name, 'Provider': self.obj.provider.name})
+
+
+@navigator.register(Node, 'EditTags')
+class EditTags(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        match_page(summary='Tag Assignment')
+
+    def step(self):
+        pol_btn('Edit Tags')
+
+
+@navigator.register(Node, 'ManagePolicies')
+class ManagePolicies(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        match_page(summary='Select Policy Profiles')
+
+    def step(self):
+        pol_btn('Manage Policies')
+
+
+@navigator.register(Node, 'Utilization')
+class Utilization(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        match_page(summary='{} Capacity & Utilization'.format(self.obj.name))
+
+    def step(self):
+        mon_btn('Utilization')

@@ -18,11 +18,12 @@ pytest_generate_tests = testgen.generate(
 VIEWS = ['Grid View', 'Tile View', 'List View']
 BUTTON_GROUP = ['Containers Providers', 'Projects', 'Routes', 'Nodes', 'Containers', 'Replicators']
 
+# TODO: Replace with navigator registered destinations when all container objects support them
 mapping = {
     'Containers Providers': 'containers_providers',
     'Projects': 'containers_projects',
     'Routes': 'containers_routes',
-    'Nodes': 'containers_nodes',
+    # 'Nodes': 'containers_nodes',
     'Containers': 'containers_containers',
     'Replicators': 'containers_replicators',
 }
