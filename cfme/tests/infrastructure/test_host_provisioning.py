@@ -9,7 +9,7 @@ from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen, version
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),

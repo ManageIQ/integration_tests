@@ -9,7 +9,7 @@ from utils.providers import setup_a_provider
 from cfme.cloud import instance  # NOQA
 from cfme.infrastructure import virtual_machines  # NOQA
 from cfme.services import workloads  # NOQA
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 
 pytestmark = [pytest.mark.tier(3),

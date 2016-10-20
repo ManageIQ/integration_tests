@@ -6,7 +6,7 @@ from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar, Quadicon
 from utils import testgen
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 
 

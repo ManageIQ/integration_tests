@@ -10,7 +10,7 @@ from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.providers import setup_a_provider as _setup_a_provider
 from cfme.infrastructure import virtual_machines  # NOQA
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import Datastore
 

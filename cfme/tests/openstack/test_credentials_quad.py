@@ -2,7 +2,7 @@ import pytest
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import Quadicon
 from utils import testgen
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type,

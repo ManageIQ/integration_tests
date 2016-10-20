@@ -8,7 +8,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Select, SortTable, accordion, fill, flash, form_buttons, toolbar, \
     Input
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils import version

@@ -13,7 +13,7 @@ from utils.pretty import Pretty
 from utils.providers import get_crud
 from utils.wait import wait_for
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 details_page = Region(infoblock_type='detail')

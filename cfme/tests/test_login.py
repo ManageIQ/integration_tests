@@ -3,7 +3,7 @@ from cfme import BaseLoggedInPage, login, Credential
 from cfme.configure.access_control import User
 from utils import conf, error
 from utils.appliance import get_or_create_current_appliance
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = pytest.mark.usefixtures('browser')
 

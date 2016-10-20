@@ -10,7 +10,7 @@ from cfme.containers.project import Project
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import InfoBlock, CheckboxTable, paginator, toolbar as tb
 from utils import testgen, version
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 from utils.version import current_version
 

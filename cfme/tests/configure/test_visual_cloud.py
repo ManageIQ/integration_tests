@@ -89,7 +89,8 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
-    # TODO replace with utils.appliance.endpoints.ui.navigate_to when all grid_pages support it
+    # TODO replace with utils.appliance.implementations.ui.navigate_to
+    # when all grid_pages support it
     sel.force_navigate(page)
     tb.select('Grid View')
     if paginator.rec_total() is not None:

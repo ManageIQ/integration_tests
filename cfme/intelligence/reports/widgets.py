@@ -14,7 +14,7 @@ from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.wait import wait_for
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 visibility_obj = ShowingInputs(

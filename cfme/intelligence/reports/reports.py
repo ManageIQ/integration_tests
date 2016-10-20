@@ -19,7 +19,7 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils import version
 from utils.timeutil import parsetime
 

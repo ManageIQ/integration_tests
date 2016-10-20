@@ -35,7 +35,7 @@ from utils.version import Version, get_stream, pick, LATEST
 from utils.wait import wait_for
 from utils import clear_property_cache
 
-from .endpoints.ui import ViaUI
+from .implementations.ui import ViaUI
 
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"

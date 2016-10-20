@@ -16,7 +16,7 @@ from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
 from utils import testgen, version, providers
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from cfme import test_requirements
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")

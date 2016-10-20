@@ -13,7 +13,7 @@ from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.version import LOWEST
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 
 assignment_tree = Tree("//div[@id='cb_assignments_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")

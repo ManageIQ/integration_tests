@@ -29,7 +29,7 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils import deferred_verpick, version
 from utils.pretty import Pretty
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
 
 # Page specific locators

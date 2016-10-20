@@ -22,7 +22,7 @@ from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, Angular
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, navigate_to, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick

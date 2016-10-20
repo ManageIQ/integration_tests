@@ -12,7 +12,7 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
 from utils.appliance import Navigatable
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.pretty import Pretty

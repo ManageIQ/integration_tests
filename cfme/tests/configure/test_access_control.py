@@ -15,7 +15,7 @@ from cfme.infrastructure import virtual_machines
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update

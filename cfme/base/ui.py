@@ -6,7 +6,7 @@ from cfme import BaseLoggedInPage
 from cfme.dashboard import DashboardView
 from cfme.login import LoginPage
 
-from utils.appliance.endpoints.ui import navigator, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 @navigator.register(Server)

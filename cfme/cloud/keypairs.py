@@ -2,7 +2,7 @@
 import cfme.fixtures.pytest_selenium as sel
 from navmazing import NavigateToAttribute
 from cfme.common import SummaryMixin, Taggable
-from utils.appliance.endpoints.ui import navigate_to, navigator, CFMENavigateStep
+from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from utils.appliance import Navigatable
 from cfme.web_ui import (Quadicon, flash, Form, Input, form_buttons, fill, AngularSelect,
      CheckboxTable)
