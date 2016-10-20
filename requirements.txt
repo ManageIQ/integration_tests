@@ -29,6 +29,8 @@ progress
 psphere
 py
 pycurl
+# cryptography fails to build w/ AssertError w/ >=2.14
+pycparser==2.13
 pycrypto
 pygal
 PyGithub
