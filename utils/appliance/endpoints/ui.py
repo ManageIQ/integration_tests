@@ -130,13 +130,13 @@ class CFMENavigateStep(NavigateStep):
     def create_view(self, *args, **kwargs):
         return self.appliance.browser.create_view(*args, **kwargs)
 
-    def am_i_here(self):
+    def am_i_here(self, *args, **kwargs):
         try:
             return self.view.is_displayed
         except (AttributeError, NoSuchElementException):
             return False
 
-    def pre_navigate(self, _tries=0):
+    def pre_navigate(self, _tries=0, *args, **kwargs):
         if _tries > 2:
             # Need at least three tries:
             # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
@@ -149,7 +149,7 @@ class CFMENavigateStep(NavigateStep):
         if self.appliance.is_miqqe_patch_candidate and not self.appliance.miqqe_patch_applied:
             self.appliance.patch_with_miqqe()
             self.appliance.browser.quit_browser()
-            self.go(_tries)
+            self.go(_tries, *args, **kwargs)
 
         wt = self.appliance.browser.widgetastic
 
@@ -166,7 +166,7 @@ class CFMENavigateStep(NavigateStep):
                 wt.is_displayed(".modal-backdrop.fade.in")):
             logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
             self.appliance.browser.quit_browser()
-            self.go(_tries)
+            self.go(_tries, *args, **kwargs)
 
         # Check if modal window is displayed
         if (wt.is_displayed(
@@ -191,7 +191,7 @@ class CFMENavigateStep(NavigateStep):
             self.appliance.wait_for_web_ui()
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser()
-            self.go(_tries)
+            self.go(_tries, *args, **kwargs)
 
         # Same with rails errors
         rails_e = get_rails_error()
@@ -209,10 +209,10 @@ class CFMENavigateStep(NavigateStep):
             logger.debug(store.current_appliance.managed_providers)
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser()
-            self.go(_tries)
+            self.go(_tries, *args, **kwargs)
             # If there is a rails error past this point, something is really awful
 
-    def do_nav(self, _tries=0):
+    def do_nav(self, _tries=0, *args, **kwargs):
         # Set this to True in the handlers below to trigger a browser restart
         recycle = False
 
@@ -225,7 +225,7 @@ class CFMENavigateStep(NavigateStep):
         wt = self.appliance.browser.widgetastic
 
         try:
-            self.step()
+            self.step(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
             # ValueError: ui_navigate.go_to can't handle this page, give up
@@ -234,7 +234,7 @@ class CFMENavigateStep(NavigateStep):
             if _tries == 1:
                 # There was an alert, accept it and try again
                 wt.handle_alert(wait=0)
-                self.go(_tries)
+                self.go(_tries, *args, **kwargs)
             else:
                 # There was still an alert when we tried again, shoot the browser in the head
                 logger.debug('Unxpected alert, recycling browser')
@@ -322,16 +322,16 @@ class CFMENavigateStep(NavigateStep):
             self.appliance.browser.quit_browser()
             logger.debug('browser killed on try {}'.format(_tries))
             # If given a "start" nav destination, it won't be valid after quitting the browser
-            self.go(_tries)
+            self.go(_tries, *args, **kwargs)
 
-    def go(self, _tries=0):
+    def go(self, _tries=0, *args, **kwargs):
         _tries += 1
         self.appliance.browser.widgetastic.dismiss_any_alerts()
-        self.pre_navigate(_tries)
+        self.pre_navigate(_tries, *args, **kwargs)
         logger.debug("NAVIGATE: Checking if already at {}".format(self._name))
         here = False
         try:
-            here = self.am_i_here()
+            here = self.am_i_here(*args, **kwargs)
         except Exception as e:
             logger.debug("NAVIGATE: Exception raised [{}] whilst checking if already at {}".format(
                 e, self._name))
@@ -341,9 +341,9 @@ class CFMENavigateStep(NavigateStep):
             logger.debug("NAVIGATE: I'm not at {}".format(self._name))
             self.prerequisite()
             logger.debug("NAVIGATE: Heading to destination {}".format(self._name))
-            self.do_nav(_tries)
-        self.resetter()
-        self.post_navigate(_tries)
+            self.do_nav(_tries, *args, **kwargs)
+        self.resetter(*args, **kwargs)
+        self.post_navigate(_tries, *args, **kwargs)
         if self.VIEW is not None:
             return self.view
 
