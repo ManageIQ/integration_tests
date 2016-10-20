@@ -87,18 +87,33 @@ class IPAppliance(object):
         self.browser_steal = browser_steal
         self.container = container
         self._db_ssh_client = None
-
-        username = conf.credentials['default']['username']
-        password = conf.credentials['default']['password']
-        from cfme.configure.access_control import User, Credential
-        cred = Credential(principal=username, secret=password)
-        self.user = User(credential=cred, appliance=self, name='Administrator')
+        self._user = None
 
         from cfme.base import Server
         self.server = Server(appliance=self)
         self.browser = ViaUI(owner=self)
         self.context = ImplementationContext.from_instances(
             [self.browser])
+
+    @property
+    def user(self):
+        from cfme.configure.access_control import User, Credential
+        if self._user is None:
+            # Admin by default
+            username = conf.credentials['default']['username']
+            password = conf.credentials['default']['password']
+            logger.info(
+                '%r.user was set to None before, therefore generating an admin user: %s/%s',
+                self, username, password)
+            cred = Credential(principal=username, secret=password)
+            self._user = User(credential=cred, appliance=self, name='Administrator')
+        return self._user
+
+    @user.setter
+    def user(self, user_object):
+        if user_object is None:
+            logger.info('%r.user set to None, will be set to admin on next access', self)
+        self._user = user_object
 
     @property
     def appliance(self):
