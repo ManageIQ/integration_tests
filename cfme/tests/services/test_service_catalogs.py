@@ -43,18 +43,17 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs.order(catalog_item.catalog.name, catalog_item)
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=1400, delay=20)
-    assert row.last_message.text == 'Request complete'
+    assert row.request_state.text == 'Finished'
     register_event('Service', catalog_item.name, 'service_provisioned')
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1350903, forced_streams=["5.6", "upstream"])])
 def test_order_catalog_item_via_rest(
         request, rest_api, provider, setup_provider, catalog_item, catalog):
     """Same as :py:func:`test_order_catalog_item`, but using REST.
@@ -82,6 +81,7 @@ def test_order_catalog_item_via_rest(
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1384759, forced_streams=["5.7", "upstream"])])
 def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     """Tests ordering a catalog bundle
     Metadata:
@@ -96,13 +96,13 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     catalog_bundle.create([catalog_item.name])
     service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_bundle)
+    service_catalogs.order(catalog_item.catalog.name, catalog_bundle)
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = bundle_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=1200, delay=20)
-    assert row.last_message.text == 'Request complete'
+    assert row.request_state.text == 'Finished'
 
 
 # Note here this needs to be reduced, doesn't need to test against all providers
@@ -124,7 +124,6 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
     flash.assert_message_match("'Catalog/Name' is required")
 
 
-@pytest.mark.meta(blockers=[BZ(1210541, forced_streams=["5.4", "5.5", "upstream"])])
 @pytest.mark.tier(3)
 def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
@@ -138,7 +137,6 @@ def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_
                                  catalog_item.name))
 
 
-@pytest.mark.meta(blockers=[BZ(1210541, forced_streams=["5.4", "5.5", "upstream"])])
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('setup_provider')
 def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
@@ -148,7 +146,7 @@ def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
     """
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs.order(catalog_item.catalog.name, catalog_item)
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
