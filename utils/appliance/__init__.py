@@ -1689,6 +1689,30 @@ class IPAppliance(object):
     def server_details_changed(self):
         clear_property_cache(self, 'configuration_details', 'zone_description')
 
+    @logger_wrap("Setting dev branch: {}")
+    def use_dev_branch(self, repo, branch, log_callback=None):
+        """Sets up an exitsing appliance to change the branch to specified one and reset it.
+
+        Args:
+            repo: URL to the repo
+            branch: Branch of that repo
+        """
+        with self.ssh_client as ssh_client:
+            dev_branch_cmd = 'cd /var/www/miq/vmdb; git remote add dev_branch {}'.format(repo)
+            if not ssh_client.run_command(dev_branch_cmd):
+                ssh_client.run_command('cd /var/www/miq/vmdb; git remote remove dev_branch')
+                if not ssh_client.run_command(dev_branch_cmd):
+                    raise Exception('Could not add the dev_branch remote')
+            # We now have the repo and now let's update it
+            ssh_client.run_command('cd /var/www/miq/vmdb; git remote update')
+            self.stop_evm_service()
+            ssh_client.run_command(
+                'cd /var/www/miq/vmdb; git checkout dev_branch/{}'.format(branch))
+            ssh_client.run_command('cd /var/www/miq/vmdb; bin/update')
+            self.start_evm_service()
+            self.wait_for_evm_service()
+            self.wait_for_web_ui()
+
 
 class Appliance(IPAppliance):
     """Appliance represents an already provisioned cfme appliance vm

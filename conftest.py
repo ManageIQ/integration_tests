@@ -145,6 +145,7 @@ pytest_plugins = (
     'fixtures.parallelizer',
 
     'fixtures.single_appliance_sprout',
+    'fixtures.dev_branch',
     'fixtures.events',
     'fixtures.appliance_update',
     'fixtures.blockers',
