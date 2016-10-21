@@ -237,10 +237,10 @@ def make_vm_from_template(api, cluster, temp_template_name, temp_vm_name, provid
         if mgmt_network:
             vm = api.vms.get(temp_vm_name)
             nic = vm.nics.get('eth0')
-            nic.name = 'eth1'
+            nic.network = params.Network(
+                name=mgmt_network)
+            nic.interface = 'virtio'
             nic.update()
-            api.vms.get(temp_vm_name).nics.add(params.NIC(name='eth0', network=params.Network(
-                name=mgmt_network), interface='virtio'))
         # check, if the vm is really there
         if not api.vms.get(temp_vm_name):
             print("RHEVM:{} temp VM could not be provisioned".format(provider))
