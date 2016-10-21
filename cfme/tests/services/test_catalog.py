@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
-from cfme.services.catalogs.catalog import Catalog
 import pytest
-from utils.update import update
-import utils.error as error
+
 import cfme.tests.configure.test_access_control as tac
+import utils.error as error
 from cfme import test_requirements
+from cfme.services.catalogs.catalog import Catalog
+from utils.update import update
 
 pytestmark = [test_requirements.service, pytest.mark.tier(2)]
 
