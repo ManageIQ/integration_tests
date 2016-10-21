@@ -328,19 +328,23 @@ class CFMENavigateStep(NavigateStep):
         _tries += 1
         self.appliance.browser.widgetastic.dismiss_any_alerts()
         self.pre_navigate(_tries)
-        logger.debug("NAVIGATE: Checking if already at {}".format(self._name))
+        logger.info("[UI-NAV/{}/{}]: Checking if already here".format(
+            self.obj.__class__.__name__, self._name))
         here = False
         try:
             here = self.am_i_here()
         except Exception as e:
-            logger.debug("NAVIGATE: Exception raised [{}] whilst checking if already at {}".format(
-                e, self._name))
+            logger.info(
+                "[UI-NAV/{}/{}]: Exception raised [{}] whilst checking if already here".format(
+                    self.obj.__class__.__name__, self._name, e))
         if here:
-            logger.debug("NAVIGATE: Already at {}".format(self._name))
+            logger.info(
+                "[UI-NAV/{}/{}]: Already here".format(self.obj.__class__.__name__, self._name))
         else:
-            logger.debug("NAVIGATE: I'm not at {}".format(self._name))
+            logger.info("[UI-NAV/{}/{}]: Not here".format(self.obj.__class__.__name__, self._name))
             self.prerequisite()
-            logger.debug("NAVIGATE: Heading to destination {}".format(self._name))
+            logger.info("[UI-NAV/{}/{}]: Heading to destination".format(
+                self.obj.__class__.__name__, self._name))
             self.do_nav(_tries)
         self.resetter()
         self.post_navigate(_tries)
