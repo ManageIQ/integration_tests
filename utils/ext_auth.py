@@ -3,11 +3,10 @@ from time import sleep
 
 from cfme.configure.configuration import (
     DatabaseAuthSetting, ExternalAuthSetting, get_ntp_servers, set_ntp_servers)
-from cfme.login import login_admin, logout
+from utils import appliance
 from utils.browser import ensure_browser_open
 from utils.conf import credentials
 from utils.ssh import SSHClient
-from utils import appliance
 
 
 def setup_external_auth_ipa(**data):
@@ -39,13 +38,13 @@ def setup_external_auth_ipa(**data):
     assert rc == 0, out
     ssh.run_command('echo "127.0.0.1\t{}" > /etc/hosts'.format(appliance_fqdn))
     ensure_browser_open()
-    login_admin()
+    appliance.current_appliance.server.login_admin()
     if data["ipaserver"] not in get_ntp_servers():
         set_ntp_servers(data["ipaserver"])
         sleep(120)
     auth = ExternalAuthSetting(get_groups=data.pop("get_groups", False))
     auth.setup()
-    logout()
+    appliance.current_appliance.server.logout()
     creds = credentials.get(data.pop("credentials"), {})
     data.update(**creds)
     rc, out = ssh.run_command(
@@ -54,14 +53,14 @@ def setup_external_auth_ipa(**data):
     )
     assert rc == 0, out
     assert "failed" not in out.lower(), "External auth setup failed:\n{}".format(out)
-    login_admin()
+    appliance.current_appliance.server.login_admin()
 
 
 def disable_external_auth_ipa():
     """Unconfigure external auth."""
     ssh = SSHClient()
     ensure_browser_open()
-    login_admin()
+    appliance.current_appliance.server.login_admin()
     auth = DatabaseAuthSetting()
     auth.update()
     rc, out = ssh.run_command("appliance_console_cli --uninstall-ipa")

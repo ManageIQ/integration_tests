@@ -38,6 +38,7 @@ import base64
 from cfme import exceptions, js
 from fixtures.pytest_store import store
 from utils import version
+from utils.appliance import current_appliance
 from utils.browser import browser, ensure_browser_open, quit
 from utils.path import log_path
 from utils.log import logger
@@ -1100,9 +1101,9 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     def _login_func():
         if not current_user:  # default to admin user
-            login.login_admin()
+            current_appliance.server.login_admin()
         else:  # we recycled and want to log back in
-            login.login(store.current_appliance.user)
+            current_appliance.server.login(store.current_appliance.user)
 
     try:
         try:

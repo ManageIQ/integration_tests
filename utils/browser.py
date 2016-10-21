@@ -281,6 +281,9 @@ def ensure_browser_open(url_key=None):
         The current browser instance.
 
     """
+    if not url_key:
+        from utils.appliance import current_appliance
+        url_key = current_appliance.server.address()
     return manager.ensure_open(url_key=url_key)
 
 
