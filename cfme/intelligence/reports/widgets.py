@@ -112,7 +112,7 @@ class WidgetsDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        accordion.tree("Dashboard Widgets", "All Widgets", "Menus", self.obj.title)
+        accordion.tree("Dashboard Widgets", "All Widgets", self.obj.TITLE, self.obj.title)
 
     def am_i_here(self, *args, **kwargs):
         return summary_title() == "{} Widget \"{}\"".format(self.obj.TITLE[:-1], self.obj.title)

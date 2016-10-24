@@ -10,6 +10,7 @@ from cfme.intelligence.reports.schedules import Schedule
 from cfme.intelligence.reports.widgets import ChartWidget, MenuWidget, ReportWidget, RSSFeedWidget
 from utils.path import data_path
 from utils.update import update
+from utils.blockers import BZ
 from utils import version
 from cfme import test_requirements
 
@@ -80,7 +81,7 @@ def test_schedule_crud(schedule):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1209945])
+@pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
 def test_menuwidget_crud():
     w = MenuWidget(
         fauxfactory.gen_alphanumeric(),
@@ -99,7 +100,7 @@ def test_menuwidget_crud():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1209945])
+@pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
 def test_reportwidget_crud():
     w = ReportWidget(
         fauxfactory.gen_alphanumeric(),
@@ -118,7 +119,7 @@ def test_reportwidget_crud():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1209945])
+@pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
 def test_chartwidget_crud():
     w = ChartWidget(
         fauxfactory.gen_alphanumeric(),
@@ -135,7 +136,7 @@ def test_chartwidget_crud():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1209945])
+@pytest.mark.meta(blockers=[BZ(1388144, forced_streams=["5.7", "upstream"])])
 def test_rssfeedwidget_crud():
     w = RSSFeedWidget(
         fauxfactory.gen_alphanumeric(),
@@ -166,7 +167,7 @@ def test_dashboard_crud():
     d = Dashboard(
         fauxfactory.gen_alphanumeric(),
         "EvmGroup-administrator",
-        fauxfactory.gen_alphanumeric(),
+        title=fauxfactory.gen_alphanumeric(),
         locked=False,
         widgets=["Top CPU Consumers (weekly)", "Vendor and Guest OS Chart"]
     )
