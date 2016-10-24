@@ -96,7 +96,7 @@ class Filedump(ArtifactorBasePlugin):
         try:
             for f in artifacts[test_ident]['files']:
                 if f["file_type"] not in {
-                        "traceback", "short_tb", "func_trace", "rbac", "soft_traceback",
+                        "traceback", "short_tb", "rbac", "soft_traceback",
                         "soft_short_tb"}:
                     continue
                 filename = f["os_filename"]
