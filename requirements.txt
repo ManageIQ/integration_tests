@@ -6,7 +6,6 @@ diaper
 docker-py
 fauxfactory>=2.0.7
 flake8
-function_trace
 functools32
 ipython
 iso8601
