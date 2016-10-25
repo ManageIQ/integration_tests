@@ -41,7 +41,6 @@ class Widget(Updateable, Pretty, Navigatable):
         self.shortcuts = shortcuts
         self.visibility = visibility
 
-
     def generate(self, wait=True, **kwargs):
         navigate_to(self, 'Details')
         toolbar.select("Configuration", "Generate Widget content now", invokes_alert=True)
@@ -54,7 +53,8 @@ class Widget(Updateable, Pretty, Navigatable):
     def wait_generated(self, timeout=600):
         wait_for(
             self.check_status,
-            num_sec=timeout, delay=5, fail_condition=lambda result: result != "Complete")
+            num_sec=timeout, delay=5, fail_condition=lambda result: result != "Complete",
+            fail_func=toolbar.refresh)
 
     def check_status(self):
         navigate_to(self, 'Details')
