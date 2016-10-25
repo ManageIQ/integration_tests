@@ -167,6 +167,21 @@ def assert_no_errors(messages=None):
 
 
 @verify_rails_error
+def assert_success(messages=None):
+    """Asserts that there is 1 or more successful messages, no errors. If no messages
+    are passed in, they will be retrieved from the UI."""
+
+    all_messages = messages or get_messages()
+    errors = [error.message for error in filter(is_error, all_messages)]
+    if not all_messages:
+        raise FlashMessageException('No flash messages found')
+    elif errors:
+        raise FlashMessageException(', '.join(errors))
+    else:
+        return all_messages
+
+
+@verify_rails_error
 @verpick_message
 @onexception_printall
 def assert_message_match(m):
