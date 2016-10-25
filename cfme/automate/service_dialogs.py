@@ -154,7 +154,9 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
 
     def delete(self, cancel=False):
         navigate_to(self, 'Details')
-        cfg_btn("Remove from the VMDB", invokes_alert=True)
+        cfg_btn(version.pick({version.LOWEST: "Remove from the VMDB",
+                              '5.7': 'Remove Dialog'}),
+                invokes_alert=True)
         sel.handle_alert(cancel)
 
     def element_type(self, each_element):
