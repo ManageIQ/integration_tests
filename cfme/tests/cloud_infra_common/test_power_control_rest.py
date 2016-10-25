@@ -69,7 +69,7 @@ def test_stop(rest_api, vm_obj, from_detail):
     if from_detail:
         vm.action.stop()
     else:
-        rest_api.collections.vms.action.stop(vm)
+        vm_obj.get_collection_via_rest().action.stop(vm)
     wait_for(lambda: vm.power_state == vm_obj.STATE_OFF,
         num_sec=1000, delay=20, fail_func=vm.reload,
         message='Wait for VM to stop (current state: {})'.format(vm.power_state))
@@ -98,11 +98,11 @@ def test_start(rest_api, vm_obj, from_detail):
     vm = vm_obj.get_vm_via_rest()
     assert "start" in vm.action
     verify_vm_power_state(vm, state=vm_obj.STATE_SUSPENDED,
-        action=rest_api.collections.vms.action.suspend)
+        action=vm_obj.get_collection_via_rest().action.suspend)
     if from_detail:
         vm.action.start()
     else:
-        rest_api.collections.vms.action.start(vm)
+        vm_obj.get_collection_via_rest().action.start(vm)
     wait_for(lambda: vm.power_state == vm_obj.STATE_ON,
         num_sec=1000, delay=20, fail_func=vm.reload,
         message='Wait for VM to stop (current state: {})'.format(vm.power_state))
@@ -134,7 +134,7 @@ def test_suspend(rest_api, vm_obj, from_detail):
     if from_detail:
         vm.action.suspend()
     else:
-        rest_api.collections.vms.action.suspend(vm)
+        vm_obj.get_collection_via_rest().action.suspend(vm)
     wait_for(lambda: vm.power_state == vm_obj.STATE_SUSPENDED,
         num_sec=1000, delay=20, fail_func=vm.reload,
         message='Wait for VM to stop (current state: {})'.format(vm.power_state))
