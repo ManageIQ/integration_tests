@@ -149,7 +149,7 @@ class IPAppliance(object):
     """
     _nav_steps = {}
 
-    def __init__(self, address=None, browser_steal=False, container=None):
+    def __init__(self, address=None, browser_steal=False, container=None, openshift_shell=None):
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -165,6 +165,7 @@ class IPAppliance(object):
                 self._url = address.geturl()
         self.browser_steal = browser_steal
         self.container = container
+        self.openshift_shell = openshift_shell
         self._db_ssh_client = None
         self._user = None
         self.appliance_console = ApplianceConsole(self)
@@ -777,6 +778,7 @@ class IPAppliance(object):
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],
             'container': self.container,
+            'openshift_shell': self.openshift_shell,
         }
         ssh_client = ssh.SSHClient(**connect_kwargs)
         try:
@@ -2557,7 +2559,27 @@ def get_or_create_current_appliance():
         base_url = conf.env['base_url']
         if base_url is None or str(base_url.lower()) == 'none':
             raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
-        stack.push(IPAppliance(urlparse(base_url), container=conf.env.get('container', None)))
+        openshift = conf.env.get('openshift', None)
+        if openshift:
+            if not isinstance(openshift, dict):
+                raise TypeError('The openshift entry in env.yaml must be a dictionary')
+            try:
+                connect_kwargs = {
+                    'hostname': openshift['hostname'],
+                    'username': openshift['username'],
+                    'password': openshift['password'],
+                }
+            except KeyError:
+                raise ValueError(
+                    'You need to specify hostname, username and password for the openshift in env')
+            openshift_shell = ssh.SSHClient(**connect_kwargs)
+        else:
+            openshift_shell = None
+        stack.push(
+            IPAppliance(
+                urlparse(base_url),
+                container=conf.env.get('container', None),
+                openshift_shell=openshift_shell))
     return stack.top
 
 

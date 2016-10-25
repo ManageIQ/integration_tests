@@ -95,7 +95,9 @@ class SSHClient(paramiko.SSHClient):
         self._streaming = stream_output
         # deprecated/useless karg, included for backward-compat
         self._keystate = connect_kwargs.pop('keystate', None)
+        # Container is used to store buth docker VM's container name and Openshift pod name.
         self._container = connect_kwargs.pop('container', None)
+        self._openshift_shell = connect_kwargs.pop('openshift_shell', None)
 
         # load the defaults for ssh
         default_connect_kwargs = {
@@ -121,7 +123,11 @@ class SSHClient(paramiko.SSHClient):
 
     @property
     def is_container(self):
-        return self._container is not None
+        return self._container is not None and self._openshift_shell is None
+
+    @property
+    def is_pod(self):
+        return self._container is not None and self._openshift_shell is not None
 
     @property
     def username(self):
@@ -219,18 +225,27 @@ class SSHClient(paramiko.SSHClient):
         """
         if isinstance(command, dict):
             command = version.pick(command)
-        logger.info("Parsing command `{command}`".format(command=command))
+        original_command = command
         uses_sudo = False
-        if self.is_container and not ensure_host:
+        logger.info("Running command %r", command)
+        if self.is_pod:
+            # This command will be executed in the context of the host provider
+            command = 'oc rsh {} bash -c {}'.format(self._container, quote(
+                'source /etc/default/evm; ' + command))
+            return self._openshift_shell.run_command(command, ensure_host=True)
+        elif self.is_container and not ensure_host:
             command = 'docker exec {} bash -c {}'.format(self._container, quote(
                 'source /etc/default/evm; ' + command))
+
+        command = '{}\n'.format(command)
 
         if self.username != 'root' and not ensure_user:
             # We need sudo
             command = 'sudo -i bash -c {command}'.format(command=quote(command))
             uses_sudo = True
 
-        logger.info("Running command `{command}`".format(command=command))
+        if command != original_command:
+            logger.info("Actually running command %r", command)
         command += '\n'
 
         output = []
