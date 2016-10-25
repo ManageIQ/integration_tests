@@ -37,6 +37,9 @@ class LoggedIn(CFMENavigateStep):
     VIEW = BaseLoggedInPage
     prerequisite = NavigateToSibling('LoginScreen')
 
+    def am_i_here(self):
+        return self.view.is_displayed
+
     def step(self):
         login_view = self.create_view(LoginPage)
         login_view.log_in(self.obj.appliance.user)
