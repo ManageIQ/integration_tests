@@ -32,7 +32,7 @@ def test_charge_report_filter_owner(setup_first_provider, request):
     report = CustomReport(
         menu_name=fauxfactory.gen_alphanumeric(),
         title=fauxfactory.gen_alphanumeric(),
-        base_report_on="Chargebacks",
+        base_report_on="Chargeback for Vms",
         report_fields=[
             "Network I/O Used",
             "Network I/O Used Cost",
@@ -65,7 +65,7 @@ def test_charge_report_filter_tag(setup_first_provider, request):
     report = CustomReport(
         menu_name=fauxfactory.gen_alphanumeric(),
         title=fauxfactory.gen_alphanumeric(),
-        base_report_on="Chargebacks",
+        base_report_on="Chargeback for Vms",
         report_fields=[
             "CPU Used",
             "CPU Used Cost",
