@@ -136,8 +136,8 @@ class Schedule(Updateable, Pretty):
     def delete(self, cancel=False):
         sel.force_navigate("schedule", context={"schedule": self})
         delete_label = version.pick({
-            "5.4": "Delete this Schedule from the Database",
-            "5.5": "Delete this Schedule from the VMDB"})
+            "5.6": "Delete this Schedule from the VMDB",
+            "5.7": "Delete this Schedule"})
         cfg_btn(delete_label, invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
