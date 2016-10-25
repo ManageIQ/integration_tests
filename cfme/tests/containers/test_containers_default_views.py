@@ -23,7 +23,7 @@ mapping = {
     'Containers Providers': 'containers_providers',
     'Projects': 'containers_projects',
     'Routes': 'containers_routes',
-    # 'Nodes': 'containers_nodes',
+    'Nodes': 'containers_nodes',
     'Containers': 'containers_containers',
     'Replicators': 'containers_replicators',
 }
