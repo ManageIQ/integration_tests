@@ -12,7 +12,6 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.generators import random_vm_name
 from utils.log import logger
@@ -47,14 +46,12 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         'first_name': 'Image',
         'last_name': 'Provisioner',
         'notes': note,
-        'instance_type': provisioning['instance_type'] if provider.type != "azure" else
-        provisioning['vm_size'],
-        "availability_zone": provisioning["availability_zone"] if provider.type != "azure" else
-        None,
-        'security_groups': [provisioning['security_group']] if provider.type != "azure" else
-        provisioning["network_nsg"],
-        "guest_keypair": provisioning["guest_keypair"] if provider.type != "azure" else None
     }
+    if not isinstance(provider, AzureProvider):
+        inst_args['instance_type'] = provisioning['instance_type']
+        inst_args['availability_zone'] = provisioning['availability_zone']
+        inst_args['security_groups'] = [provisioning['security_group']]
+        inst_args['guest_keypair'] = provisioning['guest_keypair']
 
     if isinstance(provider, OpenStackProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
@@ -69,7 +66,8 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         inst_args['cloud_subnet'] = provisioning['subnet_range']
         inst_args['security_groups'] = provisioning['network_nsg']
         inst_args['resource_groups'] = provisioning['resource_group']
-        inst_args['instance_type'] = provisioning['vm_size']
+        inst_args['instance_type'] = provisioning['vm_size'].lower() \
+            if current_version() >= "5.7" else provisioning['vm_size']
         inst_args['admin_username'] = provisioning['vm_user']
         inst_args['admin_password'] = provisioning['vm_password']
     return instance, inst_args
@@ -87,7 +85,6 @@ def test_provision_from_template(request, setup_provider, provider, testing_inst
         test_flag: provision
     """
     instance, inst_args = testing_instance
-    sel.force_navigate("clouds_instances_by_provider")
     instance.create(**inst_args)
     instance.wait_to_appear(timeout=800)
     provider.refresh_provider_relationships()
@@ -282,7 +279,6 @@ def test_provision_from_template_with_attached_disks(
         if isinstance(provider, OpenStackProvider):
             inst_args['cloud_network'] = provisioning['cloud_network']
 
-        sel.force_navigate("clouds_instances_by_provider")
         instance.create(**inst_args)
 
         for volume_id in volumes:
@@ -353,7 +349,6 @@ def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
         if isinstance(provider, OpenStackProvider):
             inst_args['cloud_network'] = provisioning['cloud_network']
 
-        sel.force_navigate("clouds_instances_by_provider")
         instance.create(**inst_args)
 
         soft_assert(vm_name in provider.mgmt.volume_attachments(volume))
@@ -427,7 +422,6 @@ def test_provision_with_additional_volume(request, setup_provider, provider, vm_
     if isinstance(provider, OpenStackProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
 
-    sel.force_navigate("clouds_instances_by_provider")
     instance.create(**inst_args)
 
     prov_instance = provider.mgmt._find_instance_by_name(vm_name)
