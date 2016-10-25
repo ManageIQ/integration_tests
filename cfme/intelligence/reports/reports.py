@@ -364,6 +364,8 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         self.path = path_to_report
         self.datetime = datetime
         self.candu = candu
+        self.datetime_in_tree = version.pick({"5.6": self.datetime,
+                        "5.7": parsetime.from_american_with_utc(self.datetime).to_iso_with_utc()})
 
     def navigate(self):
         navigate_to(self, "Details")
