@@ -156,23 +156,31 @@ class ComputeRate(Updateable, Pretty, Navigatable):
     def __init__(self, description=None,
                  cpu_alloc=None,
                  cpu_used=None,
+                 cpu_used_var=None,
                  disk_io=None,
+                 disk_io_var=None,
                  compute_fixed_1=None,
                  compute_fixed_2=None,
                  mem_alloc=None,
                  mem_used=None,
+                 mem_used_var=None,
                  net_io=None,
+                 net_io_var=None,
                  appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.cpu_alloc = cpu_alloc
         self.cpu_used = cpu_used
+        self.cpu_used_var = cpu_used_var
         self.disk_io = disk_io
+        self.disk_io_var = disk_io_var
         self.compute_fixed_1 = compute_fixed_1
         self.compute_fixed_2 = compute_fixed_2
         self.mem_alloc = mem_alloc
         self.mem_used = mem_used
+        self.mem_used_var = mem_used_var
         self.net_io = net_io
+        self.net_io_var = net_io_var
 
     def create(self):
         navigate_to(self, 'New')
@@ -180,12 +188,16 @@ class ComputeRate(Updateable, Pretty, Navigatable):
             {'description': self.description,
              'cpu_alloc': self.cpu_alloc,
              'cpu_used': self.cpu_used,
+             'cpu_used_var': self.cpu_used_var,
              'disk_io': self.disk_io,
+             'disk_io_var': self.disk_io_var,
              'compute_fixed_1': self.compute_fixed_1,
              'compute_fixed_2': self.compute_fixed_2,
              'mem_alloc': self.mem_alloc,
              'mem_used': self.mem_used,
-             'net_io': self.net_io},
+             'mem_used_var': self.mem_used_var,
+             'net_io': self.net_io,
+             'net_io_var': self.net_io_var},
             action=rate_form.add_button)
         flash.assert_no_errors()
 
