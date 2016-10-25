@@ -169,8 +169,10 @@ class DefaultDashboardDetails(CFMENavigateStep):
     def step(self):
         """This can change, because the title of the default dashboard is mutable. However, we can
         xpath there quite reliable, so we use it that way we extract the name from the tree directly
-        """
-        t = "//li[@id='db_xx-1' or @id='dashboards_xx-1']/span/a"
+        """''
+        t = version.pick({
+            "5.6": "//li[@id='db_xx-1' or @id='dashboards_xx-1']/span/a",
+            "5.7": "//li[@data-nodeid='0.0.0' and @class = 'list-group-item node-db_treebox']"})
         accordion.tree("Dashboards", "All Dashboards", sel.text(t).encode("utf-8"))
 
 
