@@ -9,9 +9,9 @@ from jinja2 import Environment, FileSystemLoader
 from urllib2 import urlopen, HTTPError
 
 from utils import trackerbot
-from utils.conf import credentials
 from utils.conf import cfme_data
 from utils.path import template_path, log_path
+from utils.providers import list_providers
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -149,16 +149,16 @@ def templates_uploaded_on_providers(api, stream, template):
     for temp in api.template.get(
             limit=1, tested=False, group__name=stream).get('objects', []):
         if 'template_rhevm' in images_uploaded(stream):
-            if not filter(lambda x: 'rhevm' in x, temp['providers']):
+            if not provider_in_the_list(list_providers('rhevm'), temp['providers']):
                 return False
         if 'template_rhos' in images_uploaded(stream):
-            if not filter(lambda x: 'rhos' in x, temp['providers']):
+            if not provider_in_the_list(list_providers('openstack'), temp['providers']):
                 return False
         if 'template_vsphere' in images_uploaded(stream):
-            if not filter(lambda x: 'vsphere' in x, temp['providers']):
+            if not provider_in_the_list(list_providers('virtualcenter'), temp['providers']):
                 return False
         if 'template_scvmm' in images_uploaded(stream):
-            if not filter(lambda x: 'scvmm' in x, temp['providers']):
+            if not provider_in_the_list(list_providers('scvmm'), temp['providers']):
                 return False
     return True
 
@@ -178,41 +178,14 @@ def get_untested_templates(api, stream_group, appliance_template=None):
         template__group__name=stream_group, template=appliance_template).get('objects', [])
 
 
-def update_template_log(appliance_template, action, provider=None, failed_providers=None):
-    try:
-        trackerbot_ip = re.findall(r'[0-9]+(?:\.[0-9]+){3}', args.trackerbot_url)[0]
-        creds = credentials['host_default']
-        sshclient = make_ssh_client(trackerbot_ip, creds['username'], creds['password'])
-        template_resultlog = log_path.join('template_result.log').strpath
-        if action == 'create':
-            command = 'mkdir -p /home/amavinag/{}'.format(appliance_template)
-            sshclient.run_command(command)
-            sshclient.put_file(template_resultlog, remote_file='/home/amavinag/{}/{}'.format(
-                appliance_template, provider))
-        if action == 'merge':
-            with open(template_resultlog, 'w') as report:
-                command = 'cd /home/amavinag/{}/&&cat {}'.format(appliance_template,
-                                                                 ' '.join(failed_providers))
-                status, output = sshclient.run_command(command)
-                if 'No such file or directory' in output:
-                    command = 'cd /home/amavinag/{}/&&cat *'.format(appliance_template)
-                    status, output = sshclient.run_command(command)
-                report.write(output)
-                report.close()
-        elif action == 'remove':
-            sshclient.run_command('cd /home/amavinag/&&rm -rf {}'.format(
-                appliance_template))
-        sshclient.close()
-    except Exception as e:
-        print(e)
-        return False
+def provider_in_the_list(provider_list, list_criteria):
+    return [provider for provider in provider_list if provider in list_criteria]
 
 
-def generate_html_report(api, stream, filename, appliance_template, provider):
+def generate_html_report(api, stream, filename, appliance_template):
 
     status = 'PASSED'
     number_of_images_before = len(images_uploaded(stream))
-    update_template_log(appliance_template, action='create', provider=provider)
     if get_untested_templates(api, stream, appliance_template):
         print('report will not be generated, proceed with the next untested provider')
         sys.exit()
@@ -220,7 +193,7 @@ def generate_html_report(api, stream, filename, appliance_template, provider):
 
     if len(images_uploaded(stream)) > number_of_images_before:
         print("new images are uploaded on latest directory, wait for upload on providers")
-        wait_for_templates_on_providers(api, stream)
+        wait_for_templates_on_providers(api, stream, appliance_template)
     if appliance_template and appliance_template != stream_data['template_name']:
         print("the report will be generated only for the latest templates")
         sys.exit()
@@ -230,8 +203,6 @@ def generate_html_report(api, stream, filename, appliance_template, provider):
         print("Found tested template for {}".format(stream))
         print("Gathering tested template data for {}".format(stream))
         print("Updating the template log")
-        update_template_log(appliance_template, action='merge',
-                            failed_providers=stream_data['failed_on_providers'])
         stream_html = [stream_data['template_name'], stream_data['passed_on_providers'],
                        stream_data['failed_on_providers'], stream_data['group_name'],
                        stream_data['datestamp']]
@@ -246,14 +217,17 @@ def generate_html_report(api, stream, filename, appliance_template, provider):
                 if 'template_rhos' not in images_uploaded(stream):
                     print('\n\nMISSING: Image for OpenStack in latest directory')
                     report.write('\n\nMISSING: Image for OpenStack in latest directory')
-                elif filter(lambda x: 'rhos' in x, stream_data['passed_on_providers']):
+                elif provider_in_the_list(list_providers('openstack'),
+                                          stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(images_uploaded(stream)['template_rhos']))
-                    map(lambda(x): report.write('\n{}: Passed'.format(x)) if 'rhos' in x else '',
-                        stream_data['passed_on_providers'])
-                elif filter(lambda x: 'rhos' in x, stream_data['failed_on_providers']):
+                    map(lambda (x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
+                        list_providers('openstack'), stream_data['passed_on_providers']))
+                elif provider_in_the_list(list_providers('openstack'),
+                                          stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(images_uploaded(stream)['template_rhos']))
-                    map(lambda(x): report.write('\n{}: Failed'.format(x)) if 'rhos' in x else '',
-                        stream_data['failed_on_providers'])
+                    map(lambda (x): report.write('\n{}: Failed'.format(x)),
+                        provider_in_the_list(list_providers('openstack'),
+                                             stream_data['failed_on_providers']))
                 else:
                     print('\n\nMISSING: OpenStack template is not available on any '
                           'rhos providers yet')
@@ -263,16 +237,19 @@ def generate_html_report(api, stream, filename, appliance_template, provider):
                 if 'template_rhevm' not in images_uploaded(stream):
                     print('\n\nMISSING: Image for RHEVM in latest directory')
                     report.write('\n\nMISSING: Image for RHEVM in latest directory')
-                elif filter(lambda x: 'rhevm' in x, stream_data['passed_on_providers']):
+                elif provider_in_the_list(list_providers('rhevm'),
+                                          stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_rhevm']))
-                    map(lambda(x): report.write('\n{}: Passed'.format(x)) if 'rhevm' in x else '',
-                        stream_data['passed_on_providers'])
-                elif filter(lambda x: 'rhevm' in x, stream_data['failed_on_providers']):
+                    map(lambda(x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
+                        list_providers('rhevm'), stream_data['passed_on_providers']))
+                elif provider_in_the_list(list_providers('rhevm'),
+                                          stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_rhevm']))
-                    map(lambda(x): report.write('\n{}: Failed'.format(x)) if 'rhevm' in x else '',
-                        stream_data['failed_on_providers'])
+                    map(lambda(x): report.write('\n{}: Failed'.format(x)),
+                        provider_in_the_list(list_providers('rhevm'),
+                                             stream_data['failed_on_providers']))
                 else:
                     print('\n\nMISSING: RHEVM template is not available on any '
                           'rhevm providers yet')
@@ -282,18 +259,19 @@ def generate_html_report(api, stream, filename, appliance_template, provider):
                 if 'template_vsphere' not in images_uploaded(stream):
                     print('\n\nMISSING: Image for VIRTUALCENTER in latest directory')
                     report.write('\n\nMISSING: Image for VIRTUALCENTER in latest directory')
-                elif filter(lambda x: 'vsphere' in x, stream_data['passed_on_providers']):
+                elif provider_in_the_list(list_providers('virtualcenter'),
+                                          stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_vsphere']))
-                    map(lambda(x): report.write(
-                        '\n{}: Passed'.format(x)) if 'vsphere' in x else '',
-                        stream_data['passed_on_providers'])
-                elif filter(lambda x: 'vsphere' in x, stream_data['failed_on_providers']):
+                    map(lambda (x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
+                        list_providers('virtualcenter'), stream_data['passed_on_providers']))
+                elif provider_in_the_list(list_providers('virtualcenter'),
+                                          stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_vsphere']))
-                    map(lambda(x): report.write(
-                        '\n{}: Failed'.format(x)) if 'vsphere' in x else '',
-                        stream_data['failed_on_providers'])
+                    map(lambda (x): report.write('\n{}: Failed'.format(x)),
+                        provider_in_the_list(list_providers('virtualcenter'),
+                                             stream_data['failed_on_providers']))
                 else:
                     print('\n\nMISSING: VIRTUALCENTER template is not available on any '
                           'vmware providers yet')
@@ -303,28 +281,36 @@ def generate_html_report(api, stream, filename, appliance_template, provider):
                 if 'template_scvmm' not in images_uploaded(stream):
                     print('\n\nMISSING: Image for SCVMM in latest directory')
                     report.write('\n\nMISSING: Image for SCVMM in latest directory')
-                elif filter(lambda x: 'scvmm' in x, stream_data['passed_on_providers']):
+                elif provider_in_the_list(list_providers('scvmm'),
+                                          stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_scvmm']))
-                    map(lambda(x): report.write(
-                        '\n{}: Passed'.format(x)) if 'scvmm' in x else '',
-                        stream_data['passed_on_providers'])
-                elif filter(lambda x: 'scvmm' in x, stream_data['failed_on_providers']):
+                    map(lambda (x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
+                        list_providers('scvmm'), stream_data['passed_on_providers']))
+                elif provider_in_the_list(list_providers('scvmm'),
+                                          stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_scvmm']))
-                    map(lambda(x): report.write(
-                        '\n{}: Failed'.format(x)) if 'scvmm' in x else '',
-                        stream_data['failed_on_providers'])
+                    map(lambda (x): report.write('\n{}: Failed'.format(x)),
+                        provider_in_the_list(list_providers('scvmm'),
+                                             stream_data['failed_on_providers']))
                 else:
                     print('\n\nMISSING: SCVMM template is not available on any '
                           'scvmm providers yet')
                     report.write('\n\nMISSING: SCVMM template is not available on any '
                                  'scvmm providers yet')
                 report.seek(0, 0)
-                if "FAILED" in report.read():
+                lines = report.readlines()
+                template_missing = filter(lambda (x): "MISSING" in x, lines)
+                template_passed = filter(lambda (x): "PASSED" in x, lines)
+                template_failed = filter(lambda (x): "FAILED" in x, lines)
+                if template_failed:
                     status = "FAILED"
-                report.close()
-        update_template_log(appliance_template, action='remove')
+
+                if template_missing and not (template_passed or template_failed):
+                    report.close()
+                    sys.exit("Template is MISSING....Please verify uploads....")
+
         print("template_tester_results report generated:{}".format(status))
     else:
         print("No Templates tested on: {}".format(datetime.datetime.now()))
@@ -337,4 +323,4 @@ if __name__ == '__main__':
         sys.exit("stream and appliance_template "
                  "cannot be None, specify the stream as --stream <stream-name>"
                  "and template as --template <template-name>")
-    generate_html_report(api, args.stream, args.output, args.appliance_template, args.provider)
+    generate_html_report(api, args.stream, args.output, args.appliance_template)
