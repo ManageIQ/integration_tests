@@ -1,7 +1,6 @@
 import datetime
 import pkgutil
 import importlib
-import time
 from functools import partial
 
 import cfme
@@ -203,25 +202,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         navigate_to(self, 'Add')
         fill(self.properties_form, self._form_mapping(True, **self.__dict__))
         for cred in self.credentials:
-            # dajo - temporarily skipping candu verification due to bz1385436
-            if self.data.type == 'rhevm' and cred == 'candu':
-                success = False
-                import time
-                for i in range(7):
-                    fill(self.credentials[cred].form, self.credentials[cred],
-                         validate=True)
-                    for item in flash.get_all_messages():
-                        if 'Credential validation was successful' in item.message:
-                            success = True
-                            break
-                    if success:
-                        break
-                    time.sleep(1)
-            else:
-                fill(self.credentials[cred].form, self.credentials[cred],
-                     validate=validate_credentials)
-        #import pdb
-        #pdb.set_trace()
+            fill(self.credentials[cred].form, self.credentials[cred],
+                 validate=validate_credentials)
         self._submit(cancel, self.add_provider_button)
         if not cancel:
             flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
@@ -723,15 +705,19 @@ def _fill_credential(form, cred, validate=None):
             'candu_verify_secret': cred.verify_secret,
             'validate_btn': validate})
         if validate:
+            # Work around BZ#1375253 / BZ#1385436:
+            # Validate 4 more times to stabilize the behavior because success can raise
+            # an error the first ~5 times
+            for __ in range(4):
+                fill(cred.form.validate_btn, validate)
+            # Then look up to 3 times for successful validation (THIS IS MADNESS)
             exc = None
-            for _ in range(4):
-                # Work around BZ#1375253. Try up to 5 times (we already did once by now)
+            for __ in range(3):
                 try:
-                    flash.assert_no_errors()
+                    flash.assert_success()
                 except FlashMessageException as e:
-                    # An error happened, so try again
+                    # No success message, try again
                     exc = e
-                    time.sleep(1)  # Give it some rest
                     fill(cred.form.validate_btn, validate)
                 else:
                     # Success, no error
