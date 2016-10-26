@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+from . import Implementation
+
 import json
 import time
 from jsmin import jsmin
 
 from utils.log import logger, create_sublogger
 from cfme import exceptions
-from cfme.fixtures.pytest_selenium import get_rails_error
 from time import sleep
 
 from navmazing import Navigate, NavigateStep
@@ -137,13 +138,15 @@ class CFMENavigateStep(NavigateStep):
             return False
 
     def pre_navigate(self, _tries=0):
+        from cfme.fixtures.pytest_selenium import get_rails_error
+
         if _tries > 2:
             # Need at least three tries:
             # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
             # 2: Everything should work. If not, NavigationError.
             raise exceptions.NavigationError(self.obj._name)
 
-        self.appliance.browser.open_browser()
+        self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
 
         # check for MiqQE javascript patch on first try and patch the appliance if necessary
         if self.appliance.is_miqqe_patch_candidate and not self.appliance.miqqe_patch_applied:
@@ -190,7 +193,7 @@ class CFMENavigateStep(NavigateStep):
             sleep(10)   # Give it some rest
             self.appliance.wait_for_web_ui()
             self.appliance.browser.quit_browser()
-            self.appliance.browser.open_browser()
+            self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
             self.go(_tries)
 
         # Same with rails errors
@@ -207,8 +210,10 @@ class CFMENavigateStep(NavigateStep):
                 'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
             logger.debug('Managed Providers:')
             logger.debug(store.current_appliance.managed_providers)
+
             self.appliance.browser.quit_browser()
-            self.appliance.browser.open_browser()
+            self.appliance.browser.open_browser(url_key=self.obj.appliance.server.address())
+
             self.go(_tries)
             # If there is a rails error past this point, something is really awful
 
@@ -219,8 +224,6 @@ class CFMENavigateStep(NavigateStep):
         # Set this to True in handlers to restart evmserverd on the appliance
         # Includes recycling so you don't need to specify recycle = False
         restart_evmserverd = False
-
-        from cfme import login
 
         wt = self.appliance.browser.widgetastic
 
@@ -302,7 +305,7 @@ class CFMENavigateStep(NavigateStep):
                 # If upstream and is the bottom part of menu is not displayed
                 logger.exception("Detected glitch from BZ#1112574. HEADSHOT!")
                 recycle = True
-            elif not login.logged_in():
+            elif not self.obj.appliance.server.logged_in():
                 # Session timeout or whatever like that, login screen appears.
                 logger.exception("Looks like we are logged out. Try again.")
                 recycle = True
@@ -356,55 +359,13 @@ navigator = Navigate()
 navigate_to = navigator.navigate
 
 
-class ViaUI(object):
+class ViaUI(Implementation):
     """UI implementation using the normal ux"""
-    # ** Wow, a lot to talk about here. so we introduced the idea of this "endpoint" object at
-    # ** the moment. This endpoint object contains everything you need to talk to that endpoint.
-    # ** Sessions, endpoint sepcific functions(a la force navigate). The base class does precious
-    # ** little. It's more an organizational level thing.
-    def __init__(self, owner):
-        self.owner = owner
-
-    @property
-    def appliance(self):
-        return self.owner
+    def __str__(self):
+        return 'ViaUI'
 
     @cached_property
     def widgetastic(self):
         """This gives us a widgetastic browser."""
         # TODO: Make this a property that could watch for browser change?
-        return MiqBrowser(self.open_browser(), self)
-
-    def open_browser(self):
-        # TODO: self.appliance.server.address() instead of None
-        return manager.ensure_open(url_key=None)
-
-    def quit_browser(self):
-        manager.quit()
-        try:
-            del self.widgetastic
-        except AttributeError:
-            pass
-
-    def create_view(self, view_class, additional_context=None):
-        """Method that is used to instantiate a Widgetastic View.
-
-        Views may define ``LOCATION`` on them, that implies a :py:meth:`force_navigate` call with
-        ``LOCATION`` as parameter.
-
-        Args:
-            view_class: A view class, subclass of ``widgetastic.widget.View``
-            additional_context: Additional informations passed to the view (user name, VM name, ...)
-                which is also passed to the :py:meth:`force_navigate` in case when navigation is
-                requested.
-
-        Returns:
-            An instance of the ``view_class``
-        """
-        additional_context = additional_context or {}
-        view = view_class(
-            self.widgetastic,
-            additional_context=additional_context,
-            logger=logger)
-
-        return view
+        return MiqBrowser(self.open_browser(url_key=self.owner.server.address()), self)

@@ -1,9 +1,12 @@
 import pytest
-from cfme import BaseLoggedInPage, login, Credential
+
+from cfme import Credential
+from cfme.base.ui import LOGIN_METHODS, BaseLoggedInPage
 from cfme.configure.access_control import User
 from utils import conf, error
 from utils.appliance import get_or_create_current_appliance
 from utils.appliance.implementations.ui import navigate_to
+from utils.appliance.endpoints.ui import ViaUI
 
 pytestmark = pytest.mark.usefixtures('browser')
 
@@ -12,9 +15,10 @@ pytestmark = pytest.mark.usefixtures('browser')
 @pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.smoke
+@pytest.mark.parametrize('context', [ViaUI])
 @pytest.mark.parametrize(
-    "method", login.LOGIN_METHODS)
-def test_login(method):
+    "method", LOGIN_METHODS)
+def test_login(method, context):
     """ Tests that the appliance can be logged into and shows dashboard page. """
     appliance = get_or_create_current_appliance()
 
@@ -46,4 +50,4 @@ def test_bad_password(request):
 
     with error.expected("Sorry, the username or password you entered is incorrect."):
         login_page.log_in(user)
-        assert login.page.is_displayed
+        assert login_page.is_displayed

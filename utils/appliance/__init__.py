@@ -35,7 +35,9 @@ from utils.version import Version, get_stream, pick, LATEST
 from utils.wait import wait_for
 from utils import clear_property_cache
 
+
 from .implementations.ui import ViaUI
+from .implementations.ssui import ViaSSUI
 
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
@@ -92,8 +94,9 @@ class IPAppliance(object):
         from cfme.base import Server
         self.server = Server(appliance=self)
         self.browser = ViaUI(owner=self)
+        self.ssui = ViaSSUI(owner=self)
         self.context = ImplementationContext.from_instances(
-            [self.browser])
+            [self.browser, self.ssui])
 
     @property
     def user(self):
@@ -2210,6 +2213,11 @@ current_appliance = LocalProxy(get_or_create_current_appliance)
 class CurrentAppliance(object):
     def __get__(self, instance, owner):
         return get_or_create_current_appliance()
+
+
+class Parent(object):
+    def __get__(self, instance, owner):
+        return instance.appliance.context
 
 
 class Navigatable(object):

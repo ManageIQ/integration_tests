@@ -1,8 +1,9 @@
 import pytest
+
+from cfme.configure import configuration
+from utils.appliance import current_appliance
 from utils.conf import cfme_data, credentials
 from utils.ext_auth import disable_external_auth_ipa, setup_external_auth_ipa
-from cfme.configure import configuration
-from cfme.login import login_admin
 
 
 @pytest.fixture(scope='session')
@@ -17,7 +18,7 @@ def configure_ldap_auth_mode(browser, available_auth_modes):
         server_data = cfme_data.get('auth_modes', {})['ldap']
         configuration.set_auth_mode(**server_data)
         yield
-        login_admin()
+        current_appliance.server.login_admin()
         configuration.set_auth_mode(mode='database')
     else:
         yield
@@ -30,7 +31,7 @@ def configure_openldap_auth_mode(browser, available_auth_modes):
         server_data = cfme_data.get('auth_modes', {})['openldap']
         configuration.set_auth_mode(**server_data)
         yield
-        login_admin()
+        current_appliance.server.login_admin()
         configuration.set_auth_mode(mode='database')
     else:
         yield
@@ -45,7 +46,7 @@ def configure_openldap_auth_mode_default_groups(browser, available_auth_modes):
         server_data['default_groups'] = 'EvmRole-user'
         configuration.set_auth_mode(**server_data)
         yield
-        login_admin()
+        current_appliance.server.login_admin()
         configuration.set_auth_mode(mode='database')
     else:
         yield
@@ -61,7 +62,7 @@ def configure_aws_iam_auth_mode(browser, available_auth_modes):
         aws_iam_data['secret_key'] = aws_iam_creds['password']
         configuration.set_auth_mode(**aws_iam_data)
         yield
-        login_admin()
+        current_appliance.server.login_admin()
         configuration.set_auth_mode(mode='database')
     else:
         yield
