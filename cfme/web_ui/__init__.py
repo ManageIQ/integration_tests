@@ -1840,6 +1840,8 @@ class BootstrapTreeview(object):
             step = step[1]
         else:
             image = None
+        if not isinstance(step, (basestring, re._pattern_type)):
+            step = str(step)
         return image, step
 
     @staticmethod
