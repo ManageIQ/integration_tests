@@ -11,7 +11,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons, match_location
 from utils.pretty import Pretty
 from utils.update import Updateable
-from utils.version import LOWEST
+from utils.version import LOWEST, pick
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 
@@ -97,7 +97,9 @@ class AssignFormTable(Pretty):
             raise NameError("Did not find row named {}!".format(name))
 
     def select_from_row(self, row):
-        return Select(sel.element("./td/select", root=row))
+        el = pick({"5.6": "./td/select",
+                   "5.7": "./td/div/select"})
+        return Select(sel.element(el, root=row))
 
     def select_by_name(self, name):
         return self.select_from_row(self.row_by_name(name))
