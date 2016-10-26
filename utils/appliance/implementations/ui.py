@@ -151,10 +151,10 @@ class CFMENavigateStep(NavigateStep):
             self.appliance.browser.quit_browser()
             self.go(_tries)
 
-        wt = self.appliance.browser.widgetastic
+        br = self.appliance.browser
 
         try:
-            wt.execute_script('miqSparkleOff();')
+            br.widgetastic.execute_script('miqSparkleOff();')
         except:  # Diaper OK (mfalesni)
             # miqSparkleOff undefined, so it's definitely off.
             pass
@@ -162,21 +162,22 @@ class CFMENavigateStep(NavigateStep):
         # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right
         # here
         if (
-                wt.is_displayed("//div[@id='blocker_div' or @id='notification']") or
-                wt.is_displayed(".modal-backdrop.fade.in")):
+                br.widgetastic.is_displayed("//div[@id='blocker_div' or @id='notification']") or
+                br.widgetastic.is_displayed(".modal-backdrop.fade.in")):
             logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
             self.appliance.browser.quit_browser()
             self.go(_tries)
 
         # Check if modal window is displayed
-        if (wt.is_displayed(
+        if (br.widgetastic.is_displayed(
                 "//div[contains(@class, 'modal-dialog') and contains(@class, 'modal-lg')]")):
             logger.warning("Modal window was open; closing the window")
-            wt.click("//button[contains(@class, 'close') and contains(@data-dismiss, 'modal')]")
+            br.widgetastic.click(
+                "//button[contains(@class, 'close') and contains(@data-dismiss, 'modal')]")
 
         # Check if jQuery present
         try:
-            wt.execute_script("jQuery")
+            br.widgetastic.execute_script("jQuery")
         except Exception as e:
             if "jQuery" not in str(e):
                 logger.error("Checked for jQuery but got something different.")
@@ -222,7 +223,7 @@ class CFMENavigateStep(NavigateStep):
 
         from cfme import login
 
-        wt = self.appliance.browser.widgetastic
+        br = self.appliance.browser
 
         try:
             self.step()
@@ -233,7 +234,7 @@ class CFMENavigateStep(NavigateStep):
         except UnexpectedAlertPresentException:
             if _tries == 1:
                 # There was an alert, accept it and try again
-                wt.handle_alert(wait=0)
+                br.widgetastic.handle_alert(wait=0)
                 self.go(_tries)
             else:
                 # There was still an alert when we tried again, shoot the browser in the head
@@ -265,40 +266,40 @@ class CFMENavigateStep(NavigateStep):
                 recycle = True
             # If the page is blocked, then recycle...
             if (
-                    wt.is_displayed("//div[@id='blocker_div' or @id='notification']") or
-                    wt.is_displayed(".modal-backdrop.fade.in")):
+                    br.widgetastic.is_displayed("//div[@id='blocker_div' or @id='notification']") or
+                    br.widgetastic.is_displayed(".modal-backdrop.fade.in")):
                 logger.warning("Page was blocked with blocker div, recycling.")
                 recycle = True
             elif cfme_exc.is_cfme_exception():
                 logger.exception("CFME Exception before force_navigate started!: {}".format(
                     cfme_exc.cfme_exception_text()))
                 recycle = True
-            elif wt.is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
+            elif br.widgetastic.is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
                 # 502
                 logger.exception("Proxy error detected. Killing browser and restarting evmserverd.")
-                req = wt.elements("/html/body/p[1]//a")
-                req = wt.text(req[0]) if req else "No request stated"
-                reason = wt.elements("/html/body/p[2]/strong")
-                reason = wt.text(reason[0]) if reason else "No reason stated"
+                req = br.widgetastic.elements("/html/body/p[1]//a")
+                req = br.widgetastic.text(req[0]) if req else "No request stated"
+                reason = br.widgetastic.elements("/html/body/p[2]/strong")
+                reason = br.widgetastic.text(reason[0]) if reason else "No reason stated"
                 logger.info("Proxy error: {} / {}".format(req, reason))
                 restart_evmserverd = True
-            elif wt.is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
+            elif br.widgetastic.is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
                 # 503 and similar sort of errors
-                title = wt.text("//body/h1")
-                body = wt.text("//body/p")
+                title = br.widgetastic.text("//body/h1")
+                body = br.widgetastic.text("//body/p")
                 logger.exception("Application error {}: {}".format(title, body))
                 sleep(5)  # Give it a little bit of rest
                 recycle = True
-            elif wt.is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
+            elif br.widgetastic.is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
                 # Rails exception detection
                 logger.exception("Rails exception before force_navigate started!: %r:%r at %r",
-                    wt.text("//body/div[@class='dialog']/h1"),
-                    wt.text("//body/div[@class='dialog']/p"),
+                    br.widgetastic.text("//body/div[@class='dialog']/h1"),
+                    br.widgetastic.text("//body/div[@class='dialog']/p"),
                     getattr(manager.browser, 'current_url', "error://dead-browser")
                 )
                 recycle = True
-            elif wt.elements("//ul[@id='maintab']/li[@class='inactive']") and not\
-                    wt.elements("//ul[@id='maintab']/li[@class='active']/ul/li"):
+            elif br.widgetastic.elements("//ul[@id='maintab']/li[@class='inactive']") and not\
+                    br.widgetastic.elements("//ul[@id='maintab']/li[@class='active']/ul/li"):
                 # If upstream and is the bottom part of menu is not displayed
                 logger.exception("Detected glitch from BZ#1112574. HEADSHOT!")
                 recycle = True
