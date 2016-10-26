@@ -4,11 +4,14 @@ from cfme.middleware import get_random_list
 from cfme.middleware.deployment import MiddlewareDeployment
 from utils import testgen
 from utils.version import current_version
-from utils.wait import wait_for
-from deployment_methods import deploy, get_server
+from deployment_methods import deploy, get_server, get_deployment_from_list
+from deployment_methods import get_deployments_set
+from deployment_methods import check_deployment_not_listed
+from deployment_methods import check_deployment_disabled, check_deployment_enabled
 from deployment_methods import EAP_PRODUCT_NAME, HAWKULAR_PRODUCT_NAME
-from deployment_methods import RESOURCE_EAR_NAME, RESOURCE_JAR_NAME
+from deployment_methods import RESOURCE_JAR_NAME
 from deployment_methods import RESOURCE_WAR_NAME, RESOURCE_WAR_NAME_NEW
+from utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -23,21 +26,18 @@ def test_list_deployments(provider):
 
     Steps:
         * Get deployments list from UI for whole Middleware
-        * Get deployments list from Database for Hawkular Local server
-        * Get deployments list from Management system for Hawkular Local server
+        * Get deployments list from Database for whole Middleware
+        * Get deployments list from Management system  for whole Middleware
         * Verifies that UI list contains all DB entities
         * Verifies that UI list contains all MGMT entities
     """
-    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
     ui_deps = get_deployments_set(MiddlewareDeployment.deployments())
-    db_deps = get_deployments_set(MiddlewareDeployment.deployments_in_db(
-        provider=provider, server=server))
-    mgmt_deps = get_deployments_set(MiddlewareDeployment.deployments_in_mgmt(
-        provider=provider, server=server))
-    assert ui_deps >= db_deps, \
+    db_deps = get_deployments_set(MiddlewareDeployment.deployments_in_db())
+    mgmt_deps = get_deployments_set(MiddlewareDeployment.deployments_in_mgmt())
+    assert ui_deps == db_deps, \
         ("Lists of deployments in UI does not contain the list in DB! UI:{}, DB:{}"
          .format(ui_deps, db_deps))
-    assert ui_deps >= mgmt_deps, \
+    assert ui_deps == mgmt_deps, \
         ("Lists of deployments in MGMT does not contain the list in DB! UI:{}, MGMT:{}"
          .format(ui_deps, mgmt_deps))
 
@@ -65,21 +65,20 @@ def test_list_provider_deployments(provider):
 
     Steps:
         * Get deployments list from UI of provider
-        * Get deployments list from Database for Hawkular Local server
-        * Get deployments list from Management system(Hawkular) for Hawkular Local server
+        * Get deployments list from Database  of provider
+        * Get deployments list from Management system(Hawkular) of provider
         * Verifies that UI list contains all DB entities
         * Verifies that UI list contains all MGMT entities
     """
-    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
     ui_deps = get_deployments_set(MiddlewareDeployment.deployments(provider=provider))
     db_deps = get_deployments_set(MiddlewareDeployment.deployments_in_db(
-        provider=provider, server=server))
+        provider=provider))
     mgmt_deps = get_deployments_set(MiddlewareDeployment.deployments_in_mgmt(
-        provider=provider, server=server))
-    assert ui_deps >= db_deps, \
+        provider=provider))
+    assert ui_deps == db_deps, \
         ("Lists of deployments in UI does not contain the list in DB! UI:{}, DB:{}"
          .format(ui_deps, db_deps))
-    assert ui_deps >= mgmt_deps, \
+    assert ui_deps == mgmt_deps, \
         ("Lists of deployments in MGMT does not contain the list in DB! UI:{}, MGMT:{}"
          .format(ui_deps, mgmt_deps))
 
@@ -128,7 +127,7 @@ def test_deployment(provider):
         dep_ui.validate_properties()
 
 
-@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME])
 def test_deploy(provider, archive_name):
     """Tests Deployment of provided archive into EAP7 server
 
@@ -151,7 +150,7 @@ def test_deploy(provider, archive_name):
     deployment.validate_properties()
 
 
-@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME])
 def test_deploy_disabled(provider, archive_name):
     """Tests Deployment of provided archive into EAP7 server as Disabled
 
@@ -175,14 +174,14 @@ def test_deploy_disabled(provider, archive_name):
     deployment.validate_properties()
 
 
-@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME])
 def test_restart(provider, archive_name):
     """Tests Restart of archive from EAP7 server
 
     Steps:
         * Get servers list from UI
         * Chooses JBoss EAP server from list
-        * Deplays some deployment archive into server.
+        * Deploys some deployment archive into server.
         * Select that deployment from deployments list.
         * Performs "Restart" toolbar operation on it.
         * Refreshes the provider.
@@ -199,14 +198,14 @@ def test_restart(provider, archive_name):
     deployment.validate_properties()
 
 
-@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME])
 def test_undeploy(provider, archive_name):
     """Tests Undeployment of archive from EAP7 server
 
     Steps:
         * Get servers list from UI
         * Chooses JBoss EAP server from list
-        * Deplays some deployment archive into server.
+        * Deploys some deployment archive into server.
         * Select that deployment from deployments list.
         * Performs "Undeploy" toolbar operation on it.
         * Refreshes the provider.
@@ -221,7 +220,7 @@ def test_undeploy(provider, archive_name):
     check_deployment_not_listed(provider, server, runtime_name)
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10583'])
+@pytest.mark.meta(blockers=[BZ(1377603, forced_streams=["5.7", "upstream"])])
 def test_redeploy(provider):
     """Tests Redeployment of already deployed archive into EAP7 server
 
@@ -244,7 +243,7 @@ def test_redeploy(provider):
     check_deployment_enabled(provider, server, runtime_name)
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10583'])
+@pytest.mark.meta(blockers=[BZ(1377603, forced_streams=["5.7", "upstream"])])
 def test_redeploy_disabled(provider):
     """Tests Redeployment of already deployed and disabled archive into EAP7 server
 
@@ -268,7 +267,7 @@ def test_redeploy_disabled(provider):
     check_deployment_disabled(provider, server, runtime_name)
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10583'])
+@pytest.mark.meta(blockers=[BZ(1377603, forced_streams=["5.7", "upstream"])])
 def test_redeploy_enable_disabled(provider):
     """Tests Redeployment and enabling of already deployed and disabled archive into EAP7 server
 
@@ -291,7 +290,7 @@ def test_redeploy_enable_disabled(provider):
     check_deployment_enabled(provider, server, runtime_name)
 
 
-@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME, RESOURCE_EAR_NAME])
+@pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME])
 def test_disable_enable(provider, archive_name):
     """Tests Starting of stopped archive into EAP7 server
 
@@ -327,7 +326,7 @@ def test_disable_enable(provider, archive_name):
     deployment.validate_properties()
 
 
-@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:10583'])
+@pytest.mark.meta(blockers=[BZ(1377603, forced_streams=["5.7", "upstream"])])
 def test_disable_upgrade_enable(provider):
     """Tests Starting of stopped archive into EAP7 server
 
@@ -354,71 +353,3 @@ def test_disable_upgrade_enable(provider):
     check_deployment_enabled(provider, server, runtime_name)
     deployment = get_deployment_from_list(provider, server, runtime_name)
     deployment.validate_properties()
-
-
-def get_deployments_set(deployments):
-    """
-    Return the set of deployments which contains only necessary fields,
-    such as 'name' and 'server'
-    """
-    return set((deployment.name, deployment.server.name) for deployment in deployments)
-
-
-def get_deployments_statuses(deployments):
-    """
-    Return the map of deployments which contains,
-    'name' as key, 'status' as value
-    """
-    return {deployment.name: deployment.status for deployment in deployments}
-
-
-def get_deployment_from_list(provider, server, runtime_name):
-    for deployment in MiddlewareDeployment.deployments(provider=provider, server=server):
-        if deployment.name == runtime_name:
-            return deployment
-    raise ValueError('Recently deployed archive {} was not found in deployments list'
-                     .format(runtime_name))
-
-
-def check_deployment_appears(provider, server, runtime_name):
-    provider.refresh_provider_relationships(method='ui')
-    wait_for(lambda: runtime_name in
-        get_deployments_statuses(
-            MiddlewareDeployment.deployments(provider=provider, server=server)),
-        delay=30, num_sec=1200,
-        message='Deployment {} must be found for server {}'
-        .format(runtime_name, server.name))
-
-
-def check_deployment_not_listed(provider, server, runtime_name):
-    provider.refresh_provider_relationships(method='ui')
-    wait_for(lambda: runtime_name not in
-        get_deployments_statuses(
-            MiddlewareDeployment.deployments(provider=provider, server=server)),
-        delay=30, num_sec=1200,
-        message='Deployment {} must not be found for server {}'
-        .format(runtime_name, server.name))
-
-
-def check_deployment_enabled(provider, server, runtime_name):
-    check_deployment_appears(provider, server, runtime_name)
-    provider.refresh_provider_relationships(method='ui')
-    wait_for(lambda:
-        get_deployments_statuses(
-            MiddlewareDeployment.deployments(provider=provider,
-                server=server))[runtime_name] == 'Enabled',
-        delay=120, num_sec=1800,
-        message='Deployment {} must be Enabled for server {}'
-        .format(runtime_name, server.name))
-
-
-def check_deployment_disabled(provider, server, runtime_name):
-    check_deployment_appears(provider, server, runtime_name)
-    provider.refresh_provider_relationships(method='ui')
-    wait_for(lambda:
-        get_deployments_statuses(
-            MiddlewareDeployment.deployments(provider=provider,
-                server=server))[runtime_name] == 'Disabled',
-        delay=120, num_sec=1800,
-        message='Deployment {} must be Disabled for server {}'
-        .format(runtime_name, server.name))

@@ -162,7 +162,7 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Deployable):
                     provider=provider,
                     server=_server,
                     nativeid=deployment.id,
-                    name=re.sub('(Deployment \\[)|(\\])', '', deployment.name)))
+                    name=re.sub('((Sub)|Deployment \\[)|(\\])', '', deployment.name)))
         return deployments
 
     @classmethod
