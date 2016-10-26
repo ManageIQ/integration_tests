@@ -23,14 +23,14 @@ def minimise_dict(item):
     else:
         return item
 
-# todo: infrastructure hosts, pools, stores, clusters are removed due to changing navigation
-#  to navmazing. all items have to be put back once navigation change is fully done
+# TODO: infrastructure hosts, pools, stores, clusters, catalog_items are removed
+#  due to navmazing. all items have to be put back once navigation change is fully done
 
 gtl_params = [
     'Infrastructure Providers/infrastructure_providers',
     'VMs/infra_vms',
     'My Services/my_services',
-    'Catalog Items/catalog_items',
+    # 'Catalog Items/catalog_items',
     'VMs & Instances/service_vms_instances',
     'Templates & Images/service_templates_images'
 ]

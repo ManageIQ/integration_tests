@@ -1,20 +1,28 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 from collections import OrderedDict
+
+from navmazing import NavigateToSibling, NavigateToAttribute
+
+from cfme.exceptions import DestinationNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
-    flash, form_buttons, menu, tabstrip, DHTMLSelect, Input, Tree, AngularSelect, BootstrapTreeview
-from cfme.web_ui import toolbar as tb
+from cfme.web_ui import Form, Radio, Select, Table, accordion, fill, paginator, \
+    flash, form_buttons, tabstrip, DHTMLSelect, Input, Tree, AngularSelect, \
+    BootstrapTreeview, toolbar as tb, match_location, CheckboxTable
+from utils import version, fakeobject_or_object
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.version import current_version
-from utils import version, fakeobject_or_object
 
 cfg_btn = partial(tb.select, "Configuration")
-accordion_tree = partial(accordion.tree, "Catalog Items")
 policy_btn = partial(tb.select, "Policy")
+
+accordion_tree = partial(accordion.tree, "Catalog Items")
 dynamic_tree = Tree("//div[@id='basic_info_div']//ul[@class='dynatree-container']")
 entry_tree = BootstrapTreeview('automate_treebox')
+listview_table = CheckboxTable(table_locator='//div[@id="list_grid"]/table')
 
 template_select_form = Form(
     fields=[
@@ -148,63 +156,24 @@ button_form = Form(
         ('add_button', form_buttons.add)
     ])
 
-
-def _all_catalogitems_add_new(context):
-    accordion_tree('All Catalog Items')
-    cfg_btn('Add a New Catalog Item')
-    provider_type = context['provider_type']
-    sel.select("//select[@id='st_prov_type']", provider_type)
+match_page = partial(match_location, title='Catalogs', controller='catalog')
 
 
-def _all_catalogbundle_add_new(context):
-    accordion_tree('All Catalog Items')
-    cfg_btn('Add a New Catalog Bundle')
+def nav_to_all():
+    from cfme.web_ui.menu import nav
+    nav._nav_to_fn('Services', 'Catalogs')(None)
+    tree = accordion.tree('Catalog Items')
+    tree.click_path('All Catalog Items')
 
 
-menu.nav.add_branch(
-    'services_catalogs',
-    {
-        'catalog_items':
-        [
-            lambda _: accordion.click('Catalog Items'),
-            {
-                'catalog_item_new': _all_catalogitems_add_new,
-                'catalog_item':
-                [
-                    lambda ctx: accordion_tree(
-                        'All Catalog Items', ctx['catalog'], ctx['catalog_item'].name),
-                    {
-                        'catalog_item_edit': lambda _: cfg_btn("Edit this Item")
-                    }
-                ]
-            }
-        ],
-        'catalog_bundle':
-        [
-            lambda _: accordion.click('Catalog Items'),
-            {
-                'catalog_bundle_new': _all_catalogbundle_add_new,
-                'catalog_bundle':
-                [
-                    lambda ctx: accordion_tree(
-                        'All Catalog Items', ctx['catalog'], ctx['catalog_bundle'].name),
-                    {
-                        'catalog_bundle_edit': lambda _: cfg_btn("Edit this Item")
-                    }
-                ]
-            }
-        ]
-    }
-)
-
-
-class CatalogItem(Updateable, Pretty):
+class CatalogItem(Updateable, Pretty, Navigatable):
     pretty_attrs = ['name', 'item_type', 'catalog', 'catalog_name', 'provider', 'domain']
 
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None,
                  catalog_name=None, orch_template=None, provider_type=None,
-                 provider=None, config_template=None, prov_data=None, domain="ManageIQ (Locked)"):
+                 provider=None, config_template=None, prov_data=None, domain="ManageIQ (Locked)",
+                 appliance=None):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -218,13 +187,16 @@ class CatalogItem(Updateable, Pretty):
         self.provider_type = provider_type
         self.provisioning_data = prov_data
         self.domain = domain
+        Navigatable.__init__(self, appliance=appliance)
 
     def __str__(self):
         return self.name
 
     def create(self):
-        sel.force_navigate('catalog_item_new',
-                           context={'provider_type': self.item_type})
+        # Create has sequential forms, the first is only the provider type
+        navigate_to(self, 'Add')
+        sel.select("//select[@id='st_prov_type']",
+                   self.provider_type or self.item_type or 'Generic')
         sel.wait_for_element(basic_info_form.name_text)
         catalog = fakeobject_or_object(self.catalog, "name", "Unassigned")
         dialog = fakeobject_or_object(self.dialog, "name", "No Dialog")
@@ -260,29 +232,36 @@ class CatalogItem(Updateable, Pretty):
         sel.click(template_select_form.add_button)
 
     def update(self, updates):
-        catalog = fakeobject_or_object(self.catalog, "name", "<Unassigned>")
-        sel.force_navigate('catalog_item_edit',
-                           context={'catalog': catalog.name,
-                                    'catalog_item': self})
+        navigate_to(self, 'Edit')
         fill(basic_info_form, {'name_text': updates.get('name', None),
                                'description_text':
                                updates.get('description', None)},
              action=basic_info_form.edit_button)
         flash.assert_success_message('Service Catalog Item "{}" was saved'.format(self.name))
 
-    def delete(self):
-        sel.force_navigate('catalog_item', context={'catalog': self.catalog,
-                                                    'catalog_item': self})
-        if version.current_version() < "5.7":
-            cfg_btn("Remove Item from the VMDB", invokes_alert=True)
+    def delete(self, from_dest='All'):
+        if from_dest in navigator.list_destinations(self):
+            navigate_to(self, from_dest)
         else:
-            cfg_btn("Remove Catalog Item", invokes_alert=True)
+            msg = 'cfme.services.catalogs.catalog_item does not have destination {}'\
+                .format(from_dest)
+            raise DestinationNotFound(msg)
+        if from_dest == 'All':
+            # select the row for deletion
+            listview_table.select_row_by_cells({'Name': self.name,
+                                                'Description': self.description})
+            cfg_btn(version.pick({version.LOWEST: 'Remove Items from the VMDB',
+                '5.7': 'Remove Catalog Items'}), invokes_alert=True)
+        if from_dest == 'Details':
+            cfg_btn(version.pick({version.LOWEST: 'Remove Item from the VMDB',
+                '5.7': 'Remove Catalog Item'}), invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('The selected Catalog Item was deleted')
+        flash.assert_success_message(version.pick(
+            {version.LOWEST: 'The selected 1 Catalog Item were deleted',
+                '5.7': 'The selected 1 Catalog Item was deleted'}))
 
     def add_button_group(self):
-        sel.force_navigate('catalog_item', context={'catalog': self.catalog,
-                                                    'catalog_item': self})
+        navigate_to(self, 'Details')
         cfg_btn("Add a new Button Group", invokes_alert=True)
         sel.wait_for_element(button_group_form.btn_group_text)
         fill(button_group_form, {'btn_group_text': "group_text",
@@ -297,8 +276,7 @@ class CatalogItem(Updateable, Pretty):
         flash.assert_success_message('Buttons Group "descr" was added')
 
     def add_button(self):
-        sel.force_navigate('catalog_item', context={'catalog': self.catalog,
-                                                    'catalog_item': self})
+        navigate_to(self, 'Details')
         cfg_btn('Add a new Button', invokes_alert=True)
         sel.wait_for_element(button_form.btn_text)
         fill(button_form, {'btn_text': "btn_text",
@@ -316,8 +294,7 @@ class CatalogItem(Updateable, Pretty):
         flash.assert_success_message('Button "btn_descr" was added')
 
     def edit_tags(self, tag, value):
-        sel.force_navigate('catalog_item', context={'catalog': self.catalog,
-                                                    'catalog_item': self})
+        navigate_to(self, 'Details')
         policy_btn('Edit Tags', invokes_alert=True)
         fill(edit_tags_form, {'select_tag': tag,
                               'select_value': value},
@@ -325,23 +302,23 @@ class CatalogItem(Updateable, Pretty):
         flash.assert_success_message('Tag edits were successfully saved')
 
 
-class CatalogBundle(Updateable, Pretty):
+class CatalogBundle(Updateable, Pretty, Navigatable):
     pretty_attrs = ['name', 'catalog', 'dialog']
 
-    def __init__(self, name=None, description=None,
-                 display_in=None, catalog=None,
-                 dialog=None):
+    def __init__(self, name=None, description=None, display_in=None, catalog=None, dialog=None,
+                 appliance=None):
         self.name = name
         self.description = description
         self.display_in = display_in
         self.catalog = catalog
         self.dialog = dialog
+        Navigatable.__init__(self, appliance=appliance)
 
     def __str__(self):
         return self.name
 
     def create(self, cat_items):
-        sel.force_navigate('catalog_bundle_new')
+        navigate_to(self, 'Add')
         domain = "ManageIQ (Locked)"
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
@@ -364,9 +341,7 @@ class CatalogBundle(Updateable, Pretty):
         flash.assert_success_message('Catalog Bundle "{}" was added'.format(self.name))
 
     def update(self, updates):
-        sel.force_navigate('catalog_bundle_edit',
-                           context={'catalog': self.catalog,
-                                    'catalog_bundle': self})
+        navigate_to(self, 'Edit')
         fill(basic_info_form, {'name_text': updates.get('name', None),
                                'description_text':
                                updates.get('description', None)})
@@ -375,3 +350,115 @@ class CatalogBundle(Updateable, Pretty):
                               updates.get('cat_item', None)},
              action=resources_form.save_button)
         flash.assert_success_message('Catalog Bundle "{}" was saved'.format(self.name))
+
+
+@navigator.register(CatalogItem, 'All')
+class ItemAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def am_i_here(self):
+        return match_page(summary='All Service Catalog Items')
+
+    def step(self):
+        nav_to_all()
+
+    def resetter(self):
+        tb.refresh()
+        tb.select('List View')
+        # Ensure no rows are checked
+        if paginator.page_controls_exist():
+            sel.check(paginator.check_all())
+            sel.uncheck(paginator.check_all())
+
+
+@navigator.register(CatalogItem, 'Details')
+class ItemDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    # No am_i_here() due to summary duplication between item and bundle
+
+    def step(self):
+        listview_table.click_row_by_cells({'Name': self.obj.name,
+                                           'Description': self.obj.description,
+                                           'Type': 'Item'})
+
+    def resetter(self):
+        tb.refresh()
+
+
+@navigator.register(CatalogItem, 'Add')
+class ItemAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def am_i_here(self):
+        return match_page(summary='Adding a new Service Catalog Item')
+
+    def step(self):
+        cfg_btn('Add a New Catalog Item')
+
+
+@navigator.register(CatalogItem, 'Edit')
+class ItemEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return match_page(summary='Editing Service Catalog Item "{}"'.format(self.obj.name))
+
+    def step(self):
+        cfg_btn('Edit this Item')
+
+
+@navigator.register(CatalogBundle, 'All')
+class BundleAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def am_i_here(self):
+        return match_page(summary='All Service Catalog Items')
+
+    def step(self):
+        nav_to_all()
+
+    def resetter(self):
+        tb.refresh()
+        tb.select('List View')
+        # Ensure no rows are checked
+        if paginator.page_controls_exist():
+            sel.check(paginator.check_all())
+            sel.uncheck(paginator.check_all())
+
+
+@navigator.register(CatalogBundle, 'Details')
+class BundleDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    # No am_i_here() due to summary duplication between item and bundle
+
+    def step(self):
+        listview_table.click_row_by_cells({'Name': self.obj.name,
+                                           'Description': self.obj.description,
+                                           'Type': 'Bundle'})
+
+    def resetter(self):
+        tb.refresh()
+
+
+@navigator.register(CatalogBundle, 'Add')
+class BundleAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def am_i_here(self):
+        return match_page(summary='Adding a new Catalog Bundle')
+
+    def step(self):
+        cfg_btn('Add a New Catalog Bundle')
+
+
+@navigator.register(CatalogBundle, 'Edit')
+class BundleEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return match_page(summary='Editing Catalog Bundle "{}"'.format(self.obj.name))
+
+    def step(self):
+        cfg_btn('Edit this Item')

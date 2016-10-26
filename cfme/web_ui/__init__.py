@@ -1095,7 +1095,10 @@ class CheckboxTable(Table):
 
     def _set_row_by_cells(self, cells, set_to=False, partial_check=False):
         row = self.find_row_by_cells(cells, partial_check=partial_check)
-        self._set_row_checkbox(row, set_to)
+        if row:
+            self._set_row_checkbox(row, set_to)
+        else:
+            raise sel_exceptions.NoSuchElementException()
 
     def select_row_by_cells(self, cells, partial_check=False):
         """Select the first row matched by ``cells``
