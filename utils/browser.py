@@ -186,6 +186,10 @@ class BrowserManager(object):
     def __init__(self, browser_factory):
         self.factory = browser_factory
         self.browser = None
+        self._impls = set()
+
+    def register(self, impl):
+        self._impls.add(impl)
 
     def coerce_url_key(self, key):
         return key or store.base_url
@@ -232,6 +236,8 @@ class BrowserManager(object):
     def quit(self):
         try:
             self.browser.quit()
+            for impl in self._impls:
+                impl()
         except:
             # Due to the multitude of exceptions can be thrown when attempting to kill the browser,
             # Diaper Pattern!

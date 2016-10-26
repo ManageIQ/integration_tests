@@ -364,6 +364,13 @@ class ViaUI(object):
     # ** little. It's more an organizational level thing.
     def __init__(self, owner):
         self.owner = owner
+        manager.register(self.end_widgetastic)
+
+    def end_widgetastic(self):
+        try:
+            del self.widgetastic
+        except AttributeError:
+            pass
 
     @property
     def appliance(self):
