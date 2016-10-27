@@ -5,6 +5,8 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, Form, Input, Region, Select, fill, flash, form_buttons
 from cfme.configure.configuration import nav  # noqa
 from utils import version
+from utils.appliance import current_appliance
+from utils.appliance.implementations.ui import navigate_to
 
 
 """
@@ -167,7 +169,7 @@ def update_registration(service,
         organization_sat5 = organization
         organization_sat6 = None
 
-    sel.force_navigate("cfg_settings_region_red_hat_updates")
+    navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
     sel.click(update_buttons.edit_registration)
     details = dict(
         service=sel.ByValue(service_value),
@@ -319,7 +321,7 @@ def get_available_version():
          e.g. ``1.2.2.3``
     """
     if not update_buttons.is_displayed():
-        sel.force_navigate("cfg_settings_region_red_hat_updates")
+        navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
     available_version_loc = "div#rhn_buttons > table > tbody > tr > td"
     available_version_raw = sel.text(available_version_loc)
     available_version_search_res = re.search(r"([0-9]+\.)*[0-9]+", available_version_raw)
@@ -335,7 +337,7 @@ def select_appliances(*appliance_names):
         appliance_names: Names of appliances to select; will select all if empty
     """
     if not update_buttons.is_displayed():
-        sel.force_navigate("cfg_settings_region_red_hat_updates")
+        navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
     if appliance_names:
         cells = {'appliance': [name for name in appliance_names]}
         appliances_table().deselect_all()
@@ -351,7 +353,7 @@ def get_appliance_rows(*appliance_names):
         appliance_names: Names of appliances to get; will get all if empty
     """
     if not update_buttons.is_displayed():
-        sel.force_navigate("cfg_settings_region_red_hat_updates")
+        navigate_to(current_appliance.server.zone.region, 'RedHatUpdates')
     if appliance_names:
         rows = list()
         for row in appliances_table().rows():

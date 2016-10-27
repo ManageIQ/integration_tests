@@ -2,22 +2,23 @@
 import fauxfactory
 import pytest
 
-import cfme.web_ui.flash as flash
 import cfme.configure.configuration as conf
+from cfme.base import ZoneCollection
 from fixtures.pytest_store import store
+from utils.appliance import current_appliance
 from utils.update import update
-from utils import version
 
 
 @pytest.mark.tier(1)
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_crud(soft_assert):
-    zone = conf.Zone(
-        name=fauxfactory.gen_alphanumeric(5),
-        description=fauxfactory.gen_alphanumeric(8))
+    zc = ZoneCollection(current_appliance)
     # CREATE
-    zone.create()
+    zone = zc.create(
+        name=fauxfactory.gen_alphanumeric(5),
+        description=fauxfactory.gen_alphanumeric(8)
+    )
     soft_assert(zone.exists, "The zone {} does not exist!".format(
         zone.description
     ))
@@ -38,15 +39,13 @@ def test_zone_crud(soft_assert):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_cancel_validation():
-    zone = conf.Zone(
+    zc = ZoneCollection(current_appliance)
+    # CREATE
+    zc.create(
         name=fauxfactory.gen_alphanumeric(5),
-        description=fauxfactory.gen_alphanumeric(8))
-    zone.create(cancel=True)
-    if version.current_version() >= 5.6:
-        msg = 'Add of new Zone was cancelled by the user'
-    else:
-        msg = 'Add of new Miq Zone was cancelled by the user'
-    flash.assert_message_match(msg)
+        description=fauxfactory.gen_alphanumeric(8),
+        cancel=True
+    )
 
 
 @pytest.mark.tier(2)
@@ -54,9 +53,12 @@ def test_zone_add_cancel_validation():
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_change_appliance_zone(request):
     """ Tests that an appliance can be changed to another Zone """
-    zone = conf.Zone(
+    zc = ZoneCollection(current_appliance)
+    # CREATE
+    zone = zc.create(
         name=fauxfactory.gen_alphanumeric(5),
-        description=fauxfactory.gen_alphanumeric(8))
+        description=fauxfactory.gen_alphanumeric(8)
+    )
     request.addfinalizer(zone.delete)
     request.addfinalizer(conf.BasicInformation(appliance_zone="default").update)
     zone.create()

@@ -88,12 +88,14 @@ class IPAppliance(object):
         self.container = container
         self._db_ssh_client = None
         self._user = None
-
-        from cfme.base import Server
-        self.server = Server(appliance=self)
         self.browser = ViaUI(owner=self)
         self.context = ImplementationContext.from_instances(
             [self.browser])
+
+        from cfme.base import Server, Region, Zone
+        region = Region(self, self.server_region())
+        zone = Zone(self, region=region)
+        self.server = Server(appliance=self, zone=zone, sid=self.server_id())
 
     @property
     def user(self):
@@ -1441,6 +1443,7 @@ class IPAppliance(object):
                  delay=5,
                  num_sec=timeout)
 
+    @cached_property
     def get_host_address(self):
         try:
             if self.version >= '5.6':
@@ -1456,11 +1459,11 @@ class IPAppliance(object):
 
     def wait_for_host_address(self):
         try:
-            wait_for(func=self.get_host_address,
+            wait_for(func=lambda: self.get_host_address,
                      fail_condition=None,
                      delay=5,
                      num_sec=120)
-            return self.get_host_address()
+            return self.get_host_address
         except Exception as e:
             logger.exception(e)
             self.log.error('waiting for host address from yaml_config timedout')
