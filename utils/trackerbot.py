@@ -28,6 +28,7 @@ stream_matchers = (
     # Nightly builds have potentially multiple version streams bound to them so we
     # cannot use get_stream()
     ('upstream_stable', r'^miq-stable-darga-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
+    ('upstream_euwe', r'^miq-stable-euwe-(.*)-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     ('downstream-nightly', r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     # new format
     ('downstream-nightly', r'^cfme-nightly-\d*-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
