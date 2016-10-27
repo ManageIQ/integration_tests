@@ -9,10 +9,13 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons, flash, Table,
     ButtonGroup, Quadicon, CheckboxTree, Input, CFMECheckbox)
 from cfme.web_ui.menu import nav
+from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import version
 from utils.blockers import BZ
 from utils.pretty import Pretty
 from utils.update import Updateable
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 details_page = Region(infoblock_type='detail')
@@ -24,27 +27,13 @@ timeprofile_table = Table("//div[@id='main_div']//table")
 nav.add_branch(
     'my_settings',
     {
-        'my_settings_time_profiles':
-        [
-            lambda _: tabs.select_tab("Time Profiles"),
-            {
-                "timeprofile_new":
-                lambda _: cfg_btn('Add a new Time Profile'),
 
-                "timeprofile_edit":
-                lambda ctx: timeprofile_table.click_cell(
-                    "description", ctx.timeprofile.description),
-
-            }
-        ],
-        'my_settings_visual': [lambda _: tabs.select_tab("Visual"), {}],
-        'my_settings_default_filters': [lambda _: tabs.select_tab("Default Filters"), {}],
         'my_settings_default_views': [lambda _: tabs.select_tab("Default Views"), {}],
     }
 )
 
 
-class Timeprofile(Updateable):
+class Timeprofile(Updateable, Navigatable):
     timeprofile_form = Form(
         fields=[
             ("description", Input("description")),
@@ -61,7 +50,9 @@ class Timeprofile(Updateable):
 
     save_button = form_buttons.FormButton("Add this Time Profile")
 
-    def __init__(self, description=None, scope=None, days=None, hours=None, timezone=None):
+    def __init__(self, description=None, scope=None, days=None, hours=None, timezone=None,
+            appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.scope = scope
         self.days = days
@@ -69,7 +60,7 @@ class Timeprofile(Updateable):
         self.timezone = timezone
 
     def create(self):
-        sel.force_navigate('timeprofile_new')
+        navigate_to(self, 'Add')
         fill(self.timeprofile_form, {'description': self.description,
                                      'scope': self.scope,
                                      'days': self.days,
@@ -82,7 +73,7 @@ class Timeprofile(Updateable):
             flash.assert_success_message('Time Profile "{}" was added'.format(self.description))
 
     def update(self, updates):
-        sel.force_navigate("timeprofile_edit", context={"timeprofile": self})
+        navigate_to(self, 'Edit')
         fill(self.timeprofile_form, {'description': updates.get('description'),
                                      'scope': updates.get('scope'),
                                      'timezone': updates.get('timezone')},
@@ -91,7 +82,7 @@ class Timeprofile(Updateable):
             'Time Profile "{}" was saved'.format(updates.get('description', self.description)))
 
     def copy(self):
-        sel.force_navigate("my_settings_time_profiles")
+        navigate_to(self, 'All')
         row = timeprofile_table.find_row_by_cells({'description': self.description})
         sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
         cfg_btn('Copy selected Time Profile')
@@ -105,7 +96,7 @@ class Timeprofile(Updateable):
         return new_timeprofile
 
     def delete(self):
-        sel.force_navigate("my_settings_time_profiles")
+        navigate_to(self, 'All')
         row = timeprofile_table.find_row_by_cells({'description': self.description})
         sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
         cfg_btn('Delete selected Time Profiles', invokes_alert=True)
@@ -114,7 +105,31 @@ class Timeprofile(Updateable):
             'Time Profile "{}": Delete successful'.format(self.description))
 
 
-class Visual(Updateable):
+@navigator.register(Timeprofile, 'All')
+class TimeprofileAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
+
+    def step(self):
+        tabs.select_tab("Time Profiles")
+
+
+@navigator.register(Timeprofile, 'Add')
+class TimeprofileNew(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn('Add a new Time Profile')
+
+
+@navigator.register(Timeprofile, 'Edit')
+class TimeprofileEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        timeprofile_table.click_cell("description", self.timeprofile.description)
+
+
+class Visual(Updateable, Navigatable):
 
     pretty_attrs = ['name']
 
@@ -166,111 +181,111 @@ class Visual(Updateable):
 
     @property
     def grid_view_limit(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return int(self.item_form.grid_view.first_selected_option_text)
 
     @grid_view_limit.setter
     def grid_view_limit(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.item_form.grid_view, str(value))
         sel.click(form_buttons.save)
 
     @property
     def tile_view_limit(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return int(self.item_form.tile_view.first_selected_option_text)
 
     @tile_view_limit.setter
     def tile_view_limit(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.item_form.tile_view, str(value))
         sel.click(form_buttons.save)
 
     @property
     def list_view_limit(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return int(self.item_form.list_view.first_selected_option_text)
 
     @list_view_limit.setter
     def list_view_limit(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.item_form.list_view, str(value))
         sel.click(form_buttons.save)
 
     @property
     def report_view_limit(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return int(self.item_form.reports.first_selected_option_text)
 
     @report_view_limit.setter
     def report_view_limit(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.item_form.reports, str(value))
         sel.click(form_buttons.save)
 
     @property
     def login_page(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return int(self.startpage_form.login_page.first_selected_option_text)
 
     @login_page.setter
     def login_page(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.startpage_form.login_page, str(value))
         sel.click(form_buttons.save)
 
     @property
     def infra_provider_quad(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return self.infra_provider_quad
 
     @infra_provider_quad.setter
     def infra_provider_quad(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.quadicons_form.infra_provider_quad, value)
         sel.click(form_buttons.save)
 
     @property
     def host_quad(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return self.host_quad
 
     @host_quad.setter
     def host_quad(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.quadicons_form.host_quad, value)
         sel.click(form_buttons.save)
 
     @property
     def datastore_quad(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return self.datastore_quad
 
     @datastore_quad.setter
     def datastore_quad(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.quadicons_form.datastore_quad, value)
         sel.click(form_buttons.save)
 
     @property
     def vm_quad(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return self.vm_quad
 
     @vm_quad.setter
     def vm_quad(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.quadicons_form.vm_quad, value)
         sel.click(form_buttons.save)
 
     @property
     def template_quad(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return self.template_quad
 
     @template_quad.setter
     def template_quad(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.quadicons_form.template_quad, value)
         sel.click(form_buttons.save)
 
@@ -281,30 +296,39 @@ class Visual(Updateable):
 
     @property
     def cloud_provider_quad(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return self.cloud_provider_quad
 
     @cloud_provider_quad.setter
     def cloud_provider_quad(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.quadicons_form.cloud_provider_quad, value)
         sel.click(form_buttons.save)
 
     @property
     def timezone(self):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         return self.display_form.time_zone.first_selected_option_text
 
     @timezone.setter
     def timezone(self, value):
-        sel.force_navigate("my_settings_visual")
+        navigate_to(self, 'All')
         fill(self.display_form.time_zone, str(value))
         sel.click(form_buttons.save)
+
 
 visual = Visual()
 
 
-class DefaultFilter(Updateable, Pretty):
+@navigator.register(Visual, 'All')
+class VisualAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
+
+    def step(self):
+        tabs.select_tab("Visual")
+
+
+class DefaultFilter(Updateable, Pretty, Navigatable):
     filter_form = Form(
         fields=[
             ("filter_tree", CheckboxTree("//div[@id='all_views_treebox']/ul")),
@@ -313,17 +337,25 @@ class DefaultFilter(Updateable, Pretty):
 
     pretty_attrs = ['name', 'filters']
 
-    def __init__(self, name=None, filters=None):
+    def __init__(self, name=None, filters=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.filters = filters or []
 
     def update(self, updates, expect_success=True):
-        sel.force_navigate("my_settings_default_filters", context=self)
+        navigate_to(self, 'All')
         fill(self.filter_form, {'filter_tree': updates.get('filters')},
              action=form_buttons.save)
         if expect_success:
             flash.assert_success_message('Default Filters saved successfully')
 
+
+@navigator.register(DefaultFilter, 'All')
+class DefaultFilterAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
+
+    def step(self):
+        tabs.select_tab("Default Filters")
 
 def set_default_view(button_group_name, view):
     bg = ButtonGroup(button_group_name)

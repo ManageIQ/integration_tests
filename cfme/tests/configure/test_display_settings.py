@@ -6,7 +6,10 @@ from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import ColorGroup, form_buttons
 from utils import version
+from cfme.configure.settings import Visual
 from cfme.configure import settings  # NOQA
+from utils.appliance.implementations.ui import navigate_to
+
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings]
@@ -65,7 +68,7 @@ def test_timezone_setting(set_timezone):
     if version.current_version() > '5.5':
         sel.force_navigate("cfg_diagnostics_server_summary")
     else:
-        sel.force_navigate("my_settings_visual")
+        navigate_to(Visual, 'All')
 
     assert sel.is_displayed(locator), "Timezone settings Failed"
 
@@ -78,7 +81,7 @@ def test_color_setting(request, color):
     Metadata:
         test_flag: visuals
     """
-    sel.force_navigate("my_settings_visual")
+    navigate_to(Visual, 'All')
     cg = ColorGroup('Header Accent Color')
     default_color = cg.active
     set_header_color(color)
