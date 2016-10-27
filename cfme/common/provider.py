@@ -812,7 +812,7 @@ class ProviderListing(CFMENavigateStep):
 class All(CFMENavigateStep):
     @property
     def prerequisite(self):
-        if isinstance(self.ob, type):
+        if isinstance(self.obj, type):
             return self.prerequisite_type
         else:
             return self.prerequisite_instance
