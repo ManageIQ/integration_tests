@@ -126,6 +126,8 @@ def test_server_reload(provider, server):
     check_server_running(server)
 
 
+# disabled as Hawkular server does not have 'Power' toolbar operation
+@pytest.mark.uncollect
 def test_hawkular_fail(provider):
     """Tests Hawkular server itself reload operation message on UI
 
