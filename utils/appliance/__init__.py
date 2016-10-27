@@ -12,6 +12,8 @@ from urlparse import ParseResult, urlparse
 from tempfile import NamedTemporaryFile
 
 from cached_property import cached_property
+import attr
+
 
 from werkzeug.local import LocalStack, LocalProxy
 
@@ -2212,15 +2214,18 @@ current_appliance = LocalProxy(get_or_create_current_appliance)
 
 class CurrentAppliance(object):
     def __get__(self, instance, owner):
+        if instance is not None:
+            return instance._appliance
         return get_or_create_current_appliance()
 
 
+@attr.s
 class Navigatable(object):
 
     appliance = CurrentAppliance()
-
-    def __init__(self, appliance=None):
-        self.appliance = appliance or get_or_create_current_appliance()
+    _appliance = attr.ib(
+        default=attr.Factory(get_or_create_current_appliance),
+        repr=False)
 
     @property
     def browser(self):

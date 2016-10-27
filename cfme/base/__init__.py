@@ -1,5 +1,5 @@
 import sentaku
-
+import attr
 from cfme.exceptions import ZoneNotFound
 
 from utils.appliance import Navigatable
@@ -7,26 +7,51 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.pretty import Pretty
 
 
-class Server(Navigatable, sentaku.Element):
-    def __init__(self, appliance, zone=None, name="EVM", sid=1):
-        Navigatable.__init__(self, appliance=appliance)
-        self.zone = zone or appliance.server.zone
-        self.name = name
-        self.sid = sid
+@attr.s
+class HackyElement(sentaku.Element):
+    parent = attr.ib()
+
+    @classmethod
+    def from_appliance(cls, appliance, parent=None, **kwargs):
+        return cls(
+            appliance=appliance,
+            parent=parent or appliance.context,
+            **kwargs)
+
+
+@attr.s
+class Server(Navigatable, HackyElement):
+    zone = attr.ib()
+    name = attr.ib(default='EVM')
+    sid = attr.ib(default=1)
+
+    @classmethod
+    def from_appliance(cls, appliance, zone=None, **kwargs):
+        self = super(Server, cls).from_appliance(
+            appliance=appliance, zone=zone or appliance.server.zone, **kwargs)
         self.zone.servers.add(self)
-        self.parent = self.appliance.context
+        return self
 
 
-class ZoneCollection(Navigatable, sentaku.Element):
+@attr.s
+class ZoneCollection(Navigatable, HackyElement):
 
     create = sentaku.ContextualMethod()
+
+    region = attr.ib()
 
     def __init__(self, appliance, region=None):
         self.appliance = appliance
         self.region = region or appliance.server.zone.region
         self.parent = self.appliance.context
 
+    @classmethod
+    def from_appliance(cls, appliance, region=None, **kwargs):
+        region = region or appliance.server.zone.region
+        return super(ZoneCollection, cls).from_appliance(appliance, region=region, **kwargs)
 
+
+@attr.s
 class Zone(Pretty, Navigatable, sentaku.Element):
     """ Configure/Configuration/Region/Zones functionality
 
@@ -39,29 +64,28 @@ class Zone(Pretty, Navigatable, sentaku.Element):
     update = sentaku.ContextualMethod()
     delete = sentaku.ContextualMethod()
 
-    def __init__(self, appliance, region=None,
-            name=None, description=None, smartproxy_ip=None, ntp_servers=None, max_scans=None,
-            user=None):
-        self.appliance = appliance
-        self.servers = set()
-        self.region = region or self.appliance.server.zone.region
-        self.name = name or "default"
-        self.description = description or "Default Zone"
+    servers = attr.ib(default=attr.Factory(set))
+    region = attr.ib()
+    name = attr.ib(default="default")
+    description = attr.ib(default="Default Zone")
+
+    smartproxy_ip = attr.ib(default=None)
+    ntp_servers = attr.ib(default=None)
+    max_scans = attr.ib(default=None)
+    user = attr.ib(default=None)
+
+    @classmethod
+    def from_appliance(cls, appliance, region=None, **kwargs):
+        region = region or appliance.server.zone.region
+        self = super(Zone, cls).from_appliance(appliance, region=region, **kwargs)
         self.region.zones.add(self)
-
-        self.smartproxy_ip = smartproxy_ip
-        self.ntp_servers = ntp_servers
-        self.max_scans = max_scans
-        self.user = user
-        self.parent = self.appliance.context
+        return self
 
 
+@attr.s
 class Region(Navigatable, sentaku.Element):
-    def __init__(self, appliance, number=0):
-        self.appliance = appliance
-        self.zones = set()
-        self.number = number
-        self.parent = self.appliance.context
+    zones = attr.ib(default=attr.Factory(set))
+    number = attr.ib(default=1)
 
     @property
     def settings_string(self):
