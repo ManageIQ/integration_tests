@@ -1573,11 +1573,14 @@ class Input(Pretty):
 
     @property
     def angular_help_block(self):
-        """Returns the angular helper text (like 'Required')."""
-        loc = "{}/following-sibling::span".format(self.locate())
-        if sel.is_displayed(loc):
+        """Returns the first visible angular helper text (like 'Required')."""
+        loc = (
+            '{0}/following-sibling::span[not(contains(@class, "ng-hide"))]'
+            '| {0}/following-sibling::div/span[not(contains(@class, "ng-hide"))]'
+            .format(self.locate()))
+        try:
             return sel.text(loc).strip()
-        else:
+        except NoSuchElementException:
             return None
 
     def __add__(self, string):
