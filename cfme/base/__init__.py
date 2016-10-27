@@ -40,11 +40,6 @@ class ZoneCollection(Navigatable, HackyElement):
 
     region = attr.ib()
 
-    def __init__(self, appliance, region=None):
-        self.appliance = appliance
-        self.region = region or appliance.server.zone.region
-        self.parent = self.appliance.context
-
     @classmethod
     def from_appliance(cls, appliance, region=None, **kwargs):
         region = region or appliance.server.zone.region
