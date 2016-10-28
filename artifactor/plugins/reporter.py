@@ -314,7 +314,6 @@ class ReporterBase(object):
                 # passed.
                 if bmax:
                     percen = "{:.2f}".format((float(v['_stats']['passed']) +
-                                              float(v['_stats']['skipped']) +
                                               float(v['_stats']['xfailed'])) / float(bmax) * 100)
                     if float(percen) == 100.0:
                         level = 'passed'
