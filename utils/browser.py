@@ -128,9 +128,18 @@ class BrowserFactory(object):
         return self.browser_kwargs
 
     def create(self, url_key):
-        browser = tries(
-            3, WebDriverException,
-            self.webdriver_class, **self.processed_browser_args())
+        try:
+            browser = tries(
+                3, WebDriverException,
+                self.webdriver_class, **self.processed_browser_args())
+        except urllib2.URLError as e:
+            if e.reason.errno == 111:
+                # Known issue
+                raise RuntimeError('Could not connect to Selenium server. Is it up and running?')
+            else:
+                # Unknown issue
+                raise
+
         browser.file_detector = UselessFileDetector()
         browser.maximize_window()
         browser.get(url_key)
