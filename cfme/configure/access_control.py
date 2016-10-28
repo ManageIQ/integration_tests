@@ -129,14 +129,21 @@ class User(Updateable, Pretty, Navigatable):
     def update(self, updates):
         navigate_to(self, 'Edit')
         change_stored_password()
-        fill(self.user_form, {'name_txt': updates.get('name'),
-                              'userid_txt': updates.get('credential').principal,
-                              'password_txt': updates.get('credential').secret,
-                              'password_verify_txt': updates.get('credential').verify_secret,
-                              'email_txt': updates.get('email'),
-                              'user_group_select': getattr(updates.get('group'),
-                                                           'description', None)},
-             action=form_buttons.save)
+        new_updates = {}
+        if 'credential' in updates:
+            new_updates.update({
+                'userid_txt': updates.get('credential').principal,
+                'password_txt': updates.get('credential').secret,
+                'password_verify_txt': updates.get('credential').verify_secret
+            })
+        new_updates.update({
+            'name_txt': updates.get('name'),
+            'email_txt': updates.get('email'),
+            'user_group_select': getattr(
+                updates.get('group'),
+                'description', None)
+        })
+        fill(self.user_form, new_updates, action=form_buttons.save)
         flash.assert_success_message(
             'User "{}" was saved'.format(updates.get('name', self.name)))
 
