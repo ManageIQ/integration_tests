@@ -9,7 +9,7 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
     form_buttons, Input, Table, UpDownSelect, CFMECheckbox)
 from cfme.web_ui.form_buttons import change_stored_password
-from cfme.web_ui.menu import extend_nav, nav
+from cfme.web_ui.menu import extend_nav
 from fixtures.pytest_store import store
 from utils import version
 from utils.appliance import Navigatable
@@ -38,14 +38,6 @@ group_order_selector = UpDownSelect(
     "select#seq_fields",
     "//img[@alt='Move selected fields up']",
     "//img[@alt='Move selected fields down']")
-
-nav.add_branch(
-    'configuration',
-    {
-        'chargeback_assignments':
-        nav.fn(partial(accordion.click, "Assignments"))
-    }
-)
 
 
 @extend_nav
