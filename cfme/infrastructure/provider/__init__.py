@@ -10,7 +10,7 @@
 """
 from functools import partial
 
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToSibling
 
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
@@ -141,6 +141,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     """
     provider_types = {}
+    NAVTREE_LOCATION = 'Compute', 'Infrastructure', 'Providers'
     in_version = (version.LOWEST, version.LATEST)
     type_tclass = "infra"
     pretty_attrs = ['name', 'key', 'zone']
@@ -307,21 +308,6 @@ class InfraProvider(Pretty, CloudInfraProvider):
         for icon in icons:
             web_clusters.append(Cluster(icon.name, self))
         return web_clusters
-
-
-@navigator.register(InfraProvider, 'All')
-class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'Providers')(None)
-
-    def resetter(self):
-        # Reset view and selection
-        tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
 
 
 @navigator.register(InfraProvider, 'Add')

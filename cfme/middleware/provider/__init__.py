@@ -1,10 +1,10 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToSibling
 
 from cfme.common.provider import import_all_modules_of
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Region, Form, AngularSelect, Input, Quadicon, form_buttons, toolbar as tb, paginator
+    Region, Form, AngularSelect, Input, Quadicon, form_buttons
 )
 from cfme.web_ui.menu import nav
 from utils import version
@@ -85,21 +85,6 @@ class MiddlewareProvider(BaseProvider):
     add_provider_button = form_buttons.FormButton("Add")
     save_button = form_buttons.FormButton("Save changes")
     taggable_type = 'ExtManagementSystem'
-
-
-@navigator.register(MiddlewareProvider, 'All')
-class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Providers')(None)
-
-    def resetter(self):
-        # Reset view and selection
-        tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
 
 
 @navigator.register(MiddlewareProvider, 'Add')

@@ -1,11 +1,11 @@
 from functools import partial
 
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToSibling
 
 from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region, paginator,
+    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region,
     match_location
 )
 from cfme.web_ui.menu import nav
@@ -94,6 +94,7 @@ match_page = partial(match_location, controller='ems_container',
 @BaseProvider.add_base_type
 class ContainersProvider(BaseProvider, Pretty):
     provider_types = {}
+    NAVTREE_LOCATION = 'Compute', 'Containers', 'Providers'
     in_version = ('5.5', version.LATEST)
     type_tclass = "container"
     pretty_attrs = ['name', 'key', 'zone']
@@ -229,21 +230,6 @@ class ContainersProvider(BaseProvider, Pretty):
     @num_image_registry.variant('ui')
     def num_image_registry_ui(self):
         return int(self.get_detail("Relationships", "Image Registries"))
-
-
-@navigator.register(ContainersProvider, 'All')
-class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Containers', 'Providers')(None)
-
-    def resetter(self):
-        # Reset view and selection
-        tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
 
 
 @navigator.register(ContainersProvider, 'Add')
