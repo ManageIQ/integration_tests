@@ -18,7 +18,7 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
-    AngularSelect, toolbar as tb, Radio, InfoBlock
+    AngularSelect, toolbar as tb, Radio, InfoBlock, match_location
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
@@ -34,6 +34,8 @@ from utils.varmeth import variable
 from utils.wait import wait_for
 
 details_page = Region(infoblock_type='detail')
+
+match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
 
 # Forms
 discover_form = Form(
@@ -312,6 +314,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def am_i_here(self):
+        return match_page(summary='Infrastructure Providers')
 
     def step(self):
         from cfme.web_ui.menu import nav
