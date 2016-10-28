@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure import host, datastore, cluster, resource_pool
 from cfme.web_ui import Region
 from utils import testgen
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3),
+              test_requirements.general_ui]
 
 details_page = Region(infoblock_type='detail')
 
