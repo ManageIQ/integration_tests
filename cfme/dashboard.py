@@ -70,7 +70,7 @@ def reset_widgets(cancel=False):
 
 def dashboards():
     """Returns a generator that iterates through the available dashboards"""
-    navigate_to(Dashboard, 'All')
+    navigate_to(Dashboard, 'Main')
     # We have to click any other of the tabs (glitch)
     # Otherwise the first one is not displayed (O_O)
     tabstrip.select_tab(tabstrip.get_all_tabs()[-1])
