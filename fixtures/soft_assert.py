@@ -99,7 +99,9 @@ def handle_assert_artifacts(request, fail_message=None):
 
     if not fail_message:
         short_tb = '{}'.format(sys.exc_info()[1])
-        full_tb = "".join(traceback.format_tb(sys.exc_info()[2]))
+        short_tb = short_tb.encode('base64')
+        var_tb = traceback.format_tb(sys.exc_info()[2])
+        full_tb = "".join(var_tb)
         full_tb = full_tb.encode('base64')
 
     else:
