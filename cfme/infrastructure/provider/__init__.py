@@ -119,7 +119,7 @@ class InfraProvidersView(BaseLoggedInPage):
     def is_displayed(self):
         return all((self.logged_in_as_current_user,
                     self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'],
-                    match_page('Infrastructure Providers')))
+                    match_page(summary='Infrastructure Providers')))
 
     @View.nested
     class paginator(Paginator):
@@ -419,6 +419,7 @@ def get_all_providers(do_not_navigate=False):
     """Returns list of all providers"""
     if not do_not_navigate:
         providers_view = navigate_to(InfraProvider, 'All')
+        providers_view.paginator.sort_by('Type')
     providers = set([])
     link_marker = "ems_infra"
     # todo: create paginator widget
@@ -426,7 +427,6 @@ def get_all_providers(do_not_navigate=False):
     #     for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
     #             "'{}/show')]".format(link_marker)):
     #         providers.add(sel.get_attribute(title, "title"))
-    providers_view.paginator.check_all()
     return providers
 
 

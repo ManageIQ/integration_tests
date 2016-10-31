@@ -1213,10 +1213,12 @@ class Paginator(View):
     """
     _main_locator = '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])'
     _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
+    # '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
 
     check_all_items = CheckBox(id='masterToggle')
-    sort_ctl = Dropdown(text='sort_choice')
+    sort_ctl = Dropup(text='sort_choice')
     items_on_page = Dropup(text='ppsetting')
+    next = Button(text='')
 
     def __locator__(self):
         return './/div[contains(@id, "paging_div")'
@@ -1254,8 +1256,7 @@ class Paginator(View):
         pass
 
     def next_page(self):
-        '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])'
-        '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
+
         pass
 
     def prev_page(self):
