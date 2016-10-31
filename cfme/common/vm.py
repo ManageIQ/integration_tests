@@ -14,6 +14,7 @@ from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
     form_buttons, paginator, toolbar, PagedTable, SplitPagedTable, search)
 from utils import version
+from utils.blockers import BZ
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.timeutil import parsetime
@@ -390,11 +391,12 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             sel.click(self.find_quadicon())
         else:
             if refresh:
-                # bz1392139 for 5.7, should be fixed in 5.7.1 - dajo
-                if version.current_version() < "5.7":
-                    toolbar.refresh()
-                else:
+                # bz1389299 for 5.7, should be fixed in 5.7.1 - dajo
+                reload_bug = BZ(1329299)
+                if reload_bug.bugzilla.get_bug(1329299).is_opened:
                     sel.click(self.find_quadicon())
+                else:
+                    toolbar.refresh()
 
     def open_edit(self):
         """Loads up the edit page of the object."""
