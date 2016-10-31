@@ -10,7 +10,7 @@ from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresen
 from widgetastic.log import call_sig
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget, \
-    BaseInput
+    BaseInput, Text
 from widgetastic.xpath import quote
 
 from wait_for import wait_for, wait_for_decorator
@@ -1211,6 +1211,9 @@ class Paginator(View):
     """
     Paginator
     """
+    _main_locator = '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])'
+    _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
+
     check_all_items = CheckBox(id='masterToggle')
     sort_ctl = Dropdown(text='sort_choice')
     items_on_page = Dropup(text='ppsetting')
@@ -1245,7 +1248,7 @@ class Paginator(View):
         pass
 
     def items_per_page(self):
-        pass
+        return Text(self._main_locator + self._page_cell)
 
     def current_page(self):
         pass
