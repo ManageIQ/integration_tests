@@ -160,8 +160,8 @@ _default_conf = {
 # let logging know we made a TRACE level
 logging.TRACE = 5
 logging.addLevelName(logging.TRACE, 'TRACE')
-logging.basicConfig(format=_default_conf['default_format'],
-                    datefmt='%d-%m %H:%M:%S')
+logging.basicConfig(format=_default_conf['default_format'], datefmt='%d-%m %H:%M:%S',
+                    level=logging.INFO)
 
 
 class logger_wrap(object):
