@@ -29,7 +29,10 @@ class MiqBrowserPlugin(DefaultPlugin):
     ENSURE_PAGE_SAFE = jsmin('''\
         function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
 
-        angular.element('error-modal').hide();
+        try {
+            angular.element('error-modal').hide();
+        } catch(err) {
+        }
 
         try {
             return ! ManageIQ.qe.anythingInFlight();
