@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import datetime
-import fauxfactory
 import pytest
 
+from cfme import test_requirements
 from cfme.common.vm import VM
 from utils import testgen, providers
+from utils.generators import random_vm_name
 from utils.timeutil import parsetime
 from utils.wait import wait_for
 from utils.version import current_version
-
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),
@@ -23,9 +23,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm(request, provider, setup_provider, small_template):
-    vm_obj = VM.factory(
-        'test_retire_prov_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
-        provider, template_name=small_template)
+    vm_obj = VM.factory(random_vm_name('retire'), provider, template_name=small_template)
 
     @request.addfinalizer
     def _delete_vm():
@@ -53,7 +51,7 @@ def existing_vm(request):
             need_to_create_vm = False
             break
     if need_to_create_vm:
-        machine_name = 'test_retire_prov_{}'.format(fauxfactory.gen_alpha(length=8).lower())
+        machine_name = random_vm_name('retire')
         need_vm = VM.factory(machine_name, test_provider)
         need_vm.create_on_provider(find_in_cfme=True, allow_skip="default")
 
@@ -82,6 +80,7 @@ def verify_retirement(vm):
         assert retirement_date == today
 
 
+@test_requirements.retirement
 @pytest.mark.meta(blockers=[1337697])
 def test_retirement_now(vm):
     """Tests retirement
@@ -93,6 +92,7 @@ def test_retirement_now(vm):
     verify_retirement(vm)
 
 
+@test_requirements.retirement
 def test_set_retirement_date(vm):
     """Tests retirement
 
@@ -103,6 +103,7 @@ def test_set_retirement_date(vm):
     verify_retirement(vm)
 
 
+@test_requirements.retirement
 def test_set_unset_retirement_date_tomorrow(existing_vm):
     """Tests retirement
 
