@@ -199,6 +199,17 @@ class WharfFactory(BrowserFactory):
         self.wharf.renew()
 
 
+class SauceFactory(BrowserFactory):
+    def processed_browser_args(self):
+        sauce_url = self.browser_kwargs.pop('webdriver_sauce')
+        command_executor = sauce_url.format(user_name=conf.credentials['saucelabs']['username'],
+                                            access_key=conf.credentials['saucelabs']['access_key'])
+        log.info('webdriver command executor set to %s', command_executor)
+        return dict(
+            super(SauceFactory, self).processed_browser_args(),
+            command_executor=command_executor)
+
+
 class BrowserManager(object):
     def __init__(self, browser_factory):
         self.factory = browser_factory
@@ -208,7 +219,9 @@ class BrowserManager(object):
         return key or store.base_url
 
     @classmethod
-    def from_conf(cls, browser_conf):
+    def from_conf(cls, browser_conf=None):
+        if not browser_conf:
+            browser_conf = conf.env.get('browser', {})
         webdriver_name = browser_conf.get('webdriver', 'Firefox')
         webdriver_class = getattr(webdriver, webdriver_name)
 
@@ -218,6 +231,9 @@ class BrowserManager(object):
             wharf = Wharf(browser_conf['webdriver_wharf'])
             atexit.register(wharf.checkin)
             return cls(WharfFactory(webdriver_class, browser_kwargs, wharf))
+        elif 'webdriver_sauce' in browser_conf:
+            browser_kwargs['webdriver_sauce'] = browser_conf['webdriver_sauce']
+            return cls(SauceFactory(webdriver_class, browser_kwargs))
         else:
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
@@ -324,7 +340,7 @@ class WithZoom(object):
         ac.perform()
 
 
-manager = BrowserManager.from_conf(conf.env.get('browser', {}))
+manager = BrowserManager.from_conf()
 
 driver = LocalProxy(manager.ensure_open)
 
