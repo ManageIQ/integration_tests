@@ -238,7 +238,25 @@ class BrowserManager(object):
             self.start(url_key=url_key)
         return self.browser
 
+    def add_cleanup(self, callback):
+        assert self.browser is not None
+        try:
+            cl = self.browser.__cleanup
+        except AttributeError:
+            cl = self.browser.__cleanup = []
+        cl.append(callback)
+
+    def _consume_cleanups(self):
+        try:
+            cl = self.browser.__cleanup
+        except AttributeError:
+            pass
+        else:
+            while cl:
+                cl.pop()()
+
     def quit(self):
+        self._consume_cleanups()
         try:
             self.browser.quit()
         except:
