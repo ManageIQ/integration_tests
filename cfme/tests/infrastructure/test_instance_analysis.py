@@ -16,7 +16,6 @@ from cfme.provisioning import do_vm_provisioning
 from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, ssh, safe_string, version, error
-from utils.browser import ensure_browser_open
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
@@ -129,7 +128,8 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
                     "https://github.com/ManageIQ/manageiq/issues/6506")
     if provider.type == 'virtualcenter':
         store.current_appliance.install_vddk(reboot=True, wait_for_web_ui_after_reboot=True)
-        ensure_browser_open()
+        store.current_appliance.browser.quit_browser()
+        store.current_appliance.browser.open_browser()
         set_host_credentials(request, provider, vm_analysis_data)
 
     # Make sure all roles are set
