@@ -1,41 +1,31 @@
 # -*- coding: utf-8 -*-
 # added new list_tbl definition
+from functools import partial
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, CheckboxTable
+from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, match_location
 from cfme.web_ui.menu import nav
 from . import details_page
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
+    navigate_to
+from navmazing import NavigateToAttribute, NavigateToSibling
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
-nav.add_branch(
-    'containers_pods',
-    {
-        'containers_pod':
-        lambda ctx: list_tbl.select_row_by_cells(
-            {'Name': ctx['pod'].name, 'Provider': ctx['pod'].provider.name}),
-
-        'containers_pod_detail':
-        lambda ctx: list_tbl.click_row_by_cells(
-            {'Name': ctx['pod'].name, 'Provider': ctx['pod'].provider.name}),
-    }
-)
+match_page = partial(match_location, controller='container_pods', title='Pods')
 
 
-class Pod(Taggable, SummaryMixin):
+class Pod(Taggable, SummaryMixin, Navigatable):
 
-    def __init__(self, name, provider):
+    def __init__(self, name, provider, appliance=None):
         self.name = name
         self.provider = provider
-
-    def _on_detail_page(self):
-        return sel.is_displayed(
-            '//div//h1[contains(., "{} (Summary)")]'.format(self.name))
+        Navigatable.__init__(self, appliance=appliance)
 
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            self.navigate(detail=True)
-        elif refresh:
+        navigate_to(self, 'Details')
+        if refresh:
             tb.refresh()
 
     def click_element(self, *ident):
@@ -52,9 +42,28 @@ class Pod(Taggable, SummaryMixin):
         self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
 
-    def navigate(self, detail=True):
-        if detail is True:
-            if not self._on_detail_page():
-                sel.force_navigate('containers_pod_detail', context={'pod': self})
-        else:
-            sel.force_navigate('containers_pod', context={'pod': self})
+
+@navigator.register(Pod, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        nav._nav_to_fn('Compute', 'Containers', 'Pods')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("List View")
+        sel.check(paginator.check_all())
+        sel.uncheck(paginator.check_all())
+
+
+@navigator.register(Pod, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def am_i_here(self):
+        return match_page(summary='{} (Summary)'.format(self.obj.name))
+
+    def step(self):
+        tb.select('List View')
+        list_tbl.click_row_by_cells({'Name': self.obj.name})

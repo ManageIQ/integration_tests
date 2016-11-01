@@ -1,8 +1,11 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from utils import testgen
 from utils.version import current_version
+from cfme.containers.route import Route
+from utils.appliance.implementations.ui import navigate_to
+from cfme.containers.project import Project
+from cfme.containers.provider import ContainersProvider
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -24,7 +27,7 @@ def test_containers_routes_views():
     Click on top right "grid view", "tile view", "list view" icon.
     Verify routes appear in a proper view
     """
-    sel.force_navigate('containers_routes')
+    navigate_to(Route, 'All')
     for view in views:
         tb.select(view)
         assert tb.is_active(view), "{}' setting failed".format(view)
@@ -38,7 +41,7 @@ def test_containers_projects_views():
     Click on top right "grid view", "tile view", "list view" icon.
     Verify routes appear in a proper view
     """
-    sel.force_navigate('containers_projects')
+    navigate_to(Project, 'All')
     for view in views:
         tb.select(view)
         assert tb.is_active(view), "{}' setting failed".format(view)
@@ -52,7 +55,7 @@ def test_containers_providers_views():
     Click on top right "grid view", "tile view", "list view" icon.
     Verify routes appear in a proper view
     """
-    sel.force_navigate('containers_providers')
+    navigate_to(ContainersProvider, 'All')
     for view in views:
         tb.select(view)
         assert tb.is_active(view), "{}' setting failed".format(view)

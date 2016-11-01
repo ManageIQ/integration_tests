@@ -1,8 +1,8 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import Pod, list_tbl
 from utils import testgen
 from utils.version import current_version
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -21,7 +21,7 @@ def test_summary_properties_validation(provider):
         in the status summary table
         is the same number that appears in the Relationships table containers field
     """
-    sel.force_navigate('containers_pods')
+    navigate_to(Pod, 'All')
     ui_pods = [r.name.text for r in list_tbl.rows()]
 
     for name in ui_pods:

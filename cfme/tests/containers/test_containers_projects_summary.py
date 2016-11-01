@@ -1,10 +1,9 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.project import Project
 from cfme.web_ui import CheckboxTable
 from utils import testgen
 from utils.version import current_version
-
+from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -34,7 +33,7 @@ def test_containers_projects_summary_relationships(provider):
             * Go through each Container Project in the menu and check validity of
             Relationships fields
         """
-    sel.force_navigate('containers_projects')
+    navigate_to(Project, 'All')
     project_name = [r.name.text for r in list_tbl.rows()]
     for name in project_name:
         for field in projects_relationships_fields:
@@ -51,7 +50,7 @@ def test_containers_projects_summary_properties(provider):
             * Goes to Containers -- > Projects menu
             * Go through each Container Project in the menu and check validity of Properties fields
         """
-    sel.force_navigate('containers_projects')
+    navigate_to(Project, 'All')
     project_name = [r.name.text for r in list_tbl.rows()]
     for name in project_name:
         for field in projects_properties_fields:

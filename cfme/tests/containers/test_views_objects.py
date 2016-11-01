@@ -11,6 +11,8 @@ from cfme.web_ui import toolbar as tb
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
+from cfme.containers.replicator import Replicator
+from cfme.containers.pod import Pod
 
 
 pytestmark = [
@@ -22,7 +24,7 @@ pytest_generate_tests = testgen.generate(
 
 
 def test_pods_views():
-    sel.force_navigate('containers_pods')
+    navigate_to(Pod, 'All')
     tb.select('Grid View')
     assert tb.is_active('Grid View'), "Pods grid view setting failed"
     tb.select('Tile View')
@@ -32,7 +34,7 @@ def test_pods_views():
 
 
 def test_replicators_views():
-    sel.force_navigate('containers_replicators')
+    navigate_to(Replicator, 'All')
     tb.select('Grid View')
     assert tb.is_active('Grid View'), "Replicators grid view setting failed"
     tb.select('Tile View')
@@ -42,6 +44,7 @@ def test_replicators_views():
 
 
 def test_containers_views():
+    # TODO: navigate_to(Container, 'All') once ready
     sel.force_navigate('containers_containers')
     tb.select('Grid View')
     assert tb.is_active('Grid View'), "Containers grid view setting failed"

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import Pod, list_tbl as list_tbl_pods
 from cfme.containers.route import Route, list_tbl as list_tbl_routes
 from cfme.containers.project import Project, list_tbl as list_tbl_projects
 from cfme.containers.service import Service, list_tbl as list_tbl_services
 from utils import testgen
 from utils.version import current_version
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [
@@ -38,7 +38,7 @@ def test_pods_properties_rel(provider, rel):
     Loop through each Pod object in the table and check validity of
     the fields in the Properties table
     """
-    sel.force_navigate('containers_pods')
+    navigate_to(Pod, 'All')
     ui_pods = [r.name.text for r in list_tbl_pods.rows()]
 
     for name in ui_pods:
@@ -63,7 +63,7 @@ def test_routes_properties_rel(provider, rel):
     Loop through each Route object in the table and check validity of
     the fields in the Properties table
     """
-    sel.force_navigate('containers_routes')
+    navigate_to(Route, 'All')
     ui_routes = [r.name.text for r in list_tbl_routes.rows()]
 
     for name in ui_routes:
@@ -87,7 +87,7 @@ def test_projects_properties_rel(provider, rel):
     Loop through each Project object in the table and check validity of
     the fields in the Properties table
     """
-    sel.force_navigate('containers_projects')
+    navigate_to(Project, 'All')
     ui_projects = [r.name.text for r in list_tbl_projects.rows()]
 
     for name in ui_projects:
@@ -114,7 +114,7 @@ def test_services_properties_rel(provider, rel):
     Loop through each Service object in the table and check validity of
     the fields in the Properties table
     """
-    sel.force_navigate('containers_services')
+    navigate_to(Service, 'All')
     ui_services = [r.name.text for r in list_tbl_services.rows()]
 
     for name in ui_services:
