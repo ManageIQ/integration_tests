@@ -167,11 +167,10 @@ def test_provision_approval(
         # Automatic approval after editing the request to conform
         with requests.edit_request(cells) as form:
             fill(form.num_vms, "1")
-            new_vm_name = vm_name + "_xx"
+            new_vm_name = vm_name + "-xx"
             fill(form.vm_name, new_vm_name)
         vm_names = [new_vm_name]  # Will be just one now
         cells = {'Description': 'Provision from [{}] to [{}]'.format(template, new_vm_name)}
-        check = "vm provisioned successfully"
         request.addfinalizer(
             lambda: cleanup_vm(new_vm_name, provider))
     else:
@@ -180,7 +179,6 @@ def test_provision_approval(
         vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
         request.addfinalizer(
             lambda: [cleanup_vm(vmname, provider) for vmname in vm_names])
-        check = "request complete"
     wait_for(
         lambda:
         len(filter(
@@ -197,7 +195,8 @@ def test_provision_approval(
 
     row, __ = wait_for(requests.wait_for_request, [cells],
                        fail_func=requests.reload, num_sec=1500, delay=20)
-    assert normalize_text(row.last_message.text) == check
+    assert normalize_text(row.status.text) == 'ok' \
+        and normalize_text(row.request_state.text) == 'finished'
 
     # Wait for e-mails to appear
     def verify():

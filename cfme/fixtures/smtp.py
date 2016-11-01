@@ -70,6 +70,12 @@ def smtp_test(request):
                 collector.send_signal(signal.SIGKILL)
         collector.wait()
         logger.info("Collector finished")
+        logger.info("Cleaning up smtp setup in CFME")
+        smtp_conf = configuration.SMTPSettings(
+            host='',
+            port='',
+        )
+        smtp_conf.update()
     collector = subprocess.Popen(server_command, shell=True)
     request.addfinalizer(_finalize)
     logger.info("Collector pid %s", collector.pid)
