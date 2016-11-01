@@ -48,4 +48,12 @@ if __name__ == "__main__":
     parser.add_argument('--run-id', default=None)
     parser.add_argument('--port')
     args = parser.parse_args()
-    run(args.port, args.run_id)
+    try:
+        run(args.port, args.run_id)
+    except Exception as e:
+        import traceback
+        import sys
+        with open("{}/{}".format(log_path.strpath, 'artifactor_crash.log'), 'w') as f:
+            f.write(str(e))
+            for line in traceback.format_tb(sys.exc_traceback):
+                f.write(line)
