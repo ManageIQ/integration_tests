@@ -2,7 +2,6 @@ import pytest
 import time
 
 from cfme.containers.container import Container, list_tbl as list_tbl_containers
-from cfme.containers.image_registry import ImageRegistry, list_tbl as list_tbl_image_registrys
 from cfme.containers.pod import Pod, list_tbl as list_tbl_pods
 from cfme.containers.project import Project, list_tbl as list_tbl_projects
 from cfme.containers.route import Route, list_tbl as list_tbl_routes
@@ -26,7 +25,7 @@ pytest_generate_tests = testgen.generate(
 TEST_DATAS = [
     # (Node, 'containers_nodes', 'Nodes', list_tbl_nodes),
     (Container, 'containers_containers', 'Containers', list_tbl_containers),
-    (ImageRegistry, 'containers_image_registries', 'Registries', list_tbl_image_registrys),
+    # (ImageRegistry, 'containers_image_registries', 'Registries', list_tbl_image_registrys),
     (Project, 'containers_projects', 'Projects', list_tbl_projects),
     (Pod, 'containers_pods', 'Pods', list_tbl_pods),
     (Service, 'containers_services', 'Services', list_tbl_services),

@@ -4,6 +4,7 @@
 import pytest
 
 from cfme.containers.image import Image
+from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
@@ -72,6 +73,16 @@ def test_nodes_views():
 
 def test_images_views():
     navigate_to(Image, 'All')
+    tb.select('Grid View')
+    assert tb.is_active('Grid View'), "Images grid view setting failed"
+    tb.select('Tile View')
+    assert tb.is_active('Tile View'), "Images tile view setting failed"
+    tb.select('List View')
+    assert tb.is_active('List View'), "Images list view setting failed"
+
+
+def test_imageregistry_views():
+    navigate_to(ImageRegistry, 'All')
     tb.select('Grid View')
     assert tb.is_active('Grid View'), "Images grid view setting failed"
     tb.select('Tile View')
