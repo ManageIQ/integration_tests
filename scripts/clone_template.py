@@ -6,7 +6,7 @@ import argparse
 import sys
 
 import utils
-from utils.appliance import Appliance
+from utils.appliance import Appliance, IPAppliance
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.path import log_path
@@ -177,19 +177,23 @@ def main(**kwargs):
     try:
         if kwargs.get('configure', None):
             logger.info('Configuring appliance, this can take a while.')
-            app = Appliance(kwargs['provider'], deploy_args['vm_name'])
+            if kwargs.get('deploy', None):
+                app = IPAppliance(address=ip)
+            else:
+                app = Appliance(kwargs['provider'], deploy_args['vm_name'])
             app.configure()
             logger.info('Successfully Configured the appliance.')
     except Exception as e:
         logger.exception(e)
         logger.error('Appliance Configuration Failed')
-        app = Appliance(kwargs['provider'], deploy_args['vm_name'])
-        ssh_client = app.ssh_client()
-        status, output = ssh_client.run_command('find /root/anaconda-post.log')
-        if status == 0:
-            ssh_client.get_file('/root/anaconda-post.log',
-                                log_path.join('anaconda-post.log').strpath)
-        ssh_client.close()
+        if not kwargs.get('deploy', None):
+            app = Appliance(kwargs['provider'], deploy_args['vm_name'])
+            ssh_client = app.ssh_client()
+            status, output = ssh_client.run_command('find /root/anaconda-post.log')
+            if status == 0:
+                ssh_client.get_file('/root/anaconda-post.log',
+                                    log_path.join('anaconda-post.log').strpath)
+            ssh_client.close()
         return 10
 
     if kwargs.get('outfile', None):

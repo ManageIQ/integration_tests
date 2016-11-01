@@ -641,8 +641,10 @@ def upload_template(rhevip, sshname, sshpass, username, password,
                                temp_vm_name, provider)
                 print("RHEVM:{} Templatizing VM...".format(provider))
                 templatize_vm(api, template_name, kwargs.get('cluster'), temp_vm_name, provider)
-                print("RHEVM:{} Adding template {} to trackerbot..".format(provider, template_name))
-                trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
+                if not provider_data:
+                    print("RHEVM:{} Adding template {} to trackerbot..".format(
+                        provider, template_name))
+                    trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
             finally:
                 cleanup(api, kwargs.get('edomain'), ssh_client, ovaname, provider,
                         temp_template_name, temp_vm_name)
