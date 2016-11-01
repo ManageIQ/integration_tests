@@ -6,6 +6,9 @@ from cfme.web_ui import search
 
 from utils import testgen
 from utils.version import current_version
+from utils.appliance.implementations.ui import navigate_to
+from cfme.containers.route import Route
+from cfme.containers.project import Project
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -35,7 +38,7 @@ def test_projects_search(projects_search_strings):
                * Inserts: Irregular symbol, '*' character, full search string, partial search string
                * Verify proper results
            """
-    sel.force_navigate('containers_projects')
+    navigate_to(Project, 'All')
     if ''.join(projects_search_strings) == '*':
         full_name_to_search = '*'
         names_list = []
@@ -81,7 +84,7 @@ def test_routes_search(routes_search_strings):
                * Inserts: Irregular symbol, '*' character, full search string, partial search string
                * Verify proper results
            """
-    sel.force_navigate('containers_routes')
+    navigate_to(Route, 'All')
     if ''.join(routes_search_strings) == '*':
         full_name_to_search = '*'
         names_list = []

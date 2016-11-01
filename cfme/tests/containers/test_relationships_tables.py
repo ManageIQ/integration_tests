@@ -41,7 +41,7 @@ def test_pods_rel(provider, rel):
           that appears on that page is equal to the number in the
           Relationships table
     """
-    sel.force_navigate('containers_pods')
+    navigate_to(Pod, 'All')
     tb.select('List View')
     list_tbl_pod = CheckboxTable(table_locator="//div[@id='list_grid']//table")
     ui_pods = [r.name.text for r in list_tbl_pod.rows()]
@@ -70,7 +70,7 @@ def test_pods_rel(provider, rel):
 @pytest.mark.parametrize(
     'rel', ['Containers Provider', 'Project', 'Routes', 'Pods', 'Nodes'])
 def test_services_rel(provider, rel):
-    sel.force_navigate('containers_services')
+    navigate_to(Service, 'All')
     tb.select('List View')
     list_tbl_service = CheckboxTable(
         table_locator="//div[@id='list_grid']//table")
@@ -147,7 +147,7 @@ def test_nodes_rel(provider, rel):
 @pytest.mark.parametrize(
     'rel', ['Containers Provider', 'Project', 'Pods', 'Nodes'])
 def test_replicators_rel(provider, rel):
-    sel.force_navigate('containers_replicators')
+    navigate_to(Replicator, 'All')
     tb.select('List View')
     list_tbl_replicator = CheckboxTable(
         table_locator="//div[@id='list_grid']//table")
