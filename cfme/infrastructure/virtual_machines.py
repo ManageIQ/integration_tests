@@ -173,9 +173,8 @@ class Vm(BaseVM, Common):
             self.vm = parent_vm
 
         def _nav_to_snapshot_mgmt(self):
-            locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , " +
-                       "'\"Snapshots\" for Virtual Machine \"{}\"') ]".format(self.name))
-            if not sel.is_displayed(locator):
+            snapshot_title = '"Snapshots" for Virtual Machine "{}"'.format(self.vm.name)
+            if summary_title() != snapshot_title:
                 self.vm.load_details()
                 sel.click(InfoBlock.element("Properties", "Snapshots"))
 
