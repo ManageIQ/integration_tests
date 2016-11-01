@@ -29,7 +29,8 @@ page = Region(
             '5.4': '//nav//ul[contains(@class, "navbar-utility")]'
                    '/li[contains(@class, "dropdown")]/a',
             '5.6.0.1': '//nav//a[@id="dropdownMenu2"]',
-        }
+        },
+        'help_dropdown': '//nav//a[@id="dropdownMenu1"]'
     },
     identifying_loc='reset_widgets_button')
 
@@ -45,6 +46,13 @@ class DashboardView(BaseLoggedInPage):
 def click_top_right(item):
     base_locator = '//nav//a[@id="dropdownMenu2"]/../ul//a[normalize-space(.)="{}"]'
     sel.click(page.user_dropdown)
+    sel.click(base_locator.format(item), wait_ajax=False)
+    sel.handle_alert(wait=False)
+
+
+def click_help(item):
+    base_locator = '//nav//a[@id="dropdownMenu1"]/../ul//a[normalize-space(.)="{}"]'
+    sel.click(page.help_dropdown)
     sel.click(base_locator.format(item), wait_ajax=False)
     sel.handle_alert(wait=False)
 
