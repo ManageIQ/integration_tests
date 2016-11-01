@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import fauxfactory
 import pytest
 
 from cfme import test_requirements
 from cfme.common.vm import VM
 from utils import testgen
+from utils.generators import random_vm_name
 from utils.version import current_version
 from utils.wait import wait_for
 
@@ -23,9 +23,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm_obj(request, provider, setup_provider, small_template, rest_api):
-    vm_obj = VM.factory(
-        'test_pwrctl_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
-        provider, template_name=small_template)
+    vm_obj = VM.factory(random_vm_name('pwrctl'), provider, template_name=small_template)
 
     @request.addfinalizer
     def _delete_vm():
