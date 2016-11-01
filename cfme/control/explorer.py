@@ -538,7 +538,15 @@ class BasePolicy(Updateable, Pretty):
         ]
     )
 
-    conditions = MultiBoxSelect.default()
+    conditions = deferred_verpick({
+        '5.6': MultiBoxSelect.default(),
+        '5.7': MultiBoxSelect(
+            "//select[@id='choices_chosen']",
+            "//select[@id='members_chosen']",
+            "//button[contains(@title, 'Remove selected Conditions from this Policy')]",
+            "//button[contains(@title, 'Move selected Conditions into this Policy')]",
+            "//button[contains(@title, 'Remove all Conditions from this Policy')]",
+        )})
 
     # Event action assignment
     event_actions = Form(
