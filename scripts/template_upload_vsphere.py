@@ -354,8 +354,9 @@ def upload_template(client, hostname, username, password,
             if kwargs.get('template'):
                 # make_template(client, name, hostname, username, password)
                 make_template(client, name, provider)
-            print("RHEVM:{} Adding template {} to trackerbot...".format(provider, name))
-            trackerbot.trackerbot_add_provider_template(stream, provider, name)
+            if not provider_data:
+                print("RHEVM:{} Adding template {} to trackerbot...".format(provider, name))
+                trackerbot.trackerbot_add_provider_template(stream, provider, name)
         if provider_data and check_template_exists(client, name, provider):
             print("VSPHERE:{} Deploying {}....".format(provider, name))
             vm_name = 'test_{}_{}'.format(name, fauxfactory.gen_alphanumeric(8))
