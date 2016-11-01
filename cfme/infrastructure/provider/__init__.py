@@ -419,7 +419,7 @@ def get_all_providers(do_not_navigate=False):
     """Returns list of all providers"""
     if not do_not_navigate:
         providers_view = navigate_to(InfraProvider, 'All')
-        providers_view.paginator.sort_by('Type')
+        providers_view.paginator.sort('Type')
     providers = set([])
     link_marker = "ems_infra"
     # todo: create paginator widget

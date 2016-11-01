@@ -1168,13 +1168,18 @@ class Dropup(Dropdown):
     Args:
         text: Text of the button, can be the inner text or the title attribute.
     """
-    BUTTON_DIV_LOCATOR = (
-        './/div[contains(@class, "dropup") and ./button[normalize-space(.)={0} or '
-        'normalize-space(@title)={0}]]')
 
-    def __init__(self, parent, text, logger=None):
-        super(Dropup, self).__init__(parent, text=text, logger=logger)
-        self.text = text
+    BUTTON_DIV_LOCATOR = './/div[contains(@class, "dropup") and ./button[@data-id="{0}"]]'
+    ITEMS_LOCATOR = './select'
+    # ITEM_LOCATOR = './select/option[@value={0}]'
+    ITEM_LOCATOR = './select/option[normalize-space(.)={}]'
+
+    def __init__(self, parent, id, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.data_id = id
+
+    def __locator__(self):
+        return self.BUTTON_DIV_LOCATOR.format(self.data_id)
 
 
 class CheckBox(BaseInput):
@@ -1216,8 +1221,8 @@ class Paginator(View):
     # '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
 
     check_all_items = CheckBox(id='masterToggle')
-    sort_ctl = Dropup(text='sort_choice')
-    items_on_page = Dropup(text='ppsetting')
+    sort_by = Dropup(id='sort_choice')
+    items_on_page = Dropup(id='ppsetting')
     next = Button(text='')
 
     def __locator__(self):
@@ -1242,8 +1247,8 @@ class Paginator(View):
             self.check_all_items.check()
             self.check_all_items.uncheck()
 
-    def sort_by(self, value):
-        self.sort_ctl.item_select(self.sort_ctl.item_element(value))
+    def sort(self, value):
+        self.sort_by.item_select(value)
 
     def sorted_by(self):
         # todo: add this when it is required
