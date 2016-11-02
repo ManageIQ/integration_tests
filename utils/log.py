@@ -221,6 +221,15 @@ class SyslogMsecFormatter(logging.Formatter):
         return s
 
 
+class PrefixAddingLoggerFilter(logging.Filter):
+    def __init__(self, prefix=None):
+        self.prefix = prefix
+
+    def filter(self, record):
+        if self.prefix:
+            record.msg = self.prefix + record.msg
+
+
 class NamedLoggerAdapter(TraceLoggerAdapter):
     """An adapter that injects a name into log messages"""
     def process(self, message, kwargs):
@@ -414,6 +423,7 @@ def create_sublogger(logger_sub_name, logger_name='cfme'):
     logger = create_logger(logger_name)
     return NamedLoggerAdapter(logger, logger_sub_name)
 
+
 def format_marker(mstring, mark="-"):
     """ Creates a marker in log files using a string and leader mark.
 
@@ -507,6 +517,9 @@ class ArtifactorHandler(logging.Handler):
 
 logger = create_logger('cfme')
 logger.addHandler(ArtifactorHandler())
+
+add_prefix = PrefixAddingLoggerFilter()
+logger.addFilter(add_prefix)
 
 perflog = Perflog()
 
