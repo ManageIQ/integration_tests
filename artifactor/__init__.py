@@ -283,9 +283,11 @@ def create_logger(logger_name, filename):
     with the current config in env.yaml
 
     """
-    # If the logger already exists, destroy it
-    # TODO: we should never need to poke into the logging internals
-    logging.root.manager.loggerDict.pop(logger_name, None)
+    # If the logger already exists, reset its handlers
+
+    logger = logging.getLogger(logger_name)
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
 
     log_file = filename
 
@@ -293,8 +295,6 @@ def create_logger(logger_name, filename):
     file_handler = RotatingFileHandler(log_file, maxBytes=2048, encoding='utf8')
     file_handler.setFormatter(file_formatter)
 
-    logger = logging.getLogger(logger_name)
     logger.addHandler(file_handler)
-
     logger.setLevel('DEBUG')
     return logger
