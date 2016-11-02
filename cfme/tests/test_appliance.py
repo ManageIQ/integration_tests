@@ -83,12 +83,6 @@ def test_firewalld_running(ssh_client):
     assert 'active (running)' in stdout
 
 
-def test_httpd_running(ssh_client):
-    """Verifies httpd service is running on the appliance"""
-    stdout = ssh_client.run_command('service httpd status')[1]
-    assert 'is running' in stdout
-
-
 def test_evm_running(ssh_client):
     """Verifies overall evm service is running on the appliance"""
     stdout = ssh_client.run_command('systemctl status evmserverd')[1]
