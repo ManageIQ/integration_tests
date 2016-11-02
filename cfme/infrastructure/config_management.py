@@ -442,7 +442,10 @@ class MgrAll(CFMENavigateStep):
 
     def step(self):
         from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Configuration', 'Configuration Management')(None)
+        if self.obj.appliance.version > '5.7.0.8':
+            nav._nav_to_fn('Configuration', 'Management')(None)
+        else:
+            nav._nav_to_fn('Configuration', 'Configuration Management')(None)
 
     def resetter(self):
         accordion.tree('Providers', 'All Configuration Manager Providers')
