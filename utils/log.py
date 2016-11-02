@@ -468,8 +468,8 @@ def nth_frame_info(n):
     return inspect.getframeinfo(inspect.stack(1)[n][0])
 
 
-class ArtifactorLoggerAdapter(logging.LoggerAdapter):
-    """Logger Adapter that hands messages off to the artifactor before logging"""
+class ArtifactorHandler(logging.Handler):
+    """Logger handler that hands messages off to the artifactor"""
     @cached_property
     def artifactor(self):
         from fixtures.artifactor_plugin import art_client
@@ -480,69 +480,10 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         from fixtures.artifactor_plugin import SLAVEID
         return SLAVEID or ""
 
-    def art_log(self, level_name, message, args, kwargs):
-        if args:
-            # Try the string formatting only if args passed
-            try:
-                formatted_message = message % args
-            except (TypeError, ValueError) as e:
-                formatted_message = message
-                self.logger.error(
-                    'Could not format the string %r with %r because of %r', message, args, e)
-        else:
-            # No args passed, do not care.
-            formatted_message = message
+    def emit(self, record):
+        self.artifactor.fire_hook('log_message', log_record=record.__dict__, slaveid=self.slaveid)
 
-        art_log_record = {
-            'level': level_name,
-            'message': formatted_message,
-            'extra': kwargs.get('extra', '')
-        }
-        self.artifactor.fire_hook('log_message', log_record=art_log_record, slaveid=self.slaveid)
-
-    def log(self, lvl, msg, *args, **kwargs):
-        level_name = logging.getLevelName(lvl).lower()
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log(level_name, msg, args, kwargs)
-        return self.logger.log(lvl, msg, *args, **kwargs)
-
-    def trace(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('trace', msg, args, kwargs)
-        return self.logger.trace(msg, *args, **kwargs)
-
-    def debug(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('debug', msg, args, kwargs)
-        return self.logger.debug(msg, *args, **kwargs)
-
-    def info(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('info', msg, args, kwargs)
-        return self.logger.info(msg, *args, **kwargs)
-
-    def warning(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('warning', msg, args, kwargs)
-        return self.logger.warning(msg, *args, **kwargs)
-
-    def error(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('error', msg, args, kwargs)
-        return self.logger.error(msg, *args, **kwargs)
-
-    def critical(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('critical', msg, args, kwargs)
-        return self.logger.critical(msg, *args, **kwargs)
-
-    def exception(self, msg, *args, **kwargs):
-        kwargs['exc_info'] = 1
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('error', msg, args, kwargs)
-        return self.logger.error(msg, *args, **kwargs)
-
-    def process(self, msg, kwargs):
+    def process_from_when_was_adapter(self, msg, kwargs):
         # frames
         # 0: call to nth_frame_info
         # 1: adapter process method (this method)
@@ -564,9 +505,8 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
 
-cfme_logger = create_logger('cfme')
-
-logger = ArtifactorLoggerAdapter(cfme_logger, {})
+logger = create_logger('cfme')
+logger.addHandler(ArtifactorHandler())
 
 perflog = Perflog()
 
