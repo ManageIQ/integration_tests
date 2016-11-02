@@ -17,8 +17,9 @@ from cfme.exceptions import FlashMessageException
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm',
-        'ec2', 'rhos'])
+    argnames, argvalues, idlist = testgen.provider_by_type(
+        metafunc, ['virtualcenter', 'rhevm', 'ec2', 'rhos'],
+        required_fields=[['cap_and_util', 'chargeback_vm']])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 pytestmark = [
