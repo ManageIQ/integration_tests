@@ -32,7 +32,7 @@ def _load_firefox_profile():
 
     # Make a new firefox profile dir if it's unset or doesn't exist for some reason
     firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
-    log.debug("created firefox profi")
+    log.debug("created firefox profile")
     # Clean up tempdir at exit
     atexit.register(rmtree, firefox_profile_tmpdir, ignore_errors=True)
 
