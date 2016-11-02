@@ -69,53 +69,36 @@ def test_selinux_enabled(ssh_client):
     assert 'Enforcing' in stdout
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() >= '5.6')
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.6', reason='Only valid for <5.6')
 def test_iptables_running(ssh_client):
     """Verifies iptables service is running on the appliance"""
     stdout = ssh_client.run_command('service iptables status')[1]
     assert 'is not running' not in stdout
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.6')
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.6', reason='Only valid for >5.7')
 def test_firewalld_running(ssh_client):
     """Verifies iptables service is running on the appliance"""
     stdout = ssh_client.run_command('service firewalld status')[1]
     assert 'active (running)' in stdout
 
 
-# In versions using systemd, httpd is disabled, and started by evmserverd
-@pytest.mark.uncollectif(lambda: version.current_version() >= '5.5')
 def test_httpd_running(ssh_client):
     """Verifies httpd service is running on the appliance"""
     stdout = ssh_client.run_command('service httpd status')[1]
     assert 'is running' in stdout
 
 
-@pytest.mark.meta(blockers=[1341242])
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_journald_running(ssh_client):
-    """Verifies systemd-journald service is running on the appliance"""
-    stdout = ssh_client.run_command('systemctl status systemd-journald').output
+def test_evm_running(ssh_client):
+    """Verifies overall evm service is running on the appliance"""
+    stdout = ssh_client.run_command('systemctl status evmserverd')[1]
     assert 'active (running)' in stdout
 
 
-def test_evm_running(ssh_client):
-    """Verifies overall evm service is running on the appliance"""
-    if version.current_version() < '5.5':
-        stdout = ssh_client.run_command('service evmserverd status | grep EVM')[1]
-        assert 'started' in stdout.lower()
-    else:
-        stdout = ssh_client.run_command('systemctl status evmserverd')[1]
-        assert 'active (running)' in stdout
-
-
-@pytest.mark.uncollectif(lambda service: version.current_version() >= '5.5'
-    and service == 'iptables')
 @pytest.mark.parametrize(('service'), [
     'evmserverd',
     'evminit',
     'sshd',
-    'iptables',
     'postgresql',
 ])
 def test_service_enabled(ssh_client, service):

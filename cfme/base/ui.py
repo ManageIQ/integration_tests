@@ -72,6 +72,32 @@ class MySettings(CFMENavigateStep):
 
 
 @navigator.register(Server)
+class About(CFMENavigateStep):
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        if self.obj.appliance.version > '5.7':
+            from cfme.dashboard import click_help
+            click_help('About')
+        else:
+            from cfme.web_ui.menu import nav
+            nav._nav_to_fn('Settings', 'About')(None)
+
+
+@navigator.register(Server)
+class Documentation(CFMENavigateStep):
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        if self.obj.appliance.version > '5.7':
+            from cfme.dashboard import click_help
+            click_help('Documentation')
+        else:
+            from cfme.web_ui.menu import nav
+            nav._nav_to_fn('Settings', 'About')(None)
+
+
+@navigator.register(Server)
 class Dashboard(CFMENavigateStep):
     VIEW = DashboardView
     prerequisite = NavigateToSibling('LoggedIn')

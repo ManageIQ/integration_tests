@@ -15,6 +15,8 @@ from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
 
 from cfme.configure.about import product_assistance as about
 from utils import version
+from utils.appliance import current_appliance
+from utils.appliance.implementations.ui import navigate_to
 
 
 def pdf_get_text(file_obj, page_nums):
@@ -79,7 +81,7 @@ def docs_content():
 @pytest.mark.sauce
 def test_links(guides, soft_assert):
     """Test whether the PDF documents are present."""
-    pytest.sel.force_navigate("about")
+    navigate_to(current_appliance.server, 'Documentation')
     for link in guides:
         locator = getattr(about, link)
         url = pytest.sel.get_attribute(locator, "href")
@@ -93,7 +95,7 @@ def test_links(guides, soft_assert):
 @pytest.mark.ignore_stream("upstream")
 def test_contents(docs_content, guides, soft_assert):
     """Test contents of each document."""
-    pytest.sel.force_navigate("about")
+    navigate_to(current_appliance.server, 'Documentation')
     cur_ver = version.current_version()
     for link in guides:
         locator = getattr(about, link)
@@ -120,7 +122,7 @@ def test_contents(docs_content, guides, soft_assert):
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(blockers=[1232434])
 def test_info(guides, soft_assert):
-    pytest.sel.force_navigate("about")
+    navigate_to(current_appliance.server, 'Documentation')
     for link in guides:
         l_a = getattr(about, link)
         # l_icon also implicitly checks for the icon url == text url
@@ -144,7 +146,7 @@ def test_info(guides, soft_assert):
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
 def test_all_docs_present(guides, docs_info):
-    pytest.sel.force_navigate("about")
+    navigate_to(current_appliance.server, 'Documentation')
     docs_list = list(docs_info)
     for link in guides:
         for doc in docs_list:
