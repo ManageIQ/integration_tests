@@ -15,6 +15,7 @@ artifactor:
 from artifactor import ArtifactorBasePlugin
 import os
 from utils.log import create_logger
+from utils import logging
 
 
 class Logger(ArtifactorBasePlugin):
@@ -69,9 +70,10 @@ class Logger(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def log_message(self, log_record, slaveid):
+        record = logging.LogRecord.__new__(logging.LogRecord)
+        record.__dict__.update(log_record)  # hack
         if not slaveid:
             slaveid = "Master"
         if slaveid in self.store:
             if self.store[slaveid].logger:
-                fn = getattr(self.store[slaveid].logger, log_record['level'])
-                fn(log_record['message'], extra=log_record['extra'])
+                self.store[slaveid].logger.handle(record)
