@@ -301,6 +301,10 @@ class MiddlewareDomainNotFound(CFMEException):
     pass
 
 
+class JDBCDriverConfigNotFound(CFMEException):
+    """Raised then cdme_data.yaml file does not contain configuration of 'jdbc_drivers'."""
+
+
 class UsingSharedTables(CFMEException):
     """Raised if the :py:class:`cfme.web_ui.Table` suspects there is a use of shared tables."""
 
