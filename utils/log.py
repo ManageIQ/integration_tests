@@ -373,9 +373,10 @@ def create_logger(logger_name, filename=None, max_file_size=None, max_backups=No
     with the current config in env.yaml
 
     """
-    # If the logger already exists, destroy it
-    # TODO: remove the need to destroy the logger
-    logging.root.manager.loggerDict.pop(logger_name, None)
+    # If the logger already exists, reset its handlers
+    logger = logging.getLogger(logger_name)
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
 
     # Grab the logging conf
     conf = _load_conf(logger_name)
@@ -395,7 +396,6 @@ def create_logger(logger_name, filename=None, max_file_size=None, max_backups=No
         backupCount=max_backups or conf['max_file_backups'], encoding='utf8')
     file_handler.setFormatter(file_formatter)
 
-    logger = logging.getLogger(logger_name)
     logger.addHandler(file_handler)
 
     syslog_settings = _get_syslog_settings()
@@ -419,8 +419,7 @@ def create_logger(logger_name, filename=None, max_file_size=None, max_backups=No
     return logger
 
 
-def create_sublogger(logger_sub_name, logger_name='cfme'):
-    logger = create_logger(logger_name)
+def create_sublogger(logger_sub_name):
     return NamedLoggerAdapter(logger, logger_sub_name)
 
 
