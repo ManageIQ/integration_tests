@@ -12,10 +12,11 @@ artifactor:
             level: DEBUG
 """
 
-from artifactor import ArtifactorBasePlugin
 import os
+import logging
+
+from artifactor import ArtifactorBasePlugin
 from utils.log import create_logger
-from utils import logging
 
 
 class Logger(ArtifactorBasePlugin):
