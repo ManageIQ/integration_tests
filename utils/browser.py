@@ -7,7 +7,7 @@ from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
 from threading import Timer
-import logging
+# import logging
 
 from werkzeug.local import LocalProxy
 
@@ -23,8 +23,8 @@ from fixtures.pytest_store import store, write_line
 from utils import conf, tries
 from utils.path import data_path
 
-
-log = logging.getLogger('cfme.browser')
+from utils.log import logger as log  # TODO remove after artifactor handler
+# log = logging.getLogger('cfme.browser')
 
 
 def _load_firefox_profile():
@@ -262,7 +262,8 @@ class BrowserManager(object):
                 cl.pop()()
 
     def quit(self):
-        log.info('closing browser for')
+        # TODO: figure if we want to log the url key here
+        log.info('closing browser')
         self._consume_cleanups()
         try:
             self.browser.quit()
