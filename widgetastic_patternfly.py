@@ -10,13 +10,13 @@ from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresen
 from widgetastic.log import call_sig
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget, \
-    BaseInput, Text
+    Text, Checkbox
 from widgetastic.xpath import quote
 
 from wait_for import wait_for, wait_for_decorator
 
 
-class CandidateNotFound(Exception):
+class CandidateNotFoundError(Exception):
     """
     Raised if there is no candidate found whilst trying to traverse a tree in
     :py:meth:`cfme.web_ui.Tree.click_path`.
@@ -32,11 +32,11 @@ class CandidateNotFound(Exception):
         return self.message
 
 
-class DropdownDisabled(Exception):
+class MenuDisabledError(Exception):
     pass
 
 
-class DropdownItemDisabled(Exception):
+class MenuItemDisabledError(Exception):
     pass
 
 
@@ -223,7 +223,7 @@ class FlashMessage(Widget):
                 .format(self.TYPE_MAPPING, self.browser.classes(self)))
 
 
-class NavDropdown(Widget, ClickableMixin):
+class NavDropDown(Widget, ClickableMixin):
     """The dropdowns used eg. in navigation. Usually located in the top navbar."""
 
     def __init__(self, parent, locator, logger=None):
@@ -645,7 +645,7 @@ class BootstrapSelect(Widget, ClickableMixin):
         return '{}({!r})'.format(type(self).__name__, self.id)
 
 
-class BootstrapTreeview(Widget):
+class BootstrapTreeView(Widget):
     """A class representing the Bootstrap treeview used in newer builds.
 
     Implements ``expand_path``, ``click_path``, ``read_contents``. All are implemented in manner
@@ -808,7 +808,7 @@ class BootstrapTreeview(Widget):
         try:
             return self.browser.element(self.ITEM_BY_NODEID.format(nodeid_q), parent=self)
         except NoSuchElementException:
-            raise CandidateNotFound({
+            raise CandidateNotFoundError({
                 'message':
                     'Could not find the item with nodeid {} in Boostrap tree {}'.format(
                         nodeid,
@@ -941,7 +941,7 @@ class BootstrapTreeview(Widget):
         image, step = self._process_step(step)
         path = path[1:]
         if not self.validate_node(node, step, image):
-            raise CandidateNotFound({
+            raise CandidateNotFoundError({
                 'message':
                     'Could not find the item {} in Boostrap tree {}'.format(
                         self.pretty_path(steps_tried),
@@ -953,7 +953,7 @@ class BootstrapTreeview(Widget):
             steps_tried.append(step)
             image, step = self._process_step(step)
             if not self.expand_node(self.get_nodeid(node)):
-                raise CandidateNotFound({
+                raise CandidateNotFoundError({
                     'message':
                         'Could not find the item {} in Boostrap tree {}'.format(
                             self.pretty_path(steps_tried),
@@ -971,7 +971,7 @@ class BootstrapTreeview(Widget):
                     node = child_item
                     break
             else:
-                raise CandidateNotFound({
+                raise CandidateNotFoundError({
                     'message':
                         'Could not find the item {} in Boostrap tree {}'.format(
                             self.pretty_path(steps_tried),
@@ -1065,7 +1065,7 @@ class BootstrapTreeview(Widget):
         return '{}({!r})'.format(type(self).__name__, self.tree_id)
 
 
-class Dropdown(Widget):
+class DropDown(Widget):
     """Represents the Patternfly/Bootstrap dropdown.
 
     Args:
@@ -1090,7 +1090,7 @@ class Dropdown(Widget):
 
     def _verify_enabled(self):
         if not self.is_enabled:
-            raise DropdownDisabled('Dropdown "{}" is not enabled'.format(self.text))
+            raise MenuDisabledError('Dropdown "{}" is not enabled'.format(self.text))
 
     @property
     def is_open(self):
@@ -1145,7 +1145,7 @@ class Dropdown(Widget):
         try:
             self.open()
             if not self.item_enabled(item):
-                raise DropdownItemDisabled(
+                raise MenuItemDisabledError(
                     'Item "{}" of dropdown "{}" is disabled'.format(item, self.text))
             self.browser.click(self.item_element(item), ignore_ajax=handle_alert is not None)
             if handle_alert is not None:
@@ -1162,57 +1162,45 @@ class Dropdown(Widget):
         return '{}({!r})'.format(type(self).__name__, self.text)
 
 
-class Dropup(Dropdown):
-    """Represents the Patternfly/Bootstrap dropup.
+class Paginator(Widget):
 
-    Args:
-        text: Text of the button, can be the inner text or the title attribute.
-    """
+    PAGINATOR_LOCATOR = './/ul[@class="pagination"]/'
+    CUR_PAGE_LOCATOR = PAGINATOR_LOCATOR + './li/span/input[@name="limitstart"]/..'
+    PAGE_BUTTON_LOCATOR = PAGINATOR_LOCATOR + './li[contains(@class, {})]/span'
 
-    BUTTON_DIV_LOCATOR = './/div[contains(@class, "dropup") and ./button[@data-id="{0}"]]'
-    ITEMS_LOCATOR = './select'
-    # ITEM_LOCATOR = './select/option[@value={0}]'
-    ITEM_LOCATOR = './select/option[normalize-space(.)={}]'
-
-    def __init__(self, parent, id, logger=None):
-        Widget.__init__(self, parent, logger=logger)
-        self.data_id = id
+    def __init__(self, parent, logger=None):
+        super(Paginator, self).__init__(parent=parent, logger=logger)
 
     def __locator__(self):
-        return self.BUTTON_DIV_LOCATOR.format(self.data_id)
+        return self.PAGINATOR_LOCATOR
+
+    def _is_enabled(self, locator):
+        el = self.browser.element(locator)
+        return 'disabled' not in self.browser.classes(el)
+
+    def _click_button(self, locator):
+        if self._is_enabled(locator):
+            self.browser.click(locator)
+        else:
+            raise NoSuchElementException('such button is either absent or grayed out')
+
+    def next(self):
+        self._click_button(self.PAGE_BUTTON_LOCATOR.format(quote('next')))
+
+    def prev(self):
+        self._click_button(self.PAGE_BUTTON_LOCATOR.format(quote('prev')))
+
+    def last(self):
+        self._click_button(self.PAGE_BUTTON_LOCATOR.format(quote('last')))
+
+    def first(self):
+        self._click_button(self.PAGE_BUTTON_LOCATOR.format(quote('first')))
+
+    def page_info(self):
+        return self.browser.text(self.CUR_PAGE_LOCATOR)
 
 
-class CheckBox(BaseInput):
-    """A PatternFly/Bootstrap checkbox
-
-    .. code-block:: python
-
-        CheckBox('Show Detailed Events')
-        CheckBox('1').is_checked
-        CheckBox('2').check()
-        CheckBox('2').uncheck()
-    """
-
-    def __init__(self, parent, name=None, id=None, logger=None):
-        super(CheckBox, self).__init__(parent, name=name, id=id, logger=logger)
-
-    def __locator__(self):
-        return super(CheckBox, self).__locator__() + '[@type="checkbox"]'
-
-    @property
-    def is_checked(self):
-        return self.browser.element(self).is_selected()
-
-    def check(self):
-        if not self.is_checked:
-            self.browser.element(self).click()
-
-    def uncheck(self):
-        if self.is_checked:
-            self.browser.element(self).click()
-
-
-class Paginator(View):
+class PaginationPane(View):
     """
     Paginator
     """
@@ -1220,10 +1208,10 @@ class Paginator(View):
     _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
     # '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
 
-    check_all_items = CheckBox(id='masterToggle')
-    sort_by = Dropup(id='sort_choice')
-    items_on_page = Dropup(id='ppsetting')
-    next = Button(text='')
+    check_all_items = Checkbox(id='masterToggle')
+    sort_by = BootstrapSelect(id='sort_choice')
+    items_on_page = BootstrapSelect(id='ppsetting')
+    paginator = Paginator()
 
     def __locator__(self):
         return './/div[contains(@id, "paging_div")'
@@ -1234,45 +1222,65 @@ class Paginator(View):
         return False not in self.browser.classes(cur_view)
 
     def check_all(self):
-        if not self.check_all_items.is_checked:
-            self.check_all_items.check()
-        else:
-            self.check_all_items.uncheck()
-            self.check_all_items.check()
+        self.check_all_items.fill(True)
 
     def uncheck_all(self):
-        if self.check_all_items.is_checked:
-            self.check_all_items.uncheck()
-        else:
-            self.check_all_items.check()
-            self.check_all_items.uncheck()
+        self.check_all_items.fill(False)
 
     def sort(self, value):
-        self.sort_by.item_select(value)
+        self.sort_by.select_by_visible_text(value)
 
+    @property
     def sorted_by(self):
-        # todo: add this when it is required
-        pass
+        raise NotImplementedError('to implement it when needed')
 
+    @property
     def items_per_page(self):
-        return Text(self._main_locator + self._page_cell)
+        return int(self.items_on_page.selected_option)
 
-    def current_page(self):
-        pass
+    @items_per_page.setter
+    def items_per_page(self, value):
+        self.items_on_page.select_by_visible_text(str(value))
+
+    def _parse_pages(self):
+        text = self.paginator.page_info()
+        max_item, item_amt = re.search('(\d+)\s+of\s+(\d+)', text).groups()
+        item_amt = int(item_amt)
+        max_item = int(max_item)
+        items_per_page = self.items_per_page
+
+        # obtaining amount of existing pages, there is 1 page by default
+        if item_amt == 0:
+            page_amt = 1
+        elif item_amt % items_per_page != 0:
+            page_amt = item_amt // items_per_page + 1
+        else:
+            page_amt = item_amt // items_per_page
+
+        # calculating current_page_number
+        if max_item <= items_per_page:
+            cur_page = 1
+        else:
+            cur_page = max_item//items_per_page
+
+        return cur_page, page_amt
+
+    @property
+    def cur_page(self):
+        return self._parse_pages()[0]
+
+    @property
+    def amount_of_pages(self):
+        return self._parse_pages()[1]
 
     def next_page(self):
-
-        pass
+        self.paginator.next()
 
     def prev_page(self):
-        _next = '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
-        _previous = '//img[@alt="Previous"]|//li[contains(@class, "prev")]/span'
-        _first = '//img[@alt="First"]|//li[contains(@class, "first")]/span'
-        _last = '//img[@alt="Last"]|//li[contains(@class, "last")]/span'
-        pass
+        self.paginator.prev()
 
     def first_page(self):
-        pass
+        self.paginator.first()
 
     def last_page(self):
-        pass
+        self.paginator.last()

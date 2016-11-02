@@ -2,7 +2,7 @@
 from navmazing import NavigateToSibling
 from widgetastic.widget import View
 from widgetastic_manageiq import ManageIQTree
-from widgetastic_patternfly import Accordion, Dropdown
+from widgetastic_patternfly import Accordion, DropDown
 
 from cfme import BaseLoggedInPage
 from cfme.base import Server
@@ -38,7 +38,7 @@ class AutomateCustomizationView(BaseLoggedInPage):
 
         tree = ManageIQTree()
 
-    configuration = Dropdown('Configuration')
+    configuration = DropDown('Configuration')
 
 
 @navigator.register(Server)

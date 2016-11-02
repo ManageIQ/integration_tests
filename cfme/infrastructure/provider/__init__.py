@@ -12,7 +12,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic_patternfly import Dropdown, Paginator
+from widgetastic_patternfly import DropDown, PaginationPane
 
 from cached_property import cached_property
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
@@ -111,9 +111,9 @@ mon_btn = partial(tb.select, 'Monitoring')
 
 class InfraProvidersView(BaseLoggedInPage):
 
-    configuration = Dropdown('Configuration')
-    policy = Dropdown('Policy')
-    monitoring = Dropdown('Monitoring')
+    configuration = DropDown('Configuration')
+    policy = DropDown('Policy')
+    monitoring = DropDown('Monitoring')
 
     @property
     def is_displayed(self):
@@ -122,7 +122,7 @@ class InfraProvidersView(BaseLoggedInPage):
                     match_page(summary='Infrastructure Providers')))
 
     @View.nested
-    class paginator(Paginator):
+    class paginator(PaginationPane):
         pass
 
 
@@ -420,6 +420,15 @@ def get_all_providers(do_not_navigate=False):
     if not do_not_navigate:
         providers_view = navigate_to(InfraProvider, 'All')
         providers_view.paginator.sort('Type')
+        providers_view.paginator.items_per_page = '5'
+        print providers_view.paginator.items_per_page
+        print providers_view.paginator.cur_page
+        print providers_view.paginator.amount_of_pages
+        providers_view.paginator.next_page()
+        providers_view.paginator.prev_page()
+        providers_view.paginator.last_page()
+        providers_view.paginator.first_page()
+
     providers = set([])
     link_marker = "ems_infra"
     # todo: create paginator widget
