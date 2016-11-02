@@ -179,7 +179,8 @@ class WharfFactory(BrowserFactory):
         )
 
     def create(self, url_key):
-        for i in range(10):
+
+        def inner():
             try:
                 self.wharf.checkout()
                 return super(WharfFactory, self).create(url_key)
@@ -189,6 +190,8 @@ class WharfFactory(BrowserFactory):
                 write_line('URLError caused container recycle, see log for details', red=True)
                 log.exception(ex)
                 self.wharf.checkin()
+                raise
+        return tries(10, urllib2.URLError, inner)
 
     def renew(self):
         self.wharf.renew()
