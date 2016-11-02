@@ -16,7 +16,6 @@ from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
 from cfme import test_requirements
-from urlparse import urlparse
 from fixtures.pytest_store import store
 
 pytestmark = [
@@ -186,15 +185,6 @@ def vm_crud(provider, vm_name, full_template):
     return VM.factory(vm_name, provider, template_name=full_template["name"])
 
 
-@pytest.fixture(scope="module")
-def ssh_appliance():
-    return SSHClient(
-        username=credentials['ssh']['username'],
-        password=credentials['ssh']['password'],
-        hostname=urlparse(store.base_url).netloc
-    )
-
-
 @pytest.yield_fixture(scope="module")
 def snmp(ssh_appliance):
     ssh_appliance.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
@@ -318,7 +308,7 @@ def test_alert_timeline_cpu(request, vm_name, provider, ssh, vm_crud):
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type not in CANDU_PROVIDER_TYPES)
-def test_alert_snmp(request, vm_name, snmp, ssh_appliance, provider):
+def test_alert_snmp(request, vm_name, snmp, provider):
     """ Tests a custom alert that uses C&U data to trigger an alert. Since the threshold is set to
     zero, it will start firing mails as soon as C&U data are available. It uses SNMP to catch the
     alerts. It uses SNMP v2.
@@ -354,7 +344,7 @@ def test_alert_snmp(request, vm_name, snmp, ssh_appliance, provider):
     setup_for_alerts(request, [alert])
 
     def _snmp_arrived():
-        rc, stdout = ssh_appliance.run_command(
+        rc, stdout = store.current_appliance.ssh_client.run_command(
             "journalctl /usr/sbin/snmptrapd | grep {}".format(match_string))
         if rc != 0:
             return False
