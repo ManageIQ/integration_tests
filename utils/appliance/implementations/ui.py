@@ -378,11 +378,10 @@ class ViaUI(object):
     @cached_property
     def widgetastic(self):
         """This gives us a widgetastic browser."""
-        # TODO: Make this a property that could watch for browser change?
-        try:
-            return MiqBrowser(self.open_browser(), self)
-        finally:
-            manager.add_cleanup(self._reset_cache)
+        browser = self.open_browser()
+        wt = MiqBrowser(browser, self)
+        manager.add_cleanup(self._reset_cache)
+        return wt
 
     def open_browser(self):
         # TODO: self.appliance.server.address() instead of None
