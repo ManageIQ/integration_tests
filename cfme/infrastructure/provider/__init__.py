@@ -12,7 +12,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic_patternfly import DropDown, PaginationPane
+from widgetastic_patternfly import DropDown, PaginationPane, Checkbox, Input, Button
 
 from cached_property import cached_property
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
@@ -20,7 +20,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
 from cfme.web_ui import (
-    Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
+    Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons,
     AngularSelect, toolbar as tb, Radio, InfoBlock, match_location
 )
 from cfme.web_ui.form_buttons import FormButton
@@ -111,14 +111,15 @@ mon_btn = partial(tb.select, 'Monitoring')
 
 class InfraProvidersView(BaseLoggedInPage):
 
-    configuration = DropDown('Configuration')
-    policy = DropDown('Policy')
-    monitoring = DropDown('Monitoring')
+    configuration = DropDown(text='Configuration')
+    policy = DropDown(text='Policy')
+    monitoring = DropDown(text='Monitoring')
 
     @property
     def is_displayed(self):
         return all((self.logged_in_as_current_user,
-                    self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'],
+                    self.navigation.currently_selected == ['Compute',
+                                                           'Infrastructure', 'Providers'],
                     match_page(summary='Infrastructure Providers')))
 
     @View.nested
@@ -126,8 +127,39 @@ class InfraProvidersView(BaseLoggedInPage):
         pass
 
 
-class InfraProviderAddForm(InfraProvidersView):
+class InfraProvidersDiscoverView(InfraProvidersView):
+    vcenter = Checkbox('discover_type_virtualcenter')
+    mscvmm = Checkbox('discover_type_scvmm')
+    rhevm = Checkbox('discover_type_rhevm')
 
+    from_ip1 = Input('from_first')
+    from_ip2 = Input('from_second')
+    from_ip3 = Input('from_third')
+    from_ip4 = Input('from_fourth')
+    to_ip4 = Input('to_fourth')
+
+    start = Button('Start')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return all((self.logged_in_as_current_user,
+                    self.navigation.currently_selected == ['Compute',
+                                                           'Infrastructure', 'Providers'],
+                    match_page(summary='Infrastructure Providers Discovery')))
+
+
+class InfraProvidersAddView(InfraProvidersView):
+    name = Input('name')
+    type = DropDown('emstype')
+
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+    # todo: rest of entities should be added according to provider type
+
+
+class InfraProvidersDetailsView(InfraProvidersView):
     pass
 
 
@@ -339,28 +371,31 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        self.view.paginator.check_all()
+        self.view.paginator.uncheck_all()
 
 
 @navigator.register(InfraProvider, 'Add')
 class Add(CFMENavigateStep):
+    VIEW = InfraProvidersAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Add a New Infrastructure Provider')
+        self.view.configuration.item_select('Add a New Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')
 class Discover(CFMENavigateStep):
+    VIEW = InfraProvidersDiscoverView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        cfg_btn('Discover Infrastructure Providers')
+        self.view.configuration.item_select('Discover Infrastructure Providers')
 
 
 @navigator.register(InfraProvider, 'Details')
 class Details(CFMENavigateStep):
+    VIEW = InfraProvidersDetailsView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -369,6 +404,7 @@ class Details(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'ManagePolicies')
 class ManagePolicies(CFMENavigateStep):
+    VIEW = InfraProvidersManagePoliciesView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -378,6 +414,7 @@ class ManagePolicies(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'ManagePoliciesFromDetails')
 class ManagePoliciesFromDetails(CFMENavigateStep):
+    VIEW = InfraProvidersManagePoliciesView
     prerequisite = NavigateToSibling('Details')
 
     def step(self):
@@ -386,6 +423,7 @@ class ManagePoliciesFromDetails(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'Edit')
 class Edit(CFMENavigateStep):
+    VIEW = InfraProvidersAddView
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -415,27 +453,19 @@ class Templates(CFMENavigateStep):
         sel.click(InfoBlock.element('Relationships', 'Templates'))
 
 
-def get_all_providers(do_not_navigate=False):
+def get_all_providers():
     """Returns list of all providers"""
-    if not do_not_navigate:
-        providers_view = navigate_to(InfraProvider, 'All')
-        providers_view.paginator.sort('Type')
-        providers_view.paginator.items_per_page = '5'
-        print providers_view.paginator.items_per_page
-        print providers_view.paginator.cur_page
-        print providers_view.paginator.amount_of_pages
-        providers_view.paginator.next_page()
-        providers_view.paginator.prev_page()
-        providers_view.paginator.last_page()
-        providers_view.paginator.first_page()
-
+    all_prov_view = navigate_to(InfraProvider, 'All')
+    cur_items_per_page = all_prov_view.paginator.items_per_page
+    all_prov_view.paginator.items_per_page = 1000
     providers = set([])
+    # fixme: to replace this somehow when quadicon is ready. probably need to wait of collections
     link_marker = "ems_infra"
-    # todo: create paginator widget
-    # for page in paginator.pages():
-    #     for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
-    #             "'{}/show')]".format(link_marker)):
-    #         providers.add(sel.get_attribute(title, "title"))
+    for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
+                              "'{}/show')]".format(link_marker)):
+        providers.add(sel.get_attribute(title, "title"))
+
+    all_prov_view.paginator.items_per_page = cur_items_per_page
     return providers
 
 
@@ -475,11 +505,10 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
 
 
 def wait_for_a_provider():
-    navigate_to(InfraProvider, 'All')
+    all_prov_view = navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
-    # todo: replace by paginator widget
-    wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
-             num_sec=1000, fail_func=sel.refresh)
+    wait_for(all_prov_view.paginator.items_amount, fail_condition=None,
+             message="Wait for any provider to appear", num_sec=1000, fail_func=sel.refresh)
 
 
 import_all_modules_of('cfme.infrastructure.provider')

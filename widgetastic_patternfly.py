@@ -10,7 +10,7 @@ from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresen
 from widgetastic.log import call_sig
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget, \
-    Text, Checkbox
+    Checkbox
 from widgetastic.xpath import quote
 
 from wait_for import wait_for, wait_for_decorator
@@ -1163,7 +1163,12 @@ class DropDown(Widget):
 
 
 class Paginator(Widget):
+    """
+    Represents Paginator control that includes First/Last/Next/Prev buttons and control displaying
+    amount of items on current page and overall amount.
 
+    It is mainly used in Paginator Pane.
+    """
     PAGINATOR_LOCATOR = './/ul[@class="pagination"]/'
     CUR_PAGE_LOCATOR = PAGINATOR_LOCATOR + './li/span/input[@name="limitstart"]/..'
     PAGE_BUTTON_LOCATOR = PAGINATOR_LOCATOR + './li[contains(@class, {})]/span'
@@ -1175,7 +1180,7 @@ class Paginator(Widget):
         return self.PAGINATOR_LOCATOR
 
     def _is_enabled(self, locator):
-        el = self.browser.element(locator)
+        el = self.browser.element(locator + '/..')
         return 'disabled' not in self.browser.classes(el)
 
     def _click_button(self, locator):
@@ -1197,12 +1202,21 @@ class Paginator(Widget):
         self._click_button(self.PAGE_BUTTON_LOCATOR.format(quote('first')))
 
     def page_info(self):
+        """
+        returns amount of items on current page and overall items amount
+        """
         return self.browser.text(self.CUR_PAGE_LOCATOR)
 
 
 class PaginationPane(View):
     """
-    Paginator
+    Represents Paginator Pane with the following controls
+    1. paginator
+    2. Check All checkbox
+    3. Sorting control
+
+    it wraps most used embedded controls' methods.
+    The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
     """
     _main_locator = '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])'
     _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
@@ -1270,7 +1284,7 @@ class PaginationPane(View):
         return self._parse_pages()[0]
 
     @property
-    def amount_of_pages(self):
+    def pages_amount(self):
         return self._parse_pages()[1]
 
     def next_page(self):
@@ -1284,3 +1298,11 @@ class PaginationPane(View):
 
     def last_page(self):
         self.paginator.last()
+
+    @property
+    def items_amount(self):
+        return self.paginator.page_info()[1]
+
+
+class QuadIcon:
+    pass
