@@ -37,11 +37,11 @@ search_box = Region(
         load_filter_disabled='//button[(normalize-space(@alt)="No saved filters or report '
                                     'filters are available to load")]',
 
-        reset_filter='//a[@title="Reset the filter"]',
+        reset_filter='(//button | //a)[@title="Reset the filter"]',
         reset_filter_disabled='//button[contains(@class, "btn-disabled") and '
                               'normalize-space(text())="Reset"]',
 
-        apply_filter='//a[@title="Apply the filter"]',
+        apply_filter='(//button | //a)[@title="Apply the filter"]',
         apply_filter_disabled='//button[contains(@class, "btn-disabled") and '
                               'normalize-space(text())="Apply"]',
 
@@ -196,7 +196,11 @@ def ensure_advanced_search_closed():
 
 
 def reset_filter():
-    """Clears the filter expression"""
+    """Clears the filter expression
+
+        Returns result of clicking reset when enabled
+        Returns false when reset is button is disabled
+    """
     ensure_advanced_search_open()
     if sel.is_displayed(search_box.reset_filter):
         return sel.click(search_box.reset_filter_button)
