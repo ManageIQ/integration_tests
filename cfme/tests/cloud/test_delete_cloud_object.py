@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme import test_requirements
 from cfme.cloud.stack import Stack
 from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
@@ -16,7 +17,8 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-pytestmark = [pytest.mark.tier(2)]
+pytestmark = [pytest.mark.tier(2),
+              test_requirements.general_ui]
 
 
 @pytest.fixture(scope="module")

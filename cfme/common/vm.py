@@ -145,10 +145,12 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     TO_OPEN_EDIT = None  # Name of the item in Configuration that puts you in the form
     QUADICON_TYPE = "vm"
     # Titles of the delete buttons in configuration
-    REMOVE_SELECTED = {version.LOWEST: 'Remove selected items from the VMDB',
-            '5.6': 'Remove selected items'}
-    REMOVE_SINGLE = {version.LOWEST: "Remove from the VMDB",
-            '5.6': 'Remove Virtual Machine'}
+    REMOVE_SELECTED = {'5.6': 'Remove selected items',
+                       '5.6.2.2': 'Remove selected items from the VMDB',
+                       '5.7': 'Remove selected items'}
+    REMOVE_SINGLE = {'5.6': 'Remove Virtual Machine',
+                     '5.6.2.2': 'Remove from the VMDB',
+                     '5.7': 'Remove Virtual Machine'}
 
     ###
     # Shared behaviour

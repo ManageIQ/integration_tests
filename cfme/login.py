@@ -141,9 +141,6 @@ def login(user, submit_method=LOGIN_METHODS[-1]):
         RuntimeError: If the login fails, ie. if a flash message appears
     """
     # Circular import
-    from utils.appliance.implementations.ui import navigate_to
-    login_view = navigate_to(store.current_appliance.server, 'LoginScreen')
-
     if not user:
         username = conf.credentials['default']['username']
         password = conf.credentials['default']['password']
@@ -156,6 +153,9 @@ def login(user, submit_method=LOGIN_METHODS[-1]):
     if not logged_in_view.logged_in_as_user(user):
         if logged_in_view.logged_in:
             logged_in_view.logout()
+
+        from utils.appliance.implementations.ui import navigate_to
+        login_view = navigate_to(store.current_appliance.server, 'LoginScreen')
 
         time.sleep(1)
 

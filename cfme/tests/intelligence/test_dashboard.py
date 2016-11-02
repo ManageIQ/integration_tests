@@ -40,7 +40,7 @@ def widgets():
 
 @pytest.mark.meta(blockers=[1202394])
 def test_widgets_operation(request):
-    navigate_to(Dashboard, 'All')
+    navigate_to(Dashboard, 'Main')
     request.addfinalizer(lambda: Widget.close_zoom())
     for widget in Widget.all():
         widget.minimize()

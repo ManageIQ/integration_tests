@@ -207,8 +207,10 @@ def upload_template(rhosip, sshname, sshpass, username, password, auth_url, prov
                 wait_for(check_image_status, [image_id, export, ssh_client],
                          fail_condition=False, delay=5, num_sec=300)
                 print("RHOS:{} Successfully uploaded the template.".format(provider))
-                print("RHOS:{} Adding template {} to trackerbot...".format(provider, template_name))
-                trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
+                if not provider_data:
+                    print("RHOS:{} Adding template {} to trackerbot...".format(provider,
+                                                                               template_name))
+                    trackerbot.trackerbot_add_provider_template(stream, provider, template_name)
         else:
             print("RHOS:{} Found image with name {}. Exiting...".format(provider, template_name))
         if provider_data and check_image_exists(template_name, export, ssh_client):

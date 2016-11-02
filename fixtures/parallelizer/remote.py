@@ -199,6 +199,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('slaveid', help='The name of this slave')
     parser.add_argument('base_url', help='The base URL for this slave to use')
+    parser.add_argument('ts', help='The timestap to use for collections')
     args = parser.parse_args()
 
     # overwrite the default logger before anything else is imported,
@@ -213,6 +214,7 @@ if __name__ == '__main__':
 
     conf.runtime['env']['slaveid'] = args.slaveid
     conf.runtime['env']['base_url'] = args.base_url
+    conf.runtime['env']['ts'] = args.ts
     store.parallelizer_role = 'slave'
 
     slave_args = conf.slave_config.pop('args')

@@ -79,6 +79,10 @@ recv_lock = Lock()
 # lock for protecting zmq socket access
 zmq_lock = Lock()
 
+if not conf.runtime['env'].get('ts'):
+    ts = str(time())
+    conf.runtime['env']['ts'] = ts
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("cfme")
@@ -396,7 +400,7 @@ class ParallelSession(object):
 
         # worker output redirected to null; useful info comes via messages and logs
         slave = subprocess.Popen(
-            ['python', remote.__file__, slaveid, base_url],
+            ['python', remote.__file__, slaveid, base_url, conf.runtime['env']['ts']],
             stdout=devnull,
         )
         self.slaves[slaveid] = slave

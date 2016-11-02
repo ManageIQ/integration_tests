@@ -48,13 +48,10 @@ class Filedump(ArtifactorBasePlugin):
                  display_type="primary", display_glyph=None, file_type=None,
                  dont_write=False, os_filename=None, group_id=None, test_name=None,
                  test_location=None):
-        if slaveid is not None:
-            if not slaveid:
-                slaveid = "Master"
-            test_ident = "{}/{}".format(self.store[slaveid]['test_location'],
-                self.store[slaveid]['test_name'])
-        else:
-            test_ident = "{}/{}".format(test_location, test_name)
+        if not slaveid:
+            slaveid = "Master"
+        test_ident = "{}/{}".format(self.store[slaveid]['test_location'],
+            self.store[slaveid]['test_name'])
         artifacts = []
         if os_filename is None:
             safe_name = re.sub(r"\s+", "_", normalize_text(safe_string(description)))

@@ -128,9 +128,18 @@ class BrowserFactory(object):
         return self.browser_kwargs
 
     def create(self, url_key):
-        browser = tries(
-            3, WebDriverException,
-            self.webdriver_class, **self.processed_browser_args())
+        try:
+            browser = tries(
+                3, WebDriverException,
+                self.webdriver_class, **self.processed_browser_args())
+        except urllib2.URLError as e:
+            if e.reason.errno == 111:
+                # Known issue
+                raise RuntimeError('Could not connect to Selenium server. Is it up and running?')
+            else:
+                # Unknown issue
+                raise
+
         browser.file_detector = UselessFileDetector()
         browser.maximize_window()
         browser.get(url_key)
@@ -229,7 +238,25 @@ class BrowserManager(object):
             self.start(url_key=url_key)
         return self.browser
 
+    def add_cleanup(self, callback):
+        assert self.browser is not None
+        try:
+            cl = self.browser.__cleanup
+        except AttributeError:
+            cl = self.browser.__cleanup = []
+        cl.append(callback)
+
+    def _consume_cleanups(self):
+        try:
+            cl = self.browser.__cleanup
+        except AttributeError:
+            pass
+        else:
+            while cl:
+                cl.pop()()
+
     def quit(self):
+        self._consume_cleanups()
         try:
             self.browser.quit()
         except:

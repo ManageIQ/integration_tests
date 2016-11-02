@@ -37,6 +37,9 @@ class LoggedIn(CFMENavigateStep):
     VIEW = BaseLoggedInPage
     prerequisite = NavigateToSibling('LoginScreen')
 
+    def am_i_here(self):
+        return self.view.is_displayed
+
     def step(self):
         login_view = self.create_view(LoginPage)
         login_view.log_in(self.obj.appliance.user)
@@ -53,6 +56,19 @@ class Configuration(CFMENavigateStep):
         else:
             from cfme.web_ui.menu import nav
             nav._nav_to_fn('Settings', 'Configuration')(None)
+
+
+@navigator.register(Server)
+class MySettings(CFMENavigateStep):
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        if self.obj.appliance.version > '5.7':
+            from cfme.dashboard import click_top_right
+            click_top_right('My Settings')
+        else:
+            from cfme.web_ui.menu import nav
+            nav._nav_to_fn('Settings', 'My Settings')(None)
 
 
 @navigator.register(Server)

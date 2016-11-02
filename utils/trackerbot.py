@@ -7,6 +7,7 @@ import urllib
 
 import slumber
 import requests
+import time
 
 from utils.conf import env
 from utils.providers import providers_data
@@ -28,6 +29,7 @@ stream_matchers = (
     # Nightly builds have potentially multiple version streams bound to them so we
     # cannot use get_stream()
     ('upstream_stable', r'^miq-stable-darga-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
+    ('upstream_euwe', r'^miq-stable-euwe-(.*)-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     ('downstream-nightly', r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
     # new format
     ('downstream-nightly', r'^cfme-nightly-\d*-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
@@ -302,8 +304,8 @@ def depaginate(api, result):
 
 def composite_uncollect(build):
     """Composite build function"""
-
-    url = "{}?build={}&source=jenkins".format(conf['ostriz'], urllib.quote(build))
+    since = env.get('ts', time.time())
+    url = "{}?build={}&source=jenkins&since={}".format(conf['ostriz'], urllib.quote(build), since)
     try:
         resp = requests.get(url, timeout=10)
         return resp.json()

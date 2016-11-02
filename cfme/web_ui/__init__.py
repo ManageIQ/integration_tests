@@ -1095,7 +1095,10 @@ class CheckboxTable(Table):
 
     def _set_row_by_cells(self, cells, set_to=False, partial_check=False):
         row = self.find_row_by_cells(cells, partial_check=partial_check)
-        self._set_row_checkbox(row, set_to)
+        if row:
+            self._set_row_checkbox(row, set_to)
+        else:
+            raise sel_exceptions.NoSuchElementException()
 
     def select_row_by_cells(self, cells, partial_check=False):
         """Select the first row matched by ``cells``
@@ -1570,11 +1573,14 @@ class Input(Pretty):
 
     @property
     def angular_help_block(self):
-        """Returns the angular helper text (like 'Required')."""
-        loc = "{}/following-sibling::span".format(self.locate())
-        if sel.is_displayed(loc):
+        """Returns the first visible angular helper text (like 'Required')."""
+        loc = (
+            '{0}/following-sibling::span[not(contains(@class, "ng-hide"))]'
+            '| {0}/following-sibling::div/span[not(contains(@class, "ng-hide"))]'
+            .format(self.locate()))
+        try:
             return sel.text(loc).strip()
-        else:
+        except NoSuchElementException:
             return None
 
     def __add__(self, string):
@@ -1840,6 +1846,8 @@ class BootstrapTreeview(object):
             step = step[1]
         else:
             image = None
+        if not isinstance(step, (basestring, re._pattern_type)):
+            step = str(step)
         return image, step
 
     @staticmethod

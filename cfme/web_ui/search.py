@@ -7,9 +7,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import expression_editor as exp_ed
 from cfme.web_ui import Input, Region, Select, fill
 from cfme.web_ui.form_buttons import FormButton
-from utils.version import current_version
 from utils.wait import wait_for
-
+from utils.log import logger
 
 search_box = Region(
     locators=dict(
@@ -48,13 +47,19 @@ search_box = Region(
 
 
         # Buttons on main view
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1380430
+        # TODO: update dimmed/disabled alt-text as 1380430 is fixed
         apply_filter_button=FormButton("Apply the current filter"),
         load_filter_button=FormButton(alt="Load a filter",
-            dimmed_alt="No saved filters or report filters are available to load"),
+                                      dimmed_alt="No saved filters or report filters are "
+                                                 "available to load"),
         delete_filter_button=FormButton("Delete the filter named", partial_alt=True),
         save_filter_button=FormButton("Save the current filter"),
         reset_filter_button=FormButton("Reset the filter"),
-        close_button="//div[@id='advsearchModal']/div//button/span[normalize-space(.)='×']",
+        # There are multiple close button divs, and they swap visibility with @style none/block
+        close_button="//div[(@id='advsearchModal' or 'quicksearchbox') "
+                     "and (normalize-space(@style)='display: block;')]//button[@class='close']"
+                     "/span[normalize-space(.)='×']",
 
         # Buttons in the "next step"
         load_filter_dialog_button=FormButton("Load the filter shown above"),
@@ -69,6 +74,7 @@ search_box = Region(
         userinput_apply_filter_button=FormButton("Apply the current filter (Enter)"),
         userinput_cancel_button=FormButton("Cancel (Esc)"),
 
+        # Elements in Load dialog
         # Selects for selecting the filter
         saved_filter=Select("select#chosen_search"),
         report_filter=Select("select#chosen_report"),
@@ -113,7 +119,12 @@ def has_quick_search_box():
 
 def is_advanced_search_opened():
     """Checks whether the advanced search box is currently opened"""
-    return sel.is_displayed(search_box.advanced_search_box_visible)
+    # Covers advanced search sub-forms as well - user-input, load, and save
+    return any(sel.is_displayed(loc) for loc in
+               [search_box.advanced_search_box_visible,
+                search_box.quick_search_box,
+                search_box.saved_filter,
+                search_box.save_name])
 
 
 def is_advanced_search_possible():
@@ -131,11 +142,33 @@ def ensure_no_filter_applied():
     """If any filter is applied in the quadicon view, it will be disabled."""
     # The expression filter
     if is_advanced_filter_applied():
+        logger.debug('search.ensure_no_filter_applied: advanced filter applied, removing')
+        # Clear filter using breadcrumb link
+        ensure_advanced_search_closed()
         sel.click(search_box.clear_advanced_search)
+
     # The simple filter
     if len(sel.value(search_box.search_field).strip()) > 0:
+        logger.debug('search.ensure_no_filter_applied: simple filter applied, removing')
         sel.set_text(search_box.search_field, "")
         sel.click(search_box.search_icon)
+
+    reset_filter()
+
+
+def check_and_click_open():
+    """Check for display of advanced search open button and click it"""
+    # Look for close button since it overlays the toggle button
+    if not sel.is_displayed(search_box.close_button):
+        logger.debug('search.check_and_click_open: clicking advanced search toggle')
+        sel.click(search_box.toggle_advanced)
+
+
+def check_and_click_close():
+    """Check for display of advanced search close button and click it"""
+    if sel.is_displayed(search_box.close_button):
+        logger.debug('search.check_and_click_close: clicking advanced search close')
+        sel.click(search_box.close_button)
 
 
 def ensure_advanced_search_open():
@@ -146,9 +179,20 @@ def ensure_advanced_search_open():
     if not is_advanced_search_possible():
         raise Exception("Advanced search is not possible in this location!")
     if not is_advanced_search_opened():
+        logger.debug('search.ensure_advanced_search_closed: search was closed, opening')
         sel.click(search_box.toggle_advanced)   # Open
 
-    wait_for(is_advanced_search_opened, fail_condition=False, num_sec=5)
+    wait_for(is_advanced_search_opened, fail_condition=False, num_sec=10, delay=2,
+             fail_func=check_and_click_open, message='Waiting for advanced search to open')
+
+
+def ensure_advanced_search_closed():
+    """Checks if the advanced search box is open and if it does, closes it."""
+    if is_advanced_search_opened():
+        logger.debug('search.ensure_advanced_search_closed: search was open, closing')
+        sel.click(search_box.close_button)
+        wait_for(is_advanced_search_opened, fail_condition=True, num_sec=10, delay=2,
+                 fail_func=check_and_click_close, message='Waiting for advanced search to close')
 
 
 def reset_filter():
@@ -178,16 +222,6 @@ def delete_filter(cancel=False):
         return True
     else:
         return False
-
-
-def ensure_advanced_search_closed():
-    """Checks if the advanced search box is open and if it does, closes it."""
-    if is_advanced_search_opened():
-        if current_version() >= "5.4":
-            sel.click(search_box.close_button)
-        else:
-            sel.click(search_box.toggle_advanced)   # Close
-        wait_for(is_advanced_search_opened, fail_condition=True, num_sec=5)
 
 
 def normal_search(search_term):

@@ -314,6 +314,12 @@ def wait_for_ajax():
         TimedOutError: when ajax did not load in time
     """
 
+    execute_script("""
+        try {
+            angular.element('error-modal').hide();
+        } catch(err) {
+        }""")
+
     _thread_local.ajax_log_msg = ''
 
     def _nothing_in_flight():

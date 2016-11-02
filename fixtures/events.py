@@ -402,6 +402,7 @@ def pytest_runtest_call(item):
     try:
         yield
     finally:
+        from fixtures.artifactor_plugin import SLAVEID
         if register_event is None:
             return
 
@@ -432,6 +433,7 @@ def pytest_runtest_call(item):
             file_type="html",
             display_glyph="align-justify",
             group_id="misc-artifacts",
+            slaveid=SLAVEID
         )
         logger.info("Clearing the database after testing ...")
         register_event.delete_database()

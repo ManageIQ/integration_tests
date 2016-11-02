@@ -6,7 +6,6 @@ from cfme.cloud.instance import (EC2Instance, Instance, OpenStackInstance,
                                  AzureInstance, GCEInstance)
 from cfme import test_requirements
 from utils import testgen, version
-from utils.blockers import BZ
 from utils.log import logger
 from utils.generators import random_vm_name
 from utils.wait import wait_for, TimedOutError, RefreshTimer
@@ -25,7 +24,7 @@ pytestmark = [pytest.mark.tier(2), pytest.mark.long_running, test_requirements.p
 def testing_instance(request, setup_provider, provider):
     """ Fixture to provision instance on the provider
     """
-    instance = Instance.factory(random_vm_name('pwr-ctrl'), provider)
+    instance = Instance.factory(random_vm_name('pwr-c'), provider)
     if not provider.mgmt.does_vm_exist(instance.name):
         instance.create_on_provider(timeout=1000, allow_skip="default", find_in_cfme=True)
         request.addfinalizer(instance.delete_from_provider)
@@ -195,17 +194,19 @@ def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert,
     """
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
-    check_power_options(soft_assert, testing_instance, 'on')
     testing_instance.power_control_from_cfme(
         option=testing_instance.STOP, cancel=False, from_details=True)
     flash.assert_message_contain("Stop initiated")
-    testing_instance.wait_for_vm_state_change(
-        desired_state=testing_instance.STATE_OFF, timeout=720, from_details=True)
+    # Check Vm state in background
     wait_for(
         lambda: provider.mgmt.is_vm_stopped(testing_instance.name),
-        num_sec=180,
+        num_sec=280,
         delay=20,
         message="mgmt system check - instance stopped")
+    # Check Vm state in CFME
+    soft_assert(testing_instance.wait_for_vm_state_change(
+        desired_state=testing_instance.STATE_OFF, timeout=720, from_details=True),
+        "VM isn't stopped in CFME UI")
 
 
 def test_start(
@@ -217,7 +218,6 @@ def test_start(
     """
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_OFF, timeout=720, from_details=True)
-    check_power_options(soft_assert, testing_instance, 'off')
     testing_instance.power_control_from_cfme(
         option=testing_instance.START, cancel=False, from_details=True)
     flash.assert_message_contain("Start initiated")
@@ -229,8 +229,6 @@ def test_start(
         "instance is not running")
 
 
-@pytest.mark.meta(
-    blockers=[BZ(1379071, unblock=lambda provider: provider.type != 'azure')])
 def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
                      verify_vm_running):
     """ Tests instance soft reboot
@@ -298,7 +296,6 @@ def test_suspend(
     """
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
-    check_power_options(soft_assert, testing_instance, 'on')
     testing_instance.power_control_from_cfme(
         option=testing_instance.SUSPEND, cancel=False, from_details=True)
     flash.assert_message_contain("Suspend initiated")
@@ -321,7 +318,6 @@ def test_unpause(
     """
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_PAUSED, timeout=720, from_details=True)
-    check_power_options(soft_assert, testing_instance, 'off')
     testing_instance.power_control_from_cfme(
         option=testing_instance.START, cancel=False, from_details=True)
     flash.assert_message_contain("Start initiated")
@@ -342,7 +338,6 @@ def test_resume(setup_provider_funcscope, provider, testing_instance, soft_asser
     """
     testing_instance.wait_for_vm_state_change(
         desired_state=testing_instance.STATE_SUSPENDED, timeout=720, from_details=True)
-    check_power_options(soft_assert, testing_instance, 'off')
     testing_instance.power_control_from_cfme(
         option=testing_instance.START, cancel=False, from_details=True)
     flash.assert_message_contain("Start initiated")
@@ -383,3 +378,27 @@ def test_terminate_via_rest(setup_provider_funcscope, provider, testing_instance
     else:
         rest_api.collections.instances.action.terminate(vm)
     soft_assert(wait_for_termination(provider, testing_instance), "Instance still exists")
+
+
+def test_power_options_from_on(setup_provider_funcscope, provider, testing_instance, soft_assert,
+                     verify_vm_running):
+    """ Tests available power options from ON state
+
+    Metadata:
+        test_flag: power_control
+    """
+    testing_instance.wait_for_vm_state_change(
+        desired_state=testing_instance.STATE_ON, timeout=720, from_details=True)
+    check_power_options(soft_assert, testing_instance, 'on')
+
+
+def test_power_options_from_off(setup_provider_funcscope, provider, testing_instance, soft_assert,
+                                verify_vm_stopped):
+    """ Tests available power options from OFF state
+
+    Metadata:
+        test_flag: power_control
+    """
+    testing_instance.wait_for_vm_state_change(
+        desired_state=testing_instance.STATE_OFF, timeout=720, from_details=True)
+    check_power_options(soft_assert, testing_instance, 'off')

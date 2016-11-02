@@ -9,7 +9,7 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
     form_buttons, Input, Table, UpDownSelect, CFMECheckbox)
 from cfme.web_ui.form_buttons import change_stored_password
-from cfme.web_ui.menu import extend_nav, nav
+from cfme.web_ui.menu import extend_nav
 from fixtures.pytest_store import store
 from utils import version
 from utils.appliance import Navigatable
@@ -38,14 +38,6 @@ group_order_selector = UpDownSelect(
     "select#seq_fields",
     "//img[@alt='Move selected fields up']",
     "//img[@alt='Move selected fields down']")
-
-nav.add_branch(
-    'configuration',
-    {
-        'chargeback_assignments':
-        nav.fn(partial(accordion.click, "Assignments"))
-    }
-)
 
 
 @extend_nav
@@ -137,14 +129,21 @@ class User(Updateable, Pretty, Navigatable):
     def update(self, updates):
         navigate_to(self, 'Edit')
         change_stored_password()
-        fill(self.user_form, {'name_txt': updates.get('name'),
-                              'userid_txt': updates.get('credential').principal,
-                              'password_txt': updates.get('credential').secret,
-                              'password_verify_txt': updates.get('credential').verify_secret,
-                              'email_txt': updates.get('email'),
-                              'user_group_select': getattr(updates.get('group'),
-                                                           'description', None)},
-             action=form_buttons.save)
+        new_updates = {}
+        if 'credential' in updates:
+            new_updates.update({
+                'userid_txt': updates.get('credential').principal,
+                'password_txt': updates.get('credential').secret,
+                'password_verify_txt': updates.get('credential').verify_secret
+            })
+        new_updates.update({
+            'name_txt': updates.get('name'),
+            'email_txt': updates.get('email'),
+            'user_group_select': getattr(
+                updates.get('group'),
+                'description', None)
+        })
+        fill(self.user_form, new_updates, action=form_buttons.save)
         flash.assert_success_message(
             'User "{}" was saved'.format(updates.get('name', self.name)))
 

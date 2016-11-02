@@ -4,26 +4,31 @@
 It does not check for filtering results so far."""
 import fauxfactory
 import pytest
+from selenium.common.exceptions import NoSuchElementException
 
 from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 # TODO: we should not call out to utils here, but maybe rather have an infra setup provider fixture
+from fixtures.pytest_store import store
 from utils.providers import setup_a_provider
 from utils.appliance.implementations.ui import navigate_to
+from utils.log import logger
 from cfme.web_ui import search
+from cfme.web_ui.search import DisabledButtonException
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
 
 
+pytestmark = [pytest.mark.usefixtures("setup_cleanup_search"), pytest.mark.tier(3)]
+
+
 @pytest.fixture(scope="module")
-def providers():
-    """Ensure the infra providers are set up and get list of hosts"""
+def single_provider():
+    """Ensure the infra provider is setup"""
     try:
-        setup_a_provider(prov_class="infra")
-    except Exception:
-        pytest.skip("It's not possible to set up any providers, therefore skipping")
-    navigate_to(InfraProvider, 'All')
-    search.ensure_no_filter_applied()
+        return setup_a_provider(prov_class="infra")
+    except Exception as ex:
+        pytest.skip("Exception while setting up providers, therefore skipping: {}".format(ex))
 
 
 @pytest.fixture(scope="module")
@@ -36,147 +41,153 @@ def hosts_with_vm_count(hosts):
 
 
 @pytest.yield_fixture(scope="function")
-def close_search():
-    """We must do this otherwise it's not possible to navigate after test!"""
+def setup_cleanup_search():
+    """Navigate to InfraProvider, clear search on setup and teardown"""
+    navigate_to(InfraProvider, 'All')
+    search.ensure_no_filter_applied()
+
     yield
+
+    # cleanup after test
+    search.ensure_no_filter_applied()
     search.ensure_advanced_search_closed()
 
 
-pytestmark = [pytest.mark.usefixtures("close_search"), pytest.mark.tier(3)]
+@pytest.yield_fixture(scope="function")
+def rails_delete_filter(request):
+    """Introspect a function bound filter_name and use ssh_client and rails to delete it"""
+    # No pre-test, just cleanup after yield
+    yield
+
+    filter_name = getattr(request.function, "filter_name", None)
+    logger.debug('rails_delete_filter: calling rails to delete filter: {}'.format(filter_name))
+    if filter_name:
+        try:
+            store.current_appliance.ssh_client.run_rails_command(
+                '"MiqSearch.where(:description => {}).first.delete"'.format(repr(filter_name)))
+        except Exception as ex:
+            logger.warning('rails_delete_filter: exception during delete. {}'.format(ex))
+            pass
+    else:
+        logger.warning('rails_delete_filter: failed to get filter_name')
 
 
-def test_can_do_advanced_search():
+def test_can_do_advanced_search(single_provider):
     navigate_to(InfraProvider, 'All')
     assert search.is_advanced_search_possible(), "Cannot do advanced search here!"
 
 
 @pytest.mark.requires("test_can_do_advanced_search")
-def test_can_open_advanced_search():
+def test_can_open_advanced_search(single_provider):
     navigate_to(InfraProvider, 'All')
     search.ensure_advanced_search_open()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_filter_without_user_input(providers):
-    navigate_to(InfraProvider, 'All')
+def test_filter_without_user_input(single_provider):
     # Set up the filter
     search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=, 0)")
     assert_no_cfme_exception()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
-def test_filter_with_user_input(providers):
-    navigate_to(InfraProvider, 'All')
+def test_filter_with_user_input(single_provider):
     # Set up the filter
-    search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=)", {"COUNT": 0})
+    logger.debug('DEBUG: test_with_user_input: fill and apply')
+    search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=)",
+                                 fill_callback={"COUNT": 0})
     assert_no_cfme_exception()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
-def test_filter_with_user_input_and_cancellation(providers):
-    navigate_to(InfraProvider, 'All')
+def test_filter_with_user_input_and_cancellation(single_provider):
     # Set up the filter
     search.fill_and_apply_filter(
-        "fill_count(Infrastructure Provider.VMs, >=)", {"COUNT": 0},
+        "fill_count(Infrastructure Provider.VMs, >=)", fill_callback={"COUNT": 0},
         cancel_on_user_filling=True
     )
     assert_no_cfme_exception()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.meta(blockers=[1168336])
-def test_filter_save_cancel(request, providers, ssh_client):
-    navigate_to(InfraProvider, 'All')
-    filter_name = fauxfactory.gen_alphanumeric()
-    # Set up finalizer
-    request.addfinalizer(
-        lambda: ssh_client.run_rails_command(
-            "\"MiqSearch.where(:description => {}).first.delete\"".format(repr(filter_name))))
+def test_filter_save_cancel(single_provider, rails_delete_filter):
+    # bind filter_name to the function for fixture cleanup
+    test_filter_save_cancel.filter_name = fauxfactory.gen_alphanumeric()
+    logger.debug('Set filter_name to: {}'.format(test_filter_save_cancel.filter_name))
+
     # Try save filter
-    search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name, cancel=True)
+    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >)",
+                              test_filter_save_cancel.filter_name, cancel=True)
     assert_no_cfme_exception()
-    with pytest.raises(pytest.sel.NoSuchElementException):
-        search.load_filter(filter_name)  # does not exist
+
+    assert search.reset_filter()
+    # Exception depends on system state - Load button will be disabled if there are no saved filters
+    with pytest.raises((DisabledButtonException, NoSuchElementException)):
+        search.load_filter(saved_filter=test_filter_save_cancel.filter_name)
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.meta(blockers=[1168336])
-def test_filter_save_and_load(request, providers, ssh_client):
-    navigate_to(InfraProvider, 'All')
-    filter_name = fauxfactory.gen_alphanumeric()
-    # Set up finalizer
-    request.addfinalizer(
-        lambda: ssh_client.run_rails_command(
-            "\"MiqSearch.where(:description => {}).first.delete\"".format(repr(filter_name))))
-    # Try save filter
-    search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name)
+def test_filter_save_and_load(single_provider, rails_delete_filter):
+    # bind filter_name to the function for fixture cleanup
+    test_filter_save_and_load.filter_name = fauxfactory.gen_alphanumeric()
+    logger.debug('Set filter_name to: {}'.format(test_filter_save_and_load.filter_name))
+
+    # Save filter
+    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)",
+                              test_filter_save_and_load.filter_name)
     assert_no_cfme_exception()
-    search.reset_filter()
 
-    search.load_and_apply_filter(filter_name, fill_callback={"COUNT": 0})
-    assert_no_cfme_exception()
-    request.addfinalizer(search.delete_filter)
+    # Reset filter
+    assert search.reset_filter()
 
-
-@pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.meta(blockers=[1168336])
-def test_filter_save_and_cancel_load(request, providers, ssh_client):
-    navigate_to(InfraProvider, 'All')
-    filter_name = fauxfactory.gen_alphanumeric()
-    # Set up finalizer
-    request.addfinalizer(
-        lambda: ssh_client.run_rails_command(
-            "\"MiqSearch.where(:description => {}).first.delete\"".format(repr(filter_name))))
-    # Try save filter
-    search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name)
-
-    @request.addfinalizer
-    def cleanup():
-        navigate_to(InfraProvider, 'All')
-        search.load_filter(filter_name)
-        search.delete_filter()
-
-    assert_no_cfme_exception()
-    search.reset_filter()
-
-    search.load_filter(filter_name, cancel=True)
+    # Load filter
+    assert search.load_filter(test_filter_save_and_load.filter_name)
     assert_no_cfme_exception()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.meta(blockers=[1168336])
-def test_filter_save_and_load_cancel(request, providers, ssh_client):
-    navigate_to(InfraProvider, 'All')
-    filter_name = fauxfactory.gen_alphanumeric()
-    # Set up finalizer
-    request.addfinalizer(
-        lambda: ssh_client.run_rails_command(
-            "\"MiqSearch.where(:description => {}).first.delete\"".format(repr(filter_name))))
-    # Try save filter
-    search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name)
+def test_filter_save_and_cancel_load(single_provider, rails_delete_filter):
+    # bind filter_name to the function for fixture cleanup
+    test_filter_save_and_cancel_load.filter_name = fauxfactory.gen_alphanumeric()
+    logger.debug('Set filter_name to: {}'.format(test_filter_save_and_cancel_load.filter_name))
 
-    @request.addfinalizer
-    def cleanup():
-        navigate_to(InfraProvider, 'All')
-        search.load_filter(filter_name)
-        search.delete_filter()
-
+    # Save filter
+    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)",
+                              test_filter_save_and_cancel_load.filter_name)
     assert_no_cfme_exception()
-    search.reset_filter()
+
+    # Reset Filter
+    assert search.reset_filter()
+
+    # Load and cancel
+    assert search.load_filter(test_filter_save_and_cancel_load.filter_name, cancel=True)
+    assert_no_cfme_exception()
+
+
+@pytest.mark.requires("test_can_open_advanced_search")
+def test_filter_save_and_cancel_load_with_user_input(single_provider, rails_delete_filter):
+    # bind filter_name to the function for fixture cleanup
+    test_filter_save_and_cancel_load_with_user_input.filter_name = fauxfactory.gen_alphanumeric()
+    logger.debug('Set filter_name to: {}'.format(
+        test_filter_save_and_cancel_load_with_user_input.filter_name))
+
+    # Save filter
+    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >)",
+                              test_filter_save_and_cancel_load_with_user_input.filter_name)
+    assert_no_cfme_exception()
+
+    # Reset Filter
+    assert search.reset_filter()
 
     search.load_and_apply_filter(
-        filter_name,
+        test_filter_save_and_cancel_load_with_user_input.filter_name,
         fill_callback={"COUNT": 0},
         cancel_on_user_filling=True
     )
     assert_no_cfme_exception()
 
 
-def test_quick_search_without_filter(request, providers):
-    navigate_to(InfraProvider, 'All')
-    search.ensure_no_filter_applied()
+def test_quick_search_without_filter(request, single_provider):
     assert_no_cfme_exception()
     # Make sure that we empty the regular search field after the test
     request.addfinalizer(search.ensure_normal_search_empty)
@@ -185,8 +196,7 @@ def test_quick_search_without_filter(request, providers):
     assert_no_cfme_exception()
 
 
-def test_quick_search_with_filter(request, providers):
-    navigate_to(InfraProvider, 'All')
+def test_quick_search_with_filter(request, single_provider):
     search.fill_and_apply_filter("fill_count(Infrastructure Provider.VMs, >=, 0)")
     assert_no_cfme_exception()
     # Make sure that we empty the regular search field after the test
@@ -196,11 +206,10 @@ def test_quick_search_with_filter(request, providers):
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1168336])
-def test_can_delete_filter():
-    navigate_to(InfraProvider, 'All')
+def test_can_delete_filter(single_provider):
     filter_name = fauxfactory.gen_alphanumeric()
-    search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
+    logger.debug('Set filter_name to: {}'.format(filter_name))
+    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
     assert_no_cfme_exception()
     search.reset_filter()
     assert_no_cfme_exception()
@@ -211,31 +220,25 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
-@pytest.mark.meta(blockers=[1097150, 1168336, 1320244])
-def test_delete_button_should_appear_after_save(request):
+@pytest.mark.meta(blockers=[1097150, 1320244])
+def test_delete_button_should_appear_after_save(single_provider, rails_delete_filter):
     """Delete button appears only after load, not after save"""
-    navigate_to(InfraProvider, 'All')
-    filter_name = fauxfactory.gen_alphanumeric()
-    search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
-
-    @request.addfinalizer
-    def cleanup():
-        navigate_to(InfraProvider, 'All')
-        search.load_filter(filter_name)
-        search.delete_filter()
+    # bind filter_name to the function for fixture cleanup
+    test_delete_button_should_appear_after_save.filter_name = fauxfactory.gen_alphanumeric()
+    search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)",
+                       test_delete_button_should_appear_after_save.filter_name)
 
     if not search.delete_filter():  # Returns False if the button is not present
         pytest.fail("Could not delete filter right after saving!")
 
 
 @pytest.mark.meta(blockers=[1097150, 1320244])
-def test_cannot_delete_more_than_once(request, nuke_browser_after_test):
+def test_cannot_delete_more_than_once(single_provider):
     """When Delete button appars, it does not want to go away"""
-    navigate_to(InfraProvider, 'All')
     filter_name = fauxfactory.gen_alphanumeric()
-    search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
+    assert search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
 
-    search.load_filter(filter_name)  # circumvent the thing happening in previous test
+    assert search.load_filter(filter_name)  # circumvent the thing happening in previous test
     # Delete once
     if not search.delete_filter():
         pytest.fail("Could not delete the filter even first time!")
