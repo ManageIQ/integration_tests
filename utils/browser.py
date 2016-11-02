@@ -7,6 +7,7 @@ from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
 from threading import Timer
+import logging
 
 from werkzeug.local import LocalProxy
 
@@ -20,8 +21,10 @@ from cached_property import cached_property
 
 from fixtures.pytest_store import store, write_line
 from utils import conf, tries
-from utils.log import logger
 from utils.path import data_path
+
+
+log = logging.getLogger('cfme.browser')
 
 
 def _load_firefox_profile():
@@ -29,7 +32,7 @@ def _load_firefox_profile():
 
     # Make a new firefox profile dir if it's unset or doesn't exist for some reason
     firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
-
+    log.debug("created firefox profi")
     # Clean up tempdir at exit
     atexit.register(rmtree, firefox_profile_tmpdir, ignore_errors=True)
 
@@ -64,13 +67,13 @@ class Wharf(object):
         self.docker_id = checkout.keys()[0]
         self.config = checkout[self.docker_id]
         self._reset_renewal_timer()
-        logger.info('Checked out webdriver container %s', self.docker_id)
+        log.info('Checked out webdriver container %s', self.docker_id)
         return self.docker_id
 
     def checkin(self):
         if self.docker_id:
             self._get('checkin', self.docker_id)
-            logger.info('Checked in webdriver container %s', self.docker_id)
+            log.info('Checked in webdriver container %s', self.docker_id)
             self.docker_id = None
 
     def renew(self):
@@ -85,7 +88,7 @@ class Wharf(object):
                 raise ValueError("JSON could not be decoded:\n{}".format(response.content))
             self.config.update(expiry_info)
             self._reset_renewal_timer()
-            logger.info('Renewed webdriver container %s', self.docker_id)
+            log.info('Renewed webdriver container %s', self.docker_id)
 
     def _reset_renewal_timer(self):
         if self.docker_id:
@@ -167,8 +170,8 @@ class WharfFactory(BrowserFactory):
         command_executor = self.wharf.config['webdriver_url']
         view_msg = 'tests can be viewed via vnc on display {}'.format(
             self.wharf.config['vnc_display'])
-        logger.info('webdriver command executor set to %s', command_executor)
-        logger.info(view_msg)
+        log.info('webdriver command executor set to %s', command_executor)
+        log.info(view_msg)
         write_line(view_msg, cyan=True)
         return dict(
             super(WharfFactory, self).processed_browser_args(),
@@ -182,9 +185,9 @@ class WharfFactory(BrowserFactory):
                 return super(WharfFactory, self).create(url_key)
             except urllib2.URLError as ex:
                 # connection to selenum was refused for unknown reasons
-                logger.error('URLError connecting to selenium; recycling container. URLError:')
+                log.error('URLError connecting to selenium; recycling container. URLError:')
                 write_line('URLError caused container recycle, see log for details', red=True)
-                logger.exception(ex)
+                log.exception(ex)
                 self.wharf.checkin()
 
     def renew(self):
@@ -256,6 +259,7 @@ class BrowserManager(object):
                 cl.pop()()
 
     def quit(self):
+        log.info('closing browser for')
         self._consume_cleanups()
         try:
             self.browser.quit()
@@ -274,6 +278,7 @@ class BrowserManager(object):
 
     def open_fresh(self, url_key=None):
         url_key = self.coerce_url_key(url_key)
+        log.info('starting browser for %r', url_key)
         assert self.browser is None
 
         self.browser = self.factory.create(url_key=url_key)
