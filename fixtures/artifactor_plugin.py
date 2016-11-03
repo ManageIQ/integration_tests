@@ -119,8 +119,10 @@ def pytest_configure(config):
         wait_for(net_check, func_args=[art_client.port, '127.0.0.1'], func_kwargs={'force': True},
                  num_sec=10, message="wait for artifactor to start")
         config.option.artifactor_port = art_client.port
+        art_client.ready = True
     elif isinstance(art_client, ArtifactorClient):
         art_client.port = config.option.artifactor_port
+        art_client.ready = True
     art_client.fire_hook('setup_merkyl', ip=appliance_ip_address)
 
 
