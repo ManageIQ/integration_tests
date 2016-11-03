@@ -12,11 +12,12 @@ artifactor:
             level: DEBUG
 """
 
+import os
 import logging
 
 from artifactor import ArtifactorBasePlugin
-from utils.log import log_path
 
+logger = logging.getLogger(__name__)
 
 class Logger(ArtifactorBasePlugin):
 
@@ -46,11 +47,11 @@ class Logger(ArtifactorBasePlugin):
                 return None
         self.store[slaveid] = self.Test(test_ident)
         self.store[slaveid].in_progress = True
-        os_filename = self.ident + "-" + "cfme.log"
+        os_filename = "{artifact_path}/{ident}-cfme.log".format(
+            artifact_path=artifact_path, ident=self.ident)
 
-        self.store[slaveid].handler = logging.FileHandler(
-            log_path.join(os_filename).strpath, mode='w')
-        self.store[slaveid].logger.setLevel(self.level)
+        self.store[slaveid].handler = logging.FileHandler(os_filename)
+        self.store[slaveid].handler.setLevel(self.level)
 
         desc = os_filename.rsplit("-", 1)[-1]
         self.fire_hook('filedump', test_location=test_location, test_name=test_name,
@@ -73,5 +74,4 @@ class Logger(ArtifactorBasePlugin):
         if slaveid in self.store:
             handler = self.store[slaveid].handler
             if handler:
-                if record.levelno >= handler.level:
-                    handler.handle(record)
+                handler.handle(record)
