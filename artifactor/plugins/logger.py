@@ -12,12 +12,11 @@ artifactor:
             level: DEBUG
 """
 
-import os
 import logging
-
 from artifactor import ArtifactorBasePlugin
 
 logger = logging.getLogger(__name__)
+
 
 class Logger(ArtifactorBasePlugin):
 
@@ -49,8 +48,8 @@ class Logger(ArtifactorBasePlugin):
         self.store[slaveid].in_progress = True
         os_filename = "{artifact_path}/{ident}-cfme.log".format(
             artifact_path=artifact_path, ident=self.ident)
-
-        self.store[slaveid].handler = logging.FileHandler(os_filename)
+        # we overwrite
+        self.store[slaveid].handler = logging.FileHandler(os_filename, mode='w')
         self.store[slaveid].handler.setLevel(self.level)
 
         desc = os_filename.rsplit("-", 1)[-1]
