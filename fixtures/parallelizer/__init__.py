@@ -783,7 +783,7 @@ class ParallelSession(object):
             current_allocate = self.slave_allocation.get(slave, None)
             # num_provs_list = [len(v) for k, v in self.slave_allocation.iteritems()]
             # average_num_provs = sum(num_provs_list) / float(len(self.slaves))
-            appliance_num_limit = 2
+            appliance_num_limit = 1
             for test_group in self._pool:
                 for test in test_group:
                     # If the test is parametrized...
