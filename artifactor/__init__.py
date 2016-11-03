@@ -125,7 +125,6 @@ import logging
 import os
 import re
 import sys
-import traceback
 
 from py.path import local
 from riggerlib import Rigger, RiggerBasePlugin, RiggerClient
@@ -171,9 +170,7 @@ class Artifactor(Rigger):
         }
 
     def handle_failure(self, exc):
-        self.logger.debug(exc[0])
-        self.logger.debug(exc[1])
-        self.logger.debug(traceback.format_tb(exc[2]))
+        self.logger.error("exception", exc_info=exc)
 
     def log_message(self, message):
         self.logger.debug(message)
