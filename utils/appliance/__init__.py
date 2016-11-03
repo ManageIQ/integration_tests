@@ -137,7 +137,7 @@ class IPAppliance(object):
         stack.push(self)
         return self
 
-    def _screenshot_capture_at_context_leave(exc_type, exc_val, exc_tb):
+    def _screenshot_capture_at_context_leave(self, exc_type, exc_val, exc_tb):
         from fixtures import artifactor_plugin
         if (
                 exc_type is not None and not RUNNING_UNDER_SPROUT):
