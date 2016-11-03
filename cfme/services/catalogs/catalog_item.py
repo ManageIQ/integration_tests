@@ -117,7 +117,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
                  display_in=False, catalog=None, dialog=None,
                  catalog_name=None, orch_template=None, provider_type=None,
                  provider=None, config_template=None, prov_data=None, domain="ManageIQ (Locked)",
-                 provider_mgmt=None, appliance=None):
+                 appliance=None):
         self.item_type = item_type
         self.vm_name = vm_name
         self.name = name
@@ -130,7 +130,6 @@ class CatalogItem(Updateable, Pretty, Navigatable):
         self.provider = provider
         self.config_template = config_template
         self.provider_type = provider_type
-        self.provider_mgmt = provider_mgmt
         self.provisioning_data = prov_data
         self.domain = domain
         Navigatable.__init__(self, appliance=appliance)
