@@ -6,8 +6,9 @@ from cached_property import cached_property
 from cfme.configure.configuration import Category, Tag
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTree, BootstrapTreeview, flash, form_buttons, mixins, toolbar
-from cfme.web_ui.topology import Topology
 from cfme.web_ui.timelines import Timelines
+from cfme.web_ui.topology import Topology
+from cfme.web_ui.utilization import Utilization
 from sqlalchemy.orm import aliased
 from utils import attributize_string, version, deferred_verpick
 from utils.db import cfmedb
@@ -496,3 +497,35 @@ class TimelinesMixin(object):
     @cached_property
     def timelines(self):
         return Timelines(self)
+
+
+class UtilizationMixin(object):
+    """Use this mixin to have simple access to the Utilization information of an object.
+
+    Requires that the class(page) has ``load_details(refresh)`` method
+    and ``taggable_type`` should be defined.
+
+    All the chart names from the UI are "attributized".
+
+    Sample usage:
+    .. code-block:: python
+
+        # You can list available charts
+        page.utilization.charts  # => '[ 'jvm_heap_usage_bytes','web_sessions','transactions']'
+        # You can get the data from chart
+        page.utilization.jvm_heap_usage_bytes.list_data_chart()  # => returns data as list
+        # You can get the data from table
+        provider.utilization.jvm_heap_usage_bytes.list_data_table()  # => returns data as list
+        # You can get the data from mgmtsystem
+        page.utilization.jvm_heap_usage_bytes.list_data_mgmt()  # => returns data as list
+        # You can change chart option
+        page.utilization.jvm_non_heap_usage_bytes.option.set_by_visible_text(op_interval='Daily')
+        # You can list available ledgends
+        page.utilization.jvm_non_heap_usage_bytes.legends
+        # You can enable/disable legends
+        page.utilization.jvm_non_heap_usage_bytes.committed.set_active(active=False) # => Disables
+        page.utilization.jvm_non_heap_usage_bytes.committed.set_active(active=True) # => Enables
+    """
+    @cached_property
+    def utilization(self):
+        return Utilization(self)

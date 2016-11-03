@@ -1,7 +1,5 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
-
 import re
-from cfme.common import Taggable
+from cfme.common import Taggable, UtilizationMixin
 from cfme.exceptions import MiddlewareServerNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties, Container
@@ -11,13 +9,14 @@ from cfme.web_ui import (
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
+from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, mon_btn, pwr_btn, MiddlewareBase, download
+from . import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -67,7 +66,7 @@ timeout_form = Form(
 )
 
 
-class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable):
+class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, UtilizationMixin):
     """
     MiddlewareServer class provides actions and details on Server page.
     Class method available to get existing servers list
@@ -307,10 +306,6 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable):
         self.load_details(refresh=True)
         pwr_btn("Kill Server", invokes_alert=True)
         sel.handle_alert()
-
-    def open_utilization(self):
-        self.load_details(refresh=True)
-        mon_btn("Utilization")
 
     @classmethod
     def download(cls, extension, provider=None, server_group=None):

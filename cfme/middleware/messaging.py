@@ -1,15 +1,15 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
 import re
-from cfme.common import Taggable
+from cfme.common import Taggable, UtilizationMixin
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import toolbar as tb
+from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
-from utils.db import cfmedb
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key
 from utils.providers import list_providers
 from utils.varmeth import variable
@@ -57,7 +57,7 @@ def _get_messagings_page(provider=None, server=None):
         navigate_to(MiddlewareMessaging, 'All')
 
 
-class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable):
+class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixin):
     """
     MiddlewareMessaging class provides details on messaging page.
     Class methods available to get existing messagings list
