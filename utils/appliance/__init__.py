@@ -137,8 +137,7 @@ class IPAppliance(object):
         stack.push(self)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Fake soft assert to capture the screenshot during the test."""
+    def _screenshot_capture_at_context_leave(exc_type, exc_val, exc_tb):
         from fixtures import artifactor_plugin
         if (
                 exc_type is not None and not RUNNING_UNDER_SPROUT):
@@ -168,7 +167,15 @@ class IPAppliance(object):
                     contents_base64=False, contents=ss_error, display_type="danger", group_id=g_id)
         elif exc_type is not None:
             logger.info("Error happened but we are not inside a test run so no screenshot now.")
-        assert stack.pop() is self, 'appliance stack inconsistent'
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            self._screenshot_capture_at_context_leave(exc_type, exc_val, exc_tb)
+        except Exception:
+            # repr is used in order to avoid having the appliance object in the log record
+            logger.exception("taking a screenshot for %s failed", repr(self))
+        finally:
+            assert stack.pop() is self, 'appliance stack inconsistent'
 
     def __eq__(self, other):
         return isinstance(other, IPAppliance) and self.address == other.address
