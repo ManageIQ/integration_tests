@@ -228,6 +228,7 @@ class PrefixAddingLoggerFilter(logging.Filter):
     def filter(self, record):
         if self.prefix:
             record.msg = self.prefix + record.msg
+        return True
 
 
 class NamedLoggerAdapter(TraceLoggerAdapter):
