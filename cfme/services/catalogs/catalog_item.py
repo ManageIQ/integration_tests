@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from functools import partial
-from collections import OrderedDict
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.exceptions import DestinationNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Radio, Select, Table, accordion, fill, paginator, \
+from cfme.provisioning import provisioning_form as request_form
+from cfme.web_ui import Form, Select, Table, accordion, fill, paginator, \
     flash, form_buttons, tabstrip, DHTMLSelect, Input, Tree, AngularSelect, \
     BootstrapTreeview, toolbar as tb, match_location, CheckboxTable
 from utils import version, fakeobject_or_object
@@ -76,62 +76,6 @@ detail_form = Form(
         ('long_desc', Input('long_description')),
     ])
 
-request_form = tabstrip.TabStripForm(
-    tab_fields=OrderedDict([
-        ('Catalog', [
-            ('vm_filter', Select('//select[@id="service__vm_filter"]')),
-            ('catalog_name', Table('//div[@id="prov_vm_div"]/table')),
-            ('vm_name', '//input[@name="service__vm_name"]'),
-            ('provision_type', AngularSelect("service__provision_type")),
-            ('linked_clone', Input("service__linked_clone")),
-            ('pxe_server', Select('//select[@id="service__pxe_server_id"]')),
-            ('pxe_image', Table('//div[@id="prov_pxe_img_div"]/table')),
-            ('iso_file', Table('//div[@id="prov_iso_img_div"]/table')),
-        ]),
-        ('Environment', [
-            ('automatic_placement', Input("environment__placement_auto")),
-            ('datacenter', Select('//select[@id="environment__placement_dc_name"]')),
-            ('cluster', Select('//select[@id="environment__placement_cluster_name"]')),
-            ('resource_pool', Select('//select[@id="environment__placement_rp_name"]')),
-            ('folder', Select('//select[@id="environment__placement_folder_name"]')),
-            ('host_filter', Select('//select[@id="environment__host_filter"]')),
-            ('host_name', Table('//div[@id="prov_host_div"]/table')),
-            ('datastore_create', Input("environment__new_datastore_create")),
-            ('datastore_filter', Select('//select[@id="environment__ds_filter"]')),
-            ('datastore_name', Table('//div[@id="prov_ds_div"]/table')),
-        ]),
-        ('Hardware', [
-            ('num_sockets', Select('//select[@id="hardware__number_of_sockets"]')),
-            ('cores_per_socket', Select('//select[@id="hardware__cores_per_socket"]')),
-            ('memory', Select('//select[@id="hardware__vm_memory"]')),
-            ('disk_format', Radio('hardware__disk_format')),
-            ('vm_limit_cpu', Input("hardware__cpu_limit")),
-            ('vm_limit_memory', Input("hardware__memory_limit")),
-            ('vm_reserve_cpu', Input("hardware__cpu_reserve")),
-            ('vm_reserve_memory', Input("hardware__memory_reserve")),
-        ]),
-        ('Network', [
-            ('vlan', AngularSelect("network__vlan")),
-        ]),
-        ('Customize', [
-            ('customize_type', Select('//select[@id="customize__sysprep_enabled"]')),
-            ('specification_name', Table('//div[@id="prov_vc_div"]/table')),
-            ('linux_host_name', Input("customize__linux_host_name")),
-            ('linux_domain_name', Input("customize__linux_domain_name")),
-            ('dns_servers', Input("customize__dns_servers")),
-            ('dns_suffixes', Input("customize__dns_suffixes")),
-            ('custom_template', Table('//div[@id="prov_template_div"]/table')),
-            ('root_password', Input("customize__root_password")),
-            ('vm_host_name', Input("customize__hostname")),
-        ]),
-        ('Schedule', [
-            ('power_on_vm', Input("schedule__vm_auto_start")),
-            ('retirement', Select('//select[@id="schedule__retirement"]')),
-            ('retirement_warning', Select('//select[@id="schedule__retirement_warn"]')),
-        ])
-    ])
-)
-
 resources_form = Form(
     fields=[
         ('choose_resource', Select("//select[@id='resource_id']")),
@@ -169,12 +113,13 @@ def nav_to_all():
 class CatalogItem(Updateable, Pretty, Navigatable):
     pretty_attrs = ['name', 'item_type', 'catalog', 'catalog_name', 'provider', 'domain']
 
-    def __init__(self, item_type=None, name=None, description=None,
+    def __init__(self, item_type=None, vm_name=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None,
                  catalog_name=None, orch_template=None, provider_type=None,
                  provider=None, config_template=None, prov_data=None, domain="ManageIQ (Locked)",
-                 appliance=None):
+                 provider_mgmt=None, appliance=None):
         self.item_type = item_type
+        self.vm_name = vm_name
         self.name = name
         self.description = description
         self.display_in = display_in
@@ -185,6 +130,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
         self.provider = provider
         self.config_template = config_template
         self.provider_type = provider_type
+        self.provider_mgmt = provider_mgmt
         self.provisioning_data = prov_data
         self.domain = domain
         Navigatable.__init__(self, appliance=appliance)

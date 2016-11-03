@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.provider import cleanup_vm
-from cfme.services.catalogs import cloud_catalog_item as cct
+from cfme.services.catalogs import catalog_item as cct
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
@@ -13,6 +13,7 @@ from cfme import test_requirements
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
+from utils.blockers import BZ
 
 
 pytestmark = [
@@ -59,7 +60,7 @@ def catalog():
     yield catalog
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type == 'gce')
+@pytest.mark.meta(blockers=[BZ(1390209, forced_streams=["5.7", "upstream"])])
 def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, provisioning):
     """Tests cloud catalog item
 
@@ -72,17 +73,8 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     image = provisioning['image']['name']
     item_name = fauxfactory.gen_alphanumeric()
-    data = dict(
-        item_type=provisioning['item_type'],
-        name=item_name,
-        description="my catalog",
-        display_in=True,
-        catalog=catalog.name,
-        dialog=dialog,
-        catalog_name=image,
+    provisioning_data = dict(
         vm_name=vm_name,
-        provider_mgmt=provider.mgmt,
-        provider=provider.name,
         instance_type=provisioning['instance_type'],
         security_groups=[provisioning['security_group']],
     )
@@ -100,11 +92,14 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
             guest_keypair=provisioning['guest_keypair'],
             boot_disk_size=provisioning['boot_disk_size']
         )
-    data.update(updates)
-    cloud_catalog_item = cct.Instance(**data)
-    cloud_catalog_item.create()
+    provisioning_data.update(updates)
+    catalog_item = cct.CatalogItem(item_type=provisioning['item_type'], name=item_name,
+                  description="my catalog", display_in=True, catalog=catalog.name,
+                  dialog=dialog, catalog_name=image, provider_mgmt=provider.mgmt,
+                  provider=provider.name, prov_data=provisioning_data)
+    catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog.name, cloud_catalog_item)
+    service_catalogs.order(catalog.name, catalog_item)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
