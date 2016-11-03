@@ -50,7 +50,6 @@ add_manager_btn = form_buttons.FormButton('Add')
 edit_manager_btn = form_buttons.FormButton('Save changes')
 cfg_btn = partial(tb.select, 'Configuration')
 
-
 match_page = partial(match_location, controller='provider_foreman',
                      title='Red Hat Satellite Provider')
 
@@ -188,9 +187,11 @@ class ConfigManager(Updateable, Pretty, Navigatable):
 
         sel.handle_alert(cancel)
         if not cancel:
-            flash_msg = version.pick({'5.6': 'Delete initiated for 1 provider',
-                                      '5.7': 'Delete initiated for 1 Provider'})
-
+            flash_msg = version.pick({
+                # version.LOWEST: 'Delete initiated for 1 Provider from the CFME Database',
+                version.LOWEST: 'Delete initiated for 1 provider',
+                '5.7': 'Delete initiated for 1 Provider'
+            })
             flash.assert_message_match(flash_msg)
             if wait_deleted:
                 wait_for(func=lambda: self.exists, fail_condition=True, delay=15, num_sec=60)
