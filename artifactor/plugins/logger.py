@@ -47,21 +47,18 @@ class Logger(ArtifactorBasePlugin):
                 return None
         self.store[slaveid] = self.Test(test_ident)
         self.store[slaveid].in_progress = True
-        artifacts = []
         os_filename = self.ident + "-" + "cfme.log"
         os_filename = os.path.join(artifact_path, os_filename)
         if os.path.isfile(os_filename):
             os.remove(os_filename)
-        artifacts.append(os_filename)
         self.store[slaveid].logger = create_logger(self.ident + test_name, os_filename)
         self.store[slaveid].logger.setLevel(self.level)
 
-        for log_name in artifacts:
-            desc = log_name.rsplit("-", 1)[-1]
-            self.fire_hook('filedump', test_location=test_location, test_name=test_name,
-                description=desc, slaveid=slaveid, contents="", file_type="log",
-                display_glyph="align-justify", dont_write=True, os_filename=log_name,
-                group_id="pytest-logfile")
+        desc = os_filename.rsplit("-", 1)[-1]
+        self.fire_hook('filedump', test_location=test_location, test_name=test_name,
+            description=desc, slaveid=slaveid, contents="", file_type="log",
+            display_glyph="align-justify", dont_write=True, os_filename=os_filename,
+            group_id="pytest-logfile")
 
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifact_path, test_name, test_location, slaveid):
