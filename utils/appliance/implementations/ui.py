@@ -141,7 +141,7 @@ class CFMENavigateStep(NavigateStep):
         except (AttributeError, NoSuchElementException):
             return False
 
-    def pre_navigate(self, _tries=0):
+    def pre_navigate(self, _tries=0, *args, **kwargs):
         if _tries > 2:
             # Need at least three tries:
             # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
@@ -218,7 +218,7 @@ class CFMENavigateStep(NavigateStep):
             self.go(_tries)
             # If there is a rails error past this point, something is really awful
 
-    def do_nav(self, _tries=0):
+    def do_nav(self, _tries=0, *args, **kwargs):
         # Set this to True in the handlers below to trigger a browser restart
         recycle = False
 
@@ -330,30 +330,30 @@ class CFMENavigateStep(NavigateStep):
             # If given a "start" nav destination, it won't be valid after quitting the browser
             self.go(_tries)
 
-    def go(self, _tries=0):
+    def log_message(self, msg):
+        logger.info("[UI-NAV/{}/{}]: {}".format(self.obj.__class__.__name__, self._name, msg))
+
+    def go(self, _tries=0, *args, **kwargs):
         _tries += 1
         self.appliance.browser.widgetastic.dismiss_any_alerts()
-        self.pre_navigate(_tries)
-        logger.info("[UI-NAV/{}/{}]: Checking if already here".format(
-            self.obj.__class__.__name__, self._name))
+        self.pre_navigate(_tries, *args, **kwargs)
+        self.log_message("Checking if already here")
         here = False
         try:
             here = self.am_i_here()
         except Exception as e:
-            logger.info(
-                "[UI-NAV/{}/{}]: Exception raised [{}] whilst checking if already here".format(
-                    self.obj.__class__.__name__, self._name, e))
+            self.log_message("Exception raised [{}] whilst checking if already here".format(e))
         if here:
-            logger.info(
-                "[UI-NAV/{}/{}]: Already here".format(self.obj.__class__.__name__, self._name))
+            self.log_message("Already here")
         else:
-            logger.info("[UI-NAV/{}/{}]: Not here".format(self.obj.__class__.__name__, self._name))
+            self.log_message("Not here")
             self.prerequisite()
-            logger.info("[UI-NAV/{}/{}]: Heading to destination".format(
-                self.obj.__class__.__name__, self._name))
+            self.log_message("Heading to destination")
             self.do_nav(_tries)
-        self.resetter()
-        self.post_navigate(_tries)
+        if kwargs.get('use_resetter', True):
+            self.log_message("Running resetter")
+            self.resetter()
+        self.post_navigate(_tries, *args, **kwargs)
         if self.VIEW is not None:
             return self.view
 
