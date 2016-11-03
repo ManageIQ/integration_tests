@@ -2,9 +2,18 @@ import pytest
 from itertools import product
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, ButtonGroup, form_buttons
+from cfme.base import Server
+from cfme.containers.container import Container
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.project import Project
+from cfme.containers.route import Route
+from cfme.containers.node import Node
+from cfme.containers.replicator import Replicator
+import cfme.web_ui.tabstrip as tabs
 from cfme.configure import settings  # noqa
 from utils import testgen
 from utils.version import current_version
+from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -23,7 +32,7 @@ mapping = {
     'Containers Providers': 'containers_providers',
     'Projects': 'containers_projects',
     'Routes': 'containers_routes',
-    # 'Nodes': 'containers_nodes',
+    'Nodes': 'containers_nodes',
     'Containers': 'containers_containers',
     'Replicators': 'containers_replicators',
 }
@@ -43,9 +52,21 @@ def test_containers_providers_default_view(button_group, view):
               to Grid/Tile/List view
             * Goes to Compute --> Containers --> Providers and verifies the selected view
         """
-    sel.force_navigate('my_settings_default_views')
+    navigate_to(Server, 'MySettings')
+    tabs.select_tab("Default Views")
     bg = ButtonGroup(button_group)
     bg.choose(view)
     sel.click(form_buttons.save)
-    sel.force_navigate(mapping[button_group])
+    if button_group == 'Containers Providers':
+        navigate_to(ContainersProvider, 'All')
+    elif button_group == 'Projects':
+        navigate_to(Project, 'All')
+    elif button_group == 'Routes':
+        navigate_to(Route, 'All')
+    elif button_group == 'Nodes':
+        navigate_to(Node, 'All')
+    elif button_group == 'Containers':
+        navigate_to(Container, 'All')
+    elif button_group == 'Replicators':
+        navigate_to(Replicator, 'All')
     assert tb.is_active(view), "{}'s {} setting failed".format(view, button_group)
