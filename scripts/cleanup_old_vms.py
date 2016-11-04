@@ -10,6 +10,7 @@ from dateutil import parser
 from threading import Lock, Thread
 from tzlocal import get_localzone
 
+from utils import net
 from utils.log import logger
 from utils.conf import cfme_data
 from utils.conf import credentials
@@ -47,12 +48,13 @@ def get_vm_config_modified_time(name, vm_name, datastore_url, provider_key):
     try:
         providers_data = cfme_data.get("management_systems", {})
         hosts = providers_data[provider_key]['hosts']
+        host_creds = providers_data[provider_key].get('host_credentials', 'host_default')
         hostname = [host['name'] for host in hosts if name in host['name']]
         if not hostname:
             hostname = re.findall(r'[0-9]+(?:\.[0-9]+){3}', name)
         connect_kwargs = {
-            'username': credentials['host_default']['username'],
-            'password': credentials['host_default']['password'],
+            'username': credentials[host_creds]['username'],
+            'password': credentials[host_creds]['password'],
             'hostname': hostname[0]
         }
         datastore_path = re.findall(r'([^ds:`/*].*)', str(datastore_url))
@@ -147,6 +149,9 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     matchers = [re.compile(text) for text in texts]
 
     for provider_key in providers:
+        ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress', None)
+        if ipaddress and not net.is_pingable(ipaddress):
+            continue
         provider_type = providers_data[provider_key].get('type', None)
         thread = Thread(target=process_provider_vms,
                         args=(provider_key, provider_type, matchers, delta, vms_to_delete))

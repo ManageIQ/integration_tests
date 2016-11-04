@@ -7,7 +7,7 @@ from threading import Lock, Thread
 
 from slumber.exceptions import SlumberHttpBaseException
 
-from utils import trackerbot
+from utils import trackerbot, net
 from utils.conf import cfme_data
 from utils.providers import list_providers, get_mgmt
 
@@ -22,6 +22,9 @@ def main(trackerbot_url, mark_usable=None):
     unresponsive_providers = set()
     # Queue up list_template calls
     for provider_key in all_providers:
+        ipaddress = cfme_data['management_systems'][provider_key].get('ipaddress', None)
+        if ipaddress and not net.is_pingable(ipaddress):
+            continue
         thread = Thread(target=get_provider_templates,
             args=(provider_key, template_providers, unresponsive_providers, thread_lock))
         thread_q.append(thread)
