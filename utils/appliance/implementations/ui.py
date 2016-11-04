@@ -156,6 +156,12 @@ class CFMENavigateStep(NavigateStep):
             self.appliance.browser.quit_browser()
             self.go(_tries)
 
+        # check for ovirt_gem patch on first try and patch the appliance if necessary
+        if self.appliance.is_ovirt_gem_patch_candidate:
+            self.appliance.patch_appliance_ovirt_gem()
+            self.appliance.browser.quit_browser()
+            self.go(_tries)
+
         br = self.appliance.browser
 
         try:

@@ -1,0 +1,13 @@
+--- ovirt_metrics.rb	2016-11-01 18:42:06.000000000 -0400
++++ patched_ovirt_metrics.rb	2016-11-03 17:13:39.352793586 -0400
+@@ -43,7 +43,9 @@
+   end
+ 
+   def self.disconnect
+-    OvirtHistory.connection.disconnect!
++    # Patched pending change to help automation
++    # OvirtHistory.connection.disconnect!
++    OvirtHistory.remove_connection
+   end
+ 
+   def self.vm_realtime(vm_id, start_time = nil, end_time = nil)
