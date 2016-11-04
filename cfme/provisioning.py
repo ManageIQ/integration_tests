@@ -8,6 +8,7 @@ from cfme.services import requests
 from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip, toolbar
 from cfme.web_ui.menu import nav
 from utils import version
+from utils import normalize_text
 from utils.log import logger
 from utils.version import current_version
 from utils.wait import wait_for
@@ -323,7 +324,9 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
     except Exception as e:
         requests.debug_requests()
         raise e
-    assert 'Provisioned Successfully' in row.last_message.text
+    assert normalize_text(row.status.text) == 'ok' \
+                                              and normalize_text(
+        row.request_state.text) == 'finished'
 
     if smtp_test:
         # Wait for e-mails to appear
@@ -334,12 +337,8 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
                 approval = dict(text_like="%%Your Virtual Machine Request was approved%%")
             expected_text = "Your virtual machine request has Completed - VM:%%{}".format(vm_name)
             return (
-                len(
-                    smtp_test.get_emails(**approval)
-                ) > 0
-                and len(
-                    smtp_test.get_emails(subject_like=expected_text)
-                ) > 0
+                len(smtp_test.get_emails(**approval)) > 0 and
+                len(smtp_test.get_emails(subject_like=expected_text)) > 0
             )
 
         wait_for(verify, message="email receive check", delay=5)
