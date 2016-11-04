@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from urlparse import urlparse
+import pytest
 
 from fixtures.pytest_store import store
 from utils.appliance import IPAppliance
@@ -33,3 +34,16 @@ def test_ipappliance_managed_providers():
     ip_a = IPAppliance()
     provider = setup_a_provider(prov_class='infra')
     assert provider.key in ip_a.managed_providers
+
+
+def test_context_hack(monkeypatch):
+
+    ip_a = IPAppliance.from_url('http://127.0.0.2/')
+
+    def not_good(*k):
+        raise RuntimeError()
+    monkeypatch.setattr(ip_a, '_screenshot_capture_at_context_leave', not_good)
+
+    with pytest.raises(ValueError):
+        with ip_a:
+            raise ValueError("test")
