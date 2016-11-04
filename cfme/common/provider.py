@@ -705,11 +705,6 @@ def _fill_credential(form, cred, validate=None):
             'candu_verify_secret': cred.verify_secret,
             'validate_btn': validate})
         if validate:
-            # Work around BZ#1375253 / BZ#1385436:
-            # Validate 4 more times to stabilize the behavior because success can raise
-            # an error the first ~5 times
-            for __ in range(4):
-                fill(cred.form.validate_btn, validate)
             # Then look up to 3 times for successful validation (THIS IS MADNESS)
             exc = None
             for __ in range(3):
