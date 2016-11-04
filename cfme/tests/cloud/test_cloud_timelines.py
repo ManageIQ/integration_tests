@@ -8,7 +8,6 @@ from utils import testgen
 from utils import version
 from utils.blockers import BZ
 from utils.log import logger
-from utils.version import current_version
 from utils.wait import wait_for
 
 
@@ -92,8 +91,7 @@ def db_event(db, provider):
     # Get event count from the DB
     logger.info("Getting event count from the DB for provider name %s", provider.name)
     ems = db['ext_management_systems']
-    ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
-    ems_events = db[ems_events_table_name]
+    ems_events = db['event_streams']
     with db.transaction:
         providers = (
             db.session.query(ems_events.id)
@@ -105,12 +103,10 @@ def db_event(db, provider):
     return event_count
 
 
-@pytest.mark.meta(
-    blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2', forced_streams=["5.5"]),
-    1265404, 1281746]
-)
-@pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.4" and provider.type != 'openstack')
+@pytest.mark.meta(blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2',
+                               forced_streams=['5.6']),
+                            BZ(1390572, unblock=lambda provider: provider.type != 'azure',
+                               forced_streams=['5.6'])])
 def test_provider_event(setup_provider, provider, gen_events, test_instance):
     """ Tests provider events on timelines
 
@@ -124,12 +120,10 @@ def test_provider_event(setup_provider, provider, gen_events, test_instance):
              message="events to appear")
 
 
-@pytest.mark.meta(
-    blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2', forced_streams=["5.5"]),
-    1281746]
-)
-@pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.4" and provider.type != 'openstack')
+@pytest.mark.meta(blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2',
+                               forced_streams=['5.6']),
+                            BZ(1390572, unblock=lambda provider: provider.type != 'azure',
+                               forced_streams=['5.6'])])
 def test_azone_event(setup_provider, provider, gen_events, test_instance):
     """ Tests availablility zone events on timelines
 
@@ -144,11 +138,10 @@ def test_azone_event(setup_provider, provider, gen_events, test_instance):
              message="events to appear")
 
 
-@pytest.mark.meta(
-    blockers=[BZ(1281746, unblock=lambda provider: provider.type != 'openstack')]
-)
-@pytest.mark.uncollectif(
-    lambda provider: current_version() < "5.4" and provider.type != 'openstack')
+@pytest.mark.meta(blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2',
+                               forced_streams=['5.6']),
+                            BZ(1390572, unblock=lambda provider: provider.type != 'azure',
+                               forced_streams=['5.6'])])
 def test_vm_event(setup_provider, provider, db, gen_events, test_instance, bug):
     """ Tests vm events on timelines
 
@@ -159,11 +152,8 @@ def test_vm_event(setup_provider, provider, db, gen_events, test_instance, bug):
         test_instance.load_details()
         toolbar.select('Monitoring', 'Timelines')
 
-    ec2_ui_bug = bug(1201923, forced_streams=["5.5"])
-    if (ec2_ui_bug is None or provider.type == 'openstack'):
-        # This fails for ec2... https://bugzilla.redhat.com/show_bug.cgi?id=1201923
-        wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
-             message="events to appear")
+    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
+         message="events to appear")
 
     wait_for(db_event, [db, provider], num_sec=840, delay=30, fail_condition=0,
         message="events to appear in the DB")

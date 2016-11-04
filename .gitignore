@@ -78,6 +78,10 @@ rhci-qe-data
 # exclude conf
 conf/*.yaml
 conf/*.eyaml
-
+conf/README
 # yaml key
 .yaml_key
+
+# virtual env
+.cfme/
+
