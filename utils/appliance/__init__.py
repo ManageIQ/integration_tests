@@ -588,6 +588,36 @@ class IPAppliance(object):
             log_callback(msg)
             raise Exception(msg)
 
+    # this is temporary and can all be removed by 2016-11-15 most likely - dajo
+    # ==========================================================================
+    @property
+    def is_ovirt_gem_patch_candidate(self):
+        status, out = self.ssh_client.run_command(
+            "md5sum /opt/rh/cfme-gemset/gems/ovirt_metrics-1.3.0/lib/ovirt_metrics.rb")
+        return 'f465d3b5345a38bba376b4b2a8c49710' in out
+
+    @logger_wrap("Patch appliance with ovirt gem patch")
+    def patch_appliance_ovirt_gem(self, log_callback=None):
+        patch_args = (
+            (str(patches_path.join('ovirt_gem.patch')),
+             '/opt/rh/cfme-gemset/gems/ovirt_metrics-1.3.0/lib/ovirt_metrics.rb',
+             None),
+        )
+
+        for local_path, remote_path, md5 in patch_args:
+            self.ssh_client.patch_file(local_path, remote_path, md5)
+
+        self.restart_evm_service()
+        logger.info("Waiting for Web UI to start")
+        wait_for(
+            func=self.is_web_ui_running,
+            message='appliance.is_web_ui_running',
+            delay=20,
+            timeout=300)
+        logger.info("Web UI is up and running")
+
+    # ===========================================================================
+
     @property
     def is_miqqe_patch_candidate(self):
         return not (self.version < "5.6" or self.version > "5.7.0.3")
