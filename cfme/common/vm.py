@@ -390,7 +390,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             sel.click(self.find_quadicon())
         else:
             if refresh:
-                toolbar.refresh()
+                # bz1392139 for 5.7, should be fixed in 5.7.1 - dajo
+                if version.current_version() < "5.7":
+                    toolbar.refresh()
+                else:
+                    sel.click(self.find_quadicon())
 
     def open_edit(self):
         """Loads up the edit page of the object."""
