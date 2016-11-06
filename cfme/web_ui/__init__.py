@@ -4012,14 +4012,19 @@ def fill_cfmecheckbox_switch(ob, val):
 
 
 def breadcrumbs():
-    """Returns a list of breadcrumbs.
+    """Returns a list of breadcrumbs names if names==True else return as elements.
 
     Returns:
         :py:class:`list` of breadcrumbs if they are present, :py:class:`NoneType` otherwise.
     """
-    result = map(sel.text_sane, sel.elements('//ol[contains(@class, "breadcrumb")]/li'))
-    return result if result else None
+    elems = sel.elements('//ol[contains(@class, "breadcrumb")]/li')
+    return elems if elems else None
 
+
+def breadcrumbs_names():
+    elems = breadcrumbs()
+    if elems:
+        return map(sel.text_sane, elems)
 
 SUMMARY_TITLE_LOCATORS = [
     '//h1'
