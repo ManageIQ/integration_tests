@@ -107,7 +107,10 @@ def pytest_collection_modifyitems(session, config, items):
         for item in items:
             # First filter out all items who have the uncollect mark
             if item.get_marker('uncollect') or not uncollectif(item):
-                marker = item.get_marker('uncollectif')
+                # if a uncollect marker has been added,
+                # give it priority for the explanation
+                uncollect = item.get_marker('uncollect')
+                marker = uncollect or item.get_marker('uncollectif')
                 if marker:
                     reason = marker.kwargs.get('reason', "No reason given")
                 else:
