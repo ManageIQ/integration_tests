@@ -5,7 +5,6 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.pxe import get_template_from_config
 from utils import testgen, ssh
 from utils.wait import wait_for
@@ -75,7 +74,6 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
         inst_args['cloud_network'] = provisioning['cloud_network']
         inst_args['public_ip_address'] = floating_ip
 
-    sel.force_navigate("clouds_instances_by_provider")
     instance.create(**inst_args)
 
     connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=300,
