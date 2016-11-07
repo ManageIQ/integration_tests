@@ -18,6 +18,7 @@ download_summary_btn = partial(tb.select, "Download summary in PDF format")
 deploy_btn = partial(tb.select, 'Deployments')
 operations_btn = partial(tb.select, 'Operations')
 auth_btn = partial(tb.select, 'Authentication')
+jdbc_btn = partial(tb.select, 'JDBC Drivers')
 
 LIST_TABLE_LOCATOR = "//div[@id='list_grid']/table"
 
@@ -43,6 +44,19 @@ import_form = Form(
         ("enable_deployment", CFMECheckbox("enable_deployment_cb")),
         ("runtime_name", Input("runtime_name_input", use_id=True)),
         ('deploy_button', FormButton("Deploy", ng_click="addDeployment()")),
+        ('cancel_button', FormButton("Cancel"))
+    ]
+)
+
+jdbc_driver_form = Form(
+    fields=[
+        ("file_select", FileInput("jdbc_driver[file]")),
+        ("jdbc_driver_name", Input("jdbc_driver_name_input")),
+        ("jdbc_module_name", Input("jdbc_module_name_input")),
+        ("jdbc_driver_class", Input("jdbc_driver_class_input")),
+        ("major_version", Input("major_version_input")),
+        ("minor_version", Input("minor_version_input")),
+        ('deploy_button', FormButton("Deploy", ng_click="addJdbcDriver()")),
         ('cancel_button', FormButton("Cancel"))
     ]
 )
@@ -116,6 +130,35 @@ class Container(SummaryMixin):
         sel.click(import_form.cancel_button if cancel else import_form.deploy_button)
         flash.assert_success_message('Deployment "{}" has been initiated on this server.'
                     .format(runtime_name if runtime_name else os.path.basename(filename)))
+
+    def add_jdbc_driver(self, filename, driver_name, module_name, driver_class,
+                        major_version=None, minor_version=None, cancel=False):
+        """Clicks to "Add JDBC Driver" button, in opened window fills fields by provided parameters,
+        and deploys.
+
+        Args:
+            filename: Full path to JDBC Driver to import.
+            driver_name: Name of newly created JDBC Driver.
+            module_name: Name on Module to register on server side.
+            driver_class: JDBC Driver Class.
+            major_version: Major version of JDBC driver, optional.
+            minor_version: Minor version of JDBC driver, optional.
+            cancel: Whether to click Cancel instead of commit.
+        """
+        self.load_details(refresh=True)
+        jdbc_btn("Add JDBC Driver")
+        fill(jdbc_driver_form,
+            {
+                "file_select": filename,
+                "jdbc_driver_name": driver_name,
+                "jdbc_module_name": module_name,
+                "jdbc_driver_class": driver_class,
+                "major_version": major_version,
+                "minor_version": minor_version
+            })
+        sel.click(jdbc_driver_form.cancel_button if cancel else jdbc_driver_form.deploy_button)
+        flash.assert_success_message('JDBC Driver "{}" has been installed on this server.'
+                    .format(driver_name))
 
 
 class Deployable(SummaryMixin):
