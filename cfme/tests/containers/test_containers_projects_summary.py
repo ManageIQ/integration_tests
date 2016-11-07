@@ -1,10 +1,9 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.project import Project
 from cfme.web_ui import CheckboxTable
-from utils import testgen
+from utils import testgen, version
 from utils.version import current_version
-
+from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -16,11 +15,22 @@ pytest_generate_tests = testgen.generate(
 
 
 projects_properties_fields = ['Name', 'Creation timestamp', 'Resource version']
-projects_relationships_fields = ['Containers Provider', 'Routes', 'Services', 'Replicators',
-                                 'Pods', 'Nodes']
+projects_relationships_fields_lowest = ['Containers Provider', 'Routes', 'Services', 'Replicators',
+                                        'Pods', 'Nodes']
+projects_relationships_fields_57 = ['Containers Provider', 'Routes', 'Container Services',
+                                    'Replicators', 'Pods', 'Nodes']
+
+projects_relationships_fields_key = ({
+    version.LOWEST: projects_relationships_fields_lowest,
+    '5.7': projects_relationships_fields_57
+})
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
+
+def config_option():
+    return version.pick({version.LOWEST: projects_relationships_fields_lowest,
+                         '5.7': projects_relationships_fields_57})
 
 # CMP - 9523
 
@@ -34,10 +44,10 @@ def test_containers_projects_summary_relationships(provider):
             * Go through each Container Project in the menu and check validity of
             Relationships fields
         """
-    sel.force_navigate('containers_projects')
+    navigate_to(Project, 'All')
     project_name = [r.name.text for r in list_tbl.rows()]
     for name in project_name:
-        for field in projects_relationships_fields:
+        for field in config_option():
             obj = Project(name, provider)
             val = obj.get_detail('Relationships', field)
             assert val
@@ -51,7 +61,7 @@ def test_containers_projects_summary_properties(provider):
             * Goes to Containers -- > Projects menu
             * Go through each Container Project in the menu and check validity of Properties fields
         """
-    sel.force_navigate('containers_projects')
+    navigate_to(Project, 'All')
     project_name = [r.name.text for r in list_tbl.rows()]
     for name in project_name:
         for field in projects_properties_fields:
