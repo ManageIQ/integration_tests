@@ -21,6 +21,7 @@ from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
+from utils.appliance.implementations.ui import navigate_to
 
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
@@ -299,6 +300,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         quadicon = Quadicon(self.name, self.quadicon_type)
         if not do_not_navigate:
             if from_any_provider:
+                # TODO implement as navigate_to when cfme.infra.virtual_machines has destination
                 sel.force_navigate(self.ALL_LIST_LOCATION)
             elif self.is_vm:
                 self.provider.load_all_provider_vms()
@@ -324,9 +326,9 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
                     # We don't use provider-specific page (vm_templates_provider_branch) here
                     # as those don't list archived/orphaned VMs
                     if self.is_vm:
-                        sel.force_navigate(self.provider.instances_page_name)
+                        navigate_to(self.provider, 'Instances')
                     else:
-                        sel.force_navigate(self.provider.templates_page_name)
+                        navigate_to(self.provider, self.provider.templates_destination_name)
                 search.normal_search(self.name)
             except Exception as e:
                 logger.warning("Failed to use search: %s", str(e))
@@ -620,7 +622,8 @@ class VM(BaseVM):
             _looking_for_state_change,
             num_sec=timeout,
             delay=30,
-            fail_func=self.refresh_relationships if with_relationship_refresh else None)
+            fail_func=lambda: self.refresh_relationships(from_details=from_details) if
+            with_relationship_refresh else None)
 
     def is_pwr_option_available_in_cfme(self, option, from_details=False):
         """Checks to see if a power option is available on the VM
