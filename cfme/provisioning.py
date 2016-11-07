@@ -15,7 +15,6 @@ from utils.wait import wait_for
 
 # nav imports
 import cfme.infrastructure.virtual_machines  # NOQA
-import cfme.cloud.instance  # NOQA
 
 
 submit_button = form_buttons.FormButton("Submit")
@@ -269,10 +268,7 @@ def generate_nav_function(tb_item):
             sel.click(template)
             # In order to mitigate the sometimes very long spinner timeout, raise the timeout
             with sel.ajax_timeout(90):
-                if current_version() < "5.4":
-                    sel.click(submit_button)
-                else:
-                    sel.click(form_buttons.FormButton("Continue", force_click=True))
+                sel.click(form_buttons.FormButton("Continue", force_click=True))
 
         else:
             raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
@@ -281,10 +277,6 @@ def generate_nav_function(tb_item):
 
 nav.add_branch('infra_vm_and_templates', {
     'infrastructure_provision_vms': generate_nav_function("Provision VMs"),
-})
-
-nav.add_branch('clouds_instances_by_provider', {
-    'clouds_provision_instances': generate_nav_function("Provision Instances"),
 })
 
 
