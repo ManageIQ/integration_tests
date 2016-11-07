@@ -2652,6 +2652,7 @@ class Quadicon(Pretty):
             "no_snapshot": ("d", 'txt'),
         },
         "middleware": {},   # Middleware quads have no fields
+        "object_store": {},
         None: {},  # If you just want to find the quad and not mess with data
     }
 
