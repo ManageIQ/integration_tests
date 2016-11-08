@@ -165,7 +165,14 @@ def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
         metafunc.parametrize(argnames, argvalues, *args, **kwargs)
     # if param check failed and the test was supposed to be parametrized around a provider
     elif 'provider' in metafunc.fixturenames:
-        pytest.mark.uncollect(metafunc.function)
+        try:
+            # hack to pass trough in case of a failed param_check
+            # where it sets a custom message
+            metafunc.function.uncollect
+        except AttributeError:
+            pytest.mark.uncollect(
+                reason="provider was not parametrized did you forget --use-provider?"
+            )(metafunc.function)
 
 
 def fixture_filter(metafunc, argnames, argvalues):
@@ -519,4 +526,4 @@ def param_check(metafunc, argnames, argvalues):
         logger.warning(uncollect_msg)
 
         # apply the mark
-        pytest.mark.uncollect()(metafunc.function)
+        pytest.mark.uncollect(reason=uncollect_msg)(metafunc.function)
