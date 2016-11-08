@@ -11,7 +11,7 @@ pytest_generate_tests = generate(config_managers)
 # TODO
 # Investigate why this does not work
 # pytestmark = pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type ==
-#             "Ansible Tower" and version.current_version() < "5.6")
+#             "Ansible Tower" and version.current_version() > "5.6")
 
 
 @pytest.yield_fixture
@@ -50,7 +50,7 @@ def tag(category):
 @pytest.mark.tier(3)
 @pytest.mark.meta(
     blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() < "5.7.0.7") or
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
         config_manager_obj.type != "Ansible Tower")]
 )
 def test_config_manager_detail_config_btn(request, config_manager):
@@ -60,7 +60,7 @@ def test_config_manager_detail_config_btn(request, config_manager):
 @pytest.mark.tier(2)
 @pytest.mark.meta(
     blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() < "5.7.0.7") or
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
         config_manager_obj.type != "Ansible Tower")]
 )
 def test_config_manager_add(request, config_manager_obj):
@@ -95,7 +95,7 @@ def test_config_manager_add_invalid_creds(request, config_manager_obj):
 @pytest.mark.tier(3)
 @pytest.mark.meta(
     blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() < "5.7.0.7") or
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
         config_manager_obj.type != "Ansible Tower")]
 )
 def test_config_manager_edit(request, config_manager):
@@ -110,10 +110,10 @@ def test_config_manager_edit(request, config_manager):
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
-    version.current_version() > "5.7.0.7")
+    version.current_version() > "5.7.0.9")
 @pytest.mark.meta(
     blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() < "5.7.0.7") or
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
         config_manager_obj.type != "Ansible Tower")]
 )
 def test_config_manager_remove(config_manager):
@@ -125,7 +125,7 @@ def test_config_manager_remove(config_manager):
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
 @pytest.mark.meta(
     blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
-        config_manager_obj.type == "Ansible Tower" and version.current_version() < "5.7.0.7") or
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
         config_manager_obj.type != "Ansible Tower")]
 )
 def test_config_system_tag(request, config_system, tag):
