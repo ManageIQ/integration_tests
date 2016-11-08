@@ -2,7 +2,7 @@ from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, paginator
+from cfme.web_ui import CheckboxTable, paginator, flash
 from cfme.web_ui.menu import nav, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
@@ -11,6 +11,7 @@ from utils.providers import get_crud, get_provider_key
 from utils.providers import list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
+from . import operations_btn
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -257,3 +258,12 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
     def download(cls, extension, provider=None, server=None):
         _get_datasources_page(provider, server)
         download(extension)
+
+    def remove(self):
+        """
+        Clicks on "Remove" button of "Operations" menu item and verifies message shown
+        """
+        self.load_details()
+        operations_btn("Remove", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_success_message('The selected datasources were removed')
