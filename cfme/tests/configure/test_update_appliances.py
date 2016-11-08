@@ -128,7 +128,6 @@ def update_registration(appliance_set, rh_updates_data, reg_method):
     else:
         repo_or_channel = reg_data.get('add_channel', None)
 
-    appliance_set.primary.browser_steal = True
     with appliance_set.primary():
         red_hat_updates.update_registration(
             service=reg_method,
@@ -145,7 +144,6 @@ def update_registration(appliance_set, rh_updates_data, reg_method):
 
 
 def register_appliances(appliance_set, appliances_to_register):
-    appliance_set.primary.browser_steal = True
     with appliance_set.primary():
         red_hat_updates.register_appliances(*appliances_to_register)
 
@@ -253,7 +251,6 @@ def rhn_mirror_setup(appliance_set):
     """Sets up RHN mirror feature on primary appliance and checks secondary are subscribed
     """
 
-    appliance_set.primary.browser_steal = True
     with appliance_set.primary():
         set_server_roles(rhn_mirror=True)
 
@@ -297,7 +294,6 @@ def rhn_mirror_setup(appliance_set):
             logger.info('Done')
 
     # And confirm that all appliances are subscribed
-    appliance_set.primary.browser_steal = True
     with appliance_set.primary():
         assert red_hat_updates.are_subscribed(),\
             'Failed to subscribe all appliances (secondary via proxy)'
@@ -310,7 +306,6 @@ def run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update):
         Just a heads up - CFME 5.3+ will, on non-db appliances, apply platform updates
         along with cfme updates.
     """
-    appliance_set.primary.browser_steal = True
     with appliance_set.primary():
         red_hat_updates.update_appliances(*appliances_to_update)
 

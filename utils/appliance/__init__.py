@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import warnings
 import fauxfactory
 import hashlib
 import os
@@ -70,7 +71,7 @@ class IPAppliance(object):
     """
     _nav_steps = {}
 
-    def __init__(self, address=None, browser_steal=False, container=None):
+    def __init__(self, address=None, container=None):
         if address is not None:
             if not isinstance(address, ParseResult):
                 address = urlparse(str(address))
@@ -84,7 +85,6 @@ class IPAppliance(object):
                 self.address = address.netloc
                 self.scheme = address.scheme
                 self._url = address.geturl()
-        self.browser_steal = browser_steal
         self.container = container
         self._db_ssh_client = None
         self._user = None
@@ -121,16 +121,6 @@ class IPAppliance(object):
 
     def __repr__(self):
         return '{}({})'.format(type(self).__name__, repr(self.address))
-
-    def __call__(self, **kwargs):
-        """Syntactic sugar for overriding certain instance variables for context managers.
-
-        Currently possible variables are:
-
-        * `browser_steal`
-        """
-        self.browser_steal = kwargs.get("browser_steal", self.browser_steal)
-        return self
 
     def __enter__(self):
         """ This method will replace the current appliance in the store """
@@ -1772,15 +1762,14 @@ class Appliance(IPAppliance):
     Args:
         provider_name: Name of the provider this appliance is running under
         vm_name: Name of the VM this appliance is running as
-        browser_steal: Setting of the browser_steal attribute.
     """
 
     _default_name = 'EVM'
 
-    def __init__(self, provider_name, vm_name, browser_steal=False, container=None):
+    def __init__(self, provider_name, vm_name, container=None):
         """Initializes a deployed appliance VM
         """
-        super(Appliance, self).__init__(browser_steal=browser_steal, container=None)
+        super(Appliance, self).__init__(container=None)
         self.name = Appliance._default_name
 
         self._provider_name = provider_name
@@ -1895,7 +1884,7 @@ class Appliance(IPAppliance):
     def configure_fleecing(self, log_callback=None):
         from cfme.configure.configuration import set_server_roles, get_server_roles
         from utils.providers import setup_provider
-        with self(browser_steal=True):
+        with self:
             if self.is_on_vsphere:
                 self.install_vddk(reboot=True, log_callback=log_callback)
                 self.wait_for_web_ui(log_callback=log_callback)
@@ -2215,9 +2204,6 @@ class ApplianceStack(LocalStack):
 
         logger.info("Pushed appliance {} on stack (was {} before) ".format(
             obj.address, getattr(was_before, 'address', 'empty')))
-        if obj.browser_steal:
-            from utils import browser
-            browser.start()
 
     def pop(self):
         was_before = super(ApplianceStack, self).pop()
@@ -2225,9 +2211,6 @@ class ApplianceStack(LocalStack):
         logger.info(
             "Popped appliance {} from the stack (now there is {})".format(
                 was_before.address, getattr(current, 'address', 'empty')))
-        if was_before.browser_steal:
-            from utils import browser
-            browser.start()
         return was_before
 
 stack = ApplianceStack()
