@@ -700,7 +700,7 @@ def test_superadmin_tenant_crud(request):
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
-@pytest.mark.meta(blockers=[BZ(1387088, forced_streams=['5.7'])])
+@pytest.mark.meta(blockers=[BZ(1387088, forced_streams=['5.7', 'upstream'])])
 def test_superadmin_tenant_project_crud(request):
     """Test suppose to verify CRUD operations for CFME projects
 
