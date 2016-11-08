@@ -110,7 +110,7 @@ def test_config_manager_edit(request, config_manager):
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
-    version.current_version() > "5.7.0.6")
+    version.current_version() > "5.7.0.7")
 @pytest.mark.meta(
     blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
         config_manager_obj.type == "Ansible Tower" and version.current_version() < "5.7.0.7") or
