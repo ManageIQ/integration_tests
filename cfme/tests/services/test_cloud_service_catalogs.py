@@ -13,7 +13,6 @@ from cfme import test_requirements
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
-from utils.blockers import BZ
 
 
 pytestmark = [
@@ -60,7 +59,6 @@ def catalog():
     yield catalog
 
 
-@pytest.mark.meta(blockers=[BZ(1390209, forced_streams=["5.7", "upstream"])])
 def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, provisioning):
     """Tests cloud catalog item
 

@@ -131,6 +131,7 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
         catalog_item_type = "RHEV"
     elif a_provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
+        provisioning_data['vlan'] = vlan
     catalog = service_catalogs[0].name
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
@@ -148,7 +149,8 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=2000, delay=20)
-    assert row.last_message.text == 'Request complete'
+    assert (row.last_message.text == 'Request complete'
+            or 'Provisioned Successfully' in row.last_message.text)
     try:
         services = [_ for _ in rest_api.collections.services]
         services[0]

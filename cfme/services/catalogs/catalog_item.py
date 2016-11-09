@@ -15,6 +15,7 @@ from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, na
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.version import current_version
+from utils.blockers import BZ
 
 cfg_btn = partial(tb.select, "Configuration")
 policy_btn = partial(tb.select, "Policy")
@@ -170,6 +171,9 @@ class CatalogItem(Updateable, Pretty, Navigatable):
             tabstrip.select_tab("Catalog")
             template = template_select_form.template_table.find_row_by_cells({
                 'Name': self.catalog_name,
+                # HACK to workaround BZ1390209
+                # revert back to Provider once it's fixed
+                'Deprecated' if BZ(1390209, forced_streams=["5.7", "upstream"]).blocks else
                 'Provider': self.provider
             })
             sel.click(template)
