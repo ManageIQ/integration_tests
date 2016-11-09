@@ -154,12 +154,14 @@ class CFMENavigateStep(NavigateStep):
         if self.appliance.is_miqqe_patch_candidate and not self.appliance.miqqe_patch_applied:
             self.appliance.patch_with_miqqe()
             self.appliance.browser.quit_browser()
+            _tries -= 1
             self.go(_tries)
 
         # check for ovirt_gem patch on first try and patch the appliance if necessary
         if self.appliance.is_ovirt_gem_patch_candidate:
             self.appliance.patch_appliance_ovirt_gem()
             self.appliance.browser.quit_browser()
+            _tries -= 1
             self.go(_tries)
 
         br = self.appliance.browser
