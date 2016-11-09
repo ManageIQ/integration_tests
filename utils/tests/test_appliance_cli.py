@@ -19,7 +19,7 @@ def provisioned_appliance():
 
     yield app
 
-    # app.destroy()
+    app.destroy()
 
 
 @pytest.fixture()
