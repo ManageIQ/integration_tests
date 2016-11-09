@@ -5,7 +5,8 @@ import re
 
 from cfme.common import Validatable, SummaryMixin
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, Form, fill, flash, FileInput, Input, CFMECheckbox
+from cfme.web_ui import toolbar as tb, Form, fill, flash, FileInput, Input
+from cfme.web_ui import CFMECheckbox, Select
 from cfme.web_ui.form_buttons import FormButton
 from utils.browser import ensure_browser_open
 
@@ -19,6 +20,7 @@ deploy_btn = partial(tb.select, 'Deployments')
 operations_btn = partial(tb.select, 'Operations')
 auth_btn = partial(tb.select, 'Authentication')
 jdbc_btn = partial(tb.select, 'JDBC Drivers')
+datasources_btn = partial(tb.select, 'Datasources')
 
 LIST_TABLE_LOCATOR = "//div[@id='list_grid']/table"
 
@@ -58,6 +60,30 @@ jdbc_driver_form = Form(
         ("minor_version", Input("minor_version_input")),
         ('deploy_button', FormButton("Deploy", ng_click="addJdbcDriver()")),
         ('cancel_button', FormButton("Cancel"))
+    ]
+)
+
+
+datasource_form = Form(
+    fields=[
+        ("ds_type", Select("//select[@id='chooose_datasource_input']")),
+        ("ds_name", Input("ds_name_input")),
+        ("jndi_name", Input("jndi_name_input")),
+        ("driver_name", Input("jdbc_ds_driver_name_input")),
+        ("driver_module_name", Input("jdbc_modoule_name_input")),
+        ("driver_class", Input("jdbc_ds_driver_input")),
+        ("ds_url", Input("connection_url_input")),
+        ("username", Input("user_name_input")),
+        ("password", Input("password_input")),
+        ("sec_domain", Input("security_domain_input", use_id=True)),
+        ('next0_button', FormButton('Next', ng_click="addDatasourceChooseNext()")),
+        ('next1_button', FormButton('Next', ng_click="addDatasourceStep1Next()")),
+        ('next2_button', FormButton('Next', ng_click="addDatasourceStep2Next()")),
+        ('back1_button', FormButton('Back', ng_click="addDatasourceStep1Back()")),
+        ('back2_button', FormButton('Back', ng_click="addDatasourceStep2Back()")),
+        ('back3_button', FormButton('Back', ng_click="finishAddDatasourceBack()")),
+        ('finish_button', FormButton('Finish', ng_click="finishAddDatasource()")),
+        ('cancel_button', FormButton('Cancel', ng_click="reset()"))
     ]
 )
 
@@ -159,6 +185,56 @@ class Container(SummaryMixin):
         sel.click(jdbc_driver_form.cancel_button if cancel else jdbc_driver_form.deploy_button)
         flash.assert_success_message('JDBC Driver "{}" has been installed on this server.'
                     .format(driver_name))
+
+    def add_datasource(self, ds_type, ds_name, jndi_name, driver_name,
+               driver_module_name, driver_class, ds_url,
+               username, password=None, sec_domain=None, cancel=False):
+        """Clicks to "Add Datasource" button,
+        in opened window fills fields by provided parameter by clicking 'Next',
+        and submits the form by clicking 'Finish'.
+
+        Args:
+            ds_type: Type of database.
+            ds_name: Name of newly created Datasource.
+            jndi_name: JNDI Name of Datasource.
+            driver_name: JDBC Driver name in Datasource.
+            driver_module_name: Module name of JDBC Driver used in datasource.
+            driver_class: JDBC Driver Class.
+            ds_url: Database connection URL in jdbc format.
+            username: Database username.
+            password: Databasae password, optional.
+            sec_domain: Security Domain, optional.
+            cancel: Whether to click Cancel instead of commit.
+        """
+        self.load_details(refresh=True)
+        datasources_btn("Add Datasource", invokes_alert=True)
+        fill(datasource_form,
+            {
+                "ds_type": ds_type
+            })
+        sel.click(datasource_form.cancel_button if cancel else datasource_form.next0_button)
+        fill(datasource_form,
+            {
+                "ds_name": ds_name,
+                "jndi_name": jndi_name
+            })
+        sel.click(datasource_form.cancel_button if cancel else datasource_form.next1_button)
+        fill(datasource_form,
+            {
+                "driver_name": driver_name,
+                "driver_module_name": driver_module_name,
+                "driver_class": driver_class
+            })
+        sel.click(datasource_form.cancel_button if cancel else datasource_form.next2_button)
+        fill(datasource_form,
+            {
+                "ds_url": ds_url,
+                "username": username,
+                "password": password,
+                "sec_domain": sec_domain
+            })
+        sel.click(datasource_form.cancel_button if cancel else datasource_form.finish_button)
+        flash.assert_no_errors()
 
 
 class Deployable(SummaryMixin):

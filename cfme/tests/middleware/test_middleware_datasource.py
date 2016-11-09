@@ -5,6 +5,10 @@ from utils import testgen
 from utils.version import current_version
 from deployment_methods import get_server
 from deployment_methods import HAWKULAR_PRODUCT_NAME
+from deployment_methods import EAP_PRODUCT_NAME
+from datasource_methods import get_datasources_set
+from datasource_methods import ORACLE_12C, DB2_105, MSSQL_2014, MYSQL_57
+from datasource_methods import POSTGRESPLUS_94, POSTGRESQL_94, SYBASE_157
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -12,6 +16,14 @@ pytestmark = [
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
 ITEMS_LIMIT = 2  # when we have big list, limit number of items to test
+
+DATASOURCES = [ORACLE_12C,
+               DB2_105,
+               MSSQL_2014,
+               MYSQL_57,
+               POSTGRESPLUS_94,
+               POSTGRESQL_94,
+               SYBASE_157]
 
 
 def test_list_datasources():
@@ -111,9 +123,37 @@ def test_datasource_details(provider):
         ds_mgmt.validate_properties()
 
 
-def get_datasources_set(datasources):
+@pytest.mark.parametrize("datasource_params", DATASOURCES)
+def test_create_delete_datasource(provider, datasource_params):
+    """Tests datasource creation and deletion on EAP server
+
+    Steps:
+        * Get servers list from UI
+        * Chooses JBoss EAP server from list
+        * Invokes 'Add Datasource' toolbar operation
+        * Selects Datasource type.
+        * Click Next.
+        * Input Datasource Name.
+        * Input Datasource JNDI Name.
+        * Click Next.
+        * Input Driver Name.
+        * Input Module Name.
+        * Input Driver Name.
+        * Input Driver Class.
+        * Click Next.
+        * Input Database Connection URL.
+        * Input Database username.
+        * Input Database password.
+        * Submits the form.
+        * Checks if newly created datasource is listed. Selects it.
+        * Deletes that Datasource via UI operation.
+        * Checks whether resource is deleted.
     """
-    Return the set of datasources which contains only necessary fields,
-    such as 'name' and 'server'
-    """
-    return set((datasource.name, datasource.server.name) for datasource in datasources)
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    server.add_datasource(datasource_params[0], datasource_params[1], datasource_params[2],
+            datasource_params[3], datasource_params[4], datasource_params[5],
+            datasource_params[6], datasource_params[7], datasource_params[8])
+    # TODO uncomment when BZ#1383414 is fixes
+    # resource = get_datasource_from_list(provider, datasource_params[1])
+    # resource.delete()
+    # check_datasource_not_listed(provider, datasource.name)
