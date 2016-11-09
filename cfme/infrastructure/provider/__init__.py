@@ -173,7 +173,10 @@ class InfraProvider(Pretty, CloudInfraProvider):
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
-        self.vm_name = version.pick({version.LOWEST: "VMs", '5.5': "VMs and Instances"})
+        self.vm_name = version.pick({
+            version.LOWEST: "VMs",
+            '5.5': "VMs and Instances",
+            '5.8': 'VMs & Templates'})  # TODO: If it lands in some 5.7.x, change this version!
         self.template_name = "Templates"
 
     def _form_mapping(self, create=None, **kwargs):
