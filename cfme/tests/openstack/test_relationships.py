@@ -39,7 +39,7 @@ def test_templates(provider):
     result = provider.summary.relationships.templates.value
     """
     todo get the list of images/templates from external resource and compare
-    it with result - currently  5
+    it with result - currently  bigger than 0
     """
 
     assert result > 0
