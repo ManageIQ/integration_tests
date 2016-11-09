@@ -620,7 +620,7 @@ class IPAppliance(object):
 
     @property
     def is_miqqe_patch_candidate(self):
-        return not (self.version < "5.6" or self.version > "5.7.0.3")
+        return self.version < "5.6.3"
 
     @property
     def miqqe_patch_applied(self):
