@@ -34,7 +34,6 @@ def app_creds():
 
 def test_configure_appliance_internal_fetch_key(request, app_creds, provisioned_appliance):
     app = provisioned_appliance
-    print app.ipapp.address
     fetch_key_ip = store.current_appliance.address
     app.ipapp.ap_cli.configure_appliance_internal_fetch_key(0, 'localhost',
         app_creds['username'], app_creds['password'], 'vmdb_production', fetch_key_ip,
