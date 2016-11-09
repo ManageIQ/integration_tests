@@ -194,7 +194,8 @@ class Vm(BaseVM, Common):
         def wait_for_snapshot_active(self):
             self._nav_to_snapshot_mgmt()
             try:
-                self.snapshot_tree.click_path(*snapshot_tree.find_path_to(re.compile(self.name)))
+                self.snapshot_tree.click_path(
+                    *self.snapshot_tree.find_path_to(re.compile(self.name)))
                 if sel.is_displayed_text(self.name + " (Active)"):
                     return True
             except CandidateNotFound:
