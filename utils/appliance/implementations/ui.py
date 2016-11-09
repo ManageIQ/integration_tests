@@ -137,9 +137,11 @@ class CFMENavigateStep(NavigateStep):
 
     def am_i_here(self):
         try:
-            return self.view.is_displayed
-        except (AttributeError, NoSuchElementException):
+            self.view.assert_is_displayed()
+        except (AttributeError, NoSuchElementException, AssertionError):
             return False
+        else:
+            return True
 
     def pre_navigate(self, _tries=0, *args, **kwargs):
         if _tries > 2:
