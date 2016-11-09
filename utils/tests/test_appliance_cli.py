@@ -19,7 +19,7 @@ def provisioned_appliance():
 
     yield app
 
-    app.destroy()
+    # app.destroy()
 
 
 @pytest.fixture()
@@ -32,14 +32,17 @@ def app_creds():
     }
 
 
-def test_configure_appliance_internal_fetch_key(request, provisioned_appliance, app_creds):
-        app = provisioned_appliance
-        fetch_key_ip = store.current_appliance.address
-        app.ap_cli.configure_appliance(0, 'localhost', app_creds['username'], app_creds['password'],
-            'vmdb_production', fetch_key_ip, app_creds['sshlogin'], app_creds['sshpass'])
-        assert app.is_evm_service_running()
-        app.ipapp.wait_for_web_ui()
-        assert app.is_web_ui_running()
+def test_configure_appliance_internal_fetch_key(request, app_creds, provisioned_appliance):
+    app = provisioned_appliance
+    print app.ipapp.address
+    fetch_key_ip = store.current_appliance.address
+    app.ipapp.ap_cli.configure_appliance_internal_fetch_key(0, 'localhost',
+        app_creds['username'], app_creds['password'], 'vmdb_production', fetch_key_ip,
+        app_creds['sshlogin'], app_creds['sshpass'])
+    app.ipapp.wait_for_evm_service()
+    assert app.ipapp.is_evm_service_running()
+    app.ipapp.wait_for_web_ui()
+    assert app.ipapp.is_web_ui_running()
 
 
 @pytest.fixture()
