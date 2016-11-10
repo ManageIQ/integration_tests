@@ -10,7 +10,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
-    paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, summary_title
+    paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, summary_title,
+    BootstrapTreeview
 )
 from cfme.web_ui.menu import extend_nav
 from functools import partial
@@ -19,7 +20,7 @@ from utils.api import rest_api
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
-from utils import version
+from utils import version, deferred_verpick
 import cfme.web_ui.toolbar as tb
 
 
@@ -40,12 +41,10 @@ manage_policies_page = Region(
     })
 
 
-snapshot_tree = Tree("//div[@id='snapshots_treebox']/ul")
-
 snapshot_form = Form(
     fields=[
         ('name', Input('name')),
-        ('descrition', Input('description')),
+        ('description', Input('description')),
         ('snapshot_memory', Input('snap_memory')),
         ('create_button', create_button),
         ('cancel_button', form_buttons.cancel)
@@ -162,6 +161,10 @@ class Vm(BaseVM, Common):
     """
 
     class Snapshot(object):
+        snapshot_tree = deferred_verpick({
+            version.LOWEST: Tree("//div[@id='snapshots_treebox']/ul"),
+            '5.7.0.1': BootstrapTreeview('snapshot_treebox')})
+
         def __init__(self, name=None, description=None, memory=None, parent_vm=None):
             super(Vm.Snapshot, self).__init__()
             self.name = name
@@ -178,21 +181,21 @@ class Vm(BaseVM, Common):
         def does_snapshot_exist(self):
             self._nav_to_snapshot_mgmt()
             try:
-                snapshot_tree.find_path_to(re.compile(r".*?\(Active\)$"))
+                if self.name is not None:
+                    self.snapshot_tree.find_path_to(re.compile(self.name + r".*?"))
+                else:
+                    self.snapshot_tree.find_path_to(re.compile(self.description + r".*?"))
                 return True
             except CandidateNotFound:
-                try:
-                    snapshot_tree.find_path_to(re.compile(self.name))
-                    return True
-                except CandidateNotFound:
-                    return False
+                return False
             except NoSuchElementException:
                 return False
 
         def wait_for_snapshot_active(self):
             self._nav_to_snapshot_mgmt()
             try:
-                snapshot_tree.click_path(*snapshot_tree.find_path_to(re.compile(self.name)))
+                self.snapshot_tree.click_path(
+                    *self.snapshot_tree.find_path_to(re.compile(self.name)))
                 if sel.is_displayed_text(self.name + " (Active)"):
                     return True
             except CandidateNotFound:
@@ -201,11 +204,17 @@ class Vm(BaseVM, Common):
         def create(self):
             self._nav_to_snapshot_mgmt()
             toolbar.select('Create a new snapshot for this VM')
-            fill(snapshot_form, {'name': self.name,
-                                 'description': self.description,
-                                 'snapshot_memory': self.memory
-                                 },
-                 action=snapshot_form.create_button)
+            if self.name is not None:
+                fill(snapshot_form, {'name': self.name,
+                                     'description': self.description,
+                                     'snapshot_memory': self.memory
+                                     },
+                     action=snapshot_form.create_button)
+            else:
+                fill(snapshot_form, {'description': self.description,
+                                     'snapshot_memory': self.memory
+                                     },
+                     action=snapshot_form.create_button)
             wait_for(self.does_snapshot_exist, num_sec=300, delay=20, fail_func=sel.refresh)
 
         def delete(self, cancel=False):
