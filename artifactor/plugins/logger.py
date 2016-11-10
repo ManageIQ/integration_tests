@@ -12,10 +12,9 @@ artifactor:
             level: DEBUG
 """
 import os
-import logging
+from logging import LogRecord
 from artifactor import ArtifactorBasePlugin
 from utils.log import make_file_handler
-logger = logging.getLogger(__name__)
 
 
 class Logger(ArtifactorBasePlugin):
@@ -68,7 +67,7 @@ class Logger(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def log_message(self, log_record, slaveid):
-        record = logging.LogRecord.__new__(logging.LogRecord)
+        record = LogRecord.__new__(LogRecord)
         record.__dict__.update(log_record)  # hack
         if not slaveid:
             slaveid = "Master"
