@@ -149,8 +149,6 @@ MARKER_LEN = 80
 # set logging defaults
 _default_conf = {
     'level': 'INFO',
-    'max_file_size': 0,
-    'max_file_backups': 0,
     'errors_to_console': False,
     'file_format': '%(asctime)-15s [%(levelname).1s] %(message)s (%(source)s)',
     'stream_format': '[%(levelname)s] %(message)s (%(source)s)'
@@ -203,24 +201,6 @@ class TraceLoggerAdapter(logging.LoggerAdapter):
         self.logger.trace(msg, *args, **kwargs)
 
 
-class SyslogMsecFormatter(logging.Formatter):
-    """ A custom Formatter for the syslogger which changes the log timestamps to
-    have millisecond resolution for compatibility with splunk.
-    """
-
-    converter = dt.datetime.fromtimestamp
-
-    # logging.Formatter impl hates pep8
-    def formatTime(self, record, datefmt=None):  # NOQA
-        ct = self.converter(record.created)
-        if datefmt:
-            s = ct.strftime(datefmt)
-        else:
-            t = ct.strftime("%Y-%m-%d %H:%M:%S")
-            s = "%s.%03d" % (t, record.msecs)
-        return s
-
-
 class PrefixAddingLoggerFilter(logging.Filter):
     def __init__(self, prefix=None):
         self.prefix = prefix
@@ -255,14 +235,6 @@ def _load_conf(logger_name=None):
         logging_conf.update(logging_conf[logger_name])
 
     return logging_conf
-
-
-def _get_syslog_settings():
-    try:
-        syslog = conf['env']['syslog']
-        return (syslog['address'], int(syslog['port']))
-    except KeyError:
-        return None
 
 
 class _RelpathFilter(logging.Filter):
@@ -367,6 +339,9 @@ class Perflog(object):
             return None
 
 
+def make_filelogger(name):
+
+
 def create_logger(logger_name, filename=None, max_file_size=None, max_backups=None):
     """Creates and returns the named logger
 
@@ -399,14 +374,6 @@ def create_logger(logger_name, filename=None, max_file_size=None, max_backups=No
 
     logger.addHandler(file_handler)
 
-    syslog_settings = _get_syslog_settings()
-    if syslog_settings:
-        lid = fauxfactory.gen_alphanumeric(8)
-        fmt = '%(asctime)s [' + lid + '] %(message)s'
-        syslog_formatter = SyslogMsecFormatter(fmt=fmt)
-        syslog_handler = SysLogHandler(address=syslog_settings)
-        syslog_handler.setFormatter(syslog_formatter)
-        logger.addHandler(syslog_handler)
     logger.setLevel(conf['level'])
     if conf['errors_to_console']:
         stream_formatter = logging.Formatter(conf['stream_format'])
