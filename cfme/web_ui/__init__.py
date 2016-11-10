@@ -1183,6 +1183,22 @@ class PagedTable(Table):
             if row is not None:
                 return row
 
+    def find_row_by_cell_on_all_pages(self, cells):
+        """Find the first row containing cells on all pages
+
+        Args:
+            cells: See :py:meth:`Table.find_rows_by_cells`
+
+        Returns: The first matching row found on any page
+
+        """
+        from cfme.web_ui import paginator
+        for _ in paginator.pages():
+            sel.wait_for_element(self)
+            row = self.find_row_by_cells(cells)
+            if row is not None:
+                return row
+
 
 class SplitPagedTable(SplitTable, PagedTable):
     """:py:class:`SplitTable` with support for paginator
