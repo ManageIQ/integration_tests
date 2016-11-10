@@ -188,6 +188,18 @@ class DockerBot(object):
                 headers=headers)
             return r.json()['base']['ref']
 
+    def get_dev_branch(self, pr=None):
+        token = self.args['gh_token']
+        owner = self.args['gh_dev_owner']
+        repo = self.args['gh_dev_repo']
+        if token:
+            headers = {'Authorization': 'token {}'.format(token)}
+            r = requests.get(
+                'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
+                headers=headers)
+            user, user_branch = r.json()['head']['label'].split(":")
+        return "https://github.com/{}/{}.git".format(user, repo), user_branch
+
     def get_pr_metadata(self, pr=None):
         token = self.args['gh_token']
         owner = self.args['gh_owner']
@@ -281,11 +293,13 @@ class DockerBot(object):
 
         self.check_arg('branch', 'origin/master')
         self.check_arg('pr', None)
+        self.check_arg('dev_pr', None)
 
         self.check_arg('cfme_repo', None)
         self.check_arg('cfme_repo_dir', '/cfme_tests_te')
         self.check_arg('cfme_cred_repo', None)
         self.check_arg('cfme_cred_repo_dir', '/cfme-qe-yamls')
+        self.check_arg('dev_repo', None)
 
         if not self.args['cfme_repo']:
             print("You must supply a CFME REPO")
@@ -300,6 +314,14 @@ class DockerBot(object):
         self.check_arg('gh_token', None)
         self.check_arg('gh_owner', None)
         self.check_arg('gh_repo', None)
+        self.check_arg('gh_dev_repo', None)
+        self.check_arg('gh_dev_owner', None)
+
+        if self.args['dev_pr']:
+            dev_check = [self.args[i] for i in ['gh_dev_repo', 'gh_dev_owner']]
+            if not all(dev_check):
+                print("To use dev_pr you must have a gh_dev_repo and gh_dev_owner defined")
+                ec += 1
 
         self.check_arg('browser', 'firefox')
 
@@ -380,6 +402,9 @@ class DockerBot(object):
             self.args['pytest'] += ' --sprout-desc {}'.format(self.args['sprout_description'])
         if not self.args['capture']:
             self.args['pytest'] += ' --capture=no'
+        if self.args['dev_pr']:
+            repo, branch = self.get_dev_branch(self.args['dev_pr'])
+            self.args['pytest'] += ' --dev-branch {} --dev-repo {}'.format(branch, repo)
         print("  PYTEST Command: {}".format(self.args['pytest']))
 
     def enc_key(self):
@@ -535,6 +560,9 @@ if __name__ == "__main__":
     repo.add_argument('--cfme-cred-repo-dir',
                       help='The cfme cred repo dir',
                       default=None)
+    repo.add_argument('--dev-pr',
+                      help='The dev PR to update master with',
+                      default=None)
 
     gh = parser.add_argument_group('GitHub Options')
     gh.add_argument('--gh-token',
@@ -544,6 +572,9 @@ if __name__ == "__main__":
                     help="The GitHub Owner to use",
                     default=None)
     gh.add_argument('--gh-repo',
+                    help="The GitHub Repo to use",
+                    default=None)
+    gh.add_argument('--gh-dev-repo',
                     help="The GitHub Repo to use",
                     default=None)
 
