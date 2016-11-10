@@ -1,9 +1,9 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable
 from cfme.containers.replicator import Replicator
 from itertools import product
 from utils import testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 
 
@@ -32,9 +32,9 @@ def test_replicators_properties(provider, prop, rel):
         This test checks the properties fields of each Replicator
         Steps:
             * Goes to Containers --> Replicators
-             * Goes through each Replicator and checks each Properties fields
+             * Goes through each Replicator and  checks each Properties fields
         """
-    sel.force_navigate('containers_replicators')
+    navigate_to(Replicator, 'All')
     replicator_name = [r.name.text for r in list_tbl.rows()]
     for name in replicator_name:
         obj = Replicator(name, provider)
