@@ -5,8 +5,8 @@ from utils.version import current_version
 from deployment_methods import get_server
 from deployment_methods import EAP_PRODUCT_NAME
 from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
-from jdbc_driver_methods import ORACLE_12C, DB2_105, MSSQL_2014, MYSQL_57
-from jdbc_driver_methods import POSTGRESPLUS_94, POSTGRESQL_94, SYBASE_157
+from jdbc_driver_methods import ORACLE_12C_JDBC, DB2_105_JDBC, MSSQL_2014_JDBC, MYSQL_57_JDBC
+from jdbc_driver_methods import POSTGRESPLUS_94_JDBC, POSTGRESQL_94_JDBC, SYBASE_157_JDBC
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -15,13 +15,13 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
 ITEMS_LIMIT = 5  # when we have big list, limit number of items to test
 
-DATABASES = [ORACLE_12C,
-             DB2_105,
-             MSSQL_2014,
-             MYSQL_57,
-             POSTGRESPLUS_94,
-             POSTGRESQL_94,
-             SYBASE_157]
+DATABASES = [ORACLE_12C_JDBC,
+             DB2_105_JDBC,
+             MSSQL_2014_JDBC,
+             MYSQL_57_JDBC,
+             POSTGRESPLUS_94_JDBC,
+             POSTGRESQL_94_JDBC,
+             SYBASE_157_JDBC]
 
 
 @pytest.mark.parametrize("database_params", DATABASES)

@@ -302,7 +302,11 @@ class MiddlewareDomainNotFound(CFMEException):
 
 
 class JDBCDriverConfigNotFound(CFMEException):
-    """Raised then cdme_data.yaml file does not contain configuration of 'jdbc_drivers'."""
+    """Raised when cdme_data.yaml file does not contain configuration of 'jdbc_drivers'."""
+
+
+class DbAllocatorConfigNotFound(CFMEException):
+    """Raised when cdme_data.yaml file does not contain configuration of 'db_allocator'."""
 
 
 class UsingSharedTables(CFMEException):
