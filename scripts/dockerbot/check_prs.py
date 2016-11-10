@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 from datetime import datetime
-
+import logging
 import fauxfactory
 import traceback
 import dockerbot
 import json
 import requests
 import pika
-import logging
 from utils.conf import docker as docker_conf
 from utils.appliance import Appliance
 from utils.trackerbot import api
-from utils.log import create_logger
+from utils.log import setup_logger
 from slumber.exceptions import HttpClientError
 
 
@@ -24,7 +23,7 @@ tapi = api()
 CONT_LIMIT = docker_conf['workers']
 DEBUG = docker_conf.get('debug', False)
 
-logger = create_logger('check_prs', 'prt.log')
+logger = setup_logger(logging.getLogger('prt'))
 
 # Disable pika logs
 logging.getLogger("pika").propagate = False

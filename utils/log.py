@@ -136,7 +136,7 @@ import logging
 import sys
 import warnings
 import datetime as dt
-from logging.handlers import RotatingFileHandler, SysLogHandler
+from logging.handlers import RotatingFileHandler
 from time import time
 from traceback import extract_tb, format_tb
 
@@ -144,14 +144,14 @@ from cached_property import cached_property
 from utils import conf, safe_string
 from utils.path import get_rel_path, log_path, project_path
 
+import os
+
 MARKER_LEN = 80
 
 # set logging defaults
 _default_conf = {
     'level': 'INFO',
     'errors_to_console': False,
-    'file_format': '%(asctime)-15s [%(levelname).1s] %(message)s (%(source)s)',
-    'stream_format': '[%(levelname)s] %(message)s (%(source)s)'
 }
 
 # let logging know we made a TRACE level
@@ -308,7 +308,7 @@ class Perflog(object):
     tracking_events = {}
 
     def __init__(self, perflog_name='perf'):
-        self.logger = create_logger(perflog_name)
+        self.logger = setup_logger(logging.getLogger(perflog_name))
 
     def start(self, event_name):
         """Start tracking the named event
@@ -339,49 +339,35 @@ class Perflog(object):
             return None
 
 
-def make_filelogger(name):
+def make_file_handler(filename, root=log_path.strpath, **kw):
+    filename = os.path.join(root, filename)
+    handler = logging.FileHandler(filename, **kw)
+    formatter = logging.Formatter('%(asctime)-15s [%(levelname).1s] %(message)s (%(source)s)')
+    handler.setFormatter(formatter)
+    return handler
 
 
-def create_logger(logger_name, filename=None, max_file_size=None, max_backups=None):
-    """Creates and returns the named logger
+def error_console_handler():
+    formatter = logging.Formatter('[%(levelname)s] %(message)s (%(source)s)')
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.ERROR)
+    handler.setFormatter(formatter)
+    return handler
 
-    If the logger already exists, it will be destroyed and recreated
-    with the current config in env.yaml
 
-    """
-    # If the logger already exists, reset its handlers
-    logger = logging.getLogger(logger_name)
-    for handler in logger.handlers:
-        logger.removeHandler(handler)
-
+def setup_logger(logger):
     # Grab the logging conf
-    conf = _load_conf(logger_name)
-
-    log_path.ensure(dir=True)
-    if filename:
-        log_file = filename
-    else:
-        log_file = str(log_path.join('{}.log'.format(logger_name)))
+    conf = _load_conf(logger.name)
 
     # log_file is dynamic, so we can't used logging.config.dictConfig here without creating
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
     # entire logging config into env.yaml
 
-    file_formatter = logging.Formatter(conf['file_format'])
-    file_handler = RotatingFileHandler(log_file, maxBytes=max_file_size or conf['max_file_size'],
-        backupCount=max_backups or conf['max_file_backups'], encoding='utf8')
-    file_handler.setFormatter(file_formatter)
-
-    logger.addHandler(file_handler)
+    logger.addHandler(make_file_handler(logger.name + '.log'))
 
     logger.setLevel(conf['level'])
     if conf['errors_to_console']:
-        stream_formatter = logging.Formatter(conf['stream_format'])
-        stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(logging.ERROR)
-        stream_handler.setFormatter(stream_formatter)
-
-        logger.addHandler(stream_handler)
+        logger.addHandler(error_console_handler())
 
     logger.addFilter(_RelpathFilter())
     return logger
@@ -482,7 +468,7 @@ class ArtifactorHandler(logging.Handler):
         return msg, kwargs
 
 
-logger = create_logger('cfme')
+logger = setup_logger(logging.getLogger('cfme'))
 logger.addHandler(ArtifactorHandler())
 
 add_prefix = PrefixAddingLoggerFilter()

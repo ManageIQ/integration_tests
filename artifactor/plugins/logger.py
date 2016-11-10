@@ -11,10 +11,10 @@ artifactor:
             plugin: logger
             level: DEBUG
 """
-
+import os
 import logging
 from artifactor import ArtifactorBasePlugin
-
+from utils.log import make_file_handler
 logger = logging.getLogger(__name__)
 
 
@@ -46,16 +46,18 @@ class Logger(ArtifactorBasePlugin):
                 return None
         self.store[slaveid] = self.Test(test_ident)
         self.store[slaveid].in_progress = True
-        os_filename = "{artifact_path}/{ident}-cfme.log".format(
-            artifact_path=artifact_path, ident=self.ident)
-        # we overwrite
-        self.store[slaveid].handler = logging.FileHandler(os_filename, mode='w')
+        filename = "{ident}-cfme.log".format(ident=self.ident)
+        self.store[slaveid].handler = make_file_handler(
+            filename,
+            root=artifact_path,
+            # we overwrite
+            mode='w')
         self.store[slaveid].handler.setLevel(self.level)
 
-        desc = os_filename.rsplit("-", 1)[-1]
         self.fire_hook('filedump', test_location=test_location, test_name=test_name,
-            description=desc, slaveid=slaveid, contents="", file_type="log",
-            display_glyph="align-justify", dont_write=True, os_filename=os_filename,
+            description="cfme.log", slaveid=slaveid, contents="", file_type="log",
+            display_glyph="align-justify", dont_write=True,
+            os_filename=os.path.join(artifact_path, filename),
             group_id="pytest-logfile")
 
     @ArtifactorBasePlugin.check_configured
