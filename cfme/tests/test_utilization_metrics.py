@@ -4,22 +4,24 @@ import pytest
 import random
 import time
 
+from cfme.configure.configuration import get_server_roles, set_server_roles, candu
+from cfme.common.provider import BaseProvider
+from cfme.exceptions import FlashMessageException
 from cfme import test_requirements
 from fixtures.pytest_store import store
+from operator import attrgetter
 from utils import providers
 from utils import testgen
 from utils import conf
 from utils.blockers import BZ
 from utils.log import logger
-from cfme.configure.configuration import get_server_roles, set_server_roles, candu
-from cfme.common.provider import BaseProvider
-from cfme.exceptions import FlashMessageException
+from utils.version import current_version
 
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter', 'rhevm', 'ec2', 'rhos'],
-        required_fields=[['cap_and_util', 'chargeback_vm']])
+        metafunc, ['ec2', 'openstack', 'azure', 'gce'],
+        required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 pytestmark = [
@@ -64,7 +66,7 @@ def handle_provider(provider):
 
 @pytest.fixture(scope="module")
 def metrics_collection(handle_provider, provider, enable_candu):
-    """check the db is gathering collection data for the given provider
+    """Check the db is gathering collection data for the given provider.
 
     Metadata:
         test_flag: metrics_collection
@@ -89,7 +91,7 @@ def metrics_collection(handle_provider, provider, enable_candu):
         last_vm_count = vm_count
         logger.info("name: %s, id: %s, vms: %s, hosts: %s",
             provider.key, mgmt_system_id, vm_count, host_count)
-        # count host and vm metrics for the provider we're testing
+        # Count host and vm metrics for the provider we're testing
         host_count = store.current_appliance.db.session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id).filter(
             metrics_tbl.resource_type == "Host"
@@ -142,66 +144,75 @@ def query_metric_db(db, provider, metric, vm_name=None, host_name=None):
 
 
 # Tests to check that specific metrics are being collected
+@pytest.mark.uncollectif(
+    lambda provider: current_version() < "5.7" and provider.type == 'gce')
 def test_raw_metric_vm_cpu(metrics_collection, db, provider):
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
+    vm_name = provider.data['cap_and_util']['capandu_vm']
     if provider.category == "infra":
         query = query_metric_db(db, provider, 'cpu_usagemhz_rate_average',
             vm_name)
+        average_rate = attrgetter('cpu_usagemhz_rate_average')
     elif provider.category == "cloud":
         query = query_metric_db(db, provider, 'cpu_usage_rate_average',
             vm_name)
+        average_rate = attrgetter('cpu_usagemhz_rate_average')
 
     for record in query:
-        if record.cpu_usagemhz_rate_average is None:
-            pass
-        else:
-            assert record.cpu_usagemhz_rate_average > 0, 'Zero VM CPU Usage'
+        if average_rate(record) is not None:
+            assert average_rate(record) > 0, 'Zero VM CPU Usage'
             break
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.type == 'ec2')
+    lambda provider: provider.type == 'ec2' or provider.type == 'gce')
 def test_raw_metric_vm_memory(metrics_collection, db, provider):
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
-    query = query_metric_db(db, provider, 'derived_memory_used',
-        vm_name)
+    vm_name = provider.data['cap_and_util']['capandu_vm']
+
+    if provider.type == 'azure':
+        query = query_metric_db(db, provider, 'mem_usage_absolute_average',
+            vm_name)
+        average_rate = attrgetter('mem_usage_absolute_average')
+    else:
+        query = query_metric_db(db, provider, 'derived_memory_used',
+            vm_name)
+        average_rate = attrgetter('derived_memory_used')
 
     for record in query:
-        if record.derived_memory_used is None:
-            pass
-        else:
-            assert record.derived_memory_used > 0, 'Zero VM Memory usage'
+        if average_rate(record) is not None:
+            assert average_rate(record) > 0, 'Zero VM Memory Usage'
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: current_version() < "5.7" and provider.type == 'gce')
 @pytest.mark.meta(
-    blockers=[BZ(1322094, unblock=lambda provider: provider.type != 'rhevm')]
+    blockers=[BZ(1322094, forced_streams=["5.6", "5.7"],
+        unblock=lambda provider: provider.type != 'rhevm')]
 )
 def test_raw_metric_vm_network(metrics_collection, db, provider):
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
+    vm_name = provider.data['cap_and_util']['capandu_vm']
     query = query_metric_db(db, provider, 'net_usage_rate_average',
         vm_name)
 
     for record in query:
-        if record.net_usage_rate_average is None:
-            pass
-        else:
+        if record.net_usage_rate_average is not None:
             assert record.net_usage_rate_average > 0, 'Zero VM Network IO'
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: current_version() < "5.7" and provider.type == 'gce')
 @pytest.mark.meta(
-    blockers=[BZ(1322094, unblock=lambda provider: provider.type != 'rhevm')]
+    blockers=[BZ(1322094, forced_streams=["5.6", "5.7"],
+        unblock=lambda provider: provider.type != 'rhevm')]
 )
 def test_raw_metric_vm_disk(metrics_collection, db, provider):
-    vm_name = provider.data['cap_and_util']['chargeback_vm']
+    vm_name = provider.data['cap_and_util']['capandu_vm']
     query = query_metric_db(db, provider, 'disk_usage_rate_average',
         vm_name)
 
     for record in query:
-        if record.disk_usage_rate_average is None:
-            pass
-        else:
+        if record.disk_usage_rate_average is not None:
             assert record.disk_usage_rate_average > 0, 'Zero VM Disk IO'
             break
 
@@ -214,9 +225,7 @@ def test_raw_metric_host_cpu(metrics_collection, db, provider):
         host_name)
 
     for record in query:
-        if record.cpu_usagemhz_rate_average is None:
-            pass
-        else:
+        if record.cpu_usagemhz_rate_average is not None:
             assert record.cpu_usagemhz_rate_average > 0, 'Zero Host CPU Usage'
             break
 
@@ -229,9 +238,7 @@ def test_raw_metric_host_memory(metrics_collection, db, provider):
         host_name)
 
     for record in query:
-        if record.derived_memory_used is None:
-            pass
-        else:
+        if record.derived_memory_used is not None:
             assert record.derived_memory_used > 0, 'Zero Host Memory Usage'
             break
 
@@ -244,9 +251,7 @@ def test_raw_metric_host_network(metrics_collection, db, provider):
         host_name)
 
     for record in query:
-        if record.net_usage_rate_average is None:
-            pass
-        else:
+        if record.net_usage_rate_average is not None:
             assert record.net_usage_rate_average > 0, 'Zero Host Network IO'
             break
 
@@ -254,7 +259,8 @@ def test_raw_metric_host_network(metrics_collection, db, provider):
 @pytest.mark.uncollectif(
     lambda provider: provider.category == 'cloud')
 @pytest.mark.meta(
-    blockers=[BZ(1322094, unblock=lambda provider: provider.type != 'rhevm')]
+    blockers=[BZ(1322094, forced_streams=["5.6", "5.7"],
+        unblock=lambda provider: provider.type != 'rhevm')]
 )
 def test_raw_metric_host_disk(metrics_collection, db, provider):
     host_name = get_host_name(provider)
@@ -263,7 +269,5 @@ def test_raw_metric_host_disk(metrics_collection, db, provider):
 
     for record in query:
         if record.disk_usage_rate_average is None:
-            pass
-        else:
             assert record.disk_usage_rate_average > 0, 'Zero Host Disk IO'
             break
