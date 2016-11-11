@@ -134,7 +134,6 @@ import inspect
 import logging
 import sys
 import warnings
-from logging.handlers import RotatingFileHandler
 from time import time
 from traceback import extract_tb, format_tb
 
