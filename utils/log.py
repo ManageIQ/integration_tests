@@ -337,11 +337,13 @@ class Perflog(object):
             return None
 
 
-def make_file_handler(filename, root=log_path.strpath, **kw):
+def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
     filename = os.path.join(root, filename)
     handler = logging.FileHandler(filename, **kw)
     formatter = logging.Formatter('%(asctime)-15s [%(levelname).1s] %(message)s (%(source)s)')
     handler.setFormatter(formatter)
+    if level is not None:
+        handler.setLevel(level)
     return handler
 
 
@@ -361,9 +363,8 @@ def setup_logger(logger):
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
     # entire logging config into env.yaml
 
-    logger.addHandler(make_file_handler(logger.name + '.log'))
+    logger.addHandler(make_file_handler(logger.name + '.log', level=conf['level']))
 
-    logger.setLevel(conf['level'])
     if conf['errors_to_console']:
         logger.addHandler(error_console_handler())
 
@@ -482,9 +483,7 @@ def _configure_warnings():
     wlog = logging.getLogger('py.warnings')
     wlog.addFilter(WarningsRelpathFilter())
     wlog.addFilter(WarningsDeduplicationFilter())
-    file_handler = RotatingFileHandler(
-        str(log_path.join('py.warnings.log')), encoding='utf8')
-    wlog.addHandler(file_handler)
+    wlog.addHandler(make_file_handler('py.warnings.log'))
     wlog.propagate = False
 _configure_warnings()
 
