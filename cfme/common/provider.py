@@ -8,7 +8,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException
 )
-from cfme.web_ui import breadcrumbs, summary_title
+from cfme.web_ui import breadcrumbs_names, summary_title
 from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, Form, Input, Radio
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
@@ -430,7 +430,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         ensure_browser_open()
         collection = '{} Providers'.format(self.string_name)
         title = '{} (Summary)'.format(self.name)
-        return breadcrumbs() == [collection, title] and summary_title() == title
+        return breadcrumbs_names() == [collection, title] and summary_title() == title
 
     def load_details(self, refresh=False):
         """To be compatible with the Taggable and PolicyProfileAssignable mixins."""

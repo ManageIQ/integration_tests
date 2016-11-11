@@ -2,7 +2,7 @@ import pytest
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.version import current_version
-from cfme.web_ui import toolbar as tb, Quadicon, breadcrumbs
+from cfme.web_ui import toolbar as tb, Quadicon, breadcrumbs_names
 from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.provider import ContainersProvider
 
@@ -36,7 +36,7 @@ def test_edit_selected_containers_provider():
     provider = ContainersProvider(name)
     provider.load_details()
     navigate_to(provider, 'EditFromDetails')
-    assert 'Edit Containers Providers \'{}\''.format(name) == breadcrumbs()[-1]
+    assert 'Edit Containers Providers \'{}\''.format(name) == breadcrumbs_names()[-1]
 
 # CMP-9881
 
