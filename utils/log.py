@@ -130,12 +130,10 @@ Members
 ^^^^^^^
 
 """
-import fauxfactory
 import inspect
 import logging
 import sys
 import warnings
-import datetime as dt
 from logging.handlers import RotatingFileHandler
 from time import time
 from traceback import extract_tb, format_tb
