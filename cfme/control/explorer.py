@@ -250,7 +250,9 @@ nav.add_branch(
         "replicator_conditions": _conditions("replicator", "Replicator", "Replicator"),
         "pod_conditions": _conditions("pod", "Pod", "Pod"),
         "container_node_conditions": _conditions("container_node", "Container Node", "Node"),
-        "container_image_conditions": _conditions("container_image", "Container Image", "Image"),
+        "container_image_conditions": _conditions("container_image", "Container Image", {
+            version.LOWEST: "Image",
+            '5.7': "Container Image"}),
 
         "control_explorer_action":
         [
