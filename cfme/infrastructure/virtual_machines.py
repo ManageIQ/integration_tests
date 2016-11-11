@@ -368,7 +368,8 @@ class Vm(BaseVM, Common):
         """Returns the current snapshot name."""
         self.load_details(refresh=True)
         sel.click(InfoBlock("Properties", "Snapshots"))
-        text = sel.text("//a[contains(normalize-space(.), '(Active)')]").strip()
+        text = sel.text("//a[contains(normalize-space(.), '(Active)')]|"
+            "//a[contains(normalize-space(.), '(Active)')]").strip()
         return re.sub(r"\s*\(Active\)$", "", text)
 
     @property
