@@ -712,6 +712,46 @@ class SNMPForm(View):
         raise NotImplementedError
 
 
+class ScriptBox(Widget):
+    """Represents a script box as is present on the customization templates pages.
+    This box has to be activated before keys can be sent. Since this can't be done
+    until the box element is visible, and some dropdowns change the element, it must
+    be activated "inline".
+
+    Args:
+    """
+
+    def __init__(self, parent, locator=None, item_name=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+        self.item_name = item_name
+
+    def __locator__(self):
+        if not self.locator:
+            self.locator = "//textarea[contains(@id, 'method_data')]"
+        return self.locator
+
+    @property
+    def name(self):
+        if not self.item_name:
+            self.item_name = 'ManageIQ.editor'
+        return self.item_name
+
+    def fill(self, values):
+        self.browser.execute_script('{}.setValue(arguments[0]);'.format(self.name), values)
+        self.browser.execute_script('{}.save();'.format(self.name))
+
+    def get_value(self):
+        script = self.browser.execute_script('return {}.getValue();'.format(self.name))
+        script = script.replace('\\"', '"').replace("\\n", "\n")
+        return script
+
+    def workaround_save_issue(self):
+        # We need to fire off the handlers manually in some cases ...
+        self.browser.execute_script(
+            "{}._handlers.change.map(function(handler) {{ handler() }});".format(self.item_name))
+
+
 class Paginator(Widget):
     """ Represents Paginator control that includes First/Last/Next/Prev buttons
     and a control displaying amount of items on current page vs overall amount.
