@@ -43,8 +43,8 @@ class Timeprofile(Updateable, Navigatable):
             ("timezone", {
                 version.LOWEST: Select("select#profile_tz"),
                 "5.5": AngularSelect("profile_tz")}),
-            ("days", Input("all_days")),
-            ("hours", Input("all_hours")),
+            ("days", CFMECheckbox("all_days")),
+            ("hours", CFMECheckbox("all_hours")),
         ]
     )
 
@@ -356,6 +356,7 @@ class DefaultFilterAll(CFMENavigateStep):
 
     def step(self):
         tabs.select_tab("Default Filters")
+
 
 def set_default_view(button_group_name, view):
     bg = ButtonGroup(button_group_name)
