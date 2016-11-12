@@ -126,7 +126,7 @@ class TimeprofileEdit(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        timeprofile_table.click_cell("description", self.timeprofile.description)
+        timeprofile_table.click_cell("description", self.obj.description)
 
 
 class Visual(Updateable, Navigatable):
