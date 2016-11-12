@@ -31,7 +31,7 @@ exp_comp_parametrize = pytest.mark.parametrize('key', exp_comp_params, scope="mo
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    _setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
+    _setup_a_provider(prov_class="cloud", prov_type="openstack", validate=True, check_existing=True)
 
 
 def set_tile_view(name):
