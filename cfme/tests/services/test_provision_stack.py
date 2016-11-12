@@ -215,8 +215,7 @@ def test_provision_stack(provider, provisioning, create_template, catalog, reque
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog_name, orch_template=template.template_name,
-                  provider_type=provider.name)
+                  dialog=dialog_name, orch_template=template.template_name)
     catalog_item.create()
 
     @request.addfinalizer
@@ -248,8 +247,7 @@ def test_reconfigure_service(provider, provisioning, create_template, catalog, r
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog_name, orch_template=template.template_name,
-                  provider_type=provider.name)
+                  dialog=dialog_name, orch_template=template.template_name)
     catalog_item.create()
     stack_data = prepare_stack_data(provider, provisioning)
 
@@ -283,8 +281,7 @@ def test_remove_template_provisioning(provider, provisioning, create_template, c
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog_name, orch_template=template.template_name,
-                  provider_type=provider.name)
+                  dialog=dialog_name, orch_template=template.template_name)
     catalog_item.create()
     stack_data = prepare_stack_data(provider, provisioning)
     service_catalogs = ServiceCatalogs("service_name", stack_data)
@@ -311,8 +308,7 @@ def test_retire_stack(provider, provisioning, create_template, catalog, request)
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog_name, orch_template=template.template_name,
-                  provider_type=provider.name)
+                  dialog=dialog_name, orch_template=template.template_name)
     catalog_item.create()
     stack_data = prepare_stack_data(provider, provisioning)
     service_catalogs = ServiceCatalogs("service_name", stack_data)
