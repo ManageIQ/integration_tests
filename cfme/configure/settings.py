@@ -72,8 +72,9 @@ class Timeprofile(Updateable, Navigatable):
                                      },
              action=self.save_button)
         tp_ui_bug = BZ(1334440, forced_streams=["5.6"])
+        end = "saved" if version.current_version() > '5.7' else "added"
         if not tp_ui_bug.blocks:
-            flash.assert_success_message('Time Profile "{}" was added'.format(self.description))
+            flash.assert_success_message('Time Profile "{}" was {}'.format(self.description, end))
 
     def update(self, updates):
         navigate_to(self, 'Edit')
