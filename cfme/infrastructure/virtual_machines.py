@@ -378,7 +378,7 @@ class Vm(BaseVM, Common):
         self.load_details(refresh=True)
         sel.click(InfoBlock("Properties", "Snapshots"))
         text = sel.text("//a[contains(normalize-space(.), '(Active)')]|"
-            "//a[contains(normalize-space(.), '(Active)')]").strip()
+            "//li[contains(normalize-space(.), '(Active)')]").strip()
         return re.sub(r"\s*\(Active\)$", "", text)
 
     @property
