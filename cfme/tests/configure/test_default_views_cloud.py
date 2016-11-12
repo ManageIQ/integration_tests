@@ -5,7 +5,7 @@ import re
 from cfme import test_requirements
 from cfme.fixtures import pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import ButtonGroup, form_buttons, Quadicon
+from cfme.web_ui import ButtonGroup, form_buttons, Quadicon, fill
 from utils.providers import setup_a_provider as _setup_a_provider
 from cfme.configure import settings  # NOQA
 from cfme.cloud import instance  # NOQA
@@ -27,6 +27,15 @@ exp_comp_params = [
 
 gtl_parametrize = pytest.mark.parametrize('key', gtl_params, scope="module")
 exp_comp_parametrize = pytest.mark.parametrize('key', exp_comp_params, scope="module")
+
+
+def select_two_quads():
+    count = 0
+    for quad in Quadicon.all("cloud_prov", this_page=True):
+        count += 1
+        if count > 2:
+            break
+        fill(quad.checkbox(), True)
 
 
 @pytest.fixture(scope="module")
@@ -143,8 +152,7 @@ def test_expanded_view(request, setup_a_provider, key):
     default_view = get_default_view(name[0])
     set_expanded_view(name[0])
     sel.force_navigate(name[1])
-    Quadicon.select_first_quad()
-    select_second_quad()
+    select_two_quads()
     tb.select(name[2], name[3])
     assert tb.is_active('Expanded View'), "Expanded view setting failed"
     reset_default_view(name[0], default_view)
@@ -156,8 +164,7 @@ def test_compressed_view(request, setup_a_provider, key):
     default_view = get_default_view(name[0])
     set_compressed_view(name[0])
     sel.force_navigate(name[1])
-    Quadicon.select_first_quad()
-    select_second_quad()
+    select_two_quads()
     tb.select(name[2], name[3])
     assert tb.is_active('Compressed View'), "Compressed view setting failed"
     reset_default_view(name[0], default_view)
@@ -170,8 +177,7 @@ def test_details_view(request, setup_a_provider, key):
     default_view = get_default_view(button_name)
     set_details_view(button_name)
     sel.force_navigate(name[1])
-    Quadicon.select_first_quad()
-    select_second_quad()
+    select_two_quads()
     tb.select(name[2], name[3])
     assert tb.is_active('Details Mode'), "Details view setting failed"
     reset_default_view(button_name, default_view)
@@ -184,8 +190,7 @@ def test_exists_view(request, setup_a_provider, key):
     default_view = get_default_view(button_name)
     set_exist_view(button_name)
     sel.force_navigate(name[1])
-    Quadicon.select_first_quad()
-    select_second_quad()
+    select_two_quads()
     tb.select(name[2], name[3])
     assert tb.is_active('Exists Mode'), "Exists view setting failed"
     reset_default_view(button_name, default_view)

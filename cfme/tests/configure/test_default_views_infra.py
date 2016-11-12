@@ -49,7 +49,7 @@ def select_two_quads():
         count += 1
         if count > 2:
             break
-        fill(quad.checkbox, True)
+        fill(quad.checkbox(), True)
 
 
 @pytest.fixture(scope="module")
