@@ -10,7 +10,7 @@ from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons
     ButtonGroup, Quadicon, CheckboxTree, Input, CFMECheckbox)
 from cfme.web_ui.menu import nav
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils import version
+from utils import version, deferred_verpick
 from utils.blockers import BZ
 from utils.pretty import Pretty
 from utils.update import Updateable
@@ -48,7 +48,10 @@ class Timeprofile(Updateable, Navigatable):
         ]
     )
 
-    save_button = form_buttons.FormButton("Add this Time Profile")
+    save_button = deferred_verpick({
+        version.LOWEST: form_buttons.FormButton("Add this Time Profile"),
+        '5.7': form_buttons.FormButton('Add')
+    })
 
     def __init__(self, description=None, scope=None, days=None, hours=None, timezone=None,
             appliance=None):
