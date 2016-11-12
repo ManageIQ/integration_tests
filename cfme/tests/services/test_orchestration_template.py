@@ -74,6 +74,7 @@ def test_copy_template(provisioning, create_template):
                                      description="my template")
     template.create(create_template)
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
+    sel.refresh()
     template.copy_template(template.template_name + "_copied", copied_method)
     template.delete()
 
