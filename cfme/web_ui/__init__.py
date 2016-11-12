@@ -2059,6 +2059,11 @@ class BootstrapTreeview(object):
             return result
 
 
+@fill.method((BootstrapTreeview, Sequence))
+def _fill_bstree_seq(tree, values):
+    tree.click_path(*values)
+
+
 class Tree(Pretty):
     """ A class directed at CFME Tree elements
 

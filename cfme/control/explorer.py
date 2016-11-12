@@ -8,7 +8,7 @@ from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
 from cfme.web_ui import fill, flash, form_buttons, table_in_object
 from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSelectForm, \
-    CheckboxSelect, Input, AngularSelect
+    CheckboxSelect, Input, AngularSelect, BootstrapTreeview
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
 from utils import version, deferred_verpick
@@ -1357,8 +1357,10 @@ class Action(Updateable, Pretty):
         Form(
             fields=[
                 (
-                    "tag",
-                    Tree(trees)
+                    "tag", {
+                        version.LOWEST: Tree(trees),
+                        '5.7': BootstrapTreeview('action_tags_treebox')
+                    }
                 ),
             ]
         ),
