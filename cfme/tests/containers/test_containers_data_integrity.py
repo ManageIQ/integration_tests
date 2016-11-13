@@ -11,12 +11,11 @@ from cfme.web_ui import history
 from utils.appliance.implementations.ui import  navigate_to
 
 
-
 pytestmark = [
     pytest.mark.uncollectif(
         lambda: current_version() < "5.6"),
     # pytest.mark.usefixtures('has_no_container_providers'),
-    # pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope='function')
@@ -38,15 +37,25 @@ def test_containers_integrity_properties():
             * Goes to Containers -- > Containers menu
             * Go through each Containers in the menu and check validity of Properties fields
         """
-    navigate_to(Container, 'All', use_resetter=False)
+    # navigate_to(Container, 'All', use_resetter=False)
     container_names = Container.get_container_names()
     container_pod_names = Container.get_pod_names()
     dictionary = dict(zip(container_names, container_pod_names))
+    # for container_name, container_pod_name in dictionary.iteritems():
+    #     for container_field in container_fields:
+    #         pod = Pod(container_pod_name, ContainersProvider)
+    #         cont = Container(container_name, pod)
+    #         somevalue = (str(cont.summary.properties.__getattribute__(container_field.lower())))
+    #         print(somevalue)
+    #         assert cont.summary.properties.__getattribute__(container_field.lower())
+    #         history.select_nth_history_item(0)
+
     for container_name, container_pod_name in dictionary.iteritems():
         for container_field in container_fields:
             pod = Pod(container_pod_name, ContainersProvider)
             cont = Container(container_name, pod)
-            assert cont.summary.properties.__getattribute__(container_field.lower())
+            somevalue = (str(cont.summary.properties.__getattr__(container_field.lower())))
+            assert cont.summary.properties.__getattr__(container_field.lower())
             history.select_nth_history_item(0)
 
 
