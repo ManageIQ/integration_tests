@@ -138,7 +138,7 @@ from time import time
 from traceback import extract_tb, format_tb
 
 from cached_property import cached_property
-from utils import conf, safe_string
+from utils import conf
 from utils.path import get_rel_path, log_path, project_path
 
 import os
