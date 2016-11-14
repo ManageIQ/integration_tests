@@ -94,7 +94,7 @@ def test_provider_add_with_bad_credentials(provider):
         test_flag: crud
     """
     if provider.type == "azure":
-        principal = uuid.uuid4()
+        principal = str(uuid.uuid4())
     else:
         principal = "bad"
     provider.credentials['default'] = provider.Credential(
