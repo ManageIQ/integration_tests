@@ -3,9 +3,11 @@
 import pytest
 import re
 from cfme import test_requirements
+from cfme.cloud.provider import CloudProvider
 from cfme.fixtures import pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import ButtonGroup, form_buttons, Quadicon, fill
+from utils.appliance.implementations.ui import navigate_to
 from utils.providers import setup_a_provider as _setup_a_provider
 from cfme.configure import settings  # NOQA
 from cfme.cloud import instance  # NOQA
@@ -14,13 +16,13 @@ pytestmark = [pytest.mark.tier(3),
               test_requirements.settings]
 
 
-gtl_params = [
-    'Cloud Providers/clouds_providers',
-    'Availability Zones/clouds_availability_zones',
-    'Flavors/clouds_flavors',
-    'Instances/clouds_instances',
-    'Images/clouds_images'
-]
+gtl_params = {
+    'Cloud Providers': CloudProvider,
+    'Availability Zones': 'clouds_availability_zones',
+    'Flavors': 'clouds_flavors',
+    'Instances': 'clouds_instances',
+    'Images': 'clouds_images'
+}
 
 gtl_parametrize = pytest.mark.parametrize('key', gtl_params, scope="module")
 
@@ -61,15 +63,13 @@ def get_default_view(name):
     return default_view
 
 
-def select_second_quad():
-    checkbox = ("(.//input[@id='listcheckbox'])[2]")
-    sel.check(checkbox)
-
-
 def set_and_test_default_view(group_name, view, page):
     default_view = get_default_view(group_name)
     set_view(group_name, view)
-    sel.force_navigate(page)
+    if isinstance(basestring, page):
+        sel.force_navigate(page)
+    else:
+        navigate_to(page, 'All', use_resetter=False)
     assert tb.is_active(view), "{} view setting failed".format(view)
     reset_default_view(group_name, default_view)
 

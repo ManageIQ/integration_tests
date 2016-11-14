@@ -4,10 +4,11 @@ import pytest
 import re
 from cfme.fixtures import pytest_selenium as sel
 from cfme import test_requirements
+from cfme.infrastructure.provider import InfraProvider
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import ButtonGroup, form_buttons, Quadicon, fill
+from utils.appliance.implementations.ui import navigate_to
 from utils.providers import setup_a_provider as _setup_a_provider
-from utils import version
 from cfme.configure import settings  # NOQA
 from cfme.services.catalogs import catalog_item  # NOQA
 from cfme.services import workloads  # NOQA
@@ -17,23 +18,17 @@ pytestmark = [pytest.mark.tier(3),
               test_requirements.settings]
 
 
-def minimise_dict(item):
-    if isinstance(item, dict):
-        return version.pick({str(k): v for k, v in item.iteritems()})
-    else:
-        return item
-
 # TODO: infrastructure hosts, pools, stores, clusters, catalog_items are removed
 #  due to navmazing. all items have to be put back once navigation change is fully done
 
-gtl_params = [
-    'Infrastructure Providers/infrastructure_providers',
-    'VMs/infra_vms',
-    'My Services/my_services',
+gtl_params = {
+    'Infrastructure Providers': InfraProvider,
+    'VMs': 'infra_vms',
+    'My Services': 'my_services',
     # 'Catalog Items/catalog_items',
-    'VMs & Instances/service_vms_instances',
-    'Templates & Images/service_templates_images'
-]
+    'VMs & Instances': 'service_vms_instances',
+    'Templates & Images': 'service_templates_images'
+}
 
 gtl_parametrize = pytest.mark.parametrize('key', gtl_params, scope="module")
 
@@ -74,15 +69,13 @@ def get_default_view(name):
     return default_view
 
 
-def select_second_quad():
-    checkbox = ("(.//input[@id='listcheckbox'])[2]")
-    sel.check(checkbox)
-
-
 def set_and_test_default_view(group_name, view, page):
     default_view = get_default_view(group_name)
     set_view(group_name, view)
-    sel.force_navigate(page)
+    if isinstance(basestring, page):
+        sel.force_navigate(page)
+    else:
+        navigate_to(page, 'All', use_resetter=False)
     assert tb.is_active(view), "{} view setting failed".format(view)
     reset_default_view(group_name, default_view)
 
