@@ -93,8 +93,12 @@ def test_provider_add_with_bad_credentials(provider):
     Metadata:
         test_flag: crud
     """
+    if provider.type == "azure":
+        principal = uuid.uuid4()
+    else:
+        principal = "bad"
     provider.credentials['default'] = provider.Credential(
-        principal='bad',
+        principal=principal,
         secret='reallybad',
     )
     with error.expected('Login failed due to a bad username or password.'):
