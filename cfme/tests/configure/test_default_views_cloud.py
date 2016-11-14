@@ -66,38 +66,30 @@ def select_second_quad():
     sel.check(checkbox)
 
 
+def set_and_test_default_view(group_name, view, page):
+    default_view = get_default_view(group_name)
+    set_view(group_name, view)
+    sel.force_navigate(page)
+    assert tb.is_active(view), "{} view setting failed".format(view)
+    reset_default_view(group_name, default_view)
+
+
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_tile_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
-    default_view = get_default_view(name[0])
-    set_view(name[0], 'Tile View')
-    sel.force_navigate(name[1])
-    if name[1] == "clouds_providers" or "clouds_instances":
-        tb.select('Tile View')
-    assert tb.is_active('Tile View'), "Tile Default view setting failed"
-    reset_default_view(name[0], default_view)
+    set_and_test_default_view(name[0], 'Tile View', name[1])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_list_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
-    default_view = get_default_view(name[0])
-    set_view(name[0], 'List View')
-    sel.force_navigate(name[1])
-    if name[1] == "clouds_providers" or "clouds_instances":
-        tb.select('List View')
-    assert tb.is_active('List View'), "List Default view setting failed"
-    reset_default_view(name[0], default_view)
+    set_and_test_default_view(name[0], 'List View', name[1])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_grid_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
-    default_view = get_default_view(name[0])
-    set_view(name[0], 'Grid View')
-    sel.force_navigate(name[1])
-    assert tb.is_active('Grid View'), "Grid Default view setting failed"
-    reset_default_view(name[0], default_view)
+    set_and_test_default_view(name[0], 'Grid View', name[1])
 
 
 def set_and_test_view(group_name, view):
