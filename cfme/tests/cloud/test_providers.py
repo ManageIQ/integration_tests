@@ -94,14 +94,19 @@ def test_provider_add_with_bad_credentials(provider):
         test_flag: crud
     """
     if provider.type == "azure":
+        flash = (
+            "Credential validation was not successful: Incorrect credentials - "
+            "check your Azure Client ID and Client Key"
+        )
         principal = str(uuid.uuid4())
     else:
+        flash = 'Login failed due to a bad username or password.'
         principal = "bad"
     provider.credentials['default'] = provider.Credential(
         principal=principal,
         secret='reallybad',
     )
-    with error.expected('Login failed due to a bad username or password.'):
+    with error.expected(flash):
         provider.create(validate_credentials=True)
 
 
