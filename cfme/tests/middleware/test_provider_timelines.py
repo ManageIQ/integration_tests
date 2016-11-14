@@ -8,6 +8,9 @@ from deployment_methods import EAP_PRODUCT_NAME, RESOURCE_WAR_NAME
 from deployment_methods import deploy_archive, generate_runtime_name, undeploy
 from deployment_methods import check_deployment_appears
 from deployment_methods import check_deployment_not_listed
+from datasource_methods import ORACLE_12C_DS
+from datasource_methods import get_datasource_from_list
+from datasource_methods import generate_ds_name
 from utils.wait import wait_for
 from utils.blockers import BZ
 from utils import error
@@ -21,6 +24,8 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"],
 DEPLOYMENT_OK_EVENT = 'hawkular_deployment.ok'
 UNDEPLOYMENT_OK_EVENT = 'hawkular_deployment_remove.ok'
 DEPLOYMENT_FAIL_EVENT = 'hawkular_deployment.fail'
+DS_CREATION_OK_EVENT = 'hawkular_datasource.ok'
+DS_DELETION_OK_EVENT = 'hawkular_datasource_remove.ok'
 
 
 # enable when solution to read new timelines will be implemented
@@ -61,6 +66,34 @@ def test_deployment_failure_timelines(provider):
     check_contains_event(timelines, before_test_date, DEPLOYMENT_FAIL_EVENT)
     load_event_summary(timelines)
     check_contains_event(timelines, before_test_date, DEPLOYMENT_FAIL_EVENT)
+
+
+# enable when solution to read new timelines will be implemented
+@pytest.mark.uncollect
+@pytest.mark.meta(blockers=[BZ(1383414, forced_streams=["5.7", "upstream"])])
+def test_create_datasource_timelines(provider):
+    # events are shown in UTC timezone
+    before_test_date = datetime.utcnow()
+    gen_ds_creation_events(provider, ORACLE_12C_DS)
+    timelines = provider.timelines
+    load_event_details(timelines)
+    check_contains_event(timelines, before_test_date, DS_CREATION_OK_EVENT)
+    load_event_summary(timelines)
+    check_not_contains_event(timelines, before_test_date, DS_CREATION_OK_EVENT)
+
+
+# enable when solution to read new timelines will be implemented
+@pytest.mark.uncollect
+@pytest.mark.meta(blockers=[BZ(1390756, forced_streams=["5.7", "upstream"])])
+def test_delete_dataource_timelines(provider):
+    # events are shown in UTC timezone
+    before_test_date = datetime.utcnow()
+    gen_ds_deletion_events(provider, ORACLE_12C_DS)
+    timelines = provider.timelines
+    load_event_details(timelines)
+    check_contains_event(timelines, before_test_date, DS_DELETION_OK_EVENT)
+    load_event_summary(timelines)
+    check_not_contains_event(timelines, before_test_date, DS_DELETION_OK_EVENT)
 
 
 def load_event_details(timelines):
@@ -115,3 +148,24 @@ def gen_deploy_fail_events(provider):
             deploy_archive(provider, server, file_path, runtime_name)
     check_deployment_appears(provider, server, runtime_name)
     return runtime_name
+
+
+def gen_ds_creation_events(provider, datasource_params):
+    server = get_server(provider, EAP_PRODUCT_NAME)
+    ds_name = generate_ds_name(datasource_params[1])
+    jndi_name = generate_ds_name(datasource_params[2])
+    server.add_datasource(datasource_params[0], ds_name, jndi_name,
+                          datasource_params[3], datasource_params[4], datasource_params[5],
+                          datasource_params[6], datasource_params[7], datasource_params[8])
+    return ds_name
+
+
+def gen_ds_deletion_events(provider, datasource_params):
+    datasource_name = gen_ds_creation_events(provider, datasource_params)
+    delete_datasource(provider, datasource_name)
+    return datasource_name
+
+
+def delete_datasource(provider, datasource_name):
+    ds = get_datasource_from_list(provider, datasource_name)
+    ds.delete()

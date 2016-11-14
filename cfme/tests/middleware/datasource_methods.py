@@ -1,3 +1,4 @@
+import fauxfactory
 from utils.wait import wait_for
 from jdbc_driver_methods import DB2_105_JDBC, MSSQL_2014_JDBC, MYSQL_57_JDBC
 from jdbc_driver_methods import POSTGRESPLUS_94_JDBC, POSTGRESQL_94_JDBC
@@ -75,6 +76,10 @@ def get_datasources_name(datasources):
     Return the set of datasources names
     """
     return set((datasource.name) for datasource in datasources)
+
+
+def generate_ds_name(ds_name):
+    return "{}{}".format(ds_name, fauxfactory.gen_alpha(8).lower())
 
 
 def check_datasource_listed(provider, name, server=None):
