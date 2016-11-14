@@ -3,6 +3,7 @@ import fauxfactory
 import cfme.configure.settings as st
 import pytest
 import utils.error as error
+from utils.blockers import BZ
 from utils.update import update
 from cfme import test_requirements
 
@@ -29,6 +30,7 @@ def test_timeprofile_crud():
     timeprofile.delete()
 
 
+@pytest.mark.meta(blockers=[BZ(1394833, forced_streams=["5.7", "upstream"])])
 @pytest.mark.sauce
 def test_timeprofile_duplicate_name():
     nt = new_timeprofile()
