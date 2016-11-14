@@ -21,12 +21,8 @@ gtl_params = [
     'Instances/clouds_instances',
     'Images/clouds_images'
 ]
-exp_comp_params = [
-    'Compare/clouds_instances/Configuration/Compare Selected items'
-]
 
 gtl_parametrize = pytest.mark.parametrize('key', gtl_params, scope="module")
-exp_comp_parametrize = pytest.mark.parametrize('key', exp_comp_params, scope="module")
 
 
 def select_two_quads():
@@ -43,52 +39,10 @@ def setup_a_provider():
     _setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
 
 
-def set_tile_view(name):
-    bg = ButtonGroup(name)
-    if bg.active != 'Tile View':
-        bg.choose('Tile View')
-        sel.click(form_buttons.save)
-
-
-def set_list_view(name):
-    bg = ButtonGroup(name)
-    if bg.active != 'List View':
-        bg.choose('List View')
-        sel.click(form_buttons.save)
-
-
-def set_grid_view(name):
-    bg = ButtonGroup(name)
-    if bg.active != 'Grid View':
-        bg.choose('Grid View')
-        sel.click(form_buttons.save)
-
-
-def set_expanded_view(name):
-    bg = ButtonGroup(name)
-    if bg.active != 'Expanded View':
-        bg.choose('Expanded View')
-        sel.click(form_buttons.save)
-
-
-def set_compressed_view(name):
-    bg = ButtonGroup(name)
-    if bg.active != 'Compressed View':
-        bg.choose('Compressed View')
-        sel.click(form_buttons.save)
-
-
-def set_details_view(name):
-    bg = ButtonGroup(name)
-    if bg.active != 'Details Mode':
-        bg.choose('Details Mode')
-        sel.click(form_buttons.save)
-
-
-def set_exist_view(name):
-    bg = ButtonGroup(name)
-    if bg.active != 'Exists Mode':
-        bg.choose('Exists Mode')
+def set_view(group, button):
+    bg = ButtonGroup(group)
+    if bg.active != button:
+        bg.choose(button)
         sel.click(form_buttons.save)
 
 
@@ -116,7 +70,7 @@ def select_second_quad():
 def test_tile_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
     default_view = get_default_view(name[0])
-    set_tile_view(name[0])
+    set_view(name[0], 'Tile View')
     sel.force_navigate(name[1])
     if name[1] == "clouds_providers" or "clouds_instances":
         tb.select('Tile View')
@@ -128,7 +82,7 @@ def test_tile_defaultview(request, setup_a_provider, key):
 def test_list_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
     default_view = get_default_view(name[0])
-    set_list_view(name[0])
+    set_view(name[0], 'List View')
     sel.force_navigate(name[1])
     if name[1] == "clouds_providers" or "clouds_instances":
         tb.select('List View')
@@ -140,57 +94,33 @@ def test_list_defaultview(request, setup_a_provider, key):
 def test_grid_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
     default_view = get_default_view(name[0])
-    set_grid_view(name[0])
+    set_view(name[0], 'Grid View')
     sel.force_navigate(name[1])
     assert tb.is_active('Grid View'), "Grid Default view setting failed"
     reset_default_view(name[0], default_view)
 
 
-@pytest.mark.parametrize('key', exp_comp_params, scope="module")
-def test_expanded_view(request, setup_a_provider, key):
-    name = re.split(r"\/", key)
-    default_view = get_default_view(name[0])
-    set_expanded_view(name[0])
-    sel.force_navigate(name[1])
+def set_and_test_view(group_name, view):
+    default_view = get_default_view(group_name)
+    set_view(group_name, view)
+    sel.force_navigate('clouds_instances')
     select_two_quads()
-    tb.select(name[2], name[3])
-    assert tb.is_active('Expanded View'), "Expanded view setting failed"
-    reset_default_view(name[0], default_view)
+    tb.select('Configuration', 'Compare Selected items')
+    assert tb.is_active(view), "{} setting failed".format(view)
+    reset_default_view(group_name, default_view)
 
 
-@pytest.mark.parametrize('key', exp_comp_params, scope="module")
-def test_compressed_view(request, setup_a_provider, key):
-    name = re.split(r"\/", key)
-    default_view = get_default_view(name[0])
-    set_compressed_view(name[0])
-    sel.force_navigate(name[1])
-    select_two_quads()
-    tb.select(name[2], name[3])
-    assert tb.is_active('Compressed View'), "Compressed view setting failed"
-    reset_default_view(name[0], default_view)
+def test_expanded_view(request, setup_a_provider):
+    set_and_test_view('Compare', 'Expanded View')
 
 
-@pytest.mark.parametrize('key', exp_comp_params, scope="module")
-def test_details_view(request, setup_a_provider, key):
-    name = re.split(r"\/", key)
-    button_name = name[0] + " Mode"
-    default_view = get_default_view(button_name)
-    set_details_view(button_name)
-    sel.force_navigate(name[1])
-    select_two_quads()
-    tb.select(name[2], name[3])
-    assert tb.is_active('Details Mode'), "Details view setting failed"
-    reset_default_view(button_name, default_view)
+def test_compressed_view(request, setup_a_provider):
+    set_and_test_view('Compare', 'Compressed View')
 
 
-@pytest.mark.parametrize('key', exp_comp_params, scope="module")
-def test_exists_view(request, setup_a_provider, key):
-    name = re.split(r"\/", key)
-    button_name = name[0] + " Mode"
-    default_view = get_default_view(button_name)
-    set_exist_view(button_name)
-    sel.force_navigate(name[1])
-    select_two_quads()
-    tb.select(name[2], name[3])
-    assert tb.is_active('Exists Mode'), "Exists view setting failed"
-    reset_default_view(button_name, default_view)
+def test_details_view(request, setup_a_provider):
+    set_and_test_view('Compare Mode', 'Details Mode')
+
+
+def test_exists_view(request, setup_a_provider):
+    set_and_test_view('Compare Mode', 'Exists Mode')
