@@ -356,6 +356,9 @@ def error_console_handler():
 
 
 def setup_logger(logger):
+    # prevent the root logger effective level from affecting us
+    # this is a hack
+    logger.setLevel(1)
     # Grab the logging conf
     conf = _load_conf(logger.name)
 
