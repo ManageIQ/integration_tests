@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import re
 from cfme.fixtures import pytest_selenium as sel
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
@@ -29,8 +28,6 @@ gtl_params = {
     'VMs & Instances': 'service_vms_instances',
     'Templates & Images': 'service_templates_images'
 }
-
-gtl_parametrize = pytest.mark.parametrize('key', gtl_params, scope="module")
 
 
 def select_two_quads():
@@ -72,7 +69,7 @@ def get_default_view(name):
 def set_and_test_default_view(group_name, view, page):
     default_view = get_default_view(group_name)
     set_view(group_name, view)
-    if isinstance(basestring, page):
+    if isinstance(page, basestring):
         sel.force_navigate(page)
     else:
         navigate_to(page, 'All', use_resetter=False)
@@ -82,20 +79,17 @@ def set_and_test_default_view(group_name, view, page):
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_tile_defaultview(request, setup_a_provider, key):
-    name = re.split(r"\/", key)
-    set_and_test_default_view(name[0], 'Tile View', name[1])
+    set_and_test_default_view(key, 'Tile View', gtl_params[key])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_list_defaultview(request, setup_a_provider, key):
-    name = re.split(r"\/", key)
-    set_and_test_default_view(name[0], 'List View', name[1])
+    set_and_test_default_view(key, 'List View', gtl_params[key])
 
 
 @pytest.mark.parametrize('key', gtl_params, scope="module")
 def test_grid_defaultview(request, setup_a_provider, key):
-    name = re.split(r"\/", key)
-    set_and_test_default_view(name[0], 'Grid View', name[1])
+    set_and_test_default_view(key, 'Grid View', gtl_params[key])
 
 
 def set_and_test_view(group_name, view):
