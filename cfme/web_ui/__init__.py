@@ -2061,7 +2061,13 @@ class BootstrapTreeview(object):
 
 @fill.method((BootstrapTreeview, Sequence))
 def _fill_bstree_seq(tree, values):
-    tree.click_path(*values)
+    try:
+        if (isinstance(values[0][0], list) or isinstance(values[0][0], tuple)) \
+                and not isinstance(values[0][0], types.StringTypes):
+            for check in values:
+                tree.check_uncheck_node(check[1], *check[0])
+    except IndexError:
+        tree.click_path(*values)
 
 
 class Tree(Pretty):
