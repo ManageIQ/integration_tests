@@ -175,7 +175,7 @@ def test_user_remove_tag():
     user.create()
     user.edit_tags("Department", "Engineering")
     user.remove_tag("Department", "Engineering")
-    navigate_to(user, 'Edit')
+    navigate_to(user, 'Details')
     assert get_tag() != "Department: Engineering", "Remove User tag failed"
     user.delete()
 
