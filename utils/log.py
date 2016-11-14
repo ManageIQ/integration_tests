@@ -339,7 +339,8 @@ class Perflog(object):
 def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
     filename = os.path.join(root, filename)
     handler = logging.FileHandler(filename, **kw)
-    formatter = logging.Formatter('%(asctime)-15s [%(levelname).1s] %(message)s (%(source)s)')
+    formatter = logging.Formatter(
+        '%(asctime)-15s [%(levelname).1s] %(message)s (%(module)s:%(lineno)s)')
     handler.setFormatter(formatter)
     if level is not None:
         handler.setLevel(level)
@@ -347,7 +348,7 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
 
 
 def error_console_handler():
-    formatter = logging.Formatter('[%(levelname)s] %(message)s (%(source)s)')
+    formatter = logging.Formatter('[%(levelname)s] %(message)s (%(module)s:%(lineno)s)')
     handler = logging.StreamHandler()
     handler.setLevel(logging.ERROR)
     handler.setFormatter(formatter)
@@ -443,27 +444,6 @@ class ArtifactorHandler(logging.Handler):
 
     def emit(self, record):
         self.artifactor.fire_hook('log_message', log_record=record.__dict__, slaveid=self.slaveid)
-
-    def process_from_when_was_adapter(self, msg, kwargs):
-        # frames
-        # 0: call to nth_frame_info
-        # 1: adapter process method (this method)
-        # 2: adapter logging method
-        # 3: original logging call
-        msg = safe_string(msg)
-        frameinfo = nth_frame_info(3)
-        extra = kwargs.get('extra', {})
-        # add extra data if needed
-        if not extra.get('source_file'):
-            if frameinfo.filename:
-                extra['source_file'] = get_rel_path(frameinfo.filename)
-                extra['source_lineno'] = frameinfo.lineno
-            else:
-                # calling frame didn't have a filename
-                extra['source_file'] = 'unknown'
-                extra['source_lineno'] = 0
-        kwargs['extra'] = extra
-        return msg, kwargs
 
 
 logger = setup_logger(logging.getLogger('cfme'))
