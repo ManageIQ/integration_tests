@@ -23,7 +23,7 @@ from cfme import test_requirements
 pytestmark = [pytest.mark.long_running, test_requirements.distributed]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def vmware_provider():
     return setup_a_provider(prov_class="infra", prov_type="virtualcenter")
 
