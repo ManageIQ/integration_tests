@@ -129,7 +129,6 @@ import sys
 from py.path import local
 from riggerlib import Rigger, RiggerBasePlugin, RiggerClient
 
-from logging.handlers import RotatingFileHandler
 from utils.net import random_port
 from utils.path import log_path
 
@@ -289,7 +288,7 @@ def create_logger(logger_name, filename):
     log_file = filename
 
     file_formatter = logging.Formatter('%(asctime)-15s [%(levelname).1s] %(message)s')
-    file_handler = RotatingFileHandler(log_file, maxBytes=2048, encoding='utf8')
+    file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(file_formatter)
 
     logger.addHandler(file_handler)
