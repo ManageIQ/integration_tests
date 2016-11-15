@@ -763,7 +763,7 @@ class VM(BaseVM):
         sec_loc_template = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]" \
                            "//span[contains(@class, 'dynatree-checkbox')]"
         sec_checkbox_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]" \
-                           "//span[contains(@class, 'dynatree-checkbox')]".format(sec_loc_map[section])
+            "//span[contains(@class, 'dynatree-checkbox')]".format(sec_loc_map[section])
         sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
 
         # Deselect other sections

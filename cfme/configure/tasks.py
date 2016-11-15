@@ -220,7 +220,7 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
 
     tabs_data = {
         'vm': {
-            'tab': 'All VM Analysis Tasks',
+            'tab': get_tab_my(),
             'page': 'tasks_all_vm',
             'task': 'Scan from Vm {}',
             'state': 'finished'
@@ -246,7 +246,6 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
             'task': 'SmartState Analysis for [{}]',
             'state': "Finished"}
     }[task_type]
-
     return is_task_finished(tab=tabs_data['tab'],
                             page=tabs_data['page'],
                             task_name=tabs_data['task'].format(name),
