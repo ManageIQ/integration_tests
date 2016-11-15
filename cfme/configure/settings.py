@@ -7,7 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons, flash, Table,
-    ButtonGroup, Quadicon, CheckboxTree, Input, CFMECheckbox)
+    ButtonGroup, Quadicon, CheckboxTree, Input, CFMECheckbox, BootstrapTreeview)
 from cfme.web_ui.menu import nav
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import version, deferred_verpick
@@ -335,7 +335,10 @@ class VisualAll(CFMENavigateStep):
 class DefaultFilter(Updateable, Pretty, Navigatable):
     filter_form = Form(
         fields=[
-            ("filter_tree", CheckboxTree("//div[@id='all_views_treebox']/ul")),
+            ("filter_tree", {
+                version.LOWEST: CheckboxTree("//div[@id='all_views_treebox']/ul"),
+                '5.7': BootstrapTreeview('df_treebox')
+            }),
         ]
     )
 
