@@ -12,7 +12,7 @@ artifactor:
             level: DEBUG
 """
 import os
-from logging import LogRecord
+from logging import makeLogRecord
 from artifactor import ArtifactorBasePlugin
 from utils.log import make_file_handler
 
@@ -67,11 +67,10 @@ class Logger(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def log_message(self, log_record, slaveid):
-        record = LogRecord.__new__(LogRecord)
-        record.__dict__.update(log_record)  # hack
+        record = makeLogRecord(log_record)  # hack
         if not slaveid:
             slaveid = "Master"
-        if slaveid in self.store:
+        if record.level >= self.level and slaveid in self.store:
             handler = self.store[slaveid].handler
             if handler:
                 handler.handle(record)
