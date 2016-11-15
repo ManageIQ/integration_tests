@@ -11,18 +11,13 @@ pytest_generate_tests = generate(config_managers)
 # TODO
 # Investigate why this does not work
 # pytestmark = pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type ==
-#             "Ansible Tower" and version.current_version() < "5.6")
+#             "Ansible Tower" and version.current_version() > "5.6")
 
 
 @pytest.yield_fixture
 def config_manager(config_manager_obj):
     """ Fixture that provides a random config manager and sets it up"""
-    if config_manager_obj.type == "Ansible Tower":
-        # Because we do not have Tower preconfigured with configured systems, we are not doing
-        # validation of added Ansible Tower conf. manager. This is temporary solution.
-        config_manager_obj.create(validate=False)
-    else:
-        config_manager_obj.create()
+    config_manager_obj.create()
     yield config_manager_obj
     config_manager_obj.delete()
 
@@ -53,42 +48,27 @@ def tag(category):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
-    version.current_version() < "5.6")
-@pytest.mark.meta(blockers=[
-    1244842,
-    BZ(
-        1326316,
-        unblock=lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-])
+@pytest.mark.meta(
+    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
+        config_manager_obj.type != "Ansible Tower")]
+)
 def test_config_manager_detail_config_btn(request, config_manager):
     config_manager.refresh_relationships()
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
-    version.current_version() < "5.6")
-@pytest.mark.meta(blockers=[
-    BZ(
-        1326316,
-        unblock=lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-])
+@pytest.mark.meta(
+    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
+        config_manager_obj.type != "Ansible Tower")]
+)
 def test_config_manager_add(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
-    if config_manager_obj.type == "Ansible Tower":
-        config_manager_obj.create(validate=False)
-    else:
-        config_manager_obj.create()
+    config_manager_obj.create()
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
-    version.current_version() < "5.6")
-@pytest.mark.meta(blockers=[
-    BZ(
-        1326316,
-        unblock=lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-])
 def test_config_manager_add_invalid_url(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.url = "invalid_url"
@@ -101,34 +81,23 @@ def test_config_manager_add_invalid_url(request, config_manager_obj):
                         '(typical production settings)'
 
     with error.expected(error_message):
-        if config_manager_obj.type == "Ansible Tower":
-            config_manager_obj.create(validate=False)
-        else:
-            config_manager_obj.create()
+        config_manager_obj.create()
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
-    version.current_version() < "5.6")
-@pytest.mark.meta(blockers=[BZ(1319751, forced_streams=["5.5", "5.6"])])
 def test_config_manager_add_invalid_creds(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.credentials.principal = 'invalid_user'
     with error.expected('Invalid username/password'):
-        if config_manager_obj.type == "Ansible Tower":
-            config_manager_obj.create(validate=False)
-        else:
-            config_manager_obj.create()
+        config_manager_obj.create()
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
-    version.current_version() < "5.6")
-@pytest.mark.meta(blockers=[
-    BZ(
-        1326316,
-        unblock=lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-])
+@pytest.mark.meta(
+    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
+        config_manager_obj.type != "Ansible Tower")]
+)
 def test_config_manager_edit(request, config_manager):
     new_name = fauxfactory.gen_alpha(8)
     old_name = config_manager.name
@@ -141,12 +110,12 @@ def test_config_manager_edit(request, config_manager):
 
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower" and
-    version.current_version() < "5.6")
-@pytest.mark.meta(blockers=[
-    BZ(
-        1326316,
-        unblock=lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-])
+    version.current_version() > "5.7.0.9")
+@pytest.mark.meta(
+    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
+        config_manager_obj.type != "Ansible Tower")]
+)
 def test_config_manager_remove(config_manager):
     config_manager.delete()
 
@@ -154,11 +123,11 @@ def test_config_manager_remove(config_manager):
 # Disable this test for Tower, no Configuration profiles can be retrieved from Tower side yet
 @pytest.mark.tier(3)
 @pytest.mark.uncollectif(lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-@pytest.mark.meta(blockers=[
-    BZ(
-        1326316,
-        unblock=lambda config_manager_obj: config_manager_obj.type == "Ansible Tower")
-])
+@pytest.mark.meta(
+    blockers=[BZ(1388928, unblock=lambda config_manager_obj: (
+        config_manager_obj.type == "Ansible Tower" and version.current_version() > "5.7.0.9") or
+        config_manager_obj.type != "Ansible Tower")]
+)
 def test_config_system_tag(request, config_system, tag):
     config_system.tag(tag)
     assert '{}: {}'.format(tag.category.display_name, tag.display_name) in config_system.tags,\
