@@ -21,6 +21,8 @@ def all_possible_roles():
     if version.current_version() < 5.6:
         roles.remove('git_owner')
         roles.remove('websocket')
+    if version.current_version() >= 5.7:
+        roles.remove('database_synchronization')
     return roles
 
 
