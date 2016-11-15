@@ -6,6 +6,7 @@ from cfme import test_requirements
 from cfme.fixtures import pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import ButtonGroup, form_buttons, Quadicon
+from utils import version
 from utils.providers import setup_a_provider as _setup_a_provider
 from cfme.configure import settings  # NOQA
 from cfme.cloud import instance  # NOQA
@@ -99,7 +100,8 @@ def get_default_view(name):
 
 
 def select_second_quad():
-    checkbox = ("(.//input[@id='listcheckbox'])[2]")
+    checkbox = version.pick({version.LOWEST: "(.//input[@id='listcheckbox'])[2]",
+                            "5.7": "//div[2]/table/tbody/tr/td/input"})
     sel.check(checkbox)
 
 
@@ -137,6 +139,7 @@ def test_grid_defaultview(request, setup_a_provider, key):
     reset_default_view(name[0], default_view)
 
 
+@pytest.mark.meta(blockers=[1381209])
 @pytest.mark.parametrize('key', exp_comp_params, scope="module")
 def test_expanded_view(request, setup_a_provider, key):
     name = re.split(r"\/", key)
@@ -150,6 +153,7 @@ def test_expanded_view(request, setup_a_provider, key):
     reset_default_view(name[0], default_view)
 
 
+@pytest.mark.meta(blockers=[1381209])
 @pytest.mark.parametrize('key', exp_comp_params, scope="module")
 def test_compressed_view(request, setup_a_provider, key):
     name = re.split(r"\/", key)
@@ -163,6 +167,7 @@ def test_compressed_view(request, setup_a_provider, key):
     reset_default_view(name[0], default_view)
 
 
+@pytest.mark.meta(blockers=[1381209])
 @pytest.mark.parametrize('key', exp_comp_params, scope="module")
 def test_details_view(request, setup_a_provider, key):
     name = re.split(r"\/", key)
@@ -177,6 +182,7 @@ def test_details_view(request, setup_a_provider, key):
     reset_default_view(button_name, default_view)
 
 
+@pytest.mark.meta(blockers=[1381209])
 @pytest.mark.parametrize('key', exp_comp_params, scope="module")
 def test_exists_view(request, setup_a_provider, key):
     name = re.split(r"\/", key)
