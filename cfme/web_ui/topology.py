@@ -41,14 +41,9 @@ class Topology(object):
         self._el_ref = _el
         return False
 
-    def _reload(self):
-        self._legends = []
+    def reload_elements(self):
         self._elements = []
         self._lines = []
-        self.search_box = TopologySearchBox()
-        self.display_names = TopologyDisplayNames()
-        # load elements
-        # we have to wait few seconds, initial few seconds elements are moving
         if len(sel.elements(self.ELEMENTS)) > 0:
             self._el_ref = TopologyElement(o=self, element=sel.elements(self.ELEMENTS)[-1])
             wait_for(lambda: self._is_el_movement_stopped(), delay=2, num_sec=30)
@@ -58,6 +53,14 @@ class Topology(object):
             # load lines
             for line in sel.elements(self.LINES):
                 self._lines.append(TopologyLine(element=line))
+
+    def _reload(self):
+        self._legends = []
+        self.search_box = TopologySearchBox()
+        self.display_names = TopologyDisplayNames()
+        # load elements
+        # we have to wait few seconds, initial few seconds elements are moving
+        self.reload_elements()
         # load legends
         # remove old legends
         for legend_id in self._legends:
@@ -112,8 +115,9 @@ class TopologyLegend(object):
 
 
 class TopologyDisplayNames(object):
-    DISPLAY_NAME = \
-        "//*[contains(@class, 'container_topology')]//label[contains(., 'Display Names')]/input"
+    DISPLAY_NAME = '|'.join([
+        "//*[contains(@class, 'container_topology')]//label[contains(., 'Display Names')]/input",
+        '//*[@id="box_display_names"]'])  # [0] is not working on containers topology
 
     def __init__(self):
         self._el = sel.element(self.DISPLAY_NAME)
@@ -131,8 +135,8 @@ class TopologyDisplayNames(object):
 
 
 class TopologySearchBox(object):
-    SEARCH_BOX = "//*[contains(@class, 'container_topology')]//input[@id='search']"
-    SEARCH_CLEAR = "//*[contains(@class, 'container_topology')]//button[contains(@class, 'clear')]"
+    SEARCH_BOX = "//input[@id='search_topology']|//input[@id='search']"
+    SEARCH_CLEAR = "//button[contains(@class, 'clear')]"
     SEARCH_SUBMIT = "//button[contains(@class, 'search-topology-button')]"
 
     def clear(self):
