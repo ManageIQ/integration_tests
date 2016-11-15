@@ -26,9 +26,14 @@ class VMwareProvider(InfraProvider):
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """
+        # Called within a dictionary update. Since we want to remove key/value pairs, return the
+        # entire dictionary
+        del deploy_args['username']
+        del deploy_args['password']
         if "allowed_datastores" not in deploy_args and "allowed_datastores" in self.data:
-            return {'allowed_datastores': self.data['allowed_datastores']}
-        return {}
+            deploy_args['allowed_datastores'] = self.data['allowed_datastores']
+
+        return deploy_args
 
     @classmethod
     def from_config(cls, prov_config, prov_key, appliance=None):

@@ -18,8 +18,8 @@ from cfme.services import requests
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
-    match_location, Table, search,paginator, toolbar, Calendar, Select, Input, CheckboxTable,
-    summary_title, BootstrapTreeview
+    match_location, Table, search, paginator, toolbar, Calendar, Select, Input, CheckboxTable,
+    summary_title, BootstrapTreeview, AngularSelect
 )
 from cfme.web_ui.search import search_box
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -353,7 +353,9 @@ class Vm(BaseVM):
     class CfmeRelationship(object):
         relationship_form = Form(
             fields=[
-                ('server_select', Select("//*[@id='server_id']")),
+                ('server_select', {
+                    version.LOWEST: Select("//*[@id='server_id']"),
+                    "5.5": AngularSelect("server_id")}),
                 ('save_button', form_buttons.save),
                 ('reset_button', form_buttons.reset),
                 ('cancel_button', form_buttons.cancel)
@@ -383,17 +385,9 @@ class Vm(BaseVM):
                 fill(self.relationship_form, {'server_select': option},
                      action=self.relationship_form.cancel_button)
             else:
-                fill(self.relationship_form, {'server_select': option},
-                     action=self.relationship_form.save_button)
-                # something weird going on where changing the select doesn't POST to undim save
-                sel.wait_for_ajax()
-                if self.relationship_form.save_button.is_dimmed:
-                    logger.warning("Worked around dimmed save button")
-                    sel.browser().execute_script(
-                        "$j.ajax({type: 'POST', url: '/vm_infra/evm_relationship_field_changed',"
-                        " data: {'server_id':'%s'}})" % (server_id))
-                    sel.click(form_buttons.FormButton(
-                        "Save Changes", dimmed_alt="Save", force_click=True))
+                fill(self.relationship_form, {'server_select': option})
+                sel.click(form_buttons.FormButton(
+                    "Save Changes", dimmed_alt="Save", force_click=True))
                 flash.assert_success_message("Management Engine Relationship saved")
 
 
