@@ -485,7 +485,8 @@ class Class(CopiableTreeNode, Updateable):
                      display_name=None, description=None, sub=None, collect=None, message=None,
                      on_entry=None, on_exit=None, on_error=None, max_retries=None, max_time=None):
             self.name = name
-            self.type_ = type_
+            # As of CFME 5.7 type is required
+            self.type_ = type_ or 'Assertion'
             self.data_type = data_type
             self.default_value = default_value
             self.display_name = display_name
