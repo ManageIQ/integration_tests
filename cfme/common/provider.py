@@ -317,6 +317,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     @variable(alias='rest')
     def refresh_provider_relationships(self, from_list_view=False):
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
+        logger.debug('Refreshing provider relationships')
         col = rest_api().collections.providers.find_by(name=self.name)
         try:
             col[0].action.refresh()
