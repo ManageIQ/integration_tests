@@ -4,7 +4,7 @@ import pytest
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme.configure.configuration import HostAnalysisProfile, VMAnalysisProfile
-from cfme.web_ui import Table, flash, toolbar as tb
+from cfme.web_ui import Table, flash, toolbar as tb, form_buttons
 from utils.update import update
 
 
@@ -55,6 +55,7 @@ def test_analysis_profile_duplicate_name():
     p.create()
     with error.expected("Name has already been taken"):
         p.create()
+    sel.click(form_buttons.cancel)
 
 
 def test_delete_default_analysis_profile():
@@ -63,7 +64,7 @@ def test_delete_default_analysis_profile():
     sel.force_navigate("cfg_analysis_profiles")
     row = records_table.find_row_by_cells({'Name': p.name})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
-    tb.select('Configuration', 'Delete the selected Analysis Profiles from the VMDB',
+    tb.select('Configuration', 'Delete the selected Analysis Profiles',
             invokes_alert=True)
     sel.handle_alert()
     flash.assert_message_match('Default Analysis Profile "{}" can not be deleted' .format(p.name))
@@ -89,13 +90,13 @@ def test_analysis_profile_item_validation():
 
 def test_analysis_profile_name_validation():
     """ Test to validate profile name."""
-    p = HostAnalysisProfile(None, fauxfactory.gen_alphanumeric(), files=["asdf", "dfg"])
+    p = HostAnalysisProfile("", fauxfactory.gen_alphanumeric(), files=["asdf", "dfg"])
     with error.expected("Name can't be blank"):
         p.create()
 
 
 def test_analysis_profile_description_validation():
     """ Test to validate profile description."""
-    p = HostAnalysisProfile(fauxfactory.gen_alphanumeric(), None, files=["asdf", "dfg"])
+    p = HostAnalysisProfile(fauxfactory.gen_alphanumeric(), "", files=["asdf", "dfg"])
     with error.expected("Description can't be blank"):
         p.create()

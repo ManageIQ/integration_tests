@@ -3585,7 +3585,8 @@ class DynamicTable(Pretty):
 
     def click_add(self):
         sel.click(sel.element(
-            ".//tbody/tr[@id='new_tr']/td//img | .//tbody/tr[@id='new_tr']/td//i",
+            ".//tbody/tr[@id='new_tr']/td//img | .//tbody/tr[@id='new_tr']/td//i |"
+            " ./tbody/tr[@id='new_tr']/td/button",
             root=self.root_loc))
 
     def click_save(self):

@@ -429,14 +429,19 @@ class AnalysisProfile(Pretty, Updateable):
                     "//div[contains(@class, 'col-md-8')]"})),
             ],
             "File": [
-                ("files", DynamicTable(
-                    "//div[@id='file']/fieldset/table", default_row_item="Name")),
+                ("files", {
+                    "5.6": DynamicTable("//div[@id='file']/fieldset/table",
+                                        default_row_item="Name"),
+                    "5.7": DynamicTable("//div[@id='file']/table",
+                                        default_row_item="Name")}),
             ],
             "Registry": [
-                ("registry", DynamicTable("//div[@id='registry']/fieldset/table")),
+                ("registry", {"5.6": DynamicTable("//div[@id='registry']/fieldset/table"),
+                              "5.7": DynamicTable("//div[@id='registry']/table")}),
             ],
             "Event Log": [
-                ("events", DynamicTable("//div[@id='event_log']/fieldset/table")),
+                ("events", {"5.6": DynamicTable("//div[@id='event_log']/fieldset/table"),
+                            "5.7": DynamicTable("//div[@id='event_log']/table")}),
             ],
         })
 
@@ -463,7 +468,7 @@ class AnalysisProfile(Pretty, Updateable):
 
     def delete(self):
         sel.force_navigate("cfg_analysis_profile", context={"analysis_profile": self})
-        tb.select("Configuration", "Delete this Analysis Profile from the VMDB", invokes_alert=True)
+        tb.select("Configuration", "Delete this Analysis Profile", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
 
