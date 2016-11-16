@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.configure.about import product_assistance as about
-from utils.version import current_version
+from cfme.configure.about import get_detail
+import utils.version as version
 
 
 @pytest.mark.tier(3)
@@ -15,7 +15,8 @@ def test_version():
 
     So we check whether the UI version starts with SSH version
     """
-    pytest.sel.force_navigate("about")
-    ssh_version = str(current_version())
-    ui_version = about.infoblock.text("Session Information", "Version").encode("utf-8").strip()
+    ssh_version = str(version.current_version())
+    ui_version = get_detail(version.pick({
+        version.LOWEST: ('Session Information', 'Version'),
+        '5.7': 'Version'}))
     assert ui_version.startswith(ssh_version), "UI: {}, SSH: {}".format(ui_version, ssh_version)
