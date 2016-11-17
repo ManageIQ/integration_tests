@@ -11,7 +11,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import (ColumnHeaderFormatTable, ColumnStyleTable,
     RecordGrouper)
 from cfme.web_ui import (CAndUGroupTable, Form, Table, Select, ShowingInputs, accordion, fill,
-    flash, form_buttons, paginator, table_in_object, tabstrip, toolbar)
+    flash, form_buttons, paginator, table_in_object, tabstrip, toolbar, CheckboxTable)
 from cfme.web_ui.expression_editor import Expression
 from cfme.web_ui.tabstrip import TabStripForm
 from cfme.web_ui.multibox import MultiBoxSelect
@@ -359,6 +359,8 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         datetime: Datetime of "Run At" of the report. That's what :py:func:`queue_canned_report`
             returns.
     """
+    saved_table = CheckboxTable('//div[@id="records_div"]//table')
+
     def __init__(self, path_to_report, datetime, candu=False, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.path = path_to_report
@@ -416,6 +418,13 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         except sel.NoSuchElementException:
             pass
         return results
+
+    def delete(self):
+        navigate_to(self, 'Saved')
+        self.saved_table.select_row(header='Run At', value=self.datetime_in_tree)
+        cfg_btn("Delete this Saved Report from the Database", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
 
 
 @navigator.register(CannedSavedReport, 'Details')
