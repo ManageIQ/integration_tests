@@ -263,7 +263,7 @@ def get_config_manager_from_config(cfg_mgr_key):
     cfg_mgr = conf.cfme_data.get('configuration_managers', {})[cfg_mgr_key]
     if cfg_mgr['type'] == 'satellite':
         return Satellite.load_from_yaml(cfg_mgr_key)
-    elif cfg_mgr['type'] == 'ansible':
+    elif cfg_mgr['type'] == 'AnsibleTower':
         return AnsibleTower.load_from_yaml(cfg_mgr_key)
     else:
         raise Exception("Unknown configuration manager key")
