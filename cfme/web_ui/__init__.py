@@ -3950,6 +3950,16 @@ class BootstrapSwitch(object):
         else:
             return False
 
+    @property
+    def angular_help_block(self):
+        """Returns the first visible angular helper text (like 'Required')."""
+        loc = ("{}/../../../../..//div[contains(@class, 'form-group has-error')]"
+               .format(self.loc_container))
+        try:
+            return sel.text(loc).strip()
+        except NoSuchElementException:
+            return None
+
 
 @fill.method((BootstrapSwitch, bool))
 def fill_bootstrap_switch(bs, val):
@@ -4037,6 +4047,7 @@ def breadcrumbs_names():
     elems = breadcrumbs()
     if elems:
         return map(sel.text_sane, elems)
+
 
 SUMMARY_TITLE_LOCATORS = [
     '//h1'
