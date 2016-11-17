@@ -12,6 +12,7 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils import browser
 from utils.version import current_version
+from utils import version
 from utils.browser import ensure_browser_open
 
 pytestmark = [
@@ -45,7 +46,9 @@ def myservice(setup_provider, provider, catalog_item, request):
     Metadata:
         test_flag: provision
     """
-    vm_name = catalog_item.provisioning_data["vm_name"] + "_0001"
+    vm_name = version.pick({
+        version.LOWEST: catalog_item.provisioning_data["vm_name"] + '_0001',
+        '5.7': catalog_item.provisioning_data["vm_name"] + '0001'})
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
