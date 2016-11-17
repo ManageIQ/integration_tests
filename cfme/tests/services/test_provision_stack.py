@@ -1,7 +1,9 @@
 import pytest
 import fauxfactory
 
-from cfme.configure.settings import set_default_view
+from boto.exception import BotoServerError
+
+from cfme.configure.settings import DefaultView
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
@@ -220,11 +222,17 @@ def test_provision_stack(provider, provisioning, create_template, catalog, reque
 
     @request.addfinalizer
     def _cleanup_vms():
-        if provider.mgmt.stack_exist(stack_data['stack_name']):
-            wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
-             delay=10, num_sec=800, message="wait for stack delete")
-        template.delete_all_templates()
-        stack_data['vm_name'].delete_from_provider()
+        try:
+            # stack_exist returns 400 if stack ID not found, which triggers an exception
+            if provider.mgmt.stack_exist(stack_data['stack_name']):
+                wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
+                         delay=10, num_sec=800, message="wait for stack delete")
+            template.delete_all_templates()
+            stack_data['vm_name'].delete_from_provider()
+        except BotoServerError as ex:
+            logger.warning('Exception while checking/deleting stack, continuing: {}'
+                           .format(ex.message))
+            pass
 
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
@@ -303,7 +311,7 @@ def test_retire_stack(provider, provisioning, create_template, catalog, request)
     Metadata:
         test_flag: provision
     """
-    set_default_view("Stacks", "Grid View")
+    DefaultView.set_default_view("Stacks", "Grid View")
     dialog_name, template = create_template
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,

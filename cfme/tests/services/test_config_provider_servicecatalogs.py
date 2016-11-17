@@ -1,15 +1,16 @@
 import fauxfactory
 import pytest
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+
+from cfme import test_requirements
 from cfme.automate.service_dialogs import ServiceDialog
+from cfme.configure.settings import DefaultView
+from cfme.services import requests
+from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.configure.settings import set_default_view
 from utils import testgen, version
 from utils.log import logger
 from utils.wait import wait_for
-from cfme.services import requests
-from cfme import test_requirements
 
 pytestmark = [
     test_requirements.service,
@@ -37,7 +38,7 @@ def pytest_generate_tests(metafunc):
 @pytest.yield_fixture
 def config_manager(config_manager_obj):
     """ Fixture that provides a random config manager and sets it up"""
-    set_default_view("Configuration Management Providers", "Grid View")
+    DefaultView.set_default_view("Configuration Management Providers", "Grid View")
     if config_manager_obj.type == "Ansible Tower":
         config_manager_obj.create(validate=True)
     else:
@@ -102,4 +103,4 @@ def test_order_catalog_item(catalog_item, request):
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=1400, delay=20)
     assert row.last_message.text == 'Service Provisioned Successfully'
-    set_default_view("Configuration Management Providers", "List View")
+    DefaultView.set_default_view("Configuration Management Providers", "List View")

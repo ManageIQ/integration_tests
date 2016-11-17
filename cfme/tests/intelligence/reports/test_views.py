@@ -4,17 +4,17 @@ import pytest
 import cfme.web_ui.toolbar as tb
 from cfme import test_requirements
 from cfme.intelligence.reports.reports import CannedSavedReport
+from utils import testgen
 from utils.blockers import BZ
 from utils.log import logger
-from utils.providers import setup_a_provider as _setup_a_provider
 
 pytestmark = [pytest.mark.tier(3),
-              test_requirements.report]
+              test_requirements.report,
+              pytest.mark.usefixtures('setup_provider')]
 
-
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    _setup_a_provider(prov_class="infra", validate=True, check_existing=True)
+pytest_generate_tests = testgen.generate(
+    testgen.provider_by_type, ['openstack', 'ec2', 'rhevm', 'vsphere'],
+    scope='module')
 
 
 @pytest.yield_fixture(scope='module')
@@ -34,7 +34,7 @@ def create_report():
 
 @pytest.mark.parametrize('view', ['Hybrid View', 'Graph View', 'Tabular View'])
 @pytest.mark.meta(blockers=[BZ(1396220)])
-def test_report_view(setup_a_provider, create_report, view):
+def test_report_view(create_report, view):
     create_report.navigate()
     tb.select(view)
     assert tb.is_active(view), "View setting failed for {}".format(view)
