@@ -98,6 +98,19 @@ class Documentation(CFMENavigateStep):
 
 
 @navigator.register(Server)
+class Tasks(CFMENavigateStep):
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        if self.obj.appliance.version > '5.7':
+            from cfme.dashboard import click_top_right
+            click_top_right('Tasks')
+        else:
+            from cfme.web_ui.menu import nav
+            nav._nav_to_fn('Settings', 'Tasks')(None)
+
+
+@navigator.register(Server)
 class Dashboard(CFMENavigateStep):
     VIEW = DashboardView
     prerequisite = NavigateToSibling('LoggedIn')
