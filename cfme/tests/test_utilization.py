@@ -16,12 +16,13 @@ from utils.log import logger
 from utils.version import current_version
 
 
-# Tests for vmware and rhev providers have been moved to cfme/tests/test_utilization_metrics.py.
+# Tests for vmware,rhev, openstack, ec2, azure, gce providers have been moved to
+# cfme/tests/test_utilization_metrics.py.
 # Also, this test just verifies that C&U/perf data is being collected, whereas the tests in
 # test_utilization_metrics.py go a step further and verify that specific performance metrics are
 # being collected.Eventually, support should be added to verify that specific metrics are being
 # collected for *all* providers.
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['cloud',
+pytest_generate_tests = testgen.generate(testgen.provider_by_type, [
     'container', 'middleware'], scope="module")
 
 
