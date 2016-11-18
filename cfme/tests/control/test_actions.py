@@ -18,16 +18,18 @@ import mgmtsystem
 from cfme.common.vm import VM
 from cfme.control import explorer
 from cfme.configure import tasks
+from cfme.configure.tasks import Tasks
 from cfme.infrastructure import host
-from cfme.web_ui import tabstrip as tabs, toolbar as tb
+from cfme.web_ui import toolbar as tb
 from datetime import datetime
 from fixtures.pytest_store import store
 from functools import partial
 from utils import testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.version import current_version, pick, LOWEST
+from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -71,8 +73,7 @@ def pytest_generate_tests(metafunc):
         if args["provider"].type in {"scvmm"}:
             continue
 
-        if ((metafunc.function is test_action_create_snapshot_and_delete_last)
-            or
+        if ((metafunc.function is test_action_create_snapshot_and_delete_last) or
             (metafunc.function is test_action_create_snapshots_and_delete_them)) \
                 and args['provider'].type in {"rhevm", "openstack", "ec2"}:
             continue
@@ -624,13 +625,7 @@ def test_action_initiate_smartstate_analysis(
     def is_vm_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
-        tab_name = pick({
-            LOWEST: "All VM Analysis Tasks",
-            '5.6': "All VM and Container Analysis Tasks",
-        })
-        if not pytest.sel.is_displayed(tasks.tasks_table) or \
-           not tabs.is_tab_selected(tab_name):
-            pytest.sel.force_navigate('tasks_all_vm')
+        navigate_to(Tasks, 'AllVMContainerAnalysis')
         vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
             'task_name': "Scan from Vm {}".format(vm.name),
             'state': 'finished'
