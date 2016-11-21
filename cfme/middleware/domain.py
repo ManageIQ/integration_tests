@@ -111,6 +111,7 @@ class MiddlewareDomain(MiddlewareBase, Taggable):
     def domains_in_db(cls, name=None, feed=None, provider=None, strict=True):
         domains = []
         rows = _db_select_query(name=name, feed=feed, provider=provider).all()
+        _provider = provider
         for domain in rows:
             if strict:
                 _provider = get_crud(get_provider_key(domain.provider_name))

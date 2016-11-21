@@ -11,14 +11,14 @@ pytestmark = [
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
 
-ITEMS_LIMIT = 5  # when we have big list, limit number of items to test
+ITEMS_LIMIT = 1  # when we have big list, limit number of items to test
 
 
 def test_list_provider_server_groups(provider):
     """Tests server groups lists from current Provider between UI, DB and Management system
 
     Steps:
-        * Get domains list from UI of provider
+        * Get domains list from DB
         * Chooses one of domains
         * Get server groups list from UI of domain
         * Get server groups list from Database of domain
@@ -27,7 +27,7 @@ def test_list_provider_server_groups(provider):
         * Compare headers from UI with expected headers list
         * Compare content of all the list [UI, Database, Management system]
     """
-    domain_list = MiddlewareDomain.domains(provider=provider)
+    domain_list = MiddlewareDomain.domains_in_db(provider=provider)
     for domain in get_random_list(domain_list, 1):
         ui_server_groups = get_server_group_set(
             MiddlewareServerGroup.server_groups(domain=domain))
@@ -47,16 +47,16 @@ def test_server_group_details(provider):
     """Tests server group details on UI
 
     Steps:
-        * Get domains list from UI of provider
+        * Get domains list from DB
         * Chooses one of domains
-        * Get server groups list from UI of domain
+        * Get server groups list from DB
         * Chooses several server groups from list
         * Select each server group's details in UI, DB and MGMT
         * Compare selected server group UI details with CFME database and MGMT system
     """
-    domain_list = MiddlewareDomain.domains(provider=provider)
+    domain_list = MiddlewareDomain.domains_in_db(provider=provider, strict=False)
     for domain in get_random_list(domain_list, ITEMS_LIMIT):
-        server_group_list = MiddlewareServerGroup.server_groups(domain=domain)
+        server_group_list = MiddlewareServerGroup.server_groups_in_db(domain=domain, strict=False)
         for server_group in get_random_list(server_group_list, 1):
             svgr_ui = server_group.server_group(method='ui')
             svgr_db = server_group.server_group(method='db')

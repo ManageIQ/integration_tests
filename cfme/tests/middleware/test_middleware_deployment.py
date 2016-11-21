@@ -20,7 +20,7 @@ pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
-ITEMS_LIMIT = 5  # when we have big list, limit number of items to test
+ITEMS_LIMIT = 1  # when we have big list, limit number of items to test
 
 
 def test_list_deployments(provider):
@@ -110,23 +110,26 @@ def test_list_provider_server_deployments(provider):
          .format(ui_deps, db_deps, mgmt_deps))
 
 
-def test_deployment(provider):
+def test_deployment_details(provider):
     """Tests deployment details on UI
 
     Steps:
-        * Get deployments list from UI
+        * Get deployments list from DB
         * Select up to `ITEMS_LIMIT` deployments randomly
-        * Compare selected deployment details with CFME database
+        * Compare selected deployment details with CFME database and UI
     """
-    ui_deps = MiddlewareDeployment.deployments(provider=provider,
+    deps = MiddlewareDeployment.deployments_in_db(provider=provider,
                                                server=get_server(provider, HAWKULAR_PRODUCT_NAME))
-    assert len(ui_deps) > 0, "There is no deployment(s) available in UI"
-    for dep_ui in get_random_list(ui_deps, ITEMS_LIMIT):
-        dep_db = dep_ui.deployment(method='db')
-        assert dep_ui.name == dep_db.name, "deployment name does not match between UI and DB"
-        assert dep_ui.server.name == dep_db.server.name, \
-            "deployment server name does not match between UI and DB"
-        dep_ui.validate_properties()
+    assert len(deps) > 0, "There is no deployment(s) available in DB"
+    for dep in get_random_list(deps, ITEMS_LIMIT):
+        dep_ui = dep.deployment(method='ui')
+        dep_db = dep.deployment(method='db')
+        assert dep_ui, "deployment was not found in UI"
+        assert dep_db, "deployment was not found in DB"
+        assert dep_ui.name == dep_db.name, \
+            ("deployment name does not match between UI:{}, DB:{}"
+             .format(dep_ui.name, dep_db.name))
+        dep_db.validate_properties()
 
 
 @pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME])

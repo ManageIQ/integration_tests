@@ -21,37 +21,37 @@ def get_random_object(provider, objecttype):
 
 
 def get_random_server(provider):
-    servers = MiddlewareServer.servers(provider=provider, strict=False)
-    assert len(servers) > 0, "There is no server(s) available in UI"
+    servers = MiddlewareServer.servers_in_db(provider=provider, strict=False)
+    assert len(servers) > 0, "There is no server(s) available in DB"
     return get_random_list(servers, 1)[0]
 
 
 def get_random_domain(provider):
-    domains = MiddlewareDomain.domains(provider=provider, strict=False)
-    assert len(domains) > 0, "There is no domains(s) available in UI"
+    domains = MiddlewareDomain.domains_in_db(provider=provider, strict=False)
+    assert len(domains) > 0, "There is no domains(s) available in DB"
     return get_random_list(domains, 1)[0]
 
 
 def get_random_server_group(provider):
-    server_groups = MiddlewareServerGroup.server_groups(get_random_domain(provider),
-                                                        strict=False)
-    assert len(server_groups) > 0, "There is no server_groups(s) available in UI"
+    server_groups = MiddlewareServerGroup.server_groups_in_db(get_random_domain(provider),
+                                                              strict=False)
+    assert len(server_groups) > 0, "There is no server_groups(s) available in DB"
     return get_random_list(server_groups, 1)[0]
 
 
 def get_random_deployment(provider):
-    deployments = MiddlewareDeployment.deployments(provider=provider)
-    assert len(deployments) > 0, "There is no deployment(s) available in UI"
+    deployments = MiddlewareDeployment.deployments_in_db(provider=provider, strict=False)
+    assert len(deployments) > 0, "There is no deployment(s) available in DB"
     return get_random_list(deployments, 1)[0]
 
 
 def get_random_datasource(provider):
-    datasources = MiddlewareDatasource.datasources(provider=provider)
-    assert len(datasources) > 0, "There is no datasource(s) available in UI"
+    datasources = MiddlewareDatasource.datasources_in_db(provider=provider, strict=False)
+    assert len(datasources) > 0, "There is no datasource(s) available in DB"
     return get_random_list(datasources, 1)[0]
 
 
 def get_random_messaging(provider):
-    messagings = MiddlewareMessaging.messagings(provider=provider)
-    assert len(messagings) > 0, "There is no messaging(s) available in UI"
+    messagings = MiddlewareMessaging.messagings_in_db(provider=provider, strict=False)
+    assert len(messagings) > 0, "There is no messaging(s) available in DB"
     return get_random_list(messagings, 1)[0]
