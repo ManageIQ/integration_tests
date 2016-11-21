@@ -11,7 +11,6 @@ from utils.providers import setup_a_provider as _setup_a_provider
 from cfme.configure import settings  # NOQA
 from cfme.services.catalogs import catalog_item  # NOQA
 from cfme.services import workloads  # NOQA
-from cfme.intelligence.reports.reports import CannedSavedReport
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings]
@@ -120,27 +119,3 @@ def test_details_view(request, setup_a_provider):
 @pytest.mark.meta(blockers=[1394331])
 def test_exists_view(request, setup_a_provider):
     set_and_test_view('Compare Mode', 'Exists Mode')
-
-
-def test_hybrid_view(request, setup_a_provider):
-    path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
-    report = CannedSavedReport.new(path)
-    report.navigate()
-    tb.select('Hybrid View')
-    assert tb.is_active('Hybrid View'), "Hybrid view setting failed"
-
-
-def test_graph_view(request, setup_a_provider):
-    path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
-    report = CannedSavedReport.new(path)
-    report.navigate()
-    tb.select('Graph View')
-    assert tb.is_active('Graph View'), "Graph view setting failed"
-
-
-def test_tabular_view(request, setup_a_provider):
-    path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
-    report = CannedSavedReport.new(path)
-    report.navigate()
-    tb.select('Tabular View')
-    assert tb.is_active('Tabular View'), "Tabular view setting failed"
