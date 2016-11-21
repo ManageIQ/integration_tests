@@ -50,8 +50,8 @@ class Logger(ArtifactorBasePlugin):
             filename,
             root=artifact_path,
             # we overwrite
-            mode='w')
-        self.store[slaveid].handler.setLevel(self.level)
+            mode='w',
+            level=self.level)
 
         self.fire_hook('filedump', test_location=test_location, test_name=test_name,
             description="cfme.log", slaveid=slaveid, contents="", file_type="log",
@@ -70,7 +70,7 @@ class Logger(ArtifactorBasePlugin):
         record = makeLogRecord(log_record)  # hack
         if not slaveid:
             slaveid = "Master"
-        if record.level >= self.level and slaveid in self.store:
+        if slaveid in self.store:
             handler = self.store[slaveid].handler
-            if handler:
+            if handler and record.levelno >= handler.level:
                 handler.handle(record)
