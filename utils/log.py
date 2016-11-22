@@ -359,6 +359,8 @@ def setup_logger(logger):
     # prevent the root logger effective level from affecting us
     # this is a hack
     logger.setLevel(1)
+    # prevent root logger handlers from triggering (its sad that we need this)
+    logger.propagate = False
     # Grab the logging conf
     conf = _load_conf(logger.name)
 
