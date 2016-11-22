@@ -33,7 +33,7 @@ def create_report():
 
 
 @pytest.mark.parametrize('view', ['Hybrid View', 'Graph View', 'Tabular View'])
-@pytest.mark.meta(blockers=[BZ(1396220)])
+@pytest.mark.meta(blockers=[BZ(1397335)])
 def test_report_view(create_report, view):
     create_report.navigate()
     tb.select(view)
