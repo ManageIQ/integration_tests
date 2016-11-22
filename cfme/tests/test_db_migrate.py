@@ -1,8 +1,9 @@
 import pytest
 from os import path as os_path
 
-from cfme.login import login_admin
-from utils import version
+from cfme.login import login
+from utils import db, version
+from utils.appliance import ApplianceException
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
@@ -10,15 +11,21 @@ from utils.wait import wait_for
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc', 'v2key_url'], [], []
+    argnames, argvalues, idlist = ['db_url', 'db_version', 'db_desc'], [], []
     db_backups = cfme_data.get('db_backups', {})
     if not db_backups:
         return []
     for key, data in db_backups.iteritems():
-        v2key_data = data.get('v2key_url', None)
-        argvalues.append((data.url, data.version, data.desc, v2key_data))
+        argvalues.append((data.url, data.version, data.desc))
         idlist.append(key)
     return metafunc.parametrize(argnames=argnames, argvalues=argvalues, ids=idlist)
+
+
+@pytest.fixture(scope="function")
+def stabilize_current_appliance():
+    app = pytest.store.current_appliance
+    app.reboot(wait_for_web_ui=False)
+    app.stop_evm_service()
 
 
 @pytest.mark.ignore_stream('5.5', 'upstream')
@@ -29,19 +36,19 @@ def pytest_generate_tests(metafunc):
         version.get_stream(db_version) == version.current_stream())
 @pytest.mark.meta(
     blockers=[BZ(1354466, unblock=lambda db_url: 'ldap' not in db_url)])
-def test_db_migrate(db_url, db_version, db_desc, v2key_url):
+def test_db_migrate(stabilize_current_appliance, db_url, db_version, db_desc):
     """ This is a destructive test - it _will_ destroy your database """
     app = pytest.store.current_appliance
 
-    # initiate evmserverd stop
-    app.stop_evm_service()
-
-    # in the meantime, download the database
+    # Download the database
     logger.info("Downloading database: {}".format(db_desc))
     url_basename = os_path.basename(db_url)
     rc, out = app.ssh_client.run_command(
-        'wget "{}" -O "/tmp/{}"'.format(db_url, url_basename), timeout=30)
+        'curl -o "/tmp/{}" "{}"'.format(url_basename, db_url), timeout=30)
     assert rc == 0, "Failed to download database: {}".format(out)
+
+    # The v2_key is potentially here
+    v2key_url = os_path.join(os_path.dirname(db_url), "v2_key")
 
     # wait 30sec until evmserverd is down
     wait_for(app.is_evm_service_running, num_sec=30, fail_condition=True, delay=5,
@@ -49,14 +56,19 @@ def test_db_migrate(db_url, db_version, db_desc, v2key_url):
 
     # restart postgres to clear connections, remove old DB, restore it and migrate it
     with app.ssh_client as ssh:
-        rc, out = ssh.run_command('systemctl restart rh-postgresql94-postgresql', timeout=30)
-        assert rc == 0, "Failed to restart postgres service: {}".format(out)
-        rc, out = ssh.run_command('dropdb vmdb_production', timeout=15)
-        assert rc == 0, "Failed to remove old database: {}".format(out)
+        def _db_dropped():
+            rc, out = ssh.run_command(
+                'systemctl restart {}-postgresql'.format(db.scl_name()), timeout=60)
+            assert rc == 0, "Failed to restart postgres service: {}".format(out)
+            ssh.run_command('dropdb vmdb_production', timeout=15)
+            rc, out = ssh.run_command("psql -l | grep vmdb_production | wc -l", timeout=15)
+            return rc == 0
+        wait_for(_db_dropped, delay=5, timeout=60, message="drop the vmdb_production DB")
+
         rc, out = ssh.run_command('createdb vmdb_production', timeout=30)
         assert rc == 0, "Failed to create clean database: {}".format(out)
         rc, out = ssh.run_command(
-            'pg_restore -v --dbname=vmdb_production /tmp/{}'.format(url_basename), timeout=420)
+            'pg_restore -v --dbname=vmdb_production /tmp/{}'.format(url_basename), timeout=600)
         assert rc == 0, "Failed to restore new database: {}".format(out)
         rc, out = ssh.run_rake_command("db:migrate", timeout=300)
         assert rc == 0, "Failed to migrate new database: {}".format(out)
@@ -82,19 +94,29 @@ def test_db_migrate(db_url, db_version, db_desc, v2key_url):
             assert rc == 0, "Failed to replace data in {} with '{}': {}".format(
                 data_filepath, db_data, out)
         # fetch v2_key
-        if v2key_url:
+        try:
             rc, out = ssh.run_command(
-                'wget "{}" -O "/var/www/miq/vmdb/certs/v2_key"'.format(v2key_url),
-                timeout=15)
+                'curl "{}"'.format(v2key_url), timeout=15)
+            assert rc == 0, "Failed to download v2_key: {}".format(out)
+            assert ":key:" in out, "Not a v2_key file: {}".format(out)
+            rc, out = ssh.run_command(
+                'curl -o "/var/www/miq/vmdb/certs/v2_key" "{}"'.format(v2key_url), timeout=15)
             assert rc == 0, "Failed to download v2_key: {}".format(out)
         # or change all invalid (now unavailable) passwords to 'invalid'
-        else:
+        except AssertionError:
             rc, out = ssh.run_command("fix_auth -i invalid", timeout=45)
             assert rc == 0, "Failed to change invalid passwords: {}".format(out)
-    rc, out = app.ssh_client.run_command(
-        'systemctl stop rh-postgresql94-postgresql', timeout=30)
-    assert rc == 0, "Failed to stop postgres service: {}".format(out)
-    # start evmserverd, wait for web UI to start and try to log in as admin
-    app.start_evm_service()
+    # start evmserverd, wait for web UI to start and try to log in
+    try:
+        app.start_evm_service()
+    except ApplianceException:
+        rc, out = app.ssh_client.run_rake_command("evm:start")
+        raise rc == 0, "Couldn't start evmserverd: {}".format(out)
     app.wait_for_web_ui(timeout=600)
-    login_admin()
+    # Reset user's password, just in case (necessary for customer DBs)
+    rc, out = ssh.run_rails_command(
+        '"u = User.find_by_userid(\'admin\'); u.password = \'{}\'; u.save!"'
+        .format(app.user.credential.secret))
+    assert rc == 0, "Failed to change UI password of {} to {}:" \
+                    .format(app.user.credential.principal, app.user.credential.secret, out)
+    login(app.user)
