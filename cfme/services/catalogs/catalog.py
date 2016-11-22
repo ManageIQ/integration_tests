@@ -101,7 +101,7 @@ class Catalog(Updateable, Pretty, Navigatable):
             # Select the row to delete, assuming default List View for All
             listview_table.select_row_by_cells({'Name': self.name, 'Description': self.description})
             cfg_btn(version.pick({version.LOWEST: 'Remove Items from the VMDB',
-                    '5.7': 'Remove Catalog Items'}), invokes_alert=True)
+                    '5.7': 'Remove Catalogs'}), invokes_alert=True)
         elif from_dest == 'Details':
             cfg_btn(version.pick({version.LOWEST: 'Remove Item from the VMDB',
                     '5.7': 'Remove Catalog'}), invokes_alert=True)
