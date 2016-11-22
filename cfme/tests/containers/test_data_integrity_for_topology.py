@@ -28,7 +28,6 @@ pytest_generate_tests = testgen.generate(
 
 DataSet = namedtuple('DataSet', ['object', 'name'])
 
-# TODO: add the following to the list once possible:
 DATA_SETS = [
     DataSet(Container, 'Containers'),
     DataSet(Node, 'Nodes'),
@@ -40,7 +39,7 @@ DATA_SETS = [
     DataSet(ContainersProvider, 'Providers'),
     DataSet(ImageRegistry, 'Registries')
 ]
-#   CMP-9521
+#   CMP-9521 CMP-9819 CMP-9820 CMP-9821 CMP-9822
 
 
 @pytest.mark.parametrize(('test_data'), DATA_SETS)
