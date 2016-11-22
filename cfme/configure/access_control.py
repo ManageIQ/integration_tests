@@ -7,7 +7,7 @@ from cfme.exceptions import CandidateNotFound
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
-    form_buttons, Input, Table, UpDownSelect, CFMECheckbox)
+    form_buttons, Input, Table, UpDownSelect, CFMECheckbox, BootstrapTreeview)
 from cfme.web_ui.form_buttons import change_stored_password
 from cfme.web_ui.menu import extend_nav
 from fixtures.pytest_store import store
@@ -21,6 +21,7 @@ from utils.update import Updateable
 
 def server_region_string():
     return store.current_appliance.server_region_string()
+
 
 tb_select = partial(tb.select, "Configuration")
 pol_btn = partial(tb.select, "Policy")
@@ -77,12 +78,9 @@ class User(Updateable, Pretty, Navigatable):
             ('name_txt', Input('name')),
             ('userid_txt', Input('userid')),
             ('password_txt', Input('password')),
-            ('password_verify_txt', {version.LOWEST: Input('password2'),
-                                     "5.5": Input('verify')}),
+            ('password_verify_txt', Input('verify')),
             ('email_txt', Input('email')),
-            ('user_group_select', {
-                version.LOWEST: Select("//*[@id='chosen_group']"),
-                '5.5': AngularSelect('chosen_group')}),
+            ('user_group_select', AngularSelect('chosen_group')),
         ])
 
     pretty_attrs = ['name', 'group']
@@ -236,9 +234,7 @@ class Group(Updateable, Pretty, Navigatable):
             ('ldap_groups_for_user', Select("//*[@id='ldap_groups_user']")),
             ('description_txt', Input('description')),
             ('lookup_ldap_groups_chk', Input('lookup')),
-            ('role_select', {
-                version.LOWEST: Select("//*[@id='group_role']"),
-                "5.5": AngularSelect("group_role")}),
+            ('role_select', AngularSelect("group_role")),
             ('group_tenant', AngularSelect("group_tenant"), {"appeared_in": "5.5"}),
             ('user_to_look_up', Input('user')),
             ('username', Input('user_id')),
@@ -374,10 +370,10 @@ class Role(Updateable, Pretty, Navigatable):
     form = Form(
         fields=[
             ('name_txt', Input('name')),
-            ('vm_restriction_select', {
-                version.LOWEST: Select("//*[@id='vm_restriction']"),
-                '5.5': AngularSelect('vm_restriction')}),
-            ('product_features_tree', CheckboxTree("//div[@id='features_treebox']/ul")),
+            ('vm_restriction_select', AngularSelect('vm_restriction')),
+            ('product_features_tree', {
+                version.LOWEST: CheckboxTree("//div[@id='features_treebox']/ul"),
+                '5.7': BootstrapTreeview("features_treebox")}),
         ])
     pretty_attrs = ['name', 'product_features']
 
