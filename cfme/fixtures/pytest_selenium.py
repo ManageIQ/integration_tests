@@ -478,7 +478,7 @@ def wait_for_element(*locs, **kwargs):
         new_kwargs["timeout"] = kwargs["timeout"]
     wait_until(
         lambda s: filt([is_displayed(loc, move_to=True) for loc in locs]),
-        msg="{} of the elements '{}' did not appear as expected.".format(msg, str(locs)),
+        msg="{} of the elements '{}' to appear".format(msg, str(locs)),
         **kwargs
     )
 
