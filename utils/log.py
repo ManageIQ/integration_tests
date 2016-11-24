@@ -245,16 +245,7 @@ class _RelpathFilter(logging.Filter):
 
     """
     def filter(self, record):
-        try:
-            relpath = get_rel_path(record.source_file)
-            lineno = record.source_lineno
-        except AttributeError:
-            relpath = get_rel_path(record.pathname)
-            lineno = record.lineno
-        if lineno:
-            record.source = "{}:{}".format(relpath, lineno)
-        else:
-            record.source = relpath
+        record.pathname = get_rel_path(record.pathname)
         return True
 
 
@@ -340,7 +331,7 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
     filename = os.path.join(root, filename)
     handler = logging.FileHandler(filename, **kw)
     formatter = logging.Formatter(
-        '%(asctime)-15s [%(levelname).1s] %(message)s (%(module)s:%(lineno)s)')
+        '%(asctime)-15s [%(levelname).1s] %(message)s (%(pathname)s:%(lineno)s)')
     handler.setFormatter(formatter)
     if level is not None:
         handler.setLevel(level)
@@ -348,7 +339,7 @@ def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
 
 
 def error_console_handler():
-    formatter = logging.Formatter('[%(levelname)s] %(message)s (%(module)s:%(lineno)s)')
+    formatter = logging.Formatter('[%(levelname)s] %(message)s (%(pathname)s:%(lineno)s)')
     handler = logging.StreamHandler()
     handler.setLevel(logging.ERROR)
     handler.setFormatter(formatter)
