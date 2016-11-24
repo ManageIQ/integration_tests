@@ -24,6 +24,7 @@ pytest_generate_tests = testgen.generate(
 TEST_OBJECTS = [Project, Service, Replicator, Route, ContainersProvider]
 
 
+@pytest.mark.meta(blockers=[1392413])
 @pytest.mark.parametrize('cls', TEST_OBJECTS)
 def test_containers_main_pages_sort(cls):
 
