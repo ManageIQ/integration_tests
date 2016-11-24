@@ -6,12 +6,11 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import (AngularSelect, Form, Region, Select, fill, form_buttons, flash, Table,
+from cfme.web_ui import (AngularSelect, Form, Region, fill, form_buttons, flash, Table,
     ButtonGroup, Quadicon, CheckboxTree, Input, CFMECheckbox, BootstrapTreeview)
 from cfme.web_ui.menu import nav
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import version, deferred_verpick
-from utils.blockers import BZ
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.appliance import Navigatable
@@ -37,17 +36,13 @@ class Timeprofile(Updateable, Navigatable):
     timeprofile_form = Form(
         fields=[
             ("description", Input("description")),
-            ("scope", {
-                version.LOWEST: Select("select#profile_type"),
-                "5.5": AngularSelect("profile_type")}),
-            ("timezone", {
-                version.LOWEST: Select("select#profile_tz"),
-                "5.5": AngularSelect("profile_tz")}),
+            ("scope", AngularSelect("profile_type")),
+            ("timezone", AngularSelect("profile_tz")),
             ("days", CFMECheckbox("all_days")),
             ("hours", CFMECheckbox("all_hours")),
         ]
     )
-
+    save_edit_button = form_buttons.FormButton('Save changes')
     save_button = deferred_verpick({
         version.LOWEST: form_buttons.FormButton("Add this Time Profile"),
         '5.7': form_buttons.FormButton('Add')
@@ -62,26 +57,27 @@ class Timeprofile(Updateable, Navigatable):
         self.hours = hours
         self.timezone = timezone
 
-    def create(self):
+    def create(self, cancel=False):
         navigate_to(self, 'Add')
         fill(self.timeprofile_form, {'description': self.description,
                                      'scope': self.scope,
                                      'days': self.days,
                                      'hours': self.hours,
                                      'timezone': self.timezone,
-                                     },
-             action=self.save_button)
-        tp_ui_bug = BZ(1334440, forced_streams=["5.6"])
-        end = "saved" if version.current_version() > '5.7' else "added"
-        if not tp_ui_bug.blocks:
-            flash.assert_success_message('Time Profile "{}" was {}'.format(self.description, end))
+                                     })
+        if not cancel:
+            sel.click(self.save_button)
+            end = "saved" if version.current_version() > '5.7' else "added"
+            flash.assert_success_message('Time Profile "{}" was {}'
+                                         .format(self.description, end))
 
     def update(self, updates):
         navigate_to(self, 'Edit')
         fill(self.timeprofile_form, {'description': updates.get('description'),
                                      'scope': updates.get('scope'),
                                      'timezone': updates.get('timezone')},
-             action=form_buttons.save)
+             action={version.LOWEST: form_buttons.save,
+                     '5.7': self.save_edit_button})
         flash.assert_success_message(
             'Time Profile "{}" was saved'.format(updates.get('description', self.description)))
 
@@ -95,8 +91,9 @@ class Timeprofile(Updateable, Navigatable):
         fill(self.timeprofile_form, {'description': new_timeprofile.description,
                               'scope': new_timeprofile.scope},
              action=self.save_button)
-        flash.assert_success_message(
-            'Time Profile "{}" was added'.format(new_timeprofile.description))
+        end = "saved" if version.current_version() > '5.7' else "added"
+        flash.assert_success_message('Time Profile "{}" was {}'
+                                     .format(new_timeprofile.description, end))
         return new_timeprofile
 
     def delete(self):
@@ -139,25 +136,15 @@ class Visual(Updateable, Navigatable):
 
     item_form = Form(
         fields=[
-            ('grid_view', {
-                version.LOWEST: Select('//select[@id="perpage_grid"]'),
-                "5.5": AngularSelect('perpage_grid')}),
-            ('tile_view', {
-                version.LOWEST: Select('//select[@id="perpage_tile"]'),
-                "5.5": AngularSelect("perpage_tile")}),
-            ('list_view', {
-                version.LOWEST: Select('//select[@id="perpage_list"]'),
-                "5.5": AngularSelect("perpage_list")}),
-            ('reports', {
-                version.LOWEST: Select('//select[@id="perpage_reports"]'),
-                "5.5": AngularSelect("perpage_reports")}),
+            ('grid_view', AngularSelect('perpage_grid')),
+            ('tile_view', AngularSelect("perpage_tile")),
+            ('list_view', AngularSelect("perpage_list")),
+            ('reports', AngularSelect("perpage_reports")),
         ])
 
     startpage_form = Form(
         fields=[
-            ('login_page', {
-                version.LOWEST: Select('//select[@id="start_page"]'),
-                "5.5": AngularSelect("start_page")})])
+            ('login_page', AngularSelect("start_page"))])
 
     quadicons_form = Form(
         fields=[
@@ -173,12 +160,8 @@ class Visual(Updateable, Navigatable):
 
     display_form = Form(
         fields=[
-            ('chart_theme', {
-                version.LOWEST: Select('//select[@id="display_reporttheme"]'),
-                "5.5": AngularSelect("display_reporttheme")}),
-            ('time_zone', {
-                version.LOWEST: Select('//select[@id="display_timezone"]'),
-                "5.5": AngularSelect("display_timezone")}),
+            ('chart_theme', AngularSelect("display_reporttheme")),
+            ('time_zone', AngularSelect("display_timezone")),
         ])
 
     save_button = form_buttons.FormButton("Add this Time Profile")
