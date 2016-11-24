@@ -60,7 +60,7 @@ from fixtures.pytest_store import store
 from utils import conf, version
 from utils.log import create_sublogger
 from utils.path import conf_path, log_path, scripts_data_path
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
 
 # paths to all of the coverage-related files
 
@@ -231,9 +231,13 @@ class CoverageManager(object):
     def _stop_touching_all_the_things(self):
         self.log.info('Waiting for baseline coverage generator to finish')
         # let the thing toucher finish touching all the things, it generally doesn't take more
-        # than 10 minutes, so we'll be nice and give it 20
-        wait_for(self._still_touching_all_the_things, fail_condition=True, num_sec=1200,
-            message='check thing_toucher.rb on appliance')
+        # than 10 minutes
+        try:
+            wait_for(self._still_touching_all_the_things, fail_condition=True, num_sec=600,
+                message='check thing_toucher.rb on appliance')
+        except TimedOutError:
+            self.print_message("thing_toucher.rb timed out after 10mins; killing the process")
+            self.ipapp.ssh_client.run_command("pkill -f thing_toucher")
 
     def _collect_reports(self):
         # restart evm to stop the proccesses and let the simplecov exit hook run
