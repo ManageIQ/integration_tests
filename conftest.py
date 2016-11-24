@@ -30,15 +30,6 @@ class _AppliancePoliceException(Exception):
         return "{} (port {})".format(self.message, self.port)
 
 
-def pytest_configure(config):
-    if store.current_appliance.version < '5.6':
-        store.write_line(
-            'WARNING: This version of the framework does not support the appliance you '
-            'are using, things may not work or be completely broken. YOU HAVE BEEN WARNED!!!',
-            red=True
-        )
-
-
 @pytest.mark.tryfirst
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
@@ -156,7 +147,6 @@ def _pytest_plugins_generator(*extension_pkgs):
         prefix = '%s.' % extension_pkg.__name__
         for importer, modname, is_package in iter_modules(path, prefix):
             yield modname
-
 
 pytest_plugins = (
 
