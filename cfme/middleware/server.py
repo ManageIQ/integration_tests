@@ -18,7 +18,8 @@ from . import LIST_TABLE_LOCATOR, mon_btn, pwr_btn, MiddlewareBase, download
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
 
-def _db_select_query(name=None, feed=None, provider=None, server_group=None):
+def _db_select_query(name=None, feed=None, provider=None, server_group=None,
+                     product=None):
     """column order: `id`, `name`, `hostname`, `feed`, `product`,
     `provider_name`, `ems_ref`, `properties`, `server_group_name`"""
     t_ms = cfmedb()['middleware_servers']
@@ -38,6 +39,8 @@ def _db_select_query(name=None, feed=None, provider=None, server_group=None):
         query = query.filter(t_ems.name == provider.name)
     if server_group:
         query = query.filter(t_msgr.name == server_group.name)
+    if product:
+        query = query.filter(t_ms.product == product)
     return query
 
 
@@ -139,10 +142,12 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
         return headers
 
     @classmethod
-    def servers_in_db(cls, name=None, feed=None, provider=None, server_group=None, strict=True):
+    def servers_in_db(cls, name=None, feed=None, provider=None, product=None,
+                      server_group=None, strict=True):
         servers = []
         rows = _db_select_query(name=name, feed=feed, provider=provider,
-            server_group=server_group).all()
+            product=product, server_group=server_group).all()
+        _provider = provider
         for server in rows:
             if strict:
                 _provider = get_crud(get_provider_key(server.provider_name))
@@ -250,27 +255,31 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
 
     @variable(alias='ui')
     def is_running(self):
-        raise NotImplementedError('This feature not implemented yet until issue #9147 is resolved')
+        self.summary.reload()
+        return self.summary.properties.server_state.text_value == 'Running'
 
-    @is_running.variant('db')
-    def is_running_in_db(self):
+    @variable(alias='db')
+    def is_suspended(self):
         server = _db_select_query(name=self.name, provider=self.provider,
                                  feed=self.feed).first()
         if not server:
             raise MiddlewareServerNotFound("Server '{}' not found in DB!".format(self.name))
-        return parse_properties(server.properties)['Server State'] == 'running'
+        return parse_properties(server.properties)['Suspend State'] == 'SUSPENDED'
 
-    @is_running.variant('mgmt')
-    def is_running_in_mgmt(self):
-        db_srv = _db_select_query(name=self.name, provider=self.provider,
-                                 feed=self.feed).first()
-        if db_srv:
-            path = CanonicalPath(db_srv.ems_ref)
-            mgmt_srv = self.provider.mgmt.inventory.get_config_data(feed_id=path.feed_id,
-                                                                    resource_id=path.resource_id)
-            if mgmt_srv:
-                return mgmt_srv.value['Server State'] == 'running'
-        raise MiddlewareServerNotFound("Server '{}' not found in MGMT!".format(self.name))
+    @variable(alias='ui')
+    def is_starting(self):
+        self.summary.reload()
+        return self.summary.properties.server_state.text_value == 'Starting'
+
+    @variable(alias='ui')
+    def is_stopping(self):
+        self.summary.reload()
+        return self.summary.properties.server_state.text_value == 'Stopping'
+
+    @variable(alias='ui')
+    def is_stopped(self):
+        self.summary.reload()
+        return self.summary.properties.server_state.text_value == 'Stopped'
 
     def shutdown_server(self, timeout=10, cancel=False):
         self.load_details(refresh=True)
@@ -284,6 +293,11 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
     def restart_server(self):
         self.load_details(refresh=True)
         pwr_btn("Restart Server", invokes_alert=True)
+        sel.handle_alert()
+
+    def start_server(self):
+        self.load_details(refresh=True)
+        pwr_btn("Start Server", invokes_alert=True)
         sel.handle_alert()
 
     def suspend_server(self, timeout=10, cancel=False):
@@ -308,6 +322,11 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container):
     def stop_server(self):
         self.load_details(refresh=True)
         pwr_btn("Stop Server", invokes_alert=True)
+        sel.handle_alert()
+
+    def kill_server(self):
+        self.load_details(refresh=True)
+        pwr_btn("Kill Server", invokes_alert=True)
         sel.handle_alert()
 
     def open_utilization(self):

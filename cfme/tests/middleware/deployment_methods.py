@@ -4,10 +4,10 @@ import pytest
 
 from contextlib import closing
 from urllib2 import urlopen, HTTPError, URLError
-from cfme.middleware.server import MiddlewareServer
 from cfme.middleware.deployment import MiddlewareDeployment
 from utils.wait import wait_for
 from utils.path import middleware_resources_path
+from server_methods import get_server_by_name
 
 RESOURCE_WAR_NAME = 'cfme_test_war_middleware.war'
 RESOURCE_WAR_NAME_NEW = 'new_cfme_test_war_middleware.war'
@@ -50,11 +50,7 @@ def generate_runtime_name(file_path):
 
 
 def get_server(provider, product):
-    for server in MiddlewareServer.servers(provider=provider):
-        if server.product == product:
-            return server
-    else:
-        raise ValueError('{} server was not found in servers list'.format(provider))
+    return get_server_by_name(provider, product, 'EAP7')
 
 
 def get_resource_path(archive_name):
