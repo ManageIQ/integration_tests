@@ -431,7 +431,7 @@ class VerticalNavigation(Widget):
         return self.browser.element('..', parent=current)
 
 
-class Tab(View):
+class Tab(View, ClickableMixin):
     """Represents the Tab widget.
 
     Selects itself automatically when any child widget gets accessed, ensuring that the widget is
@@ -443,18 +443,16 @@ class Tab(View):
     def tab_name(self):
         return self.TAB_NAME or type(self).__name__.capitalize()
 
-    def element(self):
-        return self.browser.element(
-            './li[normalize-space(.)={}]'.format(quote(self.tab_name)),
-            parent=self)
+    def __locator__(self):
+        return '//li[normalize-space(.)={}]'.format(quote(self.tab_name))
 
     def is_active(self):
-        return 'active' in self.browser.classes(self.element())
+        return 'active' in self.browser.classes(self)
 
     def select(self):
         if not self.is_active():
             self.logger.info('opened the tab %s', self.tab_name)
-            self.browser.click(self.element())
+            self.click()
 
     def child_widget_accessed(self, widget):
         # Select the tab
@@ -510,6 +508,9 @@ class Accordion(View, ClickableMixin):
         if self.is_closed:
             self.logger.info('opening')
             self.click()
+            # Workaround for stupid Settings page, perhaps we put a try mechanism in here
+            if self.is_closed:
+                self.click()
 
     def close(self):
         if self.is_open:

@@ -5,6 +5,8 @@ from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import ColorGroup, form_buttons
+from utils.appliance import current_appliance
+from utils.appliance.implementations.ui import navigate_to
 from utils import version
 from cfme.configure.settings import Visual
 from cfme.configure import settings  # NOQA
@@ -66,7 +68,7 @@ def test_timezone_setting(set_timezone):
     })
 
     if version.current_version() > '5.5':
-        sel.force_navigate("cfg_diagnostics_server_summary")
+        navigate_to(current_appliance.server, 'DiagnosticsDetails')
     else:
         navigate_to(Visual, 'All')
 

@@ -1,4 +1,6 @@
 cached-property
+attrs
+
 boto
 bottle
 bottle-sqlite

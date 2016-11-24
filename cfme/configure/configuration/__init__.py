@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from navmazing import NavigateToAttribute, NavigateToSibling
+
 from contextlib import contextmanager
 from functools import partial
 from cached_property import cached_property
@@ -7,13 +9,14 @@ from fixtures.pytest_store import store
 
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound, CandidateNotFound
+from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, CandidateNotFound
 from cfme.web_ui import (
     AngularSelect, Calendar, CheckboxSelect, CFMECheckbox, DynamicTable, Form, InfoBlock, Input,
-    MultiFill, Region, Select, Table, accordion, fill, flash, form_buttons)
+    MultiFill, Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.menu import nav
 from cfme.web_ui.form_buttons import change_stored_password
-from utils.appliance import Navigatable
+from utils.appliance import Navigatable, current_appliance
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
@@ -39,7 +42,7 @@ replication_worker = Form(
     ]
 )
 
-replication_process = Region(locators={
+replication_process = UIRegion(locators={
     "status": InfoBlock("Replication Process", "Status"),
     "current_backlog": InfoBlock("Replication Process", "Current Backlog"),
 })
@@ -123,85 +126,14 @@ tag_form = Form(
         ('save', '//button[normalize-space(.)="Save"]'),
     ])
 
-zone_form = Form(
-    fields=[
-        ("name", Input("name")),
-        ("description", Input("description")),
-        ("smartproxy_ip", Input("proxy_server_ip")),
-        ("ntp_server_1", Input("ntp_server_1")),
-        ("ntp_server_2", Input("ntp_server_2")),
-        ("ntp_server_3", Input("ntp_server_3")),
-        ("max_scans", {
-            version.LOWEST: Select('select#max_scans'),
-            '5.5': AngularSelect("max_scans")}),
-        ("user", Input("userid")),
-        ("password", Input("password")),
-        ("verify", Input("verify")),
-    ])
-
 
 records_table = Table("//div[@id='records_div']/table")
 category_table = Table("//div[@id='settings_co_categories']/table")
 classification_table = Table("//div[@id='classification_entries_div']/table")
-zones_table = Table("//div[@id='settings_list']/table")
-
-
-def add_tag(cat_name):
-    fill(tag_form, {'category': cat_name})
-    sel.click(tag_form.new)
-
-
-def edit_tag(cat_name, tag_name):
-    fill(tag_form, {'category': cat_name})
-    classification_table.click_cell('name', tag_name)
 
 
 nav.add_branch("configuration",
     {
-        "cfg_settings_region":
-        [
-            lambda _: settings_tree(store.current_appliance.server_region_string()),
-            {
-                "cfg_settings_region_details":
-                lambda _: tabs.select_tab("Details"),
-
-                "cfg_settings_region_cu_collection":
-                lambda _: tabs.select_tab("C & U Collection"),
-
-                "cfg_settings_region_my_company_categories":
-                [
-                    lambda _: tabs.select_tab("My Company Categories"),
-                    {
-                        "cfg_settings_region_my_company_category_new":
-                        lambda _: sel.click(category_form.new_tr),
-
-                        "cfg_settings_region_my_company_category_edit":
-                        lambda ctx: category_table.click_cell("name", ctx.category.name)
-                    },
-                ],
-
-                "cfg_settings_region_my_company_tags":
-                [
-                    lambda _: tabs.select_tab("My Company Tags"),
-                    {
-                        "cfg_settings_region_my_company_tag_new":
-                        lambda ctx: add_tag(ctx.tag.category.display_name),
-
-                        "cfg_settings_region_my_company_tag_edit":
-                        lambda ctx: edit_tag(ctx.tag.category.display_name, ctx.tag.name)
-                    },
-                ],
-
-                "cfg_settings_region_import_tags":
-                lambda _: tabs.select_tab("Import Tags"),
-
-                "cfg_settings_region_import":
-                lambda _: tabs.select_tab("Import"),
-
-                "cfg_settings_region_red_hat_updates":
-                lambda _: tabs.select_tab("Red Hat Updates")
-            }
-        ],
 
         "cfg_analysis_profiles": [
             lambda _: settings_tree(store.current_appliance.server_region_string(),
@@ -264,134 +196,6 @@ nav.add_branch("configuration",
                 ]
             }
         ],
-
-        "cfg_settings_currentserver":
-        [
-            lambda _: settings_tree(
-                store.current_appliance.server_region_string(),
-                "Zones",
-                "Zone: {} (current)".format(store.current_appliance.zone_description),
-                "Server: {} [{}] (current)".format(store.current_appliance.server_name(),
-                    store.current_appliance.server_id())
-            ),
-            {
-                "cfg_settings_currentserver_server":
-                lambda _: tabs.select_tab("Server"),
-
-                "cfg_settings_currentserver_auth":
-                lambda _: tabs.select_tab("Authentication"),
-
-                "cfg_settings_currentserver_workers":
-                lambda _: tabs.select_tab("Workers"),
-
-                "cfg_settings_currentserver_database":
-                lambda _: tabs.select_tab("Database"),
-
-                "cfg_settings_currentserver_logos":
-                lambda _: tabs.select_tab("Custom Logos"),
-
-                "cfg_settings_currentserver_maintenance":
-                lambda _: tabs.select_tab("Maintenance"),
-
-                "cfg_settings_currentserver_smartproxy":
-                lambda _: tabs.select_tab("SmartProxy"),
-
-                "cfg_settings_currentserver_advanced":
-                lambda _: tabs.select_tab("Advanced")
-            }
-        ],
-        "cfg_diagnostics_currentserver":
-        [
-            lambda _: diagnostics_tree(
-                store.current_appliance.server_region_string(),
-                "Zone: Default Zone (current)",
-                "Server: {} [{}] (current)".format(store.current_appliance.server_name(),
-                    store.current_appliance.server_id())
-            ),
-            {
-                "cfg_diagnostics_server_summary":
-                lambda _: tabs.select_tab("Summary"),
-
-                "cfg_diagnostics_server_workers":
-                lambda _: tabs.select_tab("Workers"),
-
-                "cfg_diagnostics_server_collect":
-                [
-                    lambda _: tabs.select_tab("Collect Logs"),
-                    {
-                        "cfg_diagnostics_server_collect_settings":
-                        lambda _: tb.select("Edit the Log Depot settings for the selected Server")
-                    }
-                ],
-
-                "cfg_diagnostics_server_cfmelog":
-                lambda _: tabs.select_tab("CFME Log"),
-
-                "cfg_diagnostics_server_auditlog":
-                lambda _: tabs.select_tab("Audit Log"),
-
-                "cfg_diagnostics_server_productionlog":
-                lambda _: tabs.select_tab("Production Log"),
-
-                "cfg_diagnostics_server_utilization":
-                lambda _: tabs.select_tab("Utilization"),
-
-                "cfg_diagnostics_server_timelines":
-                lambda _: tabs.select_tab("Timelines"),
-            }
-        ],
-        "cfg_diagnostics_defaultzone":
-        [
-            lambda _: diagnostics_tree(
-                store.current_appliance.server_region_string(),
-                "Zone: Default Zone (current)",
-            ),
-            {
-                "cfg_diagnostics_zone_roles_by_servers":
-                lambda _: tabs.select_tab("Roles by Servers"),
-
-                "cfg_diagnostics_zone_servers_by_roles":
-                lambda _: tabs.select_tab("Servers by Roles"),
-
-                "cfg_diagnostics_zone_servers":
-                lambda _: tabs.select_tab("Servers"),
-
-                "cfg_diagnostics_zone_collect":
-                lambda _: tabs.select_tab("Collect Logs"),
-
-                "cfg_diagnostics_zone_gap_collect":
-                lambda _: tabs.select_tab("C & U Gap Collection"),
-            }
-        ],
-        "cfg_diagnostics_region":
-        [
-            lambda _: diagnostics_tree(store.current_appliance.server_region_string()),
-            {
-                "cfg_diagnostics_region_zones":
-                lambda _: tabs.select_tab("Zones"),
-
-                "cfg_diagnostics_region_roles_by_servers":
-                lambda _: tabs.select_tab("Roles by Servers"),
-
-                "cfg_diagnostics_region_servers_by_roles":
-                lambda _: tabs.select_tab("Servers by Roles"),
-
-                "cfg_diagnostics_region_servers":
-                lambda _: tabs.select_tab("Servers"),
-
-                "cfg_diagnostics_region_replication":
-                lambda _: tabs.select_tab("Replication"),
-
-                "cfg_diagnostics_region_database":
-                lambda _: tabs.select_tab("Database"),
-
-                "cfg_diagnostics_region_orphaned":
-                lambda _: tabs.select_tab("Orphaned Data"),
-            }
-        ],
-
-        "configuration_access_control": lambda _: accordion.click("Access Control"),
-        "configuration_database": lambda _: accordion.click("Database"),
     }
 )
 
@@ -521,7 +325,7 @@ class ServerLogDepot(Pretty):
         ServerLogDepot.Credentials.clear()
 
     """
-    elements = Region(
+    elements = UIRegion(
         locators={
             "last_message": InfoBlock("Basic Info", "Last Message"),
             "last_log_collection": InfoBlock("Basic Info", "Last Log Collection"),
@@ -610,7 +414,7 @@ class ServerLogDepot(Pretty):
                 validate: Whether validate the credentials (not for NFS)
                 cancel: If set to True, the Cancel button is clicked instead of saving.
             """
-            sel.force_navigate("cfg_diagnostics_server_collect_settings")
+            navigate_to(current_appliance.server, 'DiagnosticsLogsSettings')
             details = {
                 "type": sel.ByValue(self.p_types[self.p_type]),
                 "name": self.name,
@@ -645,7 +449,7 @@ class ServerLogDepot(Pretty):
             Args:
                 cancel: If set to True, the Cancel button is clicked instead of saving.
             """
-            sel.force_navigate("cfg_diagnostics_server_collect_settings")
+            navigate_to(current_appliance.server, 'DiagnosticsLogsSettings')
             sel.wait_for_element(cls.server_collect_logs.type)
             sel.wait_for_ajax()
             if cls.server_collect_logs.type.first_selected_option_text == "<No Depot>":
@@ -688,7 +492,7 @@ class ServerLogDepot(Pretty):
             selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
             wait_minutes: How many minutes should we wait for the collection process to finish?
         """
-        sel.force_navigate("cfg_diagnostics_server_collect")
+        navigate_to(current_appliance.server, 'DiagnosticsCollectLogs')
         last_collection = cls.get_last_collection()
         # Initiate the collection
         tb.select("Collect", selection)
@@ -776,7 +580,8 @@ class BasicInformation(Updateable, Pretty, Navigatable):
         """ Navigate to a correct page, change details and save.
 
         """
-        sel.force_navigate("cfg_settings_currentserver_server")
+        # TODO: These should move as functions of the server and don't need to be classes
+        navigate_to(current_appliance.server, 'Server')
         fill(self.basic_information, self, action=form_buttons.save)
         self.appliance.server_details_changed()
 
@@ -825,7 +630,7 @@ class SMTPSettings(Updateable):
         ]
     )
 
-    buttons = Region(
+    buttons = UIRegion(
         locators=dict(
             test="|".join([
                 "//img[@alt='Send test email']",
@@ -860,7 +665,7 @@ class SMTPSettings(Updateable):
         )
 
     def update(self):
-        sel.force_navigate("cfg_settings_currentserver_server")
+        navigate_to(current_appliance.server, 'Server')
         fill(self.smtp_settings, self.details, action=form_buttons.save)
 
     @classmethod
@@ -870,7 +675,7 @@ class SMTPSettings(Updateable):
         Args:
             to_address: Destination address.
         """
-        sel.force_navigate("cfg_settings_currentserver_server")
+        navigate_to(current_appliance.server, 'Server')
         fill(self.smtp_settings, dict(to_email=to_address), action=self.buttons.test)
 
 
@@ -887,7 +692,7 @@ class AuthSetting(Updateable, Pretty):
     @classmethod
     def set_session_timeout(cls, hours=None, minutes=None):
         """Sets the session timeout of the appliance."""
-        sel.force_navigate("cfg_settings_currentserver_auth")
+        navigate_to(current_appliance.server, 'Authentication')
         logger.info(
             "Setting authentication timeout to %s hours and %s minutes.", hours, minutes)
         fill(cls.form, {"timeout_h": hours, "timeout_m": minutes}, action=form_buttons.save)
@@ -928,7 +733,7 @@ class DatabaseAuthSetting(AuthSetting):
         self.auth_mode = "Database"
 
     def update(self, updates=None):
-        sel.force_navigate("cfg_settings_currentserver_auth")
+        navigate_to(current_appliance.server, 'Authentication')
         fill(self.form, updates if updates is not None else self, action=form_buttons.save)
 
 
@@ -968,11 +773,11 @@ class ExternalAuthSetting(AuthSetting):
         self.get_groups = get_groups
 
     def setup(self):
-        sel.force_navigate("cfg_settings_currentserver_auth")
+        navigate_to(current_appliance.server, 'Authentication')
         fill(self.form, self, action=form_buttons.save)
 
     def update(self, updates=None):
-        sel.force_navigate("cfg_settings_currentserver_auth")
+        navigate_to(current_appliance.server, 'Authentication')
         fill(self.form, updates if updates is not None else self, action=form_buttons.save)
 
 
@@ -1018,7 +823,7 @@ class AmazonAuthSetting(AuthSetting):
         self.auth_mode = "Amazon"
 
     def update(self, updates=None):
-        sel.force_navigate("cfg_settings_currentserver_auth")
+        navigate_to(current_appliance.server, 'Authentication')
         fill(self.form, updates if updates is not None else self, action=form_buttons.save)
 
 
@@ -1116,7 +921,7 @@ class LDAPAuthSetting(AuthSetting):
             setattr(self, "ldaphost_{}".format(enum + 1), host)
 
     def update(self, updates=None):
-        sel.force_navigate("cfg_settings_currentserver_auth")
+        navigate_to(current_appliance.server, 'Authentication')
         fill(self.form, updates if updates is not None else self, action=form_buttons.save)
 
 
@@ -1587,152 +1392,13 @@ class DatabaseBackupSchedule(Schedule):
         return row[6].text
 
 
-class Zone(Pretty):
-    """ Configure/Configuration/Region/Zones functionality
-
-    Create/Read/Update/Delete functionality.
-    """
-    pretty_attrs = ['name', 'description', 'smartproxy_ip', 'ntp_server_1',
-                    'ntp_server_2', 'ntp_server_3', 'max_scans', 'user', 'password', 'verify']
-
-    def __init__(self,
-                 name=None,
-                 description=None,
-                 smartproxy_ip=None,
-                 ntp_server_1=None,
-                 ntp_server_2=None,
-                 ntp_server_3=None,
-                 max_scans=None,
-                 user=None,
-                 password=None,
-                 verify=None):
-        self.name = name
-        self.description = description
-        self.smartproxy_ip = smartproxy_ip
-        self.ntp_server_1 = ntp_server_1
-        self.ntp_server_2 = ntp_server_2
-        self.ntp_server_3 = ntp_server_3
-        self.max_scans = sel.ByValue(max_scans)
-        self.user = user
-        self.password = password
-        self.verify = verify
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {
-            'name': create and kwargs.get('name'),
-            'description': kwargs.get('description'),
-            'smartproxy_ip': kwargs.get('smartproxy_ip'),
-            'ntp_server_1': kwargs.get('ntp_server_1'),
-            'ntp_server_2': kwargs.get('ntp_server_2'),
-            'ntp_server_3': kwargs.get('ntp_server_3'),
-            'max_scans': kwargs.get('max_scans'),
-            'user': kwargs.get('user'),
-            'password': kwargs.get('password'),
-            'verify': kwargs.get('verify')
-        }
-
-    def create(self, cancel=False):
-        """ Create a new Zone from the information stored in the object.
-
-        Args:
-            cancel: Whether to click on the cancel button to interrupt the creation.
-        """
-        sel.force_navigate("cfg_settings_zones")
-        tb.select("Configuration", "Add a new Zone")
-        if self.name is not None:
-            try:
-                sel.execute_script(
-                    "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?name=%s',"
-                    " data: {'name':'%s'}})" % (self.name, self.name))
-            except sel.WebDriverException:
-                logger.info("Ignoring workaround for zone description filling")
-        if self.description is not None:
-            try:
-                sel.execute_script(
-                    "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?description=%s',"
-                    " data: {'description':'%s'}})" % (self.description,
-                    self.description))
-            except sel.WebDriverException:
-                logger.info("Ignoring workaround for zone description filling")
-        fill(
-            zone_form,
-            self._form_mapping(True, **self.__dict__))
-        if cancel:
-            form_buttons.cancel()
-        else:
-            form_buttons.add()
-            flash.assert_message_match('Zone "{}" was added'.format(self.name))
-
-    def update(self, updates, cancel=False):
-        """ Modify an existing zone with information from this instance.
-
-        Args:
-            updates: Dict with fields to be updated
-            cancel: Whether to click on the cancel button to interrupt the edit.
-
-        """
-        # sel.force_navigate("cfg_settings_zone_edit",
-        #    context={"zone_name": self.name})
-        self.go_to_by_description(self.description)
-        tb.select("Configuration", "Edit this Zone")
-        fill(zone_form, self._form_mapping(**updates))
-        if cancel:
-            form_buttons.cancel()
-        else:
-            form_buttons.save()
-            flash.assert_message_match('Zone "{}" was saved'.format(self.name))
-
-    def delete(self, cancel=False):
-        """ Delete the Zone represented by this object.
-
-        Args:
-            cancel: Whether to click on the cancel button in the pop-up.
-        """
-        self.go_to_by_description(self.description)
-        tb.select("Configuration", "Delete this Zone", invokes_alert=True)
-        sel.handle_alert(cancel)
-        if not cancel:
-            flash.assert_message_match('Zone "{}": Delete successful'.format(self.name))
-
-    @classmethod
-    def go_to_by_description(cls, description):
-        """ Finds and navigates to a particular Zone by its description.
-
-        This method looks for a Zone with the provided description. If it
-        finds one (and only one) Zone with that description, it navigates to it.
-        Otherwise, it raises an Exception.
-
-        Args:
-            description: description of the Zone.
-
-        Raises:
-            ZoneNotFound: If no single Zone is found with the specified description.
-        """
-        # TODO Stop using this method as a workaround once Zones can be located by name in the UI.
-        sel.force_navigate("cfg_settings_zones")
-        try:
-            zones_table.click_row_by_cells({1: description}, partial_check=True)
-        except:
-            raise ZoneNotFound("No unique Zones with the description '{}'".format(description))
-
-    @property
-    def exists(self):
-        sel.force_navigate("cfg_settings_zones")
-        table = Table(zones_table)
-        if table.find_cell(1, "Zone: {}".format(self.description)):
-            return True
-        elif table.find_cell(1, "Zone : {}".format(self.description)):  # Another possibility
-            return True
-        else:
-            return False
-
-
-class Category(Pretty):
+class Category(Pretty, Navigatable):
     pretty_attrs = ['name', 'display_name', 'description', 'show_in_console',
                     'single_value', 'capture_candu']
 
     def __init__(self, name=None, display_name=None, description=None, show_in_console=True,
-                 single_value=True, capture_candu=False):
+                 single_value=True, capture_candu=False, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.display_name = display_name
         self.description = description
@@ -1751,7 +1417,7 @@ class Category(Pretty):
         }
 
     def create(self, cancel=False):
-        sel.force_navigate("cfg_settings_region_my_company_category_new")
+        navigate_to(self, 'Add')
         fill(category_form, self._form_mapping(True, **self.__dict__))
         if cancel:
             form_buttons.cancel()
@@ -1760,8 +1426,7 @@ class Category(Pretty):
             flash.assert_success_message('Category "{}" was added'.format(self.display_name))
 
     def update(self, updates, cancel=False):
-        sel.force_navigate("cfg_settings_region_my_company_category_edit",
-                           context={"category": self})
+        navigate_to(self, 'Edit')
         fill(category_form, self._form_mapping(**updates))
         if cancel:
             form_buttons.cancel()
@@ -1773,7 +1438,7 @@ class Category(Pretty):
         """
         """
         if not cancel:
-            sel.force_navigate("cfg_settings_region_my_company_categories")
+            navigate_to(self, 'All')
             row = category_table.find_row_by_cells({'name': self.name})
             del_btn_fn = version.pick({
                 version.LOWEST: lambda: row[0],
@@ -1784,10 +1449,36 @@ class Category(Pretty):
             flash.assert_success_message('Category "{}": Delete successful'.format(self.name))
 
 
-class Tag(Pretty):
+@navigator.register(Category, 'All')
+class CategoryAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
+
+    def step(self):
+        tabs.select_tab("My Company Categories")
+
+
+@navigator.register(Category, 'Add')
+class CategoryAdd(CFMENavigateStep):
+    """Unlike most other Add operations, this one requires an instance"""
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        sel.click(category_form.new_tr)
+
+
+@navigator.register(Category, 'Edit')
+class CategoryEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        category_table.click_cell("name", self.obj.name)
+
+
+class Tag(Pretty, Navigatable):
     pretty_attrs = ['name', 'display_name', 'category']
 
-    def __init__(self, name=None, display_name=None, category=None):
+    def __init__(self, name=None, display_name=None, category=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.display_name = display_name
         self.category = category
@@ -1799,12 +1490,12 @@ class Tag(Pretty):
         }
 
     def create(self):
-        sel.force_navigate("cfg_settings_region_my_company_tag_new", context={"tag": self})
+        navigate_to(self, 'Add')
+        sel.click(tag_form.new)
         fill(tag_form, self._form_mapping(True, **self.__dict__), action=tag_form.add)
 
     def update(self, updates):
-        sel.force_navigate("cfg_settings_region_my_company_tag_edit",
-                           context={"tag": self})
+        navigate_to(self, 'Edit')
         update_action = version.pick({
             version.LOWEST: tag_form.add,
             '5.6': tag_form.save
@@ -1815,7 +1506,7 @@ class Tag(Pretty):
         """
         """
         if not cancel:
-            sel.force_navigate("cfg_settings_region_my_company_tags")
+            navigate_to(self, 'All')
             fill(tag_form, {'category': self.category.display_name})
             row = classification_table.find_row_by_cells({'name': self.name})
             del_btn_fn = version.pick({
@@ -1824,6 +1515,33 @@ class Tag(Pretty):
             })
             sel.click(del_btn_fn(), wait_ajax=False)
             sel.handle_alert()
+
+
+@navigator.register(Tag, 'All')
+class TagsAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server.zone.region', 'Details')
+
+    def step(self):
+        tabs.select_tab("My Company Tags")
+
+
+@navigator.register(Tag, 'Add')
+class TagsAdd(CFMENavigateStep):
+    """Unlike most other Add operations, this one requires an instance"""
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        fill(tag_form, {'category': self.obj.category.display_name})
+        sel.click(tag_form.new)
+
+
+@navigator.register(Tag, 'Edit')
+class TagsEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        fill(tag_form, {'category': self.obj.category.display_name})
+        classification_table.click_cell('name', self.obj.name)
 
 
 def set_server_roles(db=True, **roles):
@@ -1840,7 +1558,7 @@ def set_server_roles(db=True, **roles):
         yaml['server']['role'] = ','.join([role for role, boolean in roles.iteritems() if boolean])
         store.current_appliance.set_yaml_config("vmdb", yaml)
     else:
-        sel.force_navigate("cfg_settings_currentserver_server")
+        navigate_to(current_appliance.server, 'Server')
         fill(server_roles, roles, action=form_buttons.save)
 
 
@@ -1876,7 +1594,7 @@ def get_server_roles(navigate=True, db=True):
         return roles_with_bool
     else:
         if navigate:
-            sel.force_navigate("cfg_settings_currentserver_server")
+            navigate_to(current_appliance.server, 'Server')
 
         role_list = {}
         for (name, locator) in server_roles.fields:
@@ -1923,7 +1641,7 @@ def set_ntp_servers(*servers):
         *servers: Maximum of 3 hostnames.
     """
     server_value = ["", "", ""]
-    sel.force_navigate("cfg_settings_currentserver_server")
+    navigate_to(current_appliance.server, 'Server')
     assert len(servers) <= 3, "There is place only for 3 servers!"
     for enum, server in enumerate(servers):
         server_value[enum] = server
@@ -1940,66 +1658,13 @@ def set_ntp_servers(*servers):
 
 
 def get_ntp_servers():
-    sel.force_navigate("cfg_settings_currentserver_server")
+    navigate_to(current_appliance.server, 'Server')
     servers = set([])
     for i in range(3):
         value = sel.value("#ntp_server_{}".format(i + 1)).encode("utf-8").strip()
         if value:
             servers.add(value)
     return servers
-
-
-def set_database_internal():
-    """ Set the database as the internal one.
-
-    """
-    sel.force_navigate("cfg_settings_currentserver_database")
-    fill(
-        db_configuration,
-        dict(type="Internal Database on this CFME Appliance"),
-        action=form_buttons.save
-    )
-
-
-def set_database_external_appliance(hostname):
-    """ Set the database as an external from another appliance
-
-    Args:
-        hostname: Host name of the another appliance
-    """
-    sel.force_navigate("cfg_settings_currentserver_database")
-    fill(
-        db_configuration,
-        dict(
-            type="External Database on another CFME Appliance",
-            hostname=hostname
-        ),
-        action=form_buttons.save
-    )
-
-
-def set_database_external_postgres(hostname, database, username, password):
-    """ Set the database as an external Postgres DB
-
-    Args:
-        hostname: Host name of the Postgres server
-        database: Database name
-        username: User name
-        password: User password
-    """
-    sel.force_navigate("cfg_settings_currentserver_database")
-    fill(
-        db_configuration,
-        dict(
-            type="External Postgres Database",
-            hostname=hostname,
-            database=database,
-            username=username,
-            password=password,
-            password_verify=password
-        ),
-        action=form_buttons.save
-    )
 
 
 def restart_workers(name, wait_time_min=1):
@@ -2010,7 +1675,7 @@ def restart_workers(name, wait_time_min=1):
     Returns: bool whether the restart succeeded.
     """
 
-    sel.force_navigate("cfg_diagnostics_server_workers")
+    navigate_to(current_appliance.server, 'Workers')
 
     def get_all_pids(worker_name):
         return {row.pid.text for row in records_table.rows() if worker_name in row.name.text}
@@ -2065,7 +1730,7 @@ def get_workers_list(do_not_navigate=False, refresh=True):
         if refresh:
             tb.select("Reload current workers display")
     else:
-        sel.force_navigate("cfg_diagnostics_server_workers")
+        navigate_to(current_appliance.server, 'Workers')
     workers = {}
     for row in records_table.rows():
         name = sel.text_sane(row.name)
@@ -2117,7 +1782,7 @@ def set_replication_worker_host(host, port='5432'):
     Args:
         host: Address of the hostname to replicate to.
     """
-    sel.force_navigate("cfg_settings_currentserver_workers")
+    navigate_to(current_appliance.server, 'Workers')
     change_stored_password()
     fill(
         replication_worker,
