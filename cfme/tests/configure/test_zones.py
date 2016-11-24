@@ -7,7 +7,7 @@ import cfme.configure.configuration as conf
 from fixtures.pytest_store import store
 from utils.update import update
 from utils import version
-
+import utils.error as error
 
 @pytest.mark.tier(1)
 @pytest.mark.sauce
@@ -65,3 +65,28 @@ def test_zone_change_appliance_zone(request):
     assert zone.description == store.current_appliance.zone_description
     basic_info = conf.BasicInformation(appliance_zone="default")
     basic_info.update()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.sauce
+def test_zone_add_dupe():
+    zone = conf.Zone(
+        name=fauxfactory.gen_alphanumeric(5),
+        description=fauxfactory.gen_alphanumeric(8))
+
+    zone.create()
+    with error.expected('Name has already been taken'):
+        zone.create()
+
+
+@pytest.mark.tier(3)
+@pytest.mark.sauce
+def test_zone_add_maxlength(soft_assert):
+    zone = conf.Zone(
+        name=fauxfactory.gen_alphanumeric(50),
+        description=fauxfactory.gen_alphanumeric(50)
+    )
+    zone.create()
+    soft_assert(zone.exists, "The zone {} does not exist!".format(
+        zone.description
+    ))
