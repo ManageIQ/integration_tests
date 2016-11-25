@@ -56,7 +56,7 @@ def get_configuration_details(db=None, ip_address=None):
 
 def get_zone_description(zone_id, ip_address=None, db=None):
     db = _db(db, ip_address)
-    zone = db.session.query(db["zones"]).filter_by(id=zone_id).first()
+    zone = db.get_first_of("zones", id=zone_id)
     if zone is not None:
         return zone.description
 
@@ -64,7 +64,7 @@ def get_zone_description(zone_id, ip_address=None, db=None):
 def get_host_id(hostname, ip_address=None, db=None):
     db = _db(db, ip_address)
 
-    host = db.session.query(db["hosts"]).filter_by(name=hostname).first()
+    host = db.db.get_first_of("hosts", name=hostname)
 
     if host is not None:
         return str(host.id)
@@ -73,8 +73,7 @@ def get_host_id(hostname, ip_address=None, db=None):
 def check_domain_enabled(domain, ip_address=None, db=None):
     db = _db(db, ip_address)
 
-    namespaces = db["miq_ae_namespaces"]
-    ns = db.session.query(namespaces).filter_by(parent_id=None, name=domain).first()
+    ns = db.get_first_of("miq_ae_namespaces", parent_id=None, name=domain)
     if ns is not None:
         return ns.enabled
     else:
