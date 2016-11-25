@@ -34,6 +34,19 @@ class TestServiceRESTAPI(object):
     def services(self, request, rest_api, a_provider, dialog, service_catalogs):
         return _services(request, rest_api, a_provider, dialog, service_catalogs)
 
+    @pytest.mark.parametrize("method", ["post", "delete"])
+    def test_delete_service_dialog(self, rest_api, dialog, method):
+        service_dialog = rest_api.collections.service_dialogs.find_by(label=dialog.label)[0]
+        service_dialog.action.delete(force_method=method)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            service_dialog.action.delete()
+
+    def test_delete_service_dialogs(self, rest_api, dialog):
+        service_dialog = rest_api.collections.service_dialogs.find_by(label=dialog.label)[0]
+        rest_api.collections.service_dialogs.action.delete(service_dialog)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            rest_api.collections.service_dialogs.action.delete(service_dialog)
+
     def test_edit_service(self, rest_api, services):
         """Tests editing a service.
         Prerequisities:
