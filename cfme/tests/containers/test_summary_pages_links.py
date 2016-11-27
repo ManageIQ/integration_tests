@@ -45,12 +45,16 @@ def test_summary_pages_links(provider, cls):
     breads = breadcrumbs()
     bread_names = map(sel.text_sane, breads)
 
-    assert (cls.breadcrumb_member in bread_names) or \
-        (cls.breadcrumb_member.split(' ')[-1] in bread_names if
-        cls.breadcrumb_member.startswith('Container') else False)
+    if cls.breadcrumb_member.startswith('Container') and\
+       cls.breadcrumb_member not in bread_names:
+        breadcrumb_member = cls.breadcrumb_member.split(' ')[-1]
+    else:
+        breadcrumb_member = cls.breadcrumb_member
 
-    chosen_link = filter(lambda b: sel.text_sane(b) ==
-                         cls.breadcrumb_member, breads)[0]
+    assert breadcrumb_member in bread_names
+
+    chosen_link = next(b for b in breads
+                       if sel.text_sane(b) == breadcrumb_member)
 
     sel.click(chosen_link)
 
