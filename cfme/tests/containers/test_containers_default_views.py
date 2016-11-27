@@ -16,14 +16,14 @@ pytest_generate_tests = testgen.generate(
 
 
 VIEWS = ['Grid View', 'Tile View', 'List View']
-BUTTON_GROUP = ['Containers Providers', 'Projects', 'Routes', 'Nodes', 'Containers', 'Replicators']
 
-# TODO: Replace with navigator registered destinations when all container objects support them
+
+# Note: Cannot use navmazing destinations due to resetter (we need the default views)
 mapping = {
     'Containers Providers': 'containers_providers',
     'Projects': 'containers_projects',
     'Routes': 'containers_routes',
-    # 'Nodes': 'containers_nodes',
+    'Nodes': 'containers_nodes',
     'Containers': 'containers_containers',
     'Replicators': 'containers_replicators',
 }
@@ -31,7 +31,7 @@ mapping = {
 # CMP-9936 # CMP-9937 # CMP-9938 # CMP-10000 # CMP-10001 # CMP-10003
 
 
-@pytest.mark.parametrize(('button_group', 'view'), product(BUTTON_GROUP, VIEWS))
+@pytest.mark.parametrize(('button_group', 'view'), product(mapping.keys(), VIEWS))
 def test_containers_providers_default_view(button_group, view):
     """ Containers Providers/Projects/Routes/Nodes/Containers/Replicators default view test
         This test checks successful change of default views settings for Containers -->
