@@ -37,12 +37,12 @@ def get_configuration_details(db=None, ip_address=None):
         else:
             # Otherwise, filter based on id and ip address
             def server_filter(server):
-                return all([
-                    server.id >= reg_min,
-                    server.id < reg_max,
+                return (
+                    server.id >= reg_min and
+                    server.id < reg_max and
                     # XXX: This currently fails due to public/private addresses on openstack
                     server.ipaddress == ip_address
-                ])
+                )
             servers = filter(server_filter, all_servers)
             if servers:
                 server = servers[0]
