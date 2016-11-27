@@ -1,5 +1,31 @@
 # -*- coding: utf-8 -*-
 from utils.db import cfmedb, Db
+from collections import namedtuple
+
+
+class ConfigDetailResult(namedtuple('ConfigDetailResult',
+                                    'server_region, server_name, server_id, server_zone_id')):
+    @classmethod
+    def from_region_and_server(cls, region, server):
+        if not server:
+            return cls(None, None, None, None)
+        else:
+            return cls(region.region, server.name, server.id, server.zone_id)
+
+
+def config_detail_method(descriptor, attribute='configuration_details'):
+    name = next(
+        # __base__ is needed because we layer a subclass on top and need to walk the base class dict
+        name for name, value in vars(ConfigDetailResult.__base__).items()
+        if value is descriptor)
+
+    def method(self):
+        conf = getattr(self, attribute)
+        return getattr(conf, name, None)
+    method.__name__ = name
+    method.__doc__ = "alias for self.{attribute}.{name}".format(
+        attribute=attribute, name=name)
+    return method
 
 
 def _db(db=None, ip_address=None):
@@ -36,20 +62,13 @@ def get_configuration_details(db=None, ip_address=None):
             server = all_servers[0]
         else:
             # Otherwise, filter based on id and ip address
-            def server_filter(server):
-                return (
-                    server.id >= reg_min and
-                    server.id < reg_max and
-                    # XXX: This currently fails due to public/private addresses on openstack
-                    server.ipaddress == ip_address
-                )
-            servers = filter(server_filter, all_servers)
-            if servers:
-                server = servers[0]
-        if server:
-            return region.region, server.name, server.id, server.zone_id
-        else:
-            return None, None, None, None
+            server = next((
+                s for s in all_servers
+                if server.id >= reg_min and server.id < reg_max and
+                # XXX: This currently fails due to public/private addresses on openstack
+                server.ipaddress == ip_address), default=None)
+        if server is not None:
+            return ConfigDetailResult.from_region_and_server(region, server)
     else:
         return None
 

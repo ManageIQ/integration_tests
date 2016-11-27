@@ -1613,23 +1613,10 @@ class IPAppliance(object):
         except KeyError:
             return None
 
-    def _config_detail(self, idx):
-        try:
-            return self.configuration_details[idx]
-        except TypeError:
-            return None
-
-    def server_id(self):
-        return self._config_detail(2)
-
-    def server_region(self):
-        return self._config_detail(0)
-
-    def server_name(self):
-        return self._config_detail(1)
-
-    def server_zone_id(self):
-        return self._config_detail(3)
+    server_id = db_queries.config_detail_method(db_queries.ConfigDetailResult.server_id)
+    server_region = db_queries.config_detail_method(db_queries.ConfigDetailResult.server_region)
+    server_name = db_queries.config_detail_method(db_queries.ConfigDetailResult.server_name)
+    server_zone_id = db_queries.config_detail_method(db_queries.ConfigDetailResult.server_zone_id)
 
     def server_region_string(self):
         r = self.server_region()
