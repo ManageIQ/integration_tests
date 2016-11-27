@@ -29,12 +29,7 @@ def config_detail_method(descriptor, attribute='configuration_details'):
 
 
 def _db(db=None, ip_address=None):
-    if ip_address is None:
-        ip_address = cfmedb().hostname
-
-    if db is None:
-        db = Db(hostname=ip_address)
-    return db
+    return db or Db(hostname=ip_address or cfmedb().hostname)
 
 
 def get_configuration_details(db=None, ip_address=None):
