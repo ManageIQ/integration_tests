@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
-import hashlib
 import os
 import random
 import re
@@ -184,7 +183,7 @@ class IPAppliance(object):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return int(hashlib.md5(self.address).hexdigest(), 16)
+        return hash(self.address)
 
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
@@ -1797,7 +1796,7 @@ class Appliance(IPAppliance):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return int(hashlib.md5("{}@{}".format(self.vmname, self._provider_name)).hexdigest(), 16)
+        return hash((self.vmname, self._provider_name))
 
     @property
     def ipapp(self):
