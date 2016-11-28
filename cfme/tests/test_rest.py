@@ -115,3 +115,15 @@ def test_query_simple_collections(rest_api, collection_name):
     collection = getattr(rest_api.collections, collection_name)
     collection.reload()
     list(collection)
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_add_picture(rest_api):
+    collection = rest_api.collections.pictures
+    count = collection.count
+    collection.action.create({
+        "extension": "png",
+        "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS" \
+            "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
+    collection.reload()
+    assert collection.count == count + 1
