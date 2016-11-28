@@ -76,21 +76,33 @@ class Wharf(object):
         if self.docker_id:
             self._get('checkin', self.docker_id)
             log.info('Checked in webdriver container %s', self.docker_id)
+            self.renew_timer.cancel()
             self.docker_id = None
 
     def renew(self):
-        # If we have a docker id, renew_timer shouldn't still be None
-        if self.docker_id and not self.renew_timer.is_alive():
-            # You can call renew as frequently as desired, but it'll only run if
-            # the renewal timer has stopped or failed to renew
-            response = self._get('renew', self.docker_id)
-            try:
-                expiry_info = json.loads(response.content)
-            except ValueError:
-                raise ValueError("JSON could not be decoded:\n{}".format(response.content))
-            self.config.update(expiry_info)
-            self._reset_renewal_timer()
-            log.info('Renewed webdriver container %s', self.docker_id)
+        if not self.docker_id:
+            log.warn('The Wharf.renew was called before Wharf.checkout(). '
+                     'Doing checkout() first.')
+            self.checkout()
+        if not self.renew_timer.is_alive():
+            self._do_renew()
+
+    def _do_renew(self):
+        # You can call renew as frequently as desired, but it'll only run if
+        # the renewal timer has stopped or failed to renew
+        if not self.docker_id:
+            log.warn("In Wharf._do_renew, but docker_id={!r}. "
+                     "This shouldn't happen!".format(self.docker_id))
+            return
+
+        response = self._get('renew', self.docker_id)
+        try:
+            expiry_info = json.loads(response.content)
+        except ValueError:
+            raise ValueError("JSON could not be decoded:\n{}".format(response.content))
+        self.config.update(expiry_info)
+        self._reset_renewal_timer()
+        log.info('Renewed webdriver container %s', self.docker_id)
 
     def _reset_renewal_timer(self):
         if self.docker_id:
@@ -99,7 +111,7 @@ class Wharf(object):
 
             # Floor div by 2 and add a second to renew roughly halfway before expiration
             cautious_expire_interval = (self.config['expire_interval'] >> 1) + 1
-            self.renew_timer = Timer(cautious_expire_interval, self.renew)
+            self.renew_timer = Timer(cautious_expire_interval, self._do_renew)
             # mark as daemon so the timer is rudely destroyed on shutdown
             self.renew_timer.daemon = True
             self.renew_timer.start()
