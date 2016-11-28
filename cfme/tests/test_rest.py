@@ -132,3 +132,14 @@ def test_add_picture(rest_api):
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_http_options(rest_api):
     assert 'boot_time' in rest_api.collections.vms.options()['attributes']
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_server_info(rest_api):
+    assert all(item in rest_api.server_info for item in ('appliance', 'build', 'version'))
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_product_info(rest_api):
+    assert all(item in rest_api.product_info for item in
+               ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))
