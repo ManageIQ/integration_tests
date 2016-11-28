@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-
 import pytest
-from cfme.fixtures import pytest_selenium as sel
+
 from cfme import test_requirements
+from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider import InfraProvider
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import ButtonGroup, form_buttons, Quadicon, fill
+from cfme.services.myservice import MyService
+from cfme.web_ui import ButtonGroup, form_buttons, Quadicon, fill, toolbar as tb
 from utils.appliance.implementations.ui import navigate_to
 from utils.providers import setup_a_provider as _setup_a_provider
 from cfme.configure import settings  # NOQA
@@ -22,7 +22,7 @@ pytestmark = [pytest.mark.tier(3),
 gtl_params = {
     'Infrastructure Providers': InfraProvider,
     'VMs': 'infra_vms',
-    'My Services': 'my_services',
+    'My Services': MyService,
     # 'Catalog Items/catalog_items',
     'VMs & Instances': 'service_vms_instances',
     'Templates & Images': 'service_templates_images'

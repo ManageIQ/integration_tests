@@ -12,7 +12,8 @@ from utils.version import current_version
 TOLERANCE = 20
 # TODO: Replace nav branch strings with navmazing object destinations when supported
 LOCATIONS = [
-    "control_explorer", "automate_explorer", "automate_customization", "my_services",
+    "control_explorer", "automate_explorer", "automate_customization",
+    # "my_services",
     # "services_catalogs",
     "services_workloads", "reports", "chargeback", "clouds_instances",
     "infrastructure_virtual_machines", "infrastructure_pxe", "configuration"]
