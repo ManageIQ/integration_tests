@@ -34,6 +34,7 @@ class TestServiceRESTAPI(object):
     def services(self, request, rest_api, a_provider, dialog, service_catalogs):
         return _services(request, rest_api, a_provider, dialog, service_catalogs)
 
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize("method", ["post", "delete"])
     def test_delete_service_dialog(self, rest_api, dialog, method):
         service_dialog = rest_api.collections.service_dialogs.find_by(label=dialog.label)[0]
@@ -41,6 +42,7 @@ class TestServiceRESTAPI(object):
         with error.expected("ActiveRecord::RecordNotFound"):
             service_dialog.action.delete()
 
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_delete_service_dialogs(self, rest_api, dialog):
         service_dialog = rest_api.collections.service_dialogs.find_by(label=dialog.label)[0]
         rest_api.collections.service_dialogs.action.delete(service_dialog)
