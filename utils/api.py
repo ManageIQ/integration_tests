@@ -107,6 +107,16 @@ class API(object):
                 raise APIException("JSONDecodeError: {}".format(data.text))
         return self._result_processor(data)
 
+    def options(self, url, **opt_params):
+        logger.info("[RESTAPI] OPTIONS %s %s", url, repr(opt_params))
+        data = self._sending_request(
+            partial(self._session.options, url, params=opt_params, verify=False))
+        try:
+            data = data.json()
+        except simplejson.scanner.JSONDecodeError:
+            raise APIException("JSONDecodeError: {}".format(data.text))
+        return self._result_processor(data)
+
     def get_entity(self, collection_or_name, entity_id, attributes=None):
         if not isinstance(collection_or_name, Collection):
             collection = Collection(
@@ -263,6 +273,9 @@ class Collection(object):
             return self.find_by(**params)[0]
         except IndexError:
             raise ValueError("No such '{}' matching query {}!".format(self.name, repr(params)))
+
+    def options(self, **params):
+        return self._api.options(self._href, **params)
 
     @property
     def count(self):

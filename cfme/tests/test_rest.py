@@ -127,3 +127,8 @@ def test_add_picture(rest_api):
             "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
     collection.reload()
     assert collection.count == count + 1
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_http_options(rest_api):
+    assert 'boot_time' in rest_api.collections.vms.options()['attributes']
