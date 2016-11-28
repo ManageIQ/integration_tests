@@ -123,8 +123,8 @@ def test_add_picture(rest_api):
     count = collection.count
     collection.action.create({
         "extension": "png",
-        "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS" \
-            "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
+        "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
+                   "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
     collection.reload()
     assert collection.count == count + 1
 
