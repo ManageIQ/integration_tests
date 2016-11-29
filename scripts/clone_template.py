@@ -196,7 +196,7 @@ def main(**kwargs):
             ssh_client.close()
         return 10
 
-    if kwargs.get('outfile', None):
+    if kwargs.get('outfile', None) or kwargs.get('deploy', None):
         with open(kwargs['outfile'], 'w') as outfile:
             outfile.write("appliance_ip_address={}\n".format(ip))
 
