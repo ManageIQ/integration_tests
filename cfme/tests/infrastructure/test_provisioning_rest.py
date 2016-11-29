@@ -16,7 +16,11 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcent
 def provision_data(rest_api_modscope, provider, small_template_modscope):
     templates = rest_api_modscope.collections.templates.find_by(name=small_template_modscope)
     for template in templates:
-        if template.ems.name == provider.data["name"]:
+        try:
+            ems_id = template.ems_id
+        except AttributeError:
+            continue
+        if ems_id == provider.id:
             guid = template.guid
             break
     else:
