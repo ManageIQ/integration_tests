@@ -4126,6 +4126,6 @@ class StatusBox(object):
             self.name = self.name.split('_', 1)[-1]
         elem_text = sel.text(
             "//span[contains(@class,'card-pf-aggregate-status-count')]"
-            "/../../../../../div[contains(@status, '{}')]".format(self.name))
+            "/../../../../../div[contains(@status, 'objectStatus.{}')]".format(self.name.lower()))
         match = re.search(r'\d+', elem_text)
         return int(match.group())
