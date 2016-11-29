@@ -144,7 +144,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     vms_to_delete = defaultdict(set)
     thread_queue = []
     # precompile regexes
-    matchers = [re.compile(text) for text in texts]
+    matchers = [re.compile(text, re.IGNORECASE) for text in texts]
 
     for provider_key in providers:
         provider_type = providers_data[provider_key].get('type', None)
