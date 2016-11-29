@@ -45,6 +45,7 @@ import_form = Form(
         ("file_select", FileInput("upload[file]")),
         ("enable_deployment", CFMECheckbox("enable_deployment_cb")),
         ("runtime_name", Input("runtime_name_input", use_id=True)),
+        ("force_deployment", CFMECheckbox("force_deployment_cb")),
         ('deploy_button', FormButton("Deploy", ng_click="addDeployment()")),
         ('cancel_button', FormButton("Cancel"))
     ]
@@ -127,7 +128,8 @@ def get_server_name(path):
 
 class Container(SummaryMixin):
 
-    def add_deployment(self, filename, runtime_name=None, enable_deploy=True, cancel=False):
+    def add_deployment(self, filename, runtime_name=None, enable_deploy=True,
+                       overwrite=False, cancel=False):
         """Clicks to "Add Deployment" button, in opened window fills fields by provided parameters,
         and deploys.
 
@@ -141,18 +143,11 @@ class Container(SummaryMixin):
         deploy_btn("Add Deployment")
         fill(
             import_form,
-            {"file_select": filename},
+            {"file_select": filename,
+             "runtime_name": runtime_name,
+             "enable_deployment": enable_deploy,
+             "force_deployment": overwrite}
         )
-        if runtime_name:
-            fill(
-                import_form,
-                {"runtime_name": runtime_name},
-            )
-        if not enable_deploy:
-            fill(
-                import_form,
-                {"enable_deployment": enable_deploy}
-            )
         sel.click(import_form.cancel_button if cancel else import_form.deploy_button)
         flash.assert_success_message('Deployment "{}" has been initiated on this server.'
                     .format(runtime_name if runtime_name else os.path.basename(filename)))
