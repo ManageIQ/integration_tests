@@ -163,9 +163,10 @@ class ContainersProvider(BaseProvider, Pretty):
     @num_service.variant('ui')
     def num_service_ui(self):
         if version.current_version() < "5.7":
-            return int(self.get_detail("Relationships", "Services"))
+            name = "Services"
         else:
-            return int(self.get_detail("Relationships", "Container Services"))
+            name = "Container Services"
+        return int(self.get_detail("Relationships", name))
 
     @variable(alias='db')
     def num_replication_controller(self):
@@ -224,9 +225,10 @@ class ContainersProvider(BaseProvider, Pretty):
     @num_image.variant('ui')
     def num_image_ui(self):
         if version.current_version() < "5.7":
-            return int(self.get_detail("Relationships", "Images"))
+            name = "Images"
         else:
-            return int(self.get_detail("Relationships", "Container Images"))
+            name = "Container Images"
+        return int(self.get_detail("Relationships", name))
 
     @variable(alias='db')
     def num_image_registry(self):
