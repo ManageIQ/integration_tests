@@ -5,9 +5,16 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb, InfoBlock, Region, paginator,
-    match_location
-)
+    Quadicon,
+    Form,
+    AngularSelect,
+    form_buttons,
+    Input,
+    toolbar as tb,
+    InfoBlock,
+    Region,
+    paginator,
+    match_location)
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
@@ -98,8 +105,13 @@ class ContainersProvider(BaseProvider, Pretty):
     type_tclass = "container"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = [
-        'num_project', 'num_service', 'num_replication_controller', 'num_pod', 'num_node',
-        'num_container', 'num_image']
+        'num_project',
+        'num_service',
+        'num_replication_controller',
+        'num_pod',
+        'num_node',
+        'num_container',
+        'num_image']
     # TODO add 'num_image_registry' and 'num_volume'
     string_name = "Containers"
     page_name = "containers"
@@ -115,8 +127,16 @@ class ContainersProvider(BaseProvider, Pretty):
         {version.LOWEST: form_buttons.save,
          '5.6': form_buttons.angular_save})
 
-    def __init__(self, name=None, credentials=None, key=None,
-                 zone=None, hostname=None, port=None, provider_data=None, appliance=None):
+    def __init__(
+            self,
+            name=None,
+            credentials=None,
+            key=None,
+            zone=None,
+            hostname=None,
+            port=None,
+            provider_data=None,
+            appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         if not credentials:
             credentials = {}
@@ -131,7 +151,8 @@ class ContainersProvider(BaseProvider, Pretty):
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
         ensure_browser_open()
-        return sel.is_displayed('//div//h1[contains(., "{} (Summary)")]'.format(self.name))
+        return sel.is_displayed(
+            '//div//h1[contains(., "{} (Summary)")]'.format(self.name))
 
     def load_details(self, refresh=False):
         navigate_to(self, 'Details')
@@ -324,5 +345,6 @@ class TopologyFromDetails(CFMENavigateStep):
 
     def step(self):
         sel.click(InfoBlock('Overview', 'Topology'))
+
 
 import_all_modules_of('cfme.containers.provider')
