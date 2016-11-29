@@ -115,3 +115,31 @@ def test_query_simple_collections(rest_api, collection_name):
     collection = getattr(rest_api.collections, collection_name)
     collection.reload()
     list(collection)
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_add_picture(rest_api):
+    collection = rest_api.collections.pictures
+    count = collection.count
+    collection.action.create({
+        "extension": "png",
+        "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
+                   "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
+    collection.reload()
+    assert collection.count == count + 1
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_http_options(rest_api):
+    assert 'boot_time' in rest_api.collections.vms.options()['attributes']
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_server_info(rest_api):
+    assert all(item in rest_api.server_info for item in ('appliance', 'build', 'version'))
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_product_info(rest_api):
+    assert all(item in rest_api.product_info for item in
+               ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))
