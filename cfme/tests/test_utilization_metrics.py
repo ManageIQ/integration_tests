@@ -20,7 +20,7 @@ from utils.version import current_version
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['ec2', 'openstack', 'azure', 'gce'],
+        metafunc, ['virtualcenter', 'rhevm', 'ec2', 'openstack', 'azure', 'gce'],
         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
