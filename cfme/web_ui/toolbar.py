@@ -118,9 +118,13 @@ def pf_select(root, sub=None, invokes_alert=False):
                     sel.execute_script(
                         "return $('button:contains({})').trigger('click')".format(q_root))
                 except sel.NoSuchElementException:
-                    # The view selection buttons?
-                    sel.click("//li/a[@title={}]/*[self::i or self::img]/../..".format(q_root))
-
+                    try:
+                        sel.element("//a[@title = {}]".format(q_root))
+                        sel.execute_script(
+                            "return $('a[title={}]').trigger('click')".format(q_root))
+                    except sel.NoSuchElementException:
+                        # The view selection buttons?
+                        sel.click("//li/a[@title={}]/*[self::i or self::img]/../..".format(q_root))
     if not invokes_alert:
         sel.wait_for_ajax()
     return True
