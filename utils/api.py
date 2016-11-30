@@ -461,7 +461,10 @@ class ActionContainer(object):
         self._obj.reload_if_needed()
         reloaded_actions = []
         for action in self._obj._actions:
-            # don't redefine actions with same name and different methods
+            # There can be multiple actions with the same name and different methods
+            # (e.g. actions "delete" with method POST and DELETE).
+            # This makes sure that the attribute refers to the first action and is not redefined
+            # by other action with the same name and different method.
             if action["name"] not in reloaded_actions:
                 reloaded_actions.append(action["name"])
                 setattr(
@@ -514,6 +517,8 @@ class Action(object):
         return self.collection.api
 
     def __call__(self, *args, **kwargs):
+        # possibility to override HTTP method that will be used with the action
+        # (e.g. force_method='delete')
         method = kwargs.pop('force_method', self._method)
         resources = []
         # We got resources to post
