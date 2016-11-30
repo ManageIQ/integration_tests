@@ -24,7 +24,6 @@ pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope='function')
 
 VIEWS = ['Grid View', 'Tile View', 'List View']
-BUTTON_GROUP = ['Containers Providers', 'Projects', 'Routes', 'Nodes', 'Containers', 'Replicators']
 
 mapping = {
     'Containers Providers': ContainersProvider,
@@ -38,7 +37,7 @@ mapping = {
 
 # CMP-9936 # CMP-9937 # CMP-9938 # CMP-10000 # CMP-10001 # CMP-10003
 
-@pytest.mark.parametrize(('button_group', 'view'), product(BUTTON_GROUP, VIEWS))
+@pytest.mark.parametrize(('button_group', 'view'), product(mapping.keys(), VIEWS))
 def test_containers_providers_default_view(button_group, view):
     """ Containers Providers/Projects/Routes/Nodes/Containers/Replicators default view test
         This test checks successful change of default views settings for Containers -->
