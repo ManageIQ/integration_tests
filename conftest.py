@@ -150,7 +150,7 @@ def _pytest_plugins_generator(*extension_pkgs):
 
 
 pytest_plugins = (
-
+    'cfme.test_framework.sprout.plugin',
     'fixtures.pytest_store',
 
     'fixtures.portset',
