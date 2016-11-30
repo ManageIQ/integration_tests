@@ -66,8 +66,7 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
         inst_args['cloud_subnet'] = provisioning['subnet_range']
         inst_args['security_groups'] = provisioning['network_nsg']
         inst_args['resource_groups'] = provisioning['resource_group']
-        inst_args['instance_type'] = provisioning['vm_size'].lower() \
-            if current_version() >= "5.7" else provisioning['vm_size']
+        inst_args['instance_type'] = provisioning['vm_size'].lower()
         inst_args['admin_username'] = provisioning['vm_user']
         inst_args['admin_password'] = provisioning['vm_password']
     return instance, inst_args
