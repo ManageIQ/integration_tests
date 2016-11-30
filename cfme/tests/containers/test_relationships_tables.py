@@ -17,7 +17,7 @@ from utils.version import current_version
 
 pytestmark = [
     pytest.mark.uncollectif(
-        lambda: current_version() < "5.5"),
+        lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2)]
 pytest_generate_tests = testgen.generate(
@@ -30,12 +30,13 @@ pytest_generate_tests = testgen.generate(
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
                           'Project',
-                          'Services',
+                          'Container Services',
                           'Replicator',
                           'Containers',
+                          'Container Images',
                           'Node'])
 def test_pods_rel(provider, rel):
-    """   This module verifies the integrity of the Relationships table
+    """   This module verifies the fields in the Relationships table
           We also verify that clicking on the Relationships table field
           takes the user to the correct page, and the number of rows
           that appears on that page is equal to the number in the
@@ -100,9 +101,10 @@ def test_services_rel(provider, rel):
 @pytest.mark.parametrize('rel', [
     'Containers Provider',
     'Routes',
-    'Services',
+    'Container Services',
     'Replicators',
     'Pods',
+    'Container Images',
     'Containers'
 ])
 def test_nodes_rel(provider, rel):
@@ -123,7 +125,8 @@ def test_nodes_rel(provider, rel):
 
         val = node.get_detail('Relationships', rel)
         if val == '0':
-            # the row can't be clicked when there are no items, and has class 'no-hover'
+            # the row can't be clicked when there are no items, and has class
+            # 'no-hover'
             logger.info('No items for node relationship: {}'.format(rel))
             continue
         # Should already be here, but just in case
@@ -134,7 +137,8 @@ def test_nodes_rel(provider, rel):
             val = int(val)
             # best effort to include all items from rel in one page
             if paginator.page_controls_exist():
-                logger.info('Setting results per page to 1000 for {}'.format(rel))
+                logger.info(
+                    'Setting results per page to 1000 for {}'.format(rel))
                 paginator.results_per_page(1000)
             else:
                 logger.warning('Unable to increase results per page, '
@@ -229,9 +233,10 @@ def test_images_rel(provider, rel, detailfield):
 @pytest.mark.parametrize('rel',
                          ['Containers Provider',
                           'Routes',
-                          'Services',
+                          'Container Services',
                           'Replicators',
                           'Pods',
+                          'Container Images',
                           'Nodes'])
 def test_projects_rel(provider, rel):
     sel.force_navigate('containers_projects')
