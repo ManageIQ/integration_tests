@@ -274,7 +274,7 @@ def _uncollect_since_version(data, metafunc, required_fields):
     return False
 
 
-def provider_by_type(metafunc, provider_types, required_fields=None):
+def provider_by_type(metafunc, provider_types=None, provider_keys=None, required_fields=None):
     """Get the values of the named field keys from ``cfme_data.get('management_systems', {})``
 
     ``required_fields`` is special and can take many forms, it is used to ensure that
@@ -284,6 +284,7 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
 
     Args:
         provider_types: A list of provider types to include. If None, all providers are considered
+        provider_keys: A list of provider keys to include. If None, all providers are considered
 
     Returns:
         An tuple of ``(argnames, argvalues, idlist)`` for use in a pytest_generate_tests hook, or
@@ -340,7 +341,9 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
     argvalues = []
     idlist = []
 
-    for provider in cfme_data.get('management_systems', {}):
+    providers = cfme_data.get('management_systems', {})
+
+    for provider in providers:
 
         # Check provider hasn't been filtered out with --use-provider
         if provider not in filtered:
@@ -357,6 +360,10 @@ def provider_by_type(metafunc, provider_types, required_fields=None):
 
         if provider_types is not None:
             if not(prov_obj.type_tclass in provider_types or prov_obj.type_name in provider_types):
+                continue
+
+        if provider_keys is not None:
+            if not(prov_obj.key in provider_keys):
                 continue
 
         # Run through all the testgen uncollect fns
