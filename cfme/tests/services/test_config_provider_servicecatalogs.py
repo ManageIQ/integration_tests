@@ -77,13 +77,22 @@ def catalog():
 @pytest.fixture(scope="function")
 def catalog_item(config_manager, dialog, catalog):
     config_manager_obj = config_manager
-    provisionig_data = config_manager_obj.yaml_data['provisioning_data']
-    item_type, provider, template = map(provisionig_data.get,
-        ('item_type', 'provider', 'template'))
+    provisioning_data = config_manager_obj.yaml_data['provisioning_data']
+    item_type, provider_type, provider, template = map(provisioning_data.get,
+                                                       ('item_type',
+                                                        'provider_type',
+                                                        'provider',
+                                                        'template'))
     item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type=item_type, name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog, provider_type=provider, config_template=template)
+    catalog_item = CatalogItem(item_type=item_type,
+                               name=item_name,
+                               description="my catalog",
+                               display_in=True,
+                               catalog=catalog,
+                               dialog=dialog,
+                               provider=provider,
+                               provider_type=provider_type,
+                               config_template=template)
     return catalog_item
 
 
@@ -102,5 +111,11 @@ def test_order_catalog_item(catalog_item, request):
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=1400, delay=20)
-    assert row.last_message.text == 'Service Provisioned Successfully'
+    # Success message differs between 5.6 and 5.7
+    success_message = 'Service '
+    if version.current_version() >= '5.7':
+        # 5.7 success message includes catalog item name in brackets
+        success_message += '[{}] '.format(catalog_item.name)
+    success_message += 'Provisioned Successfully'
+    assert success_message in row.last_message.text
     DefaultView.set_default_view("Configuration Management Providers", "List View")
