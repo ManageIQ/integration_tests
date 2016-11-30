@@ -21,19 +21,20 @@ def get_random_object(provider, objecttype):
 
 
 def get_random_server(provider):
-    servers = MiddlewareServer.servers(provider=provider)
+    servers = MiddlewareServer.servers(provider=provider, strict=False)
     assert len(servers) > 0, "There is no server(s) available in UI"
     return get_random_list(servers, 1)[0]
 
 
 def get_random_domain(provider):
-    domains = MiddlewareDomain.domains(provider=provider)
+    domains = MiddlewareDomain.domains(provider=provider, strict=False)
     assert len(domains) > 0, "There is no domains(s) available in UI"
     return get_random_list(domains, 1)[0]
 
 
 def get_random_server_group(provider):
-    server_groups = MiddlewareServerGroup.server_groups(get_random_domain(provider))
+    server_groups = MiddlewareServerGroup.server_groups(get_random_domain(provider),
+                                                        strict=False)
     assert len(server_groups) > 0, "There is no server_groups(s) available in UI"
     return get_random_list(server_groups, 1)[0]
 
