@@ -95,11 +95,11 @@ def test_messaging_details(provider):
     """Tests messaging details on UI
 
     Steps:
-        * Get messagings list from UI
+        * Get messagings list from DB
         * Select each messaging details in UI
         * Compare selected messaging UI details with CFME database
     """
-    msg_list = MiddlewareMessaging.messagings(provider=provider)
+    msg_list = MiddlewareMessaging.messagings_in_db(provider=provider)
     for msg in get_random_list(msg_list, ITEMS_LIMIT):
         msg_ui = msg.messaging(method='ui')
         msg_db = msg.messaging(method='db')

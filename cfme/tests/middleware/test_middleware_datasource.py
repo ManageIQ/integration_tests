@@ -19,7 +19,7 @@ pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
-ITEMS_LIMIT = 2  # when we have big list, limit number of items to test
+ITEMS_LIMIT = 1  # when we have big list, limit number of items to test
 
 DATASOURCES = [ORACLE_12C_DS,
                ORACLE_12C_RAC_DS,
@@ -113,7 +113,7 @@ def test_datasource_details(provider):
         * Select each datasource details in UI
         * Compare selected datasource UI details with CFME database and MGMT system
     """
-    ds_list = MiddlewareDatasource.datasources(provider=provider)
+    ds_list = MiddlewareDatasource.datasources_in_db(provider=provider)
     for ds in get_random_list(ds_list, ITEMS_LIMIT):
         ds_ui = ds.datasource(method='ui')
         ds_db = ds.datasource(method='db')

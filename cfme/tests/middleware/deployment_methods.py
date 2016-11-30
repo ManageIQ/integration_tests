@@ -36,13 +36,13 @@ def deploy_archive(provider, server, file_path, runtime_name, enabled=True,
                    overwrite=False):
     server.add_deployment(file_path, runtime_name, enable_deploy=enabled,
                           overwrite=overwrite)
-    provider.refresh_provider_relationships(method='ui')
+    provider.refresh_provider_relationships(method='rest')
 
 
 def undeploy(provider, server, runtime_name):
     deployment = get_deployment_from_list(provider, server, runtime_name)
     deployment.undeploy()
-    provider.refresh_provider_relationships(method='ui')
+    provider.refresh_provider_relationships(method='rest')
 
 
 def generate_runtime_name(file_path):
@@ -82,7 +82,7 @@ def get_deployments_statuses(deployments):
 
 
 def check_deployment_appears(provider, server, runtime_name):
-    provider.refresh_provider_relationships(method='ui')
+    provider.refresh_provider_relationships(method='rest')
     wait_for(lambda: runtime_name in
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider, server=server)),
@@ -92,7 +92,7 @@ def check_deployment_appears(provider, server, runtime_name):
 
 
 def check_deployment_not_listed(provider, server, runtime_name):
-    provider.refresh_provider_relationships(method='ui')
+    provider.refresh_provider_relationships(method='rest')
     wait_for(lambda: runtime_name not in
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider, server=server)),
@@ -103,7 +103,7 @@ def check_deployment_not_listed(provider, server, runtime_name):
 
 def check_deployment_enabled(provider, server, runtime_name):
     check_deployment_appears(provider, server, runtime_name)
-    provider.refresh_provider_relationships(method='ui')
+    provider.refresh_provider_relationships(method='rest')
     wait_for(lambda:
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider,
@@ -115,7 +115,7 @@ def check_deployment_enabled(provider, server, runtime_name):
 
 def check_deployment_disabled(provider, server, runtime_name):
     check_deployment_appears(provider, server, runtime_name)
-    provider.refresh_provider_relationships(method='ui')
+    provider.refresh_provider_relationships(method='rest')
     wait_for(lambda:
         get_deployments_statuses(
             MiddlewareDeployment.deployments(provider=provider,

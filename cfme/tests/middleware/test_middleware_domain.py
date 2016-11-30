@@ -53,11 +53,11 @@ def test_domain_details(provider):
     """Tests domain details on UI
 
     Steps:
-        * Get domains list from UI
+        * Get domains list from DB
         * Select each domain details in UI
         * Compare selected domain UI details with CFME database and MGMT system
     """
-    domain_list = MiddlewareDomain.domains(provider=provider)
+    domain_list = MiddlewareDomain.domains_in_db(provider=provider)
     for domain in get_random_list(domain_list, 1):
         dmn_ui = domain.domain(method='ui')
         dmn_db = domain.domain(method='db')
