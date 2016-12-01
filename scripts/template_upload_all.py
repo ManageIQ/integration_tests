@@ -54,6 +54,10 @@ def parse_cmd_line():
                         help='local yaml file path, to use local provider_data & not conf/cfme_data'
                              'to be useful for template upload/deploy by non cfmeqe',
                         default=None)
+    parser.add_argument("--share_team", dest="share_team",
+                        help="share the uploaded image with other team accounts."
+                             "NOTE: This option is valid only for EC2 aws ami image uploads",
+                        default=None)
     args = parser.parse_args()
     return args
 
@@ -354,6 +358,7 @@ def main():
                 continue
         elif provider_type == 'ec2':
             module = 'template_upload_ec2'
+            kwargs['share_team'] = args.share_team
             if module not in dir_files.iterkeys():
                 continue
         kwargs['stream'] = stream

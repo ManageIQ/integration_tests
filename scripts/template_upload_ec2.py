@@ -34,6 +34,8 @@ def parse_cmd_line():
                         help="Name of final image on ec2", default=None)
     parser.add_argument("--provider", dest="provider",
                         help="Provider of ec2 service", default=None)
+    parser.add_argument("--share_team", dest="share_team",
+                        help="Provider of ec2 service", default=None)
     args = parser.parse_args()
     return args
 
@@ -147,8 +149,8 @@ def create_image(template_name, image_description, bucket_name, key_name):
     sshclient.run_command(command)
 
     print("AMAZON EC2: Running import-image command and grep ImportTaskId ...")
-    command = "aws ec2 import-image --description 'test_cfme_ami_image_upload' --disk-containers " \
-              "file://import_image.json | grep ImportTaskId"
+    command = "aws ec2 import-image --description {} --disk-containers " \
+              "file://import_image.json | grep ImportTaskId".format(template_name)
     output = sshclient.run_command(command)
     importtask_id = re.findall(r'import-ami-[a-zA-Z0-9_]*', str(output))[0]
 
@@ -171,10 +173,25 @@ def create_image(template_name, image_description, bucket_name, key_name):
     command = "aws ec2 create-tags --resources {} --tags Key='Name'," \
               "Value='{}'".format(ami_image_id, template_name)
     sshclient.run_command(command)
+    return ami_image_id
+
+
+def share_ami_image(ami_image_id, share_user_id):
+    temp_up = cfme_data['template_upload']['template_upload_ec2']
+    aws_cli_tool_client_username = credentials['host_default']['username']
+    aws_cli_tool_client_password = credentials['host_default']['password']
+    sshclient = make_ssh_client(temp_up['aws_cli_tool_client'], aws_cli_tool_client_username,
+                                aws_cli_tool_client_password)
+    permissions = '{{\"Add\":[{{\"UserId\":\"{user_id}\"}}]}}'.format(user_id=share_user_id)
+    command = 'aws ec2 modify-image-attribute --image-id {ami_image_id}' \
+              ' --launch-permission {permissions}'.format(
+               ami_image_id=ami_image_id, permissions=permissions)
+    output = sshclient.run_command(command)
+    print("AMAZON EC2: Permissions added to share the AMI image ....")
 
 
 def upload_template(provider, username, password, upload_bucket_name,
-                    image_url, template_name):
+                    image_url, template_name, share_user_id=None):
     """Downloads the image file from image_url. Creats the bucket in amazon s3 and uploads
        downloaded image file to it. Invokes the create_image method to complete the AMI image import
        process.
@@ -205,8 +222,13 @@ def upload_template(provider, username, password, upload_bucket_name,
         print("AMAZON EC2:{} File uploading done ...".format(provider))
 
         print("AMAZON EC2:{} Creating ami template/image {}...".format(provider, template_name))
-        create_image(template_name, image_description=template_name, bucket_name=upload_bucket_name,
-                     key_name=template_name)
+        ami_image_id = create_image(template_name, image_description=template_name,
+                                    bucket_name=upload_bucket_name, key_name=template_name)
+        print("AMAZON EC2:{} Successfully uploaded the template.".format(provider))
+        if share_user_id:
+            print("AMAZON EC2:{} Sharing template {} with user_id.".format(
+                provider, template_name, share_user_id))
+            share_ami_image(ami_image_id, share_user_id)
         print("AMAZON EC2:{} Successfully uploaded the template.".format(provider))
     except Exception as e:
         print(e)
@@ -225,12 +247,16 @@ def run(**kwargs):
      """
     mgmt_sys = cfme_data['management_systems']
     for provider in list_providers('ec2'):
+        if provider != 'ec2east':
+            continue
         ssh_rhevm_creds = mgmt_sys[provider]['credentials']
         username = credentials[ssh_rhevm_creds]['username']
         password = credentials[ssh_rhevm_creds]['password']
         upload_bucket_name = mgmt_sys[provider]['upload_bucket_name']
+        share_user_id = credentials['aws_ami_share'][kwargs['share_team']]['aws_user_id']\
+            if kwargs.get('share_team', None) else None
         upload_template(provider, username, password, upload_bucket_name, kwargs.get(
-            'image_url'), kwargs.get('template_name'))
+            'image_url'), kwargs.get('template_name'), share_user_id=share_user_id)
 
 if __name__ == '__main__':
     args = parse_cmd_line()
