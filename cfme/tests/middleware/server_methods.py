@@ -1,5 +1,9 @@
+import re
 from utils.wait import wait_for
 from cfme.middleware.server import MiddlewareServer
+
+EAP_PRODUCT_NAME = 'JBoss EAP'
+HAWKULAR_PRODUCT_NAME = 'Hawkular'
 
 DELAY = 20
 NUM_SEC = 700
@@ -54,12 +58,42 @@ def get_servers_set(servers):
                for server in servers)
 
 
-def get_server_by_name(provider, product, name=None):
+def get_eap_server(provider):
+    return _get_server_by_name(provider, EAP_PRODUCT_NAME, 'EAP7|Local')
+
+
+def get_hawkular_server(provider):
+    return _get_server_by_name(provider, HAWKULAR_PRODUCT_NAME)
+
+
+def get_domain_server(provider):
+    return _get_server_by_name(provider, EAP_PRODUCT_NAME, 'EAP7-server-one|server-one')
+
+
+def _get_server_by_name(provider, product, name=None):
+    """
+    Return server by given provider, product and server name.
+
+    Args:
+        provider: provider object
+        product: name of product
+        name: name of server, used as regex, optional
+
+    Usage:
+        _get_server_by_name(provider, EAP_PRODUCT_NAME, 'EAP7|Local')
+        _get_server_by_name(provider, HAWKULAR_PRODUCT_NAME)
+        _get_server_by_name(provider, EAP_PRODUCT_NAME, 'server-one')
+    """
     servers = MiddlewareServer.servers_in_db(provider=provider, product=product,
-                                             name=name, strict=False)
+                                             strict=False)
     if len(servers) > 0:
-        return servers[0]
-    raise ValueError('{} server was not found in servers list'.format(provider))
+        if name:
+            for server in servers:
+                if re.match("^({})$".format(name), server.name):
+                    return server
+        else:
+            return servers[0]
+    raise ValueError('{} server was not found in servers list'.format(product))
 
 
 def refresh(provider):

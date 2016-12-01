@@ -2,8 +2,7 @@ import pytest
 
 from utils import testgen
 from utils.version import current_version
-from deployment_methods import get_server
-from deployment_methods import EAP_PRODUCT_NAME
+from server_methods import get_eap_server
 from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
 from jdbc_driver_methods import ORACLE_12C_JDBC, DB2_105_JDBC, MSSQL_2014_JDBC, MYSQL_57_JDBC
 from jdbc_driver_methods import POSTGRESPLUS_94_JDBC, POSTGRESQL_94_JDBC, SYBASE_157_JDBC
@@ -42,7 +41,7 @@ def test_deploy_driver(provider, database_params):
         * Submits the form.
         * Checks that notification message is shown.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     file_path = download_jdbc_driver(database_params[0])
     deploy_jdbc_driver(provider, server, file_path, driver_name=database_params[1],
                        module_name=database_params[2], driver_class=database_params[3],

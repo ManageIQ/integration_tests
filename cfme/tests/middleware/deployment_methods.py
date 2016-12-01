@@ -7,7 +7,6 @@ from urllib2 import urlopen, HTTPError, URLError
 from cfme.middleware.deployment import MiddlewareDeployment
 from utils.wait import wait_for
 from utils.path import middleware_resources_path
-from server_methods import get_server_by_name
 
 RESOURCE_WAR_NAME = 'cfme_test_war_middleware.war'
 RESOURCE_WAR_NAME_NEW = 'new_cfme_test_war_middleware.war'
@@ -15,9 +14,6 @@ RESOURCE_JAR_NAME = 'cfme_test_jar_middleware.jar'
 RESOURCE_EAR_NAME = 'cfme_test_ear_middleware.ear'
 RESOURCE_WAR_CONTENT = 'Original JSP'
 RESOURCE_WAR_CONTENT_NEW = 'Original JSP 2'
-
-EAP_PRODUCT_NAME = 'JBoss EAP'
-HAWKULAR_PRODUCT_NAME = 'Hawkular'
 
 DEPLOYMENT_URL = 'http://{}:8180/{}'
 WAR_EXT = '.war'
@@ -47,10 +43,6 @@ def undeploy(provider, server, runtime_name):
 
 def generate_runtime_name(file_path):
     return "{}_{}".format(fauxfactory.gen_alpha(8).lower(), os.path.basename(file_path))
-
-
-def get_server(provider, product):
-    return get_server_by_name(provider, product, 'EAP7')
 
 
 def get_resource_path(archive_name):

@@ -5,15 +5,15 @@ from cfme.middleware import get_random_list
 from cfme.middleware.deployment import MiddlewareDeployment
 from utils import testgen
 from utils.version import current_version
-from deployment_methods import deploy, get_server, get_deployment_from_list
+from deployment_methods import deploy, get_deployment_from_list
 from deployment_methods import get_deployments_set
 from deployment_methods import check_deployment_not_listed
 from deployment_methods import check_deployment_disabled, check_deployment_enabled
-from deployment_methods import EAP_PRODUCT_NAME, HAWKULAR_PRODUCT_NAME
 from deployment_methods import RESOURCE_JAR_NAME, WAR_EXT
 from deployment_methods import RESOURCE_WAR_NAME, RESOURCE_WAR_NAME_NEW
 from deployment_methods import RESOURCE_WAR_CONTENT, RESOURCE_WAR_CONTENT_NEW
 from deployment_methods import check_deployment_content, check_no_deployment_content
+from server_methods import get_hawkular_server, get_eap_server
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -53,7 +53,7 @@ def test_list_server_deployments(provider):
         * Get deployments list from Database of server
         * Compares both lists [UI, Database]
     """
-    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    server = get_hawkular_server(provider)
     ui_deps = get_deployments_set(MiddlewareDeployment.deployments(
         server=server))
     db_deps = get_deployments_set(MiddlewareDeployment.deployments_in_db(
@@ -98,7 +98,7 @@ def test_list_provider_server_deployments(provider):
         * Get deployments list from Management system(Hawkular) of server
         * Compare size of all the list [UI, Database, Management system]
     """
-    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    server = get_hawkular_server(provider)
     ui_deps = get_deployments_set(
         MiddlewareDeployment.deployments(provider=provider, server=server))
     db_deps = get_deployments_set(
@@ -119,7 +119,7 @@ def test_deployment_details(provider):
         * Compare selected deployment details with CFME database and UI
     """
     deps = MiddlewareDeployment.deployments_in_db(provider=provider,
-                                               server=get_server(provider, HAWKULAR_PRODUCT_NAME))
+                                               server=get_hawkular_server(provider))
     assert len(deps) > 0, "There is no deployment(s) available in DB"
     for dep in get_random_list(deps, ITEMS_LIMIT):
         dep_ui = dep.deployment(method='ui')
@@ -148,7 +148,7 @@ def test_deploy(provider, archive_name):
         * Selects deployment to show the details.
         * Verified details properties.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, archive_name)
     check_deployment_enabled(provider, server, runtime_name)
     deployment = get_deployment_from_list(provider, server, runtime_name)
@@ -172,7 +172,7 @@ def test_deploy_disabled(provider, archive_name):
         * Selects deployment to show the details.
         * Verified details properties.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, archive_name, enabled=False)
     check_deployment_disabled(provider, server, runtime_name)
     deployment = get_deployment_from_list(provider, server, runtime_name)
@@ -193,7 +193,7 @@ def test_restart(provider, archive_name):
         * Lists all deployments on EAP server.
         * Verified the recently restarted archive is listed and is Enabled.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, archive_name)
     check_deployment_enabled(provider, server, runtime_name)
     deployment = get_deployment_from_list(provider, server, runtime_name)
@@ -217,7 +217,7 @@ def test_undeploy(provider, archive_name):
         * Lists all deployments on EAP server.
         * Verified the recently undeployed archive is not listed anymore.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, archive_name)
     check_deployment_enabled(provider, server, runtime_name)
     deployment = get_deployment_from_list(provider, server, runtime_name)
@@ -240,7 +240,7 @@ def test_undeploy_disabled(provider, archive_name):
         * Lists all deployments on EAP server.
         * Verified the recently undeployed archive is not listed anymore.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, archive_name)
     check_deployment_enabled(provider, server, runtime_name)
     deployment = get_deployment_from_list(provider, server, runtime_name)
@@ -263,7 +263,7 @@ def test_redeploy_fail(provider):
         * Deploys newer version of the same deployment archive into server.
         * Verify that exception is shown that archive already exists.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, RESOURCE_WAR_NAME)
     check_deployment_enabled(provider, server, runtime_name)
     with error.expected('Deployment "{}" already exists on this server.'.format(runtime_name)):
@@ -286,7 +286,7 @@ def test_redeploy_overwrite(provider):
         * Lists all deployments on EAP server.
         * Verified the recently deployed archive's status is Enabled.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, RESOURCE_WAR_NAME)
     check_deployment_enabled(provider, server, runtime_name)
     deploy(provider, server, RESOURCE_WAR_NAME_NEW, runtime_name=runtime_name,
@@ -310,7 +310,7 @@ def test_redeploy_disabled(provider):
         * Lists all deployments on EAP server.
         * Verified the recently deployed archive's status is Disabled.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, RESOURCE_WAR_NAME, enabled=False)
     check_deployment_disabled(provider, server, runtime_name)
     deploy(provider, server, RESOURCE_WAR_NAME_NEW,
@@ -334,7 +334,7 @@ def test_redeploy_enable_disabled(provider):
         * Lists all deployments on EAP server.
         * Verified the recently deployed archive's status is Enabled.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, RESOURCE_WAR_NAME, enabled=False)
     check_deployment_disabled(provider, server, runtime_name)
     deploy(provider, server, RESOURCE_WAR_NAME_NEW, runtime_name=runtime_name,
@@ -358,7 +358,7 @@ def test_redeploy_disable_enabled(provider):
         * Lists all deployments on EAP server.
         * Verified the recently deployed archive's status is Disabled.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, RESOURCE_WAR_NAME, enabled=True)
     check_deployment_enabled(provider, server, runtime_name)
     deploy(provider, server, RESOURCE_WAR_NAME_NEW, runtime_name=runtime_name,
@@ -388,7 +388,7 @@ def test_disable_enable(provider, archive_name):
         * Selects that archive from the list to load details.
         * Verifies that properties of deplyment's summary page and the status is Enabled.
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, archive_name)
     check_deployment_enabled(provider, server, runtime_name)
     deployment = get_deployment_from_list(provider, server, runtime_name)
@@ -416,7 +416,7 @@ def test_disable_upgrade_enable(provider):
         * Verified the recently enabled archive's status is Enabled.
         * Verify the content of new archive,
     """
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = deploy(provider, server, RESOURCE_WAR_NAME)
     check_deployment_enabled(provider, server, runtime_name)
     check_deployment_content(provider, server, runtime_name.replace(WAR_EXT, ''),
