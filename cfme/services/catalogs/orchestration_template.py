@@ -2,6 +2,7 @@
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator as pg
 from navmazing import NavigateToAttribute, NavigateToSibling
+from utils.log import logger
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.appliance import Navigatable
@@ -213,6 +214,12 @@ class All(CFMENavigateStep):
     def step(self):
         from cfme.web_ui.menu import nav
         nav._nav_to_fn('Services', 'Catalogs')(None)
+
+        if self.view.orchestration_templates.is_closed:
+            logger.info('Orchstration template tree is closed')
+            self.view.orchestration_templates.open
+        else:
+            logger.info('Orchstration template tree is opened')
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates")
 
     def am_i_here(self, *args, **kwargs):
@@ -226,6 +233,8 @@ class TemplateDetails(CFMENavigateStep):
     VIEW = DetailsTemplateView
 
     def step(self):
+        if not self.view.orchestration_templates.is_closed:
+            logger.info('Orchstration template tree is opened (Details)')
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates",
                                                     self.obj.template_type, self.obj.template_name)
 
@@ -240,6 +249,8 @@ class TemplateType(CFMENavigateStep):
     VIEW = TemplateTypeView
 
     def step(self):
+        if not self.view.orchestration_templates.is_closed:
+            logger.info('Orchstration template tree is opened (TemplateType)')
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates",
                                                           self.obj.template_type)
 
@@ -251,6 +262,8 @@ class AddDialog(CFMENavigateStep):
     VIEW = AddDialogView
 
     def step(self):
+        if not self.view.orchestration_templates.is_closed:
+            logger.info('Orchstration template tree is opened (Add Dialog)')
         self.view.configuration.item_select('Create Service Dialog from "Orchestration Template"')
 
 
@@ -261,6 +274,8 @@ class EditTemplate(CFMENavigateStep):
     VIEW = EditTemplateView
 
     def step(self):
+        if not self.view.orchestration_templates.is_closed:
+            logger.info('Orchstration template tree is opened (Edit)')
         self.view.configuration.item_select("Edit this Orchestration Template")
 
 
@@ -271,6 +286,8 @@ class AddTemplate(CFMENavigateStep):
     VIEW = AddTemplateView
 
     def step(self):
+        if not self.view.orchestration_templates.is_closed:
+            logger.info('Orchstration template tree is opened(AddTemplate)')
         self.view.configuration.item_select("Create new Orchestration Template")
 
 
@@ -281,4 +298,6 @@ class CopyTemplate(CFMENavigateStep):
     VIEW = CopyTemplateView
 
     def step(self):
+        if not self.view.orchestration_templates.is_closed:
+            logger.info('Orchstration template tree is opened(COpy)')
         self.view.configuration.item_select("Copy this Orchestration Template")
