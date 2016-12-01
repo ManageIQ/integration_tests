@@ -1,8 +1,6 @@
 import pytest
 import fauxfactory
 
-from boto.exception import BotoServerError
-
 from cfme.configure.settings import DefaultView
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
@@ -11,6 +9,7 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services import requests
 from cfme.cloud.stack import Stack
+from cfme.exceptions import CandidateNotFound
 from cfme import test_requirements
 from utils import testgen, version
 from utils.log import logger
@@ -142,18 +141,43 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-@pytest.fixture(scope="function")
-def dialog(provider, provisioning):
+@pytest.yield_fixture(scope="function")
+def template(provider, provisioning, dialog_name):
     template_type = provisioning['stack_provisioning']['template_type']
+    if provider.type == 'azure':
+        template_name = 'azure-single-vm-from-user-image'
+    else:
+        template_name = fauxfactory.gen_alphanumeric()
+
+    template = OrchestrationTemplate(template_type=template_type,
+                                     template_name=template_name)
+
+    if provider.type == "ec2":
+        method = AWS_TEMPLATE.replace('CloudFormation', random_desc())
+    elif provider.type == "openstack":
+        method = HEAT_TEMPLATE.replace('Simple', random_desc())
+
+    template.create(method)
+
+    if provider.type != "azure":
+        template.create_service_dialog_from_template(dialog_name, template.template_name)
+
+    yield template
+
+    try:
+        template.delete()
+    except CandidateNotFound as ex:
+        logger.warning('Exception deleting template fixture, continuing: {}'.format(ex.message))
+        pass
+
+
+@pytest.yield_fixture(scope="function")
+def dialog_name(provider):
     if provider.type == "azure":
         dialog_name = "azure-single-vm-from-user-image"
-        template = OrchestrationTemplate(template_type=template_type,
-                                     template_name="azure-single-vm-from-user-image")
     else:
         dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
-        template = OrchestrationTemplate(template_type=template_type,
-                                     template_name=fauxfactory.gen_alphanumeric())
-    return dialog_name, template
+    yield dialog_name
 
 
 @pytest.yield_fixture(scope="function")
@@ -164,22 +188,24 @@ def catalog():
     yield catalog
 
 
+@pytest.yield_fixture(scope="function")
+def catalog_item(dialog_name, catalog, template):
+    item_name = fauxfactory.gen_alphanumeric()
+
+    catalog_item = CatalogItem(item_type="Orchestration",
+                               name=item_name,
+                               description="my catalog",
+                               display_in=True,
+                               catalog=catalog.name,
+                               dialog=dialog_name,
+                               orch_template=template.template_name)
+    catalog_item.create()
+
+    yield catalog_item, item_name
+
+
 def random_desc():
     return fauxfactory.gen_alphanumeric()
-
-
-@pytest.yield_fixture(scope="function")
-def create_template(setup_provider, provider, dialog):
-    dialog_name, template = dialog
-    if provider.type == "ec2":
-        method = AWS_TEMPLATE.replace('CloudFormation', random_desc())
-        template.create(method)
-    elif provider.type == "openstack":
-        method = HEAT_TEMPLATE.replace('Simple', random_desc())
-        template.create(method)
-    if provider.type != "azure":
-        template.create_service_dialog_from_template(dialog_name, template.template_name)
-    yield dialog
 
 
 def prepare_stack_data(provider, provisioning):
@@ -206,19 +232,23 @@ def prepare_stack_data(provider, provisioning):
         return stack_data
 
 
-def test_provision_stack(provider, provisioning, create_template, catalog, request):
+def provision_success_message(name):
+    success_message = 'Service '
+    if version.current_version() >= '5.7':
+        # 5.7 success message includes catalog item name in brackets
+        success_message += '[{}] '.format(name)
+    success_message += 'Provisioned Successfully'
+    return success_message
+
+
+def test_provision_stack(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
-    dialog_name, template = create_template
+    catalog_item, item_name = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
-    item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog_name, orch_template=template.template_name)
-    catalog_item.create()
 
     @request.addfinalizer
     def _cleanup_vms():
@@ -227,9 +257,8 @@ def test_provision_stack(provider, provisioning, create_template, catalog, reque
             if provider.mgmt.stack_exist(stack_data['stack_name']):
                 wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
                          delay=10, num_sec=800, message="wait for stack delete")
-            template.delete_all_templates()
             stack_data['vm_name'].delete_from_provider()
-        except BotoServerError as ex:
+        except Exception as ex:
             logger.warning('Exception while checking/deleting stack, continuing: {}'
                            .format(ex.message))
             pass
@@ -241,31 +270,31 @@ def test_provision_stack(provider, provisioning, create_template, catalog, reque
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2500, delay=20)
-    assert row.last_message.text == 'Service Provisioned Successfully'
+
+    assert provision_success_message(catalog_item.name) in row.last_message.text
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() <= '5.5')
-def test_reconfigure_service(provider, provisioning, create_template, catalog, request):
+def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
-    dialog_name, template = create_template
-    item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog_name, orch_template=template.template_name)
-    catalog_item.create()
+    catalog_item, item_name = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
 
     @request.addfinalizer
     def _cleanup_vms():
-        if provider.mgmt.stack_exist(stack_data['stack_name']):
-            wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
-             delay=10, num_sec=800, message="wait for stack delete")
-        template.delete_all_templates()
-        stack_data['vm_name'].delete_from_provider()
+        try:
+            if provider.mgmt.stack_exist(stack_data['stack_name']):
+                wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
+                 delay=10, num_sec=800, message="wait for stack delete")
+            stack_data['vm_name'].delete_from_provider()
+        except Exception as ex:
+            logger.warning('Exception while checking/deleting stack, continuing: {}'
+                           .format(ex.message))
+            pass
 
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
@@ -274,50 +303,43 @@ def test_reconfigure_service(provider, provisioning, create_template, catalog, r
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2000, delay=20)
-    assert row.last_message.text == 'Service Provisioned Successfully'
+
+    assert provision_success_message(catalog_item.name) in row.last_message.text
+
     myservice = MyService(catalog_item.name)
     myservice.reconfigure_service()
 
 
-def test_remove_template_provisioning(provider, provisioning, create_template, catalog, request):
+def test_remove_template_provisioning(provider, provisioning, catalog, catalog_item, template):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
-    dialog_name, template = create_template
-    item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog_name, orch_template=template.template_name)
-    catalog_item.create()
+    catalog_item, item_name = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
     # This is part of test - remove template and see if provision fails , so not added as finalizer
-    template.delete_all_templates()
+    template.delete()
     row_description = 'Provisioning Service [{}] from [{}]'.format(item_name, item_name)
     cells = {'Description': row_description}
     wait_for(lambda: requests.find_request(cells), num_sec=500, delay=20)
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-      fail_func=requests.reload, num_sec=1000, delay=20)
+                       fail_func=requests.reload, num_sec=1000, delay=20)
     assert row.last_message.text == 'Service_Template_Provisioning failed'
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_retire_stack(provider, provisioning, create_template, catalog, request):
+def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
         test_flag: provision
     """
+    catalog_item, item_name = catalog_item
     DefaultView.set_default_view("Stacks", "Grid View")
-    dialog_name, template = create_template
-    item_name = fauxfactory.gen_alphanumeric()
-    catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog_name, orch_template=template.template_name)
-    catalog_item.create()
+
     stack_data = prepare_stack_data(provider, provisioning)
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
@@ -326,11 +348,18 @@ def test_retire_stack(provider, provisioning, create_template, catalog, request)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2500, delay=20)
-    assert row.last_message.text == 'Service Provisioned Successfully'
+
+    assert provision_success_message(catalog_item.name) in row.last_message.text
+
     stack = Stack(stack_data['stack_name'])
+    stack.wait_for_appear()
     stack.retire_stack()
 
     @request.addfinalizer
     def _cleanup_templates():
-        template.delete_all_templates()
-        stack_data['vm_name'].delete_from_provider()
+        try:
+            stack_data['vm_name'].delete_from_provider()
+        except Exception as ex:
+            logger.warning('Exception while checking/deleting stack, continuing: {}'
+                           .format(ex.message))
+            pass
