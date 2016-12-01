@@ -29,7 +29,7 @@ from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
 from utils.net import net_check, resolve_hostname
-from utils.path import data_path, patches_path, scripts_path
+from utils.path import data_path, patches_path, scripts_path, conf_path
 from utils.version import Version, get_stream, pick, LATEST
 from utils.wait import wait_for
 from utils import clear_property_cache
@@ -1766,6 +1766,43 @@ class IPAppliance(object):
             self.start_evm_service()
             self.wait_for_evm_service()
             self.wait_for_web_ui()
+
+    def configure_appliance_for_openldap_ext_auth(self, appliance_fqdn):
+        """This method changes the /etc/sssd/sssd.conf and /etc/openldap/ldap.conf files to set
+            up the appliance for an external authentication with OpenLdap.
+            Apache file configurations are updated, for webui to take effect.
+           arguments:
+                appliance_name: FQDN for the appliance.
+        """
+        openldap_domain1 = conf.cfme_data['auth_modes']['ext_openldap']
+        assert self.ssh_client.run_command('appliance_console_cli --host {}'.format(appliance_fqdn))
+        self.ssh_client.run_command('echo "{}\t{}" > /etc/hosts'.format(
+            openldap_domain1['ipaddress'], openldap_domain1['hostname']))
+        self.ssh_client.put_file(
+            local_file=conf_path.join(openldap_domain1['cert_filename']).strpath,
+            remote_file=openldap_domain1['cert_filepath'])
+        ldap_conf_data = conf.cfme_data['auth_modes']['ext_openldap']['ldap_conf']
+        sssd_conf_data = conf.cfme_data['auth_modes']['ext_openldap']['sssd_conf']
+        command1 = 'echo "{}"  > /etc/openldap/ldap.conf'.format(ldap_conf_data)
+        command2 = 'echo "{}" > /etc/sssd/sssd.conf && chown -R root:root /etc/sssd/sssd.conf && ' \
+                   'chmod 600 /etc/sssd/sssd.conf'.format(sssd_conf_data)
+        assert self.ssh_client.run_command(command1)
+        assert self.ssh_client.run_command(command2)
+        template_dir = '/opt/rh/cfme-appliance/TEMPLATE'
+        if self.version == 'master':
+            template_dir = '/var/www/miq/system/TEMPLATE'
+        httpd_auth = '/etc/pam.d/httpd-auth'
+        manageiq_ext_auth = '/etc/httpd/conf.d/manageiq-external-auth.conf'
+        apache_config = """
+        cp {template_dir}/etc/pam.d/httpd-auth  {httpd_auth} &&
+        cp {template_dir}/etc/httpd/conf.d/manageiq-remote-user.conf /etc/httpd/conf.d/ &&
+        cp {template_dir}/etc/httpd/conf.d/manageiq-external-auth.conf.erb {manageiq_ext_auth}
+    """.format(template_dir=template_dir, httpd_auth=httpd_auth,
+               manageiq_ext_auth=manageiq_ext_auth)
+        assert self.ssh_client.run_command(apache_config)
+        self.ssh_client.run_command(
+            'setenforce 0 && systemctl restart sssd && systemctl restart evmserverd')
+        self.wait_for_web_ui()
 
 
 class Appliance(IPAppliance):
