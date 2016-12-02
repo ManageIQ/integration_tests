@@ -59,6 +59,7 @@ class HeartBeat(object):
             target=self._loop,
             name=thread_name,
         )
+        self._actor.daemon = True
         self._actor.start()
 
     def _loop(self):
