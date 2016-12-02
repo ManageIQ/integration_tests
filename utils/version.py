@@ -179,6 +179,8 @@ class Version(object):
             vstring = '5.6.1'
         if vstring == 'darga-4.1':
             vstring = '5.6.2'
+        if vstring == 'darga-5':
+            vstring = '5.6.3'
 
         components = filter(lambda x: x and x != '.',
                             self.component_re.findall(vstring))
