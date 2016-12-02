@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import sys
+import six
 import xmlrpclib
 from github import Github
 from urlparse import urlparse
@@ -47,7 +48,7 @@ class Blocker(object):
         """Create a blocker object from some representation"""
         if isinstance(blocker, cls):
             return blocker
-        elif isinstance(blocker, basestring):
+        elif isinstance(blocker, six.string_types):
             if "#" in blocker:
                 # Generic blocker
                 engine, spec = blocker.split("#", 1)
