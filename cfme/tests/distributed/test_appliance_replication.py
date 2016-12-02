@@ -20,7 +20,11 @@ from utils.wait import wait_for
 
 from cfme import test_requirements
 
-pytestmark = [pytest.mark.long_running, test_requirements.distributed]
+pytestmark = [
+    pytest.mark.long_running,
+    test_requirements.distributed,
+    pytest.mark.uncollect(reason="test framework broke browser_steal"),
+]
 
 
 @pytest.fixture(scope="module")
