@@ -1801,7 +1801,7 @@ class IPAppliance(object):
                manageiq_ext_auth=manageiq_ext_auth)
         assert self.ssh_client.run_command(apache_config)
         self.ssh_client.run_command(
-            'setenforce 0 && systemctl restart sssd && systemctl restart evmserverd')
+            'setenforce 0 && systemctl restart sssd && systemctl restart httpd')
         self.wait_for_web_ui()
 
 

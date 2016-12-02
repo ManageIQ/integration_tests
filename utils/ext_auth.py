@@ -104,9 +104,7 @@ def disable_external_auth_ipa():
     login_admin()
     auth = DatabaseAuthSetting()
     auth.update()
-    ssh.run_command("service evmserverd stop")
     assert ssh.run_command("appliance_console_cli --uninstall-ipa")
-    ssh.run_command("service evmserverd start")
     appliance.IPAppliance().wait_for_web_ui()
     logout()
 
