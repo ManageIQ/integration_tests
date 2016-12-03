@@ -7,6 +7,7 @@ import pytest
 from cfme import test_requirements
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
+from cfme.cloud.provider import CloudProvider
 from cfme.configure import configuration
 from cfme.configure.tasks import is_vm_analysis_finished
 from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
@@ -182,13 +183,16 @@ def vm_analysis_data(provider, analysis_type):
     # Setup the provisioning data for the instance/vm
     # Will default to provisioning items under vm_analysis but if not defined
     #   falls back to items under provider['provisioning'] key
-    provisioning_data.setdefault('host', pdata['provisioning']['host'])
-    provisioning_data.setdefault('datastore', pdata['provisioning']['datastore'])
-    provisioning_data.setdefault('vlan', pdata['provisioning']['vlan'])
-    provisioning_data.setdefault('instance_type', pdata['provisioning']['instance_type'])
-    provisioning_data.setdefault('availability_zone', pdata['provisioning']['availability_zone'])
-    provisioning_data.setdefault('security_group', pdata['provisioning']['security_group'])
-    provisioning_data.setdefault('cloud_network', pdata['provisioning']['cloud_network'])
+
+    if not isinstance(provider, CloudProvider):
+        provisioning_data.setdefault('host', pdata['provisioning']['host'])
+        provisioning_data.setdefault('datastore', pdata['provisioning']['datastore'])
+        provisioning_data.setdefault('vlan', pdata['provisioning']['vlan'])
+    if isinstance(provider, CloudProvider):
+        provisioning_data.setdefault('instance_type', pdata['provisioning']['instance_type'])
+        provisioning_data.setdefault('availability_zone', pdata['provisioning']['availability_zone'])
+        provisioning_data.setdefault('security_group', pdata['provisioning']['security_group'])
+        provisioning_data.setdefault('cloud_network', pdata['provisioning']['cloud_network'])
 
     # If defined, tries to find cluster from provisioning, then provider definition itself
     if provider.type == 'rhevm':
