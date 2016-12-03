@@ -43,10 +43,7 @@ set_ownership_form = Form(fields=[
     ('cancel_button', form_buttons.cancel)
 ])
 
-drift_table = CheckboxTable({
-    version.LOWEST: "//table[@class='style3']",
-    "5.4": "//th[normalize-space(.)='Timestamp']/ancestor::table[1]"
-})
+drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
 
 
 class _TemplateMixin(object):
@@ -724,13 +721,12 @@ class VM(BaseVM):
                 fill(self.retire_form.warn, warn)
             sel.click(form_buttons.save)
 
-
     def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text
 
         Args:
             row_text: Title text of the row to compare
-            section: Accordion section where the change happened; this section must be activated
+            section: Accordion section where the change happened; this section will be activated
             indexes: Indexes of results to compare starting with 0 for first row (latest result).
                      Compares all available drifts, if left empty (default).
 
@@ -782,8 +778,8 @@ class VM(BaseVM):
 
         if not tb.is_active("All attributes"):
             tb.select("All attributes")
-        d_grid = DriftGrid()
-        if any(d_grid.cell_indicates_change(row_text, i) for i in range(0, len(indexes))):
+        drift_grid = DriftGrid()
+        if any(drift_grid.cell_indicates_change(row_text, i) for i in range(0, len(indexes))):
             return False
         return True
 

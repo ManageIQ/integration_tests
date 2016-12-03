@@ -20,8 +20,7 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils.blockers import BZ
 
-pytestmark = [pytest.mark.tier(3), test_requirements.smartstate,
-              pytest.mark.meta(blockers=[1378447])]
+pytestmark = [pytest.mark.tier(3), test_requirements.smartstate]
 
 WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows'}
 
@@ -180,32 +179,23 @@ def vm_analysis_data(provider, analysis_type):
     pdata = provider.data
     provisioning_data = pdata.get('vm_analysis_new', {}).get('provisioning', {})
 
-    # Setup up the provisioning data for the instance/vm
+    # Setup the provisioning data for the instance/vm
     # Will default to provisioning items under vm_analysis but if not defined
     #   falls back to items under provider['provisioning'] key
-    if 'host' not in provisioning_data and 'host' in pdata['provisioning']:
-        provisioning_data['host'] = pdata['provisioning']['host']
-    if 'datastore' not in provisioning_data and 'datastore' in pdata['provisioning']:
-        provisioning_data['datastore'] = pdata['provisioning']['datastore']
-    if 'vlan' not in provisioning_data and 'vlan' in pdata['provisioning']:
-        provisioning_data['vlan'] = pdata['provisioning']['vlan']
-    if 'instance_type' not in provisioning_data and 'instance_type' in pdata['provisioning']:
-        provisioning_data['instance_type'] = pdata['provisioning']['instance_type']
-    if 'availability_zone' not in provisioning_data and \
-            'availability_zone' in pdata['provisioning']:
-        provisioning_data['availability_zone'] = pdata['provisioning']['availability_zone']
-    if 'security_group' not in provisioning_data and 'security_group' in pdata['provisioning']:
-        provisioning_data['security_group'] = pdata['provisioning']['security_group']
-    if 'cloud_network' not in provisioning_data and 'cloud_network' in pdata['provisioning']:
-        provisioning_data['cloud_network'] = pdata['provisioning']['cloud_network']
+    provisioning_data.setdefault('host', pdata['provisioning']['host'])
+    provisioning_data.setdefault('datastore', pdata['provisioning']['datastore'])
+    provisioning_data.setdefault('vlan', pdata['provisioning']['vlan'])
+    provisioning_data.setdefault('instance_type', pdata['provisioning']['instance_type'])
+    provisioning_data.setdefault('availability_zone', pdata['provisioning']['availability_zone'])
+    provisioning_data.setdefault('security_group', pdata['provisioning']['security_group'])
+    provisioning_data.setdefault('cloud_network', pdata['provisioning']['cloud_network'])
 
     # If defined, tries to find cluster from provisioning, then provider definition itself
     if provider.type == 'rhevm':
-        if 'cluster' not in provisioning_data:
-            if 'cluster' not in pdata['provisioning']:
-                provisioning_data['cluster'] = pdata['default_cluster']
-            else:
-                provisioning_data['cluster'] = pdata['provisioning']['cluster']
+        if 'cluster' not in provisioning_data and 'cluster' not in pdata['provisioning']:
+            provisioning_data['cluster'] = pdata['default_cluster']
+        else:
+            provisioning_data['cluster'] = pdata['provisioning']['cluster']
 
     provisioning_data.update(
         provider.data.get('vm_analysis_new', {}).get('vms', {}).get(analysis_type, {}))
@@ -415,7 +405,6 @@ def test_ssa_vm(provider, instance, soft_assert):
     #       delete the vm itself if it did have a scan already
     #       delete all previous scan tasks
 
-
     e_users = None
     e_groups = None
     e_packages = None
@@ -484,6 +473,7 @@ def test_ssa_vm(provider, instance, soft_assert):
         soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
         soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
+    # TODO: revisit this and see if we should re-enable it
     # image_label = 'Parent VM'
     # if provider.type == 'openstack':
     #     image_label = 'VM Template'
