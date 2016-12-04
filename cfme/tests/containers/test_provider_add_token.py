@@ -22,6 +22,9 @@ def test_provider_valid_token(provider):
           Delete the  provider
 
     """
+
+    provider.delete_if_exists(cancel=False)
+    provider.wait_for_delete()
     provider.create()
     provider.validate_stats(ui=True)
     provider.delete(cancel=False)

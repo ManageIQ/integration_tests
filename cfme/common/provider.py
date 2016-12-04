@@ -310,7 +310,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                      {'ui': ui},
                      message="do_stats_match_db",
                      num_sec=1000,
-                     delay=60)
+                     delay=120)
 
         client.disconnect()
 
