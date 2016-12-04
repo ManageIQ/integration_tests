@@ -32,6 +32,10 @@ class API(object):
         self._session.headers.update({'Content-Type': 'application/json; charset=utf-8'})
         self._load_data()
 
+    @property
+    def entry_point(self):
+        return self._entry_point
+
     def _load_data(self):
         data = self.get(self._entry_point)
         self.collections = CollectionsIndex(self, data.pop("collections", []))
@@ -294,8 +298,10 @@ class Collection(object):
 class Entity(object):
     # TODO: Extend these fields
     TIME_FIELDS = {
-        "updated_on", "created_on", "last_scan_attempt_on", "state_changed_on", "lastlogon",
-        "updated_at", "created_at", "last_scan_on", "last_sync_on", "last_refresh_date", "retires_on",}
+        "updated_on", "created_on", "last_scan_attempt_on",
+        "state_changed_on", "lastlogon", "updated_at",
+        "created_at", "last_scan_on", "last_sync_on",
+        "last_refresh_date", "retires_on"}
     COLLECTION_MAPPING = dict(
         ems_id="providers",
         storage_id="data_stores",
