@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 """This module contains REST API specific tests."""
-import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme import Credential
-from cfme.configure.access_control import User, Group
-from cfme.login import login, login_admin
 from cfme.rest import vm as _vm
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
-from utils import testgen, conf, version
+from utils import testgen, version
 
 
 pytestmark = [test_requirements.rest]
@@ -25,37 +21,6 @@ pytest_generate_tests = testgen.generate(
 @pytest.fixture(scope="module")
 def a_provider():
     return _setup_a_provider("infra")
-
-
-@pytest.fixture(scope='function')
-def user():
-    user = User(credential=Credential(principal=fauxfactory.gen_alphanumeric(),
-        secret=fauxfactory.gen_alphanumeric()), name=fauxfactory.gen_alphanumeric(),
-        group=Group(description='EvmGroup-super_administrator'))
-    user.create()
-    return user
-
-
-# This test should be deleted when we get new build > 5.5.2.4
-@pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-def test_edit_user_password(request, rest_api, user):
-    if "edit" not in rest_api.collections.users.action.all:
-        pytest.skip("Edit action for users is not implemented in this version")
-    request.addfinalizer(login_admin)
-    try:
-        for cur_user in rest_api.collections.users:
-            if cur_user.userid != conf.credentials['default']['username']:
-                rest_user = cur_user
-                break
-    except:
-        pytest.skip("There is no user to change password")
-
-    new_password = fauxfactory.gen_alphanumeric()
-    rest_user.action.edit(password=new_password)
-    cred = Credential(principal=rest_user.userid, secret=new_password)
-    new_user = User(credential=cred)
-    login(new_user)
 
 
 @pytest.fixture(scope="function")
@@ -82,28 +47,29 @@ def test_vm_scan(rest_api, vm, from_detail):
         return response.task.state.lower() == 'finished'
 
 
-COLLECTIONS_IGNORED_53 = {
-    "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
-    "tags", "tasks",
-}
-
-COLLECTIONS_IGNORED_54 = {
-    "features", "pictures", "provision_dialogs", "rates", "results", "service_dialogs",
+COLLECTIONS_IGNORED_56 = {
+    "arbitration_profiles", "arbitration_rules", "arbitration_settings", "automate",
+    "automate_domains", "blueprints", "cloud_networks", "container_deployments", "currencies",
+    "measures", "notifications", "orchestration_templates", "virtual_templates",
 }
 
 
 @pytest.mark.tier(3)
 @pytest.mark.parametrize(
     "collection_name",
-    ["availability_zones", "chargebacks", "clusters", "conditions", "data_stores", "events",
-    "features", "flavors", "groups", "hosts", "pictures", "policies", "policy_actions",
-    "policy_profiles", "provision_dialogs", "rates", "request_tasks", "requests", "resource_pools",
-    "results", "roles", "security_groups", "servers", "service_dialogs", "service_requests",
-    "tags", "tasks", "templates", "users", "vms", "zones"])
+    ["arbitration_profiles", "arbitration_rules", "arbitration_settings", "automate",
+     "automate_domains", "automation_requests", "availability_zones", "blueprints", "categories",
+     "chargebacks", "cloud_networks", "clusters", "conditions", "container_deployments",
+     "currencies", "data_stores", "events", "features", "flavors", "groups", "hosts", "instances",
+     "measures", "notifications", "orchestration_templates", "pictures", "policies",
+     "policy_actions", "policy_profiles", "providers", "provision_dialogs", "provision_requests",
+     "rates", "reports", "request_tasks", "requests", "resource_pools", "results", "roles",
+     "security_groups", "servers", "service_catalogs", "service_dialogs", "service_orders",
+     "service_requests", "service_templates", "services", "tags", "tasks", "templates", "tenants",
+     "users", "virtual_templates", "vms", "zones"])
 @pytest.mark.uncollectif(
     lambda collection_name: (
-        collection_name in COLLECTIONS_IGNORED_53 and current_version() < "5.4") or (
-            collection_name in COLLECTIONS_IGNORED_54 and current_version() < "5.5"))
+        collection_name in COLLECTIONS_IGNORED_56 and current_version() < "5.7"))
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
     have no usable actions that we could try to run
@@ -143,3 +109,13 @@ def test_server_info(rest_api):
 def test_product_info(rest_api):
     assert all(item in rest_api.product_info for item in
                ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_bulk_query(rest_api):
+    entitites = rest_api.collections.events.find_by()
+    data0, data1, data2 = entitites[0]._data, entitites[1]._data, entitites[2]._data
+    response = rest_api.collections.events.action.query(
+        {"id": data0["id"]}, {"href": data1["href"]}, {"href": data2["href"]})
+    assert len(response) == 3
+    assert data0 == response[0]._data and data1 == response[1]._data and data2 == response[2]._data
