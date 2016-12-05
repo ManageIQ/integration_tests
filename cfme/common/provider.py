@@ -765,4 +765,3 @@ def import_all_modules_of(loc):
     path = project_path.join('{}'.format(loc.replace('.', '/'))).strpath
     for _, name, _ in pkgutil.iter_modules([path]):
         importlib.import_module('{}.{}'.format(loc, name))
-
