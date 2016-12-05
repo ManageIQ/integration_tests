@@ -1,4 +1,5 @@
 """Core functionality for starting, restarting, and stopping a selenium browser."""
+import attr
 import atexit
 import json
 import os
@@ -49,15 +50,18 @@ def _load_firefox_profile():
     return profile
 
 
+@attr.s
 class HeartBeat(object):
-    def __init__(self, heartbeat, initial_delay, thread_name=None):
-        self._delay = initial_delay
-        self._heartbeat = heartbeat
-        self._trigger = threading.Condition()
-        self._done = threading.Condition()
+    _heartbeat = attr.ib(repr=False)
+    _delay = attr.ib(repr=False)
+    _thread_name = attr.ib(default=None)
+    _trigger = attr.ib(default=attr.Factory(threading.Condition), init=False, repr=False)
+    _done = attr.ib(default=attr.Factory(threading.Condition), init=False, repr=False)
+
+    def __post_init__(self):
         self._actor = threading.Thread(
             target=self._loop,
-            name=thread_name,
+            name=self._thread_name,
         )
         self._actor.daemon = True
         self._actor.start()
@@ -81,11 +85,11 @@ class HeartBeat(object):
         self._done.wait()
 
 
+@attr.s
 class Wharf(object):
-    def __init__(self, wharf_url):
-        self.wharf_url = wharf_url
-        self.docker_id = None
-        self.heartbear = None
+    wharf_url = attr.ib()
+    docker_id = attr.ib(default=None, init=False)
+    heartbeat = attr.ib(default=None, repr=False, init=False)
 
     def _get(self, *args):
         return requests.get(os.path.join(self.wharf_url, *args))
