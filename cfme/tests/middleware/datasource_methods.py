@@ -82,7 +82,7 @@ def generate_ds_name(ds_name):
     return "{}{}".format(ds_name, fauxfactory.gen_alpha(8).lower())
 
 
-def check_datasource_listed(provider, name, server=None):
+def verify_datasource_listed(provider, name, server=None):
     provider.refresh_provider_relationships(method='rest')
     wait_for(lambda: name in
         get_datasources_name(
@@ -92,7 +92,7 @@ def check_datasource_listed(provider, name, server=None):
         .format(name))
 
 
-def check_datasource_not_listed(provider, name, server=None):
+def verify_datasource_not_listed(provider, name, server=None):
     provider.refresh_provider_relationships(method='rest')
     wait_for(lambda: name not in
         get_datasources_name(
@@ -103,7 +103,7 @@ def check_datasource_not_listed(provider, name, server=None):
 
 
 def get_datasource_from_list(provider, name, server=None):
-    check_datasource_listed(provider, name, server)
+    verify_datasource_listed(provider, name, server)
     for datasource in MiddlewareDatasource.datasources(provider=provider, server=server):
         if datasource.name == name:
             return datasource

@@ -3,10 +3,9 @@ from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import flash
 from utils import testgen
 from utils.version import current_version
-from deployment_methods import EAP_PRODUCT_NAME, HAWKULAR_PRODUCT_NAME
 from server_methods import verify_server_running, verify_server_stopped
 from server_methods import get_servers_set, verify_server_suspended
-from server_methods import get_server_by_name
+from server_methods import get_eap_server, get_hawkular_server
 from server_methods import verify_server_starting, verify_server_stopping
 
 pytestmark = [
@@ -18,7 +17,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"],
 
 @pytest.yield_fixture(scope="function")
 def server(provider):
-    server = get_server_by_name(provider, EAP_PRODUCT_NAME, 'EAP7')
+    server = get_eap_server(provider)
     yield server
     server.restart_server()
 
@@ -68,7 +67,7 @@ def test_server_details(provider):
         * Select Hawkular server details in UI
         * Compare selected server UI details with CFME database and MGMT system
     """
-    server = get_server_by_name(provider, HAWKULAR_PRODUCT_NAME)
+    server = get_hawkular_server(provider)
     srv_ui = server.server(method='ui')
     srv_db = server.server(method='db')
     srv_mgmt = srv_ui.server(method='mgmt')
@@ -93,7 +92,7 @@ def test_hawkular_fail(provider):
         * Checks that notification message is shown
         * Checks that server status is running in UI, in DB and in MGMT.
     """
-    server = get_server_by_name(provider, HAWKULAR_PRODUCT_NAME)
+    server = get_hawkular_server(provider)
     server.reload_server()
     flash.assert_success_message('Not reloading the provider')
     verify_server_running(provider, server)

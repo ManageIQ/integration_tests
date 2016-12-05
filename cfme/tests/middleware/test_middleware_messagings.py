@@ -3,8 +3,7 @@ from cfme.middleware import get_random_list
 from cfme.middleware.messaging import MiddlewareMessaging
 from utils import testgen
 from utils.version import current_version
-from deployment_methods import get_server
-from deployment_methods import HAWKULAR_PRODUCT_NAME
+from server_methods import get_hawkular_server
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -43,7 +42,7 @@ def test_list_server_messagings(provider):
         * Get messagings list from Database of server
         * Compare size of all the list [UI, Database]
     """
-    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    server = get_hawkular_server(provider)
     ui_msges = _get_messagings_set(MiddlewareMessaging.messagings(server=server))
     db_msges = _get_messagings_set(MiddlewareMessaging.messagings_in_db(server=server))
     assert ui_msges == db_msges, \
@@ -79,7 +78,7 @@ def test_list_provider_server_messagings(provider):
         * Get messagings list from Management system(Hawkular) of server
         * Compare size of all the list [UI, Database, Management system]
     """
-    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    server = get_hawkular_server(provider)
     ui_msges = _get_messagings_set(
         MiddlewareMessaging.messagings(provider=provider, server=server))
     db_msges = _get_messagings_set(

@@ -3,14 +3,15 @@ from datetime import datetime
 
 from utils import testgen
 from utils.version import current_version
-from deployment_methods import get_server, get_resource_path
-from deployment_methods import EAP_PRODUCT_NAME, RESOURCE_WAR_NAME
+from deployment_methods import get_resource_path
+from deployment_methods import RESOURCE_WAR_NAME
 from deployment_methods import deploy_archive, generate_runtime_name, undeploy
 from deployment_methods import check_deployment_appears
 from deployment_methods import check_deployment_not_listed
 from datasource_methods import ORACLE_12C_DS
 from datasource_methods import get_datasource_from_list
 from datasource_methods import generate_ds_name
+from server_methods import get_eap_server
 from utils.wait import wait_for
 from utils.blockers import BZ
 from utils import error
@@ -121,7 +122,7 @@ def check_not_contains_event(timelines, before_test_date, event):
 
 
 def gen_deploy_events(provider):
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     file_path = get_resource_path(RESOURCE_WAR_NAME)
     runtime_name = generate_runtime_name(file_path)
     deploy_archive(provider, server, file_path, runtime_name)
@@ -129,7 +130,7 @@ def gen_deploy_events(provider):
 
 
 def gen_undeploy_events(provider):
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     runtime_name = gen_deploy_events(provider)
     check_deployment_appears(provider, server, runtime_name)
     undeploy(provider, server, runtime_name)
@@ -138,7 +139,7 @@ def gen_undeploy_events(provider):
 
 
 def gen_deploy_fail_events(provider):
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     file_path = get_resource_path(RESOURCE_WAR_NAME)
     runtime_name = generate_runtime_name(file_path)
     deploy_archive(provider, server, file_path, runtime_name)
@@ -151,7 +152,7 @@ def gen_deploy_fail_events(provider):
 
 
 def gen_ds_creation_events(provider, datasource_params):
-    server = get_server(provider, EAP_PRODUCT_NAME)
+    server = get_eap_server(provider)
     ds_name = generate_ds_name(datasource_params[1])
     jndi_name = generate_ds_name(datasource_params[2])
     server.add_datasource(datasource_params[0], ds_name, jndi_name,
