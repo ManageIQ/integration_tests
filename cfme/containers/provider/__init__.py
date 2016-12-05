@@ -109,9 +109,8 @@ class ContainersProvider(BaseProvider, Pretty):
         'num_service',
         'num_replication_controller',
         'num_pod',
-        'num_node',
         'num_container',
-        'num_image']
+        'num_node']
     # TODO add 'num_image_registry' and 'num_volume'
     string_name = "Containers"
     page_name = "containers"
@@ -216,14 +215,6 @@ class ContainersProvider(BaseProvider, Pretty):
         return self.num_container_group(method='ui')
 
     @variable(alias='db')
-    def num_node(self):
-        return self._num_db_generic('container_nodes')
-
-    @num_node.variant('ui')
-    def num_node_ui(self):
-        return int(self.get_detail("Relationships", "Nodes"))
-
-    @variable(alias='db')
     def num_container(self):
         # Containers are linked to providers through container definitions and then through pods
         res = cfmedb().engine.execute(
@@ -238,6 +229,14 @@ class ContainersProvider(BaseProvider, Pretty):
     @num_container.variant('ui')
     def num_container_ui(self):
         return int(self.get_detail("Relationships", "Containers"))
+
+    @variable(alias='db')
+    def num_node(self):
+        return self._num_db_generic('container_nodes')
+
+    @num_node.variant('ui')
+    def num_node_ui(self):
+        return int(self.get_detail("Relationships", "Nodes"))
 
     @variable(alias='db')
     def num_image(self):

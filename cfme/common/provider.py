@@ -310,7 +310,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                      {'ui': ui},
                      message="do_stats_match_db",
                      num_sec=1000,
-                     delay=120)
+                     delay=60)
 
         client.disconnect()
 
@@ -765,3 +765,4 @@ def import_all_modules_of(loc):
     path = project_path.join('{}'.format(loc.replace('.', '/'))).strpath
     for _, name, _ in pkgutil.iter_modules([path]):
         importlib.import_module('{}.{}'.format(loc, name))
+

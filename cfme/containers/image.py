@@ -49,7 +49,7 @@ class All(CFMENavigateStep):
         nav._nav_to_fn('Compute', 'Containers', 'Container Images')(None)
 
     def resetter(self):
-        tb.select('Grid View')
+        tb.select('List View')
         sel.check(paginator.check_all())
         sel.uncheck(paginator.check_all())
 
