@@ -25,11 +25,10 @@ REPLICATORS_RELATIONSHIPS_FIELDS = ['Containers Provider', 'Project', 'Pods', 'N
 # CMP - 9531
 
 
-@pytest.mark.parametrize(('prop', 'rel'), product(REPLICATORS_PROPERTIES_FIELDS,
-                                                  REPLICATORS_RELATIONSHIPS_FIELDS))
-def test_replicators_properties(provider, prop, rel):
+@pytest.mark.parametrize('prop', product(REPLICATORS_PROPERTIES_FIELDS))
+def test_replicators_properties(provider, prop):
     """ Default Project Replicator properties test
-        This test checks the properties fields of each Replicator
+        This test checks the properties fields of a Replicator
         Steps:
             * Goes to Containers --> Replicators
              * Goes through each Replicator and  checks each Properties fields
@@ -38,7 +37,21 @@ def test_replicators_properties(provider, prop, rel):
     replicator_name = [r.name.text for r in list_tbl.rows()]
     for name in replicator_name:
         obj = Replicator(name, provider)
-        prop_val = obj.get_detail('Properties', ''.join(prop))
-        rel_val = obj.get_detail('Relationships', ''.join(rel))
-        assert prop_val
-        assert rel_val
+        assert obj.get_detail('Properties', ''.join(prop))
+        break
+
+
+@pytest.mark.parametrize('rel', product(REPLICATORS_RELATIONSHIPS_FIELDS))
+def test_replicators_relationships(provider, rel):
+    """ Default Project Replicator properties test
+        This test checks the properties fields of a Replicator
+        Steps:
+            * Goes to Containers --> Replicators
+             * Goes through each Replicator and  checks each Relationship fields
+        """
+    navigate_to(Replicator, 'All')
+    replicator_name = [r.name.text for r in list_tbl.rows()]
+    for name in replicator_name:
+        obj = Replicator(name, provider)
+        assert obj.get_detail('Relationships', ''.join(rel))
+        break
