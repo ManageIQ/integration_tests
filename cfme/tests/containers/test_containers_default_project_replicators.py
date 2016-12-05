@@ -29,7 +29,7 @@ REPLICATORS_RELATIONSHIPS_FIELDS = ['Containers Provider', 'Project', 'Pods', 'N
 def test_replicators_properties(provider, prop):
     """ Default Project Replicator properties test
         This test checks the properties fields of a Replicator
-        Steps:
+        Steps :
             * Goes to Containers --> Replicators
              * Goes through each Replicator and  checks each Properties fields
         """
