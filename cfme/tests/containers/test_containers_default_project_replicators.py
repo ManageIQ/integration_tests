@@ -1,7 +1,8 @@
 import pytest
+import random
+
 from cfme.web_ui import CheckboxTable
 from cfme.containers.replicator import Replicator
-from itertools import product
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
@@ -23,35 +24,17 @@ REPLICATORS_RELATIONSHIPS_FIELDS = ['Containers Provider', 'Project', 'Pods', 'N
                                     'My Company Tags']
 
 # CMP - 9531
-
-
-@pytest.mark.parametrize('prop', product(REPLICATORS_PROPERTIES_FIELDS))
-def test_replicators_properties(provider, prop):
-    """ Default Project Replicator properties test
-        This test checks the properties fields of a Replicator
+def test_replicators(provider):
+    """ Default Project Replicator properties and relationships test.
         Steps :
             * Goes to Containers --> Replicators
-             * Goes through each Replicator and  checks each Properties fields
+             * Goes through each Replicator and
+               checks each Properties and Relationships field.
         """
     navigate_to(Replicator, 'All')
-    replicator_name = [r.name.text for r in list_tbl.rows()]
-    for name in replicator_name:
-        obj = Replicator(name, provider)
-        assert obj.get_detail('Properties', ''.join(prop))
-        break
-
-
-@pytest.mark.parametrize('rel', product(REPLICATORS_RELATIONSHIPS_FIELDS))
-def test_replicators_relationships(provider, rel):
-    """ Default Project Replicator properties test
-        This test checks the properties fields of a Replicator
-        Steps:
-            * Goes to Containers --> Replicators
-             * Goes through each Replicator and  checks each Relationship fields
-        """
-    navigate_to(Replicator, 'All')
-    replicator_name = [r.name.text for r in list_tbl.rows()]
-    for name in replicator_name:
-        obj = Replicator(name, provider)
-        assert obj.get_detail('Relationships', ''.join(rel))
-        break
+    replicator_name = random.choice([r.name.text for r in list_tbl.rows()])
+    obj = Replicator(replicator_name, provider)
+    for prop in REPLICATORS_PROPERTIES_FIELDS:
+        assert obj.get_detail('Properties', prop)
+    for rel in REPLICATORS_RELATIONSHIPS_FIELDS:
+        assert obj.get_detail('Relationships', rel)
