@@ -5,7 +5,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import web_ui as ui
-from cfme.exceptions import DestinationNotFound
+from cfme.exceptions import DestinationNotFound, StackNotFound
 from cfme.web_ui import Quadicon, flash, Form, fill, form_buttons, paginator, toolbar as tb, \
     match_location, accordion
 from cfme.exceptions import CFMEException, FlashMessageException
@@ -36,6 +36,19 @@ class Stack(Pretty, Navigatable):
         self.name = name
         self.quad_name = quad_name or 'stack'
         Navigatable.__init__(self, appliance=appliance)
+
+    def find_quadicon(self):
+        """Find and return the quadicon belonging to this stack
+
+    Args:
+    Returns: :py:class:`cfme.web_ui.Quadicon` instance
+    """
+        for page in paginator.pages():
+            quadicon = Quadicon(self.name, self.quad_name)
+            if sel.is_displayed(quadicon):
+                return quadicon
+        else:
+            raise StackNotFound("Stack '{}' not found in UI!".format(self.name))
 
     def delete(self, from_dest='All'):
         """
@@ -86,20 +99,34 @@ class Stack(Pretty, Navigatable):
         return company_tag
 
     def wait_for_delete(self):
+        def _wait_to_disappear():
+            try:
+                self.find_quadicon()
+            except StackNotFound:
+                return True
+            else:
+                return False
+
         navigate_to(self, 'All')
-        wait_for(lambda: not sel.is_displayed(Quadicon(self.name, self.quad_name)),
-            fail_condition=False, message="Wait stack to disappear", num_sec=500,
-            fail_func=sel.refresh)
+        wait_for(_wait_to_disappear, fail_condition=False, message="Wait stack to disappear",
+                 num_sec=10 * 60, fail_func=tb.refresh, delay=10)
 
     def wait_for_appear(self):
+        def _wait_to_appear():
+            try:
+                self.find_quadicon()
+            except StackNotFound:
+                return False
+            else:
+                return True
+
         navigate_to(self, 'All')
-        wait_for(lambda: sel.is_displayed(Quadicon(self.name, self.quad_name)),
-            fail_condition=False, message="Wait stack to appear", num_sec=1000,
-            fail_func=sel.refresh)
+        wait_for(_wait_to_appear, fail_condition=False, message="Wait stack to appear",
+                 num_sec=20 * 60, fail_func=tb.refresh, delay=10)
 
     def retire_stack(self, wait=True):
         navigate_to(self, 'All')
-        sel.check(Quadicon(self.name, self.quad_name).checkbox())
+        sel.check(self.find_quadicon())
         lifecycle_btn("Retire this Orchestration Stack", invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('Retirement initiated for 1 Orchestration'
@@ -133,7 +160,7 @@ class Details(CFMENavigateStep):
         return match_page(summary='{} (Summary)'.format(self.obj.name))
 
     def step(self):
-        sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+        sel.click(self.obj.find_quadicon())
 
 
 @navigator.register(Stack, 'EditTags')
