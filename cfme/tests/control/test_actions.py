@@ -565,7 +565,9 @@ def test_action_create_snapshots_and_delete_them(
         vm_crud_refresh()
         wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
                  message="wait for snapshot %d to appear" % (n + 1), delay=5)
-        assert vm.crud.current_snapshot_name == snapshot_name
+        current_snapshot = vm.crud.current_snapshot_name
+        logger.debug('Current Snapshot Name: {}'.format(current_snapshot))
+        assert current_snapshot == snapshot_name
         vm.start_vm()
         vm_crud_refresh()
 
