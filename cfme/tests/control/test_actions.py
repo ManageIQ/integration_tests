@@ -485,7 +485,6 @@ def test_action_power_on_audit(
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-@pytest.mark.meta(blockers=[1333566])
 def test_action_create_snapshot_and_delete_last(
         request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
@@ -530,7 +529,6 @@ def test_action_create_snapshot_and_delete_last(
              message="wait for snapshot deleted", delay=5)
 
 
-@pytest.mark.meta(blockers=[1333566])
 def test_action_create_snapshots_and_delete_them(
         request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
@@ -621,7 +619,7 @@ def test_action_initiate_smartstate_analysis(
 
     # Check that analyse job has appeared in the list
     # Wait for the task to finish
-    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.refresh())
     def is_vm_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
@@ -641,7 +639,7 @@ def test_action_initiate_smartstate_analysis(
         except AttributeError:
             return False
     try:
-        wait_for(wait_analysis_finished, num_sec=600,
+        wait_for(wait_analysis_finished, num_sec=15 * 60,
                  message="wait for analysis finished", delay=60)
     except TimedOutError:
         pytest.fail("CFME did not finish analysing the VM {}".format(vm.name))
