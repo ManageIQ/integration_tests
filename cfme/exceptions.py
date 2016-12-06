@@ -231,6 +231,13 @@ class HostNotFound(CFMEException):
     pass
 
 
+class StackNotFound(CFMEException):
+    """
+    Raised if a specific stack cannot be found.
+    """
+    pass
+
+
 class OptionNotAvailable(CFMEException):
     """
     Raised if a specified option is not available.
