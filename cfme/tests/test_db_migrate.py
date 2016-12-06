@@ -2,12 +2,11 @@ import pytest
 from os import path as os_path
 
 from cfme.login import login
-from utils import db, version
-from utils.appliance import ApplianceException
+from utils import version
+from utils.appliance import ApplianceException, get_or_create_current_appliance
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.wait import wait_for
 
 
 def pytest_generate_tests(metafunc):
@@ -21,9 +20,37 @@ def pytest_generate_tests(metafunc):
     return metafunc.parametrize(argnames=argnames, argvalues=argvalues, ids=idlist)
 
 
+@pytest.fixture(scope="session")
+def extend_db_partition():
+    app = get_or_create_current_appliance()
+    app.stop_evm_service()
+    app.extend_db_partition()
+    app.start_evm_service()
+
+
+@pytest.yield_fixture(scope="session")
+def backup_orig_state(extend_db_partition):
+    app = get_or_create_current_appliance()
+    app.backup_database("/var/www/miq/orig_db.backup")
+    app.ssh_client.run_command("cp /var/www/miq/vmdb/GUID{,.bak}")
+    app.ssh_client.run_command("cp /var/www/miq/vmdb/REGION{,.bak}")
+    app.ssh_client.run_command("cp /var/www/miq/vmdb/certs/v2_key{,.bak}")
+    if not app.db_partition_extended:
+        app.extend_db_partition()
+    yield
+    app.stop_evm_service()
+    app.drop_database()
+    app.restore_database("/var/www/miq/orig_db.backup")
+    app.ssh_client.run_command("cp /var/www/miq/vmdb/GUID{.bak,}")
+    app.ssh_client.run_command("cp /var/www/miq/vmdb/REGION{.bak,}")
+    app.ssh_client.run_command("cp /var/www/miq/vmdb/certs/v2_key{.bak,}")
+    app.start_evm_service()
+    app.wait_for_web_ui()
+
+
 @pytest.fixture(scope="function")
-def stabilize_current_appliance():
-    app = pytest.store.current_appliance
+def stabilize_current_appliance(backup_orig_state):
+    app = get_or_create_current_appliance()
     app.reboot(wait_for_web_ui=False)
     app.stop_evm_service()
 
@@ -37,8 +64,7 @@ def stabilize_current_appliance():
 @pytest.mark.meta(
     blockers=[BZ(1354466, unblock=lambda db_url: 'ldap' not in db_url)])
 def test_db_migrate(stabilize_current_appliance, db_url, db_version, db_desc):
-    """ This is a destructive test - it _will_ destroy your database """
-    app = pytest.store.current_appliance
+    app = get_or_create_current_appliance()
 
     # Download the database
     logger.info("Downloading database: {}".format(db_desc))
@@ -50,21 +76,11 @@ def test_db_migrate(stabilize_current_appliance, db_url, db_version, db_desc):
     # The v2_key is potentially here
     v2key_url = os_path.join(os_path.dirname(db_url), "v2_key")
 
-    # wait 30sec until evmserverd is down
-    wait_for(app.is_evm_service_running, num_sec=30, fail_condition=True, delay=5,
-        message="Failed to stop evmserverd in 30 seconds")
+    # Drop vmdb_production DB
+    app.drop_database()
 
-    # restart postgres to clear connections, remove old DB, restore it and migrate it
+    # restore new DB and migrate it
     with app.ssh_client as ssh:
-        def _db_dropped():
-            rc, out = ssh.run_command(
-                'systemctl restart {}-postgresql'.format(db.scl_name()), timeout=60)
-            assert rc == 0, "Failed to restart postgres service: {}".format(out)
-            ssh.run_command('dropdb vmdb_production', timeout=15)
-            rc, out = ssh.run_command("psql -l | grep vmdb_production | wc -l", timeout=15)
-            return rc == 0
-        wait_for(_db_dropped, delay=5, timeout=60, message="drop the vmdb_production DB")
-
         rc, out = ssh.run_command('createdb vmdb_production', timeout=30)
         assert rc == 0, "Failed to create clean database: {}".format(out)
         rc, out = ssh.run_command(
@@ -111,7 +127,7 @@ def test_db_migrate(stabilize_current_appliance, db_url, db_version, db_desc):
         app.start_evm_service()
     except ApplianceException:
         rc, out = app.ssh_client.run_rake_command("evm:start")
-        raise rc == 0, "Couldn't start evmserverd: {}".format(out)
+        assert rc == 0, "Couldn't start evmserverd: {}".format(out)
     app.wait_for_web_ui(timeout=600)
     # Reset user's password, just in case (necessary for customer DBs)
     rc, out = ssh.run_rails_command(

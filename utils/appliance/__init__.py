@@ -263,6 +263,41 @@ class IPAppliance(object):
         self.loosen_pgssl(log_callback=log_callback)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
+    @property
+    def db_partition_extended(self):
+        return self.ssh_client.run_command("ls /var/www/miq/vmdb/.db_partition_extended") == 0
+
+    @logger_wrap("Extend DB partition")
+    def extend_db_partition(self, log_callback=None):
+        """Extends the /var partition with DB while shrinking the unused /repo partition"""
+        with self.ssh_client as ssh:
+            rc, out = ssh.run_command("df -h")
+            log_callback("File systems before extending the DB partition:\n{}".format(out))
+            ssh.run_command("umount /repo")
+            ssh.run_command("lvreduce --force --size -9GB /dev/mapper/VG--CFME-lv_repo")
+            ssh.run_command("mkfs.xfs -f /dev/mapper/VG--CFME-lv_repo")
+            ssh.run_command("lvextend --resizefs --size +9GB /dev/mapper/VG--CFME-lv_var")
+            ssh.run_command("mount -a")
+            rc, out = ssh.run_command("df -h")
+            log_callback("File systems after extending the DB partition:\n{}".format(out))
+            ssh.run_command("touch /var/www/miq/vmdb/.db_partition_extended")
+
+    @logger_wrap("Wait for no postgres connections")
+    def drop_database(self, log_callback=None):
+        """ Drops the vmdb_production database
+
+            Note: EVM service has to be stopped for this to work.
+        """
+        def _db_dropped():
+            rc, out = self.ssh_client.run_command(
+                'systemctl restart {}-postgresql'.format(db.scl_name()), timeout=60)
+            assert rc == 0, "Failed to restart postgres service: {}".format(out)
+            self.ssh_client.run_command('dropdb vmdb_production', timeout=15)
+            rc, out = self.ssh_client.run_command(
+                "psql -l | grep vmdb_production | wc -l", timeout=15)
+            return rc == 0
+        wait_for(_db_dropped, delay=5, timeout=60, message="drop the vmdb_production DB")
+
     def seal_for_templatizing(self):
         """Prepares the VM to be "generalized" for saving as a template."""
         with self.ssh_client as ssh_client:
@@ -722,39 +757,32 @@ class IPAppliance(object):
         return status
 
     @logger_wrap("Backup database: {}")
-    def backup_database(self, log_callback=None):
+    def backup_database(self, database_path="/tmp/evm_db.backup", log_callback=None):
         """Backup VMDB database
 
         """
         log_callback('Backing up database')
-
-        with self.ssh_client as ssh:
-            status, output = ssh.run_rake_command(
-                'evm:db:backup:local -- --local-file /tmp/evm_db.backup --dbname vmdb_production')
-            if status != 0:
-                msg = 'Failed to backup database'
-                log_callback(msg)
-                raise ApplianceException(msg)
+        status, output = self.ssh_client.run_rake_command(
+            'evm:db:backup:local --trace -- --local-file "{}" --dbname vmdb_production'.format(
+                database_path))
+        if status != 0:
+            msg = 'Failed to backup database'
+            log_callback(msg)
+            raise ApplianceException(msg)
 
     @logger_wrap("Restore database: {}")
-    def restore_database(self, log_callback=None):
+    def restore_database(self, database_path="/tmp/evm_db.backup", log_callback=None):
         """Restore VMDB database
 
         """
         log_callback('Restoring database')
-
-        self.stop_evm_service()
-
-        with self.ssh_client as ssh:
-            status, output = ssh.run_rake_command(
-                'evm:db:restore:local -- --local-file /tmp/evm_db.backup')
-            if status != 0:
-                msg = 'Failed to restore database on appl {},output is {}'.format(self.address,
-                    output)
-                log_callback(msg)
-                raise ApplianceException(msg)
-            else:
-                self.start_evm_service()
+        status, output = self.ssh_client.run_rake_command(
+            'evm:db:restore:local --trace -- --local-file "{}"'.format(database_path))
+        if status != 0:
+            msg = 'Failed to restore database on appl {}, output is {}'.format(self.address,
+                output)
+            log_callback(msg)
+            raise ApplianceException(msg)
 
     @logger_wrap("Setup upstream DB: {}")
     def setup_upstream_db(self, log_callback=None):
@@ -1246,75 +1274,65 @@ class IPAppliance(object):
         else:
             return unsure
 
-    def is_evm_service_running(self):
-        """checks the ``evmserverd`` service status on this appliance
+    def _evm_service_command(self, command, log_callback, expected_exit_code=None):
+        """Runs given systemctl command against the ``evmserverd`` service
+        Args:
+            command: Command to run, e.g. "start"
+            expected_exit_code: If the exit codes don't match, ApplianceException is raised
         """
+        log_callback("Running command '{}' against the evmserverd service".format(command))
         with self.ssh_client as ssh:
-            status, output = ssh.run_command('service evmserverd status')
+            status, output = ssh.run_command('systemctl {} evmserverd'.format(command))
 
-            if status == 0:
-                msg = 'evmserverd is active(running)'.format(self.address, output)
-                self.log.info(msg)
-                return True
-            return False
+        if expected_exit_code is not None and status != expected_exit_code:
+            msg = 'Failed to {} evmserverd on {}\nError: {}'.format(command, self.address, output)
+            log_callback(msg)
+            raise ApplianceException(msg)
 
-    @logger_wrap("Restart EVM Service: {}")
-    def restart_evm_service(self, rude=False, log_callback=None):
-        """Restarts the ``evmserverd`` service on this appliance
+        return status
+
+    @logger_wrap("Status of EVM service: {}")
+    def is_evm_service_running(self, log_callback=None):
+        """Checks the ``evmserverd`` service status on this appliance
         """
-        log_callback('restarting evm service')
-        store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
-        with self.ssh_client as ssh:
-            if rude:
-                status, msg = ssh.run_command(
-                    'killall -9 ruby;'
-                    'service rh-postgresql94-postgresql stop;'
-                    'service evmserverd start')
-            else:
-                status, msg = ssh.run_command('systemctl restart evmserverd')
-
-            if status != 0:
-                msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
-                log_callback(msg)
-                raise ApplianceException(msg)
-        self.server_details_changed()
+        return self._evm_service_command("status", log_callback=log_callback) == 0
 
     @logger_wrap("Stop EVM Service: {}")
     def stop_evm_service(self, log_callback=None):
         """Stops the ``evmserverd`` service on this appliance
         """
-        log_callback('stopping evm service')
-
-        with self.ssh_client as ssh:
-            status, output = ssh.run_command('service evmserverd stop')
-
-            if status != 0:
-                msg = 'Failed to stop evmserverd on {}\nError: {}'.format(self.address, output)
-                log_callback(msg)
-                raise ApplianceException(msg)
+        self._evm_service_command('stop', expected_exit_code=0, log_callback=log_callback)
 
     @logger_wrap("Start EVM Service: {}")
     def start_evm_service(self, log_callback=None):
         """Starts the ``evmserverd`` service on this appliance
         """
-        log_callback('starting evm service')
+        self._evm_service_command('start', expected_exit_code=0, log_callback=log_callback)
 
+    @logger_wrap("Restart EVM Service: {}")
+    def restart_evm_service(self, rude=False, log_callback=None):
+        """Restarts the ``evmserverd`` service on this appliance
+        """
+        store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
         with self.ssh_client as ssh:
-            status, output = ssh.run_command('service evmserverd start')
+            if rude:
+                log_callback('restarting evm service by killing processes')
+                status, msg = ssh.run_command(
+                    'killall -9 ruby; service {}-postgresql stop'.format(db.scl_name()))
+                self._evm_service_command("start", expected_exit_code=0, log_callback=log_callback)
+            else:
+                self._evm_service_command(
+                    "restart", expected_exit_code=0, log_callback=log_callback)
+        self.server_details_changed()
 
-            if status != 0:
-                msg = 'Failed to start evmserverd on {}\nError: {}'.format(self.address, output)
-                log_callback(msg)
-                raise ApplianceException(msg)
-
-    @logger_wrap("Waiting for evmserverd: {}")
+    @logger_wrap("Waiting for EVM service: {}")
     def wait_for_evm_service(self, timeout=900, log_callback=None):
         """Waits for the evemserverd service to be running
 
         Args:
-            timeout: Number of seconds to wait until timeout (default ``600``)
+            timeout: Number of seconds to wait until timeout (default ``900``)
         """
-        (log_callback or self.log.info)('Waiting for evmserverd to be active')
+        log_callback('Waiting for evmserverd to be running')
         result, wait = wait_for(self.is_evm_service_running, num_sec=timeout,
                                 fail_condition=False, delay=10)
         return result
