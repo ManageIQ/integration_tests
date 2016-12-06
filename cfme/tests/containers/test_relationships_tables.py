@@ -4,7 +4,6 @@ from cfme.containers.pod import Pod
 from cfme.containers.service import Service
 from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
-from cfme.containers.image import Image
 from cfme.containers.project import Project
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
@@ -12,16 +11,19 @@ from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 from cfme.cloud.availability_zone import details_page
+from utils.version import current_version
 
 
-pytestmark = [pytest.mark.tier(2)]
+pytestmark = [
+    pytest.mark.uncollectif(
+        lambda: current_version() < "5.6"),
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.tier(2)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
 
-TEST_OBJECTS = [Pod, Service, Node, Replicator, Image, Project]
-
-rel_values = (0, 'Unknown image source', 'registry.access.redhat.com')
+TEST_OBJECTS = [Pod, Service, Node, Replicator, Project]
 
 
 # 9930 # 9892 # 9965 # 9983 # 9869
@@ -30,13 +32,14 @@ rel_values = (0, 'Unknown image source', 'registry.access.redhat.com')
 @pytest.mark.parametrize('cls', TEST_OBJECTS)
 def test_relationships_tables(provider, cls):
     """  This module verifies the integrity of the Relationships table.
-               clicking on each field in the Relationships table takes the user
-              to either Summary page where we verify that the field that appears
-             in the Relationships table also appears in the Properties table,
-            or to the page where the number of rows is equal to the number
-           that is displayed in the Relationships table.
+         clicking on each field in the Relationships table takes the user
+         to either Summary page where we verify that the field that appears
+         in the Relationships table also appears in the Properties table,
+         or to the page where the number of rows is equal to the number
+         that is displayed in the Relationships table.
 
     """
+
     navigate_to(cls, 'All')
     tb.select('List View')
     list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -54,7 +57,7 @@ def test_relationships_tables(provider, cls):
             rel_tbl = obj.summary.groups()['relationships']
             element = getattr(rel_tbl, key)
             value = element.value
-            if value in rel_values:
+            if value == 0:
                 continue
             sel.click(element)
 
