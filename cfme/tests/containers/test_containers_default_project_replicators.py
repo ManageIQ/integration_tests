@@ -23,18 +23,32 @@ REPLICATORS_PROPERTIES_FIELDS = ['Name', 'Creation timestamp', 'Resource version
 REPLICATORS_RELATIONSHIPS_FIELDS = ['Containers Provider', 'Project', 'Pods', 'Nodes',
                                     'My Company Tags']
 
+
+@pytest.fixture(scope="module")
+def replicator(provider):
+    navigate_to(Replicator, 'All')
+    replicator_name = random.choice([r.name.text for r in list_tbl.rows()])
+    return Replicator(replicator_name, provider)
+
+
 # CMP - 9531
-def test_replicators(provider):
+@pytest.mark.parametrize('prop', REPLICATORS_PROPERTIES_FIELDS)
+def test_replicators_properties(replicator, prop):
+    """ Default Project Replicator properties test.
+        Steps :
+            * Goes to Containers --> Replicators
+             * Goes through each Replicator and
+               checks each Properties field.
+    """
+    assert replicator.get_detail('Properties', prop)
+
+
+@pytest.mark.parametrize('rel', REPLICATORS_RELATIONSHIPS_FIELDS)
+def test_replicators_relationships(replicator, rel):
     """ Default Project Replicator properties and relationships test.
         Steps :
             * Goes to Containers --> Replicators
              * Goes through each Replicator and
-               checks each Properties and Relationships field.
-        """
-    navigate_to(Replicator, 'All')
-    replicator_name = random.choice([r.name.text for r in list_tbl.rows()])
-    obj = Replicator(replicator_name, provider)
-    for prop in REPLICATORS_PROPERTIES_FIELDS:
-        assert obj.get_detail('Properties', prop)
-    for rel in REPLICATORS_RELATIONSHIPS_FIELDS:
-        assert obj.get_detail('Relationships', rel)
+               checks each Relationships field.
+    """
+    assert replicator.get_detail('Relationships', rel)
