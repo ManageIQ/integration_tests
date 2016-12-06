@@ -62,7 +62,10 @@ def group_user_or_group_owned(role_user_or_group_owned):
 
 
 def new_credential():
-    return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
+    if BZ(1401912).blocks:
+        return Credential(principal='uid' + fauxfactory.gen_alphanumeric().lower(), secret='redhat')
+    else:
+        return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
 
 
 @pytest.yield_fixture(scope="module")

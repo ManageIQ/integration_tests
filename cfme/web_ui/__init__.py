@@ -1957,7 +1957,8 @@ class BootstrapTreeview(object):
         See :py:meth:`expand_path` for more informations about synopsis.
         """
         node = self.expand_path(*path, **kwargs)
-        sel.click(node)
+        if node is not None:
+            sel.click(node)
         return node
 
     def read_contents(self, nodeid=None, include_images=False, collapse_after_read=False):
