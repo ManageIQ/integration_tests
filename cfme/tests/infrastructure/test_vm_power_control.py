@@ -304,6 +304,7 @@ def test_no_template_power_control(provider, setup_provider_funcscope, soft_asse
     soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
+@pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm')
 def test_power_options_from_on(provider, setup_provider_funcscope,
                                soft_assert, test_vm, verify_vm_running):
     test_vm.wait_for_vm_state_change(
