@@ -13,7 +13,6 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope='function')
 
-
 projects_properties_fields = ['Name', 'Creation timestamp', 'Resource version']
 projects_relationships_fields_lowest = ['Containers Provider', 'Routes', 'Services', 'Replicators',
                                         'Pods', 'Nodes']
@@ -25,6 +24,7 @@ projects_relationships_fields_key = ({
     '5.7': projects_relationships_fields_57
 })
 
+projects_relationships_fields = version.pick(projects_relationships_fields_key)
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
 
