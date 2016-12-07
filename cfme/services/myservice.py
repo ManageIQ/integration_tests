@@ -7,7 +7,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import \
     accordion, flash, Quadicon, InfoBlock, Form, fill, form_buttons, match_location, toolbar as tb
 from utils import version
-from utils.appliance import Navigatable
+from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.log import logger
 from utils.update import Updateable
@@ -36,8 +36,14 @@ edit_service_form = Form(
 
 set_ownership_form = Form(
     fields=[
-        ("select_owner", ui.Select("select#user_name")),
-        ("select_group", ui.Select("select#group_name"))
+        ("select_owner", {
+            version.LOWEST: ui.Select("select#user_name"),
+            '5.7': ui.AngularSelect("#user_name")
+        }),
+        ("select_group", {
+            version.LOWEST: ui.Select("select#group_name"),
+            '5.7': ui.AngularSelect("#group_name")
+        }),
     ])
 
 edit_tags_form = Form(
@@ -108,7 +114,10 @@ class MyService(Updateable, Navigatable):
         navigate_to(self, 'Details')
         life_btn("Retire this Service", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Retirement initiated for 1 Service from the CFME Database')
+        flash.assert_success_message(
+            'Retirement initiated for 1 Service from the {} Database'.format(
+                current_appliance.product_name)
+        )
         # wait for service to retire
         wait_for(
             lambda: self.get_detail(properties=('Lifecycle', 'Retirement State')) == 'Retiring',
