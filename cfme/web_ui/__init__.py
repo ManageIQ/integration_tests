@@ -1957,8 +1957,7 @@ class BootstrapTreeview(object):
         See :py:meth:`expand_path` for more informations about synopsis.
         """
         node = self.expand_path(*path, **kwargs)
-        if node is not None:
-            sel.click(node)
+        sel.click(node)
         return node
 
     def read_contents(self, nodeid=None, include_images=False, collapse_after_read=False):
@@ -2062,6 +2061,8 @@ class BootstrapTreeview(object):
 
 @fill.method((BootstrapTreeview, Sequence))
 def _fill_bstree_seq(tree, values):
+    if not values:
+        return None
     try:
         if (isinstance(values[0][0], list) or isinstance(values[0][0], tuple)) \
                 and not isinstance(values[0][0], types.StringTypes):
