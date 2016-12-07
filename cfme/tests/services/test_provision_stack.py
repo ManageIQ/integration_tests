@@ -6,7 +6,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services.catalogs.myservice import MyService
+from cfme.services.myservice import MyService
 from cfme.services import requests
 from cfme.cloud.stack import Stack
 from cfme import test_requirements

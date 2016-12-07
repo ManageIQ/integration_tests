@@ -5,6 +5,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import accordion, flash, menu, form_buttons, Form, Input, Select
 from utils.update import Updateable
 from utils.pretty import Pretty
+from utils.wait import wait_for
 from utils import version
 
 order_button = {
@@ -73,4 +74,5 @@ class ServiceCatalogs(Updateable, Pretty):
                                     'catalog_item': catalog_item})
         stack_form.fill(self.stack_data)
         sel.click(form_buttons.submit)
+        wait_for(flash.get_messages, num_sec=10, delay=2)
         flash.assert_success_message("Order Request was Submitted")
