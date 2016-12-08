@@ -14,6 +14,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen, providers, version
 from utils.update import update
+from utils.api import APIException
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
@@ -243,3 +244,68 @@ def test_provider_crud(provider):
 
     provider.delete(cancel=False)
     provider.wait_for_delete()
+
+
+class TestProvidersRESTAPI(object):
+    @pytest.yield_fixture(scope="function")
+    def custom_attributes(self, rest_api, setup_a_provider):
+        provider = rest_api.collections.providers[0]
+        attrs = provider.custom_attributes.action.add(
+            {"name": "ca_name1", "value": "ca_value1"}, {"name": "ca_name2", "value": "ca_value2"})
+
+        yield attrs
+
+        try:
+            provider.custom_attributes.action.delete(*attrs)
+        except APIException:
+            pass
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @test_requirements.rest
+    def test_add_custom_attributes(self, custom_attributes):
+        """Test adding custom attributes to provider using REST API."""
+        assert len(custom_attributes) == 2
+        assert custom_attributes[0].name == "ca_name1" and custom_attributes[0].value == "ca_value1"
+        assert custom_attributes[1].name == "ca_name2" and custom_attributes[1].value == "ca_value2"
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @test_requirements.rest
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_delete_custom_attributes(self, rest_api, custom_attributes, from_detail):
+        """Test deleting custom attributes using REST API."""
+        if from_detail:
+            for ent in custom_attributes:
+                ent.action.delete()
+                with error.expected("ActiveRecord::RecordNotFound"):
+                    ent.action.delete()
+        else:
+            provider = rest_api.collections.providers[0]
+            provider.custom_attributes.action.delete(*custom_attributes)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                provider.custom_attributes.action.delete(*custom_attributes)
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @test_requirements.rest
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_edit_custom_attributes(self, rest_api, custom_attributes, from_detail):
+        """Test editing custom attributes using REST API."""
+        attrs0 = {"name": "ca_new_name1", "value": "ca_new_value1"}
+        attrs1 = {"name": "ca_new_name2", "value": "ca_new_value2"}
+        if from_detail:
+            changed_attrs = []
+            changed_attrs.append(custom_attributes[0].action.edit(**attrs0))
+            changed_attrs.append(custom_attributes[1].action.edit(**attrs1))
+        else:
+            attrs0.update(custom_attributes[0]._ref_repr())
+            attrs1.update(custom_attributes[1]._ref_repr())
+            provider = rest_api.collections.providers[0]
+            changed_attrs = provider.custom_attributes.action.edit(attrs0, attrs1)
+        assert changed_attrs[0].name == "ca_new_name1" and changed_attrs[0].value == "ca_new_value1"
+        assert changed_attrs[1].name == "ca_new_name2" and changed_attrs[1].value == "ca_new_value2"
