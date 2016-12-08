@@ -44,4 +44,13 @@ def test_containers_main_pages_sort(cls):
         sort_tbl.sort_by(header_text, 'descending')
         rows_descending = [r[col].text for r in sort_tbl.rows()]
 
-        assert rows_ascending[::-1] == rows_descending
+        expected_ascending_order = sorted(rows_ascending)
+        expected_descending_order = expected_ascending_order[::-1]
+
+        if expected_ascending_order == expected_descending_order:
+            pytest.skip("There is no difference between the column %s"
+                        " sorted in ascending and descending order,"
+                        " therefore this test is not able to check is"
+                        " the ordering actualy working or not.")
+        assert rows_ascending == expected_ascending_order
+        assert rows_descending == expected_descending_order
