@@ -110,8 +110,7 @@ class ContainersProvider(BaseProvider, Pretty):
         'num_replication_controller',
         'num_pod',
         'num_node',
-        'num_container',
-        'num_image']
+        'num_container']
     # TODO add 'num_image_registry' and 'num_volume'
     string_name = "Containers"
     page_name = "containers"
