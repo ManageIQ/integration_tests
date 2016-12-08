@@ -18,12 +18,11 @@ pytestmark = [
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
-# CMP-9924 CMP-9925 CMP-9926 CMP-9927 CMP-9928
-
 
 TEST_OBJECTS = [Project, Service, Replicator, Route, ContainersProvider]
 
 
+# CMP-9924 CMP-9925 CMP-9926 CMP-9927 CMP-9928
 @pytest.mark.meta(blockers=[1392413])
 @pytest.mark.parametrize('cls', TEST_OBJECTS)
 def test_containers_main_pages_sort(cls):
