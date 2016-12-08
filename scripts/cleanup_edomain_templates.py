@@ -12,14 +12,24 @@ import pytz
 from threading import Lock, Thread
 
 from utils import net
-from utils.conf import cfme_data
-from utils.conf import credentials
-from utils.ssh import SSHClient
+from utils.conf import cfme_data, credentials
 from utils.log import logger
 from utils.providers import get_mgmt
+from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 lock = Lock()
+
+
+def make_ssh_client(provider_mgmt):
+    creds = credentials[provider_mgmt.kwargs.get('ssh_creds', None)]
+
+    connect_kwargs = {
+        'username': creds['username'],
+        'password': creds['password'],
+        'hostname': provider_mgmt.kwargs.get('ipaddress')
+    }
+    return SSHClient(**connect_kwargs)
 
 
 def parse_cmd_line():
@@ -41,19 +51,9 @@ def parse_cmd_line():
     return args
 
 
-def make_ssh_client(rhevip, sshname, sshpass):
-    connect_kwargs = {
-        'username': sshname,
-        'password': sshpass,
-        'hostname': rhevip
-    }
-    return SSHClient(**connect_kwargs)
-
-
-def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
+def is_ovirt_engine_running(provider_mgmt):
     try:
-        ssh_client = make_ssh_client(rhevm_ip, sshname, sshpass)
-        stdout = ssh_client.run_command('service ovirt-engine status')[1]
+        stdout = make_ssh_client(provider_mgmt).run_command('service ovirt-engine status')[1]
         if 'running' not in stdout:
             return False
         return True
@@ -62,8 +62,12 @@ def is_ovirt_engine_running(rhevm_ip, sshname, sshpass):
         return False
 
 
-def change_edomain_state(api, state, edomain):
+def change_edomain_state(provider_mgmt, state, edomain):
     try:
+        # fetch name for logging
+        provider_name = provider_mgmt.kwargs.get('name', None)
+
+        api = provider_mgmt.api
         dcs = api.datacenters.list()
         for dc in dcs:
             export_domain = dc.storagedomains.get(edomain)
@@ -73,13 +77,15 @@ def change_edomain_state(api, state, edomain):
                 elif state == 'active' and export_domain.get_status().state != 'active':
                     dc.storagedomains.get(edomain).activate()
 
-                wait_for(is_edomain_template_deleted,
-                         [api, state, edomain], fail_condition=False, delay=5)
-                print('{} successfully set to {} state'.format(edomain, state))
+                wait_for(is_edomain_in_state, [api, state, edomain], fail_condition=False, delay=5)
+                print('RHEVM:{} {} successfully set to {} state'
+                      .format(provider_name, edomain, state))
                 return True
         return False
-    except Exception:
-        print("Exception occurred while changing {} state to {}".format(edomain, state))
+    except Exception as e:
+        print(e)
+        print("RHEVM:{} Exception occurred while changing {} state to {}"
+              .format(provider_name, edomain, state))
         return False
 
 
@@ -96,29 +102,35 @@ def is_edomain_in_state(api, state, edomain):
 def get_edomain_path(api, edomain):
     edomain_id = api.storagedomains.get(edomain).get_id()
     edomain_conn = api.storagedomains.get(edomain).storageconnections.list()[0]
-    return (edomain_conn.get_path() + '/' + edomain_id,
+    return ('{}/{}'.format(edomain_conn.get_path(), edomain_id),
             edomain_conn.get_address())
 
 
-def cleanup_empty_dir_on_edomain(path, edomainip, sshname, sshpass):
+def cleanup_empty_dir_on_edomain(provider_mgmt, edomain):
     """Cleanup all the empty directories on the edomain/edomain_id/master/vms
     else api calls will result in 400 Error with ovf not found,
-
     Args:
-        path: path for vms directory on edomain.
-        edomain: Export domain of chosen RHEVM provider.
-        edomainip: edomainip to connect through ssh.
-        sshname: edomain ssh credentials.
-        sshpass: edomain ssh credentials.
+        provider_mgmt: provider object under execution
+        edomain: domain on which to operate
     """
     try:
-        print("RHEVM: Deleting the empty directories on edomain/vms file...")
-        ssh_client = make_ssh_client(edomainip, sshname, sshpass)
-        command = 'cd {}/master/vms && find . -maxdepth 1 -type d -empty -delete'.format(path)
-        exit_status, output = ssh_client.run_command(command)
+        # We'll use this for logging
+        provider_name = provider_mgmt.kwargs.get('name', None)
+        # get path first
+        path, edomain_ip = get_edomain_path(provider_mgmt.api, edomain)
+        edomain_path = '{}:{}'.format(edomain_ip, path)
+
+        command = 'mkdir -p ~/tmp_filemount &&'
+        command += 'mount -O tcp {} ~/tmp_filemount &&'.format(edomain_path)
+        command += 'find ~/tmp_filemount/master/vms/ -maxdepth 1 -type d -empty -delete &&'
+        command += 'cd ~ && umount ~/tmp_filemount &&'
+        command += 'find . -maxdepth 1 -name tmp_filemount -type d -empty -delete'
+        print("RHEVM:{} Deleting empty directories on edomain/vms file...".format(provider_name))
+        exit_status, output = make_ssh_client(provider_mgmt).run_command(command)
         if exit_status != 0:
-            print("RHEVM: Error while deleting the empty directories on path..")
+            print("RHEVM:{} Error while deleting empty directories on path..".format(provider_name))
             print(output)
+        print("RHEVM:{} successfully deleted empty directories on path..".format(provider_name))
     except Exception as e:
         print(e)
         return False
@@ -150,8 +162,7 @@ def delete_edomain_templates(api, template, edomain):
     try:
         template.delete()
         print('waiting for {} to be deleted..'.format(name))
-        wait_for(is_edomain_template_deleted,
-                 [api, name, edomain], fail_condition=False, delay=5)
+        wait_for(is_edomain_template_deleted, [api, name, edomain], fail_condition=False, delay=5)
         print("RHEVM: successfully deleted the template {}".format(name))
     except Exception as e:
         with lock:
@@ -203,10 +214,9 @@ def api_params_resolution(item_list, item_name, item_param):
         print("Please specify it by cmd-line parameter '--{}' or in cfme_data.".format(item_param))
         return None
     elif len(item_list) > 1:
-        print("RHEVM: Found multiple instances of {}. Picking '{}'.".format(
-            item_name, item_list[0]))
+        print("RHEVM: Found multiple of {}. Picking first, '{}'.".format(item_name, item_list[0]))
     else:
-        print("RHEVM: Found {} '{}'.".format(item_name, item_list[0]))
+        print("RHEVM: Found {}: '{}'.".format(item_name, item_list[0]))
 
     return item_list[0]
 
@@ -266,48 +276,40 @@ def run(**kwargs):
        function.
 
     Args:
-        **kwargs: Kwargs generated from
-        cfme_data['template_upload']['template_upload_rhevm'].
+        **kwargs: Kwargs generated from cfme_data['template_upload']['template_upload_rhevm'].
     """
     providers = cfme_data['management_systems']
     for provider in providers:
 
-        if cfme_data['management_systems'][provider]['type'] != 'rhevm':
+        if providers[provider]['type'] != 'rhevm':
             continue
         if args.provider:
             if args.provider != provider:
                 continue
 
-        mgmt_sys = cfme_data['management_systems'][provider]
-        ssh_rhevm_creds = mgmt_sys['hosts'][0]['credentials']
-        sshname = credentials[ssh_rhevm_creds]['username']
-        sshpass = credentials[ssh_rhevm_creds]['password']
+        provider_mgmt = get_mgmt(provider)
 
-        if not net.is_pingable(cfme_data['management_systems'][provider]['ipaddress']):
+        if not net.is_pingable(provider_mgmt.kwargs.get('ipaddress', None)):
             continue
-        elif not is_ovirt_engine_running(cfme_data['management_systems'][provider]['ipaddress'],
-                                         sshname, sshpass):
+        elif not is_ovirt_engine_running(provider_mgmt):
             print('ovirt-engine service not running..')
             continue
 
         try:
             print('connecting to provider, to establish api handler')
-            api = get_mgmt(provider).api
-            edomain = get_edomain(api)
-            if args.edomain:
-                edomain = args.edomain
-            path, edomain_ip = get_edomain_path(api, edomain)
+            edomain = args.get('edomain',
+                               provider_mgmt.kwargs['template_upload'].get('edomain', None))
         except Exception as e:
             logger.exception(e)
             continue
 
         try:
             print("\n--------Start of {}--------".format(provider))
-            cleanup_templates(api, edomain, args.days_old, args.max_templates)
+            cleanup_templates(provider_mgmt.api, edomain, args.days_old, args.max_templates)
         finally:
-            change_edomain_state(api, 'maintenance', edomain)
-            cleanup_empty_dir_on_edomain(path, edomain_ip, sshname, sshpass)
-            change_edomain_state(api, 'active', edomain)
+            change_edomain_state(provider_mgmt, 'maintenance', edomain)
+            cleanup_empty_dir_on_edomain(provider_mgmt, edomain)
+            change_edomain_state(provider_mgmt, 'active', edomain)
             print("--------End of {}--------\n".format(provider))
 
     print("Provider Execution completed")
