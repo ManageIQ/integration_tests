@@ -155,7 +155,7 @@ class Instance(VM, Navigatable):
 
         return wait_for(_looking_for_state_change, num_sec=timeout, delay=45,
                         message='Checking for instance state change',
-                        fail_func=self.provider.refresh_provider_relationships())
+                        fail_func=self.provider.refresh_provider_relationships)
 
     def find_quadicon(self, *args, **kwargs):
         """Find and return a quadicon belonging to a specific instance
