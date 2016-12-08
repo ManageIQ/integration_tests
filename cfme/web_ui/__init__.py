@@ -2061,6 +2061,8 @@ class BootstrapTreeview(object):
 
 @fill.method((BootstrapTreeview, Sequence))
 def _fill_bstree_seq(tree, values):
+    if not values:
+        return None
     try:
         if (isinstance(values[0][0], list) or isinstance(values[0][0], tuple)) \
                 and not isinstance(values[0][0], types.StringTypes):
