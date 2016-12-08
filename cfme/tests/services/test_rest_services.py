@@ -17,23 +17,32 @@ pytestmark = [test_requirements.service,
               pytest.mark.tier(2)]
 
 
+@pytest.fixture(scope="module")
+def a_provider():
+    return _setup_a_provider("infra")
+
+
+@pytest.fixture(scope="function")
+def dialog():
+    return _dialog()
+
+
+@pytest.fixture(scope="function")
+def service_catalogs(request, rest_api):
+    return _service_catalogs(request, rest_api)
+
+
+@pytest.fixture(scope="function")
+def services(request, rest_api, a_provider, dialog, service_catalogs):
+    return _services(request, rest_api, a_provider, dialog, service_catalogs)
+
+
+@pytest.fixture(scope='function')
+def service_templates(request, rest_api, dialog):
+    return _service_templates(request, rest_api, dialog)
+
+
 class TestServiceRESTAPI(object):
-    @pytest.fixture(scope="module")
-    def a_provider(self):
-        return _setup_a_provider("infra")
-
-    @pytest.fixture(scope="function")
-    def dialog(self):
-        return _dialog()
-
-    @pytest.fixture(scope="function")
-    def service_catalogs(self, request, rest_api):
-        return _service_catalogs(request, rest_api)
-
-    @pytest.fixture(scope="function")
-    def services(self, request, rest_api, a_provider, dialog, service_catalogs):
-        return _services(request, rest_api, a_provider, dialog, service_catalogs)
-
     def test_edit_service(self, rest_api, services):
         """Tests editing a service.
         Prerequisities:
@@ -172,21 +181,26 @@ class TestServiceRESTAPI(object):
                 assert service.evm_owner.userid == user.userid
 
 
+class TestServiceDialogsRESTAPI(object):
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize("method", ["post", "delete"])
+    def test_delete_service_dialog(self, rest_api, dialog, method):
+        service_dialog = rest_api.collections.service_dialogs.find_by(label=dialog.label)[0]
+        service_dialog.action.delete(force_method=method)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            service_dialog.action.delete()
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_delete_service_dialogs(self, rest_api, dialog):
+        service_dialog = rest_api.collections.service_dialogs.find_by(label=dialog.label)[0]
+        rest_api.collections.service_dialogs.action.delete(service_dialog)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            rest_api.collections.service_dialogs.action.delete(service_dialog)
+
+
 class TestServiceTemplateRESTAPI(object):
-    @pytest.fixture(scope='function')
-    def service_templates(self, request, rest_api, dialog):
-        return _service_templates(request, rest_api, dialog)
-
-    @pytest.fixture(scope="function")
-    def dialog(self):
-        return _dialog()
-
-    @pytest.fixture(scope="function")
-    def service_catalogs(self, request, rest_api):
-        return _service_catalogs(request, rest_api)
-
     def test_edit_service_template(self, rest_api, service_templates):
-        """Tests cediting a service template.
+        """Tests editing a service template.
         Prerequisities:
             * An appliance with ``/api`` available.
         Steps:

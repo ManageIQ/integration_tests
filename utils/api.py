@@ -472,11 +472,18 @@ class ActionContainer(object):
 
     def reload(self):
         self._obj.reload_if_needed()
+        reloaded_actions = []
         for action in self._obj._actions:
-            setattr(
-                self,
-                action["name"],
-                Action(self, action["name"], action["method"], action["href"]))
+            # There can be multiple actions with the same name and different methods
+            # (e.g. actions "delete" with method POST and DELETE).
+            # This makes sure that the attribute refers to the first action and is not redefined
+            # by other action with the same name and different method.
+            if action["name"] not in reloaded_actions:
+                reloaded_actions.append(action["name"])
+                setattr(
+                    self,
+                    action["name"],
+                    Action(self, action["name"], action["method"], action["href"]))
 
     def execute_action(self, action_name, *args, **kwargs):
         # To circumvent bad method names, like `import`, you can use this one directly
@@ -523,6 +530,9 @@ class Action(object):
         return self.collection.api
 
     def __call__(self, *args, **kwargs):
+        # possibility to override HTTP method that will be used with the action
+        # (e.g. force_method='delete')
+        method = kwargs.pop('force_method', self._method)
         resources = []
         # We got resources to post
         for res in args:
@@ -541,9 +551,9 @@ class Action(object):
         else:
             if kwargs:
                 query_dict["resource"] = kwargs
-        if self._method == "post":
+        if method == "post":
             result = self.api.post(self._href, **query_dict)
-        elif self._method == "delete":
+        elif method == "delete":
             result = self.api.delete(self._href, **query_dict)
         else:
             raise NotImplementedError
