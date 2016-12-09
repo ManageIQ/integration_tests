@@ -241,6 +241,21 @@ class IPAppliance(object):
         self.restart_evm_service(log_callback=log_callback)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
+    # TODO: this method eventually needs to be moved to provider class..
+    @logger_wrap("Configure GCE IPAppliance: {}")
+    def configure_gce(self, log_callback=None):
+        self.wait_for_ssh(timeout=1200)
+        self.deploy_merkyl(start=True, log_callback=log_callback)
+        # TODO: Fix NTP on GCE instances.
+        # self.fix_ntp_clock(log_callback=log_callback)
+        self.enable_internal_db(log_callback=log_callback)
+        # evm serverd does not auto start on GCE instance..
+        self.start_evm_service(log_callback=log_callback)
+        self.wait_for_evm_service(timeout=1200, log_callback=log_callback)
+        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+        self.loosen_pgssl(log_callback=log_callback)
+        self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
     def seal_for_templatizing(self):
         """Prepares the VM to be "generalized" for saving as a template."""
         with self.ssh_client as ssh_client:
@@ -456,6 +471,16 @@ class IPAppliance(object):
     def coverage(self):
         return ui_coverage.CoverageManager(self)
 
+    def ssh_client_with_privatekey(self):
+        with open(conf_path.join('appliance_private_key').strpath, 'w') as key:
+            key.write(conf.credentials['ssh']['private_key'])
+        connect_kwargs = {
+            'hostname': self.hostname,
+            'username': conf.credentials['ssh']['ssh-user'],
+            'key_filename': conf_path.join('appliance_private_key').strpath,
+        }
+        return ssh.SSHClient(**connect_kwargs)
+
     @cached_property
     def ssh_client(self):
         """Creates an ssh client connected to this appliance
@@ -483,6 +508,14 @@ class IPAppliance(object):
             'container': self.container,
         }
         ssh_client = ssh.SSHClient(**connect_kwargs)
+        try:
+            ssh_client.get_transport().is_active()
+            logger.info('default appliance ssh credentials are valid')
+        except Exception as e:
+            logger.error(e)
+            logger.error('default appliance ssh credentials failed, trying establish ssh connection'
+                         ' using ssh private key')
+            ssh_client = self.ssh_client_with_privatekey()
         # FIXME: propperly store ssh clients we made
         store.ssh_clients_to_close.append(ssh_client)
         return ssh_client
