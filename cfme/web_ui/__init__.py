@@ -57,7 +57,7 @@ import re
 import time
 import types
 from datetime import date
-from collections import Sequence, Mapping, Callable
+from collections import Sequence, Mapping, Callable, Iterable
 from tempfile import NamedTemporaryFile
 from xml.sax.saxutils import quoteattr, unescape
 
@@ -2064,13 +2064,13 @@ def _fill_bstree_seq(tree, values):
     if not values:
         return None
     try:
-        if (isinstance(values[0][0], list) or isinstance(values[0][0], tuple)) \
-                and not isinstance(values[0][0], types.StringTypes):
+        if isinstance(values[0], types.StringTypes):
+            tree.click_path(*values)
+        elif isinstance(values[0], Iterable):
             for check in values:
                 tree.check_uncheck_node(check[1], *check[0])
     except IndexError:
         tree.click_path(*values)
-
 
 class Tree(Pretty):
     """ A class directed at CFME Tree elements
