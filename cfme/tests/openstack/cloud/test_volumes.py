@@ -41,7 +41,9 @@ def test_create_volume(provider):
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     pytest_selenium.refresh()
     vol_table = Table("//div[@id='list_grid']/table")
-    params = {'Name': vname, 'Size': '%d GB' % vsize, 'Status': 'available'}
+    params = {'Name': vname,
+              'Size': '{} GB'.format(vsize),
+              'Status': 'available'}
     res = vol_table.find_rows_by_cells(params)
     assert res, 'Newly created volume doesn\'t appear in UI'
 
@@ -116,7 +118,6 @@ def test_detach_volume_from_instance_page(provider):
     Instance(vm_name, provider).load_details()
     toolbar.select('Configuration', 'Detach a Cloud Volume from this Instance')
     select = Select("//select[@id='volume_id']")
-    print select.all_options
     v_option = choice(select.all_options[1:])
     select.select_by_value(v_option[1])
     loc = "//div[@id='angular_paging_div_buttons']/button[@id='save_enabled']"
