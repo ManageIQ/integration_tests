@@ -1,14 +1,13 @@
 import pytest
 
-from utils.appliance.implementations.ui import navigate_to
-from cfme.containers.provider import ContainersProvider
 from utils import testgen, version
-from utils.version import current_version
 from cfme.web_ui import toolbar as tb
+from utils.appliance.implementations.ui import navigate_to
+
 
 pytestmark = [
     pytest.mark.uncollectif(
-        lambda: current_version() < "5.6"),
+        lambda: version.current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2)]
 pytest_generate_tests = testgen.generate(
@@ -28,8 +27,7 @@ def test_reload_button_provider(provider):
 
     """
 
-    navigate_to(ContainersProvider, 'All')
-    provider.load_details()
+    navigate_to(provider, 'Details')
     tb.select('Reload Current Display')
     provider.validate_stats(ui=True)
 
@@ -37,9 +35,7 @@ def test_reload_button_provider(provider):
     num_img_from_openshift = len(provider.mgmt.list_image())
 
     num_img_api_list = num_img_from_registry + num_img_from_openshift
-    num_img_ui = provider.num_image()
+    num_img_displayed_ui = provider.summary.relationships.container_images.value
 
-    if version.current_version() < "5.7":
-        assert num_img_ui == num_img_from_openshift
-    else:
-        assert num_img_api_list == num_img_ui
+    assert num_img_displayed_ui == version.pick({version.LOWEST: num_img_from_openshift,
+                                                 '5.7': num_img_api_list})

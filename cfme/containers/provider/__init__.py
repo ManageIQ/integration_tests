@@ -112,7 +112,7 @@ class ContainersProvider(BaseProvider, Pretty):
         'num_node',
         'num_image_registry',
         'num_container']
-    # TODO add 'num_image_registry' and 'num_volume'
+    # TODO add 'num_volume'
     string_name = "Containers"
     page_name = "containers"
     detail_page_suffix = 'provider_detail'

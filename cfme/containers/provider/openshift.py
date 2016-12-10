@@ -14,7 +14,7 @@ class CustomAttribute(object):
 
 @ContainersProvider.add_provider_type
 class OpenshiftProvider(ContainersProvider):
-    STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + ['num_route']
+    STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + ['num_route'] + ['num_template']
     type_name = "openshift"
     mgmt_class = Openshift
 
@@ -47,6 +47,14 @@ class OpenshiftProvider(ContainersProvider):
     @num_route.variant('ui')
     def num_route_ui(self):
         return int(self.get_detail("Relationships", "Routes"))
+
+    @variable(alias='db')
+    def num_template(self):
+        return self._num_db_generic('container_templates')
+
+    @num_template.variant('ui')
+    def num_template_ui(self):
+        return int(self.get_detail("Relationships", "Container Templates"))
 
     @staticmethod
     def from_config(prov_config, prov_key):
