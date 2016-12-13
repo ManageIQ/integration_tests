@@ -226,12 +226,12 @@ class Host(Updateable, Pretty, Navigatable):
 
     def power_on(self):
         navigate_to(self, 'Details')
-        pow_btn('Power On')
+        pow_btn('Power On', invokes_alert=True)
         sel.handle_alert()
 
     def power_off(self):
         navigate_to(self, 'Details')
-        pow_btn('Power Off')
+        pow_btn('Power Off', invokes_alert=True)
         sel.handle_alert()
 
     def get_ipmi(self):
