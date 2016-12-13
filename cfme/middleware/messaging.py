@@ -1,12 +1,15 @@
+from navmazing import NavigateToSibling, NavigateToAttribute
 import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
-from cfme.web_ui.menu import nav, toolbar as tb
+from cfme.web_ui.menu import toolbar as tb
 from utils import attributize_string
 from utils.db import cfmedb
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.providers import get_crud, get_provider_key
 from utils.providers import list_providers
 from utils.varmeth import variable
@@ -47,27 +50,14 @@ def _db_select_query(name=None, nativeid=None, server=None, provider=None):
 
 def _get_messagings_page(provider=None, server=None):
     if server:  # if server instance is provided navigate through server page
-        server.summary.reload()
-        if server.summary.relationships.middleware_messagings.value == 0:
-            return
-        server.summary.relationships.middleware_messagings.click()
+        navigate_to(server, 'ServerMessagings')
     elif provider:  # if provider instance is provided navigate through provider page
-        provider.summary.reload()
-        if provider.summary.relationships.middleware_messagings.value == 0:
-            return
-        provider.summary.relationships.middleware_messagings.click()
+        navigate_to(provider, 'ProviderMessagings')
     else:  # if None(provider and server) given navigate through all middleware messagings page
-        sel.force_navigate('middleware_messagings')
+        navigate_to(MiddlewareMessaging, 'All')
 
 
-nav.add_branch(
-    'middleware_messagings', {
-        'middleware_messaging': lambda ctx: list_tbl.select_row('Messaging Name', ctx['name']),
-    }
-)
-
-
-class MiddlewareMessaging(MiddlewareBase, Taggable):
+class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable):
     """
     MiddlewareMessaging class provides details on messaging page.
     Class methods available to get existing messagings list
@@ -92,11 +82,12 @@ class MiddlewareMessaging(MiddlewareBase, Taggable):
         messagings = MiddlewareMessaging.messagings(provider=haw_provider,server=ser_instance)
 
     """
-    property_tuples = [('name', 'name'), ('nativeid', 'nativeid'),
-                       ('messaging_type', 'messaging_type')]
+    property_tuples = [('name', 'Name'), ('nativeid', 'Nativeid'),
+                       ('messaging_type', 'Messaging type')]
     taggable_type = 'MiddlewareMessaging'
 
-    def __init__(self, name, server, provider=None, **kwargs):
+    def __init__(self, name, server, provider=None, appliance=None, **kwargs):
+        Navigatable.__init__(self, appliance=appliance)
         if name is None:
             raise KeyError("'name' should not be 'None'")
         if not isinstance(server, MiddlewareServer):
@@ -187,28 +178,8 @@ class MiddlewareMessaging(MiddlewareBase, Taggable):
         else:
             return cls._messagings_in_mgmt(provider, server)
 
-    def _on_detail_page(self):
-        """Override existing `_on_detail_page` and return `False` always.
-        There is no uniqueness on summary page of this resource.
-        Refer: https://github.com/ManageIQ/manageiq/issues/10189
-        """
-        return False
-
-    def _listed_on_page(self):
-        """Check weather Messaging is listed in opened page.
-        """
-        return sel.is_displayed(list_tbl) and list_tbl.find_row_by_cells(
-            {'Messaging Name': self.name,
-             'Messaging Type': self.messaging_type,
-             'Server': self.server.name})
-
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            if not self._listed_on_page():
-                _get_messagings_page(provider=self.provider, server=self.server)
-            list_tbl.click_row_by_cells({'Messaging Name': self.name,
-                                         'Messaging Type': self.messaging_type,
-                                         'Server': self.server.name})
+        navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_msg = self.messaging(method='db')
             self.db_id = tmp_msg.db_id
@@ -217,11 +188,11 @@ class MiddlewareMessaging(MiddlewareBase, Taggable):
 
     @variable(alias='ui')
     def messaging(self):
-        self.summary.reload()
-        self.id = self.summary.properties.nativeid.text_value
+        self.load_details(refresh=True)
+        self.id = self.get_detail("Properties", "Nativeid")
         self.server = MiddlewareServer(
             provider=self.provider,
-            name=self.summary.relationships.middleware_server.text_value)
+            name=self.get_detail("Relationships", "Middleware Server"))
         return self
 
     @messaging.variant('mgmt')
@@ -252,3 +223,26 @@ class MiddlewareMessaging(MiddlewareBase, Taggable):
     def download(cls, extension, provider=None, server=None):
         _get_messagings_page(provider, server)
         download(extension)
+
+
+@navigator.register(MiddlewareMessaging, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Middleware', 'Messagings')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("List View")
+
+
+@navigator.register(MiddlewareMessaging, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        list_tbl.click_row_by_cells({'Messaging Name': self.obj.name,
+                                     'Messaging Type': self.obj.messaging_type,
+                                     'Server': self.obj.server.name})

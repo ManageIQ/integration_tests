@@ -4,9 +4,9 @@ from cfme.common.provider import import_all_modules_of
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Region, Form, AngularSelect, Input, Quadicon, form_buttons, toolbar as tb, paginator
+    Region, Form, AngularSelect, InfoBlock, Input, Quadicon,
+    form_buttons, toolbar as tb, paginator
 )
-from cfme.web_ui.menu import nav
 from utils import version
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from utils.db import cfmedb
@@ -30,34 +30,6 @@ def _db_select_query(name=None, type=None):
 
 def _get_providers_page():
     sel.force_navigate('middleware_providers')
-
-nav.add_branch(
-    'middleware_providers',
-    {
-        'middleware_provider_new':
-            lambda _: cfg_btn('Add a New Middleware Provider'),
-        'middleware_provider':
-        [
-            lambda ctx: sel.check(Quadicon(ctx['provider'].name, "middleware").checkbox),
-            {
-                'middleware_provider_edit':
-                lambda _: cfg_btn('Edit Selected Middleware Provider'),
-                'middleware_provider_edit_tags':
-                lambda _: pol_btn('Edit Tags')
-            }],
-        'middleware_provider_detail':
-        [
-            lambda ctx: sel.click(Quadicon(ctx['provider'].name, "middleware")),
-            {
-                'middleware_provider_edit_detail':
-                lambda _: cfg_btn('Edit this Middleware Provider'),
-                'middleware_provider_timelines_detail':
-                lambda _: mon_btn('Timelines'),
-                'middleware_provider_edit_tags_detail':
-                lambda _: pol_btn('Edit Tags'),
-            }]
-    }
-)
 
 properties_form = Form(
     fields=[
@@ -159,5 +131,52 @@ class TimelinesFromDetails(CFMENavigateStep):
     def step(self):
         mon_btn('Timelines')
 
+
+@navigator.register(MiddlewareProvider, 'ProviderServers')
+class ProviderServers(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Servers'))
+
+
+@navigator.register(MiddlewareProvider, 'ProviderDatasources')
+class ProviderDatasources(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Datasources'))
+
+
+@navigator.register(MiddlewareProvider, 'ProviderDeployments')
+class ProviderDeployments(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Deployments'))
+
+
+@navigator.register(MiddlewareProvider, 'ProviderDomains')
+class ProviderDomains(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Domains'))
+
+
+@navigator.register(MiddlewareProvider, 'ProviderMessagings')
+class ProviderMessagings(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element('Relationships', 'Middleware Messagings'))
+
+
+@navigator.register(MiddlewareProvider, 'TopologyFromDetails')
+class TopologyFromDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock('Overview', 'Topology'))
 
 import_all_modules_of('cfme.middleware.provider')

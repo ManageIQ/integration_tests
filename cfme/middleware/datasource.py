@@ -1,11 +1,15 @@
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator, flash
-from cfme.web_ui.menu import nav, toolbar as tb
+from cfme.web_ui.menu import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key
 from utils.providers import list_providers
@@ -48,27 +52,14 @@ def _db_select_query(name=None, nativeid=None, server=None, provider=None):
 
 def _get_datasources_page(provider=None, server=None):
     if server:  # if server instance is provided navigate through server page
-        server.summary.reload()
-        if server.summary.relationships.middleware_datasources.value == 0:
-            return
-        server.summary.relationships.middleware_datasources.click()
+        navigate_to(server, 'ServerDatasources')
     elif provider:  # if provider instance is provided navigate through provider page
-        provider.summary.reload()
-        if provider.summary.relationships.middleware_datasources.value == 0:
-            return
-        provider.summary.relationships.middleware_datasources.click()
+        navigate_to(provider, 'ProviderDatasources')
     else:  # if None(provider and server) given navigate through all middleware datasources page
-        sel.force_navigate('middleware_datasources')
+        navigate_to(MiddlewareDatasource, 'All')
 
 
-nav.add_branch(
-    'middleware_datasources', {
-        'middleware_datasource': lambda ctx: list_tbl.select_row('Datasource Name', ctx['name']),
-    }
-)
-
-
-class MiddlewareDatasource(MiddlewareBase, Taggable):
+class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable):
     """
     MiddlewareDatasource class provides details on datasource page.
     Class methods available to get existing datasources list
@@ -87,18 +78,17 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
                                 server=ser_instance,
                                 provider=haw_provider,
                                 properties='ds-properties')
-
         datasources = MiddlewareDatasource.datasources() [or]
         datasources = MiddlewareDeployment.datasources(provider=haw_provider) [or]
         datasources = MiddlewareDeployment.datasources(provider=haw_provider,server=ser_instance)
-
     """
-    property_tuples = [('name', 'name'), ('nativeid', 'nativeid'),
-                       ('driver_name', 'driver_name'), ('jndi_name', 'jndi_name'),
-                       ('connection_url', 'connection_url'), ('enabled', 'enabled')]
+    property_tuples = [('name', 'Name'), ('nativeid', 'Nativeid'),
+                       ('driver_name', 'Driver Name'), ('jndi_name', 'JNDI Name'),
+                       ('connection_url', 'Connection URL'), ('enabled', 'Enabled')]
     taggable_type = 'MiddlewareDatasource'
 
-    def __init__(self, name, server, provider=None, **kwargs):
+    def __init__(self, name, server, provider=None, appliance=None, **kwargs):
+        Navigatable.__init__(self, appliance=appliance)
         if name is None:
             raise KeyError("'name' should not be 'None'")
         if not isinstance(server, MiddlewareServer):
@@ -181,25 +171,8 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         else:
             return cls._datasources_in_mgmt(provider, server)
 
-    def _on_detail_page(self):
-        """Override existing `_on_detail_page` and return `False` always.
-        There is no uniqueness on summary page of this resource.
-        Refer: https://github.com/ManageIQ/manageiq/issues/10189
-        """
-        return False
-
-    def _listed_on_page(self):
-        """Check weather Datasource is listed in opened page.
-        """
-        return sel.is_displayed(list_tbl) and list_tbl.find_row_by_cells(
-            {'Datasource Name': self.name, 'Server': self.server.name, 'Host Name': self.hostname})
-
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            if not self._listed_on_page():
-                _get_datasources_page(provider=self.provider, server=self.server)
-            list_tbl.click_row_by_cells({'Datasource Name': self.name, 'Server': self.server.name,
-                                        'Host Name': self.hostname})
+        navigate_to(self, 'Details')
         if not self.db_id or refresh:
             tmp_dsource = self.datasource(method='db')
             self.db_id = tmp_dsource.db_id
@@ -208,11 +181,11 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
 
     @variable(alias='ui')
     def datasource(self):
-        self.summary.reload()
-        self.id = self.summary.properties.nativeid.text_value
+        self.load_details(refresh=False)
+        self.id = self.get_detail("Properties", "Nativeid")
         self.server = MiddlewareServer(
             provider=self.provider,
-            name=self.summary.relationships.middleware_server.text_value)
+            name=self.get_detail("Relationships", "Middleware Server"))
         return self
 
     @datasource.variant('mgmt')
@@ -267,3 +240,28 @@ class MiddlewareDatasource(MiddlewareBase, Taggable):
         operations_btn("Remove", invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('The selected datasources were removed')
+
+
+@navigator.register(MiddlewareDatasource, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Middleware', 'Datasources')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("List View")
+
+
+@navigator.register(MiddlewareDatasource, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        list_tbl.click_row_by_cells({
+            'Datasource Name': self.obj.name,
+            'Server': self.obj.server.name,
+            'Host Name': self.obj.hostname
+        })
