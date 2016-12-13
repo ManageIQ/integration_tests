@@ -16,7 +16,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
 @pytest.mark.usefixtures("setup_provider_modscope")
 def test_host_configuration(provider, soft_assert):
     provider.load_details()
-    sel.click(InfoBlock.element("Relationships", "Nodes"))
+    sel.click(InfoBlock.element("Relationships", "Hosts / Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
     for quad in my_quads:
