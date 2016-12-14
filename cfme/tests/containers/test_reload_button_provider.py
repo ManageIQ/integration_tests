@@ -32,21 +32,21 @@ def test_reload_button_provider(provider):
     tb.select('Reload Current Display')
     provider.validate_stats(ui=True)
 
-    L1 = provider.mgmt.list_image()
+    l1 = provider.mgmt.list_image()
 
-    L1splitted = [i[2].split('@sha256:')[-1] for i in L1]
+    l1splitted = [i[2].split('@sha256:')[-1] for i in l1]
 
-    L2 = provider.mgmt.list_image_openshift()
+    l2 = provider.mgmt.list_image_openshift()
 
-    L2splitted = [d['name'] for d in L2]
+    l2splitted = [d['name'] for d in l2]
 
-    L2splitted_new = [i[7:].split('@sha256:')[-1] for i in L2splitted]
+    l2splitted_new = [i[7:].split('@sha256:')[-1] for i in l2splitted]
 
-    for s in L2splitted_new:
-        for item in L1splitted:
-            if item not in L2splitted_new:
-                L2splitted_new.append(item)
+    for s in l2splitted_new:
+        for item in l1splitted:
+            if item not in l2splitted_new:
+                l2splitted_new.append(item)
 
     num_img_in_cfme = provider.summary.relationships.container_images.value
 
-    assert len(L2splitted_new) == num_img_in_cfme
+    assert len(l2splitted_new) == num_img_in_cfme
