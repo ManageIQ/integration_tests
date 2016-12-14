@@ -84,7 +84,7 @@ def test_containers_overview_data_integrity(provider):
         list_providers_by_class(ContainersProvider))
 
     list_img_from_registry = provider.mgmt.list_image()
-    list_img_from_registry_splitted = [i[2].split(
+    list_img_from_registry_splitted = [i.id.split(
         '@sha256:')[-1] for i in list_img_from_registry]
 
     list_img_from_openshift = provider.mgmt.list_image_openshift()
@@ -102,10 +102,7 @@ def test_containers_overview_data_integrity(provider):
 
     results = {}
     for cls in DATA_SETS:
-        results[
-            cls.object] = api_values[
-            cls.object] == statusbox_values[
-            cls.object]
+        results[cls.object] = api_values[cls.object] == statusbox_values[cls.object]
     if not all(results.values()):
         pytest.fail('There is a mismatch between API and UI values:\n{}'.format(
             '\n'.join(['{}: {} (API) != {} (UI)'.format(
