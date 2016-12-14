@@ -20,12 +20,18 @@ projects_relationships_fields_lowest = ['Containers Provider', 'Routes', 'Servic
 projects_relationships_fields_57 = ['Containers Provider', 'Routes', 'Container Services',
                                     'Replicators', 'Pods', 'Nodes']
 
+
 projects_relationships_fields_key = ({
     version.LOWEST: projects_relationships_fields_lowest,
     '5.7': projects_relationships_fields_57
 })
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
+
+default_projects = {'default',
+'management-infra',
+'openshift',
+'openshift-infra'}
 
 
 def config_option():
@@ -45,9 +51,13 @@ def test_containers_projects_summary_relationships(provider):
             Relationships fields
         """
     navigate_to(Project, 'All')
-    project_name = [r.name.text for r in list_tbl.rows()]
-    for name in project_name:
+    project_names = [r.name.text for r in list_tbl.rows()]
+    for default_project in default_projects:
+        assert default_project in project_names
+    for name in default_projects:
         for field in config_option():
+            print('the tested project is: ' + name)
+            print('the tested field is: ' + field)
             obj = Project(name, provider)
             val = obj.get_detail('Relationships', field)
             assert val
@@ -62,8 +72,10 @@ def test_containers_projects_summary_properties(provider):
             * Go through each Container Project in the menu and check validity of Properties fields
         """
     navigate_to(Project, 'All')
-    project_name = [r.name.text for r in list_tbl.rows()]
-    for name in project_name:
+    project_names = [r.name.text for r in list_tbl.rows()]
+    for default_project in default_projects:
+        assert default_project in project_names
+    for name in default_projects:
         for field in projects_properties_fields:
             obj = Project(name, provider)
             val = obj.get_detail('Properties', field)
