@@ -42,7 +42,7 @@ def config_option():
 
 
 def test_containers_projects_summary_relationships(provider):
-    """ Relationships fields  tests in Project summary
+    """ Relationships fields tests in Project summary
         This test checks correct population of the Relationships Fields in Containers Projects'
         details menu
         Steps:
