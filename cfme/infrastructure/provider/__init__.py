@@ -114,6 +114,7 @@ class InfraProvidersView(BaseLoggedInPage):
     configuration = DropDown(text='Configuration')
     policy = DropDown(text='Policy')
     monitoring = DropDown(text='Monitoring')
+    authentication = DropDown(text='Authentication')
 
     @property
     def is_displayed(self):
@@ -123,7 +124,7 @@ class InfraProvidersView(BaseLoggedInPage):
                     match_page(summary='Infrastructure Providers')))
 
     @View.nested
-    class Paginator(PaginationPane):
+    class paginator(PaginationPane):
         pass
 
 
@@ -160,6 +161,26 @@ class InfraProvidersAddView(InfraProvidersView):
 
 
 class InfraProvidersDetailsView(InfraProvidersView):
+    reload = Button('blabla')  # todo: create custom button widget
+
+    @View.nested
+    class Properties(object):
+        pass
+
+    @View.nested
+    class Relationships(object):
+        pass
+
+    @View.nested
+    class Overview(object):
+        pass
+
+    @View.nested
+    class SmartManagement(object):
+        pass
+
+
+class InfraProvidersManagePoliciesView(InfraProvidersView):
     pass
 
 

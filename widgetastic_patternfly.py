@@ -16,7 +16,7 @@ from widgetastic.xpath import quote
 from wait_for import wait_for, wait_for_decorator
 
 
-class CandidateNotFoundError(Exception):
+class CandidateNotFound(Exception):
     """
     Raised if there is no candidate found whilst trying to traverse a tree in
     :py:meth:`cfme.web_ui.Tree.click_path`.
@@ -32,11 +32,11 @@ class CandidateNotFoundError(Exception):
         return self.message
 
 
-class MenuDisabledError(Exception):
+class DropdownDisabled(Exception):
     pass
 
 
-class MenuItemDisabledError(Exception):
+class DropdownItemDisabled(Exception):
     pass
 
 
@@ -223,7 +223,7 @@ class FlashMessage(Widget):
                 .format(self.TYPE_MAPPING, self.browser.classes(self)))
 
 
-class NavDropDown(Widget, ClickableMixin):
+class NavDropdown(Widget, ClickableMixin):
     """The dropdowns used eg. in navigation. Usually located in the top navbar."""
 
     def __init__(self, parent, locator, logger=None):
@@ -645,7 +645,7 @@ class BootstrapSelect(Widget, ClickableMixin):
         return '{}({!r})'.format(type(self).__name__, self.id)
 
 
-class BootstrapTreeView(Widget):
+class BootstrapTreeview(Widget):
     """A class representing the Bootstrap treeview used in newer builds.
 
     Implements ``expand_path``, ``click_path``, ``read_contents``. All are implemented in manner
@@ -808,7 +808,7 @@ class BootstrapTreeView(Widget):
         try:
             return self.browser.element(self.ITEM_BY_NODEID.format(nodeid_q), parent=self)
         except NoSuchElementException:
-            raise CandidateNotFoundError({
+            raise CandidateNotFound({
                 'message':
                     'Could not find the item with nodeid {} in Boostrap tree {}'.format(
                         nodeid,
@@ -941,7 +941,7 @@ class BootstrapTreeView(Widget):
         image, step = self._process_step(step)
         path = path[1:]
         if not self.validate_node(node, step, image):
-            raise CandidateNotFoundError({
+            raise CandidateNotFound({
                 'message':
                     'Could not find the item {} in Boostrap tree {}'.format(
                         self.pretty_path(steps_tried),
@@ -953,7 +953,7 @@ class BootstrapTreeView(Widget):
             steps_tried.append(step)
             image, step = self._process_step(step)
             if not self.expand_node(self.get_nodeid(node)):
-                raise CandidateNotFoundError({
+                raise CandidateNotFound({
                     'message':
                         'Could not find the item {} in Boostrap tree {}'.format(
                             self.pretty_path(steps_tried),
@@ -971,7 +971,7 @@ class BootstrapTreeView(Widget):
                     node = child_item
                     break
             else:
-                raise CandidateNotFoundError({
+                raise CandidateNotFound({
                     'message':
                         'Could not find the item {} in Boostrap tree {}'.format(
                             self.pretty_path(steps_tried),
@@ -1065,7 +1065,7 @@ class BootstrapTreeView(Widget):
         return '{}({!r})'.format(type(self).__name__, self.tree_id)
 
 
-class DropDown(Widget):
+class Dropdown(Widget):
     """Represents the Patternfly/Bootstrap dropdown.
 
     Args:
@@ -1090,7 +1090,7 @@ class DropDown(Widget):
 
     def _verify_enabled(self):
         if not self.is_enabled:
-            raise MenuDisabledError('Dropdown "{}" is not enabled'.format(self.text))
+            raise DropdownDisabled('Dropdown "{}" is not enabled'.format(self.text))
 
     @property
     def is_open(self):
@@ -1145,7 +1145,7 @@ class DropDown(Widget):
         try:
             self.open()
             if not self.item_enabled(item):
-                raise MenuItemDisabledError(
+                raise DropdownItemDisabled(
                     'Item "{}" of dropdown "{}" is disabled'.format(item, self.text))
             self.browser.click(self.item_element(item), ignore_ajax=handle_alert is not None)
             if handle_alert is not None:
@@ -1302,7 +1302,3 @@ class PaginationPane(View):
     @property
     def items_amount(self):
         return self.paginator.page_info()[1]
-
-
-class QuadIcon:
-    pass
