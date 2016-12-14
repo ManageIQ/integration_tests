@@ -69,7 +69,7 @@ def make_template(client, hostname, name, library, network, ostype, username_scv
             -CPUCount " + str(cores) + " -JobGroup $JobGroupID01;"
     script2 += "$JobGroupId02 = [Guid]::NewGuid().ToString();"
     script2 += "$VHD = Get-SCVirtualHardDisk | where {$_.Location -eq '" + src_path + "'} | \
-                where {$_.HostName -eq 'scvmm2.cfme-qe-vmm-ad.rhq.lab.eng.bos.redhat.com'};"
+                where {$_.HostName -eq " + hostname + "};"
     script2 += "New-SCVirtualDiskDrive -IDE -Bus 0 -LUN 0 "
     script2 += "-JobGroup $JobGroupID02 -VirtualHardDisk $VHD;"
     script2 += "$HWProfile = Get-SCHardwareProfile | where { $_.Name -eq '" + name + "' };"
