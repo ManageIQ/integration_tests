@@ -3,6 +3,7 @@ import pytest
 from utils import testgen
 from utils.version import current_version
 from cfme.web_ui.topology import Topology
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.topology import Topology as ContainerTopology
 from cfme.fixtures.pytest_selenium import is_displayed_text
 from random import choice
@@ -14,8 +15,7 @@ pytestmark = [
         lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 # CMP-9996
@@ -42,6 +42,7 @@ def test_topology_display_names():
 
 
 @WithZoom(-4)
+@pytest.mark.meta(blockers=[1415472])
 def test_topology_search():
     """Testing search functionality in Topology view.
 
@@ -61,7 +62,7 @@ def test_topology_search():
     element_to_search = elements[choice(range(len(elements)))]
     topo_obj.search_box.text(text=element_to_search.name)
     for el in topo_obj.elements():
-        if element_to_search.name == el.name:
+        if element_to_search.name in el.name:
             assert not el.is_hidden
         else:
             assert el.is_hidden

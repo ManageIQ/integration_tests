@@ -14,7 +14,7 @@ import sys
 import os
 
 from utils import trackerbot
-from utils.providers import list_providers
+from utils.providers import list_provider_keys
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.wait import wait_for
@@ -137,7 +137,7 @@ def make_kwargs_scvmm(cfme_data, provider, image_url, template_name):
 
 def run(**kwargs):
 
-    for provider in list_providers("scvmm"):
+    for provider in list_provider_keys("scvmm"):
 
         kwargs = make_kwargs_scvmm(cfme_data, provider,
                                    kwargs.get('image_url'), kwargs.get('template_name'))
@@ -222,6 +222,7 @@ def run(**kwargs):
                     provider, new_template_name))
         else:
             print("SCVMM: A Template with that name already exists in the SCVMMLibrary")
+
 
 if __name__ == "__main__":
     print("Start SCVMM Template upload")

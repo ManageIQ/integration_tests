@@ -110,8 +110,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Automate', 'Customization')(None)
+        self.prerequisite_view.navigation.select('Automate', 'Customization')
 
     def resetter(self):
         accordion.tree("Provisioning Dialogs", "All Dialogs")

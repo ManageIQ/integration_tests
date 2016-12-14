@@ -43,11 +43,10 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
         if version.current_version() >= "5.7":
-            nav._nav_to_fn('Storage', 'Object Stores')(None)
+            self.prerequisite_view.navigation.select('Storage', 'Object Stores')
         else:
-            nav._nav_to_fn('Compute', 'Clouds', 'Object Stores')(None)
+            self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Object Stores')
 
     def resetter(self):
         tb.select("Grid View")

@@ -2,6 +2,7 @@
 import pytest
 
 from cfme.common.vm import VM
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
@@ -16,7 +17,7 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter'])
+    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [VMwareProvider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 

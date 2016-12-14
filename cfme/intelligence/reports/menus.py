@@ -2,21 +2,22 @@
 """Module handling report menus contents"""
 from contextlib import contextmanager
 
+from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import FolderManager
-from cfme.web_ui import Region, Tree, accordion, form_buttons, menu
+from cfme.web_ui import Region, BootstrapTreeview, Tree, accordion, form_buttons
 from cfme.web_ui.multibox import MultiBoxSelect
+from utils import version
+from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 
-menu.nav.add_branch(
-    "reports",
-    {
-        "report_menus_group":
-        lambda ctx: accordion.tree("Edit Report Menus", "All EVM Groups", ctx["group"])
-    }
-)
 
-reports_tree = Tree("//div[@id='menu_roles_treebox']/ul")
+def reports_tree():
+    if version.current_version() >= '5.7':
+        return BootstrapTreeview("menu_roles_treebox")
+    else:
+        return Tree("//div[@id='menu_roles_treebox']/ul")
+
 
 manager = FolderManager("//div[@id='folder_lists']/table")
 report_select = MultiBoxSelect(
@@ -34,14 +35,19 @@ buttons = Region(locators=dict(
 default_button = form_buttons.FormButton("Reset All menus to CFME defaults")
 
 
+def go_to_group(group_name):
+    navigate_to(Report, 'EditReportMenus')
+    accordion.tree("Edit Report Menus", "All EVM Groups", group_name)
+
+
 def get_folders(group):
     """Returns list of folders for given user group.
 
     Args:
         group: User group to check.
     """
-    sel.force_navigate("report_menus_group", context={"group": group})
-    reports_tree.click_path("Top Level")
+    go_to_group(group)
+    reports_tree().click_path("Top Level")
     return manager.fields
 
 
@@ -52,8 +58,8 @@ def get_subfolders(group, folder):
         group: User group to check.
         folder: Folder to read.
     """
-    sel.force_navigate("report_menus_group", context={"group": group})
-    reports_tree.click_path("Top Level", folder)
+    go_to_group(group)
+    reports_tree().click_path("Top Level", folder)
     return manager.fields
 
 
@@ -86,7 +92,7 @@ def reset_to_default(group):
     Args:
         group: Group to set to Default
     """
-    sel.force_navigate("report_menus_group", context={"group": group})
+    go_to_group(group)
     sel.click(default_button)
     sel.click(form_buttons.save)
 
@@ -104,11 +110,11 @@ def manage_folder(group, folder=None):
         folder: Which folder to manage. If None, top-level will be managed.
     Returns: Context-managed :py:class:`cfme.intelligence.reports.ui_elements.FolderManager` inst.
     """
-    sel.force_navigate("report_menus_group", context={"group": group})
+    go_to_group(group)
     if folder is None:
-        reports_tree.click_path("Top Level")
+        reports_tree().click_path("Top Level")
     else:
-        reports_tree.click_path("Top Level", folder)
+        reports_tree().click_path("Top Level", folder)
     try:
         yield manager
     except FolderManager._BailOut:
@@ -137,8 +143,8 @@ def manage_subfolder(group, folder, subfolder):
         subfolder: Subfodler name to manage.
     Returns: Context-managed :py:class:`cfme.intelligence.reports.ui_elements.FolderManager` inst.
     """
-    sel.force_navigate("report_menus_group", context={"group": group})
-    reports_tree.click_path("Top Level", folder, subfolder)
+    go_to_group(group)
+    reports_tree().click_path("Top Level", folder, subfolder)
     try:
         yield report_select
     except FolderManager._BailOut:

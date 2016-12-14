@@ -13,10 +13,7 @@ from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, 
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
-from fixtures.pytest_store import store
-from utils import conf
-from utils import version
-from utils.api import rest_api
+from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
@@ -39,7 +36,7 @@ details_page = Region(infoblock_type='detail')
 
 class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     # List of constants that every non-abstract subclass must have defined
-    type_mapping = {}
+    base_types = {}
     STATS_TO_MATCH = []
     string_name = ""
     page_name = ""
@@ -54,7 +51,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @classmethod
     def add_base_type(cls, nclass):
-        cls.type_mapping[nclass.type_tclass] = nclass
+        cls.base_types[nclass.category] = nclass
         return nclass
 
     @classmethod
@@ -129,6 +126,12 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             if self.type == 'service_account':
                 self.service_account = kwargs['service_account']
 
+    def __hash__(self):
+        return hash(self.key) ^ hash(type(self))
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.key == other.key
+
     @property
     def properties_form(self):
         if self._properties_region:
@@ -146,15 +149,15 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @property
     def type(self):
-        return self.data['type']
+        return self.type_name
 
     @property
     def version(self):
         return self.data['version']
 
-    @property
-    def category(self):
-        return self.type_tclass
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines and usually overidden"""
+        return {}
 
     def get_yaml_data(self):
         """ Returns yaml data for this provider.
@@ -189,25 +192,42 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             submit_button()
             flash.assert_no_errors()
 
-    def create(self, cancel=False, validate_credentials=True):
+    def create(self, cancel=False, validate_credentials=True, check_existing=False,
+               validate_inventory=False):
         """
         Creates a provider in the UI
 
         Args:
-           cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-               after all the information present in the Provider has been filled in the UI.
-           validate_credentials (boolean): Whether to validate credentials - if True and the
-               credentials are invalid, an error will be raised.
+            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
+                after all the information present in the Provider has been filled in the UI.
+            validate_credentials (boolean): Whether to validate credentials - if True and the
+                credentials are invalid, an error will be raised.
+            check_existing (boolean): Check if this provider already exists, skip if it does
+            validate_inventory (boolean): Whether or not to block until the provider stats in CFME
+                match the stats gleaned from the backend management system
+                (default: ``True``)
+
+        Returns:
+            True if it was created, False if it already existed
         """
-        navigate_to(self, 'Add')
-        fill(self.properties_form, self._form_mapping(True, **self.__dict__))
-        for cred in self.credentials:
-            fill(self.credentials[cred].form, self.credentials[cred],
-                 validate=validate_credentials)
-        self._submit(cancel, self.add_provider_button)
-        if not cancel:
-            flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
-                                                                            self.name))
+        if check_existing and self.exists:
+            created = False
+        else:
+            created = True
+            logger.info('Setting up provider: %s', self.key)
+            navigate_to(self, 'Add')
+            fill(self.properties_form, self._form_mapping(True, **self.__dict__))
+            for cred in self.credentials:
+                fill(self.credentials[cred].form, self.credentials[cred],
+                     validate=validate_credentials)
+            self._submit(cancel, self.add_provider_button)
+            if not cancel:
+                flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
+                                                                                self.name))
+        if validate_inventory:
+            self.validate()
+
+        return created
 
     def update(self, updates, cancel=False, validate_credentials=True):
         """
@@ -226,7 +246,8 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         self._submit(cancel, self.save_button)
         name = updates.get('name', self.name)
         if not cancel:
-            flash.assert_message_match('{} Provider "{}" was saved'.format(self.string_name, name))
+            flash.assert_message_match(
+                '{} Provider "{}" was saved'.format(self.string_name, name))
 
     def delete(self, cancel=True):
         """
@@ -245,9 +266,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     self.string_name, self.appliance.product_name))
 
     def delete_if_exists(self, *args, **kwargs):
-        """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``"""
+        """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``
+
+        Returns: True if provider existed and delete was initiated, False otherwise
+        """
         if self.exists:
             self.delete(*args, **kwargs)
+            return True
+        return False
 
     @variable(alias='rest')
     def is_refreshed(self, refresh_timer=None):
@@ -259,7 +285,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         rdate = self.last_refresh_date()
         if not rdate:
             return False
-        td = store.current_appliance.utc_time() - rdate
+        td = self.appliance.utc_time() - rdate
         if td > datetime.timedelta(0, 600):
             self.refresh_provider_relationships()
             return False
@@ -289,15 +315,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         if the match is not complete within a certain defined time period.
         """
 
-        client = self.get_mgmt_system()
-
         # If we're not using db, make sure we are on the provider detail page
         if ui:
             self.load_details()
 
         # Initial bullet check
-        if self._do_stats_match(client, self.STATS_TO_MATCH, ui=ui):
-            client.disconnect()
+        if self._do_stats_match(self.mgmt, self.STATS_TO_MATCH, ui=ui):
+            self.mgmt.disconnect()
             return
         else:
             # Set off a Refresh Relationships
@@ -306,19 +330,19 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
             refresh_timer = RefreshTimer(time_for_refresh=300)
             wait_for(self._do_stats_match,
-                     [client, self.STATS_TO_MATCH, refresh_timer],
+                     [self.mgmt, self.STATS_TO_MATCH, refresh_timer],
                      {'ui': ui},
                      message="do_stats_match_db",
                      num_sec=1000,
                      delay=60)
 
-        client.disconnect()
+        self.mgmt.disconnect()
 
     @variable(alias='rest')
     def refresh_provider_relationships(self, from_list_view=False):
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
         logger.debug('Refreshing provider relationships')
-        col = rest_api().collections.providers.find_by(name=self.name)
+        col = self.appliance.rest_api.collections.providers.find_by(name=self.name)
         try:
             col[0].action.refresh()
         except IndexError:
@@ -338,7 +362,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     @variable(alias='rest')
     def last_refresh_date(self):
         try:
-            col = rest_api().collections.providers.find_by(name=self.name)[0]
+            col = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
             return col.last_refresh_date
         except AttributeError:
             return None
@@ -405,12 +429,12 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
     @property
     def exists(self):
-        ems = cfmedb()['ext_management_systems']
-        provs = (prov[0] for prov in cfmedb().session.query(ems.name))
-        if self.name in provs:
+        """ Checks if exists among managed providers
+
+        """
+        if self in self.appliance.managed_providers:
             return True
-        else:
-            return False
+        return False
 
     def wait_for_delete(self):
         navigate_to(self, 'All')
@@ -514,52 +538,35 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         else:
             return cls.get_credentials_from_config(cred_yaml_key, cred_type=cred_type)
 
+    # Move to collection
     @staticmethod
-    def clear_provider_by_type(prov_class, validate=True):
-        string_name = prov_class.string_name
-        navigate_to(prov_class, 'All')
-        logger.debug('Checking for existing {} providers...'.format(prov_class.type_tclass))
-        total = paginator.rec_total()
-        if total > 0:
-            logger.info(' Providers exist, so removing all {} providers'.format(
-                prov_class.type_tclass))
-            paginator.results_per_page('100')
-            sel.click(paginator.check_all())
-            tb.select(
-                'Configuration', {
-                    version.LOWEST: 'Remove {} Providers from the VMDB'.format(string_name),
-                    '5.7': 'Remove {} Providers'.format(string_name),
-                },
-                invokes_alert=True)
-            sel.handle_alert()
-            if validate:
-                prov_class.wait_for_no_providers_by_type(prov_class)
+    def clear_providers_by_class(prov_class, validate=True):
+        """ Removes all providers that are an instance of given class or one of it's subclasses
+        """
+        from utils.providers import ProviderFilter, list_providers
+        pf = ProviderFilter(classes=[prov_class])
+        provs = list_providers(filters=[pf], use_global_filters=False)
 
-    @staticmethod
-    def wait_for_no_providers_by_type(prov_class):
-        navigate_to(prov_class, 'All')
-        logger.debug('Waiting for all {} providers to disappear...'.format(prov_class.type_tclass))
-        wait_for(
-            lambda: get_paginator_value() == 0, message="Delete all {} providers".format(
-                prov_class.type_tclass),
-            num_sec=1000, fail_func=sel.refresh
-        )
+        # First, delete all
+        deleted_provs = []
+        for prov in provs:
+            existed = prov.delete_if_exists(cancel=False)
+            if existed:
+                deleted_provs.append(prov)
+        # Then, check that all were deleted
+        if validate:
+            for prov in deleted_provs:
+                prov.wait_for_delete()
 
+    # Move to collection
     @staticmethod
     def clear_providers():
-        """Rudely clear all providers on an appliance
+        """ Clear all providers on an appliance using UI """
+        BaseProvider.clear_providers_by_class(BaseProvider)
 
-        Uses the UI in an attempt to cleanly delete the providers
-        """
-        # Executes the deletes first, then validates in a second pass
-        logger.info('Destroying all appliance providers')
-
-        def do_for_provider_types(op):
-            for prov_class in BaseProvider.type_mapping.values():
-                if prov_class.in_version[0] < version.current_version() < prov_class.in_version[1]:
-                    op(prov_class)
-        do_for_provider_types(partial(BaseProvider.clear_provider_by_type, validate=False))
-        do_for_provider_types(BaseProvider.wait_for_no_providers_by_type)
+    def one_of(self, *classes):
+        """ Returns true if provider is an instance of any of the classes or sublasses there of"""
+        return isinstance(self, classes)
 
 
 def get_paginator_value():

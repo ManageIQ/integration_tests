@@ -67,8 +67,7 @@ class ImageAll(CFMENavigateStep):
         return match_page(summary="All Images")
 
     def step(self, *args, **kwargs):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Clouds', 'Instances')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
 
         # use accordion
         # If a filter was applied, it will persist through navigation and needs to be cleared

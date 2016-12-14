@@ -33,16 +33,14 @@ The Workflow
 
 import collections
 import difflib
-import fauxfactory
 import json
 import os
-import re
 import signal
 import subprocess
 from collections import OrderedDict, defaultdict, deque, namedtuple
 from datetime import datetime
 from itertools import count
-from threading import Lock, RLock, Thread, Timer
+from threading import Lock, RLock, Thread
 from time import sleep, time
 from urlparse import urlparse
 
@@ -55,20 +53,10 @@ from fixtures import terminalreporter
 from fixtures.parallelizer import remote
 from fixtures.pytest_store import store
 from utils import at_exit, conf
-from utils.appliance import IPAppliance, stack as appliance_stack
+from utils.appliance import IPAppliance
 from utils.log import create_sublogger
 from utils.net import random_port
-from utils.path import conf_path, project_path
-from utils.sprout import SproutClient, SproutException
-from utils.wait import wait_for
-
-
-_appliance_help = '''specify appliance URLs to use for distributed testing.
-this option can be specified more than once, and must be specified at least two times'''
-
-env_base_urls = conf.env.get('parallel_base_urls', [])
-if env_base_urls:
-    conf.runtime['env']['base_url'] = env_base_urls[0]
+from utils.path import conf_path
 
 # Initialize slaveid to None, indicating this as the master process
 # slaves will set this to a unique string when they're initialized
@@ -84,28 +72,6 @@ if not conf.runtime['env'].get('ts'):
     conf.runtime['env']['ts'] = ts
 
 
-def pytest_addoption(parser):
-    group = parser.getgroup("cfme")
-    group._addoption('--appliance', dest='appliances', action='append',
-        default=env_base_urls, metavar='base_url', help=_appliance_help)
-    group._addoption('--use-sprout', dest='use_sprout', action='store_true',
-        default=False, help="Use Sprout for provisioning appliances.")
-    group._addoption('--sprout-appliances', dest='sprout_appliances', type=int,
-        default=1, help="How many Sprout appliances to use?.")
-    group._addoption('--sprout-timeout', dest='sprout_timeout', type=int,
-        default=60, help="How many minutes is the lease timeout.")
-    group._addoption('--sprout-provision-timeout', dest='sprout_provision_timeout', type=int,
-        default=60, help="How many minutes to wait for appliances provisioned.")
-    group._addoption(
-        '--sprout-group', dest='sprout_group', default=None, help="Which stream to use.")
-    group._addoption(
-        '--sprout-version', dest='sprout_version', default=None, help="Which version to use.")
-    group._addoption(
-        '--sprout-date', dest='sprout_date', default=None, help="Which date to use.")
-    group._addoption(
-        '--sprout-desc', dest='sprout_desc', default=None, help="Set description of the pool.")
-
-
 def pytest_addhooks(pluginmanager):
     import hooks
     pluginmanager.add_hookspecs(hooks)
@@ -114,8 +80,7 @@ def pytest_addhooks(pluginmanager):
 @pytest.mark.trylast
 def pytest_configure(config):
     # configures the parallel session, then fires pytest_parallel_configured
-    if (config.option.appliances or (config.option.use_sprout and
-            config.option.sprout_appliances > 1)):
+    if len(config.option.appliances) > 1:
         session = ParallelSession(config)
         config.pluginmanager.register(session, "parallel_session")
         store.parallelizer_role = 'master'
@@ -124,21 +89,12 @@ def pytest_configure(config):
         config.hook.pytest_parallel_configured(parallel_session=None)
 
 
-def dump_pool_info(printf, pool_data):
-    printf("Fulfilled: {}".format(pool_data["fulfilled"]))
-    printf("Progress: {}%".format(pool_data["progress"]))
-    printf("Appliances:")
-    for appliance in pool_data["appliances"]:
-        name = appliance.pop("name")
-        printf("\t{}:".format(name))
-        for key in sorted(appliance.keys()):
-            printf("\t\t{}: {}".format(key, appliance[key]))
-
-
 def handle_end_session(signal, frame):
     # when signaled, end the current test session immediately
     if store.parallel_session:
         store.parallel_session.session_finished = True
+
+
 signal.signal(signal.SIGQUIT, handle_end_session)
 
 
@@ -211,113 +167,7 @@ class ParallelSession(object):
 
         self.failed_slave_test_groups = deque()
         self.slave_spawn_count = 0
-        self.sprout_client = None
-        self.sprout_timer = None
-        self.sprout_pool = None
-        if not self.config.option.use_sprout:
-            # Without Sprout
-            self.appliances = self.config.option.appliances
-        else:
-            # Using sprout
-            self.sprout_client = SproutClient.from_config()
-            try:
-                if self.config.option.sprout_desc is not None:
-                    jenkins_job = re.findall(r"Jenkins.*[^\d+$]", self.config.option.sprout_desc)
-                    if jenkins_job:
-                        self.terminal.write(
-                            "Check if pool already exists for this '{}' Jenkins job\n".format(
-                                jenkins_job[0]))
-                        jenkins_job_pools = self.sprout_client.find_pools_by_description(
-                            jenkins_job[0], partial=True)
-                        for pool in jenkins_job_pools:
-                            self.terminal.write("Destroying the old pool {} for '{}' job.\n".format(
-                                pool, jenkins_job[0]))
-                            self.sprout_client.destroy_pool(pool)
-            except Exception as e:
-                self.terminal.write(
-                    "Exception occurred during old pool deletion, this can be ignored"
-                    "proceeding to Request new pool")
-                self.terminal.write("> The exception was: {}".format(str(e)))
-
-            self.terminal.write(
-                "Requesting {} appliances from Sprout at {}\n".format(
-                    self.config.option.sprout_appliances, self.sprout_client.api_entry))
-            pool_id = self.sprout_client.request_appliances(
-                self.config.option.sprout_group,
-                count=self.config.option.sprout_appliances,
-                version=self.config.option.sprout_version,
-                date=self.config.option.sprout_date,
-                lease_time=self.config.option.sprout_timeout
-            )
-            self.println("Pool {}. Waiting for fulfillment ...".format(pool_id))
-            self.sprout_pool = pool_id
-            at_exit(self.sprout_client.destroy_pool, self.sprout_pool)
-            if self.config.option.sprout_desc is not None:
-                self.sprout_client.set_pool_description(
-                    pool_id, str(self.config.option.sprout_desc))
-
-            def detailed_check():
-                try:
-                    result = self.sprout_client.request_check(self.sprout_pool)
-                except SproutException as e:
-                    # TODO: ensure we only exit this way on sprout usage
-                    try:
-                        self.sprout_client.destroy_pool(pool_id)
-                    except Exception:
-                        pass
-                    self.println(
-                        "sprout pool could not be fulfilled\n{}".format(e))
-                    pytest.exit(1)
-
-                self.println("[{now:%H:%M}] fulfilled at {progress:2}%".format(
-                    now=datetime.now(),
-                    progress=result['progress']
-                ))
-                return result["fulfilled"]
-            try:
-                result = wait_for(
-                    detailed_check,
-                    num_sec=self.config.option.sprout_provision_timeout * 60,
-                    delay=5,
-                    message="requesting appliances was fulfilled"
-                )
-            except Exception:
-                pool = self.sprout_client.request_check(self.sprout_pool)
-                dump_pool_info(self.println, pool)
-                self.println("Destroying the pool on error.")
-                self.sprout_client.destroy_pool(pool_id)
-                raise
-            else:
-                pool = self.sprout_client.request_check(self.sprout_pool)
-                dump_pool_info(self.println, pool)
-            self.println("Provisioning took {0:.1f} seconds".format(result.duration))
-            request = self.sprout_client.request_check(self.sprout_pool)
-            self.appliances = []
-            # Push an appliance to the stack to have proper reference for test collection
-            # FIXME: this is a bad hack based on the need for controll of collection partitioning
-            appliance_stack.push(
-                IPAppliance(address=request["appliances"][0]["ip_address"]))
-            self.println("Appliances were provided:")
-            for appliance in request["appliances"]:
-                url = "https://{}/".format(appliance["ip_address"])
-                self.appliances.append(url)
-                self.println("- {} is {}".format(url, appliance['name']))
-            map(lambda a: "https://{}/".format(a["ip_address"]), request["appliances"])
-            self._reset_timer()
-            # Set the base_url for collection purposes on the first appliance
-            conf.runtime["env"]["base_url"] = self.appliances[0]
-            # Retrieve and print the template_name for Jenkins to pick up
-            template_name = request["appliances"][0]["template_name"]
-            conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
-            self.terminal.write("appliance_template=\"{}\";\n".format(template_name))
-            with project_path.join('.appliance_template').open('w') as template_file:
-                template_file.write('export appliance_template="{}"'.format(template_name))
-            self.println("Parallelized Sprout setup finished.")
-            self.slave_appliances_data = {}
-            for appliance in request["appliances"]:
-                self.slave_appliances_data[appliance["ip_address"]] = (
-                    appliance["template_name"], appliance["provider"]
-                )
+        self.appliances = self.config.option.appliances
 
         # set up the ipc socket
         zmq_endpoint = 'tcp://127.0.0.1:{}'.format(random_port())
@@ -334,14 +184,13 @@ class ParallelSession(object):
             'args': self.config.args,
             'options': self.config.option.__dict__,
             'zmq_endpoint': zmq_endpoint,
-            'sprout': self.sprout_client is not None and self.sprout_pool is not None,
         }
         if hasattr(self, "slave_appliances_data"):
             conf.runtime['slave_config']["appliance_data"] = self.slave_appliances_data
         conf.runtime['slave_config']['options']['use_sprout'] = False  # Slaves don't use sprout
         conf.save('slave_config')
 
-        for i, base_url in enumerate(self.appliances):
+        for base_url in self.appliances:
             self.slave_urls.add(base_url)
 
         for slave in sorted(self.slave_urls):
@@ -407,46 +256,6 @@ class ParallelSession(object):
         self.slave_spawn_count += 1
         at_exit(slave.kill)
 
-    def _reset_timer(self, timeout=None):
-        if not (self.sprout_client is not None and self.sprout_pool is not None):
-            if self.sprout_timer:
-                self.sprout_timer.cancel()  # Cancel it anyway
-                self.terminal.write("Sprout timer cancelled\n")
-            return
-        if self.sprout_timer:
-            self.sprout_timer.cancel()
-        timeout = timeout or ((self.config.option.sprout_timeout / 2) * 60)
-        self.sprout_timer = Timer(
-            timeout,
-            self.sprout_ping_pool)
-        self.sprout_timer.daemon = True
-        self.sprout_timer.start()
-
-    def sprout_ping_pool(self):
-        timeout = None  # None - keep the half of the lease time
-        try:
-            self.sprout_client.prolong_appliance_pool_lease(self.sprout_pool)
-        except SproutException as e:
-            self.terminal.write(
-                "Pool {} does not exist any more, disabling the timer.\n".format(self.sprout_pool))
-            self.terminal.write(
-                "This can happen before the tests are shut down "
-                "(last deleted appliance deleted the pool")
-            self.terminal.write("> The exception was: {}".format(str(e)))
-            self.sprout_pool = None  # Will disable the timer in next reset call.
-        except Exception as e:
-            self.terminal.write('An unexpected error happened during interaction with Sprout:')
-            self.terminal.write('{}: {}'.format(type(e).__name__, str(e)))
-            self.log.error('An unexpected error happened during interaction with Sprout:')
-            self.log.exception(e)
-            # Have a shorter timer now (1 min), because something is happening right now
-            # WE have a reserve of half the lease time so that should be enough time to
-            # solve any minor problems
-            # Adding a 0-10 extra random sec just for sake of dispersing any possible "swarm"
-            timeout = 60 + fauxfactory.gen_integer(0, 10)
-        finally:
-            self._reset_timer(timeout=timeout)
-
     def send(self, slaveid, event_data):
         """Send data to slave.
 
@@ -464,9 +273,6 @@ class ParallelSession(object):
                 return self._recv_queue.popleft()
         except IndexError:
             return None, None, None
-
-    def println(self, line):
-        self.terminal.write(line.lstrip('\n') + '\n')
 
     def print_message(self, message, prefix='master', **markup):
         """Print a message from a node to the py.test console
@@ -976,6 +782,7 @@ class TerminalDistReporter(object):
         if report.when == 'teardown':
             word, markup = self.outcomes.pop(test)
             self.tr.write_ensure_prefix(prefix, word, **markup)
+
 
 Outcome = namedtuple('Outcome', ['word', 'markup'])
 

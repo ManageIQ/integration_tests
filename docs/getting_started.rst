@@ -83,8 +83,8 @@ will not work.
 
 .. code-block:: bash
 
-   #Bash example:
-   `cd /path/to/virtualenv'
+   # Bash example:
+   cd /path/to/virtualenv
    source bin/activate or . bin/activate
 
 * Install python dependencies:

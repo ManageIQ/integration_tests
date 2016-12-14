@@ -903,6 +903,10 @@ class Appliance(MetadataMixin):
             return nice_seconds(seconds)
 
     @property
+    def age(self):
+        return timezone.now() - self.datetime_leased
+
+    @property
     def can_launch(self):
         return self.power_state in {self.Power.OFF, self.Power.SUSPENDED}
 
@@ -970,6 +974,18 @@ class AppliancePool(MetadataMixin):
     finished = models.BooleanField(default=False, help_text="Whether fulfillment has been met.")
     yum_update = models.BooleanField(default=False, help_text="Whether to update appliances.")
     is_container = models.BooleanField(default=False, help_text='Whether the pool uses containers.')
+
+    @property
+    def age(self):
+        try:
+            leased = Appliance.objects\
+                .filter(appliance_pool=self)\
+                .exclude(datetime_leased=None)\
+                .order_by('datetime_leased')\
+                .values('datetime_leased')[0]['datetime_leased']
+            return timezone.now() - leased
+        except IndexError:
+            return None
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
@@ -1097,6 +1113,10 @@ class AppliancePool(MetadataMixin):
     @property
     def appliances(self):
         return Appliance.objects.filter(appliance_pool=self).order_by("id").all()
+
+    @property
+    def single_or_none_appliance(self):
+        return self.appliances.count() <= 1
 
     @property
     def current_count(self):

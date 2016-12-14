@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 """Module handling schedules"""
 from functools import partial
+from navmazing import NavigateToSibling, NavigateToObject
 
+from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import Timer
-from cfme.web_ui import (EmailSelectForm, Form, CheckboxTable, Select, ShowingInputs, accordion,
-    fill, flash, toolbar, form_buttons, Input)
-from cfme.web_ui.menu import nav
+from cfme.web_ui import (
+    EmailSelectForm, Form, CheckboxTable, Select, ShowingInputs,
+    fill, flash, toolbar, form_buttons, Input, accordion
+)
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -15,43 +20,10 @@ from utils import version
 
 
 cfg_btn = partial(toolbar.select, "Configuration")
-
-
 schedules_table = CheckboxTable("//div[@id='records_div']//table[thead]")
 
 
-def get_sch_name(sch):
-    """Enables us using both string and schedule object"""
-    if isinstance(sch, basestring):
-        return sch
-    elif isinstance(sch, Schedule):
-        return sch.name
-    else:
-        return str(sch)
-
-nav.add_branch(
-    "reports",
-    {
-        "schedules":
-        [
-            lambda ctx: accordion.tree("Schedules", "All Schedules"),
-            {
-                "schedule_add": lambda ctx: cfg_btn("Add a new Schedule")
-            }
-        ],
-
-        "schedule":
-        [
-            lambda ctx: accordion.tree("Schedules", "All Schedules", get_sch_name(ctx["schedule"])),
-            {
-                "schedule_edit": lambda ctx: cfg_btn("Edit this Schedule")
-            }
-        ],
-    }
-)
-
-
-class Schedule(Updateable, Pretty):
+class Schedule(Updateable, Pretty, Navigatable):
     """Represents a schedule in Intelligence/Reports/Schedules.
 
     Args:
@@ -91,14 +63,9 @@ class Schedule(Updateable, Pretty):
 
     pretty_attrs = ['name', 'filter']
 
-    def __init__(
-            self,
-            name,
-            description,
-            filter,
-            active=None,
-            timer=None,
-            send_email=None):
+    def __init__(self, name, description, filter, active=None, timer=None, send_email=None,
+                 appliance=None):
+        Navigatable.__init__(self, appliance)
         self.name = name
         self.description = description
         self.filter = filter
@@ -122,23 +89,19 @@ class Schedule(Updateable, Pretty):
         )
 
     def create(self, cancel=False):
-        sel.force_navigate("schedule_add")
+        navigate_to(self, 'Add')
         self._fill(form_buttons.add if not cancel else form_buttons.cancel)
         flash.assert_no_errors()
         assert self.exists, "Schedule does not exist!"
 
     def update(self, updates):
-        sel.force_navigate("schedule_edit", context={"schedule": self})
+        navigate_to(self, 'Edit')
         fill(self.form, updates, action=form_buttons.save)
         flash.assert_no_errors()
         assert self.exists, "Schedule does not exist!"
 
     def delete(self, cancel=False):
-        sel.force_navigate("schedule", context={"schedule": self})
-        delete_label = version.pick({
-            "5.6": "Delete this Schedule from the VMDB",
-            "5.7": "Delete this Schedule"})
-        cfg_btn(delete_label, invokes_alert=True)
+        navigate_to(self, 'Delete')
         sel.handle_alert(cancel)
         flash.assert_no_errors()
         assert not self.exists, "Schedule does not exist!"
@@ -165,9 +128,9 @@ class Schedule(Updateable, Pretty):
         """
         if not self.exists:
             self.create()
-        sel.force_navigate("schedule", context={"schedule": self})
+        navigate_to(self, 'Details')
         last_run = sel.text(self.table_item("Last Run Time")).strip()
-        cfg_btn("Queue up this Schedule to run now")
+        navigate_to(self, 'Queue')
         flash.assert_no_errors()
         if wait_for_finish:
             wait_for(
@@ -204,7 +167,7 @@ class Schedule(Updateable, Pretty):
             schedules: Schedules to select.
         Raises: :py:class:`NameError` when some of the schedules were not found.
         """
-        sel.force_navigate("schedules")
+        navigate_to(cls, 'All')
         failed_selections = []
         for schedule in schedules:
             if isinstance(schedule, cls):
@@ -279,3 +242,51 @@ class Schedule(Updateable, Pretty):
         return cls._action_on_schedules(
             "Delete the selected Schedules from the VMDB", schedules, kwargs.get("cancel", False)
         )
+
+
+@navigator.register(Schedule, 'All')
+class ScheduleAll(CFMENavigateStep):
+    prerequisite = NavigateToObject(Report, 'Schedules')
+
+
+@navigator.register(Schedule, 'Add')
+class ScheduleNew(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        cfg_btn("Add a new Schedule")
+
+
+@navigator.register(Schedule, 'Details')
+class ScheduleDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Schedules", "All Schedules", self.obj.name)
+
+
+@navigator.register(Schedule, 'Edit')
+class ScheduleEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn("Edit this Schedule")
+
+
+@navigator.register(Schedule, 'Delete')
+class ScheduleDelete(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        delete_label = version.pick({
+            "5.6": "Delete this Schedule from the VMDB",
+            "5.7": "Delete this Schedule"})
+        cfg_btn(delete_label, invokes_alert=True)
+
+
+@navigator.register(Schedule, 'Queue')
+class ScheduleQueue(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn("Queue up this Schedule to run now")

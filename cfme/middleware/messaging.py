@@ -1,19 +1,18 @@
 import re
 from cfme.common import Taggable, UtilizationMixin
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import parse_properties
+from cfme.middleware.provider import parse_properties
+from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, paginator
-from cfme.web_ui.menu import toolbar as tb
+from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key
-from utils.providers import list_providers
+from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
+from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -119,7 +118,7 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
 
     @classmethod
     def headers(cls):
-        sel.force_navigate('middleware_messagings')
+        navigate_to(MiddlewareMessaging, 'All')
         headers = [sel.text(hdr).encode("utf-8")
                    for hdr in sel.elements("//thead/tr/th") if hdr.text]
         return headers
@@ -131,7 +130,7 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
         _provider = provider
         for messaging in rows:
             if strict:
-                _provider = get_crud(get_provider_key(messaging.provider_name))
+                _provider = get_crud_by_name(messaging.provider_name)
             _server = MiddlewareServer(
                 name=messaging.server_name,
                 feed=messaging.feed,
@@ -172,8 +171,8 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
     def messagings_in_mgmt(cls, provider=None, server=None):
         if provider is None:
             messagings = []
-            for _provider in list_providers('hawkular'):
-                messagings.extend(cls._messagings_in_mgmt(get_crud(_provider), server))
+            for _provider in list_providers_by_class(HawkularProvider):
+                messagings.extend(cls._messagings_in_mgmt(_provider, server))
             return messagings
         else:
             return cls._messagings_in_mgmt(provider, server)
@@ -230,8 +229,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Messagings')(None)
+        self.prerequisite_view.navigation.select('Middleware', 'Messagings')
 
     def resetter(self):
         # Reset view and selection

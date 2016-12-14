@@ -13,6 +13,7 @@ from fixtures.artifactor_plugin import art_client, appliance_ip_address
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
 from utils import ports
+from utils.appliance import ApplianceException
 from utils.conf import rdb
 from utils.log import logger
 from utils.path import data_path
@@ -46,6 +47,13 @@ def pytest_cmdline_main(config):
         if config.getoption(opt):
             print("The {} option has been REMOVED, it doesn't do anything; please, stop using it!"
                   .format(opt))
+
+
+def pytest_sessionstart(session):
+    try:
+        store.current_appliance.check_no_conflicting_providers()
+    except ApplianceException as e:
+        raise pytest.UsageError("Conflicting providers were found: {}".format(e))
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -148,13 +156,16 @@ def _pytest_plugins_generator(*extension_pkgs):
         for importer, modname, is_package in iter_modules(path, prefix):
             yield modname
 
-pytest_plugins = (
 
+pytest_plugins = (
+    'cfme.test_framework.sprout.plugin',
     'fixtures.pytest_store',
 
     'fixtures.portset',
     'fixtures.artifactor_plugin',
     'fixtures.parallelizer',
+
+    'fixtures.prov_filter',
 
     'fixtures.single_appliance_sprout',
     'fixtures.dev_branch',
@@ -174,7 +185,6 @@ pytest_plugins = (
     'fixtures.node_annotate',
     'fixtures.page_screenshots',
     'fixtures.perf',
-    'fixtures.prov_filter',
     'fixtures.provider',
     'fixtures.qa_contact',
     'fixtures.randomness',

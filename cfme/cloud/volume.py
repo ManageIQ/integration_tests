@@ -39,8 +39,7 @@ class All(CFMENavigateStep):
         return match_volumes(summary='Cloud Volumes')
 
     def step(self, *args, **kwargs):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Clouds', 'Volumes')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Volumes')
 
 
 @navigator.register(Volume, 'AllByProvider')

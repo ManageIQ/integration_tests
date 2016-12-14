@@ -3,6 +3,10 @@ import pytest
 
 import cfme.web_ui.toolbar as tb
 from cfme import test_requirements
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils import testgen
 from utils.blockers import BZ
@@ -13,7 +17,7 @@ pytestmark = [pytest.mark.tier(3),
               pytest.mark.usefixtures('setup_provider')]
 
 pytest_generate_tests = testgen.generate(
-    testgen.provider_by_type, ['openstack', 'ec2', 'rhevm', 'vsphere'],
+    [OpenStackProvider, EC2Provider, RHEVMProvider, VMwareProvider],
     scope='module')
 
 

@@ -43,6 +43,7 @@ def run(port, run_id=None):
     # Stash this where slaves can find it
     # log.logger.info('artifactor listening on port %d', art_config['server_port'])
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--run-id', default=None)

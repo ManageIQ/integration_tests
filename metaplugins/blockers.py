@@ -52,9 +52,11 @@ def kwargify(f):
     If you pass True, a function which always returns True is returned.
     """
     if f is None or f is False:
-        f = lambda: False
+        def f():
+            return False
     elif f is True:
-        f = lambda: True
+        def f():
+            return True
 
     return _kwargify(f)
 

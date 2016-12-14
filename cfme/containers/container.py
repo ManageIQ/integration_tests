@@ -9,7 +9,7 @@ from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location,
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from . import details_page, pol_btn, mon_btn
+from cfme.containers.provider import details_page, pol_btn, mon_btn
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
@@ -50,8 +50,7 @@ class ContainerAll(CFMENavigateStep):
         return match_page(summary='All Containers')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Containers', 'Containers')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Containers')
 
     def resetter(self):
         accordion.tree('Containers', version.pick({

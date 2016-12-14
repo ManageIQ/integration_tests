@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
 from cfme import test_requirements
 from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
 from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
 from utils import testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
 from utils.log import logger
 from utils.path import data_path
@@ -20,7 +23,7 @@ pytestmark = [pytest.mark.long_running,
               test_requirements.snapshot]
 
 
-pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
+pytest_generate_tests = testgen.generate([InfraProvider], scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -37,12 +40,13 @@ def domain(request):
 
 
 @pytest.fixture(scope="module")
-def test_vm(setup_provider_modscope, provider, vm_name):
+def test_vm(setup_provider_modscope, provider, vm_name, request):
     """Fixture to provision appliance to the provider being tested if necessary"""
     vm = VM.factory(vm_name, provider, template_name=provider.data['small_template'])
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+        request.addfinalizer(vm.delete_from_provider)
     return vm
 
 
@@ -119,14 +123,12 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
     register_event('VmOrTemplate', test_vm.name, ['request_vm_start', 'vm_start'])
     test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False)
-    pytest.sel.force_navigate(
-        'infrastructure_provider', context={'provider': test_vm.provider})
+    navigate_to(test_vm.provider, 'Details')
     test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=900)
     soft_assert(test_vm.find_quadicon().state == 'currentstate-on')
     soft_assert(
         test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
     client = SSHClient(**ssh_kwargs)
-    request.addfinalizer(test_vm.delete_from_provider)
     try:
         wait_for(lambda: client.run_command('test -e snapshot2.txt')[1] == 0, fail_condition=False)
         logger.info('Revert to snapshot %s successful', snapshot1.name)

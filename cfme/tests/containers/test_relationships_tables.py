@@ -3,6 +3,7 @@ from utils.version import current_version
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.pod import Pod, match_page as pod_match_page
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.service import Service, match_page as service_match_page
 from cfme.containers.node import Node, match_page as node_match_page
 from cfme.containers.replicator import Replicator, match_page as replicator_match_page
@@ -19,8 +20,7 @@ pytestmark = [
         lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 DataSet = namedtuple('DataSet', ['object', 'match_page'])

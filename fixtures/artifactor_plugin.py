@@ -75,8 +75,8 @@ class DummyClient(object):
         # DummyClient is always False, so it's easy to see if we have an artiactor client
         return False
 
-proc = None
 
+proc = None
 art_config = env.get('artifactor', {})
 
 if art_config:

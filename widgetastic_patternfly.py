@@ -7,6 +7,8 @@ import time
 from cached_property import cached_property
 
 from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresentException
+from widgetastic.log import call_sig
+from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget
 from widgetastic.xpath import quote
 
@@ -53,6 +55,8 @@ class Button(Widget, ClickableMixin):
     def __init__(self, parent, *text, **kwargs):
         logger = kwargs.pop('logger', None)
         Widget.__init__(self, parent, logger=logger)
+        self.args = text
+        self.kwargs = kwargs
         if text:
             if kwargs:
                 raise TypeError('If you pass button text then do not pass anything else.')
@@ -80,6 +84,9 @@ class Button(Widget, ClickableMixin):
     @property
     def disabled(self):
         return self.browser.get_attribute('disabled', self) == 'disabled'
+
+    def __repr__(self):
+        return '{}{}'.format(type(self).__name__, call_sig(self.args, self.kwargs))
 
 
 class Input(TextInput):
@@ -155,6 +162,13 @@ class FlashMessages(Widget):
             else:
                 e_text = text
             raise AssertionError('assert_message: {}'.format(e_text))
+
+    def assert_success_message(self, text, t=None):
+        self.assert_no_error()
+        self.assert_message(text, 'success')
+
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.locator)
 
 
 class FlashMessage(Widget):
@@ -304,13 +318,16 @@ class NavDropdown(Widget, ClickableMixin):
         self.logger.info('selecting item {}'.format(item))
         self.browser.click('./ul/li[normalize-space(.)={}]'.format(quote(item)), parent=self)
 
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.locator)
+
 
 class VerticalNavigation(Widget):
     """The Patternfly Vertical navigation."""
     CURRENTLY_SELECTED = './/li[contains(@class, "active")]/a'
     LINKS = './li/a'
     ITEMS_MATCHING = './li[a[normalize-space(.)={}]]'
-    DIV_LINKS_MATCHING = './ul/li/a[span[normalize-space(.)={}]]'
+    DIV_LINKS_MATCHING = './ul/li/a[span[normalize-space(.)={txt}] or @href={txt}]'
     SUB_LEVEL = './following-sibling::div[contains(@class, "nav-pf-")]'
     SUB_ITEM_LIST = './div[contains(@class, "nav-pf-")]/ul'
     CHILD_UL_FOR_DIV = './li[a[normalize-space(.)={}]]/div[contains(@class, "nav-pf-")]/ul'
@@ -388,7 +405,7 @@ class VerticalNavigation(Widget):
             passed_levels.append(level)
             finished = passed_levels == levels
             link = self.browser.element(
-                self.DIV_LINKS_MATCHING.format(quote(level)), parent=current_div)
+                self.DIV_LINKS_MATCHING.format(txt=quote(level)), parent=current_div)
             expands = bool(
                 self.browser.elements(self.SUB_LEVEL, parent=link))
             if expands and not finished:
@@ -417,6 +434,7 @@ class VerticalNavigation(Widget):
                 # finished
                 self.logger.debug('finishing the menu selection by clicking on %s', level)
                 self.browser.click(link)
+                self.browser.handle_alert(wait=2.0, squash=True)
 
     def get_child_div_for(self, *levels):
         current = self
@@ -429,6 +447,9 @@ class VerticalNavigation(Widget):
                 return None
 
         return self.browser.element('..', parent=current)
+
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.locator)
 
 
 class Tab(View, ClickableMixin):
@@ -457,6 +478,9 @@ class Tab(View, ClickableMixin):
     def child_widget_accessed(self, widget):
         # Select the tab
         self.select()
+
+    def __repr__(self):
+        return '<{} {!r}>'.format(type(self).__name__, self.tab_name)
 
 
 class Accordion(View, ClickableMixin):
@@ -501,8 +525,7 @@ class Accordion(View, ClickableMixin):
 
     @property
     def is_closed(self):
-        attr = self.browser.get_attribute('aria-expanded', self)
-        return attr is None or attr.lower().strip() == 'false'
+        return not self.is_opened
 
     def open(self):
         if self.is_closed:
@@ -534,6 +557,9 @@ class Accordion(View, ClickableMixin):
         else:
             return self.browser.get_attribute('id', div)
 
+    def __repr__(self):
+        return '<{} {!r}>'.format(type(self).__name__, self.accordion_name)
+
 
 class BootstrapSelect(Widget, ClickableMixin):
     """This class represents the Bootstrap Select widget.
@@ -541,13 +567,11 @@ class BootstrapSelect(Widget, ClickableMixin):
     Args:
         id: id of the select, that is the ``data-id`` attribute on the ``button`` tag.
     """
+    ROOT = ParametrizedLocator('.//button[normalize-space(@data-id)={@id|quote}]/..')
+
     def __init__(self, parent, id, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.id = id
-
-    def __locator__(self):
-        return self.browser.element(
-            './/button[normalize-space(@data-id)={}]/..'.format(quote(self.id)))
 
     @property
     def is_open(self):
@@ -616,6 +640,9 @@ class BootstrapSelect(Widget, ClickableMixin):
             self.select_by_visible_text(*items)
             return True
 
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.id)
+
 
 class BootstrapTreeview(Widget):
     """A class representing the Bootstrap treeview used in newer builds.
@@ -628,6 +655,7 @@ class BootstrapTreeview(Widget):
     Args:
         tree_id: Id of the tree, the closest div to the root ``ul`` element.
     """
+    ROOT = ParametrizedLocator('#{@tree_id}')
     ROOT_ITEM = './ul/li[1]'
     SELECTED_ITEM = './ul/li[contains(@class, "node-selected")]'
     CHILD_ITEMS = (
@@ -635,7 +663,7 @@ class BootstrapTreeview(Widget):
         ' and count(./span[contains(@class, "indent")])={indent}]')
     CHILD_ITEMS_TEXT = (
         './ul/li[starts-with(@data-nodeid, {id}) and not(@data-nodeid={id})'
-        ' and contains(@title, {text})'
+        ' and (contains(@title, {text}) or contains(normalize-space(.), {text}))'
         ' and count(./span[contains(@class, "indent")])={indent}]')
     ITEM_BY_NODEID = './ul/li[@data-nodeid={}]'
     IS_EXPANDABLE = './span[contains(@class, "expand-icon")]'
@@ -678,9 +706,6 @@ class BootstrapTreeview(Widget):
         image_href = re.search(r'url\("([^"]+)"\)', style).groups()[0]
         return re.search(r'/([^/]+)-[0-9a-f]+\.png$', image_href).groups()[0]
 
-    def __locator__(self):
-        return '#{}'.format(self.tree_id)
-
     def read(self):
         return self.currently_selected
 
@@ -692,14 +717,17 @@ class BootstrapTreeview(Widget):
 
     @property
     def currently_selected(self):
-        nodeid = self.get_nodeid(self.selected_item).split('.')
-        root_id_len = len(self.get_nodeid(self.root_item).split('.'))
-        result = []
-        for end in range(root_id_len, len(nodeid) + 1):
-            current_nodeid = '.'.join(nodeid[:end])
-            text = self.browser.text(self.get_item_by_nodeid(current_nodeid))
-            result.append(text)
-        return result
+        if self.selected_item is not None:
+            nodeid = self.get_nodeid(self.selected_item).split('.')
+            root_id_len = len(self.get_nodeid(self.root_item).split('.'))
+            result = []
+            for end in range(root_id_len, len(nodeid) + 1):
+                current_nodeid = '.'.join(nodeid[:end])
+                text = self.browser.text(self.get_item_by_nodeid(current_nodeid))
+                result.append(text)
+            return result
+        else:
+            return None
 
     @property
     def root_item(self):
@@ -707,7 +735,11 @@ class BootstrapTreeview(Widget):
 
     @property
     def selected_item(self):
-        return self.browser.element(self.SELECTED_ITEM, parent=self)
+        try:
+            result = self.browser.element(self.SELECTED_ITEM, parent=self)
+        except NoSuchElementException:
+            result = None
+        return result
 
     def indents(self, item):
         return len(self.browser.elements(self.INDENT, parent=item))
@@ -1028,16 +1060,19 @@ class BootstrapTreeview(Widget):
             return False
         return self.is_checked(leaf)
 
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.tree_id)
+
 
 class Dropdown(Widget):
     """Represents the Patternfly/Bootstrap dropdown.
 
     Args:
-        text: Text of the button, can be the inner text or the titel attribute.
+        text: Text of the button, can be the inner text or the title attribute.
     """
-    BUTTON_DIV_LOCATOR = (
-        './/div[contains(@class, "dropdown") and ./button[normalize-space(.)={0} or '
-        'normalize-space(@title)={0}]]')
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "dropdown") and ./button[normalize-space(.)={@text|quote} or '
+        'normalize-space(@title)={@text|quote}]]')
     BUTTON_LOCATOR = './button'
     ITEMS_LOCATOR = './ul/li/a'
     ITEM_LOCATOR = './ul/li/a[normalize-space(.)={}]'
@@ -1045,9 +1080,6 @@ class Dropdown(Widget):
     def __init__(self, parent, text, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.text = text
-
-    def __locator__(self):
-        return self.BUTTON_DIV_LOCATOR.format(quote(self.text))
 
     @property
     def is_enabled(self):
@@ -1124,3 +1156,6 @@ class Dropdown(Widget):
             except UnexpectedAlertPresentException:
                 self.logger.warning('There is an unexpected alert present.')
                 pass
+
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.text)

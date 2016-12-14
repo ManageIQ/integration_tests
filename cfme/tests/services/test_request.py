@@ -2,6 +2,7 @@
 import pytest
 
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme import test_requirements
@@ -17,8 +18,7 @@ pytestmark = [
 ]
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter'],
-    scope="module")
+pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 def test_copy_request(setup_provider, provider, catalog_item, request):
@@ -26,8 +26,8 @@ def test_copy_request(setup_provider, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],

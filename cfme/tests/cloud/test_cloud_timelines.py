@@ -2,16 +2,18 @@
 import fauxfactory
 import pytest
 from cfme.cloud.instance import Instance
+from cfme.cloud.provider import CloudProvider
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from utils import testgen
 from utils import version
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.log import logger
 from utils.wait import wait_for
 
 
-pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
+pytest_generate_tests = testgen.generate([CloudProvider], scope="module")
 
 pytestmark = [pytest.mark.tier(2)]
 
@@ -52,6 +54,7 @@ def delete_instances_fin(request):
     return provisioned_instances
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.fixture(scope="module")
 def test_instance(setup_provider_modscope, request, delete_instances_fin, provider, vm_name):
     """ Fixture to provision instance on the provider
@@ -103,6 +106,7 @@ def db_event(db, provider):
     return event_count
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2',
                                forced_streams=['5.6']),
                             BZ(1390572, unblock=lambda provider: provider.type != 'azure',
@@ -114,12 +118,12 @@ def test_provider_event(setup_provider, provider, gen_events, test_instance):
         test_flag: timelines, provision
     """
     def nav_step():
-        pytest.sel.force_navigate('cloud_provider_timelines',
-                                  context={'provider': provider})
+        navigate_to(provider, 'Timelines')
     wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2',
                                forced_streams=['5.6']),
                             BZ(1390572, unblock=lambda provider: provider.type != 'azure',
@@ -138,6 +142,7 @@ def test_azone_event(setup_provider, provider, gen_events, test_instance):
              message="events to appear")
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2',
                                forced_streams=['5.6']),
                             BZ(1390572, unblock=lambda provider: provider.type != 'azure',

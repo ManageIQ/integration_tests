@@ -292,12 +292,13 @@ class BrowserManager(object):
 
 
 class WithZoom(object):
-    """This class is a decorator that used to wrap function with zoom level.
+    """
+    This class is a decorator that used to wrap function with zoom level.
     this class perform zoom by <level>, call the target function and exit
     by zooming back to the original zoom level.
+
     Args:
-        * level: int, the zooming value
-                (i.e. -2 -> 2 clicks out; 3 -> 3 clicks in)
+        * level: int, the zooming value (i.e. -2 -> 2 clicks out; 3 -> 3 clicks in)
     """
     def __init__(self, level):
         self._level = level

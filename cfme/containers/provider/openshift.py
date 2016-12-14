@@ -1,7 +1,7 @@
 from . import ContainersProvider
 from utils.varmeth import variable
-from mgmtsystem.openshift import Openshift
 from os import path
+from mgmtsystem.openshift import Openshift
 
 
 class CustomAttribute(object):

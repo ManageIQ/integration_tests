@@ -1,13 +1,12 @@
 import pytest
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type,
-                                         ['openstack-infra'],
-                                         scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")

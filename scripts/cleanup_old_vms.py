@@ -7,6 +7,7 @@ import re
 import sys
 from collections import defaultdict
 from dateutil import parser
+from tabulate import tabulate
 from threading import Lock, Thread
 from tzlocal import get_localzone
 
@@ -14,24 +15,34 @@ from utils import net
 from utils.log import logger
 from utils.conf import cfme_data
 from utils.conf import credentials
+from utils.path import log_path
 from utils.ssh import SSHClient
-from utils.providers import list_providers, get_mgmt
+from utils.providers import list_provider_keys, get_mgmt
 
 lock = Lock()
+providers_vm_list = []
 
 
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('-f', '--force', default=True, action='store_false', dest='prompt',
-        help='Do not prompt before deleting VMs (danger zone!)')
+                        help='Do not prompt before deleting VMs (danger zone!)')
     parser.add_argument('--max-hours', default=24,
-        help='Max hours since the VM was created or last powered on '
-        '(varies by provider, default 24)')
+                        help='Max hours since the VM was created or last powered on '
+                             '(varies by provider, default 24)')
     parser.add_argument('--provider', dest='providers', action='append', default=None,
-        help='Provider(s) to inspect, can be used multiple times', metavar='PROVIDER')
+                        help='Provider(s) to inspect, can be used multiple times',
+                        metavar='PROVIDER')
     parser.add_argument('text_to_match', nargs='*', default=['^test_', '^jenkins', '^i-'],
-        help='Regex in the name of vm to be affected, can be use multiple times'
-        ' (Defaults to "^test_" and "^jenkins")')
+                        help='Regex in the name of vm to be affected, can be use multiple times'
+                             ' (Defaults to "^test_" and "^jenkins")')
+    parser.add_argument('-l', '--list', default=False, action='store_true', dest='list_vms',
+                        help='list vms of the specified "provider_type"')
+    parser.add_argument('--provider-type', dest='provider_type', default='ec2, gce, azure',
+                        help='comma separated list of the provider type, useful in case of gce,'
+                             'azure, ec2 to get the insight into cost/vm listing')
+    parser.add_argument('--outfile', dest='outfile', default=log_path.join(
+        'instance_list.log').strpath, help='outfile to list ')
     args = parser.parse_args()
     return args
 
@@ -71,7 +82,24 @@ def get_vm_config_modified_time(name, vm_name, datastore_url, provider_key):
         return False
 
 
-def process_provider_vms(provider_key, provider_type, matchers, delta, vms_to_delete):
+def list_provider_vms(provider_key):
+    try:
+        provider = get_mgmt(provider_key)
+        vm_list = provider.list_vm()
+        provider_type = cfme_data.get("management_systems", {})[provider_key].get('type', None)
+        now = datetime.datetime.now()
+        for vm_name in vm_list:
+            creation = provider.vm_creation_time(vm_name)
+            providers_vm_list.append([provider_type, provider_key, vm_name,
+                                      (now - creation), provider.vm_type(vm_name),
+                                      provider.vm_status(vm_name)])
+    except Exception as e:
+        logger.error('failed to list vms from provider {}'.format(provider_key))
+        logger.exception(e)
+
+
+def process_provider_vms(provider_key, provider_type, matchers,
+                         delta, vms_to_delete, list_vms=None):
     with lock:
         print('{} processing'.format(provider_key))
     try:
@@ -79,11 +107,15 @@ def process_provider_vms(provider_key, provider_type, matchers, delta, vms_to_de
         with lock:
             # Known conf issue :)
             provider = get_mgmt(provider_key)
-        for vm_name in provider.list_vm():
-            if not match(matchers, vm_name):
-                continue
+        vm_list = provider.list_vm()
+        if list_vms:
+            list_provider_vms(provider_key)
 
+        for vm_name in vm_list:
             try:
+                if not match(matchers, vm_name):
+                    continue
+
                 if provider_type == 'virtualcenter' and provider.vm_status(vm_name) == 'poweredOff':
                     hostname = provider.get_vm_host_name(vm_name)
                     vm_config_datastore = provider.get_vm_config_files_path(vm_name)
@@ -140,7 +172,7 @@ def delete_provider_vms(provider_key, vm_names):
 
 
 def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
-    providers = providers or list_providers()
+    providers = providers or list_provider_keys()
     providers_data = cfme_data.get("management_systems", {})
     delta = datetime.timedelta(hours=int(max_hours))
     vms_to_delete = defaultdict(set)
@@ -153,8 +185,10 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         if ipaddress and not net.is_pingable(ipaddress):
             continue
         provider_type = providers_data[provider_key].get('type', None)
+        list_vms = args.list_vms and provider_type in args.provider_type
         thread = Thread(target=process_provider_vms,
-                        args=(provider_key, provider_type, matchers, delta, vms_to_delete))
+                        args=(provider_key, provider_type, matchers,
+                              delta, vms_to_delete, list_vms))
         # Mark as daemon thread for easy-mode KeyboardInterrupt handling
         thread.daemon = True
         thread_queue.append(thread)
@@ -163,6 +197,16 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     # Join the queued calls
     for thread in thread_queue:
         thread.join()
+
+    if providers_vm_list:
+        with open(args.outfile, 'a+') as report:
+                message = tabulate(
+                    providers_vm_list, headers=['ProviderType', 'ProviderKey',
+                                                'InstanceName', 'CreatedSince',
+                                                'InstanceType', 'InstanceStatus'],
+                    tablefmt='orgtbl')
+                report.write(message)
+        print(message)
 
     for provider_key, vm_set in vms_to_delete.items():
         print('{}:'.format(provider_key))
@@ -193,6 +237,8 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
 
     print("Deleting finished")
 
+
 if __name__ == "__main__":
     args = parse_cmd_line()
-    sys.exit(cleanup_vms(args.text_to_match, args.max_hours, args.providers, args.prompt))
+    sys.exit(cleanup_vms(args.text_to_match, args.max_hours,
+                         args.providers, args.prompt))

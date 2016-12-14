@@ -5,6 +5,8 @@ import utils.conf as conf
 import utils.error as error
 
 from cfme.infrastructure import host
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen
 from utils.blockers import BZ
 from utils.update import update
@@ -18,7 +20,8 @@ msgs = {
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm'])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [VMwareProvider, RHEVMProvider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 

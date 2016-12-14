@@ -5,7 +5,7 @@ from cfme.common import SummaryMixin, Taggable
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from utils.appliance import Navigatable
 from cfme.web_ui import (Quadicon, flash, Form, Input, form_buttons, fill, AngularSelect,
-     CheckboxTable)
+                         CheckboxTable)
 from functools import partial
 from cfme.web_ui import toolbar as tb
 from utils.wait import wait_for
@@ -65,5 +65,4 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Clouds', 'Key Pairs')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Key Pairs')

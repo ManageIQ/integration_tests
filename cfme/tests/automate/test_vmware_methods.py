@@ -9,6 +9,7 @@ from cfme import test_requirements
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.automate.explorer import Namespace, Class, Instance, Domain, Method
 from cfme.common.vm import VM
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import flash, toolbar
 from utils import testgen
 from utils.blockers import BZ
@@ -23,8 +24,8 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter'], required_fields=[['provisioning', 'template']])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [VMwareProvider], required_fields=[['provisioning', 'template']])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 

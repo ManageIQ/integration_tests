@@ -38,11 +38,11 @@ set_ownership_form = Form(
     fields=[
         ("select_owner", {
             version.LOWEST: ui.Select("select#user_name"),
-            '5.7': ui.AngularSelect("#user_name")
+            '5.7': ui.AngularSelect("user_name")
         }),
         ("select_group", {
             version.LOWEST: ui.Select("select#group_name"),
-            '5.7': ui.AngularSelect("#group_name")
+            '5.7': ui.AngularSelect("group_name")
         }),
     ])
 
@@ -152,8 +152,9 @@ class MyService(Updateable, Navigatable):
         fill(edit_service_form, {'name': updated_name,
                                  'description': updated_description},
              action=form_buttons.angular_save)
+        wait_for(flash.get_messages, timeout=10, delay=2, fail_condition=[], fail_func=tb.refresh())
         if flash.assert_success_message('Service "{}" was saved'.format(updated_name)):
-            self.service_name = updated_name
+            setattr(self, 'service_name', updated_name)
 
     def delete(self):
         navigate_to(self, 'Details')
@@ -201,11 +202,11 @@ class MyServiceAll(CFMENavigateStep):
         return match_page(summary='All Services')
 
     def step(self, *args, **kwargs):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Services', 'My Services')(None)
+        self.prerequisite_view.navigation.select('Services', 'My Services')
 
     def resetter(self, *args, **kwargs):
-        my_service_tree().click_path('All Services')
+        if version.current_version() < '5.7':
+            my_service_tree().click_path('All Services')
         tb.refresh()
 
 

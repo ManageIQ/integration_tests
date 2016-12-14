@@ -4,6 +4,7 @@ import pytest
 
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
+from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
@@ -20,15 +21,11 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        required_fields=[
-            ['provisioning', 'template'],
-            ['provisioning', 'host'],
-            ['provisioning', 'datastore']
-        ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
+    ['provisioning', 'template'],
+    ['provisioning', 'host'],
+    ['provisioning', 'datastore']
+], scope="module")
 
 
 @pytest.yield_fixture(scope="function")
@@ -79,7 +76,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning):
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=template,
-                  provider=provider.name, prov_data=provisioning_data)
+                  provider=provider, prov_data=provisioning_data)
     yield catalog_item
 
 
@@ -93,8 +90,8 @@ def clone_vm_name():
 def create_vm(provider, setup_provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name

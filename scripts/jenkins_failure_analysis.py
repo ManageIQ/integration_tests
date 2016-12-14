@@ -14,6 +14,7 @@ def get_json(run):
     json = r.json()
     return json
 
+
 template_env = Environment(
     loader=FileSystemLoader(template_path.strpath)
 )

@@ -23,6 +23,7 @@ def _dgci(d, key):
 def _name(docker_info):
     return _dgci(docker_info, 'name').strip('/')
 
+
 if os.getenv("DOCKER_MACHINE_NAME", "None") == "None":
     dc = docker.Client(base_url='unix://var/run/docker.sock',
                        version='1.12',
@@ -505,6 +506,7 @@ class DockerBot(object):
             print
             f = open(os.path.join(self.log_path, 'setup.txt'))
             print(f.read())
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=None)

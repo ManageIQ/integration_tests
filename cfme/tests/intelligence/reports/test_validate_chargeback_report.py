@@ -10,10 +10,13 @@ from cfme import Credential
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.configure.configuration import get_server_roles, set_server_roles, candu
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
 from datetime import date
+from utils import testgen
 from utils.log import logger
-from utils import testgen, version
+from utils.version import current_version
 from utils.wait import wait_for
 
 
@@ -25,20 +28,14 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers not meant for Chargeback Testing
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm'],
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [VMwareProvider, RHEVMProvider],
         required_fields=[(['cap_and_util', 'test_chargeback'], True)]
     )
 
     new_argvalues = []
     new_idlist = []
     for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-
-        capandu_data = args['provider'].data['cap_and_util']
-
-        stream = capandu_data.get('chargeback_runs_on_stream', '')
-        if not version.current_version().is_in_series(str(stream)):
-            continue
 
         new_idlist.append(idlist[i])
         new_argvalues.append(argvalues[i])
@@ -58,7 +55,7 @@ def vm_ownership(enable_candu, setup_provider_modscope, provider):
         vm_name = provider.data['cap_and_util']['chargeback_vm']
         vm = VM.factory(vm_name, provider)
 
-        cb_group = ac.Group(description='EvmGroup-super_administrator')
+        cb_group = ac.Group(description='EvmGroup-user')
         user = ac.User(name=provider.name + fauxfactory.gen_alphanumeric(),
                 credential=new_credential(),
                 email='abc@example.com',
@@ -194,6 +191,11 @@ def resource_usage(vm_ownership, db, provider, ssh_client_modscope):
             average_network_io = average_network_io + record.net_usage_rate_average
             average_disk_io = average_disk_io + record.disk_usage_rate_average
 
+    average_cpu_used_in_mhz = average_cpu_used_in_mhz / 24
+    average_memory_used_in_mb = average_memory_used_in_mb / 24
+    average_network_io = average_network_io / 24
+    average_disk_io = average_disk_io / 24
+
     return {"average_cpu_used_in_mhz": average_cpu_used_in_mhz,
             "average_memory_used_in_mb": average_memory_used_in_mb,
             "average_network_io": average_network_io,
@@ -202,18 +204,21 @@ def resource_usage(vm_ownership, db, provider, ssh_client_modscope):
 
 def query_rate(db, provider, metric, description, rate_type):
     # Query the DB for Chargeback rates
+    tiers = db['chargeback_tiers']
     details = db['chargeback_rate_details']
     rates = db['chargeback_rates']
 
     with db.transaction:
         providers = (
-            db.session.query(details.id)
-            .join(rates, details.chargeback_rate_id == rates.id)
-            .filter(details.metric == metric, rates.description == description,
-                rates.rate_type == rate_type)
+            db.session.query(tiers.variable_rate).
+            join(details, tiers.chargeback_rate_detail_id == details.id).
+            join(rates, details.chargeback_rate_id == rates.id).
+            filter(details.metric == metric).
+            filter(rates.rate_type == rate_type).
+            filter(rates.description == description)
         )
-        rate = db.session.query(details).filter(details.id.in_(
-            providers.subquery())).first().rate
+    rate = db.session.query(tiers).filter(tiers.variable_rate.in_(
+        providers.subquery())).first().variable_rate
     return rate
 
 
@@ -226,16 +231,16 @@ def chargeback_costs_default(resource_usage, db, provider):
     average_disk_io = resource_usage['average_disk_io']
 
     cpu_rate = query_rate(db, provider, 'cpu_usagemhz_rate_average', 'Default', 'Compute')
-    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate) / 24
+    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate) * 24
 
     memory_rate = query_rate(db, provider, 'derived_memory_used', 'Default', 'Compute')
-    memory_used_cost = average_memory_used_in_mb * float(memory_rate) / 24
+    memory_used_cost = average_memory_used_in_mb * float(memory_rate) * 24
 
     network_rate = query_rate(db, provider, 'net_usage_rate_average', 'Default', 'Compute')
-    network_used_cost = average_network_io * float(network_rate)
+    network_used_cost = average_network_io * float(network_rate) * 24
 
     disk_rate = query_rate(db, provider, 'disk_usage_rate_average', 'Default', 'Compute')
-    disk_used_cost = average_disk_io * float(disk_rate)
+    disk_used_cost = average_disk_io * float(disk_rate) * 24
 
     return {"cpu_used_cost": cpu_used_cost,
             "memory_used_cost": memory_used_cost,
@@ -254,16 +259,16 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, db, provider):
     average_disk_io = resource_usage['average_disk_io']
 
     cpu_rate = query_rate(db, provider, 'cpu_usagemhz_rate_average', description, 'Compute')
-    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate) / 24
+    cpu_used_cost = average_cpu_used_in_mhz * float(cpu_rate) * 24
 
     memory_rate = query_rate(db, provider, 'derived_memory_used', description, 'Compute')
-    memory_used_cost = average_memory_used_in_mb * float(memory_rate) / 24
+    memory_used_cost = average_memory_used_in_mb * float(memory_rate) * 24
 
     network_rate = query_rate(db, provider, 'net_usage_rate_average', description, 'Compute')
-    network_used_cost = average_network_io * float(network_rate)
+    network_used_cost = average_network_io * float(network_rate) * 24
 
     disk_rate = query_rate(db, provider, 'disk_usage_rate_average', description, 'Compute')
-    disk_used_cost = average_disk_io * float(disk_rate)
+    disk_used_cost = average_disk_io * float(disk_rate) * 24
 
     return {"cpu_used_cost": cpu_used_cost,
             "memory_used_cost": memory_used_cost,
@@ -273,11 +278,11 @@ def chargeback_costs_custom(resource_usage, new_compute_rate, db, provider):
 
 @pytest.yield_fixture(scope="module")
 def chargeback_report_default(vm_ownership, assign_compute_default_rate, provider):
-    # Create a Chargeback report based on the default Compute rate; Queue the report
+    # Create a Chargeback report based on the default Compute rate; Queue the report.
     owner = vm_ownership
     data = {'menu_name': 'cb_' + provider.name,
             'title': 'cb_' + provider.name,
-            'base_report_on': 'Chargebacks',
+            'base_report_on': 'Chargeback for Vms',
             'report_fields': ['Memory Used', 'Memory Used Cost', 'Owner',
             'CPU Used', 'CPU Used Cost',
             'Disk I/O Used', 'Disk I/O Used Cost',
@@ -301,7 +306,7 @@ def chargeback_report_custom(vm_ownership, assign_compute_custom_rate, provider)
     owner = vm_ownership
     data = {'menu_name': 'cb_custom_' + provider.name,
             'title': 'cb_custom' + provider.name,
-            'base_report_on': 'Chargebacks',
+            'base_report_on': 'Chargeback for Vms',
             'report_fields': ['Memory Used', 'Memory Used Cost', 'Owner',
             'CPU Used', 'CPU Used Cost',
             'Disk I/O Used', 'Disk I/O Used Cost',
@@ -325,13 +330,11 @@ def new_compute_rate():
     try:
         desc = 'custom_' + fauxfactory.gen_alphanumeric()
         ccb = cb.ComputeRate(description=desc,
-                         cpu_used=(3, cb.DAILY),
-                         disk_io=(1, cb.HOURLY),
-                         compute_fixed_1=(0, cb.DAILY),
-                         compute_fixed_2=(0, cb.MONTHLY),
-                         mem_alloc=(0, cb.DAILY),
-                         mem_used=(2, cb.DAILY),
-                         net_io=(2, cb.HOURLY))
+                         cpu_used_var=(3, cb.HOURLY),
+                         disk_io_var=(1, cb.HOURLY),
+                         mem_alloc=(0, cb.HOURLY),
+                         mem_used_var=(2, cb.HOURLY),
+                         net_io_var=(2, cb.HOURLY))
         ccb.create()
         yield desc
     finally:
@@ -371,6 +374,8 @@ def test_validate_default_rate_memory_usage_cost(chargeback_costs_default,
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: current_version() > "5.5")
 def test_validate_default_rate_network_usage_cost(chargeback_costs_default,
         chargeback_report_default):
     """Test to validate network usage cost.
@@ -432,6 +437,8 @@ def test_validate_custom_rate_memory_usage_cost(chargeback_costs_custom, chargeb
             break
 
 
+@pytest.mark.uncollectif(
+    lambda provider: current_version() > "5.5")
 def test_validate_custom_rate_network_usage_cost(chargeback_costs_custom, chargeback_report_custom):
     """Test to validate network usage cost.
        Calculation is based on custom Chargeback rate.

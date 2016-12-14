@@ -8,12 +8,11 @@ from navmazing import NavigateToAttribute
 from cfme import web_ui as ui
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
-from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator, toolbar, match_location
+from cfme.web_ui import Form, Region, CheckboxTable, fill, toolbar, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.log import logger
-from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
+from cfme.services import requests
 
 buttons = Region(
     locators={
@@ -72,41 +71,6 @@ def _filter(
         pass
 
 
-def _get_tasks(tab_destination, **filter_kwargs):
-    """ Generic function to return contents of the tasks table
-
-    Args:
-        location: Location for :py:module:`ui_navigate` where to get the data.
-        **filter_kwargs: See :py:meth:`_filter`
-    Returns: List of dicts.
-    """
-    navigate_to(Tasks, tab_destination)
-    if any([filter_kwargs[key] is not None for key in filter_kwargs.keys()]):
-        _filter(**filter_kwargs)
-    tasks = []
-
-    if sel.is_displayed(tasks_table):
-        for page in paginator.pages():
-            for row in tasks_table.rows():
-                tasks.append(
-                    dict(
-                        updated=parsetime.from_american_with_utc(
-                            row.updated.text.encode('utf-8').strip()
-                        ),
-                        started=parsetime.from_american_with_utc(
-                            row.started.text.encode('utf-8').strip()
-                        ),
-                        state=row.state.text.encode('utf-8').strip(),
-                        message=row.message.text.encode('utf-8').strip(),
-                        task_name=row.task_name.text.encode('utf-8').strip(),
-                        user=row.user.text.encode('utf-8').strip()
-                    )
-                )
-    else:
-        logger.info('No Tasks collected on {}'.format(tab_destination))
-    return tasks
-
-
 def is_vm_analysis_finished(name, **kwargs):
     return is_analysis_finished(name=name, task_type='vm', **kwargs)
 
@@ -150,7 +114,7 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
     tabs_data = {
         'vm': {
             'tab': 'AllVMContainerAnalysis',
-            'task': 'Scan from Vm {}',
+            'task': '{}',
             'state': 'finished'
         },
         'host': {
@@ -175,6 +139,12 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
                             task_name=tabs_data['task'].format(name),
                             expected_status=tabs_data['state'],
                             clear_tasks_after_success=clear_tasks_after_success)
+
+
+def wait_analysis_finished(task_name, task_type, delay=5, timeout='5M'):
+    """ Wait until analysis is finished (or timeout exceeded)"""
+    wait_for(lambda: is_analysis_finished(task_name, task_type),
+             delay=delay, timeout=timeout, fail_func=requests.reload)
 
 
 class Tasks(Navigatable):

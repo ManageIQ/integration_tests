@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 from IPython import embed
 
-import cfme.fixtures.pytest_selenium as sel
+from cfme.base import Server
+from utils.appliance.implementations.ui import navigate_to
 
-sel.force_navigate('dashboard')
+navigate_to(Server, 'Dashboard')
 embed()

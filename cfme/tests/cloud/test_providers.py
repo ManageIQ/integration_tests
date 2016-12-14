@@ -6,6 +6,8 @@ import uuid
 
 import pytest
 
+from manageiq_client.api import APIException
+
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
@@ -19,15 +21,15 @@ from cfme.web_ui import fill, flash
 from utils import testgen, version, providers
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
-from utils.api import APIException
 from utils.log import logger
 
-pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
+pytest_generate_tests = testgen.generate([CloudProvider], scope="function")
 
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    return providers.setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
+    return providers.setup_a_provider_by_class(prov_class=CloudProvider, validate=True,
+                                               check_existing=True)
 
 
 @pytest.mark.tier(3)

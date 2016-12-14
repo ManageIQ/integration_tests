@@ -281,7 +281,7 @@ class Db(Mapping):
                 return table_cls
             except ArgumentError:
                 # This usually happens on join tables with no PKs
-                logger.info('Unable to create table class for table "%s"')
+                logger.info('Unable to create table class for table "{}"'.format(table_name))
                 return None
 
 

@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 from contextlib import contextmanager
+from functools import partial
+from navmazing import NavigateToAttribute
+
 from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Input, Region, SplitTable, Table, fill, flash, paginator, toolbar
+from cfme.web_ui import (
+    Input, Region, Table, fill, flash, paginator, toolbar, match_location)
 from utils import version
 from utils.log import logger
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 
@@ -20,22 +26,36 @@ buttons = Region(
     )
 )
 
-
+request_table = Table('//*[@id="list_grid"]/table')
 fields = Region(
     locators=dict(
         reason=Input("reason"),
-        request_list={
-            version.LOWEST: SplitTable(
-                ('//*[@id="list_grid"]//table[contains(@class, "hdr")]/tbody', 1),
-                ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1)),
-            "5.5.0.8": Table('//*[@id="list_grid"]/table'),
-        }
+        request_list=request_table
     )
 )
 
+match_page = partial(match_location, controller='miq_request', title='Requests')
+
+
+# TODO Refactor these module methods and their callers for a proper request class
+class Request(Navigatable):
+    def __init__(self, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
+
+
+@navigator.register(Request, 'All')
+class RequestAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def am_i_here(self):
+        return match_page(summary='Requests')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.navigation.select('Services', 'Requests')
+
 
 def reload():
-    toolbar.select('Reload')
+    toolbar.refresh()
 
 
 def approve(reason, cancel=False):
@@ -137,6 +157,7 @@ def wait_for_request(cells, partial_check=False):
         cells: A dict of cells use to identify the request row to inspect in the
             :py:attr:`request_list` Table. See :py:meth:`cfme.web_ui.Table.find_rows_by_cells`
             for more.
+        partial_check: If to use the ``in`` operator rather than ``==`` in find_rows_by_cells().
 
     Usage:
 
@@ -154,7 +175,6 @@ def wait_for_request(cells, partial_check=False):
         wait_for(wait_for_request, [cells], num_sec=600)
 
     Raises:
-        AssertionError: if the matched request has status 'Error'
         RequestException: if multiple matching requests were found
 
     Returns:
@@ -206,7 +226,7 @@ def find_request(cells):
         cells: Search data for the requests table.
     Returns: Success of the action.
     """
-    sel.force_navigate("services_requests")
+    navigate_to(Request, 'All')
     for page in paginator.pages():
         try:
             # found the row!
@@ -230,7 +250,7 @@ def go_to_request(cells, partial_check=False):
         cells: Search data for the requests table.
     Returns: Success of the action.
     """
-    sel.force_navigate("services_requests")
+    navigate_to(Request, 'All')
     for page in paginator.pages():
         try:
             # found the row!

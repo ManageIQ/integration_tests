@@ -382,6 +382,7 @@ def check_pr(pr):
 
     check_status(pr)
 
+
 if __name__ == "__main__":
     if docker_conf['pr_enabled']:
 

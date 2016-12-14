@@ -1,6 +1,6 @@
 """``setup_provider`` fixture
 
-In test modules paramatrized with :py:func:`utils.testgen.provider_by_type` (should be
+In test modules paramatrized with :py:func:`utils.testgen.providers_by_class` (should be
 just about any module that needs a provider to run its tests), this fixture will set up
 the single provider needed to run that test.
 
@@ -110,8 +110,8 @@ def template(template_location, provider):
     pytest.skip('Template not available')
 
 
-def _small_template(provider):
-    template = provider.data.get('small_template', None)
+def _get_template(provider, template_type_name):
+    template = provider.data.get(template_type_name, None)
     if template:
         if not TEMPLATES:
             # Same as couple of lines above
@@ -121,36 +121,39 @@ def _small_template(provider):
             if template in templates:
                 return template
     else:
-        pytest.skip('No small_template for provider {}'.format(provider.key))
+        pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))
     logger.info("Wanted template %s on %s but it is not there!", template, provider.key)
     pytest.skip('Template not available')
 
 
 @pytest.fixture(scope="function")
 def small_template(provider):
-    return _small_template(provider)
+    return _get_template(provider, 'small_template')
 
 
 @pytest.fixture(scope="module")
 def small_template_modscope(provider):
-    return _small_template(provider)
+    return _get_template(provider, 'small_template')
 
 
 @pytest.fixture(scope="function")
 def full_template(provider):
-    template = provider.data.get('full_template', {})
-    if template:
-        if not TEMPLATES:
-            # Same as couple of lines above
-            return template
-        templates = TEMPLATES.get(provider.key, None)
-        if templates is not None:
-            if template['name'] in templates:
-                return template
-    else:
-        pytest.skip('No full_template for provider {}'.format(provider.key))
-    logger.info("Wanted template %s on %s but it is not there!", template, provider.key)
-    pytest.skip('Template not available')
+    return _get_template(provider, 'full_template')
+
+
+@pytest.fixture(scope="module")
+def full_template_modscope(provider):
+    return _get_template(provider, 'full_template')
+
+
+@pytest.fixture(scope="function")
+def big_template(provider):
+    return _get_template(provider, 'big_template')
+
+
+@pytest.fixture(scope="module")
+def big_template_modscope(provider):
+    return _get_template(provider, 'big_template')
 
 
 @pytest.fixture(scope="function")

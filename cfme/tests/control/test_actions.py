@@ -13,13 +13,15 @@ Required YAML keys:
 import fauxfactory
 import pytest
 
-import mgmtsystem
-
+from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
-from cfme.control import explorer
+from cfme.control.explorer import actions, policies, policy_profiles
 from cfme.configure import tasks
 from cfme.configure.tasks import Tasks
 from cfme.infrastructure import host
+from cfme.services import requests
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import toolbar as tb
 from datetime import datetime
 from fixtures.pytest_store import store
@@ -28,6 +30,7 @@ from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.conf import cfme_data
+from utils.generators import random_vm_name
 from utils.log import logger
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
@@ -89,7 +92,7 @@ pytestmark = [
     pytest.mark.meta(blockers=[
         BZ(
             1149128,
-            unblock=lambda provider: not isinstance(provider.mgmt, mgmtsystem.scvmm.SCVMMSystem))
+            unblock=lambda provider: not provider.one_of(SCVMMProvider))
     ]),
     pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
     pytest.mark.tier(2),
@@ -104,7 +107,7 @@ def get_vm_object(vm_name):
         vm_name: VM name
 
     Returns:
-        If found, :py:class:`utils.api.Entity`
+        If found, returns a REST object
         If not, `None`
     """
     try:
@@ -115,7 +118,7 @@ def get_vm_object(vm_name):
 
 @pytest.fixture(scope="module")
 def vm_name(provider):
-    return "long-test_act-{}-{}".format(provider.key, fauxfactory.gen_alpha().lower())
+    return random_vm_name("action", max_length=16)
 
 
 def set_host_credentials(request, provider, vm):
@@ -154,8 +157,7 @@ def local_setup_provider(request, setup_provider_modscope, provider):
             pass
 
 
-@pytest.fixture(scope="module")
-def vm(request, provider, local_setup_provider, small_template_modscope, vm_name):
+def _get_vm(request, provider, template_name, vm_name):
     if provider.type == "rhevm":
         kwargs = {"cluster": provider.data["default_cluster"]}
     elif provider.type == "virtualcenter":
@@ -174,7 +176,7 @@ def vm(request, provider, local_setup_provider, small_template_modscope, vm_name
         deploy_template(
             provider.key,
             vm_name,
-            template_name=small_template_modscope,
+            template_name=template_name,
             allow_skip="default",
             power_on=True,
             **kwargs
@@ -217,6 +219,16 @@ def vm(request, provider, local_setup_provider, small_template_modscope, vm_name
     )[0]
 
     return VMWrapper(provider, vm_name, api)
+
+
+@pytest.fixture(scope="module")
+def vm(request, provider, local_setup_provider, small_template_modscope, vm_name):
+    return _get_vm(request, provider, small_template_modscope, vm_name)
+
+
+@pytest.fixture(scope="module")
+def vm_big(request, provider, local_setup_provider, big_template_modscope, vm_name):
+    return _get_vm(request, provider, big_template_modscope, vm_name)
 
 
 @pytest.fixture(scope="module")
@@ -297,12 +309,28 @@ def vm_crud_refresh(vm_crud, provider):
 @pytest.yield_fixture(scope="module")
 def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, provider):
     """ Takes care of setting the appliance up for testing """
-    policy = explorer.VMControlPolicy(
+    policy = policies.VMControlPolicy(
         policy_name,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name)
     )
     policy.create()
-    policy_profile = explorer.PolicyProfile(policy_profile_name, policies=[policy])
+    policy_profile = policy_profiles.PolicyProfile(policy_profile_name, policies=[policy])
+    policy_profile.create()
+    yield policy
+    policy_profile.delete()
+    policy.delete()
+
+
+@pytest.yield_fixture(scope="module")
+def policy_for_testing_for_vm_big(
+        automate_role_set, vm_big, policy_name, policy_profile_name, provider):
+    """ Takes care of setting the appliance up for testing """
+    policy = policies.VMControlPolicy(
+        policy_name,
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_big.name)
+    )
+    policy.create()
+    policy_profile = policy_profiles.PolicyProfile(policy_profile_name, policies=[policy])
     policy_profile.create()
     yield policy
     policy_profile.delete()
@@ -313,6 +341,14 @@ def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, 
 def assign_policy_for_testing(vm, policy_for_testing, provider, policy_profile_name):
     provider.assign_policy_profiles(policy_profile_name)
     yield policy_for_testing
+    provider.unassign_policy_profiles(policy_profile_name)
+
+
+@pytest.yield_fixture(scope="module")
+def assign_policy_for_testing_vm_big(
+        vm_big, policy_for_testing_for_vm_big, provider, policy_profile_name):
+    provider.assign_policy_profiles(policy_profile_name)
+    yield policy_for_testing_for_vm_big
     provider.unassign_policy_profiles(policy_profile_name)
 
 
@@ -499,7 +535,7 @@ def test_action_create_snapshot_and_delete_last(
         pytest.skip("This provider does not support snapshots yet!")
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
-    snapshot_create_action = explorer.Action(
+    snapshot_create_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
@@ -542,7 +578,7 @@ def test_action_create_snapshots_and_delete_them(
     """
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
-    snapshot_create_action = explorer.Action(
+    snapshot_create_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
@@ -595,7 +631,7 @@ def test_action_initiate_smartstate_analysis(
         test_flag: actions, provision
     """
     # Set host credentials for VMWare
-    if isinstance(vm.provider, mgmtsystem.virtualcenter.VMWareSystem):
+    if vm.provider.one_of(VMwareProvider):
         set_host_credentials(request, vm.provider, vm)
 
     # Set up the policy and prepare finalizer
@@ -694,7 +730,7 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refr
            for tag in vm.crud.get_tags()):
         vm.crud.remove_tag(("Service Level", "Gold"))
 
-    tag_assign_action = explorer.Action(
+    tag_assign_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Service Level", "Gold")}
@@ -736,7 +772,7 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
                for tag in vm.crud.get_tags()):
             vm.crud.remove_tag(("Service Level", "Gold"))
 
-    tag_unassign_action = explorer.Action(
+    tag_unassign_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
         action_values={"cat_service_level": True}
@@ -760,3 +796,23 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
         )
     except TimedOutError:
         pytest.fail("Tags were not unassigned!")
+
+
+@pytest.mark.meta(blockers=[1381255])
+@pytest.mark.uncollectif(lambda provider: provider.type != "virtualcenter")
+def test_action_cancel_clone(request, provider, assign_policy_for_testing_vm_big, vm_big):
+    """This test checks if 'Cancel vCenter task' action works.
+    For this test we need big template otherwise CFME won't have enough time
+    to cancel the task https://bugzilla.redhat.com/show_bug.cgi?id=1383372#c9
+    """
+    assign_policy_for_testing_vm_big.assign_events("VM Clone Start")
+    assign_policy_for_testing_vm_big.assign_actions_to_event(
+        "VM Clone Start", ["Cancel vCenter Task"])
+    clone_vm_name = "{}-clone".format(vm_big.name)
+    request.addfinalizer(lambda: assign_policy_for_testing_vm_big.assign_events())
+    request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider))
+    vm_big.crud.clone_vm(fauxfactory.gen_email(), "first", "last", clone_vm_name, "VMware")
+    cells = {"Description": clone_vm_name}
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+        fail_func=requests.reload, num_sec=4000, delay=20)
+    assert row.status.text == "Error"

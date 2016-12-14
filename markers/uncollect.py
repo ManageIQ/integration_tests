@@ -80,6 +80,9 @@ def uncollectif(item):
 
         try:
             values = extract_fixtures_values(item)
+            # The test has already been uncollected
+            if arg_names and not values:
+                return
             args = [values[arg] for arg in arg_names]
         except KeyError:
             missing_argnames = list(set(arg_names) - set(item._request.funcargnames))

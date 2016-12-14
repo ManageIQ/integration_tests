@@ -90,7 +90,7 @@ def catalog_item(config_manager, dialog, catalog):
                                display_in=True,
                                catalog=catalog,
                                dialog=dialog,
-                               provider=provider,
+                               provider=config_manager_obj,
                                provider_type=provider_type,
                                config_template=template)
     return catalog_item
@@ -104,8 +104,8 @@ def test_order_catalog_item(catalog_item, request):
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}

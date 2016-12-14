@@ -1,9 +1,14 @@
+# -*- coding: utf-8 -*-
+from navmazing import NavigateToSibling, NavigateToAttribute
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+
 from copy import copy
 from functools import partial
 from xml.sax.saxutils import quoteattr
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui.menu import nav
+from cfme.web_ui import match_location, summary_title
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
@@ -16,67 +21,21 @@ from collections import Mapping
 import re
 from utils.log import logger
 from utils import classproperty, pretty
-from utils.wait import wait_for
+
 
 datastore_tree = partial(accordion.tree, "Datastore", "Datastore")
 cfg_btn = partial(tb.select, 'Configuration')
 
 
-def datastore_checkbox(name):
-    return "//input[@type='checkbox' and ../../td[normalize-space(.)={}]]".format(quoteattr(name))
-
-
-def table_select(name):
-    cb = datastore_checkbox(name)
-    wait_for(sel.is_displayed, [cb], num_sec=5, delay=0.2)
-    sel.check(datastore_checkbox(name))
-
-
-def open_order_dialog_func(_):
-    datastore_tree()
-    cfg_btn("Edit Priority Order of Domains")
-
-
-nav.add_branch(
-    'automate_explorer',
-    {
-        'automate_explorer_tree_path':
-        [lambda context:
-            context.tree_item.navigate_tree() if context.tree_item is not None
-            else datastore_tree(),
-         {
-             'automate_explorer_table_select':
-             [lambda ctx: table_select(ctx['table_item'].name_in_table),
-              {
-                  'automate_explorer_edit':
-                  lambda context: context.tree_item.nav_edit(),
-                  'automate_explorer_delete':
-                  lambda _: cfg_btn('Remove selected Items', invokes_alert=True)}],
-
-             'automate_explorer_namespace_new': lambda _: cfg_btn('Add a New Namespace'),
-             'automate_explorer_domain_new': lambda _: cfg_btn('Add a New Domain'),
-             'automate_explorer_class_new': lambda _: cfg_btn('Add a New Class'),
-             "automate_explorer_domain_edit": lambda _: cfg_btn("Edit this Domain"),
-             'automate_explorer_method_edit': lambda _: cfg_btn('Edit this Method'),
-             'automate_explorer_instance_edit': lambda _: cfg_btn('Edit this Instance'),
-             'automate_explorer_methods': [lambda _: select_tab('Methods'),
-              {
-                  'automate_explorer_method_new': lambda _: cfg_btn('Add a New Method'),
-                  'automate_explorer_method_table_select':
-                  lambda ctx: table_select(ctx['table_item'].name_in_table)}],
-
-             'automate_explorer_instances': [lambda _: select_tab('Instances'),
-              {
-                  'automate_explorer_instance_new': lambda _: cfg_btn('Add a New Instance'),
-                  'automate_explorer_instance_table_select':
-                  lambda ctx: table_select(ctx['table_item'].name_in_table)}],
-
-             'automate_explorer_schema': [lambda _: select_tab("Schema"),
-             {
-                 'automate_explorer_schema_edit': lambda _: cfg_btn("Edit selected Schema")
-             }]}],
-        "automate_explorer_domain_order": open_order_dialog_func,
-    })
+def table_click(name, type):
+    try:
+        sel.click(
+            (
+                '//tr[.//*[(self::span or self::i) and contains(@class, {})]]'
+                '/td[not(contains(@class, "narrow")) and normalize-space(.)={}]'
+            ).format(quoteattr(type), quoteattr(name)))
+    except sel.NoSuchElementException:
+        raise exceptions.CandidateNotFound({'type': type, 'name': name})
 
 
 class TreeNode(pretty.Pretty):
@@ -101,7 +60,7 @@ class TreeNode(pretty.Pretty):
 
     def exists(self):
         try:
-            sel.force_navigate('automate_explorer_tree_path', context={'tree_item': self})
+            navigate_to(self, 'Details')
         except exceptions.CandidateNotFound:
             return False
         else:
@@ -149,7 +108,7 @@ class CopiableTreeNode(TreeNode):
         self._class_name = value
 
     def _open_copy_dialog(self):
-        sel.force_navigate("automate_explorer_tree_path", context={"tree_item": self})
+        navigate_to(self, 'Details')
         cfg_btn("Copy this {}".format(self.class_name))
 
     # TODO: Make possible change `override` (did not do that because of pop-up tree)
@@ -207,12 +166,13 @@ class CopiableTreeNode(TreeNode):
         return _change_parent_path_until_namespace(self, domain)
 
 
-class Domain(TreeNode, Updateable):
+class Domain(Navigatable, TreeNode, Updateable):
     form = Form(fields=[('name', Input('ns_name')),
                         ('description', Input('ns_description')),
                         ('enabled', Input('ns_enabled'))])
 
-    def __init__(self, name=None, description=None, enabled=False):
+    def __init__(self, name=None, description=None, enabled=False, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.parent = None
         self.description = description
@@ -221,19 +181,19 @@ class Domain(TreeNode, Updateable):
     def create(self, cancel=False, allow_duplicate=False):
         if self.exists() and not allow_duplicate:
             return
-        sel.force_navigate('automate_explorer_domain_new', context={'tree_item': self.parent})
+        navigate_to(self, 'Add')
         fill(self.form, {'name': self.name,
                          'description': self.description,
                          'enabled': self.enabled},
              action=form_buttons.cancel if cancel else form_buttons.add)
 
     def update(self, updates):
-        sel.force_navigate("automate_explorer_domain_edit", context={"tree_item": self})
+        navigate_to(self, 'Edit')
         fill(self.form, updates, action=form_buttons.save)
         flash.assert_no_errors()
 
     def delete(self, cancel=False):
-        sel.force_navigate("automate_explorer_tree_path", context={"tree_item": self})
+        navigate_to(self, 'Details')
         cfg_btn("Remove this Domain", invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_message_match('Automate Domain "{}": Delete successful'.format(
@@ -275,12 +235,12 @@ class Domain(TreeNode, Updateable):
 
     @property
     def is_locked(self):
-        sel.force_navigate("automate_explorer_tree_path", context={"tree_item": self})
+        navigate_to(self, 'Details')
         return (not self._nav_orig()[0]) and self._nav_locked()[0]
 
     @property
     def is_enabled(self):
-        sel.force_navigate("automate_explorer_domain_edit", context={"tree_item": self})
+        navigate_to(self, 'Edit')
         self.enabled = sel.element(self.form.enabled).is_selected()
         return self.enabled
 
@@ -294,6 +254,52 @@ class Domain(TreeNode, Updateable):
             return cls._default_domain
 
 
+@navigator.register(Domain, 'Add')
+class DomainNew(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
+
+    def step(self):
+        accordion.tree('Datastore', 'Datastore')
+        cfg_btn('Add a New Domain')
+
+    def am_i_here(self):
+        return match_location(summary='Adding a new Automate Domain')
+
+
+@navigator.register(Domain, 'Order')
+class DomainOrder(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
+
+    def step(self):
+        accordion.tree('Datastore', 'Datastore')
+        cfg_btn('Edit Priority Order of Domains')
+
+    def am_i_here(self):
+        return match_location(summary='Datastore') and sel.is_displayed('#seq_fields')
+
+
+@navigator.register(Domain, 'Details')
+class DomainDetails(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'AutomateExplorer')
+
+    def step(self):
+        self.obj.navigate_tree()
+
+    def am_i_here(self):
+        return match_location(summary='Automate Domain "{}"'.format(self.obj.name))
+
+
+@navigator.register(Domain, 'Edit')
+class DomainEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Domain')
+
+    def am_i_here(self):
+        return match_location(summary='Editing Automate Domain "{}"'.format(self.obj.name))
+
+
 domain_order_selector = UpDownSelect(
     "select#seq_fields",
     "//img[@alt='Move selected fields up']",
@@ -301,7 +307,7 @@ domain_order_selector = UpDownSelect(
 
 
 def get_domain_order():
-    sel.force_navigate("automate_explorer_domain_order")
+    navigate_to(Domain, 'Order')
     return domain_order_selector.get_items()
 
 
@@ -315,7 +321,7 @@ def set_domain_order(items):
     sel.click(form_buttons.save)
 
 
-class Namespace(TreeNode, Updateable):
+class Namespace(Navigatable, TreeNode, Updateable):
     form = Form(fields=[('name', "//*[@id='ns_name']"),
                         ('description', "//*[@id='ns_description']")])
 
@@ -344,7 +350,8 @@ class Namespace(TreeNode, Updateable):
         else:
             return ns
 
-    def __init__(self, name=None, description=None, parent=None, domain=None):
+    def __init__(self, name=None, description=None, parent=None, domain=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.description = description
         self.parent = parent or (domain if isinstance(domain, Domain) else Domain.default)
@@ -354,7 +361,7 @@ class Namespace(TreeNode, Updateable):
             self.parent.create()
         if self.exists() and not allow_duplicate:
             return
-        sel.force_navigate('automate_explorer_namespace_new', context={'tree_item': self.parent})
+        navigate_to(self, 'Add')
         form_data = {'name': self.name,
                      'description': self.description}
         try:
@@ -366,8 +373,7 @@ class Namespace(TreeNode, Updateable):
                 sel.click(form_buttons.cancel)
 
     def update(self, updates, cancel=False):
-        sel.force_navigate('automate_explorer_edit', context={'tree_item': self.parent,
-                                                              'table_item': self})
+        navigate_to(self, 'Edit')
         form_data = {'name': updates.get('name') or None,
                      'description': updates.get('description') or None}
         fill(self.form, form_data, action=form_buttons.cancel if cancel else form_buttons.save)
@@ -375,13 +381,8 @@ class Namespace(TreeNode, Updateable):
                                      updates.get('name', self.name)))
 
     def delete(self, cancel=False):
-        sel.force_navigate("automate_explorer_table_select", context={'tree_item': self.parent,
-                                                                      'table_item': self})
-        dp_length = 2
-        if len(self.path) > dp_length:
-            cfg_btn('Remove selected Items', invokes_alert=True)
-        else:
-            cfg_btn('Remove Namespaces', invokes_alert=True)
+        navigate_to(self, 'Details')
+        cfg_btn('Remove this Namespace', invokes_alert=True)
         sel.handle_alert(cancel)
         del_msg = 'Automate Namespace "{}": Delete successful'.format(self.description)
         flash.assert_success_message(del_msg)
@@ -391,7 +392,40 @@ class Namespace(TreeNode, Updateable):
                                             self.name, self.path)
 
 
-class Class(CopiableTreeNode, Updateable):
+@navigator.register(Namespace, 'Add')
+class NamespaceNew(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'Details')
+
+    def step(self):
+        cfg_btn('Add a New Namespace')
+
+    def am_i_here(self):
+        return match_location(summary='Adding a new Automate Namespace')
+
+
+@navigator.register(Namespace, 'Details')
+class NamespaceDetails(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'Details')
+
+    def step(self):
+        table_click(self.obj.name, 'ae_namespace')
+
+    def am_i_here(self):
+        return match_location(summary='Automate Namespace "{}"'.format(self.obj.name))
+
+
+@navigator.register(Namespace, 'Edit')
+class NamespaceEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Namespace')
+
+    def am_i_here(self):
+        return match_location(summary='Editing Automate Namespace "{}"'.format(self.obj.name))
+
+
+class Class(Navigatable, CopiableTreeNode, Updateable):
     """Represents a Class in the CFME ui.
 
     Providing a setup_schema dict, creates the Class with teh specified schema
@@ -404,7 +438,8 @@ class Class(CopiableTreeNode, Updateable):
                         ('inherits_from_select', Select("//select[@name='inherits_from']"))])
 
     def __init__(self, name=None, display_name=None, description=None, inherits_from=None,
-                 namespace=None, setup_schema=None):
+                 namespace=None, setup_schema=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.display_name = display_name
         self.description = description
@@ -448,7 +483,7 @@ class Class(CopiableTreeNode, Updateable):
             self.parent.create()
         if self.exists() and not allow_duplicate:
             return
-        sel.force_navigate("automate_explorer_class_new", context={"tree_item": self.namespace})
+        navigate_to(self, 'Add')
         fill(self.form, {'name_text': self.name,
                          'description_text': self.description,
                          'display_name_text': self.display_name,
@@ -460,8 +495,7 @@ class Class(CopiableTreeNode, Updateable):
             self.edit_schema(add_fields=self.setup_schema)
 
     def update(self, updates, cancel=False):
-        sel.force_navigate("automate_explorer_edit", context={"tree_item": self.parent,
-                                                     "table_item": self})
+        navigate_to(self, 'Edit')
         update_values = {
             'name_text': updates.get('name'),
             'description_text': updates.get('description'),
@@ -475,8 +509,8 @@ class Class(CopiableTreeNode, Updateable):
             action=form_buttons.cancel if cancel else form_buttons.save)
 
     def delete(self, cancel=False):
-        sel.force_navigate("automate_explorer_delete", context={'tree_item': self.parent,
-                                                                'table_item': self})
+        navigate_to(self, 'Details')
+        cfg_btn('Remove this Class', invokes_alert=True)
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
 
@@ -553,7 +587,7 @@ class Class(CopiableTreeNode, Updateable):
         'add_field_btn': "//img[@alt='Equal green']"})
 
     def edit_schema(self, add_fields=None, remove_fields=None):
-        sel.force_navigate("automate_explorer_schema_edit", context={'tree_item': self})
+        navigate_to(self, 'SchemaEdit')
         for remove_field in remove_fields or []:
             f = remove_field.get_form()
             fill(f, {}, action=f.remove_entry_button, action_always=True)
@@ -579,7 +613,52 @@ class Class(CopiableTreeNode, Updateable):
         flash.assert_success_message('Schema for Automate Class "{}" was saved'.format(self.name))
 
 
-class Method(CopiableTreeNode, Updateable):
+@navigator.register(Class, 'Add')
+class ClassNew(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'Details')
+
+    def step(self):
+        cfg_btn('Add a New Class')
+
+    def am_i_here(self):
+        return match_location(summary='Adding a new Class')
+
+
+@navigator.register(Class, 'Details')
+class ClassDetails(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'Details')
+
+    def step(self):
+        table_click(self.obj.display_name or self.obj.name, 'ae_class')
+
+    def am_i_here(self):
+        return match_location(summary='Automate Class "{}"'.format(self.obj.name_in_table))
+
+
+@navigator.register(Class, 'Edit')
+class ClassEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Class')
+
+    def am_i_here(self):
+        return match_location(summary='Editing Class "{}"'.format(self.obj.name))
+
+
+@navigator.register(Class, 'SchemaEdit')
+class ClassSchemaEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        select_tab('Schema')
+        cfg_btn('Edit selected Schema')
+
+    def am_i_here(self):
+        return match_location(summary='Editing Class Schema "{}"'.format(self.obj.name))
+
+
+class Method(Navigatable, CopiableTreeNode, Updateable):
     """Represents a Method in the CFME ui.  `Display Name` is not
        supported (it causes the name to be displayed differently in
        different places in the UI). """
@@ -592,9 +671,12 @@ class Method(CopiableTreeNode, Updateable):
                 ('data_text', ScriptBox(
                     ta_locator="//textarea[@id='method_data' or @id='cls_method_data']"))])
 
-    def __init__(self, name=None, display_name=None, location=None, data=None, cls=None):
+    def __init__(
+            self, name=None, display_name=None, location=None, data=None, cls=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
-        # self.display_name = display_name
+        # TODO: display name
+        self.display_name = None
         self.location = location
         self.data = data
         self.cls = cls
@@ -612,7 +694,7 @@ class Method(CopiableTreeNode, Updateable):
             self.parent.create()
         if self.exists() and not allow_duplicate:
             return
-        sel.force_navigate("automate_explorer_method_new", context={'tree_item': self.cls})
+        navigate_to(self, 'Add')
         fill(self.form, {'name_text': self.name,
                          # 'display_name_text': self.display_name,
                          'data_text': self.data},
@@ -625,7 +707,7 @@ class Method(CopiableTreeNode, Updateable):
             raise
 
     def update(self, updates, cancel=False):
-        sel.force_navigate("automate_explorer_method_edit", context={"tree_item": self})
+        navigate_to(self, 'Edit')
         fill(self.form, {'name_text': updates.get('name'),
                          'description_text': updates.get('description'),
                          'data_text': updates.get('data')})
@@ -638,10 +720,51 @@ class Method(CopiableTreeNode, Updateable):
             sel.click(form_buttons.cancel)
 
     def delete(self, cancel=False):
-        sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})
+        navigate_to(self, 'Details')
         cfg_btn('Remove this Method', invokes_alert=True)
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
+
+
+@navigator.register(Method, 'Add')
+class MethodNew(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'Details')
+
+    def step(self):
+        select_tab('Methods')
+        cfg_btn('Add a New Method')
+
+    def am_i_here(self):
+        return match_location(summary='Adding a new Automate Method')
+
+
+@navigator.register(Method, 'Details')
+class MethodDetails(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'Details')
+
+    def step(self):
+        select_tab('Methods')
+        table_click(self.obj.display_name or self.obj.name, 'ae_method')
+
+    def am_i_here(self):
+        if not match_location():
+            return False
+        summary = summary_title()
+        return (
+            summary.startswith('Automate Method [{} - Updated'.format(self.obj.display_name)) or
+            summary.startswith('Automate Method [{} - Updated'.format(self.obj.name))
+        )
+
+
+@navigator.register(Method, 'Edit')
+class MethodEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Method')
+
+    def am_i_here(self):
+        return match_location(summary='Editing Automate Method "{}"'.format(self.obj.name))
 
 
 class InstanceFieldsRow(pretty.Pretty):
@@ -720,7 +843,7 @@ def _fill_ifr_str(ifr, s):
     return fill(ifr, {"value": s})
 
 
-class Instance(CopiableTreeNode, Updateable):
+class Instance(Navigatable, CopiableTreeNode, Updateable):
     """Represents a Instance in the CFME ui."""
 
     form = Form(
@@ -729,7 +852,10 @@ class Instance(CopiableTreeNode, Updateable):
                 ('description_text', "//input[contains(@name,'inst_description')]"),
                 ('values', InstanceFields())])
 
-    def __init__(self, name=None, display_name=None, description=None, values=None, cls=None):
+    def __init__(
+            self, name=None, display_name=None, description=None, values=None, cls=None,
+            appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.description = description
         self.values = values
@@ -765,7 +891,7 @@ class Instance(CopiableTreeNode, Updateable):
             self.parent.create()
         if self.exists() and not allow_duplicate:
             return
-        sel.force_navigate("automate_explorer_instance_new", context={'tree_item': self.cls})
+        navigate_to(self, 'Add')
         fill(self.form, {'name_text': self.name,
                          'display_name_text': self.display_name,
                          'description_text': self.description,
@@ -779,7 +905,7 @@ class Instance(CopiableTreeNode, Updateable):
             raise
 
     def update(self, updates, cancel=False):
-        sel.force_navigate("automate_explorer_instance_edit", context={"tree_item": self})
+        navigate_to(self, 'Edit')
         update_values = {
             'name_text': updates.get('name'),
             'description_text': updates.get('description'),
@@ -792,7 +918,48 @@ class Instance(CopiableTreeNode, Updateable):
             action=form_buttons.cancel if cancel else form_buttons.save)
 
     def delete(self, cancel=False):
-        sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})
+        navigate_to(self, 'Details')
         cfg_btn('Remove this Instance', invokes_alert=True)
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
+
+
+@navigator.register(Instance, 'Add')
+class InstanceNew(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'Details')
+
+    def step(self):
+        select_tab('Instances')
+        cfg_btn('Add a New Instance')
+
+    def am_i_here(self):
+        return match_location(summary='Adding a new Automate Instance')
+
+
+@navigator.register(Instance, 'Details')
+class InstanceDetails(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('parent', 'Details')
+
+    def step(self):
+        select_tab('Instances')
+        table_click(self.obj.name_in_table, 'ae_instance')
+
+    def am_i_here(self):
+        if not match_location():
+            return False
+        summary = summary_title()
+        return (
+            summary.startswith('Automate Instance [{} - Updated'.format(self.obj.display_name)) or
+            summary.startswith('Automate Instance [{} - Updated'.format(self.obj.name))
+        )
+
+
+@navigator.register(Instance, 'Edit')
+class InstanceEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn('Edit this Instance')
+
+    def am_i_here(self):
+        return match_location(summary='Editing Automate Instance "{}"'.format(self.obj.name))

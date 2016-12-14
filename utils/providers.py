@@ -1,56 +1,424 @@
-"""Helper functions related to the creation and destruction of providers
+""" Helper functions related to the creation, listing, filtering and destruction of providers
 
-To quickly add all providers::
+The functions in this module that require the 'filters' parameter, such as list_providers,
+setup_a_provider etc depend on a (by default global) dict of filters by default.
+If you are writing tests or fixtures, you want to depend on those functions as de facto gateways.
 
-    setup_providers(validate=False)
+The rest of the functions, such as get_mgmt, get_crud etc ignore this global dict and will provide
+you with whatever you ask for with no limitations.
 
+The main clue to know what is limited by the filters and what isn't is the 'filters' parameter.
 """
+import operator
 import random
-from collections import Mapping
+import six
+from collections import Mapping, OrderedDict
+from copy import copy
 
-import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
-from cfme.web_ui import Quadicon, paginator
 from cfme.common.provider import BaseProvider
-from cfme.containers import provider as container_providers  # NOQA
-from cfme.cloud import provider as cloud_providers  # NOQA
-from cfme.infrastructure import provider as infrastructure_providers  # NOQA
-from cfme.middleware import provider as middleware_providers  # NOQA
-from fixtures.prov_filter import filtered
-from utils import conf
-from utils.log import logger, perflog
 
+from cfme.containers import provider as containers_providers # NOQA
+from cfme.cloud import provider as cloud_providers # NOQA
+from cfme.infrastructure import provider as infrastructure_providers # NOQA
+from cfme.middleware import provider as middleware_providers # NOQA
+
+from cfme.exceptions import UnknownProviderType
+from cfme.infrastructure.provider import InfraProvider
+from utils import conf, version
+from utils.log import logger
 
 providers_data = conf.cfme_data.get("management_systems", {})
+# Dict of active provider filters {name: ProviderFilter}
+global_filters = {}
 
-# This is a global variable. Not the most ideal way to do things but how can we track bad providers?
-problematic_providers = set([])
 
+class ProviderFilter(object):
+    """ Filter used to obtain only providers matching given requirements
 
-def list_providers(allowed_types=None):
-    """ Returns list of providers of selected type from configuration.
-
-    @param allowed_types: Passed by partial(), see top of this file.
-    @type allowed_types: dict, list, set, tuple
+    Args:
+        keys: List of acceptable provider keys, all if `None`
+        categories: List of acceptable provider categories, all if `None`
+        types: List of acceptable provider types, all if `None`
+        required_fields: List of required fields, see :py:func:`providers_by_class`
+        restrict_version: Checks provider version in yamls if `True`
+        required_tags: List of tags that must be set in yamls
+        inverted: Inclusive if `False`, exclusive otherwise
+        conjunctive: If true, all subfilters are applied and all must match (default)
+                     If false (disjunctive), at least one of the subfilters must match
     """
-    if not allowed_types:
-        allowed_types = [
-            k2 for k in BaseProvider.type_mapping.values() for k2 in k.provider_types.keys()
-        ]
-    providers = []
-    for provider, data in providers_data.items():
-        provider_type = data.get("type", None)
-        if provider not in filtered:
-            continue
-        assert provider_type is not None, "Provider {} has no type specified!".format(provider)
-        if provider_type in allowed_types:
-            providers.append(provider)
+    _version_operator_map = OrderedDict([('>=', operator.ge),
+                                        ('<=', operator.le),
+                                        ('==', operator.eq),
+                                        ('!=', operator.ne),
+                                        ('>', operator.gt),
+                                        ('<', operator.lt)])
+
+    def __init__(self, keys=None, classes=None, required_fields=None, required_tags=None,
+                 required_flags=None, restrict_version=False, inverted=False, conjunctive=True):
+        self.keys = keys
+        self.classes = classes
+        self.required_fields = required_fields
+        self.required_tags = required_tags
+        self.required_flags = required_flags
+        self.restrict_version = restrict_version
+        self.inverted = inverted
+        self.conjunctive = conjunctive
+
+    def _filter_keys(self, provider):
+        """ Filters by provider keys """
+        if self.keys is None:
+            return None
+        return provider.key in self.keys
+
+    def _filter_classes(self, provider):
+        """ Filters by provider (base) classes """
+        if self.classes is None:
+            return None
+        return any([provider.one_of(prov_class) for prov_class in self.classes])
+
+    def _filter_required_fields(self, provider):
+        """ Filters by required yaml fields (specified usually during test parametrization) """
+        if self.required_fields is None:
+            return None
+        for field_or_fields in self.required_fields:
+            if isinstance(field_or_fields, tuple):
+                field_ident, field_value = field_or_fields
+            else:
+                field_ident, field_value = field_or_fields, None
+            if isinstance(field_ident, six.string_types):
+                if field_ident not in provider.data:
+                    return False
+                else:
+                    if field_value:
+                        if provider.data[field_ident] != field_value:
+                            return False
+            else:
+                o = provider.data
+                try:
+                    for field in field_ident:
+                        o = o[field]
+                    if field_value:
+                        if o != field_value:
+                            return False
+                except (IndexError, KeyError):
+                    return False
+        return True
+
+    def _filter_required_tags(self, provider):
+        """ Filters by required yaml tags """
+        prov_tags = provider.data.get('tags', [])
+        if self.required_tags is None:
+            return None
+        if set(self.required_tags) & set(prov_tags):
+            return True
+        return False
+
+    def _filter_required_flags(self, provider):
+        """ Filters by required yaml flags """
+        if self.required_flags is None:
+            return None
+        if self.required_flags:
+            test_flags = [flag.strip() for flag in self.required_flags]
+
+            defined_flags = conf.cfme_data.get('test_flags', '').split(',')
+            defined_flags = [flag.strip() for flag in defined_flags]
+
+            excluded_flags = provider.data.get('excluded_test_flags', '').split(',')
+            excluded_flags = [flag.strip() for flag in excluded_flags]
+
+            allowed_flags = set(defined_flags) - set(excluded_flags)
+
+            if set(test_flags) - allowed_flags:
+                logger.info("Filtering Provider %s out because it does not have the right flags, "
+                            "%s does not contain %s",
+                            provider.name, list(allowed_flags),
+                            list(set(test_flags) - allowed_flags))
+                return False
+        return True
+
+    def _filter_restricted_version(self, provider):
+        """ Filters by yaml version restriction; not applied if SSH is not available """
+        if self.restrict_version:
+            # TODO
+            # get rid of this since_version hotfix by translating since_version
+            # to restricted_version; in addition, restricted_version should turn into
+            # "version_restrictions" and it should be a sequence of restrictions with operators
+            # so that we can create ranges like ">= 5.6" and "<= 5.8"
+            version_restrictions = []
+            since_version = provider.data.get('since_version', None)
+            if since_version:
+                version_restrictions.append('>= {}'.format(since_version))
+            restricted_version = provider.data.get('restricted_version', None)
+            if restricted_version:
+                version_restrictions.append(restricted_version)
+            for restriction in version_restrictions:
+                for op, comparator in ProviderFilter._version_operator_map.items():
+                    # split string by op; if the split works, version won't be empty
+                    head, op, ver = restriction.partition(op)
+                    if not ver:  # This means that the operator was not found
+                        continue
+                    try:
+                        curr_ver = version.current_version()
+                    except:
+                        return True
+                    if not comparator(curr_ver, ver):
+                        return False
+                    break
+                else:
+                    raise Exception('Operator not found in {}'.format(restriction))
+        return None
+
+    def __call__(self, provider):
+        """ Applies this filter on a given provider
+
+        Usage:
+            pf = ProviderFilter('cloud_infra', categories=['cloud', 'infra'])
+            providers = list_providers([pf])
+            pf2 = ProviderFilter(
+                classes=[GCEProvider, EC2Provider], required_fields=['small_template'])
+            provider_keys = [prov.key for prov in list_providers([pf, pf2])]
+            ^ this will list keys of all GCE and EC2 providers
+            ...or...
+            pf = ProviderFilter(required_tags=['openstack', 'complete'])
+            pf_inverted = ProviderFilter(required_tags=['disabled'], inverted=True)
+            provider = new_setup_a_provider([pf, pf_inverted])
+            ^ this will setup a provider that has both the "openstack" and "complete" tags set
+              and at the same time does not have the "disabled" tag
+            ...or...
+            pf = ProviderFilter(keys=['rhevm34'], class=CloudProvider, conjunctive=False)
+            providers = list_providers([pf])
+            ^ this will list all providers that either have the 'rhevm34' key or are an instance
+              of the CloudProvider class and therefore are a cloud provider
+
+        Returns:
+            `True` if provider passed all checks and was not filtered out, `False` otherwise.
+            The result is opposite if the 'inverted' attribute is set to `True`.
+        """
+        keys_l = self._filter_keys(provider)
+        classes_l = self._filter_classes(provider)
+        fields_l = self._filter_required_fields(provider)
+        tags_l = self._filter_required_tags(provider)
+        flags_l = self._filter_required_flags(provider)
+        version_l = self._filter_restricted_version(provider)
+        results = [keys_l, classes_l, fields_l, tags_l, flags_l, version_l]
+        relevant_results = [res for res in results if res in [True, False]]
+        compiling_fn = all if self.conjunctive else any
+        # If all / any filters return true, the provider was not blocked (unless inverted)
+        if compiling_fn(relevant_results):
+            return not self.inverted
+        return self.inverted
+
+    def copy(self):
+        return copy(self)
+
+
+# Only providers without the 'disabled' tag
+global_filters['enabled_only'] = ProviderFilter(required_tags=['disabled'], inverted=True)
+# Only providers relevant for current appliance version (requires SSH access when used)
+global_filters['restrict_version'] = ProviderFilter(restrict_version=True)
+
+
+def list_providers(filters=None, use_global_filters=True):
+    """ Lists provider crud objects, global filter optional
+
+    Args:
+        filters: List if :py:class:`ProviderFilter` or None
+        use_global_filters: Will apply global filters as well if `True`, will not otherwise
+
+    Note: Requires the framework to be pointed at an appliance to succeed.
+
+    Returns: List of provider crud objects.
+    """
+    filters = filters or []
+    if use_global_filters:
+        filters = filters + global_filters.values()
+    providers = [get_crud(prov_key) for prov_key in providers_data]
+    for prov_filter in filters:
+        providers = filter(prov_filter, providers)
     return providers
 
 
-def get_mgmt(provider_key, providers=None, credentials=None):
+def list_providers_by_class(prov_class, use_global_filters=True):
+    """ Lists provider crud objects of a specific class (or its subclasses), global filter optional
+
+    Args:
+        prov_class: Provider class to apply for filtering
+        use_global_filters: See :py:func:`list_providers`
+
+    Note: Requires the framework to be pointed at an appliance to succeed.
+
+    Returns: List of provider crud objects.
     """
-    Provides a ``mgmtsystem`` object, based on the request.
+    pf = ProviderFilter(classes=[prov_class])
+    return list_providers(filters=[pf], use_global_filters=use_global_filters)
+
+
+def list_provider_keys(provider_type=None):
+    """ Lists provider keys from conf (yamls)
+
+    Args:
+        provider_type: Optional filtering by 'type' string (from yaml); disabled by default
+
+    Note: Doesn't require the framework to be pointed at an appliance to succeed.
+
+    Returns: List of provider keys (strings).
+    """
+    try:
+        all_keys = conf.cfme_data.management_systems.keys()
+    except:
+        all_keys = []
+
+    if provider_type:
+        filtered_keys = []
+        for key in all_keys:
+            if conf.cfme_data.management_systems[key].type == provider_type:
+                filtered_keys.append(key)
+        return filtered_keys
+    else:
+        return all_keys
+
+
+def setup_provider(provider_key, validate=True, check_existing=True):
+    provider = get_crud(provider_key)
+    provider.create(validate_credentials=True, validate_inventory=validate,
+                    check_existing=check_existing)
+    return provider
+
+
+def new_setup_a_provider(filters=None, use_global_filters=True, validate=True, check_existing=True):
+    """ Sets up a single provider robustly.
+
+    Does some counter-badness measures.
+
+    Args:
+        filters: List if :py:class:`ProviderFilter` or None; infra providers by default
+        use_global_filters: Will apply global filters as well if `True`, will not otherwise
+        validate: Whether to validate the provider.
+        check_existing: Whether to check if the provider already exists.
+    """
+    filters = filters or []
+
+    providers = list_providers(filters=filters, use_global_filters=use_global_filters)
+    if not providers:
+        raise Exception("All providers have been filtered out, cannot setup any providers")
+
+    # If there is a provider already set up matching the user's requirements, reuse it
+    for provider in providers:
+        if provider.exists:
+            return provider
+
+    # Activate the 'nonproblematic' filter to filter out problematic providers (if any)
+    if global_filters.get('problematic') is None:
+        global_filters['problematic'] = ProviderFilter(keys=[], inverted=True)
+
+    # If there are no non-problematic providers, reset the filter
+    nonproblematic_providers = list_providers(filters=filters)
+    if not nonproblematic_providers:
+        global_filters['problematic'].keys = []
+        store.terminalreporter.write_line(
+            "Reached the point where all possible providers forthis case are marked as bad. "
+            "Clearing the bad provider list for a fresh start and next chance.", yellow=True)
+    # Otherwise, make non-problematic the new cool
+    else:
+        providers = nonproblematic_providers
+
+    # If we have more than one provider, try to pick one that doesnt have the do_not_prefer flag set
+    if len(providers) > 1:
+        do_not_prefer_filter = ProviderFilter(required_fields=[("do_not_prefer", False)],
+                                              inverted=True)
+        # If we find any providers without the 'do_not_prefer' flag, add  the filter to the list
+        # of active filters and make preferred providers the new cool
+        preferred_providers = list_providers(filters=filters + [do_not_prefer_filter])
+        if preferred_providers:
+            filters.append(do_not_prefer_filter)
+            providers = preferred_providers
+
+    # Try to set up a nonexisting provider (return if successful, otherwise try another)
+    non_existing = [prov for prov in providers if not prov.exists]
+    random.shuffle(non_existing)  # Make the provider load even (long-term) by shuffling them around
+    for provider in non_existing:
+        try:
+            store.terminalreporter.write_line(
+                "Trying to set up provider {}\n".format(provider.key), green=True)
+            provider.create(validate_credentials=True, validate_inventory=validate,
+                            check_existing=check_existing)
+            return provider
+        except Exception as e:
+            # In case of a known provider error:
+            logger.exception(e)
+            message = "Provider {} is behaving badly, marking it as bad. {}: {}".format(
+                provider.key, type(e).__name__, str(e))
+            logger.warning(message)
+            store.terminalreporter.write_line(message + "\n", red=True)
+            global_filters['problematic'].keys.append(provider.key)
+            if provider.exists:
+                # Remove it in order to not explode on next calls
+                provider.delete(cancel=False)
+                provider.wait_for_delete()
+                message = "Provider {} was deleted because it failed to set up.".format(
+                    provider.key)
+                logger.warning(message)
+                store.terminalreporter.write_line(message + "\n", red=True)
+    else:
+        raise Exception("No providers could be set up matching the params")
+
+    return provider
+
+
+def setup_a_provider_by_class(prov_class=InfraProvider, validate=True, check_existing=True):
+    pf = ProviderFilter(classes=[prov_class])
+    return new_setup_a_provider(filters=[pf], validate=validate, check_existing=check_existing)
+
+
+# Replaced by setup_a_provider_by_class
+def setup_a_provider(prov_class="infra", prov_type=None, validate=True, check_existing=True):
+    prov_class = get_class_from_type(prov_type or prov_class)
+    return setup_a_provider_by_class(
+        prov_class=prov_class, validate=validate, check_existing=check_existing)
+
+
+def get_class_from_type(prov_type):
+    """ Serves to translate both provider types and categories to actual classes """
+    all_classes_map = BaseProvider.base_types.copy()
+    for base_type in BaseProvider.base_types.itervalues():
+        all_classes_map.update(base_type.provider_types)
+    try:
+        return all_classes_map[prov_type]
+    except KeyError:
+        raise UnknownProviderType("Unknown provider type: {}!".format(prov_type))
+
+
+def get_crud(provider_key):
+    """ Creates a Provider object given a management_system key in cfme_data.
+
+    Usage:
+        get_crud('ec2east')
+
+    Returns: A Provider object that has methods that operate on CFME
+    """
+    prov_config = providers_data[provider_key]
+    prov_type = prov_config.get('type')
+
+    return get_class_from_type(prov_type).from_config(prov_config, provider_key)
+
+
+def get_crud_by_name(provider_name):
+    """ Creates a Provider object given a management_system name in cfme_data.
+
+    Usage:
+        get_crud_by_name('My RHEV 3.6 Provider')
+
+    Returns: A Provider object that has methods that operate on CFME
+    """
+    for provider_key, provider_data in providers_data.items():
+        if provider_data.get("name") == provider_name:
+            return get_crud(provider_key)
+    raise NameError("Could not find provider {}".format(provider_name))
+
+
+def get_mgmt(provider_key, providers=None, credentials=None):
+    """ Provides a ``mgmtsystem`` object, based on the request.
 
     Args:
         provider_key: The name of a provider, as supplied in the yaml configuration files.
@@ -65,14 +433,16 @@ def get_mgmt(provider_key, providers=None, credentials=None):
     """
     if providers is None:
         providers = providers_data
+    # provider_key can also be provider_data for some reason
+    # TODO rename the parameter; might break things
     if isinstance(provider_key, Mapping):
-        provider = provider_key
+        provider_data = provider_key
     else:
-        provider = providers[provider_key]
+        provider_data = providers[provider_key]
 
     if credentials is None:
         # We need to handle the in-place credentials
-        credentials = provider['credentials']
+        credentials = provider_data['credentials']
         # If it is not a mapping, it most likely points to a credentials yaml (as by default)
         if not isinstance(credentials, Mapping):
             credentials = conf.credentials[credentials]
@@ -80,309 +450,13 @@ def get_mgmt(provider_key, providers=None, credentials=None):
 
     # Munge together provider dict and creds,
     # Let the provider do whatever they need with them
-    provider_kwargs = provider.copy()
+    provider_kwargs = provider_data.copy()
     provider_kwargs.update(credentials)
-    if isinstance(provider_key, basestring):
+    if isinstance(provider_key, six.string_types):
         provider_kwargs['provider_key'] = provider_key
     provider_kwargs['logger'] = logger
 
-    return _get_provider_class_by_type(provider['type']).mgmt_class(**provider_kwargs)
-
-
-def _get_provider_class_by_type(prov_type):
-    for cls in BaseProvider.type_mapping.itervalues():
-        maybe_the_class = cls.provider_types.get(prov_type)
-        if maybe_the_class is not None:
-            return maybe_the_class
-
-
-def get_provider_key(provider_name):
-    for provider_key, provider_data in providers_data.items():
-        if provider_data.get("name") == provider_name:
-            return provider_key
-    else:
-        raise NameError("Could not find provider {}".format(provider_name))
-
-
-def get_mgmt_by_name(provider_name, *args, **kwargs):
-    """Provides a ``mgmtsystem`` object, based on the request.
-
-    For detailed parameter description, refer to the :py:func:`get_mgmt` (except its
-    `provider_key` parameter)
-
-    Args:
-        provider_name: 'Nice' provider name (name field from provider's YAML entry)
-    Return: A provider instance of the appropriate ``mgmtsystem``
-        subclass
-    """
-    return get_mgmt(get_provider_key(provider_name), *args, **kwargs)
-
-
-def setup_a_provider(prov_class="infra", prov_type=None, validate=True, check_existing=True,
-                     required_keys=None):
-    """Sets up a single provider robustly.
-
-    Does some counter-badness measures.
-
-    Args:
-        prov_class: "infra", "cloud", "container" or "middleware"
-        prov_type: "ec2", "virtualcenter" or any other valid type
-        validate: Whether to validate the provider.
-        check_existing: Whether to check if the provider already exists.
-        required_keys: A set of required keys for the provider data to have
-    """
-    if not required_keys:
-        required_keys = []
-    potential_providers = list_providers(
-        BaseProvider.type_mapping[prov_class].provider_types.keys())
-    if prov_type:
-        providers = []
-        for provider in potential_providers:
-            if providers_data[provider]['type'] == prov_type:
-                providers.append(provider)
-    else:
-        providers = potential_providers
-
-    final_providers = []
-    for provider in providers:
-        if all(key in providers_data[provider] for key in required_keys):
-            final_providers.append(provider)
-    providers = final_providers
-
-    # Check if the provider was behaving badly in the history
-    if problematic_providers:
-        filtered_providers = [
-            provider for provider in providers if provider not in problematic_providers]
-        if not filtered_providers:
-            # problematic_providers took all of the providers, so start over with clean list
-            # (next chance for bad guys) and use the original list. This will then slow down a
-            # little bit but make it more reliable.
-            problematic_providers.clear()
-            store.terminalreporter.write_line(
-                "Reached the point where all possible providers forthis case are marked as bad. "
-                "Clearing the bad provider list for a fresh start and next chance.", yellow=True)
-        else:
-            providers = filtered_providers
-
-    # If there is a provider that we want to specifically avoid ...
-    # If there is only a single provider, then do not do any filtering
-    # Specify `do_not_prefer` in provider's yaml to make it an object of avoidance.
-    if len(providers) > 1:
-        filtered_providers = [
-            provider
-            for provider
-            in providers
-            if not providers_data[provider].get("do_not_prefer", False)]
-        if filtered_providers:
-            # If our filtering yielded any providers, use them, otherwise do not bother with that
-            providers = filtered_providers
-
-    # If there is already a suitable provider, don't try to setup a new one.
-    already_existing = filter(is_provider_setup, providers)
-    random.shuffle(already_existing)        # Make the provider load more even by random chaice.
-    not_already_existing = filter(lambda x: not is_provider_setup(x), providers)
-    random.shuffle(not_already_existing)    # Make the provider load more even by random chaice.
-
-    # So, make this one loop and it tries the existing providers first, then the nonexisting
-    for provider in already_existing + not_already_existing:
-        try:
-            if provider in already_existing:
-                store.terminalreporter.write_line(
-                    "Trying to reuse provider {}\n".format(provider), green=True)
-            else:
-                store.terminalreporter.write_line(
-                    "Trying to set up provider {}\n".format(provider), green=True)
-            return setup_provider(provider, validate=validate, check_existing=check_existing)
-        except Exception as e:
-            # In case of a known provider error:
-            logger.exception(e)
-            message = "Provider {} is behaving badly, marking it as bad. {}: {}".format(
-                provider, type(e).__name__, str(e))
-            logger.warning(message)
-            store.terminalreporter.write_line(message + "\n", red=True)
-            problematic_providers.add(provider)
-            prov_object = get_crud(provider)
-            if prov_object.exists:
-                # Remove it in order to not explode on next calls
-                prov_object.delete(cancel=False)
-                prov_object.wait_for_delete()
-                message = "Provider {} was deleted because it failed to set up.".format(provider)
-                logger.warning(message)
-                store.terminalreporter.write_line(message + "\n", red=True)
-    else:
-        raise Exception("No providers could be set up matching the params")
-
-
-def is_provider_setup(provider_key):
-    """Checks whether provider is already existing in CFME
-
-    Args:
-        provider_key: YAML key of the provider
-
-    Returns:
-        :py:class:`bool` of existence
-    """
-    return get_crud(provider_key).exists
-
-
-def existing_providers():
-    """Lists all providers that are already set up in the appliance."""
-    return filter(is_provider_setup, list_providers())
-
-
-def setup_provider(provider_key, validate=True, check_existing=True):
-    """Add the named provider to CFME
-
-    Args:
-        provider_key: Provider key name from cfme_data
-        validate: Whether or not to block until the provider stats in CFME
-            match the stats gleaned from the backend management system
-            (default: ``True``)
-        check_existing: Check if this provider already exists, skip if it does
-
-    Returns:
-        An instance of :py:class:`cfme.cloud.provider.Provider` or
-        :py:class:`cfme.infrastructure.provider.Provider` for the named provider, as appropriate.
-
-    """
-    provider = get_crud(provider_key)
-    if check_existing and provider.exists:
-        # no need to create provider if the provider exists
-        # pass so we don't skip the validate step
-        pass
-    else:
-        logger.info('Setting up provider: %s', provider.key)
-        provider.create(validate_credentials=True)
-
-    if validate:
-        provider.validate()
-
-    return provider
-
-
-def setup_provider_by_name(provider_name, *args, **kwargs):
-    return setup_provider(get_provider_key(provider_name), *args, **kwargs)
-
-
-def setup_providers(prov_classes=('cloud', 'infra'), validate=True, check_existing=True):
-    """Run :py:func:`setup_provider` for every provider (cloud and infra only, by default)
-
-    Args:
-        prov_classes: list of provider classes to setup ('cloud', 'infra' and 'container')
-        validate: see description in :py:func:`setup_provider`
-        check_existing: see description in :py:func:`setup_provider`
-
-    Returns:
-        A list of provider object for the created providers, cloud and infrastructure.
-
-    """
-    perflog.start('utils.providers.setup_providers')
-    # Do cloud and infra separately to keep the browser navs down
-    added_providers = []
-
-    # Defer validation
-    setup_kwargs = {'validate': False, 'check_existing': check_existing}
-    for pclass in prov_classes:
-        added_providers.extend(_setup_providers(pclass, **setup_kwargs))
-
-    if validate:
-        for provider in added_providers:
-            provider.validate()
-
-    perflog.stop('utils.providers.setup_providers')
-
-    return added_providers
-
-
-def _setup_providers(prov_class, validate, check_existing):
-    """Helper to set up all cloud, infra or container providers, and then validate them
-
-    Args:
-        prov_class: Provider class - 'cloud, 'infra', 'container' or 'middleware' (a string)
-        validate: see description in :py:func:`setup_provider`
-        check_existing: see description in :py:func:`setup_provider`
-
-    Returns:
-        A list of provider objects that have been created.
-
-    """
-
-    # Check for existing providers all at once, to prevent reloading
-    # the providers page for every provider in cfme_data
-    if not list_providers(BaseProvider.type_mapping[prov_class].provider_types.keys()):
-        return []
-    if check_existing:
-        navigate = "{}_providers".format(
-            BaseProvider.type_mapping[prov_class].page_name)
-        sel.force_navigate(navigate)
-        add_providers = []
-        for provider_key in list_providers(
-                BaseProvider.type_mapping[prov_class].provider_types.keys()):
-            provider_name = conf.cfme_data.get('management_systems', {})[provider_key]['name']
-            quad_name = BaseProvider.type_mapping[prov_class].quad_name
-            quad = Quadicon(provider_name, quad_name)
-            for page in paginator.pages():
-                if sel.is_displayed(quad):
-                    logger.debug('Provider %s exists, skipping', provider_key)
-                    break
-            else:
-                add_providers.append(provider_key)
-    else:
-        # Add all cloud, infra or container providers unconditionally
-        add_providers = list_providers(BaseProvider.type_mapping[prov_class].provider_types.keys())
-
-    if add_providers:
-        logger.info('Providers to be added: %s', ', '.join(add_providers))
-
-    # Save the provider objects for validation and return
-    added_providers = []
-
-    for provider_name in add_providers:
-        # Don't validate in this step; add all providers, then go back and validate in order
-        provider = setup_provider(provider_name, validate=False, check_existing=False)
-        added_providers.append(provider)
-
-    if validate:
-        for provider in added_providers:
-            provider.validate()
-
-    return added_providers
-
-
-def destroy_vm(provider_mgmt, vm_name):
-    """Given a provider backend and VM name, destroy an instance with logging and error guards
-
-    Returns ``True`` if the VM is deleted, ``False`` if the backend reports that it did not delete
-        the VM, and ``None`` if an error occurred (the error will be logged)
-
-    """
-    try:
-        if provider_mgmt.does_vm_exist(vm_name):
-            logger.info('Destroying VM %s', vm_name)
-            vm_deleted = provider_mgmt.delete_vm(vm_name)
-            if vm_deleted:
-                logger.info('VM %s destroyed', vm_name)
-            else:
-                logger.error('Destroying VM %s failed for unknown reasons', vm_name)
-            return vm_deleted
-    except Exception as e:
-        logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, str(e))
-
-
-def get_crud(provider_config_name):
-    """
-    Creates a Provider object given a yaml entry in cfme_data.
-
-    Usage:
-        get_crud('ec2east')
-
-    Returns: A Provider object that has methods that operate on CFME
-    """
-
-    prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
-    prov_type = prov_config.get('type')
-
-    return _get_provider_class_by_type(prov_type).from_config(prov_config, provider_config_name)
+    return get_class_from_type(provider_data['type']).mgmt_class(**provider_kwargs)
 
 
 class UnknownProvider(Exception):

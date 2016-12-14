@@ -9,7 +9,7 @@ from utils.log import logger
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.ssh import SSHClient
-from utils.providers import list_providers, get_mgmt
+from utils.providers import list_provider_keys, get_mgmt
 
 
 def parse_cmd_line():
@@ -146,11 +146,12 @@ def get_datastores_per_host(provider_key):
 
 
 def get_orphaned_vmware_files(provider=None):
-    providers = [provider] if provider else list_providers("virtualcenter")
+    providers = [provider] if provider else list_provider_keys("virtualcenter")
 
     for provider_key in providers:
         # we can add thread here
         get_datastores_per_host(provider_key)
+
 
 if __name__ == "__main__":
     args = parse_cmd_line()

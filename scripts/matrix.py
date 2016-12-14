@@ -43,6 +43,7 @@ class Group(object):
         self.params = sorted(list(params))
         self.tests = []
 
+
 with open(os.path.join(data_path.strpath, 'suite.yaml')) as f:
     suite_data = yaml.safe_load(f)
 

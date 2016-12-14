@@ -20,7 +20,7 @@ from psphere.managedobjects import VirtualMachine, ClusterComputeResource, HostS
 from utils import net, trackerbot
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.providers import list_providers
+from utils.providers import list_provider_keys
 from utils.ssh import SSHClient
 from mgmtsystem import VMWareSystem
 from utils.wait import wait_for
@@ -375,7 +375,7 @@ def run(**kwargs):
 
     try:
         thread_queue = []
-        providers = list_providers("virtualcenter")
+        providers = list_provider_keys("virtualcenter")
         if kwargs['provider_data']:
             mgmt_sys = providers = kwargs['provider_data']['management_systems']
         for provider in providers:

@@ -3,11 +3,11 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
+from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from utils import testgen
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['scvmm'],
-    scope="module")
+pytest_generate_tests = testgen.generate([SCVMMProvider], scope="module")
 
 
 @pytest.mark.meta(blockers=[1178961])

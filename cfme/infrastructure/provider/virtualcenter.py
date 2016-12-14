@@ -1,5 +1,5 @@
-from mgmtsystem.virtualcenter import VMWareSystem
 from . import InfraProvider
+from mgmtsystem.virtualcenter import VMWareSystem
 
 
 @InfraProvider.add_provider_type
@@ -22,6 +22,12 @@ class VMwareProvider(InfraProvider):
                 'type_select': create and 'VMware vCenter',
                 'hostname_text': kwargs.get('hostname'),
                 'ipaddress_text': kwargs.get('ip_address')}
+
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        if "allowed_datastores" not in deploy_args and "allowed_datastores" in self.data:
+            return {'allowed_datastores': self.data['allowed_datastores']}
+        return {}
 
     @classmethod
     def from_config(cls, prov_config, prov_key):

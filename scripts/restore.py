@@ -37,6 +37,7 @@ def run_command(cmd):
         logger.info('SUCCESS')
     return output
 
+
 # copy scripts
 run_command("cp " + options.scripts + " /var/www/miq/vmdb/")
 

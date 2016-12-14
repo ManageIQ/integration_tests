@@ -7,7 +7,7 @@
 {% endblock %}
 {% block body-script %}
 <script type="text/javascript">
-    $('select').select2();
+    $('select').select2({ width: '100%' });
     $('select#view_user').change(function(){
         var url = $('select#view_user').val();
         if(url != "")
@@ -16,12 +16,14 @@
 </script>
 {% endblock %}
 {% block body %}
-<div ng-app="myAppliancesApp">
+<div ng-app="myAppliancesApp" ng-cloak>
 
 {% if not request.user.is_superuser %}
     <h2>Listing and operation of your appliances</h2>
 {% else %}
-    <h2>Listing and operation of {% if show_user == "my" %}my{% else %}{{ show_user }}'s{% endif %} appliances - switch to:
+    <h2>Listing and operation of {% if show_user == "my" %}my{% else %}{{ show_user }}'s{% endif %} appliances</h2>
+    <h3>Switch to:</h3>
+    <div style="width: 320px; margin: 10px 10px 10px 10px;">
         <select id="view_user">
             <option value="">Select an user ...</option>
         {% if show_user != "my" %}
@@ -36,7 +38,7 @@
             {% endif %}
         {% endfor %}
         </select>
-    </h2>
+    </div>
 {% endif %}
 {% if pools_paginator.num_pages > 1 %}
 <h4>{{per_page}} pools per page.</h4>
@@ -76,48 +78,85 @@
 {% for pool in pools_paged %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
         <div class="panel-heading">
-            <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.yum_update %} with YUM updated appliances{% endif %}{% if pool.is_container %} (containers){% endif %}
-            {% if not pool.finished %}
-            - D: {{ pool.num_delayed_provisioning_tasks }}, Q: {{ pool.num_provisioning_tasks_before }}, PS: {{ pool.num_possible_provisioning_slots }}, AS: {{ pool.num_possible_appliance_slots}}, SA: {{ pool.num_shepherd_appliances }}
-            {% endif %}</strong>
-            {% if show_user == "all" %}
-                <em>Owner: {{ pool.owner|user_repr }}
-                <a href="{% url 'user_appliances' pool.owner.username %}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
+            <h2>#{{pool.id}} (<em>{{ pool.group.id }}</em>){% if pool.is_container %} (containers){% endif %}{% if pool.yum_update %} with YUM updated appliances{% endif %} - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.description %} - "{{ pool.description }}"{% endif %} | 
+            {% if pool.version %}
+                Version: {{ pool.version }}
             {% endif %}
-            <div class="form-inline">
-                <div class="form-group">
-                    <label for="pool-desc-{{ pool.id }}">Description</label>
-                    <input id="pool-desc-{{ pool.id }}" name="pool-desc-{{ pool.id }}" value="{{ pool.description }}" class="form-control">
-                    <button class="btn btn-primary btn-xs set-pool-desc" data-poolid="{{ pool.id }}"><span class="glyphicon glyphicon-floppy-save"></span> Set</button>
-                </div>
-            </div>
+            {% if pool.date %}
+                Date: {{ pool.date }}
+            {% endif %}
+            </h2>
+            {% if pool.current_count != pool.total_count %}
+                <p>{{ pool.current_count }} from {{ pool.total_count }} appliances provisioned</p>
+            {% endif %}
+            {% if not pool.finished %}
+            <table>
+                <tr>
+                    <td>Delayed provisioning tasks:</td>
+                    <td>{{ pool.num_delayed_provisioning_tasks }}</td>
+                    <td>{% if pool.num_delayed_provisioning_tasks == 0 %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</td>
+                </tr>
+
+                <tr>
+                    <td>Number of queued provisioning tasks before your tasks:</td>
+                    <td>{{ pool.num_provisioning_tasks_before }}</td>
+                    <td>{% if pool.num_provisioning_tasks_before == 0 %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</td>
+                </tr>
+
+                <tr>
+                    <td>Free provisioning slots:</td>
+                    <td>{{ pool.num_possible_provisioning_slots }}</td>
+                    <td>{% if pool.num_possible_provisioning_slots > 0 %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</td>
+                </tr>
+
+                <tr>
+                    <td>Free appliance slots:</td>
+                    <td>{{ pool.num_possible_appliance_slots }}</td>
+                    <td>{% if pool.num_possible_appliance_slots > 0 %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</td>
+                </tr>
+
+                <tr>
+                    <td>Shepherd-available appliances:</td>
+                    <td>{{ pool.num_shepherd_appliances }}</td>
+                    <td>{% if pool.num_shepherd_appliances > 0 %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</td>
+                </tr>
+            </table>
+            {% endif %}
+            {% if show_user == "all" %}
+                <h4><a href="{% url 'user_appliances' pool.owner.username %}">{{ pool.owner|user_repr }}</a></h4>
+            {% endif %}
         </div>
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>ID:</th>
-                    <th>Name:</th>
-                    <th>Provider:</th>
-                    <th>Address:</th>
-                    <th>Swap</th>
-                    <th style="width: 10%;">Manages:</th>
-                    <th style="width: 10%;">Ready?</th>
-                    <th>Power state:</th>
-                    <th>Expires in:</th>
-                    <th>Actions:</th>
-                    <th>Lease actions:</th>
+                    <th class="col-md-1">ID &amp; IP</th>
+                    <th class="col-md-3">Name</th>
+                    <th class="col-md-1">Provider</th>
+                    <th class="col-md-1">Swap</th>
+                    <th class="col-md-1">Manages</th>
+                    <th class="col-md-2">Status</th>
+                    <th class="col-md-1">Power state:</th>
+                    <th class="col-md-1">Expiration</th>
+                    <th class="col-md-1">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for appliance in pool.appliances %}
                 <tr id="appliance-{{ appliance.id }}">
-                    <td>{{ appliance.id }}</td>
+                    <td class="col-md-1">
+                        <small>{{ appliance.id }}</small>
+                        <br>
+                        {% if appliance.ip_address %}
+                             <small><a href="https://{{ appliance.ip_address }}/" target="_blank" title="{{ appliance.ip_address }}">{{ appliance.ip_address }}</a></small>
+                        {% else %}
+                            <small>---</small>
+                        {% endif %}
+                    </td>
                     <!-- There's gotta be a better way to do this angular thing, but that probably involves REST. -->
                     {% if appliance.provider.allow_renaming %}
-                        <td style=" overflow: auto;" ng-controller="EditVmName" ng-init="applianceId = '{{ appliance.id }}'; apiURL = '{% url 'rename_appliance' %}'; taskResultURL = '{% url 'task_result' %}'; applianceOriginalName = '{{ appliance.name }}'; applianceHasUUID = {{ appliance.has_uuid_angular }} ;">
-                        {% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}
+                        <td style=" overflow: auto;" ng-controller="EditVmName" ng-init="applianceId = '{{ appliance.id }}'; apiURL = '{% url 'rename_appliance' %}'; taskResultURL = '{% url 'task_result' %}'; applianceOriginalName = '{{ appliance.name }}'; applianceHasUUID = {{ appliance.has_uuid_angular }} ;" class="col-md-3">
                             <div ng-hide="editing" ng-click="edit()">
-                                {[{ vm.name }]}
+                                    {[{ vm.name }]}
                             </div>
                             <div ng-show="editing">
                                 <input ng-model="vm.name" ng-disabled="submitting">
@@ -127,117 +166,172 @@
                             </div>
                         </td>
                     {% else %}
-                        <td title="Cannot rename because provider does not allow it">
+                        <td title="Cannot rename because provider does not allow it" class="col-md-2">
                         {% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}
                         {{ appliance.name }}
                         </td>
                     {% endif %}
-                    <td>{{ appliance.template.provider.id }}</td>
-                    <td>
-                        {% if appliance.ip_address %}
-                            <a href="https://{{ appliance.ip_address }}/" target="_blank">{{ appliance.ip_address }}</a>
+                    <td class="col-md-1">
+                        <strong><a href="{% url 'specific_provider' appliance.template.provider.id %}">{{ appliance.template.provider.id }}</a></strong>
+                    </td>
+                    <td class="col-md-1">
+                            {% if appliance.ssh_failed %}
+                                <strong style="color: red;">SSH FAIL!</strong>
+                            {% elif appliance.swap > 0 %}
+                                <span style='color: red;'>{{ appliance.swap }} MB</span>
+                            {% else %}
+                                OK
+                            {% endif %}
+                    </td>
+                    <td class="col-md-1">
+                        {% if appliance.managed_providers %}
+                            {% for provider in appliance.managed_providers %}
+                                <small><em><a href="{% url 'specific_provider' provider %}">{{provider}}</a></em></small><br>
+                            {% endfor %}
                         {% else %}
                             ---
                         {% endif %}
                     </td>
-                    <td>
-                        {% if appliance.ssh_failed %}
-                            <strong style="color: red;">SSH FAIL!</strong>
-                        {% elif appliance.swap > 0 %}
-                            <span style='color: red;'>{{ appliance.swap }} MB</span>
-                        {% else %}
-                            OK
-                        {% endif %}
+                    <td class="col-md-2" style="overflow-x: auto;{% if appliance.ready %} background-color: green;{% else %} background-color: red;{% endif %}">
+                        {{ appliance.status }}
                     </td>
-                    <td>
-                        {% if appliance.managed_providers %}
-                            {% for provider in appliance.managed_providers %}
-                                <a href="{% url 'specific_provider' provider %}" class="btn btn-default btn-xs">{{provider}}</a>
-                            {% endfor %}
-                        {% else %}
-                            <em>Nothing! :)</em>
-                        {% endif %}
-                    </td>
-                    <td style="overflow-x: auto;">
-                        {% if appliance.ready %}
-                            <span class="glyphicon glyphicon-ok" title="{{ appliance.status }}"></span>
-                        {% else %}
-                            {{ appliance.status }}
-                        {% endif %}
-                    </td>
-                    <td>{{ appliance.power_state|power_icon }}</td>
-                    <td>{{ appliance.expires_in }}</td>
-                    <td>
-                        <div class="btn-toolbar" role="toolbar" aria-label="Appliance operations">
-                            <div class="btn-group" role="group" aria-label="Power operations">
+                    <td class="col-md-1">{{ appliance.power_state|power_icon }}</td>
+                    <td class="col-md-1"><span title="Age: {{ appliance.age|nice_timedelta }}">{{ appliance.expires_in }}</span></td>
+                    <td class="col-md-1">
+
+                        <div class="dropdown">
+                          <button class="btn btn-default dropdown-toggle" type="button" id="appliance-dropdown-{{appliance.id}}" data-toggle="dropdown">
+                            Actions
+                            <span class="caret"></span>
+                          </button>
+                          <ul class="dropdown-menu" role="menu" aria-labelledby="appliance-dropdown-{{appliance.id}}">
+                            <li role="presentation">
+                                {% if appliance.vnc_link %}
+                                    <a role="menuitem" class="btn btn-xs" tabindex="-1" href="{{ appliance.vnc_link }}" target="_blank" title="Open the VNC console for {{appliance.name}}"><span class="glyphicon glyphicon-log-in"></span>Open the VNC console</a>
+                                {% else %}
+                                    <a role="menuitem" class="btn btn-xs disabled" tabindex="-1" href="#"><span class="glyphicon glyphicon-log-in"></span>Open the VNC console</a>
+                                {% endif %}
+                            </li>
+                            <li role="presentation">
                                 {% if appliance.can_launch %}
-                                    <a href="{% url 'appliance_action' appliance.id 'start' %}" class="btn btn-success btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Launch</a>
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'start' %}" class="btn btn-success btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Launch</a>
+                                {% else %}
+                                    <a role="menuitem" tabindex="-1" href="#" class="btn btn-success btn-xs disabled"><span class="glyphicon glyphicon-off"></span> Launch</a>
                                 {% endif %}
+                            </li>
+                            <li role="presentation">
                                 {% if appliance.can_stop %}
-                                    <a href="{% url 'appliance_action' appliance.id 'stop' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'stop' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                {% else %}
+                                    <a role="menuitem" tabindex="-1" href="#" class="btn btn-danger btn-xs disabled"><span class="glyphicon glyphicon-off"></span> Stop</a>
                                 {% endif %}
+                            </li>
+                            <li role="presentation">
                                 {% if appliance.can_reboot %}
-                                    <a href="{% url 'appliance_action' appliance.id 'reboot' %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-repeat"></span> Reboot</a>
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'reboot' %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-repeat"></span> Reboot</a>
+                                {% else %}
+                                    <a role="menuitem" tabindex="-1" href="#" class="btn btn-warning btn-xs disabled"><span class="glyphicon glyphicon-repeat"></span> Reboot</a>
                                 {% endif %}
+                            </li>
+                            <li role="presentation">
                                 {% if appliance.can_suspend %}
-                                    <a href="{% url 'appliance_action' appliance.id 'suspend' %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'suspend' %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
+                                {% else %}
+                                    <a role="menuitem" tabindex="-1" href="#" class="btn btn-warning btn-xs disabled"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
                                 {% endif %}
-                            </div>
-                            <div class="btn-group" role="group" aria-label="">
-                                <a href="{% url 'appliance_action' appliance.id 'kill' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        {% if not appliance.marked_for_deletion %}
-                        <div class="btn-toolbar" role="toolbar" aria-label="Appliance lease time control">
-                            <div class="btn-group" role="group" aria-label="...">
-                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
-                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
-                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
-                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
-                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
-                            {% if appliance.leased_until and request.user.is_superuser %}
-                                <a href="{% url 'appliance_action' appliance.id 'dont_expire' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
+                            </li>
+                            <li role="presentation" class="divider"></li>
+                            <li role="presentation">
+                                <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'kill' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
+                            </li>
+                            {% if not appliance.marked_for_deletion %}
+                                <li role="presentation">
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'set_lease' 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
+                                </li>
+                                <li role="presentation">
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'set_lease' 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
+                                </li>
+                                <li role="presentation">
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'set_lease' 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
+                                </li>
+                                <li role="presentation">
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'set_lease' 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
+                                </li>
+                                <li role="presentation">
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'set_lease' 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
+                                </li>
+                                <li role="presentation" class="divider"></li>
+                                <li role="presentation">
+                                {% if appliance.leased_until and request.user.is_superuser %}
+                                    <a role="menuitem" tabindex="-1" href="{% url 'appliance_action' appliance.id 'dont_expire' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
+                                {% else %}
+                                    <a role="menuitem" tabindex="-1" href="#" class="btn btn-danger btn-xs disabled" onclick="return alert('This functionality is only for super users.')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
+                                {% endif %}
+                                </li>
                             {% endif %}
-                            </div>
+                          </ul>
                         </div>
-                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
-            <tfoot>
-                {% if not pool.finished %}
-                    <tr>
-                        <td colspan="2">Fulfillment progress:</td>
-                        <td colspan="6">{{ pool.percent_finished|progress }}</td>
-                        <td colspan="2">
-                            {% if pool.fulfilled %}
-                                <span class="glyphicon glyphicon-ok"></span> Fulfilled
-                            {% else %}
-                                <span class="glyphicon glyphicon-remove"></span> Not fulfilled
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endif %}
-                <tr>
-                    <td colspan="10">
-                        <a href="{% url 'kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')" style="display: inline;"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
+            </table><hr>
+            <div class="form-horizontal">
+                <button class="btn btn-default btn-xs" data-toggle="collapse" data-target="#collapsible-{{ pool.id }}" style="margin-left: 10px; margin-bottom: 10px;"><span class="glyphicon glyphicon-arrow-down"></span> Open additional settings</button>
+
+                <div id="collapsible-{{ pool.id }}" class="collapse">
+                    <div class="form-group">
+                        <label for="pool-desc-{{ pool.id }}" class="col-sm-1 control-label">Description</label>
+                        <div class="col-sm-2">
+                            <input id="pool-desc-{{ pool.id }}" name="pool-desc-{{ pool.id }}" value="{{ pool.description }}" class="form-control">
+                        </div>
+                        <div class="col-sm-1">
+                            <button class="btn btn-primary btn-xs set-pool-desc" data-poolid="{{ pool.id }}"><span class="glyphicon glyphicon-floppy-save"></span> Set</button>
+                        </div>
                         {% if pool.possible_other_owners %}
                         <form action="{% url 'transfer_pool' %}" method="POST" style="display: inline;">
                             {% csrf_token %}
                             <input type="hidden" name="pool_id" value="{{ pool.id }}">
-                            <input type="submit" class="btn btn-success btn-sm" value="Transfer ownership to:" onclick="return confirm('Are you sure?')">
-                            <select name="user_id" class='select-user'>
-                            {% for user in pool.possible_other_owners %}
-                                <option value="{{ user.id }}">{{ user|user_repr }}</option>
-                            {% endfor %}
-                            </select>
+                            <label for="pool-own-{{ pool.id }}" class="col-sm-1 control-label">Transfer ownership:</label>
+                            <div class="col-sm-2">
+                                <select name="user_id" class='select-user'>
+                                {% for user in pool.possible_other_owners %}
+                                    <option value="{{ user.id }}">{{ user|user_repr }}</option>
+                                {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-sm-1">
+                                <input type="submit" class="btn btn-success btn-sm" value="Transfer!" onclick="return confirm('Are you sure?')">
+                            </div>
                         </form>
                         {% endif %}
+
+                    </div>
+                </div>
+
+                {% if not pool.finished %}
+                    <div class="form-group">
+                        <label for="pool-progress-{{ pool.id }}" class="col-md-1 control-label">Progress</label>
+                        <div class="col-md-4">
+                            {{ pool.percent_finished|progress }}
+                        </div>
+                        <div class="col-md-2">
+                           {% if pool.fulfilled %}
+                                <span class="glyphicon glyphicon-ok"></span> Fulfilled
+                            {% else %}
+                                <span class="glyphicon glyphicon-remove"></span> Not fulfilled
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+
+                {% if not pool.single_or_none_appliance %}
+                <div class="form-group">
+                    <label for="pool-ops-{{ pool.id }}" class="col-md-1 control-label">Pool operations</label>
+                    <div class="col-md-4">
+                        <a href="{% url 'kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')" style="display: inline;"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
                         {% if not pool.not_needed_anymore %}
-                        | Set expiration for all vms:
                         <a href="{% url 'prolong_lease_pool' pool.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
                         <a href="{% url 'prolong_lease_pool' pool.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
                         <a href="{% url 'prolong_lease_pool' pool.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
@@ -247,23 +341,15 @@
                             <a href="{% url 'dont_expire_pool' pool.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
                         {% endif %}
                         {% endif %}
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+            
     </div>
 {% endfor %}
 
-{% if display_legend %}
-    <h3>Legend</h3>
-    <ul>
-        <li><strong>D</strong> - How many delayed provisioning tasks are scheduled for this pool.</li>
-        <li><strong>Q</strong> - How many other delayed provisioning tasks are scheduled before the latest task of this pool.</li>
-        <li><strong>PS</strong> - How many slots for simultaneous provisioning are currently free.</li>
-        <li><strong>AS</strong> - How many slots for appliances are currently free. If it is lower than you need, you won't get the required number of appliances!</li>
-        <li><strong>SA</strong> - How many of shepherd appliances that can be taken in the pool.</li>
-    </ul>
-{% endif %}
 {% if can_order_pool %}
     {% if new_pool_possible %}
         <h2>Requesting additional pools{% if pools_remaining %} ({{pools_remaining}} remaining){% endif %}</h2>
@@ -357,24 +443,6 @@
         </form>
         <script type="text/javascript">
         $(document).ready(function() {
-            // Description setting
-            $('button.set-pool-desc').click(function(){
-                var e = $(this);
-                var poolid = e.attr("data-poolid");
-                var input = document.getElementById("pool-desc-" + poolid);
-                var description = input.value;
-                $.ajax({
-                    type: "POST",
-                    url: "{% url 'set_pool_description' %}",
-                    data: {pool_id: poolid, description: description},
-                    dataType: 'html'
-                }).done(function(data){
-                    addAlert("success", "Description of the pool " + poolid + " set to '" + description + "'.");
-                }).fail(function(xhr, textStatus, errorThrown){
-                    addAlert("danger", "Error during setting of the description of the pool " + poolid + ": '" + xhr.responseText + "'.");
-                })
-            });
-
             // Provisioning
             $('select#stream').change(function(){
                 $.ajax({
@@ -437,5 +505,26 @@
         <h3>You reached the limit of your account, no more pools</h3>
     {% endif %}
 {% endif %}
+<script type="text/javascript">
+$(document).ready(function(){
+    // Description setting
+    $('button.set-pool-desc').click(function(){
+        var e = $(this);
+        var poolid = e.attr("data-poolid");
+        var input = document.getElementById("pool-desc-" + poolid);
+        var description = input.value;
+        $.ajax({
+            type: "POST",
+            url: "{% url 'set_pool_description' %}",
+            data: {pool_id: poolid, description: description},
+            dataType: 'html'
+        }).done(function(data){
+            addAlert("success", "Description of the pool " + poolid + " set to '" + description + "'.");
+        }).fail(function(xhr, textStatus, errorThrown){
+            addAlert("danger", "Error during setting of the description of the pool " + poolid + ": '" + xhr.responseText + "'.");
+        })
+    });
+});
+</script>
 </div>
 {% endblock %}

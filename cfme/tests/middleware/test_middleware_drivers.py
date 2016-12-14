@@ -1,5 +1,5 @@
 import pytest
-
+from cfme.middleware.provider.hawkular import HawkularProvider
 from utils import testgen
 from utils.version import current_version
 from server_methods import get_eap_server
@@ -11,7 +11,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
+pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 ITEMS_LIMIT = 5  # when we have big list, limit number of items to test
 
 DRIVERS = [ORACLE_12C_JDBC,

@@ -9,6 +9,7 @@ from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
 from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
 from cfme.cloud.instance.azure import AzureInstance  # NOQA
 from cfme.cloud.instance.gce import GCEInstance  # NOQA
+from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.pxe import get_template_from_config
 from utils import testgen, ssh
 from utils.log import logger
@@ -17,17 +18,13 @@ from utils.wait import wait_for
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc,
-        required_fields=[
-            ['provisioning', 'ci-template'],
-            ['provisioning', 'ci-username'],
-            ['provisioning', 'ci-pass'],
-            ['provisioning', 'image']
-        ])
-
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(
+    [CloudProvider], required_fields=[
+        ['provisioning', 'ci-template'],
+        ['provisioning', 'ci-username'],
+        ['provisioning', 'ci-pass'],
+        ['provisioning', 'image']],
+    scope="module")
 
 
 @pytest.fixture(scope="module")

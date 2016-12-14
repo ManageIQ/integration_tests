@@ -90,6 +90,7 @@ if [ -n "$WHARF" ]; then
     BROWSER_SECTION="browser:
     webdriver_wharf: $WHARF
     webdriver_options:
+        keep_alive: True
         desired_capabilities:
             platform: LINUX
             browserName: '$BROWSER'"
@@ -97,6 +98,7 @@ else
     BROWSER_SECTION="browser:
     webdriver_options:
         command_executor: http://$SELFF_PORT_4444_TCP_ADDR:$SELFF_PORT_4444_TCP_PORT/wd/hub
+        keep_alive: True
         desired_capabilities:
             platform: LINUX
             browserName: '$BROWSER'"

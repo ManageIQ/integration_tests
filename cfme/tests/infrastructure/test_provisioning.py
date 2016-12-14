@@ -3,6 +3,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.services import requests
 from cfme.web_ui import fill
@@ -10,7 +12,6 @@ from utils import normalize_text, testgen
 from utils.blockers import BZ
 from utils.generators import random_vm_name
 from utils.log import logger
-from utils.mgmt_system import RHEVMSystem
 from utils.wait import wait_for
 
 pytestmark = [
@@ -19,22 +20,18 @@ pytestmark = [
     pytest.mark.meta(blockers=[
         BZ(
             1265466,
-            unblock=lambda provider: not isinstance(provider.mgmt, RHEVMSystem))
+            unblock=lambda provider: not provider.one_of(RHEVMProvider))
     ]),
     pytest.mark.tier(2),
     test_requirements.provision
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        required_fields=[
-            ['provisioning', 'template'],
-            ['provisioning', 'host'],
-            ['provisioning', 'datastore']
-        ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
+    ['provisioning', 'template'],
+    ['provisioning', 'host'],
+    ['provisioning', 'datastore']
+], scope="module")
 
 
 @pytest.fixture(scope="function")

@@ -167,7 +167,7 @@ def read_env(file):
         This will only include shell variables that are exported from the file being parsed
 
     Returns:
-        A :py:class:`dict` of ``varname: value`` pairs. If the file does not exist or bash could not
+        A :py:class:`dict` of key/value pairs. If the file does not exist or bash could not
         parse the file, this dict will be empty.
     """
     env_vars = {}
@@ -258,8 +258,8 @@ def process_pytest_path(path):
         # Definitely a final segment
         return [path]
     else:
-        if (param_start is not None and param_end is not None and seg_end > param_start
-                and seg_end < param_end):
+        if (param_start is not None and param_end is not None and seg_end > param_start and
+                seg_end < param_end):
             # The / inside []
             segment = path[:param_end + 1]
             rest = path[param_end + 1:]
@@ -360,6 +360,7 @@ class InstanceClassMethod(object):
     Usage:
 
     .. code-block:: python
+
         class SomeClass(object):
             @InstanceClassMethod
             def a_method(self):

@@ -4,6 +4,7 @@ from datetime import datetime
 import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services import requests
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
@@ -11,7 +12,6 @@ from cfme.web_ui import toolbar as tb
 from utils import browser, testgen, version
 from utils.browser import ensure_browser_open
 from utils.log import logger
-from utils.version import current_version
 from utils.wait import wait_for
 
 pytestmark = [
@@ -34,8 +34,7 @@ def needs_firefox():
         pytest.skip(msg="This test needs firefox to run")
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter'],
-                                         scope="module")
+pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 @pytest.yield_fixture(scope='function')
@@ -49,13 +48,13 @@ def myservice(setup_provider, provider, catalog_item, request):
         version.LOWEST: catalog_item.provisioning_data["vm_name"] + '_0001',
         '5.7': catalog_item.provisioning_data["vm_name"] + '0001'})
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=tb.refresh, num_sec=2000, delay=20)
+                       fail_func=tb.refresh, num_sec=2000, delay=60)
     assert row.request_state.text == 'Finished'
 
     yield MyService(catalog_item.name, vm_name)
@@ -96,7 +95,6 @@ def test_crud_set_ownership_and_edit_tags(myservice):
     myservice.delete()
 
 
-@pytest.mark.uncollectif(lambda: current_version() < "5.5")
 @pytest.mark.parametrize("filetype", ["Text", "CSV", "PDF"])
 def test_download_file(needs_firefox, myservice, filetype):
     """Tests my service download files

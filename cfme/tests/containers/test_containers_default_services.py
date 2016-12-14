@@ -3,6 +3,7 @@ from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 from cfme.containers.service import Service, list_tbl
+from cfme.containers.provider import ContainersProvider
 from cfme.fixtures import pytest_selenium as sel
 
 
@@ -10,8 +11,7 @@ pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope='function')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 DefaultServices = ['frontend',

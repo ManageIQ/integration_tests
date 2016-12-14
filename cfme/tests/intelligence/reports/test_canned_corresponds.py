@@ -6,7 +6,7 @@ from cfme.infrastructure.provider import InfraProvider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
-from utils.providers import get_mgmt_by_name, setup_a_provider as _setup_a_provider
+from utils.providers import get_crud_by_name, setup_a_provider as _setup_a_provider
 from utils import version
 from cfme import test_requirements
 
@@ -62,7 +62,7 @@ def test_cluster_relationships(soft_assert, setup_a_provider):
         if not provider_name.strip():
             # If no provider name specified, ignore it
             continue
-        provider = get_mgmt_by_name(provider_name)
+        provider = get_crud_by_name(provider_name).mgmt
         host_name = relation["Host Name"].strip()
         soft_assert(name in provider.list_cluster(), "Cluster {} not found in {}".format(
             name, provider_name

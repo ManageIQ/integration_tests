@@ -9,6 +9,11 @@ from textwrap import dedent
 from cfme import test_requirements
 from cfme.automate import explorer as automate
 from cfme.cloud.instance import Instance
+from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
+from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
+from cfme.cloud.instance.azure import AzureInstance  # NOQA
+from cfme.cloud.instance.gce import GCEInstance  # NOQA
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -23,10 +28,8 @@ pytestmark = [pytest.mark.meta(server_roles="+automate"),
               test_requirements.provision, pytest.mark.tier(2)]
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc,
-        required_fields=[['provisioning', 'image']])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
+pytest_generate_tests = testgen.generate(
+    [CloudProvider], required_fields=[['provisioning', 'image']], scope="function")
 
 
 @pytest.fixture(scope="function")
@@ -95,9 +98,25 @@ def test_provision_from_template(request, setup_provider, provider, testing_inst
              num_sec=1000,
              delay=60,
              handle_exception=True)
-    if provider.type == 'gce' and current_version() >= "5.7":
-        soft_assert('Yes' in instance.get_detail(
-            properties=("Properties", "Preemptible")), "GCE Instance isn't Preemptible")
+    soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
+
+
+@pytest.mark.uncollectif(lambda provider: provider.type != 'gce' or current_version() < "5.7")
+def test_gce_preemtible_provision(request, setup_provider, provider, testing_instance, soft_assert):
+    instance, inst_args = testing_instance
+    instance.create(**inst_args)
+    instance.wait_to_appear(timeout=800)
+    provider.refresh_provider_relationships()
+    logger.info("Refreshing provider relationships and power states")
+    refresh_timer = RefreshTimer(time_for_refresh=300)
+    wait_for(provider.is_refreshed,
+             [refresh_timer],
+             message="is_refreshed",
+             num_sec=1000,
+             delay=60,
+             handle_exception=True)
+    soft_assert('Yes' in instance.get_detail(
+        properties=("Properties", "Preemptible")), "GCE Instance isn't Preemptible")
     soft_assert(instance.does_vm_exist_on_provider(), "Instance wasn't provisioned")
 
 

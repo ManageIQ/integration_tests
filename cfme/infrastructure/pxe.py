@@ -280,8 +280,7 @@ class PXEServerAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'PXE')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
         acc.tree("PXE Servers", "All PXE Servers")
 
 
@@ -429,8 +428,7 @@ class CustomizationTemplateAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'PXE')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
         acc.tree("Customization Templates",
             "All Customization Templates - System Image Types")
 
@@ -543,8 +541,7 @@ class SystemImageTypeAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'PXE')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
         acc.tree("System Image Types", "All System Image Types")
 
 
@@ -692,8 +689,7 @@ class ISODatastoreAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'PXE')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'PXE')
         acc.tree("ISO Datastores", "All ISO Datastores")
 
 

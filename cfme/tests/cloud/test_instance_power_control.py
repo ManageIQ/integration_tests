@@ -9,6 +9,7 @@ from cfme.cloud.instance.openstack import OpenStackInstance
 from cfme.cloud.instance.ec2 import EC2Instance
 from cfme.cloud.instance.azure import AzureInstance
 from cfme.cloud.instance.gce import GCEInstance
+from cfme.cloud.provider import CloudProvider
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.generators import random_vm_name
@@ -17,10 +18,11 @@ from utils.wait import wait_for, TimedOutError, RefreshTimer
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['azure', 'ec2', 'openstack', 'gce'],
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [CloudProvider],
         required_fields=[('test_power_control', True)])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
+
 
 pytestmark = [pytest.mark.tier(2), pytest.mark.long_running, test_requirements.power]
 

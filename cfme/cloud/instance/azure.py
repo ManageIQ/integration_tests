@@ -1,9 +1,9 @@
-from utils import version, deferred_verpick
 from cfme.exceptions import OptionNotAvailable
 from cfme.web_ui import fill, flash
 from cfme.fixtures import pytest_selenium as sel
 from cfme.common.vm import VM
-from . import Instance
+from utils import version, deferred_verpick
+from . import Instance, select_provision_image
 
 
 @VM.register_for_provider_type("azure")
@@ -52,10 +52,7 @@ class AzureInstance(Instance):
             :py:data:`cfme.cloud.provisioning.provisioning_form`
         """
         from cfme.provisioning import provisioning_form
-        sel.force_navigate('clouds_provision_instances', context={
-            'provider': self.provider,
-            'template_name': self.template_name,
-        })
+        select_provision_image(template_name=self.template_name, provider=self.provider)
 
         fill(provisioning_form, dict(
             email=email,

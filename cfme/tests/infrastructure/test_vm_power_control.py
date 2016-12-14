@@ -5,6 +5,7 @@ import random
 import time
 from cfme import test_requirements
 from cfme.common.vm import VM
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import get_all_vms
 from cfme.web_ui import toolbar
 from utils import testgen
@@ -20,22 +21,17 @@ pytestmark = [
     test_requirements.power]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
-    if not idlist:
-        return
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="class")
+pytest_generate_tests = testgen.generate([InfraProvider], scope="class")
 
 
 @pytest.fixture(scope='function')
-def vm_name(provider):  # Provider in order to keep the names provider-specific
+def vm_name():
     return random_vm_name('pwr-c')
 
 
 @pytest.fixture(scope="function")
-def test_vm(request, provider, vm_name):
-    """Fixture to provision appliance to the provider being tested if necessary"""
+def testing_vm(request, provider, vm_name):
+    """Fixture to provision vm to the provider being tested"""
     vm = VM.factory(vm_name, provider)
     logger.info("provider_key: %s", provider.key)
 
@@ -46,11 +42,24 @@ def test_vm(request, provider, vm_name):
 
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default")
-    else:
-        logger.info("recycling deployed vm %s on provider %s", vm.name, provider.key)
-    vm.provider.refresh_provider_relationships()
-    vm.wait_to_appear()
+        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
+    return vm
+
+
+@pytest.fixture(scope="function")
+def testing_vm_tools(request, provider, vm_name, full_template):
+    """Fixture to provision vm with preinstalled tools to the provider being tested"""
+    vm = VM.factory(vm_name, provider, template_name=full_template["name"])
+    logger.info("provider_key: %s", provider.key)
+
+    @request.addfinalizer
+    def _cleanup():
+        vm.delete_from_provider()
+        if_scvmm_refresh_provider(provider)
+
+    if not provider.mgmt.does_vm_exist(vm.name):
+        logger.info("deploying %s on provider %s", vm.name, provider.key)
+        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     return vm
 
 
@@ -95,187 +104,192 @@ def check_power_options(provider, soft_assert, vm, power_state):
                     pwr_option, power_state))
 
 
+def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
+    """Timestamp update doesn't happen with state change so need a longer
+    wait when expecting a last boot timestamp change"""
+
+    def _wait_for_timestamp_refresh():
+        vm.load_details(refresh=True)
+        return boot_time != vm.get_detail(properties=("Power Management", "Last Boot Time"))
+
+    try:
+        wait_for(_wait_for_timestamp_refresh, num_sec=timeout, delay=30)
+    except TimedOutError:
+        return False
+
+
 class TestControlOnQuadicons(object):
 
-    def test_power_off_cancel(self, test_vm, verify_vm_running, soft_assert):
+    def test_power_off_cancel(self, testing_vm, verify_vm_running, soft_assert):
         """Tests power off cancel
 
         Metadata:
             test_flag: power_control, provision
         """
-        test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=720)
-        test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=True)
-        if_scvmm_refresh_provider(test_vm.provider)
+        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
+        testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=True)
+        if_scvmm_refresh_provider(testing_vm.provider)
         # TODO: assert no event.
         time.sleep(60)
-        soft_assert('currentstate-on' in test_vm.find_quadicon().state)
+        soft_assert('currentstate-on' in testing_vm.find_quadicon().state)
         soft_assert(
-            test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
+            testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
-    def test_power_off(self, test_vm, verify_vm_running, soft_assert, register_event):
+    def test_power_off(self, testing_vm, verify_vm_running, soft_assert, register_event):
         """Tests power off
 
         Metadata:
             test_flag: power_control, provision
         """
-        test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=720)
-        register_event('VmOrTemplate', test_vm.name, ['request_vm_poweroff', 'vm_poweroff'])
-        test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
+        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
+        register_event('VmOrTemplate', testing_vm.name, ['request_vm_poweroff', 'vm_poweroff'])
+        testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False)
         flash.assert_message_contain("Stop initiated")
-        if_scvmm_refresh_provider(test_vm.provider)
-        test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=900)
-        soft_assert('currentstate-off' in test_vm.find_quadicon().state)
+        if_scvmm_refresh_provider(testing_vm.provider)
+        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=900)
+        soft_assert('currentstate-off' in testing_vm.find_quadicon().state)
         soft_assert(
-            not test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm running")
+            not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
 
-    def test_power_on_cancel(self, test_vm, verify_vm_stopped, soft_assert):
+    def test_power_on_cancel(self, testing_vm, verify_vm_stopped, soft_assert):
         """Tests power on cancel
 
         Metadata:
             test_flag: power_control, provision
         """
-        test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
-        test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=True)
-        if_scvmm_refresh_provider(test_vm.provider)
+        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
+        testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=True)
+        if_scvmm_refresh_provider(testing_vm.provider)
         time.sleep(60)
-        soft_assert('currentstate-off' in test_vm.find_quadicon().state)
+        soft_assert('currentstate-off' in testing_vm.find_quadicon().state)
         soft_assert(
-            not test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm running")
+            not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
 
     @pytest.mark.tier(1)
-    def test_power_on(self, test_vm, verify_vm_stopped, soft_assert, register_event):
+    def test_power_on(self, testing_vm, verify_vm_stopped, soft_assert, register_event):
         """Tests power on
 
         Metadata:
             test_flag: power_control, provision
         """
-        test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
-        register_event('VmOrTemplate', test_vm.name, ['request_vm_start', 'vm_start'])
-        test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False)
+        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
+        register_event('VmOrTemplate', testing_vm.name, ['request_vm_start', 'vm_start'])
+        testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False)
         flash.assert_message_contain("Start initiated")
-        if_scvmm_refresh_provider(test_vm.provider)
-        test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=900)
-        soft_assert('currentstate-on' in test_vm.find_quadicon().state)
+        if_scvmm_refresh_provider(testing_vm.provider)
+        testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=900)
+        soft_assert('currentstate-on' in testing_vm.find_quadicon().state)
         soft_assert(
-            test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
+            testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
 
 class TestVmDetailsPowerControlPerProvider(object):
 
-    def _wait_for_last_boot_timestamp_refresh(self, vm, boot_time, timeout=300):
-        """Timestamp update doesn't happen with state change so need a longer
-        wait when expecting a last boot timestamp change"""
-
-        def _wait_for_timestamp_refresh():
-            vm.load_details(refresh=True)
-            return boot_time != vm.get_detail(properties=("Power Management", "Last Boot Time"))
-
-        try:
-            wait_for(_wait_for_timestamp_refresh, num_sec=timeout, delay=30)
-        except TimedOutError:
-            return False
-
-    def test_power_off(self, test_vm, verify_vm_running, soft_assert, register_event):
+    def test_power_off(self, testing_vm, verify_vm_running, soft_assert, register_event):
         """Tests power off
 
         Metadata:
             test_flag: power_control, provision
         """
-        test_vm.wait_for_vm_state_change(
-            desired_state=test_vm.STATE_ON, timeout=720, from_details=True)
-        last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
-        register_event('VmOrTemplate', test_vm.name, ['request_vm_poweroff', 'vm_poweroff'])
-        test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False, from_details=True)
+        testing_vm.wait_for_vm_state_change(
+            desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
+        last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
+        register_event('VmOrTemplate', testing_vm.name, ['request_vm_poweroff', 'vm_poweroff'])
+        testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False,
+                                           from_details=True)
         flash.assert_message_contain("Stop initiated")
-        if_scvmm_refresh_provider(test_vm.provider)
-        test_vm.wait_for_vm_state_change(
-            desired_state=test_vm.STATE_OFF, timeout=720, from_details=True)
+        if_scvmm_refresh_provider(testing_vm.provider)
+        testing_vm.wait_for_vm_state_change(
+            desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
         soft_assert(
-            not test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm running")
+            not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
         # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
-        if test_vm.provider.type != "rhevm":
-            new_last_boot_time = test_vm.get_detail(
+        if testing_vm.provider.type != "rhevm":
+            new_last_boot_time = testing_vm.get_detail(
                 properties=("Power Management", "Last Boot Time"))
             soft_assert(new_last_boot_time == last_boot_time,
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
-    def test_power_on(self, test_vm, verify_vm_stopped, soft_assert, register_event):
+    def test_power_on(self, testing_vm, verify_vm_stopped, soft_assert, register_event):
         """Tests power on
 
         Metadata:
             test_flag: power_control, provision
         """
-        test_vm.wait_for_vm_state_change(
-            desired_state=test_vm.STATE_OFF, timeout=720, from_details=True)
-        register_event('VmOrTemplate', test_vm.name, ['request_vm_start', 'vm_start'])
-        test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False, from_details=True)
+        testing_vm.wait_for_vm_state_change(
+            desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
+        register_event('VmOrTemplate', testing_vm.name, ['request_vm_start', 'vm_start'])
+        testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False,
+                                           from_details=True)
         flash.assert_message_contain("Start initiated")
-        if_scvmm_refresh_provider(test_vm.provider)
-        test_vm.wait_for_vm_state_change(
-            desired_state=test_vm.STATE_ON, timeout=720, from_details=True)
+        if_scvmm_refresh_provider(testing_vm.provider)
+        testing_vm.wait_for_vm_state_change(
+            desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
         soft_assert(
-            test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
+            testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
-    def test_suspend(self, test_vm, verify_vm_running, soft_assert, register_event):
+    def test_suspend(self, testing_vm, verify_vm_running, soft_assert, register_event):
         """Tests suspend
 
         Metadata:
             test_flag: power_control, provision
         """
-        test_vm.wait_for_vm_state_change(
-            desired_state=test_vm.STATE_ON, timeout=720, from_details=True)
-        last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
-        register_event('VmOrTemplate', test_vm.name, ['request_vm_suspend', 'vm_suspend'])
-        test_vm.power_control_from_cfme(option=test_vm.SUSPEND, cancel=False, from_details=True)
+        testing_vm.wait_for_vm_state_change(
+            desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
+        last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
+        register_event('VmOrTemplate', testing_vm.name, ['request_vm_suspend', 'vm_suspend'])
+        testing_vm.power_control_from_cfme(option=testing_vm.SUSPEND, cancel=False,
+                                           from_details=True)
         flash.assert_message_contain("Suspend initiated")
-        if_scvmm_refresh_provider(test_vm.provider)
+        if_scvmm_refresh_provider(testing_vm.provider)
         try:
-            test_vm.wait_for_vm_state_change(
-                desired_state=test_vm.STATE_SUSPENDED, timeout=450, from_details=True)
+            testing_vm.wait_for_vm_state_change(
+                desired_state=testing_vm.STATE_SUSPENDED, timeout=450, from_details=True)
         except TimedOutError as e:
-            if test_vm.provider.type == "rhevm":
+            if testing_vm.provider.type == "rhevm":
                 logger.warning('working around bz1174858, ignoring timeout')
             else:
                 raise e
         soft_assert(
-            test_vm.provider.mgmt.is_vm_suspended(
-                test_vm.name), "vm not suspended")
+            testing_vm.provider.mgmt.is_vm_suspended(
+                testing_vm.name), "vm not suspended")
         # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1101604
-        if test_vm.provider.type != "rhevm":
-            new_last_boot_time = test_vm.get_detail(
+        if testing_vm.provider.type != "rhevm":
+            new_last_boot_time = testing_vm.get_detail(
                 properties=("Power Management", "Last Boot Time"))
             soft_assert(new_last_boot_time == last_boot_time,
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
     def test_start_from_suspend(
-            self, test_vm, verify_vm_suspended, soft_assert, register_event):
+            self, testing_vm, verify_vm_suspended, soft_assert, register_event):
         """Tests start from suspend
 
         Metadata:
             test_flag: power_control, provision
         """
         try:
-            test_vm.provider.refresh_provider_relationships()
-            test_vm.wait_for_vm_state_change(
-                desired_state=test_vm.STATE_SUSPENDED, timeout=450, from_details=True)
+            testing_vm.provider.refresh_provider_relationships()
+            testing_vm.wait_for_vm_state_change(
+                desired_state=testing_vm.STATE_SUSPENDED, timeout=450, from_details=True)
         except TimedOutError:
-            if test_vm.provider.type == "rhevm":
+            if testing_vm.provider.type == "rhevm":
                 logger.warning('working around bz1174858, ignoring timeout')
             else:
                 raise
-        register_event('VmOrTemplate', test_vm.name, ['request_vm_start', 'vm_start'])
-        last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
-        test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False, from_details=True)
+        register_event('VmOrTemplate', testing_vm.name, ['request_vm_start', 'vm_start'])
+        last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
+        testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False,
+                                           from_details=True)
         flash.assert_message_contain("Start initiated")
-        if_scvmm_refresh_provider(test_vm.provider)
-        test_vm.wait_for_vm_state_change(
-            desired_state=test_vm.STATE_ON, timeout=720, from_details=True)
-        self._wait_for_last_boot_timestamp_refresh(test_vm, last_boot_time, timeout=600)
+        if_scvmm_refresh_provider(testing_vm.provider)
+        testing_vm.wait_for_vm_state_change(
+            desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
+        wait_for_last_boot_timestamp_refresh(testing_vm, last_boot_time, timeout=600)
         soft_assert(
-            test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
+            testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
 
-def test_no_template_power_control(provider, setup_provider_funcscope, soft_assert):
+def test_no_template_power_control(provider, soft_assert):
     """ Ensures that no power button is displayed for templates.
 
     Prerequisities:
@@ -307,26 +321,62 @@ def test_no_template_power_control(provider, setup_provider_funcscope, soft_asse
     soft_assert(not toolbar.exists("Power"), "Power displayed in template details!")
 
 
-def test_power_options_from_on(provider, setup_provider_funcscope,
-                               soft_assert, test_vm, verify_vm_running):
-    test_vm.wait_for_vm_state_change(
-        desired_state=test_vm.STATE_ON, timeout=720, from_details=True)
-    check_power_options(provider, soft_assert, test_vm, test_vm.STATE_ON)
+@pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm')
+def test_power_options_from_on(provider, soft_assert, testing_vm, verify_vm_running):
+    testing_vm.wait_for_vm_state_change(
+        desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
+    check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_ON)
 
 
-def test_power_options_from_off(provider, setup_provider_funcscope,
-                               soft_assert, test_vm, verify_vm_stopped):
-    test_vm.wait_for_vm_state_change(
-        desired_state=test_vm.STATE_OFF, timeout=720, from_details=True)
-    check_power_options(provider, soft_assert, test_vm, test_vm.STATE_OFF)
+def test_power_options_from_off(provider, soft_assert, testing_vm, verify_vm_stopped):
+    testing_vm.wait_for_vm_state_change(
+        desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
+    check_power_options(provider, soft_assert, testing_vm, testing_vm.STATE_OFF)
+
+
+@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+def test_guest_os_reset(testing_vm_tools, verify_vm_running, soft_assert):
+    testing_vm_tools.wait_for_vm_state_change(
+        desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
+    tools_state = testing_vm_tools.get_detail(properties=("Properties", "Platform Tools"))
+    soft_assert(tools_state == "toolsOk", "vmtools are not OK")
+    last_boot_time = testing_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
+    testing_vm_tools.power_control_from_cfme(
+        option=testing_vm_tools.GUEST_RESTART, cancel=False, from_details=True)
+    flash.assert_message_contain("Restart Guest initiated")
+    testing_vm_tools.wait_for_vm_state_change(
+        desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
+    wait_for_last_boot_timestamp_refresh(testing_vm_tools, last_boot_time)
+    soft_assert(
+        testing_vm_tools.provider.mgmt.is_vm_running(testing_vm_tools.name), "vm not running")
+
+
+@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+def test_guest_os_shutdown(testing_vm_tools, verify_vm_running, soft_assert):
+    testing_vm_tools.wait_for_vm_state_change(
+        desired_state=testing_vm_tools.STATE_ON, timeout=720, from_details=True)
+    tools_state = testing_vm_tools.get_detail(properties=("Properties", "Platform Tools"))
+    soft_assert(tools_state == "toolsOk", "vmtools are not OK")
+    last_boot_time = testing_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
+    testing_vm_tools.power_control_from_cfme(
+        option=testing_vm_tools.GUEST_SHUTDOWN, cancel=False, from_details=True)
+    flash.assert_message_contain("Shutdown Guest initiated")
+    testing_vm_tools.wait_for_vm_state_change(
+        desired_state=testing_vm_tools.STATE_OFF, timeout=720, from_details=True)
+    soft_assert(
+        not testing_vm_tools.provider.mgmt.is_vm_running(testing_vm_tools.name), "vm running")
+    new_last_boot_time = testing_vm_tools.get_detail(
+        properties=("Power Management", "Last Boot Time"))
+    soft_assert(new_last_boot_time == last_boot_time,
+                "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
 
 @pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
 class TestPowerControlRESTAPI(object):
     @pytest.fixture(scope="function")
-    def vm(self, rest_api, test_vm):
-        result = rest_api.collections.vms.get(name=test_vm.name)
-        assert result.name == test_vm.name
+    def vm(self, rest_api, testing_vm):
+        result = rest_api.collections.vms.get(name=testing_vm.name)
+        assert result.name == testing_vm.name
         return result
 
     def test_power_off(self, vm, verify_vm_running):
@@ -345,20 +395,20 @@ class TestPowerControlRESTAPI(object):
         wait_for(lambda: vm.power_state == "suspended", num_sec=300, delay=5, fail_func=vm.reload)
 
 
-@pytest.mark.usefixtures("test_vm")
+@pytest.mark.usefixtures("testing_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
 @pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
 class TestDeleteViaREST(object):
     # TODO: Put it somewhere else?
     @pytest.fixture(scope="function")
-    def vm(self, rest_api, test_vm):
-        result = rest_api.collections.vms.get(name=test_vm.name)
-        assert result.name == test_vm.name
+    def vm(self, rest_api, testing_vm):
+        result = rest_api.collections.vms.get(name=testing_vm.name)
+        assert result.name == testing_vm.name
         return result
 
-    def test_delete(self, verify_vm_stopped, vm, test_vm, rest_api):
+    def test_delete(self, verify_vm_stopped, vm, testing_vm, rest_api):
         assert "delete" in vm.action
         vm.action.delete()
         wait_for(
-            lambda: not rest_api.collections.vms.find_by(name=test_vm.name),
+            lambda: not rest_api.collections.vms.find_by(name=testing_vm.name),
             num_sec=240, delay=5)

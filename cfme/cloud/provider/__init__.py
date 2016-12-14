@@ -15,9 +15,8 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
-from cfme.web_ui import form_buttons
+from cfme.web_ui import form_buttons, CFMECheckbox
 from cfme.web_ui import toolbar as tb
-from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio, \
     InfoBlock, match_location
 from cfme.web_ui import Input
@@ -69,6 +68,7 @@ properties_form_56 = TabStripForm(
     fields=[
         ('type_select', AngularSelect("ems_type")),
         ('name_text', Input("name")),
+        ('tenant_mapping', CFMECheckbox("ems_tenant_mapping_enabled"), {"appeared_in": "5.7"}),
         ('region_select', {
             version.LOWEST: AngularSelect("ems_region"),
             '5.7': AngularSelect('provider_region')}),
@@ -112,18 +112,6 @@ mon_btn = partial(tb.select, 'Monitoring')
 
 match_page = partial(match_location, controller='ems_cloud', title='Cloud Providers')
 
-nav.add_branch('clouds_providers',
-               {'clouds_provider_new': lambda _: cfg_btn('Add a New Cloud Provider'),
-                'clouds_provider_discover': lambda _: cfg_btn('Discover Cloud Providers'),
-                'clouds_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
-                                                                  'cloud_prov')),
-                                   {'clouds_provider_edit':
-                                    lambda _: cfg_btn('Edit this Cloud Provider'),
-                                    'clouds_provider_policy_assignment':
-                                    lambda _: pol_btn('Manage Policies'),
-                                    'cloud_provider_timelines':
-                                    lambda _: mon_btn('Timelines')}]})
-
 
 @CloudInfraProvider.add_base_type
 class CloudProvider(Pretty, CloudInfraProvider):
@@ -133,7 +121,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
     Args:
         name: Name of the provider.
         details: a details record (see EC2Details, OpenStackDetails inner class).
-        credentials (Credential): see Credential inner class.
+        credentials (:py:class:`Credential`): see Credential inner class.
         key: The CFME key of the provider in the yaml.
 
     Usage:
@@ -146,7 +134,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
     """
     provider_types = {}
     in_version = (version.LOWEST, version.LATEST)
-    type_tclass = "cloud"
+    category = "cloud"
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
@@ -182,8 +170,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Clouds', 'Providers')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Providers')
 
     def resetter(self):
         tb.select('Grid View')
@@ -334,5 +321,6 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
+
 
 import_all_modules_of('cfme.cloud.provider')

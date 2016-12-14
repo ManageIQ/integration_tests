@@ -1,20 +1,20 @@
 from cfme.common import Taggable, UtilizationMixin
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import parse_properties
+from cfme.middleware.provider import parse_properties
+from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, paginator, flash
-from cfme.web_ui.menu import toolbar as tb
+from cfme.web_ui import CheckboxTable, paginator, flash, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key
-from utils.providers import list_providers
+from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
-from . import operations_btn
+from cfme.middleware.provider import (
+    LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name, operations_btn)
+
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -124,7 +124,7 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
         _provider = provider
         for datasource in rows:
             if strict:
-                _provider = get_crud(get_provider_key(datasource.provider_name))
+                _provider = get_crud_by_name(datasource.provider_name)
             _server = MiddlewareServer(
                 name=datasource.server_name,
                 feed=datasource.feed,
@@ -164,8 +164,8 @@ class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMix
     def datasources_in_mgmt(cls, provider=None, server=None):
         if provider is None:
             datasources = []
-            for _provider in list_providers('hawkular'):
-                datasources.extend(cls._datasources_in_mgmt(get_crud(_provider), server))
+            for _provider in list_providers_by_class(HawkularProvider):
+                datasources.extend(cls._datasources_in_mgmt(_provider, server))
             return datasources
         else:
             return cls._datasources_in_mgmt(provider, server)
@@ -246,8 +246,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Datasources')(None)
+        self.prerequisite_view.navigation.select('Middleware', 'Datasources')
 
     def resetter(self):
         # Reset view and selection

@@ -86,26 +86,40 @@ More information on ``parametrize`` can be found in pytest's documentation:
 """
 import pytest
 
-from collections import OrderedDict
-from cfme.exceptions import UnknownProviderType
+from cfme.common.provider import BaseProvider
+from cfme.infrastructure.config_management import get_config_manager_from_config
 from cfme.infrastructure.pxe import get_pxe_server_from_config
-from fixtures.prov_filter import filtered
 from cfme.roles import group_data
-from utils import version
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.providers import get_crud
-from cfme.infrastructure.config_management import get_config_manager_from_config
-
-_version_operator_map = OrderedDict([('>=', lambda o, v: o >= v),
-                                    ('<=', lambda o, v: o <= v),
-                                    ('==', lambda o, v: o == v),
-                                    ('!=', lambda o, v: o != v),
-                                    ('>', lambda o, v: o > v),
-                                    ('<', lambda o, v: o < v)])
+from utils.providers import ProviderFilter, list_providers
 
 
-def generate(gen_func, *args, **kwargs):
+def providers_by_class(metafunc, classes, required_fields=None):
+    """ Gets providers by their class
+
+    Args:
+        metafunc: Passed in by pytest
+        classes: List of classes to fetch
+        required_fields: See :py:class:`cfme.utils.provider.ProviderFilter`
+
+    Usage:
+        # In the function itself
+        def pytest_generate_tests(metafunc):
+            argnames, argvalues, idlist = testgen.providers_by_class(
+                [GCEProvider, AzureProvider], required_fields=['provisioning']
+            )
+        metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+
+        # Using the parametrize wrapper
+        pytest_generate_tests = testgen.parametrize(testgen.providers_by_class, [GCEProvider],
+            scope='module')
+    """
+    pf = ProviderFilter(classes=classes, required_fields=required_fields)
+    return providers(metafunc, filters=[pf])
+
+
+def generate(*args, **kwargs):
     """Functional handler for inline pytest_generate_tests definition
 
     Args:
@@ -142,6 +156,7 @@ def generate(gen_func, *args, **kwargs):
     scope = kwargs.pop('scope', 'function')
     indirect = kwargs.pop('indirect', False)
     filter_unused = kwargs.pop('filter_unused', True)
+    gen_func = kwargs.pop('gen_func', providers_by_class)
 
     # If parametrize doesn't get you what you need, steal this and modify as needed
     def pytest_generate_tests(metafunc):
@@ -181,7 +196,8 @@ def fixture_filter(metafunc, argnames, argvalues):
     keep_index = [e[0] for e in enumerate(argnames) if e[1] in metafunc.fixturenames]
 
     # Keep items at indices in keep_index
-    f = lambda l: [e[1] for e in enumerate(l) if e[0] in keep_index]
+    def f(l):
+        return [e[1] for e in enumerate(l) if e[0] in keep_index]
 
     # Generate the new values
     argnames = f(argnames)
@@ -189,238 +205,47 @@ def fixture_filter(metafunc, argnames, argvalues):
     return argnames, argvalues
 
 
-def _uncollect_restricted_version(data, metafunc, required_fields):
-    restricted_version = data.get('restricted_version', None)
-    if restricted_version:
-        logger.info('we found a restricted version')
-        for op, comparator in _version_operator_map.items():
-            # split string by op; if the split works, version won't be empty
-            head, op, ver = restricted_version.partition(op)
-            if not ver:  # This means that the operator was not found
-                continue
-            if not comparator(version.current_version(), ver):
-                return True
-            break
-        else:
-            raise Exception('Operator not found in {}'.format(restricted_version))
-    return False
-
-
-def _check_required_fields(data, metafunc, required_fields):
-    if required_fields:
-        for field_or_fields in required_fields:
-            if isinstance(field_or_fields, tuple):
-                field_ident, field_value = field_or_fields
-            else:
-                field_ident, field_value = field_or_fields, None
-            if isinstance(field_ident, basestring):
-                if field_ident not in data:
-                    return True
-                else:
-                    if field_value:
-                        if data[field_ident] != field_value:
-                            return True
-            else:
-                o = data
-                try:
-                    for field in field_ident:
-                        o = o[field]
-                    if field_value:
-                        if o != field_value:
-                            return True
-                except (IndexError, KeyError):
-                    return True
-    return False
-
-
-def _uncollect_test_flags(data, metafunc, required_fields):
-    # Test to see the test has meta data, if it does and that metadata contains
-    # a test_flag kwarg, then check to make sure the provider contains that test_flag
-    # if not, do not collect the provider for this particular test.
-
-    # Obtain the tests flags
-    meta = getattr(metafunc.function, 'meta', None)
-    test_flags = getattr(meta, 'kwargs', {}) \
-        .get('from_docs', {}).get('test_flag', '').split(',')
-    if test_flags != ['']:
-        test_flags = [flag.strip() for flag in test_flags]
-
-        defined_flags = cfme_data.get('test_flags', '').split(',')
-        defined_flags = [flag.strip() for flag in defined_flags]
-
-        excluded_flags = data.get('excluded_test_flags', '').split(',')
-        excluded_flags = [flag.strip() for flag in excluded_flags]
-
-        allowed_flags = set(defined_flags) - set(excluded_flags)
-
-        if set(test_flags) - allowed_flags:
-            logger.info("Uncollecting Provider %s for test %s in module %s because "
-                "it does not have the right flags, "
-                "%s does not contain %s",
-                data['name'], metafunc.function.func_name, metafunc.function.__module__,
-                list(allowed_flags), list(set(test_flags) - allowed_flags))
-            return True
-    return False
-
-
-def _uncollect_since_version(data, metafunc, required_fields):
-    try:
-        if "since_version" in data:
-            # Ignore providers that are not supported in this version yet
-            if version.current_version() < data["since_version"]:
-                return True
-    except Exception:  # No SSH connection
-        return True
-    return False
-
-
-def provider_by_type(metafunc, provider_types, required_fields=None):
-    """Get the values of the named field keys from ``cfme_data.get('management_systems', {})``
-
-    ``required_fields`` is special and can take many forms, it is used to ensure that
-    yaml data is present for a particular key, or path of keys, and can even validate
-    the values as long as they are not None.
-
-
-    Args:
-        provider_types: A list of provider types to include. If None, all providers are considered
-
-    Returns:
-        An tuple of ``(argnames, argvalues, idlist)`` for use in a pytest_generate_tests hook, or
-        with the :py:func:`parametrize` helper.
-
-    Usage:
-
-        # In the function itself
-        def pytest_generate_tests(metafunc):
-            argnames, argvalues, idlist = testgen.provider_by_type(
-                ['openstack', 'ec2'], required_fields=['provisioning']
-            )
-        metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
-
-        # Using the parametrize wrapper
-        pytest_generate_tests = testgen.parametrize(testgen.provider_by_type, ['openstack', 'ec2'],
-            scope='module')
-
-        # Using required_fields
-
-        # Ensures that ``provisioning`` exists as a yaml field
-        testgen.provider_by_type(
-            ['openstack', 'ec2'], required_fields=['provisioning']
-        )
-
-        # Ensures that ``provisioning`` exists as a yaml field and has another field in it called
-        # ``host``
-        testgen.provider_by_type(
-            ['openstack', 'ec2'], required_fields=[['provisioning', 'host']]
-        )
-
-        # Ensures that ``powerctl`` exists as a yaml field and has a value 'True'
-        testgen.provider_by_type(
-            ['openstack', 'ec2'], required_fields=[('powerctl', True)]
-        )
-
-
+def providers(metafunc, filters=None):
+    """ Gets providers based on given (+ global) filters
 
     Note:
-
         Using the default 'function' scope, each test will be run individually for each provider
         before moving on to the next test. To group all tests related to single provider together,
         parametrize tests in the 'module' scope.
 
     Note:
-
         testgen for providers now requires the usage of test_flags for collection to work.
         Please visit http://cfme-tests.readthedocs.org/guides/documenting.html#documenting-tests
         for more details.
-
     """
-
+    filters = filters or []
     argnames = []
     argvalues = []
     idlist = []
 
-    for provider in cfme_data.get('management_systems', {}):
+    # Obtains the test's flags in form of a ProviderFilter
+    meta = getattr(metafunc.function, 'meta', None)
+    test_flag_str = getattr(meta, 'kwargs', {}).get('from_docs', {}).get('test_flag')
+    if test_flag_str:
+        test_flags = test_flag_str.split(',')
+        flags_filter = ProviderFilter(required_flags=test_flags)
+        filters = filters + [flags_filter]
 
-        # Check provider hasn't been filtered out with --use-provider
-        if provider not in filtered:
-            continue
-
-        try:
-            prov_obj = get_crud(provider)
-        except UnknownProviderType:
-            continue
-
-        if not prov_obj:
-            logger.debug("Whilst trying to create an object for %s we failed", provider)
-            continue
-
-        if provider_types is not None:
-            if not(prov_obj.type_tclass in provider_types or prov_obj.type_name in provider_types):
-                continue
-
-        # Run through all the testgen uncollect fns
-        uncollect = False
-        uncollect_fns = [_uncollect_restricted_version, _check_required_fields,
-            _uncollect_test_flags, _uncollect_since_version]
-        for fn in uncollect_fns:
-            if fn(prov_obj.data, metafunc, required_fields):
-                uncollect = True
-                break
-        if uncollect:
-            continue
-
+    for provider in list_providers(filters):
+        argvalues.append([provider])
+        # Use the provider key for idlist, helps with readable parametrized test output
+        idlist.append(provider.key)
+        # Add provider to argnames if missing
         if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
             metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
             argnames.append('provider')
 
-        # uncollect when required field is not present and option['require_field'] == True
-        argvalues.append([prov_obj])
-
-        # Use the provider name for idlist, helps with readable parametrized test output
-        idlist.append(provider)
-
     return argnames, argvalues, idlist
 
 
-def cloud_providers(metafunc, **options):
-    """Wrapper for :py:func:`provider_by_type` that pulls types from
-    :py:attr:`utils.providers.cloud_provider_type_map`
-
-    """
-    return provider_by_type(metafunc, 'cloud', **options)
-
-
-def infra_providers(metafunc, **options):
-    """Wrapper for :py:func:`provider_by_type` that pulls types from
-    :py:attr:`utils.providers.infra_provider_type_map`
-
-    """
-    return provider_by_type(metafunc, 'infra', **options)
-
-
-def container_providers(metafunc, **options):
-    """Wrapper for :py:func:`provider_by_type` that pulls types from
-    :py:attr:`utils.providers.container_provider_type_map`
-
-    """
-    return provider_by_type(metafunc, 'container', **options)
-
-
-def middleware_providers(metafunc, **options):
-    """Wrapper for :py:func:`provider_by_type` that pulls types from
-    :py:attr:`utils.providers.container_provider_type_map`
-
-    """
-    return provider_by_type(metafunc, 'middleware', **options)
-
-
 def all_providers(metafunc, **options):
-    """Wrapper for :py:func:`provider_by_type` that pulls types from
-    :py:attr:`utils.providers.provider_type_map`
-
-    """
-    return provider_by_type(metafunc, None, **options)
+    """ Returns providers of all types """
+    return providers_by_class(metafunc, [BaseProvider], **options)
 
 
 def auth_groups(metafunc, auth_mode):

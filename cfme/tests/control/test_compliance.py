@@ -6,9 +6,11 @@ import pytest
 from mgmtsystem import exceptions
 
 from cfme.common.vm import VM
-from cfme.configure.configuration import VMAnalysisProfile
-from cfme.control.explorer import (
-    VMCompliancePolicy, VMCondition, PolicyProfile)
+from cfme.configure.configuration import AnalysisProfile
+from cfme.control.explorer.policies import VMCompliancePolicy
+from cfme.control.explorer.conditions import VMCondition
+from cfme.control.explorer.policy_profiles import PolicyProfile
+from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version
@@ -31,10 +33,8 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, required_fields=["vm_analysis"])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(
+    [InfraProvider], required_fields=["vm_analysis"], scope="module")
 
 
 def wait_for_ssa_enabled():
@@ -89,9 +89,8 @@ def compliance_vm(request, provider):
 
 @pytest.yield_fixture(scope="module")
 def analysis_profile(compliance_vm):
-    ap = VMAnalysisProfile(
-        name="default", description="ap-desc", files=[],
-        categories=["check_software"])
+    ap = AnalysisProfile(name="default", description="ap-desc", profile_type='VM', files=[],
+                         categories=["check_software"])
     if ap.exists:
         ap.delete()
     with ap:

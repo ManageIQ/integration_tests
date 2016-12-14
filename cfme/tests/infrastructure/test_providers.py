@@ -4,6 +4,8 @@ import uuid
 
 import pytest
 
+from manageiq_client.api import APIException
+
 import cfme.web_ui.flash as flash
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
@@ -14,15 +16,15 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen, providers, version
 from utils.update import update
-from utils.api import APIException
 from cfme import test_requirements
 
-pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
+pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
 
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    return providers.setup_a_provider(prov_class="infra", validate=True, check_existing=True)
+    return providers.setup_a_provider_by_class(prov_class=InfraProvider, validate=True,
+                                               check_existing=True)
 
 
 @pytest.mark.tier(3)
@@ -186,10 +188,11 @@ def test_providers_discovery(request, provider):
     """
     provider.discover()
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
-    request.addfinalizer(lambda: BaseProvider.clear_provider_by_type(InfraProvider))
+    request.addfinalizer(lambda: BaseProvider.clear_providers_by_class(InfraProvider))
     wait_for_a_provider()
 
 
+@pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm', 'blocker=1399622')
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_infra_providers')
 @test_requirements.provider_discovery
@@ -208,14 +211,13 @@ def test_provider_add_with_bad_credentials(provider):
         with error.expected('Cannot complete login due to an incorrect user name or password.'):
             provider.create(validate_credentials=True)
     elif isinstance(provider, RHEVMProvider):
-        error_message = version.pick(
-            {'5.4': '401 Unauthorized',
-             '5.5': 'Credential validation was not successful: '
-                'Login failed due to a bad username or password.',
-             '5.6': 'Credential validation was not successful: '
-                'Incorrect user name or password.',
-        }
-        )
+        error_message = version.pick({
+            '5.4': '401 Unauthorized',
+            '5.5': ('Credential validation was not successful: '
+                'Login failed due to a bad username or password.'),
+            '5.6': ('Credential validation was not successful: '
+                'Incorrect user name or password.'),
+        })
         with error.expected(error_message):
             provider.create(validate_credentials=True)
 

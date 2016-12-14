@@ -5,10 +5,8 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
+from cfme.base import Server
 from cfme.web_ui import Region, Table, tabstrip, toolbar
-from cfme.web_ui.menu import nav
-from cfme.intelligence.reports.dashboards import Dashboard
-from utils import deferred_verpick, version
 from utils.timeutil import parsetime
 from utils.pretty import Pretty
 from utils.wait import wait_for
@@ -19,17 +17,9 @@ from . import BaseLoggedInPage
 page = Region(
     title="Dashboard",
     locators={
-        'reset_widgets_button': {
-            version.LOWEST: toolbar.root_loc('Reset Dashboard Widgets'),
-            '5.5.0.11': toolbar.root_loc('Reset Dashboard Widgets to the defaults'),
-        },
+        'reset_widgets_button': toolbar.root_loc('Reset Dashboard Widgets to the defaults'),
         'csrf_token': "//meta[@name='csrf-token']",
-        'user_dropdown': {
-            version.LOWEST: '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
-            '5.4': '//nav//ul[contains(@class, "navbar-utility")]'
-                   '/li[contains(@class, "dropdown")]/a',
-            '5.6.0.1': '//nav//a[@id="dropdownMenu2"]',
-        },
+        'user_dropdown': '//nav//a[@id="dropdownMenu2"]',
         'help_dropdown': '//nav//a[@id="dropdownMenu1"]'
     },
     identifying_loc='reset_widgets_button')
@@ -57,15 +47,6 @@ def click_help(item):
     sel.handle_alert(wait=False)
 
 
-def add_nav_branches():
-    nav.add_branch('toplevel', {
-        'my_settings': lambda _: click_top_right('My Settings'),
-        'tasks': lambda _: click_top_right('Tasks'),
-        'configuration': lambda _: click_top_right('Configuration'),
-        'about': lambda _: click_top_right('About')
-    }, add_to_stack=False)
-
-
 def reset_widgets(cancel=False):
     """Resets the widgets on the dashboard page.
 
@@ -78,7 +59,7 @@ def reset_widgets(cancel=False):
 
 def dashboards():
     """Returns a generator that iterates through the available dashboards"""
-    navigate_to(Dashboard, 'Main')
+    navigate_to(Server, 'Dashboard')
     # We have to click any other of the tabs (glitch)
     # Otherwise the first one is not displayed (O_O)
     tabstrip.select_tab(tabstrip.get_all_tabs()[-1])
@@ -88,42 +69,20 @@ def dashboards():
 
 
 class Widget(Pretty):
-    _name = deferred_verpick({
-        version.LOWEST: "//div[@id='{}']//span[contains(@class, 'modtitle_text')]",
-        "5.5": "//div[@id='{}']//h3",
-        "5.6": "//div[@id='{}']//h2[contains(@class, 'card-pf-title')]"
-    })
+    _name = "//div[@id='{}']//h2[contains(@class, 'card-pf-title')]"
     _remove = "//div[@id='{}']//a[@title='Remove from Dashboard']"
     _minimize = "//div[@id='{}']//a[@title='Minimize']"
     _restore = "//div[@id='{}']//a[@title='Restore']"
-    _footer = deferred_verpick({
-        version.LOWEST:
-            "//div[@id='{}']//div[@class='modboxfooter' or contains(@class, 'panel-footer')]",
-        "5.6": "//div[@id='{}']//div[contains(@class, 'card-pf-footer')]"
-    })
+    _footer = "//div[@id='{}']//div[contains(@class, 'card-pf-footer')]"
     _zoom = "//div[@id='{}']//a[@title='Zoom in on this chart']"
     _zoomed_name = "//div[@id='lightbox_div']//h2[contains(@class, 'card-pf-title')]"
-    _zoomed_close = deferred_verpick({
-        version.LOWEST: "//div[@id='lightbox_div']//a[@title='Close']",
-        "5.5": "//div[@id='lightbox_div']//a[@title='Close']/i"
-    })
+    _zoomed_close = "//div[@id='lightbox_div']//a[@title='Close']/i"
     _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
-    _content = deferred_verpick({
-        version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]",
-        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]/div",
-        "5.6": "//div[@id='{}']//div[contains(@class,'card-pf-body')]/div"
-    })
-    _content_type = deferred_verpick({
-        version.LOWEST: "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]",
-        "5.5": "//div[@id='{}']//div[contains(@class,'panel-body')]",
-        "5.6": "//div[@id='{}']//div[contains(@class,'card-pf-body')]"
-    })
+    _content = "//div[@id='{}']//div[contains(@class,'card-pf-body')]/div"
+    _content_type = "//div[@id='{}']//div[contains(@class,'card-pf-body')]"
 
     # 5.5+ updated
-    _menu_opener = deferred_verpick({
-        version.LOWEST: "//div[@id='{}']//a[contains(@class, 'dropdown-toggle')]/i",
-        "5.6": "//div[@id='{}']//button[contains(@class, 'dropdown-toggle')]"
-    })
+    _menu_opener = "//div[@id='{}']//button[contains(@class, 'dropdown-toggle')]"
     _menu_container = "//div[@id='{}']//ul[contains(@class, 'dropdown-menu')]"
     _menu_minmax = _menu_container + "/li/a[contains(@id, 'minmax')]"
     _menu_remove = _menu_container + "/li/a[contains(@id, 'close')]"
@@ -135,20 +94,13 @@ class Widget(Pretty):
         self._div_id = div_id
 
     @property
-    def newer_version(self):
-        return version.current_version() >= "5.5"
-
-    @property
     def name(self):
         return sel.text(self._name.format(self._div_id)).encode("utf-8")
 
     @property
     def content_type(self):
-        if version.current_version() <= "5.4":
-            return sel.get_attribute(self._content_type.format(self._div_id), "class").strip()
-        else:
-            return sel.get_attribute(
-                self._content_type.format(self._div_id), "class").rsplit(" ", 1)[-1]
+        return sel.get_attribute(
+            self._content_type.format(self._div_id), "class").rsplit(" ", 1)[-1]
 
     @property
     def content(self):
@@ -190,22 +142,16 @@ class Widget(Pretty):
     @property
     def is_minimized(self):
         self.close_zoom()
-        if not self.newer_version:
-            return not sel.is_displayed(self._minimize.format(self._div_id))
-        else:
-            return not sel.is_displayed(self._content.format(self._div_id))
+        return not sel.is_displayed(self._content.format(self._div_id))
 
     @property
     def can_zoom(self):
         """Can this Widget be zoomed?"""
         self.close_zoom()
-        if not self.newer_version:
-            return sel.is_displayed(self._zoom.format(self._div_id))
-        else:
-            self.open_dropdown_menu()
-            zoomable = sel.is_displayed(self._menu_zoom.format(self._div_id))
-            self.close_dropdown_menu()
-            return zoomable
+        self.open_dropdown_menu()
+        zoomable = sel.is_displayed(self._menu_zoom.format(self._div_id))
+        self.close_dropdown_menu()
+        return zoomable
 
     def _click_menu_button_by_loc(self, loc):
         self.close_zoom()
@@ -215,38 +161,25 @@ class Widget(Pretty):
     def remove(self, cancel=False):
         """Remove this Widget."""
         self.close_zoom()
-        if not self.newer_version:
-            sel.click(self._remove.format(self._div_id), wait_ajax=False)  # alert
-            sel.handle_alert(cancel)
-        else:
-            self._click_menu_button_by_loc(self._menu_remove)
+        self._click_menu_button_by_loc(self._menu_remove)
 
     def minimize(self):
         """Minimize this Widget."""
         self.close_zoom()
         if not self.is_minimized:
-            if not self.newer_version:
-                sel.click(self._minimize.format(self._div_id))
-            else:
-                self._click_menu_button_by_loc(self._menu_minmax)
+            self._click_menu_button_by_loc(self._menu_minmax)
 
     def restore(self):
         """Return the Widget back from minimalization."""
         self.close_zoom()
         if self.is_minimized:
-            if not self.newer_version:
-                sel.click(self._restore.format(self._div_id))
-            else:
-                self._click_menu_button_by_loc(self._menu_minmax)
+            self._click_menu_button_by_loc(self._menu_minmax)
 
     def zoom(self):
         """Zoom this Widget."""
         self.close_zoom()
         if not self.is_zoomed():
-            if not self.newer_version:
-                sel.click(self._zoom.format(self._div_id))
-            else:
-                self._click_menu_button_by_loc(self._menu_zoom)
+            self._click_menu_button_by_loc(self._menu_zoom)
 
     @classmethod
     def is_zoomed(cls):
@@ -266,7 +199,7 @@ class Widget(Pretty):
     @classmethod
     def all(cls):
         """Returns objects with all Widgets currently present."""
-        navigate_to(Dashboard, 'Main')
+        navigate_to(Server, 'Dashboard')
         result = []
         for el in sel.elements(cls._all):
             result.append(cls(sel.get_attribute(el, "id")))

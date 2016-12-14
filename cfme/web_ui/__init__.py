@@ -421,6 +421,14 @@ class Table(Pretty):
                 # but no data.
                 return
 
+    def rows_as_list(self):
+        """Returns rows as list"""
+        return [i for i in self.rows()]
+
+    def row_count(self):
+        """Returns row count"""
+        return len(self.rows_as_list())
+
     def find_row(self, header, value):
         """
         Finds a row in the Table by iterating through each visible item.
@@ -1617,6 +1625,9 @@ class FileInput(Input):
 
 @fill.method((FileInput, Anything))
 def _fill_file_input(i, a):
+    # TODO Upgrade selenium to 3.0.1+, this breaks in chrome at send_keys()
+    # https://github.com/SeleniumHQ/selenium/issues/2906
+
     # Engage the selenium's file detector so we can reliably transfer the file to the browser
     with browser().file_detector_context(LocalFileDetector):
         # We need a raw element so we can send_keys to it
@@ -1626,7 +1637,7 @@ def _fill_file_input(i, a):
             f = NamedTemporaryFile()
             f.write(str(a))
             f.flush()
-            input_el.send_keys(f.name)
+            input_el.send_keys(os.path.abspath(f.name))
             atexit.register(f.close)
         else:
             # It already is a file ...
@@ -1940,14 +1951,20 @@ class BootstrapTreeview(object):
                     node = child_item
                     break
             else:
+                try:
+                    cause = 'Was not found in {}'.format(
+                        self._repr_step(*self._process_step(steps_tried[-2])))
+                except IndexError:
+                    # There is only one item, probably root?
+                    cause = 'Could not find {}'.format(
+                        self._repr_step(*self._process_step(steps_tried[0])))
                 raise exceptions.CandidateNotFound({
                     'message':
                         'Could not find the item {} in Boostrap tree {}'.format(
                             self.pretty_path(steps_tried),
                             self.tree_id),
                     'path': path,
-                    'cause': 'Was not found in {}'.format(
-                        self._repr_step(*self._process_step(steps_tried[-2])))})
+                    'cause': cause})
 
         return node
 
@@ -2071,6 +2088,7 @@ def _fill_bstree_seq(tree, values):
                 tree.check_uncheck_node(check[1], *check[0])
     except IndexError:
         tree.click_path(*values)
+
 
 class Tree(Pretty):
     """ A class directed at CFME Tree elements

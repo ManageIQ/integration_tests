@@ -1,16 +1,18 @@
 import pytest
+
+from manageiq_client.api import APIException
+
 from utils.version import current_version
 from utils import testgen
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.provider.openshift import CustomAttribute
-from utils.api import APIException
 
 pytestmark = [
     pytest.mark.uncollectif(
         lambda: current_version() < "5.7"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 ATTRIBUTES_DATASET = [
     CustomAttribute('exp_date', '2017-01-02', 'Date'),

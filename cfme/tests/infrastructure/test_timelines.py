@@ -4,6 +4,8 @@ import pytest
 
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
@@ -35,7 +37,8 @@ def delete_fx_provider_event(db, provider):
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm'])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [VMwareProvider, RHEVMProvider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
@@ -45,6 +48,7 @@ def vm_name():
     return "test_tt_" + fauxfactory.gen_alphanumeric(length=4)
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.fixture(scope="module")
 def test_vm(request, provider, vm_name, setup_provider_modscope):
     """Fixture to provision appliance to the provider being tested if necessary"""
@@ -86,6 +90,7 @@ def count_events(vm, nav_step):
     return 0
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[1264183, 1281746])
 def test_provider_event(provider, gen_events, test_vm):
     """Tests provider event on timelines
@@ -101,6 +106,7 @@ def test_provider_event(provider, gen_events, test_vm):
              message="events to appear")
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[1281746])
 def test_host_event(provider, gen_events, test_vm):
     """Tests host event on timelines
@@ -117,6 +123,7 @@ def test_host_event(provider, gen_events, test_vm):
              message="events to appear")
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[1281746])
 def test_vm_event(provider, gen_events, test_vm):
     """Tests vm event on timelines
@@ -132,6 +139,7 @@ def test_vm_event(provider, gen_events, test_vm):
              message="events to appear")
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[1281746])
 def test_cluster_event(provider, gen_events, test_vm):
     """Tests cluster event on timelines

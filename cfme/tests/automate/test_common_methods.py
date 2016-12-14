@@ -6,6 +6,7 @@ import pytest
 from datetime import timedelta
 
 from cfme import test_requirements
+from cfme.infrastructure.provider import InfraProvider
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.common.vm import VM
 from cfme.web_ui import toolbar
@@ -20,15 +21,12 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        required_fields=[
-            ['provisioning', 'template'],
-            ['provisioning', 'host'],
-            ['provisioning', 'datastore']
-        ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(
+    [InfraProvider], required_fields=[
+        ['provisioning', 'template'],
+        ['provisioning', 'host'],
+        ['provisioning', 'datastore']
+    ], scope="module")
 
 
 @pytest.fixture(scope="function")

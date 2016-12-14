@@ -24,6 +24,7 @@ pol_btn = partial(tb.select, 'Policy')
 match_page = partial(match_location, controller='resource_pool',
                      title='Resource Pools')
 
+
 class ResourcePool(Pretty, Navigatable):
     """ Model of an infrastructure Resource pool in cfme
 
@@ -100,8 +101,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'Resource Pools')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Resource Pools')
 
     def resetter(self):
         # Reset view and selection

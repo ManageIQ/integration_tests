@@ -9,14 +9,14 @@ from utils.version import current_version
 from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.route import Route
 from cfme.containers.project import Project
+from cfme.containers.provider import ContainersProvider
 
 pytestmark = [
     pytest.mark.uncollectif(
         lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(3)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope='function')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 PROJECTS_SEARCH_STRINGS = ['*', 'infra', '$', 'management-infra']

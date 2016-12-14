@@ -2,17 +2,17 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common import Taggable
 from cfme.exceptions import MiddlewareDomainNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import parse_properties
-from cfme.web_ui import CheckboxTable, paginator, InfoBlock
-from cfme.web_ui.menu import toolbar as tb
+from cfme.middleware.provider import parse_properties
+from cfme.middleware.provider.hawkular import HawkularProvider
+from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_providers
+from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
+from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -88,7 +88,7 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     if strict:
-                        _provider = get_crud(get_provider_key(row.provider.text))
+                        _provider = get_crud_by_name(row.provider.text)
                     domains.append(MiddlewareDomain(
                         name=row.domain_name.text,
                         feed=row.feed.text,
@@ -97,7 +97,7 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
 
     @classmethod
     def headers(cls):
-        sel.force_navigate('middleware_domains')
+        navigate_to(MiddlewareDomain, 'All')
         headers = [sel.text(hdr).encode("utf-8")
                    for hdr in sel.elements("//thead/tr/th") if hdr.text]
         return headers
@@ -109,7 +109,7 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
         _provider = provider
         for domain in rows:
             if strict:
-                _provider = get_crud(get_provider_key(domain.provider_name))
+                _provider = get_crud_by_name(domain.provider_name)
             domains.append(MiddlewareDomain(
                 name=domain.name,
                 feed=domain.feed,
@@ -135,8 +135,8 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
     def domains_in_mgmt(cls, provider=None):
         if provider is None:
             deployments = []
-            for _provider in list_providers('hawkular'):
-                deployments.extend(cls._domains_in_mgmt(get_crud(_provider)))
+            for _provider in list_providers_by_class(HawkularProvider):
+                deployments.extend(cls._domains_in_mgmt(_provider))
             return deployments
         else:
             return cls._domains_in_mgmt(provider)
@@ -219,8 +219,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Domains')(None)
+        self.prerequisite_view.navigation.select('Middleware', 'Domains')
 
     def resetter(self):
         # Reset view and selection

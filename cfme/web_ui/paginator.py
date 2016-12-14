@@ -7,8 +7,12 @@ from functools import partial
 from utils import version
 from cfme.exceptions import PaginatorException
 
-_locator = lambda: version.pick({version.LOWEST: '(//div[@id="paging_div"]//div[@id="pc_div_1"])',
-    '5.5': '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])'})
+
+def _locator():
+    return version.pick({version.LOWEST: '(//div[@id="paging_div"]//div[@id="pc_div_1"])',
+        '5.5': '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])'})
+
+
 _next = '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
 _previous = '//img[@alt="Previous"]|//li[contains(@class, "prev")]/span'
 _first = '//img[@alt="First"]|//li[contains(@class, "first")]/span'

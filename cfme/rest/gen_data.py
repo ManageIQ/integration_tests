@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 
+from manageiq_client.api import APIException
+
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.exceptions import OptionNotAvailable
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -9,9 +11,23 @@ from cfme.services import requests
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils.api import APIException
 from utils.log import logger
+from utils import version
 
+
+_TEMPLATE_TORSO = """{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "AWS CloudFormation Sample Template Rails_Single_Instance.",
+
+  "Parameters" : {
+    "KeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+    }
+  }
+}
+"""
 
 def service_catalogs(request, rest_api):
     name = fauxfactory.gen_alphanumeric()
@@ -113,12 +129,12 @@ def dialog():
     return service_dialog
 
 
-def services(request, rest_api, a_provider, dialog, service_catalogs):
+def service_data(request, rest_api, a_provider, dialog, service_catalogs):
     """
     The attempt to add the service entities via web
     """
-    template, host, datastore, iso_file, vlan, catalog_item_type = map(a_provider.data.get(
-        "provisioning").get,
+    template, host, datastore, iso_file, vlan, catalog_item_type = map(
+        a_provider.data.get("provisioning").get,
         ('template', 'host', 'datastore', 'iso_file', 'vlan', 'catalog_item_type'))
 
     provisioning_data = {
@@ -134,6 +150,11 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
     elif a_provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
         provisioning_data['vlan'] = vlan
+
+    vm_name = version.pick({
+        version.LOWEST: provisioning_data['vm_name'] + '_0001',
+        '5.7': provisioning_data['vm_name'] + '0001'})
+
     catalog = service_catalogs[0].name
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
@@ -141,18 +162,37 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
                                catalog=catalog,
                                dialog=dialog.label,
                                catalog_name=template,
-                               provider=a_provider.name,
+                               provider=a_provider,
                                prov_data=provisioning_data)
 
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     row_description = catalog_item.name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=2000, delay=20)
-    assert (row.last_message.text == 'Request complete'
-            or 'Provisioned Successfully' in row.last_message.text)
+    row, _ = wait_for(requests.wait_for_request, [cells, True],
+        fail_func=requests.reload, num_sec=2000, delay=60)
+    assert row.request_state.text == 'Finished'
+
+    @request.addfinalizer
+    def _finished():
+        try:
+            a_provider.mgmt.delete_vm(vm_name)
+        except Exception:
+            # vm can be deleted/retired by test
+            logger.warning("Failed to delete vm '{}'.".format(vm_name))
+        try:
+            rest_api.collections.services.get(name=catalog_item.name).action.delete()
+        except ValueError:
+            # service can be deleted by test
+            logger.warning("Failed to delete service '{}'.".format(catalog_item.name))
+
+    return {'service_name': catalog_item.name, 'vm_name': vm_name}
+
+
+def services(request, rest_api, a_provider, dialog, service_catalogs):
+    service_data(request, rest_api, a_provider, dialog, service_catalogs)
+
     try:
         services = [_ for _ in rest_api.collections.services]
         services[0]
@@ -375,5 +415,30 @@ def arbitration_settings(request, rest_api, num=2):
         except APIException:
             # settings can be deleted by tests, just log warning
             logger.warning("Failed to delete arbitration settings.")
+
+    return response
+
+
+def orchestration_templates(request, rest_api, num=2):
+    collection = rest_api.collections.orchestration_templates
+    body = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric(5)
+        body.append({
+            'name': 'test_{}'.format(uniq),
+            'description': 'Test Template {}'.format(uniq),
+            'type': 'OrchestrationTemplateCfn',
+            'orderable': False,
+            'draft': False,
+            'content': _TEMPLATE_TORSO.replace('CloudFormation', uniq)})
+    response = collection.action.create(*body)
+
+    @request.addfinalizer
+    def _finished():
+        try:
+            collection.action.delete(*response)
+        except APIException:
+            # settings can be deleted by tests, just log warning
+            logger.warning("Failed to delete orchestration templates.")
 
     return response

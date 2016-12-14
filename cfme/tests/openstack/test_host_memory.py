@@ -3,12 +3,12 @@ import pytest
 from utils import testgen
 from cfme.web_ui import Quadicon
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import InfoBlock
 from cfme.fixtures import pytest_selenium as sel
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type,
-                                         ['openstack-infra'], scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 
 def get_integer_value(x):

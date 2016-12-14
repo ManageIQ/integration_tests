@@ -143,8 +143,7 @@ class All(CFMENavigateStep):
         return match_page(summary='Orchestration Stacks')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Clouds', 'Stacks')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Stacks')
 
     def resetter(self):
         tb.select('Grid View')

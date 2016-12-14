@@ -80,7 +80,8 @@ class MiqBrowserPlugin(DefaultPlugin):
             attr_dict = json.loads(observed_field_attr)
             interval = float(attr_dict.get('interval', self.DEFAULT_WAIT))
             # Pad the detected interval, as with default_wait
-            interval += .1
+            if interval < self.DEFAULT_WAIT:
+                interval = self.DEFAULT_WAIT
         except (TypeError, ValueError):
             # ValueError and TypeError happens if the attribute value couldn't be decoded as JSON
             # ValueError also happens if interval couldn't be coerced to float
@@ -141,21 +142,20 @@ class CFMENavigateStep(NavigateStep):
         except (AttributeError, NoSuchElementException):
             return False
 
-    def pre_navigate(self, _tries=0, *args, **kwargs):
-        if _tries > 2:
-            # Need at least three tries:
-            # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
-            # 2: Everything should work. If not, NavigationError.
-            raise exceptions.NavigationError(self._name)
-
+    def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
+        if self.VIEW:
+            self.view.flush_widget_cache()
+        go_kwargs = kwargs.copy()
+        go_kwargs.update(nav_args)
         self.appliance.browser.open_browser()
+        self.appliance.browser.widgetastic.dismiss_any_alerts()
 
         # check for MiqQE javascript patch on first try and patch the appliance if necessary
         if self.appliance.is_miqqe_patch_candidate and not self.appliance.miqqe_patch_applied:
             self.appliance.patch_with_miqqe()
             self.appliance.browser.quit_browser()
             _tries -= 1
-            self.go(_tries)
+            self.go(_tries, *args, **go_kwargs)
 
         br = self.appliance.browser
 
@@ -172,7 +172,7 @@ class CFMENavigateStep(NavigateStep):
                 br.widgetastic.is_displayed(".modal-backdrop.fade.in")):
             logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
             self.appliance.browser.quit_browser()
-            self.go(_tries)
+            self.go(_tries, *args, **go_kwargs)
 
         # Check if modal window is displayed
         if (br.widgetastic.is_displayed(
@@ -198,7 +198,7 @@ class CFMENavigateStep(NavigateStep):
             self.appliance.wait_for_web_ui()
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser()
-            self.go(_tries)
+            self.go(_tries, *args, **go_kwargs)
 
         # Same with rails errors
         rails_e = get_rails_error()
@@ -213,13 +213,12 @@ class CFMENavigateStep(NavigateStep):
             logger.debug(store.current_appliance.ssh_client.run_command(
                 'top -c -b -n1 -o "%MEM" | head -30').output)  # noqa
             logger.debug('Managed Providers:')
-            logger.debug(store.current_appliance.managed_providers)
+            logger.debug('%r', [prov.key for prov in store.current_appliance.managed_providers])
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser()
-            self.go(_tries)
+            self.go(_tries, *args, **go_kwargs)
             # If there is a rails error past this point, something is really awful
 
-    def do_nav(self, _tries=0, *args, **kwargs):
         # Set this to True in the handlers below to trigger a browser restart
         recycle = False
 
@@ -229,19 +228,17 @@ class CFMENavigateStep(NavigateStep):
 
         from cfme import login
 
-        br = self.appliance.browser
-
         try:
-            self.step()
+            logger.debug("Invoking {}, with {} and {}".format(fn, args, kwargs))
+            return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
-            # ValueError: ui_navigate.go_to can't handle this page, give up
             raise
         except UnexpectedAlertPresentException:
             if _tries == 1:
                 # There was an alert, accept it and try again
                 br.widgetastic.handle_alert(wait=0)
-                self.go(_tries)
+                self.go(_tries, *args, **go_kwargs)
             else:
                 # There was still an alert when we tried again, shoot the browser in the head
                 logger.debug('Unxpected alert, recycling browser')
@@ -277,7 +274,7 @@ class CFMENavigateStep(NavigateStep):
                 logger.warning("Page was blocked with blocker div, recycling.")
                 recycle = True
             elif cfme_exc.is_cfme_exception():
-                logger.exception("CFME Exception before force_navigate started!: {}".format(
+                logger.exception("CFME Exception before force navigate started!: {}".format(
                     cfme_exc.cfme_exception_text()))
                 recycle = True
             elif br.widgetastic.is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
@@ -298,7 +295,7 @@ class CFMENavigateStep(NavigateStep):
                 recycle = True
             elif br.widgetastic.is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
                 # Rails exception detection
-                logger.exception("Rails exception before force_navigate started!: %r:%r at %r",
+                logger.exception("Rails exception before force navigate started!: %r:%r at %r",
                     br.widgetastic.text("//body/div[@class='dialog']/h1"),
                     br.widgetastic.text("//body/div[@class='dialog']/p"),
                     getattr(manager.browser, 'current_url', "error://dead-browser")
@@ -324,37 +321,54 @@ class CFMENavigateStep(NavigateStep):
             logger.info("evmserverd restart requested")
             self.appliance.restart_evm_service()
             self.appliance.wait_for_web_ui()
+            self.go(_tries, *args, **go_kwargs)
 
         if recycle or restart_evmserverd:
             self.appliance.browser.quit_browser()
             logger.debug('browser killed on try {}'.format(_tries))
             # If given a "start" nav destination, it won't be valid after quitting the browser
-            self.go(_tries)
+            self.go(_tries, *args, **go_kwargs)
+
+    def pre_navigate(self, *args, **kwargs):
+        pass
+
+    def post_navigate(self, *args, **kwargs):
+        pass
 
     def log_message(self, msg):
         logger.info("[UI-NAV/{}/{}]: {}".format(self.obj.__class__.__name__, self._name, msg))
 
     def go(self, _tries=0, *args, **kwargs):
+        nav_args = {'use_resetter': True}
+
+        if _tries > 2:
+            # Need at least three tries:
+            # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
+            # 2: Everything should work. If not, NavigationError.
+            raise exceptions.NavigationError(self._name)
+
         _tries += 1
-        self.appliance.browser.widgetastic.dismiss_any_alerts()
-        self.pre_navigate(_tries, *args, **kwargs)
+        for arg in nav_args:
+            if arg in kwargs:
+                nav_args[arg] = kwargs.pop(arg)
+        self.check_for_badness(self.pre_navigate, _tries, nav_args, *args, **kwargs)
         self.log_message("Checking if already here")
         here = False
         try:
-            here = self.am_i_here()
+            here = self.check_for_badness(self.am_i_here, _tries, nav_args, *args, **kwargs)
         except Exception as e:
             self.log_message("Exception raised [{}] whilst checking if already here".format(e))
         if here:
             self.log_message("Already here")
         else:
             self.log_message("Not here")
-            self.prerequisite()
+            self.prerequisite_view = self.prerequisite()
             self.log_message("Heading to destination")
-            self.do_nav(_tries)
-        if kwargs.get('use_resetter', True):
+            self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
+        if nav_args['use_resetter']:
             self.log_message("Running resetter")
-            self.resetter()
-        self.post_navigate(_tries, *args, **kwargs)
+            self.check_for_badness(self.resetter, _tries, nav_args, *args, **kwargs)
+        self.check_for_badness(self.post_navigate, _tries, nav_args, *args, **kwargs)
         if self.VIEW is not None:
             return self.view
 
@@ -400,14 +414,9 @@ class ViaUI(object):
     def create_view(self, view_class, additional_context=None):
         """Method that is used to instantiate a Widgetastic View.
 
-        Views may define ``LOCATION`` on them, that implies a :py:meth:`force_navigate` call with
-        ``LOCATION`` as parameter.
-
         Args:
             view_class: A view class, subclass of ``widgetastic.widget.View``
             additional_context: Additional informations passed to the view (user name, VM name, ...)
-                which is also passed to the :py:meth:`force_navigate` in case when navigation is
-                requested.
 
         Returns:
             An instance of the ``view_class``

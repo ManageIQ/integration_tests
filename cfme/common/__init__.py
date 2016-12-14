@@ -370,8 +370,9 @@ def process_field(values):
 class Validatable(SummaryMixin):
     """Mixin for various validations. Requires the class to be also :py:class:`Taggable`.
 
-    :var property_tuples: Tuples which first value is the provider class's attribute name, the
-        second value is provider's UI summary page field key. Should have values in child classes.
+    :var :py:attr:`property_tuples`: Tuples which first value is the provider class's attribute
+        name, the second value is provider's UI summary page field key. Should have values in
+        child classes.
     """
     property_tuples = []
 

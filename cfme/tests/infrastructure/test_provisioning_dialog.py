@@ -7,11 +7,14 @@ import fauxfactory
 import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
-from cfme.common.vm import VM
+from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import InfoBlock, fill, flash
-from utils import mgmt_system, testgen
+from utils import testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.generators import random_vm_name
 from utils.log import logger
@@ -26,21 +29,17 @@ pytestmark = [
     pytest.mark.meta(blockers=[
         BZ(
             1265466,
-            unblock=lambda provider: not isinstance(provider.mgmt, mgmt_system.RHEVMSystem))
+            unblock=lambda provider: not provider.one_of(RHEVMProvider))
     ]),
     pytest.mark.tier(3)
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        required_fields=[
-            ['provisioning', 'template'],
-            ['provisioning', 'host'],
-            ['provisioning', 'datastore']
-        ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
+    ['provisioning', 'template'],
+    ['provisioning', 'host'],
+    ['provisioning', 'datastore']
+], scope="module")
 
 
 @pytest.fixture(scope="function")
@@ -78,10 +77,8 @@ def prov_data(provisioning, provider):
 def provisioner(request, setup_provider, provider, vm_name):
 
     def _provisioner(template, provisioning_data, delayed=None):
-        pytest.sel.force_navigate('infrastructure_provision_vms', context={
-            'provider': provider,
-            'template_name': template,
-        })
+        vm = Vm(name=vm_name, provider=provider, template_name=template)
+        navigate_to(vm, 'ProvisionVM')
 
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         flash.assert_no_errors()
@@ -107,7 +104,7 @@ def provisioner(request, setup_provider, provider, vm_name):
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=900, delay=20)
         assert 'Successfully' in row.last_message.text and row.status.text != 'Error'
-        return VM.factory(vm_name, provider)
+        return vm
 
     return _provisioner
 

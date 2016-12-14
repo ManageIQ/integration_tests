@@ -12,7 +12,7 @@ import iso8601
 import tzlocal
 from datetime import datetime, timedelta
 
-from utils.providers import list_providers, get_mgmt
+from utils.providers import list_provider_keys, get_mgmt
 
 local_tz = tzlocal.get_localzone()
 GRACE_TIME = timedelta(hours=2)
@@ -43,4 +43,4 @@ if __name__ == "__main__":
     if provs:
         main(*provs)
     else:
-        main(*list_providers("openstack"))
+        main(*list_provider_keys("openstack"))

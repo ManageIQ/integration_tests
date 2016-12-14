@@ -103,7 +103,7 @@ def configure_db_replication(db_address):
     flash.assert_message_contain("Configuration settings saved for CFME Server")
     navigate_to(current_appliance.server, 'Server')
     conf.set_server_roles(database_synchronization=True)
-    sel.force_navigate("cfg_diagnostics_region_replication")
+    navigate_to(current_appliance.server.zone.region, 'Replication')
     wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
              num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
     assert conf.get_replication_status()
@@ -134,7 +134,7 @@ def test_vm(request, vmware_provider, vm_name):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
 def test_appliance_replicate_between_regions(request, vmware_provider):
     """Tests that a provider added to an appliance in one region
         is replicated to the parent appliance in another region.
@@ -187,7 +187,7 @@ def test_external_database_appliance(request, vmware_provider):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
 def test_appliance_replicate_sync_role_change(request, vmware_provider):
     """Tests that a role change is replicated
 
@@ -205,11 +205,11 @@ def test_appliance_replicate_sync_role_change(request, vmware_provider):
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
         conf.set_server_roles(database_synchronization=False)
-        sel.force_navigate("cfg_diagnostics_region_replication")
+        navigate_to(current_appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         conf.set_server_roles(database_synchronization=True)
-        sel.force_navigate("cfg_diagnostics_region_replication")
+        navigate_to(current_appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
@@ -223,7 +223,7 @@ def test_appliance_replicate_sync_role_change(request, vmware_provider):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
 def test_appliance_replicate_sync_role_change_with_backlog(request, vmware_provider):
     """Tests that a role change is replicated with backlog
 
@@ -242,11 +242,11 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, vmware_provi
         # Replication is up and running, now disable DB sync role
         vmware_provider.create()
         conf.set_server_roles(database_synchronization=False)
-        sel.force_navigate("cfg_diagnostics_region_replication")
+        navigate_to(current_appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         conf.set_server_roles(database_synchronization=True)
-        sel.force_navigate("cfg_diagnostics_region_replication")
+        navigate_to(current_appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
@@ -259,7 +259,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, vmware_provi
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
 def test_appliance_replicate_database_disconnection(request, vmware_provider):
     """Tests a database disconnection
 
@@ -279,7 +279,7 @@ def test_appliance_replicate_database_disconnection(request, vmware_provider):
         stop_db_process(appl2.address)
         sleep(60)
         start_db_process(appl2.address)
-        sel.force_navigate("cfg_diagnostics_region_replication")
+        navigate_to(current_appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
@@ -293,7 +293,7 @@ def test_appliance_replicate_database_disconnection(request, vmware_provider):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
 def test_appliance_replicate_database_disconnection_with_backlog(request, vmware_provider):
     """Tests a database disconnection with backlog
 
@@ -314,7 +314,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, vmware
         stop_db_process(appl2.address)
         sleep(60)
         start_db_process(appl2.address)
-        sel.force_navigate("cfg_diagnostics_region_replication")
+        navigate_to(current_appliance.server.zone.region, 'Replication')
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
@@ -327,7 +327,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, vmware
 
 
 @pytest.mark.tier(2)
-@pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("upstream", "5.7")  # no config->diagnostics->replication tab in 5.7
 def test_distributed_vm_power_control(request, test_vm, vmware_provider, verify_vm_running,
                                       register_event, soft_assert):
     """Tests that a replication parent appliance can control the power state of a
@@ -353,8 +353,7 @@ def test_distributed_vm_power_control(request, test_vm, vmware_provider, verify_
         register_event('VmOrTemplate', test_vm.name, ['request_vm_poweroff', 'vm_poweroff'])
         test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
         flash.assert_message_contain("Stop initiated")
-        pytest.sel.force_navigate(
-            'infrastructure_provider', context={'provider': test_vm.provider})
+        navigate_to(test_vm.provider, 'Details')
         test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=900)
         soft_assert(test_vm.find_quadicon().state == 'currentstate-off')
         soft_assert(

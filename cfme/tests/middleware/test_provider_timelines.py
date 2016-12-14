@@ -1,6 +1,7 @@
 import pytest
 from datetime import datetime
 
+from cfme.middleware.provider.hawkular import HawkularProvider
 from utils import testgen
 from utils.version import current_version
 from deployment_methods import get_resource_path
@@ -20,7 +21,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
+pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 DEPLOYMENT_OK_EVENT = 'hawkular_deployment.ok'
 UNDEPLOYMENT_OK_EVENT = 'hawkular_deployment_remove.ok'

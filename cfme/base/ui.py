@@ -1,5 +1,4 @@
 import re
-
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic_manageiq import ManageIQTree
@@ -8,12 +7,15 @@ from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
 from widgetastic.widget import View, Table
 
 from cfme import BaseLoggedInPage
+from cfme.automate import automate_menu_name
 from cfme.dashboard import DashboardView
-from cfme.exceptions import ZoneNotFound
+from cfme.intelligence.rss import RSSView
+from cfme.exceptions import ZoneNotFound, DestinationNotFound
+from cfme.intelligence.chargeback import ChargebackView
 from cfme.login import LoginPage
 
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
-
+from utils import version
 from . import Server, Region, Zone, ZoneCollection
 
 
@@ -114,8 +116,7 @@ class MySettings(CFMENavigateStep):
             from cfme.dashboard import click_top_right
             click_top_right('My Settings')
         else:
-            from cfme.web_ui.menu import nav
-            nav._nav_to_fn('Settings', 'My Settings')(None)
+            self.prerequisite_view.navigation.select('Settings', 'My Settings')
 
 
 @navigator.register(Server)
@@ -127,8 +128,16 @@ class About(CFMENavigateStep):
             from cfme.dashboard import click_help
             click_help('About')
         else:
-            from cfme.web_ui.menu import nav
-            nav._nav_to_fn('Settings', 'About')(None)
+            self.prerequisite_view.navigation.select('Settings', 'About')
+
+
+@navigator.register(Server)
+class RSS(CFMENavigateStep):
+    VIEW = RSSView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select('Cloud Intel', 'RSS')
 
 
 @navigator.register(Server)
@@ -140,8 +149,7 @@ class Documentation(CFMENavigateStep):
             from cfme.dashboard import click_help
             click_help('Documentation')
         else:
-            from cfme.web_ui.menu import nav
-            nav._nav_to_fn('Settings', 'About')(None)
+            self.prerequisite_view.navigation.select('Settings', 'About')
 
 
 @navigator.register(Server)
@@ -153,8 +161,7 @@ class Tasks(CFMENavigateStep):
             from cfme.dashboard import click_top_right
             click_top_right('Tasks')
         else:
-            from cfme.web_ui.menu import nav
-            nav._nav_to_fn('Settings', 'Tasks')(None)
+            self.prerequisite_view.navigation.select('Settings', 'Tasks')
 
 
 @navigator.register(Server)
@@ -164,6 +171,15 @@ class Dashboard(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select('Cloud Intel', 'Dashboard')
+
+
+@navigator.register(Server)
+class Chargeback(CFMENavigateStep):
+    VIEW = ChargebackView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self, *args, **kwargs):
+        self.view.navigation.select('Cloud Intel', 'Chargeback')
 
 
 class ServerView(ConfigurationView):
@@ -472,6 +488,10 @@ class RegionDiagnosticsView(ConfigurationView):
         TAB_NAME = "Roles by Servers"
 
     @View.nested
+    class replication(Tab):  # noqa
+        TAB_NAME = "Replication"
+
+    @View.nested
     class serversbyroles(Tab):  # noqa
         TAB_NAME = "Servers by Roles"
 
@@ -513,6 +533,18 @@ class RegionDiagnosticsRolesByServers(CFMENavigateStep):
 
     def step(self):
         self.view.rolesbyservers.select()
+
+
+@navigator.register(Region, 'Replication')
+class RegionDiagnosticsReplication(CFMENavigateStep):
+    VIEW = RegionDiagnosticsView
+    prerequisite = NavigateToSibling('Diagnostics')
+
+    def step(self):
+        if version.current_version() < '5.7':
+            self.view.replication.select()
+        else:
+            raise DestinationNotFound('Replication destination is absent in 5.7')
 
 
 @navigator.register(Region, 'ServersByRoles')
@@ -782,3 +814,24 @@ def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=No
     return Zone(appliance=self.appliance, region=self.region,
         name=name, description=description, smartproxy_ip=smartproxy_ip,
         ntp_servers=ntp_servers, max_scans=max_scans, user=user)
+
+
+# AUTOMATE
+class AutomateSimulationView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == automate_menu_name(
+                self.obj.appliance) + ['Simulation'])
+
+    # TODO: Actually convert this to Widgetastic.
+
+
+@navigator.register(Server)
+class AutomateSimulation(CFMENavigateStep):
+    VIEW = AutomateSimulationView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Simulation'])

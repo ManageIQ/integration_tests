@@ -9,7 +9,9 @@ from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
 from cfme.configure import configuration
 from cfme.configure.tasks import is_vm_analysis_finished
-from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
+from cfme.control.explorer.policy_profiles import PolicyProfile
+from cfme.control.explorer.policies import VMControlPolicy
+from cfme.control.explorer.actions import Action
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host, datastore
 from cfme.provisioning import do_vm_provisioning
@@ -274,9 +276,11 @@ def policy_profile(request, instance):
     ]
 
     analysis_profile_name = 'ssa_analysis_{}'.format(fauxfactory.gen_alphanumeric())
-    analysis_profile = configuration.VMAnalysisProfile(analysis_profile_name, analysis_profile_name,
-                                                       categories=["check_system"],
-                                                       files=collected_files)
+    analysis_profile = configuration.AnalysisProfile(name=analysis_profile_name,
+                                                     description=analysis_profile_name,
+                                                     profile_type='VM',
+                                                     categories=["check_system"],
+                                                     files=collected_files)
     if analysis_profile.exists:
         analysis_profile.delete()
     analysis_profile.create()

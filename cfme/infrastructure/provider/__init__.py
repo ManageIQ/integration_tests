@@ -12,6 +12,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cached_property import cached_property
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
@@ -21,10 +22,8 @@ from cfme.web_ui import (
     AngularSelect, toolbar as tb, Radio, InfoBlock, match_location
 )
 from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, deferred_verpick, version
-from utils.api import rest_api
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
@@ -107,20 +106,6 @@ cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
 
-nav.add_branch('infrastructure_providers',
-             {'infrastructure_provider_new': lambda _: cfg_btn(
-                 'Add a New Infrastructure Provider'),
-              'infrastructure_provider_discover': lambda _: cfg_btn(
-                  'Discover Infrastructure Providers'),
-              'infrastructure_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
-                                                                         'infra_prov')),
-                                          {'infrastructure_provider_edit':
-                                           lambda _: cfg_btn('Edit this Infrastructure Provider'),
-                                           'infrastructure_provider_policy_assignment':
-                                           lambda _: pol_btn('Manage Policies'),
-                                           'infrastructure_provider_timelines':
-                                           lambda _: mon_btn('Timelines')}]})
-
 
 @CloudInfraProvider.add_base_type
 class InfraProvider(Pretty, CloudInfraProvider):
@@ -130,7 +115,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     Args:
         name: Name of the provider.
         details: a details record (see VMwareDetails, RHEVMDetails inner class).
-        credentials (Credential): see Credential inner class.
+        credentials (:py:class:`Credential`): see Credential inner class.
         key: The CFME key of the provider in the yaml.
         candu: C&U credentials if this is a RHEVMDetails class.
 
@@ -144,7 +129,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     """
     provider_types = {}
     in_version = (version.LOWEST, version.LATEST)
-    type_tclass = "infra"
+    category = "infra"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
@@ -172,14 +157,17 @@ class InfraProvider(Pretty, CloudInfraProvider):
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
-        self.vm_name = version.pick({
-            version.LOWEST: "VMs",
-            '5.5': "VMs and Instances",
-            '5.8': 'VMs & Templates'})  # TODO: If it lands in some 5.7.x, change this version!
         self.template_name = "Templates"
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
+
+    @cached_property
+    def vm_name(self):
+        return version.pick({
+            version.LOWEST: "VMs",
+            '5.5': "VMs and Instances",
+            '5.7': "Virtual Machines"})
 
     @variable(alias='db')
     def num_datastore(self):
@@ -204,9 +192,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @variable(alias='rest')
     def num_host(self):
-        provider = rest_api().collections.providers.find_by(name=self.name)[0]
+        provider = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
         num_host = 0
-        for host in rest_api().collections.hosts:
+        for host in self.appliance.rest_api.collections.hosts:
             if host['ems_id'] == provider.id:
                 num_host += 1
         return num_host
@@ -238,9 +226,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @variable(alias='rest')
     def num_cluster(self):
-        provider = rest_api().collections.providers.find_by(name=self.name)[0]
+        provider = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
         num_cluster = 0
-        for cluster in rest_api().collections.clusters:
+        for cluster in self.appliance.rest_api.collections.clusters:
             if cluster['ems_id'] == provider.id:
                 num_cluster += 1
         return num_cluster
@@ -284,7 +272,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
         """
         returns current provider id using rest api
         """
-        return rest_api().collections.providers.find_by(name=self.name)[0].id
+        return self.appliance.rest_api.collections.providers.find_by(name=self.name)[0].id
 
     @property
     def hosts(self):
@@ -321,8 +309,7 @@ class All(CFMENavigateStep):
         return match_page(summary='Infrastructure Providers')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'Providers')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Providers')
 
     def resetter(self):
         # Reset view and selection

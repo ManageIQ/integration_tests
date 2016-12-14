@@ -4,7 +4,6 @@ import pytest
 
 from cfme.control import import_export
 from utils.path import data_path
-from cfme.web_ui import flash
 from utils import error
 from utils.version import current_version
 from cfme import test_requirements
@@ -28,7 +27,6 @@ def import_invalid_yaml_file(request):
 @pytest.mark.meta(blockers=[1106456, 1198111], automates=[1198111])
 def test_import_policies(import_policy_file):
     import_export.import_file(import_policy_file)
-    flash.assert_no_errors()
 
 
 def test_control_import_invalid_yaml_file(import_invalid_yaml_file):

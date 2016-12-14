@@ -1,17 +1,18 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
+from cfme.containers.overview import ContainersOverview
+from cfme.containers.provider import ContainersProvider
 from cfme.web_ui import StatusBox
 from utils import testgen, version
+from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 
 pytestmark = [
     pytest.mark.uncollectif(
         lambda: current_version() < "5.6"),
-    pytest.mark.usefixtures('has_no_container_providers'),
+    pytest.mark.usefixtures('has_no_containers_providers'),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope='function')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 # CMP-9827 # CMP-9826 # CMP-9825 # CMP-9824 # CMP-9823 # CMP-9822 # CMP-9821 # CMP-9820
@@ -40,8 +41,7 @@ def test_containers_summary_objects(provider):
     })
     container_object = version.pick(objects_key)
     prov_ui_values, status_box_values = dict(), dict()
-    #  TODO: Change the following force navigate once navmazing destination is available
-    sel.force_navigate('container_dashboard')
+    navigate_to(ContainersOverview, 'All')
     for obj_type in container_object:
         status_box_values[obj_type] = StatusBox(obj_type).value()
     for obj_type in container_object:

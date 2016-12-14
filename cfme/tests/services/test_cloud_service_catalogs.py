@@ -3,7 +3,8 @@ import fauxfactory
 import pytest
 
 from cfme.common.provider import cleanup_vm
-from cfme.services.catalogs import catalog_item as cct
+from cfme.cloud.provider import CloudProvider
+from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
@@ -22,12 +23,8 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(
-        metafunc, required_fields=[['provisioning', 'image']]
-    )
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(
+    [CloudProvider], required_fields=[['provisioning', 'image']], scope="module")
 
 
 @pytest.yield_fixture(scope="function")
@@ -91,17 +88,22 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
             boot_disk_size=provisioning['boot_disk_size']
         )
     provisioning_data.update(updates)
-    catalog_item = cct.CatalogItem(item_type=provisioning['item_type'], name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog, catalog_name=image,
-                  provider=provider.name, prov_data=provisioning_data)
+    catalog_item = CatalogItem(item_type=provisioning['item_type'],
+                               name=item_name,
+                               description="my catalog",
+                               display_in=True,
+                               catalog=catalog.name,
+                               dialog=dialog,
+                               catalog_name=image,
+                               provider=provider,
+                               prov_data=provisioning_data)
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=1000, delay=20)
+                       fail_func=requests.reload, num_sec=1200, delay=20)
     assert row.request_state.text == 'Finished'

@@ -19,7 +19,7 @@ from threading import Lock
 from mgmtsystem import EC2System
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.providers import list_providers
+from utils.providers import list_provider_keys
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -224,13 +224,14 @@ def run(**kwargs):
          **kwargs: Kwargs are passed by template_upload_all.
      """
     mgmt_sys = cfme_data['management_systems']
-    for provider in list_providers('ec2'):
+    for provider in list_provider_keys('ec2'):
         ssh_rhevm_creds = mgmt_sys[provider]['credentials']
         username = credentials[ssh_rhevm_creds]['username']
         password = credentials[ssh_rhevm_creds]['password']
         upload_bucket_name = mgmt_sys[provider]['upload_bucket_name']
         upload_template(provider, username, password, upload_bucket_name, kwargs.get(
             'image_url'), kwargs.get('template_name'))
+
 
 if __name__ == '__main__':
     args = parse_cmd_line()

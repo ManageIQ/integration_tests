@@ -1,6 +1,7 @@
 import fauxfactory
 import pytest
 from cfme.cloud.keypairs import KeyPair
+from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
 from utils.version import current_version
 from utils.providers import setup_a_provider as _setup_a_provider
@@ -17,8 +18,8 @@ def a_provider():
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['openstack'])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [OpenStackProvider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 

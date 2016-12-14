@@ -1,13 +1,12 @@
-from utils import testgen
 import pytest
+from utils import testgen
+from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 
 
 pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate')]
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type,
-                                         ['openstack-infra'],
-                                         scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")

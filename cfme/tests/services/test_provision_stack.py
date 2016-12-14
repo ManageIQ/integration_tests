@@ -8,8 +8,8 @@ from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services import requests
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
-from cfme.exceptions import CandidateNotFound
 from cfme import test_requirements
 from utils import testgen, version
 from utils.log import logger
@@ -133,12 +133,11 @@ outputs:
 """
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, required_fields=[
+pytest_generate_tests = testgen.generate(
+    [CloudProvider], required_fields=[
         ['provisioning', 'stack_provisioning']
-    ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+    ],
+    scope="module")
 
 
 @pytest.yield_fixture(scope="function")
@@ -164,12 +163,6 @@ def template(provider, provisioning, dialog_name):
 
     yield template
 
-    try:
-        template.delete()
-    except CandidateNotFound as ex:
-        logger.warning('Exception deleting template fixture, continuing: {}'.format(ex.message))
-        pass
-
 
 @pytest.yield_fixture(scope="function")
 def dialog_name(provider):
@@ -189,16 +182,17 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(dialog_name, catalog, template):
+def catalog_item(dialog_name, catalog, template, provider):
     item_name = fauxfactory.gen_alphanumeric()
 
     catalog_item = CatalogItem(item_type="Orchestration",
                                name=item_name,
                                description="my catalog",
                                display_in=True,
-                               catalog=catalog.name,
+                               catalog=catalog,
                                dialog=dialog_name,
-                               orch_template=template.template_name)
+                               orch_template=template,
+                               provider=provider)
     catalog_item.create()
 
     yield catalog_item, item_name
@@ -232,16 +226,7 @@ def prepare_stack_data(provider, provisioning):
         return stack_data
 
 
-def provision_success_message(name):
-    success_message = 'Service '
-    if version.current_version() >= '5.7':
-        # 5.7 success message includes catalog item name in brackets
-        success_message += '[{}] '.format(name)
-    success_message += 'Provisioned Successfully'
-    return success_message
-
-
-def test_provision_stack(provider, provisioning, catalog, catalog_item, request):
+def test_provision_stack(setup_provider, provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
@@ -258,20 +243,21 @@ def test_provision_stack(provider, provisioning, catalog, catalog_item, request)
                 wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
                          delay=10, num_sec=800, message="wait for stack delete")
             stack_data['vm_name'].delete_from_provider()
+            catalog_item.orch_template.delete()
         except Exception as ex:
             logger.warning('Exception while checking/deleting stack, continuing: {}'
                            .format(ex.message))
             pass
 
-    service_catalogs = ServiceCatalogs("service_name", stack_data)
-    service_catalogs.order_stack_item(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2500, delay=20)
 
-    assert provision_success_message(catalog_item.name) in row.last_message.text
+    assert 'Provisioned Successfully' in row.last_message.text
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() <= '5.5')
@@ -291,20 +277,21 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
                 wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
                  delay=10, num_sec=800, message="wait for stack delete")
             stack_data['vm_name'].delete_from_provider()
+            catalog_item.orch_template.delete()
         except Exception as ex:
             logger.warning('Exception while checking/deleting stack, continuing: {}'
                            .format(ex.message))
             pass
 
-    service_catalogs = ServiceCatalogs("service_name", stack_data)
-    service_catalogs.order_stack_item(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2000, delay=20)
 
-    assert provision_success_message(catalog_item.name) in row.last_message.text
+    assert 'Provisioned Successfully' in row.last_message.text
 
     myservice = MyService(catalog_item.name)
     myservice.reconfigure_service()
@@ -318,8 +305,8 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     """
     catalog_item, item_name = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs("service_name", stack_data)
-    service_catalogs.order_stack_item(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs.order()
     # This is part of test - remove template and see if provision fails , so not added as finalizer
     template.delete()
     row_description = 'Provisioning Service [{}] from [{}]'.format(item_name, item_name)
@@ -341,15 +328,15 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     DefaultView.set_default_view("Stacks", "Grid View")
 
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs("service_name", stack_data)
-    service_catalogs.order_stack_item(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2500, delay=20)
 
-    assert provision_success_message(catalog_item.name) in row.last_message.text
+    assert 'Provisioned Successfully' in row.last_message.text
 
     stack = Stack(stack_data['stack_name'])
     stack.wait_for_appear()
@@ -359,6 +346,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     def _cleanup_templates():
         try:
             stack_data['vm_name'].delete_from_provider()
+            catalog_item.orch_template.delete()
         except Exception as ex:
             logger.warning('Exception while checking/deleting stack, continuing: {}'
                            .format(ex.message))

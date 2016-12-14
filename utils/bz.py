@@ -155,8 +155,8 @@ class Bugzilla(object):
                 continue
             if ((variant.version is not None and variant.target_release is not None) and
                     (
-                        variant.version.is_in_series(version_series)
-                        or variant.target_release.is_in_series(version_series))):
+                        variant.version.is_in_series(version_series) or
+                        variant.target_release.is_in_series(version_series))):
                     filtered.add(variant)
             elif variant.release_flag is not None:
                 if version.is_in_series(variant.release_flag):
@@ -181,8 +181,8 @@ class Bugzilla(object):
             if ((bug.version is not None and bug.target_release is not None) and
                     check_fixed_in(bug.fixed_in, version_series) and
                     (
-                        bug.version.is_in_series(version_series)
-                        or bug.target_release.is_in_series(version_series))):
+                        bug.version.is_in_series(version_series) or
+                        bug.target_release.is_in_series(version_series))):
                 return bug
         # Otherwise prefer release_flag
         for bug in filtered:

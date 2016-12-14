@@ -9,7 +9,7 @@ from slumber.exceptions import SlumberHttpBaseException
 
 from utils import trackerbot, net
 from utils.conf import cfme_data
-from utils.providers import list_providers, get_mgmt
+from utils.providers import list_provider_keys, get_mgmt
 
 
 def main(trackerbot_url, mark_usable=None):
@@ -18,7 +18,7 @@ def main(trackerbot_url, mark_usable=None):
     thread_q = []
     thread_lock = Lock()
     template_providers = defaultdict(list)
-    all_providers = set(list_providers())
+    all_providers = set(list_provider_keys())
     unresponsive_providers = set()
     # Queue up list_template calls
     for provider_key in all_providers:

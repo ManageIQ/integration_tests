@@ -2,6 +2,8 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.instance.image import Image
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
 from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
@@ -11,10 +13,8 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, required_fields=['remove_test'])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(
+    [CloudProvider], required_fields=['remove_test'], scope="module")
 
 
 pytestmark = [pytest.mark.tier(2),
@@ -23,13 +23,12 @@ pytestmark = [pytest.mark.tier(2),
 
 @pytest.fixture(scope="module")
 def set_grid():
-    sel.force_navigate("clouds_images")
+    navigate_to(Image, 'All')
     toolbar.select('Grid View')
 
 
 def reset():
-    # TODO replace this navigation with navmazing when cloud images supports it
-    sel.force_navigate("clouds_images")
+    navigate_to(Image, 'All')
     toolbar.select('List View')
 
 

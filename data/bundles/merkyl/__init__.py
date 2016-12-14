@@ -50,6 +50,7 @@ class Log(object):
         if self.running:
             return os.path.getsize(self.f.name)
 
+
 Loggers = {}
 
 
@@ -57,6 +58,7 @@ def die(a, b):
     for logger in Loggers:
         Loggers[logger].stop()
     sys.exit()
+
 
 signal.signal(signal.SIGTERM, die)
 

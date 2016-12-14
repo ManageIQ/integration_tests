@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import (NavigateToAttribute,
+                       NavigateToSibling,
+                       NavigateToObject,
+                       NavigationDestinationNotFound)
 
 from contextlib import contextmanager
 from functools import partial
@@ -7,13 +10,13 @@ from cached_property import cached_property
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 
+from cfme.base.ui import Server, Region
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, CandidateNotFound
+from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
 from cfme.web_ui import (
     AngularSelect, Calendar, CheckboxSelect, CFMECheckbox, DynamicTable, Form, InfoBlock, Input,
     MultiFill, Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
-from cfme.web_ui.menu import nav
 from cfme.web_ui.form_buttons import change_stored_password
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -132,82 +135,14 @@ category_table = Table("//div[@id='settings_co_categories']/table")
 classification_table = Table("//div[@id='classification_entries_div']/table")
 
 
-nav.add_branch("configuration",
-    {
-
-        "cfg_analysis_profiles": [
-            lambda _: settings_tree(store.current_appliance.server_region_string(),
-                "Analysis Profiles"),
-            {
-                "host_analysis_profile_add": lambda _: tb.select(
-                    "Configuration", "Add Host Analysis Profile"),
-                "vm_analysis_profile_add": lambda _: tb.select(
-                    "Configuration", "Add VM Analysis Profile"),
-            }
-        ],
-
-        "cfg_analysis_profile": [
-            lambda ctx:
-            settings_tree(store.current_appliance.server_region_string(),
-                "Analysis Profiles", str(ctx.analysis_profile)),
-            {
-                "analysis_profile_edit":
-                lambda _: tb.select("Configuration", "Edit this Analysis Profile"),
-            }
-        ],
-
-        "cfg_settings_defaultzone":
-        lambda _: settings_tree(
-            store.current_appliance.server_region_string(),
-            "Zones",
-            "Zone: Default Zone (current)",
-        ),
-
-        "cfg_settings_zones":
-        [
-            lambda _: settings_tree(
-                store.current_appliance.server_region_string(),
-                "Zones"),
-            {
-                "cfg_settings_zone":
-                [
-                    lambda ctx: zones_table.click_cell("name", ctx["zone_name"]),
-                    {
-                        "cfg_settings_zone_edit":
-                        lambda _: tb.select("Configuration", "Edit this Zone")
-                    }
-                ]
-            }
-        ],
-
-        "cfg_settings_schedules":
-        [
-            lambda _: settings_tree(
-                store.current_appliance.server_region_string(),
-                "Schedules"),
-            {
-                "cfg_settings_schedule":
-                [
-                    lambda ctx: records_table.click_cell("name", ctx["schedule_name"]),
-                    {
-                        "cfg_settings_schedule_edit":
-                        lambda _: tb.select("Configuration", "Edit this Schedule")
-                    }
-                ]
-            }
-        ],
-    }
-)
-
-
-class AnalysisProfile(Pretty, Updateable):
+class AnalysisProfile(Pretty, Updateable, Navigatable):
     """Analysis profiles. Do not use this class but the derived one.
 
     Example:
 
         .. code-block:: python
 
-            p = VMAnalysisProfile(name, description)
+            p = AnalysisProfile(name, description, profile_type='VM')
             p.files = [
                 "/somefile",
                 {"Name": "/some/anotherfile", "Collect Contents?": True}
@@ -243,27 +178,34 @@ class AnalysisProfile(Pretty, Updateable):
                 ("registry", {"5.6": DynamicTable("//div[@id='registry']/fieldset/table"),
                               "5.7": DynamicTable("//div[@id='registry']/table")}),
             ],
+
             "Event Log": [
                 ("events", {"5.6": DynamicTable("//div[@id='event_log']/fieldset/table"),
                             "5.7": DynamicTable("//div[@id='event_log']/table")}),
             ],
         })
 
-    def __init__(self, name, description, files=None, events=None, categories=None, registry=None):
+    def __init__(self, name, description, profile_type, files=None, events=None, categories=None,
+                 registry=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.description = description
         self.files = files
         self.events = events
         self.categories = categories
         self.registry = registry
+        if profile_type in ('Host', 'VM'):
+            self.profile_type = profile_type
+        else:
+            raise ValueError("Profile Type is incorrect")
 
     def create(self):
-        sel.force_navigate(self.CREATE_LOC)
+        navigate_to(self, 'Add')
         fill(self.form, self, action=form_buttons.add)
         flash.assert_no_errors()
 
     def update(self, updates=None):
-        sel.force_navigate("analysis_profile_edit", context={"analysis_profile": self})
+        navigate_to(self, 'Edit')
         if updates is None:
             fill(self.form, self, action=form_buttons.save)
         else:
@@ -271,7 +213,7 @@ class AnalysisProfile(Pretty, Updateable):
         flash.assert_no_errors()
 
     def delete(self):
-        sel.force_navigate("cfg_analysis_profile", context={"analysis_profile": self})
+        navigate_to(self, 'Details')
         tb.select("Configuration", "Delete this Analysis Profile", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
@@ -279,9 +221,9 @@ class AnalysisProfile(Pretty, Updateable):
     def copy(self, name=None):
         if not name:
             name = self.name + "copy"
-        sel.force_navigate("cfg_analysis_profile", context={"analysis_profile": self})
-        tb.select('Configuration', 'Copy this selected Analysis Profile')
-        new_profile = AnalysisProfile(name=name, description=self.description, files=self.files)
+        navigate_to(self, 'Copy')
+        new_profile = AnalysisProfile(name=name, description=self.description,
+                                      profile_type=self.profile_type, files=self.files)
         fill(self.form, {'name': new_profile.name},
              action=form_buttons.add)
         flash.assert_success_message('Analysis Profile "{}" was saved'.format(new_profile.name))
@@ -290,8 +232,8 @@ class AnalysisProfile(Pretty, Updateable):
     @property
     def exists(self):
         try:
-            sel.force_navigate("cfg_analysis_profile", context={"analysis_profile": self})
-        except CandidateNotFound:
+            navigate_to(self, 'Details')
+        except NavigationDestinationNotFound:
             return False
         else:
             return True
@@ -306,12 +248,48 @@ class AnalysisProfile(Pretty, Updateable):
         self.delete()
 
 
-class HostAnalysisProfile(AnalysisProfile):
-    CREATE_LOC = "host_analysis_profile_add"
+@navigator.register(AnalysisProfile, 'All')
+class AnalysisProfileAll(CFMENavigateStep):
+    prerequisite = NavigateToObject(Server, 'Configuration')
+
+    def step(self):
+        server_region = store.current_appliance.server_region_string()
+        self.prerequisite_view.accordions.settings.tree.click_path(
+            (server_region, "Analysis Profiles"))
 
 
-class VMAnalysisProfile(AnalysisProfile):
-    CREATE_LOC = "vm_analysis_profile_add"
+@navigator.register(AnalysisProfile, 'Add')
+class AnalysisProfileAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb.select("Configuration", "Add {type} Analysis Profile".format(type=self.obj.profile_type))
+
+
+@navigator.register(AnalysisProfile, 'Details')
+class AnalysisProfileDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        server_region = store.current_appliance.server_region_string()
+        self.prerequisite_view.accordions.settings.tree.click_path((server_region,
+                                                              "Analysis Profiles", str(self)))
+
+
+@navigator.register(AnalysisProfile, 'Edit')
+class AnalysisProfileEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb.select("Configuration", "Edit this Analysis Profile")
+
+
+@navigator.register(AnalysisProfile, 'Copy')
+class AnalysisProfileCopy(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb.select('Configuration', 'Copy this selected Analysis Profile')
 
 
 class ServerLogDepot(Pretty):
@@ -955,10 +933,10 @@ class LDAPSAuthSetting(LDAPAuthSetting):
     AUTH_MODE = "LDAPS"
 
 
-class Schedule(Pretty):
+class Schedule(Pretty, Navigatable):
     """ Configure/Configuration/Region/Schedules functionality
 
-    CReate, Update, Delete functionality.
+    Create, Update, Delete functionality.
 
     Args:
         name: Schedule's name.
@@ -1038,19 +1016,10 @@ class Schedule(Pretty):
     pretty_attrs = ['name', 'description', 'run_type', 'run_every',
                     'start_date', 'start_hour', 'start_min']
 
-    def __init__(self,
-                 name,
-                 description,
-                 active=True,
-                 action=None,
-                 filter_type=None,
-                 filter_value=None,
-                 run_type="Once",
-                 run_every=None,
-                 time_zone=None,
-                 start_date=None,
-                 start_hour=None,
-                 start_min=None):
+    def __init__(self, name, description, active=True, action=None, filter_type=None,
+                 filter_value=None, run_type="Once", run_every=None, time_zone=None,
+                 start_date=None, start_hour=None, start_min=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.details = dict(
             name=name,
             description=description,
@@ -1079,8 +1048,7 @@ class Schedule(Pretty):
         Args:
             cancel: Whether to click on the cancel button to interrupt the creation.
         """
-        sel.force_navigate("cfg_settings_schedules")
-        tb.select("Configuration", "Add a new Schedule")
+        navigate_to(self, 'Add')
 
         if cancel:
             action = form_buttons.cancel
@@ -1100,8 +1068,8 @@ class Schedule(Pretty):
             cancel: Whether to click on the cancel button to interrupt the editation.
 
         """
-        sel.force_navigate("cfg_settings_schedule_edit",
-                           context={"schedule_name": self.details["name"]})
+        navigate_to(self, 'Edit')
+
         if cancel:
             action = form_buttons.cancel
         else:
@@ -1121,81 +1089,72 @@ class Schedule(Pretty):
         Args:
             cancel: Whether to click on the cancel button in the pop-up.
         """
-        self.delete_by_name(self.details["name"], cancel)
+        navigate_to(self, 'Details')
+        tb.select("Configuration", "Delete this Schedule from the Database", invokes_alert=True)
+        sel.handle_alert(cancel)
 
     def enable(self):
         """ Enable the schedule via table checkbox and Configuration menu.
 
         """
-        self.enable_by_names(self.details["name"])
+        self.select()
+        tb.select("Configuration", "Enable the selected Schedules")
 
     def disable(self):
         """ Enable the schedule via table checkbox and Configuration menu.
 
         """
-        self.disable_by_names(self.details["name"])
-
-    ##
-    # CLASS METHODS
-    #
-    @classmethod
-    def delete_by_name(cls, name, cancel=False):
-        """ Finds a particular schedule by its name and then deletes it.
-
-        Args:
-            name: Name of the schedule.
-            cancel: Whether to click on the cancel button in the pop-up.
-        """
-        sel.force_navigate("cfg_settings_schedule", context={"schedule_name": name})
-        tb.select("Configuration", "Delete this Schedule from the Database", invokes_alert=True)
-        sel.handle_alert(cancel)
-
-    @classmethod
-    def select_by_names(cls, *names):
-        """ Select all checkboxes at the schedules with specified names.
-
-        Can select multiple of them.
-
-        Candidate for DRY in Table class.
-
-        Args:
-            *names: Arguments with all schedules' names.
-        """
-        def select_by_name(name):
-            for row in records_table.rows():
-                if row.name.strip() == name:
-                    checkbox = row[0].find_element_by_xpath("//input[@type='checkbox']")
-                    if not checkbox.is_selected():
-                        sel.click(checkbox)
-                    break
-            else:
-                raise ScheduleNotFound(
-                    "Schedule '{}' could not be found for selection!".format(name)
-                )
-
-        sel.force_navigate("cfg_settings_schedules")
-        for name in names:
-            select_by_name(name)
-
-    @classmethod
-    def enable_by_names(cls, *names):
-        """ Checks all schedules that are passed with `names` and then enables them via menu.
-
-        Args:
-            *names: Names of schedules to enable.
-        """
-        cls.select_by_names(*names)
-        tb.select("Configuration", "Enable the selected Schedules")
-
-    @classmethod
-    def disable_by_names(cls, *names):
-        """ Checks all schedules that are passed with `names` and then disables them via menu.
-
-        Args:
-            *names: Names of schedules to disable.
-        """
-        cls.select_by_names(*names)
+        self.select()
         tb.select("Configuration", "Disable the selected Schedules")
+
+    def select(self):
+        """ Select the checkbox for current schedule
+
+        """
+        navigate_to(self, 'All')
+        for row in records_table.rows():
+            if row.name.strip() == self.details['name']:
+                checkbox = row[0].find_element_by_xpath("//input[@type='checkbox']")
+                if not checkbox.is_selected():
+                    sel.click(checkbox)
+                break
+        else:
+            raise ScheduleNotFound(
+                "Schedule '{}' could not be found for selection!".format(self.details['name'])
+            )
+
+
+@navigator.register(Schedule, 'All')
+class ScheduleAll(CFMENavigateStep):
+    prerequisite = NavigateToObject(Server, 'Configuration')
+
+    def step(self):
+        server_region = store.current_appliance.server_region_string()
+        self.prerequisite_view.accordions.settings.tree.click_path((server_region, "Schedules"))
+
+
+@navigator.register(Schedule, 'Add')
+class ScheduleAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb.select("Configuration", "Add a new Schedule")
+
+
+@navigator.register(Schedule, 'Details')
+class ScheduleDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        records_table.click_cell("name", self.obj.details["name"])
+
+
+@navigator.register(Schedule, 'Edit')
+class ScheduleEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb.select("Configuration", "Edit this Schedule")
 
 
 class DatabaseBackupSchedule(Schedule):
@@ -1283,22 +1242,9 @@ class DatabaseBackupSchedule(Schedule):
             '5.5': AngularSelect('start_min')}),
     ])
 
-    def __init__(self,
-                 name,
-                 description,
-                 active=True,
-                 protocol=None,
-                 depot_name=None,
-                 uri=None,
-                 username=None,
-                 password=None,
-                 password_verify=None,
-                 run_type="Once",
-                 run_every=None,
-                 time_zone=None,
-                 start_date=None,
-                 start_hour=None,
-                 start_min=None):
+    def __init__(self, name, description, active=True, protocol=None, depot_name=None, uri=None,
+                 username=None, password=None, password_verify=None, run_type="Once",
+                 run_every=None, time_zone=None, start_date=None, start_hour=None, start_min=None):
 
         assert protocol in {'Samba', 'Network File System'},\
             "Unknown protocol type '{}'".format(protocol)
@@ -1352,8 +1298,7 @@ class DatabaseBackupSchedule(Schedule):
             samba_validate: Samba-only option to click the `Validate` button to check
                             if entered samba credentials are valid or not
         """
-        sel.force_navigate("cfg_settings_schedules")
-        tb.select("Configuration", "Add a new Schedule")
+        navigate_to(self, 'Add')
 
         fill(self.form, self.details)
         if samba_validate:
@@ -1372,8 +1317,7 @@ class DatabaseBackupSchedule(Schedule):
             samba_validate: Samba-only option to click the `Validate` button to check
                             if entered samba credentials are valid or not
         """
-        sel.force_navigate("cfg_settings_schedule_edit",
-                           context={"schedule_name": self.details["name"]})
+        navigate_to(self, 'Edit')
 
         self.details.update(updates)
         fill(self.form, self.details)
@@ -1386,7 +1330,7 @@ class DatabaseBackupSchedule(Schedule):
 
     @property
     def last_date(self):
-        sel.force_navigate("cfg_settings_schedules")
+        navigate_to(self, 'All')
         name = self.details["name"]
         row = records_table.find_row("Name", name)
         return row[6].text
@@ -1806,7 +1750,8 @@ def get_replication_status(navigate=True):
     Returns: bool of whether replication is Active or Inactive.
     """
     if navigate:
-        sel.force_navigate("cfg_diagnostics_region_replication")
+
+        navigate_to(Region, 'Replication')
     return replication_process.status.text == "Active"
 
 
@@ -1816,5 +1761,5 @@ def get_replication_backlog(navigate=True):
     Returns: int representing the remaining items in the replication backlog.
     """
     if navigate:
-        sel.force_navigate("cfg_diagnostics_region_replication")
+        navigate_to(Region, 'Replication')
     return int(replication_process.current_backlog.text)

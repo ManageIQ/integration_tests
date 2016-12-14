@@ -138,7 +138,7 @@ from time import time
 from traceback import extract_tb, format_tb
 
 from cached_property import cached_property
-from utils import conf
+from utils import conf, safe_string
 from utils.path import get_rel_path, log_path, project_path
 
 import os
@@ -184,6 +184,8 @@ class TraceLogger(logging.Logger):
         """
         if self.isEnabledFor(logging.TRACE):
             self._log(logging.TRACE, msg, args, **kwargs)
+
+
 logging._loggerClass = TraceLogger
 
 
@@ -204,7 +206,7 @@ class PrefixAddingLoggerFilter(logging.Filter):
 
     def filter(self, record):
         if self.prefix:
-            record.msg = self.prefix + record.msg
+            record.msg = "{0}{1}".format(safe_string(self.prefix), safe_string(record.msg))
         return True
 
 
@@ -404,6 +406,7 @@ def _custom_excepthook(type, value, traceback):
     logger.error(text, extra={'source_file': file, 'source_lineno': lineno})
     _original_excepthook(type, value, traceback)
 
+
 if '_original_excepthook' not in globals():
     # Guard the original excepthook against reloads so we don't hook twice
     _original_excepthook = sys.excepthook
@@ -460,6 +463,8 @@ def _configure_warnings():
     wlog.addFilter(WarningsDeduplicationFilter())
     wlog.addHandler(make_file_handler('py.warnings.log'))
     wlog.propagate = False
+
+
 _configure_warnings()
 
 # Register a custom excepthook to log unhandled exceptions

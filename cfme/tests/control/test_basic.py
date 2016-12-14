@@ -10,13 +10,11 @@ import fauxfactory
 import pytest
 import random
 
-import cfme.fixtures.pytest_selenium as sel
+from cfme.control.explorer import (actions, alert_profiles, alerts, conditions, policies,
+    policy_profiles)
 
-from cfme.control import explorer
 from utils.update import update
 from utils.version import current_version
-from cfme.web_ui import flash
-from cfme.web_ui import expression_editor
 from cfme import test_requirements
 
 pytestmark = [
@@ -50,32 +48,32 @@ VM_EXPRESSIONS_TO_TEST = [
 ]
 
 COMPLIANCE_POLICIES = [
-    explorer.HostCompliancePolicy,
-    explorer.VMCompliancePolicy,
-    explorer.ReplicatorCompliancePolicy,
-    explorer.PodCompliancePolicy,
-    explorer.ContainerNodeCompliancePolicy,
-    explorer.ContainerImageCompliancePolicy,
+    policies.HostCompliancePolicy,
+    policies.VMCompliancePolicy,
+    policies.ReplicatorCompliancePolicy,
+    policies.PodCompliancePolicy,
+    policies.ContainerNodeCompliancePolicy,
+    policies.ContainerImageCompliancePolicy,
 ]
 
 CONTROL_POLICIES = [
-    explorer.HostControlPolicy,
-    explorer.VMControlPolicy,
-    explorer.ReplicatorControlPolicy,
-    explorer.PodControlPolicy,
-    explorer.ContainerNodeControlPolicy,
-    explorer.ContainerImageControlPolicy
+    policies.HostControlPolicy,
+    policies.VMControlPolicy,
+    policies.ReplicatorControlPolicy,
+    policies.PodControlPolicy,
+    policies.ContainerNodeControlPolicy,
+    policies.ContainerImageControlPolicy
 ]
 
 POLICIES = COMPLIANCE_POLICIES + CONTROL_POLICIES
 
 CONDITIONS = [
-    explorer.HostCondition,
-    explorer.VMCondition,
-    explorer.ReplicatorCondition,
-    explorer.PodCondition,
-    explorer.ContainerNodeCondition,
-    explorer.ContainerImageCondition
+    conditions.HostCondition,
+    conditions.VMCondition,
+    conditions.ReplicatorCondition,
+    conditions.PodCondition,
+    conditions.ContainerNodeCondition,
+    conditions.ContainerImageCondition
 ]
 
 POLICIES_AND_CONDITIONS = zip(CONTROL_POLICIES, CONDITIONS)
@@ -211,18 +209,19 @@ EVENTS = [
 ]
 
 ALERT_PROFILES = [
-    explorer.ClusterAlertProfile,
-    explorer.DatastoreAlertProfile,
-    explorer.HostAlertProfile,
-    explorer.MiddlewareServerAlertProfile,
-    explorer.ProviderAlertProfile,
-    explorer.ServerAlertProfile,
-    explorer.VMInstanceAlertProfile
+    alert_profiles.ClusterAlertProfile,
+    alert_profiles.DatastoreAlertProfile,
+    alert_profiles.HostAlertProfile,
+    alert_profiles.MiddlewareServerAlertProfile,
+    alert_profiles.ProviderAlertProfile,
+    alert_profiles.ServerAlertProfile,
+    alert_profiles.VMInstanceAlertProfile
 ]
+
 
 @pytest.yield_fixture
 def random_vm_control_policy():
-    policy = explorer.VMControlPolicy(fauxfactory.gen_alphanumeric())
+    policy = policies.VMControlPolicy(fauxfactory.gen_alphanumeric())
     policy.create()
     yield policy
     policy.delete()
@@ -230,7 +229,7 @@ def random_vm_control_policy():
 
 @pytest.yield_fixture
 def random_host_control_policy():
-    policy = explorer.HostControlPolicy(fauxfactory.gen_alphanumeric())
+    policy = policies.HostControlPolicy(fauxfactory.gen_alphanumeric())
     policy.create()
     yield policy
     policy.delete()
@@ -238,7 +237,7 @@ def random_host_control_policy():
 
 @pytest.yield_fixture
 def random_alert():
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
     )
     alert.create()
@@ -251,9 +250,9 @@ def policy_class(request):
     return request.param
 
 
-@pytest.yield_fixture(params=POLICIES, ids=lambda policy_class: policy_class.__name__)
-def policy(request):
-    policy = request.param(fauxfactory.gen_alphanumeric())
+@pytest.yield_fixture
+def policy(policy_class):
+    policy = policy_class(fauxfactory.gen_alphanumeric())
     policy.create()
     yield policy
     policy.delete()
@@ -261,7 +260,7 @@ def policy(request):
 
 @pytest.yield_fixture(scope="module")
 def vm_condition_for_expressions():
-    cond = explorer.VMCondition(
+    cond = conditions.VMCondition(
         fauxfactory.gen_alphanumeric(),
         expression="fill_field(VM and Instance : CPU Limit, =, 20)",
         scope="fill_count(VM and Instance.Files, >, 150)"
@@ -282,27 +281,27 @@ def control_policy(request):
 @pytest.yield_fixture(params=ALERT_PROFILES,
     ids=lambda alert_profile_class: alert_profile_class.__name__)
 def alert_profile(request):
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         fauxfactory.gen_alphanumeric(),
         based_on=request.param.TYPE,
         timeline_event=True,
         driving_event="Hourly Timer"
     )
     alert.create()
-    alert_profile = request.param(fauxfactory.gen_alphanumeric(), [alert])
+    alert_profile = request.param(fauxfactory.gen_alphanumeric(), [alert.description])
     yield alert_profile
     alert.delete()
 
 
-@pytest.fixture(params=CONDITIONS, ids=lambda condition: condition.__name__)
+@pytest.fixture(params=CONDITIONS, ids=lambda condition_class: condition_class.__name__)
 def condition(request):
     condition_class = request.param
     expression = "fill_field({} : Name, =, {})".format(
-        condition_class.PRETTY_NAME,
+        condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
     scope = "fill_field({} : Name, =, {})".format(
-        condition_class.PRETTY_NAME,
+        condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
     cond = condition_class(
@@ -317,7 +316,7 @@ def condition(request):
 def policy_and_condition(request):
     condition_class = request.param[1]
     expression = "fill_field({} : Name, =, {})".format(
-        condition_class.PRETTY_NAME,
+        condition_class.FIELD_VALUE,
         fauxfactory.gen_alphanumeric()
     )
     condition = condition_class(
@@ -333,80 +332,47 @@ def policy_and_condition(request):
 
 
 @pytest.mark.tier(2)
-def test_condition_crud(condition, soft_assert):
+def test_condition_crud(condition):
     # CR
     condition.create()
-    soft_assert(condition.exists, "The condition {} does not exist!".format(
-        condition.description
-    ))
     # U
     with update(condition):
         condition.notes = "Modified!"
-    sel.force_navigate(
-        "{}condition_edit".format(condition.PREFIX),
-        context={"condition_name": condition.description})
-    soft_assert(sel.text(condition.form.notes).strip() == "Modified!", "Modification failed!")
     # D
     condition.delete()
-    soft_assert(not condition.exists, "The condition {} exists!".format(
-        condition.description
-    ))
 
 
 @pytest.mark.tier(2)
-def test_action_crud(soft_assert):
-    action = explorer.Action(
+def test_action_crud():
+    action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Department", "Accounting")}
     )
     # CR
     action.create()
-    soft_assert(action.exists, "The action {} does not exist!".format(
-        action.description
-    ))
     # U
     with update(action):
         action.description = "w00t w00t"
-    sel.force_navigate("control_explorer_action_edit", context={"action_name": action.description})
-    soft_assert(
-        sel.get_attribute(action.form.description, "value").strip() == "w00t w00t",
-        "Modification failed!"
-    )
     # D
     action.delete()
-    soft_assert(not action.exists, "The action {} exists!".format(
-        action.description
-    ))
 
 
 @pytest.mark.tier(2)
-def test_policy_crud(policy_class, soft_assert):
+def test_policy_crud(policy_class):
     policy = policy_class(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
-    soft_assert(policy.exists, "The policy {} does not exist!".format(
-        policy.description
-    ))
     # U
     with update(policy):
         policy.notes = "Modified!"
-    sel.force_navigate(
-        "{}policy_edit".format(policy.PREFIX),
-        context={"policy_name": policy.description}
-    )
-    soft_assert(sel.text(policy.form.notes).strip() == "Modified!", "Modification failed!")
     # D
     policy.delete()
-    soft_assert(not policy.exists, "The policy {} exists!".format(
-        policy.description
-    ))
 
 
 @pytest.mark.tier(3)
-def test_policy_copy(policy, soft_assert):
+def test_policy_copy(policy):
     random_policy_copy = policy.copy()
-    soft_assert(random_policy_copy.exists, "The {} does not exist!".format(random_policy_copy))
     random_policy_copy.delete()
 
 
@@ -432,19 +398,15 @@ def test_assign_condition_to_control_policy(request, policy_and_condition):
 
 
 @pytest.mark.tier(2)
-def test_policy_profile_crud(random_vm_control_policy, random_host_control_policy, soft_assert):
-    profile = explorer.PolicyProfile(
+def test_policy_profile_crud(random_vm_control_policy, random_host_control_policy):
+    profile = policy_profiles.PolicyProfile(
         fauxfactory.gen_alphanumeric(),
         policies=[random_vm_control_policy, random_host_control_policy]
     )
     profile.create()
-    soft_assert(profile.exists, "Policy profile {} does not exist!".format(profile.description))
     with update(profile):
         profile.notes = "Modified!"
-    sel.force_navigate("policy_profile", context={"policy_profile_name": profile.description})
-    soft_assert(sel.text(profile.form.notes).strip() == "Modified!")
     profile.delete()
-    soft_assert(not profile.exists, "The policy profile {} exists!".format(profile.description))
 
 
 @pytest.mark.tier(3)
@@ -455,69 +417,36 @@ def test_modify_vm_condition_expression(
         vm_condition_for_expressions, expression, verify, soft_assert):
     with update(vm_condition_for_expressions):
         vm_condition_for_expressions.expression = expression
-    flash.assert_no_errors()
     if verify is not None:
-        sel.force_navigate("vm_condition_edit",
-                           context={"condition_name": vm_condition_for_expressions.description})
-        vm_condition_for_expressions.form.expression.show_func()
-        soft_assert(expression_editor.get_expression_as_text() == verify)
+        soft_assert(vm_condition_for_expressions.read_expression() == verify)
 
 
 @pytest.mark.tier(2)
-def test_alert_crud(soft_assert):
-    alert = explorer.Alert(
+def test_alert_crud():
+    alert = alerts.Alert(
         fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
     )
     # CR
     alert.create()
-    soft_assert(alert.exists, "The alert {} does not exist!".format(
-        alert.description
-    ))
     # U
     with update(alert):
         alert.notification_frequency = "2 Hours"
-    sel.force_navigate("control_explorer_alert_edit", context={"alert_name": alert.description})
-    soft_assert(
-        (alert.form.notification_frequency.first_selected_option[0]
-         .strip()) == "2 Hours", "Modification failed!"
-    )
     # D
     alert.delete()
-    soft_assert(not alert.exists, "The alert {} exists!".format(
-        alert.description
-    ))
 
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(blockers=[1303645], automates=[1303645])
-def test_control_alert_copy(random_alert, soft_assert):
-    alert_copy = random_alert.copy()
-    soft_assert(alert_copy.exists, "The alert {} does not exist!".format(
-        alert_copy.description
-    ))
+def test_control_alert_copy(random_alert):
+    alert_copy = random_alert.copy(description=fauxfactory.gen_alphanumeric())
     alert_copy.delete()
-    soft_assert(not alert_copy.exists, "The alert {} exists!".format(
-        alert_copy.description
-    ))
 
 
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda alert_profile: alert_profile.TYPE == "Middleware Server" and
     current_version() < "5.7")
-def test_alert_profile_crud(alert_profile, soft_assert):
+def test_alert_profile_crud(alert_profile):
     alert_profile.create()
-    soft_assert(alert_profile.exists, "The alert profile {} does not exist!".format(
-        alert_profile.description
-    ))
     with update(alert_profile):
         alert_profile.notes = "Modified!"
-    sel.force_navigate("{}_alert_profile_edit".format(alert_profile.PREFIX),
-                       context={"alert_profile_name": alert_profile.description})
-    soft_assert(
-        sel.text(
-            alert_profile.form.notes) == "Modified!", "Modification failed!"
-    )
     alert_profile.delete()
-    soft_assert(not alert_profile.exists, "The alert profile {} exists!".format(
-        alert_profile.description
-    ))

@@ -135,8 +135,8 @@ class ReportCompile(object):
         build_numbers = []
         # XXX relying on trackerbot giving us the most recent builds first, should be explicit
         for build in builds.get('objects', []):
-            if (build['number'] not in self.exclude_builds
-                    and build['number'] >= self.minimum_build):
+            if (build['number'] not in self.exclude_builds and
+                    build['number'] >= self.minimum_build):
                 build_numbers.append(build['number'])
                 if self.num_builds and len(build_numbers) == self.num_builds:
                     break
@@ -247,8 +247,8 @@ class ReportCompile(object):
         json.dump(composite_report, self.work_dir.join('composite-report.json').open('w'),
             indent=1)
         try:
-            passing_percent = (100. * (test_counts['passed'] + test_counts['skipped']
-                + test_counts['xfailed'])) / sum(test_counts.values())
+            passing_percent = (100. * (test_counts['passed'] + test_counts['skipped'] +
+                test_counts['xfailed'])) / sum(test_counts.values())
             print('Passing percent:', passing_percent)
             # XXX: Terrible artifactor spoofing happens here.
             print('Running artifactor reports')

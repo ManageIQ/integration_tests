@@ -4,10 +4,16 @@ import pytest
 import random
 import time
 
+from cfme import test_requirements
+from cfme.cloud.provider.azure import AzureProvider
+from cfme.cloud.provider.ec2 import EC2Provider
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration import get_server_roles, set_server_roles, candu
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
-from cfme import test_requirements
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from fixtures.pytest_store import store
 from operator import attrgetter
 from utils import providers
@@ -19,10 +25,12 @@ from utils.version import current_version
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter', 'rhevm', 'ec2', 'openstack', 'azure', 'gce'],
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc,
+        [VMwareProvider, RHEVMProvider, EC2Provider, OpenStackProvider, AzureProvider, GCEProvider],
         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+
 
 pytestmark = [
     pytest.mark.tier(1),

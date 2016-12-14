@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.storage import object_store
 from cfme.web_ui import mixins
 from utils.providers import setup_a_provider as _setup_a_provider
@@ -14,8 +15,8 @@ def setup_a_provider():
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['openstack'])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [OpenStackProvider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 

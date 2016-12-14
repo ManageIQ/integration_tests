@@ -1,5 +1,6 @@
 import pytest
 from cfme.containers.project import Project
+from cfme.containers.provider import ContainersProvider
 from cfme.web_ui import CheckboxTable
 from utils import testgen, version
 from utils.version import current_version
@@ -10,8 +11,7 @@ pytestmark = [
         lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope='function')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 projects_properties_fields = ['Name', 'Creation timestamp', 'Resource version']

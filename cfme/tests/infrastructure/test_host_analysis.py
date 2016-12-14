@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.configure.tasks import is_host_analysis_finished
 from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.infrastructure import host
+from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
 from utils import conf
 from utils import testgen
@@ -20,7 +21,7 @@ HOST_TYPES = ('rhev', 'rhel', 'esx', 'esxi')
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
+    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [InfraProvider])
     argnames = argnames + ['host_type', 'host_name']
     new_argvalues = []
     new_idlist = []

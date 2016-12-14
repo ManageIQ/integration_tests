@@ -53,7 +53,9 @@ def process_provider(mgmt, prov):
             if user in vm:
                 process_vm(vm, mgmt, user, prov)
 
+
 prov_key_db = {}
+
 
 for prov in li:
     ip = li[prov].get('ipaddress', None)

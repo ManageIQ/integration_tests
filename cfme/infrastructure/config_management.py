@@ -441,11 +441,10 @@ class MgrAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
         if self.obj.appliance.version > '5.7.0.8':
-            nav._nav_to_fn('Configuration', 'Management')(None)
+            self.prerequisite_view.navigation.select('Configuration', 'Management')
         else:
-            nav._nav_to_fn('Configuration', 'Configuration Management')(None)
+            self.prerequisite_view.navigation.select('Configuration', 'Configuration Management')
 
     def resetter(self):
         accordion.tree('Providers', 'All Configuration Manager Providers')
@@ -509,8 +508,7 @@ class SysAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Configuration', 'Configuration Management')(None)
+        self.prerequisite_view.navigation.select('Configuration', 'Configuration Management')
 
     def resetter(self):
         accordion.tree('Configured Systems', 'All Configured Systems')

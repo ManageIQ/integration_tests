@@ -7,6 +7,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services import requests
 from cfme import test_requirements
@@ -25,17 +26,18 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
-        ['provisioning', 'pxe_server'],
-        ['provisioning', 'pxe_image'],
-        ['provisioning', 'pxe_image_type'],
-        ['provisioning', 'pxe_kickstart'],
-        ['provisioning', 'pxe_template'],
-        ['provisioning', 'datastore'],
-        ['provisioning', 'host'],
-        ['provisioning', 'pxe_root_password'],
-        ['provisioning', 'vlan']
-    ])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [InfraProvider], required_fields=[
+            ['provisioning', 'pxe_server'],
+            ['provisioning', 'pxe_image'],
+            ['provisioning', 'pxe_image_type'],
+            ['provisioning', 'pxe_kickstart'],
+            ['provisioning', 'pxe_template'],
+            ['provisioning', 'datastore'],
+            ['provisioning', 'host'],
+            ['provisioning', 'pxe_root_password'],
+            ['provisioning', 'vlan']
+        ])
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]
@@ -127,7 +129,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning, setup_pxe_ser
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=pxe_template,
-                  provider=provider.name, prov_data=provisioning_data)
+                  provider=provider, prov_data=provisioning_data)
     yield catalog_item
 
 
@@ -141,8 +143,8 @@ def test_pxe_servicecatalog(setup_provider, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name

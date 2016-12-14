@@ -9,7 +9,7 @@ from utils.providers import setup_a_provider
 from cfme.cloud.instance.image import Image
 from cfme.cloud.instance import Instance
 from cfme.infrastructure import virtual_machines as vms
-from cfme.services import workloads  # NOQA
+from cfme.services import workloads
 from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 
@@ -68,9 +68,8 @@ def test_servicetemplateandimages_defaultfilters(setup_first_provider):
     df = st.DefaultFilter(name='Platform / Microsoft')
     df.update({'filters': [(k, True) for k in filters]})
     try:
-        sel.force_navigate(
-            'service_templates_images_filter', context={'folder_name': 'Global Filters',
-                                                        'filter_name': df.name})
+        navigate_to(workloads.VmsInstances, 'All', filter_folder='Global Filters',
+                    filter_name=df.name)
         assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
     finally:
         df.update({'filters': [(k, False) for k in filters]})
@@ -81,9 +80,8 @@ def test_servicevmsandinstances_defaultfilters(setup_first_provider):
     df = st.DefaultFilter(name='Platform / Openstack')
     df.update({'filters': [(k, True) for k in filters]})
     try:
-        sel.force_navigate(
-            'service_vms_instances_filter', context={'folder_name': 'Global Filters',
-                                                     'filter_name': df.name})
+        navigate_to(workloads.TemplatesImages, 'All', filter_folder='Global Filters',
+                    filter_name=df.name)
         assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
     finally:
         df.update({'filters': [(k, False) for k in filters]})

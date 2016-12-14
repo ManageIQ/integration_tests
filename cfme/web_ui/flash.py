@@ -213,6 +213,7 @@ def assert_success_message(m):
     """Asserts that there are no errors and a (green) info message
     matches the given string."""
     messages = get_messages()
+    logger.info('Asserting flash success message against messages: {}'.format(messages))
     assert_no_errors(messages)
     if not any([
             (fm.message == m and (fm.level in {"info", "success"}))

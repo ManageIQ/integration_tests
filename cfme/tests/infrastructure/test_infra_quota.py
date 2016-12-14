@@ -7,10 +7,13 @@ from cfme import test_requirements
 from cfme.configure.access_control import Tenant
 from cfme.fixtures import pytest_selenium as sel
 from cfme.automate import explorer as automate
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import fill, flash
 from utils import testgen, version
+from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
 
 pytestmark = [
@@ -21,8 +24,8 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter'])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [VMwareProvider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 
@@ -86,6 +89,46 @@ def set_group_cpu():
     group.remove_tag("Quota - Max CPUs *", "2")
 
 
+@pytest.yield_fixture(scope="module")
+def set_tenant_cpu():
+    cpu_data = {'cpu_cb': True, 'cpu': 2}
+    reset_cpu_data = {'cpu_cb': False}
+    roottenant = Tenant.get_root_tenant()
+    roottenant.set_quota(**cpu_data)
+    yield
+    roottenant.set_quota(**reset_cpu_data)
+
+
+@pytest.yield_fixture(scope="module")
+def set_tenant_memory():
+    memory_data = {'memory_cb': True, 'memory': 2}
+    reset_memory_data = {'memory_cb': False}
+    roottenant = Tenant.get_root_tenant()
+    roottenant.set_quota(**memory_data)
+    yield
+    roottenant.set_quota(**reset_memory_data)
+
+
+@pytest.yield_fixture(scope="module")
+def set_tenant_storage():
+    storage_data = {'storage_cb': True, 'storage': 1}
+    reset_storage_data = {'storage_cb': False}
+    roottenant = Tenant.get_root_tenant()
+    roottenant.set_quota(**storage_data)
+    yield
+    roottenant.set_quota(**reset_storage_data)
+
+
+@pytest.yield_fixture(scope="module")
+def set_tenant_vm():
+    vm_data = {'vm_cb': True, 'vm': 1}
+    reset_vm_data = {'vm_cb': False}
+    roottenant = Tenant.get_root_tenant()
+    roottenant.set_quota(**vm_data)
+    yield
+    roottenant.set_quota(**reset_vm_data)
+
+
 @pytest.fixture(scope="function")
 def prov_data(provider, provisioning):
     return {
@@ -110,10 +153,8 @@ def template_name(provisioning):
 @pytest.fixture(scope="function")
 def provisioner(request, setup_provider, provider):
     def _provisioner(template, provisioning_data, delayed=None):
-        sel.force_navigate('infrastructure_provision_vms', context={
-            'provider': provider,
-            'template_name': template,
-        })
+        vm = Vm(name=vm_name, provider=provider, template_name=template)
+        navigate_to(vm, 'ProvisionVM')
 
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         flash.assert_no_errors()
@@ -200,16 +241,15 @@ def test_group_quota_max_cpu_check_by_tagging(
 
 
 @pytest.mark.tier(1)
-@pytest.mark.meta(blockers=[1367290])
 def test_tenant_quota_max_cpu_check(
-        provisioner, prov_data, template_name, provider, request, vm_name, bug):
-    """ Test Tenant Quota-Max CPU by UI.
+        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_cpu, bug):
+    """Test Tenant Quota-Max CPU by UI.
 
     Prerequisities:
         * A provider set up, supporting provisioning in CFME
 
     Steps:
-        * Set the tenant quota for cpu by UI emforcement
+        * Set the tenant quota for cpu by UI enforcement
         * Open the provisioning dialog.
         * Apart from the usual provisioning settings, set CPU greater then tenant quota cpu.
         * Submit the provisioning request and wait for it to finish.
@@ -218,9 +258,6 @@ def test_tenant_quota_max_cpu_check(
     Metadata:
         test_flag: provision
     """
-    cpu_data = {'cpu_cb': True, 'cpu': 2}
-    roottenant = Tenant.get_root_tenant()
-    roottenant.set_quota(**cpu_data)
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     prov_data["vm_name"] = vm_name
     prov_data["num_sockets"] = "8"
@@ -237,4 +274,105 @@ def test_tenant_quota_max_cpu_check(
     # TODO: update assert message once the above bug is fixed.
     # assert row.last_message.text == 'Request exceeds maximum allowed for the following: \
     # (cpu - Used: 526 plus requested: 8 exceeds quota: 3))'
+    assert row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.tier(1)
+def test_tenant_quota_max_memory_check(
+        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_memory, bug):
+    """Test Tenant Quota-Max Memory by UI.
+
+    Prerequisities:
+        * A provider set up, supporting provisioning in CFME
+
+    Steps:
+        * Set the tenant quota for memory by UI enforcement
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, set memory greater then tenant quota memory.
+        * Submit the provisioning request and wait for it to finish.
+        * Visit the requests page. The last message should state quota validation message.
+
+    Metadata:
+        test_flag: provision
+    """
+    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
+    prov_data["vm_name"] = vm_name
+    prov_data["memory"] = "4096"
+    prov_data["notes"] = note
+
+    provisioner(template_name, prov_data)
+
+    # nav to requests page to check quota validation
+    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    cells = {'Description': row_description}
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+                    fail_func=requests.reload, num_sec=500, delay=20)
+    assert row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.tier(1)
+def test_tenant_quota_max_storage_check(
+        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_storage, bug):
+    """Test Tenant Quota-Max Storage by UI.
+
+    Prerequisities:
+        * A provider set up, supporting provisioning in CFME
+
+    Steps:
+        * Set the tenant quota for storage by UI enforcement
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, set storage greater then tenant quota storage.
+        * Submit the provisioning request and wait for it to finish.
+        * Visit the requests page. The last message should state quota validation message.
+
+    Metadata:
+        test_flag: provision
+    """
+    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
+    prov_data["vm_name"] = vm_name
+    prov_data["notes"] = note
+
+    provisioner(template_name, prov_data)
+
+    # nav to requests page to check quota validation
+    row_description = 'Provision from [{}] to [{}]'.format(template_name, vm_name)
+    cells = {'Description': row_description}
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+                    fail_func=requests.reload, num_sec=500, delay=20)
+    assert row.reason.text == "Quota Exceeded"
+
+
+@pytest.mark.tier(1)
+def test_tenant_quota_max_num_vms_check(
+        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_vm, bug):
+    """Test Tenant Quota-Max number of vms by UI.
+
+    Prerequisities:
+        * A provider set up, supporting provisioning in CFME
+
+    Steps:
+        * Set the tenant quota for storage by UI enforcement
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, set num of vms greater then tenant quota vm.
+        * Submit the provisioning request.
+        * Approve the request and wait for it to finish.
+        * Visit the requests page. The last message should state quota validation message.
+
+    Metadata:
+        test_flag: provision
+    """
+    note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
+    prov_data["num_vms"] = "4"
+    prov_data["vm_name"] = vm_name
+    prov_data["notes"] = note
+
+    provisioner(template_name, prov_data)
+
+    # nav to requests page to check quota validation
+    row_description = 'Provision from [{}] to [{}###]'.format(template_name, vm_name)
+    cells = {'Description': row_description}
+    wait_for(lambda: requests.go_to_request(cells), num_sec=80, delay=5)
+    requests.approve_request(cells, "Approved")
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+                    fail_func=requests.reload, num_sec=500, delay=20)
     assert row.reason.text == "Quota Exceeded"

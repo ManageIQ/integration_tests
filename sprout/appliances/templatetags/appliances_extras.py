@@ -3,6 +3,8 @@ from django import template
 from django.utils.safestring import mark_safe
 from appliances.models import Appliance
 
+from utils.timeutil import nice_seconds
+
 register = template.Library()
 
 
@@ -37,6 +39,14 @@ def alert_type(tags):
         return mark_safe('danger')
     else:
         return mark_safe(tags)
+
+
+@register.filter(is_safe=True)
+def nice_timedelta(timedelta):
+    try:
+        return mark_safe(nice_seconds(timedelta.total_seconds()))
+    except AttributeError:
+        return mark_safe('None')
 
 
 @register.filter

@@ -10,17 +10,16 @@ from selenium.common.exceptions import NoSuchElementException
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
-from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable, DestinationNotFound
+from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
+                             DestinationNotFound, TemplateNotFound)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
     paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, match_location,
-    BootstrapTreeview, summary_title
+    BootstrapTreeview, summary_title, Table
 )
-
-from utils.api import rest_api
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.conf import cfme_data
 from utils.log import logger
@@ -49,6 +48,14 @@ manage_policies_page = Region(
     })
 
 
+template_select_form = Form(
+    fields=[
+        ('template_table', Table('//div[@id="pre_prov_div"]//table')),
+        ('cancel_button', form_buttons.cancel)
+    ]
+)
+
+
 snapshot_form = Form(
     fields=[
         ('name', Input('name')),
@@ -67,11 +74,6 @@ retirement_date_form = Form(fields=[
 retire_remove_button = "//span[@id='remove_button']/a/img"
 
 match_page = partial(match_location, controller='vm_infra', title='Virtual Machines')
-
-
-def nav_to_vms():
-    from cfme.web_ui.menu import nav
-    nav._nav_to_fn('Compute', 'Infrastructure', '/vm_infra/explorer')(None)
 
 
 def reset_page():
@@ -320,10 +322,10 @@ class Vm(BaseVM):
         return Genealogy(self)
 
     def get_vm_via_rest(self):
-        return rest_api().collections.vms.get(name=self.name)
+        return self.appliance.rest_api.collections.vms.get(name=self.name)
 
     def get_collection_via_rest(self):
-        return rest_api().collections.vms
+        return self.appliance.rest_api.collections.vms
 
     def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text
@@ -699,7 +701,7 @@ class VmAllWithTemplates(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        nav_to_vms()
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
         accordion.tree('VMs & Templates', 'All VMs & Templates')
 
     def resetter(self, *args, **kwargs):
@@ -875,7 +877,7 @@ class TemplatesAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        nav_to_vms()
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
         templates = partial(accordion.tree, 'Templates', 'All Templates')
         if 'filter_folder' not in kwargs:
             templates()
@@ -889,3 +891,27 @@ class TemplatesAll(CFMENavigateStep):
 
     def am_i_here(self, *args, **kwargs):
         return match_page(summary='Template "{}"'.format(self.obj.name))
+
+
+@navigator.register(Vm, 'ProvisionVM')
+class ProvisionVM(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        lcl_btn("Provision VMs")
+
+        # choosing template and going further
+        template_select_form.template_table._update_cache()
+        template = template_select_form.template_table.find_row_by_cells({
+            'Name': self.obj.template_name,
+            'Provider': self.obj.provider.name
+        })
+        if template:
+            sel.click(template)
+            # In order to mitigate the sometimes very long spinner timeout, raise the timeout
+            with sel.ajax_timeout(90):
+                sel.click(form_buttons.FormButton("Continue", force_click=True))
+
+        else:
+            raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
+                self.obj.template_name, self.obj.provider.key))

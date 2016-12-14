@@ -31,14 +31,17 @@ class Unit(object):
 
     You can compare two :py:class:`Unit` instances or you can compare :py:class:`Unit` with
     :py:class:`int`, :py:class:`float` or any :py:class:`str` as long as it can go through the
-    :py:method:`Unit.parse`.
+    :py:meth:`Unit.parse`.
 
     If you compare :py:class:`Unit` only (or a string that gets subsequently parsed), it also takes
     the kind of the unit it is, you cannot compare bytes with hertzes. It then calculates the
     absolute value in the base units and that gets compared.
 
     If you compare with a number, it does it like it was the number of the same unit. So eg.
-    doing ``Unit.parse('2 GB') == 2 *1024 * 1024 * 1024 `` is True.
+    doing::
+
+      Unit.parse('2 GB') == 2 *1024 * 1024 * 1024 `` is True
+
     """
     __slots__ = ['number', 'prefix', 'unit_type']
 

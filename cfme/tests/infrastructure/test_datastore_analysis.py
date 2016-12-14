@@ -4,6 +4,8 @@ from cfme import test_requirements
 from cfme.configure.tasks import is_datastore_analysis_finished
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import toolbar as tb, Quadicon, InfoBlock
 from utils import conf, testgen
 from utils.blockers import BZ
@@ -12,7 +14,7 @@ import pytest
 
 pytestmark = [test_requirements.smartstate]
 DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
-PROVIDER_TYPES = ('virtualcenter', 'rhevm')
+PROVIDER_TYPES = (VMwareProvider, RHEVMProvider)
 
 
 # Rows to check in the datastore detail Content infoblock; after smartstate analysis
@@ -30,7 +32,7 @@ def pytest_generate_tests(metafunc):
     new_idlist = []
     new_argvalues = []
 
-    argnames, argvalues, idlist = testgen.provider_by_type(
+    argnames, argvalues, idlist = testgen.providers_by_class(
         metafunc, PROVIDER_TYPES, required_fields=['datastores'])
     argnames += ['datastore']
 

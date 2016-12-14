@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
-import sys
+import six
 import xmlrpclib
 from github import Github
 from urlparse import urlparse
@@ -32,22 +32,17 @@ class Blocker(object):
         Having this as a separate function will later enable to scatter the engines across modules
         in case of extraction into a separate library.
         """
-        this_module = sys.modules[__name__]
-        result = {}
-        for key in dir(this_module):
-            if key.startswith("_"):
-                continue
-            o = getattr(this_module, key)
-            if isinstance(o, type) and o is not cls and issubclass(o, cls):
-                result[o.__name__] = o
-        return result
+        return {
+            'GH': GH,
+            'BZ': BZ,
+        }
 
     @classmethod
     def parse(cls, blocker, **kwargs):
         """Create a blocker object from some representation"""
         if isinstance(blocker, cls):
             return blocker
-        elif isinstance(blocker, basestring):
+        elif isinstance(blocker, six.string_types):
             if "#" in blocker:
                 # Generic blocker
                 engine, spec = blocker.split("#", 1)

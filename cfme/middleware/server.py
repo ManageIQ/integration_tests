@@ -2,21 +2,22 @@ import re
 from cfme.common import Taggable, UtilizationMixin
 from cfme.exceptions import MiddlewareServerNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import parse_properties, Container
+from cfme.middleware.provider import parse_properties, Container
+from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import (
     CheckboxTable, paginator, Form, Input, fill, InfoBlock
 )
 from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui.menu import toolbar as tb
+from cfme.web_ui import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_providers
+from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
+from cfme.middleware.provider import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -55,6 +56,7 @@ def _get_servers_page(provider=None, server_group=None):
         navigate_to(server_group, 'ServerGroupServers')
     else:  # if None(provider) given navigate through all middleware servers page
         navigate_to(MiddlewareServer, 'All')
+
 
 timeout_form = Form(
     fields=[
@@ -116,7 +118,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     if strict:
-                        _provider = get_crud(get_provider_key(row.provider.text))
+                        _provider = get_crud_by_name(row.provider.text)
                     servers.append(MiddlewareServer(
                         name=row.server_name.text,
                         feed=row.feed.text,
@@ -128,7 +130,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
 
     @classmethod
     def headers(cls):
-        sel.force_navigate('middleware_servers')
+        navigate_to(MiddlewareServer, 'All')
         headers = [sel.text(hdr).encode("utf-8")
                    for hdr in sel.elements("//thead/tr/th") if hdr.text]
         return headers
@@ -142,7 +144,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         _provider = provider
         for server in rows:
             if strict:
-                _provider = get_crud(get_provider_key(server.provider_name))
+                _provider = get_crud_by_name(server.provider_name)
             servers.append(MiddlewareServer(
                 name=server.name,
                 hostname=server.hostname,
@@ -176,8 +178,8 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
     def servers_in_mgmt(cls, provider=None, server_group=None):
         if provider is None:
             servers = []
-            for _provider in list_providers('hawkular'):
-                servers.extend(cls._servers_in_mgmt(get_crud(_provider), server_group))
+            for _provider in list_providers_by_class(HawkularProvider):
+                servers.extend(cls._servers_in_mgmt(_provider, server_group))
             return servers
         else:
             return cls._servers_in_mgmt(provider, server_group)
@@ -230,6 +232,11 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
     @server.variant('rest')
     def server_in_rest(self):
         raise NotImplementedError('This feature not implemented yet')
+
+    @variable(alias='ui')
+    def is_reload_required(self):
+        self.load_details(refresh=True)
+        return self.get_detail("Properties", "Server State") == 'Reload-required'
 
     @variable(alias='ui')
     def is_running(self):
@@ -318,8 +325,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Servers')(None)
+        self.prerequisite_view.navigation.select('Middleware', 'Servers')
 
     def resetter(self):
         # Reset view and selection

@@ -1,30 +1,24 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict
 
+from widgetastic.widget import View
+from widgetastic_patternfly import Tab, BootstrapSelect, Input, BootstrapTreeview
+from widgetastic_manageiq import VersionPick, Version, CheckboxSelect, Table, Calendar
+
 from cfme import web_ui as ui
-from cfme.exceptions import TemplateNotFound
+from cfme import BaseLoggedInPage
 from cfme.fixtures import pytest_selenium as sel
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.services import requests
-from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip, toolbar
-from cfme.web_ui.menu import nav
+from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip
 from utils import version
 from utils import normalize_text
+from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 from utils.version import current_version
 from utils.wait import wait_for
 
-# nav imports
-import cfme.infrastructure.virtual_machines  # NOQA
-
-
 submit_button = form_buttons.FormButton("Submit")
-
-template_select_form = ui.Form(
-    fields=[
-        ('template_table', ui.Table('//div[@id="pre_prov_div"]//table')),
-        ('cancel_button', form_buttons.cancel)
-    ]
-)
 
 
 def select_security_group(sg):
@@ -45,6 +39,127 @@ def select_security_group(sg):
     sel.wait_for_ajax()
     sel.sleep(1)
 
+
+class ProvisioningForm(BaseLoggedInPage):
+    @View.nested
+    class request(Tab):  # noqa
+        TAB_NAME = 'Request'
+        email = Input(name='requester__owner_email')
+        first_name = Input(name='requester__owner_first_name')
+        last_name = Input(name='requester__owner_last_name')
+        notes = Input(name='requester__request_notes')
+        manager_name = Input(name='requester__owner_manager')
+
+    @View.nested
+    class purpose(Tab):  # noqa
+        TAB_NAME = 'Purpose'
+        apply_tags = VersionPick({
+            Version.lowest(): CheckboxSelect('//div[@id="all_tags_treebox"]//ul'),
+            '5.7': BootstrapTreeview('all_tags_treebox')})
+
+    @View.nested
+    class catalog(Tab):  # noqa
+        TAB_NAME = 'Catalog'
+        num_instances = BootstrapSelect('service__number_of_vms')
+        vm_name = Input(name='service__vm_name')
+        vm_description = Input(name='service__vm_description')
+        vm_filter = BootstrapSelect('service__vm_filter')
+        num_vms = BootstrapSelect('service__number_of_vms')
+        catalog_name = Table('//div[@id="prov_vm_div"]/table')
+        provision_type = BootstrapSelect('service__provision_type')
+        linked_clone = Input(name='service__linked_clone')
+        pxe_server = BootstrapSelect('service__pxe_server_id')
+        pxe_image = Table('//div[@id="prov_pxe_img_div"]/table')
+        iso_file = Table('//div[@id="prov_iso_img_div"]/table')
+
+    @View.nested
+    class environment(Tab):  # noqa
+        TAB_NAME = 'Environment'
+
+        automatic_placement = Input(name='environment__placement_auto')
+        # Cloud
+        availability_zone = BootstrapSelect('environment__placement_availability_zone')
+        cloud_network = BootstrapSelect('environment__cloud_network')
+        cloud_subnet = BootstrapSelect('environment__cloud_subnet')
+        security_groups = BootstrapSelect('environment__security_groups')
+        resource_groups = BootstrapSelect('environment__resource_group')
+        public_ip_address = BootstrapSelect('environment__floating_ip_address')
+        # Infra
+        provider_name = BootstrapSelect('environment__placement_ems_name')
+        datacenter = BootstrapSelect('environment__placement_dc_name')
+        cluster = BootstrapSelect('environment__placement_cluster_name')
+        resource_pool = BootstrapSelect('environment__placement_rp_name')
+        folder = BootstrapSelect('environment__placement_folder_name')
+        host_filter = BootstrapSelect('environment__host_filter')
+        host_name = Table('//div[@id="prov_host_div"]/table')
+        datastore_create = Input('environment__new_datastore_create')
+        datastore_filter = BootstrapSelect('environment__ds_filter')
+        datastore_name = Table('//div[@id="prov_ds_div"]/table')
+
+    @View.nested
+    class hardware(Tab):  # noqa
+        TAB_NAME = 'Hardware'
+        num_sockets = BootstrapSelect('hardware__number_of_sockets')
+        cores_per_socket = BootstrapSelect('hardware__cores_per_socket')
+        num_cpus = BootstrapSelect('hardware__number_of_cpus')
+        memory = BootstrapSelect('hardware__vm_memory')
+        # TODO radio widget # disk_format', ui.Radio('hardware__disk_format')
+        vm_limit_cpu = Input(name='hardware__cpu_limit')
+        vm_limit_memory = Input(name='hardware__memory_limit')
+        vm_reserve_cpu = Input(name='hardware__cpu_reserve')
+        vm_reserve_memory = Input(name='hardware__memory_reserve')
+
+    @View.nested
+    class network(Tab):  # noqa
+        TAB_NAME = 'Network'
+        vlan = BootstrapSelect('network__vlan')
+
+    @View.nested
+    class properties(Tab):  # noqa
+        TAB_NAME = 'Properties'
+        instance_type = BootstrapSelect('hardware__instance_type')
+        guest_keypair = BootstrapSelect('hardware__guest_access_key_pair')
+        hardware_monitoring = BootstrapSelect('hardware__monitoring')
+        boot_disk_size = BootstrapSelect('hardware__boot_disk_size')
+        # GCE
+        is_preemtible = VersionPick({
+            Version.lowest(): None,
+            '5.7': Input(name='hardware__is_preemptible')})
+
+    @View.nested
+    class customize(Tab):  # noqa
+        TAB_NAME = 'Customize'
+        # Common
+        dns_servers = Input(name='customize__dns_servers')
+        dns_suffixes = Input(name='customize__dns_suffixes')
+        customize_type = BootstrapSelect('customize__sysprep_enabled')
+        specification_name = Table('//div[@id="prov_vc_div"]/table')
+        admin_username = Input(name='customize__root_username')
+        admin_password = Input(name='customize__root_password')
+        linux_host_name = Input(name='customize__linux_host_name')
+        linux_domain_name = Input(name='customize__linux_domain_name')
+        ip_address = Input(name='customize__ip_addr')
+        subnet_mask = Input(name='customize__subnet_mask')
+        gateway = Input(name='customize__gateway')
+        custom_template = Table('//div[@id="prov_template_div"]/table')
+        hostname = Input(name='customize__hostname')
+
+    @View.nested
+    class schedule(Tab):  # noqa
+        TAB_NAME = 'Schedule'
+        # Common
+        # TODO radio widget # schedule_type = Radio('schedule__schedule_type')
+        provision_date = Calendar('miq_date_1')
+        provision_start_hour = BootstrapSelect('start_hour')
+        provision_start_min = BootstrapSelect('start_min')
+        power_on = Input(name='schedule__vm_auto_start')
+        retirement = BootstrapSelect('schedule__retirement')
+        retirement_warning = BootstrapSelect('schedule__retirement_warn')
+        # Infra
+        stateless = Input(name='schedule__stateless')
+
+
+# TODO remove old form once all importers have moved to widget form
 provisioning_form = tabstrip.TabStripForm(
     fields=[
         ('submit_button', form_buttons.FormButton("Submit")),
@@ -64,7 +179,9 @@ provisioning_form = tabstrip.TabStripForm(
         ]),
 
         ('Purpose', [
-            ('apply_tags', ui.CheckboxTree('//div[@id="all_tags_treebox"]//ul'))
+            ('apply_tags', {
+                version.LOWEST: ui.CheckboxTree('//div[@id="all_tags_treebox"]//ul'),
+                '5.7': ui.BootstrapTreeview('all_tags_treebox')})
         ]),
 
         ('Catalog', [
@@ -252,41 +369,11 @@ provisioning_form = tabstrip.TabStripForm(
 )
 
 
-def generate_nav_function(tb_item):
-    def f(context):
-        # Here it also can have long spinners
-        with sel.ajax_timeout(90):
-            toolbar.select('Lifecycle', tb_item)
-        provider = context['provider']
-        template_name = context['template_name']
-        template_select_form.template_table._update_cache()
-        template = template_select_form.template_table.find_row_by_cells({
-            'Name': template_name,
-            'Provider': provider if isinstance(provider, basestring) else provider.name
-        })
-        if template:
-            sel.click(template)
-            # In order to mitigate the sometimes very long spinner timeout, raise the timeout
-            with sel.ajax_timeout(90):
-                sel.click(form_buttons.FormButton("Continue", force_click=True))
-
-        else:
-            raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
-                template_name, provider.key))
-    return f
-
-nav.add_branch('infra_vm_and_templates', {
-    'infrastructure_provision_vms': generate_nav_function("Provision VMs"),
-})
-
-
 def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, request,
                        smtp_test, num_sec=1500, wait=True):
     # generate_tests makes sure these have values
-    sel.force_navigate('infrastructure_provision_vms', context={
-        'provider': provider,
-        'template_name': template_name,
-    })
+    vm = Vm(name=vm_name, provider=provider, template_name=template_name)
+    navigate_to(vm, 'ProvisionVM')
 
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     provisioning_data.update({
@@ -323,10 +410,7 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
     if smtp_test:
         # Wait for e-mails to appear
         def verify():
-            if current_version() >= "5.4":
-                approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
-            else:
-                approval = dict(text_like="%%Your Virtual Machine Request was approved%%")
+            approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
             expected_text = "Your virtual machine request has Completed - VM:%%{}".format(vm_name)
             return (
                 len(smtp_test.get_emails(**approval)) > 0 and

@@ -25,7 +25,6 @@ def test_reload_button_provider(provider):
         number of images in CFME 5.7 includes all images from the OSE registry as well
         as the images that are being created from the running pods. The images are searched
         according to the @sha.
-
     """
 
     navigate_to(provider, 'Details')

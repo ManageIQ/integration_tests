@@ -116,5 +116,5 @@ def test_dynamicdropdown_dialog(dialog, catalog):
                   description="my catalog", display_in=True, catalog=catalog.name,
                   dialog=dialog.label)
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()

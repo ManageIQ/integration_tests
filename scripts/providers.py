@@ -87,5 +87,6 @@ def call_provider(provider_name, action, *args, **kwargs):
         raise Exception('Action {} not found'.format(repr(action)))
     return call(*args, **kwargs)
 
+
 if __name__ == '__main__':
     sys.exit(main())

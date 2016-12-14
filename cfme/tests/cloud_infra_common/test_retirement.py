@@ -3,9 +3,11 @@ import datetime
 import pytest
 
 from cfme import test_requirements
+from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
-from utils import testgen, providers
+from utils import testgen
 from utils.generators import random_vm_name
+from utils.providers import setup_a_provider_by_class
 from utils.timeutil import parsetime
 from utils.wait import wait_for
 from utils.version import current_version
@@ -34,15 +36,15 @@ def vm(request, provider, setup_provider, small_template):
 
 
 @pytest.fixture(scope="function")
-def existing_vm(request):
+def test_provider(request):
+    return setup_a_provider_by_class(CloudInfraProvider)
+
+
+@pytest.fixture(scope="function")
+def existing_vm(request, test_provider):
     """ Fixture will be using for set\unset retirement date for existing vm instead of
     creation a new one
     """
-    list_of_existing_providers = providers.existing_providers()
-    if list_of_existing_providers:
-        test_provider = providers.get_crud(list_of_existing_providers[0])
-    else:
-        test_provider = providers.setup_a_provider()
     all_vms = test_provider.mgmt.list_vm()
     need_to_create_vm = True
     for virtual_machine in all_vms:

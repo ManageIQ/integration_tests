@@ -6,6 +6,7 @@ def test_page(browser, datafile):
     test_page_html = datafile('elements.html').read()
     pytest.sel.get('data:text/html;base64,{}'.format(test_page_html.encode('base64')))
 
+
 pytestmark = pytest.mark.usefixtures('test_page')
 
 

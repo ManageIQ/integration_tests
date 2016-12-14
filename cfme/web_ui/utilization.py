@@ -607,27 +607,36 @@ class Option(object):
         return element.first_selected_option.value
 
     def get_interval(self, force_visible_text=False):
-        """Returns selected interval from options
+        """
+        Returns selected interval from options
+
         Args:
             force_visible_text: default it is False and returns internal value. If you want to get
-             visible text pass this value as True
+               visible text pass this value as True
         """
+
         return self._get_value(element=self._interval, force_visible_text=force_visible_text)
 
     def get_minute(self, force_visible_text=False):
-        """Returns selected minute from options
+        """
+        Returns selected minute from options
+
         Args:
             force_visible_text: default it is False and returns internal value. If you want to get
-             visible text pass this value as True
+               visible text pass this value as True
         """
+
         return self._get_value(element=self._minute, force_visible_text=force_visible_text)
 
     def get_week(self, force_visible_text=False):
-        """Returns selected week from options
+        """
+        Returns selected week from options
+
         Args:
             force_visible_text: default it is False and returns internal value. If you want to get
-             visible text pass this value as True
+               visible text pass this value as True
         """
+
         return self._get_value(element=self._week, force_visible_text=force_visible_text)
 
     def _get_dd(self, element_xpath):
@@ -712,7 +721,8 @@ class Option(object):
 
 
 class Legend(object):
-    """This class used to control/read legends"""
+    """This class used to control/read legends """
+
     def __init__(self, name, legend_object):
         self._name = name
         self._l_object = legend_object
@@ -732,9 +742,11 @@ class Legend(object):
 
     def set_active(self, active=True):
         """Enable or Disable legend
+
         Args:
             active: When we set True, Enables the legend. When we set False disables the legend.
-                    Default True
+              Default True
         """
+
         if active is not self.is_active:
             self._l_object.click()

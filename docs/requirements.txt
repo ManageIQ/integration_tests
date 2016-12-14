@@ -16,6 +16,7 @@ kwargify
 layered-yaml-attrdict-config
 mock
 multimethods.py
+navmazing
 numpy
 paramiko
 parsedatetime
@@ -47,15 +48,17 @@ tornado
 tzlocal
 ui-navigate
 wait_for
+widgetastic.core<0.3.0
 yaycl
 yaycl-crypt
+
+sentaku~=0.4.0
 
 # docs requirements
 # When Sphinx 1.3 is released and on RTD, we can upgrade and use
 # napoleon from sphinx.ext instead of the sphinxcontrib version
-Sphinx<1.3
+Sphinx==1.3.5
 sphinx-rtd-theme
-sphinxcontrib-napoleon
 six>=1.9
 
 ###

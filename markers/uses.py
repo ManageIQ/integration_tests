@@ -42,7 +42,8 @@ appliance_marks = {
 ##
 markdoc = "Fixture which marks a test with the ``{}`` mark"
 for mark in _marks_to_make:
-    _markfunc = lambda: None
+    def _markfunc():
+        return None
     # Put on a nice docstring...
     _markfunc.__doc__ = markdoc.format(mark)
     globals()[mark] = pytest.fixture(scope="session")(_markfunc)

@@ -20,7 +20,7 @@ from ovirtsdk.xml import params
 from utils import net, trackerbot
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.providers import get_mgmt, list_providers
+from utils.providers import get_mgmt, list_provider_keys
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -677,7 +677,7 @@ def run(**kwargs):
     thread_queue = []
     valid_providers = []
 
-    providers = list_providers("rhevm")
+    providers = list_provider_keys("rhevm")
     if kwargs['provider_data']:
         mgmt_sys = providers = kwargs['provider_data']['management_systems']
     for provider in providers:

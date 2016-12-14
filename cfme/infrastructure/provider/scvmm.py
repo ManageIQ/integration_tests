@@ -1,5 +1,5 @@
-from mgmtsystem.scvmm import SCVMMSystem
 from . import InfraProvider
+from mgmtsystem.scvmm import SCVMMSystem
 
 
 @InfraProvider.add_provider_type
@@ -35,6 +35,12 @@ class SCVMMProvider(InfraProvider):
             values['sec_realm'] = kwargs.get('sec_realm')
 
         return values
+
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        if 'host_group' not in deploy_args:
+            return {'host_group': self.data.get("host_group", "All Hosts")}
+        return {}
 
     @classmethod
     def from_config(cls, prov_config, prov_key):

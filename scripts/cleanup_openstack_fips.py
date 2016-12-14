@@ -10,11 +10,11 @@ If no providers specified, it will cleanup all of them.
 import sys
 from traceback import format_exc
 
-from utils.providers import list_providers, get_mgmt
+from utils.providers import list_provider_keys, get_mgmt
 
 
 def main(*providers):
-    for provider_key in list_providers('openstack'):
+    for provider_key in list_provider_keys('openstack'):
         print('Checking {}'.format(provider_key))
         api = get_mgmt(provider_key).api
         try:
@@ -29,9 +29,10 @@ def main(*providers):
             fip.delete()
             print('{} deleted'.format(fip.ip))
 
+
 if __name__ == "__main__":
     provs = sys.argv[1:]
     if provs:
         main(*provs)
     else:
-        main(*list_providers("openstack"))
+        main(*list_provider_keys("openstack"))

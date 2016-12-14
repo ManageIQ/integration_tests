@@ -56,7 +56,6 @@ To begin with we have the imports, we have added comments after each to specify 
 
   from functools import partial                   # Standard library
   from selenium.webdriver.common.by import By     # Convenience functions for locators, ID etc.
-  from cfme.web_ui.menu import nav                # Navigation library
   import cfme                                     # Core cfme module
   import cfme.web_ui.menu                         # Standard menu for grafting additional menus onto
   from cfme.web_ui import Region, Quadicon, Form  # Loads the Region, Quadicon and Form UI elements
@@ -172,23 +171,53 @@ In our provider page we are going to hook in the toolbar button presses to the n
 This means we are able to do something the code below and have the page execute the toolbar button
 clicks to navigate to the page in question. We could simply use the
 :py:func:`cfme.web_ui.toolbar.select` function, but to make it clearer that we expect to navigate
-away from the current page, using the ``sel.force_navigate`` function is better::
+away from the current page, using the ``navigate_to`` function is better::
 
-  sel.force_navigate('cloud_provider_new')
+  navigate_to(Provider, 'New')
 
 We need to add a few buttons to the center menu to handle "Add a New Cloud Provider", "Discover
 Cloud Providers" and a special case.
 
-The ``ui_navigate`` module handles all tree based navigation. It it prepopulated with all of the
-main navigation and is then extendable. This is called grafting. In the example below we add three
-more elements onto the tree::
+The navigation is tree-esque but you cannot determine all tree
+nodes and destinations like before. This is because navmazing as a library is far more dynamic
+and allows for very powerful navigation. So to add new navigation points onto the tree, we need to
+give them a prerequisite step. This can be something to actually perform, or it can be achieved by
+linking it to a previous navigation.::
 
-  nav.add_branch('clouds_providers',
-                 {'cloud_provider_new': lambda: cfg_btn('Add a New Cloud Provider'),
-                  'cloud_provider_discover': lambda: cfg_btn('Discover Cloud Providers'),
-                  'cloud_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name)),
-                                     {'cloud_provider_edit':
-                                      lambda: cfg_btn('Edit Selected Cloud Provider')}]})
+  @navigator.register(CloudProvider, 'Add')
+  class New(CFMENavigateStep):
+      prerequisite = NavigateToSibling('All')
 
-The first two elements are added by defining the name of the navigation leaf and a lambda function
-determining what to do to get to that page.
+      def step(self):
+          cfg_btn('Add a New Cloud Provider')
+
+
+  @navigator.register(CloudProvider, 'Discover')
+  class Discover(CFMENavigateStep):
+      prerequisite = NavigateToSibling('All')
+
+      def step(self):
+          cfg_btn('Discover Cloud Providers')
+
+
+  @navigator.register(CloudProvider, 'Details')
+  class Details(CFMENavigateStep):
+      prerequisite = NavigateToSibling('All')
+
+      def step(self):
+          sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+
+  @navigator.register(CloudProvider, 'Edit')
+  class Edit(CFMENavigateStep):
+      prerequisite = NavigateToSibling('All')
+
+      def step(self):
+          sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
+          cfg_btn('Edit Selected Cloud Provider')
+
+As you can see all these steps rely on the ``All`` step, which already exists. Simliar to the old method
+these new steps are grafted on to the navigation tree in a way, but the prerequisite step has no
+knowledge of the subsequent steps. This is because prerequisite can be dynamic in nature. The product
+may be of a certain version/state which requires either the prerequisite or the step to be performed
+in a different way.

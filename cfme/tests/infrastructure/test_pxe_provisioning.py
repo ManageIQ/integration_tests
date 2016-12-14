@@ -4,6 +4,7 @@ import pytest
 
 from utils.conf import cfme_data
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.provisioning import do_vm_provisioning
 from utils import testgen
@@ -17,17 +18,18 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
-        ['provisioning', 'pxe_server'],
-        ['provisioning', 'pxe_image'],
-        ['provisioning', 'pxe_image_type'],
-        ['provisioning', 'pxe_kickstart'],
-        ['provisioning', 'pxe_template'],
-        ['provisioning', 'datastore'],
-        ['provisioning', 'host'],
-        ['provisioning', 'pxe_root_password'],
-        ['provisioning', 'vlan']
-    ])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [InfraProvider], required_fields=[
+            ['provisioning', 'pxe_server'],
+            ['provisioning', 'pxe_image'],
+            ['provisioning', 'pxe_image_type'],
+            ['provisioning', 'pxe_kickstart'],
+            ['provisioning', 'pxe_template'],
+            ['provisioning', 'datastore'],
+            ['provisioning', 'host'],
+            ['provisioning', 'pxe_root_password'],
+            ['provisioning', 'vlan']
+        ])
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]

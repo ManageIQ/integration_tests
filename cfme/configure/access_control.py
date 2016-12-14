@@ -3,13 +3,13 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme import Credential
-from cfme.exceptions import CandidateNotFound
+from cfme.exceptions import CandidateNotFound, OptionNotAvailable
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import (AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
+from cfme.web_ui import (
+    AngularSelect, Form, Select, CheckboxTree, accordion, fill, flash,
     form_buttons, Input, Table, UpDownSelect, CFMECheckbox, BootstrapTreeview)
 from cfme.web_ui.form_buttons import change_stored_password
-from cfme.web_ui.menu import extend_nav
 from fixtures.pytest_store import store
 from utils import version
 from utils.appliance import Navigatable
@@ -39,32 +39,6 @@ group_order_selector = UpDownSelect(
     "select#seq_fields",
     "//img[@alt='Move selected fields up']",
     "//img[@alt='Move selected fields down']")
-
-
-@extend_nav
-class configuration:
-    def cfg_tenant_project_create(context):
-        tenant = context["tenant"]
-        if tenant._default:
-            raise ValueError("Cannot create the root tenant {}".format(tenant.name))
-        accordion.tree("Access Control", server_region_string(), "Tenants", *tenant.parent_path)
-        if type(tenant) is Tenant:
-            tb_select("Add child Tenant to this Tenant")
-        elif type(tenant) is Project:
-            tb_select("Add Project to this Tenant")
-        else:
-            raise TypeError(
-                'You must pass either Tenant or Project class but not {}'.format(
-                    type(tenant).__name__))
-
-    class cfg_tenant_project:
-        def navigate(context):
-            tenant = context["tenant"]
-            accordion.tree("Access Control", server_region_string(), "Tenants", *tenant.tree_path)
-
-        def cfg_tenant_project_edit(_):
-            tb_select("Edit this item")
-            sel.wait_for_ajax()
 
 
 def simple_user(userid, password):
@@ -580,7 +554,7 @@ class Tenant(Updateable, Pretty, Navigatable):
     @property
     def exists(self):
         try:
-            sel.force_navigate("cfg_tenant_project", context={"tenant": self})
+            navigate_to(self, 'Details')
             return True
         except CandidateNotFound:
             return False
@@ -597,7 +571,10 @@ class Tenant(Updateable, Pretty, Navigatable):
         return self.tree_path[:-1]
 
     def create(self, cancel=False):
-        sel.force_navigate("cfg_tenant_project_create", context={"tenant": self})
+        if self._default:
+            raise ValueError("Cannot create the root tenant {}".format(self.name))
+
+        navigate_to(self, 'Add')
         fill(self.tenant_form, self, action=form_buttons.add)
         if type(self) is Tenant:
             flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
@@ -609,9 +586,7 @@ class Tenant(Updateable, Pretty, Navigatable):
                     type(self).__name__))
 
     def update(self, updates):
-        sel.force_navigate("cfg_tenant_project_edit", context={"tenant": self})
-        # Workaround - without this, update was failing sometimes
-        sel.wait_for_ajax()
+        navigate_to(self, 'Edit')
         # Workaround - form is appearing after short delay
         sel.wait_for_element(self.tenant_form.description)
         fill(self.tenant_form, updates, action=self.save_changes)
@@ -619,28 +594,78 @@ class Tenant(Updateable, Pretty, Navigatable):
             'Project "{}" was saved'.format(updates.get('name', self.name)))
 
     def delete(self, cancel=False):
-        sel.force_navigate("cfg_tenant_project", context={"tenant": self})
+        navigate_to(self, 'Details')
         tb_select("Delete this item", invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_success_message('Tenant "{}": Delete successful'.format(self.description))
 
     def set_quota(self, **kwargs):
-        sel.force_navigate("cfg_tenant_project", context={"tenant": self})
-        tb.select("Configuration", "Manage Quotas")
+        navigate_to(self, 'ManageQuotas')
         # Workaround - form is appearing after short delay
         sel.wait_for_element(self.quota_form.cpu_txt)
         fill(self.quota_form, {'cpu_cb': kwargs.get('cpu_cb'),
-                              'cpu_txt': kwargs.get('cpu'),
-                              'memory_cb': kwargs.get('memory_cb'),
-                              'memory_txt': kwargs.get('memory'),
-                              'storage_cb': kwargs.get('storage_cb'),
-                              'storage_txt': kwargs.get('storage'),
-                              'vm_cb': kwargs.get('vm_cb'),
-                              'vm_txt': kwargs.get('vm'),
-                              'template_cb': kwargs.get('template_cb'),
-                              'template_txt': kwargs.get('template')},
-            action=self.save_changes)
+                               'cpu_txt': kwargs.get('cpu'),
+                               'memory_cb': kwargs.get('memory_cb'),
+                               'memory_txt': kwargs.get('memory'),
+                               'storage_cb': kwargs.get('storage_cb'),
+                               'storage_txt': kwargs.get('storage'),
+                               'vm_cb': kwargs.get('vm_cb'),
+                               'vm_txt': kwargs.get('vm'),
+                               'template_cb': kwargs.get('template_cb'),
+                               'template_txt': kwargs.get('template')},
+             action=self.save_changes)
         flash.assert_success_message('Quotas for Tenant "{}" were saved'.format(self.name))
+
+
+@navigator.register(Tenant, 'All')
+class TenantAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
+
+    def step(self):
+        accordion.tree("Access Control", server_region_string(), "Tenants")
+
+    def resetter(self):
+        accordion.refresh("Access Control")
+
+
+@navigator.register(Tenant, 'Details')
+class TenantDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        accordion.tree("Access Control", server_region_string(), "Tenants", *self.obj.tree_path)
+
+
+@navigator.register(Tenant, 'Add')
+class TenantAdd(CFMENavigateStep):
+    def prerequisite(self, *args, **kwargs):
+        navigate_to(self.obj.parent_tenant, 'Details')
+
+    def step(self, *args, **kwargs):
+        if isinstance(self.obj, Tenant):
+            add_selector = 'Add child Tenant to this Tenant'
+        elif isinstance(self.obj, Project):
+            add_selector = 'Add Project to this Tenant'
+        else:
+            raise OptionNotAvailable('Object type unsupported for Tenant Add: {}'
+                                     .format(type(self.obj).__name__))
+        tb.select('Configuration', add_selector)
+
+
+@navigator.register(Tenant, 'Edit')
+class TenantEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        tb.select('Configuration', 'Edit this item')
+
+
+@navigator.register(Tenant, 'ManageQuotas')
+class TenantManageQuotas(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self, *args, **kwargs):
+        tb.select('Configuration', 'Manage Quotas')
 
 
 class Project(Tenant):

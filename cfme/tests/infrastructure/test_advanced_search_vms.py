@@ -6,19 +6,21 @@ import pytest
 from random import sample
 
 from cfme.infrastructure import virtual_machines
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import search
-from utils.appliance.endpoints.ui import navigate_to
-from utils.providers import setup_a_provider
+from utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
+from utils.providers import new_setup_a_provider, ProviderFilter
 
 
 @pytest.fixture(scope="module")
 def vms():
     """Ensure the infra providers are set up and get list of vms"""
     try:
-        setup_a_provider(prov_class="infra", required_keys=["large"])
+        pf = ProviderFilter(classes=[InfraProvider], required_fields=['large'])
+        new_setup_a_provider(filters=[pf])
     except Exception:
         pytest.skip("It's not possible to set up any providers, therefore skipping")
     navigate_to(Vm, 'VMsOnly')

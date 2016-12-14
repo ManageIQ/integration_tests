@@ -13,7 +13,7 @@ from utils.version import Version
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter'])
+    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [VMwareProvider])
     argnames = argnames + ["_host_provider"]
 
     new_idlist = []
@@ -21,6 +21,8 @@ def pytest_generate_tests(metafunc):
 
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
+        # TODO
+        # All this should be replaced with a proper ProviderFilter passed to testgen.providers()
         if args['provider'].type != "virtualcenter":
             continue
         hosts = args['provider'].data.get("hosts", [])

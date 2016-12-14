@@ -3,6 +3,7 @@ import time
 
 from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
+from cfme.containers.overview import ContainersOverview
 from cfme.containers.pod import Pod
 from cfme.containers.project import Project
 from cfme.containers.route import Route
@@ -20,13 +21,13 @@ from cfme.web_ui import toolbar as tb
 from cfme.web_ui.search import ensure_no_filter_applied
 from selenium.common.exceptions import NoSuchElementException
 
+
 pytestmark = [
     pytest.mark.uncollectif(
         lambda provider: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 DataSet = namedtuple('DataSet', ['object', 'name'])
 
@@ -49,7 +50,7 @@ def test_data_integrity_for_topology(test_data):
     """ This test verifies that every status box value under Containers Overview is identical to the
     number present on its page.
     """
-    sel.force_navigate('container_dashboard')
+    navigate_to(ContainersOverview, 'All')
     # We should wait ~2 seconds for the StatusBox population
     # (until we find a better solution)
     time.sleep(2)

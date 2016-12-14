@@ -4,12 +4,14 @@ import fauxfactory
 import pytest
 
 import cfme.provisioning
+from cfme import test_requirements
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.fixtures import pytest_selenium as sel
 from cfme.login import login_admin
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
-from cfme.web_ui import flash
-from cfme import test_requirements
+from cfme.web_ui import flash, fill
+from utils.appliance.implementations.ui import navigate_to
 from utils.browser import browser
 from utils.providers import setup_a_provider
 from utils.wait import wait_for
@@ -60,10 +62,8 @@ def generated_request(provider, provider_data, provisioning, template_name, vm_n
     notes = fauxfactory.gen_alphanumeric()
     e_mail = "{}@{}.test".format(first_name, last_name)
     host, datastore = map(provisioning.get, ('host', 'datastore'))
-    pytest.sel.force_navigate('infrastructure_provision_vms', context={
-        'provider': provider,
-        'template_name': template_name,
-    })
+    vm = Vm(name=vm_name, provider=provider, template_name=template_name)
+    navigate_to(vm, 'ProvisionVM')
 
     provisioning_data = {
         'email': e_mail,
@@ -89,8 +89,7 @@ def generated_request(provider, provider_data, provisioning, template_name, vm_n
         if provider_data["type"] == 'rhevm':
             raise pytest.fail('rhevm requires a vlan value in provisioning info')
 
-    provisioning_form.fill(provisioning_data)
-    pytest.sel.click(provisioning_form.submit_button)
+    fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
     flash.assert_no_errors()
     request_cells = {
         "Description": "Provision from [{}] to [{}###]".format(template_name, vm_name),

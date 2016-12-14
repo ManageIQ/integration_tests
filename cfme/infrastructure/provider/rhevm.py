@@ -1,5 +1,5 @@
-from mgmtsystem.rhevm import RHEVMSystem
 from . import InfraProvider, prop_region
+from mgmtsystem.rhevm import RHEVMSystem
 
 
 @InfraProvider.add_provider_type
@@ -29,6 +29,12 @@ class RHEVMProvider(InfraProvider):
                 'candu_hostname_text':
                 kwargs.get('hostname') if self.credentials.get('candu', None) else None}
 
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        if 'default_cluster' not in deploy_args:
+            return {'cluster': self.data['default_cluster']}
+        return {}
+
     @classmethod
     def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
@@ -50,7 +56,7 @@ class RHEVMProvider(InfraProvider):
             ip_address=prov_config['ipaddress'],
             api_port='',
             credentials=credentials,
-            zone=prov_config['server_zone'],
+            zone=prov_config.get('server_zone', 'default'),
             key=prov_key,
             start_ip=start_ip,
             end_ip=end_ip)

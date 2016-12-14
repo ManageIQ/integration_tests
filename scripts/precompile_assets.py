@@ -24,5 +24,6 @@ def main():
         print("EVM service restarted, UI should be available shortly")
     return status
 
+
 if __name__ == '__main__':
     sys.exit(main())

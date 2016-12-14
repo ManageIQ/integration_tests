@@ -1,6 +1,7 @@
 import pytest
 
 from cfme.fixtures import pytest_selenium as sel
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.stack import Stack
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -14,8 +15,8 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['ec2'])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [EC2Provider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 

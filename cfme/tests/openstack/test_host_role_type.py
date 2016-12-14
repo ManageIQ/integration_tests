@@ -1,14 +1,13 @@
 import pytest
 from utils import testgen
+from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import Quadicon
 from cfme.web_ui import InfoBlock
 from cfme.fixtures import pytest_selenium as sel
 import re
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type,
-                                         ['openstack-infra'],
-                                         scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 
 ROLES = ['NovaCompute', 'Controller', 'BlockStorage', 'SwiftStorage',

@@ -1,6 +1,7 @@
 import pytest
-from cfme.middleware import get_random_list
 from cfme.middleware.domain import MiddlewareDomain
+from cfme.middleware.provider import get_random_list
+from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server_group import MiddlewareServerGroup
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import flash
@@ -15,7 +16,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
+pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 
 @pytest.yield_fixture(scope="function")
@@ -53,6 +54,7 @@ def test_list_server_group_servers(provider):
                  .format(ui_servers, db_servers))
 
 
+@pytest.mark.smoke
 def test_domain_server_suspend_resume(provider, domain_server):
     """Tests domain mode server suspend/resume operation on UI
 

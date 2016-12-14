@@ -2,6 +2,8 @@
 import fauxfactory
 import pytest
 
+from manageiq_client.api import APIException
+
 from cfme.configure.configuration import Category, Tag
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import categories as _categories
@@ -12,7 +14,6 @@ from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import tags as _tags
 from cfme.rest.gen_data import vm as _vm
-from utils.api import APIException
 from utils.blockers import BZ
 from utils.update import update
 from utils.wait import wait_for

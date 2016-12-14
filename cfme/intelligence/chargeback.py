@@ -5,6 +5,8 @@ from functools import partial
 
 from selenium.webdriver.common.by import By
 from navmazing import NavigateToSibling, NavigateToAttribute
+
+from cfme import BaseLoggedInPage
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
@@ -22,6 +24,14 @@ match_page = partial(match_location, controller='chargeback',
                      title='Chargeback')
 
 
+class ChargebackView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Cloud Intel', 'Chargeback'])
+
+
 class RateFormItem(Pretty):
     pretty_attrs = ['rate_loc', 'unit_select_loc']
 
@@ -33,6 +43,7 @@ class RateFormItem(Pretty):
 def _mkitem(field, index1, index2=0):
     return RateFormItem((By.CSS_SELECTOR, "input#{}_{}_{}".format(field, index1, index2)),
                         Select((By.CSS_SELECTOR, "select#per_time_" + str(index1))))
+
 
 rate_form = Form(
     fields=[
@@ -156,23 +167,31 @@ class ComputeRate(Updateable, Pretty, Navigatable):
     def __init__(self, description=None,
                  cpu_alloc=None,
                  cpu_used=None,
+                 cpu_used_var=None,
                  disk_io=None,
+                 disk_io_var=None,
                  compute_fixed_1=None,
                  compute_fixed_2=None,
                  mem_alloc=None,
                  mem_used=None,
+                 mem_used_var=None,
                  net_io=None,
+                 net_io_var=None,
                  appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.description = description
         self.cpu_alloc = cpu_alloc
         self.cpu_used = cpu_used
+        self.cpu_used_var = cpu_used_var
         self.disk_io = disk_io
+        self.disk_io_var = disk_io_var
         self.compute_fixed_1 = compute_fixed_1
         self.compute_fixed_2 = compute_fixed_2
         self.mem_alloc = mem_alloc
         self.mem_used = mem_used
+        self.mem_used_var = mem_used_var
         self.net_io = net_io
+        self.net_io_var = net_io_var
 
     def create(self):
         navigate_to(self, 'New')
@@ -180,12 +199,16 @@ class ComputeRate(Updateable, Pretty, Navigatable):
             {'description': self.description,
              'cpu_alloc': self.cpu_alloc,
              'cpu_used': self.cpu_used,
+             'cpu_used_var': self.cpu_used_var,
              'disk_io': self.disk_io,
+             'disk_io_var': self.disk_io_var,
              'compute_fixed_1': self.compute_fixed_1,
              'compute_fixed_2': self.compute_fixed_2,
              'mem_alloc': self.mem_alloc,
              'mem_used': self.mem_used,
-             'net_io': self.net_io},
+             'mem_used_var': self.mem_used_var,
+             'net_io': self.net_io,
+             'net_io_var': self.net_io_var},
             action=rate_form.add_button)
         flash.assert_no_errors()
 
@@ -216,8 +239,7 @@ class ComputeRateAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Chargeback')(None)
+        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         accordion.tree("Rates", "Rates", "Compute")
 
     def am_i_here(self):
@@ -299,8 +321,7 @@ class StorageRateAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Chargeback')(None)
+        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         accordion.tree("Rates", "Rates", "Storage")
 
     def am_i_here(self):
@@ -389,8 +410,7 @@ class AssignAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Chargeback')(None)
+        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         accordion.tree("Rates", "Rates", "Storage")
 
 

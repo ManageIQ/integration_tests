@@ -3,7 +3,11 @@ import json
 import os
 import requests
 
+from utils.version import get_stream
+from utils.appliance import current_appliance, IPAppliance
 from utils.conf import credentials, env
+# TODO: use custom wait_for logger fitting sprout
+from utils.log import logger
 from utils.wait import wait_for
 
 
@@ -56,6 +60,7 @@ class SproutClient(object):
             "args": args,
             "kwargs": kwargs,
         }
+        logger.info("SPROUT: Called {} with {} {}".format(name, args, kwargs))
         if self._auth is not None:
             req_data["auth"] = self._auth
         result = self._call_post(**req_data)
@@ -87,3 +92,25 @@ class SproutClient(object):
         else:
             auth = None
         return cls(host=host, port=port, auth=auth, **kwargs)
+
+    def provision_appliances(
+            self, count=1, preconfigured=False, version=None, stream=None, provider=None):
+        if not version:
+            version = current_appliance.version.vstring
+        if not stream:
+            stream = get_stream(current_appliance.version)
+        request_id = self.call_method(
+            'request_appliances', preconfigured=preconfigured, version=version,
+            group=stream, provider=provider
+        )
+        wait_for(
+            lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=300)
+        data = self.call_method('request_check', str(request_id))
+        logger.debug(data)
+        appliances = []
+        for appliance in data['appliances']:
+            appliances.append(IPAppliance(appliance['ip_address']))
+        return appliances, request_id
+
+    def destroy_pool(self, pool_id):
+        self.call_method('destroy_pool', id=pool_id)

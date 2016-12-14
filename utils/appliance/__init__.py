@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
+import logging
 import os
 import random
 import re
 import socket
 import yaml
+from manageiq_client.api import ManageIQClient as MiqApi
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
@@ -19,12 +21,10 @@ import requests
 import traceback
 
 from sentaku import ImplementationContext
-from utils.mgmt_system import RHEVMSystem
-from mgmtsystem.virtualcenter import VMWareSystem
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import api, conf, datafile, db, db_queries, ssh, ports
+from utils import conf, datafile, db, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
@@ -39,6 +39,11 @@ from .implementations.ui import ViaUI
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
 
+# EMS types recognized by IP or credentials
+RECOGNIZED_BY_IP = [
+    "InfraManager", "ContainerManager", "MiddlewareManager", "Openstack::CloudManager"]
+RECOGNIZED_BY_CREDS = ["CloudManager"]
+
 
 def _current_miqqe_version():
     """Parses MiqQE JS patch version from the patch file
@@ -50,11 +55,37 @@ def _current_miqqe_version():
     version = int(match.group(1))
     return version
 
+
 current_miqqe_version = _current_miqqe_version()
 
 
 class ApplianceException(Exception):
     pass
+
+
+class ApplianceConsoleCli(object):
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def run(self, ap_cli_command):
+        return self.appliance.ssh_client.run_command(
+            "appliance_console_cli {}".format(ap_cli_command))
+
+    def set_hostname(self, hostname):
+        self.run("-H {}".format(hostname))
+
+    def configure_appliance_internal_fetch_key(self, region, dbhostname,
+            username, password, dbname, fetch_key, sshlogin, sshpass):
+        self.run("-r {} -i -h {} -U {} -p {} -d {} -v -K {} -s {} -a {}".format(
+            region, dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass))
+
+    def configure_ipa(self, ipaserver, username, password, domain, realm):
+        return self.run("-e {} -n {} -w {} -o {} -l {}".format(
+            ipaserver, username, password, domain, realm))
+
+    def uninstall_ipa_client(self):
+        self.run("--uninstall-ipa")
 
 
 class IPAppliance(object):
@@ -87,14 +118,20 @@ class IPAppliance(object):
         self.container = container
         self._db_ssh_client = None
         self._user = None
+        self.ap_cli = ApplianceConsoleCli(self)
         self.browser = ViaUI(owner=self)
         self.context = ImplementationContext.from_instances(
             [self.browser])
+        self._server = None
 
-        from cfme.base import Server, Region, Zone
-        region = Region(self, self.server_region())
-        zone = Zone(self, region=region)
-        self.server = Server(appliance=self, zone=zone, sid=self.server_id())
+    @property
+    def server(self):
+        if self._server is None:
+            from cfme.base import Server, Region, Zone
+            region = Region(self, self.server_region())
+            zone = Zone(self, region=region)
+            self._server = Server(appliance=self, zone=zone, sid=self.server_id())
+        return self._server
 
     @property
     def user(self):
@@ -187,6 +224,10 @@ class IPAppliance(object):
     def __hash__(self):
         return hash(self.address)
 
+    @cached_property
+    def rest_logger(self):
+        return create_sublogger('rest-api')
+
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
     def configure(self, log_callback=None, **kwargs):
@@ -258,6 +299,41 @@ class IPAppliance(object):
         self.loosen_pgssl(log_callback=log_callback)
         self.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
+    @property
+    def db_partition_extended(self):
+        return self.ssh_client.run_command("ls /var/www/miq/vmdb/.db_partition_extended") == 0
+
+    @logger_wrap("Extend DB partition")
+    def extend_db_partition(self, log_callback=None):
+        """Extends the /var partition with DB while shrinking the unused /repo partition"""
+        with self.ssh_client as ssh:
+            rc, out = ssh.run_command("df -h")
+            log_callback("File systems before extending the DB partition:\n{}".format(out))
+            ssh.run_command("umount /repo")
+            ssh.run_command("lvreduce --force --size -9GB /dev/mapper/VG--CFME-lv_repo")
+            ssh.run_command("mkfs.xfs -f /dev/mapper/VG--CFME-lv_repo")
+            ssh.run_command("lvextend --resizefs --size +9GB /dev/mapper/VG--CFME-lv_var")
+            ssh.run_command("mount -a")
+            rc, out = ssh.run_command("df -h")
+            log_callback("File systems after extending the DB partition:\n{}".format(out))
+            ssh.run_command("touch /var/www/miq/vmdb/.db_partition_extended")
+
+    @logger_wrap("Wait for no postgres connections")
+    def drop_database(self, log_callback=None):
+        """ Drops the vmdb_production database
+
+            Note: EVM service has to be stopped for this to work.
+        """
+        def _db_dropped():
+            rc, out = self.ssh_client.run_command(
+                'systemctl restart {}-postgresql'.format(db.scl_name()), timeout=60)
+            assert rc == 0, "Failed to restart postgres service: {}".format(out)
+            self.ssh_client.run_command('dropdb vmdb_production', timeout=15)
+            rc, out = self.ssh_client.run_command(
+                "psql -l | grep vmdb_production | wc -l", timeout=15)
+            return rc == 0
+        wait_for(_db_dropped, delay=5, timeout=60, message="drop the vmdb_production DB")
+
     def seal_for_templatizing(self):
         """Prepares the VM to be "generalized" for saving as a template."""
         with self.ssh_client as ssh_client:
@@ -298,40 +374,50 @@ class IPAppliance(object):
             ssh_client.run_command('echo "vm.swappiness = 1" >> /etc/sysctl.conf',
                 ensure_host=True)
 
-    @property
-    def managed_providers(self):
-        """Returns a set of providers that are managed by this appliance
+    def _encrypt_string(self, string):
+        try:
+            # Let's not log passwords
+            logging.disable(logging.CRITICAL)
+            rc, out = self.ssh_client.run_rails_command(
+                "puts MiqPassword.encrypt('{}')".format(string))
+            return out
+        finally:
+            logging.disable(logging.NOTSET)
 
-        Returns:
-            :py:class:`set` of :py:class:`str` - provider_key-s
-        """
-        ip_addresses = set([])
+    def _get_ems_ips(self, ems):
+        ep_table = self.db["endpoints"]
+        ip_addresses = set()
+        for ep in self.db.session.query(ep_table).filter(ep_table.resource_id == ems.id):
+            if ep.ipaddress is not None:
+                ip_addresses.add(ep.ipaddress)
+            elif ep.hostname is not None:
+                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ep.hostname) is not None:
+                    ip_addresses.add(ep.hostname)
+                else:
+                    ip_address = resolve_hostname(ep.hostname)
+                    if ip_address is not None:
+                        ip_addresses.add(ip_address)
+        return list(ip_addresses)
 
+    def _list_ems(self):
+        ems_table = self.db["ext_management_systems"]
         # Fetch all providers at once, return empty list otherwise
         try:
-            query_res = list(self._query_endpoints())
+            ems_list = list(self.db.session.query(ems_table))
         except Exception as ex:
             self.log.warning("Unable to query DB for managed providers: %s", str(ex))
             return []
-
-        for ipaddress, hostname in query_res:
-            if ipaddress is not None:
-                ip_addresses.add(ipaddress)
-            elif hostname is not None:
-                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", hostname) is not None:
-                    ip_addresses.add(hostname)
-                else:
-                    ip_address = resolve_hostname(hostname)
-                    if ip_address is not None:
-                        ip_addresses.add(ip_address)
-        provider_keys = set([])
-        for provider_key, provider_data in conf.cfme_data.get("management_systems", {}).iteritems():
-            if provider_data.get("ipaddress", None) in ip_addresses:
-                provider_keys.add(provider_key)
-        return provider_keys
+        known_ems_list = []
+        for ems in ems_list:
+            # Skip any EMS types that we don't care about / can't recognize safely
+            if not any(p_type in ems.type for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
+                continue
+            # Make sure we load current data from the DB
+            self.db.session.expire(ems)
+            known_ems_list.append(ems)
+        return known_ems_list
 
     def _query_endpoints(self):
-
         if "endpoints" in self.db:
             return self._query_post_endpoints()
         else:
@@ -351,6 +437,92 @@ class IPAppliance(object):
                 ipaddress = endpoint.ipaddress
                 hostname = endpoint.hostname
                 yield ipaddress, hostname
+
+    @property
+    def managed_providers(self):
+        """Returns a set of provider crud objects of known providers managed by this appliance
+
+        Note:
+            Recognized by name only.
+        """
+        from utils.providers import list_providers
+        prov_cruds = list_providers(use_global_filters=False)
+
+        found_cruds = set()
+        unrecognized_ems_names = set()
+        for ems in self._list_ems():
+            for prov in prov_cruds:
+                # Name check is authoritative and the only proper way to recognize a known provider
+                if ems.name == prov.name:
+                    found_cruds.add(prov)
+                    break
+            else:
+                unrecognized_ems_names.add(ems.name)
+        if unrecognized_ems_names:
+            self.log.warning(
+                "Unrecognized managed providers: {}".format(','.join(unrecognized_ems_names)))
+        return list(found_cruds)
+
+    def check_no_conflicting_providers(self):
+        """ Checks that there are no conflicting providers set up on the appliance
+
+        Raises:
+            ApplianceException: If there are any conflicting providers present on the appliance
+
+        Note:
+            A conflicting provider is a provider with IP or credentials (depends on it's type)
+            known to our automation but whose name doesn't match the one found in yamls.
+            This is used to avoid hard-to-debug
+         automation issues.
+        """
+        from utils.providers import list_providers
+
+        def _recognized_by_ip(provider, ems):
+            if any(p_type in ems.type for p_type in RECOGNIZED_BY_IP):
+                try:
+                    prov_ip = getattr(provider, 'ip_address', None) \
+                        or resolve_hostname(provider.hostname)
+                except AttributeError:
+                    # Provider has no IP nor hostname; it should be looked up by credentials,
+                    # not by IP address
+                    return False
+                if prov_ip in self._get_ems_ips(ems):
+                    return True
+            return False
+
+        def _recognized_by_creds(provider, ems):
+            if any(p_type in ems.type for p_type in RECOGNIZED_BY_CREDS):
+                creds_table = self.db["authentications"]
+                try:
+                    default_creds = provider.credentials['default']
+                except KeyError:
+                    # Provider has no default credentials; it should be looked up by IP address,
+                    # not by credentials
+                    return False
+                auth = self.db.session.query(creds_table)\
+                    .filter(creds_table.resource_id == ems.id)\
+                    .filter(creds_table.userid == default_creds.principal)\
+                    .filter(creds_table.password == self._encrypt_string(default_creds.secret))\
+                    .order_by(creds_table.id.desc())\
+                    .first()
+                if auth is not None:
+                    return True
+            return False
+
+        prov_cruds = list_providers(use_global_filters=False)
+        managed_providers_names = [prov.name for prov in self.managed_providers]
+        for ems in self._list_ems():
+            # EMS found among managed providers can be safely ignored; they are not conflicting
+            if ems.name in managed_providers_names:
+                continue
+            # Otherwise, if the EMS matches a provider in our yamls by IP or credentials
+            # but isn't among managed providers -> same provider with a different name
+            for prov in prov_cruds:
+                if _recognized_by_ip(prov, ems) or _recognized_by_creds(prov, ems):
+                    raise ApplianceException(
+                        "Provider '{}' present on the appliance under the name '{}' instead"
+                        " of expected '{}', please rename or remove it before continuing"
+                        .format(prov.key, ems.name, prov.name))
 
     @property
     def has_os_infra(self):
@@ -376,9 +548,11 @@ class IPAppliance(object):
 
     @cached_property
     def rest_api(self):
-        return api.API(
+        return MiqApi(
             "{}://{}:{}/api".format(self.scheme, self.address, self.ui_port),
-            auth=("admin", "smartvm"))
+            (conf.credentials['default']['username'], conf.credentials['default']['password']),
+            logger=self.rest_logger,
+            verify_ssl=False)
 
     @cached_property
     def miqqe_version(self):
@@ -622,7 +796,6 @@ class IPAppliance(object):
             log_callback(msg)
             raise Exception(msg)
 
-
     @property
     def is_miqqe_patch_candidate(self):
         return self.version < "5.6.3"
@@ -717,39 +890,32 @@ class IPAppliance(object):
         return status
 
     @logger_wrap("Backup database: {}")
-    def backup_database(self, log_callback=None):
+    def backup_database(self, database_path="/tmp/evm_db.backup", log_callback=None):
         """Backup VMDB database
 
         """
         log_callback('Backing up database')
-
-        with self.ssh_client as ssh:
-            status, output = ssh.run_rake_command(
-                'evm:db:backup:local -- --local-file /tmp/evm_db.backup --dbname vmdb_production')
-            if status != 0:
-                msg = 'Failed to backup database'
-                log_callback(msg)
-                raise ApplianceException(msg)
+        status, output = self.ssh_client.run_rake_command(
+            'evm:db:backup:local --trace -- --local-file "{}" --dbname vmdb_production'.format(
+                database_path))
+        if status != 0:
+            msg = 'Failed to backup database'
+            log_callback(msg)
+            raise ApplianceException(msg)
 
     @logger_wrap("Restore database: {}")
-    def restore_database(self, log_callback=None):
+    def restore_database(self, database_path="/tmp/evm_db.backup", log_callback=None):
         """Restore VMDB database
 
         """
         log_callback('Restoring database')
-
-        self.stop_evm_service()
-
-        with self.ssh_client as ssh:
-            status, output = ssh.run_rake_command(
-                'evm:db:restore:local -- --local-file /tmp/evm_db.backup')
-            if status != 0:
-                msg = 'Failed to restore database on appl {},output is {}'.format(self.address,
-                    output)
-                log_callback(msg)
-                raise ApplianceException(msg)
-            else:
-                self.start_evm_service()
+        status, output = self.ssh_client.run_rake_command(
+            'evm:db:restore:local --trace -- --local-file "{}"'.format(database_path))
+        if status != 0:
+            msg = 'Failed to restore database on appl {}, output is {}'.format(self.address,
+                output)
+            log_callback(msg)
+            raise ApplianceException(msg)
 
     @logger_wrap("Setup upstream DB: {}")
     def setup_upstream_db(self, log_callback=None):
@@ -1241,75 +1407,65 @@ class IPAppliance(object):
         else:
             return unsure
 
-    def is_evm_service_running(self):
-        """checks the ``evmserverd`` service status on this appliance
+    def _evm_service_command(self, command, log_callback, expected_exit_code=None):
+        """Runs given systemctl command against the ``evmserverd`` service
+        Args:
+            command: Command to run, e.g. "start"
+            expected_exit_code: If the exit codes don't match, ApplianceException is raised
         """
+        log_callback("Running command '{}' against the evmserverd service".format(command))
         with self.ssh_client as ssh:
-            status, output = ssh.run_command('service evmserverd status')
+            status, output = ssh.run_command('systemctl {} evmserverd'.format(command))
 
-            if status == 0:
-                msg = 'evmserverd is active(running)'.format(self.address, output)
-                self.log.info(msg)
-                return True
-            return False
+        if expected_exit_code is not None and status != expected_exit_code:
+            msg = 'Failed to {} evmserverd on {}\nError: {}'.format(command, self.address, output)
+            log_callback(msg)
+            raise ApplianceException(msg)
 
-    @logger_wrap("Restart EVM Service: {}")
-    def restart_evm_service(self, rude=False, log_callback=None):
-        """Restarts the ``evmserverd`` service on this appliance
+        return status
+
+    @logger_wrap("Status of EVM service: {}")
+    def is_evm_service_running(self, log_callback=None):
+        """Checks the ``evmserverd`` service status on this appliance
         """
-        log_callback('restarting evm service')
-        store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
-        with self.ssh_client as ssh:
-            if rude:
-                status, msg = ssh.run_command(
-                    'killall -9 ruby;'
-                    'service rh-postgresql94-postgresql stop;'
-                    'service evmserverd start')
-            else:
-                status, msg = ssh.run_command('systemctl restart evmserverd')
-
-            if status != 0:
-                msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
-                log_callback(msg)
-                raise ApplianceException(msg)
-        self.server_details_changed()
+        return self._evm_service_command("status", log_callback=log_callback) == 0
 
     @logger_wrap("Stop EVM Service: {}")
     def stop_evm_service(self, log_callback=None):
         """Stops the ``evmserverd`` service on this appliance
         """
-        log_callback('stopping evm service')
-
-        with self.ssh_client as ssh:
-            status, output = ssh.run_command('service evmserverd stop')
-
-            if status != 0:
-                msg = 'Failed to stop evmserverd on {}\nError: {}'.format(self.address, output)
-                log_callback(msg)
-                raise ApplianceException(msg)
+        self._evm_service_command('stop', expected_exit_code=0, log_callback=log_callback)
 
     @logger_wrap("Start EVM Service: {}")
     def start_evm_service(self, log_callback=None):
         """Starts the ``evmserverd`` service on this appliance
         """
-        log_callback('starting evm service')
+        self._evm_service_command('start', expected_exit_code=0, log_callback=log_callback)
 
+    @logger_wrap("Restart EVM Service: {}")
+    def restart_evm_service(self, rude=False, log_callback=None):
+        """Restarts the ``evmserverd`` service on this appliance
+        """
+        store.terminalreporter.write_line('evmserverd is being restarted, be patient please')
         with self.ssh_client as ssh:
-            status, output = ssh.run_command('service evmserverd start')
+            if rude:
+                log_callback('restarting evm service by killing processes')
+                status, msg = ssh.run_command(
+                    'killall -9 ruby; service {}-postgresql restart'.format(db.scl_name()))
+                self._evm_service_command("start", expected_exit_code=0, log_callback=log_callback)
+            else:
+                self._evm_service_command(
+                    "restart", expected_exit_code=0, log_callback=log_callback)
+        self.server_details_changed()
 
-            if status != 0:
-                msg = 'Failed to start evmserverd on {}\nError: {}'.format(self.address, output)
-                log_callback(msg)
-                raise ApplianceException(msg)
-
-    @logger_wrap("Waiting for evmserverd: {}")
+    @logger_wrap("Waiting for EVM service: {}")
     def wait_for_evm_service(self, timeout=900, log_callback=None):
         """Waits for the evemserverd service to be running
 
         Args:
-            timeout: Number of seconds to wait until timeout (default ``600``)
+            timeout: Number of seconds to wait until timeout (default ``900``)
         """
-        (log_callback or self.log.info)('Waiting for evmserverd to be active')
+        log_callback('Waiting for evmserverd to be running')
         result, wait = wait_for(self.is_evm_service_running, num_sec=timeout,
                                 fail_condition=False, delay=10)
         return result
@@ -1499,7 +1655,7 @@ class IPAppliance(object):
 
     def wait_for_host_address(self):
         try:
-            wait_for(func=lambda: self.get_host_address,
+            wait_for(func=lambda: getattr(self, 'get_host_address'),
                      fail_condition=None,
                      delay=5,
                      num_sec=120)
@@ -1582,6 +1738,31 @@ class IPAppliance(object):
             return True
         else:
             return False
+
+    @property
+    def is_idle(self):
+        """Return appliance idle state measured by last production.log activity.
+        It runs one liner script, which first gathers current date on appliance and then gathers
+        date of last entry in production.log(which has to be parsed) with /api calls filtered
+        (These calls occur every minute.)
+        Then it deducts that last time in log from current date and if it is lower than idle_time it
+        returns False else True.
+
+        Args:
+
+        Returns:
+            True if appliance is idling for longer or equal to idle_time seconds.
+            False if appliance is not idling for longer or equal to idle_time seconds.
+        """
+        idle_time = 3600
+        ssh_output = self.ssh_client.run_command('if [ $((`date "+%s"` - `date -d "$(egrep -v '
+            '"(Processing by Api::ApiController\#index as JSON|Started GET "/api" for '
+            '127.0.0.1|Completed 200 OK in)" /var/www/miq/vmdb/log/production.log | tail -1 |cut '
+            '-d"[" -f3 | cut -d"]" -f1 | cut -d" " -f1)\" \"+%s\"`)) -lt {} ];'
+            'then echo "False";'
+            'else echo "True";'
+            'fi;'.format(idle_time))
+        return True if 'True' in ssh_output else False
 
     @cached_property
     def build_datetime(self):
@@ -1740,6 +1921,7 @@ class IPAppliance(object):
                 raise
 
     def delete_all_providers(self):
+        logger.info('Destroying all appliance providers')
         for prov in self.rest_api.collections.providers:
             prov.action.delete()
 
@@ -1778,8 +1960,10 @@ class IPAppliance(object):
         """This method changes the /etc/sssd/sssd.conf and /etc/openldap/ldap.conf files to set
             up the appliance for an external authentication with OpenLdap.
             Apache file configurations are updated, for webui to take effect.
+
            arguments:
                 appliance_name: FQDN for the appliance.
+
         """
         openldap_domain1 = conf.cfme_data['auth_modes']['ext_openldap']
         assert self.ssh_client.run_command('appliance_console_cli --host {}'.format(appliance_fqdn))
@@ -1829,18 +2013,18 @@ class Appliance(IPAppliance):
         super(Appliance, self).__init__(browser_steal=browser_steal, container=None)
         self.name = Appliance._default_name
 
-        self._provider_name = provider_name
+        self._provider_key = provider_name
         self.vmname = vm_name
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and (
-            self.vmname == other.vmname and self._provider_name == other._provider_name)
+            self.vmname == other.vmname and self._provider_key == other._provider_key)
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash((self.vmname, self._provider_name))
+        return hash((self.vmname, self._provider_key))
 
     @property
     def ipapp(self):
@@ -1854,7 +2038,7 @@ class Appliance(IPAppliance):
             Cannot be cached because provider object is unpickable.
         """
         from utils.providers import get_mgmt
-        return get_mgmt(self._provider_name)
+        return get_mgmt(self._provider_key)
 
     @property
     def vm_name(self):
@@ -1926,7 +2110,7 @@ class Appliance(IPAppliance):
                          ``None`` (default ``None``)
 
         """
-        log_callback("Configuring appliance {} on {}".format(self.vmname, self._provider_name))
+        log_callback("Configuring appliance {} on {}".format(self.vmname, self._provider_key))
         if kwargs:
             with self:
                 self._custom_configure(**kwargs)
@@ -1964,13 +2148,13 @@ class Appliance(IPAppliance):
 
             # add provider
             log_callback('Setting up provider...')
-            setup_provider(self._provider_name)
+            setup_provider(self._provider_key)
 
             # credential hosts
             log_callback('Credentialing hosts...')
             if not RUNNING_UNDER_SPROUT:
                 from utils.hosts import setup_providers_hosts_credentials
-            setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
+            setup_providers_hosts_credentials(self._provider_key, ignore_errors=True)
 
             # if rhev, set relationship
             if self.is_on_rhev:
@@ -1978,7 +2162,7 @@ class Appliance(IPAppliance):
                 log_callback('Setting up CFME VM relationship...')
                 from cfme.common.vm import VM
                 from utils.providers import get_crud
-                vm = VM.factory(self.vm_name, get_crud(self._provider_name))
+                vm = VM.factory(self.vm_name, get_crud(self._provider_key))
                 cfme_rel = Vm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server_name()), self.server_id())
 
@@ -2003,7 +2187,8 @@ class Appliance(IPAppliance):
     def destroy(self):
         """Destroys the VM this appliance is running as
         """
-        if isinstance(self.provider, RHEVMSystem):
+        from cfme.infrastructure.provider.rhevm import RHEVMProvider
+        if self.provider.one_of(RHEVMProvider):
             # if rhev, try to remove direct_lun just in case it is detach
             self.remove_rhev_direct_lun_disk()
         self.provider.delete_vm(self.vm_name)
@@ -2044,11 +2229,13 @@ class Appliance(IPAppliance):
 
     @property
     def is_on_rhev(self):
-        return isinstance(self.provider, RHEVMSystem)
+        from cfme.infrastructure.provider.rhevm import RHEVMProvider
+        return self.provider.one_of(RHEVMProvider)
 
     @property
     def is_on_vsphere(self):
-        return isinstance(self.provider, VMWareSystem)
+        from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+        return self.provider.one_of(VMwareProvider)
 
     def add_rhev_direct_lun_disk(self, log_callback=None):
         if log_callback is None:
@@ -2276,6 +2463,7 @@ class ApplianceStack(LocalStack):
             browser.start()
         return was_before
 
+
 stack = ApplianceStack()
 
 
@@ -2286,6 +2474,7 @@ def get_or_create_current_appliance():
             raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
         stack.push(IPAppliance(urlparse(base_url), container=conf.env.get('container', None)))
     return stack.top
+
 
 current_appliance = LocalProxy(get_or_create_current_appliance)
 

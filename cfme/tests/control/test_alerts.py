@@ -2,16 +2,17 @@
 import fauxfactory
 import pytest
 
+from cfme.common.provider import BaseProvider
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_roles_enabled, candu
-from cfme.control import explorer
+from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
 from cfme.exceptions import CFMEExceptionOccured
+from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import flash, jstimelines
 from utils import ports, testgen
 from utils.conf import credentials
 from utils.log import logger
 from utils.net import net_check
-from utils.providers import existing_providers, get_crud
 from utils.ssh import SSHClient
 from utils.update import update
 from utils.wait import wait_for
@@ -30,7 +31,7 @@ CANDU_PROVIDER_TYPES = {"virtualcenter"}  # TODO: rhevm
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
+    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [InfraProvider])
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
@@ -87,7 +88,7 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         vm_name: VM name to use for policy filtering
         provider: funcarg provider
     """
-    alert_profile = explorer.VMInstanceAlertProfile(
+    alert_profile = alert_profiles.VMInstanceAlertProfile(
         "Alert profile for {}".format(vm_name),
         alerts
     )
@@ -95,20 +96,20 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
     request.addfinalizer(alert_profile.delete)
     alert_profile.assign_to("The Enterprise")
     if event is not None:
-        action = explorer.Action(
+        action = actions.Action(
             "Evaluate Alerts for {}".format(vm_name),
             "Evaluate Alerts",
             alerts
         )
         action.create()
         request.addfinalizer(action.delete)
-        policy = explorer.VMControlPolicy(
+        policy = policies.VMControlPolicy(
             "Evaluate Alerts policy for {}".format(vm_name),
             scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
         )
         policy.create()
         request.addfinalizer(policy.delete)
-        policy_profile = explorer.PolicyProfile(
+        policy_profile = policy_profiles.PolicyProfile(
             "Policy profile for {}".format(vm_name), [policy]
         )
         policy_profile.create()
@@ -118,16 +119,12 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         request.addfinalizer(lambda: provider.unassign_policy_profiles(policy_profile.description))
 
 
-# TODO: When we get rest, just nuke all providers, and add our one, no need to target delete
 @pytest.yield_fixture(scope="module")
-def initialize_provider(provider, setup_provider_modscope):
-    # Remove other providers
-    for provider_key in existing_providers():
-        if provider_key == provider.key:
-            continue
-        provider_to_delete = get_crud(provider_key)
-        if provider_to_delete.exists:
-            provider_to_delete.delete(cancel=False)
+def initialize_provider(provider):
+    # Remove all providers
+    BaseProvider.clear_providers()
+    # Setup the provider we want
+    provider.create(validate_credentials=True, validate_inventory=True, check_existing=True)
     # Take care of C&U settings
     if provider.type not in CANDU_PROVIDER_TYPES:
         yield provider
@@ -202,7 +199,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     Metadata:
         test_flag: alerts, provision
     """
-    alert = explorer.Alert("VM Power On > 2 in last 15 min")
+    alert = alerts.Alert("VM Power On > 2 in last 15 min")
     with update(alert):
         alert.emails = fauxfactory.gen_email()
 
@@ -235,7 +232,7 @@ def test_alert_rtp(request, vm_name, smtp_test, provider):
         test_flag: alerts, provision, metrics_collection
     """
     email = fauxfactory.gen_email()
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -267,7 +264,7 @@ def test_alert_timeline_cpu(request, vm_name, provider, ssh, vm_crud):
     Metadata:
         test_flag: alerts, provision, metrics_collection
     """
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         "TL event by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -317,7 +314,7 @@ def test_alert_snmp(request, vm_name, snmp, provider):
         test_flag: alerts, provision, metrics_collection
     """
     match_string = fauxfactory.gen_alpha(length=8)
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -363,7 +360,7 @@ def test_vmware_alarm_selection_does_not_fail():
     Metadata:
         test_flag: alerts
     """
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",

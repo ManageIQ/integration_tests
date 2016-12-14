@@ -2,6 +2,7 @@ import pytest
 from itertools import combinations
 
 from utils import testgen
+from utils.appliance import current_appliance
 from utils.providers import get_crud
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider import discover, InfraProvider
@@ -51,8 +52,8 @@ def minmax_ip(providers):
 
 
 def pytest_generate_tests(metafunc):
-    types = ['virtualcenter', 'rhevm', 'scvmm']
-    argnames, argvalues, idlist = testgen.provider_by_type(
+    types = [VMwareProvider, RHEVMProvider, SCVMMProvider]
+    argnames, argvalues, idlist = testgen.providers_by_class(
         metafunc, types)
 
     argnames = ['providers_for_discover', 'start_ip', 'max_range']
@@ -83,7 +84,7 @@ def pytest_generate_tests(metafunc):
 @pytest.yield_fixture(scope='function')
 def delete_providers_after_test():
     yield
-    BaseProvider.clear_provider_by_type(InfraProvider)
+    BaseProvider.clear_providers_by_class(InfraProvider)
 
 
 @pytest.mark.tier(2)
@@ -106,9 +107,9 @@ def test_discover_infra(providers_for_discover, start_ip, max_range):
     @pytest.wait_for(num_sec=count_timeout(start_ip, max_range), delay=5)
     def _wait_for_all_providers():
         for provider in providers_for_discover:
-            if provider.key not in pytest.store.current_appliance.managed_providers:
+            if not provider.exists:
                 return False
-        if len(pytest.store.current_appliance.managed_providers) != len(providers_for_discover):
+        if len(current_appliance.managed_providers) != len(providers_for_discover):
             return False
         return True
 

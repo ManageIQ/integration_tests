@@ -8,6 +8,8 @@ from fixtures.pytest_store import store
 
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.common.provider import BaseProvider
+from cfme.containers.provider import ContainersProvider
+from cfme.middleware.provider import MiddlewareProvider
 from cfme.exceptions import FlashMessageException
 from utils import providers
 from utils import testgen
@@ -22,8 +24,7 @@ from utils.version import current_version
 # test_utilization_metrics.py go a step further and verify that specific performance metrics are
 # being collected.Eventually, support should be added to verify that specific metrics are being
 # collected for *all* providers.
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, [
-    'container', 'middleware'], scope="module")
+pytest_generate_tests = testgen.generate([ContainersProvider, MiddlewareProvider], scope="module")
 
 
 pytestmark = [

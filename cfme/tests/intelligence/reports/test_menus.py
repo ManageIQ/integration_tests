@@ -2,8 +2,9 @@
 import pytest
 import random
 
-from cfme.intelligence.reports import menus
+from cfme.intelligence.reports import menus, Report
 from cfme.web_ui import Tree, accordion
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 
 # EvmGroup-super_administrator -> user `admin`
@@ -37,7 +38,7 @@ def test_shuffle_top_level(group, on_finish_default):
         for item in reversed(order):
             folder.move_first(item)
     # Now go and read the tree
-    pytest.sel.force_navigate("reports")
+    navigate_to(Report, 'Reports')
     tree = accordion.tree("Reports").read_contents()
     checked = Tree.flatten_level(Tree.browse(tree, "All Reports"))
     assert checked == order, "The order differs!"
@@ -48,7 +49,7 @@ def test_shuffle_top_level(group, on_finish_default):
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_first_level(group, on_finish_default):
     # Find a folder
-    pytest.sel.force_navigate("reports")
+    navigate_to(Report, 'Reports')
     tree = accordion.tree("Reports").read_contents()
     folders = Tree.browse(tree, "All Reports")
     # Select some folder that has at least 3 children
@@ -61,7 +62,7 @@ def test_shuffle_first_level(group, on_finish_default):
         for item in reversed(order):
             folder.move_first(item)
     # Now go and read the tree
-    pytest.sel.force_navigate("reports")
+    navigate_to(Report, 'Reports')
     tree = accordion.tree("Reports").read_contents()
     checked = Tree.flatten_level(Tree.browse(tree, "All Reports", selected_folder))
     assert checked == order, "The order differs!"

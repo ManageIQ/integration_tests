@@ -15,11 +15,12 @@ class Configuration(object):
         self.yaycl_config = None
 
     def configure(self, config_dir, crypt_key_file=None):
-        """do the defered initial loading of the configuration
+        """
+        do the defered initial loading of the configuration
+
         :param config_dir: path to the folder with configuration files
-        :param crypt_key_file:
-            optional name of a file holding the key
-            for encrypted configurationfiles
+        :param crypt_key_file: optional name of a file holding the key for encrypted
+            configuration files
 
         :raises: AssertionError if called more than once
 
@@ -73,6 +74,7 @@ class DeprecatedConfigWrapper(object):
         warnings.warn('clearing configuration is bad', stacklevel=2)
 
         del self.configuration.yaycl_config[key]
+
 
 # for the initial usage we keep a global object
 # later on we want to replace it

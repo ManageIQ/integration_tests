@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+from types import NoneType
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.exceptions import DestinationNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.provisioning import provisioning_form as request_form
-from cfme.web_ui import Form, Select, Table, accordion, fill, paginator, \
-    flash, form_buttons, tabstrip, DHTMLSelect, Input, Tree, AngularSelect, \
-    BootstrapTreeview, toolbar as tb, match_location, CheckboxTable
+from cfme.web_ui import (
+    Form, Select, Table, accordion, fill, paginator,
+    flash, form_buttons, tabstrip, DHTMLSelect, Input, Tree, AngularSelect,
+    BootstrapTreeview, toolbar as tb, match_location, CheckboxTable)
 from utils import version, fakeobject_or_object
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
@@ -38,37 +40,21 @@ basic_info_form = Form(
         ('name_text', Input("name")),
         ('description_text', Input("description")),
         ('display_checkbox', Input("display")),
-        ('select_catalog', {
-            version.LOWEST: Select("//select[@id='catalog_id']"),
-            '5.5': AngularSelect('catalog_id')}),
-        ('select_dialog', {
-            version.LOWEST: Select("//select[@id='dialog_id']"),
-            '5.5': AngularSelect('dialog_id')}),
-        ('select_orch_template', {
-            version.LOWEST: Select("//select[@id='template_id']"),
-            '5.5': AngularSelect('template_id')}),
-        ('select_provider', {
-            version.LOWEST: Select("//select[@id='manager_id']"),
-            '5.5': AngularSelect('manager_id')}),
-        ('select_config_template', {
-            version.LOWEST: Select("//select[@id='template_id']"),
-            '5.5': AngularSelect('template_id')}),
+        ('select_catalog', AngularSelect('catalog_id')),
+        ('select_dialog', AngularSelect('dialog_id')),
+        ('select_orch_template', AngularSelect('template_id')),
+        ('select_provider', AngularSelect('manager_id')),
+        ('select_config_template', AngularSelect('template_id')),
         ('field_entry_point', Input("fqname")),
         ('edit_button', form_buttons.save),
-        ('apply_btn', {
-            version.LOWEST: '//a[@title="Apply"]',
-            '5.5.0.6': '//a[normalize-space(.)="Apply"]'})
+        ('apply_btn', '//a[normalize-space(.)="Apply"]')
     ])
 
 # TODO: Replace with Taggable
 edit_tags_form = Form(
     fields=[
-        ("select_tag", {
-            version.LOWEST: Select("select#tag_cat"),
-            '5.5': AngularSelect('tag_cat')}),
-        ("select_value", {
-            version.LOWEST: Select("select#tag_add"),
-            '5.5': AngularSelect('tag_add')})
+        ("select_tag", AngularSelect('tag_cat')),
+        ("select_value", AngularSelect('tag_add'))
     ])
 
 detail_form = Form(
@@ -103,13 +89,6 @@ button_form = Form(
 match_page = partial(match_location, title='Catalogs', controller='catalog')
 
 
-def nav_to_all():
-    from cfme.web_ui.menu import nav
-    nav._nav_to_fn('Services', 'Catalogs')(None)
-    tree = accordion.tree('Catalog Items')
-    tree.click_path('All Catalog Items')
-
-
 class CatalogItem(Updateable, Pretty, Navigatable):
     pretty_attrs = ['name', 'item_type', 'catalog', 'catalog_name', 'provider', 'domain']
 
@@ -140,37 +119,51 @@ class CatalogItem(Updateable, Pretty, Navigatable):
     def create(self):
         # Create has sequential forms, the first is only the provider type
         navigate_to(self, 'Add')
+        # For element not found exception (To be removed)
+        sel.sleep(5)
         sel.select("//select[@id='st_prov_type']",
                    self.provider_type or self.item_type or 'Generic')
+
         sel.wait_for_element(basic_info_form.name_text)
         catalog = fakeobject_or_object(self.catalog, "name", "Unassigned")
         dialog = fakeobject_or_object(self.dialog, "name", "No Dialog")
+
+        # Need to provide the (optional) provider name to the form, not the object
+        provider_name = None
+        provider_required_types = ['AnsibleTower', 'Orchestration']
+        if self.item_type in provider_required_types \
+                or self.provider_type in provider_required_types:
+            provider_name = self.provider.name
+        # For tests where orchestration template is None
+        orch_template = None
+        if self.orch_template:
+            orch_template = self.orch_template.template_name
 
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
                                'select_catalog': catalog.name,
                                'select_dialog': dialog.name,
-                               'select_orch_template': self.orch_template,
-                               'select_provider': self.provider,
+                               'select_orch_template': orch_template,
+                               'select_provider': provider_name,
                                'select_config_template': self.config_template})
-        if sel.text(basic_info_form.field_entry_point) == "":
+        if not (self.item_type in provider_required_types):
             sel.click(basic_info_form.field_entry_point)
             if version.current_version() < "5.7":
                 dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                      "StateMachines", "ServiceProvision_Template", "default")
             else:
                 entry_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
-                                     "StateMachines", "ServiceProvision_Template", "default")
+                    "StateMachines", "ServiceProvision_Template", "default")
             sel.click(basic_info_form.apply_btn)
-        if self.catalog_name is not None and self.provisioning_data is not None:
+        if self.catalog_name is not None \
+                and self.provisioning_data is not None \
+                and not isinstance(self.provider, NoneType):
             tabstrip.select_tab("Request Info")
-            # Address BZ1321631
-            tabstrip.select_tab("Environment")
             tabstrip.select_tab("Catalog")
             template = template_select_form.template_table.find_row_by_cells({
                 'Name': self.catalog_name,
-                'Provider': self.provider
+                'Provider': self.provider.name
             })
             sel.click(template)
             request_form.fill(self.provisioning_data)
@@ -305,7 +298,9 @@ class ItemAll(CFMENavigateStep):
         return match_page(summary='All Service Catalog Items')
 
     def step(self):
-        nav_to_all()
+        self.prerequisite_view.navigation.select('Services', 'Catalogs')
+        tree = accordion.tree('Catalog Items')
+        tree.click_path('All Catalog Items')
 
     def resetter(self):
         tb.refresh()
@@ -361,7 +356,9 @@ class BundleAll(CFMENavigateStep):
         return match_page(summary='All Service Catalog Items')
 
     def step(self):
-        nav_to_all()
+        self.prerequisite_view.navigation.select('Services', 'Catalogs')
+        tree = accordion.tree('Catalog Items')
+        tree.click_path('All Catalog Items')
 
     def resetter(self):
         tb.refresh()

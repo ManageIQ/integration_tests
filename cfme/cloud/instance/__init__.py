@@ -14,7 +14,6 @@ from cfme.web_ui import (
     Tree, Quadicon, match_location, Form, Table, PagedTable, form_buttons)
 from cfme.web_ui.search import search_box
 from utils import version
-from utils.api import rest_api
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
 from utils.wait import wait_for
@@ -128,13 +127,14 @@ class Instance(VM, Navigatable):
     def get_vm_via_rest(self):
         # Try except block, because instances collection isn't available on 5.4
         try:
-            instance = rest_api().collections.instances.get(name=self.name)
+            instance = self.appliance.rest_api.collections.instances.get(name=self.name)
         except AttributeError:
             raise Exception("Collection instances isn't available")
-        return instance
+        else:
+            return instance
 
     def get_collection_via_rest(self):
-        return rest_api().collections.instances
+        return self.appliance.rest_api.collections.instances
 
     def wait_for_instance_state_change(self, desired_state, timeout=900):
         """Wait for an instance to come to desired state.
@@ -327,8 +327,7 @@ class InstanceAll(CFMENavigateStep):
         return match_page(summary='All Instances')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Clouds', 'Instances')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
 
         # use accordion
         # If a filter was applied, it will persist through navigation and needs to be cleared
@@ -346,8 +345,7 @@ class InstanceProviderAll(CFMENavigateStep):
         return match_page(summary='Instances under Provider "{}"'.format(self.obj.provider.name))
 
     def step(self, *args, **kwargs):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Clouds', 'Instances')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
 
         # use accordion
         # If a filter was applied, it will persist through navigation and needs to be cleared

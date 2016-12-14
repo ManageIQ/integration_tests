@@ -15,7 +15,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
+pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 tags = [
     Tag(category=Category(display_name='Environment', single_value=True), display_name='Test'),

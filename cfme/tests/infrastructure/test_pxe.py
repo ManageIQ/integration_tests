@@ -5,7 +5,7 @@ from utils.update import update
 from utils.testgen import generate, pxe_servers
 
 
-pytest_generate_tests = generate(pxe_servers)
+pytest_generate_tests = generate(gen_func=pxe_servers)
 
 
 @pytest.fixture(scope='function')

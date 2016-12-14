@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
@@ -22,15 +23,11 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        required_fields=[
-            ['provisioning', 'template'],
-            ['provisioning', 'host'],
-            ['provisioning', 'datastore']
-        ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
+    ['provisioning', 'template'],
+    ['provisioning', 'host'],
+    ['provisioning', 'datastore']
+], scope="module")
 
 
 @pytest.mark.tier(2)
@@ -42,8 +39,8 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
@@ -64,7 +61,7 @@ def test_order_catalog_item_via_rest(
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     catalog_item.create()
     request.addfinalizer(catalog_item.delete)
-    catalog = rest_api.collections.service_catalogs.find_by(name=catalog)
+    catalog = rest_api.collections.service_catalogs.find_by(name=catalog.name)
     assert len(catalog) == 1
     catalog, = catalog
     template = catalog.service_templates.find_by(name=catalog_item.name)
@@ -95,8 +92,8 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     catalog_bundle.create([catalog_item.name])
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog.name, catalog_bundle)
+    service_catalogs = ServiceCatalogs(catalog_bundle.name)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = bundle_name
     cells = {'Description': row_description}
@@ -145,8 +142,8 @@ def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}

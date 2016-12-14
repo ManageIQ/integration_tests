@@ -55,6 +55,7 @@ def compute_coverage(branch):
 
     return float(completed_lines) / line_count * 100
 
+
 if __name__ == "__main__":
     result = compute_coverage(sys.argv[1])
     with open(project_path.join('coverage_result.txt').strpath, "w") as f:

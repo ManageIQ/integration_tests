@@ -1,6 +1,6 @@
-from mgmtsystem.ec2 import EC2System
 from . import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
+from mgmtsystem.ec2 import EC2System
 
 
 @CloudProvider.add_provider_type

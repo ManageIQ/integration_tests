@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme.base import Server
 from cfme.dashboard import Widget
 from cfme.intelligence.reports import widgets
+from utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.fixture(scope="session")
 def widgets_generated(any_provider_session):
-    pytest.sel.force_navigate("dashboard")
+    navigate_to(Server, 'Dashboard')
     widget_list = []
     for widget in Widget.all():
         widget_list.append((widget.name, widget.content_type))

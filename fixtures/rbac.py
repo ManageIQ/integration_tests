@@ -49,7 +49,7 @@ When a test is configured to run against the RBAC suite, it will first parametri
 the associated roles from the metadata. The test will then be wrapped and before it begins
 we login as the *new* user. This process is also two fold. The ``pytest_store`` holds the current
 user, and logging in is performed with whatever this user value is set to. So we first replace this
-value with our new user. This ensures that if the browser fails during a force_naviagate, we get
+value with our new user. This ensures that if the browser fails during a navigation, we get
 the opportunity to log in again with the *right* user. Once the user is set, we attempt to login.
 
 When the test finishes, we set the user back to ``default`` before moving on to handling the outcome

@@ -8,7 +8,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, InfoBlock, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from . import pol_btn, mon_btn
+from cfme.containers.provider import pol_btn, mon_btn
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
@@ -45,8 +45,7 @@ class All(CFMENavigateStep):
         return match_page(summary='Nodes')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Containers', 'Container Nodes')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Nodes')
 
     def resetter(self):
         # Reset view and selection

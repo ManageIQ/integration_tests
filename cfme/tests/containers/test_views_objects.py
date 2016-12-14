@@ -4,7 +4,8 @@ from cfme.containers.container import Container
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
-from cfme.fixtures import pytest_selenium as sel
+from cfme.containers.provider import ContainersProvider
+from cfme.containers.service import Service
 from cfme.web_ui import toolbar as tb
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -13,8 +14,7 @@ from cfme.containers.pod import Pod
 
 
 pytestmark = [pytest.mark.tier(2)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 # CMP-9907 # CMP-9908 # CMP-9909
@@ -65,7 +65,7 @@ def test_containers_views():
 
 
 def test_services_views():
-    sel.force_navigate('containers_services')
+    navigate_to(Service, 'All')
     tb.select('Grid View')
     assert tb.is_active('Grid View'), "Services grid view setting failed"
     tb.select('Tile View')

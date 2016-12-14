@@ -1,8 +1,9 @@
 import pytest
 
 import utils.error as error
-from cfme.middleware import get_random_list
 from cfme.middleware.deployment import MiddlewareDeployment
+from cfme.middleware.provider import get_random_list
+from cfme.middleware.provider.hawkular import HawkularProvider
 from utils import testgen
 from utils.version import current_version
 from deployment_methods import deploy, get_deployment_from_list
@@ -19,7 +20,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
+pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 ITEMS_LIMIT = 1  # when we have big list, limit number of items to test
 
 
@@ -203,6 +204,7 @@ def test_restart(provider, archive_name):
     deployment.validate_properties()
 
 
+@pytest.mark.smoke
 @pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME])
 def test_undeploy(provider, archive_name):
     """Tests Undeployment of archive from EAP7 server

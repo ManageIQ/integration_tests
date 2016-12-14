@@ -4,9 +4,10 @@
 Extensively uses :py:mod:`cfme.intelligence.reports.ui_elements`
 """
 from functools import partial
-
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute, NavigateToObject
+
+from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import (ColumnHeaderFormatTable, ColumnStyleTable,
     RecordGrouper)
@@ -40,7 +41,12 @@ def tag(tag_name, **kwargs):
 
 
 input = partial(tag, "input")
-select = lambda **kwargs: Select(tag("select", **kwargs))
+
+
+def select(**kwargs):
+    Select(tag("select", **kwargs))
+
+
 button = partial(tag, "button")
 table = partial(tag, "table")
 
@@ -199,11 +205,13 @@ class CustomReport(Updateable, Navigatable):
         navigate_to(self, 'Details')
         toolbar.select("Queue")
         flash.assert_no_errors()
+        tabstrip.select_tab("Saved Reports")
         if wait_for_finish:
             # Get the queued_at value to always target the correct row
             queued_at = sel.text(list(records_table.rows())[0].queued_at)
 
             def _get_state():
+                navigate_to(self, 'Saved')
                 row = records_table.find_row("queued_at", queued_at)
                 status = sel.text(row.status).strip().lower()
                 assert status != "error", sel.text(row)
@@ -221,12 +229,7 @@ class CustomReport(Updateable, Navigatable):
 
 @navigator.register(CustomReport, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Reports')(None)
-        accordion.tree("Reports", "All Reports")
+    prerequisite = NavigateToObject(Report, 'Reports')
 
 
 @navigator.register(CustomReport, 'New')

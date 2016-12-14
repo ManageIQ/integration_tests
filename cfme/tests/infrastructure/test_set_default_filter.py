@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from functools import partial
 
 import pytest
 
@@ -77,11 +78,11 @@ def test_clear_datastore_filter_results(provider):
 
     if version.current_version() >= 5.6:
         expected_page_title = 'All Datastores'
-        datastore_select = lambda: accordion.tree('Datastores', 'All Datastores', 'Global Filters',
+        datastore_select = partial(accordion.tree, 'Datastores', 'All Datastores', 'Global Filters',
             'Store Type / VMFS')
     else:
         expected_page_title = 'Datastores'
-        datastore_select = lambda: list_acc.select('Filters', 'Store Type / VMFS', by_title=False)
+        datastore_select = partial(list_acc.select, 'Filters', 'Store Type / VMFS', by_title=False)
 
     navigate_to(Datastore, 'All')
     datastore_select()

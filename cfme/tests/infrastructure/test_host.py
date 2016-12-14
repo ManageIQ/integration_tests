@@ -4,7 +4,7 @@ import random
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.host import credential_form
-from cfme.infrastructure.provider import details_page
+from cfme.infrastructure.provider import details_page, InfraProvider
 from cfme.web_ui import Quadicon, fill, toolbar as tb, flash
 from utils import testgen
 from utils import version
@@ -23,7 +23,8 @@ def config_option():
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without multiple hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=["hosts"])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [InfraProvider], required_fields=["hosts"])
 
     new_argvalues = []
     new_idlist = []

@@ -3,16 +3,16 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import Deployable
+from cfme.middleware.provider import Deployable
+from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, paginator
-from cfme.web_ui.menu import toolbar as tb
+from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_providers
+from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
+from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
@@ -120,7 +120,7 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
         _provider = provider
         for deployment in rows:
             if strict:
-                _provider = get_crud(get_provider_key(deployment.provider_name))
+                _provider = get_crud_by_name(deployment.provider_name)
             _server = MiddlewareServer(
                 name=deployment.server_name,
                 feed=deployment.feed,
@@ -162,8 +162,8 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
     def deployments_in_mgmt(cls, provider=None, server=None):
         if provider is None:
             deployments = []
-            for _provider in list_providers('hawkular'):
-                deployments.extend(cls._deployments_in_mgmt(get_crud(_provider), server))
+            for _provider in list_providers_by_class(HawkularProvider):
+                deployments.extend(cls._deployments_in_mgmt(_provider, server))
             return deployments
         else:
             return cls._deployments_in_mgmt(provider, server)
@@ -192,7 +192,7 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
         deployment = _db_select_query(name=self.name, server=self.server,
                                       provider=self.provider).first()
         if deployment:
-            _provider = get_crud(get_provider_key(deployment.provider_name))
+            _provider = get_crud_by_name(deployment.provider_name)
             _server = MiddlewareServer(
                 name=deployment.server_name,
                 feed=deployment.feed,
@@ -222,8 +222,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Deployments')(None)
+        self.prerequisite_view.navigation.select('Middleware', 'Deployments')
 
     def resetter(self):
         # Reset view and selection

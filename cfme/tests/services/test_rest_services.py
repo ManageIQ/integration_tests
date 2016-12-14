@@ -3,18 +3,37 @@ import datetime
 import fauxfactory
 import pytest
 
+from manageiq_client.api import APIException
+
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import services as _services
+from cfme.rest.gen_data import service_data as _service_data
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.rest.gen_data import service_templates as _service_templates
+from cfme.rest.gen_data import orchestration_templates as _orchestration_templates
 from cfme import test_requirements
+from cfme.infrastructure.provider import InfraProvider
+from utils import error, version, testgen
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
-from utils import error, version
+from utils.log import logger
 
 
-pytestmark = [test_requirements.service,
-              pytest.mark.tier(2)]
+pytestmark = [
+    pytest.mark.long_running,
+    test_requirements.service,
+    pytest.mark.tier(2)
+]
+
+
+pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
+    ['provisioning', 'template'],
+    ['provisioning', 'host'],
+    ['provisioning', 'datastore'],
+    ['provisioning', 'iso_file'],
+    ['provisioning', 'vlan'],
+    ['provisioning', 'catalog_item_type']
+], scope='module')
 
 
 @pytest.fixture(scope="module")
@@ -40,6 +59,16 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
 @pytest.fixture(scope='function')
 def service_templates(request, rest_api, dialog):
     return _service_templates(request, rest_api, dialog)
+
+
+@pytest.fixture(scope='function')
+def service_data(request, rest_api, a_provider, dialog, service_catalogs):
+    return _service_data(request, rest_api, a_provider, dialog, service_catalogs)
+
+
+@pytest.fixture(scope='function')
+def orchestration_templates(request, rest_api):
+    return _orchestration_templates(request, rest_api, num=2)
 
 
 class TestServiceRESTAPI(object):
@@ -143,42 +172,87 @@ class TestServiceRESTAPI(object):
         def _finished():
             retire_service.reload()
             if retire_service.updated_at > date_before:
-                    return True
+                return True
             return False
 
         wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
 
-        @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-        def test_set_service_owner(self, rest_api, services):
-            if "set_ownership" not in rest_api.collections.services.action.all:
-                pytest.skip("Set owner action for service is not implemented in this version")
-            service = services[0]
-            user = rest_api.collections.users.get(userid='admin')
-            data = {
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    def test_set_service_owner(self, rest_api, services):
+        """Tests set_ownership action on /api/services/:id.
+
+        Metadata:
+            test_flag: rest
+        """
+        if "set_ownership" not in rest_api.collections.services.action.all:
+            pytest.skip("Set owner action for service is not implemented in this version")
+        service = services[0]
+        user = rest_api.collections.users.get(userid='admin')
+        data = {
+            "owner": {"href": user.href}
+        }
+        service.action.set_ownership(data)
+        service.reload()
+        assert hasattr(service, "evm_owner")
+        assert service.evm_owner.userid == user.userid
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    def test_set_services_owner(self, rest_api, services):
+        """Tests set_ownership action on /api/services collection.
+
+        Metadata:
+            test_flag: rest
+        """
+        if "set_ownership" not in rest_api.collections.services.action.all:
+            pytest.skip("Set owner action for service is not implemented in this version")
+        data = []
+        user = rest_api.collections.users.get(userid='admin')
+        for service in services:
+            tmp_data = {
+                "href": service.href,
                 "owner": {"href": user.href}
             }
-            service.action.set_ownership(data)
+            data.append(tmp_data)
+        rest_api.collections.services.action.set_ownership(*data)
+        for service in services:
             service.reload()
             assert hasattr(service, "evm_owner")
             assert service.evm_owner.userid == user.userid
 
-        @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-        def test_set_services_owner(self, rest_api, services):
-            if "set_ownership" not in rest_api.collections.services.action.all:
-                pytest.skip("Set owner action for service is not implemented in this version")
-            data = []
-            user = rest_api.collections.users.get(userid='admin')
-            for service in services:
-                tmp_data = {
-                    "href": service.href,
-                    "owner": {"href": user.href}
-                }
-                data.append(tmp_data)
-            rest_api.collections.services.action.set_ownership(*data)
-            for service in services:
-                service.reload()
-                assert hasattr(service, "evm_owner")
-                assert service.evm_owner.userid == user.userid
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_power_service(self, rest_api, service_data, from_detail):
+        """Tests power operations on /api/services and /api/services/:id.
+
+        * start, stop and suspend actions
+        * transition from one power state to another
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.services
+        service = collection.get(name=service_data['service_name'])
+        vm = rest_api.collections.vms.get(name=service_data['vm_name'])
+
+        def _action_and_check(action, resulting_state):
+            if from_detail:
+                getattr(service.action, action)()
+            else:
+                getattr(collection.action, action)(service)
+
+            wait_for(
+                lambda: vm.power_state == resulting_state,
+                num_sec=600, delay=20, fail_func=vm.reload,
+                message='Wait for VM to {} (current state: {})'.format(
+                    resulting_state, vm.power_state))
+
+        assert vm.power_state == 'on'
+        _action_and_check('stop', 'off')
+        _action_and_check('start', 'on')
+        _action_and_check('suspend', 'suspended')
+        _action_and_check('start', 'on')
 
 
 class TestServiceDialogsRESTAPI(object):
@@ -282,3 +356,171 @@ class TestServiceTemplateRESTAPI(object):
                 num_sec=180,
                 delay=10,
             )
+
+
+class TestBlueprintsRESTAPI(object):
+    @pytest.yield_fixture(scope="function")
+    def blueprints(self, rest_api):
+        body = []
+        for _ in range(2):
+            uid = fauxfactory.gen_alphanumeric(5)
+            body.append({
+                'name': 'test_blueprint_{}'.format(uid),
+                'description': 'Test Blueprint {}'.format(uid),
+                'ui_properties': {
+                    'service_catalog': {},
+                    'service_dialog': {},
+                    'automate_entrypoints': {},
+                    'chart_data_model': {}
+                }
+            })
+        response = rest_api.collections.blueprints.action.create(*body)
+
+        yield response
+
+        try:
+            rest_api.collections.blueprints.action.delete(*response)
+        except APIException:
+            # blueprints can be deleted by tests, just log warning
+            logger.warning("Failed to delete blueprints.")
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_create_blueprints(self, rest_api, blueprints):
+        """Tests creation of blueprints.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(blueprints) > 0
+        record = rest_api.collections.blueprints.get(id=blueprints[0].id)
+        assert record.name == blueprints[0].name
+        assert record.description == blueprints[0].description
+        assert record.ui_properties == blueprints[0].ui_properties
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_delete_blueprints(self, rest_api, blueprints, from_detail):
+        """Tests delete blueprints.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(blueprints) > 0
+        collection = rest_api.collections.blueprints
+        if from_detail:
+            methods = ['post', 'delete']
+            for i, ent in enumerate(blueprints):
+                ent.action.delete(force_method=methods[i % 2])
+                with error.expected("ActiveRecord::RecordNotFound"):
+                    ent.action.delete()
+        else:
+            collection.action.delete(*blueprints)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                collection.action.delete(*blueprints)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_edit_blueprints(self, rest_api, blueprints, from_detail):
+        """Tests editing of blueprints.
+
+        Metadata:
+            test_flag: rest
+        """
+        response_len = len(blueprints)
+        assert response_len > 0
+        new = []
+        for _ in range(response_len):
+            new.append({
+                'ui_properties': {
+                    'automate_entrypoints': {'Reconfigure': 'foo'}
+                }
+            })
+        if from_detail:
+            edited = []
+            for i in range(response_len):
+                edited.append(blueprints[i].action.edit(**new[i]))
+        else:
+            for i in range(response_len):
+                new[i].update(blueprints[i]._ref_repr())
+            edited = rest_api.collections.blueprints.action.edit(*new)
+        assert len(edited) == response_len
+        for i in range(response_len):
+            assert edited[i].ui_properties == new[i]['ui_properties']
+
+
+class TestOrchestrationTemplatesRESTAPI(object):
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_create_orchestration_templates(self, rest_api, orchestration_templates):
+        """Tests creation of orchestration templates.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(orchestration_templates) == 2
+        for template in orchestration_templates:
+            record = rest_api.collections.orchestration_templates.get(id=template.id)
+            assert record.name == template.name
+            assert record.description == template.description
+            assert record.type == template.type
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_delete_orchestration_templates(self, rest_api, orchestration_templates, from_detail):
+        """Tests delete orchestration templates.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(orchestration_templates) > 0
+        collection = rest_api.collections.orchestration_templates
+        if from_detail:
+            methods = ['post', 'delete']
+            for i, ent in enumerate(orchestration_templates):
+                ent.action.delete(force_method=methods[i % 2])
+                with error.expected("ActiveRecord::RecordNotFound"):
+                    ent.action.delete()
+        else:
+            collection.action.delete(*orchestration_templates)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                collection.action.delete(*orchestration_templates)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_edit_orchestration_templates(self, rest_api, orchestration_templates, from_detail):
+        """Tests editing of orchestration templates.
+
+        Metadata:
+            test_flag: rest
+        """
+        response_len = len(orchestration_templates)
+        assert response_len > 0
+        new = []
+        for _ in range(response_len):
+            new.append({
+                'description': 'Updated Test Template {}'.format(fauxfactory.gen_alphanumeric(5))
+            })
+        if from_detail:
+            edited = []
+            for i in range(response_len):
+                edited.append(orchestration_templates[i].action.edit(**new[i]))
+        else:
+            for i in range(response_len):
+                new[i].update(orchestration_templates[i]._ref_repr())
+            edited = rest_api.collections.orchestration_templates.action.edit(*new)
+        assert len(edited) == response_len
+        for i in range(response_len):
+            assert edited[i].description == new[i]['description']

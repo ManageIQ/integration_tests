@@ -34,5 +34,6 @@ def main():
             for name, value in inventory[k].items():
                 print("{} {} is <{}:{}>".format(k, value[2], app.name, name))
 
+
 if __name__ == "__main__":
     sys.exit(main())

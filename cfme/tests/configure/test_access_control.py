@@ -7,13 +7,16 @@ import traceback
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
-from cfme import Credential
-from cfme import login
-from cfme import test_requirements
+from cfme import Credential, login, test_requirements
+from cfme.automate import AutomateExplorer # NOQA
+from cfme.base import Server
 from cfme.configure.access_control import set_group_order
+from cfme.control.explorer import ControlExplorer # NOQA
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.exceptions import OptionNotAvailable
+from cfme.common.provider import BaseProvider
 from cfme.infrastructure import virtual_machines as vms
+from cfme.services.myservice import MyService
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.configure import tasks
 from utils.appliance.implementations.ui import navigate_to
@@ -32,6 +35,7 @@ group_table = Table("//div[@id='main_div']//table")
 @pytest.fixture(scope="module")
 def setup_first_provider():
     setup_a_provider(validate=True, check_existing=True)
+
 
 # due to pytest.mark.meta(blockers=[1035399]), non admin users can't login
 # with no providers added
@@ -99,6 +103,7 @@ def test_user_duplicate_name():
     nu.create()
     with error.expected("Userid has already been taken"):
         nu.create()
+
 
 group_user = Group("EvmGroup-user")
 
@@ -489,9 +494,9 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
         product_features=product_features)
 
 
-def _go_to(dest):
+def _go_to(cls, dest='All'):
     """Create a thunk that navigates to the given destination"""
-    return lambda: sel.force_navigate(dest)
+    return lambda: navigate_to(cls, dest)
 
 
 cat_name = "Settings"
@@ -504,22 +509,21 @@ cat_name = "Settings"
                                  [['Everything', cat_name, 'Tasks'], True]]),
       {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
       {
-          'my services': _go_to('my_services'),
-          'chargeback': _go_to('chargeback'),
-          'clouds providers': _go_to('clouds_providers'),
-          'infrastructure providers': _go_to('infrastructure_providers'),
-          'control explorer': _go_to('control_explorer'),
-          'automate explorer': _go_to('automate_explorer')}],
+          'my services': _go_to(MyService),
+          'chargeback': _go_to(Server, 'Chargeback'),
+          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
+          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
+          'control explorer': _go_to(Server, 'ControlExplorer'),
+          'automate explorer': _go_to(Server, 'AutomateExplorer')}],
      [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
       {
-          'my services': _go_to('my_services'),
-          'chargeback': _go_to('chargeback'),
-          'clouds providers': _go_to('clouds_providers'),
-          'infrastructure providers': _go_to('infrastructure_providers'),
-          'control explorer': _go_to('control_explorer'),
-          'automate explorer': _go_to('automate_explorer')},
+          'my services': _go_to(MyService),
+          'chargeback': _go_to(Server, 'Chargeback'),
+          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
+          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
+          'control explorer': _go_to(Server, 'ControlExplorer'),
+          'automate explorer': _go_to(Server, 'AutomateExplorer')},
       {}]])
-# @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 @pytest.mark.meta(blockers=[1262759])
 def test_permissions(role, allowed_actions, disallowed_actions):
     # create a user and role
@@ -569,7 +573,7 @@ def single_task_permission_test(product_features, actions):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(blockers=[1136112, 1262764])
+@pytest.mark.meta(blockers=[1262764])
 def test_permissions_role_crud():
     single_task_permission_test([['Everything', cat_name, 'Configuration'],
                                  ['Everything', 'Services', 'Catalogs Explorer']],
@@ -677,7 +681,6 @@ def test_user_change_password(request):
 
 # Tenant/Project test cases
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 def test_superadmin_tenant_crud(request):
     """Test suppose to verify CRUD operations for CFME tenants
 
@@ -708,7 +711,6 @@ def test_superadmin_tenant_crud(request):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 @pytest.mark.meta(blockers=[BZ(1387088, forced_streams=['5.7', 'upstream'])])
 def test_superadmin_tenant_project_crud(request):
     """Test suppose to verify CRUD operations for CFME projects
@@ -749,7 +751,6 @@ def test_superadmin_tenant_project_crud(request):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < "5.5")
 @pytest.mark.parametrize('number_of_childrens', [5])
 def test_superadmin_child_tenant_crud(request, number_of_childrens):
     """Test CRUD operations for CFME child tenants, where several levels of tenants are created.

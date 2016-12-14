@@ -8,9 +8,9 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.services import requests
-from cfme.exceptions import CandidateNotFound
 from cfme.web_ui import flash
 from cfme import test_requirements
+from selenium.common.exceptions import NoSuchElementException
 from utils import error
 from utils.log import logger
 from utils.wait import wait_for
@@ -41,16 +41,16 @@ def test_delete_catalog_deletes_service(dialog, catalog):
                   dialog=dialog)
     catalog_item.create()
     catalog.delete()
-    service_catalogs = ServiceCatalogs("service_name")
-    with error.expected(CandidateNotFound):
-        service_catalogs.order(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    with error.expected(NoSuchElementException):
+        service_catalogs.order()
 
 
 def test_delete_catalog_item_deletes_service(catalog_item):
     catalog_item.delete()
-    service_catalogs = ServiceCatalogs("service_name")
-    with error.expected(CandidateNotFound):
-        service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    with error.expected(NoSuchElementException):
+        service_catalogs.order()
 
 
 def test_service_circular_reference(catalog_item):
@@ -74,15 +74,19 @@ def test_service_generic_catalog_bundle(catalog_item):
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     catalog_bundle.create([catalog_item.name])
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_bundle)
+    service_catalogs = ServiceCatalogs(bundle_name)
+    service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = bundle_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=900, delay=20)
-    assert row.last_message.text == 'Request complete'
+    # Success message differs between 5.6 and 5.7
+    if version.current_version() >= '5.7':
+        assert 'Service [{}] Provisioned Successfully'.format(bundle_name) in row.last_message.text
+    else:
+        assert row.last_message.text == 'Request complete'
 
 
 def test_bundles_in_bundle(catalog_item):
@@ -98,15 +102,20 @@ def test_bundles_in_bundle(catalog_item):
     third_catalog_bundle = CatalogBundle(name=third_bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     third_catalog_bundle.create([bundle_name, sec_bundle_name])
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, third_catalog_bundle)
+    service_catalogs = ServiceCatalogs(third_bundle_name)
+    service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = third_bundle_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=900, delay=20)
-    assert row.last_message.text == 'Request complete'
+    # Success message differs between 5.6 and 5.7
+    if version.current_version() >= '5.7':
+        assert 'Service [{}] Provisioned Successfully'.format(third_bundle_name)\
+            in row.last_message.text
+    else:
+        assert row.last_message.text == 'Request complete'
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:7277'])

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 from cfme.containers.pod import Pod, list_tbl as list_tbl_pods
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.route import Route, list_tbl as list_tbl_routes
 from cfme.containers.project import Project, list_tbl as list_tbl_projects
 from cfme.containers.service import Service, list_tbl as list_tbl_services
@@ -14,8 +15,8 @@ pytestmark = [
         lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+
 
 # CMP-9911
 

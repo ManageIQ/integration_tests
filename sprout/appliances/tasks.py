@@ -869,16 +869,28 @@ def appliance_power_on(self, appliance_id):
         return
     try:
         if appliance.provider_api.is_vm_running(appliance.name):
-            Appliance.objects.get(id=appliance_id).set_status("Appliance was powered on.")
-            with transaction.atomic():
-                appliance = Appliance.objects.get(id=appliance_id)
-                appliance.set_power_state(Appliance.Power.ON)
-                appliance.save()
-            if appliance.containerized:
-                with appliance.ipapp.ssh_client as ssh:
-                    # Fire up the container
-                    ssh.run_command('cfme-start', ensure_host=True)
-            return
+            try:
+                current_ip = appliance.provider_api.current_ip_address(appliance.name)
+            except Exception:
+                current_ip = None
+            if current_ip is not None:
+                # IP present
+                Appliance.objects.get(id=appliance_id).set_status("Appliance was powered on.")
+                with transaction.atomic():
+                    appliance = Appliance.objects.get(id=appliance_id)
+                    appliance.ip_address = current_ip
+                    appliance.set_power_state(Appliance.Power.ON)
+                    appliance.save()
+                if appliance.containerized:
+                    with appliance.ipapp.ssh_client as ssh:
+                        # Fire up the container
+                        ssh.run_command('cfme-start', ensure_host=True)
+                # VM is running now.
+                return
+            else:
+                # IP not present yet
+                Appliance.objects.get(id=appliance_id).set_status("Appliance waiting for IP.")
+                self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
                 appliance.provider_api.vm_status(appliance.name)))
@@ -1394,7 +1406,7 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
         return None
     try:
         managed_providers = appliance.ipapp.managed_providers
-        appliance.managed_providers = managed_providers
+        appliance.managed_providers = [prov.key for prov in managed_providers]
     except Exception as e:
         # To prevent single appliance messing up whole result
         provider_error_logger().error("{}: {}".format(type(e).__name__, str(e)))
@@ -1411,10 +1423,10 @@ def calculate_provider_management_usage(self, appliance_ids):
         except ObjectDoesNotExist:
             # Deleted in meanwhile
             continue
-        for provider in appliance.managed_providers:
-            if provider not in results:
-                results[provider] = []
-            results[provider].append(appliance.id)
+        for provider_key in appliance.managed_providers:
+            if provider_key not in results:
+                results[provider_key] = []
+            results[provider_key].append(appliance.id)
     for provider in Provider.objects.all():
         provider.appliances_manage_this_provider = results.get(provider.id, [])
 

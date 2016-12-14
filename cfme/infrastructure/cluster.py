@@ -14,7 +14,6 @@ from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as 
     paginator, match_location
 from utils.pretty import Pretty
 from utils.wait import wait_for
-from utils.api import rest_api
 
 
 details_page = Region(infoblock_type='detail')
@@ -48,9 +47,12 @@ class Cluster(Pretty, Navigatable):
         self.provider = provider
         self.quad_name = 'cluster'
 
-        col = rest_api().collections
-        self._id = [cl.id for cl in col.clusters.all if cl.name == self._short_name
-                    and cl.ems_id == self.provider.id][-1]
+        col = self.appliance.rest_api.collections
+        self._id = [
+            cl.id
+            for cl in col.clusters.all
+            if cl.name == self._short_name and cl.ems_id == self.provider.id
+        ][-1]
 
     def delete(self, cancel=True):
         """
@@ -115,8 +117,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'Clusters')(None)
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Clusters')
 
     def resetter(self):
         tb.select("Grid View")

@@ -299,7 +299,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         if not do_not_navigate:
             if from_any_provider:
                 # TODO implement as navigate_to when cfme.infra.virtual_machines has destination
-                sel.force_navigate(self.ALL_LIST_LOCATION)
+                navigate_to(self, 'All')
             elif self.is_vm:
                 self.provider.load_all_provider_vms()
             else:
@@ -316,8 +316,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             else:
                 raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
 
-        # this is causing some issues in 5.5.0.9, commenting out for a bit
-        # paginator.results_per_page(1000)
+        paginator.results_per_page(1000)
         if use_search:
             try:
                 if not search.has_quick_search_box():
@@ -330,7 +329,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
                 search.normal_search(self.name)
             except Exception as e:
                 logger.warning("Failed to use search: %s", str(e))
-
         for page in paginator.pages():
             if sel.is_displayed(quadicon, move_to=True):
                 if mark:
@@ -366,7 +364,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         """Get the title of first VM/Instance."""
         if not do_not_navigate:
             if provider is None:
-                sel.force_navigate(cls.ALL_LIST_LOCATION)
+                navigate_to(cls, 'All')
             else:
                 provider.load_all_provider_vms()
         return Quadicon.get_first_quad_title()
@@ -495,16 +493,22 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         cfg_btn('Set Ownership')
         if click_reset:
             action = form_buttons.reset
-            msg_assert = lambda: flash.assert_message_match(
-                'All changes have been reset')
+            msg_assert = partial(
+                flash.assert_message_match,
+                'All changes have been reset'
+            )
         elif click_cancel:
             action = form_buttons.cancel
-            msg_assert = lambda: flash.assert_success_message(
-                'Set Ownership was cancelled by the user')
+            msg_assert = partial(
+                flash.assert_success_message,
+                'Set Ownership was cancelled by the user'
+            )
         else:
             action = form_buttons.save
-            msg_assert = lambda: flash.assert_success_message(
-                'Ownership saved for selected {}'.format(self.VM_TYPE))
+            msg_assert = partial(
+                flash.assert_success_message,
+                'Ownership saved for selected {}'.format(self.VM_TYPE)
+            )
         fill(set_ownership_form, {'user_name': user, 'group_name': group},
              action=action)
         msg_assert()

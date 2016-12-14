@@ -1,10 +1,10 @@
 from utils import testgen
 from cfme.web_ui import Quadicon
 from cfme.infrastructure.host import Host
+from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 import pytest
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type,
-                                         ['openstack-infra'], scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 

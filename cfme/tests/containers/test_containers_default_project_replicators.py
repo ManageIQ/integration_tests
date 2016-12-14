@@ -2,6 +2,7 @@ import pytest
 import random
 
 from cfme.web_ui import CheckboxTable
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.replicator import Replicator
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -12,8 +13,7 @@ pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.6" and provider.version > 3.2),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope='module')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 

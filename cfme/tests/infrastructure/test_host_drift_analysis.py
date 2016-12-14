@@ -7,6 +7,7 @@ from cfme.configure import tasks
 from cfme.configure.tasks import Tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host as host_obj
+from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import DriftGrid, toolbar as tb
 from utils import error, testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -19,7 +20,8 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=['hosts'])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [InfraProvider], required_fields=['hosts'])
     argnames += ['host']
 
     new_idlist = []
