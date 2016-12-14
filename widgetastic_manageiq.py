@@ -20,7 +20,8 @@ from widgetastic.widget import (
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
+    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
+    Dropdown)
 from cached_property import cached_property
 from utils.log import logger
 
@@ -878,3 +879,63 @@ class PaginationPane(View):
     @property
     def items_amount(self):
         return self.paginator.page_info()[1]
+
+
+class ToolBarViewSelector(View):
+    """
+    represents toolbar's view selector control.
+    """
+    list_view = Button(title='List View')
+    grid_view = Button(title='Grid View')
+    tile_view = Button(title='Tile View')
+
+    def __locator__(self):
+        return './/div[contains(@class, "toolbar-pf-view-selector")]'
+
+    def select(self, item):
+        if item == self.list_view.title:
+            self.list_view.click()
+        elif item == 'Grid View':
+            self.grid_view.click()
+        elif item == 'Tile View':
+            self.grid_view.click()
+        else:
+            raise ValueError('Incorrect value passed')
+
+    @property
+    def selected(self):
+        """
+        goes thru buttons and returns the title of active button
+        Returns: currently selected view
+
+        """
+        return [btn.title for btn in (self.list_view, self.grid_view, self.tile_view)
+                if btn.active][-1]
+
+
+class ProviderToolBar(View):
+    """
+    represents provider toolbar and its controls
+    """
+    configuration = Dropdown(text='Configuration')
+    policy = Dropdown(text='Policy')
+    authentication = Dropdown(text='Authentication')
+    download = Dropdown(text='Download')
+
+    @View.nested
+    class view_selector(ToolBarViewSelector):
+        pass
+
+
+class DetailsProviderToolBar(ProviderToolBar):
+    """
+    represents provider toolbar and its controls
+    """
+    monitoring = Dropdown(text='Monitoring')
+    reload = Button(title='Reload Current Display')
+
+    @View.nested
+    class view_selector(ToolBarViewSelector):
+        pass
+
+

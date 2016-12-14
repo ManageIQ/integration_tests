@@ -12,7 +12,8 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic.widget import View
-from widgetastic_patternfly import DropDown, PaginationPane, Checkbox, Input, Button
+from widgetastic_patternfly import Input, Button, Dropdown
+from widgetastic_manageiq import PaginationPane, Checkbox, ProviderToolBar
 
 from cached_property import cached_property
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
@@ -111,11 +112,6 @@ mon_btn = partial(tb.select, 'Monitoring')
 
 class InfraProvidersView(BaseLoggedInPage):
 
-    configuration = DropDown(text='Configuration')
-    policy = DropDown(text='Policy')
-    monitoring = DropDown(text='Monitoring')
-    authentication = DropDown(text='Authentication')
-
     @property
     def is_displayed(self):
         return all((self.logged_in_as_current_user,
@@ -125,6 +121,10 @@ class InfraProvidersView(BaseLoggedInPage):
 
     @View.nested
     class paginator(PaginationPane):
+        pass
+
+    @View.nested
+    class toolbar(ProviderToolBar):
         pass
 
 
@@ -152,7 +152,7 @@ class InfraProvidersDiscoverView(InfraProvidersView):
 
 class InfraProvidersAddView(InfraProvidersView):
     name = Input('name')
-    type = DropDown('emstype')
+    type = Dropdown('emstype')
 
     add = Button('Add')
     cancel = Button('Cancel')
@@ -378,7 +378,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
         return web_clusters
 
 
-@navigator.register(InfraProvider)
+@navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
     VIEW = InfraProvidersView
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
@@ -391,7 +391,8 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        tb.select("Grid View")
+        self.view.toolbar.view_selector.select("Grid View")
+
         self.view.paginator.check_all()
         self.view.paginator.uncheck_all()
 

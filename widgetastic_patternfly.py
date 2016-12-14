@@ -89,6 +89,10 @@ class Button(Widget, ClickableMixin):
     def __repr__(self):
         return '{}{}'.format(type(self).__name__, call_sig(self.args, self.kwargs))
 
+    @property
+    def title(self):
+        return self.browser.get_attribute('title', self)
+
 
 class Input(TextInput):
     """Patternfly input

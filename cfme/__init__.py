@@ -1,7 +1,7 @@
 from utils.pretty import Pretty
 
 from widgetastic.widget import View
-from widgetastic_patternfly import NavDropDown, VerticalNavigation, FlashMessages
+from widgetastic_patternfly import NavDropdown, VerticalNavigation, FlashMessages
 
 
 class Credential(Pretty):
@@ -41,8 +41,8 @@ class BaseLoggedInPage(View):
     logged in.
     """
     flash = FlashMessages('div#flash_text_div')
-    help = NavDropDown('.//li[./a[@id="dropdownMenu1"]]')
-    settings = NavDropDown('.//li[./a[@id="dropdownMenu2"]]')
+    help = NavDropdown('.//li[./a[@id="dropdownMenu1"]]')
+    settings = NavDropdown('.//li[./a[@id="dropdownMenu2"]]')
     navigation = VerticalNavigation('#maintab')
 
     @property
