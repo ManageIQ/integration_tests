@@ -18,6 +18,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
 PROD_VERSION = version.current_version().product_version()
 
 
+@pytest.mark.usefixtures("setup_provider_modscope")
 @pytest.mark.uncollectif(lambda: PROD_VERSION > '4.1')
 def test_create_volume(provider):
     """Creates a volume for given cloud provider"""
@@ -48,7 +49,7 @@ def test_create_volume(provider):
     assert res, 'Newly created volume doesn\'t appear in UI'
 
 
-@pytest.mark.uncollectif(lambda: PROD_VERSION < '4.1')
+@pytest.mark.uncollectif(lambda: PROD_VERSION > '4.1')
 def test_list_volumes_provider_details(provider):
     """Verifies that all provider's volumes are present on details page"""
     # Gather all provider's volumes name
@@ -68,7 +69,7 @@ def test_list_volumes_provider_details(provider):
         assert vol_table.find_cell('Name', volume), err_msg
 
 
-@pytest.mark.uncollectif(lambda: PROD_VERSION < '4.1')
+@pytest.mark.uncollectif(lambda: PROD_VERSION > '4.1')
 def test_attach_volume_from_instance_page(provider):
     """Attaches pre-created volume to an instance from Instance page"""
     instance_name = choice(provider.mgmt.all_vms()).name
@@ -103,7 +104,7 @@ def test_attach_volume_from_instance_page(provider):
     assert res, 'Volume does not appear in instance relationships'
 
 
-@pytest.mark.uncollectif(lambda: PROD_VERSION < '4.1')
+@pytest.mark.uncollectif(lambda: PROD_VERSION > '4.1')
 def test_detach_volume_from_instance_page(provider):
     """Detaches volume from instance from Instance page"""
     vm_name = None
