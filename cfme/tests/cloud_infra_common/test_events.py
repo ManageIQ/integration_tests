@@ -79,4 +79,4 @@ def test_vm_create(request, vm_crud, provider, register_event):
         return any(tag.category.display_name == "Environment" and tag.display_name == "Development"
                    for tag in vm_crud.get_tags())
 
-    wait_for(_check, num_sec=180, delay=15, message="tags to appear")
+    wait_for(_check, num_sec=300, delay=15, message="tags to appear")
