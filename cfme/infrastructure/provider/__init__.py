@@ -123,7 +123,7 @@ class InfraProvidersView(BaseLoggedInPage):
                     match_page(summary='Infrastructure Providers')))
 
     @View.nested
-    class paginator(PaginationPane):
+    class Paginator(PaginationPane):
         pass
 
 
