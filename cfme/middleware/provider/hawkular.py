@@ -8,6 +8,7 @@ from utils.db import cfmedb
 from utils.varmeth import variable
 from . import _get_providers_page, _db_select_query
 from .. import download, MiddlewareBase, auth_btn, mon_btn
+from utils.appliance.implementations.ui import navigate_to
 
 
 @MiddlewareProvider.add_provider_type
@@ -35,7 +36,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
     STATS_TO_MATCH = MiddlewareProvider.STATS_TO_MATCH +\
         ['num_server', 'num_domain', 'num_deployment', 'num_datasource', 'num_messaging']
     property_tuples = MiddlewareProvider.property_tuples +\
-        [('name', 'name'), ('hostname', 'host_name'), ('port', 'port'), ('provider_type', 'type')]
+        [('name', 'Name'), ('hostname', 'Host Name'), ('port', 'Port'), ('provider_type', 'Type')]
     type_name = "hawkular"
     mgmt_class = Hawkular
 
@@ -64,9 +65,8 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @num_deployment.variant('ui')
     def num_deployment_ui(self, reload_data=True):
-        if reload_data:
-            self.summary.reload()
-        return self.summary.relationships.middleware_deployments.value
+        self.load_details(refresh=reload_data)
+        return int(self.get_detail("Relationships", "Middleware Deployments"))
 
     @variable(alias='db')
     def num_server(self):
@@ -74,9 +74,8 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @num_server.variant('ui')
     def num_server_ui(self, reload_data=True):
-        if reload_data:
-            self.summary.reload()
-        return self.summary.relationships.middleware_servers.value
+        self.load_details(refresh=reload_data)
+        return int(self.get_detail("Relationships", "Middleware Servers"))
 
     @variable(alias='db')
     def num_server_group(self):
@@ -94,9 +93,8 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @num_datasource.variant('ui')
     def num_datasource_ui(self, reload_data=True):
-        if reload_data:
-            self.summary.reload()
-        return self.summary.relationships.middleware_datasources.value
+        self.load_details(refresh=reload_data)
+        return int(self.get_detail("Relationships", "Middleware Datasources"))
 
     @variable(alias='db')
     def num_domain(self):
@@ -104,9 +102,8 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @num_domain.variant('ui')
     def num_domain_ui(self, reload_data=True):
-        if reload_data:
-            self.summary.reload()
-        return self.summary.relationships.middleware_domains.value
+        self.load_details(refresh=reload_data)
+        return int(self.get_detail("Relationships", "Middleware Domains"))
 
     @variable(alias='db')
     def num_messaging(self):
@@ -114,15 +111,13 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
 
     @num_messaging.variant('ui')
     def num_messaging_ui(self, reload_data=True):
-        if reload_data:
-            self.summary.reload()
-        return self.summary.relationships.middleware_messagings.value
+        self.load_details(refresh=reload_data)
+        return int(self.get_detail("Relationships", "Middleware Messagings"))
 
     @variable(alias='ui')
     def is_refreshed(self, reload_data=True):
-        if reload_data:
-            self.summary.reload()
-        if re.match('Success.*Minute.*Ago', self.summary.status.last_refresh.text_value):
+        self.load_details(refresh=reload_data)
+        if re.match('Success.*Minute.*Ago', self.get_detail("Status", "Last Refresh")):
             return True
         else:
             return False
@@ -148,8 +143,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
             self.db_id = tmp_provider.id
 
     def load_topology_page(self):
-        self.summary.reload()
-        self.summary.overview.topology.click()
+        navigate_to(self, 'TopologyFromDetails')
 
     def recheck_auth_status(self):
         self.load_details(refresh=True)

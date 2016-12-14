@@ -9,6 +9,7 @@ from dateutil import parser
 from django.contrib import messages
 from django.contrib.auth import views
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, Http404, HttpResponseForbidden
@@ -353,6 +354,43 @@ def my_appliances(request, show_user="my"):
         pools = AppliancePool.objects.order_by("id")
     else:
         pools = AppliancePool.objects.filter(owner__username=show_user).order_by("id")
+    page = request.GET.get("page")
+    try:
+        per_page = int(request.GET.get("per_page", 5))
+    except (ValueError, TypeError):
+        per_page = 5
+
+    pools_paginator = Paginator(pools, per_page)
+    try:
+        pools_paged = pools_paginator.page(page)
+        page = int(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        pools_paged = pools_paginator.page(1)
+        page = 1
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        pools_paged = pools_paginator.page(pools_paginator.num_pages)
+        page = pools_paginator.num_pages
+
+    pages = list(pools_paginator.page_range)
+    if pools_paginator.num_pages <= 5:
+        start_index = 0
+        end_index = 5
+    else:
+        if page - 2 < 0:
+            start_index = 0
+            end_index = 5
+        elif page + 2 > pools_paginator.num_pages:
+            end_index = pools_paginator.num_pages
+            start_index = end_index - 5
+        else:
+            start_index = page - 3
+            end_index = page + 2
+    if start_index < 0:
+        end_index -= start_index
+        start_index = 0
+    pages = pages[start_index:end_index]
     groups = Group.objects.order_by("id")
     can_order_pool = show_user == "my"
     new_pool_possible = True

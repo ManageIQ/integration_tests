@@ -57,7 +57,7 @@ yaycl
 yaycl-crypt
 shyaml
 
-sentaku>=0.3.0
+sentaku~=0.3.0
 
 # docs requirements
 # When Sphinx 1.3 is released and on RTD, we can upgrade and use

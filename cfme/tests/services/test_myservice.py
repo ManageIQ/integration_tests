@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
-import pytest
-
-from cfme.common.provider import cleanup_vm
-from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.services.catalogs.myservice import MyService
-from cfme.services import requests
-from cfme import test_requirements
 from datetime import datetime
-from utils import testgen
-from utils.log import logger
-from utils.wait import wait_for
-from utils import browser
-from utils.version import current_version
-from utils import version
+
+import pytest
+from cfme import test_requirements
+from cfme.common.provider import cleanup_vm
+from cfme.services import requests
+from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.myservice import MyService
+from cfme.web_ui import toolbar as tb
+from utils import browser, testgen, version
 from utils.browser import ensure_browser_open
+from utils.log import logger
+from utils.version import current_version
+from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name", "catalog_item"),
@@ -36,10 +35,10 @@ def needs_firefox():
 
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter'],
-    scope="module")
+                                         scope="module")
 
 
-@pytest.fixture
+@pytest.yield_fixture(scope='function')
 def myservice(setup_provider, provider, catalog_item, request):
     """Tests my service
 
@@ -49,7 +48,6 @@ def myservice(setup_provider, provider, catalog_item, request):
     vm_name = version.pick({
         version.LOWEST: catalog_item.provisioning_data["vm_name"] + '_0001',
         '5.7': catalog_item.provisioning_data["vm_name"] + '0001'})
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog.name, catalog_item)
@@ -57,9 +55,12 @@ def myservice(setup_provider, provider, catalog_item, request):
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=2000, delay=20)
+                       fail_func=tb.refresh, num_sec=2000, delay=20)
     assert row.request_state.text == 'Finished'
-    return MyService(catalog_item.name, vm_name)
+
+    yield MyService(catalog_item.name, vm_name)
+
+    cleanup_vm(vm_name, provider)
 
 
 def test_retire_service(provider, myservice, register_event):
@@ -90,9 +91,9 @@ def test_crud_set_ownership_and_edit_tags(myservice):
     """
     myservice.set_ownership("Administrator", "EvmGroup-administrator")
     myservice.edit_tags("Cost Center *", "Cost Center 001")
-    myservice.update("edited", "edited_desc")
-    edited_name = myservice.service_name + "_" + "edited"
-    myservice.delete(edited_name)
+    myservice.update(updates={'service_name': myservice.service_name + '_updated',
+                              'description': 'Updated service description'})
+    myservice.delete()
 
 
 @pytest.mark.uncollectif(lambda: current_version() < "5.5")

@@ -382,12 +382,10 @@ class Validatable(SummaryMixin):
 
         Fails if some property does not match.
         """
-        self.summary.reload()
-        properties = self.summary.properties.items()
-        assert len(properties) > 0, 'No property was found in UI'
+        self.load_details(refresh=False)
         for property_tuple in self.property_tuples:
             expected_value = str(getattr(self, property_tuple[0], ''))
-            shown_value = properties[property_tuple[1]].text_value
+            shown_value = self.get_detail("Properties", property_tuple[1])
             assert expected_value == shown_value,\
                 ("Property '{}' has wrong value, expected '{}' but was '{}'"
                  .format(property_tuple, expected_value, shown_value))

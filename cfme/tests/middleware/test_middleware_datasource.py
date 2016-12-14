@@ -4,15 +4,11 @@ from cfme.middleware import get_random_list
 from cfme.middleware.datasource import MiddlewareDatasource
 from utils import testgen
 from utils.version import current_version
-from deployment_methods import get_server
-from deployment_methods import HAWKULAR_PRODUCT_NAME
-from deployment_methods import EAP_PRODUCT_NAME
+from server_methods import get_eap_server, get_hawkular_server
 from datasource_methods import get_datasources_set
 from datasource_methods import ORACLE_12C_DS, DB2_105_DS, MSSQL_2014_DS, MYSQL_57_DS
 from datasource_methods import POSTGRESPLUS_94_DS, POSTGRESQL_94_DS, SYBASE_157_DS
 from datasource_methods import ORACLE_12C_RAC_DS
-from dballocator_methods import db_allocate
-from dballocator_methods import DS_USERNAME_PROP, DS_URL_PROP, DS_PASSWORD_PROP
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -57,7 +53,7 @@ def test_list_server_datasources(provider):
         * Get datasources list from Database of server
         * Compare size of all the list [UI, Database]
     """
-    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    server = get_hawkular_server(provider)
     ui_dses = get_datasources_set(MiddlewareDatasource.datasources(server=server))
     db_dses = get_datasources_set(MiddlewareDatasource.datasources_in_db(server=server))
     assert ui_dses == db_dses, \
@@ -93,7 +89,7 @@ def test_list_provider_server_datasources(provider):
         * Get datasources list from Management system(Hawkular) of server
         * Compare size of all the list [UI, Database, Management system]
     """
-    server = get_server(provider, HAWKULAR_PRODUCT_NAME)
+    server = get_hawkular_server(provider)
     ui_dses = get_datasources_set(
         MiddlewareDatasource.datasources(provider=provider, server=server))
     db_dses = get_datasources_set(
@@ -134,7 +130,6 @@ def test_create_delete_datasource(provider, datasource_params):
     Method is executed for all database types
 
     Steps:
-        * Allocates Database via DBAllocator tool.
         * Get servers list from UI
         * Chooses JBoss EAP server from list
         * Invokes 'Add Datasource' toolbar operation
@@ -155,16 +150,16 @@ def test_create_delete_datasource(provider, datasource_params):
         * Checks if newly created datasource is listed. Selects it.
         * Deletes that Datasource via UI operation.
         * Checks whether resource is deleted.
-        * Deallocated allocated Database in DBAllocator tool.
     """
-    with db_allocate(datasource_params[9]) as db_metadata:
-        server = get_server(provider, EAP_PRODUCT_NAME)
-        server.add_datasource(datasource_params[0], datasource_params[1], datasource_params[2],
-                    datasource_params[3], datasource_params[4], datasource_params[5],
-                    db_metadata[DS_URL_PROP].replace("\\", ""),
-                    db_metadata[DS_USERNAME_PROP],
-                    db_metadata[DS_PASSWORD_PROP])
-        # TODO uncomment when BZ#1383414 is fixes
-        # resource = get_datasource_from_list(provider, datasource_params[1])
-        # resource.delete()
-        # check_datasource_not_listed(provider, datasource.name)
+    server = get_eap_server(provider)
+    server.add_datasource(datasource_params[0], datasource_params[1], datasource_params[2],
+                          datasource_params[3], datasource_params[4], datasource_params[5],
+                          datasource_params[6].replace("\\", ""),
+                          datasource_params[7],
+                          datasource_params[8])
+    # TODO uncomment when BZ#1383414 is fixed
+    # datasource = get_datasource_from_list(provider,
+    #                                       "Datasource [{}]".format(datasource_params[1]),
+    #                                       server)
+    # datasource.remove()
+    # verify_datasource_not_listed(provider, datasource.name)

@@ -1,10 +1,14 @@
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import Deployable
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
-from cfme.web_ui.menu import nav, toolbar as tb
+from cfme.web_ui.menu import toolbar as tb
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.providers import get_crud, get_provider_key, list_providers
 from utils.varmeth import variable
@@ -42,26 +46,14 @@ def _db_select_query(name=None, server=None, provider=None):
 
 def _get_deployments_page(provider, server):
     if server:  # if server instance is provided navigate through server page
-        server.summary.reload()
-        if server.summary.relationships.middleware_deployments.value == 0:
-            return
-        server.summary.relationships.middleware_deployments.click()
+        navigate_to(server, 'ServerDeployments')
     elif provider:  # if provider instance is provided navigate through provider page
-        provider.summary.reload()
-        if provider.summary.relationships.middleware_deployments.value == 0:
-            return
-        provider.summary.relationships.middleware_deployments.click()
+        navigate_to(provider, 'ProviderDeployments')
     else:  # if None(provider and server) given navigate through all middleware deployments page
-        sel.force_navigate('middleware_deployments')
-
-nav.add_branch(
-    'middleware_deployments', {
-        'middleware_deployment': lambda ctx: list_tbl.select_row('Deployment Name', ctx['name']),
-    }
-)
+        navigate_to(MiddlewareDeployment, 'All')
 
 
-class MiddlewareDeployment(MiddlewareBase, Taggable, Deployable):
+class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
     """
     MiddlewareDeployment class provides details on deployment page.
     Class methods available to get existing deployments list
@@ -84,10 +76,11 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Deployable):
         deployments = MiddlewareDeployment.deployments(provider=haw_provider,server=ser_instance)
 
     """
-    property_tuples = [('name', 'name'), ('status', 'status')]
+    property_tuples = [('name', 'Name'), ('status', 'Status')]
     taggable_type = 'MiddlewareDeployment'
 
-    def __init__(self, name, server, provider=None, **kwargs):
+    def __init__(self, name, server, provider=None, appliance=None, **kwargs):
+        Navigatable.__init__(self, appliance=appliance)
         if name is None:
             raise KeyError("'name' should not be 'None'")
         if not isinstance(server, MiddlewareServer):
@@ -175,29 +168,19 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Deployable):
         else:
             return cls._deployments_in_mgmt(provider, server)
 
-    def _on_detail_page(self):
-        """Override existing `_on_detail_page` and return `False` always.
-        There is no uniqueness on summary page of this resource.
-        Refer: https://github.com/ManageIQ/manageiq/issues/9046
-        """
-        return False
-
     def load_details(self, refresh=False):
-        if not self._on_detail_page():
-            _get_deployments_page(provider=self.provider, server=self.server)
-            paginator.results_per_page(1000)
-            list_tbl.click_row_by_cells({'Deployment Name': self.name, 'Server': self.server.name})
-            if not self.db_id or refresh:
-                tmp_dep = self.deployment(method='db')
-                self.db_id = tmp_dep.db_id
+        navigate_to(self, 'Details')
+        if not self.db_id or refresh:
+            tmp_dep = self.deployment(method='db')
+            self.db_id = tmp_dep.db_id
         if refresh:
             tb.refresh()
 
     @variable(alias='ui')
     def deployment(self):
-        self.summary.reload()
-        self.id = self.summary.properties.nativeid.text_value
-        self.status = self.summary.properties.status.text_value
+        self.load_details(refresh=False)
+        self.id = self.get_detail("Properties", "Nativeid")
+        self.status = self.get_detail("Properties", "Status")
         return self
 
     @deployment.variant('mgmt')
@@ -232,3 +215,25 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Deployable):
     def download(cls, extension, provider=None, server=None):
         _get_deployments_page(provider, server)
         download(extension)
+
+
+@navigator.register(MiddlewareDeployment, 'All')
+class All(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Middleware', 'Deployments')(None)
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("List View")
+
+
+@navigator.register(MiddlewareDeployment, 'Details')
+class Details(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        list_tbl.click_row_by_cells({'Deployment Name': self.obj.name,
+                                     'Server': self.obj.server.name})

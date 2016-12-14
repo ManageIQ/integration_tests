@@ -38,7 +38,42 @@
         </select>
     </h2>
 {% endif %}
-{% for pool in pools %}
+{% if pools_paginator.num_pages > 1 %}
+<h4>{{per_page}} pools per page.</h4>
+<ul class="pagination">
+    {% if pools_paged.has_previous %}
+    <li>
+        <a href="{% url 'user_appliances' show_user %}?page={{ pools_paged.previous_page_number }}&per_page={{per_page}}" aria-label="Previous">
+            <span class="i fa fa-angle-left"></span>
+        </a>
+    </li>
+    {% else %}
+    <li class="disabled">
+        <a href="#" aria-label="Previous"><span class="i fa fa-angle-left"></span></a>
+    </li>
+    {% endif %}
+    {% for i_page in pages %}
+    <li {% if i_page == page %}class="active"{% endif %}>
+        <a href="{% url 'user_appliances' show_user %}?page={{ i_page }}&per_page={{per_page}}">
+            {{ i_page }}
+        </a>
+    </li>
+    {% endfor %}
+    {% if pools_paged.has_next %}
+    <li>
+        <a href="{% url 'user_appliances' show_user %}?page={{ pools_paged.next_page_number }}&per_page={{per_page}}" aria-label="Next">
+            <span class="i fa fa-angle-right"></span>
+        </a>
+    </li>
+    {% else %}
+    <li class="disabled">
+        <a href="#" aria-label="Next"><span class="i fa fa-angle-right"></span></a>
+    </li>
+    {% endif %}
+</ul>
+{% endif %}
+
+{% for pool in pools_paged %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
         <div class="panel-heading">
             <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.yum_update %} with YUM updated appliances{% endif %}{% if pool.is_container %} (containers){% endif %}

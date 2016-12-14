@@ -5,10 +5,11 @@ import re
 
 from cfme.common import Validatable, SummaryMixin
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, Form, fill, flash, FileInput, Input
-from cfme.web_ui import CFMECheckbox, Select
+from cfme.web_ui import (
+    toolbar as tb, Form, fill, flash, FileInput, Input,
+    CFMECheckbox, Select, InfoBlock
+)
 from cfme.web_ui.form_buttons import FormButton
-from utils.browser import ensure_browser_open
 
 cfg_btn = partial(tb.select, 'Configuration')
 mon_btn = partial(tb.select, 'Monitoring')
@@ -31,14 +32,17 @@ class MiddlewareBase(Validatable):
     Also used to override existing function when required.
     """
 
-    def _on_detail_page(self):
-        """ Returns ``True`` if on the providers detail page, ``False`` if not."""
-        ensure_browser_open()
-        return sel.is_displayed('//h1[contains(., "{} (Summary)")]'.format(self.name))
-
     def download_summary(self):
-        self.summary.reload()
+        self.load_details(refresh=False)
         download_summary_btn()
+
+    def get_detail(self, *ident):
+        """ Gets details from the details infoblock
+        Args:
+            *ident: Table name and Key name, e.g. "Relationships", "Images"
+        Returns: A string representing the contents of the summary's value.
+        """
+        return InfoBlock.text(*ident)
 
 import_form = Form(
     fields=[
