@@ -1,7 +1,6 @@
 import pytest
 
-from utils import testgen
-from utils.version import current_version
+from utils import testgen, version
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.node import Node
 from cfme.containers.pod import Pod
@@ -19,7 +18,7 @@ from cfme.containers.overview import ContainersOverview
 
 pytestmark = [
     pytest.mark.uncollectif(
-        lambda provider: current_version() < "5.6"),
+        lambda provider: version.current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
@@ -97,7 +96,11 @@ def test_containers_overview_data_integrity(provider):
     list_img_from_openshift_parsed.extend([item for item in list_img_from_registry_splitted
                                            if item not in list_img_from_openshift_parsed])
 
-    assert len(list_img_from_openshift_parsed) == StatusBox('images').value()
+    num_img_cfme_56 = len(provider.mgmt.list_image())
+    num_img_cfme_57 = len(list_img_from_openshift_parsed)
+
+    assert StatusBox('images').value() == version.pick({version.LOWEST:
+                                                        num_img_cfme_56, '5.7': num_img_cfme_57})
 
     list_all_rgstr = provider.mgmt.list_image_registry()
     list_all_rgstr_revised = [i.host for i in list_all_rgstr]
