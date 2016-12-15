@@ -34,6 +34,7 @@ def test_replicators_properties(provider, prop):
         """
     navigate_to(Replicator, 'All')
     replicator_names = [r.name.text for r in list_tbl.rows()]
+    assert 'router-1' in replicator_names
     obj = Replicator(replicator_names[0], provider)
     assert obj.get_detail('Properties', ''.join(prop))
 
