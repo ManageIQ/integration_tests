@@ -40,15 +40,16 @@ def test_reload_button_provider(provider):
                                         for d in list_img_from_openshift]
     list_img_from_openshift_parsed = [i[7:].split(
         '@sha256:')[-1] for i in list_img_from_openshift_splitted]
+    list_img_from_registry_splitted_new = set(list_img_from_registry_splitted)
+    list_img_from_openshift_parsed_new = set(list_img_from_openshift_parsed)
 
-    list_img_from_openshift_parsed.extend([item for item in list_img_from_registry_splitted
-                                           if item not in list_img_from_openshift_parsed])
+    list_img_from_openshift_parsed_new.update(list_img_from_registry_splitted_new)
 
     num_img_in_cfme = provider.num_image()
     # TODO Fix num_image_ui()
 
     num_img_cfme_56 = len(provider.mgmt.list_image())
-    num_img_cfme_57 = len(list_img_from_openshift_parsed)
+    num_img_cfme_57 = len(list_img_from_openshift_parsed_new)
 
     assert num_img_in_cfme == version.pick({version.LOWEST: num_img_cfme_56,
                                             '5.7': num_img_cfme_57})
