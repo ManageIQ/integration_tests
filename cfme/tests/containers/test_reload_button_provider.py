@@ -41,10 +41,8 @@ def test_reload_button_provider(provider):
     list_img_from_openshift_parsed = [i[7:].split(
         '@sha256:')[-1] for i in list_img_from_openshift_splitted]
 
-    for s in list_img_from_openshift_parsed:
-        for item in list_img_from_registry_splitted:
-            if item not in list_img_from_openshift_parsed:
-                list_img_from_openshift_parsed.append(item)
+    list_img_from_openshift_parsed.extend([item for item in list_img_from_registry_splitted
+                                           if item not in list_img_from_openshift_parsed])
 
     num_img_in_cfme = provider.summary.relationships.container_images.value
     assert len(list_img_from_openshift_parsed) == num_img_in_cfme
