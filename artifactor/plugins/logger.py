@@ -67,7 +67,9 @@ class Logger(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def log_message(self, log_record, slaveid):
-        record = makeLogRecord(log_record)  # hack
+        # json transport fallout
+        log_record['args'] = tuple(log_record['args'])
+        record = makeLogRecord(log_record)
         if not slaveid:
             slaveid = "Master"
         if slaveid in self.store:
