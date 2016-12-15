@@ -7,26 +7,42 @@ from utils import conf
 from deployment_methods import get_resource_path
 
 
-"""Properties to be used during JDBC driver creation,
-each property is an array with necessary fields used during creation.
-PROPERTIES[0] is used for JDBC Driver download from url.
-PROPERTIES[1] name of driver.
-PROPERTIES[2] module name.
-PROPERTIES[3] jdbc driver class.
-PROPERTIES[4] major version of driver.
-PROPERTIES[5] minor version of driver.
-"""
-DB2_105_JDBC = ['db2-105', 'db2', 'com.ibm', 'com.ibm.db2.jcc.DB2Driver', '', '']
-MSSQL_2014_JDBC = ['mssql2014', 'mssql', 'com.microsoft',
-              'com.microsoft.sqlserver.jdbc.SQLServerDriver', '', '']
-MYSQL_57_JDBC = ['mysql57', 'mysql', 'com.mysql', 'com.mysql.jdbc.Driver', '5', '1']
-POSTGRESPLUS_94_JDBC = ['postgresplus94', 'edb', 'com.edb', 'com.edb.Driver', '', '']
-POSTGRESQL_94_JDBC = ['postgresql94', 'postgresql', 'org.postgresql',
-                      'org.postgresql.Driver', '', '']
-SYBASE_157_JDBC = ['sybase157', 'sybase', 'com.sybase',
-                   'com.sybase.jdbc4.jdbc.SybDriver', '', '']
-ORACLE_12C_JDBC = ['oracle12c', 'oracle12c', 'com.oracle', 'oracle.jdbc.OracleDriver', '', '']
-MARIADB10_JDBC = ['mariadb10', 'mariadb10', 'org.mariadb', 'org.mariadb.jdbc.Driver', '', '']
+class JDBCDriver():
+    """
+    Class which contains properties to be used during JDBC driver creation,
+    each property is an array with necessary fields used during creation.
+
+    Args:
+        database_name is used for JDBC Driver download from url.
+        driver_name name of driver.
+        module_name the module name.
+        driver_class jdbc driver class.
+        major_version major version of driver.
+        minor_version minor version of driver.
+    """
+    def __init__(self, database_name, driver_name, module_name, driver_class,
+                 major_version=None, minor_version=None):
+        self.database_name = database_name
+        self.driver_name = driver_name
+        self.module_name = module_name
+        self.driver_class = driver_class
+        self.major_version = major_version
+        self.minor_version = minor_version
+
+
+DB2_105_JDBC = JDBCDriver('db2-105', 'db2', 'com.ibm', 'com.ibm.db2.jcc.DB2Driver', '', '')
+MSSQL_2014_JDBC = JDBCDriver('mssql2014', 'mssql', 'com.microsoft',
+              'com.microsoft.sqlserver.jdbc.SQLServerDriver', '', '')
+MYSQL_57_JDBC = JDBCDriver('mysql57', 'mysql', 'com.mysql', 'com.mysql.jdbc.Driver', '5', '1')
+POSTGRESPLUS_94_JDBC = JDBCDriver('postgresplus94', 'edb', 'com.edb', 'com.edb.Driver', '', '')
+POSTGRESQL_94_JDBC = JDBCDriver('postgresql94', 'postgresql', 'org.postgresql',
+                      'org.postgresql.Driver', '', '')
+SYBASE_157_JDBC = JDBCDriver('sybase157', 'sybase', 'com.sybase',
+                   'com.sybase.jdbc4.jdbc.SybDriver', '', '')
+ORACLE_12C_JDBC = JDBCDriver('oracle12c', 'oracle12c', 'com.oracle.jdbc',
+                             'oracle.jdbc.OracleDriver', '', '')
+MARIADB10_JDBC = JDBCDriver('mariadb10', 'mariadb10', 'org.mariadb',
+                            'org.mariadb.jdbc.Driver', '', '')
 
 
 def download_jdbc_driver(database_name):
