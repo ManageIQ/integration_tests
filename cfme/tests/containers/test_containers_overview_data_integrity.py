@@ -100,6 +100,12 @@ def test_containers_overview_data_integrity(provider):
 
     assert len(list_img_from_openshift_parsed) == StatusBox('images').value()
 
+    list_all_rgstr = provider.mgmt.list_image_registry()
+    list_all_rgstr_revised = [i.host for i in list_all_rgstr]
+    list_all_rgstr_new = filter(lambda ch: 'openshift3' not in ch, list_all_rgstr_revised)
+
+    assert len(list_all_rgstr_new) == StatusBox('registries').value()
+
     results = {}
     for cls in DATA_SETS:
         results[cls.object] = api_values[cls.object] == statusbox_values[cls.object]
