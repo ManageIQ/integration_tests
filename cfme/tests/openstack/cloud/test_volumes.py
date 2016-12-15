@@ -72,7 +72,7 @@ def test_list_volumes_provider_details(provider):
 @pytest.mark.uncollectif(lambda: PROD_VERSION > '4.1')
 def test_attach_volume_from_instance_page(provider):
     """Attaches pre-created volume to an instance from Instance page"""
-    vms = filter(lambda vm: vm.status == 'ACTIVE', provider.mgmt.all_vms())
+    vms = filter(lambda vm: vm.power_state == 'ACTIVE', provider.mgmt.all_vms())
     instance_name = choice(vms).name
     volume_name = None
     # Find available volume
@@ -138,7 +138,7 @@ def test_detach_volume_from_instance_page(provider):
 @pytest.mark.uncollectif(lambda: PROD_VERSION > '4.1')
 def test_attach_volume_from_volume_page(provider):
     """Attaches pre-created volume to an instance from Volume page"""
-    vms = filter(lambda vm: vm.status == 'ACTIVE', provider.mgmt.all_vms())
+    vms = filter(lambda vm: vm.power_state == 'ACTIVE', provider.mgmt.all_vms())
     instance_name = choice(vms).name
     navigate_to(Volume, 'All')
     vol_table = Table("//div[@id='list_grid']/table")
