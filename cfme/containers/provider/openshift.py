@@ -14,8 +14,8 @@ class CustomAttribute(object):
 
 @ContainersProvider.add_provider_type
 class OpenshiftProvider(ContainersProvider):
-    num_route_template = ['num_route'] + ['num_template']
-    STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route_template
+    num_route = ['num_route']
+    STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route
     type_name = "openshift"
     mgmt_class = Openshift
 
