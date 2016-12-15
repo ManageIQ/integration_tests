@@ -67,8 +67,9 @@ class Logger(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def log_message(self, log_record, slaveid):
-        # json transport fallout
-        log_record['args'] = tuple(log_record['args'])
+        # json transport fallout: args must be a dict or a tuple, json makes a tuple into a list
+        args = log_record['args']
+        log_record['args'] = tuple(args) if isinstance(args, list) else args
         record = makeLogRecord(log_record)
         if not slaveid:
             slaveid = "Master"
