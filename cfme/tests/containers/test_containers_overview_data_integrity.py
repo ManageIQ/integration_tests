@@ -77,6 +77,7 @@ def test_containers_overview_data_integrity(provider):
     # (until we find a better solution)
     # Since we collect images from Openshift and from the pods,
     # images are tested separately
+    # image registries are also tested separately
     time.sleep(2)
     statusbox_values = {data_set.object: int(StatusBox(data_set.name).value())
                         for data_set in DATA_SETS}
