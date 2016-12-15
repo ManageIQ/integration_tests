@@ -72,7 +72,8 @@ def test_list_volumes_provider_details(provider):
 @pytest.mark.uncollectif(lambda: PROD_VERSION > '4.1')
 def test_attach_volume_from_instance_page(provider):
     """Attaches pre-created volume to an instance from Instance page"""
-    instance_name = choice(provider.mgmt.all_vms()).name
+    vms = filter(lambda vm: vm.status == 'ACTIVE', provider.mgmt.all_vms())
+    instance_name = choice(vms).name
     volume_name = None
     # Find available volume
     for volume in provider.mgmt.list_volume():
@@ -137,6 +138,8 @@ def test_detach_volume_from_instance_page(provider):
 @pytest.mark.uncollectif(lambda: PROD_VERSION > '4.1')
 def test_attach_volume_from_volume_page(provider):
     """Attaches pre-created volume to an instance from Volume page"""
+    vms = filter(lambda vm: vm.status == 'ACTIVE', provider.mgmt.all_vms())
+    instance_name = choice(vms).name
     navigate_to(Volume, 'All')
     vol_table = Table("//div[@id='list_grid']/table")
     params = {'Status': 'available',
@@ -147,7 +150,7 @@ def test_attach_volume_from_volume_page(provider):
     select = Select("//select[@id='vm_id']")
     assert len(select.all_options) > 0
 
-    select.select_by_index(1)
+    select.select_by_value(select.get_value_by_text(instance_name))
     pytest_selenium.send_keys("//input[@name='device_path']", '/dev/vdb')
     pytest_selenium.click("//div[@id='buttons_on']/button")
     msg = pytest_selenium.text("//div[@id='flash_text_div']/div/strong")
