@@ -53,6 +53,7 @@ def test_reload_button_provider(provider):
     assert num_img_in_cfme == version.pick({version.LOWEST: num_img_cfme_56,
                                             '5.7': num_img_cfme_57})
 
+    # validate the number of image registries
     list_all_rgstr = provider.mgmt.list_image_registry()
     list_all_rgstr_revised = [i.host for i in list_all_rgstr]
     list_all_rgstr_new = filter(lambda ch: 'openshift3' not in ch, list_all_rgstr_revised)
