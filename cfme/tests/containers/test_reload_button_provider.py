@@ -21,10 +21,10 @@ def test_reload_button_provider(provider):
         the Relationships table after clicking the "reload"
         button. Fields that are being verified as part of provider.validate.stats():
         Projects, Routes, Container Services, Replicators, Pods, Containers, and Nodes.
-        Images and Image Registries are being validated separately, since the total
+        Images are being validated separately, since the total
         number of images in CFME 5.7 includes all images from the OSE registry as well
         as the images that are being created from the running pods. The images are searched
-        according to the @sha.
+        according to the @sha. Image Registries are also validated separately.
     """
 
     navigate_to(provider, 'Details')
