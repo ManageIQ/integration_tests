@@ -3,9 +3,9 @@
 import pytest
 from fauxfactory import gen_alphanumeric
 from cfme.cloud.instance import Instance
-from cfme.cloud.volume import Volume
+from cfme.cloud.volume import list_tbl, Volume
 from cfme.fixtures import pytest_selenium
-from cfme.web_ui import Form, InfoBlock, toolbar, Select, Table
+from cfme.web_ui import Form, InfoBlock, toolbar, Select
 from random import choice
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
@@ -41,11 +41,10 @@ def test_create_volume(provider):
 
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     pytest_selenium.refresh()
-    vol_table = Table("//div[@id='list_grid']/table")
     params = {'Name': vname,
               'Size': '{} GB'.format(vsize),
               'Status': 'available'}
-    res = vol_table.find_rows_by_cells(params)
+    res = list_tbl.find_rows_by_cells(params)
     assert res, 'Newly created volume doesn\'t appear in UI'
 
 
@@ -63,10 +62,9 @@ def test_list_volumes_provider_details(provider):
     assert len(volumes) == clv_el.value, err_msg
 
     clv_el.click()
-    vol_table = Table("//div[@id='list_grid']/table")
     err_msg = 'One of volumes is not displayed'
     for volume in volumes:
-        assert vol_table.find_cell('Name', volume), err_msg
+        assert list_tbl.find_cell('Name', volume), err_msg
 
 
 @pytest.mark.uncollectif(lambda: PROD_VERSION > '4.1')
@@ -99,9 +97,8 @@ def test_attach_volume_from_instance_page(provider):
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     info_el = InfoBlock.element('Relationships', 'Cloud Volumes')
     pytest_selenium.click(info_el)
-    vol_table = Table("//div[@id='list_grid']/table")
     params = {'Name': volume_name, 'Status': 'in-use'}
-    res = vol_table.find_rows_by_cells(params)
+    res = list_tbl.find_rows_by_cells(params)
     assert res, 'Volume does not appear in instance relationships'
 
 
@@ -130,8 +127,7 @@ def test_detach_volume_from_instance_page(provider):
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     info_el = InfoBlock.element('Relationships', 'Cloud Volumes')
     pytest_selenium.click(info_el)
-    vol_table = Table("//div[@id='list_grid']/table")
-    res = vol_table.find_cell('Name', v_option[0])
+    res = list_tbl.find_cell('Name', v_option[0])
     assert not res, 'Volume does not disappear from instance relationships'
 
 
@@ -141,10 +137,9 @@ def test_attach_volume_from_volume_page(provider):
     vms = filter(lambda vm: vm.power_state == 'ACTIVE', provider.mgmt.all_vms())
     instance_name = choice(vms).name
     navigate_to(Volume, 'All')
-    vol_table = Table("//div[@id='list_grid']/table")
     params = {'Status': 'available',
               'Cloud Provider': provider.get_yaml_data()['name']}
-    vol_table.click_row_by_cells(params, 'Name')
+    list_tbl.click_row_by_cells(params, 'Name')
     vname = pytest_selenium.text('//h1').split()[0]
     toolbar.select('Configuration', 'Attach this Cloud Volume to an Instance')
     select = Select("//select[@id='vm_id']")
@@ -159,7 +154,7 @@ def test_attach_volume_from_volume_page(provider):
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     navigate_to(Volume, 'All')
     params = {'Name': vname, 'Status': 'in-use'}
-    res = vol_table.find_rows_by_cells(params)
+    res = list_tbl.find_rows_by_cells(params)
     assert res, 'Volume does not marked as in-use'
 
 
@@ -167,10 +162,9 @@ def test_attach_volume_from_volume_page(provider):
 def test_detach_volume_from_volume_page(provider):
     """Detaches volume from instance from Volume page"""
     navigate_to(Volume, 'All')
-    vol_table = Table("//div[@id='list_grid']/table")
     params = {'Status': 'in-use',
               'Cloud Provider': provider.get_yaml_data()['name']}
-    vol_table.click_row_by_cells(params, 'Name')
+    list_tbl.click_row_by_cells(params, 'Name')
     vname = pytest_selenium.text('//h1').split()[0]
     toolbar.select('Configuration', 'Detach this Cloud Volume from an Instance')
     select = Select("//select[@id='vm_id']")
@@ -183,7 +177,7 @@ def test_detach_volume_from_volume_page(provider):
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     navigate_to(Volume, 'All')
     params = {'Name': vname, 'Status': 'available'}
-    res = vol_table.find_rows_by_cells(params)
+    res = list_tbl.find_rows_by_cells(params)
     assert res, 'Volume does not marked as available'
 
 
@@ -191,10 +185,9 @@ def test_detach_volume_from_volume_page(provider):
 def test_delete_volume(provider):
     """Deletes volume"""
     navigate_to(Volume, 'All')
-    vol_table = Table("//div[@id='list_grid']/table")
     params = {'Status': 'available',
               'Cloud Provider': provider.get_yaml_data()['name']}
-    vol_table.click_row_by_cells(params, 'Name')
+    list_tbl.click_row_by_cells(params, 'Name')
     vname = pytest_selenium.text('//h1').split()[0]
     toolbar.select('Configuration', 'Delete this Cloud Volume',
                    invokes_alert=True)
@@ -205,5 +198,5 @@ def test_delete_volume(provider):
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     navigate_to(Volume, 'All')
     params = {'Name': vname}
-    res = vol_table.find_rows_by_cells(params)
+    res = list_tbl.find_rows_by_cells(params)
     assert not res, 'Volume does not disappear from volume list'
