@@ -434,82 +434,64 @@ class Accordion(PFAccordion):
 
 
 class Paginator(Widget):
-    """
-    Represents Paginator control that includes First/Last/Next/Prev buttons and control displaying
-    amount of items on current page and overall amount.
+    """ Represents Paginator control that includes First/Last/Next/Prev buttons
+    and a control displaying amount of items on current page vs overall amount.
 
     It is mainly used in Paginator Pane.
     """
-    PAGINATOR_LOCATOR = './/ul[@class="pagination"]/'
-    CUR_PAGE_LOCATOR = PAGINATOR_LOCATOR + './li/span/input[@name="limitstart"]/..'
-    PAGE_BUTTON_LOCATOR = PAGINATOR_LOCATOR + './li[contains(@class, {})]/span'
-
-    def __init__(self, parent, logger=None):
-        super(Paginator, self).__init__(parent=parent, logger=logger)
-
-    def __locator__(self):
-        return self.PAGINATOR_LOCATOR
+    ROOT = '//div[@id="pc_div_1"]/*/ul[@class="pagination"]/'
+    CUR_PAGE_LOCATOR = ROOT + './li/span/input[@name="limitstart"]/..'
+    PAGE_BUTTON_LOCATOR = ROOT + './li[contains(@class, {})]/span'
 
     def _is_enabled(self, locator):
-        el = self.browser.element(locator + '/..')
-        return 'disabled' not in self.browser.classes(el)
+        return 'disabled' not in self.browser.classes(locator + '/..')
 
-    def _click_button(self, locator):
+    def _click_button(self, cmd):
+        locator = self.PAGE_BUTTON_LOCATOR.format(quote(cmd))
         if self._is_enabled(locator):
             self.browser.click(locator)
         else:
             raise NoSuchElementException('such button is either absent or grayed out')
 
-    def next(self):
-        self._click_button(self.PAGE_BUTTON_LOCATOR.format(quote('next')))
+    def next_page(self):
+        self._click_button('next')
 
-    def prev(self):
-        self._click_button(self.PAGE_BUTTON_LOCATOR.format(quote('prev')))
+    def prev_page(self):
+        self._click_button('prev')
 
-    def last(self):
-        self._click_button(self.PAGE_BUTTON_LOCATOR.format(quote('last')))
+    def last_page(self):
+        self._click_button('last')
 
-    def first(self):
-        self._click_button(self.PAGE_BUTTON_LOCATOR.format(quote('first')))
+    def first_page(self):
+        self._click_button('first')
 
     def page_info(self):
-        """
-        returns amount of items on current page and overall items amount
-        """
-        return self.browser.text(self.CUR_PAGE_LOCATOR)
+        text = self.browser.text(self.CUR_PAGE_LOCATOR)
+        return re.search('(\d+)\s+of\s+(\d+)', text).groups()
 
 
 class PaginationPane(View):
-    """
-    Represents Paginator Pane with the following controls
-    1. paginator
-    2. Check All checkbox
-    3. Sorting control
+    """ Represents Paginator Pane with the following controls.
 
-    it wraps most used embedded controls' methods.
     The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
     """
-    _main_locator = '(//div[@id="paging_div"]//div[@id="rpb_div_1" or @id="pc_div_1"])'
-    _page_cell = '//td//td[contains(., " of ")]|//li//span[contains(., " of ")]'
-    # '//img[@alt="Next"]|//li[contains(@class, "next")]/span'
+    ROOT = '//div[@id="paging_div"]'
 
     check_all_items = Checkbox(id='masterToggle')
     sort_by = BootstrapSelect(id='sort_choice')
     items_on_page = BootstrapSelect(id='ppsetting')
     paginator = Paginator()
 
-    def __locator__(self):
-        return './/div[contains(@id, "paging_div")'
-
     @property
     def exists(self):
-        cur_view = self.browser.element(self.__locator__(), parent=self)
+        cur_view = self.browser.element(self)
         return False not in self.browser.classes(cur_view)
 
     def check_all(self):
         self.check_all_items.fill(True)
 
     def uncheck_all(self):
+        self.check_all()
         self.check_all_items.fill(False)
 
     def sort(self, value):
@@ -523,13 +505,12 @@ class PaginationPane(View):
     def items_per_page(self):
         return int(self.items_on_page.selected_option)
 
-    @items_per_page.setter
-    def items_per_page(self, value):
+    def set_items_per_page(self, value):
         self.items_on_page.select_by_visible_text(str(value))
 
     def _parse_pages(self):
-        text = self.paginator.page_info()
-        max_item, item_amt = re.search('(\d+)\s+of\s+(\d+)', text).groups()
+        max_item, item_amt = self.paginator.page_info()
+
         item_amt = int(item_amt)
         max_item = int(max_item)
         items_per_page = self.items_per_page
@@ -559,16 +540,16 @@ class PaginationPane(View):
         return self._parse_pages()[1]
 
     def next_page(self):
-        self.paginator.next()
+        self.paginator.next_page()
 
     def prev_page(self):
-        self.paginator.prev()
+        self.paginator.prev_page()
 
     def first_page(self):
-        self.paginator.first()
+        self.paginator.first_page()
 
     def last_page(self):
-        self.paginator.last()
+        self.paginator.last_page()
 
     @property
     def items_amount(self):
