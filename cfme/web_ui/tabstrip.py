@@ -9,7 +9,7 @@ Usage:
     print(get_selected_tab())
 
 """
-from collections import Mapping
+from collections import Mapping, OrderedDict
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import web_ui
@@ -198,7 +198,7 @@ class TabStripForm(web_ui.Form):
     def __init__(
             self, fields=None, tab_fields=None, identifying_loc=None, order=None, fields_end=None):
         fields = fields or list()
-        new_tab_fields = {}
+        new_tab_fields = OrderedDict()
         flags_per_tab = {}
         for key, value in tab_fields.iteritems():
             if isinstance(key, tuple):
