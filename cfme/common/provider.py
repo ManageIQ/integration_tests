@@ -250,7 +250,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
             self.delete(*args, **kwargs)
 
     @variable(alias='rest')
-    def is_refreshed(self, refresh_timer=None):
+    def is_refreshed(self, refresh_timer=None, refresh_delta=600):
         if refresh_timer:
             if refresh_timer.is_it_time():
                 logger.info(' Time for a refresh!')
@@ -260,7 +260,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         if not rdate:
             return False
         td = store.current_appliance.utc_time() - rdate
-        if td > datetime.timedelta(0, 600):
+        if td > datetime.timedelta(0, refresh_delta):
             self.refresh_provider_relationships()
             return False
         else:
