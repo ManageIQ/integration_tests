@@ -38,7 +38,7 @@ def pytest_generate_tests(metafunc):
 def config_manager(config_manager_obj):
     """ Fixture that provides a random config manager and sets it up"""
     set_default_view("Configuration Management Providers", "Grid View")
-    if config_manager_obj.type == "Ansible Tower":
+    if config_manager_obj.type == "ansible":
         config_manager_obj.create(validate=True)
     else:
         config_manager_obj.create()
@@ -96,10 +96,11 @@ def test_order_catalog_item(catalog_item, request):
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
-    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
+    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=1400, delay=20)
-    assert row.last_message.text == 'Service Provisioned Successfully'
+    assert row.last_message.text == '[EVM] Service [{}] Provisioned Successfully'.\
+        format(catalog_item.name)
     set_default_view("Configuration Management Providers", "List View")

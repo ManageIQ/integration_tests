@@ -141,7 +141,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
         # Create has sequential forms, the first is only the provider type
         navigate_to(self, 'Add')
         sel.select("//select[@id='st_prov_type']",
-                   self.provider_type or self.item_type or 'Generic')
+                   self.item_type or 'Generic')
         sel.wait_for_element(basic_info_form.name_text)
         catalog = fakeobject_or_object(self.catalog, "name", "Unassigned")
         dialog = fakeobject_or_object(self.dialog, "name", "No Dialog")
