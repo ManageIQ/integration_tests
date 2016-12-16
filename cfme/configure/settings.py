@@ -6,9 +6,9 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import (AngularSelect, Form, Region, fill, form_buttons, flash, Table,
-    ButtonGroup, Quadicon, CheckboxTree, Input, CFMECheckbox, BootstrapTreeview)
-from cfme.web_ui.menu import nav
+from cfme.web_ui import (
+    AngularSelect, Form, Region, fill, form_buttons, flash, Table, ButtonGroup, Quadicon,
+    CheckboxTree, Input, CFMECheckbox, BootstrapTreeview)
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
@@ -21,15 +21,6 @@ details_page = Region(infoblock_type='detail')
 
 cfg_btn = partial(tb.select, 'Configuration')
 timeprofile_table = Table("//div[@id='main_div']//table")
-
-
-nav.add_branch(
-    'my_settings',
-    {
-
-        'my_settings_default_views': [lambda _: tabs.select_tab("Default Views"), {}],
-    }
-)
 
 
 class Timeprofile(Updateable, Navigatable):
@@ -348,10 +339,31 @@ class DefaultFilterAll(CFMENavigateStep):
         tabs.select_tab("Default Filters")
 
 
-def set_default_view(button_group_name, view):
-    bg = ButtonGroup(button_group_name)
-    sel.force_navigate("my_settings_default_views")
-    default_view = bg.active
-    if(default_view != view):
-        bg.choose(view)
-        sel.click(form_buttons.save)
+class DefaultView(Updateable, Navigatable):
+    # Basic class for navigation to default views screen
+    # TODO implement default views form with widgetastic to simplify setting views in tests
+
+    def __init__(self, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
+
+    @classmethod
+    def set_default_view(cls, button_group_name, default):
+        bg = ButtonGroup(button_group_name)
+        navigate_to(cls, 'All')
+        if bg.active != default:
+            bg.choose(default)
+            sel.click(form_buttons.save)
+
+    @classmethod
+    def get_default_view(cls, button_group_name):
+        bg = ButtonGroup(button_group_name)
+        navigate_to(cls, 'All')
+        return bg.active
+
+
+@navigator.register(DefaultView, 'All')
+class DefaultViewAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
+
+    def step(self, *args, **kwargs):
+        tabs.select_tab('Default Views')

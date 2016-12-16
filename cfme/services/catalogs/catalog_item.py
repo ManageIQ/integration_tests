@@ -152,7 +152,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
                                'select_catalog': catalog.name,
                                'select_dialog': dialog.name,
                                'select_orch_template': self.orch_template,
-                               'select_provider': self.provider_type,
+                               'select_provider': self.provider,
                                'select_config_template': self.config_template})
         if sel.text(basic_info_form.field_entry_point) == "":
             sel.click(basic_info_form.field_entry_point)

@@ -66,6 +66,7 @@ class ServiceCatalogs(Updateable, Pretty):
                            context={'catalog': catalog,
                                     'catalog_item': catalog_item})
         sel.click(form_buttons.submit)
+        wait_for(flash.get_messages, num_sec=10, delay=2)
         flash.assert_success_message("Order Request was Submitted")
 
     def order_stack_item(self, catalog, catalog_item):

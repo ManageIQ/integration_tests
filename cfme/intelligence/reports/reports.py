@@ -24,13 +24,6 @@ from utils import version
 from utils.timeutil import parsetime
 
 
-def reload_view():
-    """Reloads and keeps on the current tabstrip page"""
-    current = tabstrip.get_selected_tab()
-    toolbar.select("Reload current display")
-    tabstrip.select_tab(current)
-
-
 cfg_btn = partial(toolbar.select, "Configuration")
 download_btn = partial(toolbar.select, "Download")
 
@@ -44,6 +37,7 @@ def tag(tag_name, **kwargs):
         )
     else:
         return prefix
+
 
 input = partial(tag, "input")
 select = lambda **kwargs: Select(tag("select", **kwargs))
@@ -220,7 +214,7 @@ class CustomReport(Updateable, Navigatable):
                 _get_state,
                 delay=1,
                 message="wait for report generation finished",
-                fail_func=reload_view,
+                fail_func=toolbar.refresh(),
                 num_sec=300,
             )
 
@@ -392,6 +386,7 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         queued_at = sel.text(list(records_table.rows())[0].queued_at)
 
         def _get_state():
+            navigate_to(cls, 'Saved')
             row = records_table.find_row("queued_at", queued_at)
             status = sel.text(row.status).strip().lower()
             assert status != "error", sel.text(row)
@@ -400,9 +395,9 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
 
         wait_for(
             _get_state,
-            delay=1,
+            delay=3,
             message="wait for report generation finished",
-            fail_func=reload_view
+            fail_func=toolbar.refresh()
         )
         return sel.text(list(records_table.rows())[0].run_at).encode("utf-8")
 
