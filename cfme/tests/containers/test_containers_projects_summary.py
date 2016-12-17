@@ -42,7 +42,7 @@ def config_option():
 
 
 def test_containers_projects_summary_relationships(provider):
-    """ Relationships   fields tests in Project summary
+    """ Relationships fields tests in Project summary
         This test checks correct population of the Relationships Fields in Containers Projects'
         details menu
         Steps:
@@ -56,8 +56,6 @@ def test_containers_projects_summary_relationships(provider):
         assert default_project in project_names
     for name in default_projects:
         for field in config_option():
-            print('the tested project is: ' + name)
-            print('the tested field is: ' + field)
             obj = Project(name, provider)
             val = obj.get_detail('Relationships', field)
             assert val
