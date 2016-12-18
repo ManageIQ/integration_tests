@@ -20,7 +20,7 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 @pytest.mark.meta(blockers=[BZ(1406772)])
-def test_webconsole_node():
+def test_webconsole_node(provider):
     """ Verify single sign-on to cockpit from master
     """
     navigate_to(Node, 'All')
@@ -30,4 +30,7 @@ def test_webconsole_node():
     nodes_instances[0].row_element.click()
     tb.select('Open a new browser window with Cockpit for this '
               'VM.  This requires that Cockpit is pre-configured on the VM.')
+    port_num = ':9090/system'
+    url_cockpit = provider.hostname + port_num
+    sel.get(url_cockpit)
     assert sel.title() == 'Cockpit'
