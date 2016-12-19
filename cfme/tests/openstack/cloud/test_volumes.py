@@ -6,6 +6,9 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.volume import list_tbl, Volume
 from cfme.fixtures import pytest_selenium
 from cfme.web_ui import Form, InfoBlock, toolbar, Select
+from cfme.web_ui.flash import assert_message_contain
+from cfme.web_ui.form_buttons import (attach_volume, detach_volume, FormButton,
+                                      submit_changes)
 from random import choice
 from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
@@ -34,10 +37,9 @@ def test_create_volume(provider):
                        volume_size=vsize,
                        cloud_tenant=provider.mgmt.list_tenant()[0])
     form.fill(volume_data)
-    submit_btn_loc = "//div[@id='buttons_on']/button[contains(text(), 'Add')]"
-    pytest_selenium.click(submit_btn_loc)
-    msg = pytest_selenium.text("//div[@id='flash_text_div']/div/strong")
-    assert 'Create Cloud Volume' in msg
+
+    pytest_selenium.click(FormButton('Add', ng_click='addClicked()'))
+    assert_message_contain('Create Cloud Volume')
 
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     pytest_selenium.refresh()
@@ -88,11 +90,8 @@ def test_attach_volume_from_instance_page(provider):
 
     select.select_by_value(select.get_value_by_text(volume_name))
     pytest_selenium.send_keys("//input[@name='device_path']", '/dev/vdb')
-    pytest_selenium.click("//button[@id='save_enabled']")
-    flash_msg_loc = "//div[@id='flash_text_div']/div/strong"
-    msg = pytest_selenium.text(flash_msg_loc)
-    assert 'Attaching Cloud Volume' in msg
-    pytest_selenium.click(flash_msg_loc)
+    pytest_selenium.click(submit_changes)
+    assert_message_contain('Attaching Cloud Volume')
 
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     info_el = InfoBlock.element('Relationships', 'Cloud Volumes')
@@ -119,10 +118,8 @@ def test_detach_volume_from_instance_page(provider):
     select = Select("//select[@id='volume_id']")
     v_option = choice(select.all_options[1:])
     select.select_by_value(v_option[1])
-    loc = "//div[@id='angular_paging_div_buttons']/button[@id='save_enabled']"
-    pytest_selenium.click(loc)
-    msg = pytest_selenium.text("//div[@id='flash_text_div']/div/strong")
-    assert 'Detaching Cloud Volume' in msg
+    pytest_selenium.click(submit_changes)
+    assert_message_contain('Detaching Cloud Volume')
 
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     info_el = InfoBlock.element('Relationships', 'Cloud Volumes')
@@ -147,9 +144,8 @@ def test_attach_volume_from_volume_page(provider):
 
     select.select_by_value(select.get_value_by_text(instance_name))
     pytest_selenium.send_keys("//input[@name='device_path']", '/dev/vdb')
-    pytest_selenium.click("//div[@id='buttons_on']/button")
-    msg = pytest_selenium.text("//div[@id='flash_text_div']/div/strong")
-    assert 'Attaching Cloud Volume' in msg
+    pytest_selenium.click(attach_volume)
+    assert_message_contain('Attaching Cloud Volume')
 
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     navigate_to(Volume, 'All')
@@ -170,9 +166,8 @@ def test_detach_volume_from_volume_page(provider):
     select = Select("//select[@id='vm_id']")
     assert len(select.all_options) > 0
     select.select_by_index(1)
-    pytest_selenium.click("//div[@id='buttons_on']/button")
-    msg = pytest_selenium.text("//div[@id='flash_text_div']/div/strong")
-    assert 'Detaching Cloud Volume' in msg
+    pytest_selenium.click(detach_volume)
+    assert_message_contain('Detaching Cloud Volume')
 
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     navigate_to(Volume, 'All')
@@ -192,8 +187,7 @@ def test_delete_volume(provider):
     toolbar.select('Configuration', 'Delete this Cloud Volume',
                    invokes_alert=True)
     pytest_selenium.handle_alert(cancel=False)
-    msg = pytest_selenium.text("//div[@id='flash_text_div']/div/strong")
-    assert 'Delete initiated for 1 Cloud Volume.' in msg
+    assert_message_contain('Delete initiated for 1 Cloud Volume.')
 
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     navigate_to(Volume, 'All')
