@@ -4,5 +4,6 @@
     "services.sync.prefs.sync.browser.download.manager.showWhenStarting": false,
     "browser.download.dir": "$profile_dir",
     "browser.helperApps.neverAsk.saveToDisk": "application/txt,application/csv,application/pdf,application/octet-stream,text/csv,text/plain",
+    "network.http.max-persistent-connections-per-server": 20,
     "security.dialog_enable_delay": 0
 }
