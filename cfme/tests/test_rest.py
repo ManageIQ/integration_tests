@@ -113,9 +113,58 @@ def test_product_info(rest_api):
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_bulk_query(rest_api):
-    entitites = rest_api.collections.events.find_by()
-    data0, data1, data2 = entitites[0]._data, entitites[1]._data, entitites[2]._data
+    """Tests bulk query referencing resources by attributes id, href and guid
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = rest_api.collections.events
+    data0, data1, data2 = collection[0]._data, collection[1]._data, collection[2]._data
     response = rest_api.collections.events.action.query(
-        {"id": data0["id"]}, {"href": data1["href"]}, {"href": data2["href"]})
+        {"id": data0["id"]}, {"href": data1["href"]}, {"guid": data2["guid"]})
     assert len(response) == 3
     assert data0 == response[0]._data and data1 == response[1]._data and data2 == response[2]._data
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_bulk_query_users(rest_api):
+    """Tests bulk query on 'users' collection
+
+    Metadata:
+        test_flag: rest
+    """
+    data = rest_api.collections.users[0]._data
+    response = rest_api.collections.users.action.query(
+        {"name": data["name"]}, {"userid": data["userid"]})
+    assert len(response) == 2
+    assert data["id"] == response[0]._data["id"] == response[1]._data["id"]
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_bulk_query_roles(rest_api):
+    """Tests bulk query on 'roles' collection
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = rest_api.collections.roles
+    data0, data1 = collection[0]._data, collection[1]._data
+    response = rest_api.collections.roles.action.query(
+        {"name": data0["name"]}, {"name": data1["name"]})
+    assert len(response) == 2
+    assert data0 == response[0]._data and data1 == response[1]._data
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_bulk_query_groups(rest_api):
+    """Tests bulk query on 'groups' collection
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = rest_api.collections.groups
+    data0, data1 = collection[0]._data, collection[1]._data
+    response = rest_api.collections.groups.action.query(
+        {"description": data0["description"]}, {"description": data1["description"]})
+    assert len(response) == 2
+    assert data0 == response[0]._data and data1 == response[1]._data
