@@ -5,14 +5,24 @@ from navmazing import NavigateToSibling
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import DestinationNotFound
-from cfme.web_ui import match_location, InfoBlock, PagedTable, toolbar as tb
+from cfme.web_ui import (match_location, Form, InfoBlock, Input, PagedTable,
+                         Select, toolbar as tb)
 from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from utils.appliance.implementations.ui import (CFMENavigateStep, navigator,
+                                                navigate_to)
 from utils.version import current_version
 
-match_volumes = partial(match_location, controller='cloud_volume', title='Cloud Volumes')
-match_provider = partial(match_location, controller='ems_cloud', title='Cloud Providers')
+match_volumes = partial(match_location, controller='cloud_volume',
+                        title='Cloud Volumes')
+match_provider = partial(match_location, controller='ems_cloud',
+                         title='Cloud Providers')
 
+creation_form = Form([('volume_name', "//input[@name='name']"),
+                      ('volume_size', "//input[@name='size']"),
+                      ('cloud_tenant', "//select[@id='cloud_tenant_id']")])
+device_input = Input('device_path')
+select_vm = Select("//select[@id='vm_id']")
+select_volume = Select("//select[@id='volume_id']")
 list_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 
@@ -21,8 +31,12 @@ def check_version():
         raise DestinationNotFound('Cloud Volumes does not exist in CFME 5.7+')
 
 
-class Volume(Navigatable):
+def get_volume_name():
+    """Returns the name of volume which page is opened"""
+    return sel.text('//h1').split()[0]
 
+
+class Volume(Navigatable):
     def __init__(self, name, provider, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
