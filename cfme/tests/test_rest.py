@@ -133,12 +133,11 @@ def test_bulk_query_users(rest_api):
     Metadata:
         test_flag: rest
     """
-    collection = rest_api.collections.users
-    data0, data1 = collection[0]._data, collection[1]._data
+    data = rest_api.collections.users[0]._data
     response = rest_api.collections.users.action.query(
-        {"name": data0["name"]}, {"userid": data1["userid"]})
+        {"name": data["name"]}, {"userid": data["userid"]})
     assert len(response) == 2
-    assert data0["id"] == response[0]._data["id"] and data1["id"] == response[1]._data["id"]
+    assert data["id"] == response[0]._data["id"] == response[1]._data["id"]
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
