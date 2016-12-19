@@ -7,24 +7,21 @@ import pytest
 from cfme import test_requirements
 from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
+from cfme.cloud.provider import CloudProvider
 from cfme.configure import configuration
 from cfme.configure.tasks import is_vm_analysis_finished
 from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host, datastore
-from cfme.provisioning import do_vm_provisioning
 from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, ssh, safe_string, version, error
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
-from utils.blockers import GH, BZ
+from utils.blockers import BZ
 
-pytestmark = [pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:6939"],
-                               unblock=lambda provider: provider.type != 'rhevm'),
-              pytest.mark.tier(3), test_requirements.smartstate,
-              pytest.mark.meta(blockers=[1378447])]
+pytestmark = [pytest.mark.tier(3), test_requirements.smartstate]
 
 WINDOWS = {'id': "Red Hat Enterprise Windows", 'icon': 'windows'}
 
@@ -33,22 +30,30 @@ RPM_BASED = {
         'id': "Red Hat", 'release-file': '/etc/redhat-release', 'icon': 'linux_redhat',
         'package': "kernel", 'install-command': "",  # We don't install stuff on RHEL
         'package-number': 'rpm -qa | wc -l',
-        'services-number': 'systemctl -a --type service -o cat --no-legend --no-pager | wc -l'},
+        'services-number': 'echo $((`ls -lL /etc/init.d | egrep -i -v "readme|total" | wc -l` + '
+                           '`ls -l /usr/lib/systemd/system | grep service | wc -l` + '
+                           '`ls -l /usr/lib/systemd/user | grep service | wc -l`))'},
     'centos': {
         'id': "CentOS", 'release-file': '/etc/centos-release', 'icon': 'linux_centos',
         'package': 'iso-codes', 'install-command': 'yum install -y {}',
         'package-number': 'rpm -qa | wc -l',
-        'services-number': 'systemctl -a --type service -o cat --no-legend --no-pager | wc -l'},
+        'services-number': 'echo $((`ls -lL /etc/init.d | egrep -i -v "readme|total" | wc -l` +'
+                           ' `ls -l /usr/lib/systemd/system | grep service | wc -l` +'
+                           ' `ls -l /usr/lib/systemd/user | grep service | wc -l`))'},
     'fedora': {
         'id': 'Fedora', 'release-file': '/etc/fedora-release', 'icon': 'linux_fedora',
         'package': 'iso-codes', 'install-command': 'dnf install -y {}',
         'package-number': 'rpm -qa | wc -l',
-        'services-number': 'systemctl -a --type service -o cat --no-legend --no-pager | wc -l'},
+        'services-number': 'echo $((`ls -lL /etc/init.d | egrep -i -v "readme|total" | wc -l` +'
+                           ' `ls -l /usr/lib/systemd/system | grep service | wc -l` +'
+                           ' `ls -l /usr/lib/systemd/user | grep service | wc -l`))'},
     'suse': {
         'id': 'Suse', 'release-file': '/etc/SuSE-release', 'icon': 'linux_suse',
         'package': 'iso-codes', 'install-command': 'zypper install -y {}',
         'package-number': 'rpm -qa | wc -l',
-        'services-number': 'systemctl -a --type service -o cat --no-legend --no-pager | wc -l'},
+        'services-number': 'echo $((`ls -lL /etc/init.d | egrep -i -v "readme|total" | wc -l` +'
+                           ' `ls -l /usr/lib/systemd/system | grep service | wc -l` +'
+                           ' `ls -l /usr/lib/systemd/user | grep service | wc -l`))'},
 }
 
 DEB_BASED = {
@@ -57,13 +62,15 @@ DEB_BASED = {
         'package': 'iso-codes',
         'install-command': 'env DEBIAN_FRONTEND=noninteractive apt-get -y install {}',
         'package-number': "dpkg --get-selections | wc -l",
-        'services-number': 'chkconfig --list | wc -l'},
+        'services-number': 'echo $((`ls -alL /etc/init.d | egrep -iv "readme|total|drwx" | wc -l` +'
+                           ' `ls -alL /etc/systemd/system/ | grep service | wc -l`))'},
     'debian': {
         'id': 'Debian ', 'release-file': '/etc/issue.net', 'icon': 'linux_debian',
         'package': 'iso-codes',
         'install-command': 'env DEBIAN_FRONTEND=noninteractive apt-get -y install {}',
         'package-number': 'dpkg --get-selections | wc -l',
-        'services-number': 'chkconfig --list | wc -l'},
+        'services-number': 'echo $((`ls -alL /etc/init.d | egrep -iv "readme|total|drwx" | wc -l` +'
+                           ' `ls -alL /etc/systemd/system/ | grep service | wc -l`))'},
 }
 
 ssa_expect_file = "/etc/hosts"
@@ -120,12 +127,8 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis_data):
-    if provider.type == 'rhevm' and version.current_version() < "5.5":
-        # See https://bugzilla.redhat.com/show_bug.cgi?id=1300030
-        pytest.skip("SSA is not supported on RHEVM for appliances earlier than 5.5 and upstream")
-    if GH("ManageIQ/manageiq:6506").blocks:
-        pytest.skip("Upstream provisioning is blocked by" +
-                    "https://github.com/ManageIQ/manageiq/issues/6506")
+
+    # TODO: allow for vddk parameterization
     if provider.type == 'virtualcenter':
         store.current_appliance.install_vddk(reboot=True, wait_for_web_ui_after_reboot=True)
         store.current_appliance.browser.quit_browser()
@@ -148,6 +151,7 @@ def set_host_credentials(request, provider, vm_analysis_data):
     host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
     host_data = [x for x in host_list if x.name == vm_analysis_data['host']][0]
 
+    # has valid creds appears broken
     if not test_host.has_valid_credentials:
         test_host.update(
             updates={'credentials': host.get_credentials_from_config(host_data['credentials'])},
@@ -166,68 +170,59 @@ def set_host_credentials(request, provider, vm_analysis_data):
 
 @pytest.fixture(scope="module")
 def vm_name(provider, analysis_type):
-    vm_name = 'test_ssa_{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
+    vm_name = 'test-ssa-{}-{}'.format(fauxfactory.gen_alphanumeric(), analysis_type)
     return vm_name
 
 
 @pytest.fixture(scope="module")
 def vm_analysis_data(provider, analysis_type):
-    base_data = provider.data.get('vm_analysis_new', {}).get('provisioning', {})
-    base_data.update(provider.data.get('vm_analysis_new', {}).get('vms', {}).get(analysis_type, {}))
-    return base_data
+
+    pdata = provider.data
+    provisioning_data = pdata.get('vm_analysis_new', {}).get('provisioning', {})
+
+    # Setup the provisioning data for the instance/vm
+    # Will default to provisioning items under vm_analysis but if not defined
+    #   falls back to items under provider['provisioning'] key
+
+    if not isinstance(provider, CloudProvider):
+        provisioning_data.setdefault('host', pdata['provisioning']['host'])
+        provisioning_data.setdefault('datastore', pdata['provisioning']['datastore'])
+        provisioning_data.setdefault('vlan', pdata['provisioning']['vlan'])
+    if isinstance(provider, CloudProvider):
+        provisioning_data.setdefault('instance_type', pdata['provisioning']['instance_type'])
+        provisioning_data.setdefault('availability_zone', pdata['provisioning']['availability_zone'])
+        provisioning_data.setdefault('security_group', pdata['provisioning']['security_group'])
+        provisioning_data.setdefault('cloud_network', pdata['provisioning']['cloud_network'])
+
+    # If defined, tries to find cluster from provisioning, then provider definition itself
+    if provider.type == 'rhevm':
+        if 'cluster' not in provisioning_data and 'cluster' not in pdata['provisioning']:
+            provisioning_data['cluster'] = pdata['default_cluster']
+        else:
+            provisioning_data['cluster'] = pdata['provisioning']['cluster']
+
+    provisioning_data.update(
+        provider.data.get('vm_analysis_new', {}).get('vms', {}).get(analysis_type, {}))
+    return provisioning_data
 
 
 @pytest.fixture(scope="module")
 def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data):
     """ Fixture to provision instance on the provider """
 
-    template = vm_analysis_data.get('image', None)
-    host_name, datastore_name = map(vm_analysis_data.get, ('host', 'datastore'))
+    vm = VM.factory(vm_name, provider, template_name=vm_analysis_data['image'])
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
-    mgmt_system = provider.get_mgmt_system()
+    provision_data = vm_analysis_data.copy()
+    del provision_data['image']
+    vm.create_on_provider(find_in_cfme=True, **provision_data)
 
-    provisioning_data = {
-        'vm_name': vm_name,
-        'host_name': {'name': [host_name]},
-        'datastore_name': {'name': [datastore_name]},
-    }
-
-    try:
-        provisioning_data['vlan'] = vm_analysis_data['vlan']
-    except KeyError:
-        # provisioning['vlan'] is required for rhevm provisioning
-        if provider.type == 'rhevm':
-            raise pytest.fail('rhevm requires a vlan value in provisioning info')
-
-    vm = VM.factory(vm_name, provider)
-
-    connect_ip = None
     if provider.type == "openstack":
-        image = vm_analysis_data['image']
-        vm = VM.factory(vm_name, provider, image)
-        request.addfinalizer(vm.delete_from_provider)
-        connect_ip = mgmt_system.get_first_floating_ip()
-        provider.refresh_provider_relationships(method='ui')
-        inst_args = {
-            'email': 'image_provisioner@example.com',
-            'first_name': 'Image',
-            'last_name': 'Provisioner',
-            'template_name': image,
-            'notes': ('Testing provisioning from image {} to vm {} on provider {}'.format(
-                image, vm_name, provider.key)),
-            'instance_type': vm_analysis_data['instance_type'],
-            'availability_zone': vm_analysis_data['availability_zone'],
-            'security_groups': [vm_analysis_data['security_group']],
-            'cloud_network': vm_analysis_data['cloud_network'],
-            'public_ip_address': connect_ip,
-        }
-        vm.create(**inst_args)
-    else:
-        request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
-        do_vm_provisioning(template, provider, vm_name, provisioning_data, request, None,
-                           num_sec=6000)
+        vm.provider.mgmt.assign_floating_ip(vm.name, 'public')
+
     logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
+    mgmt_system = provider.get_mgmt_system()
     @pytest.wait_for(timeout="20m", delay=5)
     def get_ip_address():
         logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
@@ -249,14 +244,18 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data)
         logger.info("Waiting for %s to be available via SSH", connect_ip)
         ssh_client = ssh.SSHClient(hostname=connect_ip, username=vm_analysis_data['username'],
                                    password=vm_analysis_data['password'], port=22)
-        wait_for(ssh_client.uptime, num_sec=3600, handle_exception=False)
+        wait_for(ssh_client.uptime, num_sec=3600, handle_exception=True)
         vm.ssh = ssh_client
-
     vm.system_type = detect_system_type(vm)
     logger.info("Detected system type: %s", vm.system_type)
     vm.image = vm_analysis_data['image']
     vm.connect_ip = connect_ip
 
+    # TODO:  This is completely wrong and needs to be fixed
+    #   CFME relationship is suppose to be set to the appliance, which is required
+    #   to be placed within the same datastore that the VM resides
+    #
+    #   Also, if rhev and iscsi, it need direct_lun
     if provider.type == 'rhevm':
         logger.info("Setting a relationship between VM and appliance")
         from cfme.infrastructure.virtual_machines import Vm
@@ -328,9 +327,6 @@ def detect_system_type(vm):
 @pytest.mark.tier(1)
 @pytest.mark.long_running
 @pytest.mark.meta(blockers=[
-    BZ(1311134, unblock=lambda provider: provider.type != 'rhevm'),
-    BZ(1311218, unblock=lambda provider:
-        provider.type != 'virtualcenter' or provider.version < "6"),
     BZ(1320248, unblock=lambda provider: version.current_version() >= "5.5")])
 def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_analysis_data):
     """ Tests SSA can be performed on a template
@@ -343,7 +339,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
     template = Template.factory(template_name, provider, template=True)
 
     # Set credentials to all hosts set for this datastore
-    if provider.type != 'openstack':
+    if provider.type in ['virtualcenter', 'rhevm']:
         datastore_name = vm_analysis_data['datastore']
         test_datastore = datastore.Datastore(datastore_name, provider.key)
         host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
@@ -363,7 +359,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
 
     template.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(template_name),
-             delay=15, timeout="10m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check release and quadricon
     quadicon_os_icon = template.find_quadicon().os
@@ -400,6 +396,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
         soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
 
+@pytest.mark.tier(2)
 @pytest.mark.long_running
 def test_ssa_vm(provider, instance, soft_assert):
     """ Tests SSA can be performed and returns sane results
@@ -407,6 +404,10 @@ def test_ssa_vm(provider, instance, soft_assert):
     Metadata:
         test_flag: vm_analysis
     """
+
+    # TODO: check if previously scanned?
+    #       delete the vm itself if it did have a scan already
+    #       delete all previous scan tasks
 
     e_users = None
     e_groups = None
@@ -427,7 +428,7 @@ def test_ssa_vm(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check release and quadricon
     quadicon_os_icon = instance.find_quadicon().os
@@ -476,14 +477,15 @@ def test_ssa_vm(provider, instance, soft_assert):
         soft_assert(c_kernel_drivers != '0', "kernel drivers: '{}' != '0'".format(c_kernel_drivers))
         soft_assert(c_fs_drivers != '0', "fs drivers: '{}' != '0'".format(c_fs_drivers))
 
-    image_label = 'Parent VM'
-    if provider.type == 'openstack':
-        image_label = 'VM Template'
+    # TODO: revisit this and see if we should re-enable it
+    # image_label = 'Parent VM'
+    # if provider.type == 'openstack':
+    #     image_label = 'VM Template'
     # 5.4 doesn't have Parent VM field
-    if version.current_version() > "5.5" and provider.type != 'openstack':
-        c_image = InfoBlock.text('Relationships', image_label)
-        soft_assert(c_image == instance.image,
-                    "image: '{}' != '{}'".format(c_image, instance.image))
+    # if version.current_version() > "5.5" and provider.type != 'openstack':
+    #     c_image = InfoBlock.text('Relationships', image_label)
+    #     soft_assert(c_image == instance.image,
+    #                 "image: '{}' != '{}'".format(c_image, instance.image))
 
 
 @pytest.mark.long_running
@@ -500,12 +502,14 @@ def test_ssa_users(provider, instance, soft_assert):
     # So we simply check that user list doesn't cause any Rails errors
     if instance.system_type != WINDOWS:
         # Add a new user
+        # force ssh re-connection
+        instance.ssh.close()
         instance.ssh.run_command("userdel {0} || useradd {0}".format(username))
         expected = instance.ssh.run_command("cat /etc/passwd | wc -l").output.strip('\n')
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Users'))
@@ -531,12 +535,14 @@ def test_ssa_groups(provider, instance, soft_assert):
 
     if instance.system_type != WINDOWS:
         # Add a new group
+        # force ssh re-connection
+        instance.ssh.close()
         instance.ssh.run_command("groupdel {0} || groupadd {0}".format(group))
         expected = instance.ssh.run_command("cat /etc/group | wc -l").output.strip('\n')
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Security', 'Groups'))
@@ -570,6 +576,8 @@ def test_ssa_packages(provider, instance, soft_assert):
     package_number_command = instance.system_type['package-number']
 
     cmd = package_command.format(package_name)
+    # force ssh re-connection
+    instance.ssh.close()
     output = instance.ssh.run_command(cmd.format(package_name)).output
     logger.info("%s output:\n%s", cmd, output)
 
@@ -577,7 +585,7 @@ def test_ssa_packages(provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Configuration', 'Packages'))
@@ -598,7 +606,7 @@ def test_ssa_files(provider, instance, policy_profile, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
 
     # Check that all data has been fetched
     current = instance.get_detail(properties=('Configuration', 'Files'))
@@ -609,6 +617,7 @@ def test_ssa_files(provider, instance, policy_profile, soft_assert):
         pytest.fail("File {0} was not found".format(ssa_expect_file))
 
 
+@pytest.mark.tier(2)
 @pytest.mark.long_running
 def test_drift_analysis(request, provider, instance, soft_assert):
     """ Tests drift analysis is correct
@@ -624,7 +633,7 @@ def test_drift_analysis(request, provider, instance, soft_assert):
         drift_num_orig = int(drift_orig)
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
     instance.load_details()
     wait_for(
         lambda: int(InfoBlock("Relationships", "Drift History").text) == drift_num_orig + 1,
@@ -642,7 +651,7 @@ def test_drift_analysis(request, provider, instance, soft_assert):
 
     instance.smartstate_scan()
     wait_for(lambda: is_vm_analysis_finished(instance.name),
-             delay=15, timeout="15m", fail_func=lambda: toolbar.select('Reload'))
+             delay=15, timeout="35m", fail_func=lambda: toolbar.select('Reload'))
     instance.load_details()
     wait_for(
         lambda: int(InfoBlock("Relationships", "Drift History").text) == drift_new + 1,

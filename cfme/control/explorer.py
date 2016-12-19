@@ -1266,7 +1266,10 @@ class Action(Updateable, Pretty):
         "Assign Profile to Analysis Task":
         Form(
             fields=[
-                ("analysis_profile", AngularSelect("analysis_profile", exact=True)),
+
+                ("analysis_profile", {
+                    version.LOWEST: Select("select#analysis_profile"),
+                    "5.5": AngularSelect("analysis_profile")}),
             ]
         ),
 
