@@ -3,9 +3,10 @@
 import pytest
 from fauxfactory import gen_alphanumeric
 from cfme.cloud.instance import Instance
-from cfme.cloud.volume import list_tbl, Volume
+from cfme.cloud.volume import (creation_form, device_input, get_volume_name,
+                               list_tbl, select_vm, select_volume, Volume)
 from cfme.fixtures import pytest_selenium
-from cfme.web_ui import Form, InfoBlock, toolbar, Select
+from cfme.web_ui import InfoBlock, toolbar
 from cfme.web_ui.flash import assert_message_contain
 from cfme.web_ui.form_buttons import (attach_volume, detach_volume, FormButton,
                                       submit_changes)
@@ -27,16 +28,12 @@ def test_create_volume(provider):
     """Creates a volume for given cloud provider"""
     navigate_to(Volume, 'All')
     toolbar.select('Configuration', 'Add a new Cloud Volume')
-    fields = [('volume_name', "//input[@name='name']"),
-              ('volume_size', "//input[@name='size']"),
-              ('cloud_tenant', "//select[@id='cloud_tenant_id']")]
-    form = Form(fields=fields)
     vname = gen_alphanumeric()
     vsize = 1
     volume_data = dict(volume_name=vname,
                        volume_size=vsize,
                        cloud_tenant=provider.mgmt.list_tenant()[0])
-    form.fill(volume_data)
+    creation_form.fill(volume_data)
 
     pytest_selenium.click(FormButton('Add', ng_click='addClicked()'))
     assert_message_contain('Create Cloud Volume')
@@ -85,11 +82,10 @@ def test_attach_volume_from_instance_page(provider):
 
     Instance(instance_name, provider).load_details()
     toolbar.select('Configuration', 'Attach a Cloud Volume to this Instance')
-    select = Select("//select[@id='volume_id']")
-    assert len(select.all_options) > 0
+    assert len(select_volume.all_options) > 0
 
-    select.select_by_value(select.get_value_by_text(volume_name))
-    pytest_selenium.send_keys("//input[@name='device_path']", '/dev/vdb')
+    select_volume.select_by_value(select_volume.get_value_by_text(volume_name))
+    pytest_selenium.send_keys(device_input, '/dev/vdb')
     pytest_selenium.click(submit_changes)
     assert_message_contain('Attaching Cloud Volume')
 
@@ -115,9 +111,8 @@ def test_detach_volume_from_instance_page(provider):
 
     Instance(vm_name, provider).load_details()
     toolbar.select('Configuration', 'Detach a Cloud Volume from this Instance')
-    select = Select("//select[@id='volume_id']")
-    v_option = choice(select.all_options[1:])
-    select.select_by_value(v_option[1])
+    v_option = choice(select_volume.all_options[1:])
+    select_volume.select_by_value(v_option[1])
     pytest_selenium.click(submit_changes)
     assert_message_contain('Detaching Cloud Volume')
 
@@ -132,18 +127,17 @@ def test_detach_volume_from_instance_page(provider):
 def test_attach_volume_from_volume_page(provider):
     """Attaches pre-created volume to an instance from Volume page"""
     vms = filter(lambda vm: vm.power_state == 'ACTIVE', provider.mgmt.all_vms())
-    instance_name = choice(vms).name
+    inst_name = choice(vms).name
     navigate_to(Volume, 'All')
     params = {'Status': 'available',
               'Cloud Provider': provider.get_yaml_data()['name']}
     list_tbl.click_row_by_cells(params, 'Name')
-    vname = pytest_selenium.text('//h1').split()[0]
+    vname = get_volume_name()
     toolbar.select('Configuration', 'Attach this Cloud Volume to an Instance')
-    select = Select("//select[@id='vm_id']")
-    assert len(select.all_options) > 0
+    assert len(select_vm.all_options) > 0
 
-    select.select_by_value(select.get_value_by_text(instance_name))
-    pytest_selenium.send_keys("//input[@name='device_path']", '/dev/vdb')
+    select_vm.select_by_value(select_vm.get_value_by_text(inst_name))
+    pytest_selenium.send_keys(device_input, '/dev/vdb')
     pytest_selenium.click(attach_volume)
     assert_message_contain('Attaching Cloud Volume')
 
@@ -161,11 +155,10 @@ def test_detach_volume_from_volume_page(provider):
     params = {'Status': 'in-use',
               'Cloud Provider': provider.get_yaml_data()['name']}
     list_tbl.click_row_by_cells(params, 'Name')
-    vname = pytest_selenium.text('//h1').split()[0]
+    vname = get_volume_name()
     toolbar.select('Configuration', 'Detach this Cloud Volume from an Instance')
-    select = Select("//select[@id='vm_id']")
-    assert len(select.all_options) > 0
-    select.select_by_index(1)
+    assert len(select_vm.all_options) > 0
+    select_vm.select_by_index(1)
     pytest_selenium.click(detach_volume)
     assert_message_contain('Detaching Cloud Volume')
 
@@ -183,7 +176,7 @@ def test_delete_volume(provider):
     params = {'Status': 'available',
               'Cloud Provider': provider.get_yaml_data()['name']}
     list_tbl.click_row_by_cells(params, 'Name')
-    vname = pytest_selenium.text('//h1').split()[0]
+    vname = get_volume_name()
     toolbar.select('Configuration', 'Delete this Cloud Volume',
                    invokes_alert=True)
     pytest_selenium.handle_alert(cancel=False)
