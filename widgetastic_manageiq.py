@@ -439,9 +439,17 @@ class Paginator(Widget):
 
     It is mainly used in Paginator Pane.
     """
-    ROOT = '//div[@id="pc_div_1"]/*/ul[@class="pagination"]/'
-    CUR_PAGE_LOCATOR = ROOT + './li/span/input[@name="limitstart"]/..'
-    PAGE_BUTTON_LOCATOR = ROOT + './li[contains(@class, {})]/span'
+    def __init__(self, parent, logger=None):
+        super(Paginator, self).__init__(parent=parent, logger=logger)
+
+        if not self.parent.ROOT.endswith('/'):
+            separator = '/'
+        else:
+            separator = ''
+        self.ROOT = self.parent_view.ROOT + separator + './/ul[@class="pagination"]/'
+
+        self.CUR_PAGE_LOCATOR = self.ROOT + './li/span/input[@name="limitstart"]/..'
+        self.PAGE_BUTTON_LOCATOR = self.ROOT + './li[contains(@class, {})]/span'
 
     def _is_enabled(self, locator):
         return 'disabled' not in self.browser.classes(locator + '/..')
@@ -475,7 +483,7 @@ class PaginationPane(View):
 
     The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
     """
-    ROOT = '//div[@id="paging_div"]'
+    ROOT = '//div[@id="paging_div"]/'
 
     check_all_items = Checkbox(id='masterToggle')
     sort_by = BootstrapSelect(id='sort_choice')
