@@ -5,11 +5,13 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.common.vm import VM
-from cfme.exceptions import InstanceNotFound, OptionNotAvailable, DestinationNotFound, \
-    BlockTypeUnknown, TemplateNotFound, ToolbarOptionGreyedOrUnavailable
+from cfme.exceptions import (
+    InstanceNotFound, OptionNotAvailable, DestinationNotFound,
+    BlockTypeUnknown, TemplateNotFound, ToolbarOptionGreyedOrUnavailable)
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import accordion, paginator, toolbar as tb, CheckboxTree, Region, InfoBlock, \
-    Tree, Quadicon, match_location, Form, Table, PagedTable, form_buttons
+from cfme.web_ui import (
+    accordion, paginator, toolbar as tb, CheckboxTree, Region, InfoBlock,
+    Tree, Quadicon, match_location, Form, Table, PagedTable, form_buttons)
 from cfme.web_ui.search import search_box
 from utils import version
 from utils.api import rest_api
