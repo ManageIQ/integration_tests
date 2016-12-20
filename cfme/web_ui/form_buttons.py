@@ -122,6 +122,7 @@ class FormButton(Pretty):
         return "{}({})".format(type(self).__name__, str(repr(self._alt)))
 
 add = FormButton("Add")
+add_ng = FormButton('Add', ng_click='addClicked()')
 attach_volume = FormButton('Attach', ng_click='attachClicked()')
 detach_volume = FormButton('Detach', ng_click='detachClicked()')
 save = FormButton("Save Changes", dimmed_alt="Save", ng_click="saveClicked()")
