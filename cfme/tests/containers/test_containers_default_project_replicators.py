@@ -1,9 +1,12 @@
 import pytest
+import random
+
 from cfme.web_ui import CheckboxTable
 from cfme.containers.replicator import Replicator
 from itertools import product
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.log import logger
 from utils.version import current_version
 
 
@@ -27,7 +30,7 @@ REPLICATORS_RELATIONSHIPS_FIELDS = ['Containers Provider', 'Project', 'Pods', 'N
 
 @pytest.mark.parametrize(('prop', 'rel'), product(REPLICATORS_PROPERTIES_FIELDS,
                                                   REPLICATORS_RELATIONSHIPS_FIELDS))
-def test_replicators_properties(provider, prop, rel):
+def test_replicator_properties(provider, prop, rel):
     """ Default Project Replicator properties test
         This test checks the properties fields of each Replicator
         Steps:
@@ -35,10 +38,8 @@ def test_replicators_properties(provider, prop, rel):
              * Goes through each Replicator and  checks each Properties fields
         """
     navigate_to(Replicator, 'All')
-    replicator_name = [r.name.text for r in list_tbl.rows()]
-    for name in replicator_name:
-        obj = Replicator(name, provider)
-        prop_val = obj.get_detail('Properties', ''.join(prop))
-        rel_val = obj.get_detail('Relationships', ''.join(rel))
-        assert prop_val
-        assert rel_val
+    name = random.choice([r.name.text for r in list_tbl.rows()])
+    logger.debug("Chosen the replicator '{}' for inspection.".format(name))
+    replicator = Replicator(name, provider)
+    assert replicator.get_detail('Properties', ''.join(prop))
+    assert replicator.get_detail('Relationships', ''.join(rel))
