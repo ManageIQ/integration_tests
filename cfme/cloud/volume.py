@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from functools import partial
 
 from navmazing import NavigateToSibling
@@ -6,7 +7,7 @@ from navmazing import NavigateToSibling
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import DestinationNotFound
 from cfme.web_ui import (match_location, Form, InfoBlock, Input, PagedTable,
-                         Select, toolbar as tb)
+                         Select, summary_title, toolbar as tb)
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import (CFMENavigateStep, navigator,
                                                 navigate_to)
@@ -17,12 +18,21 @@ match_volumes = partial(match_location, controller='cloud_volume',
 match_provider = partial(match_location, controller='ems_cloud',
                          title='Cloud Providers')
 
-creation_form = Form([('volume_name', "//input[@name='name']"),
-                      ('volume_size', "//input[@name='size']"),
-                      ('cloud_tenant', "//select[@id='cloud_tenant_id']")])
-device_input = Input('device_path')
-select_vm = Select("//select[@id='vm_id']")
-select_volume = Select("//select[@id='volume_id']")
+creation_form = Form([
+    ('volume_name', "//input[@name='name']"),
+    ('volume_size', "//input[@name='size']"),
+    ('cloud_tenant', Select("//select[@id='cloud_tenant_id']"))
+])
+
+__device_input = ('device_path', Input('device_path'))
+__select_vm = ('select_vm', Select("//select[@id='vm_id']"))
+__select_volume = ('select_volume', Select("//select[@id='volume_id']"))
+
+attach_inst_page_form = Form([__device_input, __select_volume])
+attach_vlm_page_form = Form([__device_input, __select_vm])
+detach_inst_page_form = Form([__select_volume])
+detach_vlm_page_form = Form([__select_vm])
+
 list_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 
@@ -33,7 +43,7 @@ def check_version():
 
 def get_volume_name():
     """Returns the name of volume which page is opened"""
-    return sel.text('//h1').split()[0]
+    return summary_title().split()[0]
 
 
 class Volume(Navigatable):
