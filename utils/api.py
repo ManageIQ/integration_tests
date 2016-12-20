@@ -310,7 +310,7 @@ class Entity(object):
     SUBCOLLECTIONS = dict(
         service_catalogs={"service_templates"},
         roles={"features"},
-        providers={"tags", "custom_attributes"},
+        providers={"tags", "custom_attributes", "cloud_networks"},
         hosts={"tags"},
         data_stores={"tags"},
         resource_pools={"tags"},
