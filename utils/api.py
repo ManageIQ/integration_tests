@@ -32,10 +32,6 @@ class API(object):
         self._session.headers.update({'Content-Type': 'application/json; charset=utf-8'})
         self._load_data()
 
-    @property
-    def entry_point(self):
-        return self._entry_point
-
     def _load_data(self):
         data = self.get(self._entry_point)
         self.collections = CollectionsIndex(self, data.pop("collections", []))

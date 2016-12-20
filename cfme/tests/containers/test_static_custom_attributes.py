@@ -22,7 +22,7 @@ VALUE_UPDATES = ['2018-07-12', 'ADF231VRWQ1', '1']
 
 # CMP-10281
 
-def tes1t_add_static_custom_attributes(provider):
+def test_add_static_custom_attributes(provider):
     """Tests adding of static custom attributes to provider
     Steps:
         * Add static custom attributes (API)
@@ -40,7 +40,7 @@ def tes1t_add_static_custom_attributes(provider):
 
 # CMP-10286
 
-def tes1t_edit_static_custom_attributes(provider):
+def test_edit_static_custom_attributes(provider):
     """Tests editing of static custom attributes from provider
     Prerequisite:
         * test_add_static_custom_attributes passed.
@@ -66,7 +66,7 @@ def tes1t_edit_static_custom_attributes(provider):
 
 # CMP-10285
 
-def tes1t_delete_static_custom_attributes(provider):
+def test_delete_static_custom_attributes(provider):
     """Tests deleting of static custom attributes from provider
     Steps:
         * Delete the static custom attributes that recently added (API)
@@ -108,3 +108,17 @@ def test_add_attribute_with_empty_name(provider):
 
     if hasattr(provider.summary, 'custom_attributes'):
         assert "" not in provider.summary.custom_attributes
+
+
+def test_add_date_value_with_wrong_value(provider):
+    ca = CustomAttribute('nondate', "koko", 'Date')
+    try:
+        provider.add_custom_attributes(ca)
+        pytest.fail('You have added custom attribute of type'
+                    '{} with value of {} and didn\'t get an error!'
+                    .format(ca.field_type, ca.value))
+    except APIException:
+        pass
+
+    if hasattr(provider.summary, 'custom_attributes'):
+        assert 'nondate' not in provider.summary.custom_attributes
