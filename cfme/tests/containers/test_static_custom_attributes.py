@@ -53,10 +53,10 @@ def test_edit_static_custom_attributes(provider):
     attribs_names = [attr.name for attr in provider.custom_attributes()]
     assert all([attr.name in attribs_names
                 for attr in ATTRIBUTES_DATASET])
-    EditedAttributes = ATTRIBUTES_DATASET
+    edited_attribs = ATTRIBUTES_DATASET
     for ii, value in enumerate(VALUE_UPDATES):
-        EditedAttributes[ii].value = value
-    provider.edit_custom_attributes(*EditedAttributes)
+        edited_attribs[ii].value = value
+    provider.edit_custom_attributes(*edited_attribs)
     custom_attr_ui = provider.summary.custom_attributes.items()
     for attr in ATTRIBUTES_DATASET:
         assert attr.name in custom_attr_ui
