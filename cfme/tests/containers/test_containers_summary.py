@@ -1,9 +1,7 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import StatusBox
 from utils import testgen, version
 from utils.version import current_version
-import time
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -43,7 +41,4 @@ def test_containers_summary_objects(provider):
     prov_ui_values = dict()
     for obj_type in container_object:
         prov_ui_values[obj_type] = getattr(provider.summary.relationships, obj_type).value
-    sel.force_navigate('container_dashboard')
-    time.sleep(2)
-    for obj_type in container_object:
         assert StatusBox(obj_type).value() == prov_ui_values[obj_type]
