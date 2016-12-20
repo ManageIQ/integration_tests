@@ -18,16 +18,18 @@ import mgmtsystem
 from cfme.common.vm import VM
 from cfme.control import explorer
 from cfme.configure import tasks
+from cfme.configure.tasks import Tasks
 from cfme.infrastructure import host
-from cfme.web_ui import tabstrip as tabs, toolbar as tb
+from cfme.web_ui import toolbar as tb
 from datetime import datetime
 from fixtures.pytest_store import store
 from functools import partial
 from utils import testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.version import current_version, pick, LOWEST
+from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -71,8 +73,7 @@ def pytest_generate_tests(metafunc):
         if args["provider"].type in {"scvmm"}:
             continue
 
-        if ((metafunc.function is test_action_create_snapshot_and_delete_last)
-            or
+        if ((metafunc.function is test_action_create_snapshot_and_delete_last) or
             (metafunc.function is test_action_create_snapshots_and_delete_them)) \
                 and args['provider'].type in {"rhevm", "openstack", "ec2"}:
             continue
@@ -484,7 +485,6 @@ def test_action_power_on_audit(
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-@pytest.mark.meta(blockers=[1333566])
 def test_action_create_snapshot_and_delete_last(
         request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
@@ -529,7 +529,6 @@ def test_action_create_snapshot_and_delete_last(
              message="wait for snapshot deleted", delay=5)
 
 
-@pytest.mark.meta(blockers=[1333566])
 def test_action_create_snapshots_and_delete_them(
         request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
@@ -566,7 +565,9 @@ def test_action_create_snapshots_and_delete_them(
         vm_crud_refresh()
         wait_for(lambda: vm.crud.total_snapshots > snapshots_before, num_sec=800,
                  message="wait for snapshot %d to appear" % (n + 1), delay=5)
-        assert vm.crud.current_snapshot_name == snapshot_name
+        current_snapshot = vm.crud.current_snapshot_name
+        logger.debug('Current Snapshot Name: {}'.format(current_snapshot))
+        assert current_snapshot == snapshot_name
         vm.start_vm()
         vm_crud_refresh()
 
@@ -620,17 +621,11 @@ def test_action_initiate_smartstate_analysis(
 
     # Check that analyse job has appeared in the list
     # Wait for the task to finish
-    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.select('Reload'))
+    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.refresh())
     def is_vm_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
-        tab_name = pick({
-            LOWEST: "All VM Analysis Tasks",
-            '5.6': "All VM and Container Analysis Tasks",
-        })
-        if not pytest.sel.is_displayed(tasks.tasks_table) or \
-           not tabs.is_tab_selected(tab_name):
-            pytest.sel.force_navigate('tasks_all_vm')
+        navigate_to(Tasks, 'AllVMContainerAnalysis')
         vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
             'task_name': "Scan from Vm {}".format(vm.name),
             'state': 'finished'
@@ -646,7 +641,7 @@ def test_action_initiate_smartstate_analysis(
         except AttributeError:
             return False
     try:
-        wait_for(wait_analysis_finished, num_sec=600,
+        wait_for(wait_analysis_finished, num_sec=15 * 60,
                  message="wait for analysis finished", delay=60)
     except TimedOutError:
         pytest.fail("CFME did not finish analysing the VM {}".format(vm.name))

@@ -3,45 +3,24 @@
 """ Module dealing with Configure/Tasks section.
 """
 
+from navmazing import NavigateToAttribute
+
 from cfme import web_ui as ui
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
-from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator, toolbar
-from cfme.web_ui.menu import nav
+from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator, toolbar, match_location
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.log import logger
 from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
-from utils.version import LOWEST, pick
-
-
-get_tab_my = lambda: pick({
-    LOWEST: "My VM Analysis Tasks",
-    '5.6': "My VM and Container Analysis Tasks",
-})
-
-get_tab_all = lambda: pick({
-    LOWEST: "All VM Analysis Tasks",
-    '5.6': "All VM and Container Analysis Tasks",
-})
-
-
-nav.add_branch("tasks",
-    dict(
-        tasks_my_vm=lambda _: tabs.select_tab(get_tab_my()),
-        tasks_my_other_ui=lambda _: tabs.select_tab("My Other UI Tasks"),
-        tasks_all_vm=lambda _: tabs.select_tab(get_tab_all()),
-        tasks_all_other=lambda _: tabs.select_tab("All Other Tasks"),
-    )
-)
 
 buttons = Region(
-    locators=dict(
-        default={LOWEST: "//*[@id='buttons_off']/li[3]/a/img",
-                 '5.4': "//*[@id='buttons_off']/a"},
-        apply={LOWEST: "//*[@id='buttons_on']/li[1]/a/img",
-               '5.4': "//*[@id='buttons_on']/a[1]"},
-        reset={LOWEST: "//*[@id='buttons_on']/li[2]/a/img",
-               '5.4': "//*[@id='buttons_on']/a[2]"}
-    )
+    locators={
+        'default': '//*[@id="buttons_off"]/a',
+        'apply': '//*[@id="buttons_on"]/a[1]',
+        'reset': '//*[@id="buttons_on"]/a[2]'
+    }
 )
 
 filter_form = Form(
@@ -59,9 +38,7 @@ filter_form = Form(
 )
 
 tasks_table = CheckboxTable(
-    table_locator={
-        LOWEST: '//div[@id="records_div"]/table[@class="style3"]',
-        "5.4": '//div[@id="records_div"]/table[thead]'},
+    table_locator='//div[@id="records_div"]/table[thead]',
     header_checkbox_locator="//div[@id='records_div']//input[@id='masterToggle']"
 )
 
@@ -95,7 +72,7 @@ def _filter(
         pass
 
 
-def _get_tasks(location, **filter_kwargs):
+def _get_tasks(tab_destination, **filter_kwargs):
     """ Generic function to return contents of the tasks table
 
     Args:
@@ -103,14 +80,13 @@ def _get_tasks(location, **filter_kwargs):
         **filter_kwargs: See :py:meth:`_filter`
     Returns: List of dicts.
     """
-    sel.force_navigate(location)
+    navigate_to(Tasks, tab_destination)
     if any([filter_kwargs[key] is not None for key in filter_kwargs.keys()]):
         _filter(**filter_kwargs)
     tasks = []
 
     if sel.is_displayed(tasks_table):
-        have_next_page = True
-        while have_next_page:
+        for page in paginator.pages():
             for row in tasks_table.rows():
                 tasks.append(
                     dict(
@@ -126,51 +102,9 @@ def _get_tasks(location, **filter_kwargs):
                         user=row.user.text.encode('utf-8').strip()
                     )
                 )
-            if int(paginator.rec_end()) < int(paginator.rec_total()):
-                sel.click(paginator.next())
-            else:
-                have_next_page = False
+    else:
+        logger.info('No Tasks collected on {}'.format(tab_destination))
     return tasks
-
-
-def my_vm_analysis_tasks(**filter_kwargs):
-    """ Returns all tasks in the table for 'My VM Analysis Tasks'
-
-    Args:
-        **filter_kwargs: See :py:meth:`_filter`
-    Returns: List of dicts.
-    """
-    return _get_tasks("tasks_my_vm", **filter_kwargs)
-
-
-def my_other_ui_tasks(**filter_kwargs):
-    """ Returns all tasks in the table for 'My Other UI Tasks'
-
-    Args:
-        **filter_kwargs: See :py:meth:`_filter`
-    Returns: List of dicts.
-    """
-    return _get_tasks("tasks_my_other_ui", **filter_kwargs)
-
-
-def all_vm_analysis_tasks(**filter_kwargs):
-    """ Returns all tasks in the table for 'All VM Analysis Tasks'
-
-    Args:
-        **filter_kwargs: See :py:meth:`_filter`
-    Returns: List of dicts.
-    """
-    return _get_tasks("tasks_all_vm", **filter_kwargs)
-
-
-def all_other_tasks(**filter_kwargs):
-    """ Returns all tasks in the table for 'All Other Tasks'
-
-    Args:
-        **filter_kwargs: See :py:meth:`_filter`
-    Returns: List of dicts.
-    """
-    return _get_tasks("tasks_all_other", **filter_kwargs)
 
 
 def is_vm_analysis_finished(name, **kwargs):
@@ -189,18 +123,13 @@ def is_cluster_analysis_finished(name, **kwargs):
     return is_analysis_finished(name=name, task_type='cluster', **kwargs)
 
 
-def is_task_finished(tab, page, task_name, expected_status, clear_tasks_after_success=True):
-    el = None
-    try:
-        if not sel.is_displayed(tasks_table) or not tabs.is_tab_selected(tab):
-            sel.force_navigate(page)
-        el = tasks_table.find_row_by_cells({
-            'task_name': task_name,
-            'state': expected_status
-        })
-        if el is None:
-            return False
-    except Exception:
+def is_task_finished(tab_destination, task_name, expected_status, clear_tasks_after_success=True):
+    navigate_to(Tasks, tab_destination)
+    el = tasks_table.find_row_by_cells({
+        'task_name': task_name,
+        'state': expected_status
+    })
+    if el is None:
         return False
 
     # throw exception if status is error
@@ -220,35 +149,89 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
 
     tabs_data = {
         'vm': {
-            'tab': 'All VM Analysis Tasks',
-            'page': 'tasks_all_vm',
+            'tab': 'AllVMContainerAnalysis',
             'task': 'Scan from Vm {}',
             'state': 'finished'
         },
         'host': {
-            'tab': 'My Other UI Tasks',
-            'page': 'tasks_my_other_ui',
-            'task': pick({
-                LOWEST: "SmartState Analysis for {}",
-                "5.5": "SmartState Analysis for '{}'",
-            }),
+            'tab': 'MyOther',
+            'task': "SmartState Analysis for '{}'",
             'state': 'Finished'
         },
         'datastore': {
-            'tab': 'My Other UI Tasks',
+            'tab': 'MyOther',
             'page': 'tasks_my_other_ui',
             'task': 'SmartState Analysis for [{}]',
             'state': "Finished"
         },
         'cluster': {
-            'tab': 'My Other UI Tasks',
+            'tab': 'MyOther',
             'page': 'tasks_my_other_ui',
             'task': 'SmartState Analysis for [{}]',
             'state': "Finished"}
     }[task_type]
 
-    return is_task_finished(tab=tabs_data['tab'],
-                            page=tabs_data['page'],
+    return is_task_finished(tab_destination=tabs_data['tab'],
                             task_name=tabs_data['task'].format(name),
                             expected_status=tabs_data['state'],
                             clear_tasks_after_success=clear_tasks_after_success)
+
+
+class Tasks(Navigatable):
+    pass
+
+
+@navigator.register(Tasks, 'MyVMContainerAnalysis')
+class MyVMContainerAnalysis(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
+
+    tab_name = 'My VM and Container Analysis Tasks'
+
+    def step(self, *args, **kwargs):
+        tabs.select_tab(self.tab_name)
+
+    def am_i_here(self):
+        return match_location(controller='miq_task', title='My Tasks') and \
+            tabs.is_tab_selected(self.tab_name)
+
+
+@navigator.register(Tasks, 'MyOther')
+class MyOther(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
+
+    tab_name = 'My Other UI Tasks'
+
+    def step(self, *args, **kwargs):
+        tabs.select_tab(self.tab_name)
+
+    def am_i_here(self):
+        return match_location(controller='miq_task', title='My UI Tasks') and \
+            tabs.is_tab_selected()
+
+
+@navigator.register(Tasks, 'AllVMContainerAnalysis')
+class AllVMContainerAnalysis(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
+
+    tab_name = "All VM and Container Analysis Tasks"
+
+    def step(self, *args, **kwargs):
+        tabs.select_tab(self.tab_name)
+
+    def am_i_here(self):
+        return match_location(controller='miq_task', title='All Tasks') and \
+            tabs.is_tab_selected(self.tab_name)
+
+
+@navigator.register(Tasks, 'AllOther')
+class AllOther(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'Tasks')
+
+    tab_name = 'All Other Tasks'
+
+    def step(self, *args, **kwargs):
+        tabs.select_tab(self.tab_name)
+
+    def am_i_here(self):
+        return match_location(controller='miq_task', title='All UI Tasks') and \
+            tabs.is_tab_selected(self.tab_name)

@@ -4,10 +4,12 @@ import pytest
 
 from cfme import test_requirements
 from cfme.configure import tasks
+from cfme.configure.tasks import Tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host as host_obj
-from cfme.web_ui import DriftGrid, toolbar as tb, tabstrip as tabs
+from cfme.web_ui import DriftGrid, toolbar as tb
 from utils import error, testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
 
 pytestmark = [
@@ -78,8 +80,7 @@ def test_host_drift_analysis(request, setup_provider, provider, host, soft_asser
     def is_host_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
-        if not sel.is_displayed(tasks.tasks_table) or not tabs.is_tab_selected('All Other Tasks'):
-            sel.force_navigate('tasks_all_other')
+        navigate_to(Tasks, 'AllOther')
         host_analysis_finished = tasks.tasks_table.find_row_by_cells({
             'task_name': "SmartState Analysis for '{}'".format(test_host.name),
             'state': 'Finished'
