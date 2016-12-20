@@ -5,10 +5,16 @@ from cfme.middleware.datasource import MiddlewareDatasource
 from utils import testgen
 from utils.version import current_version
 from server_methods import get_eap_server, get_hawkular_server
-from datasource_methods import get_datasources_set
-from datasource_methods import ORACLE_12C_DS, DB2_105_DS, MSSQL_2014_DS, MYSQL_57_DS
-from datasource_methods import POSTGRESPLUS_94_DS, POSTGRESQL_94_DS, SYBASE_157_DS
-from datasource_methods import ORACLE_12C_RAC_DS
+from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
+from datasource_methods import (
+    get_datasources_set,
+    ORACLE_12C_DS, DB2_105_DS, MSSQL_2014_DS, MYSQL_57_DS,
+    POSTGRESPLUS_94_DS, POSTGRESQL_94_DS, SYBASE_157_DS,
+    ORACLE_12C_RAC_DS,
+    get_datasource_from_list, verify_datasource_not_listed,
+    verify_datasource_listed
+)
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -124,14 +130,16 @@ def test_datasource_details(provider):
         ds_mgmt.validate_properties()
 
 
-@pytest.mark.parametrize("datasource_params", DATASOURCES)
-def test_create_delete_datasource(provider, datasource_params):
+@pytest.mark.parametrize("datasource", DATASOURCES)
+def test_create_delete_datasource(provider, datasource):
     """Tests datasource creation and deletion on EAP server
     Method is executed for all database types
 
     Steps:
         * Get servers list from UI
         * Chooses JBoss EAP server from list
+        * Invokes 'Add JDBC Driver' toolbar operation
+        * Fills all necessary fields and saves
         * Invokes 'Add Datasource' toolbar operation
         * Selects Datasource type.
         * Click Next.
@@ -152,14 +160,33 @@ def test_create_delete_datasource(provider, datasource_params):
         * Checks whether resource is deleted.
     """
     server = get_eap_server(provider)
-    server.add_datasource(datasource_params[0], datasource_params[1], datasource_params[2],
-                          datasource_params[3], datasource_params[4], datasource_params[5],
-                          datasource_params[6].replace("\\", ""),
-                          datasource_params[7],
-                          datasource_params[8])
-    # TODO uncomment when BZ#1383414 is fixed
-    # datasource = get_datasource_from_list(provider,
-    #                                       "Datasource [{}]".format(datasource_params[1]),
-    #                                       server)
-    # datasource.remove()
-    # verify_datasource_not_listed(provider, datasource.name)
+    file_path = download_jdbc_driver(datasource.driver.database_name)
+    deploy_jdbc_driver(provider, server, file_path,
+                       driver_name=datasource.driver.driver_name,
+                       module_name=datasource.driver.module_name,
+                       driver_class=datasource.driver.driver_class,
+                       major_version=datasource.driver.major_version,
+                       minor_version=datasource.driver.minor_version)
+    server.add_datasource(datasource.database_type,
+                          datasource.datasource_name,
+                          datasource.jndi_name,
+                          datasource.driver.driver_name,
+                          datasource.driver.module_name,
+                          datasource.driver.driver_class,
+                          datasource.connection_url.replace("\\", ""),
+                          datasource.username,
+                          datasource.password)
+    datasource_name = "Datasource [{}]".format(datasource.datasource_name)
+    verify_datasource_listed(provider, datasource_name, server)
+    delete_datasource(provider, server, datasource_name)
+    verify_datasource_not_listed(provider, datasource_name)
+
+
+def delete_datasource(provider, server, datasource_name):
+    try:
+        datasource = get_datasource_from_list(provider, datasource_name, server)
+        datasource.remove()
+    except ValueError as e:
+        print('Skipping {} no datasource found to be deleted.'
+              .format(e, datasource_name))
+        return None
