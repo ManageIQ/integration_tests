@@ -2,6 +2,7 @@ import pytest
 from utils.version import current_version
 from utils import testgen
 from cfme.containers.provider.openshift import CustomAttribute
+from utils.api import APIException
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -21,7 +22,7 @@ VALUE_UPDATES = ['2018-07-12', 'ADF231VRWQ1', '1']
 
 # CMP-10281
 
-def test_add_static_custom_attributes(provider):
+def tes1t_add_static_custom_attributes(provider):
     """Tests adding of static custom attributes to provider
     Steps:
         * Add static custom attributes (API)
@@ -39,7 +40,7 @@ def test_add_static_custom_attributes(provider):
 
 # CMP-10286
 
-def test_edit_static_custom_attributes(provider):
+def tes1t_edit_static_custom_attributes(provider):
     """Tests editing of static custom attributes from provider
     Prerequisite:
         * test_add_static_custom_attributes passed.
@@ -65,7 +66,7 @@ def test_edit_static_custom_attributes(provider):
 
 # CMP-10285
 
-def test_delete_static_custom_attributes(provider):
+def tes1t_delete_static_custom_attributes(provider):
     """Tests deleting of static custom attributes from provider
     Steps:
         * Delete the static custom attributes that recently added (API)
@@ -83,3 +84,27 @@ def test_delete_static_custom_attributes(provider):
     if hasattr(provider.summary, 'custom_attributes'):
         for attr in ATTRIBUTES_DATASET:
             assert attr.name not in provider.summary.custom_attributes
+
+
+# CMP-10303
+
+def test_add_attribute_with_empty_name(provider):
+    """Tests adding of static custom attributes with empty field
+    Steps:
+        * add the static custom attribute with name "" (API)
+        * Go to provider summary page
+    Expected results:
+        * You should get an error
+        * You should not see this attribute in the custom  attributes table
+    """
+    try:
+        provider.add_custom_attributes(
+            CustomAttribute('', "17")
+        )
+        pytest.fail('You have added custom attribute with empty name'
+                    'and didn\'t get an error!')
+    except APIException:
+        pass
+
+    if hasattr(provider.summary, 'custom_attributes'):
+        assert "" not in provider.summary.custom_attributes

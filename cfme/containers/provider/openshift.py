@@ -78,7 +78,11 @@ class OpenshiftProvider(ContainersProvider):
         return out
 
     def add_custom_attributes(self, *custom_attributes):
-        """Adding static custom attributes to provider."""
+        """Adding static custom attributes to provider.
+        Args:
+            custom_attributes: The custom attributes to add.
+        returns: response.
+        """
         if not custom_attributes:
             raise TypeError('{} takes at least 1 argument.'
                             .format(self.add_custom_attributes.__name__))
@@ -95,11 +99,15 @@ class OpenshiftProvider(ContainersProvider):
         for i, fld_tp in enumerate([attr.field_type for attr in custom_attributes]):
             if fld_tp:
                 payload['resources'][i]['field_type'] = fld_tp
-        self.appliance.rest_api.post(
+        return self.appliance.rest_api.post(
             path.join(self._href(), 'custom_attributes'), **payload)
 
     def edit_custom_attributes(self, *custom_attributes):
-        """Editing static custom attributes in provider."""
+        """Editing static custom attributes in provider.
+        Args:
+            custom_attributes: The custom attributes to edit.
+        returns: response.
+        """
         if not custom_attributes:
             raise TypeError('{} takes at least 1 argument.'
                             .format(self.edit_custom_attributes.__name__))
@@ -114,10 +122,15 @@ class OpenshiftProvider(ContainersProvider):
                 "href": filter(lambda attr: attr.name == ca.name, attribs)[-1].href,
                 "value": ca.value
             } for ca in custom_attributes]}
-        self.appliance.rest_api.post(path.join(self._href(), 'custom_attributes'), **payload)
+        return self.appliance.rest_api.post(
+            path.join(self._href(), 'custom_attributes'), **payload)
 
     def delete_custom_attributes(self, *names):
-        """Deleting static custom attributes from provider."""
+        """Deleting static custom attributes from provider.
+        Args:
+            names: The names of the custom attributes to delete.
+        returns: response.
+        """
         for name in names:
             if type(name) is not str:
                 raise TypeError('Type of names should be {}. ({} != {})'
@@ -130,5 +143,5 @@ class OpenshiftProvider(ContainersProvider):
             "resources": [{
                 "href": attr.href,
             } for attr in attribs if attr.name in names]}
-        self.appliance.rest_api.post(
+        return self.appliance.rest_api.post(
             path.join(self._href(), 'custom_attributes'), **payload)
