@@ -94,118 +94,30 @@ appliances_table = lambda: version.pick({
 })
 
 
-def update_registration(service,
-                        url,
-                        username,
-                        password,
-                        password_verify=None,
-                        repo_name=None,
-                        organization=None,
-                        use_proxy=False,
-                        proxy_url=None,
-                        proxy_username=None,
-                        proxy_password=None,
-                        proxy_password_verify=None,
-                        validate=True,
-                        cancel=False,
-                        set_default_rhsm_address=False,
-                        set_default_repository=False):
+def update_registration(username, password,
+                        password_verify=None):
     """ Fill in the registration form, validate and save/cancel
 
     Args:
-        service: Service type (registration method).
-        url: Service server URL address.
         username: Username to use for registration.
         password: Password to use for registration.
         password_verify: 2nd entry of password for verification.
                          Same as 'password' if None.
-        repo_or_channel: Repository/channel to enable.
-        organization: Organization (sat5/sat6 only).
-        use_proxy: `True` if proxy should be used, `False` otherwise
-                   (default `False`).
-        proxy_url: Address of the proxy server.
-        proxy_username: Username for the proxy server.
-        proxy_password: Password for the proxy server.
-        proxy_password_verify: 2nd entry of proxy server password for verification.
-                               Same as 'proxy_password' if None.
-        validate: Click the Validate button and check the
-                  flash message for errors if `True` (default `True`)
-        cancel: Click the Cancel button if `True` or the Save button
-                if `False` (default `False`)
-        set_default_rhsm_address: Click the Default button connected to
-                                  the RHSM (only) address if `True`
-        set_default_repository: Click the Default button connected to
-                                the repo/channel if `True`
-
-    Warning:
-        'password_verify' and 'proxy_password_verify' are available in 5.4+ only.
-
-    Note:
-        With satellite 6, it is necessary to validate credentials to obtain
-        available organizations from the server.
-        With satellite 5, 'validate' parameter is ignored because there is
-        no validation button available.
     """
-    assert service in service_types, "Unknown service type '{}'".format(service)
-    service_value = service_types[service]
-
-    # In 5.4+, we have verification inputs as well
-    if version.current_version() >= '5.4':
-        password_verify = password_verify or password
-        proxy_password_verify = proxy_password_verify or proxy_password
-    # Otherwise, verification inputs are ignored df even if specified
-    else:
-        password_verify = None
-        proxy_password_verify = None
-
-    # Sat6 organization can be selected only after successful validation
-    # while Sat5 organization is selected normally
-    if service == 'sat6':
-        organization_sat5 = None
-        organization_sat6 = organization
-    else:
-        organization_sat5 = organization
-        organization_sat6 = None
-
     sel.force_navigate("cfg_settings_region_red_hat_updates")
     sel.click(update_buttons.edit_registration)
     details = dict(
-        service=sel.ByValue(service_value),
-        url=url,
         username=username,
         password=password,
-        password_verify=password_verify,
-        repo_name=repo_name,
-        organization_sat5=organization_sat5,
-        use_proxy=use_proxy,
-        proxy_url=proxy_url,
-        proxy_username=proxy_username,
-        proxy_password=proxy_password,
-        proxy_password_verify=proxy_password_verify
+        password_verify=password_verify
     )
 
     fill(registration_form, details)
-
-    if set_default_rhsm_address:
-        sel.click(registration_buttons.url_default)
-
-    if set_default_repository:
-        sel.click(registration_buttons.repo_default)
-
-    if validate and service != 'sat5':
-        sel.click(form_buttons.validate_short)
-        flash.assert_no_errors()
-        flash.dismiss()
-
-    if organization_sat6:
-        sel.select(registration_form.locators['organization_sat6'], organization_sat6)
-
-    if cancel:
-        form_buttons.cancel()
-    else:
-        form_buttons.save()
-        flash.assert_message_match("Customer Information successfully saved")
-        flash.dismiss()
+    validate = form_buttons.FormButton("Validate the credentials")
+    sel.click(validate)
+    form_buttons.save()
+    flash.assert_message_match("Customer Information successfully saved")
+    flash.dismiss()
 
 
 def refresh():
