@@ -1,5 +1,4 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import StatusBox
 from utils import testgen, version
 from utils.version import current_version
