@@ -146,7 +146,7 @@ class CFMENavigateStep(NavigateStep):
             # Need at least three tries:
             # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
             # 2: Everything should work. If not, NavigationError.
-            raise exceptions.NavigationError(self.obj._name)
+            raise exceptions.NavigationError(self._name)
 
         self.appliance.browser.open_browser()
 
