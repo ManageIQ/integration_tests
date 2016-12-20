@@ -2,7 +2,6 @@ import pytest
 from cfme.web_ui import StatusBox
 from utils import testgen, version
 from utils.version import current_version
-import time
 
 pytestmark = [
     pytest.mark.uncollectif(
