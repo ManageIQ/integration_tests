@@ -112,6 +112,27 @@ def test_product_info(rest_api):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_identity(rest_api):
+    """Check that user's identity is returned.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert all(item in rest_api.identity for item in
+               ('userid', 'name', 'group', 'role', 'tenant', 'groups'))
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+def test_user_settings(rest_api):
+    """Check that user's settings are returned.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert isinstance(rest_api.settings, dict)
+
+
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_bulk_query(rest_api):
     """Tests bulk query referencing resources by attributes id, href and guid
 
