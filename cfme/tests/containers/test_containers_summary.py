@@ -43,6 +43,5 @@ def test_containers_summary_objects(provider):
     prov_ui_values = dict()
     for obj_type in container_object:
         prov_ui_values[obj_type] = getattr(provider.summary.relationships, obj_type).value
-        sel.force_navigate('container_dashboard')
         time.sleep(2)
         assert StatusBox(obj_type).value() == prov_ui_values[obj_type]
