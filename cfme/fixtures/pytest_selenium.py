@@ -326,7 +326,7 @@ def wait_for_ajax():
         """Checks if there is no ajax in flight and also logs current status
         """
         prev_log_msg = _thread_local.ajax_log_msg
-
+        observe_processing = False
         # 5.5.z and 5.7.0.4+
         if not store.current_appliance.is_miqqe_patch_candidate:
             try:
@@ -339,6 +339,15 @@ def wait_for_ajax():
                 return True
             running = execute_script("return ManageIQ.qe.inFlight()")
             log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
+            try:
+                observe_processing = in_flight(
+                    "return Boolean(ManageIQ.observe.processing || ManageIQ.observe.queue.length)")
+                processing = in_flight("return Boolean(ManageIQ.observe.processing)")
+                queue_length = in_flight("return ManageIQ.observe.queue.length")
+            except Exception as e:
+                logger.error('Couldnt execute observe checker')
+            logger.info(log_msg)
+            logger.info("Observer: {}, {}".format(processing, queue_length))
         # 5.6.z, 5.7.0.{1,2,3}
         else:
             try:
@@ -366,12 +375,11 @@ def wait_for_ajax():
         if (not anything_in_flight) and prev_log_msg:
             logger.trace('Ajax done')
 
-        return not anything_in_flight
+        return not (anything_in_flight or observe_processing)
 
     wait_for(
         _nothing_in_flight,
-        num_sec=_thread_local.ajax_timeout, delay=0.1, message="wait for ajax", quiet=True,
-        silent_failure=True)
+        num_sec=_thread_local.ajax_timeout, delay=0.8, message="wait for ajax", quiet=True)
 
     # If we are not supposed to take page screenshots...well...then...dont.
     if store.config and not store.config.getvalue('page_screenshots'):
