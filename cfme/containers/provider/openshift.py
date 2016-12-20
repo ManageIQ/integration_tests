@@ -2,7 +2,14 @@ from . import ContainersProvider
 from utils.varmeth import variable
 from mgmtsystem.openshift import Openshift
 from os import path
-from types import NoneType
+
+
+class CustomAttribute(object):
+    def __init__(self, name, value, field_type=None, href=None):
+        self.name = name
+        self.value = value
+        self.field_type = field_type
+        self.href = href
 
 
 @ContainersProvider.add_provider_type
@@ -55,83 +62,73 @@ class OpenshiftProvider(ContainersProvider):
             provider_data=prov_config)
 
     def custom_attributes(self):
-        """returns custom attributes in {name: {data}}"""
+        """returns custom attributes"""
         response = self.appliance.rest_api.get(
             path.join(self._href(), 'custom_attributes'))
-        out = {}
+        out = []
         for attr_dict in response['resources']:
             attr = self.appliance.rest_api.get(attr_dict['href'])
-            out[attr['name']] = attr
+            out.append(
+                CustomAttribute(
+                    attr['name'], attr['value'],
+                    (attr['field_type'] if 'field_type' in attr else None),
+                    attr_dict['href']
+                )
+            )
         return out
 
-    def add_custom_attributes(self, names, values, field_types):
-        """Adding static custom attributes to provider.
-        Args:
-            names: List of names of the attributes
-            value: List of values of the attributes
-            field_type: List of field types of the attributes
-                (field type could be None)
-        """
-        for arg in (names, values, field_types):
-            if type(arg) not in (tuple, list):
-                raise TypeError('add_custom_attributes(): '
-                    'Argument types should be list or tuple. got: {} = {}'
-                    .format(repr(arg), type(arg)))
-            elif not len(names) == len(arg):
-                raise Exception('add_custom_attributes(): '
-                    'All arguments should have the same length.')
+    def add_custom_attributes(self, *custom_attributes):
+        """Adding static custom attributes to provider."""
+        if not custom_attributes:
+            raise TypeError('{} takes at least 1 argument.'
+                            .format(self.add_custom_attributes.__name__))
+        for attr in custom_attributes:
+            if not isinstance(attr, CustomAttribute):
+                raise TypeError('All arguments should be of type {}. ({} != {})'
+                                .format(CustomAttribute, type(attr), CustomAttribute))
         payload = {
             "action": "add",
             "resources": [{
-                "name": name,
-                "value": str(value)
-            } for name, value in zip(names, values)]}
-        for i, fld_tp in enumerate(field_types):
+                "name": ca.name,
+                "value": str(ca.value)
+            } for ca in custom_attributes]}
+        for i, fld_tp in enumerate([attr.field_type for attr in custom_attributes]):
             if fld_tp:
                 payload['resources'][i]['field_type'] = fld_tp
         self.appliance.rest_api.post(
             path.join(self._href(), 'custom_attributes'), **payload)
 
-    def edit_custom_attributes(self, names, values):
-        """Editing static custom attributes in provider.
-        Args:
-            names: List of names of the attributes to edit
-            values: List of the new values to set
-        """
-        for arg in (names, values):
-            if type(arg) not in (tuple, list):
-                raise TypeError('add_custom_attributes(): '
-                    'Argument types should be list or tuple. got: {} = {}'
-                    .format(repr(arg), type(arg)))
-            elif not len(names) == len(arg):
-                raise Exception('add_custom_attributes(): '
-                    'All arguments should have the same length.')
+    def edit_custom_attributes(self, *custom_attributes):
+        """Editing static custom attributes in provider."""
+        if not custom_attributes:
+            raise TypeError('{} takes at least 1 argument.'
+                            .format(self.edit_custom_attributes.__name__))
+        for attr in custom_attributes:
+            if not isinstance(attr, CustomAttribute):
+                raise TypeError('All arguments should be of type {}. ({} != {})'
+                                .format(CustomAttribute, type(attr), CustomAttribute))
         attribs = self.custom_attributes()
         payload = {
             "action": "edit",
             "resources": [{
-                "href": attribs[name]['href'],
-                "value": value
-            } for name, value in zip(names, values)]}
+                "href": filter(lambda attr: attr.name == ca.name, attribs)[-1].href,
+                "value": ca.value
+            } for ca in custom_attributes]}
         self.appliance.rest_api.post(path.join(self._href(), 'custom_attributes'), **payload)
 
-    def delete_custom_attributes(self, names=None):
-        """Deleting static custom attributes from provider.
-        Args:
-            names: List of names of the attributes to delete
-                if names is None: delete all
-        """
-        if type(names) not in (list, tuple, NoneType):
-            raise TypeError('delete_custom_attributes(names={}):'
-                            ' names type should be list, tuple or NoneType. got {}'
-                            .format(names, type(names)))
+    def delete_custom_attributes(self, *names):
+        """Deleting static custom attributes from provider."""
+        for name in names:
+            if type(name) is not str:
+                raise TypeError('Type of names should be {}. ({} != {})'
+                                .format(str, type(name), str))
         attribs = self.custom_attributes()
         if not names:
-            names = attribs.keys()
+            names = [attr.name for attr in attribs]
         payload = {
             "action": "delete",
             "resources": [{
-                "href": attr['href'],
-            } for name, attr in attribs.items() if name in names]}
+                "href": attr.href,
+            } for attr in attribs if attr.name in names]}
         self.appliance.rest_api.post(
             path.join(self._href(), 'custom_attributes'), **payload)
