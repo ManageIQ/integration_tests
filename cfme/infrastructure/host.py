@@ -91,7 +91,7 @@ match_page = partial(match_location, controller='host',
                      title='Hosts')
 
 
-class Host(Updateable, Pretty, Navigatable):
+class Host(Updateable, Navigatable, Pretty):
     """
     Model of an infrastructure host in cfme.
 
