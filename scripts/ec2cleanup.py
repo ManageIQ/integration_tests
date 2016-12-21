@@ -11,14 +11,15 @@ from utils.providers import list_providers, get_mgmt
 
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
-    parser.add_argument('--max-hours', dest='maxhours', type=int, default=24, help='Max hours '
-        'since Instanced was created. (Default is 24 hours.)')
-    parser.add_argument('--exclude-instances', nargs='+', help='List of instances, '
-        'which should be excluded.')
-    parser.add_argument('--exclude-volumes', nargs='+', help='List of volumes, which should be '
-        'excluded.')
-    parser.add_argument('--exclude-eips', nargs='+', help='List of EIPs, which should be '
-        'excluded. Allocation_id or public IP are allowed.')
+    parser.add_argument('--max-hours', dest='maxhours', type=int, default=24,
+                        help='Max hours since Instanced was created. (Default is 24 hours.)')
+    parser.add_argument('--exclude-instances', nargs='+',
+                        help='List of instances, which should be excluded.')
+    parser.add_argument('--exclude-volumes', nargs='+',
+                        help='List of volumes, which should be excluded.')
+    parser.add_argument('--exclude-eips', nargs='+',
+                        help='List of EIPs, which should be '
+                             'excluded. Allocation_id or public IP are allowed.')
     parser.add_argument('text_to_match', nargs='*', default=None,
                         help='Regex in the name of vm to be affected, can be use multiple times'
                              "['^test_', '^jenkins', '^i-']")
@@ -44,20 +45,23 @@ def delete_old_instances(texts, ec2provider, provider_key, date,
         with open(output, 'a+') as report:
             print("\n{}:\n-----------------------\n".format(provider_key))
             report.write("\n{}:\n-----------------------\n".format(provider_key))
-            for instance in ec2provider.list_vm(include_terminated=True):
-                creation = ec2provider.vm_creation_time(instance)
-                print("EC2:{}  {}  \t {}".format(
-                    provider_key, instance, (date - creation)))
-                report.write("EC2:{}  {}  \t {}\n".format(
-                    provider_key, instance, (date - creation)))
-                if excluded_instances and instance in excluded_instances:
+            for vm in ec2provider.list_vm(include_terminated=True):
+                creation = ec2provider.vm_creation_time(vm)
+                message = "EC2:{provider}  {instance}  \t {time} \t {instance_type} " \
+                          "\t {instance_status}\n".format(provider=provider_key, instance=vm,
+                                                          time=(date - creation),
+                                                          instance_type=ec2provider.vm_type(vm),
+                                                          instance_status=ec2provider.vm_status(vm))
+                print(message)
+                report.write(message)
+                if excluded_instances and vm in excluded_instances:
                     continue
-                if not match(matchers, instance):
+                if not match(matchers, vm):
                     continue
                 difference = (date - creation).total_seconds()
                 if difference >= deletetime:
-                    ec2provider.delete_vm(instance_id=instance)
-                    print("EC2:{}  {} is successfully deleted".format(provider_key, instance))
+                    ec2provider.delete_vm(instance_id=vm)
+                    print("EC2:{}  {} is successfully deleted".format(provider_key, vm))
     except Exception as e:
         logger.error(e)
 
