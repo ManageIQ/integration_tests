@@ -311,3 +311,42 @@ def test_openstack_provider_has_api_version():
     pytest.sel.wait_for_ajax()
     assert pytest.sel.is_displayed(
         prov.properties_form.api_version), "API version select is not visible"
+
+
+class TestProvidersRESTAPI(object):
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_cloud_networks_query(self, setup_a_provider, rest_api, from_detail):
+        """Tests querying cloud providers and cloud_networks collection for network info.
+
+        Metadata:
+            test_flag: rest
+        """
+        if from_detail:
+            networks = rest_api.collections.providers.get(name=setup_a_provider.name).cloud_networks
+        else:
+            networks = rest_api.collections.cloud_networks
+        assert len(networks) > 0
+        assert len(networks) == networks.subcount
+        assert len(networks.find_by(enabled=True)) >= 1
+        assert 'CloudNetwork' in networks[0].type
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_security_groups_query(self, setup_a_provider, rest_api):
+        """Tests querying cloud networks subcollection for security groups info.
+
+        Metadata:
+            test_flag: rest
+        """
+        network = rest_api.collections.providers.get(name=setup_a_provider.name).cloud_networks[0]
+        network.reload(attributes='security_groups')
+        security_groups = network.security_groups
+        # "security_groups" needs to be present, even if it's just an empty list
+        assert isinstance(security_groups, list)
+        # if it's not empty, check type
+        if len(security_groups) > 0:
+            assert 'SecurityGroup' in security_groups[0]['type']
