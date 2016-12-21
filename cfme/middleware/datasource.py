@@ -1,12 +1,11 @@
-from navmazing import NavigateToSibling, NavigateToAttribute
-
-from cfme.common import Taggable
+from cfme.common import Taggable, UtilizationMixin
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator, flash
 from cfme.web_ui.menu import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
+from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -59,7 +58,7 @@ def _get_datasources_page(provider=None, server=None):
         navigate_to(MiddlewareDatasource, 'All')
 
 
-class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable):
+class MiddlewareDatasource(MiddlewareBase, Taggable, Navigatable, UtilizationMixin):
     """
     MiddlewareDatasource class provides details on datasource page.
     Class methods available to get existing datasources list
