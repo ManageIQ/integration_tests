@@ -345,5 +345,8 @@ class TestProvidersRESTAPI(object):
         network = rest_api.collections.providers.get(name=setup_a_provider.name).cloud_networks[0]
         network.reload(attributes='security_groups')
         security_groups = network.security_groups
-        assert len(security_groups) > 0
-        assert 'SecurityGroup' in security_groups[0]['type']
+        # "security_groups" needs to be present, even if it's just an empty list
+        assert isinstance(security_groups, list)
+        # if it's not empty, check type
+        if len(security_groups) > 0:
+            assert 'SecurityGroup' in security_groups[0]['type']
