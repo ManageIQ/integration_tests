@@ -1,6 +1,15 @@
 from . import ContainersProvider
 from utils.varmeth import variable
 from mgmtsystem.openshift import Openshift
+from os import path
+
+
+class CustomAttribute(object):
+    def __init__(self, name, value, field_type=None, href=None):
+        self.name = name
+        self.value = value
+        self.field_type = field_type
+        self.href = href
 
 
 @ContainersProvider.add_provider_type
@@ -19,6 +28,10 @@ class OpenshiftProvider(ContainersProvider):
         # Workaround - randomly fails on 5.5.0.8 with no validation
         # probably a js wait issue, not reproducible manually
         super(OpenshiftProvider, self).create(validate_credentials=validate_credentials, **kwargs)
+
+    def _href(self):
+        return self.appliance.rest_api.collections.providers\
+            .find_by(name=self.name).resources[0].href
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -47,3 +60,88 @@ class OpenshiftProvider(ContainersProvider):
             hostname=prov_config.get('hostname', None) or prov_config['ip_address'],
             port=prov_config['port'],
             provider_data=prov_config)
+
+    def custom_attributes(self):
+        """returns custom attributes"""
+        response = self.appliance.rest_api.get(
+            path.join(self._href(), 'custom_attributes'))
+        out = []
+        for attr_dict in response['resources']:
+            attr = self.appliance.rest_api.get(attr_dict['href'])
+            out.append(
+                CustomAttribute(
+                    attr['name'], attr['value'],
+                    (attr['field_type'] if 'field_type' in attr else None),
+                    attr_dict['href']
+                )
+            )
+        return out
+
+    def add_custom_attributes(self, *custom_attributes):
+        """Adding static custom attributes to provider.
+        Args:
+            custom_attributes: The custom attributes to add.
+        returns: response.
+        """
+        if not custom_attributes:
+            raise TypeError('{} takes at least 1 argument.'
+                            .format(self.add_custom_attributes.__name__))
+        for attr in custom_attributes:
+            if not isinstance(attr, CustomAttribute):
+                raise TypeError('All arguments should be of type {}. ({} != {})'
+                                .format(CustomAttribute, type(attr), CustomAttribute))
+        payload = {
+            "action": "add",
+            "resources": [{
+                "name": ca.name,
+                "value": str(ca.value)
+            } for ca in custom_attributes]}
+        for i, fld_tp in enumerate([attr.field_type for attr in custom_attributes]):
+            if fld_tp:
+                payload['resources'][i]['field_type'] = fld_tp
+        return self.appliance.rest_api.post(
+            path.join(self._href(), 'custom_attributes'), **payload)
+
+    def edit_custom_attributes(self, *custom_attributes):
+        """Editing static custom attributes in provider.
+        Args:
+            custom_attributes: The custom attributes to edit.
+        returns: response.
+        """
+        if not custom_attributes:
+            raise TypeError('{} takes at least 1 argument.'
+                            .format(self.edit_custom_attributes.__name__))
+        for attr in custom_attributes:
+            if not isinstance(attr, CustomAttribute):
+                raise TypeError('All arguments should be of type {}. ({} != {})'
+                                .format(CustomAttribute, type(attr), CustomAttribute))
+        attribs = self.custom_attributes()
+        payload = {
+            "action": "edit",
+            "resources": [{
+                "href": filter(lambda attr: attr.name == ca.name, attribs)[-1].href,
+                "value": ca.value
+            } for ca in custom_attributes]}
+        return self.appliance.rest_api.post(
+            path.join(self._href(), 'custom_attributes'), **payload)
+
+    def delete_custom_attributes(self, *names):
+        """Deleting static custom attributes from provider.
+        Args:
+            names: The names of the custom attributes to delete.
+        returns: response.
+        """
+        for name in names:
+            if type(name) is not str:
+                raise TypeError('Type of names should be {}. ({} != {})'
+                                .format(str, type(name), str))
+        attribs = self.custom_attributes()
+        if not names:
+            names = [attr.name for attr in attribs]
+        payload = {
+            "action": "delete",
+            "resources": [{
+                "href": attr.href,
+            } for attr in attribs if attr.name in names]}
+        return self.appliance.rest_api.post(
+            path.join(self._href(), 'custom_attributes'), **payload)
