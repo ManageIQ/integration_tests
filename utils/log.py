@@ -153,12 +153,15 @@ _default_conf = {
     'max_file_backups': 0,
     'errors_to_console': False,
     'file_format': '%(asctime)-15s [%(levelname).1s] %(message)s (%(source)s)',
-    'stream_format': '[%(levelname)s] %(message)s (%(source)s)'
+    'stream_format': '[%(levelname)s] %(message)s (%(source)s)',
+    'default_format': '%(asctime)s,%(msecs)d [%(levelname)s] %(message)s'
 }
 
 # let logging know we made a TRACE level
 logging.TRACE = 5
 logging.addLevelName(logging.TRACE, 'TRACE')
+logging.basicConfig(format=_default_conf['default_format'], datefmt='%d-%m %H:%M:%S',
+                    level=logging.INFO)
 
 
 class logger_wrap(object):
