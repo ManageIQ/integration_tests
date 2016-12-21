@@ -3,6 +3,7 @@ from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 from cfme.containers.service import Service, list_tbl
+from cfme.fixtures import pytest_selenium as sel
 
 
 pytestmark = [
@@ -32,6 +33,9 @@ def test_containers_default_services():
         ALL DefaultServices above should exist (appear in the table).
     """
     navigate_to(Service, 'All')
+    sel.wait_until(lambda *args: not sel.is_displayed_text('No Records Found'),
+                   'There is no container services at all. ((!) No Records Found)'
+                   'Maybe the provider didn\'t load?', timeout=120.0)
     names = [r[2].text for r in list_tbl.rows()]
     not_in_list = [serv for serv in DefaultServices if serv not in names]
     if not_in_list:
