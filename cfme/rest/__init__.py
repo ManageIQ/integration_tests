@@ -9,6 +9,7 @@ from cfme.services import requests
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
+from utils.api import APIException
 
 
 def service_catalogs(request, rest_api):
@@ -354,3 +355,23 @@ def mark_vm_as_template(rest_api, provider, vm_name):
         lambda: rest_api.collections.templates.find_by(name=vm_name).subcount != 0,
         num_sec=700, delay=15)
     return rest_api.collections.templates.get(name=vm_name)
+
+
+def arbitration_settings(request, rest_api, num=2):
+    collection = rest_api.collections.arbitration_settings
+    body = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric(5)
+        body.append({
+            'name': 'test_settings_{}'.format(uniq),
+            'display_name': 'Test Settings {}'.format(uniq)})
+    response = collection.action.create(*body)
+
+    @request.addfinalizer
+    def _finished():
+        try:
+            collection.action.delete(*response)
+        except APIException:
+            pass
+
+    return response
