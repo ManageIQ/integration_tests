@@ -48,15 +48,14 @@ def upload_vhd(client, url, library, vhd):
 
     script11 = '(New-Object System.Net.WebClient).DownloadFile("{}", "{}{}");'.format(
         url, library, vhd)
-    script11 += "$lib = Get-SCLibraryShare;"
-    script11 += "$lib01 = $lib[1];"
-    script11 += "Read-SCLibraryShare $lib01;"
+    script11 += "$lib = Get-SCLibraryShare |  where {$_.name -eq 'MSSCVMMLibrary' };"
+    script11 += "Read-SCLibraryShare $lib[0];"
 
     print("Invoke-Command -scriptblock {{{}}}".format(script11))
     client.run_script("Invoke-Command -scriptblock {{{}}}".format(script11))
 
 
-def make_template(client, hostname, name, library, network, ostype, username_scvmm, cores, ram):
+def make_template(client, host_fqdn, name, library, network, ostype, username_scvmm, cores, ram):
     src_path = "{}{}.vhd".format(library, name)
     print("SCVMM: Adding HW Resource File and Template to Library")
     script2 = "$JobGroupId01 = [Guid]::NewGuid().ToString();"
@@ -69,7 +68,7 @@ def make_template(client, hostname, name, library, network, ostype, username_scv
             -CPUCount " + str(cores) + " -JobGroup $JobGroupID01;"
     script2 += "$JobGroupId02 = [Guid]::NewGuid().ToString();"
     script2 += "$VHD = Get-SCVirtualHardDisk | where {$_.Location -eq '" + src_path + "'} | \
-                where {$_.HostName -eq " + hostname + "};"
+                where {$_.HostName -eq '" + host_fqdn + "'};"
     script2 += "New-SCVirtualDiskDrive -IDE -Bus 0 -LUN 0 "
     script2 += "-JobGroup $JobGroupID02 -VirtualHardDisk $VHD;"
     script2 += "$HWProfile = Get-SCHardwareProfile | where { $_.Name -eq '" + name + "' };"
@@ -144,7 +143,7 @@ def run(**kwargs):
                                    kwargs.get('image_url'), kwargs.get('template_name'))
         check_kwargs(**kwargs)
         mgmt_sys = cfme_data['management_systems'][provider]
-        hostname_fqdn = mgmt_sys['hostname']
+        host_fqdn = mgmt_sys['hostname_fqdn']
         creds = credentials[mgmt_sys['credentials']]
 
         # For powershell to work, we need to extract the User Name from the Domain
@@ -199,7 +198,7 @@ def run(**kwargs):
 
                 make_template(
                     client,
-                    hostname_fqdn,
+                    host_fqdn,
                     new_template_name,
                     use_library,
                     use_network,
