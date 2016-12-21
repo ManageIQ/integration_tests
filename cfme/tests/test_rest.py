@@ -223,7 +223,7 @@ def test_delete_arbitration_settings(request, rest_api, from_detail):
     if from_detail:
         methods = ['post', 'delete']
         for i, ent in enumerate(response):
-            ent.action.delete(force_method=methods[i%2])
+            ent.action.delete(force_method=methods[i % 2])
             with error.expected("ActiveRecord::RecordNotFound"):
                 ent.action.delete()
     else:
