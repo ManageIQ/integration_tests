@@ -5,6 +5,7 @@ from utils.version import current_version
 from cfme.web_ui import toolbar as tb, Quadicon, breadcrumbs_names
 from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.provider import ContainersProvider
+from utils.wait import wait_for
 
 
 pytestmark = [
@@ -52,4 +53,7 @@ def test_remove_selected_containers_provider():
     name = select_first_provider_and_get_its_name()
     ContainersProvider(name).delete(cancel=False)
     sel.refresh()
-    assert not Quadicon(name).exists
+    assert wait_for(lambda *args: not Quadicon(name).exists,
+                    'Waiting for containers provider to be removed.',
+                    delay=5,
+                    num_sec=60.0), 'Failed to remove containers provider'

@@ -62,6 +62,6 @@ def test_data_integrity_for_topology(test_data):
     navigate_to(test_data.object, 'All')
     if statusbox_value > 0:
         tb.select('Grid View')
-        assert len(map(lambda i: i, Quadicon.all())) == statusbox_value
+        assert len(list(Quadicon.all())) == statusbox_value
     else:
         assert sel.is_displayed_text('No Records Found.')
