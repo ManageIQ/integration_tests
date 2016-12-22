@@ -1,74 +1,65 @@
 import pytest
-
-from cfme.containers.pod import Pod
-from cfme.containers.service import Service
-from cfme.containers.node import Node
-from cfme.containers.replicator import Replicator
-from cfme.containers.image import Image
-from cfme.containers.project import Project
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
+from utils.version import current_version
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
-from cfme.cloud.availability_zone import details_page
+from cfme.containers.pod import Pod, match_page as pod_match_page
+from cfme.containers.service import Service, match_page as service_match_page
+from cfme.containers.node import Node, match_page as node_match_page
+from cfme.containers.replicator import Replicator, match_page as replicator_match_page
+from cfme.containers.image import Image, match_page as image_match_page
+from cfme.containers.project import Project, match_page as project_match_page
+from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import CheckboxTable, toolbar as tb
+from random import sample
+from collections import namedtuple
 
 
-pytestmark = [pytest.mark.tier(2)]
+pytestmark = [
+    pytest.mark.uncollectif(
+        lambda: current_version() < "5.6"),
+    pytest.mark.usefixtures('setup_provider'),
+    pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
     testgen.container_providers, scope="function")
 
 
-TEST_OBJECTS = [Pod, Service, Node, Replicator, Image, Project]
+DataSet = namedtuple('DataSet', ['object', 'match_page'])
 
+TEST_OBJECTS = [DataSet(Pod, pod_match_page),
+                DataSet(Service, service_match_page),
+                DataSet(Node, node_match_page),
+                DataSet(Replicator, replicator_match_page),
+                DataSet(Image, image_match_page),
+                DataSet(Project, project_match_page)]
 rel_values = (0, 'Unknown image source', 'registry.access.redhat.com')
 
-
-# 9930 # 9892 # 9965 # 9983 # 9869
+# CMP-9930 CMP-9892 CMP-9965 CMP-9983 CMP-9869
 
 
 @pytest.mark.parametrize('cls', TEST_OBJECTS)
 def test_relationships_tables(provider, cls):
-    """  This module verifies the integrity of the Relationships table.
-               clicking on each field in the Relationships table takes the user
-              to either Summary page where we verify that the field that appears
-             in the Relationships table also appears in the Properties table,
-            or to the page where the number of rows is equal to the number
-           that is displayed in the Relationships table.
-
+    """This module verifies the integrity of the Relationships table.
+    clicking on each field in the Relationships table takes the user
+    to either Summary page where we verify that the field that appears
+    in the Relationships table also appears in the Properties table,
+    or to the page where the number of rows is equal to the number
+    that is displayed in the Relationships table.
     """
-    navigate_to(cls, 'All')
+    navigate_to(cls.object, 'All')
     tb.select('List View')
     list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
     cls_instances = [r.name.text for r in list_tbl.rows()]
-    cls_instances_revised = [ch for ch in cls_instances
-                             if 'nginx' not in ch and not ch.startswith('metrics')]
-    for name in cls_instances_revised:
-        navigate_to(cls, 'All')
-        obj = cls(name, provider)
-        rel_tbl = obj.summary.groups()['relationships']
-        keys = [key for key in rel_tbl.keys]
+    cls_instances = sample(cls_instances, min(2, len(cls_instances)))
+    for name in cls_instances:
+        obj = cls.object(name, provider)
+        keys = sample(obj.summary.relationships.keys,
+                      min(1, len(obj.summary.relationships.keys)))
         for key in keys:
             # reload summary to prevent StaleElementReferenceException:
             obj.summary.reload()
-            rel_tbl = obj.summary.groups()['relationships']
-            element = getattr(rel_tbl, key)
-            value = element.value
-            if value in rel_values:
+            element = getattr(obj.summary.relationships, key)
+            if element.value in rel_values:
                 continue
             sel.click(element)
-
-            try:
-                value = int(value)
-            except ValueError:
-                assert value == details_page.infoblock.text(
-                    'Properties', 'Name')
-            else:
-                # best effort to include all items from rel on one page
-                if paginator.page_controls_exist():
-                    paginator.results_per_page(1000)
-                else:
-                    logger.warning(
-                        'Unable to increase results per page, '
-                        'assertion against number of rows may fail.')
-                assert len([r for r in list_tbl.rows()]) == value
+            # TODO: find a better indication that we are in the right page:
+            sel.is_displayed_text('{} (Summary)'.format(element.text_value))
