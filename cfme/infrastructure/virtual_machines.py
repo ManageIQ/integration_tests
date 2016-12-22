@@ -379,11 +379,12 @@ class Vm(BaseVM, Common):
         sel.click(InfoBlock("Properties", "Snapshots"))
         text = sel.text("//a[contains(normalize-space(.), '(Active)')]|"
             "//li[contains(normalize-space(.), '(Active)')]").strip()
-        return re.sub(r"\s*\(Active\)$", "", text)
+        # In 5.6 the locator returns the entire tree string, snapshot name is after a newline
+        return re.sub(r"\s*\(Active\)$", "", text.split('\n')[-1:][0])
 
     @property
     def current_snapshot_description(self):
-        """Returns the current snapshot name."""
+        """Returns the current snapshot description."""
         self.load_details(refresh=True)
         sel.click(InfoBlock("Properties", "Snapshots"))
         l = "|".join([
