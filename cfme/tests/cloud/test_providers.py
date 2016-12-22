@@ -12,13 +12,16 @@ from cfme import Credential
 from cfme.exceptions import FlashMessageException
 from cfme.cloud.provider import (discover, wait_for_a_provider,
     CloudProvider, prop_region)
+from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
 from utils import testgen, version, providers
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
-from cfme import test_requirements
+from utils.api import APIException
+from utils.log import logger
+
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
 
 
@@ -314,6 +317,26 @@ def test_openstack_provider_has_api_version():
 
 
 class TestProvidersRESTAPI(object):
+    @pytest.yield_fixture(scope="function")
+    def arbitration_profiles(self, rest_api, setup_a_provider):
+        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
+        body = []
+        providers = [{'id': provider.id}, {'href': provider.href}]
+        for i in range(2):
+            body.append({
+                'name': 'test_settings_{}'.format(fauxfactory.gen_alphanumeric(5)),
+                'provider': providers[i % 2]
+            })
+        response = rest_api.collections.arbitration_profiles.action.create(*body)
+
+        yield response
+
+        try:
+            rest_api.collections.arbitration_profiles.action.delete(*response)
+        except APIException:
+            # profiles can be deleted by tests, just log warning
+            logger.warning("Failed to delete arbitration profiles.")
+
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize(
@@ -350,3 +373,68 @@ class TestProvidersRESTAPI(object):
         # if it's not empty, check type
         if len(security_groups) > 0:
             assert 'SecurityGroup' in security_groups[0]['type']
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_create_arbitration_profiles(self, rest_api, arbitration_profiles):
+        """Tests creation of arbitration profiles.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(arbitration_profiles) > 0
+        record = rest_api.collections.arbitration_profiles.get(id=arbitration_profiles[0].id)
+        assert record._data == arbitration_profiles[0]._data
+        assert 'ArbitrationProfile' in arbitration_profiles[0].type
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_delete_arbitration_profiles(self, rest_api, arbitration_profiles, from_detail):
+        """Tests delete arbitration profiles.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(arbitration_profiles) > 0
+        collection = rest_api.collections.arbitration_profiles
+        if from_detail:
+            methods = ['post', 'delete']
+            for i, ent in enumerate(arbitration_profiles):
+                ent.action.delete(force_method=methods[i % 2])
+                with error.expected("ActiveRecord::RecordNotFound"):
+                    ent.action.delete()
+        else:
+            collection.action.delete(*arbitration_profiles)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                collection.action.delete(*arbitration_profiles)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_edit_arbitration_profiles(self, rest_api, arbitration_profiles, from_detail):
+        """Tests editing of arbitration profiles.
+
+        Metadata:
+            test_flag: rest
+        """
+        response_len = len(arbitration_profiles)
+        assert response_len > 0
+        zone = rest_api.collections.availability_zones[-1]
+        locators = [{'id': zone.id}, {'href': zone.href}]
+        new = [{'availability_zone': locators[i % 2]} for i in range(response_len)]
+        if from_detail:
+            edited = []
+            for i in range(response_len):
+                edited.append(arbitration_profiles[i].action.edit(**new[i]))
+        else:
+            for i in range(response_len):
+                new[i].update(arbitration_profiles[i]._ref_repr())
+            edited = rest_api.collections.arbitration_profiles.action.edit(*new)
+        assert len(edited) == response_len
+        for i in range(response_len):
+            assert edited[i].availability_zone_id == zone.id
