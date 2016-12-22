@@ -24,14 +24,14 @@ creation_form = Form([
     ('cloud_tenant', Select("//select[@id='cloud_tenant_id']"))
 ])
 
-__device_input = ('device_path', Input('device_path'))
-__select_vm = ('select_vm', Select("//select[@id='vm_id']"))
-__select_volume = ('select_volume', Select("//select[@id='volume_id']"))
+_device_input = ('device_path', Input('device_path'))
+_select_vm = ('select_vm', Select("//select[@id='vm_id']"))
+_select_volume = ('select_volume', Select("//select[@id='volume_id']"))
 
-attach_inst_page_form = Form([__device_input, __select_volume])
-attach_vlm_page_form = Form([__device_input, __select_vm])
-detach_inst_page_form = Form([__select_volume])
-detach_vlm_page_form = Form([__select_vm])
+attach_inst_page_form = Form([_device_input, _select_volume])
+attach_vlm_page_form = Form([_device_input, _select_vm])
+detach_inst_page_form = Form([_select_volume])
+detach_vlm_page_form = Form([_select_vm])
 
 list_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
