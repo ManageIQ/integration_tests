@@ -439,27 +439,27 @@ class Paginator(Widget):
 
     It is mainly used in Paginator Pane.
     """
-    def __init__(self, parent, logger=None):
-        super(Paginator, self).__init__(parent=parent, logger=logger)
+    PAGINATOR_CTL = './/ul[@class="pagination"]'
+    CUR_PAGE_CTL = './li/span/input[@name="limitstart"]/..'
+    PAGE_BUTTON_CTL = './li[contains(@class, {})]/span'
 
-        if not self.parent.ROOT.endswith('/'):
-            separator = '/'
-        else:
-            separator = ''
-        self.ROOT = self.parent_view.ROOT + separator + './/ul[@class="pagination"]/'
+    def __locator__(self):
+        return self._paginator
 
-        self.CUR_PAGE_LOCATOR = self.ROOT + './li/span/input[@name="limitstart"]/..'
-        self.PAGE_BUTTON_LOCATOR = self.ROOT + './li[contains(@class, {})]/span'
+    @property
+    def _paginator(self):
+        return self.browser.element(self.PAGINATOR_CTL, parent=self.parent_view)
 
-    def _is_enabled(self, locator):
-        return 'disabled' not in self.browser.classes(locator + '/..')
+    def _is_enabled(self, element):
+        return 'disabled' not in self.browser.classes(element.find_element_by_xpath('..'))
 
     def _click_button(self, cmd):
-        locator = self.PAGE_BUTTON_LOCATOR.format(quote(cmd))
-        if self._is_enabled(locator):
-            self.browser.click(locator)
+        cur_page_btn = self.browser.element(self.PAGE_BUTTON_CTL.format(quote(cmd)),
+                                            parent=self._paginator)
+        if self._is_enabled(cur_page_btn):
+            self.browser.click(cur_page_btn)
         else:
-            raise NoSuchElementException('such button is either absent or grayed out')
+            raise NoSuchElementException('such button {} is absent/grayed out'.format(cmd))
 
     def next_page(self):
         self._click_button('next')
@@ -474,7 +474,8 @@ class Paginator(Widget):
         self._click_button('first')
 
     def page_info(self):
-        text = self.browser.text(self.CUR_PAGE_LOCATOR)
+        cur_page = self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator)
+        text = cur_page.text
         return re.search('(\d+)\s+of\s+(\d+)', text).groups()
 
 
@@ -483,7 +484,7 @@ class PaginationPane(View):
 
     The intention of this view is to use it as nested view on f.e. Infrastructure Providers page.
     """
-    ROOT = '//div[@id="paging_div"]/'
+    ROOT = '//div[@id="paging_div"]'
 
     check_all_items = Checkbox(id='masterToggle')
     sort_by = BootstrapSelect(id='sort_choice')
