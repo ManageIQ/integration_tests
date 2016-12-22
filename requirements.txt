@@ -34,11 +34,7 @@ PyGithub
 
 pytest==2.9.2
 python-bugzilla>=1.2.0
-python-cinderclient
 python-dateutil
-python-keystoneclient
-python-novaclient
-python-heatclient
 pywinrm
 PyYAML
 requests
