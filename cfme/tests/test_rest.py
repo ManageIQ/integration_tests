@@ -6,7 +6,7 @@ import utils.error as error
 
 from cfme import test_requirements
 from cfme.rest import vm as _vm
-from cfme.rest import arbitration_settings as _arbitration_settings
+from cfme.rest import arbitration_settings
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 from utils import testgen, version
@@ -196,15 +196,16 @@ def test_bulk_query_groups(rest_api):
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_create_arbitration_settings(request, rest_api):
-    """Tests create arbitration_settings
+    """Tests create arbitration settings.
 
     Metadata:
         test_flag: rest
     """
-    response = _arbitration_settings(request, rest_api, num=2)
+    num_settings = 2
+    response = arbitration_settings(request, rest_api, num=num_settings)
+    assert len(response) == num_settings
     collection = rest_api.collections.arbitration_settings
     record = collection.get(id=response[0].id)
-    assert len(response) == 2
     assert record._data == response[0]._data
 
 
@@ -213,12 +214,14 @@ def test_create_arbitration_settings(request, rest_api):
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
 def test_delete_arbitration_settings(request, rest_api, from_detail):
-    """Tests delete arbitration_settings
+    """Tests delete arbitration settings.
 
     Metadata:
         test_flag: rest
     """
-    response = _arbitration_settings(request, rest_api, num=2)
+    num_settings = 2
+    response = arbitration_settings(request, rest_api, num=num_settings)
+    assert len(response) == num_settings
     collection = rest_api.collections.arbitration_settings
     if from_detail:
         methods = ['post', 'delete']
@@ -237,22 +240,24 @@ def test_delete_arbitration_settings(request, rest_api, from_detail):
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
 def test_edit_arbitration_settings(request, rest_api, from_detail):
-    """Tests edit arbitration_settings
+    """Tests edit arbitration settings.
 
     Metadata:
         test_flag: rest
     """
     num_settings = 2
-    response = _arbitration_settings(request, rest_api, num=num_settings)
+    response = arbitration_settings(request, rest_api, num=num_settings)
+    assert len(response) == num_settings
     uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_settings)]
     new = [{'name': 'test_edit{}'.format(u), 'display_name': 'Test Edit{}'.format(u)} for u in uniq]
     if from_detail:
         edited = []
-        for i, _ in enumerate(response):
+        for i in range(num_settings):
             edited.append(response[i].action.edit(**new[i]))
     else:
-        for i, _ in enumerate(response):
+        for i in range(num_settings):
             new[i].update(response[i]._ref_repr())
         edited = rest_api.collections.arbitration_settings.action.edit(*new)
-    for i, _ in enumerate(edited):
+    assert len(edited) == num_settings
+    for i in range(num_settings):
         assert edited[i].name == new[i]['name'] and edited[i].display_name == new[i]['display_name']

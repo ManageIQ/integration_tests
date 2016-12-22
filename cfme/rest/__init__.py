@@ -10,6 +10,7 @@ from utils.providers import setup_a_provider as _setup_a_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 from utils.api import APIException
+from utils.log import logger
 
 
 def service_catalogs(request, rest_api):
@@ -372,6 +373,7 @@ def arbitration_settings(request, rest_api, num=2):
         try:
             collection.action.delete(*response)
         except APIException:
-            pass
+            # settings can be deleted by tests, just log warning
+            logger.warning("Failed to delete arbitration settings.")
 
     return response
