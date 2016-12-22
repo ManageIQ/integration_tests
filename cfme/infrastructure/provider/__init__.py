@@ -149,8 +149,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
     page_name = "infrastructure"
-    instances_page_name = "infra_vm_and_templates"
-    templates_page_name = "infra_vm_and_templates"
+    templates_destination_name = "Templates"
     quad_name = "infra_prov"
     _properties_region = prop_region  # This will get resolved in common to a real form
     add_provider_button = deferred_verpick({
@@ -380,6 +379,28 @@ class Edit(CFMENavigateStep):
     def step(self):
         sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
         cfg_btn('Edit Selected Infrastructure Providers')
+
+
+@navigator.register(InfraProvider, 'Instances')
+class Instances(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return match_page(summary='{} (All VMs)'.format(self.obj.name))
+
+    def step(self, *args, **kwargs):
+        sel.click(InfoBlock.element('Relationships', 'VMs and Instances'))
+
+
+@navigator.register(InfraProvider, 'Templates')
+class Templates(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return match_page(summary='{} (All Templates)'.format(self.obj.name))
+
+    def step(self, *args, **kwargs):
+        sel.click(InfoBlock.element('Relationships', 'Templates'))
 
 
 def get_all_providers(do_not_navigate=False):

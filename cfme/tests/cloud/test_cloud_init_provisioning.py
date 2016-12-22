@@ -4,10 +4,14 @@
 import fauxfactory
 import pytest
 
-from cfme.common.vm import VM
-from cfme.fixtures import pytest_selenium as sel
+from cfme.cloud.instance import Instance
+from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
+from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
+from cfme.cloud.instance.azure import AzureInstance  # NOQA
+from cfme.cloud.instance.gce import GCEInstance  # NOQA
 from cfme.infrastructure.pxe import get_template_from_config
 from utils import testgen, ssh
+from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
@@ -51,10 +55,11 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
     image = provisioning.get('ci-image', None) or provisioning['image']['name']
     note = ('Testing provisioning from image {} to vm {} on provider {}'.format(
         image, vm_name, provider.key))
+    logger.info(note)
 
     mgmt_system = provider.mgmt
 
-    instance = VM.factory(vm_name, provider, image)
+    instance = Instance.factory(vm_name, provider, image)
 
     request.addfinalizer(instance.delete_from_provider)
 
@@ -75,7 +80,8 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
         inst_args['cloud_network'] = provisioning['cloud_network']
         inst_args['public_ip_address'] = floating_ip
 
-    sel.force_navigate("clouds_instances_by_provider")
+    logger.info('Instance args: {}'.format(inst_args))
+
     instance.create(**inst_args)
 
     connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=300,

@@ -18,7 +18,8 @@ from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui.menu import nav
-from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio
+from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio, \
+    InfoBlock, match_location
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
 from utils.appliance import Navigatable
@@ -109,6 +110,8 @@ cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
 
+match_page = partial(match_location, controller='ems_cloud', title='Cloud Providers')
+
 nav.add_branch('clouds_providers',
                {'clouds_provider_new': lambda _: cfg_btn('Add a New Cloud Provider'),
                 'clouds_provider_discover': lambda _: cfg_btn('Discover Cloud Providers'),
@@ -148,8 +151,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
     page_name = "clouds"
-    instances_page_name = "clouds_instances_by_provider"
-    templates_page_name = "clouds_images_by_provider"
+    templates_destination_name = "Images"
     quad_name = "cloud_prov"
     vm_name = "Instances"
     template_name = "Images"
@@ -270,6 +272,28 @@ class Timelines(CFMENavigateStep):
 
     def step(self):
         mon_btn('Timelines')
+
+
+@navigator.register(CloudProvider, 'Instances')
+class Instances(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return match_page(summary='{} (All Instances)'.format(self.obj.name))
+
+    def step(self, *args, **kwargs):
+        sel.click(InfoBlock.element('Relationships', 'Instances'))
+
+
+@navigator.register(CloudProvider, 'Images')
+class Images(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return match_page(summary='{} (All Images)'.format(self.obj.name))
+
+    def step(self, *args, **kwargs):
+        sel.click(InfoBlock.element('Relationships', 'Images'))
 
 
 def get_all_providers(do_not_navigate=False):

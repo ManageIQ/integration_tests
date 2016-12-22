@@ -219,6 +219,13 @@ class InstanceNotFound(VmOrInstanceNotFound):
     pass
 
 
+class ImageNotFound(VmOrInstanceNotFound):
+    """
+    Raised if a specific image cannot be found
+    """
+    pass
+
+
 class TemplateNotFound(CFMEException):
     """
     Raised if a specific Template cannot be found.
