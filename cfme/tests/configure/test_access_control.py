@@ -482,6 +482,7 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
 
 def _go_to(dest):
     """Create a thunk that navigates to the given destination"""
+    nav.initialize()
     return lambda: nav.go_to(dest)
 
 
