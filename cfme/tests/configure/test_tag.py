@@ -3,15 +3,15 @@ import fauxfactory
 import pytest
 
 from cfme.configure.configuration import Category, Tag
-from cfme.rest import a_provider as _a_provider
-from cfme.rest import categories as _categories
-from cfme.rest import dialog as _dialog
-from cfme.rest import services as _services
-from cfme.rest import service_catalogs as _service_catalogs
-from cfme.rest import service_templates as _service_templates
-from cfme.rest import tenants as _tenants
-from cfme.rest import tags as _tags
-from cfme.rest import vm as _vm
+from cfme.rest.gen_data import a_provider as _a_provider
+from cfme.rest.gen_data import categories as _categories
+from cfme.rest.gen_data import dialog as _dialog
+from cfme.rest.gen_data import services as _services
+from cfme.rest.gen_data import service_catalogs as _service_catalogs
+from cfme.rest.gen_data import service_templates as _service_templates
+from cfme.rest.gen_data import tenants as _tenants
+from cfme.rest.gen_data import tags as _tags
+from cfme.rest.gen_data import vm as _vm
 from utils.api import APIException
 from utils.blockers import BZ
 from utils.update import update

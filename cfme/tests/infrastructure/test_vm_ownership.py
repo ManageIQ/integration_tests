@@ -1,7 +1,7 @@
 import pytest
 from cfme import test_requirements
-from cfme.rest import a_provider as _a_provider
-from cfme.rest import vm as _vm
+from cfme.rest.gen_data import a_provider as _a_provider
+from cfme.rest.gen_data import vm as _vm
 from utils import version
 
 

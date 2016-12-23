@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 from cfme.configure.configuration import Category
-from cfme.rest import categories as _categories
+from cfme.rest.gen_data import categories as _categories
 import pytest
 from utils.update import update
 from utils.wait import wait_for
