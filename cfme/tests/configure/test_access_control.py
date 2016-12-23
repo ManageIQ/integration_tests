@@ -201,6 +201,7 @@ def test_delete_default_user():
 
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[1090877])
+@pytest.mark.meta(blockers=[1408479])
 def test_current_user_login_delete(request):
     """Test for deleting current user login.
 
@@ -220,8 +221,13 @@ def test_current_user_login_delete(request):
     request.addfinalizer(user.delete)
     request.addfinalizer(login.login_admin)
     with user:
-        with error.expected("Current EVM User \"{}\" cannot be deleted".format(user.name)):
-            user.delete()
+        if version.current_version() >= '5.7':
+            navigate_to(user, 'Details')
+            menu_item = ('Configuration', 'Delete this User')
+            assert tb.exists(*menu_item) and tb.is_greyed(*menu_item), "Delete User is not dimmed"
+        else:
+            with error.expected("Current EVM User \"{}\" cannot be deleted".format(user.name)):
+                user.delete()
 
 
 @pytest.mark.tier(2)
