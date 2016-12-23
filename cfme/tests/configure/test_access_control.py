@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from time import sleep
 import traceback
+
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
@@ -277,14 +279,12 @@ def test_description_required_error_validation():
 
 @pytest.mark.tier(3)
 def test_delete_default_group():
-    flash_msg = version.pick({
-        '5.6': ("EVM Group \"{}\": Error during delete: A read only group cannot be deleted."),
-        '5.5': ("EVM Group \"{}\": Error during \'destroy\': A read only group cannot be deleted.")
-    })
+    flash_msg = "EVM Group \"{}\": Error during delete: A read only group cannot be deleted."
     group = Group(description='EvmGroup-administrator')
     navigate_to(Group, 'All')
     row = group_table.find_row_by_cells({'Name': group.description})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
+    sleep(5)  # todo: temporary fix of js issue, to remove when switch to widgetastic
     tb.select('Configuration', 'Delete selected Groups', invokes_alert=True)
     sel.handle_alert()
     flash.assert_message_match(flash_msg.format(group.description))
