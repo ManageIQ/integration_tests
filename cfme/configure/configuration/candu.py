@@ -1,6 +1,7 @@
 from cfme import web_ui as ui
 from cfme.web_ui import form_buttons, CFMECheckbox
-import cfme.fixtures.pytest_selenium as sel
+from utils.appliance import current_appliance
+from utils.appliance.implementations.ui import navigate_to
 
 form = ui.Form(
     fields=[
@@ -10,7 +11,7 @@ form = ui.Form(
 
 
 def _enable_disable(enable=True):
-    sel.force_navigate("cfg_settings_region_cu_collection")
+    navigate_to(current_appliance.server.zone.region, 'CANDUCollection')
     ui.fill(form, {'all_clusters_cb': enable,
                    'all_datastores_cb': enable},
             action=form_buttons.save)

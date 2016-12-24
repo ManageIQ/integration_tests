@@ -66,6 +66,13 @@ class LoginPage(View):
             self.flash.assert_no_error()
 
     def log_in(self, user, method='click_on_login'):
+        if not user:
+            username = conf.credentials['default']['username']
+            password = conf.credentials['default']['password']
+            cred = Credential(principal=username, secret=password)
+            from cfme.configure.access_control import User
+            user = User(credential=cred)
+            user.name = 'Administrator'
         self.fill({
             'username': user.credential.principal,
             'password': user.credential.secret,
