@@ -53,7 +53,7 @@ def test_remove_selected_containers_provider():
     name = select_first_provider_and_get_its_name()
     ContainersProvider(name).delete(cancel=False)
     assert wait_for(lambda: not Quadicon(name).exists,
-                    'Waiting for containers provider to be removed.',
+                    msg='Waiting for containers provider to be removed.',
                     fail_func=sel.refresh,
                     delay=5,
                     num_sec=60.0), 'Failed to remove containers provider'
