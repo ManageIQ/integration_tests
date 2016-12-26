@@ -9,7 +9,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.providers import setup_a_provider as _setup_a_provider
-from cfme.infrastructure import virtual_machines  # NOQA
+from cfme.infrastructure import virtual_machines as vms  # NOQA
+from cfme.infrastructure.provider import InfraProvider
 from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import Datastore
@@ -21,8 +22,8 @@ pytestmark = [pytest.mark.tier(3),
 # navigation to navmazing. all items have to be put back once navigation change is fully done
 
 grid_pages = [
-    'infrastructure_providers',
-    'infrastructure_virtual_machines',
+    InfraProvider,
+    vms.Vm,
 ]
 
 # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
@@ -88,7 +89,7 @@ def set_default_page():
 
 
 def go_to_grid(page):
-    sel.force_navigate(page)
+    navigate_to(page, 'All')
     tb.select('Grid View')
 
 
@@ -137,7 +138,7 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
-    sel.force_navigate(page)
+    navigate_to(page, 'All')
     tb.select('Grid View')
     if int(paginator.rec_total()) >= int(limit):
         assert int(paginator.rec_end()) == int(limit), "Gridview Failed for page {}!".format(page)
@@ -153,7 +154,7 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
     """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.tile_view_limit
-    sel.force_navigate(page)
+    navigate_to(page, 'All')
     tb.select('Tile View')
     if int(paginator.rec_total()) >= int(limit):
         assert int(paginator.rec_end()) == int(limit), "Tileview Failed for page {}!".format(page)
@@ -169,7 +170,7 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
     """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.list_view_limit
-    sel.force_navigate(page)
+    navigate_to(page, 'All')
     tb.select('List View')
     if int(paginator.rec_total()) >= int(limit):
         assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)
@@ -226,11 +227,11 @@ def test_datastore_noquads(request, setup_a_provider, set_datastore_quad):
 
 
 def test_vm_noquads(request, setup_a_provider, set_vm_quad):
-    sel.force_navigate('infrastructure_virtual_machines')
+    navigate_to(vms.Vm, 'All')
     assert visual.check_image_exists, "Image View Failed!"
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:11215'])
 def test_template_noquads(request, setup_a_provider, set_template_quad):
-    sel.force_navigate('infra_templates')
+    navigate_to(vms.Template, 'TemplatesOnly')
     assert visual.check_image_exists, "Image View Failed!"

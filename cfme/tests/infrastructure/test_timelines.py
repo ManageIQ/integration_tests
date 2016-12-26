@@ -94,8 +94,8 @@ def test_provider_event(provider, gen_events, test_vm):
         test_flag: timelines, provision
     """
     def nav_step():
-        pytest.sel.force_navigate('infrastructure_provider',
-                                  context={'provider': provider})
+        navigate_to(provider, 'Details')
+
         toolbar.select('Monitoring', 'Timelines')
     wait_for(count_events, [test_vm, nav_step], timeout='5m', fail_condition=0,
              message="events to appear")
