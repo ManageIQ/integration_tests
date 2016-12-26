@@ -1,9 +1,12 @@
 from utils.appliance.implementations.ui import navigate_to
+from cfme.web_ui import Form, FileInput, InfoBlock, fill
+import cfme.web_ui.toolbar as tb
+from cfme.web_ui import Region
 from . import InfraProvider, prop_region
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
-from cfme.web_ui import Form, FileInput, InfoBlock, fill
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.toolbar as tb
+
+details_page = Region(infoblock_type='detail')
 
 register_nodes_form = Form(
     fields=[
@@ -49,6 +52,15 @@ class OpenstackInfraProvider(InfraProvider):
                 'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
             })
         return data_dict
+
+    @staticmethod
+    def has_nodes():
+        try:
+            details_page.infoblock.text("Relationships", "Hosts")
+            return False
+        except sel.NoSuchElementException:
+            return int(
+                details_page.infoblock.text("Relationships", "Nodes")) > 0
 
     @classmethod
     def from_config(cls, prov_config, prov_key):
@@ -106,3 +118,11 @@ class OpenstackInfraProvider(InfraProvider):
         node_uuid = str(nodes_dict[name])
         for db_node in query.all():
             return db_node.hosts.name == str(node_uuid.uuid)
+
+    def load_all_provider_nodes(self):
+        self.load_details()
+        if not self.has_nodes():
+            return False
+        else:
+            sel.click(details_page.infoblock.element('Relationships', 'Nodes'))
+            return True
