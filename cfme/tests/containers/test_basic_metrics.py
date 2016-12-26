@@ -25,4 +25,5 @@ def test_basic_metrics(provider, ssh_client):
     host_url = 'https://' + hostname + '/hawkular/metrics/'
     command = 'curl -X GET ' + host_url + ' --insecure'
     ssh_client = ssh_client(hostname=hostname, username=username, password=password)
-    assert 'Hawkular Metrics' or 'Hawkular-Metrics' in str(ssh_client.run_command(command))
+    metrics_string = str(ssh_client.run_command(command))
+    assert 'Hawkular Metrics' or 'Hawkular-Metrics' in metrics_string
