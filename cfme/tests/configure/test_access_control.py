@@ -118,7 +118,7 @@ def test_username_required_error_validation():
 def test_userid_required_error_validation():
     user = User(
         name='user' + fauxfactory.gen_alphanumeric(),
-        credential=Credential(principal=None, secret='redhat'),
+        credential=Credential(principal='', secret='redhat'),
         email='xyz@redhat.com',
         group=group_user)
     with error.expected("Userid can't be blank"):
@@ -146,7 +146,7 @@ def test_user_group_error_validation():
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='xyz@redhat.com',
-        group=None)
+        group='')
     with error.expected("A User must be assigned to a Group"):
         user.create()
 
@@ -204,6 +204,7 @@ def test_delete_default_user():
 @pytest.mark.tier(3)
 @pytest.mark.meta(automates=[BZ(1090877)])
 @pytest.mark.meta(blockers=[BZ(1408479)], forced_streams=["5.7", "upstream"])
+@pytest.mark.uncollectif(lambda: version.current_version() >= "5.7")
 def test_current_user_login_delete(request):
     """Test for deleting current user login.
 
@@ -272,9 +273,11 @@ def test_group_remove_tag():
 
 @pytest.mark.tier(3)
 def test_description_required_error_validation():
+    error_text = "Description can't be blank"
     group = Group(description=None, role='EvmRole-approver')
-    with error.expected("Description can't be blank"):
+    with error.expected(error_text):
         group.create()
+    flash.dismiss()
 
 
 @pytest.mark.tier(3)
