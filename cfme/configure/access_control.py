@@ -134,6 +134,7 @@ class User(Updateable, Pretty, Navigatable):
                 'password_txt': updates.get('credential').secret,
                 'password_verify_txt': updates.get('credential').verify_secret
             })
+            self.name = updates.get('credential').principal
         new_updates.update({
             'name_txt': updates.get('name'),
             'email_txt': updates.get('email'),

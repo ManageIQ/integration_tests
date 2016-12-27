@@ -112,25 +112,37 @@ def elements(o, **kwargs):
 
     Returns: A list of WebElement objects
     """
-    check_visibility = kwargs.pop("check_visibility", True)
-    if hasattr(o, "locate"):
-        els = elements(o.locate(), **kwargs)
-        if check_visibility:
-            return [e for e in els if is_displayed(e)]
-        else:
-            return els
-    elif callable(o):
-        els = elements(o(), **kwargs)
-        if check_visibility:
-            return [e for e in els if is_displayed(e)]
-        else:
-            els
+    if 'tries' in kwargs:
+        tries = kwargs['tries']
     else:
-        raise TypeError("Unprocessable type for elements({}) -> class {} (kwargs: {})".format(
-            str(repr(o)), o.__class__.__name__, str(repr(kwargs))
-        ))
-    # If it doesn't implement locate() or __call__(), we're in trouble so
-    # let the error bubble up.
+        tries = 3
+
+    for _ in range(tries):
+        check_visibility = kwargs.pop("check_visibility", True)
+        if hasattr(o, "locate"):
+            els = elements(o.locate(), **kwargs)
+            if not els:
+                continue
+            elif check_visibility:
+                return [e for e in els if is_displayed(e)]
+            else:
+                return els
+        elif callable(o):
+            els = elements(o(), **kwargs)
+            if not els:
+                continue
+            elif check_visibility:
+                return [e for e in els if is_displayed(e)]
+            else:
+                return els
+        else:
+            raise TypeError("Unprocessable type for elements({}) -> class {} (kwargs: {})".format(
+                str(repr(o)), o.__class__.__name__, str(repr(kwargs))
+            ))
+            # If it doesn't implement locate() or __call__(), we're in trouble so
+            # let the error bubble up.
+    else:
+        return []
 
 
 @elements.method(basestring)
