@@ -204,7 +204,7 @@ class Visual(Updateable, Navigatable):
     @property
     def login_page(self):
         navigate_to(self, 'All')
-        return int(self.startpage_form.login_page.first_selected_option_text)
+        return self.startpage_form.login_page.first_selected_option_text
 
     @login_page.setter
     def login_page(self, value):

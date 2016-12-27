@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import re
+from copy import copy
 import pytest
+
 from cfme import login
 from cfme import test_requirements
 from cfme.configure.settings import visual
-from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.providers import setup_a_provider as _setup_a_provider
@@ -200,15 +200,17 @@ def test_start_page(request, setup_a_provider, start_page):
         test_flag: visuals
     """
     request.addfinalizer(set_default_page)
-    visual.login_page = start_page
+    if visual.login_page != start_page:
+        visual.login_page = start_page
     login.logout()
     login.login_admin()
-    level = re.split(r"\/", start_page)
-    two_level = level[0].strip(), level[1].strip()
-    three_level = None, level[0].strip(), level[1].strip()
+    steps = map(lambda x: x.strip(), start_page.split('/'))
+    longer_steps = copy(steps)
+    longer_steps.insert(0, None)
     # BUG - https://bugzilla.redhat.com/show_bug.cgi?id=1331327
-    assert (menu.nav.is_page_active(*two_level) or menu.nav.is_page_active(*three_level)), \
-        "Landing Page Failed"
+    nav = menu.nav
+    nav.initialize()
+    assert nav.is_page_active(*steps) or nav.is_page_active(*longer_steps), "Landing Page Failed"
 
 
 def test_infraprovider_noquads(request, setup_a_provider, set_infra_provider_quad):
