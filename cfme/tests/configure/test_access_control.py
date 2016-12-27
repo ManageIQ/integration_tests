@@ -106,7 +106,7 @@ group_user = Group("EvmGroup-user")
 @pytest.mark.tier(3)
 def test_username_required_error_validation():
     user = User(
-        name=None,
+        name="",
         credential=new_credential(),
         email='xyz@redhat.com',
         group=group_user)
