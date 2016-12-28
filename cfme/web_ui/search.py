@@ -203,9 +203,12 @@ def reset_filter():
     """
     ensure_advanced_search_open()
     if sel.is_displayed(search_box.reset_filter):
-        return sel.click(search_box.reset_filter_button)
+        out = sel.click(search_box.reset_filter_button)
     else:
-        return False
+        out = False
+
+    ensure_advanced_search_closed()
+    return out
 
 
 def apply_filter():
