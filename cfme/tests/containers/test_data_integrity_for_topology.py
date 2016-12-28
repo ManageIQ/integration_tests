@@ -39,19 +39,13 @@ DATA_SETS = [
     DataSet(ContainersProvider, 'Providers'),
     DataSet(ImageRegistry, 'Registries')
 ]
-#   CMP-9521 CMP-9819 CMP-9820 CMP-9821 CMP-9822
+# CMP-9820 CMP-9821 CMP-9822 CMP-9823 CMP-9824 CMP-9825 CMP-9826 CMP-9827
 
 
 @pytest.mark.parametrize(('test_data'), DATA_SETS)
 def test_data_integrity_for_topology(test_data):
     """ This test verifies that every status box value under Containers Overview is identical to the
     number present on its page.
-    Steps:
-        * Go to Containers / Overview
-        * All cells should contain the correct relevant information
-            # of nodes
-            # of providers
-            # ...
     """
     sel.force_navigate('container_dashboard')
     # We should wait ~2 seconds for the StatusBox population
