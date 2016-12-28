@@ -54,7 +54,11 @@ def set_and_test_default_view(group_name, view, page):
     if isinstance(page, basestring):
         sel.force_navigate(page)
     else:
-        navigate_to(page, 'All', use_resetter=False)
+        dest = 'All'
+        if group_name == 'VMs':
+            dest = 'VMsOnly'
+        navigate_to(page, dest, use_resetter=False)
+
     assert tb.is_active(view), "{} view setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 
