@@ -1,5 +1,4 @@
 import pytest
-from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.version import current_version
 from cfme.containers.provider import ContainersProvider
@@ -15,6 +14,8 @@ from cfme.containers.container import Container
 import time
 from cfme.web_ui import StatusBox
 from utils.providers import list_providers
+from utils.appliance.implementations.ui import navigate_to
+from cfme.containers.overview import ContainersOverview
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -77,7 +78,7 @@ def test_containers_overview_data_integrity():
             # of providers
             # ...
     """
-    sel.force_navigate('container_dashboard')
+    navigate_to(ContainersOverview, 'All')
     # We should wait ~2 seconds for the StatusBox population
     # (until we find a better solution)
     time.sleep(2)
@@ -87,5 +88,11 @@ def test_containers_overview_data_integrity():
         map(lambda name: ContainersProvider(name, key=name),
             list_providers('openshift'))
     )
+    results = {}
     for cls in DATA_SETS:
-        assert api_values[cls.object] == statusbox_values[cls.object]
+        results[cls.object] = api_values[cls.object] == statusbox_values[cls.object]
+    if not all(results.values()):
+        pytest.fail('There is a mismatch between API and UI values:\n{}'.format(
+                    '\n'.join(['{}: {} (API) != {} (UI)'.format(
+                        obj.__name__, api_values[obj], statusbox_values[obj])
+                        for obj, is_pass in results.items() if is_pass])))
