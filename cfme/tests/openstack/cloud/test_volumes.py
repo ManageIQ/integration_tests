@@ -5,12 +5,11 @@ import pytest
 from fauxfactory import gen_alphanumeric
 from cfme.cloud.instance import Instance
 from cfme.cloud.volume import (attach_inst_page_form, attach_vlm_page_form,
-                               creation_form, detach_inst_page_form,
-                               detach_vlm_page_form, get_volume_name, list_tbl,
-                               Volume)
+                               detach_inst_page_form, detach_vlm_page_form,
+                               get_volume_name, list_tbl, Volume)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import InfoBlock, toolbar as tb
-from cfme.web_ui.form_buttons import (add_ng, attach_volume, detach_volume,
+from cfme.web_ui.form_buttons import (attach_volume, detach_volume,
                                       submit_changes)
 from random import choice
 from utils import testgen
@@ -27,21 +26,14 @@ pytestmark = [pytest.mark.uncollectif(lambda: current_version() >= '5.7'),
 
 def test_create_volume(provider):
     """Creates a volume for given cloud provider"""
-    navigate_to(Volume, 'All')
-    tb.select('Configuration', 'Add a new Cloud Volume')
-    vname = gen_alphanumeric()
+    volume = Volume(gen_alphanumeric(), provider)
     vsize = 1
-    volume_data = dict(volume_name=vname,
-                       volume_size=vsize,
-                       cloud_tenant=provider.mgmt.list_tenant()[0])
-    creation_form.fill(volume_data)
-
-    sel.click(add_ng)
+    volume.create(vsize)
     flash.assert_message_contain('Create Cloud Volume')
 
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     sel.refresh()
-    params = {'Name': vname,
+    params = {'Name': volume.name,
               'Size': '{} GB'.format(vsize),
               'Status': 'available'}
     res = list_tbl.find_rows_by_cells(params)
