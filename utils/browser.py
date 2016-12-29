@@ -13,6 +13,8 @@ from werkzeug.local import LocalProxy
 
 import requests
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common import keys
 from selenium.common.exceptions import UnexpectedAlertPresentException, WebDriverException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.remote.file_detector import UselessFileDetector
@@ -287,6 +289,39 @@ class BrowserManager(object):
 
         self.browser = self.factory.create(url_key=url_key)
         return self.browser
+
+
+class WithZoom(object):
+    """This class is a decorator that used to wrap function with zoom level.
+    this class perform zoom by <level>, call the target function and exit
+    by zooming back to the original zoom level.
+    Args:
+        * level: int, the zooming value
+                (i.e. -2 -> 2 clicks out; 3 -> 3 clicks in)
+    """
+    def __init__(self, level):
+        self._level = level
+
+    def __call__(self, func):
+        def wrapper(*args, **kwargs):
+            ensure_browser_open()
+            with self:
+                return func(*args, **kwargs)
+        return wrapper
+
+    def __enter__(self, *args, **kwargs):
+        ac = ActionChains(browser())
+        for _ in xrange(abs(self._level)):
+            ac.send_keys(keys.Keys.CONTROL,
+                         keys.Keys.SUBTRACT if self._level < 0 else keys.Keys.ADD)
+        ac.perform()
+
+    def __exit__(self, *args, **kwargs):
+        ac = ActionChains(browser())
+        for _ in xrange(abs(self._level)):
+            ac.send_keys(keys.Keys.CONTROL,
+                         keys.Keys.SUBTRACT if -self._level < 0 else keys.Keys.ADD)
+        ac.perform()
 
 
 manager = BrowserManager.from_conf(conf.env.get('browser', {}))
