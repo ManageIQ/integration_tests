@@ -8,6 +8,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import DestinationNotFound
 from cfme.web_ui import (match_location, Form, InfoBlock, Input, PagedTable,
                          Select, summary_title, toolbar as tb)
+from cfme.web_ui.form_buttons import add_ng
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import (CFMENavigateStep, navigator,
                                                 navigate_to)
@@ -51,6 +52,19 @@ class Volume(Navigatable):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.provider = provider
+
+    def create(self, volume_size):
+        """
+        Creates cloud volume
+        :param volume_size: int value of volume size to be created in GB
+        """
+        navigate_to(Volume, 'All')
+        tb.select('Configuration', 'Add a new Cloud Volume')
+        volume_data = dict(volume_name=self.name,
+                           volume_size=volume_size,
+                           cloud_tenant=self.provider.mgmt.list_tenant()[0])
+        creation_form.fill(volume_data)
+        sel.click(add_ng)
 
 
 @navigator.register(Volume, 'All')
