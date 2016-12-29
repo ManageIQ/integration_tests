@@ -923,19 +923,99 @@ class ProviderToolBar(View):
     download = Dropdown(text='Download')
 
     @View.nested
-    class view_selector(ToolBarViewSelector):
+    class view_selector(ToolBarViewSelector):  # NOQA
         pass
 
 
-class DetailsProviderToolBar(ProviderToolBar):
+class DetailsProviderToolBar(View):
     """
     represents provider toolbar and its controls
     """
     monitoring = Dropdown(text='Monitoring')
+    configuration = Dropdown(text='Configuration')
     reload = Button(title='Reload Current Display')
+    policy = Dropdown(text='Policy')
+    authentication = Dropdown(text='Authentication')
 
     @View.nested
-    class view_selector(ToolBarViewSelector):
+    class view_selector(ToolBarViewSelector):  #NOQA
+        # todo: there should be another ViewSelector. to add it later
         pass
 
+
+class Search(Widget):
+    # todo: add it later
+    pass
+
+
+class Items(View):
+    """
+    should represent the view with different items like providers
+    """
+    @View.nested
+    class search(Search):  # NOQA
+        pass
+
+
+class BaseSideBar(View):
+    """
+    represents left side bar. it usually contains navigation, filters, etc
+    """
+    pass
+
+
+class BreadCrumb(Widget):
+    """
+    represents breadcrumb navigation control
+    """
+    pass
+
+
+class TimelinesFilter(View):
+
+    def __init__(self, parent, filter_type, logger=None):
+        super(TimelinesFilter, self).__init__(parent=parent, logger=logger)
+        if filter_type in ('Management Events', 'Policy Events'):
+            self._filter_type = filter_type
+        else:
+            raise ValueError('incorrect filter type is passed')
+
+    # common
+    event_type = BootstrapSelect(id='tl_show')
+    event_category = BootstrapSelect(id='tl_category_management')
+    time_period = Stepper()
+    time_range = BootstrapSelect(id='tl_range')
+    time_position = BootstrapSelect(id='tl_timepivot')
+    date_picker = DatePicker()
+    apply = Button("Apply")
+    # management controls
+    detailed_events = Checkbox(name='showDetailedEvents')
+    # policy controls
+    event_category = BootstrapSelect(id='tl_category_policy')
+    event_status = RadioGroup()
+
+
+class TimelinesChart(View):
+    # todo: to add widgets for all controls
+    # currently only events collection is available
+    pass
+
+
+class Timelines(View):
+    """
+    represents Timelines page
+    """
+    @View.nested
+    class sidebar(BaseSideBar):  # NOQA
+        pass
+
+    breadcrumb = BreadCrumb()
+
+    @View.nested
+    class filter(TimelinesFilter):  # NOQA
+        pass
+
+    @View.nested
+    class chart(TimelinesChart):  # NOQA
+        pass
 

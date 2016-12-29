@@ -11,11 +11,20 @@
 from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
-from widgetastic.widget import View
+from widgetastic.widget import View, Text
 from widgetastic_patternfly import Input, Button, Dropdown
 from widgetastic_manageiq import PaginationPane, Checkbox, ProviderToolBar
 
 from cached_property import cached_property
+from widgetastic_manageiq import (PaginationPane,
+                                  Checkbox,
+                                  ProviderToolBar,
+                                  DetailsProviderToolBar,
+                                  Items,
+                                  BaseSideBar,
+                                  Table,
+                                  BreadCrumb)
+from cfme import BaseLoggedInPage
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
@@ -111,7 +120,6 @@ mon_btn = partial(tb.select, 'Monitoring')
 
 
 class InfraProvidersView(BaseLoggedInPage):
-
     @property
     def is_displayed(self):
         return all((self.logged_in_as_current_user,
@@ -120,12 +128,34 @@ class InfraProvidersView(BaseLoggedInPage):
                     match_page(summary='Infrastructure Providers')))
 
     @View.nested
-    class paginator(PaginationPane):
+    class toolbar(ProviderToolBar):  # NOQA
         pass
 
     @View.nested
-    class toolbar(ProviderToolBar):
+    class sidebar(BaseSideBar):  # NOQA
         pass
+
+    @View.nested
+    class items(Items):  # NOQA
+        pass
+
+    @View.nested
+    class paginator(PaginationPane):  # NOQA
+        pass
+
+
+class InfraProvidersDetailsView(InfraProvidersView):
+    @View.nested
+    class toolbar(DetailsProviderToolBar):
+        pass
+
+    title = Text('//div[@id="main-content"]//h1')
+    breadcrumb = BreadCrumb('//ol[@class="breadcrumb"]')
+    properties = Table('//table[.//th[normalize-space(text())="Properties"]]')
+    status = Table('//table[.//th[normalize-space(text())="Status"]]')
+    relationships = Table('//table[.//th[normalize-space(text())="Relationships"]]')
+    overview = Table('//table[.//th[normalize-space(text())="Overview"]]')
+    smart_management = Table('//table[.//th[normalize-space(text())="Smart Management"]]')
 
 
 class InfraProvidersDiscoverView(InfraProvidersView):
@@ -158,26 +188,6 @@ class InfraProvidersAddView(InfraProvidersView):
     cancel = Button('Cancel')
 
     # todo: rest of entities should be added according to provider type
-
-
-class InfraProvidersDetailsView(InfraProvidersView):
-    reload = Button('blabla')  # todo: create custom button widget
-
-    @View.nested
-    class Properties(object):
-        pass
-
-    @View.nested
-    class Relationships(object):
-        pass
-
-    @View.nested
-    class Overview(object):
-        pass
-
-    @View.nested
-    class SmartManagement(object):
-        pass
 
 
 class InfraProvidersManagePoliciesView(InfraProvidersView):
