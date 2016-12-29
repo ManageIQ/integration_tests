@@ -1,4 +1,5 @@
 import pytest
+from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import StatusBox
 from utils import testgen, version
 from utils.version import current_version
@@ -38,7 +39,11 @@ def test_containers_summary_objects(provider):
         '5.7': container_object_types
     })
     container_object = version.pick(objects_key)
-    prov_ui_values = dict()
+    prov_ui_values, status_box_values = dict(), dict()
+    #  TODO: Change the following force navigate once navmazing destination is available
+    sel.force_navigate('container_dashboard')
+    for obj_type in container_object:
+        status_box_values[obj_type] = StatusBox(obj_type).value()
     for obj_type in container_object:
         prov_ui_values[obj_type] = getattr(provider.summary.relationships, obj_type).value
-        assert StatusBox(obj_type).value() == prov_ui_values[obj_type]
+        assert status_box_values[obj_type] == prov_ui_values[obj_type]
