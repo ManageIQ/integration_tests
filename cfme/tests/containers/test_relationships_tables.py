@@ -52,6 +52,7 @@ def test_relationships_tables(provider, cls):
     cls_instances = sample(cls_instances, min(2, len(cls_instances)))
     for name in cls_instances:
         obj = cls.object(name, provider)
+        obj.summary.reload()
         keys = sample(obj.summary.relationships.keys,
                       min(1, len(obj.summary.relationships.keys)))
         for key in keys:
