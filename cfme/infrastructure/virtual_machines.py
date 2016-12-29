@@ -215,7 +215,8 @@ class Vm(BaseVM, Common):
                                      'snapshot_memory': self.memory
                                      },
                      action=snapshot_form.create_button)
-            wait_for(self.does_snapshot_exist, num_sec=300, delay=20, fail_func=sel.refresh)
+            wait_for(self.does_snapshot_exist, num_sec=300, delay=20, fail_func=sel.refresh,
+                     handle_exception=True)
 
         def delete(self, cancel=False):
             self._nav_to_snapshot_mgmt()

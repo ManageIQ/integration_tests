@@ -214,8 +214,6 @@ def test_provider_add_with_bad_credentials(provider):
                 'Login failed due to a bad username or password.',
              '5.6': 'Credential validation was not successful: '
                 'Incorrect user name or password.',
-             '5.7': 'Credential validation was not successful: '
-                'Unauthorized'
         }
         )
         with error.expected(error_message):

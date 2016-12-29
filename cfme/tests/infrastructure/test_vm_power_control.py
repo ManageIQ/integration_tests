@@ -71,6 +71,9 @@ def check_power_options(provider, soft_assert, vm, power_state):
     if provider.type != 'scvmm':
         must_be_available['on'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
         mustnt_be_available['off'].extend([vm.GUEST_RESTART, vm.GUEST_SHUTDOWN])
+    if provider.type == 'rhevm':
+        must_be_available['on'].remove(vm.RESET)
+        must_be_available['on'].remove(vm.GUEST_RESTART)
     vm.load_details()
     toolbar.pf_select('Power')
     for pwr_option in must_be_available[power_state]:
@@ -84,7 +87,7 @@ def check_power_options(provider, soft_assert, vm, power_state):
             "'{}' must not be available in current power state - '{}' ".format(
                 pwr_option, power_state))
     # check if Guest OS power operations exist and greyed from "on"
-    if power_state == vm.STATE_ON and provider.type != 'scvmm':
+    if power_state == vm.STATE_ON and (provider.type != 'scvmm' and provider.type != 'rhevm'):
         for pwr_option in [vm.GUEST_RESTART, vm.GUEST_SHUTDOWN]:
             soft_assert(-
                 toolbar.is_greyed('Power', pwr_option),
