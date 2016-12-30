@@ -206,7 +206,8 @@ class MyServiceAll(CFMENavigateStep):
         nav._nav_to_fn('Services', 'My Services')(None)
 
     def resetter(self, *args, **kwargs):
-        my_service_tree().click_path('All Services')
+        if version.current_version() < '5.7':
+            my_service_tree().click_path('All Services')
         tb.refresh()
 
 
@@ -218,8 +219,9 @@ class MyServiceDetails(CFMENavigateStep):
         return match_page(summary='Service "{}"'.format(self.obj.service_name))
 
     def step(self, *args, **kwargs):
-        logger.debug('Clicking tree for service: {}'.format(self.obj.service_name))
-        my_service_tree().click_path('All Services', self.obj.service_name)
+        if version.current_version() < '5.7':
+            logger.debug('Clicking tree for service: {}'.format(self.obj.service_name))
+            my_service_tree().click_path('All Services', self.obj.service_name)
 
     def resetter(self, *args, **kwargs):
         tb.refresh()
