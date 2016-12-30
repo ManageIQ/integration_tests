@@ -124,7 +124,7 @@ def elements(o, **kwargs):
         if check_visibility:
             return [e for e in els if is_displayed(e)]
         else:
-            els
+            return els
     else:
         raise TypeError("Unprocessable type for elements({}) -> class {} (kwargs: {})".format(
             str(repr(o)), o.__class__.__name__, str(repr(kwargs))

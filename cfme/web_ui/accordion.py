@@ -20,6 +20,7 @@ from utils import version
 from utils.log import logger
 from utils.wait import wait_for
 
+
 DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
 DHX_LABEL = '*[contains(@class, "dhx_acc_item_label") or contains(@data-remote, "true")]'
 DHX_ARROW = 'div[contains(@class, "dhx_acc_item_arrow")]'
@@ -51,6 +52,33 @@ def click(name):
         el = sel.element(locate(name))
         if not is_active(name):
             return sel.click(el)
+    except sel.NoSuchElementException:
+        raise AccordionItemNotFound("Accordion item '{}' not found!".format(name))
+
+
+def refresh(name):
+    """ Closes and opens accordion
+
+    Args:
+        name: The name of the accordion.
+    Returns: A web element of the clicked accordion.
+    """
+
+    try:
+        el = sel.element(locate(name))
+        if is_active(name):
+            sel.click(el)
+
+        for _ in range(3):
+            if sel.is_alert_present():
+                alert = sel.get_alert()
+                alert.accept()
+
+            if not is_active(name):
+                sel.click(el, wait_ajax=False)
+                continue
+            else:
+                return el
     except sel.NoSuchElementException:
         raise AccordionItemNotFound("Accordion item '{}' not found!".format(name))
 

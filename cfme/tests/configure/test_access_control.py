@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from time import sleep
 import traceback
+
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
@@ -13,14 +15,14 @@ from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
-from cfme.web_ui.menu import nav
 from cfme.configure import tasks
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
 from utils import version
-from utils.blockers import BZ
+
 
 records_table = Table("//div[@id='main_div']//table")
 usergrp = Group(description='EvmGroup-user')
@@ -104,7 +106,7 @@ group_user = Group("EvmGroup-user")
 @pytest.mark.tier(3)
 def test_username_required_error_validation():
     user = User(
-        name=None,
+        name="",
         credential=new_credential(),
         email='xyz@redhat.com',
         group=group_user)
@@ -116,7 +118,7 @@ def test_username_required_error_validation():
 def test_userid_required_error_validation():
     user = User(
         name='user' + fauxfactory.gen_alphanumeric(),
-        credential=Credential(principal=None, secret='redhat'),
+        credential=Credential(principal='', secret='redhat'),
         email='xyz@redhat.com',
         group=group_user)
     with error.expected("Userid can't be blank"):
@@ -144,7 +146,7 @@ def test_user_group_error_validation():
         name='user' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='xyz@redhat.com',
-        group=None)
+        group='')
     with error.expected("A User must be assigned to a Group"):
         user.create()
 
@@ -200,7 +202,9 @@ def test_delete_default_user():
 
 
 @pytest.mark.tier(3)
-@pytest.mark.meta(automates=[1090877])
+@pytest.mark.meta(automates=[BZ(1090877)])
+@pytest.mark.meta(blockers=[BZ(1408479)], forced_streams=["5.7", "upstream"])
+@pytest.mark.uncollectif(lambda: version.current_version() >= "5.7")
 def test_current_user_login_delete(request):
     """Test for deleting current user login.
 
@@ -220,8 +224,13 @@ def test_current_user_login_delete(request):
     request.addfinalizer(user.delete)
     request.addfinalizer(login.login_admin)
     with user:
-        with error.expected("Current EVM User \"{}\" cannot be deleted".format(user.name)):
-            user.delete()
+        if version.current_version() >= '5.7':
+            navigate_to(user, 'Details')
+            menu_item = ('Configuration', 'Delete this User')
+            assert tb.exists(*menu_item) and tb.is_greyed(*menu_item), "Delete User is not dimmed"
+        else:
+            with error.expected("Current EVM User \"{}\" cannot be deleted".format(user.name)):
+                user.delete()
 
 
 @pytest.mark.tier(2)
@@ -264,21 +273,21 @@ def test_group_remove_tag():
 
 @pytest.mark.tier(3)
 def test_description_required_error_validation():
+    error_text = "Description can't be blank"
     group = Group(description=None, role='EvmRole-approver')
-    with error.expected("Description can't be blank"):
+    with error.expected(error_text):
         group.create()
+    flash.dismiss()
 
 
 @pytest.mark.tier(3)
 def test_delete_default_group():
-    flash_msg = version.pick({
-        '5.6': ("EVM Group \"{}\": Error during delete: A read only group cannot be deleted."),
-        '5.5': ("EVM Group \"{}\": Error during \'destroy\': A read only group cannot be deleted.")
-    })
+    flash_msg = "EVM Group \"{}\": Error during delete: A read only group cannot be deleted."
     group = Group(description='EvmGroup-administrator')
     navigate_to(Group, 'All')
     row = group_table.find_row_by_cells({'Name': group.description})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
+    sleep(10)  # todo: temporary fix of js issue, to remove when switch to widgetastic
     tb.select('Configuration', 'Delete selected Groups', invokes_alert=True)
     sel.handle_alert()
     flash.assert_message_match(flash_msg.format(group.description))
@@ -482,7 +491,7 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
 
 def _go_to(dest):
     """Create a thunk that navigates to the given destination"""
-    return lambda: nav.go_to(dest)
+    return lambda: sel.force_navigate(dest)
 
 
 cat_name = "Settings"

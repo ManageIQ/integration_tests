@@ -134,6 +134,8 @@ class User(Updateable, Pretty, Navigatable):
                 'password_txt': updates.get('credential').secret,
                 'password_verify_txt': updates.get('credential').verify_secret
             })
+            if version.current_version() >= '5.7':
+                self.name = updates.get('credential').principal
         new_updates.update({
             'name_txt': updates.get('name'),
             'email_txt': updates.get('email'),
@@ -202,6 +204,9 @@ class UserAll(CFMENavigateStep):
     def step(self):
         accordion.tree("Access Control", server_region_string(), "Users")
 
+    def resetter(self):
+        accordion.refresh("Access Control")
+
 
 @navigator.register(User, 'Add')
 class UserAdd(CFMENavigateStep):
@@ -217,6 +222,9 @@ class UserDetails(CFMENavigateStep):
 
     def step(self):
         accordion.tree("Access Control", server_region_string(), "Users", self.obj.name)
+
+    def resetter(self):
+        accordion.refresh("Access Control")
 
 
 @navigator.register(User, 'Edit')
@@ -344,6 +352,9 @@ class GroupAll(CFMENavigateStep):
     def step(self):
         accordion.tree("Access Control", server_region_string(), "Groups")
 
+    def resetter(self):
+        accordion.refresh("Access Control")
+
 
 @navigator.register(Group, 'Add')
 class GroupAdd(CFMENavigateStep):
@@ -367,6 +378,9 @@ class GroupDetails(CFMENavigateStep):
 
     def step(self):
         accordion.tree("Access Control", server_region_string(), "Groups", self.obj.description)
+
+    def resetter(self):
+        accordion.refresh("Access Control")
 
 
 @navigator.register(Group, 'Edit')
@@ -450,6 +464,9 @@ class RoleAll(CFMENavigateStep):
     def step(self):
         accordion.tree("Access Control", server_region_string(), "Roles")
 
+    def resetter(self):
+        accordion.refresh("Access Control")
+
 
 @navigator.register(Role, 'Add')
 class RoleAdd(CFMENavigateStep):
@@ -465,6 +482,9 @@ class RoleDetails(CFMENavigateStep):
 
     def step(self):
         accordion.tree("Access Control", server_region_string(), "Roles", self.obj.name)
+
+    def resetter(self):
+        accordion.refresh("Access Control")
 
 
 @navigator.register(Role, 'Edit')
