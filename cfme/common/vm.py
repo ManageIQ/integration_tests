@@ -14,6 +14,8 @@ from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
     form_buttons, paginator, toolbar, PagedTable, SplitPagedTable, search)
 from utils import version
+from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.log import logger
 from utils.pretty import Pretty
@@ -21,7 +23,6 @@ from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
-from utils.appliance.implementations.ui import navigate_to
 
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
@@ -46,7 +47,7 @@ class _TemplateMixin(object):
     pass
 
 
-class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin):
+class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin, Navigatable):
     """Base VM and Template class that holds the largest common functionality between VMs,
     instances, templates and images.
 
@@ -157,17 +158,14 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     ###
     # Shared behaviour
     #
-    def __init__(self, name, provider, template_name=None):
+    def __init__(self, name, provider, template_name=None, appliance=None):
         super(BaseVM, self).__init__()
+        Navigatable.__init__(self, appliance=appliance)
         if type(self) in {BaseVM, VM, Template}:
             raise NotImplementedError('This class cannot be instantiated.')
         self.name = name
         self.provider = provider
         self.template_name = template_name
-
-        if not hasattr(self, "on_details"):
-            raise NotImplementedError(
-                "You need to implement on_details method in {}!".format(type(self).__name__))
 
     ###
     # Properties
@@ -388,17 +386,15 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             VmOrInstanceNotFound:
                 When unable to find the VM passed
         """
-        if not self.on_details():
-            logger.debug("load_details: not on details already")
-            sel.click(self.find_quadicon())
-        else:
-            if refresh:
-                # bz1389299 for 5.7, should be fixed in 5.7.1 - dajo
-                reload_bug = BZ(1329299)
-                if reload_bug.bugzilla.get_bug(1329299).is_opened:
-                    sel.click(self.find_quadicon())
-                else:
-                    toolbar.refresh()
+        navigate_to(self, 'Details')
+        sel.click(self.find_quadicon())
+        if refresh:
+            # bz1389299 for 5.7, should be fixed in 5.7.1 - dajo
+            reload_bug = BZ(1329299)
+            if reload_bug.bugzilla.get_bug(1329299).is_opened:
+                sel.click(self.find_quadicon())
+            else:
+                toolbar.refresh()
 
     def open_edit(self):
         """Loads up the edit page of the object."""

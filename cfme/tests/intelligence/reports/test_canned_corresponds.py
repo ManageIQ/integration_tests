@@ -2,13 +2,14 @@
 import pytest
 from functools import partial
 
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider import InfraProvider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
+from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
 from utils.providers import get_mgmt_by_name, setup_a_provider as _setup_a_provider
 from utils import version
 from cfme import test_requirements
+
 provider_props = partial(details_page.infoblock.text, "Properties")
 
 
@@ -27,8 +28,7 @@ def test_providers_summary(soft_assert, setup_a_provider):
     for provider in report.data.rows:
         if any(ptype in provider["MS Type"] for ptype in {"ec2", "openstack"}):  # Skip cloud
             continue
-        provider_fake_obj = InfraProvider(name=provider["Name"])
-        sel.force_navigate("infrastructure_provider", context={"provider": provider_fake_obj})
+        navigate_to(InfraProvider(name=provider["Name"]), 'Details')
         hostname = version.pick({
             version.LOWEST: ("Hostname", "Hostname"),
             "5.5": ("Host Name", "Hostname")})

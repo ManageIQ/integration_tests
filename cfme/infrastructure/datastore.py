@@ -187,7 +187,12 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        accordion.tree('Datastores', 'All Datastores')
+        if version.current_version() >= '5.7':
+            accordion.tree('Datastores', 'All Datastores')
+        else:
+            # todo: there is unsupported accordion in 5.6.3.3. currently it isn't necessary
+            # for existing tests
+            pass
         tb.select("Grid View")
         sel.check(paginator.check_all())
         sel.uncheck(paginator.check_all())

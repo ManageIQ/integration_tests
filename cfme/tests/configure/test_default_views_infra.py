@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.configure.settings import DefaultView
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.myservice import MyService
 from cfme.services.workloads import services_workloads  # NOQA
@@ -30,7 +31,7 @@ def setup_a_provider():
 
 gtl_params = {
     'Infrastructure Providers': InfraProvider,
-    'VMs': 'infra_vms',
+    'VMs': Vm,
     'My Services': MyService,
     'Catalog Items': CatalogItem,
     'VMs & Instances': 'service_vms_instances',
@@ -53,7 +54,11 @@ def set_and_test_default_view(group_name, view, page):
     if isinstance(page, basestring):
         sel.force_navigate(page)
     else:
-        navigate_to(page, 'All', use_resetter=False)
+        dest = 'All'
+        if group_name == 'VMs':
+            dest = 'VMsOnly'
+        navigate_to(page, dest, use_resetter=False)
+
     assert tb.is_active(view), "{} view setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)
 
@@ -79,7 +84,7 @@ def test_grid_defaultview(request, key):
 def set_and_test_view(group_name, view):
     old_default = DefaultView.get_default_view(group_name)
     DefaultView.set_default_view(group_name, view)
-    sel.force_navigate('infrastructure_virtual_machines')
+    navigate_to(Vm, 'All')
     select_two_quads()
     tb.select('Configuration', 'Compare Selected items')
     assert tb.is_active(view), "{} setting failed".format(view)

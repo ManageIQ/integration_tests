@@ -6,7 +6,9 @@ import pytest
 from random import sample
 
 from cfme.infrastructure import virtual_machines
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import search
+from utils.appliance.endpoints.ui import navigate_to
 from utils.providers import setup_a_provider
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
@@ -19,7 +21,7 @@ def vms():
         setup_a_provider(prov_class="infra", required_keys=["large"])
     except Exception:
         pytest.skip("It's not possible to set up any providers, therefore skipping")
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     search.ensure_no_filter_applied()
     return virtual_machines.get_all_vms()
 
@@ -48,19 +50,19 @@ def expression_for_vms_subset(subset_of_vms):
 
 
 def test_can_do_advanced_search():
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     assert search.is_advanced_search_possible(), "Cannot do advanced search here!"
 
 
 @pytest.mark.requires("test_can_do_advanced_search")
 def test_can_open_advanced_search():
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     search.ensure_advanced_search_open()
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_without_user_input(vms, subset_of_vms, expression_for_vms_subset):
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     # Set up the filter
     search.fill_and_apply_filter(expression_for_vms_subset)
     assert_no_cfme_exception()
@@ -73,7 +75,7 @@ def test_filter_without_user_input(vms, subset_of_vms, expression_for_vms_subset
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input(vms, subset_of_vms, expression_for_vms_subset):
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
     search.fill_and_apply_filter(
@@ -88,7 +90,7 @@ def test_filter_with_user_input(vms, subset_of_vms, expression_for_vms_subset):
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input_and_cancellation(vms, subset_of_vms, expression_for_vms_subset):
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
     search.fill_and_apply_filter(
@@ -101,7 +103,7 @@ def test_filter_with_user_input_and_cancellation(vms, subset_of_vms, expression_
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_filter_save_cancel(vms, subset_of_vms, expression_for_vms_subset):
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up the filter
     search.save_filter(
@@ -117,7 +119,7 @@ def test_filter_save_cancel(vms, subset_of_vms, expression_for_vms_subset):
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=[1273032])
 def test_filter_save_and_load(request, vms, subset_of_vms, expression_for_vms_subset):
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
@@ -134,14 +136,14 @@ def test_filter_save_and_load(request, vms, subset_of_vms, expression_for_vms_su
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=[1273032])
 def test_filter_save_and_cancel_load(request):
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
     # Set up the filter
     search.save_filter("fill_field(Virtual Machine : Name, =)", filter_name)
 
     @request.addfinalizer
     def cleanup():
-        pytest.sel.force_navigate("infra_vms")
+        navigate_to(Vm, 'VMsOnly')
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -155,7 +157,7 @@ def test_filter_save_and_cancel_load(request):
 @pytest.mark.requires("test_can_open_advanced_search")
 @pytest.mark.meta(blockers=[1273032])
 def test_filter_save_and_load_cancel(request, vms, subset_of_vms):
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
     vm = sample(subset_of_vms, 1)[0]
     # Set up the filter
@@ -163,7 +165,7 @@ def test_filter_save_and_load_cancel(request, vms, subset_of_vms):
 
     @request.addfinalizer
     def cleanup():
-        pytest.sel.force_navigate("infra_vms")
+        navigate_to(Vm, 'VMsOnly')
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -179,7 +181,7 @@ def test_filter_save_and_load_cancel(request, vms, subset_of_vms):
 
 
 def test_quick_search_without_filter(request, vms, subset_of_vms):
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     search.ensure_no_filter_applied()
     assert_no_cfme_exception()
     vm = sample(subset_of_vms, 1)[0]
@@ -195,7 +197,7 @@ def test_quick_search_without_filter(request, vms, subset_of_vms):
 
 @pytest.mark.requires("test_can_open_advanced_search")
 def test_quick_search_with_filter(request, vms, subset_of_vms, expression_for_vms_subset):
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     search.fill_and_apply_filter(expression_for_vms_subset)
     assert_no_cfme_exception()
     # Make sure that we empty the regular search field after the test
@@ -211,7 +213,7 @@ def test_quick_search_with_filter(request, vms, subset_of_vms, expression_for_vm
 
 @pytest.mark.meta(blockers=[1273032, 1320244])
 def test_can_delete_filter():
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter("fill_count(Virtual Machine.Files, >, 0)", filter_name)
     assert_no_cfme_exception()
@@ -227,13 +229,13 @@ def test_can_delete_filter():
 @pytest.mark.meta(blockers=[1097150, 1273032, 1320244])
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter("fill_count(Virtual Machine.Files, >, 0)", filter_name)
 
     @request.addfinalizer
     def cleanup():
-        pytest.sel.force_navigate("infra_vms")
+        navigate_to(Vm, 'VMsOnly')
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -244,7 +246,7 @@ def test_delete_button_should_appear_after_save(request):
 @pytest.mark.meta(blockers=[1097150, 1273032, 1320244])
 def test_cannot_delete_more_than_once(request, nuke_browser_after_test):
     """When Delete button appars, it does not want to go away"""
-    pytest.sel.force_navigate("infra_vms")
+    navigate_to(Vm, 'VMsOnly')
     filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter("fill_count(Virtual Machine.Files, >, 0)", filter_name)
 
