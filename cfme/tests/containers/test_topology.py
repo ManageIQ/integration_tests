@@ -61,7 +61,7 @@ def test_topology_search():
     element_to_search = elements[choice(range(len(elements)))]
     topo_obj.search_box.text(text=element_to_search.name)
     for el in topo_obj.elements():
-        if element_to_search.name in el.name:
+        if element_to_search.name == el.name:
             assert not el.is_hidden
         else:
             assert el.is_hidden
