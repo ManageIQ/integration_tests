@@ -1,15 +1,12 @@
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils import version
 from utils.update import Updateable
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from utils.pretty import Pretty
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from cfme.web_ui import (
-    AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins, match_location)
+from cfme.web_ui import (Region, Quadicon, paginator, match_location)
 
 details_page = Region(infoblock_type='detail')
 
