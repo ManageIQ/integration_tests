@@ -15,7 +15,7 @@ match_page = partial(match_location, controller='cloud_network',
 
 
 class NetworkManager(Updateable, Pretty, Navigatable):
-    def __init__(self, name=None, quad_name = None, appliance=None, network_manager_type=None,
+    def __init__(self, name=None, quad_name=None, appliance=None, network_manager_type=None,
                  region=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
@@ -42,7 +42,7 @@ class All(CFMENavigateStep):
 
     def step(self):
         from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Networks', 'Providers', '/cloud_network')(None)
+        nav._nav_to_fn('Networks', 'Providers')(None)
 
     def resetter(self):
         tb.select("Grid View")
