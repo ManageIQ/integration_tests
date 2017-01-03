@@ -69,6 +69,7 @@ def get_api_object_counts(providers):
 # CMP-9521
 
 
+@pytest.mark.meta(blockers=[1369359])
 def test_containers_overview_data_integrity():
     """Test data integrity of status boxes in containers dashboard.
     Steps:
@@ -95,4 +96,4 @@ def test_containers_overview_data_integrity():
         pytest.fail('There is a mismatch between API and UI values:\n{}'.format(
                     '\n'.join(['{}: {} (API) != {} (UI)'.format(
                         obj.__name__, api_values[obj], statusbox_values[obj])
-                        for obj, is_pass in results.items() if is_pass])))
+                        for obj, is_pass in results.items() if not is_pass])))
