@@ -158,16 +158,18 @@ The types can be retrieved using the :py:class:`utils.events.EventTool` by calli
 :py:meth:`utils.events.EventTool.all_event_types` on it.
 """
 from datetime import datetime
+import logging
 
 import pytest
 
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.pytest_store import store
 from utils.datafile import template_env
-from utils.log import create_logger
+from utils.log import setup_logger
 from utils.wait import wait_for, TimedOutError
 
-logger = create_logger('events')
+# xxx better logger name
+logger = setup_logger(logging.getLogger('events'))
 
 
 class HTMLReport(object):

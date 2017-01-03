@@ -130,30 +130,25 @@ Members
 ^^^^^^^
 
 """
-import fauxfactory
 import inspect
 import logging
 import sys
 import warnings
-import datetime as dt
-from logging.handlers import RotatingFileHandler, SysLogHandler
 from time import time
 from traceback import extract_tb, format_tb
 
 from cached_property import cached_property
-from utils import conf, safe_string
+from utils import conf
 from utils.path import get_rel_path, log_path, project_path
+
+import os
 
 MARKER_LEN = 80
 
 # set logging defaults
 _default_conf = {
     'level': 'INFO',
-    'max_file_size': 0,
-    'max_file_backups': 0,
     'errors_to_console': False,
-    'file_format': '%(asctime)-15s [%(levelname).1s] %(message)s (%(source)s)',
-    'stream_format': '[%(levelname)s] %(message)s (%(source)s)'
 }
 
 # let logging know we made a TRACE level
@@ -203,22 +198,14 @@ class TraceLoggerAdapter(logging.LoggerAdapter):
         self.logger.trace(msg, *args, **kwargs)
 
 
-class SyslogMsecFormatter(logging.Formatter):
-    """ A custom Formatter for the syslogger which changes the log timestamps to
-    have millisecond resolution for compatibility with splunk.
-    """
+class PrefixAddingLoggerFilter(logging.Filter):
+    def __init__(self, prefix=None):
+        self.prefix = prefix
 
-    converter = dt.datetime.fromtimestamp
-
-    # logging.Formatter impl hates pep8
-    def formatTime(self, record, datefmt=None):  # NOQA
-        ct = self.converter(record.created)
-        if datefmt:
-            s = ct.strftime(datefmt)
-        else:
-            t = ct.strftime("%Y-%m-%d %H:%M:%S")
-            s = "%s.%03d" % (t, record.msecs)
-        return s
+    def filter(self, record):
+        if self.prefix:
+            record.msg = self.prefix + record.msg
+        return True
 
 
 class NamedLoggerAdapter(TraceLoggerAdapter):
@@ -247,14 +234,6 @@ def _load_conf(logger_name=None):
     return logging_conf
 
 
-def _get_syslog_settings():
-    try:
-        syslog = conf['env']['syslog']
-        return (syslog['address'], int(syslog['port']))
-    except KeyError:
-        return None
-
-
 class _RelpathFilter(logging.Filter):
     """Adds the relpath attr to records
 
@@ -266,16 +245,7 @@ class _RelpathFilter(logging.Filter):
 
     """
     def filter(self, record):
-        try:
-            relpath = get_rel_path(record.source_file)
-            lineno = record.source_lineno
-        except AttributeError:
-            relpath = get_rel_path(record.pathname)
-            lineno = record.lineno
-        if lineno:
-            record.source = "{}:{}".format(relpath, lineno)
-        else:
-            record.source = relpath
+        record.pathname = get_rel_path(record.pathname)
         return True
 
 
@@ -326,7 +296,7 @@ class Perflog(object):
     tracking_events = {}
 
     def __init__(self, perflog_name='perf'):
-        self.logger = create_logger(perflog_name)
+        self.logger = setup_logger(logging.getLogger(perflog_name))
 
     def start(self, event_name):
         """Start tracking the named event
@@ -357,62 +327,50 @@ class Perflog(object):
             return None
 
 
-def create_logger(logger_name, filename=None, max_file_size=None, max_backups=None):
-    """Creates and returns the named logger
+def make_file_handler(filename, root=log_path.strpath, level=None, **kw):
+    filename = os.path.join(root, filename)
+    handler = logging.FileHandler(filename, **kw)
+    formatter = logging.Formatter(
+        '%(asctime)-15s [%(levelname).1s] %(message)s (%(pathname)s:%(lineno)s)')
+    handler.setFormatter(formatter)
+    if level is not None:
+        handler.setLevel(level)
+    return handler
 
-    If the logger already exists, it will be destroyed and recreated
-    with the current config in env.yaml
 
-    """
-    # If the logger already exists, destroy it
-    # TODO: remove the need to destroy the logger
-    logging.root.manager.loggerDict.pop(logger_name, None)
+def error_console_handler():
+    formatter = logging.Formatter('[%(levelname)s] %(message)s (%(pathname)s:%(lineno)s)')
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.ERROR)
+    handler.setFormatter(formatter)
+    return handler
 
+
+def setup_logger(logger):
+    # prevent the root logger effective level from affecting us
+    # this is a hack
+    logger.setLevel(1)
+    # prevent root logger handlers from triggering (its sad that we need this)
+    logger.propagate = False
     # Grab the logging conf
-    conf = _load_conf(logger_name)
-
-    log_path.ensure(dir=True)
-    if filename:
-        log_file = filename
-    else:
-        log_file = str(log_path.join('{}.log'.format(logger_name)))
+    conf = _load_conf(logger.name)
 
     # log_file is dynamic, so we can't used logging.config.dictConfig here without creating
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
     # entire logging config into env.yaml
 
-    file_formatter = logging.Formatter(conf['file_format'])
-    file_handler = RotatingFileHandler(log_file, maxBytes=max_file_size or conf['max_file_size'],
-        backupCount=max_backups or conf['max_file_backups'], encoding='utf8')
-    file_handler.setFormatter(file_formatter)
+    logger.addHandler(make_file_handler(logger.name + '.log', level=conf['level']))
 
-    logger = logging.getLogger(logger_name)
-    logger.addHandler(file_handler)
-
-    syslog_settings = _get_syslog_settings()
-    if syslog_settings:
-        lid = fauxfactory.gen_alphanumeric(8)
-        fmt = '%(asctime)s [' + lid + '] %(message)s'
-        syslog_formatter = SyslogMsecFormatter(fmt=fmt)
-        syslog_handler = SysLogHandler(address=syslog_settings)
-        syslog_handler.setFormatter(syslog_formatter)
-        logger.addHandler(syslog_handler)
-    logger.setLevel(conf['level'])
     if conf['errors_to_console']:
-        stream_formatter = logging.Formatter(conf['stream_format'])
-        stream_handler = logging.StreamHandler()
-        stream_handler.setLevel(logging.ERROR)
-        stream_handler.setFormatter(stream_formatter)
-
-        logger.addHandler(stream_handler)
+        logger.addHandler(error_console_handler())
 
     logger.addFilter(_RelpathFilter())
     return logger
 
 
-def create_sublogger(logger_sub_name, logger_name='cfme'):
-    logger = create_logger(logger_name)
+def create_sublogger(logger_sub_name):
     return NamedLoggerAdapter(logger, logger_sub_name)
+
 
 def format_marker(mstring, mark="-"):
     """ Creates a marker in log files using a string and leader mark.
@@ -468,8 +426,8 @@ def nth_frame_info(n):
     return inspect.getframeinfo(inspect.stack(1)[n][0])
 
 
-class ArtifactorLoggerAdapter(logging.LoggerAdapter):
-    """Logger Adapter that hands messages off to the artifactor before logging"""
+class ArtifactorHandler(logging.Handler):
+    """Logger handler that hands messages off to the artifactor"""
     @cached_property
     def artifactor(self):
         from fixtures.artifactor_plugin import art_client
@@ -480,93 +438,15 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         from fixtures.artifactor_plugin import SLAVEID
         return SLAVEID or ""
 
-    def art_log(self, level_name, message, args, kwargs):
-        if args:
-            # Try the string formatting only if args passed
-            try:
-                formatted_message = message % args
-            except (TypeError, ValueError) as e:
-                formatted_message = message
-                self.logger.error(
-                    'Could not format the string %r with %r because of %r', message, args, e)
-        else:
-            # No args passed, do not care.
-            formatted_message = message
-
-        art_log_record = {
-            'level': level_name,
-            'message': formatted_message,
-            'extra': kwargs.get('extra', '')
-        }
-        self.artifactor.fire_hook('log_message', log_record=art_log_record, slaveid=self.slaveid)
-
-    def log(self, lvl, msg, *args, **kwargs):
-        level_name = logging.getLevelName(lvl).lower()
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log(level_name, msg, args, kwargs)
-        return self.logger.log(lvl, msg, *args, **kwargs)
-
-    def trace(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('trace', msg, args, kwargs)
-        return self.logger.trace(msg, *args, **kwargs)
-
-    def debug(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('debug', msg, args, kwargs)
-        return self.logger.debug(msg, *args, **kwargs)
-
-    def info(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('info', msg, args, kwargs)
-        return self.logger.info(msg, *args, **kwargs)
-
-    def warning(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('warning', msg, args, kwargs)
-        return self.logger.warning(msg, *args, **kwargs)
-
-    def error(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('error', msg, args, kwargs)
-        return self.logger.error(msg, *args, **kwargs)
-
-    def critical(self, msg, *args, **kwargs):
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('critical', msg, args, kwargs)
-        return self.logger.critical(msg, *args, **kwargs)
-
-    def exception(self, msg, *args, **kwargs):
-        kwargs['exc_info'] = 1
-        msg, kwargs = self.process(msg, kwargs)
-        self.art_log('error', msg, args, kwargs)
-        return self.logger.error(msg, *args, **kwargs)
-
-    def process(self, msg, kwargs):
-        # frames
-        # 0: call to nth_frame_info
-        # 1: adapter process method (this method)
-        # 2: adapter logging method
-        # 3: original logging call
-        msg = safe_string(msg)
-        frameinfo = nth_frame_info(3)
-        extra = kwargs.get('extra', {})
-        # add extra data if needed
-        if not extra.get('source_file'):
-            if frameinfo.filename:
-                extra['source_file'] = get_rel_path(frameinfo.filename)
-                extra['source_lineno'] = frameinfo.lineno
-            else:
-                # calling frame didn't have a filename
-                extra['source_file'] = 'unknown'
-                extra['source_lineno'] = 0
-        kwargs['extra'] = extra
-        return msg, kwargs
+    def emit(self, record):
+        self.artifactor.fire_hook('log_message', log_record=record.__dict__, slaveid=self.slaveid)
 
 
-cfme_logger = create_logger('cfme')
+logger = setup_logger(logging.getLogger('cfme'))
+logger.addHandler(ArtifactorHandler())
 
-logger = ArtifactorLoggerAdapter(cfme_logger, {})
+add_prefix = PrefixAddingLoggerFilter()
+logger.addFilter(add_prefix)
 
 perflog = Perflog()
 
@@ -578,9 +458,7 @@ def _configure_warnings():
     wlog = logging.getLogger('py.warnings')
     wlog.addFilter(WarningsRelpathFilter())
     wlog.addFilter(WarningsDeduplicationFilter())
-    file_handler = RotatingFileHandler(
-        str(log_path.join('py.warnings.log')), encoding='utf8')
-    wlog.addHandler(file_handler)
+    wlog.addHandler(make_file_handler('py.warnings.log'))
     wlog.propagate = False
 _configure_warnings()
 

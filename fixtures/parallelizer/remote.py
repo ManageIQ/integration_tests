@@ -184,8 +184,7 @@ if __name__ == '__main__':
     # overwrite the default logger before anything else is imported,
     # to get our best chance at having everything import the replaced logger
     import utils.log
-    slave_logger = utils.log.create_sublogger(args.slaveid)
-    utils.log.logger = utils.log.ArtifactorLoggerAdapter(slave_logger, {})
+    utils.log.add_prefix.prefix = "({}) ".format(args.slaveid)
 
     from fixtures import terminalreporter
     from fixtures.pytest_store import store

@@ -125,12 +125,10 @@ import logging
 import os
 import re
 import sys
-import traceback
 
 from py.path import local
 from riggerlib import Rigger, RiggerBasePlugin, RiggerClient
 
-from logging.handlers import RotatingFileHandler
 from utils.net import random_port
 from utils.path import log_path
 
@@ -171,9 +169,7 @@ class Artifactor(Rigger):
         }
 
     def handle_failure(self, exc):
-        self.logger.debug(exc[0])
-        self.logger.debug(exc[1])
-        self.logger.debug(traceback.format_tb(exc[2]))
+        self.logger.error("exception", exc_info=exc)
 
     def log_message(self, message):
         self.logger.debug(message)
@@ -283,18 +279,18 @@ def create_logger(logger_name, filename):
     with the current config in env.yaml
 
     """
-    # If the logger already exists, destroy it
-    # TODO: we should never need to poke into the logging internals
-    logging.root.manager.loggerDict.pop(logger_name, None)
+    # If the logger already exists, reset its handlers
+
+    logger = logging.getLogger(logger_name)
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
 
     log_file = filename
 
     file_formatter = logging.Formatter('%(asctime)-15s [%(levelname).1s] %(message)s')
-    file_handler = RotatingFileHandler(log_file, maxBytes=2048, encoding='utf8')
+    file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(file_formatter)
 
-    logger = logging.getLogger(logger_name)
     logger.addHandler(file_handler)
-
     logger.setLevel('DEBUG')
     return logger
