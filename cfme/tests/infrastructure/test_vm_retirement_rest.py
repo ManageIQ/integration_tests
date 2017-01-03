@@ -4,7 +4,7 @@ import pytest
 import fauxfactory
 
 from cfme import test_requirements
-from cfme.rest import a_provider as _a_provider
+from cfme.rest.gen_data import a_provider as _a_provider
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
@@ -20,7 +20,7 @@ def a_provider():
 
 @pytest.fixture(scope='function')
 def vm(request, a_provider, rest_api):
-    # Don't use cfme.rest.vm because we don't need finalizer and delete vm after test
+    # Don't use cfme.rest.gen_data.vm because we don't need finalizer and delete vm after test
     provider_rest = rest_api.collections.providers.get(name=a_provider.name)
     vm_name = deploy_template(
         a_provider.key,

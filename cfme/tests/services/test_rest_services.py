@@ -3,10 +3,10 @@ import datetime
 import fauxfactory
 import pytest
 
-from cfme.rest import dialog as _dialog
-from cfme.rest import services as _services
-from cfme.rest import service_catalogs as _service_catalogs
-from cfme.rest import service_templates as _service_templates
+from cfme.rest.gen_data import dialog as _dialog
+from cfme.rest.gen_data import services as _services
+from cfme.rest.gen_data import service_catalogs as _service_catalogs
+from cfme.rest.gen_data import service_templates as _service_templates
 from cfme import test_requirements
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
