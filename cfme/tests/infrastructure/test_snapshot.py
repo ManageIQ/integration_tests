@@ -39,7 +39,7 @@ def domain(request):
 @pytest.fixture(scope="module")
 def test_vm(setup_provider_modscope, provider, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = VM.factory(vm_name, provider, template_name=provider.data['full_template']['name'])
+    vm = VM.factory(vm_name, provider, template_name=provider.data['small_template'])
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
@@ -61,7 +61,8 @@ def new_snapshot(test_vm, has_name=True):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.type != 'virtualcenter' and provider.type != 'rhevm')
+    lambda provider: provider.type != 'virtualcenter' and (provider.type != 'rhevm' or
+          (provider.type == 'rhevm' and provider.version < 4)))
 def test_snapshot_crud(test_vm, provider):
     """Tests snapshot crud
 
