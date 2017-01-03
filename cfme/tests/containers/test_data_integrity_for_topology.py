@@ -17,6 +17,8 @@ from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.node import Node
 from collections import namedtuple
 from cfme.web_ui import toolbar as tb
+from cfme.web_ui.search import ensure_no_filter_applied
+from selenium.common.exceptions import NoSuchElementException
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -39,19 +41,13 @@ DATA_SETS = [
     DataSet(ContainersProvider, 'Providers'),
     DataSet(ImageRegistry, 'Registries')
 ]
-#   CMP-9521 CMP-9819 CMP-9820 CMP-9821 CMP-9822
+# CMP-9820 CMP-9821 CMP-9822 CMP-9823 CMP-9824 CMP-9825 CMP-9826 CMP-9827
 
 
 @pytest.mark.parametrize(('test_data'), DATA_SETS)
 def test_data_integrity_for_topology(test_data):
     """ This test verifies that every status box value under Containers Overview is identical to the
     number present on its page.
-    Steps:
-        * Go to Containers / Overview
-        * All cells should contain the correct relevant information
-            # of nodes
-            # of providers
-            # ...
     """
     sel.force_navigate('container_dashboard')
     # We should wait ~2 seconds for the StatusBox population
@@ -62,6 +58,10 @@ def test_data_integrity_for_topology(test_data):
     navigate_to(test_data.object, 'All')
     if statusbox_value > 0:
         tb.select('Grid View')
-        assert len(map(lambda i: i, Quadicon.all())) == statusbox_value
+        try:
+            ensure_no_filter_applied()
+        except NoSuchElementException:
+            pass
+        assert len(list(Quadicon.all())) == statusbox_value
     else:
         assert sel.is_displayed_text('No Records Found.')
