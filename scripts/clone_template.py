@@ -8,6 +8,7 @@ import sys
 import utils
 from utils.appliance import Appliance, IPAppliance
 from utils.conf import cfme_data
+from utils.conf import credentials as cred
 from utils.log import logger
 from utils.path import log_path
 from utils.providers import destroy_vm, get_mgmt
@@ -146,7 +147,10 @@ def main(**kwargs):
             deploy_args["allowed_datastores"] = provider_dict["allowed_datastores"]
     elif provider_type == 'scvmm':
         deploy_args["host_group"] = provider_dict["provisioning"]['host_group']
-
+    elif provider_type == 'gce':
+        deploy_args['ssh_key'] = '{user_name}:{public_key}'.format(
+            user_name=cred['ssh']['ssh-user'],
+            public_key=cred['ssh']['public_key'])
     # Do it!
     try:
         logger.info('Cloning {} to {} on {}'.format(deploy_args['template'], deploy_args['vm_name'],
@@ -182,7 +186,10 @@ def main(**kwargs):
                 app = IPAppliance(address=ip)
             else:
                 app = Appliance(kwargs['provider'], deploy_args['vm_name'])
-            app.configure()
+            if provider_type == 'gce':
+                app.configure_gce()
+            else:
+                app.configure()
             logger.info('Successfully Configured the appliance.')
     except Exception as e:
         logger.exception(e)

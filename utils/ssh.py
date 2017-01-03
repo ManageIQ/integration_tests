@@ -123,6 +123,10 @@ class SSHClient(paramiko.SSHClient):
     def is_container(self):
         return self._container is not None
 
+    @property
+    def username(self):
+        return self._connect_kwargs.get('username', None)
+
     def __repr__(self):
         return "<SSHClient hostname={} port={}>".format(
             repr(self._connect_kwargs.get("hostname")),
@@ -197,20 +201,45 @@ class SSHClient(paramiko.SSHClient):
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
-    def run_command(self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False):
+    def run_command(
+            self, command, timeout=RUNCMD_TIMEOUT, reraise=False, ensure_host=False,
+            ensure_user=False):
+        """Run a command over SSH.
+
+        Args:
+            command: The command. Supports taking dicts as version picking.
+            timeout: Timeout after which the command execution fails.
+            reraise: Does not muffle the paramiko exceptions in the log.
+            ensure_host: Ensure that the command is run on the machine with the IP given, not any
+                container or such that we might be using by default.
+            ensure_user: Ensure that the command is run as the user we logged in, so in case we are
+                not root, setting this to True will prevent from running sudo.
+
+        Returns:
+            A :py:class:`SSHResult` instance.
+        """
         if isinstance(command, dict):
             command = version.pick(command)
-        logger.info("Running command `%s`", command)
+        logger.info("Parsing command `{command}`".format(command=command))
+        uses_sudo = False
         if self.is_container and not ensure_host:
             command = 'docker exec {} bash -c {}'.format(self._container, quote(
                 'source /etc/default/evm; ' + command))
-            logger.info("Actually running command `%s`", command)
-        template = '{}\n'
-        command = template.format(command)
 
-        output = ''
+        if self.username != 'root' and not ensure_user:
+            # We need sudo
+            command = 'sudo -i bash -c {command}'.format(command=quote(command))
+            uses_sudo = True
+
+        logger.info("Running command `{command}`".format(command=command))
+        command += '\n'
+
+        output = []
         try:
             session = self.get_transport().open_session()
+            if uses_sudo:
+                # We need a pseudo-tty for sudo
+                session.get_pty()
             if timeout:
                 session.settimeout(float(timeout))
             session.exec_command(command)
@@ -219,29 +248,30 @@ class SSHClient(paramiko.SSHClient):
             while True:
                 if session.recv_ready:
                     for line in stdout:
-                        output += line
+                        output.append(line)
                         if self._streaming:
                             sys.stdout.write(line)
 
                 if session.recv_stderr_ready:
                     for line in stderr:
-                        output += line
+                        output.append(line)
                         if self._streaming:
                             sys.stderr.write(line)
 
                 if session.exit_status_ready():
                     break
             exit_status = session.recv_exit_status()
-            return SSHResult(exit_status, output)
+            return SSHResult(exit_status, ''.join(output))
         except paramiko.SSHException as exc:
             if reraise:
                 raise
             else:
                 logger.exception(exc)
         except socket.timeout as e:
-            logger.error("Command `%s` timed out.", command)
+            logger.error("Command `{command}` timed out.".format(command=command))
             logger.exception(e)
-            logger.error("Output of the command before it failed was:\n%s", output)
+            logger.error("Output of the command before it failed was:\n{output}".format(
+                output=''.join(output)))
             raise
 
         # Returning two things so tuple unpacking the return works even if the ssh client fails
@@ -262,18 +292,20 @@ class SSHClient(paramiko.SSHClient):
             "for ((i=0; i<instances; i++)) do while (($(date +%s) < $endtime)); "
             "do :; done & done".format(seconds, cpus), **kwargs)
 
-    def run_rails_command(self, command, timeout=RUNCMD_TIMEOUT):
-        logger.info("Running rails command `%s`", command)
-        return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {}'.format(command),
-            timeout=timeout)
+    def run_rails_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
+        logger.info("Running rails command `{command}`".format(command=command))
+        return self.run_command('/var/www/miq/vmdb/bin/rails runner {command}'.format(
+            command=command), timeout=timeout, **kwargs)
 
-    def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT):
-        logger.info("Running rake command `%s`", command)
-        return self.run_command('cd /var/www/miq/vmdb; bin/rake {}'.format(command),
-            timeout=timeout)
+    def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT, **kwargs):
+        logger.info("Running rake command `{command}`".format(command=command))
+        return self.run_command(
+            '/var/www/miq/vmdb/bin/rake -f /var/www/miq/vmdb/Rakefile {command}'.format(
+                command=command), timeout=timeout, **kwargs)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
-        logger.info("Transferring local file %s to remote %s", local_file, remote_file)
+        logger.info("Transferring local file {local_file} to remote {remote_file}".format(
+            local_file=local_file, remote_file=remote_file))
         if self.is_container:
             tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
             scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
@@ -281,11 +313,21 @@ class SSHClient(paramiko.SSHClient):
             self.run_command('mv {} {}'.format(tempfilename, remote_file))
             return scp
         else:
-            return SCPClient(self.get_transport(), progress=self._progress_callback).put(
-                local_file, remote_file, **kwargs)
+            if self.username == 'root':
+                return SCPClient(self.get_transport(), progress=self._progress_callback).put(
+                    local_file, remote_file, **kwargs)
+            # scp client is not sudo, may not work for non sudo
+            tempfilename = '/home/{user_name}/temp_{random_alpha}'.format(
+                user_name=self.username, random_alpha=fauxfactory.gen_alpha())
+            scp = SCPClient(self.get_transport(), progress=self._progress_callback).put(
+                local_file, tempfilename, **kwargs)
+            self.run_command('mv {temp_file} {remote_file}'.format(temp_file=tempfilename,
+                                                                   remote_file=remote_file))
+            return scp
 
     def get_file(self, remote_file, local_path='', **kwargs):
-        logger.info("Transferring remote file %s to local %s", remote_file, local_path)
+        logger.info("Transferring remote file {remote_file} to local {local_path}".format(
+            remote_file=remote_file, local_path=local_path))
         if self.is_container:
             tempfilename = '/share/temp_{}'.format(fauxfactory.gen_alpha())
             self.run_command('cp {} {}'.format(remote_file, tempfilename))
@@ -313,7 +355,7 @@ class SSHClient(paramiko.SSHClient):
             not patched by the current patch-file, it will be used to restore it first.
             Recompiling assets and restarting appropriate services might be required.
         """
-        logger.info('Patching %s', remote_path)
+        logger.info('Patching {remote_path}'.format(remote_path=remote_path))
 
         # Upload diff to the appliance
         diff_remote_path = os_path.join('/tmp/', os_path.basename(remote_path))
@@ -342,7 +384,8 @@ class SSHClient(paramiko.SSHClient):
 
         # If not patched and there's MD5 checksum available, check it
         if md5:
-            logger.info("MD5 sum check in progress for %s", remote_path)
+            logger.info("MD5 sum check in progress for {remote_path}".format(
+                remote_path=remote_path))
             rc, out = self.run_command('md5sum -c - <<< "{} {}"'.format(md5, remote_path))
             if rc == 0:
                 logger.info('MD5 sum check result: file not changed')
@@ -376,7 +419,7 @@ class SSHClient(paramiko.SSHClient):
         return 0
 
     def client_address(self):
-        res = self.run_command('echo $SSH_CLIENT', ensure_host=True)
+        res = self.run_command('echo $SSH_CLIENT', ensure_host=True, ensure_user=True)
         # SSH_CLIENT format is 'clientip clientport serverport', we want clientip
         if not res.output:
             raise Exception('unable to get client address via SSH')
