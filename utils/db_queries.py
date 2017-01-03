@@ -14,10 +14,9 @@ def get_configuration_details(db=None, ip_address=None):
         If the data weren't found in the DB, :py:class:`NoneType`
         If the data were found, it returns tuple `(region, server name, server id, server zone id)`
     """
-    if ip_address is None:
-        ip_address = cfmedb().hostname
-
     if db is None:
+        if ip_address is None:
+            ip_address = cfmedb().hostname
         db = Db(hostname=ip_address)
 
     SEQ_FACT = 1e12

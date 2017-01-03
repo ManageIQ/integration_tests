@@ -202,7 +202,9 @@ class UserAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        accordion.tree("Access Control", server_region_string(), "Users")
+        accordion.tree(
+            "Access Control",
+            self.obj.appliance.server.zone.region.settings_string, "Users")
 
     def resetter(self):
         accordion.refresh("Access Control")
@@ -221,7 +223,12 @@ class UserDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        accordion.tree("Access Control", server_region_string(), "Users", self.obj.name)
+        accordion.tree(
+            "Access Control",
+            self.obj.appliance.server.zone.region.settings_string,
+            "Users",
+            self.obj.name
+        )
 
     def resetter(self):
         accordion.refresh("Access Control")

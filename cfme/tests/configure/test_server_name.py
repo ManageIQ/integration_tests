@@ -6,6 +6,8 @@ from cfme.fixtures import pytest_selenium as sel
 from fixtures.pytest_store import store
 from cfme.web_ui import flash, InfoBlock
 from utils import clear_property_cache
+from utils.appliance import current_appliance
+from utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.mark.tier(3)
@@ -14,7 +16,7 @@ def test_server_name():
     """Tests that changing the server name updates the about page"""
     flash_msg = 'Configuration settings saved for CFME Server "{}'
 
-    sel.force_navigate('cfg_settings_currentserver_server')
+    navigate_to(current_appliance.server, 'Server')
     old_server_name = sel.value(BasicInformation.basic_information.appliance_name)
     new_server_name = old_server_name + "-CFME"
     settings_pg = BasicInformation(appliance_name=new_server_name)
