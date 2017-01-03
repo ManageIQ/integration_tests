@@ -513,7 +513,7 @@ class Accordion(View, ClickableMixin):
                 self.click()
 
     def close(self):
-        if self.is_open:
+        if self.is_opened:
             self.click()
 
     def child_widget_accessed(self, widget):
