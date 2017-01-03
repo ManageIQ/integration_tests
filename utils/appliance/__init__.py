@@ -1588,6 +1588,16 @@ class IPAppliance(object):
         else:
             return False
 
+    @property
+    def is_idle(self):
+        idle_time = 3600
+        ssh_output = self.ssh_client.run_command('if [ $((`date "+%s"` - `date -d "$(egrep -v '
+            '"(Processing by Api::ApiController\#index as JSON|Started GET "/api" for '
+            '127.0.0.1|Completed 200 OK in)" /var/www/miq/vmdb/log/production.log | tail -1 |cut '
+            '-d"[" -f3 | cut -d"]" -f1 | cut -d" " -f1)\" \"+%s\"`)) -lt {} ];then echo "False";'
+            'else echo "True"; fi;'.format(idle_time))
+        return True if 'True' in ssh_output else False
+
     @cached_property
     def build_datetime(self):
         datetime = self.ssh_client.get_build_datetime()
