@@ -61,9 +61,8 @@ def new_snapshot(test_vm, has_name=True):
 
 
 @pytest.mark.uncollectif(
-    lambda provider: provider.type != 'virtualcenter' and
-                     (provider.type != 'rhevm' or
-                     (provider.type == 'rhevm' and provider.version < 4)))
+    lambda provider: provider.type != 'virtualcenter' and (provider.type != 'rhevm' or
+          (provider.type == 'rhevm' and provider.version < 4)))
 def test_snapshot_crud(test_vm, provider):
     """Tests snapshot crud
 
