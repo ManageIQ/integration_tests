@@ -1,6 +1,35 @@
 # -*- coding: utf-8 -*-
-
 from utils.db import cfmedb, Db
+from collections import namedtuple
+
+
+class ConfigDetailResult(namedtuple('ConfigDetailResult',
+                                    'server_region, server_name, server_id, server_zone_id')):
+    @classmethod
+    def from_region_and_server(cls, region, server):
+        if not server:
+            return cls(None, None, None, None)
+        else:
+            return cls(region.region, server.name, server.id, server.zone_id)
+
+
+def config_detail_method(descriptor, attribute='configuration_details'):
+    name = next(
+        # __base__ is needed because we layer a subclass on top and need to walk the base class dict
+        name for name, value in vars(ConfigDetailResult.__base__).items()
+        if value is descriptor)
+
+    def method(self):
+        conf = getattr(self, attribute)
+        return getattr(conf, name, None)
+    method.__name__ = name
+    method.__doc__ = "alias for self.{attribute}.{name}".format(
+        attribute=attribute, name=name)
+    return method
+
+
+def _db(db=None, ip_address=None):
+    return db or Db(hostname=ip_address or cfmedb().hostname)
 
 
 def get_configuration_details(db=None, ip_address=None):
@@ -14,11 +43,7 @@ def get_configuration_details(db=None, ip_address=None):
         If the data weren't found in the DB, :py:class:`NoneType`
         If the data were found, it returns tuple `(region, server name, server id, server zone id)`
     """
-    if ip_address is None:
-        ip_address = cfmedb().hostname
-
-    if db is None:
-        db = Db(hostname=ip_address)
+    db = _db(db, ip_address)
 
     SEQ_FACT = 1e12
     miq_servers = db['miq_servers']
@@ -32,71 +57,38 @@ def get_configuration_details(db=None, ip_address=None):
             server = all_servers[0]
         else:
             # Otherwise, filter based on id and ip address
-            def server_filter(server):
-                return all([
-                    server.id >= reg_min,
-                    server.id < reg_max,
-                    # XXX: This currently fails due to public/private addresses on openstack
-                    server.ipaddress == ip_address
-                ])
-            servers = filter(server_filter, all_servers)
-            if servers:
-                server = servers[0]
-        if server:
-            return region.region, server.name, server.id, server.zone_id
-        else:
-            return None, None, None, None
+            server = next((
+                s for s in all_servers
+                if server.id >= reg_min and server.id < reg_max and
+                # XXX: This currently fails due to public/private addresses on openstack
+                server.ipaddress == ip_address), default=None)
+        if server is not None:
+            return ConfigDetailResult.from_region_and_server(region, server)
     else:
         return None
 
 
 def get_zone_description(zone_id, ip_address=None, db=None):
-    if ip_address is None:
-        ip_address = cfmedb().hostname
-
-    if db is None:
-        db = Db(hostname=ip_address)
-
-    zones = list(
-        db.session.query(db["zones"]).filter(
-            db["zones"].id == zone_id
-        )
-    )
-    if zones:
-        return zones[0].description
-    else:
-        return None
+    db = _db(db, ip_address)
+    zone = db.get_first_of("zones", id=zone_id)
+    if zone is not None:
+        return zone.description
 
 
 def get_host_id(hostname, ip_address=None, db=None):
-    if ip_address is None:
-        ip_address = cfmedb().hostname
+    db = _db(db, ip_address)
 
-    if db is None:
-        db = Db(hostname=ip_address)
+    host = db.db.get_first_of("hosts", name=hostname)
 
-    hosts = list(
-        db.session.query(db["hosts"]).filter(
-            db["hosts"].name == hostname
-        )
-    )
-    if hosts:
-        return str(hosts[0].id)
-    else:
-        return None
+    if host is not None:
+        return str(host.id)
 
 
 def check_domain_enabled(domain, ip_address=None, db=None):
-    if ip_address is None:
-        ip_address = cfmedb().hostname
+    db = _db(db, ip_address)
 
-    if db is None:
-        db = Db(hostname=ip_address)
-
-    namespaces = db["miq_ae_namespaces"]
-    q = db.session.query(namespaces).filter(
-        namespaces.parent_id == None, namespaces.name == domain)  # NOQA (for is/==)
-    try:
-        return list(q)[0].enabled
-    except IndexError:
+    ns = db.get_first_of("miq_ae_namespaces", parent_id=None, name=domain)
+    if ns is not None:
+        return ns.enabled
+    else:
         raise KeyError("No such Domain: {}".format(domain))

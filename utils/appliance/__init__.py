@@ -1573,10 +1573,6 @@ class IPAppliance(object):
     def configuration_details(self):
         """Return details that are necessary to navigate through Configuration accordions.
 
-        Args:
-            ip_address: IP address of the server to match. If None, uses hostname from
-                ``conf.env['base_url']``
-
         Returns:
             If the data weren't found in the DB, :py:class:`NoneType`
             If the data were found, it returns tuple ``(region, server name,
@@ -1587,29 +1583,10 @@ class IPAppliance(object):
         except KeyError:
             return None
 
-    def server_id(self):
-        try:
-            return self.configuration_details[2]
-        except TypeError:
-            return None
-
-    def server_region(self):
-        try:
-            return self.configuration_details[0]
-        except TypeError:
-            return None
-
-    def server_name(self):
-        try:
-            return self.configuration_details[1]
-        except TypeError:
-            return None
-
-    def server_zone_id(self):
-        try:
-            return self.configuration_details[3]
-        except TypeError:
-            return None
+    server_id = db_queries.config_detail_method(db_queries.ConfigDetailResult.server_id)
+    server_region = db_queries.config_detail_method(db_queries.ConfigDetailResult.server_region)
+    server_name = db_queries.config_detail_method(db_queries.ConfigDetailResult.server_name)
+    server_zone_id = db_queries.config_detail_method(db_queries.ConfigDetailResult.server_zone_id)
 
     def server_region_string(self):
         r = self.server_region()

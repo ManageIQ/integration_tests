@@ -284,6 +284,9 @@ class Db(Mapping):
                 logger.info('Unable to create table class for table "%s"')
                 return None
 
+    def get_first_of(self, db_table_name, **filter):
+        return self.session.query(self[db_table_name]).filter_by(**filter).first()
+
 
 @contextmanager
 def database_on_server(hostname, **kwargs):
