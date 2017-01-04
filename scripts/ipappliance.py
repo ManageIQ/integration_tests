@@ -15,13 +15,15 @@ Returns the resulting value of the call written to the stdout, one line per appl
 Logs its actions to stderr.
 
 """
+from __future__ import print_function
 import argparse
 import inspect
 import json
 import sys
-import time
 from datetime import datetime
-from threading import Lock, Thread
+from threading import Lock
+from concurrent import futures
+import traceback
 from utils.appliance import IPAppliance
 
 lock = Lock()
@@ -41,35 +43,26 @@ def log_callback(s):
             "[{}] {}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), s))
 
 
-def call_appliance(order, result_dict, ip_address, action, args, kwargs):
+def call_appliance(ip_address, action, args, kwargs):
     # Given a provider class, find the named method and call it with
     # *args. This could possibly be generalized for other CLI tools.
     appliance = IPAppliance(ip_address)
-    result = None
 
     try:
         call = getattr(appliance, action)
     except AttributeError:
         raise Exception('Action "{}" not found'.format(action))
     if isinstance(getattr(type(appliance), action), property):
-        result = call
+        return call
     else:
         try:
             argspec = inspect.getargspec(call)
         except TypeError:
-            try:
-                result = call(*args, **kwargs)
-            except Exception as e:
-                result = e
+            return call(*args, **kwargs)
         else:
             if argspec.keywords is not None or 'log_callback' in argspec.args:
                 kwargs['log_callback'] = generate_log_callback(ip_address)
-            try:
-                result = call(*args, **kwargs)
-            except Exception as e:
-                result = e
-    with lock:
-        result_dict[order] = result
+            return call(*args, **kwargs)
 
 
 def parse_args():
@@ -90,49 +83,40 @@ def parse_args():
 def main(args):
     action_args = json.loads(args.args)
     action_kwargs = json.loads(args.kwargs)
-    results = {}
-    threads = []
+    appliance_calls = {}
+    finished_call_futures = []
     log_callback('Calling {}({}, {}) on {}'.format(
         args.action_name,
         ", ".join(map(repr, action_args)),
         ", ".join("{}={}".format(k, repr(v)) for k, v in action_kwargs.iteritems()),
         ", ".join(args.appliances)))
-    for order, appliance in enumerate(args.appliances):
-        log_callback("=== Starting on {} as thread {}".format(appliance, order))
-        thread = Thread(target=call_appliance,
-            args=(order, results, appliance, args.action_name, action_args, action_kwargs))
-        # Mark as daemon thread for easy-mode KeyboardInterrupt handling
-        thread.daemon = True
-        threads.append(thread)
-        thread.start()
 
-    finished_threads = set()
-    while len(finished_threads) < len(threads):
-        time.sleep(0.25)
-        for order, thread in enumerate(threads):
-            if order in finished_threads:
-                continue
-            thread.join(timeout=0.5)
-            if not thread.is_alive():
-                finished_threads.add(order)
-                log_callback("=== Thread {} finished.".format(order))
-                finished_count = float(len(finished_threads))
-                total_count = float(len(threads))
-                log_callback(
-                    "=== Progress: {0:.2f}%".format(100.0 * (finished_count / total_count)))
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        appliance_calls = {executor.submit(call_appliance,
+                                           appliance,
+                                           args.action_name,
+                                           action_args,
+                                           action_kwargs): appliance
+                           for appliance in args.appliances}
 
-    results = results.items()
-    results.sort(key=lambda pair: pair[0])
-    results = [pair[1] for pair in results]
+        total_count = len(appliance_calls)
+        finished_call_futures = []
+        for arrivial_order, future in enumerate(futures.as_completed(appliance_calls)):
+            log_callback("=== Progress: {:.2f}% out of {} appliances finished the call".format(
+                100.0 * (arrivial_order / total_count),
+                total_count))
+            finished_call_futures.append(future)
 
     log_callback("Ended. Result printout follows:")
     rc = 0
-    for result in results:
-        if isinstance(result, Exception):
-            print('Exception {}: {}'.format(type(result).__name__, str(result)))
+    for future in finished_call_futures:  # Note that they are in the order of their arrivial.
+        try:
+            print(future.result())
+        except Exception as exc:
+            print("The call on the appliance {} failed: {}".format(
+                  appliance_calls[future], exc))
+            traceback.print_exc()
             rc = 1
-        else:
-            print(result)
     return rc
 
 

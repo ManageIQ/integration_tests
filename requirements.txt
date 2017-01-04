@@ -7,6 +7,7 @@ docker-py
 fauxfactory>=2.0.7
 flake8
 functools32
+futures==3.0.5
 ipython
 iso8601
 Jinja2
