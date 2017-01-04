@@ -8,13 +8,26 @@ from cfme.rest.gen_data import services as _services
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.rest.gen_data import service_templates as _service_templates
 from cfme import test_requirements
+from utils import error, version, testgen
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
-from utils import error, version
 
 
 pytestmark = [test_requirements.service,
               pytest.mark.tier(2)]
+
+
+def pytest_generate_tests(metafunc):
+    # cfme.rest.services requires several provisioning tags
+    argnames, argvalues, idlist = testgen.infra_providers(
+        metafunc,
+        required_fields=[['provisioning', 'template'],
+                         ['provisioning', 'host'],
+                         ['provisioning', 'datastore'],
+                         ['provisioning', 'iso_file'],
+                         ['provisioning', 'vlan'],
+                         ['provisioning', 'catalog_item_type']])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 
 @pytest.fixture(scope="module")
