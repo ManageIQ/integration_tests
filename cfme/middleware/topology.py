@@ -1,14 +1,13 @@
 from cfme.common import TopologyMixin
-from cfme.fixtures import pytest_selenium as sel
 from navmazing import NavigateToAttribute
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 
 
 class MiddlewareTopology(TopologyMixin):
 
     @classmethod
     def load_topology_page(cls):
-        sel.force_navigate('middleware_topology')
+        navigate_to(MiddlewareTopology, 'All')
 
 
 @navigator.register(MiddlewareTopology, 'All')

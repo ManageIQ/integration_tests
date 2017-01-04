@@ -8,7 +8,7 @@ from cfme.web_ui import (
     form_buttons, toolbar as tb, paginator
 )
 from utils import version
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 
 from .. import cfg_btn, mon_btn, pol_btn
@@ -29,7 +29,7 @@ def _db_select_query(name=None, type=None):
 
 
 def _get_providers_page():
-    sel.force_navigate('middleware_providers')
+    navigate_to(MiddlewareProvider, 'All')
 
 properties_form = Form(
     fields=[

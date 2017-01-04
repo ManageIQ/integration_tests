@@ -128,7 +128,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
 
     @classmethod
     def headers(cls):
-        sel.force_navigate('middleware_servers')
+        navigate_to(MiddlewareServer, 'All')
         headers = [sel.text(hdr).encode("utf-8")
                    for hdr in sel.elements("//thead/tr/th") if hdr.text]
         return headers
