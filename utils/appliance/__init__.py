@@ -1590,12 +1590,27 @@ class IPAppliance(object):
 
     @property
     def is_idle(self):
+        """Return appliance idle state measured by last production.log activity.
+        It runs one liner script, which first gathers current date on appliance and then gathers
+        date of last entry in production.log(which has to be parsed) with /api calls filtered
+        (These calls occur every minute.)
+        Then it deducts that last time in log from current date and if it is lower than idle_time it
+        returns False else True.
+
+        Args:
+
+        Returns:
+            True if appliance is idling for longer or equal to idle_time seconds.
+            False if appliance is not idling for longer or equal to idle_time seconds.
+        """
         idle_time = 3600
         ssh_output = self.ssh_client.run_command('if [ $((`date "+%s"` - `date -d "$(egrep -v '
             '"(Processing by Api::ApiController\#index as JSON|Started GET "/api" for '
             '127.0.0.1|Completed 200 OK in)" /var/www/miq/vmdb/log/production.log | tail -1 |cut '
-            '-d"[" -f3 | cut -d"]" -f1 | cut -d" " -f1)\" \"+%s\"`)) -lt {} ];then echo "False";'
-            'else echo "True"; fi;'.format(idle_time))
+            '-d"[" -f3 | cut -d"]" -f1 | cut -d" " -f1)\" \"+%s\"`)) -lt {} ];'
+            'then echo "False";'
+            'else echo "True";'
+            'fi;'.format(idle_time))
         return True if 'True' in ssh_output else False
 
     @cached_property
