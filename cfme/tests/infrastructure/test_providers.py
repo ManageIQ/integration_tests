@@ -190,6 +190,7 @@ def test_providers_discovery(request, provider):
     wait_for_a_provider()
 
 
+@pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm', 'blocker=1399622')
 @pytest.mark.tier(3)
 @pytest.mark.usefixtures('has_no_infra_providers')
 @test_requirements.provider_discovery
