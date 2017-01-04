@@ -114,7 +114,7 @@ def catalog_item(setup_provider, provider, vm_name, dialog, catalog, provisionin
     catalog_item = CatalogItem(item_type="RHEV", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=iso_template,
-                  provider=provider.name, prov_data=provisioning_data)
+                  provider=provider, prov_data=provisioning_data)
     yield catalog_item
 
 

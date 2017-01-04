@@ -79,7 +79,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning):
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=template,
-                  provider=provider.name, prov_data=provisioning_data)
+                  provider=provider, prov_data=provisioning_data)
     yield catalog_item
 
 

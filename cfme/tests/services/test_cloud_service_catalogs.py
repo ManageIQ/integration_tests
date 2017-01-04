@@ -94,7 +94,7 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
     catalog_item = cct.CatalogItem(item_type=provisioning['item_type'], name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
                   dialog=dialog, catalog_name=image,
-                  provider=provider.name, prov_data=provisioning_data)
+                  provider=provider, prov_data=provisioning_data)
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog.name, catalog_item)

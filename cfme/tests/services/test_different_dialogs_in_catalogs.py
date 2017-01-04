@@ -84,7 +84,7 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=tagcontrol_dialog, catalog_name=template,
-                  provider=provider.name, prov_data=provisioning_data)
+                  provider=provider, prov_data=provisioning_data)
     return catalog_item
 
 
