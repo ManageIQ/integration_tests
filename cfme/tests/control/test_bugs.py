@@ -6,7 +6,7 @@ from cfme.base import Server
 from cfme.common.vm import VM
 from cfme.control.explorer import PolicyProfile, VMCompliancePolicy, Action, VMControlPolicy
 from cfme.infrastructure.virtual_machines import Vm
-from utils.appliance.endpoints.ui import navigate_to
+from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 from utils.log import logger
 from utils.providers import setup_a_provider as _setup_a_provider
