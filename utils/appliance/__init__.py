@@ -94,7 +94,7 @@ class IPAppliance(object):
 
     @property
     def server(self):
-        if self.server is None:
+        if self._server is None:
             from cfme.base import Server, Region, Zone
             region = Region(self, self.server_region())
             zone = Zone(self, region=region)
