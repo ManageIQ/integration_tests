@@ -6,6 +6,7 @@ from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from utils import testgen
 from utils import version
+from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.log import logger
 from utils.wait import wait_for
@@ -114,8 +115,7 @@ def test_provider_event(setup_provider, provider, gen_events, test_instance):
         test_flag: timelines, provision
     """
     def nav_step():
-        pytest.sel.force_navigate('cloud_provider_timelines',
-                                  context={'provider': provider})
+        navigate_to(provider, 'Timelines')
     wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
