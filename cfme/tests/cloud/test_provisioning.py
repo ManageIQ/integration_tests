@@ -9,6 +9,10 @@ from textwrap import dedent
 from cfme import test_requirements
 from cfme.automate import explorer as automate
 from cfme.cloud.instance import Instance
+from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
+from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
+from cfme.cloud.instance.azure import AzureInstance  # NOQA
+from cfme.cloud.instance.gce import GCEInstance  # NOQA
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
