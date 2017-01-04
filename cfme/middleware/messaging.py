@@ -119,7 +119,7 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
 
     @classmethod
     def headers(cls):
-        sel.force_navigate('middleware_messagings')
+        navigate_to(MiddlewareMessaging, 'All')
         headers = [sel.text(hdr).encode("utf-8")
                    for hdr in sel.elements("//thead/tr/th") if hdr.text]
         return headers

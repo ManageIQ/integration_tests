@@ -97,7 +97,7 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
 
     @classmethod
     def headers(cls):
-        sel.force_navigate('middleware_domains')
+        navigate_to(MiddlewareDomain, 'All')
         headers = [sel.text(hdr).encode("utf-8")
                    for hdr in sel.elements("//thead/tr/th") if hdr.text]
         return headers
