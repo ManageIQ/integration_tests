@@ -39,6 +39,11 @@ class Image(Taggable, SummaryMixin, Navigatable):
         navigate_to(self, 'Details')
         return InfoBlock.text(*ident)
 
+    @staticmethod
+    def get_names():
+        navigate_to(Image, 'All', use_resetter=False)
+        return [r.name.text for r in list_tbl.rows()]
+
 
 @navigator.register(Image, 'All')
 class All(CFMENavigateStep):
