@@ -52,6 +52,7 @@ def delete_instances_fin(request):
     return provisioned_instances
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.fixture(scope="module")
 def test_instance(setup_provider_modscope, request, delete_instances_fin, provider, vm_name):
     """ Fixture to provision instance on the provider
@@ -103,6 +104,7 @@ def db_event(db, provider):
     return event_count
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2',
                                forced_streams=['5.6']),
                             BZ(1390572, unblock=lambda provider: provider.type != 'azure',
@@ -120,6 +122,7 @@ def test_provider_event(setup_provider, provider, gen_events, test_instance):
              message="events to appear")
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2',
                                forced_streams=['5.6']),
                             BZ(1390572, unblock=lambda provider: provider.type != 'azure',
@@ -138,6 +141,7 @@ def test_azone_event(setup_provider, provider, gen_events, test_instance):
              message="events to appear")
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.7')
 @pytest.mark.meta(blockers=[BZ(1201923, unblock=lambda provider: provider.type != 'ec2',
                                forced_streams=['5.6']),
                             BZ(1390572, unblock=lambda provider: provider.type != 'azure',
