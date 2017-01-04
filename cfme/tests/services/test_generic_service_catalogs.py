@@ -82,7 +82,11 @@ def test_service_generic_catalog_bundle(catalog_item):
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=900, delay=20)
-    assert row.last_message.text == 'Request complete'
+    # Success message differs between 5.6 and 5.7
+    if version.current_version() >= '5.7':
+        assert 'Service [{}] Provisioned Successfully'.format(bundle_name) in row.last_message.text
+    else:
+        assert row.last_message.text == 'Request complete'
 
 
 def test_bundles_in_bundle(catalog_item):
@@ -106,7 +110,12 @@ def test_bundles_in_bundle(catalog_item):
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=900, delay=20)
-    assert row.last_message.text == 'Request complete'
+    # Success message differs between 5.6 and 5.7
+    if version.current_version() >= '5.7':
+        assert 'Service [{}] Provisioned Successfully'.format(third_bundle_name)\
+            in row.last_message.text
+    else:
+        assert row.last_message.text == 'Request complete'
 
 
 @pytest.mark.meta(blockers=['GH#ManageIQ/manageiq:7277'])
