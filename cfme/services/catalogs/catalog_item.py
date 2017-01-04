@@ -145,14 +145,17 @@ class CatalogItem(Updateable, Pretty, Navigatable):
         sel.wait_for_element(basic_info_form.name_text)
         catalog = fakeobject_or_object(self.catalog, "name", "Unassigned")
         dialog = fakeobject_or_object(self.dialog, "name", "No Dialog")
-
+        sel_provider = None
+        if self.item_type is not "Generic":
+            if self.provider.type_tclass is not "infra":
+                sel_provider = self.provider
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
                                'select_catalog': catalog.name,
                                'select_dialog': dialog.name,
                                'select_orch_template': self.orch_template,
-                               'select_provider': self.provider,
+                               'select_provider': sel_provider,
                                'select_config_template': self.config_template})
         if sel.text(basic_info_form.field_entry_point) == "":
             sel.click(basic_info_form.field_entry_point)
@@ -170,7 +173,7 @@ class CatalogItem(Updateable, Pretty, Navigatable):
             tabstrip.select_tab("Catalog")
             template = template_select_form.template_table.find_row_by_cells({
                 'Name': self.catalog_name,
-                'Provider': self.provider
+                'Provider': self.provider.name
             })
             sel.click(template)
             request_form.fill(self.provisioning_data)
