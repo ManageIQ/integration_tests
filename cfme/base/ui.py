@@ -472,6 +472,10 @@ class RegionDiagnosticsView(ConfigurationView):
         TAB_NAME = "Roles by Servers"
 
     @View.nested
+    class replication(Tab):  # noqa
+        TAB_NAME = "Replication"
+
+    @View.nested
     class serversbyroles(Tab):  # noqa
         TAB_NAME = "Servers by Roles"
 
@@ -513,6 +517,15 @@ class RegionDiagnosticsRolesByServers(CFMENavigateStep):
 
     def step(self):
         self.view.rolesbyservers.select()
+
+
+@navigator.register(Region, 'Replication')
+class RegionDiagnosticsReplication(CFMENavigateStep):
+    VIEW = RegionDiagnosticsView
+    prerequisite = NavigateToSibling('Diagnostics')
+
+    def step(self):
+        self.view.replication.select()
 
 
 @navigator.register(Region, 'ServersByRoles')
