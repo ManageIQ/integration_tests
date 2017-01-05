@@ -9,21 +9,9 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Region, PagedTable, toolbar as tb, match_location
+from cfme.web_ui import PagedTable, toolbar as tb, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator
-
-# Page specific locators
-# TODO Remove?
-# list_page = Region(
-#    locators={
-#        'flavor_table': SplitPagedTable(header_data=('//div[@class="xhdr"]/table/tbody', 1),
-#            body_data=('//div[@class="objbox"]/table/tbody', 1))
-#    },
-#    title='Flavors')
-
-# TODO remove?
-details_page = Region(infoblock_type='detail')
 
 listview_table = PagedTable(table_locator="//div[@id='list_grid']//table")
 
