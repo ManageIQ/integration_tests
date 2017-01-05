@@ -141,7 +141,7 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
                                catalog=catalog,
                                dialog=dialog.label,
                                catalog_name=template,
-                               provider=a_provider.name,
+                               provider=a_provider,
                                prov_data=provisioning_data)
 
     catalog_item.create()
