@@ -17,9 +17,8 @@ class Configuration(object):
     def configure(self, config_dir, crypt_key_file=None):
         """do the defered initial loading of the configuration
         :param config_dir: path to the folder with configuration files
-        :param crypt_key_file:
-            optional name of a file holding the key
-            for encrypted configurationfiles
+        :param crypt_key_file: optional name of a file holding the key
+           for encrypted configuration files
 
         :raises: AssertionError if called more than once
 

@@ -360,6 +360,7 @@ class InstanceClassMethod(object):
     Usage:
 
     .. code-block:: python
+
         class SomeClass(object):
             @InstanceClassMethod
             def a_method(self):

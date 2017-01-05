@@ -184,6 +184,8 @@ class TraceLogger(logging.Logger):
         """
         if self.isEnabledFor(logging.TRACE):
             self._log(logging.TRACE, msg, args, **kwargs)
+
+
 logging._loggerClass = TraceLogger
 
 
@@ -204,7 +206,7 @@ class PrefixAddingLoggerFilter(logging.Filter):
 
     def filter(self, record):
         if self.prefix:
-            record.msg = self.prefix + record.msg
+            record.msg = "{}{}".format(self.prefix, record.msg)
         return True
 
 
