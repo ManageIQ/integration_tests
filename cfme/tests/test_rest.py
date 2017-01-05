@@ -9,7 +9,9 @@ from cfme.rest.gen_data import vm as _vm
 from cfme.rest.gen_data import arbitration_settings
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
-from utils import testgen, version
+from utils import testgen
+from utils.api import APIException
+from utils.log import logger
 
 
 pytestmark = [test_requirements.rest]
@@ -29,6 +31,26 @@ def a_provider():
 @pytest.fixture(scope="function")
 def vm(request, a_provider, rest_api):
     return _vm(request, a_provider, rest_api)
+
+
+@pytest.yield_fixture(scope="function")
+def arbitration_rules(rest_api):
+    body = []
+    for _ in range(2):
+        body.append({
+            'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
+            'operation': 'inject',
+            'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
+        })
+    response = rest_api.collections.arbitration_rules.action.create(*body)
+
+    yield response
+
+    try:
+        rest_api.collections.arbitration_rules.action.delete(*response)
+    except APIException:
+        # rules can be deleted by tests, just log warning
+        logger.warning("Failed to delete arbitration rules.")
 
 
 @pytest.mark.tier(2)
@@ -86,7 +108,7 @@ def test_query_simple_collections(rest_api, collection_name):
     list(collection)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_add_picture(rest_api):
     collection = rest_api.collections.pictures
     count = collection.count
@@ -98,23 +120,23 @@ def test_add_picture(rest_api):
     assert collection.count == count + 1
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_http_options(rest_api):
     assert 'boot_time' in rest_api.collections.vms.options()['attributes']
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_server_info(rest_api):
     assert all(item in rest_api.server_info for item in ('appliance', 'build', 'version'))
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_product_info(rest_api):
     assert all(item in rest_api.product_info for item in
                ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_identity(rest_api):
     """Check that user's identity is returned.
 
@@ -125,7 +147,7 @@ def test_identity(rest_api):
                ('userid', 'name', 'group', 'role', 'tenant', 'groups'))
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_user_settings(rest_api):
     """Check that user's settings are returned.
 
@@ -135,7 +157,7 @@ def test_user_settings(rest_api):
     assert isinstance(rest_api.settings, dict)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_bulk_query(rest_api):
     """Tests bulk query referencing resources by attributes id, href and guid
 
@@ -150,7 +172,7 @@ def test_bulk_query(rest_api):
     assert data0 == response[0]._data and data1 == response[1]._data and data2 == response[2]._data
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_bulk_query_users(rest_api):
     """Tests bulk query on 'users' collection
 
@@ -164,7 +186,7 @@ def test_bulk_query_users(rest_api):
     assert data["id"] == response[0]._data["id"] == response[1]._data["id"]
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_bulk_query_roles(rest_api):
     """Tests bulk query on 'roles' collection
 
@@ -179,7 +201,7 @@ def test_bulk_query_roles(rest_api):
     assert data0 == response[0]._data and data1 == response[1]._data
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_bulk_query_groups(rest_api):
     """Tests bulk query on 'groups' collection
 
@@ -194,7 +216,7 @@ def test_bulk_query_groups(rest_api):
     assert data0 == response[0]._data and data1 == response[1]._data
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_create_arbitration_settings(request, rest_api):
     """Tests create arbitration settings.
 
@@ -209,7 +231,7 @@ def test_create_arbitration_settings(request, rest_api):
     assert record._data == response[0]._data
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
@@ -235,7 +257,7 @@ def test_delete_arbitration_settings(request, rest_api, from_detail):
             collection.action.delete(*response)
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
@@ -261,3 +283,66 @@ def test_edit_arbitration_settings(request, rest_api, from_detail):
     assert len(edited) == num_settings
     for i in range(num_settings):
         assert edited[i].name == new[i]['name'] and edited[i].display_name == new[i]['display_name']
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
+def test_create_arbitration_rules(arbitration_rules, rest_api):
+    """Tests create arbitration rules.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert len(arbitration_rules) > 0
+    record = rest_api.collections.arbitration_rules.get(id=arbitration_rules[0].id)
+    assert record._data == arbitration_rules[0]._data
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_delete_arbitration_rules(arbitration_rules, rest_api, from_detail):
+    """Tests delete arbitration rules.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert len(arbitration_rules) >= 2
+    collection = rest_api.collections.arbitration_rules
+    if from_detail:
+        methods = ['post', 'delete']
+        for i, ent in enumerate(arbitration_rules):
+            ent.action.delete(force_method=methods[i % 2])
+            with error.expected("ActiveRecord::RecordNotFound"):
+                ent.action.delete()
+    else:
+        collection.action.delete(*arbitration_rules)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            collection.action.delete(*arbitration_rules)
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_edit_arbitration_rules(arbitration_rules, rest_api, from_detail):
+    """Tests edit arbitration rules.
+
+    Metadata:
+        test_flag: rest
+    """
+    num_rules = len(arbitration_rules)
+    assert num_rules > 0
+    uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_rules)]
+    new = [{'description': 'new test admin rule {}'.format(u)} for u in uniq]
+    if from_detail:
+        edited = []
+        for i in range(num_rules):
+            edited.append(arbitration_rules[i].action.edit(**new[i]))
+    else:
+        for i in range(num_rules):
+            new[i].update(arbitration_rules[i]._ref_repr())
+        edited = rest_api.collections.arbitration_rules.action.edit(*new)
+    assert len(edited) == num_rules
+    for i in range(num_rules):
+        assert edited[i].description == new[i]['description']
