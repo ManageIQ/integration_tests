@@ -7,8 +7,9 @@ from mgmtsystem import exceptions
 
 from cfme.common.vm import VM
 from cfme.configure.configuration import VMAnalysisProfile
-from cfme.control.explorer import (
-    VMCompliancePolicy, VMCondition, PolicyProfile)
+from cfme.control.explorer.policies import VMCompliancePolicy
+from cfme.control.explorer.conditions import VMCondition
+from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version

@@ -4,7 +4,7 @@ import pytest
 
 from cfme.common.vm import VM
 from cfme.configure.configuration import server_roles_enabled, candu
-from cfme.control import explorer
+from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
 from cfme.exceptions import CFMEExceptionOccured
 from cfme.web_ui import flash, jstimelines
 from utils import ports, testgen
@@ -87,7 +87,7 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         vm_name: VM name to use for policy filtering
         provider: funcarg provider
     """
-    alert_profile = explorer.VMInstanceAlertProfile(
+    alert_profile = alert_profiles.VMInstanceAlertProfile(
         "Alert profile for {}".format(vm_name),
         alerts
     )
@@ -95,20 +95,20 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
     request.addfinalizer(alert_profile.delete)
     alert_profile.assign_to("The Enterprise")
     if event is not None:
-        action = explorer.Action(
+        action = actions.Action(
             "Evaluate Alerts for {}".format(vm_name),
             "Evaluate Alerts",
             alerts
         )
         action.create()
         request.addfinalizer(action.delete)
-        policy = explorer.VMControlPolicy(
+        policy = policies.VMControlPolicy(
             "Evaluate Alerts policy for {}".format(vm_name),
             scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm_name)
         )
         policy.create()
         request.addfinalizer(policy.delete)
-        policy_profile = explorer.PolicyProfile(
+        policy_profile = policy_profiles.PolicyProfile(
             "Policy profile for {}".format(vm_name), [policy]
         )
         policy_profile.create()
@@ -202,7 +202,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     Metadata:
         test_flag: alerts, provision
     """
-    alert = explorer.Alert("VM Power On > 2 in last 15 min")
+    alert = alerts.Alert("VM Power On > 2 in last 15 min")
     with update(alert):
         alert.emails = fauxfactory.gen_email()
 
@@ -235,7 +235,7 @@ def test_alert_rtp(request, vm_name, smtp_test, provider):
         test_flag: alerts, provision, metrics_collection
     """
     email = fauxfactory.gen_email()
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -267,7 +267,7 @@ def test_alert_timeline_cpu(request, vm_name, provider, ssh, vm_crud):
     Metadata:
         test_flag: alerts, provision, metrics_collection
     """
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         "TL event by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",
@@ -363,7 +363,7 @@ def test_vmware_alarm_selection_does_not_fail():
     Metadata:
         test_flag: alerts
     """
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",

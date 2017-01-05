@@ -692,14 +692,17 @@ class BootstrapTreeview(Widget):
 
     @property
     def currently_selected(self):
-        nodeid = self.get_nodeid(self.selected_item).split('.')
-        root_id_len = len(self.get_nodeid(self.root_item).split('.'))
-        result = []
-        for end in range(root_id_len, len(nodeid) + 1):
-            current_nodeid = '.'.join(nodeid[:end])
-            text = self.browser.text(self.get_item_by_nodeid(current_nodeid))
-            result.append(text)
-        return result
+        if self.selected_item is not None:
+            nodeid = self.get_nodeid(self.selected_item).split('.')
+            root_id_len = len(self.get_nodeid(self.root_item).split('.'))
+            result = []
+            for end in range(root_id_len, len(nodeid) + 1):
+                current_nodeid = '.'.join(nodeid[:end])
+                text = self.browser.text(self.get_item_by_nodeid(current_nodeid))
+                result.append(text)
+            return result
+        else:
+            return None
 
     @property
     def root_item(self):
@@ -707,7 +710,11 @@ class BootstrapTreeview(Widget):
 
     @property
     def selected_item(self):
-        return self.browser.element(self.SELECTED_ITEM, parent=self)
+        try:
+            result = self.browser.element(self.SELECTED_ITEM, parent=self)
+        except NoSuchElementException:
+            result = None
+        return result
 
     def indents(self, item):
         return len(self.browser.elements(self.INDENT, parent=item))
@@ -1033,7 +1040,7 @@ class Dropdown(Widget):
     """Represents the Patternfly/Bootstrap dropdown.
 
     Args:
-        text: Text of the button, can be the inner text or the titel attribute.
+        text: Text of the button, can be the inner text or the title attribute.
     """
     BUTTON_DIV_LOCATOR = (
         './/div[contains(@class, "dropdown") and ./button[normalize-space(.)={0} or '

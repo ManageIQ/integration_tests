@@ -2,8 +2,9 @@
 import fauxfactory
 import pytest
 
-from cfme.control.explorer import PolicyProfile, VMControlPolicy
-from cfme.control.import_export import export_form
+from cfme.control.explorer.policies import VMControlPolicy
+from cfme.control.explorer.policy_profiles import PolicyProfile
+from cfme.control.import_export import is_imported
 from cfme import test_requirements
 
 
@@ -32,9 +33,4 @@ def test_policy_profiles_listed(policy_profile):
         * Select ``Policy Profiles`` from the ``Export:`` dropdown.
         * Assert that the policy profile is displayed in the selector.
     """
-    pytest.sel.force_navigate("control_import_export")
-    pytest.sel.select(export_form.type, "Policy Profiles")
-    try:
-        export_form.available.select_by_visible_text(str(policy_profile.description))
-    except pytest.sel.NoSuchElementException:
-        pytest.fail("The policy profile to export was not displayed")
+    is_imported(policy_profile)
