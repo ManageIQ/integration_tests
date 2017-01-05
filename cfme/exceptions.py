@@ -226,6 +226,13 @@ class ImageNotFound(VmOrInstanceNotFound):
     pass
 
 
+class TenantNotFound(CFMEException):
+    """
+        Raised if a specific tenant cannot be found
+        """
+    pass
+
+
 class TemplateNotFound(CFMEException):
     """
     Raised if a specific Template cannot be found.
