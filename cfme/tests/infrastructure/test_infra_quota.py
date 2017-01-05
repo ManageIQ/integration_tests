@@ -7,10 +7,12 @@ from cfme import test_requirements
 from cfme.configure.access_control import Tenant
 from cfme.fixtures import pytest_selenium as sel
 from cfme.automate import explorer as automate
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import fill, flash
 from utils import testgen, version
+from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
 
 pytestmark = [
@@ -110,10 +112,8 @@ def template_name(provisioning):
 @pytest.fixture(scope="function")
 def provisioner(request, setup_provider, provider):
     def _provisioner(template, provisioning_data, delayed=None):
-        sel.force_navigate('infrastructure_provision_vms', context={
-            'provider': provider,
-            'template_name': template,
-        })
+        vm = Vm(name=vm_name, provider=provider, template_name=template)
+        navigate_to(vm, 'ProvisionVM')
 
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         flash.assert_no_errors()
