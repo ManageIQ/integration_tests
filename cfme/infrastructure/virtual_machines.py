@@ -14,7 +14,6 @@ from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
                              DestinationNotFound, TemplateNotFound)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
-from cfme.provisioning import provisioning_form
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
@@ -923,6 +922,3 @@ class ProvisionVM(CFMENavigateStep):
         else:
             raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
                 self.obj.template_name, self.obj.provider.key))
-
-    def am_i_here(self, *args, **kwargs):
-            return match_page(summary='Provision Virtual Machines - Select a Template')
