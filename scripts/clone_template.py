@@ -187,7 +187,8 @@ def main(**kwargs):
             else:
                 app = Appliance(kwargs['provider'], deploy_args['vm_name'])
             if provider_type == 'gce':
-                app.configure_gce()
+                with app as ipapp:
+                    ipapp.configure_gce()
             else:
                 app.configure()
             logger.info('Successfully Configured the appliance.')
