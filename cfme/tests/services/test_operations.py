@@ -4,12 +4,14 @@ import fauxfactory
 import pytest
 
 import cfme.provisioning
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.fixtures import pytest_selenium as sel
 from cfme.login import login_admin
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
+from utils.appliance.implementations.ui import navigate_to
 from utils.browser import browser
 from utils.providers import setup_a_provider
 from utils.wait import wait_for
@@ -60,10 +62,8 @@ def generated_request(provider, provider_data, provisioning, template_name, vm_n
     notes = fauxfactory.gen_alphanumeric()
     e_mail = "{}@{}.test".format(first_name, last_name)
     host, datastore = map(provisioning.get, ('host', 'datastore'))
-    pytest.sel.force_navigate('infrastructure_provision_vms', context={
-        'provider': provider,
-        'template_name': template_name,
-    })
+    vm = Vm(name=vm_name, provider=provider, template_name=template_name)
+    navigate_to(vm, 'ProvisionVM')
 
     provisioning_data = {
         'email': e_mail,

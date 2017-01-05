@@ -10,14 +10,16 @@ from selenium.common.exceptions import NoSuchElementException
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
-from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable, DestinationNotFound
+from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
+                             DestinationNotFound, TemplateNotFound)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
+from cfme.provisioning import provisioning_form
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
     paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, match_location,
-    BootstrapTreeview, summary_title
+    BootstrapTreeview, summary_title, Table
 )
 
 from utils.api import rest_api
@@ -47,6 +49,14 @@ manage_policies_page = Region(
     locators={
         'save_button': form_buttons.save,
     })
+
+
+template_select_form = Form(
+    fields=[
+        ('template_table', Table('//div[@id="pre_prov_div"]//table')),
+        ('cancel_button', form_buttons.cancel)
+    ]
+)
 
 
 snapshot_form = Form(
@@ -889,3 +899,30 @@ class TemplatesAll(CFMENavigateStep):
 
     def am_i_here(self, *args, **kwargs):
         return match_page(summary='Template "{}"'.format(self.obj.name))
+
+
+@navigator.register(Vm, 'ProvisionVM')
+class ProvisionVM(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self, *args, **kwargs):
+        lcl_btn("Provision VMs")
+
+        # choosing template and going further
+        template_select_form.template_table._update_cache()
+        template = template_select_form.template_table.find_row_by_cells({
+            'Name': self.obj.template_name,
+            'Provider': self.obj.provider.name
+        })
+        if template:
+            sel.click(template)
+            # In order to mitigate the sometimes very long spinner timeout, raise the timeout
+            with sel.ajax_timeout(90):
+                sel.click(form_buttons.FormButton("Continue", force_click=True))
+
+        else:
+            raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
+                self.obj.template_name, self.obj.provider.key))
+
+    def am_i_here(self, *args, **kwargs):
+            return match_page(summary='Provision Virtual Machines - Select a Template')

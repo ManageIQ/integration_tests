@@ -2,29 +2,18 @@
 from collections import OrderedDict
 
 from cfme import web_ui as ui
-from cfme.exceptions import TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.services import requests
-from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip, toolbar
-from cfme.web_ui.menu import nav
+from cfme.web_ui import AngularSelect, fill, flash, form_buttons, tabstrip
 from utils import version
 from utils import normalize_text
+from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 from utils.version import current_version
 from utils.wait import wait_for
 
-# nav imports
-import cfme.infrastructure.virtual_machines  # NOQA
-
-
 submit_button = form_buttons.FormButton("Submit")
-
-template_select_form = ui.Form(
-    fields=[
-        ('template_table', ui.Table('//div[@id="pre_prov_div"]//table')),
-        ('cancel_button', form_buttons.cancel)
-    ]
-)
 
 
 def select_security_group(sg):
@@ -252,41 +241,11 @@ provisioning_form = tabstrip.TabStripForm(
 )
 
 
-def generate_nav_function(tb_item):
-    def f(context):
-        # Here it also can have long spinners
-        with sel.ajax_timeout(90):
-            toolbar.select('Lifecycle', tb_item)
-        provider = context['provider']
-        template_name = context['template_name']
-        template_select_form.template_table._update_cache()
-        template = template_select_form.template_table.find_row_by_cells({
-            'Name': template_name,
-            'Provider': provider if isinstance(provider, basestring) else provider.name
-        })
-        if template:
-            sel.click(template)
-            # In order to mitigate the sometimes very long spinner timeout, raise the timeout
-            with sel.ajax_timeout(90):
-                sel.click(form_buttons.FormButton("Continue", force_click=True))
-
-        else:
-            raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
-                template_name, provider.key))
-    return f
-
-nav.add_branch('infra_vm_and_templates', {
-    'infrastructure_provision_vms': generate_nav_function("Provision VMs"),
-})
-
-
 def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, request,
                        smtp_test, num_sec=1500, wait=True):
     # generate_tests makes sure these have values
-    sel.force_navigate('infrastructure_provision_vms', context={
-        'provider': provider,
-        'template_name': template_name,
-    })
+    vm = Vm(name=vm_name, provider=provider, template_name=template_name)
+    navigate_to(vm, 'ProvisionVM')
 
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     provisioning_data.update({
@@ -323,10 +282,7 @@ def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, requ
     if smtp_test:
         # Wait for e-mails to appear
         def verify():
-            if current_version() >= "5.4":
-                approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
-            else:
-                approval = dict(text_like="%%Your Virtual Machine Request was approved%%")
+            approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
             expected_text = "Your virtual machine request has Completed - VM:%%{}".format(vm_name)
             return (
                 len(smtp_test.get_emails(**approval)) > 0 and
