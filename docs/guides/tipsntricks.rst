@@ -127,7 +127,7 @@ object::
     user = User(name='user' + fauxfactory.gen_alphanumeric(),
         credential=cred)
     with user:
-        sel.force_navigate('dashboard')
+        navigate_to(current_appliance.server, 'Dashboard')
 
 The ``User`` object stores the previous ``User`` object in a cache inside itself and on exiting the
 context, returns this to the pytest store as the *current* user so that future operations are
