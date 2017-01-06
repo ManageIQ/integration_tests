@@ -612,7 +612,7 @@ class Calendar(TextInput):
 
     def fill(self, value):
         if isinstance(value, date):
-            date_str = '{}/{}/{}'.format(value.month, value.day, value.year)
+            date_str = value.strftime('%m/%d/%Y')
         else:
             date_str = str(value)
         self.move_to()
@@ -639,39 +639,6 @@ class Calendar(TextInput):
                     .format(self.name, str(e)))
         self.browser.plugin.ensure_page_safe()
         return True
-
-
-class SNMPForm(Widget):
-
-    def __init__(self, parent, logger=None):
-        Widget.__init__(self, parent, logger=logger)
-
-    @property
-    def hosts(self):
-        return SNMPHostsField(self)
-
-    @property
-    def version(self):
-        return BootstrapSelect(self, "snmp_version")
-
-    @property
-    def id(self):
-        return Input(self, "trap_id")
-
-    @property
-    def traps(self):
-        return SNMPTrapsField(self)
-
-    def fill(self, snmp):
-        return any((
-            self.hosts.fill(snmp["hosts"]),
-            self.version.fill(snmp["version"]),
-            self.id.fill(snmp["id"]),
-            self.traps.fill(snmp["traps"])
-        ))
-
-    def read(self):
-        raise NotImplementedError
 
 
 class SNMPHostsField(Widget):
@@ -730,6 +697,16 @@ class SNMPTrapsField(Widget):
                 self.fill_value_field(i, value)
             )))
         return any(result)
+
+    def read(self):
+        raise NotImplementedError
+
+
+class SNMPForm(View):
+    hosts = SNMPHostsField()
+    version = BootstrapSelect("snmp_version")
+    id = Input("trap_id")
+    traps = SNMPTrapsField()
 
     def read(self):
         raise NotImplementedError

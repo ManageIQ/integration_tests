@@ -317,7 +317,7 @@ def test_alert_snmp(request, vm_name, snmp, provider):
         test_flag: alerts, provision, metrics_collection
     """
     match_string = fauxfactory.gen_alpha(length=8)
-    alert = explorer.Alert(
+    alert = alerts.Alert(
         "Trigger by CPU {}".format(fauxfactory.gen_alpha(length=4)),
         active=True,
         based_on="VM and Instance",

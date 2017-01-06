@@ -14,11 +14,14 @@ from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 
 class Expression(Widget):
-    ROOT = "//div[@id='condition_info_div']"
+    ROOT = "div#condition_info_div"
 
     def __init__(self, parent, type_, logger=None):
         Widget.__init__(self, parent, logger=logger)
-        self.type = type_
+        if type_ not in ["Scope", "Expression"]:
+            raise ValueError("Type should be Scope or Expression only")
+        else:
+            self.type = type_
 
     def __locator__(self):
         return self.ROOT
@@ -28,6 +31,20 @@ class Expression(Widget):
         return self.browser.element(self).text.split("\n")
 
     def read(self):
+        """In Condition details view Scope and Expression don't have any locator. So we
+        have to scrape whole text in the parent div and split it by "\n". After that in text_list
+        we receive something like that:
+        [u'Scope',
+         u'COUNT OF VM and Instance.Files > 150',
+         u'Expression',
+         u'VM and Instance : Boot Time BEFORE "03/04/2014 00:00"',
+         u'Notes',
+         u'No notes have been entered.',
+         u'Assigned to Policies',
+         u'This Condition is not assigned to any Policies.']
+        To get value of Scope or Expression firstly we find its index in the list and then just
+        seek next member.
+        """
         index = self.text_list.index(self.type)
         return self.text_list[index + 1]
 

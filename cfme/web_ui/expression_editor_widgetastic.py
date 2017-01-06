@@ -36,7 +36,7 @@ class ExpressionEditor(Widget, Pretty):
     SELECT_SPECIFIC = "//img[@alt='Click to change to a specific Date/Time format']"
     SELECT_RELATIVE = "//img[@alt='Click to change to a relative Date/Time format']"
 
-    pretty_attrs = ['show_func']
+    pretty_attrs = ['show_loc']
 
     def __init__(self, parent, show_loc=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -46,55 +46,55 @@ class ExpressionEditor(Widget, Pretty):
         return self.ROOT
 
     def click_undo(self):
-        self.browser.element(self.UNDO, self).click()
+        self.browser.element(self.UNDO, parent=self).click()
 
     def click_redo(self):
-        self.browser.element(self.REDO, self).click()
+        self.browser.element(self.REDO, parent=self).click()
 
     def click_and(self):
-        self.browser.element(self.AND, self).click()
+        self.browser.element(self.AND, parent=self).click()
 
     def click_or(self):
-        self.browser.element(self.OR, self).click()
+        self.browser.element(self.OR, parent=self).click()
 
     def click_not(self):
-        self.browser.element(self.NOT, self).click()
+        self.browser.element(self.NOT, parent=self).click()
 
     def click_remove(self):
-        self.browser.element(self.REMOVE, self).click()
+        self.browser.element(self.REMOVE, parent=self).click()
 
     def click_commit(self):
-        self.browser.element(self.COMMIT, self).click()
+        self.browser.element(self.COMMIT, parent=self).click()
 
     def click_discard(self):
-        self.browser.element(self.DISCARD, self).click()
+        self.browser.element(self.DISCARD, parent=self).click()
 
     def click_switch_to_relative(self):
-        self.browser.element(self.SELECT_RELATIVE, self).click()
+        self.browser.element(self.SELECT_RELATIVE, parent=self).click()
 
     def click_switch_to_specific(self):
-        self.browser.element(self.SELECT_SPECIFIC, self).click()
+        self.browser.element(self.SELECT_SPECIFIC, parent=self).click()
 
     @property
     def _atom_root(self):
-        return self.browser.element(self.ATOM_ROOT, self)
+        return self.browser.element(self.ATOM_ROOT, parent=self)
 
     @property
     def _expressions_root(self):
-        return self.browser.element(self.EXPRESSIONS_ROOT, self)
+        return self.browser.element(self.EXPRESSIONS_ROOT, parent=self)
 
     def select_first_expression(self):
-        "There is always at least one (???), so no checking of bounds."
-        self.browser.elements("//a[contains(@id,'exp_')]", self._expressions_root)[0].click()
+        """There is always at least one (???), so no checking of bounds."""
+        self.browser.elements("//a[contains(@id,'exp_')]", parent=self._expressions_root)[0].click()
 
     def select_expression_by_text(self, text):
         self.browser.element(
             "//a[contains(@id,'exp_')][contains(normalize-space(text()),'{}')]".format(text),
-            self
+            parent=self
         ).click()
 
     def no_expression_present(self):
-        els = self.browser.elements("//a[contains(@id,'exp_')]", self._expressions_root)
+        els = self.browser.elements("//a[contains(@id,'exp_')]", parent=self._expressions_root)
         if len(els) > 1:
             return False
         return els[0].text.strip() == "???"
@@ -106,7 +106,7 @@ class ExpressionEditor(Widget, Pretty):
         try:
             self.browser.element(
                 "//a[contains(@id,'exp_')][contains(normalize-space(text()),'???')]",
-                self._expressions_root
+                parent=self._expressions_root
             )
             return True
         except NoSuchElementException:
@@ -123,7 +123,7 @@ class ExpressionEditor(Widget, Pretty):
 
     def enable_editor(self):
         try:
-            el = self.browser.element(self.show_loc, self)
+            el = self.browser.element(self.show_loc, parent=self)
             wait_for(lambda: el.is_displayed, num_sec=2, delay=0.2)
             el.click()
         except (TimedOutError, NoSuchElementException):
@@ -133,7 +133,10 @@ class ExpressionEditor(Widget, Pretty):
         if self.show_loc is not None:
             self.enable_editor()
         prog = create_program(expression, self)
+        before = self.read()
         prog()
+        after = self.read()
+        return before != after
 
     def fill_count(self, count=None, key=None, value=None):
         """ Fills the 'Count of' type of form.
