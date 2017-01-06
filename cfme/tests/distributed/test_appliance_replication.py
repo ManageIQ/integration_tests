@@ -103,7 +103,7 @@ def configure_db_replication(db_address):
     flash.assert_message_contain("Configuration settings saved for CFME Server")
     navigate_to(current_appliance.server, 'Server')
     conf.set_server_roles(database_synchronization=True)
-    sel.force_navigate("cfg_diagnostics_region_replication")
+    navigate_to(current_appliance.server.zone.region, 'Replication')
     wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
              num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
     assert conf.get_replication_status()

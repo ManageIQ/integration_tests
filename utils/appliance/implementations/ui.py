@@ -277,7 +277,7 @@ class CFMENavigateStep(NavigateStep):
                 logger.warning("Page was blocked with blocker div, recycling.")
                 recycle = True
             elif cfme_exc.is_cfme_exception():
-                logger.exception("CFME Exception before force_navigate started!: {}".format(
+                logger.exception("CFME Exception before force navigate started!: {}".format(
                     cfme_exc.cfme_exception_text()))
                 recycle = True
             elif br.widgetastic.is_displayed("//body/h1[normalize-space(.)='Proxy Error']"):
@@ -298,7 +298,7 @@ class CFMENavigateStep(NavigateStep):
                 recycle = True
             elif br.widgetastic.is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
                 # Rails exception detection
-                logger.exception("Rails exception before force_navigate started!: %r:%r at %r",
+                logger.exception("Rails exception before force navigate started!: %r:%r at %r",
                     br.widgetastic.text("//body/div[@class='dialog']/h1"),
                     br.widgetastic.text("//body/div[@class='dialog']/p"),
                     getattr(manager.browser, 'current_url', "error://dead-browser")
@@ -400,14 +400,9 @@ class ViaUI(object):
     def create_view(self, view_class, additional_context=None):
         """Method that is used to instantiate a Widgetastic View.
 
-        Views may define ``LOCATION`` on them, that implies a :py:meth:`force_navigate` call with
-        ``LOCATION`` as parameter.
-
         Args:
             view_class: A view class, subclass of ``widgetastic.widget.View``
             additional_context: Additional informations passed to the view (user name, VM name, ...)
-                which is also passed to the :py:meth:`force_navigate` in case when navigation is
-                requested.
 
         Returns:
             An instance of the ``view_class``
