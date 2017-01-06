@@ -1,0 +1,10 @@
+type: item
+name: CNN
+placement: top_right
+id: news_cnn
+feature: news_cnn
+rbac:
+  feature: news_cnn
+parent: news_top
+href: https://www.redhat.com
+item_type: big_iframe

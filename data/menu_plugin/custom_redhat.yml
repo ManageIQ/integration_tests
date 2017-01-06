@@ -1,0 +1,9 @@
+type: item
+name: Homepage
+id: rht3
+feature: redhat
+rbac:
+  feature: redhat
+parent: redhat
+href: https://www.redhat.com
+item_type: big_iframe

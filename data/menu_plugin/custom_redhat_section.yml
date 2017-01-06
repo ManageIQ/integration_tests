@@ -1,0 +1,6 @@
+type: section
+name: Red Hat
+id: redhat
+before: svc
+section_type: big_iframe
+href: https://www.redhat.com
