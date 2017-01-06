@@ -53,7 +53,9 @@ provisioning_form = tabstrip.TabStripForm(
         ]),
 
         ('Purpose', [
-            ('apply_tags', ui.CheckboxTree('//div[@id="all_tags_treebox"]//ul'))
+            ('apply_tags', {
+                version.LOWEST: ui.CheckboxTree('//div[@id="all_tags_treebox"]//ul'),
+                '5.7': ui.BootstrapTreeview('all_tags_treebox')})
         ]),
 
         ('Catalog', [
