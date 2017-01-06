@@ -50,6 +50,7 @@ def _current_miqqe_version():
     version = int(match.group(1))
     return version
 
+
 current_miqqe_version = _current_miqqe_version()
 
 
@@ -626,7 +627,6 @@ class IPAppliance(object):
             msg = 'Setting the time failed on appliance'
             log_callback(msg)
             raise Exception(msg)
-
 
     @property
     def is_miqqe_patch_candidate(self):
@@ -2306,6 +2306,7 @@ class ApplianceStack(LocalStack):
             browser.start()
         return was_before
 
+
 stack = ApplianceStack()
 
 
@@ -2316,6 +2317,7 @@ def get_or_create_current_appliance():
             raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
         stack.push(IPAppliance(urlparse(base_url), container=conf.env.get('container', None)))
     return stack.top
+
 
 current_appliance = LocalProxy(get_or_create_current_appliance)
 
