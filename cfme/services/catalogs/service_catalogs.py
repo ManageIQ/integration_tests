@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 
+from navmazing import NavigateToSibling, NavigateToAttribute
+
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import accordion, flash, menu, form_buttons, Form, Input, Select
+from cfme.web_ui import(accordion, flash, form_buttons, Form, Input, Select,
+ match_location, toolbar as tb, PagedTable)
+from selenium.common.exceptions import NoSuchElementException
+from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from utils.appliance import Navigatable
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.wait import wait_for
@@ -13,6 +19,7 @@ order_button = {
     '5.4': "//button[@title='Order this Service']"
 }
 accordion_tree = partial(accordion.tree, "Service Catalogs")
+list_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 # Forms
 stack_form = Form(
@@ -33,47 +40,63 @@ stack_form = Form(
     ])
 
 
-menu.nav.add_branch(
-    'services_catalogs',
-    {
-        'service_catalogs':
-        [
-            lambda _: accordion.click('Service Catalogs'),
-            {
-                'service_catalog':
-                [
-                    lambda ctx: accordion_tree(
-                        'All Services', ctx['catalog'], ctx['catalog_item'].name),
-                    {
-                        'order_service_catalog': lambda _: sel.click(order_button)
-                    }
-                ]
-            }
-        ]
-    }
-)
+match_page = partial(match_location, title='Catalogs', controller='catalog')
 
 
-class ServiceCatalogs(Updateable, Pretty):
+class ServiceCatalogs(Updateable, Pretty, Navigatable):
     pretty_attrs = ['service_name']
 
-    def __init__(self, service_name=None, stack_data=None):
+    def __init__(self, service_name=None, stack_data=None, appliance=None):
         self.service_name = service_name
         self.stack_data = stack_data
+        Navigatable.__init__(self, appliance=appliance)
 
-    def order(self, catalog, catalog_item):
-        sel.force_navigate('order_service_catalog',
-                           context={'catalog': catalog,
-                                    'catalog_item': catalog_item})
+    def order(self):
+        navigate_to(self, 'Order')
+        if self.stack_data:
+            stack_form.fill(self.stack_data)
         sel.click(form_buttons.submit)
         wait_for(flash.get_messages, num_sec=10, delay=2)
         flash.assert_success_message("Order Request was Submitted")
 
-    def order_stack_item(self, catalog, catalog_item):
-        sel.force_navigate('order_service_catalog',
-                           context={'catalog': catalog,
-                                    'catalog_item': catalog_item})
-        stack_form.fill(self.stack_data)
-        sel.click(form_buttons.submit)
-        wait_for(flash.get_messages, num_sec=10, delay=2)
-        flash.assert_success_message("Order Request was Submitted")
+
+@navigator.register(ServiceCatalogs, 'All')
+class ServiceCatalogsAll(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def am_i_here(self):
+        return match_page(summary='All Services')
+
+    def step(self):
+        from cfme.web_ui.menu import nav
+        nav._nav_to_fn('Services', 'Catalogs')(None)
+        tree = accordion.tree('Service Catalogs')
+        tree.click_path('All Services')
+
+
+@navigator.register(ServiceCatalogs, 'Details')
+class ServiceCatalogDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def am_i_here(self):
+        return match_page(summary='Service "{}"'.format(self.obj.service_name))
+
+    def step(self):
+        try:
+            sel.click(list_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.service_name}))
+        except:
+            raise NoSuchElementException()
+
+    def resetter(self):
+        tb.refresh()
+
+
+@navigator.register(ServiceCatalogs, 'Order')
+class ServiceCatalogOrder(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return match_page(summary='Order Service "{}"'.format(self.obj.service_name))
+
+    def step(self):
+        sel.click(order_button)
