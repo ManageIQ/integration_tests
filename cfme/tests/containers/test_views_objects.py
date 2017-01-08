@@ -5,7 +5,6 @@ from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
 from cfme.containers.service import Service
-from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
