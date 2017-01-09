@@ -4,20 +4,17 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import(accordion, flash, form_buttons, Form, Input, Select,
- match_location, toolbar as tb, PagedTable)
+from cfme.web_ui import (
+    accordion, flash, form_buttons, Form, Input, Select, match_location, toolbar as tb, PagedTable)
 from selenium.common.exceptions import NoSuchElementException
 from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from utils.appliance import Navigatable
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.wait import wait_for
-from utils import version
 
-order_button = {
-    version.LOWEST: "//img[@title='Order this Service']",
-    '5.4': "//button[@title='Order this Service']"
-}
+order_button = "//button[@title='Order this Service']"
+
 accordion_tree = partial(accordion.tree, "Service Catalogs")
 list_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
