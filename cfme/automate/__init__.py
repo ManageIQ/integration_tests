@@ -48,3 +48,26 @@ class AutomateCustomization(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select('Automate', 'Customization')
+
+
+class AutomateExplorerView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Automate', 'Explorer'])
+
+    @View.nested
+    class datastore(Accordion):  # noqa
+        tree = ManageIQTree()
+
+    configuration = Dropdown('Configuration')
+
+
+@navigator.register(Server)
+class AutomateExplorer(CFMENavigateStep):
+    VIEW = AutomateExplorerView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select('Automate', 'Explorer')
