@@ -90,7 +90,7 @@ def catalog_item(config_manager, dialog, catalog):
                                display_in=True,
                                catalog=catalog,
                                dialog=dialog,
-                               provider=provider,
+                               provider=config_manager_obj,
                                provider_type=provider_type,
                                config_template=template)
     return catalog_item
