@@ -71,6 +71,8 @@ class Tenant(Navigatable):
         if current_version() < '5.7':
             raise OptionNotAvailable('Cannot delete cloud tenants in CFME < 5.7')
         if from_details:
+            if cancel:
+                raise OptionNotAvailable('Cannot cancel cloud tenant delete from details page')
             # Generates no alert or confirmation
             try:
                 navigate_to(self, 'Details')
@@ -100,13 +102,14 @@ class Tenant(Navigatable):
             cfg_btn('Delete Cloud Tenants', invokes_alert=True)
             sel.handle_alert(cancel=cancel)
 
-        # In both cases the flash message is the same
-        if not cancel:
+        if cancel:
+            return self.exists()
+        else:
+            # Flash message is the same whether deleted from details or by selection
             result = flash.assert_success_message('Delete initiated for 1 Cloud Tenant.')
             if wait:
                 result = self.wait_for_disappear()
-
-        return result
+            return result
 
     def exists(self):
         try:
