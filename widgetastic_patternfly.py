@@ -501,8 +501,7 @@ class Accordion(View, ClickableMixin):
 
     @property
     def is_closed(self):
-        attr = self.browser.get_attribute('aria-expanded', self)
-        return attr is None or attr.lower().strip() == 'false'
+        return not self.is_opened
 
     def open(self):
         if self.is_closed:
