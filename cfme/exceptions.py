@@ -340,3 +340,7 @@ class MenuItemNotFound(CFMEException):
 
 class DestinationNotFound(CFMEException):
     """Raised during navigation where the navigator destination is not found"""
+
+
+class TreeDimmedException(CFMEException):
+    """Raised when you try to access a dimmed tree from an accordion."""
