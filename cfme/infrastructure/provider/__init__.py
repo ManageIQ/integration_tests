@@ -130,7 +130,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     Args:
         name: Name of the provider.
         details: a details record (see VMwareDetails, RHEVMDetails inner class).
-        credentials (Credential): see Credential inner class.
+        credentials (:py:class:`Credential`): see Credential inner class.
         key: The CFME key of the provider in the yaml.
         candu: C&U credentials if this is a RHEVMDetails class.
 

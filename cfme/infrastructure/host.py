@@ -103,8 +103,8 @@ class Host(Updateable, Pretty, Navigatable):
         host_platform: Included but appears unused in CFME at the moment.
         ipmi_address: The IPMI address.
         mac_address: The mac address of the system.
-        credentials (Credential): see Credential inner class.
-        ipmi_credentials (Credential): see Credential inner class.
+        credentials (:py:class:`Credential`): see Credential inner class.
+        ipmi_credentials (:py:class:`Credential`): see Credential inner class.
 
     Usage:
 
