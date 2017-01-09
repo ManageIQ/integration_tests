@@ -167,7 +167,7 @@ def read_env(file):
         This will only include shell variables that are exported from the file being parsed
 
     Returns:
-        A :py:class:`dict` of ``varname: value`` pairs. If the file does not exist or bash could not
+        A :py:class:`dict` of key/value pairs. If the file does not exist or bash could not
         parse the file, this dict will be empty.
     """
     env_vars = {}

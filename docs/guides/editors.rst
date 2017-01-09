@@ -150,11 +150,10 @@ this code:
       "open_pydoc_in_view": true,
       "create_view_in_same_group": false,
 
-      // Linter settings
       "python_linting": true,
-      "python_linter_mark_style": "outline", // "none" or "outline"
+      "python_linter_mark_style": "outline",
       "python_linter_gutter_marks": true,
-      "python_linter_gutter_marks_theme": "alpha", // see folder gutter_mark_themes
+      "python_linter_gutter_marks_theme": "alpha",
       "pep8": true,
       "pep8_ignore": ["E128"],
       "pep8_max_line_length": 100,

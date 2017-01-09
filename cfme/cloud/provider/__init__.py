@@ -133,7 +133,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
     Args:
         name: Name of the provider.
         details: a details record (see EC2Details, OpenStackDetails inner class).
-        credentials (Credential): see Credential inner class.
+        credentials (:py:class:`Credential`): see Credential inner class.
         key: The CFME key of the provider in the yaml.
 
     Usage:
