@@ -101,7 +101,7 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
                                provider=provider,
                                prov_data=provisioning_data)
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
+    service_catalogs = ServiceCatalogs(catalog_item.name)
     service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', item_name)

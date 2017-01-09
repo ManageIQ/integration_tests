@@ -145,8 +145,8 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
                                prov_data=provisioning_data)
 
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],

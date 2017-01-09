@@ -129,8 +129,8 @@ def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
