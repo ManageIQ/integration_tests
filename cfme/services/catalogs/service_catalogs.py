@@ -53,7 +53,7 @@ class ServiceCatalogs(Updateable, Pretty, Navigatable):
         if self.stack_data:
             stack_form.fill(self.stack_data)
         sel.click(form_buttons.submit)
-        wait_for(flash.get_messages, num_sec=10, delay=2)
+        wait_for(flash.get_messages, num_sec=10, delay=2, fail_condition=[], fail_func=tb.refresh())
         flash.assert_success_message("Order Request was Submitted")
 
 
