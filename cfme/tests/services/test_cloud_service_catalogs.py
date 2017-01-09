@@ -108,5 +108,5 @@ def test_cloud_catalog_item(setup_provider, provider, dialog, catalog, request, 
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=requests.reload, num_sec=1000, delay=20)
+                       fail_func=requests.reload, num_sec=1200, delay=20)
     assert row.request_state.text == 'Finished'
