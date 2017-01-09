@@ -37,7 +37,7 @@ yaml_key_password_question: "Type your yaml key (if you do not have any, just pr
 
 # yaml local repo
 yaml_local_repo:
-yaml_local_repo_question: "Type URL of repository where your yaml files are located:"
+yaml_local_repo_question: "DO you have any local yaml files which you would like to use? Type \"y\" or \"n\""
 
 base_url:
 base_url_question: "Type IP address or resolvable name of your appliance tests will be executed against:"

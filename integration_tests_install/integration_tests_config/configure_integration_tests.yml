@@ -81,9 +81,19 @@
       register: gpg_public_key_p
       when: pull_requests_p.key != "n"
     
-    - name: "6)"   
-      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:" accepted_keys="{{ accepted_keys_yn }}"
-      register: yaml_external_repo
+#    - name: "Do you have any yaml files?"   
+#      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:" accepted_keys="{{ pull_requests_accepted_keys }}"
+#      register: yaml_quest
+#      when: pull_requests_p.key != "n"
+#    
+#    - name: "How many repos"
+#      action: custom_prompt prompt="how many repos do you have - [{{ yaml_repo }}]:" accepted_keys="[0-9]"
+#      register: how_many_repos
+#      when: pull_requests_p.key != "n"
+ 
+    - name: "6)"
+      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:"
+      register: yaml_repo_p
       when: pull_requests_p.key != "n"
     
     - name: "7)"
@@ -105,10 +115,10 @@
       action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:" accepted_keys="{{ accepted_keys_yn }}"
       register: yaml_local_repo
       when: pull_requests_p.key != "n"
-    
-    - name: "10)"   
-      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:"
-      register: yaml_local_repo_p
+
+    - name: "9)"   
+      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:" accepted_keys="{{ pull_requests_accepted_keys }}"
+      register: yaml_
       when: pull_requests_p.key != "n"
 
     #- name: "6) 7) 8) nested loop"
@@ -122,12 +132,12 @@
     #  until: yaml_question == 'n' 
     #  #until: item.key == 'y' 
 
-    - name: "12)"
+    - name: "10)"
       action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
       register: base_url_p
       when: pull_requests_p.key != "n"
 
-    - name: "13)"
+    - name: "11)"
       action: custom_prompt prompt="{{ browser_question }} - [[ {{browser}} ]]" accepted_keys="{{browser_accepted_keys}}" 
       register: browser_p
  
@@ -256,7 +266,7 @@
       set_fact: 
         yamls_base: "{{ yaml_repo | basename }}"
 
-    - name: Add username into repo url - regexp
+    - name: Clone YAML repo - Add username into repo url - regexp
       # git: repo="{{ yaml_repo }}" dest="{{ cfme_vol }}/{{ yamls_base }}" clone=yes
       git: repo="{{ yaml_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
@@ -273,7 +283,6 @@
         - /projects/cfme_env/cfme_vol/cfme-qe-yamls/complete/*.*yaml 
       when: item | basename != 'env.yaml'
       
- 
     - name: Create symlinks
       file: src="../../cfme-qe-yamls/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
       with_fileglob: 
