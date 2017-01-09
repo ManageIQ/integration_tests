@@ -138,7 +138,7 @@ from time import time
 from traceback import extract_tb, format_tb
 
 from cached_property import cached_property
-from utils import conf
+from utils import conf, safe_string
 from utils.path import get_rel_path, log_path, project_path
 
 import os
@@ -206,7 +206,7 @@ class PrefixAddingLoggerFilter(logging.Filter):
 
     def filter(self, record):
         if self.prefix:
-            record.msg = "{}{}".format(self.prefix, record.msg)
+            record.msg = "{0}{1}".format(safe_string(self.prefix), safe_string(record.msg))
         return True
 
 
