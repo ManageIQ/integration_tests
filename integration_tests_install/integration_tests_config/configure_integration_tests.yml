@@ -54,6 +54,7 @@
       include_vars: "{{ vars_config }}"
       when: p.stat.exists == True
 
+
     - name: "1)"
       # https://gist.githubusercontent.com/confiks/6d7b0ee3e137df01b758/raw/6b31d61151c4199e5121c34c841f7168850a6071/ask_key.py
       # action: custom_prompt prompt="{{ pull_requests_question }} - [{{ pull_requests }}]:" accepted_keys="{{ accepted_keys_yn }}"
