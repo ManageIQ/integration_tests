@@ -41,14 +41,14 @@ def test_delete_catalog_deletes_service(dialog, catalog):
                   dialog=dialog)
     catalog_item.create()
     catalog.delete()
-    service_catalogs = ServiceCatalogs("service_name")
+    service_catalogs = ServiceCatalogs(catalog_item.name)
     with error.expected(NoSuchElementException):
         service_catalogs.order()
 
 
 def test_delete_catalog_item_deletes_service(catalog_item):
     catalog_item.delete()
-    service_catalogs = ServiceCatalogs("service_name")
+    service_catalogs = ServiceCatalogs(catalog_item.name)
     with error.expected(NoSuchElementException):
         service_catalogs.order()
 

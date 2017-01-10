@@ -79,7 +79,7 @@ def catalog_item(provider, vm_name, dialog, catalog, provisioning):
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=template,
-                  provider=provider.name, prov_data=provisioning_data)
+                  provider=provider, prov_data=provisioning_data)
     yield catalog_item
 
 
@@ -93,8 +93,8 @@ def clone_vm_name():
 def create_vm(provider, setup_provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name

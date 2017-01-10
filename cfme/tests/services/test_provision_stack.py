@@ -189,7 +189,7 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(dialog_name, catalog, template):
+def catalog_item(dialog_name, catalog, template, provider):
     item_name = fauxfactory.gen_alphanumeric()
 
     catalog_item = CatalogItem(item_type="Orchestration",
@@ -198,7 +198,8 @@ def catalog_item(dialog_name, catalog, template):
                                display_in=True,
                                catalog=catalog.name,
                                dialog=dialog_name,
-                               orch_template=template.template_name)
+                               orch_template=template.template_name,
+                               provider=provider)
     catalog_item.create()
 
     yield catalog_item, item_name
@@ -241,7 +242,7 @@ def provision_success_message(name):
     return success_message
 
 
-def test_provision_stack(provider, provisioning, catalog, catalog_item, request):
+def test_provision_stack(setup_provider, provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
     Metadata:
@@ -263,8 +264,8 @@ def test_provision_stack(provider, provisioning, catalog, catalog_item, request)
                            .format(ex.message))
             pass
 
-    service_catalogs = ServiceCatalogs("service_name", stack_data)
-    service_catalogs.order_stack_item(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
@@ -296,8 +297,8 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
                            .format(ex.message))
             pass
 
-    service_catalogs = ServiceCatalogs("service_name", stack_data)
-    service_catalogs.order_stack_item(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}
@@ -318,8 +319,8 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     """
     catalog_item, item_name = catalog_item
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs("service_name", stack_data)
-    service_catalogs.order_stack_item(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs.order()
     # This is part of test - remove template and see if provision fails , so not added as finalizer
     template.delete()
     row_description = 'Provisioning Service [{}] from [{}]'.format(item_name, item_name)
@@ -341,8 +342,8 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     DefaultView.set_default_view("Stacks", "Grid View")
 
     stack_data = prepare_stack_data(provider, provisioning)
-    service_catalogs = ServiceCatalogs("service_name", stack_data)
-    service_catalogs.order_stack_item(catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(item_name, stack_data)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', item_name)
     row_description = item_name
     cells = {'Description': row_description}

@@ -152,8 +152,9 @@ class MyService(Updateable, Navigatable):
         fill(edit_service_form, {'name': updated_name,
                                  'description': updated_description},
              action=form_buttons.angular_save)
+        wait_for(flash.get_messages, timeout=10, delay=2, fail_condition=[], fail_func=tb.refresh())
         if flash.assert_success_message('Service "{}" was saved'.format(updated_name)):
-            self.service_name = updated_name
+            setattr(self, 'service_name', updated_name)
 
     def delete(self):
         navigate_to(self, 'Details')
