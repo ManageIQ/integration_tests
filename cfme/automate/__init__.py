@@ -71,3 +71,22 @@ class AutomateExplorer(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select('Automate', 'Explorer')
+
+
+class AutomateSimulationView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Automate', 'Simulation'])
+
+    # TODO: Actually convert this to Widgetastic.
+
+
+@navigator.register(Server)
+class AutomateSimulation(CFMENavigateStep):
+    VIEW = AutomateSimulationView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select('Automate', 'Simulation')
