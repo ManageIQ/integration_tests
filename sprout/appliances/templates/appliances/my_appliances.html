@@ -79,7 +79,7 @@
             <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.yum_update %} with YUM updated appliances{% endif %}{% if pool.is_container %} (containers){% endif %}
             {% if not pool.finished %}
             - D: {{ pool.num_delayed_provisioning_tasks }}, Q: {{ pool.num_provisioning_tasks_before }}, PS: {{ pool.num_possible_provisioning_slots }}, AS: {{ pool.num_possible_appliance_slots}}, SA: {{ pool.num_shepherd_appliances }}
-            {% endif %}</strong>
+            {% endif %}{% if pool.current_count > 0 %} - Age: {{ pool.age|nice_timedelta }}{% endif %}</strong>
             {% if show_user == "all" %}
                 <em>Owner: {{ pool.owner|user_repr }}
                 <a href="{% url 'user_appliances' pool.owner.username %}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
@@ -103,6 +103,7 @@
                     <th style="width: 10%;">Manages:</th>
                     <th style="width: 10%;">Ready?</th>
                     <th>Power state:</th>
+                    <th>Age:</th>
                     <th>Expires in:</th>
                     <th>Actions:</th>
                     <th>Lease actions:</th>
@@ -166,6 +167,7 @@
                         {% endif %}
                     </td>
                     <td>{{ appliance.power_state|power_icon }}</td>
+                    <td>{{ appliance.age|nice_timedelta }}</td>
                     <td>{{ appliance.expires_in }}</td>
                     <td>
                         <div class="btn-toolbar" role="toolbar" aria-label="Appliance operations">
