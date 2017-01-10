@@ -23,8 +23,8 @@ pytestmark = [
 ]
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter'],
-    scope="module")
+pytest_generate_tests = testgen.generate(testgen.provider_by_type,
+                                         ['virtualcenter'], scope="module")
 
 
 @pytest.fixture(scope="function")
@@ -35,7 +35,7 @@ def copy_domain(request):
     return domain
 
 
-@pytest.fixture
+@pytest.yield_fixture(scope='function')
 def myservice(setup_provider, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
@@ -46,9 +46,15 @@ def myservice(setup_provider, provider, catalog_item, request):
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=900, delay=20)
+                       fail_func=requests.reload, num_sec=900, delay=20)
     assert row.request_state.text == 'Finished'
-    return MyService(catalog_item.name, vm_name)
+    service = MyService(catalog_item.name, vm_name)
+    yield service
+
+    try:
+        service.delete()
+    except Exception as ex:
+        logger.warning('Exception while deleting MyService, continuing: {}'.format(ex.message))
 
 
 def test_add_vm_to_service(myservice, request, copy_domain):
@@ -98,4 +104,3 @@ def test_add_vm_to_service(myservice, request, copy_domain):
         execute_methods=True
     )
     myservice.check_vm_add("auto_test_services")
-    request.addfinalizer(lambda: myservice.delete(myservice.service_name))
