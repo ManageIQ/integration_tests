@@ -2,6 +2,7 @@
 import pytest
 
 from cfme import test_requirements
+from cfme.cloud.instance.image import Image
 from cfme.cloud.stack import Stack
 from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
@@ -23,13 +24,12 @@ pytestmark = [pytest.mark.tier(2),
 
 @pytest.fixture(scope="module")
 def set_grid():
-    sel.force_navigate("clouds_images")
+    navigate_to(Image, 'All')
     toolbar.select('Grid View')
 
 
 def reset():
-    # TODO replace this navigation with navmazing when cloud images supports it
-    sel.force_navigate("clouds_images")
+    navigate_to(Image, 'All')
     toolbar.select('List View')
 
 
