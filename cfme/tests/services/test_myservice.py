@@ -11,7 +11,6 @@ from cfme.web_ui import toolbar as tb
 from utils import browser, testgen, version
 from utils.browser import ensure_browser_open
 from utils.log import logger
-from utils.version import current_version
 from utils.wait import wait_for
 
 pytestmark = [
@@ -96,7 +95,6 @@ def test_crud_set_ownership_and_edit_tags(myservice):
     myservice.delete()
 
 
-@pytest.mark.uncollectif(lambda: current_version() < "5.5")
 @pytest.mark.parametrize("filetype", ["Text", "CSV", "PDF"])
 def test_download_file(needs_firefox, myservice, filetype):
     """Tests my service download files
