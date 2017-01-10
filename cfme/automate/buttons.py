@@ -9,10 +9,10 @@ from widgetastic_manageiq import SummaryFormItem
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from widgetastic_patternfly import CandidateNotFound
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.update import Updateable
-from utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.update import Updateable
+from cfme.utils import version
 
 from . import AutomateCustomizationView
 

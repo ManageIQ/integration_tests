@@ -2,10 +2,10 @@
 import fauxfactory
 import cfme.configure.settings as st
 import pytest
-import utils.error as error
-from utils.blockers import BZ
-from utils.update import update
-from utils import version
+import cfme.utils.error as error
+from cfme.utils.blockers import BZ
+from cfme.utils.update import update
+from cfme.utils import version
 from cfme import test_requirements
 from cfme.web_ui import form_buttons
 

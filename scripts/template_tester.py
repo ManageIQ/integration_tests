@@ -14,7 +14,7 @@ mark:
 import os
 import sys
 
-from utils import trackerbot
+from cfme.utils import trackerbot
 
 
 def get(api, request_type=None):
@@ -67,7 +67,7 @@ def mark(api, provider_key, template, usable, diagnose):
 #   temporarily disabled; diagnosis is causing template marking to fail on downstream appliances :(
 #         if diagnose:
 #             # diagnose will return None on a usable appliance, so don't bother
-#             from utils.appliance import IPAppliance
+#             from cfme.utils.appliance import IPAppliance
 #             ipa = IPAppliance()
 #             diagnosis = ipa.diagnose_evm_failure()
 #             if diagnosis:

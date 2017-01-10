@@ -9,9 +9,9 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, toolbar as tb, CheckboxTable, InfoBlock, match_location, \
     PagedTable
 from cfme.web_ui.search import search_box
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
-from utils.log import logger
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from cfme.utils.log import logger
 from . import cfg_btn, life_btn, pol_btn
 
 list_table = PagedTable(table_locator="//div[@id='list_grid']//table")

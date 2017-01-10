@@ -55,9 +55,9 @@ import inspect
 import os
 
 from fixtures.pytest_store import store
-from utils.path import log_path
-from utils.log import logger
-from utils.pytest_shortcuts import extract_fixtures_values
+from cfme.utils.path import log_path
+from cfme.utils.log import logger
+from cfme.utils.pytest_shortcuts import extract_fixtures_values
 
 
 def uncollectif(item):

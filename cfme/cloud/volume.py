@@ -6,9 +6,9 @@ from navmazing import NavigateToSibling
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import DestinationNotFound
 from cfme.web_ui import match_location, InfoBlock, PagedTable, toolbar as tb
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.version import current_version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.version import current_version
 
 match_volumes = partial(match_location, controller='cloud_volume', title='Cloud Volumes')
 match_provider = partial(match_location, controller='ems_cloud', title='Cloud Providers')

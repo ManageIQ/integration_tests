@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from utils import testgen
+from cfme.utils import testgen
 
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['scvmm'],

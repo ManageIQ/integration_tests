@@ -6,11 +6,11 @@ from cfme.configure.tasks import is_host_analysis_finished
 from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.infrastructure import host
 from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
-from utils import conf
-from utils import testgen
-from utils import version
-from utils.update import update
-from utils.wait import wait_for
+from cfme.utils import conf
+from cfme.utils import testgen
+from cfme.utils import version
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.smartstate,

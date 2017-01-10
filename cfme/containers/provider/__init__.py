@@ -17,13 +17,13 @@ from cfme.web_ui import (
     match_location)
 from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
-from utils import deferred_verpick, version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.browser import ensure_browser_open
-from utils.db import cfmedb
-from utils.pretty import Pretty
-from utils.varmeth import variable
+from cfme.utils import deferred_verpick, version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.browser import ensure_browser_open
+from cfme.utils.db import cfmedb
+from cfme.utils.pretty import Pretty
+from cfme.utils.varmeth import variable
 
 
 from .. import cfg_btn, mon_btn, pol_btn, details_page

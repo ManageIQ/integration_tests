@@ -54,7 +54,7 @@ from types import FunctionType
 import pytest
 
 from lya import AttrDict
-from utils.log import logger
+from cfme.utils.log import logger
 
 
 def pytest_configure(config):

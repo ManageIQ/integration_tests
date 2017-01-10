@@ -7,11 +7,11 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import (
     accordion, flash, form_buttons, Form, Input, Select, match_location, toolbar as tb, PagedTable)
 from selenium.common.exceptions import NoSuchElementException
-from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
-from utils.appliance import Navigatable
-from utils.update import Updateable
-from utils.pretty import Pretty
-from utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.utils.appliance import Navigatable
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
 
 order_button = "//button[@title='Order this Service']"
 

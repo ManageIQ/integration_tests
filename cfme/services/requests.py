@@ -3,8 +3,8 @@ from contextlib import contextmanager
 from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Input, Region, SplitTable, Table, fill, flash, paginator, toolbar
-from utils import version
-from utils.log import logger
+from cfme.utils import version
+from cfme.utils.log import logger
 
 REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 

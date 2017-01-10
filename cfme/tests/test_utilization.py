@@ -9,11 +9,11 @@ from fixtures.pytest_store import store
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
-from utils import providers
-from utils import testgen
-from utils import conf
-from utils.log import logger
-from utils.version import current_version
+from cfme.utils import providers
+from cfme.utils import testgen
+from cfme.utils import conf
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
 
 
 # Tests for vmware,rhev, openstack, ec2, azure, gce providers have been moved to

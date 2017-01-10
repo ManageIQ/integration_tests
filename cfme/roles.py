@@ -1,4 +1,4 @@
-from utils.log import logger
+from cfme.utils.log import logger
 
 
 def _remove_page(roles, group, pages):

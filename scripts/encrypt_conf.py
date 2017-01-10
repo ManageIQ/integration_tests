@@ -10,7 +10,7 @@ Usage:
 import argparse
 import yaycl_crypt
 
-from utils import conf
+from cfme.utils import conf
 
 
 def parse_cmd_line():

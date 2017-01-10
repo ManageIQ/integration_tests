@@ -4,7 +4,7 @@ import random
 
 from cfme.intelligence.reports import menus
 from cfme.web_ui import Tree, accordion
-from utils.blockers import BZ
+from cfme.utils.blockers import BZ
 
 # EvmGroup-super_administrator -> user `admin`
 # If we add more, will need relogin + user creation

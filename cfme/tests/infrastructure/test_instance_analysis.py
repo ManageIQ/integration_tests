@@ -15,11 +15,11 @@ from cfme.infrastructure import host, datastore
 from cfme.provisioning import do_vm_provisioning
 from cfme.web_ui import InfoBlock, DriftGrid, toolbar
 from fixtures.pytest_store import store
-from utils import testgen, ssh, safe_string, version, error
-from utils.conf import cfme_data
-from utils.log import logger
-from utils.wait import wait_for
-from utils.blockers import GH, BZ
+from cfme.utils import testgen, ssh, safe_string, version, error
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils.blockers import GH, BZ
 
 pytestmark = [pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:6939"],
                                unblock=lambda provider: provider.type != 'rhevm'),

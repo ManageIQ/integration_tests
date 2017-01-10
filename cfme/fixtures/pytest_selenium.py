@@ -37,13 +37,13 @@ import base64
 
 from cfme import exceptions, js
 from fixtures.pytest_store import store
-from utils import version
-from utils.browser import browser, ensure_browser_open, quit
-from utils.path import log_path
-from utils.log import logger
-from utils.wait import wait_for
-from utils.pretty import Pretty
-from utils.deprecation import removed_in_fw30
+from cfme.utils import version
+from cfme.utils.browser import browser, ensure_browser_open, quit
+from cfme.utils.path import log_path
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
+from cfme.utils.deprecation import removed_in_fw30
 
 from threading import local
 _thread_local = local()

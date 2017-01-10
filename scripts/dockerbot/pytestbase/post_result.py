@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from utils.trackerbot import post_task_result
+from cfme.utils.trackerbot import post_task_result
 import os
 import sys
 

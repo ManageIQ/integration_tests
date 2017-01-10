@@ -5,8 +5,8 @@ import time
 from wait_for import wait_for
 
 from dockerbot import SeleniumDocker
-from utils.net import random_port, net_check
-from utils.conf import docker as docker_conf
+from cfme.utils.net import random_port, net_check
+from cfme.utils.conf import docker as docker_conf
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=None)

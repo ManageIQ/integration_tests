@@ -11,9 +11,9 @@ from cfme.services import requests
 from cfme.cloud.stack import Stack
 from cfme.exceptions import CandidateNotFound
 from cfme import test_requirements
-from utils import testgen, version
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import testgen, version
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

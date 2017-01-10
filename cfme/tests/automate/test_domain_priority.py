@@ -7,8 +7,8 @@ from cfme import test_requirements
 from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
 from cfme.automate.explorer import set_domain_order
 from cfme.automate.simulation import simulate
-from utils.update import update
-from utils.wait import wait_for
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [test_requirements.automate]

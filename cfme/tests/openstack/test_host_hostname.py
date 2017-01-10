@@ -1,4 +1,4 @@
-from utils import testgen
+from cfme.utils import testgen
 from cfme.web_ui import Quadicon
 from cfme.infrastructure.host import Host
 import pytest

@@ -5,11 +5,11 @@ import re
 
 from cfme.configure import red_hat_updates
 from cfme.web_ui import InfoBlock, flash
-from utils import conf, error, version
-from utils.blockers import BZ
-from utils.ssh import SSHClient
-from utils.testgen import parametrize
-from utils.wait import wait_for
+from cfme.utils import conf, error, version
+from cfme.utils.blockers import BZ
+from cfme.utils.ssh import SSHClient
+from cfme.utils.testgen import parametrize
+from cfme.utils.wait import wait_for
 
 
 REG_METHODS = ('rhsm', 'sat5', 'sat6')

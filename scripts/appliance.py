@@ -18,7 +18,7 @@ For example, this will work but not do anyhting helpful:
 import argparse
 import sys
 
-from utils.appliance import Appliance
+from cfme.utils.appliance import Appliance
 
 
 def main():

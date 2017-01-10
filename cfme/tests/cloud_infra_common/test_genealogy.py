@@ -2,9 +2,9 @@
 import pytest
 
 from cfme.common.vm import VM
-from utils import testgen
+from cfme.utils import testgen
 from cfme import test_requirements
-from utils.generators import random_vm_name
+from cfme.utils.generators import random_vm_name
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider'),

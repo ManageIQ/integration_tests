@@ -12,7 +12,7 @@ import iso8601
 import tzlocal
 from datetime import datetime, timedelta
 
-from utils.providers import list_providers, get_mgmt
+from cfme.utils.providers import list_providers, get_mgmt
 
 local_tz = tzlocal.get_localzone()
 GRACE_TIME = timedelta(hours=2)

@@ -6,8 +6,8 @@ import argparse
 import random
 import re
 
-from utils import conf
-from utils.api import API
+from cfme.utils import conf
+from cfme.utils.api import API
 
 parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)

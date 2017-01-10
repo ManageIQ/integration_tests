@@ -3,9 +3,9 @@ import fauxfactory
 from cfme.configure.configuration import Category
 from cfme.rest.gen_data import categories as _categories
 import pytest
-from utils.update import update
-from utils.wait import wait_for
-from utils import error, version
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
+from cfme.utils import error, version
 
 
 @pytest.mark.tier(2)

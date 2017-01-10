@@ -6,10 +6,10 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.host import credential_form
 from cfme.infrastructure.provider import details_page
 from cfme.web_ui import Quadicon, fill, toolbar as tb, flash
-from utils import testgen
-from utils import version
-import utils.conf as conf
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils import version
+import cfme.utils.conf as conf
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.meta(blockers=[1296258]),

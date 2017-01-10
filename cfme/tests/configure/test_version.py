@@ -2,7 +2,7 @@
 import pytest
 
 from cfme.configure.about import get_detail
-import utils.version as version
+import cfme.utils.version as version
 
 
 @pytest.mark.tier(3)
@@ -20,3 +20,4 @@ def test_version():
         version.LOWEST: ('Session Information', 'Version'),
         '5.7': 'Version'}))
     assert ui_version.startswith(ssh_version), "UI: {}, SSH: {}".format(ui_version, ssh_version)
+

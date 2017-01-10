@@ -4,8 +4,8 @@
 from cfme import test_requirements
 from cfme.infrastructure import cluster
 from cfme.fixtures import pytest_selenium as sel
-from utils import testgen
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.wait import wait_for
 
 pytestmark = [test_requirements.smartstate]
 

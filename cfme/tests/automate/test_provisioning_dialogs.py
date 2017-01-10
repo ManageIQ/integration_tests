@@ -5,8 +5,8 @@ import pytest
 from cfme import test_requirements
 from cfme.automate import provisioning_dialogs
 from cfme.web_ui import accordion
-from utils.update import update
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.yield_fixture(scope="function")

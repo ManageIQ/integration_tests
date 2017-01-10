@@ -2,8 +2,8 @@
 import fauxfactory
 import pytest
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
-from utils import testgen, error
-from utils.update import update
+from cfme.utils import testgen, error
+from cfme.utils.update import update
 from cfme.web_ui import mixins
 from cfme.fixtures import pytest_selenium as sel
 from cfme import test_requirements

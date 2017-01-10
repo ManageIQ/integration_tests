@@ -10,8 +10,8 @@ from cfme.rest.gen_data import groups as _groups
 from cfme.rest.gen_data import roles as _roles
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import users as _users
-from utils.wait import wait_for
-from utils import error
+from cfme.utils.wait import wait_for
+from cfme.utils import error
 
 
 pytestmark = [

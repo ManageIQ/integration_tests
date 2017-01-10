@@ -2,8 +2,8 @@
 import pytest
 from cfme.storage import object_store
 from cfme.web_ui import mixins
-from utils.providers import setup_a_provider as _setup_a_provider
-from utils import testgen
+from cfme.utils.providers import setup_a_provider as _setup_a_provider
+from cfme.utils import testgen
 
 pytestmark = [pytest.mark.usefixtures("setup_a_provider")]
 

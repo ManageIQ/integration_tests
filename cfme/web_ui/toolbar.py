@@ -11,8 +11,8 @@ Usage:
 import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
-from utils import version
-from utils.log import logger
+from cfme.utils import version
+from cfme.utils.log import logger
 from xml.sax.saxutils import quoteattr, unescape
 
 

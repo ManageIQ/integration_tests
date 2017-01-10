@@ -4,9 +4,9 @@ import re
 import sys
 import time
 
-from utils.log import logger
-from utils.path import log_path
-from utils.providers import list_providers, get_mgmt
+from cfme.utils.log import logger
+from cfme.utils.path import log_path
+from cfme.utils.providers import list_providers, get_mgmt
 
 
 def parse_cmd_line():

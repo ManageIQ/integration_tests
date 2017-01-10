@@ -3,7 +3,7 @@ from cfme import test_requirements
 from cfme.rest.gen_data import automation_requests_data as _automation_requests_data
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [test_requirements.rest]

@@ -10,10 +10,10 @@ from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
-from utils.wait import wait_for
-from utils import testgen
-from utils.log import logger
-from utils import version
+from cfme.utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.log import logger
+from cfme.utils import version
 
 pytestmark = [
     pytest.mark.meta(roles="+automate")

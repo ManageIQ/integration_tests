@@ -3,8 +3,8 @@ import fauxfactory
 import pytest
 from cfme import Credential, login, test_requirements
 from cfme.common.vm import VM
-from utils import testgen
-from utils.blockers import BZ
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
 
 
 def pytest_generate_tests(metafunc):

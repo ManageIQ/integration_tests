@@ -4,8 +4,8 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.service_dialogs import ServiceDialog
-from utils import error
-from utils.update import update
+from cfme.utils import error
+from cfme.utils.update import update
 
 
 pytestmark = [test_requirements.automate, pytest.mark.tier(3)]

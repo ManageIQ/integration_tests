@@ -15,7 +15,7 @@ class SlaveManager(object):
         self.collection = None
         self.slaveid = conf.runtime['env']['slaveid'] = slaveid
         self.base_url = conf.runtime['env']['base_url'] = base_url
-        self.log = utils.log.logger
+        self.log = cfme.utils.log.logger
         conf.clear()
         # Override the logger in utils.log
 
@@ -183,12 +183,12 @@ if __name__ == '__main__':
 
     # overwrite the default logger before anything else is imported,
     # to get our best chance at having everything import the replaced logger
-    import utils.log
-    utils.log.add_prefix.prefix = "({}) ".format(args.slaveid)
+    import cfme.utils.log
+    cfme.utils.log.add_prefix.prefix = "({}) ".format(args.slaveid)
 
     from fixtures import terminalreporter
     from fixtures.pytest_store import store
-    from utils import conf
+    from cfme.utils import conf
 
     conf.runtime['env']['slaveid'] = args.slaveid
     conf.runtime['env']['base_url'] = args.base_url

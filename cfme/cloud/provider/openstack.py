@@ -1,7 +1,7 @@
 from mgmtsystem.openstack import OpenstackSystem
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 
-from utils.version import current_version
+from cfme.utils.version import current_version
 
 from . import CloudProvider
 
@@ -30,7 +30,7 @@ class OpenStackProvider(CloudProvider):
                 infra_provider_name = self.infra_provider.name
             else:
                 infra_provider_name = str(self.infra_provider)
-            from utils.providers import setup_provider_by_name
+            from cfme.utils.providers import setup_provider_by_name
             setup_provider_by_name(
                 infra_provider_name, validate=True, check_existing=True)
         if current_version() >= "5.6" and 'validate_credentials' not in kwargs:

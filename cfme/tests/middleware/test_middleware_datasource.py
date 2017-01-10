@@ -2,8 +2,8 @@ import pytest
 
 from cfme.middleware import get_random_list
 from cfme.middleware.datasource import MiddlewareDatasource
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from server_methods import get_eap_server, get_hawkular_server
 from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
 from datasource_methods import (

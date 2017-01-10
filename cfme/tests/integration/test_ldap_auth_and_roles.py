@@ -3,10 +3,10 @@ import pytest
 from cfme.configure.access_control import simple_user
 from cfme.login import login, login_admin
 from cfme.web_ui import menu
-from utils.conf import credentials
-from utils.testgen import auth_groups, generate
-from utils import version
-from utils.providers import setup_a_provider
+from cfme.utils.conf import credentials
+from cfme.utils.testgen import auth_groups, generate
+from cfme.utils import version
+from cfme.utils.providers import setup_a_provider
 
 pytest_generate_tests = generate(auth_groups, auth_mode='ldap')
 

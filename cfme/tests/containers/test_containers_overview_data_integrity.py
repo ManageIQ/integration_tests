@@ -1,6 +1,6 @@
 import pytest
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.node import Node
 from cfme.containers.pod import Pod
@@ -13,8 +13,8 @@ from collections import namedtuple
 from cfme.containers.container import Container
 import time
 from cfme.web_ui import StatusBox
-from utils.providers import list_providers
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.providers import list_providers
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.overview import ContainersOverview
 
 pytestmark = [

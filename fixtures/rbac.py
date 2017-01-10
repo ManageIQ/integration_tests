@@ -90,15 +90,15 @@ called *rhos* and one called *ec2* we could not change the expected exception to
 depending on if the test was run against *rhos* or *ec2*.
 
 """
-from utils.log import logger
+from cfme.utils.log import logger
 from cfme.configure.access_control import User
 from cfme.login import logout
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from cfme.fixtures.pytest_selenium import take_screenshot
 import pytest
 import traceback
-from utils.browser import browser, ensure_browser_open
-from utils import conf, testgen
+from cfme.utils.browser import browser, ensure_browser_open
+from cfme.utils import conf, testgen
 
 
 enable_rbac = False

@@ -8,9 +8,9 @@ from cfme.configure.tasks import Tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host as host_obj
 from cfme.web_ui import DriftGrid, toolbar as tb
-from utils import error, testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.wait import wait_for
+from cfme.utils import error, testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.drift,

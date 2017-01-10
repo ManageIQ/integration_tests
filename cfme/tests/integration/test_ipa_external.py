@@ -3,8 +3,8 @@ import pytest
 
 from cfme.configure.access_control import Group, User
 from cfme import login, Credential
-from utils.conf import cfme_data
-from utils.providers import setup_a_provider
+from cfme.utils.conf import cfme_data
+from cfme.utils.providers import setup_a_provider
 
 
 @pytest.fixture(scope="module")

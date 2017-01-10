@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-import utils.error as error
+import cfme.utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme.configure.configuration import HostAnalysisProfile, VMAnalysisProfile
 from cfme.web_ui import Table, flash, toolbar as tb, form_buttons
-from utils.update import update
+from cfme.utils.update import update
 
 
 records_table = Table("//div[@id='records_div']/table")

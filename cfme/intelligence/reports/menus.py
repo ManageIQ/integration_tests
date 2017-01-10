@@ -6,7 +6,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import FolderManager
 from cfme.web_ui import Region, Tree, accordion, form_buttons, menu
 from cfme.web_ui.multibox import MultiBoxSelect
-from utils.log import logger
+from cfme.utils.log import logger
 
 menu.nav.add_branch(
     "reports",

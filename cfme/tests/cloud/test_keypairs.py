@@ -1,9 +1,9 @@
 import fauxfactory
 import pytest
 from cfme.cloud.keypairs import KeyPair
-from utils import testgen
-from utils.version import current_version
-from utils.providers import setup_a_provider as _setup_a_provider
+from cfme.utils import testgen
+from cfme.utils.version import current_version
+from cfme.utils.providers import setup_a_provider as _setup_a_provider
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() > '5.7')

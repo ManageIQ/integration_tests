@@ -2,7 +2,7 @@
 """This module contains tests that exercise control of evmserverd service."""
 import pytest
 import re
-from utils.version import current_version
+from cfme.utils.version import current_version
 
 
 @pytest.yield_fixture(scope="module")

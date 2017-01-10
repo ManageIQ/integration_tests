@@ -14,19 +14,19 @@ from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
 from fixtures.pytest_store import store
-from utils import conf
-from utils import version
-from utils.api import rest_api
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to
-from utils.browser import ensure_browser_open
-from utils.db import cfmedb
-from utils.log import logger
-from utils.path import project_path
-from utils.wait import wait_for, RefreshTimer
-from utils.stats import tol_check
-from utils.update import Updateable
-from utils.varmeth import variable
+from cfme.utils import conf
+from cfme.utils import version
+from cfme.utils.api import rest_api
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.browser import ensure_browser_open
+from cfme.utils.db import cfmedb
+from cfme.utils.log import logger
+from cfme.utils.path import project_path
+from cfme.utils.wait import wait_for, RefreshTimer
+from cfme.utils.stats import tol_check
+from cfme.utils.update import Updateable
+from cfme.utils.varmeth import variable
 
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
@@ -171,7 +171,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
         """
         # gotta stash this in here to prevent circular imports
-        from utils.providers import get_mgmt
+        from cfme.utils.providers import get_mgmt
 
         if self.key:
             return get_mgmt(self.key)

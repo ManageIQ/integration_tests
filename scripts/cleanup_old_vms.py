@@ -11,13 +11,13 @@ from tabulate import tabulate
 from threading import Lock, Thread
 from tzlocal import get_localzone
 
-from utils import net
-from utils.log import logger
-from utils.conf import cfme_data
-from utils.conf import credentials
-from utils.path import log_path
-from utils.ssh import SSHClient
-from utils.providers import list_providers, get_mgmt
+from cfme.utils import net
+from cfme.utils.log import logger
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
+from cfme.utils.path import log_path
+from cfme.utils.ssh import SSHClient
+from cfme.utils.providers import list_providers, get_mgmt
 
 lock = Lock()
 providers_vm_list = []

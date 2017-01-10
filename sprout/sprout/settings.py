@@ -12,7 +12,7 @@ from __future__ import absolute_import
 from datetime import timedelta
 import os
 
-from utils.conf import credentials
+from cfme.utils.conf import credentials
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 

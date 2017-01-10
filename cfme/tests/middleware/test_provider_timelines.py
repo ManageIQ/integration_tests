@@ -1,8 +1,8 @@
 import pytest
 from datetime import datetime
 
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from deployment_methods import get_resource_path
 from deployment_methods import RESOURCE_WAR_NAME
 from deployment_methods import deploy_archive, generate_runtime_name, undeploy
@@ -12,9 +12,9 @@ from datasource_methods import ORACLE_12C_DS
 from datasource_methods import get_datasource_from_list
 from datasource_methods import generate_ds_name
 from server_methods import get_eap_server
-from utils.wait import wait_for
-from utils.blockers import BZ
-from utils import error
+from cfme.utils.wait import wait_for
+from cfme.utils.blockers import BZ
+from cfme.utils import error
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),

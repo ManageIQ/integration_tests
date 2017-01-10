@@ -1,5 +1,5 @@
 from . import ContainersProvider
-from utils.varmeth import variable
+from cfme.utils.varmeth import variable
 from mgmtsystem.openshift import Openshift
 from os import path
 

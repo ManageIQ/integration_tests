@@ -3,10 +3,10 @@
 import pytest
 
 from cfme.control import import_export
-from utils.path import data_path
+from cfme.utils.path import data_path
 from cfme.web_ui import flash
-from utils import error
-from utils.version import current_version
+from cfme.utils import error
+from cfme.utils.version import current_version
 from cfme import test_requirements
 
 pytestmark = [

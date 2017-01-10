@@ -1,8 +1,8 @@
 import pytest
 import re
-from utils import testgen
-from utils import conf
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils import conf
+from cfme.utils.version import current_version
 
 
 pytestmark = [

@@ -12,10 +12,11 @@ from cfme.common.vm import VM
 from cfme.configure.configuration import get_server_roles, set_server_roles, candu
 from cfme.intelligence.reports.reports import CustomReport
 from datetime import date
-from utils import testgen
-from utils.log import logger
-from utils.version import current_version
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.log import logger
+from cfme.utils import testgen, version
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

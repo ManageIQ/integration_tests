@@ -6,11 +6,11 @@ from cfme.base import Server
 from cfme.common.vm import VM
 from cfme.control.explorer import PolicyProfile, VMCompliancePolicy, Action, VMControlPolicy
 from cfme.infrastructure.virtual_machines import Vm
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
-from utils.log import logger
-from utils.providers import setup_a_provider as _setup_a_provider
-from utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
+from cfme.utils.log import logger
+from cfme.utils.providers import setup_a_provider as _setup_a_provider
+from cfme.utils.wait import wait_for
 from cfme import test_requirements
 
 

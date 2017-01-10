@@ -6,7 +6,7 @@ import uuid
 
 import pytest
 
-import utils.error as error
+import cfme.utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme.exceptions import FlashMessageException
@@ -16,11 +16,11 @@ from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
-from utils import testgen, version, providers
-from utils.appliance.implementations.ui import navigate_to
-from utils.update import update
-from utils.api import APIException
-from utils.log import logger
+from cfme.utils import testgen, version, providers
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.update import update
+from cfme.utils.api import APIException
+from cfme.utils.log import logger
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
 

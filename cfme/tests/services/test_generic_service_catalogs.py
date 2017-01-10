@@ -11,10 +11,10 @@ from cfme.services import requests
 from cfme.web_ui import flash
 from cfme import test_requirements
 from selenium.common.exceptions import NoSuchElementException
-from utils import error
-from utils.log import logger
-from utils.wait import wait_for
-from utils import version
+from cfme.utils import error
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils import version
 
 pytestmark = [
     test_requirements.service,

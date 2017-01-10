@@ -1,4 +1,4 @@
-from utils import testgen
+from cfme.utils import testgen
 import pytest
 
 pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate')]

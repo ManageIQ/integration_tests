@@ -3,12 +3,12 @@ import re
 from cfme.common import TopologyMixin, TimelinesMixin
 from . import MiddlewareProvider
 from mgmtsystem.hawkular import Hawkular
-from utils.appliance import Navigatable
-from utils.db import cfmedb
-from utils.varmeth import variable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.db import cfmedb
+from cfme.utils.varmeth import variable
 from . import _get_providers_page, _db_select_query
 from .. import download, MiddlewareBase, auth_btn, mon_btn
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 @MiddlewareProvider.add_provider_type

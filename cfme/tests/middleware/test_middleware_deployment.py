@@ -1,10 +1,10 @@
 import pytest
 
-import utils.error as error
+import cfme.utils.error as error
 from cfme.middleware import get_random_list
 from cfme.middleware.deployment import MiddlewareDeployment
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from deployment_methods import deploy, get_deployment_from_list
 from deployment_methods import get_deployments_set
 from deployment_methods import check_deployment_not_listed

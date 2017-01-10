@@ -10,7 +10,7 @@ import os
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from utils.pretty import Pretty
+from cfme.utils.pretty import Pretty
 
 
 class Object(Pretty):

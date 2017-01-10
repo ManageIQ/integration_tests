@@ -1,5 +1,5 @@
-from utils.conf import cfme_data
-from utils.log import logger
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
 
 
 def provider_keys():

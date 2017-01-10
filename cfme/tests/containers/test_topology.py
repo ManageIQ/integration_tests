@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import pytest
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from cfme.web_ui.topology import Topology
 from cfme.containers.topology import Topology as ContainerTopology
 from cfme.fixtures.pytest_selenium import is_displayed_text
 from random import choice
-from utils.wait import wait_for
-from utils.browser import WithZoom
+from cfme.utils.wait import wait_for
+from cfme.utils.browser import WithZoom
 
 pytestmark = [
     pytest.mark.uncollectif(

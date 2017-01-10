@@ -12,11 +12,11 @@ from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import tenants as _tenants
 from cfme.rest.gen_data import tags as _tags
 from cfme.rest.gen_data import vm as _vm
-from utils.api import APIException
-from utils.blockers import BZ
-from utils.update import update
-from utils.wait import wait_for
-from utils import error, version
+from cfme.utils.api import APIException
+from cfme.utils.blockers import BZ
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
+from cfme.utils import error, version
 
 
 @pytest.yield_fixture

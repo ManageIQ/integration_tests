@@ -1,5 +1,5 @@
 import pytest
-from utils import testgen
+from cfme.utils import testgen
 from cfme.web_ui import Quadicon
 from cfme.web_ui import InfoBlock
 from cfme.fixtures import pytest_selenium as sel

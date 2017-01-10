@@ -24,15 +24,15 @@ from cfme.web_ui import toolbar as tb
 from datetime import datetime
 from fixtures.pytest_store import store
 from functools import partial
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.conf import cfme_data
-from utils.log import logger
-from utils.version import current_version
-from utils.virtual_machines import deploy_template
-from utils.wait import wait_for, TimedOutError
-from utils.pretty import Pretty
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.pretty import Pretty
 from cfme import test_requirements
 
 

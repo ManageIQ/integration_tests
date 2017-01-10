@@ -4,10 +4,10 @@ from functools import partial
 
 from cfme.infrastructure.provider import InfraProvider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
-from utils.appliance.implementations.ui import navigate_to
-from utils.net import ip_address, resolve_hostname
-from utils.providers import get_mgmt_by_name, setup_a_provider as _setup_a_provider
-from utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.net import ip_address, resolve_hostname
+from cfme.utils.providers import get_mgmt_by_name, setup_a_provider as _setup_a_provider
+from cfme.utils import version
 from cfme import test_requirements
 
 provider_props = partial(details_page.infoblock.text, "Properties")

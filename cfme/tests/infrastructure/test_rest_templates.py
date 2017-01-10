@@ -5,7 +5,7 @@ from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import mark_vm_as_template
 from cfme.rest.gen_data import vm as _vm
-from utils import error
+from cfme.utils import error
 
 pytestmark = [pytest.mark.ignore_stream("5.4"), test_requirements.rest]
 

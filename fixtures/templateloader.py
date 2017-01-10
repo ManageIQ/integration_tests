@@ -3,7 +3,7 @@
 """
 from fixtures.prov_filter import filtered
 from fixtures.pytest_store import store, write_line
-from utils import trackerbot
+from cfme.utils import trackerbot
 
 TEMPLATES = {}
 

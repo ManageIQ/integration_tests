@@ -4,7 +4,7 @@
 import pytest
 
 from fixtures.pytest_store import store
-from utils import db, version
+from cfme.utils import db, version
 
 pytestmark = [pytest.mark.smoke, pytest.mark.tier(1)]
 

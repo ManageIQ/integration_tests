@@ -8,12 +8,12 @@ from cfme.exceptions import DestinationNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, flash, form_buttons, Input
 from cfme.web_ui import toolbar as tb, paginator, CheckboxTable, match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.blockers import BZ
-from utils.pretty import Pretty
-from utils.update import Updateable
-from utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.blockers import BZ
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils import version
 
 
 cfg_btn = partial(tb.select, "Configuration")

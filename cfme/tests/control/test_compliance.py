@@ -11,11 +11,11 @@ from cfme.control.explorer import (
     VMCompliancePolicy, VMCondition, PolicyProfile)
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
-from utils import testgen, version
-from utils.appliance import Appliance, ApplianceException, provision_appliance
-from utils.log import logger
-from utils.update import update
-from utils.wait import wait_for
+from cfme.utils import testgen, version
+from cfme.utils.appliance import Appliance, ApplianceException, provision_appliance
+from cfme.utils.log import logger
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 from urlparse import urlparse
 from cfme import test_requirements
 

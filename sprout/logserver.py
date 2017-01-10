@@ -14,7 +14,7 @@ import struct
 from threading import Lock
 
 from sprout import sprout_path
-from utils.log import create_logger
+from cfme.utils.log import create_logger
 
 
 logs_path = sprout_path.join("log")

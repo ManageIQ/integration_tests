@@ -7,8 +7,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, toolbar
 from lya import AttrDict
 from selenium.common.exceptions import NoSuchElementException
-from utils import version
-from utils.log import logger
+from cfme.utils import version
+from cfme.utils.log import logger
 
 
 def _not_implemented(menu_name, version_appeared):

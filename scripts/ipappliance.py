@@ -22,7 +22,7 @@ import sys
 import time
 from datetime import datetime
 from threading import Lock, Thread
-from utils.appliance import IPAppliance
+from cfme.utils.appliance import IPAppliance
 
 lock = Lock()
 

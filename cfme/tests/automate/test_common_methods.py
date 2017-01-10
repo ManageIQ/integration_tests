@@ -9,9 +9,9 @@ from cfme import test_requirements
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.common.vm import VM
 from cfme.web_ui import toolbar
-from utils import testgen
-from utils.timeutil import parsetime
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.timeutil import parsetime
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

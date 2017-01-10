@@ -4,8 +4,8 @@ import pytest
 from cfme.web_ui import Quadicon
 from cfme.infrastructure.cluster import Cluster
 
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type,

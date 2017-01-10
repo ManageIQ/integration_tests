@@ -5,9 +5,9 @@ from cfme.configure.tasks import is_datastore_analysis_finished
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
 from cfme.web_ui import toolbar as tb, Quadicon, InfoBlock
-from utils import conf, testgen
-from utils.blockers import BZ
-from utils.wait import wait_for
+from cfme.utils import conf, testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.wait import wait_for
 import pytest
 
 pytestmark = [test_requirements.smartstate]

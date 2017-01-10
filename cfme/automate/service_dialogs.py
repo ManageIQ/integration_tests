@@ -7,11 +7,11 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import AngularSelect, Form, Select, SplitTable, accordion,\
     fill, flash, form_buttons, Table, Tree, Input, Region, BootstrapTreeview
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.pretty import Pretty
-from utils.update import Updateable
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 
 from widgetastic.utils import Fillable
 

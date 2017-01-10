@@ -2,8 +2,8 @@ import pytest
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.cloud.stack import Stack
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.configure import settings  # NOQA
 from cfme.web_ui import Table, Quadicon
 

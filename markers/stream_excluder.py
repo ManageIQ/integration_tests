@@ -11,7 +11,7 @@ It also provides a facility to check the appliance's version/stream for smoke te
 import pytest
 
 from fixtures.terminalreporter import reporter
-from utils.version import appliance_is_downstream, current_version, current_stream
+from cfme.utils.version import appliance_is_downstream, current_version, current_stream
 
 
 def get_streams_id():

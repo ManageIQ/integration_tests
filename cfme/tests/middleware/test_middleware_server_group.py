@@ -2,8 +2,8 @@ import pytest
 from cfme.middleware import get_random_list
 from cfme.middleware.domain import MiddlewareDomain
 from cfme.middleware.server_group import MiddlewareServerGroup
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
