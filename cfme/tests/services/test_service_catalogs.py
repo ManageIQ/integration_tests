@@ -42,8 +42,8 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request, reg
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
@@ -95,8 +95,8 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     catalog_bundle.create([catalog_item.name])
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog.name, catalog_bundle)
+    service_catalogs = ServiceCatalogs(bundle_name)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', bundle_name)
     row_description = bundle_name
     cells = {'Description': row_description}
@@ -119,7 +119,8 @@ def test_no_template_catalog_item(provider, provisioning, setup_provider, vm_nam
         catalog_item_type = "RHEV"
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
+                  description="my catalog", display_in=True, catalog=catalog, dialog=dialog,
+                  provider=provider)
     catalog_item.create()
     flash.assert_message_match("'Catalog/Name' is required")
 
@@ -145,8 +146,8 @@ def test_request_with_orphaned_template(provider, setup_provider, catalog_item):
         test_flag: provision
     """
     catalog_item.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog.name, catalog_item)
+    service_catalogs = ServiceCatalogs(catalog_item.name)
+    service_catalogs.order()
     logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
