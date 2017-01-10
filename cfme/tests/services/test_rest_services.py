@@ -377,7 +377,7 @@ class TestBlueprintsRESTAPI(object):
         response_len = len(blueprints)
         assert response_len > 0
         new = []
-        for i in range(response_len):
+        for _ in range(response_len):
             new.append({
                 'ui_properties': {
                     'automate_entrypoints': {'Reconfigure': 'foo'}
