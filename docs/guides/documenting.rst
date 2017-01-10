@@ -59,6 +59,29 @@ For a test to be collected for a provider:
  * the *test_flag* must **NOT** appear in the list of ``excluded_test_flags:`` for a particular
    provider
 
+It is beneficial that the documented test also has its description in it in Google-style format.
+When the automated tests get imported in our test case management system, the comment is imported
+as a description, so you don't have to write it twice!
+
+.. code:: yaml
+
+    """Tests provisioning via PXE
+
+    This test verifies that foo causes bar to crash.
+
+    Prerequisities:
+        * bar is set up
+        * baz
+
+    Steps:
+        1) Ook.
+        2) Ook?
+        3) Ook!
+
+    Metadata:
+        test_flag: pxe, provision
+    """
+
 Linking new modules
 -------------------
 
@@ -93,13 +116,6 @@ in the docs/build/ directory, which can then be opened in a browser::
     google-chrome docs/build/index.html
     # or...
     firefox docs/build/index.html
-
-Old and busted
---------------
-
-The "legacy" code (contained mainly in the ``pages/`` and ``tests/`` directories) will not be
-documented here. Time spent documenting that code is better spent converting it to the new page
-style, in the ``cfme/`` directory.
 
 .. link refs
 .. _`pep 257`: http://www.python.org/dev/peps/pep-0257/
