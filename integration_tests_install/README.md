@@ -1,8 +1,8 @@
 # Dockerized ManageIQ Integration tests
 
 ## Prerequisities
- - bash, sed, awk, curl
- - git
+ - bash, GNU sed, awk, curl
+ - git => 2.10
  - vncviewer
  - Docker installed from official Docker repositories
 
@@ -74,13 +74,17 @@ docker run -it redhatqe/integration_tests:latest /bin/bash
 ## Configure CFME - WIP
 Create working folder on your laptop:
 ```
-mkdir -p ~/projects/integration_tests_files;cd ~/projects/integration_tests_files
+export CFME_WORK="~/projects"
+mkdir -p ${CFME_WORK}/integration_tests_files; cd ${CFME_WORK}/integration_tests_files
 ```
 Clone integration_tests repo from GitHub:
 ```
-# git clone https://github.com/ManageIQ/integration_tests
-# Testing:
+<!---
 git clone https://github.com/ManageIQ/integration_tests
+Testing:
+git clone https://github.com/ManageIQ/integration_tests
+--->
+git clone git://github.com/ManageIQ/integration_tests.git
 cd integration_tests
 git fetch origin pull/3254/head:integration_tests_container
 git checkout integration_tests_container
@@ -95,16 +99,19 @@ ln -s integration_tests/integration_tests_install/integration_tests_init.sh .
 - starting/stopping containers with different arguments, volumes
 - ...
 
-Execute wrapper script:
+Get information about how to use the wrapper script:
 ```
+cd ${CFME_WORK}
 /bin/bash ./integration_tests_init.sh
 ```
 Configure environment:
 ```
+cd ${CFME_WORK}
 /bin/bash ./integration_tests_init.sh init
 ```
 Run test:
 ```
+cd ${CFME_WORK}
 /bin/bash ./integration_tests_init.sh cmd "py.test cfme/tests/test_login.py -k test_login -v"
 ```
 

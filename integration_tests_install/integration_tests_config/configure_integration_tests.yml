@@ -82,46 +82,50 @@
       register: gpg_public_key_p
       when: pull_requests_p.key != "n"
     
-#    - name: "Do you have any yaml files?"   
-#      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:" accepted_keys="{{ pull_requests_accepted_keys }}"
-#      register: yaml_quest
-#      when: pull_requests_p.key != "n"
+    - name: "Do you have any yaml files?"   
+      action: custom_prompt prompt="{{ any_yaml_question }} - [{{ any_yaml }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      register: any_yaml_p
+      when: pull_requests_p.key != "n"
 #    
-#    - name: "How many repos"
-#      action: custom_prompt prompt="how many repos do you have - [{{ yaml_repo }}]:" accepted_keys="[0-9]"
-#      register: how_many_repos
-#      when: pull_requests_p.key != "n"
- 
-    - name: "6)"
-      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:"
-      register: yaml_repo_p
-      when: pull_requests_p.key != "n"
-    
-    - name: "7)"
-      action: custom_prompt prompt="{{ yaml_repo_question }} - [{{ yaml_repo }}]:"
-      register: yaml_repo_p
-      when: pull_requests_p.key != "n" and yaml_external_repo is defined 
-    
-    - name: "8)"
-      action: custom_prompt prompt="{{ yaml_repo_username_question }} - [{{ yaml_repo_username }}]:"
-      register: yaml_repo_username_p
-      when: pull_requests_p.key != "n" and yaml_external_repo is defined 
-    
-    - name: "9)"
-      action: custom_prompt prompt="{{ yaml_key_password_question }} - [{{ yaml_key_password }}]:"
-      register: yaml_key_password_p
-      when: pull_requests_p.key != "n" and yaml_external_repo is defined 
-    
-    - name: "10)"   
-      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:" accepted_keys="{{ accepted_keys_yn }}"
-      register: yaml_local_repo
-      when: pull_requests_p.key != "n"
+      #  Ask user if he wants to use YAML files from remote repository 
+    - name: "6.1)"
+      action: custom_prompt prompt="{{ yaml_remote_repo_yn_question }} - [{{ yaml_remote_repo_yn }}]:" accepted_keys="{{ accecpted_keys_yn }}"
+      register: yaml_remote_repo_yn_p
+      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
 
-    - name: "9)"   
-      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:" accepted_keys="{{ pull_requests_accepted_keys }}"
-      register: yaml_
-      when: pull_requests_p.key != "n"
+      # Ask for URL for remote YAML repo 
+    - name: "6.2)"
+      action: custom_prompt prompt="{{ yaml_remote_repo_question }} - [{{ yaml_remote_repo }}]:"
+      register: yaml_remote_repo_p
+      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
 
+      # Ask for username for remote YAML repo 
+    - name: "6.2)"
+      action: custom_prompt prompt="{{ yaml_remote_repo_username_question }} - [{{ yaml_remote_repo_username }}]:"
+      register: yaml_remote_repo_username_p
+      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+      # when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+      
+      # Ask for password if YAMLs are encrypted
+    - name: "6.3)"
+      action: custom_prompt prompt="{{ yaml_remote_key_password_question }} - [{{ yaml_remote_key_password }}]:"
+      register: yaml_remote_key_password_p
+      # when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+  
+      # Ask user if he wants to use local files from his PC
+    - name: "7.1)"   
+      action: custom_prompt prompt="{{ yaml_local_repo_yn_question }} - [{{ yaml_local_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}"
+      register: yaml_local_repo_yn_p
+      # when: pull_requests_p.key != "n"
+      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
+
+      # Ask for path where local YAML files can be found
+    - name: "7.2)"   
+      action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:"
+      register: yaml_local_repo_p
+      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_local_repo_yn_p.key == "y")
+    
     #- name: "6) 7) 8) nested loop"
     #  action: custom_prompt prompt="{{ item.value }}" "{{ item.accepted_keys }}"="{{ item.accepted_key|default('') }}"
     #  register: "{{ item.key }}"
@@ -145,7 +149,7 @@
     - name: debug
       debug: msg="{{ git_account_username_p.key }}"
  
-    - name: write vars into variables file
+    - name: Writing all prompted variables into variable file
       lineinfile: "dest={{ vars_config }} regexp='^{{ item.key }}:' line='{{ item.key }}: {{ item.value }}'"
       with_items:
         - { key: 'pull_requests', value: "{{ pull_requests_p.key }}"}
@@ -153,19 +157,17 @@
         - { key: 'git_full_name', value: "{{ git_full_name_p.key|default('') }}"}
         - { key: 'git_email', value: "{{ git_email_p.key|default('') }}"}
         - { key: 'gpg_public_key', value: "{{ gpg_public_key_p.key|default('') }}"}
-        - { key: 'yaml_repo', value: "{{ yaml_repo_p.key|default('') }}"}
-        - { key: 'yaml_repo_username', value: "{{ yaml_repo_username_p.key|default('') }}"}
-        - { key: 'yaml_key_password', value: "{{ yaml_key_password_p.key|default('') }}"}
+        - { key: 'yaml_remote_repo', value: "{{ yaml_remote_repo_p.key|default('') }}"}
+        - { key: 'yaml_remote_repo_username', value: "{{ yaml_remote_repo_username_p.key|default('') }}"}
+        - { key: 'yaml_remote_key_password', value: "{{ yaml_remote_key_password_p.key|default('') }}"}
+        - { key: 'yaml_local_repo', value: "{{ yaml_local_repo_p.key|default('') }}"}
         - { key: 'base_url', value: "{{ base_url_p.key|default('') }}"}
         - { key: 'browser', value: "{{ browser_p.key }}"}
       when: item.value != ''
     
-    - name: import vars
+    - name: Re-importing variables from variable file
       include_vars: "{{ vars_config }}"
 
-#    - name: set variables
-      
-#      when: 
 
     # - debug: msg="Mesage {{ git_account_username_p }}"          
     # - debug: msg="Mesage {{ (git_account_username_p.key == "") | ternary(git_account_username_p.key, '1') }}"
@@ -213,7 +215,8 @@
     #- name: Print status of branch
     #  debug: msg="{{ git_stash_status.stdout_lines }}"
     #  when: not git_repo_exists.changed
-    
+      
+      # TBD - can be replaced by git_config module - Ansible 2.1
     - name: update git config
       ini_file: dest="{{ cfme_vol }}/integration_tests/.git/config" section="{{ item.section }}" option="        {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
       with_items:
@@ -263,32 +266,45 @@
       #when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
       when: (git_stash_status is defined) and (git_stash_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
 
-    - name: get basename from url
-      set_fact: 
-        yamls_base: "{{ yaml_repo | basename }}"
+#    - name: get basename from url
+#      set_fact: 
+#        yamls_base: "{{ yaml_remote_repo | basename }}"
+#      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
 
-    - name: Clone YAML repo - Add username into repo url - regexp
-      # git: repo="{{ yaml_repo }}" dest="{{ cfme_vol }}/{{ yamls_base }}" clone=yes
-      git: repo="{{ yaml_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
+    - name: Clone remote YAML repo - Add username into repo url - regexp
+      git: repo="{{ yaml_repo }}" dest="{{ cfme_vol }}/{{ yamls_base }}" clone=yes remote=upstream
+      # git: repo="{{ yaml_remote_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_remote_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
-      when: pull_requests_p.key != "n"
+      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+
+      # TBD - can be replaced by git_config module - Ansible 2.1
+    - name: Configure origin for YAML repo
+      ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
+      with_items:
+        - { section: 'remote "origin"', key: 'url', value: "{{ yaml_remote_repo | regex_replace("^(.+)//(.+)/(.+)/(.+)$", "\\1/" + "\\2:" + yaml_remote_repo_username + "/\\4") }}", state: 'present' }
+        - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
+      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
     
-    #- name: update git config
-    - name: add yaml key if defined
-      #lineinfile: dest="{{ cfme_vol }}/cfme_tests/.yaml_key" line="{{ yaml_key_password }}" state=present 
+    - name: Add YAML password/key if it is defined into .yaml_key file
       template: src=templates/yaml_key.j2 dest="{{ cfme_vol }}/integration_tests/.yaml_key"
-      when: yaml_key_password is defined
+      when: yaml_remote_key_password is defined
      
     - debug: msg="{{item | basename }}"
       with_fileglob: 
         - /projects/cfme_env/cfme_vol/cfme-qe-yamls/complete/*.*yaml 
       when: item | basename != 'env.yaml'
       
-    - name: Create symlinks
+    - name: Create symlinks for (remote) YAML repo
       file: src="../../cfme-qe-yamls/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
       with_fileglob: 
         - /projects/cfme_env/cfme_vol/cfme-qe-yamls/complete/*.*yaml 
-      when: (pull_requests == "y") and ( item | basename != 'env.yaml')
+      when: yaml_remote_repo_yn_p.key == "y" and ((pull_requests == "y") and ( item | basename != 'env.yaml'))
+    
+    - name: Create symlinks for (local) YAML repo (symlinks to remote repo will be overwritten if name is the same)
+      file: src="../../{{ yaml_local_repo }}/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
+      with_fileglob:
+        - /projects/cfme_env/cfme_vol/{{ yaml_local_repo }}/*.*yaml 
+      when: yaml_local_repo_yn_p.key == "y"
 
     - name: Update env.yaml
       template: src=templates/env.yaml.j2 dest="{{ cfme_vol }}/integration_tests/conf/env.yaml"

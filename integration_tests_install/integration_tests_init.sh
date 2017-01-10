@@ -163,12 +163,12 @@ set_browser)
   run_config "-t set_browser"
   ;;
 *)
-  log "unknown argument \n
-      Available arguments: \n
-        init \n
-        update\n
-        ipython\n
-        cmd\n
+  log "No argument was provided!\n\n
+      Available arguments are:\n
+        init - configure CFME tests environment\n
+        update - pull latest changes for GIT repositories\n
+        ipython - start ipython once environment is configured\n
+        cmd - start any command inside CFME docker container \n
         set_url (does not work yet, tags must be implemented inside playbook)\n
         set_browser (does not work yet, tags must be implemented inside playbook)\n"
   ;;
