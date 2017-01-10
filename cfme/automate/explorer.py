@@ -31,7 +31,7 @@ def table_click(name, type):
     try:
         sel.click(
             (
-                '//tr[.//span[contains(@class, {})]]'
+                '//tr[.//*[(self::span or self::i) and contains(@class, {})]]'
                 '/td[not(contains(@class, "narrow")) and normalize-space(.)={}]'
             ).format(quoteattr(type), quoteattr(name)))
     except sel.NoSuchElementException:
