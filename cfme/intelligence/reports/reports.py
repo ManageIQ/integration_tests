@@ -199,11 +199,13 @@ class CustomReport(Updateable, Navigatable):
         navigate_to(self, 'Details')
         toolbar.select("Queue")
         flash.assert_no_errors()
+        tabstrip.select_tab("Saved Reports")
         if wait_for_finish:
             # Get the queued_at value to always target the correct row
             queued_at = sel.text(list(records_table.rows())[0].queued_at)
 
             def _get_state():
+                navigate_to(self, 'Saved')
                 row = records_table.find_row("queued_at", queued_at)
                 status = sel.text(row.status).strip().lower()
                 assert status != "error", sel.text(row)
