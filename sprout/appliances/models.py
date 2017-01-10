@@ -977,12 +977,15 @@ class AppliancePool(MetadataMixin):
 
     @property
     def age(self):
-        leased = Appliance.objects\
-            .filter(appliance_pool=self)\
-            .exclude(datetime_leased=None)\
-            .order_by('datetime_leased')\
-            .values('datetime_leased')[0]['datetime_leased']
-        return timezone.now() - leased
+        try:
+            leased = Appliance.objects\
+                .filter(appliance_pool=self)\
+                .exclude(datetime_leased=None)\
+                .order_by('datetime_leased')\
+                .values('datetime_leased')[0]['datetime_leased']
+            return timezone.now() - leased
+        except IndexError:
+            return None
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,

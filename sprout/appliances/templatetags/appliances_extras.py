@@ -43,7 +43,10 @@ def alert_type(tags):
 
 @register.filter(is_safe=True)
 def nice_timedelta(timedelta):
-    return mark_safe(nice_seconds(timedelta.total_seconds()))
+    try:
+        return mark_safe(nice_seconds(timedelta.total_seconds()))
+    except AttributeError:
+        return mark_safe('None')
 
 
 @register.filter
