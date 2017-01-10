@@ -1940,14 +1940,20 @@ class BootstrapTreeview(object):
                     node = child_item
                     break
             else:
+                try:
+                    cause = 'Was not found in {}'.format(
+                        self._repr_step(*self._process_step(steps_tried[-2])))
+                except IndexError:
+                    # There is only one item, probably root?
+                    cause = 'Could not find {}'.format(
+                        self._repr_step(*self._process_step(steps_tried[0])))
                 raise exceptions.CandidateNotFound({
                     'message':
                         'Could not find the item {} in Boostrap tree {}'.format(
                             self.pretty_path(steps_tried),
                             self.tree_id),
                     'path': path,
-                    'cause': 'Was not found in {}'.format(
-                        self._repr_step(*self._process_step(steps_tried[-2])))})
+                    'cause': cause})
 
         return node
 
