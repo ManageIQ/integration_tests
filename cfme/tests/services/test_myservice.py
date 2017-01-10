@@ -55,7 +55,7 @@ def myservice(setup_provider, provider, catalog_item, request):
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-                       fail_func=tb.refresh, num_sec=2000, delay=20)
+                       fail_func=tb.refresh, num_sec=2000, delay=60)
     assert row.request_state.text == 'Finished'
 
     yield MyService(catalog_item.name, vm_name)
