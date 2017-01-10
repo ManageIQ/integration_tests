@@ -86,7 +86,10 @@ def test_db_restore(request, soft_assert):
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         # Restore DB on the second appliance
+        appl2.ipapp.stop_evm_service()
+        appl2.ipapp.drop_database()
         appl2.ipapp.restore_database()
+        appl2.ipapp.start_evm_service()
         appl2.ipapp.wait_for_web_ui()
         wait_for_a_provider()
         cloud_provider.wait_for_a_provider()
