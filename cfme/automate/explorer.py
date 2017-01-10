@@ -171,7 +171,8 @@ class Domain(Navigatable, TreeNode, Updateable):
                         ('description', Input('ns_description')),
                         ('enabled', Input('ns_enabled'))])
 
-    def __init__(self, name=None, description=None, enabled=False):
+    def __init__(self, name=None, description=None, enabled=False, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.parent = None
         self.description = description
@@ -349,7 +350,8 @@ class Namespace(Navigatable, TreeNode, Updateable):
         else:
             return ns
 
-    def __init__(self, name=None, description=None, parent=None, domain=None):
+    def __init__(self, name=None, description=None, parent=None, domain=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.description = description
         self.parent = parent or (domain if isinstance(domain, Domain) else Domain.default)
@@ -436,7 +438,8 @@ class Class(Navigatable, CopiableTreeNode, Updateable):
                         ('inherits_from_select', Select("//select[@name='inherits_from']"))])
 
     def __init__(self, name=None, display_name=None, description=None, inherits_from=None,
-                 namespace=None, setup_schema=None):
+                 namespace=None, setup_schema=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.display_name = display_name
         self.description = description
@@ -668,7 +671,9 @@ class Method(Navigatable, CopiableTreeNode, Updateable):
                 ('data_text', ScriptBox(
                     ta_locator="//textarea[@id='method_data' or @id='cls_method_data']"))])
 
-    def __init__(self, name=None, display_name=None, location=None, data=None, cls=None):
+    def __init__(
+            self, name=None, display_name=None, location=None, data=None, cls=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         # TODO: display name
         self.display_name = None
@@ -847,7 +852,10 @@ class Instance(Navigatable, CopiableTreeNode, Updateable):
                 ('description_text', "//input[contains(@name,'inst_description')]"),
                 ('values', InstanceFields())])
 
-    def __init__(self, name=None, display_name=None, description=None, values=None, cls=None):
+    def __init__(
+            self, name=None, display_name=None, description=None, values=None, cls=None,
+            appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.description = description
         self.values = values
