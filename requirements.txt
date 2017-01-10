@@ -45,6 +45,7 @@ selenium<3.0.0
 slumber
 sqlalchemy
 suds
+tabulate==0.7.7
 tornado
 tzlocal
 wait_for
