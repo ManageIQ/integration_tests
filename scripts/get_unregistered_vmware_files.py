@@ -5,11 +5,11 @@ import re
 import sys
 from collections import defaultdict
 
-from utils.log import logger
-from utils.conf import cfme_data
-from utils.conf import credentials
-from utils.ssh import SSHClient
-from utils.providers import list_providers, get_mgmt
+from cfme.utils.log import logger
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
+from cfme.utils.ssh import SSHClient
+from cfme.utils.providers import list_providers, get_mgmt
 
 
 def parse_cmd_line():

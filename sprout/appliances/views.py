@@ -24,9 +24,9 @@ from appliances.tasks import (appliance_power_on, appliance_power_off, appliance
     appliance_rename, wait_appliance_ready, mark_appliance_ready, appliance_reboot)
 
 from sprout.log import create_logger
-from utils.bz import Bugzilla
-from utils.providers import get_mgmt
-from utils.version import Version
+from cfme.utils.bz import Bugzilla
+from cfme.utils.providers import get_mgmt
+from cfme.utils.version import Version
 
 
 def go_home(request):

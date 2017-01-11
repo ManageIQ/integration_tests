@@ -7,9 +7,9 @@ from cfme.web_ui import (
     Region, Form, AngularSelect, InfoBlock, Input, Quadicon,
     form_buttons, toolbar as tb, paginator
 )
-from utils import version
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
+from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.db import cfmedb
 
 from .. import cfg_btn, mon_btn, pol_btn
 

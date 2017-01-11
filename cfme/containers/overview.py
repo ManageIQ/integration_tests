@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from functools import partial
-from utils.appliance import Navigatable
+from cfme.utils.appliance import Navigatable
 from cfme.common import Taggable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 from navmazing import NavigateToAttribute
 from cfme.web_ui import match_location
 

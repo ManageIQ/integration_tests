@@ -7,11 +7,11 @@ from cfme.middleware import Deployable
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator
 from cfme.web_ui.menu import toolbar as tb
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_providers
-from utils.varmeth import variable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.db import cfmedb
+from cfme.utils.providers import get_crud, get_provider_key, list_providers
+from cfme.utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)

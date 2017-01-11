@@ -1,9 +1,9 @@
 import pytest
 from cfme.containers.project import Project
 from cfme.web_ui import CheckboxTable
-from utils import testgen, version
-from utils.version import current_version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen, version
+from cfme.utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.uncollectif(

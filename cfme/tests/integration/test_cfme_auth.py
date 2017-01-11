@@ -3,8 +3,8 @@ import pytest
 
 from cfme.configure.access_control import Group, User
 from cfme import Credential, login
-from utils import browser
-from utils.conf import cfme_data
+from cfme.utils import browser
+from cfme.utils.conf import cfme_data
 
 RETRIEVE_GROUP = 'retrieve_group'
 CREATE_GROUP = 'create_group'

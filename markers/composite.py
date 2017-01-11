@@ -1,7 +1,7 @@
 from fixtures.artifactor_plugin import get_test_idents
 from fixtures.pytest_store import store
-from utils.log import logger
-from utils.trackerbot import composite_uncollect
+from cfme.utils.log import logger
+from cfme.utils.trackerbot import composite_uncollect
 
 
 def pytest_addoption(parser):

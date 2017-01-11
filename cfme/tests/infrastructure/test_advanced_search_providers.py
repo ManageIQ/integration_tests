@@ -10,9 +10,9 @@ from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 # TODO: we should not call out to utils here, but maybe rather have an infra setup provider fixture
 from fixtures.pytest_store import store
-from utils.providers import setup_a_provider
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
+from cfme.utils.providers import setup_a_provider
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 from cfme.web_ui import search
 from cfme.web_ui.search import DisabledButtonException
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,

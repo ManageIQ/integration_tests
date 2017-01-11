@@ -7,11 +7,11 @@ from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure.virtual_machines import get_all_vms
 from cfme.web_ui import toolbar
-from utils import testgen
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.wait import wait_for, TimedOutError
-from utils.version import appliance_is_downstream, current_version
+from cfme.utils import testgen
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils.version import appliance_is_downstream, current_version
 
 pytestmark = [
     pytest.mark.long_running,

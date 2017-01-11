@@ -8,11 +8,11 @@ from cfme.rest.gen_data import services as _services
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.rest.gen_data import service_templates as _service_templates
 from cfme import test_requirements
-from utils import error, version, testgen
-from utils.providers import setup_a_provider as _setup_a_provider
-from utils.wait import wait_for
-from utils.api import APIException
-from utils.log import logger
+from cfme.utils import error, version, testgen
+from cfme.utils.providers import setup_a_provider as _setup_a_provider
+from cfme.utils.wait import wait_for
+from cfme.utils.api import APIException
+from cfme.utils.log import logger
 
 
 pytestmark = [test_requirements.service,

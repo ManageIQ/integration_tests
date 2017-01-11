@@ -1,7 +1,7 @@
 import pytest
 
 from cfme.common.provider import BaseProvider
-from utils import providers
+from cfme.utils import providers
 
 
 @pytest.fixture

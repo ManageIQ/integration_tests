@@ -22,12 +22,12 @@ from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, Angular
     InfoBlock, match_location
 from cfme.web_ui import Input
 from cfme.web_ui.tabstrip import TabStripForm
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.log import logger
-from utils.wait import wait_for
-from utils import version, deferred_verpick
-from utils.pretty import Pretty
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils import version, deferred_verpick
+from cfme.utils.pretty import Pretty
 
 
 # Forms

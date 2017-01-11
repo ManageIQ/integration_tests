@@ -7,10 +7,10 @@ import dockerbot
 import json
 import requests
 import pika
-from utils.conf import docker as docker_conf
-from utils.appliance import Appliance
-from utils.trackerbot import api
-from utils.log import setup_logger
+from cfme.utils.conf import docker as docker_conf
+from cfme.utils.appliance import Appliance
+from cfme.utils.trackerbot import api
+from cfme.utils.log import setup_logger
 from slumber.exceptions import HttpClientError
 
 

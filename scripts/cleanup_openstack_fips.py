@@ -10,7 +10,7 @@ If no providers specified, it will cleanup all of them.
 import sys
 from traceback import format_exc
 
-from utils.providers import list_providers, get_mgmt
+from cfme.utils.providers import list_providers, get_mgmt
 
 
 def main(*providers):

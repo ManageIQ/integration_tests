@@ -10,12 +10,12 @@ from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils import attributize_string
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_providers
-from utils.varmeth import variable
+from cfme.utils import attributize_string
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.db import cfmedb
+from cfme.utils.providers import get_crud, get_provider_key, list_providers
+from cfme.utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)

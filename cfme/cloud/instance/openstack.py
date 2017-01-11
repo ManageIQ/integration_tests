@@ -1,4 +1,4 @@
-from utils import version, deferred_verpick
+from cfme.utils import version, deferred_verpick
 from cfme.exceptions import OptionNotAvailable
 from cfme.web_ui import fill, flash
 from cfme.fixtures import pytest_selenium as sel

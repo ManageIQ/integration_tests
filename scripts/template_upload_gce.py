@@ -17,9 +17,9 @@ import urllib2
 from threading import Lock, Thread
 
 from mgmtsystem import GoogleCloudSystem
-from utils.conf import cfme_data
-from utils.conf import credentials
-from utils.providers import list_providers
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
+from cfme.utils.providers import list_providers
 
 lock = Lock()
 

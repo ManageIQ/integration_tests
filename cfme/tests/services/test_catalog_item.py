@@ -10,10 +10,10 @@ from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.web_ui import flash
-from utils import error
-from utils.blockers import BZ
-from utils.log import logger
-from utils.update import update
+from cfme.utils import error
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from cfme.utils.update import update
 
 
 pytestmark = [test_requirements.service, pytest.mark.tier(3)]

@@ -1,12 +1,12 @@
 import pytest
 from py.error import ENOENT
 
-import utils.browser
+import cfme.utils.browser
 from cfme.fixtures.pytest_selenium import take_screenshot
 from fixtures.artifactor_plugin import art_client, get_test_idents
-from utils.datafile import template_env
-from utils.path import log_path
-from utils import safe_string
+from cfme.utils.datafile import template_env
+from cfme.utils.path import log_path
+from cfme.utils import safe_string
 
 browser_fixtures = {'browser'}
 

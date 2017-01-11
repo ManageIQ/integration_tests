@@ -3,7 +3,7 @@ This test can run only after overcloud cloud provider created and linked to
 undercloud infra provider, need to compare the cloud providers with the
 results of the relationships
 """
-from utils import testgen
+from cfme.utils import testgen
 import pytest
 
 

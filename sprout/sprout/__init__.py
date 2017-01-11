@@ -11,8 +11,8 @@ assert celery_app
 from django.core.cache import cache
 from sprout import settings
 from redis import StrictRedis
-from utils.path import project_path
-from utils.wait import wait_for
+from cfme.utils.path import project_path
+from cfme.utils.wait import wait_for
 
 redis_client = StrictRedis(**settings.GENERAL_REDIS)
 

@@ -4,9 +4,9 @@ from cfme.containers.pod import Pod, list_tbl as list_tbl_pods
 from cfme.containers.route import Route, list_tbl as list_tbl_routes
 from cfme.containers.project import Project, list_tbl as list_tbl_projects
 from cfme.containers.service import Service, list_tbl as list_tbl_services
-from utils import testgen
-from utils.version import current_version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

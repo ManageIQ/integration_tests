@@ -11,16 +11,16 @@ from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSe
     CheckboxSelect, Input, AngularSelect, BootstrapTreeview
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
-from utils import version, deferred_verpick
-from utils.db import cfmedb
-from utils.log import logger
-from utils.update import Updateable
-from utils.wait import wait_for, TimedOutError
+from cfme.utils import version, deferred_verpick
+from cfme.utils.db import cfmedb
+from cfme.utils.log import logger
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for, TimedOutError
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.expression_editor as editor
 import cfme.web_ui.toolbar as tb
-from utils.pretty import Pretty
+from cfme.utils.pretty import Pretty
 
 
 events_policies_table = Table(

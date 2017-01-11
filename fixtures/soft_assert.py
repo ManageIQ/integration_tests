@@ -28,11 +28,11 @@ import fauxfactory
 import pytest
 
 from fixtures.artifactor_plugin import art_client
-from utils.log import nth_frame_info
-from utils.path import get_rel_path
+from cfme.utils import browser
+from cfme.utils.log import nth_frame_info
+from cfme.utils.path import get_rel_path
 import sys
 import traceback
-import utils
 
 # Use a thread-local store for failed soft asserts, making it thread-safe
 # in parallel testing and shared among the functions in this module.
@@ -108,7 +108,7 @@ def handle_assert_artifacts(request, fail_message=None):
         short_tb = full_tb = fail_message.encode('base64')
 
     try:
-        ss = utils.browser.browser().get_screenshot_as_base64()
+        ss = browser.browser().get_screenshot_as_base64()
         ss_error = None
     except Exception as b_ex:
         ss = None

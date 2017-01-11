@@ -10,10 +10,10 @@ from cfme.web_ui.timelines import Timelines
 from cfme.web_ui.topology import Topology
 from cfme.web_ui.utilization import Utilization
 from sqlalchemy.orm import aliased
-from utils import attributize_string, version, deferred_verpick
-from utils.db import cfmedb
-from utils.units import Unit
-from utils.varmeth import variable
+from cfme.utils import attributize_string, version, deferred_verpick
+from cfme.utils.db import cfmedb
+from cfme.utils.units import Unit
+from cfme.utils.varmeth import variable
 
 pol_btn = partial(toolbar.select, "Policy")
 

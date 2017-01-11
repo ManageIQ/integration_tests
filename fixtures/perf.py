@@ -1,6 +1,6 @@
 """Fixtures specifically for performance tests."""
-from utils.perf import set_rails_loglevel
-from utils.perf import get_worker_pid
+from cfme.utils.perf import set_rails_loglevel
+from cfme.utils.perf import get_worker_pid
 import pytest
 
 

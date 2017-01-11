@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 from cfme.automate.explorer import Namespace, Class, Instance, Domain
-from utils import version
+from cfme.utils import version
 
 
 @version.dependent

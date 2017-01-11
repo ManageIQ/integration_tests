@@ -8,7 +8,7 @@ from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator, toolbar as tb, menu
-from utils.providers import setup_a_provider as _setup_a_provider
+from cfme.utils.providers import setup_a_provider as _setup_a_provider
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings]

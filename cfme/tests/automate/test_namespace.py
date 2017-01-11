@@ -8,9 +8,9 @@ from cfme import test_requirements
 from cfme.automate.explorer import Namespace, Domain
 from cfme.tests import automate as ta
 from cfme.tests.configure import test_access_control as tac
-from utils import error, version
-from utils.providers import setup_a_provider
-from utils.update import update
+from cfme.utils import error, version
+from cfme.utils.providers import setup_a_provider
+from cfme.utils.update import update
 
 
 pytestmark = [test_requirements.automate]

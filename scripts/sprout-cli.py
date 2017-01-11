@@ -3,8 +3,8 @@
 import json
 import os
 import sys
-from utils.conf import env
-from utils.sprout import SproutClient
+from cfme.utils.conf import env
+from cfme.utils.sprout import SproutClient
 
 
 def main():

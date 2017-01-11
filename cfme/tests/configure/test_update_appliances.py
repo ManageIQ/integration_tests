@@ -7,10 +7,10 @@
 
 from cfme.configure.configuration import set_server_roles
 from cfme.configure import red_hat_updates
-from utils import conf
-from utils.appliance import provision_appliance_set
-from utils.log import logger
-from utils.wait import wait_for, TimedOutError
+from cfme.utils import conf
+from cfme.utils.appliance import provision_appliance_set
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for, TimedOutError
 import pytest
 
 # Refresh interval used in wait_for

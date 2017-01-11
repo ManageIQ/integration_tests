@@ -12,9 +12,8 @@ from cfme.infrastructure.virtual_machines import Template
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.instance import Instance
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
-from utils import providers
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
+from cfme.utils import providers
+from cfme.utils.version import current_version
 
 
 @pytest.fixture(scope="module")

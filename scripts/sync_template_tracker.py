@@ -7,9 +7,9 @@ from threading import Lock, Thread
 
 from slumber.exceptions import SlumberHttpBaseException
 
-from utils import trackerbot, net
-from utils.conf import cfme_data
-from utils.providers import list_providers, get_mgmt
+from cfme.utils import trackerbot, net
+from cfme.utils.conf import cfme_data
+from cfme.utils.providers import list_providers, get_mgmt
 
 
 def main(trackerbot_url, mark_usable=None):

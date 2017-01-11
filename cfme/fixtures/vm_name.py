@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from utils.log import logger
+from cfme.utils.log import logger
 
 
 @pytest.yield_fixture(scope='function')

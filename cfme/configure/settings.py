@@ -10,11 +10,11 @@ from cfme.web_ui import (
     AngularSelect, Form, Region, fill, form_buttons, flash, Table, ButtonGroup, Quadicon,
     CheckboxTree, Input, CFMECheckbox, BootstrapTreeview)
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils import version, deferred_verpick
-from utils.pretty import Pretty
-from utils.update import Updateable
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import version, deferred_verpick
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 details_page = Region(infoblock_type='detail')

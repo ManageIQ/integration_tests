@@ -14,9 +14,9 @@ from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
 
 from cfme.configure.about import product_assistance as about
-from utils import version
-from utils.appliance import current_appliance
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import version
+from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 def pdf_get_text(file_obj, page_nums):

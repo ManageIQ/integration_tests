@@ -3,7 +3,7 @@
 import pytest
 from cfme.configure import configuration
 from cfme.web_ui import flash
-from utils import conf, version
+from cfme.utils import conf, version
 from functools import partial
 
 try:

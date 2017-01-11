@@ -6,8 +6,8 @@ import pytest
 import random
 
 from cfme import test_requirements
-from utils.providers import setup_a_provider
-from utils import version
+from cfme.utils.providers import setup_a_provider
+from cfme.utils import version
 
 
 pytestmark = [

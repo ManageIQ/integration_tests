@@ -11,10 +11,10 @@ from cfme.containers.service import Service
 from cfme.containers.image import Image
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import StatusBox, Quadicon
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from cfme.containers.provider import ContainersProvider
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.node import Node
 from collections import namedtuple
 from cfme.web_ui import toolbar as tb

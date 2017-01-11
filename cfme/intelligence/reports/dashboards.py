@@ -6,11 +6,11 @@ from cfme.intelligence.reports.ui_elements import (
     DashboardWidgetSelector, NewerDashboardWidgetSelector)
 from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar, Input
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils import version
-from utils.update import Updateable
-from utils.pretty import Pretty
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import version
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 class Dashboard(Updateable, Pretty, Navigatable):

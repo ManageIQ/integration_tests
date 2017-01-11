@@ -5,7 +5,7 @@ from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.infrastructure import host, datastore, cluster, resource_pool
 from cfme.web_ui import Region
-from utils import testgen
+from cfme.utils import testgen
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.general_ui]

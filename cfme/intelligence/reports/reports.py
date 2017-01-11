@@ -15,13 +15,13 @@ from cfme.web_ui import (CAndUGroupTable, Form, Table, Select, ShowingInputs, ac
 from cfme.web_ui.expression_editor import Expression
 from cfme.web_ui.tabstrip import TabStripForm
 from cfme.web_ui.multibox import MultiBoxSelect
-from utils.update import Updateable
-from utils.wait import wait_for
-from utils.pretty import Pretty
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils import version
-from utils.timeutil import parsetime
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils import version
+from cfme.utils.timeutil import parsetime
 
 
 cfg_btn = partial(toolbar.select, "Configuration")

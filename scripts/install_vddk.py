@@ -6,8 +6,8 @@
 import argparse
 import sys
 from urlparse import urlparse
-from utils.appliance import IPAppliance
-from utils.conf import env
+from cfme.utils.appliance import IPAppliance
+from cfme.utils.conf import env
 
 
 def log(message):

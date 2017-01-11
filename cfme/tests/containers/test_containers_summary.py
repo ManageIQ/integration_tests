@@ -1,9 +1,9 @@
 import pytest
 from cfme.containers.overview import ContainersOverview
 from cfme.web_ui import StatusBox
-from utils import testgen, version
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
+from cfme.utils import testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
 
 pytestmark = [
     pytest.mark.uncollectif(

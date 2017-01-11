@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling, NavigateToAttribute
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 
 from copy import copy
 from functools import partial
@@ -15,12 +15,12 @@ from cfme.web_ui.tabstrip import select_tab
 from cfme.web_ui import Form, Table, UpDownSelect, fill, Select, ScriptBox, DHTMLSelect,\
     Region, form_buttons, accordion, Input, AngularSelect
 import cfme.exceptions as exceptions
-from utils.update import Updateable
-from utils import error, version, on_rtd
+from cfme.utils.update import Updateable
+from cfme.utils import error, version, on_rtd
 from collections import Mapping
 import re
-from utils.log import logger
-from utils import classproperty, pretty
+from cfme.utils.log import logger
+from cfme.utils import classproperty, pretty
 
 datastore_tree = partial(accordion.tree, "Datastore", "Datastore")
 cfg_btn = partial(tb.select, 'Configuration')

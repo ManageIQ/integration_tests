@@ -4,7 +4,7 @@ import pytest
 from cfme import Credential, login, test_requirements
 from cfme.common.vm import VM
 from cfme.configure.configuration import Tag, Category
-from utils import testgen
+from cfme.utils import testgen
 
 
 def pytest_generate_tests(metafunc):

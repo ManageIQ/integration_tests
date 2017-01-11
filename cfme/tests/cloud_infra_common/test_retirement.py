@@ -4,11 +4,11 @@ import pytest
 
 from cfme import test_requirements
 from cfme.common.vm import VM
-from utils import testgen, providers
-from utils.generators import random_vm_name
-from utils.timeutil import parsetime
-from utils.wait import wait_for
-from utils.version import current_version
+from cfme.utils import testgen, providers
+from cfme.utils.generators import random_vm_name
+from cfme.utils.timeutil import parsetime
+from cfme.utils.wait import wait_for
+from cfme.utils.version import current_version
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers'),

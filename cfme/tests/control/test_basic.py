@@ -13,8 +13,8 @@ import random
 import cfme.fixtures.pytest_selenium as sel
 
 from cfme.control import explorer
-from utils.update import update
-from utils.version import current_version
+from cfme.utils.update import update
+from cfme.utils.version import current_version
 from cfme.web_ui import flash
 from cfme.web_ui import expression_editor
 from cfme import test_requirements

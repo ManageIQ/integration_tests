@@ -8,10 +8,10 @@ from cfme.cloud import provider as cloud_provider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import wait_for_a_provider
 from fixtures.pytest_store import store
-from utils.appliance import provision_appliance
-from utils.log import logger
-from utils.providers import setup_a_provider
-from utils import version
+from cfme.utils.appliance import provision_appliance
+from cfme.utils.log import logger
+from cfme.utils.providers import setup_a_provider
+from cfme.utils import version
 
 
 def provision_vm(request, provider):

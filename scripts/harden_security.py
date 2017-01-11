@@ -30,9 +30,9 @@ import re
 import socket
 import sys
 
-from utils.conf import credentials
-from utils.ssh import SSHClient
-from utils.wait import wait_for
+from cfme.utils.conf import credentials
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
 
 
 def main():

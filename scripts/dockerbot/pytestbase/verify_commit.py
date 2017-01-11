@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from utils import conf
+from cfme.utils import conf
 import subprocess
 import sys
 import re

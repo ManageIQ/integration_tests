@@ -14,7 +14,7 @@ artifactor:
 import os
 from logging import makeLogRecord
 from artifactor import ArtifactorBasePlugin
-from utils.log import make_file_handler
+from cfme.utils.log import make_file_handler
 
 
 class Logger(ArtifactorBasePlugin):

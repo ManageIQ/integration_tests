@@ -1,11 +1,11 @@
 import pytest
-from utils import testgen
+from cfme.utils import testgen
 from cfme.web_ui import Quadicon, toolbar
 from cfme.infrastructure.host import Host
 from cfme.web_ui import InfoBlock
 from cfme.fixtures import pytest_selenium as sel
 from cfme.configure.tasks import is_host_analysis_finished
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type,

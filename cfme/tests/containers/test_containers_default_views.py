@@ -9,9 +9,9 @@ from cfme.containers.route import Route
 from cfme.containers.node import Node
 from cfme.containers.replicator import Replicator
 from cfme.web_ui import toolbar as tb
-from utils import testgen
-from utils.version import current_version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [
     pytest.mark.uncollectif(

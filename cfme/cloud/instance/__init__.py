@@ -13,12 +13,12 @@ from cfme.web_ui import (
     accordion, paginator, toolbar as tb, CheckboxTree, Region, InfoBlock,
     Tree, Quadicon, match_location, Form, Table, PagedTable, form_buttons)
 from cfme.web_ui.search import search_box
-from utils import version
-from utils.api import rest_api
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
-from utils.wait import wait_for
-from utils.log import logger
+from cfme.utils import version
+from cfme.utils.api import rest_api
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, navigator
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
 
 
 cfg_btn = partial(tb.select, 'Configuration')

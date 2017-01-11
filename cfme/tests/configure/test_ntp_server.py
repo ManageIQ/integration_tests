@@ -2,10 +2,10 @@ from cfme import test_requirements
 from cfme.configure import configuration
 from datetime import datetime, timedelta
 from fixtures.pytest_store import store
-from utils.browser import quit
-from utils.conf import cfme_data
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils.browser import quit
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 import fauxfactory
 import pytest
 

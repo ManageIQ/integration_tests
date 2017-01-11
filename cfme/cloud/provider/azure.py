@@ -1,4 +1,4 @@
-from utils.version import pick
+from cfme.utils.version import pick
 from mgmtsystem.azure import AzureSystem
 from . import CloudProvider
 

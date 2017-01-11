@@ -1,7 +1,7 @@
 import pytest
-from utils.version import current_version
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.pod import Pod, match_page as pod_match_page
 from cfme.containers.service import Service, match_page as service_match_page
 from cfme.containers.node import Node, match_page as node_match_page

@@ -9,11 +9,11 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, toolbar as tb, paginator, match_location
 from functools import partial
-from utils.pretty import Pretty
-from utils.providers import get_crud
-from utils.wait import wait_for
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.providers import get_crud
+from cfme.utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 details_page = Region(infoblock_type='detail')

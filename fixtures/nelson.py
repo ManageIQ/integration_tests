@@ -11,7 +11,7 @@ from sphinx.ext.napoleon.docstring import NumpyDocstring
 import sphinx
 import yaml
 
-from utils.log import get_rel_path, logger
+from cfme.utils.log import get_rel_path, logger
 
 config = Config(napoleon_use_param=True, napoleon_use_rtype=True)
 

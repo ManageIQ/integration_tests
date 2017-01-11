@@ -1,8 +1,8 @@
 import pytest
 from cfme.web_ui.splitter import pull_splitter_left, pull_splitter_right
 from xml.sax.saxutils import quoteattr, unescape
-from utils import version
-from utils.blockers import BZ
+from cfme.utils import version
+from cfme.utils.blockers import BZ
 LOCATIONS = [
     "control_explorer", "automate_explorer", "automate_customization", "my_services",
     "services_catalogs", "services_workloads", "reports", "chargeback", "clouds_instances_no_tree",

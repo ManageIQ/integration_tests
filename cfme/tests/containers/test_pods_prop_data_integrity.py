@@ -1,8 +1,8 @@
 import pytest
 from cfme.containers.pod import Pod, list_tbl
-from utils import testgen
-from utils.version import current_version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

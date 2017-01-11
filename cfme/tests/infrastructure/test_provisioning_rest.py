@@ -2,8 +2,8 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from utils.wait import wait_for
-from utils import mgmt_system, testgen
+from cfme.utils.wait import wait_for
+from cfme.utils import mgmt_system, testgen
 
 
 pytestmark = [test_requirements.provision]

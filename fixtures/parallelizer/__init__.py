@@ -54,13 +54,13 @@ from functools32 import wraps
 from fixtures import terminalreporter
 from fixtures.parallelizer import remote
 from fixtures.pytest_store import store
-from utils import at_exit, conf
-from utils.appliance import IPAppliance, stack as appliance_stack
-from utils.log import create_sublogger
-from utils.net import random_port
-from utils.path import conf_path, project_path
-from utils.sprout import SproutClient, SproutException
-from utils.wait import wait_for
+from cfme.utils import at_exit, conf
+from cfme.utils.appliance import IPAppliance, stack as appliance_stack
+from cfme.utils.log import create_sublogger
+from cfme.utils.net import random_port
+from cfme.utils.path import conf_path, project_path
+from cfme.utils.sprout import SproutClient, SproutException
+from cfme.utils.wait import wait_for
 
 
 _appliance_help = '''specify appliance URLs to use for distributed testing.
@@ -203,7 +203,7 @@ class ParallelSession(object):
 
         self._pool = []
         self.pool_lock = Lock()
-        from utils.conf import cfme_data
+        from cfme.utils.conf import cfme_data
         self.provs = sorted(set(cfme_data['management_systems'].keys()),
                             key=len, reverse=True)
         self.slave_allocation = collections.defaultdict(list)

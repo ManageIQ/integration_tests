@@ -15,12 +15,12 @@ from cfme.web_ui import (
     flash, InfoBlock, match_location, fill, paginator, accordion
 )
 from cfme.web_ui.form_buttons import FormButton
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.pretty import Pretty
-from utils.providers import get_crud
-from utils.wait import wait_for
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.pretty import Pretty
+from cfme.utils.providers import get_crud
+from cfme.utils.wait import wait_for
 
 
 details_page = Region(infoblock_type='detail')

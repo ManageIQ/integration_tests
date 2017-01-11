@@ -2,8 +2,8 @@
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.configure import about
-from utils import version
-from utils.log import logger
+from cfme.utils import version
+from cfme.utils.log import logger
 import pytest
 import requests
 

@@ -3,8 +3,8 @@
 
 
 import pytest
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 @pytest.fixture(scope="function")

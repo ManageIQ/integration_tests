@@ -3,10 +3,10 @@ import pytest
 
 from cfme import test_requirements
 from cfme.common.vm import VM
-from utils import testgen
-from utils.generators import random_vm_name
-from utils.version import current_version
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.generators import random_vm_name
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

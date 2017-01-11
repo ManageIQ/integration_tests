@@ -7,11 +7,11 @@ from threading import Timer
 
 from fixtures.parallelizer import dump_pool_info
 from fixtures.terminalreporter import reporter
-from utils import at_exit, conf
-from utils.appliance import IPAppliance, stack as appliance_stack
-from utils.path import project_path
-from utils.sprout import SproutClient
-from utils.wait import wait_for
+from cfme.utils import at_exit, conf
+from cfme.utils.appliance import IPAppliance, stack as appliance_stack
+from cfme.utils.path import project_path
+from cfme.utils.sprout import SproutClient
+from cfme.utils.wait import wait_for
 
 # todo introduce a sproutstate plugin
 

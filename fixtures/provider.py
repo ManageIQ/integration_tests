@@ -14,8 +14,8 @@ import six
 from cfme.common.provider import BaseProvider
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.templateloader import TEMPLATES
-from utils import providers
-from utils.log import logger
+from cfme.utils import providers
+from cfme.utils.log import logger
 
 # failed provider tracking for _setup_provider_fixture
 _failed_providers = set()

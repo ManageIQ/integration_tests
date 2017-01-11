@@ -5,13 +5,13 @@
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from multimethods import singledispatch
-from utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import wait_for, TimedOutError
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Anything, Calendar, Form, Input, Region, AngularSelect, fill
 import re
 import sys
 import types
-from utils.pretty import Pretty
+from cfme.utils.pretty import Pretty
 
 
 def _make_button(title):

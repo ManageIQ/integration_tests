@@ -6,8 +6,8 @@ from collections import Mapping
 
 from cfme.web_ui import Select, Form, fill, Input
 from cfme.fixtures import pytest_selenium as sel
-from utils.log import logger
-from utils.pretty import Pretty
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
 
 
 class SNMPTrap(Pretty):

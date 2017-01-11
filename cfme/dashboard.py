@@ -8,11 +8,11 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Region, Table, tabstrip, toolbar
 from cfme.web_ui.menu import nav
 from cfme.intelligence.reports.dashboards import Dashboard
-from utils import deferred_verpick, version
-from utils.timeutil import parsetime
-from utils.pretty import Pretty
-from utils.wait import wait_for
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import deferred_verpick, version
+from cfme.utils.timeutil import parsetime
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 from . import BaseLoggedInPage
 

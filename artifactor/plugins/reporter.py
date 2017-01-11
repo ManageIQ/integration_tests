@@ -25,9 +25,9 @@ from copy import deepcopy
 from jinja2 import Environment, FileSystemLoader
 from py.path import local
 
-from utils import process_pytest_path
-from utils.conf import cfme_data  # Only for the provider specific reports
-from utils.path import template_path
+from cfme.utils import process_pytest_path
+from cfme.utils.conf import cfme_data  # Only for the provider specific reports
+from cfme.utils.path import template_path
 from artifactor import ArtifactorBasePlugin
 
 _tests_tpl = {

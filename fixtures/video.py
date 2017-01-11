@@ -16,9 +16,9 @@ import os.path
 import pytest
 import re
 
-from utils.conf import env
-from utils.path import log_path
-from utils.video import Recorder
+from cfme.utils.conf import env
+from cfme.utils.path import log_path
+from cfme.utils.video import Recorder
 
 vid_options = env.get('logging', {}).get('video')
 recorder = None

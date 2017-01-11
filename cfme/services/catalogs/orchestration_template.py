@@ -5,9 +5,9 @@ from cfme.web_ui import (
     accordion, fill, form_buttons, menu, Form, Input, flash, AngularSelect, Select, ScriptBox)
 from cfme.web_ui import paginator as pg
 from cfme.web_ui import toolbar as tb
-from utils.update import Updateable
-from utils.pretty import Pretty
-from utils import error, version
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
+from cfme.utils import error, version
 
 
 cfg_btn = partial(tb.select, "Configuration")
