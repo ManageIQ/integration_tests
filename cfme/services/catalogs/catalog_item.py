@@ -145,18 +145,15 @@ class CatalogItem(Updateable, Pretty, Navigatable):
                                'display_checkbox': self.display_in,
                                'select_catalog': catalog.name,
                                'select_dialog': dialog.name,
-                               'select_orch_template': self.orch_template,
+                               'select_orch_template': self.orch_template.template_name,
                                'select_provider': provider_name,
                                'select_config_template': self.config_template})
-        if sel.text(basic_info_form.field_entry_point) == "":
+        if not (self.item_type in provider_required_types):
             sel.click(basic_info_form.field_entry_point)
             if version.current_version() < "5.7":
                 dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                      "StateMachines", "ServiceProvision_Template", "default")
-            else:
-                entry_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
-                                     "StateMachines", "ServiceProvision_Template", "default")
-            sel.click(basic_info_form.apply_btn)
+                sel.click(basic_info_form.apply_btn)
         if self.catalog_name is not None \
                 and self.provisioning_data is not None \
                 and not isinstance(self.provider, NoneType):

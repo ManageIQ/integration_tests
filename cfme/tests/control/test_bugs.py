@@ -4,7 +4,9 @@ import pytest
 
 from cfme.base import Server
 from cfme.common.vm import VM
-from cfme.control.explorer import PolicyProfile, VMCompliancePolicy, Action, VMControlPolicy
+from cfme.control.explorer.policy_profiles import PolicyProfile
+from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
+from cfme.control.explorer.actions import Action
 from cfme.infrastructure.virtual_machines import Vm
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version

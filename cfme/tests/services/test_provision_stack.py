@@ -164,12 +164,6 @@ def template(provider, provisioning, dialog_name):
 
     yield template
 
-    try:
-        template.delete()
-    except CandidateNotFound as ex:
-        logger.warning('Exception deleting template fixture, continuing: {}'.format(ex.message))
-        pass
-
 
 @pytest.yield_fixture(scope="function")
 def dialog_name(provider):
@@ -198,7 +192,7 @@ def catalog_item(dialog_name, catalog, template, provider):
                                display_in=True,
                                catalog=catalog.name,
                                dialog=dialog_name,
-                               orch_template=template.template_name,
+                               orch_template=template,
                                provider=provider)
     catalog_item.create()
 
@@ -233,15 +227,6 @@ def prepare_stack_data(provider, provisioning):
         return stack_data
 
 
-def provision_success_message(name):
-    success_message = 'Service '
-    if version.current_version() >= '5.7':
-        # 5.7 success message includes catalog item name in brackets
-        success_message += '[{}] '.format(name)
-    success_message += 'Provisioned Successfully'
-    return success_message
-
-
 def test_provision_stack(setup_provider, provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -259,6 +244,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
                 wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
                          delay=10, num_sec=800, message="wait for stack delete")
             stack_data['vm_name'].delete_from_provider()
+            catalog_item.orch_template.delete()
         except Exception as ex:
             logger.warning('Exception while checking/deleting stack, continuing: {}'
                            .format(ex.message))
@@ -272,7 +258,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2500, delay=20)
 
-    assert provision_success_message(catalog_item.name) in row.last_message.text
+    assert 'Provisioned Successfully' in row.last_message.text
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() <= '5.5')
@@ -305,7 +291,7 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2000, delay=20)
 
-    assert provision_success_message(catalog_item.name) in row.last_message.text
+    assert 'Provisioned Successfully' in row.last_message.text
 
     myservice = MyService(catalog_item.name)
     myservice.reconfigure_service()
@@ -350,7 +336,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=2500, delay=20)
 
-    assert provision_success_message(catalog_item.name) in row.last_message.text
+    assert 'Provisioned Successfully' in row.last_message.text
 
     stack = Stack(stack_data['stack_name'])
     stack.wait_for_appear()
