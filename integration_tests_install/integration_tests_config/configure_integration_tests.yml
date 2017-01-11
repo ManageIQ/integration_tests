@@ -284,9 +284,15 @@
 
       # TBD - can be replaced by git_config module - Ansible 2.1
     - name: Configure origin for remote YAML repo
-      ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
+      # ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
+      ini_file: > 
+        dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" 
+        section="{{ item.section }}" 
+        option="           {{ item.key }}" 
+        value="{{ item.value }}" 
+        state="{{ item.state }}"
       with_items:
-        - { section: 'remote "origin"', key: 'url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', "\\1//" + "\\2{{':'}}" + yaml_remote_repo_username + "/\\4") }}", state: 'present' }
+        - { section: 'remote "origin"', key: 'url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', "\\1//" + "\\2:" + yaml_remote_repo_username + "/\\4") }}", state: 'present' }
         - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
       become_user: "{{ username }}"
       when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
