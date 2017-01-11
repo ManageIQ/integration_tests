@@ -74,8 +74,9 @@ docker run -it redhatqe/integration_tests:latest /bin/bash
 ## Configure CFME - WIP
 Create working folder on your laptop:
 ```
-export CFME_WORK="${HOME}/projects"
-mkdir -p ${CFME_WORK}/integration_tests_files; cd ${CFME_WORK}/integration_tests_files
+export PROJECTS="${HOME}/projects"
+export CFME_TESTS="${PROJECTS}/integration_tests_files"
+mkdir -p ${CFME_TESTS}/integration_tests_files; cd ${CFME_TESTS}/integration_tests_files
 ```
 Clone integration_tests repo from GitHub:
 ```
@@ -101,17 +102,17 @@ ln -s integration_tests/integration_tests_install/integration_tests_init.sh .
 
 Get information about how to use the wrapper script:
 ```
-cd ${CFME_WORK}
+cd ${CFME_TESTS}
 /bin/bash ./integration_tests_init.sh
 ```
 Configure environment:
 ```
-cd ${CFME_WORK}
+cd ${CFME_TESTS}
 /bin/bash ./integration_tests_init.sh init
 ```
 Run test:
 ```
-cd ${CFME_WORK}
+cd ${CFME_TESTS}
 /bin/bash ./integration_tests_init.sh cmd "py.test cfme/tests/test_login.py -k test_login -v"
 ```
 

@@ -25,7 +25,7 @@ git_email_question: "Type email address you want to use in your git config:"
 
 
 any_yaml:
-any_yaml_files: "Do you have any YAML files? Type \"y\" or \"n\""
+any_yaml_question: "Do you have any YAML files? Type \"y\" or \"n\""
 
 ## YAML remote repo
 # yaml external repo y/n question

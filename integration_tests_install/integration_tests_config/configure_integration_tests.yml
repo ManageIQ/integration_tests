@@ -82,7 +82,7 @@
       register: gpg_public_key_p
       when: pull_requests_p.key != "n"
     
-    - name: "Do you have any yaml files?"   
+    - name: "6)" 
       action: custom_prompt prompt="{{ any_yaml_question }} - [{{ any_yaml }}]:" accepted_keys="{{ accepted_keys_yn }}"
       register: any_yaml_p
       when: pull_requests_p.key != "n"
