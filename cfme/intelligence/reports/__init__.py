@@ -55,7 +55,7 @@ class Schedules(CFMENavigateStep):
 
 
 @navigator.register(Report, 'Dashboards')
-class Schedules(CFMENavigateStep):
+class Dashboards(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -84,3 +84,5 @@ class ImportExport(CFMENavigateStep):
 
     def step(self):
         accordion.tree("Import/Export", "Import / Export")
+
+# todo: to add am_I_here where it is necessary
