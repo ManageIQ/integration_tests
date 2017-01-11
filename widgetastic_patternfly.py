@@ -936,8 +936,9 @@ class BootstrapTreeview(Widget):
             if isinstance(step, basestring):
                 # To speed up the search when having a string to match, pick up items with that text
                 child_items = self.child_items_with_text(node, step)
-            else:
+            if not child_items:
                 # Otherwise we need to go through all of them.
+                # Also covers situation when step is string but @title is missing
                 child_items = self.child_items(node)
             for child_item in child_items:
                 if self.validate_node(child_item, step, image):
