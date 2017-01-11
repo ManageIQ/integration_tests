@@ -1,6 +1,7 @@
 import pytest
 from xml.sax.saxutils import quoteattr, unescape
 
+from cfme.exceptions import CannotScrollException
 from cfme.base.ui import Server
 from cfme.cloud.instance import Instance
 from cfme.infrastructure.config_management import ConfigManager
@@ -22,6 +23,7 @@ LOCATIONS = [
     ISODatastore, Server, Datastore, ConfigManager, "utilization", "bottlenecks",
     "infrastructure_networking"]
 
+
 pytestmark = [pytest.mark.parametrize("location", LOCATIONS), pytest.mark.uncollectif(lambda
     location: location == "infrastructure_networking" and version.current_version() < '5.7')]
 
@@ -30,11 +32,12 @@ def nav_to(location):
     if isinstance(location, basestring):
         pytest.sel.force_navigate(location)
     else:
-        dest = 'All'
         if location is Vm:
             dest = 'VMsOnly'
         elif location is Server:
-            dest = 'Dashboard'
+            dest = 'Configuration'
+        else:
+            dest = 'All'
 
         navigate_to(location, dest)
 
@@ -52,7 +55,13 @@ def test_pull_splitter_persistence(location):
     pull_splitter_left()
     pull_splitter_left()
     navigate_to(Server, 'Dashboard')
-    nav_to(location)
+    try:
+        nav_to(location)
+    except (TypeError, CannotScrollException):
+        # this exception is expected here since
+        # some navigation commands try to use accordion when it is hidden by splitter
+        pass
+
     # Then we check hidden position splitter
     if not pytest.sel.elements("//div[@id='left_div'][contains(@class, 'hidden-md')]"):
         pytest.fail("Splitter did not persist when on hidden position!")
