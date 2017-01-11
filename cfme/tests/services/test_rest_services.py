@@ -2,6 +2,7 @@
 import datetime
 import fauxfactory
 import pytest
+from manageiq_client.api import APIException
 
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import services as _services
@@ -11,7 +12,6 @@ from cfme import test_requirements
 from utils import error, version, testgen
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
-from utils.api import APIException
 from utils.log import logger
 
 

@@ -1,8 +1,8 @@
 import pytest
+from manageiq_client.api import APIException
 from utils.version import current_version
 from utils import testgen
 from cfme.containers.provider.openshift import CustomAttribute
-from utils.api import APIException
 
 pytestmark = [
     pytest.mark.uncollectif(

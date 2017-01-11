@@ -5,6 +5,7 @@ import fauxfactory
 import uuid
 
 import pytest
+from manageiq_client.api import APIException
 
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
@@ -19,7 +20,6 @@ from cfme.web_ui import fill, flash
 from utils import testgen, version, providers
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
-from utils.api import APIException
 from utils.log import logger
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")

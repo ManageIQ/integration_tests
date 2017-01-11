@@ -6,6 +6,7 @@
 """
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
+from fixtures.pytest_store import store
 
 from cfme.fixtures import pytest_selenium as sel
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -14,7 +15,6 @@ from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as 
     paginator, match_location
 from utils.pretty import Pretty
 from utils.wait import wait_for
-from utils.api import rest_api
 
 
 details_page = Region(infoblock_type='detail')
@@ -48,7 +48,7 @@ class Cluster(Pretty, Navigatable):
         self.provider = provider
         self.quad_name = 'cluster'
 
-        col = rest_api().collections
+        col = store.current_appliance.rest_api.collections
         self._id = [
             cl.id
             for cl in col.clusters.all
