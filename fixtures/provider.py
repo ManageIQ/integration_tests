@@ -110,8 +110,8 @@ def template(template_location, provider):
     pytest.skip('Template not available')
 
 
-def _get_template(provider, template_name):
-    template = provider.data.get(template_name, None)
+def _get_template(provider, template_type_name):
+    template = provider.data.get(template_type_name, None)
     if template:
         if not TEMPLATES:
             # Same as couple of lines above
@@ -121,7 +121,7 @@ def _get_template(provider, template_name):
             if template in templates:
                 return template
     else:
-        pytest.skip('No {} for provider {}'.format(template_name, provider.key))
+        pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))
     logger.info("Wanted template %s on %s but it is not there!", template, provider.key)
     pytest.skip('Template not available')
 
