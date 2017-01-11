@@ -67,6 +67,24 @@ class Tenant(Navigatable):
         except TimedOutError:
             logger.error('Timed out waiting for tenant to disappear, continuing')
 
+    def wait_for(self, timeout=300):
+        try:
+            return wait_for(self.exists,
+                            fail_condition=False,
+                            timeout=timeout,
+                            message='Wait for cloud tenant to appear',
+                            delay=10,
+                            fail_func=sel.refresh)
+        except TimedOutError:
+            logger.error('Timed out waiting for tenant to appear, continuing')
+
+    def update(self, updates, wait=True):
+        navigate_to(self, 'Edit')
+        updated_name = updates.get('name', self.name + '_edited')
+        create_tenant_form.fill({'name': updated_name})
+        sel.click(create_tenant_form.save_button)
+        flash.assert_success_message('Cloud Tenant "{}" updated'.format(updated_name))
+
     def delete(self, cancel=False, from_details=True, wait=True):
         if current_version() < '5.7':
             raise OptionNotAvailable('Cannot delete cloud tenants in CFME < 5.7')
