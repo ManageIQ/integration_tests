@@ -76,7 +76,7 @@ Create working folder on your laptop:
 ```
 export PROJECTS="${HOME}/projects"
 export CFME_TESTS="${PROJECTS}/integration_tests_files"
-mkdir -p ${CFME_TESTS}/integration_tests_files; cd ${CFME_TESTS}/integration_tests_files
+mkdir -p ${CFME_TESTS}; cd ${CFME_TESTS}
 ```
 Clone integration_tests repo from GitHub:
 ```
