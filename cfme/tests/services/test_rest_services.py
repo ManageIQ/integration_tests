@@ -11,8 +11,8 @@ from cfme import test_requirements
 from cfme.utils import error, version, testgen
 from cfme.utils.providers import setup_a_provider as _setup_a_provider
 from cfme.utils.wait import wait_for
-from utils.api import APIException
-from utils.log import logger
+from cfme.utils.api import APIException
+from cfme.utils.log import logger
 
 
 pytestmark = [test_requirements.service,

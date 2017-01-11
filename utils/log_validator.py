@@ -2,7 +2,7 @@ import re
 import pytest
 
 from ssh import SSHTail
-from utils.log import logger
+from cfme.utils.log import logger
 
 
 class LogValidator(object):
