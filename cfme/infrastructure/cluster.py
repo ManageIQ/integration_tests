@@ -49,8 +49,11 @@ class Cluster(Pretty, Navigatable):
         self.quad_name = 'cluster'
 
         col = rest_api().collections
-        self._id = [cl.id for cl in col.clusters.all if cl.name == self._short_name and
-            cl.ems_id == self.provider.id][-1]
+        self._id = [
+            cl.id
+            for cl in col.clusters.all
+            if cl.name == self._short_name and cl.ems_id == self.provider.id
+        ][-1]
 
     def delete(self, cancel=True):
         """

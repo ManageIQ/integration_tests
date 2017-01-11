@@ -495,16 +495,22 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         cfg_btn('Set Ownership')
         if click_reset:
             action = form_buttons.reset
-            msg_assert = partial(flash.assert_message_match,
-                'All changes have been reset')
+            msg_assert = partial(
+                flash.assert_message_match,
+                'All changes have been reset'
+            )
         elif click_cancel:
             action = form_buttons.cancel
-            msg_assert = partial(flash.assert_success_message,
-                'Set Ownership was cancelled by the user')
+            msg_assert = partial(
+                flash.assert_success_message,
+                'Set Ownership was cancelled by the user'
+            )
         else:
             action = form_buttons.save
-            msg_assert = partial(flash.assert_success_message,
-                'Ownership saved for selected {}'.format(self.VM_TYPE))
+            msg_assert = partial(
+                flash.assert_success_message,
+                'Ownership saved for selected {}'.format(self.VM_TYPE)
+            )
         fill(set_ownership_form, {'user_name': user, 'group_name': group},
              action=action)
         msg_assert()
