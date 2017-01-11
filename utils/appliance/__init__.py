@@ -5,7 +5,7 @@ import random
 import re
 import socket
 import yaml
-from manageiq_client.api import API as MiqApi  # noqa
+from manageiq_client.api import ManageIQClient as MiqApi  # noqa
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
