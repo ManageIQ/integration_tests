@@ -41,6 +41,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900,
         template_name: Name of the template that the VM is deployed from
     """
     allow_skip = deploy_args.pop("allow_skip", ())
+    with_tools = deploy_args.pop("with_tools", ())
     if isinstance(allow_skip, dict):
         skip_exceptions = allow_skip.keys()
         callable_mapping = allow_skip
@@ -53,12 +54,17 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900,
     provider_crud = get_crud(provider_key)
 
     deploy_args.update(vm_name=vm_name)
-
-    if template_name is None:
+    if template_name is None and not with_tools:
         try:
             deploy_args.update(template=provider_crud.data['small_template'])
         except KeyError:
             raise ValueError('small_template not defined for Provider {} in cfme_data.yaml'.format(
+                provider_key))
+    elif with_tools:
+        try:
+            deploy_args.update(template=data['tools_template'])
+        except KeyError:
+            raise ValueError('tools_template not defined for Provider {} in cfme_data.yaml'.format(
                 provider_key))
     else:
         deploy_args.update(template=template_name)

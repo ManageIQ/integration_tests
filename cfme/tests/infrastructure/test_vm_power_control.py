@@ -53,6 +53,27 @@ def test_vm(request, provider, vm_name):
     vm.wait_to_appear()
     return vm
 
+@pytest.fixture(scope="function")
+def test_vm_tools(request, provider, vm_name):
+    """Fixture to provision appliance to the provider being tested if necessary"""
+    vm = VM.factory(vm_name, provider)
+    logger.info("provider_key: %s", provider.key)
+
+    @request.addfinalizer
+    def _cleanup():
+        vm.delete_from_provider()
+        if_scvmm_refresh_provider(provider)
+
+    if not provider.mgmt.does_vm_exist(vm.name):
+        logger.info("deploying %s on provider %s", vm.name, provider.key)
+        vm.create_on_provider(allow_skip="default",
+                              find_in_cfme=True, with_tools=True)
+    else:
+        logger.info("recycling deployed vm %s on provider %s", vm.name, provider.key)
+    # vm.provider.refresh_provider_relationships()
+    # vm.wait_to_appear()
+    return vm
+
 
 def if_scvmm_refresh_provider(provider):
     # No eventing from SCVMM so force a relationship refresh
@@ -94,6 +115,19 @@ def check_power_options(provider, soft_assert, vm, power_state):
                 "'{}' must be greyed/disabled in current power state - '{}' ".format(
                     pwr_option, power_state))
 
+
+def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
+    """Timestamp update doesn't happen with state change so need a longer
+    wait when expecting a last boot timestamp change"""
+
+    def _wait_for_timestamp_refresh():
+        vm.load_details(refresh=True)
+        return boot_time != vm.get_detail(properties=("Power Management", "Last Boot Time"))
+
+    try:
+        wait_for(_wait_for_timestamp_refresh, num_sec=timeout, delay=30)
+    except TimedOutError:
+        return False
 
 class TestControlOnQuadicons(object):
 
@@ -320,6 +354,38 @@ def test_power_options_from_off(provider, setup_provider_funcscope,
     test_vm.wait_for_vm_state_change(
         desired_state=test_vm.STATE_OFF, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, test_vm, test_vm.STATE_OFF)
+
+
+@pytest.mark.parametrize("power_op", ['reset', 'shutdown'], ids=["reset", "shutdown"])
+def test_guest_os_power_operation(test_vm_tools, verify_vm_running, soft_assert,
+                                  power_op):
+    test_vm_tools.wait_for_vm_state_change(
+        desired_state=test_vm_tools.STATE_ON, timeout=720, from_details=True)
+    tools_state = test_vm_tools.get_detail(
+            properties=("Properties", "Platform Tools"))
+    soft_assert(tools_state == "toolsOk", "vmtools are not OK")
+    last_boot_time = test_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
+    if power_op == "shutdown":
+        test_vm_tools.power_control_from_cfme(option=test_vm_tools.GUEST_SHUTDOWN, cancel=False, from_details=True)
+        flash.assert_message_contain("Shutdown Guest initiated")
+        test_vm_tools.wait_for_vm_state_change(
+            desired_state=test_vm_tools.STATE_OFF, timeout=720, from_details=True)
+        soft_assert(
+            not test_vm_tools.provider.mgmt.is_vm_running(test_vm_tools.name), "vm running")
+        new_last_boot_time = test_vm_tools.get_detail(
+                properties=("Power Management", "Last Boot Time"))
+        soft_assert(new_last_boot_time == last_boot_time,
+                        "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
+    else:
+        test_vm.power_control_from_cfme(option=test_vm.GUEST_RESTART, cancel=False, from_details=True)
+        flash.assert_message_contain("Restart Guest initiated")
+        test_vm.wait_for_vm_state_change(
+            desired_state=test_vm.STATE_ON, timeout=720, from_details=True)
+        # new_last_boot_time = test_vm_tools.get_detail(
+        #     properties=("Power Management", "Last Boot Time"))
+        wait_for_last_boot_timestamp_refresh(test_vm_tools, last_boot_time)
+        soft_assert(
+            test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
 
 
 @pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
