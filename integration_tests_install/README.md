@@ -86,8 +86,7 @@ Testing:
 git clone https://github.com/ManageIQ/integration_tests
 --->
 git clone git://github.com/ManageIQ/integration_tests.git
-cd integration_tests
-git fetch origin pull/3254/head:integration_tests_container
+cd integration_tests; git fetch origin pull/3254/head:integration_tests_container
 git checkout integration_tests_container
 cd ..; ln -s integration_tests/integration_tests_install/integration_tests_init.sh .
 
