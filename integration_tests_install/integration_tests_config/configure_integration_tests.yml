@@ -89,7 +89,7 @@
 #    
       #  Ask user if he wants to use YAML files from remote repository 
     - name: "6.1)"
-      action: custom_prompt prompt="{{ yaml_remote_repo_yn_question }} - [{{ yaml_remote_repo_yn }}]:" accepted_keys="{{ accecpted_keys_yn }}"
+      action: custom_prompt prompt="{{ yaml_remote_repo_yn_question }} - [{{ yaml_remote_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}"
       register: yaml_remote_repo_yn_p
       when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
 
