@@ -74,7 +74,7 @@ docker run -it redhatqe/integration_tests:latest /bin/bash
 ## Configure CFME - WIP
 Create working folder on your laptop:
 ```
-export CFME_WORK="~/projects"
+export CFME_WORK="${HOME}/projects"
 mkdir -p ${CFME_WORK}/integration_tests_files; cd ${CFME_WORK}/integration_tests_files
 ```
 Clone integration_tests repo from GitHub:
