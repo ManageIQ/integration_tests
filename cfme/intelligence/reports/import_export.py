@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
-
+from . import Report
 from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Region, accordion, fill, flash, form_buttons
-from cfme.web_ui.menu import nav
+from cfme.web_ui import Region, fill, flash, form_buttons
+from utils.appliance.implementations.ui import navigate_to
 
-nav.add_branch(
-    "reports",
-    {
-        "import_export": lambda ctx: accordion.tree("Import/Export", "Import / Export"),
-    }
-)
 
 form = Region(locators=dict(
     export_select=ui.Select("//select[@id='choices_chosen']", multi=True),
@@ -25,13 +19,13 @@ export_button = form_buttons.FormButton("Download Report to YAML")
 
 
 def export_reports(*custom_report_names):
-    sel.force_navigate("import_export")
+    navigate_to(Report, 'ImportExport')
     fill(form.export_select, custom_report_names)
     sel.click(form.export_button)
 
 
 def import_reports(filename, overwrite=False):
-    sel.force_navigate("import_export")
+    navigate_to(Report, 'ImportExport')
     sel.checkbox(form.import_overwrite, overwrite)
     sel.send_keys(form.import_file, filename)
     sel.click(form.import_submit)

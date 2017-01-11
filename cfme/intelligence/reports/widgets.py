@@ -2,12 +2,12 @@
 """Module handling Dashboard Widgets accordion.
 
 """
-
+from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import ExternalRSSFeed, MenuShortcuts, Timer
 from cfme.web_ui import (
     CheckboxSelect, Form, InfoBlock, Select, ShowingInputs, accordion, fill, toolbar, Input)
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToObject, NavigateToSibling
 from cfme.web_ui import flash, form_buttons, summary_title
 from utils import version
 from utils.update import Updateable
@@ -96,11 +96,9 @@ class Widget(Updateable, Pretty, Navigatable):
 
 @navigator.register(Widget, 'All')
 class WidgetsAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToObject(Report, 'DashboardWidgets')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Reports')(None)
         accordion.tree("Dashboard Widgets", "All Widgets", self.obj.TITLE)
 
     def am_i_here(self, *args, **kwargs):

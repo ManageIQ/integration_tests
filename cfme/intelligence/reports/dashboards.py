@@ -5,7 +5,8 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import (
     DashboardWidgetSelector, NewerDashboardWidgetSelector)
 from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar, Input
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToSibling, NavigateToObject, NavigateToAttribute
+from . import Report
 from utils import version
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -58,61 +59,6 @@ class Dashboard(Updateable, Pretty, Navigatable):
         flash.assert_no_errors()
 
 
-@navigator.register(Dashboard, 'Main')
-class DashboardPage(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        from cfme.web_ui.menu import nav
-        if self.obj.appliance.version < "5.6.0.1":
-            nav.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
-        else:
-            nav.CURRENT_TOP_MENU = "{}{}".format(nav.ROOT, nav.ACTIVE_LEV)
-        nav.is_page_active('Dashboard')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Dashboard')(None)
-
-
-@navigator.register(Dashboard, 'All')
-class DashboardAll(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Reports')(None)
-
-    def resetter(self):
-        accordion.tree("Dashboards", "All Dashboards")
-
-
-@navigator.register(Dashboard, 'Add')
-class DashboardNew(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        accordion.tree("Dashboards", "All Dashboards", "All Groups", self.obj.group)
-        toolbar.select("Configuration", "Add a new Dashboard")
-        sel.wait_for_element(Dashboard.form.name)
-
-
-@navigator.register(Dashboard, 'Details')
-class DashboardDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        accordion.tree("Dashboards", "All Dashboards", "All Groups", self.obj.group, self.obj.name)
-
-
-@navigator.register(Dashboard, 'Edit')
-class DashboardEdit(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        toolbar.select("Configuration", "Edit this Dashboard")
-
-
 class DefaultDashboard(Updateable, Pretty, Navigatable):
     form = Form(fields=[
         ("title", Input("description")),
@@ -150,16 +96,52 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
         flash.assert_no_errors()
 
 
-@navigator.register(DefaultDashboard, 'All')
-class DefaultDashboardAll(CFMENavigateStep):
+@navigator.register(Dashboard, 'Main')
+class DashboardPage(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    def step(self):
+    def am_i_here(self):
         from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Reports')(None)
+        if self.obj.appliance.version < "5.6.0.1":
+            nav.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
+        else:
+            nav.CURRENT_TOP_MENU = "{}{}".format(nav.ROOT, nav.ACTIVE_LEV)
+        nav.is_page_active('Dashboard')
 
-    def resetter(self):
-        accordion.tree("Dashboards", "All Dashboards")
+    def step(self):
+        self.parent_view.navigation.select('Cloud Intel', 'Dashboard')(None)
+
+
+@navigator.register(DefaultDashboard, 'All')
+@navigator.register(Dashboard, 'All')
+class DashboardAll(CFMENavigateStep):
+    prerequisite = NavigateToObject(Report, 'Dashboards')
+
+
+@navigator.register(Dashboard, 'Add')
+class DashboardNew(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Dashboards", "All Dashboards", "All Groups", self.obj.group)
+        toolbar.select("Configuration", "Add a new Dashboard")
+        sel.wait_for_element(Dashboard.form.name)
+
+
+@navigator.register(Dashboard, 'Details')
+class DashboardDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Dashboards", "All Dashboards", "All Groups", self.obj.group, self.obj.name)
+
+
+@navigator.register(Dashboard, 'Edit')
+class DashboardEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        toolbar.select("Configuration", "Edit this Dashboard")
 
 
 @navigator.register(DefaultDashboard, 'Details')
