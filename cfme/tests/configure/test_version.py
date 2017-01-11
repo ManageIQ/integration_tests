@@ -20,4 +20,3 @@ def test_version():
         version.LOWEST: ('Session Information', 'Version'),
         '5.7': 'Version'}))
     assert ui_version.startswith(ssh_version), "UI: {}, SSH: {}".format(ui_version, ssh_version)
-

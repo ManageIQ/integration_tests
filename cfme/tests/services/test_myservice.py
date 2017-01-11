@@ -11,7 +11,6 @@ from cfme.web_ui import toolbar as tb
 from cfme.utils import browser, testgen, version
 from cfme.utils.browser import ensure_browser_open
 from cfme.utils.log import logger
-from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
 pytestmark = [

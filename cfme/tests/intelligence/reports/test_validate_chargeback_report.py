@@ -14,7 +14,6 @@ from cfme.intelligence.reports.reports import CustomReport
 from datetime import date
 from cfme.utils import testgen
 from cfme.utils.log import logger
-from cfme.utils import testgen, version
 from cfme.utils.version import current_version
 from cfme.utils.wait import wait_for
 
