@@ -795,3 +795,23 @@ def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=No
     return Zone(appliance=self.appliance, region=self.region,
         name=name, description=description, smartproxy_ip=smartproxy_ip,
         ntp_servers=ntp_servers, max_scans=max_scans, user=user)
+
+
+# AUTOMATE
+class AutomateSimulationView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Automate', 'Simulation'])
+
+    # TODO: Actually convert this to Widgetastic.
+
+
+@navigator.register(Server)
+class AutomateSimulation(CFMENavigateStep):
+    VIEW = AutomateSimulationView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select('Automate', 'Simulation')
