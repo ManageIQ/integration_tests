@@ -42,7 +42,8 @@ def ipa_creds():
 def test_set_hostname(request):
     store.current_appliance.ap_cli.set_hostname('test.example.com')
     return_code, output = store.current_appliance.ssh_client.run_command(
-        "cat /etc/hosts | grep test.example.com")
+        "hostname -f")
+    assert output.strip() == 'test.example.com'
     assert return_code == 0
 
 
@@ -53,9 +54,7 @@ def test_configure_appliance_internal_fetch_key(request, app_creds, provisioned_
         app_creds['username'], app_creds['password'], 'vmdb_production', fetch_key_ip,
         app_creds['sshlogin'], app_creds['sshpass'])
     app.ipapp.wait_for_evm_service()
-    assert app.ipapp.is_evm_service_running()
     app.ipapp.wait_for_web_ui()
-    assert app.ipapp.is_web_ui_running()
 
 
 # def test_configure_ipa(request, ipa_creds):
@@ -64,10 +63,9 @@ def test_configure_appliance_internal_fetch_key(request, app_creds, provisioned_
 #     assert store.current_appliance.ssh_client.run_command("systemctl status sssd | grep running")
 #     return_code, output = store.current_appliance.ssh_client.run_command(
 #         "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
-#     assert return_code == 0
-#     # TODO extend test to login as user from ipa
-
-
+#     assert return_code == 0   # TODO extend test to login as ipa user
+#
+#
 # def test_uninstall_ipa(request):
 #     store.current_appliance.ap_cli.uninstall_ipa_client()
 #     return_code, output = store.current_appliance.ssh_client.run_command(
