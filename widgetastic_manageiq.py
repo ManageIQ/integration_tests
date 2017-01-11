@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+from datetime import date
 from jsmin import jsmin
 from selenium.common.exceptions import WebDriverException
 
@@ -11,14 +12,16 @@ from widgetastic.widget import (
     TableRow as VanillaTableRow,
     Widget,
     View,
+    Select,
+    TextInput,
     Checkbox,
+    WidgetDescriptor,
     do_not_read_this_widget)
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion,
-    CandidateNotFound,
-    BootstrapTreeview,
-    BootstrapSelect)
+    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
+from cached_property import cached_property
+from utils.log import logger
 
 
 class DynaTree(Widget):
@@ -368,6 +371,168 @@ class SummaryFormItem(Widget):
         return text
 
 
+class MultiBoxSelect(Widget):
+
+    TABLE = "//table[@id={}]{}"
+
+    def __init__(self, parent, id, number="", move_into=None, move_from=None,
+            available_items="choices_chosen", chosen_items="members_chosen", logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.available_options = Select(self, id=available_items)
+        self.chosen_options = Select(self, id=chosen_items)
+        self.id = id
+        if number:
+            self.number = "[{}]".format(number)
+        else:
+            self.number = number
+        if isinstance(move_into, WidgetDescriptor):
+            self._move_into = move_into.klass(self, **move_into.kwargs)
+        else:
+            self._move_into = move_into
+        if isinstance(move_from, WidgetDescriptor):
+            self._move_from = move_from.klass(self, **move_from.kwargs)
+        else:
+            self._move_from = move_from
+
+    def __locator__(self):
+        return self.TABLE.format(quote(self.id), self.number)
+
+    def _values_to_remove(self, values):
+        return list((set(values) ^ self.read()) - set(values))
+
+    def _values_to_add(self, values):
+        return list((set(values) ^ self.read()) - self.read())
+
+    @property
+    def move_into_button(self):
+        """This method is required to avoid 'Element is no longer attached to the DOM'
+        Selenium exception.
+        """
+        if isinstance(self._move_into, Button):
+            button = self._move_into
+        elif isinstance(self._move_into, basestring):
+            button = self.browser.element(self._move_into, self)
+        return button
+
+    @property
+    def move_from_button(self):
+        if isinstance(self._move_from, Button):
+            button = self._move_from
+        elif isinstance(self._move_from, basestring):
+            button = self.browser.element(self._move_from, self)
+        return button
+
+    def fill(self, values):
+        if set(values) == self.read():
+            return False
+        else:
+            values_to_remove = self._values_to_remove(values)
+            values_to_add = self._values_to_add(values)
+            if values_to_remove:
+                self.chosen_options.fill(values_to_remove)
+                self.move_from_button.click()
+                self.browser.plugin.ensure_page_safe()
+            if values_to_add:
+                self.available_options.fill(values_to_add)
+                self.move_into_button.click()
+                self.browser.plugin.ensure_page_safe()
+            return True
+
+    def read(self):
+        return {option.text for option in self.chosen_options.all_options}
+
+
+class CheckboxSelect(Widget):
+
+    ROOT = "//div[@id={}]"
+
+    def __init__(self, parent, search_root, text_access_func=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self._root = search_root
+        self._access_func = text_access_func
+
+    def __locator__(self):
+        return self.ROOT.format(quote(self._root))
+
+    @property
+    def checkboxes(self):
+        """All checkboxes."""
+        return {Checkbox(self, id=el.get_attribute("id")) for el in self.browser.elements(
+            ".//input[@type='checkbox'] ", self)}
+
+    def read(self):
+        """Only selected checkboxes."""
+        return {cb for cb in self.checkboxes if cb.selected}
+
+    @cached_property
+    def selected_text(self):
+        """Only selected checkboxes' text descriptions."""
+        return {cb.browser.element("./..", cb).text for cb in self.read()}
+
+    @property
+    def selected_values(self):
+        """Only selected checkboxes' values."""
+        return {cb.get_attribute("value") for cb in self.read()}
+
+    @property
+    def unselected_checkboxes(self):
+        """Only unselected checkboxes."""
+        return {cb for cb in self.checkboxes if not cb.selected}
+
+    @property
+    def unselected_values(self):
+        """Only unselected checkboxes' values."""
+        return {cb.get_attribute("value") for cb in self.unselected_checkboxes}
+
+    def checkbox_by_id(self, id):
+        """Find checkbox's WebElement by id."""
+        return Checkbox(self, id=id)
+
+    def _values_to_remove(self, values):
+        return (set(values) ^ self.selected_text) - set(values)
+
+    def _values_to_add(self, values):
+        return (set(values) ^ self.selected_text) - self.selected_text
+
+    def select_all(self):
+        """Selects all checkboxes."""
+        for cb in self.unselected_checkboxes:
+            cb.fill(True)
+
+    def unselect_all(self):
+        """Unselects all checkboxes."""
+        for cb in self.selected_checkboxes:
+            cb.fill(False)
+
+    def checkbox_by_text(self, text):
+        """Returns checkbox's WebElement by searched by its text."""
+        if self._access_func is not None:
+            for cb in self.checkboxes:
+                txt = self._access_func(cb)
+                if txt == text:
+                    return cb
+            else:
+                raise NameError("Checkbox with text {} not found!".format(text))
+        else:
+            # Has to be only single
+            element = self.browser.element(
+                ".//*[normalize-space(.)={}]/input[@type='checkbox']".format(quote(text)), self
+            )
+            return Checkbox(self, id=element.get_attribute("id"))
+
+    def fill(self, values):
+        if set(values) == self.selected_text:
+            return False
+        else:
+            for value in self._values_to_remove(values):
+                checkbox = self.checkbox_by_text(value)
+                checkbox.fill(False)
+            for value in self._values_to_add(values):
+                checkbox = self.checkbox_by_text(value)
+                checkbox.fill(True)
+            return True
+
+
 # ManageIQ table objects definition
 class TableColumn(VanillaTableColumn):
     @property
@@ -431,6 +596,120 @@ class Accordion(PFAccordion):
     def is_dimmed(self):
         return bool(
             self.browser.elements('.//div[contains(@id, "tree") and contains(@class, "dimmed")]'))
+
+
+class Calendar(TextInput):
+    """A CFME calendar form field
+
+    Calendar fields are readonly, and managed by the dxhtmlCalendar widget. A Calendar field
+    will accept any object that can be coerced into a string, but the value may not match the format
+    expected by dhtmlxCalendar or CFME. For best results, either a ``datetime.date`` or
+    ``datetime.datetime`` object should be used to create a valid date field.
+
+    Args:
+        name: "name" property of the readonly calendar field.
+    """
+
+    def fill(self, value):
+        if isinstance(value, date):
+            date_str = value.strftime('%m/%d/%Y')
+        else:
+            date_str = str(value)
+        self.move_to()
+        # need to write to a readonly field: resort to evil
+        if self.browser.get_attribute("ng-model", self) is not None:
+            # self.set_angularjs_value(self, date_str)
+            raise NotImplementedError
+        else:
+            self.browser.set_attribute("value", date_str, self)
+            # Now when we set the value, we need to simulate a change event.
+            if self.browser.get_attribute("data-date-autoclose", self):
+                # New one
+                script = "$(\"#{}\").trigger('changeDate');"
+            else:
+                # Old one
+                script = (
+                    "if(typeof $j == 'undefined') {var jq = $;} else {var jq = $j;} "
+                    "jq(\"#{}\").change();")
+            try:
+                self.browser.execute_script(script.format(self.name))
+            except WebDriverException as e:
+                logger.warning(
+                    "An exception was raised during handling of the Cal #{}'s change event:\n{}"
+                    .format(self.name, str(e)))
+        self.browser.plugin.ensure_page_safe()
+        return True
+
+
+class SNMPHostsField(Widget):
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+
+    def fill(self, values):
+        fields = self.host_fields
+        if isinstance(values, basestring):
+            values = [values]
+        if len(values) > len(fields):
+            raise ValueError("You cannot specify more hosts than the form allows!")
+        return any(fields[i].fill(value) for i, value in enumerate(values))
+
+    def read(self):
+        raise NotImplementedError
+
+    @property
+    def host_fields(self):
+        """Returns list of locators to all host fields"""
+        _input = Input(self, "host")
+        if _input.is_displayed:
+            return [_input]
+        else:
+            return [Input(self, "host_{}".format(i)) for i in range(1, 4)]
+
+
+class SNMPTrapsField(Widget):
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+
+    def fill_oid_field(self, i, oid):
+        oid_field = Input(self, "oid__{}".format(i))
+        return oid_field.fill(oid)
+
+    def fill_type_field(self, i, type_):
+        type_field = BootstrapSelect(self, "var_type__{}".format(i))
+        return type_field.fill(type_)
+
+    def fill_value_field(self, i, value):
+        value_field = Input(self, "value__{}".format(i))
+        return value_field.fill(value)
+
+    def fill(self, traps):
+        result = []
+        for i, trap in enumerate(traps, 1):
+            assert 2 <= len(trap) <= 3, "The tuple must be at least 2 items and max 3 items!"
+            if len(trap) == 2:
+                trap += (None,)
+            oid, type_, value = trap
+            result.append(any((
+                self.fill_oid_field(i, oid),
+                self.fill_type_field(i, type_),
+                self.fill_value_field(i, value)
+            )))
+        return any(result)
+
+    def read(self):
+        raise NotImplementedError
+
+
+class SNMPForm(View):
+    hosts = SNMPHostsField()
+    version = BootstrapSelect("snmp_version")
+    id = Input("trap_id")
+    traps = SNMPTrapsField()
+
+    def read(self):
+        raise NotImplementedError
 
 
 class Paginator(Widget):

@@ -9,7 +9,9 @@ from cfme.common.vm import VM, Template
 from cfme.common.provider import cleanup_vm
 from cfme.configure import configuration
 from cfme.configure.tasks import is_vm_analysis_finished
-from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
+from cfme.control.explorer.policy_profiles import PolicyProfile
+from cfme.control.explorer.policies import VMControlPolicy
+from cfme.control.explorer.actions import Action
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host, datastore
 from cfme.provisioning import do_vm_provisioning
