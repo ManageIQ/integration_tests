@@ -29,6 +29,7 @@ def main(*providers):
             fip.delete()
             print('{} deleted'.format(fip.ip))
 
+
 if __name__ == "__main__":
     provs = sys.argv[1:]
     if provs:

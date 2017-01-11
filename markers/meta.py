@@ -125,6 +125,7 @@ class PluginContainer(object):
             return g  # So the markers can be chained
         return f
 
+
 if "plugin" not in globals():
     plugin = PluginContainer()
 

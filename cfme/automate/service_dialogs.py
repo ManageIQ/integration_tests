@@ -110,11 +110,12 @@ class ServiceDialog(Updateable, Pretty, Navigatable, Fillable):
 
     def create(self, *element_data):
         navigate_to(self, 'Add')
-        fill(label_form, {'label': self.label,
-                          'description_text': self.description,
-                          'submit_button': self.submit,
-                          'cancel_button': self.cancel,
-                          'label': self.label})
+        fill(label_form, {
+            'label': self.label,
+            'description_text': self.description,
+            'submit_button': self.submit,
+            'cancel_button': self.cancel
+        })
         plus_btn("Add a new Tab to this Dialog")
         sel.wait_for_element(tab_form.tab_label)
         fill(tab_form, {'tab_label': self.tab_label,

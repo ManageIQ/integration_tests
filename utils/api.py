@@ -295,7 +295,9 @@ class Entity(object):
     # TODO: Extend these fields
     TIME_FIELDS = {
         "updated_on", "created_on", "last_scan_attempt_on", "state_changed_on", "lastlogon",
-        "updated_at", "created_at", "last_scan_on", "last_sync_on", "last_refresh_date", "retires_on",}
+        "updated_at", "created_at", "last_scan_on", "last_sync_on", "last_refresh_date",
+        "retires_on"
+    }
     COLLECTION_MAPPING = dict(
         ems_id="providers",
         storage_id="data_stores",

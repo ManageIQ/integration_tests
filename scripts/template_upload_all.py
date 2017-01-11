@@ -324,7 +324,7 @@ def main():
             continue
         checksum_url = url + "SHA256SUM"
         try:
-            o = urlopen(checksum_url)
+            urlopen(checksum_url)
         except Exception:
             print("No valid checksum file for {}. Skipping...".format(key))
             continue

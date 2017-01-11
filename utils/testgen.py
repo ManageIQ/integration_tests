@@ -181,7 +181,8 @@ def fixture_filter(metafunc, argnames, argvalues):
     keep_index = [e[0] for e in enumerate(argnames) if e[1] in metafunc.fixturenames]
 
     # Keep items at indices in keep_index
-    f = lambda l: [e[1] for e in enumerate(l) if e[0] in keep_index]
+    def f(l):
+        return [e[1] for e in enumerate(l) if e[0] in keep_index]
 
     # Generate the new values
     argnames = f(argnames)

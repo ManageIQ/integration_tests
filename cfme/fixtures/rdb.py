@@ -70,6 +70,8 @@ def rdb_handle_signal(signal, frame):
     # only registered for USR1, no need to inspect the signal,
     # just hand the frame off to Rdb
     Rdb('Debugger started on user signal').set_trace(frame)
+
+
 signal.signal(signal.SIGUSR1, rdb_handle_signal)
 
 

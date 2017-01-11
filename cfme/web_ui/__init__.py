@@ -2078,6 +2078,7 @@ def _fill_bstree_seq(tree, values):
     except IndexError:
         tree.click_path(*values)
 
+
 class Tree(Pretty):
     """ A class directed at CFME Tree elements
 

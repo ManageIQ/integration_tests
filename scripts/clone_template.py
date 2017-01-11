@@ -212,6 +212,7 @@ def main(**kwargs):
     # In addition to the outfile, drop the ip address on stdout for easy parsing
     print(ip)
 
+
 if __name__ == "__main__":
     args = parse_cmd_line()
     kwargs = dict(args._get_kwargs())

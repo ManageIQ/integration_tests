@@ -493,7 +493,8 @@ class Menu(UINavigate):
                 el = "{} | {}".format(active_loc, inactive_loc)
                 cls._try_nav(el, toplevel, secondlevel)
 
-            nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
+            def nav_fn():
+                return cls._nav_to_fn(toplevel, secondlevel, reset_action, _final=True)
             cls._try_reset_action(reset_action, _final, nav_fn)
             # todo move to element on the active tab to clear the menubox
             sel.wait_for_ajax()
@@ -512,8 +513,9 @@ class Menu(UINavigate):
                     break
             cls._try_nav(loc, toplevel, secondlevel, thirdlevel)
 
-            nav_fn = lambda: cls._nav_to_fn(toplevel, secondlevel, thirdlevel, reset_action,
-                _final=True)
+            def nav_fn():
+                return cls._nav_to_fn(toplevel, secondlevel, thirdlevel, reset_action,
+                    _final=True)
             cls._try_reset_action(reset_action, _final, nav_fn)
 
         if version.current_version() < "5.6.0.1":
@@ -760,5 +762,6 @@ def extend_nav(cls):
     """
     nav.add_branch(cls.__name__, _scavenge_class(cls, ignore_navigate=True))
     return cls
+
 
 nav = Menu()

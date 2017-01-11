@@ -126,13 +126,18 @@ def test_info(guides, soft_assert):
     for link in guides:
         l_a = getattr(about, link)
         # l_icon also implicitly checks for the icon url == text url
-        l_icon = lambda: pytest.sel.element(
-            "../a[contains(@href, '{}')]/img".format(
-                pytest.sel.get_attribute(l_a, "href").rsplit("/", 1)[-1]
-            ),
-            root=l_a
-        )
-        l_icon_a = lambda: pytest.sel.element("..", root=l_icon)
+
+        def l_icon():
+            return pytest.sel.element(
+                "../a[contains(@href, '{}')]/img".format(
+                    pytest.sel.get_attribute(l_a, "href").rsplit("/", 1)[-1]
+                ),
+                root=l_a
+            )
+
+        def l_icon_a():
+            return pytest.sel.element("..", root=l_icon)
+
         soft_assert(
             pytest.sel.get_attribute(l_icon, "alt") == pytest.sel.get_attribute(l_icon_a, "title"),
             "Icon alt attr should match icon title attr ({})".format(pytest.sel.text(l_a))

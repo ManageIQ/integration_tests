@@ -406,6 +406,7 @@ def _custom_excepthook(type, value, traceback):
     logger.error(text, extra={'source_file': file, 'source_lineno': lineno})
     _original_excepthook(type, value, traceback)
 
+
 if '_original_excepthook' not in globals():
     # Guard the original excepthook against reloads so we don't hook twice
     _original_excepthook = sys.excepthook
@@ -462,6 +463,8 @@ def _configure_warnings():
     wlog.addFilter(WarningsDeduplicationFilter())
     wlog.addHandler(make_file_handler('py.warnings.log'))
     wlog.propagate = False
+
+
 _configure_warnings()
 
 # Register a custom excepthook to log unhandled exceptions

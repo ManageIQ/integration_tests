@@ -75,6 +75,7 @@ class DeprecatedConfigWrapper(object):
 
         del self.configuration.yaycl_config[key]
 
+
 # for the initial usage we keep a global object
 # later on we want to replace it
 global_configuration = Configuration()

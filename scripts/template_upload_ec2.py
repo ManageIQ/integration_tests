@@ -232,6 +232,7 @@ def run(**kwargs):
         upload_template(provider, username, password, upload_bucket_name, kwargs.get(
             'image_url'), kwargs.get('template_name'))
 
+
 if __name__ == '__main__':
     args = parse_cmd_line()
     kwargs = cfme_data['template_upload']['template_upload_ec2']

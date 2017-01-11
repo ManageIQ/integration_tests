@@ -34,6 +34,7 @@ def _mkitem(field, index1, index2=0):
     return RateFormItem((By.CSS_SELECTOR, "input#{}_{}_{}".format(field, index1, index2)),
                         Select((By.CSS_SELECTOR, "select#per_time_" + str(index1))))
 
+
 rate_form = Form(
     fields=[
         ('description', (By.CSS_SELECTOR, "input#description")),

@@ -21,6 +21,7 @@ class ProviderFilter(object):
     def __contains__(self, provider):
         return provider in self.providers
 
+
 filtered = ProviderFilter(provider_keys())
 
 
