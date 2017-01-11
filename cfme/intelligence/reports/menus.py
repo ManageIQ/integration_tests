@@ -4,9 +4,11 @@ from contextlib import contextmanager
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import FolderManager
-from cfme.web_ui import Region, Tree, accordion, form_buttons, menu
+from cfme.web_ui import Region, BootstrapTreeview, Tree, accordion, form_buttons, menu
 from cfme.web_ui.multibox import MultiBoxSelect
+from utils import version
 from utils.log import logger
+
 
 menu.nav.add_branch(
     "reports",
@@ -16,7 +18,10 @@ menu.nav.add_branch(
     }
 )
 
-reports_tree = Tree("//div[@id='menu_roles_treebox']/ul")
+if version.current_version() >= '5.7':
+    reports_tree = BootstrapTreeview("menu_roles_treebox")
+else:
+    reports_tree = Tree("//div[@id='menu_roles_treebox']/ul")
 
 manager = FolderManager("//div[@id='folder_lists']/table")
 report_select = MultiBoxSelect(
