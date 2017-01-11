@@ -451,7 +451,8 @@ class IPAppliance(object):
         return MiqApi(
             "{}://{}:{}/api".format(self.scheme, self.address, self.ui_port),
             ('admin', 'smartvm'),
-            logger=self.rest_logger)
+            logger=self.rest_logger,
+            verify_ssl=False)
 
     @cached_property
     def miqqe_version(self):
