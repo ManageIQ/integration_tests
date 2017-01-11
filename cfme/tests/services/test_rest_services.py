@@ -11,6 +11,8 @@ from cfme import test_requirements
 from utils import error, version, testgen
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
+from utils.api import APIException
+from utils.log import logger
 
 
 pytestmark = [test_requirements.service,
@@ -295,3 +297,100 @@ class TestServiceTemplateRESTAPI(object):
                 num_sec=180,
                 delay=10,
             )
+
+
+class TestBlueprintsRESTAPI(object):
+    @pytest.yield_fixture(scope="function")
+    def blueprints(self, rest_api):
+        body = []
+        for _ in range(2):
+            uid = fauxfactory.gen_alphanumeric(5)
+            body.append({
+                'name': 'test_blueprint_{}'.format(uid),
+                'description': 'Test Blueprint {}'.format(uid),
+                'ui_properties': {
+                    'service_catalog': {},
+                    'service_dialog': {},
+                    'automate_entrypoints': {},
+                    'chart_data_model': {}
+                }
+            })
+        response = rest_api.collections.blueprints.action.create(*body)
+
+        yield response
+
+        try:
+            rest_api.collections.blueprints.action.delete(*response)
+        except APIException:
+            # blueprints can be deleted by tests, just log warning
+            logger.warning("Failed to delete blueprints.")
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_create_blueprints(self, rest_api, blueprints):
+        """Tests creation of blueprints.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(blueprints) > 0
+        record = rest_api.collections.blueprints.get(id=blueprints[0].id)
+        assert record.name == blueprints[0].name
+        assert record.description == blueprints[0].description
+        assert record.ui_properties == blueprints[0].ui_properties
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_delete_blueprints(self, rest_api, blueprints, from_detail):
+        """Tests delete blueprints.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(blueprints) > 0
+        collection = rest_api.collections.blueprints
+        if from_detail:
+            methods = ['post', 'delete']
+            for i, ent in enumerate(blueprints):
+                ent.action.delete(force_method=methods[i % 2])
+                with error.expected("ActiveRecord::RecordNotFound"):
+                    ent.action.delete()
+        else:
+            collection.action.delete(*blueprints)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                collection.action.delete(*blueprints)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_edit_blueprints(self, rest_api, blueprints, from_detail):
+        """Tests editing of blueprints.
+
+        Metadata:
+            test_flag: rest
+        """
+        response_len = len(blueprints)
+        assert response_len > 0
+        new = []
+        for _ in range(response_len):
+            new.append({
+                'ui_properties': {
+                    'automate_entrypoints': {'Reconfigure': 'foo'}
+                }
+            })
+        if from_detail:
+            edited = []
+            for i in range(response_len):
+                edited.append(blueprints[i].action.edit(**new[i]))
+        else:
+            for i in range(response_len):
+                new[i].update(blueprints[i]._ref_repr())
+            edited = rest_api.collections.blueprints.action.edit(*new)
+        assert len(edited) == response_len
+        for i in range(response_len):
+            assert edited[i].ui_properties == new[i]['ui_properties']
