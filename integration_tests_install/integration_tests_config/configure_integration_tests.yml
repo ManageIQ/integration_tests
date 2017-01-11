@@ -220,22 +220,37 @@
     #  when: not git_repo_exists.changed
       
       # TBD - can be replaced by git_config module - Ansible 2.1
-    - name: update git config
-      ini_file: dest="{{ cfme_vol }}/integration_tests/.git/config" section="{{ item.section }}" option="        {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
+#    - name: update git config
+#      ini_file: dest="{{ cfme_vol }}/integration_tests/.git/config" section="{{ item.section }}" option="        {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
+#      with_items:
+#        - { section: 'user',  key: 'email', value: "{{ git_email }}", state: 'present' }
+#        - { section: 'user', key: 'name', value: "{{ git_full_name }}", state: 'present' }
+#        - { section: 'user', key: 'signingkey', value: "{{ gpg_public_key }}", state: 'present' }
+#        - { section: 'push', key: 'default', value: 'simple', state: 'present'}
+#        - { section: 'remote "upstream"', key: 'url', value: 'git://github.com/ManageIQ/integration_tests.git', state: 'present'}
+#        - { section: 'remote "upstream"', key: 'fetch', value: '+refs/heads/*:refs/remotes/upstream/*', state: 'present'}
+#        - { section: 'remote "origin"', key: 'url', value: 'https://github.com/ManageIQ/integration_tests', state: 'absent'}
+#        - { section: 'remote "origin"', key: 'url', value: 'git://github.com/ManageIQ/integration_tests.git', state: 'absent'}
+#        # - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'absent'}
+#        - { section: 'remote "origin"', key: 'url', value: 'git@github.com/{{ git_account_username }}/cfme_tests.git', state: 'present' }
+#        # - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
+#      #when: pull_requests_p.key == "y"
+#      when: pull_requests == "y"
+
+    - name: Update git config of integration_tests repo
+      git_config: repo="{{ cfme_vol }}/integration_tests/" scope=local name="{{ item.name }}" value="{{ item.value }}"
       with_items:
-        - { section: 'user',  key: 'email', value: "{{ git_email }}", state: 'present' }
-        - { section: 'user', key: 'name', value: "{{ git_full_name }}", state: 'present' }
-        - { section: 'user', key: 'signingkey', value: "{{ gpg_public_key }}", state: 'present' }
-        - { section: 'push', key: 'default', value: 'simple', state: 'present'}
-        - { section: 'remote "upstream"', key: 'url', value: 'git://github.com/ManageIQ/integration_tests.git', state: 'present'}
-        - { section: 'remote "upstream"', key: 'fetch', value: '+refs/heads/*:refs/remotes/upstream/*', state: 'present'}
-        - { section: 'remote "origin"', key: 'url', value: 'https://github.com/ManageIQ/integration_tests', state: 'absent'}
-        - { section: 'remote "origin"', key: 'url', value: 'git://github.com/ManageIQ/integration_tests.git', state: 'absent'}
-        # - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'absent'}
-        - { section: 'remote "origin"', key: 'url', value: 'git@github.com/{{ git_account_username }}/cfme_tests.git', state: 'present' }
-        # - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
-      #when: pull_requests_p.key == "y"
+        - { name: 'user.email', value: "{{ git_email }}" }
+        - { name: 'user.name', value: "{{ git_full_name }}" }
+        - { name: 'user.signingkey', value: "{{ gpg_public_key }}" }
+        - { name: 'push.default', value: 'simple' }
+        - { name: 'remote.upstream.url', value: 'git://github.com/ManageIQ/integration_tests.git' }
+        - { name: 'remote.upstream.fetch', value: '+refs/heads/*:refs/remotes/upstream/*' }
+        - { name: 'remote.origin.url', value: 'git@github.com/{{ git_account_username }}/cfme_tests.git' }
+        - { name: 'remote.origin.fetch', value: '+refs/heads/*:refs/remotes/origin/*' }
+      become_user: "{{ username }}"
       when: pull_requests == "y"
+
 
     - name: We must stash changes - active branch is not clean
       shell: cd "{{ cfme_vol }}/integration_tests"; git stash
@@ -283,20 +298,29 @@
       when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
 
       # TBD - can be replaced by git_config module - Ansible 2.1
+#    - name: Configure origin for remote YAML repo
+#      # ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
+#      ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
+#      with_items:
+#        - { section: 'remote "origin"', key: 'url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', '\\1//\\2:{{ yaml_remote_repo_username }}/\\4') }}", state: 'present' }
+#        - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
+#      become_user: "{{ username }}"
+#      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+   
     - name: Configure origin for remote YAML repo
-      # ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
-      ini_file: > 
-        dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" 
-        section="{{ item.section }}" 
-        option="           {{ item.key }}" 
-        value="{{ item.value }}" 
-        state="{{ item.state }}"
+      git_config: repo="{{ cfme_vol }}/cfme-qe-yamls.git/" scope=local name="{{ item.name }}" value="{{ item.value }}"
       with_items:
-        - { section: 'remote "origin"', key: 'url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', "\\1//" + "\\2:" + yaml_remote_repo_username + "/\\4") }}", state: 'present' }
-        - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
+#        - { name: 'user.email', value: "{{ git_email }}" }
+#        - { name: 'user.name', value: "{{ git_full_name }}" }
+#        - { name: 'user.signingkey', value: "{{ gpg_public_key }}" }
+#        - { name: 'push.default', value: 'simple' }
+#        - { name: 'remote.upstream.url', value: 'git://github.com/ManageIQ/integration_tests.git' }
+#        - { name: 'remote.upstream.fetch', value: '+refs/heads/*:refs/remotes/upstream/*' }
+        - { name: 'remote.origin.url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', '\\1//\\2:{{ yaml_remote_repo_username }}/\\4') }}" }
+        - { name: 'remote.origin.fetch', value: '+refs/heads/*:refs/remotes/origin/*' }
       become_user: "{{ username }}"
       when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
-    
+ 
     - name: Add YAML password/key if it is defined into .yaml_key file
       template: src=templates/yaml_key.j2 dest="{{ cfme_vol }}/integration_tests/.yaml_key"
       when: yaml_remote_key_password is defined
