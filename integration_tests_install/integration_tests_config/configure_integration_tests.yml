@@ -283,7 +283,7 @@
 
       # TBD - can be replaced by git_config module - Ansible 2.1
     - name: Configure origin for remote YAML repo
-      ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
+      ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
       with_items:
         - { section: 'remote "origin"', key: 'url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', '\\1// + \\2: + yaml_remote_repo_username + /\\4') }}", state: 'present' }
         - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
@@ -296,13 +296,13 @@
      
     - debug: msg="{{item | basename }}"
       with_fileglob: 
-        - /projects/cfme_env/cfme_vol/cfme-qe-yamls/complete/*.*yaml 
+        - /projects/cfme_env/cfme_vol/cfme-qe-yamls.git/complete/*.*yaml 
       when: item | basename != 'env.yaml'
       
     - name: Create symlinks for (remote) YAML repo
-      file: src="../../cfme-qe-yamls/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
+      file: src="../../cfme-qe-yamls.git/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
       with_fileglob: 
-        - /projects/cfme_env/cfme_vol/cfme-qe-yamls/complete/*.*yaml 
+        - /projects/cfme_env/cfme_vol/cfme-qe-yamls.git/complete/*.*yaml 
       when: yaml_remote_repo_yn_p.key == "y" and ((pull_requests == "y") and ( item | basename != 'env.yaml'))
     
     - name: Create symlinks for (local) YAML repo (symlinks to remote repo will be overwritten if name is the same)
