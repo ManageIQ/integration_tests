@@ -119,7 +119,7 @@ def test_tag_orchestration_template(provisioning, tag, create_template):
                                     template_name=fauxfactory.gen_alphanumeric(),
                                     description="my template")
     template.create(create_template)
-    navigate_to(template, "TemplateDetails")
+    navigate_to(template, "Details")
     mixins.add_tag(tag)
     mixins.remove_tag(tag)
     template.delete()
