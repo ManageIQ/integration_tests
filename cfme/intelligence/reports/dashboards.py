@@ -109,7 +109,7 @@ class DashboardPage(CFMENavigateStep):
         nav.is_page_active('Dashboard')
 
     def step(self):
-        self.parent_view.navigation.select('Cloud Intel', 'Dashboard')(None)
+        self.parent_view.navigation.select('Cloud Intel', 'Dashboard')
 
 
 @navigator.register(DefaultDashboard, 'All')
