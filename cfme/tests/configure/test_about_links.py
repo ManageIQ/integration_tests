@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+import requests
+import pytest
 
+from cfme.base.ui import Server
 from cfme.fixtures import pytest_selenium as sel
 from cfme.configure import about
 from utils import version
+from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
-import pytest
-import requests
 
 
 @pytest.mark.tier(3)
@@ -13,7 +15,11 @@ import requests
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2246"])
 @pytest.mark.meta(blockers=[1272618])
 def test_about_links():
-    sel.force_navigate('about')
+    if version.current_version() < '5.7':
+        navigate_to(Server, 'About')
+    else:
+        navigate_to(Server, 'Documentation')
+
     for link_key, link_loc in about.product_assistance.locators.items():
         # If its a dict to be ver-picked and the resulting loc is None
         if isinstance(link_loc, dict) and version.pick(link_loc) is None:

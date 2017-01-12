@@ -9,6 +9,7 @@ from widgetastic.widget import View, Table
 
 from cfme import BaseLoggedInPage
 from cfme.dashboard import DashboardView
+from cfme.intelligence.rss import RSSView
 from cfme.exceptions import ZoneNotFound
 from cfme.login import LoginPage
 
@@ -129,6 +130,15 @@ class About(CFMENavigateStep):
         else:
             from cfme.web_ui.menu import nav
             nav._nav_to_fn('Settings', 'About')(None)
+
+
+@navigator.register(Server)
+class RSS(CFMENavigateStep):
+    VIEW = RSSView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select('Cloud Intel', 'RSS')
 
 
 @navigator.register(Server)
