@@ -1,57 +1,62 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+from navmazing import NavigateToSibling, NavigateToObject
 
+from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, accordion, toolbar
-from cfme.web_ui.menu import nav
-
-
-nav.add_branch(
-    "reports",
-    {
-        "saved_reports":
-        lambda ctx: accordion.tree("Saved Reports", "All Saved Reports"),
-
-        "saved_reports_for":
-        [
-            lambda ctx: accordion.tree("Saved Reports", "All Saved Reports", ctx["report_name"]),
-            {
-                "saved_report":
-                lambda ctx: reports_table.click_cell("queued_at", ctx["date_time_completed"]),
-            }
-        ],
-    }
-)
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance import Navigatable
 
 reports_table = CheckboxTable("//div[@id='records_div']//table[thead]")
 cfg_btn = partial(toolbar.select, "Configuration")
 
 
-def get_saved_reports_for(name):
-    sel.force_navigate("saved_reports_for", context={"report_name": name})
-    dates = []
-    try:
-        for row in reports_table.rows():
-            dates.append(sel.text(row.queued_at).encode("utf-8").strip())
-    except sel.NoSuchElementException:
-        pass
-    return dates
+class SavedReport(Navigatable):
+
+    def __init__(self, name, timestamp, appliance=None):
+        Navigatable.__init__(self, appliance)
+        self.name = name
+        self.timestamp = timestamp
+
+    def delete(self, cancel):
+        navigate_to(self, 'Delete')
+        sel.handle_alert(cancel)
+
+    @classmethod
+    def get_all_saved_reports_by_name(cls, name):
+        navigate_to(cls, 'All')
+        accordion.tree("Saved Reports", "All Saved Reports", name)
+        dates = []
+        try:
+            for row in reports_table.rows():
+                dates.append(sel.text(row.queued_at).encode("utf-8").strip())
+        except sel.NoSuchElementException:
+            pass
+        return dates
+
+    def go_to_latest_saved_report(self):
+        latest = self.get_all_saved_reports_by_name(self.name)[0]
+        navigate_to(self, 'Details')
+        reports_table.click_cell("queued_at", latest)
 
 
-def go_to_latest_saved_report_for(name):
-    latest = get_saved_reports_for(name)[0]
-    sel.force_navigate(
-        "saved_report",
-        context={"report_name": name, "date_time_completed": latest},
-        start="saved_reports_for"
-    )
+@navigator.register(SavedReport, 'All')
+class SavedReportAll(CFMENavigateStep):
+    prerequisite = NavigateToObject(Report, 'SavedReports')
 
 
-def show_full_screen(cancel=False):
-    cfg_btn("Show full screen report", invokes_alert=True)
-    sel.handle_alert(cancel)
+@navigator.register(SavedReport, 'Details')
+class ScheduleDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        accordion.tree("Saved Reports", "All Saved Reports", self.obj.name, self.obj.timestamp)
 
 
-def delete_saved_report(cancel=False):
-    cfg_btn("Delete this Saved Report from the Database", invokes_alert=True)
-    sel.handle_alert(cancel)
+@navigator.register(SavedReport, 'Delete')
+class ScheduleDelete(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        cfg_btn("Delete this Saved Report from the Database", invokes_alert=True)

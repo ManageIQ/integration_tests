@@ -4,9 +4,10 @@
 Extensively uses :py:mod:`cfme.intelligence.reports.ui_elements`
 """
 from functools import partial
-
 from cached_property import cached_property
 from navmazing import NavigateToSibling, NavigateToAttribute, NavigateToObject
+
+from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import (ColumnHeaderFormatTable, ColumnStyleTable,
     RecordGrouper)
@@ -228,12 +229,7 @@ class CustomReport(Updateable, Navigatable):
 
 @navigator.register(CustomReport, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Cloud Intel', 'Reports')(None)
-        accordion.tree("Reports", "All Reports")
+    prerequisite = NavigateToObject(Report, 'Reports')
 
 
 @navigator.register(CustomReport, 'New')
