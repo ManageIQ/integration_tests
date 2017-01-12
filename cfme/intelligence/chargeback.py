@@ -5,6 +5,8 @@ from functools import partial
 
 from selenium.webdriver.common.by import By
 from navmazing import NavigateToSibling, NavigateToAttribute
+
+from cfme import BaseLoggedInPage
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
@@ -20,6 +22,14 @@ tb_select = partial(tb.select, "Configuration")
 
 match_page = partial(match_location, controller='chargeback',
                      title='Chargeback')
+
+
+class ChargebackView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ['Cloud Intel', 'Chargeback'])
 
 
 class RateFormItem(Pretty):
