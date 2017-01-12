@@ -39,12 +39,13 @@ def domain(request):
 
 
 @pytest.fixture(scope="module")
-def test_vm(setup_provider_modscope, provider, vm_name):
+def test_vm(setup_provider_modscope, provider, vm_name, request):
     """Fixture to provision appliance to the provider being tested if necessary"""
     vm = VM.factory(vm_name, provider, template_name=provider.data['small_template'])
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+        request.addfinalizer(test_vm.delete_from_provider)
     return vm
 
 
@@ -127,7 +128,6 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     soft_assert(
         test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
     client = SSHClient(**ssh_kwargs)
-    request.addfinalizer(test_vm.delete_from_provider)
     try:
         wait_for(lambda: client.run_command('test -e snapshot2.txt')[1] == 0, fail_condition=False)
         logger.info('Revert to snapshot %s successful', snapshot1.name)
