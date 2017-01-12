@@ -158,7 +158,7 @@ class FlashMessages(Widget):
 
     def assert_success_message(self, text, t=None):
         self.assert_no_error()
-        self.assert_message(text, t)
+        self.assert_message(text, 'success')
 
 
 class FlashMessage(Widget):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import BootstrapSelect, Button, Input
-from widgetastic_manageiq import ScriptBox
+from widgetastic_manageiq import ScriptBox, Table
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator as pg
 from navmazing import NavigateToAttribute, NavigateToSibling
@@ -80,7 +80,7 @@ class CopyTemplateView(CopyTemplateForm):
         )
 
 
-class DetailsTemplateView(TemplateForm):
+class DetailsTemplateView(ServicesCatalogView):
 
     @property
     def is_displayed(self):
@@ -93,7 +93,10 @@ class DetailsTemplateView(TemplateForm):
         )
 
 
-class TemplateTypeView(TemplateForm):
+class TemplateTypeView(ServicesCatalogView):
+
+    templates = Table("//table[@class='table table-striped table-bordered "
+                      "table-hover table-selectable]'")
 
     @property
     def is_displayed(self):
