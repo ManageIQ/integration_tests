@@ -29,13 +29,13 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope='function')
-def vm_name(provider):  # Provider in order to keep the names provider-specific
+def vm_name():
     return random_vm_name('pwr-c')
 
 
 @pytest.fixture(scope="function")
 def test_vm(request, provider, vm_name):
-    """Fixture to provision appliance to the provider being tested if necessary"""
+    """Fixture to provision vm to the provider being tested"""
     vm = VM.factory(vm_name, provider)
     logger.info("provider_key: %s", provider.key)
 
@@ -53,10 +53,11 @@ def test_vm(request, provider, vm_name):
     vm.wait_to_appear()
     return vm
 
+
 @pytest.fixture(scope="function")
-def test_vm_tools(request, provider, vm_name):
-    """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = VM.factory(vm_name, provider)
+def test_vm_tools(request, provider, vm_name, full_template):
+    """Fixture to provision vm with preinstalled tools to the provider being tested"""
+    vm = VM.factory(vm_name, provider, template_name=full_template["name"])
     logger.info("provider_key: %s", provider.key)
 
     @request.addfinalizer
@@ -67,7 +68,7 @@ def test_vm_tools(request, provider, vm_name):
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
         vm.create_on_provider(allow_skip="default",
-                              find_in_cfme=True, with_tools=True)
+                              find_in_cfme=True)
     else:
         logger.info("recycling deployed vm %s on provider %s", vm.name, provider.key)
     # vm.provider.refresh_provider_relationships()
@@ -128,6 +129,7 @@ def wait_for_last_boot_timestamp_refresh(vm, boot_time, timeout=300):
         wait_for(_wait_for_timestamp_refresh, num_sec=timeout, delay=30)
     except TimedOutError:
         return False
+
 
 class TestControlOnQuadicons(object):
 
@@ -195,19 +197,6 @@ class TestControlOnQuadicons(object):
 
 
 class TestVmDetailsPowerControlPerProvider(object):
-
-    def _wait_for_last_boot_timestamp_refresh(self, vm, boot_time, timeout=300):
-        """Timestamp update doesn't happen with state change so need a longer
-        wait when expecting a last boot timestamp change"""
-
-        def _wait_for_timestamp_refresh():
-            vm.load_details(refresh=True)
-            return boot_time != vm.get_detail(properties=("Power Management", "Last Boot Time"))
-
-        try:
-            wait_for(_wait_for_timestamp_refresh, num_sec=timeout, delay=30)
-        except TimedOutError:
-            return False
 
     def test_power_off(self, test_vm, verify_vm_running, soft_assert, register_event):
         """Tests power off
@@ -304,12 +293,12 @@ class TestVmDetailsPowerControlPerProvider(object):
         if_scvmm_refresh_provider(test_vm.provider)
         test_vm.wait_for_vm_state_change(
             desired_state=test_vm.STATE_ON, timeout=720, from_details=True)
-        self._wait_for_last_boot_timestamp_refresh(test_vm, last_boot_time, timeout=600)
+        wait_for_last_boot_timestamp_refresh(test_vm, last_boot_time, timeout=600)
         soft_assert(
             test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
 
 
-def test_no_template_power_control(provider, setup_provider_funcscope, soft_assert):
+def test_no_template_power_control(provider, soft_assert):
     """ Ensures that no power button is displayed for templates.
 
     Prerequisities:
@@ -342,50 +331,53 @@ def test_no_template_power_control(provider, setup_provider_funcscope, soft_asse
 
 
 @pytest.mark.uncollectif(lambda provider: provider.type == 'rhevm')
-def test_power_options_from_on(provider, setup_provider_funcscope,
-                               soft_assert, test_vm, verify_vm_running):
+def test_power_options_from_on(provider, soft_assert, test_vm, verify_vm_running):
     test_vm.wait_for_vm_state_change(
         desired_state=test_vm.STATE_ON, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, test_vm, test_vm.STATE_ON)
 
 
-def test_power_options_from_off(provider, setup_provider_funcscope,
-                               soft_assert, test_vm, verify_vm_stopped):
+def test_power_options_from_off(provider, soft_assert, test_vm, verify_vm_stopped):
     test_vm.wait_for_vm_state_change(
         desired_state=test_vm.STATE_OFF, timeout=720, from_details=True)
     check_power_options(provider, soft_assert, test_vm, test_vm.STATE_OFF)
 
 
-@pytest.mark.parametrize("power_op", ['reset', 'shutdown'], ids=["reset", "shutdown"])
-def test_guest_os_power_operation(test_vm_tools, verify_vm_running, soft_assert,
-                                  power_op):
+@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+def test_guest_os_reset(test_vm_tools, verify_vm_running, soft_assert):
     test_vm_tools.wait_for_vm_state_change(
         desired_state=test_vm_tools.STATE_ON, timeout=720, from_details=True)
-    tools_state = test_vm_tools.get_detail(
-            properties=("Properties", "Platform Tools"))
+    tools_state = test_vm_tools.get_detail(properties=("Properties", "Platform Tools"))
     soft_assert(tools_state == "toolsOk", "vmtools are not OK")
     last_boot_time = test_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
-    if power_op == "shutdown":
-        test_vm_tools.power_control_from_cfme(option=test_vm_tools.GUEST_SHUTDOWN, cancel=False, from_details=True)
-        flash.assert_message_contain("Shutdown Guest initiated")
-        test_vm_tools.wait_for_vm_state_change(
-            desired_state=test_vm_tools.STATE_OFF, timeout=720, from_details=True)
-        soft_assert(
-            not test_vm_tools.provider.mgmt.is_vm_running(test_vm_tools.name), "vm running")
-        new_last_boot_time = test_vm_tools.get_detail(
-                properties=("Power Management", "Last Boot Time"))
-        soft_assert(new_last_boot_time == last_boot_time,
-                        "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
-    else:
-        test_vm.power_control_from_cfme(option=test_vm.GUEST_RESTART, cancel=False, from_details=True)
-        flash.assert_message_contain("Restart Guest initiated")
-        test_vm.wait_for_vm_state_change(
-            desired_state=test_vm.STATE_ON, timeout=720, from_details=True)
-        # new_last_boot_time = test_vm_tools.get_detail(
-        #     properties=("Power Management", "Last Boot Time"))
-        wait_for_last_boot_timestamp_refresh(test_vm_tools, last_boot_time)
-        soft_assert(
-            test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
+    test_vm_tools.power_control_from_cfme(
+        option=test_vm_tools.GUEST_RESTART, cancel=False, from_details=True)
+    flash.assert_message_contain("Restart Guest initiated")
+    test_vm_tools.wait_for_vm_state_change(
+        desired_state=test_vm_tools.STATE_ON, timeout=720, from_details=True)
+    wait_for_last_boot_timestamp_refresh(test_vm_tools, last_boot_time)
+    soft_assert(
+        test_vm_tools.provider.mgmt.is_vm_running(test_vm_tools.name), "vm not running")
+
+
+@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+def test_guest_os_shutdown(test_vm_tools, verify_vm_running, soft_assert):
+    test_vm_tools.wait_for_vm_state_change(
+        desired_state=test_vm_tools.STATE_ON, timeout=720, from_details=True)
+    tools_state = test_vm_tools.get_detail(properties=("Properties", "Platform Tools"))
+    soft_assert(tools_state == "toolsOk", "vmtools are not OK")
+    last_boot_time = test_vm_tools.get_detail(properties=("Power Management", "Last Boot Time"))
+    test_vm_tools.power_control_from_cfme(
+        option=test_vm_tools.GUEST_SHUTDOWN, cancel=False, from_details=True)
+    flash.assert_message_contain("Shutdown Guest initiated")
+    test_vm_tools.wait_for_vm_state_change(
+        desired_state=test_vm_tools.STATE_OFF, timeout=720, from_details=True)
+    soft_assert(
+        not test_vm_tools.provider.mgmt.is_vm_running(test_vm_tools.name), "vm running")
+    new_last_boot_time = test_vm_tools.get_detail(
+        properties=("Power Management", "Last Boot Time"))
+    soft_assert(new_last_boot_time == last_boot_time,
+                "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
 
 @pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
