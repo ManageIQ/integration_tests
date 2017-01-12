@@ -322,17 +322,7 @@
     </div>
 {% endfor %}
 
-{% if display_legend %}
-    <h3>Legend</h3>
-    <ul>
-        <li><strong>D</strong> - How many delayed provisioning tasks are scheduled for this pool.</li>
-        <li><strong>Q</strong> - How many other delayed provisioning tasks are scheduled before the latest task of this pool.</li>
-        <li><strong>PS</strong> - How many slots for simultaneous provisioning are currently free.</li>
-        <li><strong>AS</strong> - How many slots for appliances are currently free. If it is lower than you need, you won't get the required number of appliances!</li>
-        <li><strong>SA</strong> - How many of shepherd appliances that can be taken in the pool.</li>
-    </ul>
-{% endif %}
-{% if can_order_pool %}
+% if can_order_pool %}
     {% if new_pool_possible %}
         <h2>Requesting additional pools{% if pools_remaining %} ({{pools_remaining}} remaining){% endif %}</h2>
         <form action="{% url 'request_pool' %}" method="POST" class="form-horizontal">
