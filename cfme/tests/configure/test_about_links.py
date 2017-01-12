@@ -15,7 +15,11 @@ from utils.log import logger
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2246"])
 @pytest.mark.meta(blockers=[1272618])
 def test_about_links():
-    navigate_to(Server, 'About')
+    if version.current_version() < '5.7':
+        navigate_to(Server, 'About')
+    else:
+        navigate_to(Server, 'Documentation')
+
     for link_key, link_loc in about.product_assistance.locators.items():
         # If its a dict to be ver-picked and the resulting loc is None
         if isinstance(link_loc, dict) and version.pick(link_loc) is None:

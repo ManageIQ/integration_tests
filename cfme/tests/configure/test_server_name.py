@@ -22,6 +22,8 @@ def test_server_name():
     settings_pg = BasicInformation(appliance_name=new_server_name)
     settings_pg.update()
     flash.assert_message_contain(flash_msg.format(new_server_name))
+    # CFME updates about box only after any navigation BZ(1408681)
+    navigate_to(current_appliance.server, 'Dashboard')
 
     navigate_to(current_appliance.server, 'About')
     assert new_server_name == InfoBlock('Session Information', 'Server Name').text,\
