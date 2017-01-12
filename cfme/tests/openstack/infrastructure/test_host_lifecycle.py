@@ -26,8 +26,8 @@ def test_host_manageable(provider):
     provider.refresh()
 
     if not result == "Manageable":
-        wait_for(lambda: result,  delay=15, timeout="10m",
-                 fail_func=lambda: tb.select('Reload'))
+        wait_for(lambda: result, delay=15,
+                 timeout="10m", fail_func=lambda: tb.select('Reload'))
     return result
 
 
@@ -42,10 +42,10 @@ def test_host_available(provider):
     sel.handle_alert()
     result = host.get_detail('Openstack Hardware', 'Provision State')
     provider.refresh()
-    
+
     if not result == "available":
-        wait_for(lambda: result,  delay=15, timeout="10m",
-                 fail_func=lambda: tb.select('Reload'))
+        wait_for(lambda: result, delay=15,
+                 timeout="10m", fail_func=lambda: tb.select('Reload'))
     return result
 
 
@@ -62,8 +62,8 @@ def test_host_introspection(provider):
     provider.refresh()
 
     if not result == "true":
-        wait_for(lambda: result,  delay=15, timeout="10m",
-                 fail_func=lambda: tb.select('Reload'))
+        wait_for(lambda: result, delay=15,
+                 timeout="10m", fail_func=lambda: tb.select('Reload'))
     return result
 
 
@@ -75,7 +75,8 @@ def test_host_registration(provider, reg_file):
     host = Host(name=quad.name)
     sel.check(quad.checkbox())
     # need a json file input to add here
+
+    tb.select('Configuration', 'Introspect Nodes', invokes_alert=True)
+    sel.handle_alert()
+    host.get_detail('Openstack Hardware', 'Introspected')
     pass
-
-
-
