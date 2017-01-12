@@ -275,6 +275,10 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         return IPMI(hostname=self.ipmi_address, username=self.ipmi_credentials.principal,
                     password=self.ipmi_credentials.secret, interface_type=self.interface_type)
 
+    def refresh(self, cancel=False):
+        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
 
