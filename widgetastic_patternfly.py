@@ -156,6 +156,10 @@ class FlashMessages(Widget):
                 e_text = text
             raise AssertionError('assert_message: {}'.format(e_text))
 
+    def assert_success_message(self, text, t=None):
+        self.assert_no_error()
+        self.assert_message(text, 'success')
+
 
 class FlashMessage(Widget):
     """Not to be instantiated on View"""

@@ -5,8 +5,8 @@ from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from utils import testgen, error
 from utils.update import update
 from cfme.web_ui import mixins
-from cfme.fixtures import pytest_selenium as sel
 from cfme import test_requirements
+from utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [test_requirements.stack, pytest.mark.tier(2)]
@@ -74,7 +74,6 @@ def test_copy_template(provisioning, create_template):
                                      description="my template")
     template.create(create_template)
     copied_method = METHOD_TORSO_copied.replace('CloudFormation', fauxfactory.gen_alphanumeric())
-    sel.refresh()
     template.copy_template(template.template_name + "_copied", copied_method)
     template.delete()
 
@@ -120,9 +119,7 @@ def test_tag_orchestration_template(provisioning, tag, create_template):
                                     template_name=fauxfactory.gen_alphanumeric(),
                                     description="my template")
     template.create(create_template)
-    sel.force_navigate('select_template', context={
-        'template_type': template.template_type,
-        'template_name': template.template_name})
+    navigate_to(template, "Details")
     mixins.add_tag(tag)
     mixins.remove_tag(tag)
     template.delete()
