@@ -16,7 +16,7 @@ import pytest
 import mgmtsystem
 
 from cfme.common.vm import VM
-from cfme.control import explorer
+from cfme.control.explorer import (actions, policies, policy_profiles)
 from cfme.configure import tasks
 from cfme.configure.tasks import Tasks
 from cfme.infrastructure import host
@@ -297,12 +297,12 @@ def vm_crud_refresh(vm_crud, provider):
 @pytest.yield_fixture(scope="module")
 def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, provider):
     """ Takes care of setting the appliance up for testing """
-    policy = explorer.VMControlPolicy(
+    policy = policies.VMControlPolicy(
         policy_name,
         scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name)
     )
     policy.create()
-    policy_profile = explorer.PolicyProfile(policy_profile_name, policies=[policy])
+    policy_profile = policy_profiles.PolicyProfile(policy_profile_name, policies=[policy])
     policy_profile.create()
     yield policy
     policy_profile.delete()
@@ -499,7 +499,7 @@ def test_action_create_snapshot_and_delete_last(
         pytest.skip("This provider does not support snapshots yet!")
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
-    snapshot_create_action = explorer.Action(
+    snapshot_create_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
@@ -542,7 +542,7 @@ def test_action_create_snapshots_and_delete_them(
     """
     # Set up the policy and prepare finalizer
     snapshot_name = fauxfactory.gen_alphanumeric()
-    snapshot_create_action = explorer.Action(
+    snapshot_create_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
@@ -694,7 +694,7 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refr
            for tag in vm.crud.get_tags()):
         vm.crud.remove_tag(("Service Level", "Gold"))
 
-    tag_assign_action = explorer.Action(
+    tag_assign_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Service Level", "Gold")}
@@ -736,7 +736,7 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
                for tag in vm.crud.get_tags()):
             vm.crud.remove_tag(("Service Level", "Gold"))
 
-    tag_unassign_action = explorer.Action(
+    tag_unassign_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
         action_values={"cat_service_level": True}

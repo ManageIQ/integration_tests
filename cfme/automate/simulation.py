@@ -4,6 +4,9 @@ from collections import Mapping
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Input, Select, ShowingInputs, fill, flash, form_buttons
 
+from utils.appliance import get_or_create_current_appliance
+from utils.appliance.implementations.ui import navigate_to
+
 
 class AVPForm(object):
     """Maps dictionary to Attribute/Value pair subform"""
@@ -53,7 +56,11 @@ def simulate(**data):
     Args:
         **data: See :py:data:`sim_form` for keyword reference
     """
-    sel.force_navigate("automate_simulation")
+    try:
+        appliance = data['appliance']
+    except KeyError:
+        appliance = get_or_create_current_appliance()
+    navigate_to(appliance.server, 'AutomateSimulation')
     if data.get("attribute", None) is None:
         t = sel.text(sim_form.attribute[0].options[0]).encode("utf-8")  # None
         sel.select(sim_form.attribute[0], t)

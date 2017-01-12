@@ -7,8 +7,9 @@ from mgmtsystem import exceptions
 
 from cfme.common.vm import VM
 from cfme.configure.configuration import VMAnalysisProfile
-from cfme.control.explorer import (
-    VMCompliancePolicy, VMCondition, PolicyProfile)
+from cfme.control.explorer.policies import VMCompliancePolicy, HostCompliancePolicy
+from cfme.control.explorer.conditions import VMCondition
+from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version
@@ -41,6 +42,40 @@ def wait_for_ssa_enabled():
     wait_for(
         lambda: not toolbar.is_greyed('Configuration', 'Perform SmartState Analysis'),
         delay=10, handle_exception=True, num_sec=600, fail_func=lambda: toolbar.select("Reload"))
+
+
+@pytest.fixture
+def policy_name():
+    return "compliance_testing: policy {}".format(fauxfactory.gen_alphanumeric(8))
+
+
+@pytest.fixture
+def policy_profile_name():
+    return "compliance_testing: policy profile {}".format(fauxfactory.gen_alphanumeric(8))
+
+
+@pytest.fixture
+def host(provider):
+    return provider.hosts[0]
+
+
+@pytest.yield_fixture
+def policy_for_testing(policy_name, policy_profile_name, provider):
+    """ Takes care of setting the appliance up for testing """
+    policy = HostCompliancePolicy(policy_name)
+    policy.create()
+    policy_profile = PolicyProfile(policy_profile_name, policies=[policy])
+    policy_profile.create()
+    yield policy
+    policy_profile.delete()
+    policy.delete()
+
+
+@pytest.yield_fixture
+def assign_policy_for_testing(policy_for_testing, host, policy_profile_name):
+    host.assign_policy_profiles(policy_profile_name)
+    yield policy_for_testing
+    host.unassign_policy_profiles(policy_profile_name)
 
 
 @pytest.yield_fixture(scope="module")
@@ -204,3 +239,11 @@ def test_check_files(request, fleecing_vm, ssh_client, analysis_profile):
 
     do_scan(fleecing_vm, ("Configuration", "Files"))
     assert fleecing_vm.check_compliance_and_wait()
+
+
+def test_compliance_with_unconditional_policy(request, host, assign_policy_for_testing):
+    assign_policy_for_testing.assign_actions_to_event(
+        "Host Compliance Check",
+        {"Mark as Non-Compliant": True}
+    )
+    assert not host.check_compliance_and_wait()

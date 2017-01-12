@@ -3,18 +3,19 @@
 import diaper
 import pytest
 
-from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.cluster import Cluster
-from cfme.infrastructure.host import Host
-from cfme.infrastructure.virtual_machines import Vm
-from cfme.infrastructure.datastore import Datastore
-from cfme.infrastructure.virtual_machines import Template
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.availability_zone import AvailabilityZone
+from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
+from cfme.cloud.tenant import Tenant
+from cfme.infrastructure.cluster import Cluster
+from cfme.infrastructure.datastore import Datastore
+from cfme.infrastructure.host import Host
+from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.virtual_machines import Vm, Template
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
 from utils import providers
 from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
 
 
 @pytest.fixture(scope="module")
@@ -23,31 +24,34 @@ def setup_first_provider():
     providers.setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
 
 
+param_classes = {
+    'Infra Providers': InfraProvider,
+    'Infra VMs': Vm,
+    'Infra Templates': Template,
+    'Infra Hosts': Host,
+    'Infra Clusters': Cluster,
+    'Infra Stores': Datastore,
+
+    'Cloud Providers': CloudProvider,
+    'Cloud Instances': Instance,
+    'Cloud Availabity Zones': AvailabilityZone,
+    'Cloud Flavors': Flavor,
+    'Cloud Tenants': Tenant
+}
+
 pytestmark = [
-    pytest.mark.parametrize("location", [
-        # Infrastructure
-        InfraProvider, Cluster, Host, Datastore, Vm, Template,
-        # Cloud
-        CloudProvider, Instance,
-        "clouds_availability_zones",  # todo: no navmazing for azone
-        "clouds_flavors",  # todo: no navmazing for flavors
-        "clouds_tenants",  # todo: no navmazing for tenants
-        # "clouds_security_groups",  # Does not have grid view selector
-    ]),
+    pytest.mark.parametrize("location", param_classes),
     pytest.mark.usefixtures("setup_first_provider"),
     pytest.mark.tier(3)
 ]
 
 
-def nav_to(location):
-    if isinstance(location, basestring):
-        pytest.sel.force_navigate(location)
-    else:
-        navigate_to(location, 'All')
+def navigate_and_check(location):
+    navigate_to(param_classes[location], 'All')
+    tb.select('Grid View')
+    return Quadicon.any_present()
 
 
-@pytest.mark.uncollectif(
-    lambda location: location in {"clouds_tenants"} and current_version() < "5.4")
 def test_tag_item_through_selecting(request, location, tag):
     """Add a tag to an item with going through the details page.
 
@@ -62,15 +66,13 @@ def test_tag_item_through_selecting(request, location, tag):
         * Go back to the quadicon view and select ``Policy/Edit Tags`` and remove the tag.
         * Click on the quadicon and verify the tag is not present. (TODO)
     """
-    nav_to(location)
-    tb.select('Grid View')
-    if not Quadicon.any_present():
+    if not navigate_and_check(location):
         pytest.skip("No Quadicon present, cannot test.")
     Quadicon.select_first_quad()
 
     def _delete():
-        nav_to(location)
-        tb.select('Grid View')
+        # Ignoring the result of the check here
+        navigate_and_check(location)
         Quadicon.select_first_quad()
         mixins.remove_tag(tag)
     request.addfinalizer(lambda: diaper(_delete))
@@ -78,8 +80,6 @@ def test_tag_item_through_selecting(request, location, tag):
     _delete()
 
 
-@pytest.mark.uncollectif(
-    lambda location: location in {"clouds_tenants"} and current_version() < "5.4")
 def test_tag_item_through_details(request, location, tag):
     """Add a tag to an item with going through the details page.
 
@@ -94,9 +94,7 @@ def test_tag_item_through_details(request, location, tag):
         * Select ``Policy/Edit Tags`` and remove the tag.
         * Verify the tag is not present. (TODO)
     """
-    nav_to(location)
-    tb.select('Grid View')
-    if not Quadicon.any_present():
+    if not navigate_and_check(location):
         pytest.skip("No Quadicon present, cannot test.")
     pytest.sel.click(Quadicon.first())
     request.addfinalizer(lambda: diaper(lambda: mixins.remove_tag(tag)))
