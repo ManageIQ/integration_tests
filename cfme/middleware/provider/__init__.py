@@ -31,6 +31,7 @@ def _db_select_query(name=None, type=None):
 def _get_providers_page():
     navigate_to(MiddlewareProvider, 'All')
 
+
 properties_form = Form(
     fields=[
         ('type_select', AngularSelect('emstype')),
@@ -178,5 +179,6 @@ class TopologyFromDetails(CFMENavigateStep):
 
     def step(self):
         sel.click(InfoBlock('Overview', 'Topology'))
+
 
 import_all_modules_of('cfme.middleware.provider')

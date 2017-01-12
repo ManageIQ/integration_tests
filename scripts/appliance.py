@@ -97,5 +97,6 @@ def call_appliance(provider_name, vm_name, action, *args):
     else:
         return call(*process_args(args))
 
+
 if __name__ == '__main__':
     sys.exit(main())

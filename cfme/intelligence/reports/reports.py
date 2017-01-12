@@ -40,7 +40,12 @@ def tag(tag_name, **kwargs):
 
 
 input = partial(tag, "input")
-select = lambda **kwargs: Select(tag("select", **kwargs))
+
+
+def select(**kwargs):
+    Select(tag("select", **kwargs))
+
+
 button = partial(tag, "button")
 table = partial(tag, "table")
 

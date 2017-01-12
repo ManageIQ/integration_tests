@@ -70,6 +70,7 @@ def __repr__(self):
     else:
         return _old__repr__(self)
 
+
 if WebElement.__repr__ is not __repr__:
     WebElement.__repr__ = __repr__
 
@@ -1042,8 +1043,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right here
     if (
-            is_displayed("//div[@id='blocker_div' or @id='notification']", _no_deeper=True)
-            or is_displayed(".modal-backdrop.fade.in", _no_deeper=True)):
+            is_displayed("//div[@id='blocker_div' or @id='notification']", _no_deeper=True) or
+            is_displayed(".modal-backdrop.fade.in", _no_deeper=True)):
         logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
         quit()
         kwargs.pop("start", None)
@@ -1168,8 +1169,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             recycle = True
         # If the page is blocked, then recycle...
         if (
-                is_displayed("//div[@id='blocker_div' or @id='notification']", _no_deeper=True)
-                or is_displayed(".modal-backdrop.fade.in", _no_deeper=True)):
+                is_displayed("//div[@id='blocker_div' or @id='notification']", _no_deeper=True) or
+                is_displayed(".modal-backdrop.fade.in", _no_deeper=True)):
             logger.warning("Page was blocked with blocker div, recycling.")
             recycle = True
         elif cfme_exc.is_cfme_exception():

@@ -24,6 +24,7 @@ def pytest_generate_tests(metafunc):
         required_fields=[(['cap_and_util', 'capandu_vm'], 'cu-24x7')])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
+
 pytestmark = [
     pytest.mark.tier(1),
     test_requirements.c_and_u

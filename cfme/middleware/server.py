@@ -56,6 +56,7 @@ def _get_servers_page(provider=None, server_group=None):
     else:  # if None(provider) given navigate through all middleware servers page
         navigate_to(MiddlewareServer, 'All')
 
+
 timeout_form = Form(
     fields=[
         ("timeout", Input("timeout", use_id=True)),

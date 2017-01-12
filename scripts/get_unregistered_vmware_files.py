@@ -152,6 +152,7 @@ def get_orphaned_vmware_files(provider=None):
         # we can add thread here
         get_datastores_per_host(provider_key)
 
+
 if __name__ == "__main__":
     args = parse_cmd_line()
     sys.exit(get_orphaned_vmware_files(args.provider))

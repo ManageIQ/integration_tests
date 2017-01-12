@@ -148,6 +148,7 @@ def _pytest_plugins_generator(*extension_pkgs):
         for importer, modname, is_package in iter_modules(path, prefix):
             yield modname
 
+
 pytest_plugins = (
 
     'fixtures.pytest_store',

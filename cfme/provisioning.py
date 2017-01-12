@@ -34,6 +34,7 @@ def select_security_group(sg):
     sel.wait_for_ajax()
     sel.sleep(1)
 
+
 provisioning_form = tabstrip.TabStripForm(
     fields=[
         ('submit_button', form_buttons.FormButton("Submit")),

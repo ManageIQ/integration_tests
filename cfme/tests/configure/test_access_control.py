@@ -33,6 +33,7 @@ group_table = Table("//div[@id='main_div']//table")
 def setup_first_provider():
     setup_a_provider(validate=True, check_existing=True)
 
+
 # due to pytest.mark.meta(blockers=[1035399]), non admin users can't login
 # with no providers added
 pytestmark = [test_requirements.rbac,
@@ -99,6 +100,7 @@ def test_user_duplicate_name():
     nu.create()
     with error.expected("Userid has already been taken"):
         nu.create()
+
 
 group_user = Group("EvmGroup-user")
 

@@ -22,6 +22,7 @@ from utils.providers import list_providers, get_mgmt
 lock = Lock()
 providers_vm_list = []
 
+
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('-f', '--force', default=True, action='store_false', dest='prompt',
@@ -235,6 +236,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         thread.join()
 
     print("Deleting finished")
+
 
 if __name__ == "__main__":
     args = parse_cmd_line()

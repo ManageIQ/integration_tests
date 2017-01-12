@@ -29,6 +29,7 @@ def get_sch_name(sch):
     else:
         return str(sch)
 
+
 nav.add_branch(
     "reports",
     {

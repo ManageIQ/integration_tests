@@ -24,6 +24,7 @@ pol_btn = partial(tb.select, 'Policy')
 match_page = partial(match_location, controller='resource_pool',
                      title='Resource Pools')
 
+
 class ResourcePool(Pretty, Navigatable):
     """ Model of an infrastructure Resource pool in cfme
 

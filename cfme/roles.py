@@ -23,6 +23,7 @@ def _remove_from_all(roles, r_page):
                 logger.info("Page %s attempted to be removed from role %s, "
                             "but isn't in there anyway", page, group)
 
+
 group_data = {
     'evmgroup-administrator': [
         'control_explorer',

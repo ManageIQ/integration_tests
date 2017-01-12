@@ -335,4 +335,5 @@ def wait_for_a_provider():
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
 
+
 import_all_modules_of('cfme.cloud.provider')

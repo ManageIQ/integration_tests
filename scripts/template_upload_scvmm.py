@@ -223,6 +223,7 @@ def run(**kwargs):
         else:
             print("SCVMM: A Template with that name already exists in the SCVMMLibrary")
 
+
 if __name__ == "__main__":
     print("Start SCVMM Template upload")
     args = parse_cmd_line()

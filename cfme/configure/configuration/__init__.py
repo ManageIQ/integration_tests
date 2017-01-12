@@ -163,23 +163,6 @@ nav.add_branch("configuration",
             "Zone: Default Zone (current)",
         ),
 
-        "cfg_settings_zones":
-        [
-            lambda _: settings_tree(
-                store.current_appliance.server_region_string(),
-                "Zones"),
-            {
-                "cfg_settings_zone":
-                [
-                    lambda ctx: zones_table.click_cell("name", ctx["zone_name"]),
-                    {
-                        "cfg_settings_zone_edit":
-                        lambda _: tb.select("Configuration", "Edit this Zone")
-                    }
-                ]
-            }
-        ],
-
         "cfg_settings_schedules":
         [
             lambda _: settings_tree(

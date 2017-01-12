@@ -394,6 +394,7 @@ def run_platform_updates(appliance_set, appliances_to_update):
                  fail_func=check_updates_and_refresh)
         logger.info("Done")
 
+
 try:
     skip_rhsm_direct = not conf.cfme_data.redhat_updates.registration.rhsm.test_direct
 except KeyError:
@@ -413,6 +414,7 @@ def test_rhsm_direct(appliance_set, rh_updates_data,
 
     run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update)
     run_platform_updates(appliance_set, appliances_to_update)
+
 
 try:
     skip_rhsm_rhn_mirror = not conf.cfme_data.redhat_updates.registration.rhsm.test_rhn_mirror
@@ -437,6 +439,7 @@ def test_rhsm_rhn_mirror(appliance_set, rh_updates_data, appliances_to_update):
     run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update)
     run_platform_updates(appliance_set, appliances_to_update)
 
+
 try:
     skip_sat5_direct = not conf.cfme_data.redhat_updates.registration.sat5.test_direct
 except KeyError:
@@ -457,6 +460,7 @@ def test_sat5_direct(appliance_set, rh_updates_data,
     run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update)
     run_platform_updates(appliance_set, appliances_to_update)
 
+
 try:
     skip_sat6_direct = not conf.cfme_data.redhat_updates.registration.sat6.test_direct
 except KeyError:
@@ -476,6 +480,7 @@ def test_sat6_direct(appliance_set, rh_updates_data,
 
     run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update)
     run_platform_updates(appliance_set, appliances_to_update)
+
 
 try:
     skip_sat6_rhn_mirror = not conf.cfme_data.redhat_updates.registration.sat6.test_rhn_mirror
