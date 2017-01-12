@@ -7,6 +7,7 @@ from cfme.common.vm import VM
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
 from cfme.control.explorer.actions import Action
+from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.virtual_machines import Vm
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
@@ -217,3 +218,27 @@ def test_check_compliance_history(request, vmware_provider, vmware_vm):
         "//span[@id='explorer_title_text']").text
     assert history_screen_title == '"Compliance History" for Virtual Machine "{}"'.format(
         vmware_vm.name)
+
+
+@pytest.mark.meta(blockers=[1395965], automates=[1395965])
+def test_delete_all_actions_from_compliance_policy(request):
+    """We should not allow a compliance policy to be saved
+    if there are no actions on the compliance event.
+
+    Steps:
+        * Create a compliance policy
+        * Remove all actions
+
+    Result:
+        The policy shouldn't be saved.
+    """
+    policy = VMCompliancePolicy(fauxfactory.gen_alphanumeric())
+
+    @request.addfinalizer
+    def _delete_policy():
+        if policy.exists:
+            policy.delete()
+
+    policy.create()
+    with pytest.raises(FlashMessageException):
+        policy.assign_actions_to_event("VM Compliance Check", [])
