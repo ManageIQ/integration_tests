@@ -45,7 +45,7 @@ def test_vm(setup_provider_modscope, provider, vm_name, request):
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-        request.addfinalizer(test_vm.delete_from_provider)
+        request.addfinalizer(vm.delete_from_provider)
     return vm
 
 
