@@ -12,12 +12,14 @@ import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 from cfme.web_ui import Quadicon, paginator
 from cfme.common.provider import BaseProvider
-from cfme.containers import provider as container_providers  # NOQA
-from cfme.cloud import provider as cloud_providers  # NOQA
-from cfme.infrastructure import provider as infrastructure_providers  # NOQA
-from cfme.middleware import provider as middleware_providers  # NOQA
+from cfme.containers import provider as container_providers # NOQA
+from cfme.cloud import provider as cloud_providers # NOQA
+from cfme.infrastructure import provider as infrastructure_providers # NOQA
+from cfme.middleware import provider as middleware_providers # NOQA
+
 from fixtures.prov_filter import filtered
 from utils import conf
+from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger, perflog
 
 
@@ -264,7 +266,7 @@ def setup_provider_by_name(provider_name, *args, **kwargs):
     return setup_provider(get_provider_key(provider_name), *args, **kwargs)
 
 
-def setup_providers(prov_classes=('cloud', 'infra'), validate=True, check_existing=True):
+def setup_providers(prov_classes=['cloud', 'infra'], validate=True, check_existing=True):
     """Run :py:func:`setup_provider` for every provider (cloud and infra only, by default)
 
     Args:
@@ -312,9 +314,7 @@ def _setup_providers(prov_class, validate, check_existing):
     if not list_providers(BaseProvider.type_mapping[prov_class].provider_types.keys()):
         return []
     if check_existing:
-        navigate = "{}_providers".format(
-            BaseProvider.type_mapping[prov_class].page_name)
-        sel.force_navigate(navigate)
+        navigate_to(BaseProvider.type_mapping[prov_class], 'All')
         add_providers = []
         for provider_key in list_providers(
                 BaseProvider.type_mapping[prov_class].provider_types.keys()):
