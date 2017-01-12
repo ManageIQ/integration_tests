@@ -23,7 +23,7 @@ def test_server_name():
     settings_pg.update()
     flash.assert_message_contain(flash_msg.format(new_server_name))
 
-    sel.force_navigate('about')
+    navigate_to(current_appliance.server, 'About')
     assert new_server_name == InfoBlock('Session Information', 'Server Name').text,\
         "Server name in About section does not match the new name"
 
