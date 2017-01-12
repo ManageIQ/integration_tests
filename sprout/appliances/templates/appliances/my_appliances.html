@@ -16,7 +16,7 @@
 </script>
 {% endblock %}
 {% block body %}
-<div ng-app="myAppliancesApp">
+<div ng-app="myAppliancesApp" ng-cloak>
 
 {% if not request.user.is_superuser %}
     <h2>Listing and operation of your appliances</h2>
