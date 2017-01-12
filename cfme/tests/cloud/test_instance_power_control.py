@@ -22,6 +22,7 @@ def pytest_generate_tests(metafunc):
         required_fields=[('test_power_control', True)])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
 
+
 pytestmark = [pytest.mark.tier(2), pytest.mark.long_running, test_requirements.power]
 
 

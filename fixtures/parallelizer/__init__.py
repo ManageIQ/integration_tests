@@ -139,6 +139,8 @@ def handle_end_session(signal, frame):
     # when signaled, end the current test session immediately
     if store.parallel_session:
         store.parallel_session.session_finished = True
+
+
 signal.signal(signal.SIGQUIT, handle_end_session)
 
 
@@ -976,6 +978,7 @@ class TerminalDistReporter(object):
         if report.when == 'teardown':
             word, markup = self.outcomes.pop(test)
             self.tr.write_ensure_prefix(prefix, word, **markup)
+
 
 Outcome = namedtuple('Outcome', ['word', 'markup'])
 

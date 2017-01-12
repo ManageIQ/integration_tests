@@ -90,10 +90,11 @@ service_types = {
 }
 
 
-appliances_table = lambda: version.pick({
-    version.LOWEST: CheckboxTable("//div[@id='form_div']/table[@class='style3']"),
-    '5.4': CheckboxTable("//div[@id='form_div']/table")
-})
+def appliances_table():
+    return version.pick({
+        version.LOWEST: CheckboxTable("//div[@id='form_div']/table[@class='style3']"),
+        '5.4': CheckboxTable("//div[@id='form_div']/table")
+    })
 
 
 def update_registration(service,

@@ -44,6 +44,7 @@ class MiddlewareBase(Validatable):
         """
         return InfoBlock.text(*ident)
 
+
 import_form = Form(
     fields=[
         ("file_select", FileInput("upload[file]")),

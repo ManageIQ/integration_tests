@@ -330,6 +330,7 @@ class Version(object):
             if self.is_in_series(v):
                 return spt.product_version
 
+
 LOWEST = Version.lowest()
 LATEST = Version.latest()
 UPSTREAM = LATEST

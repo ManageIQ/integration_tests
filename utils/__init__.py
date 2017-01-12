@@ -258,8 +258,8 @@ def process_pytest_path(path):
         # Definitely a final segment
         return [path]
     else:
-        if (param_start is not None and param_end is not None and seg_end > param_start
-                and seg_end < param_end):
+        if (param_start is not None and param_end is not None and seg_end > param_start and
+                seg_end < param_end):
             # The / inside []
             segment = path[:param_end + 1]
             rest = path[param_end + 1:]

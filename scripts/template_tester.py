@@ -80,6 +80,7 @@ def mark(api, provider_key, template, usable, diagnose):
 def retest(api, provider_key, template):
     trackerbot.mark_provider_template(api, provider_key, template, tested=False)
 
+
 if __name__ == '__main__':
     parser = trackerbot.cmdline_parser()
     subs = parser.add_subparsers(title='commands', dest='command')
