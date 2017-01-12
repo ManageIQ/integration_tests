@@ -8,24 +8,6 @@ from cfme.web_ui import CheckboxTable, accordion, toolbar
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
 
-nav.add_branch(
-    "reports",
-    {
-        "saved_reports":
-        lambda ctx: accordion.tree("Saved Reports", "All Saved Reports"),
-
-        "saved_reports_for":
-        [
-            lambda ctx: accordion.tree("Saved Reports", "All Saved Reports", ctx["report_name"]),
-            {
-                "saved_report":
-                lambda ctx: reports_table.click_cell("queued_at", ctx["date_time_completed"]),
-            }
-        ],
-    }
-)
-
-
 reports_table = CheckboxTable("//div[@id='records_div']//table[thead]")
 cfg_btn = partial(toolbar.select, "Configuration")
 
