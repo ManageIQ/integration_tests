@@ -11,6 +11,7 @@ from cfme import BaseLoggedInPage
 from cfme.dashboard import DashboardView
 from cfme.intelligence.rss import RSSView
 from cfme.exceptions import ZoneNotFound
+from cfme.intelligence.chargeback import ChargebackView
 from cfme.login import LoginPage
 
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
@@ -174,6 +175,15 @@ class Dashboard(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select('Cloud Intel', 'Dashboard')
+
+
+@navigator.register(Server)
+class Chargeback(CFMENavigateStep):
+    VIEW = ChargebackView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self, *args, **kwargs):
+        self.view.navigation.select('Cloud Intel', 'Chargeback')
 
 
 class ServerView(ConfigurationView):
