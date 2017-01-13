@@ -7,7 +7,6 @@ from cfme.common.vm import VM
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.control.explorer.policies import VMCompliancePolicy, VMControlPolicy
 from cfme.control.explorer.actions import Action
-from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.virtual_machines import Vm
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
@@ -240,5 +239,5 @@ def test_delete_all_actions_from_compliance_policy(request):
             policy.delete()
 
     policy.create()
-    with pytest.raises(FlashMessageException):
+    with pytest.raises(AssertionError):
         policy.assign_actions_to_event("VM Compliance Check", [])
