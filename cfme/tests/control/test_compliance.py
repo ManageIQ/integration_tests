@@ -59,7 +59,6 @@ def host(provider):
 
 @pytest.yield_fixture
 def policy_for_testing(policy_name, policy_profile_name, provider):
-    """ Takes care of setting the appliance up for testing """
     policy = HostCompliancePolicy(policy_name)
     policy.create()
     policy_profile = PolicyProfile(policy_profile_name, policies=[policy])
@@ -131,8 +130,7 @@ def analysis_profile(compliance_vm):
 
 
 @pytest.fixture(scope="module")
-def fleecing_vm(
-        request, compliance_vm, provider, analysis_profile):
+def fleecing_vm(request, compliance_vm, provider, analysis_profile):
     logger.info("Provisioning an appliance for fleecing on %s", provider.key)
     # TODO: When we get something smaller, use it!
     appliance = provision_appliance(
