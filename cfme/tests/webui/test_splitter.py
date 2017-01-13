@@ -1,5 +1,3 @@
-import types
-
 import pytest
 from xml.sax.saxutils import quoteattr, unescape
 
@@ -27,8 +25,9 @@ LOCATIONS = [
     # Bottlenecks missing
     # infra_networking missing
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
-    MyService, ServiceCatalogs, CustomReport, ComputeRate, Instance, (Vm, 'VMsOnly'),
-    ISODatastore, (Server, 'Configuration'), Datastore, ConfigManager, (Server, 'Utilization')
+    (MyService, 'All'), (ServiceCatalogs, 'All'), (CustomReport, 'All'), (ComputeRate, 'All'),
+    (Instance, 'All'), (Vm, 'VMsOnly'), (ISODatastore, 'All'), (Server, 'Configuration'),
+    (Datastore, 'All'), (ConfigManager, 'All'), (Server, 'Utilization')
 ]
 
 
@@ -36,29 +35,22 @@ pytestmark = [pytest.mark.parametrize("location", LOCATIONS), pytest.mark.uncoll
     location: location == "infrastructure_networking" and version.current_version() < '5.7')]
 
 
-def nav_to(location):
-    if isinstance(location, types.TupleType):
-        location, dest = location
-    else:
-        dest = 'All'
-    navigate_to(location, dest)
-
-
 @pytest.mark.meta(
     blockers=[
-        BZ('1380443', unblock=lambda location: location != "bottlenecks")
+        BZ('1380443', unblock=lambda location: location != "bottlenecks")  # Leaving this for later
     ]
 )
 @pytest.mark.requirement('general_ui')
 @pytest.mark.tier(3)
 def test_pull_splitter_persistence(location):
-    nav_to(location)
+    obj, dest = location
+    navigate_to(obj, dest)
     # First we move splitter to hidden position by pulling it left twice
     pull_splitter_left()
     pull_splitter_left()
     navigate_to(Server, 'Dashboard')
     try:
-        nav_to(location)
+        navigate_to(obj, dest)
     except (TypeError, CannotScrollException):
         # this exception is expected here since
         # some navigation commands try to use accordion when it is hidden by splitter
@@ -72,7 +64,7 @@ def test_pull_splitter_persistence(location):
         # Pull splitter left
         pull_splitter_right()
         navigate_to(Server, 'Dashboard')
-        nav_to(location)
+        navigate_to(obj, dest)
         # Then check its position
         if not pytest.sel.elements("//div[@id='left_div'][contains(@class, {})]"
                 .format(unescape(quoteattr(position)))):
