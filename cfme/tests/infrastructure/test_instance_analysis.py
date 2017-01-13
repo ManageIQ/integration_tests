@@ -276,9 +276,11 @@ def policy_profile(request, instance):
     ]
 
     analysis_profile_name = 'ssa_analysis_{}'.format(fauxfactory.gen_alphanumeric())
-    analysis_profile = configuration.VMAnalysisProfile(analysis_profile_name, analysis_profile_name,
-                                                       categories=["check_system"],
-                                                       files=collected_files)
+    analysis_profile = configuration.AnalysisProfile(name=analysis_profile_name,
+                                                     description=analysis_profile_name,
+                                                     profile_type='VM',
+                                                     categories=["check_system"],
+                                                     files=collected_files)
     if analysis_profile.exists:
         analysis_profile.delete()
     analysis_profile.create()

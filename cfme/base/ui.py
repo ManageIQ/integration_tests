@@ -1,5 +1,4 @@
 import re
-
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic_manageiq import ManageIQTree
@@ -10,12 +9,12 @@ from widgetastic.widget import View, Table
 from cfme import BaseLoggedInPage
 from cfme.dashboard import DashboardView
 from cfme.intelligence.rss import RSSView
-from cfme.exceptions import ZoneNotFound
+from cfme.exceptions import ZoneNotFound, DestinationNotFound
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.login import LoginPage
 
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
-
+from utils import version
 from . import Server, Region, Zone, ZoneCollection
 
 
@@ -545,7 +544,10 @@ class RegionDiagnosticsReplication(CFMENavigateStep):
     prerequisite = NavigateToSibling('Diagnostics')
 
     def step(self):
-        self.view.replication.select()
+        if version.current_version() < '5.7':
+            self.view.replication.select()
+        else:
+            raise DestinationNotFound('Replication destination is absent in 5.7')
 
 
 @navigator.register(Region, 'ServersByRoles')

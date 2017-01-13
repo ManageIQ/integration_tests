@@ -6,7 +6,7 @@ import pytest
 from mgmtsystem import exceptions
 
 from cfme.common.vm import VM
-from cfme.configure.configuration import VMAnalysisProfile
+from cfme.configure.configuration import AnalysisProfile
 from cfme.control.explorer.policies import VMCompliancePolicy
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
@@ -90,9 +90,8 @@ def compliance_vm(request, provider):
 
 @pytest.yield_fixture(scope="module")
 def analysis_profile(compliance_vm):
-    ap = VMAnalysisProfile(
-        name="default", description="ap-desc", files=[],
-        categories=["check_software"])
+    ap = AnalysisProfile(name="default", description="ap-desc", profile_type='VM', files=[],
+                         categories=["check_software"])
     if ap.exists:
         ap.delete()
     with ap:
