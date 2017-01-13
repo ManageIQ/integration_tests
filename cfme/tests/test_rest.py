@@ -6,7 +6,7 @@ import utils.error as error
 
 from cfme import test_requirements
 from cfme.rest.gen_data import vm as _vm
-from cfme.rest.gen_data import arbitration_settings
+from cfme.rest.gen_data import arbitration_settings, automation_requests_data
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 from utils import testgen
@@ -31,6 +31,17 @@ def a_provider():
 @pytest.fixture(scope="function")
 def vm(request, a_provider, rest_api):
     return _vm(request, a_provider, rest_api)
+
+
+@pytest.fixture(scope="module")
+def vm_modscope(request, a_provider, rest_api_modscope):
+    return _vm(request, a_provider, rest_api_modscope)
+
+
+@pytest.fixture(scope="function")
+def generate_notifications(rest_api, vm_modscope):
+    requests_data = automation_requests_data(vm_modscope)
+    return rest_api.collections.automation_requests.action.create(*requests_data[:2])
 
 
 @pytest.yield_fixture(scope="function")
@@ -346,3 +357,52 @@ def test_edit_arbitration_rules(arbitration_rules, rest_api, from_detail):
     assert len(edited) == num_rules
     for i in range(num_rules):
         assert edited[i].description == new[i]['description']
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_mark_notifications(rest_api, generate_notifications, from_detail):
+    """Tests marking notifications as seen.
+
+    Metadata:
+        test_flag: rest
+    """
+    unseen = rest_api.collections.notifications.find_by(seen=False)
+    notifications = [unseen[i] for i in range(2)]
+
+    if from_detail:
+        for ent in notifications:
+            ent.action.mark_as_seen()
+    else:
+        rest_api.collections.notifications.action.mark_as_seen(*notifications)
+
+    for ent in notifications:
+        ent.reload()
+        assert ent.seen
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_delete_notifications(rest_api, generate_notifications, from_detail):
+    """Tests delete notifications.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = rest_api.collections.notifications
+    collection.reload()
+    notifications = [collection[i] for i in range(2)]
+
+    if from_detail:
+        for ent in notifications:
+            ent.action.delete()
+            with error.expected("ActiveRecord::RecordNotFound"):
+                ent.action.delete()
+    else:
+        collection.action.delete(*notifications)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            collection.action.delete(*notifications)
