@@ -623,14 +623,12 @@ class Calendar(TextInput):
             # Now when we set the value, we need to simulate a change event.
             if self.browser.get_attribute("data-date-autoclose", self):
                 # New one
-                script = "$(\"#{}\").trigger('changeDate');"
+                script = "$(arguments[0]).trigger('changeDate');"
             else:
                 # Old one
-                script = (
-                    "if(typeof $j == 'undefined') {var jq = $;} else {var jq = $j;} "
-                    "jq(\"#{}\").change();")
+                script = "$(arguments[0]).change();"
             try:
-                self.browser.execute_script(script.format(self.name))
+                self.browser.execute_script(script, self.browser.element(self))
             except WebDriverException as e:
                 logger.warning(
                     "An exception was raised during handling of the Cal #{}'s change event:\n{}"
