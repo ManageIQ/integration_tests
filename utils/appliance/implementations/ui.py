@@ -232,7 +232,7 @@ class CFMENavigateStep(NavigateStep):
         br = self.appliance.browser
 
         try:
-            self.step()
+            self.step(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
             # ValueError: ui_navigate.go_to can't handle this page, give up
@@ -336,12 +336,15 @@ class CFMENavigateStep(NavigateStep):
 
     def go(self, _tries=0, *args, **kwargs):
         _tries += 1
+        use_resetter = True
+        if 'use_resetter' in kwargs:
+            use_resetter = kwargs.pop('use_resetter')
         self.appliance.browser.widgetastic.dismiss_any_alerts()
         self.pre_navigate(_tries, *args, **kwargs)
         self.log_message("Checking if already here")
         here = False
         try:
-            here = self.am_i_here()
+            here = self.am_i_here(*args, **kwargs)
         except Exception as e:
             self.log_message("Exception raised [{}] whilst checking if already here".format(e))
         if here:
@@ -350,8 +353,8 @@ class CFMENavigateStep(NavigateStep):
             self.log_message("Not here")
             self.parent_view = self.prerequisite()
             self.log_message("Heading to destination")
-            self.do_nav(_tries)
-        if kwargs.get('use_resetter', True):
+            self.do_nav(_tries, *args, **kwargs)
+        if use_resetter:
             self.log_message("Running resetter")
             self.resetter()
         self.post_navigate(_tries, *args, **kwargs)

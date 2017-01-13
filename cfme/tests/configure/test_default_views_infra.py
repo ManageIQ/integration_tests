@@ -3,12 +3,11 @@ import pytest
 
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
-from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.myservice import MyService
-from cfme.services.workloads import services_workloads  # NOQA
+from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.web_ui import Quadicon, fill, toolbar as tb
 from utils.appliance.implementations.ui import navigate_to
 from utils.providers import setup_a_provider as _setup_a_provider
@@ -34,9 +33,8 @@ gtl_params = {
     'VMs': Vm,
     'My Services': MyService,
     'Catalog Items': CatalogItem,
-    'VMs & Instances': 'service_vms_instances',
-    'Templates & Images': 'service_templates_images'
-}
+    'VMs & Instances': VmsInstances,
+    'Templates & Images': TemplatesImages}
 
 
 def select_two_quads():
@@ -51,13 +49,10 @@ def select_two_quads():
 def set_and_test_default_view(group_name, view, page):
     old_default = DefaultView.get_default_view(group_name)
     DefaultView.set_default_view(group_name, view)
-    if isinstance(page, basestring):
-        sel.force_navigate(page)
-    else:
-        dest = 'All'
-        if group_name == 'VMs':
-            dest = 'VMsOnly'
-        navigate_to(page, dest, use_resetter=False)
+    dest = 'All'
+    if group_name == 'VMs':
+        dest = 'VMsOnly'
+    navigate_to(page, dest, use_resetter=False)
 
     assert tb.is_active(view), "{} view setting failed".format(view)
     DefaultView.set_default_view(group_name, old_default)

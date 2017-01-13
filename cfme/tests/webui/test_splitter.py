@@ -14,6 +14,7 @@ from cfme.intelligence.chargeback import ComputeRate
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
+from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.web_ui.splitter import pull_splitter_left, pull_splitter_right
 from utils import version
 from utils.appliance.implementations.ui import navigate_to
@@ -21,13 +22,13 @@ from utils.blockers import BZ
 
 
 LOCATIONS = [
-    # Worksloads missing
     # Bottlenecks missing
     # infra_networking missing
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
     (MyService, 'All'), (ServiceCatalogs, 'All'), (CustomReport, 'All'), (ComputeRate, 'All'),
     (Instance, 'All'), (Vm, 'VMsOnly'), (ISODatastore, 'All'), (Server, 'Configuration'),
-    (Datastore, 'All'), (ConfigManager, 'All'), (Server, 'Utilization')
+    (Datastore, 'All'), (ConfigManager, 'All'), (Server, 'Utilization'), (VmsInstances, 'All'),
+    (TemplatesImages, 'All')
 ]
 
 
