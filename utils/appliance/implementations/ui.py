@@ -336,6 +336,9 @@ class CFMENavigateStep(NavigateStep):
 
     def go(self, _tries=0, *args, **kwargs):
         _tries += 1
+        use_resetter = True
+        if 'use_resetter' in kwargs:
+            use_resetter = kwargs.pop('use_resetter')
         self.appliance.browser.widgetastic.dismiss_any_alerts()
         self.pre_navigate(_tries, *args, **kwargs)
         self.log_message("Checking if already here")
@@ -351,7 +354,7 @@ class CFMENavigateStep(NavigateStep):
             self.parent_view = self.prerequisite()
             self.log_message("Heading to destination")
             self.do_nav(_tries, *args, **kwargs)
-        if kwargs.get('use_resetter', True):
+        if use_resetter:
             self.log_message("Running resetter")
             self.resetter()
         self.post_navigate(_tries, *args, **kwargs)
