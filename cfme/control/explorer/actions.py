@@ -21,7 +21,7 @@ class ActionsAllView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(ActionsAllView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "All Actions" and
             self.actions.tree.currently_selected == ["All Actions"]
         )
@@ -59,7 +59,7 @@ class NewActionView(ActionFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewActionView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "Adding a new Action" and
             self.actions.is_opened and
             self.actions.tree.currently_selected == ["All Actions"]
@@ -75,7 +75,7 @@ class EditActionView(ActionFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(EditActionView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Editing Action "{}"'.format(self.context["object"].description) and
             self.actions.is_opened and
             self.actions.tree.currently_selected == [
@@ -94,7 +94,7 @@ class ActionDetailsView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(ActionDetailsView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Action "{}"'.format(self.context["object"].description) and
             self.actions.is_opened and
             self.actions.tree.currently_selected == [

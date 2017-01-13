@@ -32,7 +32,7 @@ class NewPolicyProfileView(PolicyProfileFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewPolicyProfileView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "Adding a New Policy Profile" and
             self.policy_profiles.tree.currently_selected == ["All Policy Profiles"]
         )
@@ -44,7 +44,7 @@ class EditPolicyProfileView(PolicyProfileFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewPolicyProfileView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Editing Policy Profile "{}"'.format(
                 self.context["object"].description) and
             self.policy_profiles.tree.currently_selected == [
@@ -60,7 +60,7 @@ class PolicyProfileDetailsView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(PolicyProfileDetailsView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Policy Profile "{}"'.format(self.context["object"].description)
         )
 
@@ -71,7 +71,7 @@ class PolicyProfilesAllView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(PolicyProfilesAllView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "All Policy Profiles"
         )
 

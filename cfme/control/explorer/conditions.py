@@ -55,7 +55,7 @@ class ConditionsAllView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(ConditionsAllView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "All {} Conditions".format(self.context["object"].FIELD_VALUE) and
             self.conditions.is_opened and
             self.conditions.tree.currently_selected == ["All Conditions",
@@ -80,7 +80,7 @@ class NewConditionView(ConditionFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewConditionView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "Adding a new Condition" and
             self.conditions.is_opened and
             self.conditions.tree.currently_selected == ["All Conditions",
@@ -97,7 +97,7 @@ class EditConditionView(ConditionFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(EditConditionView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == '{} "{}"'.format(self.context["object"].FIELD_VALUE,
                 self.context["object"].description) and
             self.conditions.is_opened and
@@ -117,7 +117,7 @@ class ConditionDetailsView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(ConditionDetailsView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == '{} Condition "{}"'.format(self.context["object"].FIELD_VALUE,
                 self.context["object"].description) and
             self.conditions.is_opened

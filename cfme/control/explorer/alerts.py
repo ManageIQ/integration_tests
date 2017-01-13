@@ -21,7 +21,7 @@ class AlertsAllView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(AlertsAllView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "All Alerts" and
             self.alerts.tree.currently_selected == ["All Alerts"]
         )
@@ -49,7 +49,7 @@ class NewAlertView(AlertFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewAlertView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "Adding a new Alert" and
             self.alerts.is_opened and
             self.alerts.tree.currently_selected == ["All Alerts"]
@@ -65,7 +65,7 @@ class EditAlertView(AlertFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(EditAlertView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Editing Alert "{}"'.format(self.context["object"].description) and
             self.alerts.is_opened and
             self.alerts.tree.currently_selected == [
@@ -81,7 +81,7 @@ class AlertDetailsView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(AlertDetailsView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Alert "{}"'.format(self.context["object"].description) and
             self.alerts.is_opened and
             self.alerts.tree.currently_selected == [
