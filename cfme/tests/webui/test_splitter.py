@@ -31,8 +31,13 @@ LOCATIONS = [
 ]
 
 
-pytestmark = [pytest.mark.parametrize("location", LOCATIONS), pytest.mark.uncollectif(lambda
-    location: location == "infrastructure_networking" and version.current_version() < '5.7')]
+pytestmark = [
+    pytest.mark.parametrize(
+        "location", LOCATIONS, ids=[
+            "{}-{}".format(loc[0].__name__, loc[1]) for loc in LOCATIONS]
+    ),
+    pytest.mark.uncollectif(lambda
+        location: location == "infrastructure_networking" and version.current_version() < '5.7')]
 
 
 @pytest.mark.meta(
