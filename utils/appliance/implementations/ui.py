@@ -232,7 +232,7 @@ class CFMENavigateStep(NavigateStep):
         br = self.appliance.browser
 
         try:
-            self.step()
+            self.step(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
             # ValueError: ui_navigate.go_to can't handle this page, give up
@@ -350,7 +350,7 @@ class CFMENavigateStep(NavigateStep):
             self.log_message("Not here")
             self.parent_view = self.prerequisite()
             self.log_message("Heading to destination")
-            self.do_nav(_tries)
+            self.do_nav(_tries, *args, **kwargs)
         if kwargs.get('use_resetter', True):
             self.log_message("Running resetter")
             self.resetter()
