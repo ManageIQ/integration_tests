@@ -135,6 +135,7 @@ def test_vm(request, vmware_provider, vm_name):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("5.7")  # no configuration->diagnostics->replication tab in 5.7
 def test_appliance_replicate_between_regions(request, vmware_provider):
     """Tests that a provider added to an appliance in one region
         is replicated to the parent appliance in another region.
@@ -188,6 +189,7 @@ def test_external_database_appliance(request, vmware_provider):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("5.7")  # no configuration->diagnostics->replication tab in 5.7
 def test_appliance_replicate_sync_role_change(request, vmware_provider):
     """Tests that a role change is replicated
 
@@ -224,6 +226,7 @@ def test_appliance_replicate_sync_role_change(request, vmware_provider):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("5.7")  # no configuration->diagnostics->replication tab in 5.7
 def test_appliance_replicate_sync_role_change_with_backlog(request, vmware_provider):
     """Tests that a role change is replicated with backlog
 
@@ -260,6 +263,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, vmware_provi
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("5.7")  # no configuration->diagnostics->replication tab in 5.7 
 def test_appliance_replicate_database_disconnection(request, vmware_provider):
     """Tests a database disconnection
 
@@ -294,6 +298,7 @@ def test_appliance_replicate_database_disconnection(request, vmware_provider):
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("5.7")  # no configuration->diagnostics->replication tab in 5.7
 def test_appliance_replicate_database_disconnection_with_backlog(request, vmware_provider):
     """Tests a database disconnection with backlog
 
@@ -328,6 +333,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, vmware
 
 @pytest.mark.tier(2)
 @pytest.mark.ignore_stream("upstream")
+@pytest.mark.ignore_stream("5.7")  # no configuration->diagnostics->replication tab in 5.7
 def test_distributed_vm_power_control(request, test_vm, vmware_provider, verify_vm_running,
                                       register_event, soft_assert):
     """Tests that a replication parent appliance can control the power state of a

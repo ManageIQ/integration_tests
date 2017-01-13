@@ -7,7 +7,7 @@ from cached_property import cached_property
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 
-from cfme.base.ui import Server
+from cfme.base.ui import Server, Region
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, CandidateNotFound
@@ -154,30 +154,6 @@ nav.add_branch("configuration",
             {
                 "analysis_profile_edit":
                 lambda _: tb.select("Configuration", "Edit this Analysis Profile"),
-            }
-        ],
-
-        "cfg_settings_defaultzone":
-        lambda _: settings_tree(
-            store.current_appliance.server_region_string(),
-            "Zones",
-            "Zone: Default Zone (current)",
-        ),
-
-        "cfg_settings_schedules":
-        [
-            lambda _: settings_tree(
-                store.current_appliance.server_region_string(),
-                "Schedules"),
-            {
-                "cfg_settings_schedule":
-                [
-                    lambda ctx: records_table.click_cell("name", ctx["schedule_name"]),
-                    {
-                        "cfg_settings_schedule_edit":
-                        lambda _: tb.select("Configuration", "Edit this Schedule")
-                    }
-                ]
             }
         ],
     }
@@ -1793,7 +1769,8 @@ def get_replication_status(navigate=True):
     Returns: bool of whether replication is Active or Inactive.
     """
     if navigate:
-        sel.force_navigate("cfg_diagnostics_region_replication")
+
+        navigate_to(Region, 'Replication')
     return replication_process.status.text == "Active"
 
 
@@ -1803,5 +1780,5 @@ def get_replication_backlog(navigate=True):
     Returns: int representing the remaining items in the replication backlog.
     """
     if navigate:
-        sel.force_navigate("cfg_diagnostics_region_replication")
+        navigate_to(Region, 'Replication')
     return int(replication_process.current_backlog.text)

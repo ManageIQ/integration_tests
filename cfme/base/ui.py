@@ -539,6 +539,7 @@ class RegionDiagnosticsRolesByServers(CFMENavigateStep):
         self.view.rolesbyservers.select()
 
 
+# this destination is absent in 5.7
 @navigator.register(Region, 'Replication')
 class RegionDiagnosticsReplication(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
