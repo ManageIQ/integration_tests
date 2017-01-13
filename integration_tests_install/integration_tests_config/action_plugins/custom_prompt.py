@@ -1,9 +1,9 @@
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 import termios
 import tty
 from os import isatty
 from ansible.plugins.action import ActionBase
+__metaclass__ = type
 
 # Not extensively tested
 # This is modification of:
