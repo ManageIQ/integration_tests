@@ -299,7 +299,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         if not do_not_navigate:
             if from_any_provider:
                 # TODO implement as navigate_to when cfme.infra.virtual_machines has destination
-                sel.force_navigate(self.ALL_LIST_LOCATION)
+                navigate_to(self, 'All')
             elif self.is_vm:
                 self.provider.load_all_provider_vms()
             else:
@@ -366,7 +366,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         """Get the title of first VM/Instance."""
         if not do_not_navigate:
             if provider is None:
-                sel.force_navigate(cls.ALL_LIST_LOCATION)
+                navigate_to(cls, 'All')
             else:
                 provider.load_all_provider_vms()
         return Quadicon.get_first_quad_title()
