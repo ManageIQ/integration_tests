@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 """Module handling Dashboards accordion.
 """
+from navmazing import NavigateToSibling, NavigateToObject
+
+from cfme.base import Server
 from cfme.fixtures import pytest_selenium as sel
-from cfme.intelligence.reports.ui_elements import (
-    DashboardWidgetSelector, NewerDashboardWidgetSelector)
+from cfme.intelligence.reports.ui_elements import NewerDashboardWidgetSelector
 from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar, Input
-from navmazing import NavigateToSibling, NavigateToObject, NavigateToAttribute
-from . import Report
 from utils import version
-from utils.update import Updateable
-from utils.pretty import Pretty
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.update import Updateable
+from utils.pretty import Pretty
+from . import Report
 
 
 class Dashboard(Updateable, Pretty, Navigatable):
@@ -19,9 +20,7 @@ class Dashboard(Updateable, Pretty, Navigatable):
         ("name", Input("name")),
         ("title", Input("description")),
         ("locked", Input("locked")),
-        ("widgets", {
-            version.LOWEST: DashboardWidgetSelector("//div[@id='form_widgets_div']"),
-            "5.5": NewerDashboardWidgetSelector("//div[@id='form_widgets_div']")}),
+        ("widgets", NewerDashboardWidgetSelector("//div[@id='form_widgets_div']")),
     ])
     pretty_attrs = ['name', 'group', 'title', 'widgets']
 
@@ -63,9 +62,7 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
     form = Form(fields=[
         ("title", Input("description")),
         ("locked", Input("locked")),
-        ("widgets", {
-            version.LOWEST: DashboardWidgetSelector("//div[@id='form_widgets_div']"),
-            "5.5": NewerDashboardWidgetSelector("//div[@id='form_widgets_div']")}),
+        ("widgets", NewerDashboardWidgetSelector("//div[@id='form_widgets_div']")),
     ])
     reset_button = "//*[@title='Reset Dashboard Widgets to the defaults']"
     pretty_attrs = ['title', 'widgets']
@@ -90,26 +87,10 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
 
     @classmethod
     def reset_widgets(cls, cancel=False):
-        sel.force_navigate("dashboard")
+        navigate_to(Server, 'Dashboard')
         sel.click(cls.reset_button, wait_ajax=False)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
-
-
-@navigator.register(Dashboard, 'Main')
-class DashboardPage(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def am_i_here(self):
-        from cfme.web_ui.menu import nav
-        if self.obj.appliance.version < "5.6.0.1":
-            nav.CURRENT_TOP_MENU = "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]"
-        else:
-            nav.CURRENT_TOP_MENU = "{}{}".format(nav.ROOT, nav.ACTIVE_LEV)
-        nav.is_page_active('Dashboard')
-
-    def step(self):
-        self.parent_view.navigation.select('Cloud Intel', 'Dashboard')
 
 
 @navigator.register(DefaultDashboard, 'All')
