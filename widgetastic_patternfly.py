@@ -7,6 +7,8 @@ import time
 from cached_property import cached_property
 
 from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresentException
+from widgetastic.log import call_sig
+from widgetastic.utils import ParametrizedLocator
 from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget
 from widgetastic.xpath import quote
 
@@ -53,6 +55,8 @@ class Button(Widget, ClickableMixin):
     def __init__(self, parent, *text, **kwargs):
         logger = kwargs.pop('logger', None)
         Widget.__init__(self, parent, logger=logger)
+        self.args = text
+        self.kwargs = kwargs
         if text:
             if kwargs:
                 raise TypeError('If you pass button text then do not pass anything else.')
@@ -80,6 +84,9 @@ class Button(Widget, ClickableMixin):
     @property
     def disabled(self):
         return self.browser.get_attribute('disabled', self) == 'disabled'
+
+    def __repr__(self):
+        return '{}{}'.format(type(self).__name__, call_sig(self.args, self.kwargs))
 
 
 class Input(TextInput):
@@ -159,6 +166,9 @@ class FlashMessages(Widget):
     def assert_success_message(self, text, t=None):
         self.assert_no_error()
         self.assert_message(text, 'success')
+
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.locator)
 
 
 class FlashMessage(Widget):
@@ -308,6 +318,9 @@ class NavDropdown(Widget, ClickableMixin):
         self.logger.info('selecting item {}'.format(item))
         self.browser.click('./ul/li[normalize-space(.)={}]'.format(quote(item)), parent=self)
 
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.locator)
+
 
 class VerticalNavigation(Widget):
     """The Patternfly Vertical navigation."""
@@ -434,6 +447,9 @@ class VerticalNavigation(Widget):
 
         return self.browser.element('..', parent=current)
 
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.locator)
+
 
 class Tab(View, ClickableMixin):
     """Represents the Tab widget.
@@ -461,6 +477,9 @@ class Tab(View, ClickableMixin):
     def child_widget_accessed(self, widget):
         # Select the tab
         self.select()
+
+    def __repr__(self):
+        return '<{} {!r}>'.format(type(self).__name__, self.tab_name)
 
 
 class Accordion(View, ClickableMixin):
@@ -537,6 +556,9 @@ class Accordion(View, ClickableMixin):
         else:
             return self.browser.get_attribute('id', div)
 
+    def __repr__(self):
+        return '<{} {!r}>'.format(type(self).__name__, self.accordion_name)
+
 
 class BootstrapSelect(Widget, ClickableMixin):
     """This class represents the Bootstrap Select widget.
@@ -544,13 +566,11 @@ class BootstrapSelect(Widget, ClickableMixin):
     Args:
         id: id of the select, that is the ``data-id`` attribute on the ``button`` tag.
     """
+    ROOT = ParametrizedLocator('.//button[normalize-space(@data-id)={@id|quote}]/..')
+
     def __init__(self, parent, id, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.id = id
-
-    def __locator__(self):
-        return self.browser.element(
-            './/button[normalize-space(@data-id)={}]/..'.format(quote(self.id)))
 
     @property
     def is_open(self):
@@ -619,6 +639,9 @@ class BootstrapSelect(Widget, ClickableMixin):
             self.select_by_visible_text(*items)
             return True
 
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.id)
+
 
 class BootstrapTreeview(Widget):
     """A class representing the Bootstrap treeview used in newer builds.
@@ -631,6 +654,7 @@ class BootstrapTreeview(Widget):
     Args:
         tree_id: Id of the tree, the closest div to the root ``ul`` element.
     """
+    ROOT = ParametrizedLocator('#{@tree_id}')
     ROOT_ITEM = './ul/li[1]'
     SELECTED_ITEM = './ul/li[contains(@class, "node-selected")]'
     CHILD_ITEMS = (
@@ -680,9 +704,6 @@ class BootstrapTreeview(Widget):
         style = self.browser.get_attribute('style', image_node)
         image_href = re.search(r'url\("([^"]+)"\)', style).groups()[0]
         return re.search(r'/([^/]+)-[0-9a-f]+\.png$', image_href).groups()[0]
-
-    def __locator__(self):
-        return '#{}'.format(self.tree_id)
 
     def read(self):
         return self.currently_selected
@@ -1038,6 +1059,9 @@ class BootstrapTreeview(Widget):
             return False
         return self.is_checked(leaf)
 
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.tree_id)
+
 
 class Dropdown(Widget):
     """Represents the Patternfly/Bootstrap dropdown.
@@ -1045,9 +1069,9 @@ class Dropdown(Widget):
     Args:
         text: Text of the button, can be the inner text or the title attribute.
     """
-    BUTTON_DIV_LOCATOR = (
-        './/div[contains(@class, "dropdown") and ./button[normalize-space(.)={0} or '
-        'normalize-space(@title)={0}]]')
+    ROOT = ParametrizedLocator(
+        './/div[contains(@class, "dropdown") and ./button[normalize-space(.)={@text|quote} or '
+        'normalize-space(@title)={@text|quote}]]')
     BUTTON_LOCATOR = './button'
     ITEMS_LOCATOR = './ul/li/a'
     ITEM_LOCATOR = './ul/li/a[normalize-space(.)={}]'
@@ -1055,9 +1079,6 @@ class Dropdown(Widget):
     def __init__(self, parent, text, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.text = text
-
-    def __locator__(self):
-        return self.BUTTON_DIV_LOCATOR.format(quote(self.text))
 
     @property
     def is_enabled(self):
@@ -1134,3 +1155,6 @@ class Dropdown(Widget):
             except UnexpectedAlertPresentException:
                 self.logger.warning('There is an unexpected alert present.')
                 pass
+
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.text)
