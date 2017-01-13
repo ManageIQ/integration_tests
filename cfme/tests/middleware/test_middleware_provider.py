@@ -114,6 +114,7 @@ def test_duplicite_provider_creation(provider):
 # TODO - this checks only hostname err msgs, we need two providers to check name err msg as well
 
 
+@pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_middleware_providers')
 def test_hawkular_crud(provider):
     """Test provider add with good credentials.
