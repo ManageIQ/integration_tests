@@ -28,7 +28,7 @@ LOCATIONS = [
     # infra_networking missing
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
     MyService, ServiceCatalogs, CustomReport, ComputeRate, Instance, (Vm, 'VMsOnly'),
-    ISODatastore, (Server, 'Configuration'), Datastore, ConfigManager, (Server, 'utilization')
+    ISODatastore, (Server, 'Configuration'), Datastore, ConfigManager, (Server, 'Utilization')
 ]
 
 
