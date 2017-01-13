@@ -1,3 +1,10 @@
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+import termios
+import tty
+from os import isatty
+from ansible.plugins.action import ActionBase
+
 # Not extensively tested
 # This is modification of:
 # https://gist.githubusercontent.com/confiks/6d7b0ee3e137df01b758/raw/6b31d61151c4199e5121c34c841f7168850a6071/ask_key.py
@@ -15,15 +22,6 @@
 #   register: answer
 #
 # The pressed key is now in answer.key
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-import termios
-import tty
-from os import isatty
-
-from ansible.plugins.action import ActionBase
 
 try:
     from __main__ import display
