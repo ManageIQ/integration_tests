@@ -213,7 +213,8 @@ class AnalysisProfile(Pretty, Updateable, Navigatable):
         flash.assert_no_errors()
 
     def delete(self):
-        navigate_to(self, 'Delete')
+        navigate_to(self, 'Details')
+        tb.select("Configuration", "Delete this Analysis Profile", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
 
@@ -280,14 +281,6 @@ class AnalysisProfileEdit(CFMENavigateStep):
 
     def step(self):
         tb.select("Configuration", "Edit this Analysis Profile")
-
-
-@navigator.register(AnalysisProfile, 'Delete')
-class AnalysisProfileDelete(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        tb.select("Configuration", "Delete this Analysis Profile", invokes_alert=True)
 
 
 @navigator.register(AnalysisProfile, 'Copy')
@@ -942,7 +935,7 @@ class LDAPSAuthSetting(LDAPAuthSetting):
 class Schedule(Pretty, Navigatable):
     """ Configure/Configuration/Region/Schedules functionality
 
-    CReate, Update, Delete functionality.
+    Create, Update, Delete functionality.
 
     Args:
         name: Schedule's name.
@@ -1095,7 +1088,7 @@ class Schedule(Pretty, Navigatable):
         Args:
             cancel: Whether to click on the cancel button in the pop-up.
         """
-        navigate_to(self, 'Delete')
+        navigate_to(self, 'Details')
         tb.select("Configuration", "Delete this Schedule from the Database", invokes_alert=True)
         sel.handle_alert(cancel)
 
@@ -1103,60 +1096,31 @@ class Schedule(Pretty, Navigatable):
         """ Enable the schedule via table checkbox and Configuration menu.
 
         """
-        self.enable_by_names(self.details["name"])
+        self.select()
+        tb.select("Configuration", "Enable the selected Schedules")
 
     def disable(self):
         """ Enable the schedule via table checkbox and Configuration menu.
 
         """
-        self.disable_by_names(self.details["name"])
-
-    @classmethod
-    def select_by_names(cls, *names):
-        """ Select all checkboxes at the schedules with specified names.
-
-        Can select multiple of them.
-
-        Candidate for DRY in Table class.
-
-        Args:
-            *names: Arguments with all schedules' names.
-        """
-        def select_by_name(name):
-            for row in records_table.rows():
-                if row.name.strip() == name:
-                    checkbox = row[0].find_element_by_xpath("//input[@type='checkbox']")
-                    if not checkbox.is_selected():
-                        sel.click(checkbox)
-                    break
-            else:
-                raise ScheduleNotFound(
-                    "Schedule '{}' could not be found for selection!".format(name)
-                )
-
-        navigate_to(cls, 'All')
-        for name in names:
-            select_by_name(name)
-
-    @classmethod
-    def enable_by_names(cls, *names):
-        """ Checks all schedules that are passed with `names` and then enables them via menu.
-
-        Args:
-            *names: Names of schedules to enable.
-        """
-        cls.select_by_names(*names)
-        tb.select("Configuration", "Enable the selected Schedules")
-
-    @classmethod
-    def disable_by_names(cls, *names):
-        """ Checks all schedules that are passed with `names` and then disables them via menu.
-
-        Args:
-            *names: Names of schedules to disable.
-        """
-        cls.select_by_names(*names)
+        self.select()
         tb.select("Configuration", "Disable the selected Schedules")
+
+    def select(self):
+        """ Select the checkbox for current schedule
+
+        """
+        navigate_to(self, 'All')
+        for row in records_table.rows():
+            if row.name.strip() == self.details['name']:
+                checkbox = row[0].find_element_by_xpath("//input[@type='checkbox']")
+                if not checkbox.is_selected():
+                    sel.click(checkbox)
+                break
+        else:
+            raise ScheduleNotFound(
+                "Schedule '{}' could not be found for selection!".format(self.details['name'])
+            )
 
 
 @navigator.register(Schedule, 'All')
@@ -1190,14 +1154,6 @@ class ScheduleEdit(CFMENavigateStep):
 
     def step(self):
         tb.select("Configuration", "Edit this Schedule")
-
-
-@navigator.register(Schedule, 'Delete')
-class ScheduleDelete(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        tb.select("Configuration", "Delete this Schedule from the Database", invokes_alert=True)
 
 
 class DatabaseBackupSchedule(Schedule):
