@@ -2,8 +2,7 @@ from cfme.common import Taggable, UtilizationMixin
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, paginator, flash
-from cfme.web_ui.menu import toolbar as tb
+from cfme.web_ui import CheckboxTable, paginator, flash, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
@@ -246,8 +245,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Datasources')(None)
+        self.parent_view.navigation.select('Middleware', 'Datasources')
 
     def resetter(self):
         # Reset view and selection

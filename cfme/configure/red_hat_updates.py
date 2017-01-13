@@ -3,7 +3,6 @@ import re
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, Form, Input, Region, Select, fill, flash, form_buttons
-from cfme.configure.configuration import nav  # noqa
 from utils import version
 from utils.appliance import current_appliance
 from utils.appliance.implementations.ui import navigate_to
@@ -91,10 +90,7 @@ service_types = {
 
 
 def appliances_table():
-    return version.pick({
-        version.LOWEST: CheckboxTable("//div[@id='form_div']/table[@class='style3']"),
-        '5.4': CheckboxTable("//div[@id='form_div']/table")
-    })
+    return CheckboxTable("//div[@id='form_div']/table[@class='style3']")
 
 
 def update_registration(service,

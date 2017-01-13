@@ -202,8 +202,7 @@ class MyServiceAll(CFMENavigateStep):
         return match_page(summary='All Services')
 
     def step(self, *args, **kwargs):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Services', 'My Services')(None)
+        self.parent_view.navigation.select('Services', 'My Services')
 
     def resetter(self, *args, **kwargs):
         if version.current_version() < '5.7':

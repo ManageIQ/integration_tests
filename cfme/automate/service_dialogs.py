@@ -204,8 +204,7 @@ class ServiceDialogAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Automate', 'Customization')(None)
+        self.parent_view.navigation.select('Automate', 'Customization')(None)
 
     def resetter(self):
         accordion.tree("Service Dialogs", "All Dialogs")

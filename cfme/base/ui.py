@@ -115,8 +115,7 @@ class MySettings(CFMENavigateStep):
             from cfme.dashboard import click_top_right
             click_top_right('My Settings')
         else:
-            from cfme.web_ui.menu import nav
-            nav._nav_to_fn('Settings', 'My Settings')(None)
+            self.parent_view.navigation.select('Settings', 'My Settings')
 
 
 @navigator.register(Server)
@@ -128,8 +127,7 @@ class About(CFMENavigateStep):
             from cfme.dashboard import click_help
             click_help('About')
         else:
-            from cfme.web_ui.menu import nav
-            nav._nav_to_fn('Settings', 'About')(None)
+            self.parent_view.navigation.select('Settings', 'About')
 
 
 @navigator.register(Server)
@@ -150,8 +148,7 @@ class Documentation(CFMENavigateStep):
             from cfme.dashboard import click_help
             click_help('Documentation')
         else:
-            from cfme.web_ui.menu import nav
-            nav._nav_to_fn('Settings', 'About')(None)
+            self.parent_view.navigation.select('Settings', 'About')
 
 
 @navigator.register(Server)
@@ -163,8 +160,7 @@ class Tasks(CFMENavigateStep):
             from cfme.dashboard import click_top_right
             click_top_right('Tasks')
         else:
-            from cfme.web_ui.menu import nav
-            nav._nav_to_fn('Settings', 'Tasks')(None)
+            self.parent_view.navigation.select('Settings', 'Tasks')
 
 
 @navigator.register(Server)

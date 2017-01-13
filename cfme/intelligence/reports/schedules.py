@@ -6,8 +6,10 @@ from navmazing import NavigateToSibling, NavigateToObject
 from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import Timer
-from cfme.web_ui import (EmailSelectForm, Form, CheckboxTable, Select, ShowingInputs, accordion,
-    fill, flash, toolbar, form_buttons, Input)
+from cfme.web_ui import (
+    EmailSelectForm, Form, CheckboxTable, Select, ShowingInputs,
+    fill, flash, toolbar, form_buttons, Input, accordion
+)
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb

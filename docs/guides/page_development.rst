@@ -56,7 +56,6 @@ To begin with we have the imports, we have added comments after each to specify 
 
   from functools import partial                   # Standard library
   from selenium.webdriver.common.by import By     # Convenience functions for locators, ID etc.
-  from cfme.web_ui.menu import nav                # Navigation library
   import cfme                                     # Core cfme module
   import cfme.web_ui.menu                         # Standard menu for grafting additional menus onto
   from cfme.web_ui import Region, Quadicon, Form  # Loads the Region, Quadicon and Form UI elements
@@ -179,9 +178,8 @@ away from the current page, using the ``navigate_to`` function is better::
 We need to add a few buttons to the center menu to handle "Add a New Cloud Provider", "Discover
 Cloud Providers" and a special case.
 
-The ``navmazing`` library handles navigations and is a little different to the older and now deprecated
-``ui_navigate`` module. The navigation is still tree-esque but is no longer possible to determine all tree
-nodes and destinations like it was before. This is because navmazing as a library is far more dynamic
+The navigation is tree-esque but you cannot determine all tree
+nodes and destinations like before. This is because navmazing as a library is far more dynamic
 and allows for very powerful navigation. So to add new navigation points onto the tree, we need to
 give them a prerequisite step. This can be something to actually perform, or it can be achieved by
 linking it to a previous navigation.::

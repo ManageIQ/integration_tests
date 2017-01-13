@@ -38,8 +38,7 @@ class ImageRegistryAll(CFMENavigateStep):
         return match_page(summary='Image Registries')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Containers', 'Image Registries')(None)
+        self.parent_view.navigation.select('Compute', 'Containers', 'Image Registries')
 
     def resetter(self):
         tb.select('List View')

@@ -7,7 +7,7 @@ from cfme.web_ui import (
     CheckboxTable, paginator, Form, Input, fill, InfoBlock
 )
 from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui.menu import toolbar as tb
+from cfme.web_ui import toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
@@ -319,8 +319,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Servers')(None)
+        self.parent_view.navigation.select('Middleware', 'Servers')
 
     def resetter(self):
         # Reset view and selection

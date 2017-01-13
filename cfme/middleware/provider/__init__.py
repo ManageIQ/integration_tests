@@ -65,8 +65,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Providers')(None)
+        self.parent_view.navigation.select('Middleware', 'Providers')
 
     def resetter(self):
         # Reset view and selection

@@ -45,8 +45,7 @@ class All(CFMENavigateStep):
         return match_page(summary='Nodes')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Containers', 'Container Nodes')(None)
+        self.parent_view.navigation.select('Compute', 'Containers', 'Container Nodes')
 
     def resetter(self):
         # Reset view and selection

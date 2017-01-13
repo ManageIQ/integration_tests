@@ -20,9 +20,9 @@ from textwrap import dedent
 import json
 import re
 from selenium.common.exceptions import \
-    (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
+    (NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
-     InvalidElementStateException, MoveTargetOutOfBoundsException, WebDriverException,
+     MoveTargetOutOfBoundsException, WebDriverException,
      StaleElementReferenceException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
@@ -38,7 +38,7 @@ import base64
 from cfme import exceptions, js
 from fixtures.pytest_store import store
 from utils import version
-from utils.browser import browser, ensure_browser_open, quit
+from utils.browser import browser, ensure_browser_open
 from utils.path import log_path
 from utils.log import logger
 from utils.wait import wait_for

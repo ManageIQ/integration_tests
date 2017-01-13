@@ -2,7 +2,6 @@
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location
-from cfme.web_ui.menu import nav
 from . import details_page
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
@@ -46,7 +45,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        nav._nav_to_fn('Compute', 'Containers', 'Routes')(None)
+        self.parent_view.navigation.select('Compute', 'Containers', 'Routes')
 
     def resetter(self):
         # Reset view and selection

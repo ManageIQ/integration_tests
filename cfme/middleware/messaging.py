@@ -3,8 +3,7 @@ from cfme.common import Taggable, UtilizationMixin
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
 from cfme.middleware.server import MiddlewareServer
-from cfme.web_ui import CheckboxTable, paginator
-from cfme.web_ui.menu import toolbar as tb
+from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import attributize_string
 from utils.appliance import Navigatable
@@ -230,8 +229,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Messagings')(None)
+        self.parent_view.navigation.select('Middleware', 'Messagings')
 
     def resetter(self):
         # Reset view and selection

@@ -4,8 +4,7 @@ import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
-from cfme.web_ui import CheckboxTable, paginator, InfoBlock
-from cfme.web_ui.menu import toolbar as tb
+from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.db import cfmedb

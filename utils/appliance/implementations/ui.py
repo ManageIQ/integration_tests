@@ -235,7 +235,6 @@ class CFMENavigateStep(NavigateStep):
             self.step(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
-            # ValueError: ui_navigate.go_to can't handle this page, give up
             raise
         except UnexpectedAlertPresentException:
             if _tries == 1:
