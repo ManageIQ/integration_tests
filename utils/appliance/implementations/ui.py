@@ -341,7 +341,7 @@ class CFMENavigateStep(NavigateStep):
         self.log_message("Checking if already here")
         here = False
         try:
-            here = self.am_i_here()
+            here = self.am_i_here(*args, **kwargs)
         except Exception as e:
             self.log_message("Exception raised [{}] whilst checking if already here".format(e))
         if here:
