@@ -1,15 +1,20 @@
+import types
+
 import pytest
 from xml.sax.saxutils import quoteattr, unescape
 
 from cfme.exceptions import CannotScrollException
 from cfme.base.ui import Server
+from cfme import automate  # noqa
 from cfme.cloud.instance import Instance
+from cfme.control.explorer import ControlExplorer  # noqa
 from cfme.infrastructure.config_management import ConfigManager
 from cfme.infrastructure.datastore import Datastore
 from cfme.infrastructure.pxe import ISODatastore
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.intelligence.chargeback import ComputeRate
 from cfme.intelligence.reports.reports import CustomReport
+from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.web_ui.splitter import pull_splitter_left, pull_splitter_right
 from utils import version
@@ -18,10 +23,13 @@ from utils.blockers import BZ
 
 
 LOCATIONS = [
-    "control_explorer", "automate_explorer", "automate_customization", MyService,
-    "services_catalogs", "services_workloads", CustomReport, ComputeRate, Instance, Vm,
-    ISODatastore, Server, Datastore, ConfigManager, "utilization", "bottlenecks",
-    "infrastructure_networking"]
+    # Worksloads missing
+    # Bottlenecks missing
+    # infra_networking missing
+    (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
+    MyService, ServiceCatalogs, CustomReport, ComputeRate, Instance, (Vm, 'VMsOnly'),
+    ISODatastore, (Server, 'Configuration'), Datastore, ConfigManager, (Server, 'utilization')
+]
 
 
 pytestmark = [pytest.mark.parametrize("location", LOCATIONS), pytest.mark.uncollectif(lambda
@@ -29,17 +37,11 @@ pytestmark = [pytest.mark.parametrize("location", LOCATIONS), pytest.mark.uncoll
 
 
 def nav_to(location):
-    if isinstance(location, basestring):
-        pytest.sel.force_navigate(location)
+    if isinstance(location, types.TupleType):
+        location, dest = location
     else:
-        if location is Vm:
-            dest = 'VMsOnly'
-        elif location is Server:
-            dest = 'Configuration'
-        else:
-            dest = 'All'
-
-        navigate_to(location, dest)
+        dest = 'All'
+    navigate_to(location, dest)
 
 
 @pytest.mark.meta(
