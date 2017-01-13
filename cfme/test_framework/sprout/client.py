@@ -7,6 +7,7 @@ from utils.version import get_stream
 from utils.appliance import current_appliance, IPAppliance
 from utils.conf import credentials, env
 # TODO: use custom wait_for logger fitting sprout
+from utils.log import logger
 from utils.wait import wait_for
 
 
@@ -104,6 +105,7 @@ class SproutClient(object):
         wait_for(
             lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=300)
         data = self.call_method('request_check', str(request_id))
+        logger.debug(data)
         appliances = []
         for appliance in data['appliances']:
             appliances.append(IPAppliance(appliance['ip_address']))

@@ -3,6 +3,7 @@ from utils.version import get_stream
 from utils.sprout import SproutClient
 from utils.appliance import current_appliance
 from utils.conf import cfme_data, credentials
+from utils.log import logger
 import pytest
 
 
@@ -22,10 +23,23 @@ def sprout_provisioned_appliance():
 @pytest.yield_fixture(scope="module")
 def sprout_provisioned_appliance2():
     sp = SproutClient.from_config()
+    available_providers = set(sp.call_method('available_providers'))
+    required_providers = set(cfme_data['fqdn_providers'])
+    usable_providers = available_providers & required_providers
     version = current_appliance.version.vstring
     stream = get_stream(current_appliance.version)
-    apps, pool_id = sp.provision_appliances(
-        count=1, preconfigured=True, version=version, stream=stream, provider='rhvqe40')
+
+    for provider in usable_providers:
+        try:
+            apps, pool_id = sp.provision_appliances(
+                count=1, preconfigured=True, version=version, stream=stream, provider=provider)
+            break
+        except Exception as e:
+            logger.warning("Couldn't provision appliance with following error:")
+            logger.warning({}.format(e))
+            continue
+    else:
+        logger.error("Couldn't provision an appliance at all")
 
     yield apps[0]
 
@@ -74,7 +88,7 @@ def test_configure_appliance_internal_fetch_key(request, app_creds, sprout_provi
     app.wait_for_web_ui()
 
 
-def test_configure_ipa(request, ipa_creds, sprout_provisioned_appliance2):
+def test_ipa_crud(request, ipa_creds, sprout_provisioned_appliance2):
     app = sprout_provisioned_appliance2
     app.ap_cli.configure_ipa(ipa_creds['ipaserver'], ipa_creds['username'],
         ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
@@ -82,10 +96,6 @@ def test_configure_ipa(request, ipa_creds, sprout_provisioned_appliance2):
     return_code, output = app.ssh_client.run_command(
         "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
     assert return_code == 0   # TODO extend test to login as ipa user
-
-
-def test_uninstall_ipa(request, test_configure_ipa):
-    app = sprout_provisioned_appliance2
     app.ap_cli.uninstall_ipa_client()
     return_code, output = app.ssh_client.run_command(
         "cat /etc/ipa/default.conf")
