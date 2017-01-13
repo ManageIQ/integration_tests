@@ -5,7 +5,6 @@
  - git => 2.10
  - vncviewer
  - Docker installed from official Docker repositories
-
 Follow official documentation on how to [install](https://www.docker.com/products/overview#/install_the_platform) Docker on your favourite platform.
 
 ## Building images manually

@@ -17,7 +17,7 @@ gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub' > /etc/yum.repos.d
 # mandatory packages
 RUN dnf -y install http://linuxdownload.adobe.com/linux/x86_64/adobe-release-x86_64-1.0-1.noarch.rpm && \
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-adobe-linux && \
-    dnf -y install git python-pip gcc gcc-c++ postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel python-devel redhat-rpm-config libffi-devel openssl-devel \
+    dnf -y install which git python-pip gcc gcc-c++ postgresql-devel libxml2-devel libxslt-devel zeromq3-devel libcurl-devel python-devel redhat-rpm-config libffi-devel openssl-devel \
     tigervnc-server fluxbox xterm java-1.8.0-openjdk.x86_64 flash-plugin nspluginwrapper unzip xorg-x11-fonts-* dejavu* bzip2\
     ftp://rpmfind.net/linux/fedora/linux/releases/22/Everything/x86_64/os/Packages/f/firefox-38.0.1-1.fc22.x86_64.rpm sudo\
     python-setuptools sshpass python-netaddr findutils \
