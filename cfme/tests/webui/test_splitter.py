@@ -43,14 +43,13 @@ pytestmark = [pytest.mark.parametrize("location", LOCATIONS), pytest.mark.uncoll
 @pytest.mark.requirement('general_ui')
 @pytest.mark.tier(3)
 def test_pull_splitter_persistence(location):
-    obj, dest = location
-    navigate_to(obj, dest)
+    navigate_to(*location)
     # First we move splitter to hidden position by pulling it left twice
     pull_splitter_left()
     pull_splitter_left()
     navigate_to(Server, 'Dashboard')
     try:
-        navigate_to(obj, dest)
+        navigate_to(*location)
     except (TypeError, CannotScrollException):
         # this exception is expected here since
         # some navigation commands try to use accordion when it is hidden by splitter
@@ -64,7 +63,7 @@ def test_pull_splitter_persistence(location):
         # Pull splitter left
         pull_splitter_right()
         navigate_to(Server, 'Dashboard')
-        navigate_to(obj, dest)
+        navigate_to(*location)
         # Then check its position
         if not pytest.sel.elements("//div[@id='left_div'][contains(@class, {})]"
                 .format(unescape(quoteattr(position)))):
