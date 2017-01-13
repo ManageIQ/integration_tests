@@ -56,8 +56,8 @@ class AllVMs(CFMENavigateStep):
         if 'filter_folder' not in kwargs:
             return match_page(summary='All VMs & Instances')
         elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            return match_page(summary='All VMs & Instances - '
-                                      'Filtered by "{}"'.format(kwargs['filter_name']))
+            return match_page(summary='All VMs and Instances - '
+                                      'Filtered by "{}" ( clear )'.format(kwargs['filter_name']))
 
 
 @navigator.register(TemplatesImages, 'All')
@@ -73,5 +73,9 @@ class AllTemplates(CFMENavigateStep):
         else:
             raise DestinationNotFound("the destination isn't found")
 
-    def am_i_here(self):
-        return match_page(summary='All Templates & Images')
+    def am_i_here(self, *args, **kwargs):
+        if 'filter_folder' not in kwargs:
+            return match_page(summary='All Templates & Images')
+        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
+            return match_page(summary='All VM Templates and Images - '
+                                      'Filtered by "{}" ( clear )'.format(kwargs['filter_name']))
