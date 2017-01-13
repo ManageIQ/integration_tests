@@ -123,6 +123,7 @@ function run_command {
 
   return_vnc_port
   log "VNC port is $VNC_PORT" 
+  echo "source /etc/bashrc" > /var/tmp/bashrc
   docker run -it --rm \
     -w /projects/cfme_env/cfme_vol/integration_tests \
     -u ${USER_ID}:${GROUP_ID} \
