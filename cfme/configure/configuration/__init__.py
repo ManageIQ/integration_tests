@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from navmazing import NavigateToAttribute, NavigateToSibling
+from navmazing import NavigateToAttribute, NavigateToSibling, NavigateToObject
 
 from contextlib import contextmanager
 from functools import partial
@@ -7,6 +7,7 @@ from cached_property import cached_property
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 
+from cfme.base.ui import Server
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, CandidateNotFound
@@ -938,7 +939,7 @@ class LDAPSAuthSetting(LDAPAuthSetting):
     AUTH_MODE = "LDAPS"
 
 
-class Schedule(Pretty):
+class Schedule(Pretty, Navigatable):
     """ Configure/Configuration/Region/Schedules functionality
 
     CReate, Update, Delete functionality.
@@ -1021,19 +1022,10 @@ class Schedule(Pretty):
     pretty_attrs = ['name', 'description', 'run_type', 'run_every',
                     'start_date', 'start_hour', 'start_min']
 
-    def __init__(self,
-                 name,
-                 description,
-                 active=True,
-                 action=None,
-                 filter_type=None,
-                 filter_value=None,
-                 run_type="Once",
-                 run_every=None,
-                 time_zone=None,
-                 start_date=None,
-                 start_hour=None,
-                 start_min=None):
+    def __init__(self, name, description, active=True, action=None, filter_type=None,
+                 filter_value=None, run_type="Once", run_every=None, time_zone=None,
+                 start_date=None, start_hour=None, start_min=None, appliance=None):
+        Navigatable.__init__(self, appliance=appliance)
         self.details = dict(
             name=name,
             description=description,
@@ -1062,8 +1054,7 @@ class Schedule(Pretty):
         Args:
             cancel: Whether to click on the cancel button to interrupt the creation.
         """
-        sel.force_navigate("cfg_settings_schedules")
-        tb.select("Configuration", "Add a new Schedule")
+        navigate_to(self, 'Add')
 
         if cancel:
             action = form_buttons.cancel
@@ -1083,8 +1074,8 @@ class Schedule(Pretty):
             cancel: Whether to click on the cancel button to interrupt the editation.
 
         """
-        sel.force_navigate("cfg_settings_schedule_edit",
-                           context={"schedule_name": self.details["name"]})
+        navigate_to(self, 'Edit')
+
         if cancel:
             action = form_buttons.cancel
         else:
@@ -1104,7 +1095,9 @@ class Schedule(Pretty):
         Args:
             cancel: Whether to click on the cancel button in the pop-up.
         """
-        self.delete_by_name(self.details["name"], cancel)
+        navigate_to(self, 'Delete')
+        tb.select("Configuration", "Delete this Schedule from the Database", invokes_alert=True)
+        sel.handle_alert(cancel)
 
     def enable(self):
         """ Enable the schedule via table checkbox and Configuration menu.
@@ -1117,21 +1110,6 @@ class Schedule(Pretty):
 
         """
         self.disable_by_names(self.details["name"])
-
-    ##
-    # CLASS METHODS
-    #
-    @classmethod
-    def delete_by_name(cls, name, cancel=False):
-        """ Finds a particular schedule by its name and then deletes it.
-
-        Args:
-            name: Name of the schedule.
-            cancel: Whether to click on the cancel button in the pop-up.
-        """
-        sel.force_navigate("cfg_settings_schedule", context={"schedule_name": name})
-        tb.select("Configuration", "Delete this Schedule from the Database", invokes_alert=True)
-        sel.handle_alert(cancel)
 
     @classmethod
     def select_by_names(cls, *names):
@@ -1156,7 +1134,7 @@ class Schedule(Pretty):
                     "Schedule '{}' could not be found for selection!".format(name)
                 )
 
-        sel.force_navigate("cfg_settings_schedules")
+        navigate_to(cls, 'All')
         for name in names:
             select_by_name(name)
 
@@ -1179,6 +1157,47 @@ class Schedule(Pretty):
         """
         cls.select_by_names(*names)
         tb.select("Configuration", "Disable the selected Schedules")
+
+
+@navigator.register(Schedule, 'All')
+class ScheduleAll(CFMENavigateStep):
+    prerequisite = NavigateToObject(Server, 'Configuration')
+
+    def step(self):
+        server_region = store.current_appliance.server_region_string()
+        self.parent_view.accordions.settings.tree.click_path((server_region, "Schedules"))
+
+
+@navigator.register(Schedule, 'Add')
+class ScheduleAdd(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        tb.select("Configuration", "Add a new Schedule")
+
+
+@navigator.register(Schedule, 'Details')
+class ScheduleDetails(CFMENavigateStep):
+    prerequisite = NavigateToSibling('All')
+
+    def step(self):
+        records_table.click_cell("name", self.obj.details["name"])
+
+
+@navigator.register(Schedule, 'Edit')
+class ScheduleEdit(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb.select("Configuration", "Edit this Schedule")
+
+
+@navigator.register(Schedule, 'Delete')
+class ScheduleDelete(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        tb.select("Configuration", "Delete this Schedule from the Database", invokes_alert=True)
 
 
 class DatabaseBackupSchedule(Schedule):
@@ -1266,22 +1285,9 @@ class DatabaseBackupSchedule(Schedule):
             '5.5': AngularSelect('start_min')}),
     ])
 
-    def __init__(self,
-                 name,
-                 description,
-                 active=True,
-                 protocol=None,
-                 depot_name=None,
-                 uri=None,
-                 username=None,
-                 password=None,
-                 password_verify=None,
-                 run_type="Once",
-                 run_every=None,
-                 time_zone=None,
-                 start_date=None,
-                 start_hour=None,
-                 start_min=None):
+    def __init__(self, name, description, active=True, protocol=None, depot_name=None, uri=None,
+                 username=None, password=None, password_verify=None, run_type="Once",
+                 run_every=None, time_zone=None, start_date=None, start_hour=None, start_min=None):
 
         assert protocol in {'Samba', 'Network File System'},\
             "Unknown protocol type '{}'".format(protocol)
@@ -1335,8 +1341,7 @@ class DatabaseBackupSchedule(Schedule):
             samba_validate: Samba-only option to click the `Validate` button to check
                             if entered samba credentials are valid or not
         """
-        sel.force_navigate("cfg_settings_schedules")
-        tb.select("Configuration", "Add a new Schedule")
+        navigate_to(self, 'Add')
 
         fill(self.form, self.details)
         if samba_validate:
@@ -1355,8 +1360,7 @@ class DatabaseBackupSchedule(Schedule):
             samba_validate: Samba-only option to click the `Validate` button to check
                             if entered samba credentials are valid or not
         """
-        sel.force_navigate("cfg_settings_schedule_edit",
-                           context={"schedule_name": self.details["name"]})
+        navigate_to(self, 'Edit')
 
         self.details.update(updates)
         fill(self.form, self.details)
@@ -1369,7 +1373,7 @@ class DatabaseBackupSchedule(Schedule):
 
     @property
     def last_date(self):
-        sel.force_navigate("cfg_settings_schedules")
+        navigate_to(self, 'All')
         name = self.details["name"]
         row = records_table.find_row("Name", name)
         return row[6].text
