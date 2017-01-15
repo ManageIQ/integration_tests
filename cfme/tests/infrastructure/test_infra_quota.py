@@ -88,6 +88,46 @@ def set_group_cpu():
     group.remove_tag("Quota - Max CPUs *", "2")
 
 
+@pytest.yield_fixture(scope="module")
+def set_tenant_cpu():
+    cpu_data = {'cpu_cb': True, 'cpu': 2}
+    reset_cpu_data = {'cpu_cb': False}
+    roottenant = Tenant.get_root_tenant()
+    roottenant.set_quota(**cpu_data)
+    yield
+    roottenant.set_quota(**reset_cpu_data)
+
+
+@pytest.yield_fixture(scope="module")
+def set_tenant_memory():
+    memory_data = {'memory_cb': True, 'memory': 2}
+    reset_memory_data = {'memory_cb': False}
+    roottenant = Tenant.get_root_tenant()
+    roottenant.set_quota(**memory_data)
+    yield
+    roottenant.set_quota(**reset_memory_data)
+
+
+@pytest.yield_fixture(scope="module")
+def set_tenant_storage():
+    storage_data = {'storage_cb': True, 'storage': 1}
+    reset_storage_data = {'storage_cb': False}
+    roottenant = Tenant.get_root_tenant()
+    roottenant.set_quota(**storage_data)
+    yield
+    roottenant.set_quota(**reset_storage_data)
+
+
+@pytest.yield_fixture(scope="module")
+def set_tenant_vm():
+    vm_data = {'vm_cb': True, 'vm': 1}
+    reset_vm_data = {'vm_cb': False}
+    roottenant = Tenant.get_root_tenant()
+    roottenant.set_quota(**vm_data)
+    yield
+    roottenant.set_quota(**reset_vm_data)
+
+
 @pytest.fixture(scope="function")
 def prov_data(provider, provisioning):
     return {
@@ -201,14 +241,14 @@ def test_group_quota_max_cpu_check_by_tagging(
 
 @pytest.mark.tier(1)
 def test_tenant_quota_max_cpu_check(
-        provisioner, prov_data, template_name, provider, request, vm_name, bug):
-    """ Test Tenant Quota-Max CPU by UI.
+        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_cpu, bug):
+    """Test Tenant Quota-Max CPU by UI.
 
     Prerequisities:
         * A provider set up, supporting provisioning in CFME
 
     Steps:
-        * Set the tenant quota for cpu by UI emforcement
+        * Set the tenant quota for cpu by UI enforcement
         * Open the provisioning dialog.
         * Apart from the usual provisioning settings, set CPU greater then tenant quota cpu.
         * Submit the provisioning request and wait for it to finish.
@@ -217,9 +257,6 @@ def test_tenant_quota_max_cpu_check(
     Metadata:
         test_flag: provision
     """
-    cpu_data = {'cpu_cb': True, 'cpu': 2}
-    roottenant = Tenant.get_root_tenant()
-    roottenant.set_quota(**cpu_data)
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     prov_data["vm_name"] = vm_name
     prov_data["num_sockets"] = "8"
@@ -241,14 +278,14 @@ def test_tenant_quota_max_cpu_check(
 
 @pytest.mark.tier(1)
 def test_tenant_quota_max_memory_check(
-        provisioner, prov_data, template_name, provider, request, vm_name, bug):
-    """ Test Tenant Quota-Max Memory by UI.
+        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_memory, bug):
+    """Test Tenant Quota-Max Memory by UI.
 
     Prerequisities:
         * A provider set up, supporting provisioning in CFME
 
     Steps:
-        * Set the tenant quota for memory by UI emforcement
+        * Set the tenant quota for memory by UI enforcement
         * Open the provisioning dialog.
         * Apart from the usual provisioning settings, set memory greater then tenant quota memory.
         * Submit the provisioning request and wait for it to finish.
@@ -257,9 +294,6 @@ def test_tenant_quota_max_memory_check(
     Metadata:
         test_flag: provision
     """
-    memory_data = {'memory_cb': True, 'memory': 2}
-    roottenant = Tenant.get_root_tenant()
-    roottenant.set_quota(**memory_data)
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     prov_data["vm_name"] = vm_name
     prov_data["memory"] = "4096"
@@ -277,8 +311,8 @@ def test_tenant_quota_max_memory_check(
 
 @pytest.mark.tier(1)
 def test_tenant_quota_max_storage_check(
-        provisioner, prov_data, template_name, provider, request, vm_name, bug):
-    """ Test Tenant Quota-Max Storage by UI.
+        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_storage, bug):
+    """Test Tenant Quota-Max Storage by UI.
 
     Prerequisities:
         * A provider set up, supporting provisioning in CFME
@@ -293,9 +327,6 @@ def test_tenant_quota_max_storage_check(
     Metadata:
         test_flag: provision
     """
-    storage_data = {'storage_cb': True, 'storage': 1}
-    roottenant = Tenant.get_root_tenant()
-    roottenant.set_quota(**storage_data)
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     prov_data["vm_name"] = vm_name
     prov_data["notes"] = note
@@ -312,8 +343,8 @@ def test_tenant_quota_max_storage_check(
 
 @pytest.mark.tier(1)
 def test_tenant_quota_max_num_vms_check(
-        provisioner, prov_data, template_name, provider, request, vm_name, bug):
-    """ Test Tenant Quota-Max number of vms by UI.
+        provisioner, prov_data, template_name, provider, request, vm_name, set_tenant_vm, bug):
+    """Test Tenant Quota-Max number of vms by UI.
 
     Prerequisities:
         * A provider set up, supporting provisioning in CFME
@@ -329,9 +360,6 @@ def test_tenant_quota_max_num_vms_check(
     Metadata:
         test_flag: provision
     """
-    vm_data = {'vm_cb': True, 'vm': 1}
-    roottenant = Tenant.get_root_tenant()
-    roottenant.set_quota(**vm_data)
     note = ('template {} to vm {} on provider {}'.format(template_name, vm_name, provider.key))
     prov_data["num_vms"] = "4"
     prov_data["vm_name"] = vm_name
