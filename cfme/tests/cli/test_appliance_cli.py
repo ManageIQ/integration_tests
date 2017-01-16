@@ -1,6 +1,6 @@
 from fixtures.pytest_store import store
 from utils.version import get_stream
-from utils.sprout import SproutClient
+from cfme.test_framework.sprout.client import SproutClient
 from utils.appliance import current_appliance
 from utils.conf import cfme_data, credentials
 from utils.log import logger
