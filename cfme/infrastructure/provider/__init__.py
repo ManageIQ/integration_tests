@@ -21,7 +21,6 @@ from cfme.web_ui import (
     AngularSelect, toolbar as tb, Radio, InfoBlock, match_location
 )
 from cfme.web_ui.form_buttons import FormButton
-from cfme.web_ui.menu import nav
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, deferred_verpick, version
 from utils.api import rest_api
@@ -106,20 +105,6 @@ manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
-
-nav.add_branch('infrastructure_providers',
-             {'infrastructure_provider_new': lambda _: cfg_btn(
-                 'Add a New Infrastructure Provider'),
-              'infrastructure_provider_discover': lambda _: cfg_btn(
-                  'Discover Infrastructure Providers'),
-              'infrastructure_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
-                                                                         'infra_prov')),
-                                          {'infrastructure_provider_edit':
-                                           lambda _: cfg_btn('Edit this Infrastructure Provider'),
-                                           'infrastructure_provider_policy_assignment':
-                                           lambda _: pol_btn('Manage Policies'),
-                                           'infrastructure_provider_timelines':
-                                           lambda _: mon_btn('Timelines')}]})
 
 
 @CloudInfraProvider.add_base_type
@@ -321,8 +306,7 @@ class All(CFMENavigateStep):
         return match_page(summary='Infrastructure Providers')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Infrastructure', 'Providers')(None)
+        self.parent_view.navigation.select('Compute', 'Infrastructure', 'Providers')
 
     def resetter(self):
         # Reset view and selection

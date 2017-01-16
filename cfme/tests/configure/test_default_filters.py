@@ -4,7 +4,6 @@ import pytest
 from cfme import test_requirements
 from cfme.configure import settings as st
 from cfme.fixtures import pytest_selenium as sel
-from cfme.tests.webui.test_splitter import nav_to  # NOQA
 from utils.blockers import BZ
 from utils.providers import setup_a_provider
 from cfme.cloud.instance.image import Image

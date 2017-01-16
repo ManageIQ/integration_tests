@@ -5,17 +5,8 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Quadicon,
-    Form,
-    AngularSelect,
-    form_buttons,
-    Input,
-    toolbar as tb,
-    InfoBlock,
-    Region,
-    paginator,
-    match_location)
-from cfme.web_ui.menu import nav
+    Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb,
+    InfoBlock, Region, paginator, match_location)
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
 from utils.appliance import Navigatable
@@ -27,36 +18,6 @@ from utils.varmeth import variable
 
 
 from .. import cfg_btn, mon_btn, pol_btn, details_page
-
-nav.add_branch(
-    'containers_providers',
-    {
-        'containers_provider_new':
-            lambda _: cfg_btn('Add a New Containers Provider'),
-        'containers_provider':
-            [
-                lambda ctx: sel.check(Quadicon(ctx['provider'].name, None).checkbox),
-                {
-                    'containers_provider_edit':
-                        lambda _: cfg_btn('Edit Selected Containers Provider'),
-                    'containers_provider_edit_tags':
-                        lambda _: pol_btn('Edit Tags')
-                }],
-        'containers_provider_detail':
-            [
-                lambda ctx: sel.click(Quadicon(ctx['provider'].name, None)),
-                {
-                    'containers_provider_edit_detail':
-                        lambda _: cfg_btn('Edit this Containers Provider'),
-                    'containers_provider_timelines_detail':
-                        lambda _: mon_btn('Timelines'),
-                    'containers_provider_edit_tags_detail':
-                        lambda _: pol_btn('Edit Tags'),
-                    'containers_provider_topology_detail':
-                        lambda _: sel.click(InfoBlock('Overview', 'Topology'))
-                }]
-    }
-)
 
 
 properties_form = Form(
@@ -265,8 +226,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Containers', 'Providers')(None)
+        self.parent_view.navigation.select('Compute', 'Containers', 'Providers')
 
     def resetter(self):
         # Reset view and selection

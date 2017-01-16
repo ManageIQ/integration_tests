@@ -128,8 +128,7 @@ class All(CFMENavigateStep):
         return match_page(summary='All Catalogs')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Services', 'Catalogs')(None)
+        self.parent_view.navigation.select('Services', 'Catalogs')
         tree = accordion.tree('Catalogs')
         tree.click_path('All Catalogs')
 

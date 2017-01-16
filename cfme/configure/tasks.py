@@ -8,11 +8,9 @@ from navmazing import NavigateToAttribute
 from cfme import web_ui as ui
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
-from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator, toolbar, match_location
+from cfme.web_ui import Form, Region, CheckboxTable, fill, toolbar, match_location
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.log import logger
-from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
 
 buttons = Region(
@@ -70,41 +68,6 @@ def _filter(
         sel.click(buttons.apply)
     except TimedOutError:
         pass
-
-
-def _get_tasks(tab_destination, **filter_kwargs):
-    """ Generic function to return contents of the tasks table
-
-    Args:
-        location: Location for :py:module:`ui_navigate` where to get the data.
-        **filter_kwargs: See :py:meth:`_filter`
-    Returns: List of dicts.
-    """
-    navigate_to(Tasks, tab_destination)
-    if any([filter_kwargs[key] is not None for key in filter_kwargs.keys()]):
-        _filter(**filter_kwargs)
-    tasks = []
-
-    if sel.is_displayed(tasks_table):
-        for page in paginator.pages():
-            for row in tasks_table.rows():
-                tasks.append(
-                    dict(
-                        updated=parsetime.from_american_with_utc(
-                            row.updated.text.encode('utf-8').strip()
-                        ),
-                        started=parsetime.from_american_with_utc(
-                            row.started.text.encode('utf-8').strip()
-                        ),
-                        state=row.state.text.encode('utf-8').strip(),
-                        message=row.message.text.encode('utf-8').strip(),
-                        task_name=row.task_name.text.encode('utf-8').strip(),
-                        user=row.user.text.encode('utf-8').strip()
-                    )
-                )
-    else:
-        logger.info('No Tasks collected on {}'.format(tab_destination))
-    return tasks
 
 
 def is_vm_analysis_finished(name, **kwargs):

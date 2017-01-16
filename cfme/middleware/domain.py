@@ -3,8 +3,7 @@ from cfme.common import Taggable
 from cfme.exceptions import MiddlewareDomainNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware import parse_properties
-from cfme.web_ui import CheckboxTable, paginator, InfoBlock
-from cfme.web_ui.menu import toolbar as tb
+from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.appliance import Navigatable
@@ -219,8 +218,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Middleware', 'Domains')(None)
+        self.parent_view.navigation.select('Middleware', 'Domains')
 
     def resetter(self):
         # Reset view and selection

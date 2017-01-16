@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import FolderManager
-from cfme.web_ui import Region, BootstrapTreeview, Tree, accordion, form_buttons, menu
+from cfme.web_ui import Region, BootstrapTreeview, Tree, form_buttons
 from cfme.web_ui.multibox import MultiBoxSelect
 from utils import version
 from utils.appliance.implementations.ui import navigate_to

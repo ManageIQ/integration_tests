@@ -78,11 +78,6 @@ retire_remove_button = "//span[@id='remove_button']/a/img"
 match_page = partial(match_location, controller='vm_infra', title='Virtual Machines')
 
 
-def nav_to_vms():
-    from cfme.web_ui.menu import nav
-    nav._nav_to_fn('Compute', 'Infrastructure', '/vm_infra/explorer')(None)
-
-
 def reset_page():
     tb.select("Grid View")
     if paginator.page_controls_exist():
@@ -708,7 +703,7 @@ class VmAllWithTemplates(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        nav_to_vms()
+        self.parent_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
         accordion.tree('VMs & Templates', 'All VMs & Templates')
 
     def resetter(self, *args, **kwargs):
@@ -884,7 +879,7 @@ class TemplatesAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        nav_to_vms()
+        self.parent_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
         templates = partial(accordion.tree, 'Templates', 'All Templates')
         if 'filter_folder' not in kwargs:
             templates()

@@ -4,8 +4,8 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import (
-    accordion, flash, form_buttons, Form, Input, Select, match_location, toolbar as tb, PagedTable)
+from cfme.web_ui import (accordion, flash, form_buttons, Form, Input, Select,
+    match_location, toolbar as tb, PagedTable)
 from selenium.common.exceptions import NoSuchElementException
 from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
 from utils.appliance import Navigatable
@@ -65,8 +65,7 @@ class ServiceCatalogsAll(CFMENavigateStep):
         return match_page(summary='All Services')
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Services', 'Catalogs')(None)
+        self.parent_view.navigation.select('Services', 'Catalogs')
         tree = accordion.tree('Service Catalogs')
         tree.click_path('All Services')
 

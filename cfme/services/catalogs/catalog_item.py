@@ -89,13 +89,6 @@ button_form = Form(
 match_page = partial(match_location, title='Catalogs', controller='catalog')
 
 
-def nav_to_all():
-    from cfme.web_ui.menu import nav
-    nav._nav_to_fn('Services', 'Catalogs')(None)
-    tree = accordion.tree('Catalog Items')
-    tree.click_path('All Catalog Items')
-
-
 class CatalogItem(Updateable, Pretty, Navigatable):
     pretty_attrs = ['name', 'item_type', 'catalog', 'catalog_name', 'provider', 'domain']
 
@@ -299,7 +292,9 @@ class ItemAll(CFMENavigateStep):
         return match_page(summary='All Service Catalog Items')
 
     def step(self):
-        nav_to_all()
+        self.parent_view.navigation.select('Services', 'Catalogs')
+        tree = accordion.tree('Catalog Items')
+        tree.click_path('All Catalog Items')
 
     def resetter(self):
         tb.refresh()
@@ -355,7 +350,9 @@ class BundleAll(CFMENavigateStep):
         return match_page(summary='All Service Catalog Items')
 
     def step(self):
-        nav_to_all()
+        self.parent_view.navigation.select('Services', 'Catalogs')
+        tree = accordion.tree('Catalog Items')
+        tree.click_path('All Catalog Items')
 
     def resetter(self):
         tb.refresh()
