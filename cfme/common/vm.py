@@ -27,9 +27,6 @@ from utils.update import Updateable
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 
-from widgetastic.widget import Text
-from widgetastic_patternfly import Button, BootstrapSelect
-
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
 access_btn = partial(toolbar.select, "Access")
@@ -78,20 +75,6 @@ def all_types(template=False):
 
 class _TemplateMixin(object):
     pass
-
-
-class EditServerRelationShipView(BaseLoggedInPage):
-    title = Text('//div[@id="main-content"]//h1')
-    server = BootstrapSelect(id='server_id')
-
-    save = Button('Save')
-    reset = Button('Reset')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        title_name = 'Edit CFME Server Relationship for Virtual Machine'
-        return title_name in self.title.text
 
 
 class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin, Navigatable):

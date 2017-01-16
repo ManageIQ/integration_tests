@@ -15,8 +15,8 @@ from utils.log import logger
 from utils.wait import wait_for, TimedOutError, RefreshTimer
 
 
-pytest_generate_tests = testgen.generate([CloudProvider], scope='function',
-                                         required_fields=['test_power_control'])
+pytest_generate_tests = testgen.generate(
+    [CloudProvider], scope='function', required_fields=['test_power_control'])
 
 pytestmark = [pytest.mark.tier(2),
               pytest.mark.long_running,
@@ -29,7 +29,7 @@ def testing_instance(setup_provider, provider):
     """
     instance = Instance.factory(random_vm_name('pwr-c'), provider)
     if not provider.mgmt.does_vm_exist(instance.name):
-        instance.create_on_provider(timeout=2000, allow_skip="default", find_in_cfme=True)
+        instance.create_on_provider(allow_skip="default")
     elif instance.provider.type == "ec2" and \
             provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted']):
         provider.mgmt.set_name(
@@ -37,13 +37,24 @@ def testing_instance(setup_provider, provider):
         instance.create_on_provider(allow_skip="default", find_in_cfme=True)
     provider.refresh_provider_relationships()
 
+    # Make sure the instance shows up
+    try:
+        wait_for(lambda: instance.exists,
+                 fail_condition=False,
+                 num_sec=600,
+                 delay=15,
+                 fail_func=provider.refresh_provider_relationships)
+    except TimedOutError:
+        pytest.fail('Failed to find instance in CFME after creating on provider: {}'
+                    .format(instance.name))
+
     yield instance
 
+    logger.info('Fixture cleanup, deleting test instance: %s', instance.name)
     try:
-        logger.info('Fixture cleanup, deleting test instance: {}'.format(instance))
-        instance.power_control_from_cfme(option=instance.TERMINATE)
-    except Exception as ex:
-        logger.warning('Exception when deleting testing_instance: {}'.format(ex))
+        provider.mgmt.delete_vm(instance.name)
+    except Exception:
+        logger.exception('Exception when deleting testing_instance: %s', instance.name)
 
 
 # This fixture must be named 'vm_name' because its tied to fixtures/virtual_machine
@@ -53,7 +64,7 @@ def vm_name(testing_instance):
     return testing_instance.name
 
 
-def wait_for_state_change_time_refresh(instance, provider, state_change_time, timeout=720):
+def wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=900):
     """ Waits for 'State Changed On' refresh
     """
     def _wait_for_state_refresh():
@@ -85,14 +96,14 @@ def wait_for_termination(provider, instance):
              num_sec=1000,
              delay=60,
              handle_exception=True)
-    wait_for_state_change_time_refresh(instance, provider, state_change_time, timeout=720)
+    wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=720)
     if instance.get_detail(properties=('Power Management', 'Power State')) not in \
             {instance.STATE_TERMINATED, instance.STATE_ARCHIVED, instance.STATE_UNKNOWN}:
         """Wait for one more state change as transitional state also changes "State Changed On" time
         """
         logger.info("Instance is still powering down. please wait before termination")
         state_change_time = instance.get_detail(properties=('Power Management', 'State Changed On'))
-        wait_for_state_change_time_refresh(instance, provider, state_change_time, timeout=720)
+        wait_for_ui_state_refresh(instance, provider, state_change_time, timeout=720)
     if provider.type == 'ec2':
         return True if provider.mgmt.is_vm_state(instance.name, provider.mgmt.states['deleted'])\
             else False
@@ -117,21 +128,19 @@ def check_power_options(soft_assert, instance, power_state):
             "{} must not be available in current power state - {} ".format(pwr_option, power_state))
 
 
-def test_quadicon_terminate_cancel(setup_provider_funcscope, provider, testing_instance,
-                                   verify_vm_running, soft_assert):
+def test_quadicon_terminate_cancel(provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests terminate cancel
 
     Metadata:
         test_flag: power_control, provision
     """
-    testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
-    testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE, cancel=True,
+    testing_instance.power_control_from_cfme(option=testing_instance.TERMINATE,
+                                             cancel=True,
                                              from_details=False)
     soft_assert('currentstate-on' in testing_instance.find_quadicon().state)
 
 
-def test_quadicon_terminate(setup_provider_funcscope, provider, testing_instance, verify_vm_running,
-                            soft_assert):
+def test_quadicon_terminate(provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests terminate instance
 
     Metadata:
@@ -147,8 +156,8 @@ def test_quadicon_terminate(setup_provider_funcscope, provider, testing_instance
                                                                 timeout=1200))
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type == 'openstack')
-def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_running):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+def test_stop(provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests instance stop
 
     Metadata:
@@ -168,8 +177,7 @@ def test_stop(setup_provider_funcscope, provider, testing_instance, soft_assert,
         desired_state=testing_instance.STATE_OFF, timeout=1200), "VM isn't stopped in CFME UI")
 
 
-def test_start(setup_provider_funcscope, provider, testing_instance, soft_assert,
-               verify_vm_stopped):
+def test_start(provider, testing_instance, verify_vm_stopped, soft_assert):
     """ Tests instance start
 
     Metadata:
@@ -187,8 +195,7 @@ def test_start(setup_provider_funcscope, provider, testing_instance, soft_assert
         "instance is not running")
 
 
-def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
-                     verify_vm_running):
+def test_soft_reboot(provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests instance soft reboot
 
     Metadata:
@@ -199,7 +206,7 @@ def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_
                                                                 'State Changed On'))
     testing_instance.power_control_from_cfme(option=testing_instance.SOFT_REBOOT)
     flash.assert_message_contain('Restart Guest initiated')
-    wait_for_state_change_time_refresh(testing_instance, provider, state_change_time, timeout=720)
+    wait_for_ui_state_refresh(testing_instance, provider, state_change_time, timeout=720)
     if provider.type == 'gce' \
             and testing_instance.get_detail(properties=('Power Management', 'Power State')) \
             == testing_instance.STATE_UNKNOWN:
@@ -211,8 +218,8 @@ def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_
                                                                            'Power State'))))
         state_change_time = testing_instance.get_detail(properties=('Power Management',
                                                                     'State Changed On'))
-        wait_for_state_change_time_refresh(testing_instance, provider, state_change_time,
-                                           timeout=720)
+        wait_for_ui_state_refresh(testing_instance, provider, state_change_time,
+                                  timeout=720)
 
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     soft_assert(
@@ -220,9 +227,8 @@ def test_soft_reboot(setup_provider_funcscope, provider, testing_instance, soft_
         "instance is not running")
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-def test_hard_reboot(setup_provider_funcscope, provider, testing_instance, soft_assert,
-                     verify_vm_running):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+def test_hard_reboot(provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests instance hard reboot
 
     Metadata:
@@ -236,14 +242,14 @@ def test_hard_reboot(setup_provider_funcscope, provider, testing_instance, soft_
     testing_instance.power_control_from_cfme(option=testing_instance.HARD_REBOOT)
     flash.assert_message_contain("Reset initiated")
 
-    wait_for_state_change_time_refresh(testing_instance, provider, state_change_time, timeout=720)
+    wait_for_ui_state_refresh(testing_instance, provider, state_change_time, timeout=720)
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     soft_assert(provider.mgmt.is_vm_running(testing_instance.name), "instance is not running")
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
-def test_suspend(
-        setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_running):
+@pytest.mark.uncollectif(lambda provider: (not provider.one_of(OpenStackProvider) and
+                                           not provider.one_of(AzureProvider)))
+def test_suspend(provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests instance suspend
 
     Metadata:
@@ -260,9 +266,8 @@ def test_suspend(
         provider.mgmt.is_vm_suspended(testing_instance.name), "instance is still running")
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
-def test_unpause(
-        setup_provider_funcscope, provider, testing_instance, soft_assert, verify_vm_paused):
+@pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
+def test_unpause(provider, testing_instance, verify_vm_paused, soft_assert):
     """ Tests instance unpause
 
     Metadata:
@@ -278,9 +283,9 @@ def test_unpause(
         provider.mgmt.is_vm_running(testing_instance.name), "instance is not running")
 
 
-@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack' and provider.type != 'azure')
-def test_resume(setup_provider_funcscope, provider, testing_instance, soft_assert,
-                verify_vm_suspended):
+@pytest.mark.uncollectif(lambda provider: (not provider.one_of(OpenStackProvider) and
+                                           not provider.one_of(AzureProvider)))
+def test_resume(provider, testing_instance, verify_vm_suspended, soft_assert):
     """ Tests instance resume
 
     Metadata:
@@ -295,8 +300,7 @@ def test_resume(setup_provider_funcscope, provider, testing_instance, soft_asser
         provider.mgmt.is_vm_running(testing_instance.name), "instance is not running")
 
 
-def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_assert,
-                   verify_vm_running):
+def test_terminate(provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests instance terminate
 
     Metadata:
@@ -312,8 +316,7 @@ def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_as
         timeout=1200))
 
 
-def test_power_options_from_on(setup_provider_funcscope, provider, testing_instance, soft_assert,
-                     verify_vm_running):
+def test_power_options_from_on(provider, testing_instance, verify_vm_running, soft_assert):
     """ Tests available power options from ON state
 
     Metadata:
@@ -323,8 +326,7 @@ def test_power_options_from_on(setup_provider_funcscope, provider, testing_insta
     check_power_options(soft_assert, testing_instance, 'on')
 
 
-def test_power_options_from_off(setup_provider_funcscope, provider, testing_instance, soft_assert,
-                                verify_vm_stopped):
+def test_power_options_from_off(provider, testing_instance, verify_vm_stopped, soft_assert):
     """ Tests available power options from OFF state
 
     Metadata:
@@ -417,7 +419,7 @@ class TestInstanceRESTAPI(object):
             fail_func=vm.reload)
         testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
         soft_assert(self.verify_vm_power_state(vm, testing_instance.STATE_ON),
-            "instance not running")
+                    "instance not running")
 
     @pytest.mark.uncollectif(lambda provider: not provider.one_of(OpenStackProvider))
     @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
