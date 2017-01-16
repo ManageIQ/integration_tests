@@ -6,7 +6,9 @@ from cfme.infrastructure.provider import InfraProvider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
-from utils.providers import get_crud_by_name, setup_a_provider as _setup_a_provider
+from utils.providers import get_mgmt_by_name, get_mgmt, existing_providers,
+    setup_a_provider as _setup_a_provider
+
 from utils import version
 from cfme import test_requirements
 
@@ -93,3 +95,26 @@ def test_cluster_relationships(soft_assert, setup_a_provider):
                     break
         else:
             soft_assert(False, "Hostname {} not found in {}".format(host_name, provider_name))
+
+@pytest.mark.tier(3)
+@test_requirements.report
+def test_operations_vm_on(soft_assert, setup_a_provider):
+
+
+    vms_in_report = []
+    vms_in_providers = []
+    for provider in existing_providers():
+        vms_in_providers.append(get_mgmt(provider).all_vms())
+
+    path = ["Operations", "Virtual Machines", "Online VMs (Powered On)"]
+    report = CannedSavedReport.new(path)
+    for relation in report.data.rows:
+        vms_in_report.append(relation['VM Name'])
+
+    for prov in vms_in_providers:
+        for machine in prov:
+            if (machine.power_state == 'poweredOn' or machine.power_state == 'up' or
+            machine.power_state == 'ACTIVE' or machine.power_state == 'Running' or
+            machine.power_state == 'running'):
+                if machine.name not in vms_in_report:
+                    return False
