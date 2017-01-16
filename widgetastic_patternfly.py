@@ -314,7 +314,7 @@ class VerticalNavigation(Widget):
     CURRENTLY_SELECTED = './/li[contains(@class, "active")]/a'
     LINKS = './li/a'
     ITEMS_MATCHING = './li[a[normalize-space(.)={}]]'
-    DIV_LINKS_MATCHING = './ul/li/a[span[normalize-space(.)={}]]'
+    DIV_LINKS_MATCHING = './ul/li/a[span[normalize-space(.)={txt}] or @href={txt}]'
     SUB_LEVEL = './following-sibling::div[contains(@class, "nav-pf-")]'
     SUB_ITEM_LIST = './div[contains(@class, "nav-pf-")]/ul'
     CHILD_UL_FOR_DIV = './li[a[normalize-space(.)={}]]/div[contains(@class, "nav-pf-")]/ul'
@@ -392,7 +392,7 @@ class VerticalNavigation(Widget):
             passed_levels.append(level)
             finished = passed_levels == levels
             link = self.browser.element(
-                self.DIV_LINKS_MATCHING.format(quote(level)), parent=current_div)
+                self.DIV_LINKS_MATCHING.format(txt=quote(level)), parent=current_div)
             expands = bool(
                 self.browser.elements(self.SUB_LEVEL, parent=link))
             if expands and not finished:
