@@ -32,7 +32,7 @@ class NewAlertProfileView(AlertProfileFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewAlertProfileView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "Adding a new Alert Profile" and
             self.alert_profiles.tree.currently_selected == [
                 "All Alert Profiles",
@@ -47,7 +47,7 @@ class EditAlertProfileView(AlertProfileFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewAlertProfileView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Editing {} Alert Profile "{}"'.format(
                 self.context["object"].TYPE,
                 self.context["object"].description) and
@@ -64,7 +64,7 @@ class AlertProfileDetailsView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(AlertProfileDetailsView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Alert Profile "{}"'.format(self.context["object"].description)
         )
 
@@ -75,7 +75,7 @@ class AlertProfilesAllView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(AlertProfilesAllView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "All {} Alert Profiles".format(self.context["object"].TYPE)
         )
 

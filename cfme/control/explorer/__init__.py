@@ -12,9 +12,14 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 class ControlExplorerView(BaseLoggedInPage):
 
     @property
-    def is_displayed(self):
-        return (self.logged_in_as_current_user and
+    def in_control_explorer(self):
+        return (
+            self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Control', 'Explorer'])
+
+    @property
+    def is_displayed(self):
+        return self.in_control_explorer and self.configuration.is_displayed
 
     @View.nested
     class policy_profiles(Accordion):  # noqa

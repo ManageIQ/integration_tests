@@ -20,7 +20,7 @@ class PoliciesAllView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(PoliciesAllView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "All {} {} Policies".format(
                 self.context["object"].PRETTY,
                 self.context["object"].TYPE
@@ -39,7 +39,7 @@ class EditPolicyEventAssignments(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(EditPolicyEventAssignments, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Editing {} {} Policy "{}" Event Assignments'.format(
                 self.context["object"].PRETTY,
                 self.context["object"].TYPE,
@@ -66,7 +66,7 @@ class EditPolicyConditionAssignments(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(EditPolicyConditionAssignments, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Editing {} {} Policy "{}" Condition Assignments'.format(
                 self.context["object"].PRETTY,
                 self.context["object"].TYPE,
@@ -93,7 +93,7 @@ class NewPolicyView(PolicyFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewPolicyView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == "Adding a new {} {} Policy".format(
                 self.context["object"].PRETTY, self.context["object"].TYPE) and
             self.policies.is_opened and
@@ -111,7 +111,7 @@ class EditPolicyView(PolicyFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(EditPolicyView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Editing {} {} Policy "{}"'.format(
                 self.context["object"].PRETTY,
                 self.context["object"].TYPE,
@@ -137,7 +137,7 @@ class PolicyDetailsView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(PolicyDetailsView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == '{} {} Policy "{}"'.format(self.context["object"].PRETTY,
                 self.context["object"].TYPE, self.context["object"].description) and
             self.policies.is_opened and
@@ -157,7 +157,7 @@ class ConditionDetailsView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(ConditionDetailsView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == '{} Condition "{}"'.format(self.context["object"].PRETTY,
                 self.context["object"].testing_condition.description) and
             self.policies.is_opened and
@@ -178,7 +178,7 @@ class EventDetailsView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(EventDetailsView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Event "{}"'.format(self.context["object"].testing_event)
         )
 
@@ -211,7 +211,7 @@ class EditEventView(ControlExplorerView):
     @property
     def is_displayed(self):
         return (
-            super(EditEventView, self).is_displayed and
+            self.in_control_explorer and
             self.title.text == 'Editing Event "{}"'.format(self.context["object"].testing_event)
         )
 

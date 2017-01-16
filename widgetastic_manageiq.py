@@ -17,6 +17,7 @@ from widgetastic.widget import (
     Checkbox,
     WidgetDescriptor,
     do_not_read_this_widget)
+from widgetastic.utils import ParametrizedLocator
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
@@ -444,15 +445,12 @@ class MultiBoxSelect(Widget):
 
 class CheckboxSelect(Widget):
 
-    ROOT = "//div[@id={}]"
+    ROOT = ParametrizedLocator("//div[@id={@search_root|quote}]")
 
     def __init__(self, parent, search_root, text_access_func=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
-        self._root = search_root
+        self.search_root = search_root
         self._access_func = text_access_func
-
-    def __locator__(self):
-        return self.ROOT.format(quote(self._root))
 
     @property
     def checkboxes(self):
@@ -625,14 +623,12 @@ class Calendar(TextInput):
             # Now when we set the value, we need to simulate a change event.
             if self.browser.get_attribute("data-date-autoclose", self):
                 # New one
-                script = "$(\"#{}\").trigger('changeDate');"
+                script = "$(arguments[0]).trigger('changeDate');"
             else:
                 # Old one
-                script = (
-                    "if(typeof $j == 'undefined') {var jq = $;} else {var jq = $j;} "
-                    "jq(\"#{}\").change();")
+                script = "$(arguments[0]).change();"
             try:
-                self.browser.execute_script(script.format(self.name))
+                self.browser.execute_script(script, self.browser.element(self))
             except WebDriverException as e:
                 logger.warning(
                     "An exception was raised during handling of the Cal #{}'s change event:\n{}"
