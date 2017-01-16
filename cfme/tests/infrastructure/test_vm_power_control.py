@@ -46,11 +46,7 @@ def test_vm(request, provider, vm_name):
 
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default")
-    else:
-        logger.info("recycling deployed vm %s on provider %s", vm.name, provider.key)
-    vm.provider.refresh_provider_relationships()
-    vm.wait_to_appear()
+        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     return vm
 
 
@@ -67,12 +63,7 @@ def test_vm_tools(request, provider, vm_name, full_template):
 
     if not provider.mgmt.does_vm_exist(vm.name):
         logger.info("deploying %s on provider %s", vm.name, provider.key)
-        vm.create_on_provider(allow_skip="default",
-                              find_in_cfme=True)
-    else:
-        logger.info("recycling deployed vm %s on provider %s", vm.name, provider.key)
-    # vm.provider.refresh_provider_relationships()
-    # vm.wait_to_appear()
+        vm.create_on_provider(allow_skip="default", find_in_cfme=True)
     return vm
 
 
