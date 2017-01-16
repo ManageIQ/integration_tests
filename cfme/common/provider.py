@@ -13,7 +13,6 @@ from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, 
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
-from fixtures.pytest_store import store
 from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
@@ -257,7 +256,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         rdate = self.last_refresh_date()
         if not rdate:
             return False
-        td = store.current_appliance.utc_time() - rdate
+        td = self.appliance.utc_time() - rdate
         if td > datetime.timedelta(0, 600):
             self.refresh_provider_relationships()
             return False
@@ -316,7 +315,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def refresh_provider_relationships(self, from_list_view=False):
         # from_list_view is ignored as it is included here for sake of compatibility with UI call.
         logger.debug('Refreshing provider relationships')
-        col = store.current_appliance.rest_api.collections.providers.find_by(name=self.name)
+        col = self.appliance.rest_api.collections.providers.find_by(name=self.name)
         try:
             col[0].action.refresh()
         except IndexError:
@@ -336,7 +335,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     @variable(alias='rest')
     def last_refresh_date(self):
         try:
-            col = store.current_appliance.rest_api.collections.providers.find_by(name=self.name)[0]
+            col = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
             return col.last_refresh_date
         except AttributeError:
             return None

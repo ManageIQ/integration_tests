@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+
 from manageiq_client.api import APIException
 
 from cfme.configure.configuration import Category, Tag

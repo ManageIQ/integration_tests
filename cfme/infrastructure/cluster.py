@@ -6,7 +6,6 @@
 """
 from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
-from fixtures.pytest_store import store
 
 from cfme.fixtures import pytest_selenium as sel
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
@@ -48,7 +47,7 @@ class Cluster(Pretty, Navigatable):
         self.provider = provider
         self.quad_name = 'cluster'
 
-        col = store.current_appliance.rest_api.collections
+        col = self.appliance.rest_api.collections
         self._id = [
             cl.id
             for cl in col.clusters.all

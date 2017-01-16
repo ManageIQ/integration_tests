@@ -5,7 +5,7 @@ import random
 import re
 import socket
 import yaml
-from manageiq_client.api import ManageIQClient as MiqApi  # noqa
+from manageiq_client.api import ManageIQClient as MiqApi
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
@@ -450,7 +450,7 @@ class IPAppliance(object):
     def rest_api(self):
         return MiqApi(
             "{}://{}:{}/api".format(self.scheme, self.address, self.ui_port),
-            ('admin', 'smartvm'),
+            (conf.credentials['default']['username'], conf.credentials['default']['password']),
             logger=self.rest_logger,
             verify_ssl=False)
 

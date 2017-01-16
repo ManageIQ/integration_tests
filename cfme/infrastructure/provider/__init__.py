@@ -22,7 +22,6 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
-from fixtures.pytest_store import store
 from utils import conf, deferred_verpick, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -189,9 +188,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @variable(alias='rest')
     def num_host(self):
-        provider = store.current_appliance.rest_api.collections.providers.find_by(name=self.name)[0]
+        provider = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
         num_host = 0
-        for host in store.current_appliance.rest_api.collections.hosts:
+        for host in self.appliance.rest_api.collections.hosts:
             if host['ems_id'] == provider.id:
                 num_host += 1
         return num_host
@@ -223,9 +222,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @variable(alias='rest')
     def num_cluster(self):
-        provider = store.current_appliance.rest_api.collections.providers.find_by(name=self.name)[0]
+        provider = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
         num_cluster = 0
-        for cluster in store.current_appliance.rest_api.collections.clusters:
+        for cluster in self.appliance.rest_api.collections.clusters:
             if cluster['ems_id'] == provider.id:
                 num_cluster += 1
         return num_cluster
@@ -269,7 +268,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
         """
         returns current provider id using rest api
         """
-        return rest_api().collections.providers.find_by(name=self.name)[0].id
+        return self.appliance.rest_api.collections.providers.find_by(name=self.name)[0].id
 
     @property
     def hosts(self):
