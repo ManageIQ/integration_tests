@@ -58,6 +58,31 @@ class ApplianceException(Exception):
     pass
 
 
+class ApplianceConsoleCli(object):
+
+    def __init__(self, appliance):
+        self.appliance = appliance
+
+    def run(self, ap_cli_command):
+        return self.appliance.ssh_client.run_command(
+            "appliance_console_cli {}".format(ap_cli_command))
+
+    def set_hostname(self, hostname):
+        self.run("-H {}".format(hostname))
+
+    def configure_appliance_internal_fetch_key(self, region, dbhostname,
+            username, password, dbname, fetch_key, sshlogin, sshpass):
+        self.run("-r {} -i -h {} -U {} -p {} -d {} -v -K {} -s {} -a {}".format(
+            region, dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass))
+
+    def configure_ipa(self, ipaserver, username, password, domain, realm):
+        return self.run("-e {} -n {} -w {} -o {} -l {}".format(
+            ipaserver, username, password, domain, realm))
+
+    def uninstall_ipa_client(self):
+        self.run("--uninstall-ipa")
+
+
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
     but who has an IP address. This has a lot of core functionality that Appliance uses, since
@@ -88,6 +113,7 @@ class IPAppliance(object):
         self.container = container
         self._db_ssh_client = None
         self._user = None
+        self.ap_cli = ApplianceConsoleCli(self)
         self.browser = ViaUI(owner=self)
         self.context = ImplementationContext.from_instances(
             [self.browser])
