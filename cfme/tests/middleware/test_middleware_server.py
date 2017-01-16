@@ -168,6 +168,7 @@ def test_server_shutdown(provider, server):
     verify_server_running(provider, server)
 
 
+@pytest.mark.smoke
 def test_server_restart(provider, server):
     """Tests server restart operation on UI
 

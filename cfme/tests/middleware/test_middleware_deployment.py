@@ -203,6 +203,7 @@ def test_restart(provider, archive_name):
     deployment.validate_properties()
 
 
+@pytest.mark.smoke
 @pytest.mark.parametrize("archive_name", [RESOURCE_WAR_NAME, RESOURCE_JAR_NAME])
 def test_undeploy(provider, archive_name):
     """Tests Undeployment of archive from EAP7 server

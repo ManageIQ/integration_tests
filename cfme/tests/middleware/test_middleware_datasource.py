@@ -130,6 +130,7 @@ def test_datasource_details(provider):
         ds_mgmt.validate_properties()
 
 
+@pytest.mark.smoke
 @pytest.mark.parametrize("datasource", DATASOURCES)
 def test_create_delete_datasource(provider, datasource):
     """Tests datasource creation and deletion on EAP server
