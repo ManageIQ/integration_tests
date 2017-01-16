@@ -90,7 +90,7 @@ service_types = {
 
 
 def appliances_table():
-    return CheckboxTable("//div[@id='form_div']/table[@class='style3']")
+    return CheckboxTable("//div[@id='form_div']/table")
 
 
 def update_registration(service,
