@@ -1,8 +1,7 @@
+# -*- coding: utf-8 -*-
 from cfme.exceptions import OptionNotAvailable
-from cfme.web_ui import fill, flash
-from cfme.fixtures import pytest_selenium as sel
 from utils import version, deferred_verpick
-from . import Instance, select_provision_image
+from . import Instance
 
 
 class AzureInstance(Instance):
@@ -38,50 +37,18 @@ class AzureInstance(Instance):
         'off': [STOP, SUSPEND, SOFT_REBOOT]
     }
 
-    def create(self, email=None, first_name=None, last_name=None, availability_zone=None,
-               security_groups=None, instance_type=None, guest_keypair=None, cancel=False,
-               **prov_fill_kwargs):
+    def create(self, cancel=False, **prov_fill_kwargs):
         """Provisions an Azure instance with the given properties through CFME
 
         Args:
-            email: Email of the requester
-            first_name: Name of the requester
-            last_name: Surname of the requester
-            availability_zone: Name of the zone the instance should belong to
-            security_groups: List of security groups the instance should belong to
-                             (currently, only the first one will be used)
-            instance_type: Type of the instance
-            guest_keypair: Name of the key pair used to access the instance
             cancel: Clicks the cancel button if `True`, otherwise clicks the submit button
                     (Defaults to `False`)
+            prov_fill_kwargs: dictionary of provisioning field/value pairs
         Note:
             For more optional keyword arguments, see
-            :py:data:`cfme.cloud.provisioning.provisioning_form`
+            :py:data:`cfme.cloud.provisioning.ProvisioningForm`
         """
-        from cfme.provisioning import provisioning_form
-        select_provision_image(template_name=self.template_name, provider=self.provider)
-
-        fill(provisioning_form, dict(
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            instance_name=self.name,
-            availability_zone=availability_zone,
-            # not supporting multiselect now, just take first value
-            security_groups=security_groups[0],
-            instance_type=instance_type,
-            guest_keypair=guest_keypair,
-            **prov_fill_kwargs
-        ))
-
-        if cancel:
-            sel.click(provisioning_form.cancel_button)
-            flash.assert_success_message(
-                "Add of new VM Provision Request was cancelled by the user")
-        else:
-            sel.click(provisioning_form.submit_button)
-            flash.assert_success_message(
-                "VM Provision Request was Submitted, you will be notified when your VMs are ready")
+        super(AzureInstance, self).create(form_values=prov_fill_kwargs, cancel=cancel)
 
     def power_control_from_provider(self, option):
         """Power control the instance from the provider

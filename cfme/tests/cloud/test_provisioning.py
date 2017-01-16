@@ -3,6 +3,7 @@
 # in selenium (the group is selected then immediately reset)
 import fauxfactory
 import pytest
+from riggerlib import recursive_update
 
 from textwrap import dedent
 
@@ -30,7 +31,7 @@ pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=[['provisioning', 'image']], scope="function")
 
 
-@pytest.fixture(scope="function")
+@pytest.yield_fixture(scope="function")
 def testing_instance(request, setup_provider, provider, provisioning, vm_name):
     """ Fixture to prepare instance parameters for provisioning
     """
@@ -42,36 +43,75 @@ def testing_instance(request, setup_provider, provider, provisioning, vm_name):
 
     request.addfinalizer(instance.delete_from_provider)
 
-    inst_args = {
+    inst_args = dict()
+
+    # Base instance info
+    inst_args['request'] = {
         'email': 'image_provisioner@example.com',
         'first_name': 'Image',
         'last_name': 'Provisioner',
         'notes': note,
     }
     # TODO Move this into helpers on the provider classes
+
+    recursive_update(inst_args, {'catalog': {'vm_name': vm_name}})
+
+    # Provider specific
     if not isinstance(provider, AzureProvider):
-        inst_args['instance_type'] = provisioning['instance_type']
-        inst_args['availability_zone'] = provisioning['availability_zone']
-        inst_args['security_groups'] = [provisioning['security_group']]
-        inst_args['guest_keypair'] = provisioning['guest_keypair']
+        recursive_update(inst_args, {
+            'properties': {
+                'instance_type': provisioning['instance_type'],
+                'guest_keypair': provisioning['guest_keypair']
+            },
+            'environment': {
+                'availability_zone': provisioning['availability_zone'],
+                # security group can be a list
+                'security_groups': [provisioning['security_group']]
+            }
+        })
 
     if isinstance(provider, OpenStackProvider):
-        inst_args['cloud_network'] = provisioning['cloud_network']
+        recursive_update(inst_args, {
+            'environment': {
+                'cloud_network': provisioning['cloud_network']
+            }
+        })
 
     if isinstance(provider, GCEProvider):
-        inst_args['cloud_network'] = provisioning['cloud_network']
-        inst_args['boot_disk_size'] = provisioning['boot_disk_size']
-        inst_args['is_preemtible'] = True if current_version() >= "5.7" else None
+        recursive_update(inst_args, {
+            'environment': {
+                'cloud_network': provisioning['cloud_network']
+            },
+            'properties': {
+                'boot_disk_size': provisioning['boot_disk_size'],
+                'is_preemptible': True if current_version() >= "5.7" else None}
+        })
 
     if isinstance(provider, AzureProvider):
-        inst_args['cloud_network'] = provisioning['virtual_net']
-        inst_args['cloud_subnet'] = provisioning['subnet_range']
-        inst_args['security_groups'] = provisioning['network_nsg']
-        inst_args['resource_groups'] = provisioning['resource_group']
-        inst_args['instance_type'] = provisioning['vm_size'].lower()
-        inst_args['admin_username'] = provisioning['vm_user']
-        inst_args['admin_password'] = provisioning['vm_password']
-    return instance, inst_args, image
+        # Azure uses different provisioning keys for some reason
+        recursive_update(inst_args, {
+            'environment': {
+                'cloud_network': provisioning['virtual_net'],
+                'cloud_subnet': provisioning['subnet_range'],
+                'security_groups': [provisioning['network_nsg']],
+                'resource_groups': provisioning['resource_group']
+            },
+            'properties': {
+                'instance_type': provisioning['vm_size'].lower()
+            },
+            'customize': {
+                'admin_username': provisioning['vm_user'],
+                'admin_password': provisioning['vm_password']
+            }
+        })
+
+    yield instance, inst_args
+
+    try:
+        instance.delete_from_provider()
+    except Exception as ex:
+        logger.warning('Exception while deleting instance fixture, continuing: {}'
+                       .format(ex.message))
 
 
 @pytest.fixture(scope="function")
