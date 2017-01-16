@@ -39,7 +39,7 @@ class FlavorAll(CFMENavigateStep):
         return match_page(summary='Flavors')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Compute', 'Clouds', 'Flavors')(None)
+        self.parent_view.navigation.select('Compute', 'Clouds', 'Flavors')
 
 
 @navigator.register(Flavor, 'Details')
