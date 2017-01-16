@@ -9,6 +9,7 @@ from cfme.rest.gen_data import vm as _vm
 from cfme.rest.gen_data import arbitration_settings, automation_requests_data
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
+from utils.wait import wait_for
 from utils import testgen
 from utils.api import APIException
 from utils.log import logger
@@ -33,15 +34,19 @@ def vm(request, a_provider, rest_api):
     return _vm(request, a_provider, rest_api)
 
 
-@pytest.fixture(scope="module")
-def vm_modscope(request, a_provider, rest_api_modscope):
-    return _vm(request, a_provider, rest_api_modscope)
-
-
 @pytest.fixture(scope="function")
-def generate_notifications(rest_api, vm_modscope):
-    requests_data = automation_requests_data(vm_modscope)
-    return rest_api.collections.automation_requests.action.create(*requests_data[:2])
+def generate_notifications(rest_api):
+    requests_data = automation_requests_data('nonexistent_vm')
+    requests = rest_api.collections.automation_requests.action.create(*requests_data[:2])
+
+    def _finished():
+        for resource in requests:
+            resource.reload()
+            if resource.request_state != 'finished':
+                return False
+        return True
+
+    wait_for(_finished, num_sec=45, delay=5, message="notifications generation")
 
 
 @pytest.yield_fixture(scope="function")
@@ -370,7 +375,7 @@ def test_mark_notifications(rest_api, generate_notifications, from_detail):
         test_flag: rest
     """
     unseen = rest_api.collections.notifications.find_by(seen=False)
-    notifications = [unseen[i] for i in range(2)]
+    notifications = [unseen[-i] for i in range(1, 3)]
 
     if from_detail:
         for ent in notifications:
@@ -395,7 +400,7 @@ def test_delete_notifications(rest_api, generate_notifications, from_detail):
     """
     collection = rest_api.collections.notifications
     collection.reload()
-    notifications = [collection[i] for i in range(2)]
+    notifications = [collection[-i] for i in range(1, 3)]
 
     if from_detail:
         for ent in notifications:
