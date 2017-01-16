@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict
 
-from widgetastic.widget import View
+from widgetastic.widget import View, Checkbox
 from widgetastic_patternfly import Tab, BootstrapSelect, Input, BootstrapTreeview
 from widgetastic_manageiq import VersionPick, Version, CheckboxSelect, Table, Calendar
 
@@ -62,7 +62,7 @@ class ProvisioningForm(BaseLoggedInPage):
     class environment(Tab):  # noqa
         TAB_NAME = 'Environment'
 
-        automatic_placement = Input(name='environment__placement_auto')
+        automatic_placement = Checkbox(id='environment__placement_auto')
         # Cloud
         availability_zone = BootstrapSelect('environment__placement_availability_zone')
         cloud_network = BootstrapSelect('environment__cloud_network')
