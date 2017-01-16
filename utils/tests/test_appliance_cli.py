@@ -8,7 +8,7 @@ import pytest
 
 
 @pytest.yield_fixture(scope="module")
-def sprout_provisioned_appliance():
+def appliance():
     sp = SproutClient.from_config()
     version = current_appliance.version.vstring
     stream = get_stream(current_appliance.version)
@@ -21,7 +21,7 @@ def sprout_provisioned_appliance():
 
 
 @pytest.yield_fixture(scope="module")
-def sprout_provisioned_appliance2():
+def fqdn_appliance():
     sp = SproutClient.from_config()
     available_providers = set(sp.call_method('available_providers'))
     required_providers = set(cfme_data['fqdn_providers'])
@@ -78,8 +78,8 @@ def test_set_hostname(request):
     assert return_code == 0
 
 
-def test_configure_appliance_internal_fetch_key(request, app_creds, sprout_provisioned_appliance):
-    app = sprout_provisioned_appliance
+def test_configure_appliance_internal_fetch_key(request, app_creds, appliance):
+    app = appliance
     fetch_key_ip = store.current_appliance.address
     app.ap_cli.configure_appliance_internal_fetch_key(0, 'localhost',
         app_creds['username'], app_creds['password'], 'vmdb_production', fetch_key_ip,
@@ -88,8 +88,8 @@ def test_configure_appliance_internal_fetch_key(request, app_creds, sprout_provi
     app.wait_for_web_ui()
 
 
-def test_ipa_crud(request, ipa_creds, sprout_provisioned_appliance2):
-    app = sprout_provisioned_appliance2
+def test_ipa_crud(request, ipa_creds, fqdn_appliance):
+    app = fqdn_appliance
     app.ap_cli.configure_ipa(ipa_creds['ipaserver'], ipa_creds['username'],
         ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
     assert app.ssh_client.run_command("systemctl status sssd | grep running")
