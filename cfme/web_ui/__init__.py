@@ -1617,6 +1617,9 @@ class FileInput(Input):
 
 @fill.method((FileInput, Anything))
 def _fill_file_input(i, a):
+    # TODO Upgrade selenium to 3.0.1+, this breaks in chrome at send_keys()
+    # https://github.com/SeleniumHQ/selenium/issues/2906
+
     # Engage the selenium's file detector so we can reliably transfer the file to the browser
     with browser().file_detector_context(LocalFileDetector):
         # We need a raw element so we can send_keys to it
@@ -1626,7 +1629,7 @@ def _fill_file_input(i, a):
             f = NamedTemporaryFile()
             f.write(str(a))
             f.flush()
-            input_el.send_keys(f.name)
+            input_el.send_keys(os.path.abspath(f.name))
             atexit.register(f.close)
         else:
             # It already is a file ...
