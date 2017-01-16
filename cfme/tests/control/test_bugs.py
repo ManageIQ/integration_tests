@@ -174,3 +174,38 @@ def test_invoke_custom_automation(request):
             action.delete()
 
     action.create()
+
+
+@pytest.mark.meta(blockers=[1375093], automates=[1375093])
+def test_check_compliance_history(request, vmware_provider, vmware_vm):
+    """This test checks if compliance history link in a VM details screen work.
+
+    Steps:
+        * Create any VM compliance policy
+        * Assign it to a policy profile
+        * Assign the policy profile to any VM
+        * Perform the compliance check for the VM
+        * Go to the VM details screen
+        * Click on "History" row in Compliance InfoBox
+
+    Result:
+        Compliance history screen with last 10 checks should be opened
+    """
+    policy = VMCompliancePolicy(
+        "Check compliance history policy",
+        active=True,
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vmware_vm.name)
+    )
+    request.addfinalizer(lambda: policy.delete() if policy.exists else None)
+    policy.create()
+    policy_profile = PolicyProfile(
+        "Check compliance history policy",
+        policies=[policy]
+    )
+    request.addfinalizer(lambda: policy_profile.delete() if policy_profile.exists else None)
+    policy_profile.create()
+    vmware_provider.assign_policy_profiles(policy_profile.description)
+    request.addfinalizer(lambda: vmware_provider.unassign_policy_profiles(
+        policy_profile.description))
+    vmware_vm.check_compliance()
+    vmware_vm.open_details("Compliance", "History")

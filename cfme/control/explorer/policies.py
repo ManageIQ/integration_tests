@@ -6,7 +6,8 @@ from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text, Checkbox, TextInput
 from widgetastic_manageiq import SummaryFormItem, CheckboxSelect, MultiBoxSelect
-from widgetastic_patternfly import BootstrapSelect, Button, Input
+from widgetastic_patternfly import Button, Input
+from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 from . import ControlExplorerView
 from actions import Action
@@ -79,7 +80,7 @@ class PolicyFormCommon(ControlExplorerView):
 
     description = Input(name="description")
     active = Checkbox("active")
-    scope = BootstrapSelect("chosen_typ")
+    scope = ExpressionEditor()
     notes = TextInput(name="notes")
 
     cancel_button = Button("Cancel")
