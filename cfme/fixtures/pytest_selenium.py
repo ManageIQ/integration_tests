@@ -889,7 +889,7 @@ def checkbox(loc, set_to=False):
             selected = el.is_selected()
 
         if selected is not set_to:
-            logger.debug("Setting checkbox %s to %s", str(loc), str(set_to))
+            logger.debug("Setting checkbox to {}".format(set_to))
             click(el)
         return selected
 

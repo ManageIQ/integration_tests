@@ -11,7 +11,6 @@ from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, na
 from utils.appliance import Navigatable
 from utils.update import Updateable
 from utils.pretty import Pretty
-from utils.wait import wait_for
 
 order_button = "//button[@title='Order this Service']"
 
@@ -53,7 +52,8 @@ class ServiceCatalogs(Updateable, Pretty, Navigatable):
         if self.stack_data:
             stack_form.fill(self.stack_data)
         sel.click(form_buttons.submit)
-        wait_for(flash.get_messages, num_sec=10, delay=2, fail_condition=[], fail_func=tb.refresh())
+        # TO DO - needs to be reworked and remove sleep
+        sel.sleep(5)
         flash.assert_success_message("Order Request was Submitted")
 
 
