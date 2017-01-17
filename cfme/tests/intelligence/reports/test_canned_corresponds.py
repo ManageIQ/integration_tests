@@ -95,6 +95,7 @@ def test_cluster_relationships(soft_assert, setup_a_provider):
         else:
             soft_assert(False, "Hostname {} not found in {}".format(host_name, provider_name))
 
+
 @pytest.mark.tier(3)
 @test_requirements.report
 def test_operations_vm_on(soft_assert, setup_a_provider):
@@ -117,7 +118,6 @@ def test_operations_vm_on(soft_assert, setup_a_provider):
 
     path = ["Operations", "Virtual Machines", "Online VMs (Powered On)"]
     report = CannedSavedReport.new(path)
-    #read the report table
 
     if len(vms_in_db) == len(list(report.data.rows)):
         for vm in vms_in_db:
@@ -129,8 +129,6 @@ def test_operations_vm_on(soft_assert, setup_a_provider):
                 vm.vm_last_scan == item['Last Analysis Time']):
                     continue
                 else:
-                    print vm, item
                     return False
     else:
-        print len(vms_in_db), len(list(report.data.rows))
         return False
