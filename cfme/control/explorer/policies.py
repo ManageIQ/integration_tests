@@ -376,21 +376,21 @@ class BasePolicy(Updateable, Navigatable, Pretty):
                 TRUE section. If :py:class:`dict`, the action is key and value specifies its
                 placement. If it's True, then it will be put in the TRUE section and so on.
         """
-        true, false = [], []
+        true_actions, false_actions = [], []
         if isinstance(actions, Action):
-            true.append(actions)
+            true_actions.append(actions)
         elif isinstance(actions, list) or isinstance(actions, tuple) or isinstance(actions, set):
-            true.extend(actions)
+            true_actions.extend(actions)
         elif isinstance(actions, dict):
             for action, is_true in actions.iteritems():
                 if is_true:
-                    true.append(action)
+                    true_actions.append(action)
                 else:
-                    false.append(action)
+                    false_actions.append(action)
         else:
             raise TypeError("assign_actions_to_event expects, list, tuple, set or dict!")
         # Check whether actions exist
-        for action in true + false:
+        for action in true_actions + false_actions:
             if isinstance(action, Action):
                 if not action.exists:
                     action.create()
@@ -410,8 +410,8 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         view = self.create_view(EditEventView)
         assert view.is_displayed
         changed = view.fill({
-            "true_actions": [ac.description for ac in true],
-            "false_actions": [ac.description for ac in false]
+            "true_actions": [ac.description for ac in true_actions],
+            "false_actions": [ac.description for ac in false_actions]
         })
         if changed:
             view.save_button.click()
