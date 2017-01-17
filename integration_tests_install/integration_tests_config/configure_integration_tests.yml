@@ -151,8 +151,12 @@
       action: custom_prompt prompt="{{ browser_question }} - [[ {{browser}} ]]" accepted_keys="{{browser_accepted_keys}}" 
       register: browser_p
  
-#    - name: debug
-#      debug: msg="{{ git_account_username_p.key }}"
+    - name: Set facts 
+      set_fact:
+        git_remote_name: 'upstream'
+        yaml_remote_name: 'upstream' 
+      when: pull_requests_p.key != "n"
+
  
     - name: Writing all prompted variables into variable file
       lineinfile: "dest={{ vars_config }} regexp='^{{ item.key }}:' line='{{ item.key }}: {{ item.value }}'"
@@ -200,7 +204,7 @@
     # already been cloned locally.
 
     - name: Check if repo exists locally
-      git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" update=no clone=no version=master remote=upstream
+      git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" update=no clone=no version=master remote={{ git_remote_name | default('origin') }}
       register: git_repo_exists
 
     - name: Print if repo exists locally - if it is false it means it was cloned before
@@ -266,14 +270,15 @@
 
     - name: Clone Integration tests repo
       #git: repo="git://github.com/{{ git_account_username}}/cfme_tests.git" dest="{{ cfme_vol }}/cfme_tests" clone=yes update=yes version=master
-      git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote=upstream
+      # git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote=upstream
+      git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote={{ git_remote_name | default('origin') }}
       become_user: "{{ username }}"
       #when: pull_requests_p.key != "n"
       #when: pull_requests.key != "n"
 #      when: pull_requests != "n"
     
     - name: Clone Integration tests PR [testing]
-      git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote=upstream refspec=+refs/pull/3254/head:integration_tests_container force=yes
+      git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote={{ git_remote_name | default('origin') }} refspec=+refs/pull/3254/head:integration_tests_container force=yes
       become_user: "{{ username }}"
       when: pull_requests != "n"
 
@@ -297,7 +302,7 @@
 
     - name: Clone remote YAML repo - Add username into repo url - regexp
       # git: repo="{{ yaml_repo }}" dest="{{ cfme_vol }}/{{ yamls_base }}" clone=yes remote=upstream
-      git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo | basename }}" clone=yes remote=upstream
+      git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo | basename }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
       # git: repo="{{ yaml_remote_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_remote_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
 #      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
