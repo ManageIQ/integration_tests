@@ -142,7 +142,8 @@ class CFMENavigateStep(NavigateStep):
             return False
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
-        self.view.flush_widget_cache()
+        if self.VIEW:
+            self.view.flush_widget_cache()
         go_kwargs = kwargs.copy()
         go_kwargs.update(nav_args)
         self.appliance.browser.open_browser()
