@@ -85,25 +85,27 @@
     - name: "6)" 
       action: custom_prompt prompt="{{ any_yaml_question }} - [{{ any_yaml }}]:" accepted_keys="{{ accepted_keys_yn }}"
       register: any_yaml_p
-      when: pull_requests_p.key != "n"
+#      when: pull_requests_p.key != "n"
 #    
       #  Ask user if he wants to use YAML files from remote repository 
     - name: "6.1)"
       action: custom_prompt prompt="{{ yaml_remote_repo_yn_question }} - [{{ yaml_remote_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}"
       register: yaml_remote_repo_yn_p
-      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
+#      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
 
       # Ask for URL for remote YAML repo 
     - name: "6.2)"
       action: custom_prompt prompt="{{ yaml_remote_repo_question }} - [{{ yaml_remote_repo }}]:"
       register: yaml_remote_repo_p
-      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+ #     when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+      when: any_yaml_p.key == "y" and yaml_remote_repo_yn_p.key == "y"
 
       # Ask for username for remote YAML repo 
     - name: "6.2)"
       action: custom_prompt prompt="{{ yaml_remote_repo_username_question }} - [{{ yaml_remote_repo_username }}]:"
       register: yaml_remote_repo_username_p
-      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+#      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+      when: any_yaml_p.key == "y" and yaml_remote_repo_yn_p.key == "y"
       # when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
       
       # Ask for password if YAMLs are encrypted
@@ -111,20 +113,23 @@
       action: custom_prompt prompt="{{ yaml_remote_key_password_question }} - [{{ yaml_remote_key_password }}]:"
       register: yaml_remote_key_password_p
       # when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
-      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+#      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y")
+      when: any_yaml_p.key == "y" and yaml_remote_repo_yn_p.key == "y"
   
       # Ask user if he wants to use local files from his PC
     - name: "7.1)"   
       action: custom_prompt prompt="{{ yaml_local_repo_yn_question }} - [{{ yaml_local_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}"
       register: yaml_local_repo_yn_p
       # when: pull_requests_p.key != "n"
-      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
+#      when: any_yaml_p.key == "y" and pull_requests_p.key != "n"
+      when: any_yaml_p.key == "y"
 
       # Ask for path where local YAML files can be found
     - name: "7.2)"   
       action: custom_prompt prompt="{{ yaml_local_repo_question }} - [{{ yaml_local_repo }}]:"
       register: yaml_local_repo_p
-      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_local_repo_yn_p.key == "y")
+#      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_local_repo_yn_p.key == "y")
+      when: any_yaml_p.key == "y" and yaml_local_repo_yn_p.key == "y"
     
     #- name: "6) 7) 8) nested loop"
     #  action: custom_prompt prompt="{{ item.value }}" "{{ item.accepted_keys }}"="{{ item.accepted_key|default('') }}"
@@ -140,7 +145,7 @@
     - name: "10)"
       action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
       register: base_url_p
-      when: pull_requests_p.key != "n"
+#      when: pull_requests_p.key != "n"
 
     - name: "11)"
       action: custom_prompt prompt="{{ browser_question }} - [[ {{browser}} ]]" accepted_keys="{{browser_accepted_keys}}" 
@@ -265,7 +270,7 @@
       become_user: "{{ username }}"
       #when: pull_requests_p.key != "n"
       #when: pull_requests.key != "n"
-      when: pull_requests != "n"
+#      when: pull_requests != "n"
     
     - name: Clone Integration tests PR [testing]
       git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote=upstream refspec=+refs/pull/3254/head:integration_tests_container force=yes
@@ -295,7 +300,8 @@
       git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo | basename }}" clone=yes remote=upstream
       # git: repo="{{ yaml_remote_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_remote_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
-      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+#      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
+      when: yaml_remote_repo_yn_p.key == "y"
 
       # TBD - can be replaced by git_config module - Ansible 2.1
 #    - name: Configure origin for remote YAML repo
@@ -334,7 +340,8 @@
       file: src="../../cfme-qe-yamls.git/complete/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
       with_fileglob: 
         - /projects/cfme_env/cfme_vol/cfme-qe-yamls.git/complete/*.*yaml 
-      when: yaml_remote_repo_yn_p.key == "y" and ((pull_requests == "y") and ( item | basename != 'env.yaml'))
+      #when: yaml_remote_repo_yn_p.key == "y" and ((pull_requests == "y") and ( item | basename != 'env.yaml'))
+      when: yaml_remote_repo_yn_p.key == "y" and (item | basename != 'env.yaml')
     
     - name: Create symlinks for (local) YAML repo (symlinks to remote repo will be overwritten if name is the same)
       file: src="../../{{ yaml_local_repo }}/{{ item | basename }}" dest="{{ cfme_vol }}/integration_tests/conf/{{ item | basename }}" state=link force=yes
