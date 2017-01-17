@@ -49,8 +49,10 @@ RUN sed -i '/-e \./d' requirements.txt
 
 RUN source /root/.bashrc; PYCURL_SSL_LIBRARY=nss pip install -Ur ./requirements.txt && rm -rf ~/.cache/pip
 
-ENV CHROME_DRIVER_VERSION 2.21
-ENV SELENIUM_VERSION 2.51
+# ENV CHROME_DRIVER_VERSION 2.21
+ENV CHROME_DRIVER_VERSION 2.27
+# ENV SELENIUM_VERSION 2.51
+ENV SELENIUM_VERSION 2.53
 ENV FIREFOX_VERSION 38.6
 
 RUN dnf install -y google-chrome-stable
