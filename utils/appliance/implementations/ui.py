@@ -142,7 +142,8 @@ class CFMENavigateStep(NavigateStep):
             return False
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
-        go_kwargs = kwargs.copy().update(nav_args)
+        go_kwargs = kwargs.copy()
+        go_kwargs.update(nav_args)
         self.appliance.browser.open_browser()
         self.appliance.browser.widgetastic.dismiss_any_alerts()
 
