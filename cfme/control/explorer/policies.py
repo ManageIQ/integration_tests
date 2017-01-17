@@ -422,6 +422,14 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         view.flash.assert_message('Actions for Policy Event "{}" were saved'.format(
             event))
 
+    @property
+    def exists(self):
+        policies = self.appliance.db["miq_policies"]
+        return self.appliance.db.session\
+            .query(policies.description)\
+            .filter(policies.description == self.description)\
+            .count() > 0
+
 
 @navigator.register(BasePolicy, "Add")
 class PolicyNew(CFMENavigateStep):
