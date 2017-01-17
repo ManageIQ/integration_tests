@@ -61,20 +61,15 @@ def test_attach_volume_from_instance_page(provider):
     """Attaches pre-created volume to an instance from Instance page"""
     vms = filter(lambda vm: vm.power_state == 'ACTIVE', provider.mgmt.all_vms())
     instance_name = choice(vms).name
-    volume_name = None
     # Find available volume
-    for volume in provider.mgmt.list_volume():
-        vol_info = provider.mgmt.get_volume(volume).to_dict()
-        if vol_info['status'] == 'available':
-            volume_name = vol_info['display_name']
-            break
-    assert volume_name, "Can't find free volume to attach"
+    volume = Volume('', provider).find_free_volume()
+    assert volume, "Can't find free volume to attach"
 
     Instance(instance_name, provider).load_details()
     tb.select('Configuration', 'Attach a Cloud Volume to this Instance')
     assert len(attach_inst_page_form.select_volume.all_options) > 0
 
-    attach_inst_page_form.fill(dict(select_volume=volume_name,
+    attach_inst_page_form.fill(dict(select_volume=volume.name,
                                     device_path='/dev/vdb'))
     sel.click(submit_changes)
     flash.assert_message_contain('Attaching Cloud Volume')
@@ -82,7 +77,7 @@ def test_attach_volume_from_instance_page(provider):
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     info_el = InfoBlock.element('Relationships', 'Cloud Volumes')
     sel.click(info_el)
-    params = {'Name': volume_name, 'Status': 'in-use'}
+    params = {'Name': volume.name, 'Status': 'in-use'}
     res = list_tbl.find_rows_by_cells(params)
     assert res, 'Volume does not appear in instance relationships'
 
@@ -157,17 +152,14 @@ def test_detach_volume_from_volume_page(provider):
 
 def test_delete_volume(provider):
     """Deletes volume"""
-    navigate_to(Volume, 'All')
-    params = {'Status': 'available',
-              'Cloud Provider': provider.get_yaml_data()['name']}
-    list_tbl.click_row_by_cells(params, 'Name')
-    vname = get_volume_name()
-    tb.select('Configuration', 'Delete this Cloud Volume', invokes_alert=True)
-    sel.handle_alert(cancel=False)
+    volume = Volume('', provider).find_free_volume()
+    assert volume, "Can't find free volume to attach"
+
+    volume.delete()
     flash.assert_message_contain('Delete initiated for 1 Cloud Volume.')
 
     wait_for(provider.is_refreshed, [None, 10], delay=5)
     navigate_to(Volume, 'All')
-    params = {'Name': vname}
+    params = {'Name': volume.name}
     res = list_tbl.find_rows_by_cells(params)
     assert not res, 'Volume does not disappear from volume list'
