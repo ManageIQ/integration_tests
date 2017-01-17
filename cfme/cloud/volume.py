@@ -66,6 +66,32 @@ class Volume(Navigatable):
         creation_form.fill(volume_data)
         sel.click(add_ng)
 
+    def find_free_volume(self):
+        """
+        Gets first available volume on provider, returns None if there are no
+            free volumes found
+        :returns Volume object
+        """
+        for volume in self.provider.mgmt.list_volume():
+            vol_info = self.provider.mgmt.get_volume(volume).to_dict()
+            if vol_info['status'] == 'available':
+                volume_name = vol_info['display_name']
+                break
+        else:
+            return None
+        return Volume(volume_name, self.provider)
+
+    def delete(self):
+        """Deletes 'self' volume"""
+        navigate_to(Volume, 'All')
+        params = {'Status': 'available',
+                  'Name': self.name,
+                  'Cloud Provider': self.provider.get_yaml_data()['name']}
+        list_tbl.click_row_by_cells(params, 'Name')
+        tb.select('Configuration', 'Delete this Cloud Volume',
+                  invokes_alert=True)
+        sel.handle_alert(cancel=False)
+
 
 @navigator.register(Volume, 'All')
 class All(CFMENavigateStep):
