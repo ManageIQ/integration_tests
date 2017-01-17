@@ -576,9 +576,9 @@ class Tenant(Updateable, Pretty, Navigatable):
 
         navigate_to(self, 'Add')
         fill(self.tenant_form, self, action=form_buttons.add)
-        if type(self) is Tenant:
+        if isinstance(self, Tenant):
             flash.assert_success_message('Tenant "{}" was saved'.format(self.name))
-        elif type(self) is Project:
+        elif isinstance(self, Project):
             flash.assert_success_message('Project "{}" was saved'.format(self.name))
         else:
             raise TypeError(
