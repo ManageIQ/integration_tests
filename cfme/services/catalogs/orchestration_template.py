@@ -198,8 +198,7 @@ class All(CFMENavigateStep):
     VIEW = OrchestrationTemplatesView
 
     def step(self):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Services', 'Catalogs')(None)
+        self.parent_view.navigation.select('Services', 'Catalogs')
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates")
 
     def am_i_here(self, *args, **kwargs):

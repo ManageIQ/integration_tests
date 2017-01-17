@@ -33,8 +33,7 @@ class AvailabilityZoneAll(CFMENavigateStep):
         match_page(summary='Availability Zones')
 
     def step(self, *args, **kwargs):
-        from cfme.web_ui.menu import nav
-        nav._nav_to_fn('Compute', 'Clouds', 'Availability Zones')(None)
+        self.parent_view.navigation.select('Compute', 'Clouds', 'Availability Zones')
 
 
 @navigator.register(AvailabilityZone, 'Details')
