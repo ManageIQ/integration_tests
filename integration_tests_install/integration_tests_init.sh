@@ -101,11 +101,14 @@ function return_vnc_port {
 }
 
 function run_config {
+  # Check if new image is available on Docker registry
+  check_4_new_img
+
   # If this file exists, it means user was notified about new image and image must be pulled when executing script with init argument.
   if [ -f ${DO_NOT_CHECK} ]; then
     rm ${DO_NOT_CHECK}
     log "New image have been detected and therefore pulling its latest version... This may take some time."
-    docker pull ${DOCK_IMAGE}
+    docker pull ${DOCK_IMG}
   fi
 
   docker run -it --rm \
