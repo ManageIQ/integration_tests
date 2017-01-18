@@ -41,7 +41,7 @@ Updating of Docker images works by pushing changes to integration_tests Dockerfi
  - Docker installed from official Docker repositories
 Follow official documentation on how to [install](https://www.docker.com/products/overview#/install_the_platform) Docker on your favourite platform.
 
-## Configure CFME - WIP
+## Configure CFME 
 Create working folder on your laptop:
 ```
 export PROJECTS="${HOME}/projects"
@@ -55,6 +55,7 @@ cp -r /<path to custom yamls>/*.y*ml ./my_custom_yaml_files
 ```
 When you will be asked for custom yamls, type relative path as used above e.g. ./my_custom__yaml_files
 
+### Clone integration_tests repo
 Clone integration_tests repo from GitHub:
 ```
 <!---
@@ -80,6 +81,8 @@ Configure environment:
 cd ${CFME_TESTS}
 /bin/bash ./integration_tests_init.sh init
 ```
+Note: Answers collected from user during init phase are stored inside .vars_config.yml.
+
 Run test:
 Note: This test requires to have YAML files configured.
 ```
