@@ -12,6 +12,7 @@ from utils.providers import setup_a_provider as _setup_a_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 from utils.log import logger
+from utils import version
 
 
 def service_catalogs(request, rest_api):
@@ -114,12 +115,12 @@ def dialog():
     return service_dialog
 
 
-def services(request, rest_api, a_provider, dialog, service_catalogs):
+def service_data(request, rest_api, a_provider, dialog, service_catalogs):
     """
     The attempt to add the service entities via web
     """
-    template, host, datastore, iso_file, vlan, catalog_item_type = map(a_provider.data.get(
-        "provisioning").get,
+    template, host, datastore, iso_file, vlan, catalog_item_type = map(
+        a_provider.data.get("provisioning").get,
         ('template', 'host', 'datastore', 'iso_file', 'vlan', 'catalog_item_type'))
 
     provisioning_data = {
@@ -135,6 +136,11 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
     elif a_provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
         provisioning_data['vlan'] = vlan
+
+    vm_name = version.pick({
+        version.LOWEST: provisioning_data['vm_name'] + '_0001',
+        '5.7': provisioning_data['vm_name'] + '0001'})
+
     catalog = service_catalogs[0].name
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
@@ -150,10 +156,24 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
     service_catalogs.order()
     row_description = catalog_item.name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=2000, delay=20)
-    assert (row.last_message.text == 'Request complete' or
-        'Provisioned Successfully' in row.last_message.text)
+    row, _ = wait_for(requests.wait_for_request, [cells, True],
+        fail_func=requests.reload, num_sec=2000, delay=60)
+    assert row.request_state.text == 'Finished'
+
+    @request.addfinalizer
+    def _finished():
+        a_provider.mgmt.delete_vm(vm_name)
+        try:
+            rest_api.collections.services.get(name=catalog_item.name).action.delete()
+        except ValueError:
+            logger.warning("Failed to delete service '{}'.".format(catalog_item.name))
+
+    return {'service_name': catalog_item.name, 'vm_name': vm_name}
+
+
+def services(request, rest_api, a_provider, dialog, service_catalogs):
+    service_data(request, rest_api, a_provider, dialog, service_catalogs)
+
     try:
         services = [_ for _ in rest_api.collections.services]
         services[0]
