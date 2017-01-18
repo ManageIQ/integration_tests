@@ -52,7 +52,7 @@ mkdir -p ${CFME_TESTS}; cd ${CFME_TESTS}
 ### Copy custom YAML files (optional)
 ```
 mkdir ./my_custom_yaml_files
-cp -r /<path to custom yamls>/*.y*ml ./my_custom_yaml_files
+cp -r /<path to custom yamls>/*.*y*ml ./my_custom_yaml_files
 ```
 When you will be asked for custom yamls, type relative path as used above e.g. ./my_custom__yaml_files
 

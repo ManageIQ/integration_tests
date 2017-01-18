@@ -143,12 +143,12 @@
     #  #until: item.key == 'y' 
 
     - name: "10)"
-      action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url | regex_replace('^https://(.*)$','\\1') }}]:"
+      action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
       register: base_url_p 
 #      when: pull_requests_p.key != "n"
 
     - name: "11)"
-      action: custom_prompt prompt="{{ browser_question }} - [[ {{browser}} ]]" accepted_keys="{{browser_accepted_keys}}" 
+      action: custom_prompt prompt="{{ browser_question }} - [{{ browser }}]" accepted_keys="{{browser_accepted_keys}}" 
       register: browser_p
  
     - name: Set facts 
@@ -173,7 +173,7 @@
         - { key: 'yaml_remote_key_password', value: "{{ yaml_remote_key_password_p.key|default('') }}"}
         - { key: 'yaml_local_repo_yn', value: "{{ yaml_local_repo_yn_p.key|default('') }}"}
         - { key: 'yaml_local_repo', value: "{{ yaml_local_repo_p.key|default('') }}"}
-        - { key: 'base_url', value: "{{ base_url_p.key| regex_replace('^(.*)$', 'https://\\1') |default('') }}"}
+        - { key: 'base_url', value: "{{ base_url_p.key |default('') }}"}
         - { key: 'browser', value: "{{ browser_p.key }}"}
       when: item.value != ''
     
