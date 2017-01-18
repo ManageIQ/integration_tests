@@ -144,7 +144,7 @@
 
     - name: "10)"
       action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
-      register: base_url_p
+      register: {{ base_url_p | regex_replace('^(.*)$', 'https://\\1') }}
 #      when: pull_requests_p.key != "n"
 
     - name: "11)"
