@@ -144,7 +144,7 @@
 
     - name: "10)"
       action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
-      register: {{ base_url_p | regex_replace('^(.*)$', 'https://\\1') }}
+      register: base_url_p 
 #      when: pull_requests_p.key != "n"
 
     - name: "11)"
@@ -173,7 +173,7 @@
         - { key: 'yaml_remote_key_password', value: "{{ yaml_remote_key_password_p.key|default('') }}"}
         - { key: 'yaml_local_repo_yn', value: "{{ yaml_local_repo_yn_p.key|default('') }}"}
         - { key: 'yaml_local_repo', value: "{{ yaml_local_repo_p.key|default('') }}"}
-        - { key: 'base_url', value: "{{ base_url_p.key|default('') }}"}
+        - { key: 'base_url', value: "{{ base_url_p.key| regex_replace('^(.*)$', 'https://\\1') |default('') }}"}
         - { key: 'browser', value: "{{ browser_p.key }}"}
       when: item.value != ''
     
