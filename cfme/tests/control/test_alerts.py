@@ -201,6 +201,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     """
     alert = alerts.Alert("VM Power On > 2 in last 15 min")
     with update(alert):
+        alert.active = True
         alert.emails = fauxfactory.gen_email()
 
     setup_for_alerts(request, [alert], "VM Power On", vm_name, provider)

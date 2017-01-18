@@ -6,7 +6,7 @@ from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text, Checkbox
 from widgetastic_patternfly import BootstrapSelect, Button, Input
-from widgetastic_manageiq import SNMPForm
+from widgetastic_manageiq import SNMPForm, AlertEmail
 
 from . import ControlExplorerView
 from utils.appliance import Navigatable
@@ -39,6 +39,8 @@ class AlertFormCommon(ControlExplorerView):
     mgmt_event_send = Checkbox("send_event_cb")
     mgmt_event = Input("event_name")
     cancel_button = Button("Cancel")
+    emails_send = Checkbox("send_email_cb")
+    emails = AlertEmail()
 
 
 class NewAlertView(AlertFormCommon):
@@ -149,8 +151,7 @@ class Alert(Updateable, Navigatable, Pretty):
         self.driving_event = driving_event
         self.notification_frequency = notification_frequency
         self.snmp_trap = snmp_trap
-        if emails is not None:
-            raise NotImplementedError
+        self.emails = emails
         self.timeline_event = timeline_event
         self.mgmt_event = mgmt_event
 
@@ -176,13 +177,13 @@ class Alert(Updateable, Navigatable, Pretty):
             cancel: Whether to cancel the update (default False).
         """
         view = navigate_to(self, "Edit")
-        changed = view.fill(updates)
+        for attr, value in updates.items():
+            setattr(self, attr, value)
+        changed = self._fill(view)
         if changed:
             view.save_button.click()
         else:
             view.cancel_button.click()
-        for attr, value in updates.items():
-            setattr(self, attr, value)
         view = self.create_view(AlertDetailsView)
         assert view.is_displayed
         view.flash.assert_no_error()
@@ -260,7 +261,14 @@ class Alert(Updateable, Navigatable, Pretty):
             else:
                 fill_details["snmp_trap_send"] = True
                 fill_details["snmp_trap"] = self.snmp_trap
-        view.fill(fill_details)
+        if self.emails is not None:
+            if not self.emails:
+                fill_details["emails_send"] = False
+                fill_details["emails"] = None
+            else:
+                fill_details["emails_send"] = True
+                fill_details["emails"] = self.emails
+        return view.fill(fill_details)
 
     @property
     def exists(self):

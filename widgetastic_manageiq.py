@@ -1204,3 +1204,57 @@ class UpDownSelect(View):
         for item in reversed(items):  # reversed because every new item at top pushes others down
             self.move_top(item)
         return True
+
+
+class AlertEmail(Widget):
+
+    ROOT = "//div[@id='edit_email_div']"
+    ADD_BUTTON = ".//div[@title='Add']"
+    RECIPIENTS = "./div[@id='edit_to_email_div']//a"
+    EMAIL_LINK = ".//a[text()='{}']"
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.RECIPIENTS_INPUT = TextInput(self, "email")
+
+    def __locator__(self):
+        return self.ROOT
+
+    def fill(self, values):
+        if isinstance(values, basestring):
+            values = [values]
+        elif isinstance(values, list):
+            pass
+        else:
+            raise ValueError("Emails should be a string or a list")
+        if self.read() == set(values):
+            return False
+        else:
+            values_to_remove = self._values_to_remove(values)
+            values_to_add = self._values_to_add(values)
+            for value in values_to_remove:
+                self._remove_recipient(value)
+            for value in values_to_add:
+                self._add_recipient(value)
+            return True
+
+    @property
+    def button_add_recipient(self):
+        return self.browser.element(self.ADD_BUTTON, parent=self)
+
+    def _values_to_remove(self, values):
+        return list((set(values) ^ self.read()) - set(values))
+
+    def _values_to_add(self, values):
+        return list((set(values) ^ self.read()) - self.read())
+
+    def _add_recipient(self, email):
+        self.RECIPIENTS_INPUT.fill(email)
+        self.button_add_recipient.click()
+
+    def _remove_recipient(self, email):
+        self.browser.element(self.EMAIL_LINK.format(email), parent=self).click()
+
+    def read(self):
+        links = self.browser.elements(self.RECIPIENTS, parent=self)
+        return {link.text for link in links}
