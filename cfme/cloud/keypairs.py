@@ -8,7 +8,7 @@ from widgetastic_patternfly import Dropdown, Button, FlashMessages
 from cfme.base.ui import BaseLoggedInPage
 from cfme.common import SummaryMixin, Taggable
 from cfme.exceptions import KeyPairNotFound
-from cfme.web_ui import match_location
+from cfme.web_ui import match_location, mixins
 from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
 from utils.appliance import Navigatable
 from utils.wait import wait_for
@@ -198,6 +198,21 @@ class KeyPair(Taggable, SummaryMixin, Navigatable):
         view = self.create_view(KeyPairAllView)
         view.entities.flash.assert_no_error()
         view.entities.flash.assert_success_message(flash_message)
+
+    def add_tag(self, tag, **kwargs):
+        """Tags the Keypair by given tag"""
+        navigate_to(self, 'Details')
+        mixins.add_tag(tag, **kwargs)
+
+    def remove_tag(self, tag, **kwargs):
+        """Untag the Keypair by given tag"""
+        navigate_to(self, 'Details')
+        mixins.remove_tag(tag)
+
+    @property
+    def exists(self):
+        view = navigate_to(self, 'Details')
+        return view.is_displayed
 
 
 @navigator.register(KeyPair, 'All')
