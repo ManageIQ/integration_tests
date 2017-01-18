@@ -1,4 +1,3 @@
-from mgmtsystem.rhevm import RHEVMSystem
 from . import InfraProvider, prop_region
 
 
@@ -6,7 +5,11 @@ from . import InfraProvider, prop_region
 class RHEVMProvider(InfraProvider):
     _properties_region = prop_region
     type_name = "rhevm"
-    mgmt_class = RHEVMSystem
+
+    @property
+    def mgmt_class(self):
+        from mgmtsystem.rhevm import RHEVMSystem
+        return RHEVMSystem
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, start_ip=None, end_ip=None,

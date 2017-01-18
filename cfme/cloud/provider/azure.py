@@ -1,12 +1,15 @@
 from utils.version import pick
-from mgmtsystem.azure import AzureSystem
 from . import CloudProvider
 
 
 @CloudProvider.add_provider_type
 class AzureProvider(CloudProvider):
     type_name = "azure"
-    mgmt_class = AzureSystem
+
+    @property
+    def mgmt_class(self):
+        from mgmtsystem.azure import AzureSystem
+        return AzureSystem
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, region=None,
                  tenant_id=None, subscription_id=None):

@@ -2,7 +2,6 @@ import re
 
 from cfme.common import TopologyMixin, TimelinesMixin
 from . import MiddlewareProvider
-from mgmtsystem.hawkular import Hawkular
 from utils.appliance import Navigatable
 from utils.db import cfmedb
 from utils.varmeth import variable
@@ -38,7 +37,11 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
     property_tuples = MiddlewareProvider.property_tuples +\
         [('name', 'Name'), ('hostname', 'Host Name'), ('port', 'Port'), ('provider_type', 'Type')]
     type_name = "hawkular"
-    mgmt_class = Hawkular
+
+    @property
+    def mgmt_class(self):
+        from mgmtsystem.hawkular import Hawkular
+        return Hawkular
 
     def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None,
             appliance=None, **kwargs):
