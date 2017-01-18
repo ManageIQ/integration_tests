@@ -143,7 +143,7 @@
     #  #until: item.key == 'y' 
 
     - name: "10)"
-      action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
+      action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url | regex_replace('^https://(.*)$','\\1') }}]:"
       register: base_url_p 
 #      when: pull_requests_p.key != "n"
 
