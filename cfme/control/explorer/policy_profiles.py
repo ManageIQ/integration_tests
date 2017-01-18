@@ -149,6 +149,19 @@ class PolicyProfile(Updateable, Navigatable, Pretty):
             view.flash.assert_message(
                 'Policy Profile "{}": Delete successful'.format(self.description))
 
+    @property
+    def exists(self):
+        """Check existence of this Policy Profile.
+
+        Returns: :py:class:`bool` signalizing the presence of the Policy Profile in database.
+        """
+        miq_sets = self.appliance.db["miq_sets"]
+        return self.appliance.db.session\
+            .query(miq_sets.description)\
+            .filter(
+                miq_sets.description == self.description and miq_sets.set_type == "MiqPolicySet")\
+            .count() > 0
+
 
 @navigator.register(PolicyProfile, "Add")
 class PolicyProfileNew(CFMENavigateStep):

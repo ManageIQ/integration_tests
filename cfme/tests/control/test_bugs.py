@@ -14,6 +14,9 @@ from utils.log import logger
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
 from cfme import test_requirements
+from utils.generators import random_vm_name
+from widgetastic.widget import Text
+from utils.appliance import get_or_create_current_appliance
 
 
 pytestmark = [
@@ -34,7 +37,7 @@ def vmware_provider():
 
 @pytest.fixture(scope="module")
 def vmware_vm(request, vmware_provider):
-    vm = VM.factory("test_control_{}".format(fauxfactory.gen_alpha().lower()), vmware_provider)
+    vm = VM.factory(random_vm_name("control"), vmware_provider)
     vm.create_on_provider(find_in_cfme=True)
     request.addfinalizer(vm.delete_from_provider)
     return vm
@@ -174,3 +177,43 @@ def test_invoke_custom_automation(request):
             action.delete()
 
     action.create()
+
+
+@pytest.mark.meta(blockers=[1375093], automates=[1375093])
+def test_check_compliance_history(request, vmware_provider, vmware_vm):
+    """This test checks if compliance history link in a VM details screen work.
+
+    Steps:
+        * Create any VM compliance policy
+        * Assign it to a policy profile
+        * Assign the policy profile to any VM
+        * Perform the compliance check for the VM
+        * Go to the VM details screen
+        * Click on "History" row in Compliance InfoBox
+
+    Result:
+        Compliance history screen with last 10 checks should be opened
+    """
+    policy = VMCompliancePolicy(
+        "Check compliance history policy {}".format(fauxfactory.gen_alpha()),
+        active=True,
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vmware_vm.name)
+    )
+    request.addfinalizer(lambda: policy.delete() if policy.exists else None)
+    policy.create()
+    policy_profile = PolicyProfile(
+        policy.description,
+        policies=[policy]
+    )
+    request.addfinalizer(lambda: policy_profile.delete() if policy_profile.exists else None)
+    policy_profile.create()
+    vmware_provider.assign_policy_profiles(policy_profile.description)
+    request.addfinalizer(lambda: vmware_provider.unassign_policy_profiles(
+        policy_profile.description))
+    vmware_vm.check_compliance()
+    vmware_vm.open_details(["Compliance", "History"])
+    appliance = get_or_create_current_appliance()
+    history_screen_title = Text(appliance.browser.widgetastic,
+        "//span[@id='explorer_title_text']").text
+    assert history_screen_title == '"Compliance History" for Virtual Machine "{}"'.format(
+        vmware_vm.name)
