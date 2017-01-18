@@ -33,6 +33,7 @@ Updating of Docker images works by pushing changes to integration_tests Dockerfi
 ## Features
 - wrapper script can be executed as many times as needed
 - answers collected from user are stored, so when the script is executed next time, user can confirm values which won't change
+- if user is switched to another branch (not master) and working on his tests, he/she can still update environment (changes will be stashed before switching to master and updating)
 
 ## Prerequisities
  - bash, GNU sed, awk, curl
