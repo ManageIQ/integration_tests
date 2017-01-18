@@ -4,13 +4,14 @@ import pytest
 import fauxfactory
 import utils.error as error
 
+from manageiq_client.api import APIException
+
 from cfme import test_requirements
 from cfme.rest.gen_data import vm as _vm
 from cfme.rest.gen_data import arbitration_settings
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
 from utils import testgen
-from utils.api import APIException
 from utils.log import logger
 
 

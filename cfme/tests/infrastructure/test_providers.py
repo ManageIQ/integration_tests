@@ -4,6 +4,8 @@ import uuid
 
 import pytest
 
+from manageiq_client.api import APIException
+
 import cfme.web_ui.flash as flash
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
@@ -14,7 +16,6 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen, providers, version
 from utils.update import update
-from utils.api import APIException
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
