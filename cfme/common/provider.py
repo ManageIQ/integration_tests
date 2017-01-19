@@ -425,7 +425,7 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         """ Checks if exists among managed providers
 
         """
-        if self in store.current_appliance.managed_providers:
+        if self in self.appliance.managed_providers:
             return True
         return False
 
