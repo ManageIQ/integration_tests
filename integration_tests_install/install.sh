@@ -12,7 +12,6 @@ print (){
 
 if [ -z ${PROJECTS} ];then
   print "PROJECTS variable not set. This variable sets path to where integration_tests will be installed. Export this variable and re-run this script again."
-  exit 1
 fi
 
 export CFME_TESTS="${PROJECTS}/integration_tests_files"
