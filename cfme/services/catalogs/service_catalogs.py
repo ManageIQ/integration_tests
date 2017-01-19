@@ -35,6 +35,10 @@ stack_form = Form(
         ('vm_size', Select("//select[@id='param_virtualMachineSize']"))
     ])
 
+dialog_form = Form(
+    fields=[
+        ('default_select_value', Select("//select[@id='service_level']"))
+    ])
 
 match_page = partial(match_location, title='Catalogs', controller='catalog')
 
@@ -42,15 +46,18 @@ match_page = partial(match_location, title='Catalogs', controller='catalog')
 class ServiceCatalogs(Updateable, Pretty, Navigatable):
     pretty_attrs = ['service_name']
 
-    def __init__(self, service_name=None, stack_data=None, appliance=None):
+    def __init__(self, service_name=None, stack_data=None, dialog_values=None, appliance=None):
         self.service_name = service_name
         self.stack_data = stack_data
+        self.dialog_values = dialog_values
         Navigatable.__init__(self, appliance=appliance)
 
     def order(self):
         navigate_to(self, 'Order')
         if self.stack_data:
             stack_form.fill(self.stack_data)
+        if self.dialog_values:
+            dialog_form.fill(self.dialog_values)
         sel.click(form_buttons.submit)
         # TO DO - needs to be reworked and remove sleep
         sel.sleep(5)
