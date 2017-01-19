@@ -8,9 +8,10 @@ from manageiq_client.api import APIException
 
 from cfme import test_requirements
 from cfme.rest.gen_data import vm as _vm
-from cfme.rest.gen_data import arbitration_settings
+from cfme.rest.gen_data import arbitration_settings, automation_requests_data
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.version import current_version
+from utils.wait import wait_for
 from utils import testgen
 from utils.log import logger
 
@@ -32,6 +33,21 @@ def a_provider():
 @pytest.fixture(scope="function")
 def vm(request, a_provider, rest_api):
     return _vm(request, a_provider, rest_api)
+
+
+@pytest.fixture(scope="function")
+def generate_notifications(rest_api):
+    requests_data = automation_requests_data('nonexistent_vm')
+    requests = rest_api.collections.automation_requests.action.create(*requests_data[:2])
+
+    def _finished():
+        for resource in requests:
+            resource.reload()
+            if resource.request_state != 'finished':
+                return False
+        return True
+
+    wait_for(_finished, num_sec=45, delay=5, message="notifications generation")
 
 
 @pytest.yield_fixture(scope="function")
@@ -347,3 +363,52 @@ def test_edit_arbitration_rules(arbitration_rules, rest_api, from_detail):
     assert len(edited) == num_rules
     for i in range(num_rules):
         assert edited[i].description == new[i]['description']
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_mark_notifications(rest_api, generate_notifications, from_detail):
+    """Tests marking notifications as seen.
+
+    Metadata:
+        test_flag: rest
+    """
+    unseen = rest_api.collections.notifications.find_by(seen=False)
+    notifications = [unseen[-i] for i in range(1, 3)]
+
+    if from_detail:
+        for ent in notifications:
+            ent.action.mark_as_seen()
+    else:
+        rest_api.collections.notifications.action.mark_as_seen(*notifications)
+
+    for ent in notifications:
+        ent.reload()
+        assert ent.seen
+
+
+@pytest.mark.uncollectif(lambda: current_version() < '5.7')
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_delete_notifications(rest_api, generate_notifications, from_detail):
+    """Tests delete notifications.
+
+    Metadata:
+        test_flag: rest
+    """
+    collection = rest_api.collections.notifications
+    collection.reload()
+    notifications = [collection[-i] for i in range(1, 3)]
+
+    if from_detail:
+        for ent in notifications:
+            ent.action.delete()
+            with error.expected("ActiveRecord::RecordNotFound"):
+                ent.action.delete()
+    else:
+        collection.action.delete(*notifications)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            collection.action.delete(*notifications)
