@@ -80,7 +80,7 @@ cd ..; ln -s integration_tests/integration_tests_install/integration_tests_init.
 ## Execution of wrapper script
 First go to your working directory:
 ```
-cd ${PROJECTS}/integration_tests
+cd ${PROJECTS}/integration_tests_files
 ```
 
 Get information about how to use the wrapper script:
