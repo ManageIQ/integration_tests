@@ -42,4 +42,4 @@ cd ${CFME_TESTS}/integration_tests
 ./integration_tests_init.sh init
 "
 
-cd ${CFME_TESTS}/integration_tests
+cd ${CFME_TESTS}
