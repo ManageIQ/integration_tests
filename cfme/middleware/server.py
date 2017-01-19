@@ -233,6 +233,11 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         raise NotImplementedError('This feature not implemented yet')
 
     @variable(alias='ui')
+    def is_reload_required(self):
+        self.load_details(refresh=True)
+        return self.get_detail("Properties", "Server State") == 'Reload-required'
+
+    @variable(alias='ui')
     def is_running(self):
         self.load_details(refresh=True)
         return self.get_detail("Properties", "Server State") == 'Running'

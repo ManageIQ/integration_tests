@@ -19,6 +19,9 @@ def verify_server_stopped(provider, server):
 
 def verify_server_running(provider, server):
     refresh(provider)
+    # in some cases server requires reload
+    if server.is_reload_required():
+        server.reload_server()
     wait_for(lambda: server.is_running(),
              delay=DELAY, num_sec=NUM_SEC,
              message='Server {} must be running'.format(server.name),
