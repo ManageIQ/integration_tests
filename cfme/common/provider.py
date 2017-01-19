@@ -262,9 +262,14 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                     self.string_name, self.appliance.product_name))
 
     def delete_if_exists(self, *args, **kwargs):
-        """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``"""
+        """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``
+
+        Returns: True if provider existed and delete was initiated, False otherwise
+        """
         if self.exists:
             self.delete(*args, **kwargs)
+            return True
+        return False
 
     @variable(alias='rest')
     def is_refreshed(self, refresh_timer=None):
@@ -539,12 +544,16 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         from utils.providers import ProviderFilter, new_list_providers
         pf = ProviderFilter(classes=[prov_class])
         provs = new_list_providers(filters=[pf], use_global_filters=False)
+
         # First, delete all
+        deleted_provs = []
         for prov in provs:
-            prov.delete_if_exists(cancel=False)
+            existed = prov.delete_if_exists(cancel=False)
+            if existed:
+                deleted_provs.append(prov)
         # Then, check that all were deleted
         if validate:
-            for prov in provs:
+            for prov in deleted_provs:
                 prov.wait_for_delete()
 
     # Move to collection
