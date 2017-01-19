@@ -78,21 +78,24 @@ cd ..; ln -s integration_tests/integration_tests_install/integration_tests_init.
 --->
 
 ## Execution of wrapper script
+First go to your working directory:
+```
+cd ${PROJECTS}/integration_tests
+```
+
 Get information about how to use the wrapper script:
 ```
-cd ${CFME_TESTS}
 ./integration_tests_init.sh
 ```
 Configure or re-configure environment:
 ```
-cd ${CFME_TESTS}
-
+./integration_tests_init.sh init
+```
 Note: Answers collected from user during init phase are stored inside .vars_config.yml.
 
 Run test:
 Note: This test requires to have YAML files configured.
 ```
-cd ${CFME_TESTS}
 ./integration_tests_init.sh cmd "py.test cfme/tests/test_login.py -k test_login -v"
 ```
 
