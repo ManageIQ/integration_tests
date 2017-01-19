@@ -22,11 +22,9 @@ from cfme.web_ui import (
     FileInput, InfoBlock)
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
-from utils.db import cfmedb
 from utils.db_queries import get_host_id
 from utils.ipmi import IPMI
 from utils.log import logger
-#from utils.providers import get_mgmt
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils import deferred_verpick, version
