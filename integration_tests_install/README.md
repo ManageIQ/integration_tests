@@ -42,6 +42,12 @@ Updating of Docker images works by pushing changes to integration_tests Dockerfi
  - Docker installed from official Docker repositories
 Follow official documentation on how to [install](https://www.docker.com/products/overview#/install_the_platform) Docker on your favourite platform.
 
+## Installation
+```
+curl -L | sh 
+```
+
+
 ## Configure CFME 
 Create working folder on your laptop:
 ```
