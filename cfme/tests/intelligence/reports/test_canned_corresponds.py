@@ -114,7 +114,7 @@ def test_operations_vm_on(soft_assert, setup_a_provider):
         hosts.name.label('hosts_name')).join(
             hosts, vms.host_id == hosts.id).join(
                 storages, vms.storage_id == storages.id).filter(
-                    vms.power_state == 'on').all()
+                    vms.power_state == 'on').order_by(vms.name).all()
 
     path = ["Operations", "Virtual Machines", "Online VMs (Powered On)"]
     report = CannedSavedReport.new(path)
@@ -122,13 +122,17 @@ def test_operations_vm_on(soft_assert, setup_a_provider):
     if len(vms_in_db) == len(list(report.data.rows)):
         for vm in vms_in_db:
             for item in report.data.rows:
-                if (vm.vm_name == item['VM Name'] and
-                vm.host_name == item['Host'] and
-                vm.storages_name == item['Datastore'] and
-                vm.vm_location == item['Datastore Path'] and
-                vm.vm_last_scan == item['Last Analysis Time']):
+                if (vm.vm_name.encode('utf8') == item['VM Name'] and
+                vm.hosts_name.encode('utf8') == item['Host'] and
+                vm.storages_name.encode('utf8') == item['Datastore'] and
+                vm.vm_location.encode('utf8') == item['Datastore Path'] and
+                (vm.vm_last_scan.encode('utf8') == item['Last Analysis Time'] or
+                (str(vm.vm_last_scan.encode('utf8')) == 'None' and item['Last Analysis Time'] == '')
+                 )
+                ):
                     continue
                 else:
-                    return False
+                    pytest.fail("Found not matching items. db:{} report:{}".format(vm, item))
     else:
-        return False
+        pytest.fail("Lenghts of report and BD do not match. db count:{} report count:{}".format(
+            len(vms_in_db), len(list(report.data.rows))))
