@@ -339,7 +339,7 @@ def main(args, providers):
             # establish api
             try:
                 rhevm_api = rhevm_create_api(rhevm_url, username, password)
-            except Exception, e:
+            except Exception as e:
                 print("RHEVM: Failed to establish connection. Skipping this provider...")
                 print(str(e))
                 was_exception = True
@@ -349,7 +349,7 @@ def main(args, providers):
                 delete_vm_list, delete_tmp_list = rhevm_check_with_api(rhevm_api,
                                                                        args.rhevm_use_start_time,
                                                                        args.run_time, args.text)
-            except Exception, e:
+            except Exception as e:
                 print("RHEVM: Failed to check for vms using api. Skipping this provider...")
                 print(str(e))
                 was_exception = True
@@ -360,7 +360,7 @@ def main(args, providers):
                     pass
                     rhevm_delete_vm(rhevm_api, vm_name)
                     print("Dryrun Delete: {}".format(vm_name))
-                except Exception, e:
+                except Exception as e:
                     print("RHEVM: Failed to delete vm. Skipping '{}'".format(vm_name))
                     print(str(e))
                     was_exception = True
@@ -371,7 +371,7 @@ def main(args, providers):
                     pass
                     rhevm_delete_template(rhevm_api, tmp_name)
                     print("Dryrun Delete: {}".format(tmp_name))
-                except Exception, e:
+                except Exception as e:
                     print("RHEVM: Failed to delete template. Skipping '{}'".format(tmp_name))
                     print(str(e))
                     was_exception = True
@@ -382,7 +382,7 @@ def main(args, providers):
             # establish api
             try:
                 vsphere_api = vsphere_create_api(vsphere_url, username, password)
-            except Exception, e:
+            except Exception as e:
                 print("VSPHERE: Failed to establish connection. Skipping this provider...")
                 print(str(e))
                 was_exception = True
@@ -391,7 +391,7 @@ def main(args, providers):
             try:
                 delete_vm_list, delete_tmp_list = vsphere_check_with_api(vsphere_api,
                                                                          args.run_time, args.text)
-            except Exception, e:
+            except Exception as e:
                 print("VSPHERE: Failed to check for vms using api. Skipping this provider...")
                 print(str(e))
                 was_exception = True
@@ -402,7 +402,7 @@ def main(args, providers):
                     pass
                     vsphere_delete_vm(vsphere_api, vm_name)
                     print("Dryrun Delete: {}".format(vm_name))
-                except Exception, e:
+                except Exception as e:
                     print("VSPHERE: Failed to delete vm. Skipping '{}'".format(vm_name))
                     print(str(e))
                     was_exception = True
@@ -412,7 +412,7 @@ def main(args, providers):
                     pass
                     vsphere_delete_vm(vsphere_api, tmp_name)
                     print("Dryrun Delete: {}".format(tmp_name))
-                except Exception, e:
+                except Exception as e:
                     print("VSPHERE: Failed to delete template. Skipping '{}'".format(tmp_name))
                     print(str(e))
                     was_exception = True
@@ -423,7 +423,7 @@ def main(args, providers):
             # establish api
             try:
                 rhos_api = rhos_create_api(rhos_auth_url, username, password, rhos_project_id)
-            except Exception, e:
+            except Exception as e:
                 print("RHOS: Failed to establish connection. Skipping this provider...")
                 print(str(e))
                 was_exception = True
@@ -431,7 +431,7 @@ def main(args, providers):
             # check for old vms
             try:
                 delete_vm_list = rhos_check_with_api(rhos_api, args.run_time, args.text)
-            except Exception, e:
+            except Exception as e:
                 print("RHOS: Failed to check for vms using api. Skipping this provider...")
                 print(str(e))
                 was_exception = True
@@ -441,7 +441,7 @@ def main(args, providers):
                 try:
                     pass
                     rhos_delete_vm(rhos_api, vm_name)
-                except Exception, e:
+                except Exception as e:
                     print("RHOS: Failed to delete vm. Skipping '{}'".format(vm_name))
                     print(str(e))
                     was_exception = True

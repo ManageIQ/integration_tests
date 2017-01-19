@@ -141,7 +141,7 @@ class OpenshiftProvider(ContainersProvider):
         returns: response.
         """
         for name in names:
-            if type(name) is not str:
+            if not isinstance(name, str):
                 raise TypeError('Type of names should be {}. ({} != {})'
                                 .format(str, type(name), str))
         attribs = self.custom_attributes()

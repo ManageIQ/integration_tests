@@ -258,7 +258,7 @@ def _uncollect_test_flags(data, metafunc, required_fields):
             logger.info("Uncollecting Provider %s for test %s in module %s because "
                 "it does not have the right flags, "
                 "%s does not contain %s",
-                data['name'], metafunc.function.func_name, metafunc.function.__module__,
+                data['name'], metafunc.function.__name__, metafunc.function.__module__,
                 list(allowed_flags), list(set(test_flags) - allowed_flags))
             return True
     return False

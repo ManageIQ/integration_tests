@@ -94,11 +94,11 @@ def test_discover_infra(providers_for_discover, start_ip, max_range):
     virtualcenter = False
 
     for i in providers_for_discover:
-        if type(i) == RHEVMProvider:
+        if isinstance(i, RHEVMProvider):
                 rhevm = True
-        if type(i) == SCVMMProvider:
+        if isinstance(i, SCVMMProvider):
                 scvmm = True
-        if type(i) == VMwareProvider:
+        if isinstance(i, VMwareProvider):
                 virtualcenter = True
 
     discover(rhevm, virtualcenter, scvmm, False, start_ip, max_range)
