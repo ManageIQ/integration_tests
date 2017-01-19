@@ -162,10 +162,15 @@ def service_data(request, rest_api, a_provider, dialog, service_catalogs):
 
     @request.addfinalizer
     def _finished():
-        a_provider.mgmt.delete_vm(vm_name)
+        try:
+            a_provider.mgmt.delete_vm(vm_name)
+        except Exception:
+            # vm can be deleted/retired by test
+            logger.warning("Failed to delete vm '{}'.".format(vm_name))
         try:
             rest_api.collections.services.get(name=catalog_item.name).action.delete()
         except ValueError:
+            # service can be deleted by test
             logger.warning("Failed to delete service '{}'.".format(catalog_item.name))
 
     return {'service_name': catalog_item.name, 'vm_name': vm_name}
