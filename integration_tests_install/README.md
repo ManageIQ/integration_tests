@@ -42,10 +42,10 @@ Updating of Docker images works by pushing changes to integration_tests Dockerfi
  - Docker installed from official Docker repositories
 Follow official documentation on how to [install](https://www.docker.com/products/overview#/install_the_platform) Docker on your favourite platform.
 
-## Installation
+## Initial installation
 ```
 export PROJECTS="${HOME}/projects"
-curl -L https://git.io/vMMbQ | sh 
+source <(curl -L https://git.io/vMMbQ)
 ```
 
 <!---
@@ -74,19 +74,19 @@ git clone git://github.com/ManageIQ/integration_tests.git
 cd integration_tests; git fetch origin pull/3254/head:integration_tests_container
 git checkout integration_tests_container
 cd ..; ln -s integration_tests/integration_tests_install/integration_tests_init.sh .
-
-`--->``
+```
+--->
 
 ## Execution of wrapper script
 Get information about how to use the wrapper script:
 ```
 cd ${CFME_TESTS}
-/bin/bash ./integration_tests_init.sh
+./integration_tests_init.sh
 ```
-Configure environment:
+Configure or re-configure environment:
 ```
 cd ${CFME_TESTS}
-/bin/bash ./integration_tests_init.sh init
+./integration_tests_init.sh init
 ```
 Note: Answers collected from user during init phase are stored inside .vars_config.yml.
 
@@ -94,7 +94,12 @@ Run test:
 Note: This test requires to have YAML files configured.
 ```
 cd ${CFME_TESTS}
-/bin/bash ./integration_tests_init.sh cmd "py.test cfme/tests/test_login.py -k test_login -v"
+./integration_tests_init.sh cmd "py.test cfme/tests/test_login.py -k test_login -v"
+```
+
+Run ipython with VNC and Selenium servers running:
+```
+./integration_tests_init.sh ipython
 ```
 
 ## Building images manually
