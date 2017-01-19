@@ -45,7 +45,7 @@ Follow official documentation on how to [install](https://www.docker.com/product
 ## Initial installation
 ```
 export PROJECTS="${HOME}/projects"
-source <(curl -L https://git.io/vMMbQ)
+source <(curl -sL https://git.io/vMMbQ)
 ```
 
 <!---
@@ -86,8 +86,7 @@ cd ${CFME_TESTS}
 Configure or re-configure environment:
 ```
 cd ${CFME_TESTS}
-./integration_tests_init.sh init
-```
+
 Note: Answers collected from user during init phase are stored inside .vars_config.yml.
 
 Run test:
