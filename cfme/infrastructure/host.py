@@ -26,7 +26,7 @@ from utils.db import cfmedb
 from utils.db_queries import get_host_id
 from utils.ipmi import IPMI
 from utils.log import logger
-from utils.providers import get_mgmt
+#from utils.providers import get_mgmt
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils import deferred_verpick, version
@@ -584,15 +584,15 @@ def register(provider, file_path, cancel=False):
 
 def host_exist(provider, name='my_node'):
     """" registered imported host exist
+    provider - provider instance
+    name - by default name is my_name
     Input provider, name of the new node, looking for the host in Ironic
     clients, compare the record found with hosts list in CFME DB
     """
-    p = get_mgmt(provider.name)
-    nodes = p.iapi.node.list()
+    nodes = provider.mgmt.list_node()
     nodes_dict = {i.name: i for i in nodes}
     appliance = get_or_create_current_appliance()
-    my_db = cfmedb()['hosts']
-    query = appliance.db.session.query(my_db, 'guid')
+    query = appliance.db.session.query(appliance.db['hosts'], 'guid')
     node_uuid = str(nodes_dict[name])
 
     for db_node in query:
