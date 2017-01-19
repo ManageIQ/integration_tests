@@ -44,11 +44,12 @@ Follow official documentation on how to [install](https://www.docker.com/product
 
 ## Installation
 ```
-curl -L | sh 
+export PROJECTS="${HOME}/projects"
+curl -L https://git.io/vMMbQ | sh 
 ```
 
-
-## Configure CFME 
+<!---
+## Configure CFME - initial run
 Create working folder on your laptop:
 ```
 export PROJECTS="${HOME}/projects"
@@ -65,17 +66,16 @@ When you will be asked for custom yamls, type relative path as used above e.g. .
 ### Clone integration_tests repo
 Clone integration_tests repo from GitHub:
 ```
-<!---
 git clone https://github.com/ManageIQ/integration_tests
 Testing:
 git clone https://github.com/ManageIQ/integration_tests
---->
+
 git clone git://github.com/ManageIQ/integration_tests.git
 cd integration_tests; git fetch origin pull/3254/head:integration_tests_container
 git checkout integration_tests_container
 cd ..; ln -s integration_tests/integration_tests_install/integration_tests_init.sh .
 
-```
+`--->``
 
 ## Execution of wrapper script
 Get information about how to use the wrapper script:
