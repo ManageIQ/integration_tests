@@ -10,6 +10,7 @@ from cfme.rest.gen_data import services as _services
 from cfme.rest.gen_data import service_data as _service_data
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.rest.gen_data import service_templates as _service_templates
+from cfme.rest.gen_data import orchestration_templates as _orchestration_templates
 from cfme import test_requirements
 from utils import error, version, testgen
 from utils.providers import setup_a_provider as _setup_a_provider
@@ -65,6 +66,11 @@ def service_templates(request, rest_api, dialog):
 @pytest.fixture(scope='function')
 def service_data(request, rest_api, a_provider, dialog, service_catalogs):
     return _service_data(request, rest_api, a_provider, dialog, service_catalogs)
+
+
+@pytest.fixture(scope='function')
+def orchestration_templates(request, rest_api):
+    return _orchestration_templates(request, rest_api, num=2)
 
 
 class TestServiceRESTAPI(object):
@@ -449,3 +455,73 @@ class TestBlueprintsRESTAPI(object):
         assert len(edited) == response_len
         for i in range(response_len):
             assert edited[i].ui_properties == new[i]['ui_properties']
+
+
+class TestOrchestrationTemplatesRESTAPI(object):
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_create_orchestration_templates(self, rest_api, orchestration_templates):
+        """Tests creation of orchestration templates.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(orchestration_templates) > 0
+        record = rest_api.collections.orchestration_templates.get(id=orchestration_templates[0].id)
+        assert record.name == orchestration_templates[0].name
+        assert record.description == orchestration_templates[0].description
+        assert record.type == orchestration_templates[0].type
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_delete_orchestration_templates(self, rest_api, orchestration_templates, from_detail):
+        """Tests delete orchestration templates.
+
+        Metadata:
+            test_flag: rest
+        """
+        assert len(orchestration_templates) > 0
+        collection = rest_api.collections.orchestration_templates
+        if from_detail:
+            methods = ['post', 'delete']
+            for i, ent in enumerate(orchestration_templates):
+                ent.action.delete(force_method=methods[i % 2])
+                with error.expected("ActiveRecord::RecordNotFound"):
+                    ent.action.delete()
+        else:
+            collection.action.delete(*orchestration_templates)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                collection.action.delete(*orchestration_templates)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_edit_orchestration_templates(self, rest_api, orchestration_templates, from_detail):
+        """Tests editing of orchestration templates.
+
+        Metadata:
+            test_flag: rest
+        """
+        response_len = len(orchestration_templates)
+        assert response_len > 0
+        new = []
+        for _ in range(response_len):
+            new.append({
+                'description': 'Updated Test Template {}'.format(fauxfactory.gen_alphanumeric(5))
+            })
+        if from_detail:
+            edited = []
+            for i in range(response_len):
+                edited.append(orchestration_templates[i].action.edit(**new[i]))
+        else:
+            for i in range(response_len):
+                new[i].update(orchestration_templates[i]._ref_repr())
+            edited = rest_api.collections.orchestration_templates.action.edit(*new)
+        assert len(edited) == response_len
+        for i in range(response_len):
+            assert edited[i].description == new[i]['description']
