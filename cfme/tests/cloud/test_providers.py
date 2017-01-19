@@ -28,7 +28,8 @@ pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="functio
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    return providers.setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
+    return providers.setup_a_provider_by_class(prov_class=CloudProvider, validate=True,
+                                               check_existing=True)
 
 
 @pytest.mark.tier(3)

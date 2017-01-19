@@ -14,7 +14,7 @@ from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_providers
+from utils.providers import get_crud, get_crud_by_name, list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
 
@@ -117,7 +117,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     if strict:
-                        _provider = get_crud(get_provider_key(row.provider.text))
+                        _provider = get_crud_by_name(row.provider.text)
                     servers.append(MiddlewareServer(
                         name=row.server_name.text,
                         feed=row.feed.text,
@@ -143,7 +143,7 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
         _provider = provider
         for server in rows:
             if strict:
-                _provider = get_crud(get_provider_key(server.provider_name))
+                _provider = get_crud_by_name(server.provider_name)
             servers.append(MiddlewareServer(
                 name=server.name,
                 hostname=server.hostname,

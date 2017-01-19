@@ -20,7 +20,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope="function")
+    testgen.containers_providers, scope="function")
 
 # CMP_9903  CMP_9904  CMP_9905  CMP_9906
 

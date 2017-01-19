@@ -9,7 +9,7 @@ from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key
+from utils.providers import get_crud, get_crud_by_name
 from utils.providers import list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
@@ -130,7 +130,7 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
         _provider = provider
         for messaging in rows:
             if strict:
-                _provider = get_crud(get_provider_key(messaging.provider_name))
+                _provider = get_crud_by_name(messaging.provider_name)
             _server = MiddlewareServer(
                 name=messaging.server_name,
                 feed=messaging.feed,

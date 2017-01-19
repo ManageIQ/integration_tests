@@ -9,7 +9,7 @@ from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_providers
+from utils.providers import get_crud, get_crud_by_name, list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download
 
@@ -87,7 +87,7 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
             for _ in paginator.pages():
                 for row in list_tbl.rows():
                     if strict:
-                        _provider = get_crud(get_provider_key(row.provider.text))
+                        _provider = get_crud_by_name(row.provider.text)
                     domains.append(MiddlewareDomain(
                         name=row.domain_name.text,
                         feed=row.feed.text,
@@ -108,7 +108,7 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
         _provider = provider
         for domain in rows:
             if strict:
-                _provider = get_crud(get_provider_key(domain.provider_name))
+                _provider = get_crud_by_name(domain.provider_name)
             domains.append(MiddlewareDomain(
                 name=domain.name,
                 feed=domain.feed,

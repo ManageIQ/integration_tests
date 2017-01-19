@@ -9,7 +9,7 @@ from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_provider_key, list_providers
+from utils.providers import get_crud, get_crud_by_name, list_providers
 from utils.varmeth import variable
 from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
@@ -119,7 +119,7 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
         _provider = provider
         for deployment in rows:
             if strict:
-                _provider = get_crud(get_provider_key(deployment.provider_name))
+                _provider = get_crud_by_name(deployment.provider_name)
             _server = MiddlewareServer(
                 name=deployment.server_name,
                 feed=deployment.feed,
@@ -191,7 +191,7 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
         deployment = _db_select_query(name=self.name, server=self.server,
                                       provider=self.provider).first()
         if deployment:
-            _provider = get_crud(get_provider_key(deployment.provider_name))
+            _provider = get_crud_by_name(deployment.provider_name)
             _server = MiddlewareServer(
                 name=deployment.server_name,
                 feed=deployment.feed,

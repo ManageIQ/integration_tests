@@ -12,6 +12,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cached_property import cached_property
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
@@ -128,7 +129,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     """
     provider_types = {}
     in_version = (version.LOWEST, version.LATEST)
-    type_tclass = "infra"
+    category = "infra"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
@@ -156,14 +157,17 @@ class InfraProvider(Pretty, CloudInfraProvider):
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
-        self.vm_name = version.pick({
-            version.LOWEST: "VMs",
-            '5.5': "VMs and Instances",
-            '5.8': "Virtual Machines"})  # TODO: If it lands in some 5.7.x, change this version!
         self.template_name = "Templates"
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
+
+    @cached_property
+    def vm_name(self):
+        return version.pick({
+            version.LOWEST: "VMs",
+            '5.5': "VMs and Instances",
+            '5.8': "Virtual Machines"})  # TODO: If it lands in some 5.7.x, change this version!
 
     @variable(alias='db')
     def num_datastore(self):

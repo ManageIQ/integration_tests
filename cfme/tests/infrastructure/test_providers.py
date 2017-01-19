@@ -23,7 +23,8 @@ pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="functio
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    return providers.setup_a_provider(prov_class="infra", validate=True, check_existing=True)
+    return providers.setup_a_provider_by_class(prov_class=InfraProvider, validate=True,
+                                               check_existing=True)
 
 
 @pytest.mark.tier(3)
@@ -187,7 +188,7 @@ def test_providers_discovery(request, provider):
     """
     provider.discover()
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
-    request.addfinalizer(lambda: BaseProvider.clear_provider_by_type(InfraProvider))
+    request.addfinalizer(lambda: BaseProvider.clear_providers_by_class(InfraProvider))
     wait_for_a_provider()
 
 

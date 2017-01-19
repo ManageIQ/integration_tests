@@ -133,7 +133,7 @@ class CloudProvider(Pretty, CloudInfraProvider):
     """
     provider_types = {}
     in_version = (version.LOWEST, version.LATEST)
-    type_tclass = "cloud"
+    category = "cloud"
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"

@@ -63,7 +63,7 @@ match_page = partial(match_location, controller='ems_container',
 class ContainersProvider(BaseProvider, Pretty):
     provider_types = {}
     in_version = ('5.5', version.LATEST)
-    type_tclass = "container"
+    category = "container"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = [
         'num_project',
