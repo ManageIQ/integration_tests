@@ -593,10 +593,7 @@ def host_exist(provider, name='my_node'):
     appliance = get_or_create_current_appliance()
     my_db = cfmedb()['hosts']
     query = appliance.db.session.query(my_db, 'guid')
-    try:
-        node_uuid = str(nodes_dict[name])
-    except 'KeyError':
-        raise HostNotFound("New registered node hasn't been added")
+    node_uuid = str(nodes_dict[name])
 
     for db_node in query:
         if node_uuid == str(db_node.guid):
