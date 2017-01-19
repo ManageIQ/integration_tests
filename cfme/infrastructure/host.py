@@ -22,15 +22,17 @@ from cfme.web_ui import (
     FileInput, InfoBlock)
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
+from utils.db import cfmedb
 from utils.db_queries import get_host_id
 from utils.ipmi import IPMI
 from utils.log import logger
+from utils.providers import get_mgmt
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils import deferred_verpick, version
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.appliance import Navigatable
+from utils.appliance import Navigatable, get_or_create_current_appliance
 
 # Page specific locators
 details_page = Region(infoblock_type='detail')
@@ -578,3 +580,28 @@ def register(provider, file_path, cancel=False):
     tb.select('Configuration', 'Register Nodes')
     my_form = {'file': file_path}
     fill(register_nodes_form, my_form, action=register_nodes_form.register)
+
+
+def host_exist(provider, name='my_node'):
+    """" registered imported host exist
+    Input provider, name of the new node, looking for the host in Ironic
+    clients, compare the record found with hosts list in CFME DB
+    """
+    p = get_mgmt(provider.name)
+    nodes = p.iapi.node.list()
+    nodes_dict = {i.name: i for i in nodes}
+    appliance = get_or_create_current_appliance()
+    my_db = cfmedb()['hosts']
+    query = appliance.db.session.query(my_db, 'guid')
+    try:
+        node_uuid = str(nodes_dict[name])
+    except 'KeyError':
+        raise HostNotFound("New registered node hasn't been added")
+
+    for db_node in query:
+        if node_uuid == str(db_node.guid):
+            return True
+    return False
+
+
+
