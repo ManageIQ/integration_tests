@@ -8,8 +8,8 @@ if [ -z ${PROJECTS} ];then
 This variable sets path to where integration_tests will be installed. Export this variable and re-run this script again."
 
 
-elif [ -d ${PROJECTS} ];then 
-  echo "${PROJECTS} exists...\n
+elif [ -d ${PROJECTS}/integration_tests_files ];then 
+  echo "${PROJECTS}/integration_tests_files exists...\n
 It seems you have integration_tests cloned already. 
 You can specify different PROJECTS path to clone integration_tests somewhere else.
 OR
