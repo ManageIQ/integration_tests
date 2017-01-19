@@ -2,7 +2,7 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.cloud.provider import CloudProvider
+from cfme.providers.cloud import CloudProvider
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance

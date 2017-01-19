@@ -1,5 +1,5 @@
 import pytest
-from cfme.middleware.provider.hawkular import HawkularProvider
+from cfme.providers.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.middleware.datasource import MiddlewareDatasource
 from cfme.middleware.deployment import MiddlewareDeployment

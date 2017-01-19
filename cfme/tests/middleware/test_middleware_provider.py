@@ -4,7 +4,7 @@ import uuid
 import pytest
 
 import utils.error as error
-from cfme.middleware.provider.hawkular import HawkularProvider
+from cfme.providers.hawkular import HawkularProvider
 from cfme.web_ui import fill, flash, form_buttons
 from cfme.fixtures import pytest_selenium as sel
 from cfme.exceptions import FlashMessageException

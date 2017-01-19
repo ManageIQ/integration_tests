@@ -11,9 +11,9 @@ import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import FlashMessageException
-from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.providers.infrastructure import discover, wait_for_a_provider, InfraProvider
+from cfme.providers.rhevm import RHEVMProvider
+from cfme.providers.virtualcenter import VMwareProvider
 from utils import testgen, providers, version
 from utils.update import update
 from cfme import test_requirements

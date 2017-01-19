@@ -7,7 +7,7 @@ from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.service import Service
 from cfme.containers.route import Route
 from cfme.containers.project import Project
-from cfme.containers.provider import ContainersProvider
+from cfme.providers.containers import ContainersProvider
 from random import choice
 from cfme.web_ui import breadcrumbs
 from collections import namedtuple

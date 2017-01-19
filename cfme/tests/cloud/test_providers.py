@@ -12,11 +12,11 @@ import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme.exceptions import FlashMessageException
-from cfme.cloud.provider import (discover, wait_for_a_provider,
+from cfme.providers.cloud import (discover, wait_for_a_provider,
     CloudProvider, prop_region)
 from cfme import test_requirements
-from cfme.cloud.provider.ec2 import EC2Provider
-from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.providers.ec2 import EC2Provider
+from cfme.providers.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
 from utils import testgen, version, providers
 from utils.appliance.implementations.ui import navigate_to

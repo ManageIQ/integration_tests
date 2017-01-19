@@ -4,9 +4,9 @@ import fauxfactory
 import pytest
 
 from cfme.configure import configuration as config
-from cfme.cloud import provider as cloud_provider
+from cfme.providers import cloud as cloud_provider
 from cfme.common.vm import VM
-from cfme.infrastructure.provider import wait_for_a_provider
+from cfme.providers.cloud import wait_for_a_provider
 from fixtures.pytest_store import store
 from utils.appliance import provision_appliance
 from utils.log import logger

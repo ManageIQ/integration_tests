@@ -3,7 +3,7 @@ import pytest
 import time
 from cfme.common.vm import VM
 from cfme.exceptions import CFMEException
-from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.providers.scvmm import SCVMMProvider
 from utils import testgen
 from utils.generators import random_vm_name
 from utils.log import logger

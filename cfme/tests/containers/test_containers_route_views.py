@@ -5,7 +5,7 @@ from utils.version import current_version
 from cfme.containers.route import Route
 from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.project import Project
-from cfme.containers.provider import ContainersProvider
+from cfme.providers.containers import ContainersProvider
 
 pytestmark = [
     pytest.mark.uncollectif(

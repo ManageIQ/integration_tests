@@ -3,7 +3,7 @@ from itertools import product
 
 from cfme.configure.settings import DefaultView
 from cfme.containers.container import Container
-from cfme.containers.provider import ContainersProvider
+from cfme.providers.containers import ContainersProvider
 from cfme.containers.project import Project
 from cfme.containers.route import Route
 from cfme.containers.node import Node

@@ -13,7 +13,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import StatusBox, Quadicon
 from utils import testgen
 from utils.version import current_version
-from cfme.containers.provider import ContainersProvider
+from cfme.providers.containers import ContainersProvider
 from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.node import Node
 from collections import namedtuple

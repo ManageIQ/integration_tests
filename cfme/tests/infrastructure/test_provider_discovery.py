@@ -5,10 +5,10 @@ from utils import testgen
 from utils.appliance import current_appliance
 from utils.providers import get_crud
 from cfme.common.provider import BaseProvider
-from cfme.infrastructure.provider import discover, InfraProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.providers.infrastructure import discover, InfraProvider
+from cfme.providers.rhevm import RHEVMProvider
+from cfme.providers.scvmm import SCVMMProvider
+from cfme.providers.virtualcenter import VMwareProvider
 
 
 def generate_signature(combination):

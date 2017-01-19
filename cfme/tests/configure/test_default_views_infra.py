@@ -3,7 +3,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
-from cfme.infrastructure.provider import InfraProvider
+from cfme.providers.infrastructure import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.myservice import MyService

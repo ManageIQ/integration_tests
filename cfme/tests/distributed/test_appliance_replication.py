@@ -5,7 +5,7 @@ import pytest
 import cfme.web_ui.flash as flash
 from cfme.common.vm import VM
 from cfme.configure import configuration as conf
-from cfme.infrastructure.provider import wait_for_a_provider
+from cfme.providers.infrastructure import wait_for_a_provider
 import cfme.fixtures.pytest_selenium as sel
 from time import sleep
 from urlparse import urlparse

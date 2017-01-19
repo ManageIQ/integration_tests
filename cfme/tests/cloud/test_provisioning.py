@@ -13,9 +13,9 @@ from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
 from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
 from cfme.cloud.instance.azure import AzureInstance  # NOQA
 from cfme.cloud.instance.gce import GCEInstance  # NOQA
-from cfme.cloud.provider.azure import AzureProvider
-from cfme.cloud.provider.gce import GCEProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
+from cfme.providers.azure import AzureProvider
+from cfme.providers.gce import GCEProvider
+from cfme.providers.openstack import OpenStackProvider
 from utils import testgen
 from utils.generators import random_vm_name
 from utils.log import logger

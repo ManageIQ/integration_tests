@@ -3,7 +3,7 @@
 import diaper
 import pytest
 
-from cfme.cloud.provider import CloudProvider
+from cfme.providers.cloud import CloudProvider
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
@@ -11,7 +11,7 @@ from cfme.cloud.tenant import Tenant
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.datastore import Datastore
 from cfme.infrastructure.host import Host
-from cfme.infrastructure.provider import InfraProvider
+from cfme.providers.infrastructure import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
 from utils import providers

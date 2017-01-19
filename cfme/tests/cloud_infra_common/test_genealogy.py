@@ -4,9 +4,9 @@ import pytest
 from cfme.common.vm import VM
 from utils import testgen
 from cfme import test_requirements
-from cfme.cloud.provider import CloudProvider
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.scvmm import SCVMMProvider
+from cfme.providers.cloud import CloudProvider
+from cfme.providers.rhevm import RHEVMProvider
+from cfme.providers.scvmm import SCVMMProvider
 from utils.generators import random_vm_name
 
 pytestmark = [

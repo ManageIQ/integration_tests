@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.infrastructure.provider import InfraProvider
+from cfme.providers.infrastructure import InfraProvider
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.web_ui import InfoBlock, toolbar, jstimelines

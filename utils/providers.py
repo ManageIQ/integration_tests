@@ -18,7 +18,7 @@ from copy import copy
 from fixtures.pytest_store import store
 from cfme.common.provider import BaseProvider
 
-from cfme import providers # NOQA
+from cfme import providers as noqaprovs  # NOQA
 
 from cfme.exceptions import UnknownProviderType
 from cfme.providers.infrastructure import InfraProvider
