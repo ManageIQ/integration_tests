@@ -1,5 +1,5 @@
 from mgmtsystem.google import GoogleCloudSystem
-from . import CloudProvider
+from cloud import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
 
 

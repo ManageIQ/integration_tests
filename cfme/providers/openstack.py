@@ -2,7 +2,7 @@ from mgmtsystem.openstack import OpenstackSystem
 
 from utils.version import current_version
 
-from . import CloudProvider
+from cloud import CloudProvider
 
 
 @CloudProvider.add_provider_type

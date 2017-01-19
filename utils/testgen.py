@@ -86,13 +86,10 @@ More information on ``parametrize`` can be found in pytest's documentation:
 """
 import pytest
 
-from cfme.cloud.provider import CloudProvider
+from cfme import providers as provs
 from cfme.common.provider import BaseProvider
-from cfme.containers.provider import ContainersProvider
 from cfme.infrastructure.config_management import get_config_manager_from_config
-from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
-from cfme.middleware.provider import MiddlewareProvider
 from cfme.roles import group_data
 from utils.conf import cfme_data
 from utils.log import logger
@@ -302,22 +299,22 @@ def all_providers(metafunc, **options):
 
 def cloud_providers(metafunc, **options):
     """ Returns only cloud providers """
-    return providers_by_class(metafunc, [CloudProvider], **options)
+    return providers_by_class(metafunc, [provs.cloud.CloudProvider], **options)
 
 
 def containers_providers(metafunc, **options):
     """ Returns only containers providers """
-    return providers_by_class(metafunc, [ContainersProvider], **options)
+    return providers_by_class(metafunc, [provs.containers.ContainersProvider], **options)
 
 
 def infra_providers(metafunc, **options):
     """ Returns only infrastructure providers """
-    return providers_by_class(metafunc, [InfraProvider], **options)
+    return providers_by_class(metafunc, [provs.infrastructure.InfraProvider], **options)
 
 
 def middleware_providers(metafunc, **options):
     """ Returns only middleware providers """
-    return providers_by_class(metafunc, [MiddlewareProvider], **options)
+    return providers_by_class(metafunc, [provs.middleware.MiddlewareProvider], **options)
 
 
 def auth_groups(metafunc, auth_mode):

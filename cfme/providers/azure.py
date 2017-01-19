@@ -1,6 +1,6 @@
 from utils.version import pick
 from mgmtsystem.azure import AzureSystem
-from . import CloudProvider
+from cloud import CloudProvider
 
 
 @CloudProvider.add_provider_type

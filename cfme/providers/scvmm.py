@@ -1,5 +1,5 @@
 from mgmtsystem.scvmm import SCVMMSystem
-from . import InfraProvider
+from infrastructure import InfraProvider
 
 
 @InfraProvider.add_provider_type

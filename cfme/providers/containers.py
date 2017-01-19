@@ -2,7 +2,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.common.provider import BaseProvider, import_all_modules_of
+from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb,
@@ -17,7 +17,7 @@ from utils.pretty import Pretty
 from utils.varmeth import variable
 
 
-from .. import cfg_btn, mon_btn, pol_btn, details_page
+from cfme.containers import cfg_btn, mon_btn, pol_btn, details_page
 
 
 properties_form = Form(
@@ -305,6 +305,3 @@ class TopologyFromDetails(CFMENavigateStep):
 
     def step(self):
         sel.click(InfoBlock('Overview', 'Topology'))
-
-
-import_all_modules_of('cfme.containers.provider')

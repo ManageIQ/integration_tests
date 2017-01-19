@@ -1,5 +1,5 @@
 from mgmtsystem.virtualcenter import VMWareSystem
-from . import InfraProvider
+from infrastructure import InfraProvider
 
 
 @InfraProvider.add_provider_type

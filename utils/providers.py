@@ -18,13 +18,10 @@ from copy import copy
 from fixtures.pytest_store import store
 from cfme.common.provider import BaseProvider
 
-from cfme.containers import provider as containers_providers # NOQA
-from cfme.cloud import provider as cloud_providers # NOQA
-from cfme.infrastructure import provider as infrastructure_providers # NOQA
-from cfme.middleware import provider as middleware_providers # NOQA
+from cfme import providers # NOQA
 
 from cfme.exceptions import UnknownProviderType
-from cfme.infrastructure.provider import InfraProvider
+from cfme.providers.infrastructure import InfraProvider
 from utils import conf, version
 from utils.log import logger
 

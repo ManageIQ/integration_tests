@@ -1,5 +1,5 @@
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
-from . import InfraProvider, prop_region
+from infrastructure import InfraProvider, prop_region
 
 
 @InfraProvider.add_provider_type

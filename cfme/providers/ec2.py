@@ -1,5 +1,5 @@
 from mgmtsystem.ec2 import EC2System
-from . import CloudProvider
+from cloud import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
 
 
