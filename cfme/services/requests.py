@@ -157,6 +157,7 @@ def wait_for_request(cells, partial_check=False):
         cells: A dict of cells use to identify the request row to inspect in the
             :py:attr:`request_list` Table. See :py:meth:`cfme.web_ui.Table.find_rows_by_cells`
             for more.
+        partial_check: If to use the ``in`` operator rather than ``==`` in find_rows_by_cells().
 
     Usage:
 
@@ -174,7 +175,6 @@ def wait_for_request(cells, partial_check=False):
         wait_for(wait_for_request, [cells], num_sec=600)
 
     Raises:
-        AssertionError: if the matched request has status 'Error'
         RequestException: if multiple matching requests were found
 
     Returns:
