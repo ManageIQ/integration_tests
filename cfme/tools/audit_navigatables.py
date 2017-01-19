@@ -16,6 +16,7 @@ def relevant_types(module):
 def main():
     failures = {}
 
+    seen = set()
     for path in utils.path.project_path.join('cfme').visit('**.py'):
         if path.basename.startswith('test_'):
             # ignore tests
@@ -26,10 +27,15 @@ def main():
             failures[path.pypkgpath()] = e
             print(path.pypkgpath(), e)
         for clas in relevant_types(module):
+            if clas in seen:
+                continue
+            seen.add(clas)
             methods = []
             properties = []
             for name, obj in sorted(vars(clas).items()):
-                if inspect.ismethod(obj):
+                if name[0] == '_':
+                    continue
+                if inspect.isfunction(obj):
                     methods.append(
                         "{} ({})".format(name, obj.__module__))
                 elif isinstance(obj, property):
