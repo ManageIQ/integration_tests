@@ -7,6 +7,18 @@ if [ -z ${PROJECTS} ];then
   echo -e "PROJECTS variable not set.\n
 This variable sets path to where integration_tests will be installed. Export this variable and re-run this script again."
 
+
+elif [ -d ${PROJECTS} ];then 
+  echo "${PROJECTS} exists...\n
+It seems you have integration_tests cloned already. 
+You can specify different PROJECTS path to clone integration_tests somewhere else.
+OR
+You can delete ${PROJECTS} folder if you have pushed all changes from your branches and execute this script again.
+OR
+you can update your existing environment by running:
+  
+  ./integration_tests_init.sh init
+"
 else
 
   export CFME_TESTS="${PROJECTS}/integration_tests_files"
