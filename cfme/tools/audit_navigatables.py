@@ -36,17 +36,16 @@ def main():
                 if name[0] == '_':
                     continue
                 if inspect.isfunction(obj):
-                    methods.append(
-                        "{} ({})".format(name, obj.__module__))
+                    methods.append(name)
                 elif isinstance(obj, property):
                     properties.append(name)
             if methods or properties:
-                print(clas)
+                print("{}.{}".format(clas.__module__, clas.__name__))
             if methods:
-                print("\tMethods:")
-                print("\t\t{}".format("\n\t\t".join(methods)))
+                print("  Methods:")
+                print("    {}".format("\n    ".join(methods)))
             if properties:
-                print("\tProperties")
-                print("\t\t{}".format("\n\t\t".join(properties)))
+                print("  Properties")
+                print("    {}".format("\n    ".join(properties)))
 
     pprint.pprint(failures)
