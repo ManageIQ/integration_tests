@@ -602,6 +602,3 @@ def host_exist(provider, name='my_node'):
         if node_uuid == str(db_node.guid):
             return True
     return False
-
-
-
