@@ -20,8 +20,6 @@ from cfme.web_ui import (
     paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, match_location,
     BootstrapTreeview, summary_title, Table
 )
-
-from utils.api import rest_api
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.conf import cfme_data
 from utils.log import logger
@@ -324,10 +322,10 @@ class Vm(BaseVM):
         return Genealogy(self)
 
     def get_vm_via_rest(self):
-        return rest_api().collections.vms.get(name=self.name)
+        return self.appliance.rest_api.collections.vms.get(name=self.name)
 
     def get_collection_via_rest(self):
-        return rest_api().collections.vms
+        return self.appliance.rest_api.collections.vms
 
     def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text

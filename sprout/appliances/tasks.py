@@ -1406,7 +1406,7 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
         return None
     try:
         managed_providers = appliance.ipapp.managed_providers
-        appliance.managed_providers = managed_providers
+        appliance.managed_providers = [prov.key for prov in managed_providers]
     except Exception as e:
         # To prevent single appliance messing up whole result
         provider_error_logger().error("{}: {}".format(type(e).__name__, str(e)))
@@ -1423,10 +1423,10 @@ def calculate_provider_management_usage(self, appliance_ids):
         except ObjectDoesNotExist:
             # Deleted in meanwhile
             continue
-        for provider in appliance.managed_providers:
-            if provider not in results:
-                results[provider] = []
-            results[provider].append(appliance.id)
+        for provider_key in appliance.managed_providers:
+            if provider_key not in results:
+                results[provider_key] = []
+            results[provider_key].append(appliance.id)
     for provider in Provider.objects.all():
         provider.appliances_manage_this_provider = results.get(provider.id, [])
 

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 
+from manageiq_client.api import APIException
+
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.exceptions import OptionNotAvailable
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -9,7 +11,6 @@ from cfme.services import requests
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils.api import APIException
 from utils.log import logger
 
 

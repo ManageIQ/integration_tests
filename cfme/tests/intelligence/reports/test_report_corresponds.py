@@ -5,7 +5,7 @@ from random import sample
 
 import utils
 from cfme.intelligence.reports.reports import CustomReport
-from utils.providers import get_mgmt_by_name, setup_a_provider
+from utils.providers import get_crud_by_name, setup_a_provider
 from utils.version import since_date_or_version
 from cfme import test_requirements
 
@@ -54,7 +54,7 @@ def test_custom_vm_report(soft_assert, report_vms):
         if row["Name"].startswith("test_"):
             continue  # Might disappear meanwhile
         provider_name = row["Cloud/Infrastructure Provider Name"]
-        provider = get_mgmt_by_name(provider_name)
+        provider = get_crud_by_name(provider_name).mgmt
         provider_hosts_and_ips = utils.net.resolve_ips(provider.list_host())
         provider_datastores = provider.list_datastore()
         provider_clusters = provider.list_cluster()

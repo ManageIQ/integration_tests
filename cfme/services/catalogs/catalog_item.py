@@ -119,6 +119,8 @@ class CatalogItem(Updateable, Pretty, Navigatable):
     def create(self):
         # Create has sequential forms, the first is only the provider type
         navigate_to(self, 'Add')
+        # For element not found exception (To be removed)
+        sel.sleep(5)
         sel.select("//select[@id='st_prov_type']",
                    self.provider_type or self.item_type or 'Generic')
 
@@ -132,23 +134,27 @@ class CatalogItem(Updateable, Pretty, Navigatable):
         if self.item_type in provider_required_types \
                 or self.provider_type in provider_required_types:
             provider_name = self.provider.name
+        # For tests where orchestration template is None
+        orch_template = None
+        if self.orch_template:
+            orch_template = self.orch_template.template_name
 
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
                                'select_catalog': catalog.name,
                                'select_dialog': dialog.name,
-                               'select_orch_template': self.orch_template,
+                               'select_orch_template': orch_template,
                                'select_provider': provider_name,
                                'select_config_template': self.config_template})
-        if sel.text(basic_info_form.field_entry_point) == "":
+        if not (self.item_type in provider_required_types):
             sel.click(basic_info_form.field_entry_point)
             if version.current_version() < "5.7":
                 dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                      "StateMachines", "ServiceProvision_Template", "default")
             else:
                 entry_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
-                                     "StateMachines", "ServiceProvision_Template", "default")
+                    "StateMachines", "ServiceProvision_Template", "default")
             sel.click(basic_info_form.apply_btn)
         if self.catalog_name is not None \
                 and self.provisioning_data is not None \

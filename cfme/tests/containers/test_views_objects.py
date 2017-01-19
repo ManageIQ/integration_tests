@@ -14,7 +14,7 @@ from cfme.containers.pod import Pod
 
 pytestmark = [pytest.mark.tier(2)]
 pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope="function")
+    testgen.containers_providers, scope="function")
 
 
 # CMP-9907 # CMP-9908 # CMP-9909

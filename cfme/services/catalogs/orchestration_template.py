@@ -237,7 +237,7 @@ class AddDialog(CFMENavigateStep):
     VIEW = AddDialogView
 
     def step(self):
-        self.view.configuration.item_select('Create Service Dialog from "Orchestration Template"')
+        self.view.configuration.item_select('Create Service Dialog from Orchestration Template')
 
 
 @navigator.register(OrchestrationTemplate, 'Edit')

@@ -12,7 +12,6 @@ from cfme.services import requests
 from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
-from utils.blockers import BZ
 
 
 pytestmark = [
@@ -38,9 +37,9 @@ def pytest_generate_tests(metafunc):
 def tagcontrol_dialog():
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = {
-        'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
-        'ele_name': fauxfactory.gen_alphanumeric(),
-        'ele_desc': fauxfactory.gen_alphanumeric(),
+        'ele_label': "Service Level",
+        'ele_name': "service_level",
+        'ele_desc': "service_level_desc",
         'choose_type': "Tag Control",
         'field_category': "Service Level",
         'field_required': True
@@ -89,7 +88,7 @@ def catalog_item(provider, provisioning, vm_name, tagcontrol_dialog, catalog):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1382765, forced_streams=["5.6", "5.7", "upstream"])])
+@pytest.mark.ignore_stream("upstream")
 def test_tagdialog_catalog_item(provider, setup_provider, catalog_item, request):
     """Tests tag dialog catalog item
     Metadata:
@@ -98,9 +97,12 @@ def test_tagdialog_catalog_item(provider, setup_provider, catalog_item, request)
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
-    service_catalogs = ServiceCatalogs(catalog_item.name)
+    dialog_values = {
+        'default_select_value': "Gold"
+    }
+    service_catalogs = ServiceCatalogs(service_name=catalog_item.name, dialog_values=dialog_values)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', catalog_item.name)
+    logger.info('Waiting for cfme provision request for service {}'.format(catalog_item.name))
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],

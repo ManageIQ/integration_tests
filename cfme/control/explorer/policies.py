@@ -6,7 +6,8 @@ from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text, Checkbox, TextInput
 from widgetastic_manageiq import SummaryFormItem, CheckboxSelect, MultiBoxSelect
-from widgetastic_patternfly import BootstrapSelect, Button, Input
+from widgetastic_patternfly import Button, Input
+from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 from . import ControlExplorerView
 from actions import Action
@@ -79,7 +80,7 @@ class PolicyFormCommon(ControlExplorerView):
 
     description = Input(name="description")
     active = Checkbox("active")
-    scope = BootstrapSelect("chosen_typ")
+    scope = ExpressionEditor()
     notes = TextInput(name="notes")
 
     cancel_button = Button("Cancel")
@@ -420,6 +421,14 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         view.flash.assert_no_error()
         view.flash.assert_message('Actions for Policy Event "{}" were saved'.format(
             event))
+
+    @property
+    def exists(self):
+        policies = self.appliance.db["miq_policies"]
+        return self.appliance.db.session\
+            .query(policies.description)\
+            .filter(policies.description == self.description)\
+            .count() > 0
 
 
 @navigator.register(BasePolicy, "Add")

@@ -67,6 +67,8 @@ class Catalog(Updateable, Pretty, Navigatable):
 
     def create(self):
         navigate_to(self, 'Add')
+        # For element not found exception (To be removed)
+        sel.sleep(5)
         web_ui.fill(form, {'name_text': self.name,
                            'description_text': self.description,
                            'button_multiselect': self.items},

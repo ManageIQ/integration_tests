@@ -16,7 +16,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(3)]
 pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope='function')
+    testgen.containers_providers, scope='function')
 
 
 PROJECTS_SEARCH_STRINGS = ['*', 'infra', '$', 'management-infra']

@@ -149,6 +149,19 @@ class PolicyProfile(Updateable, Navigatable, Pretty):
             view.flash.assert_message(
                 'Policy Profile "{}": Delete successful'.format(self.description))
 
+    @property
+    def exists(self):
+        """Check existence of this Policy Profile.
+
+        Returns: :py:class:`bool` signalizing the presence of the Policy Profile in database.
+        """
+        miq_sets = self.appliance.db["miq_sets"]
+        return self.appliance.db.session\
+            .query(miq_sets.description)\
+            .filter(
+                miq_sets.description == self.description and miq_sets.set_type == "MiqPolicySet")\
+            .count() > 0
+
 
 @navigator.register(PolicyProfile, "Add")
 class PolicyProfileNew(CFMENavigateStep):
@@ -157,7 +170,6 @@ class PolicyProfileNew(CFMENavigateStep):
 
     def step(self):
         self.view.policy_profiles.tree.click_path("All Policy Profiles")
-        # if self.view.policy_profiles.is_opened:
         self.view.configuration.item_select("Add a New Policy Profile")
 
 
@@ -167,8 +179,7 @@ class PolicyProfileEdit(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        if self.view.policy_profiles.is_opened:
-            self.view.policy_profiles.tree.click_path("All Policy Profiles", self.obj.description)
+        self.view.policy_profiles.tree.click_path("All Policy Profiles", self.obj.description)
         self.view.configuration.item_select("Edit this Policy Profile")
 
 
@@ -178,5 +189,4 @@ class PolicyProfileDetails(CFMENavigateStep):
     prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
 
     def step(self):
-        if self.view.policy_profiles.is_opened:
-            self.view.policy_profiles.tree.click_path("All Policy Profiles", self.obj.description)
+        self.view.policy_profiles.tree.click_path("All Policy Profiles", self.obj.description)

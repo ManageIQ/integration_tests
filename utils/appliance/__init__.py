@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
+import logging
 import os
 import random
 import re
 import socket
 import yaml
+from manageiq_client.api import ManageIQClient as MiqApi
 from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
@@ -24,7 +26,7 @@ from mgmtsystem.virtualcenter import VMWareSystem
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import api, conf, datafile, db, db_queries, ssh, ports
+from utils import conf, datafile, db, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
@@ -38,6 +40,11 @@ from .implementations.ui import ViaUI
 
 
 RUNNING_UNDER_SPROUT = os.environ.get("RUNNING_UNDER_SPROUT", "false") != "false"
+
+# EMS types recognized by IP or credentials
+RECOGNIZED_BY_IP = [
+    "InfraManager", "ContainerManager", "MiddlewareManager", "Openstack::CloudManager"]
+RECOGNIZED_BY_CREDS = ["CloudManager"]
 
 
 def _current_miqqe_version():
@@ -219,6 +226,10 @@ class IPAppliance(object):
     def __hash__(self):
         return hash(self.address)
 
+    @cached_property
+    def rest_logger(self):
+        return create_sublogger('rest-api')
+
     # Configuration methods
     @logger_wrap("Configure IPAppliance: {}")
     def configure(self, log_callback=None, **kwargs):
@@ -365,40 +376,50 @@ class IPAppliance(object):
             ssh_client.run_command('echo "vm.swappiness = 1" >> /etc/sysctl.conf',
                 ensure_host=True)
 
-    @property
-    def managed_providers(self):
-        """Returns a set of providers that are managed by this appliance
+    def _encrypt_string(self, string):
+        try:
+            # Let's not log passwords
+            logging.disable(logging.CRITICAL)
+            rc, out = self.ssh_client.run_rails_command(
+                "puts MiqPassword.encrypt('{}')".format(string))
+            return out
+        finally:
+            logging.disable(logging.NOTSET)
 
-        Returns:
-            :py:class:`set` of :py:class:`str` - provider_key-s
-        """
-        ip_addresses = set([])
+    def _get_ems_ips(self, ems):
+        ep_table = self.db["endpoints"]
+        ip_addresses = set()
+        for ep in self.db.session.query(ep_table).filter(ep_table.resource_id == ems.id):
+            if ep.ipaddress is not None:
+                ip_addresses.add(ep.ipaddress)
+            elif ep.hostname is not None:
+                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ep.hostname) is not None:
+                    ip_addresses.add(ep.hostname)
+                else:
+                    ip_address = resolve_hostname(ep.hostname)
+                    if ip_address is not None:
+                        ip_addresses.add(ip_address)
+        return list(ip_addresses)
 
+    def _list_ems(self):
+        ems_table = self.db["ext_management_systems"]
         # Fetch all providers at once, return empty list otherwise
         try:
-            query_res = list(self._query_endpoints())
+            ems_list = list(self.db.session.query(ems_table))
         except Exception as ex:
             self.log.warning("Unable to query DB for managed providers: %s", str(ex))
             return []
-
-        for ipaddress, hostname in query_res:
-            if ipaddress is not None:
-                ip_addresses.add(ipaddress)
-            elif hostname is not None:
-                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", hostname) is not None:
-                    ip_addresses.add(hostname)
-                else:
-                    ip_address = resolve_hostname(hostname)
-                    if ip_address is not None:
-                        ip_addresses.add(ip_address)
-        provider_keys = set([])
-        for provider_key, provider_data in conf.cfme_data.get("management_systems", {}).iteritems():
-            if provider_data.get("ipaddress", None) in ip_addresses:
-                provider_keys.add(provider_key)
-        return provider_keys
+        known_ems_list = []
+        for ems in ems_list:
+            # Skip any EMS types that we don't care about / can't recognize safely
+            if not any(p_type in ems.type for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
+                continue
+            # Make sure we load current data from the DB
+            self.db.session.expire(ems)
+            known_ems_list.append(ems)
+        return known_ems_list
 
     def _query_endpoints(self):
-
         if "endpoints" in self.db:
             return self._query_post_endpoints()
         else:
@@ -418,6 +439,92 @@ class IPAppliance(object):
                 ipaddress = endpoint.ipaddress
                 hostname = endpoint.hostname
                 yield ipaddress, hostname
+
+    @property
+    def managed_providers(self):
+        """Returns a set of provider crud objects of known providers managed by this appliance
+
+        Note:
+            Recognized by name only.
+        """
+        from utils.providers import new_list_providers
+        prov_cruds = new_list_providers(use_global_filters=False)
+
+        found_cruds = set()
+        unrecognized_ems_names = set()
+        for ems in self._list_ems():
+            for prov in prov_cruds:
+                # Name check is authoritative and the only proper way to recognize a known provider
+                if ems.name == prov.name:
+                    found_cruds.add(prov)
+                    break
+            else:
+                unrecognized_ems_names.add(ems.name)
+        if unrecognized_ems_names:
+            self.log.warning(
+                "Unrecognized managed providers: {}".format(','.join(unrecognized_ems_names)))
+        return list(found_cruds)
+
+    def check_no_conflicting_providers(self):
+        """ Checks that there are no conflicting providers set up on the appliance
+
+        Raises:
+            ApplianceException: If there are any conflicting providers present on the appliance
+
+        Note:
+            A conflicting provider is a provider with IP or credentials (depends on it's type)
+            known to our automation but whose name doesn't match the one found in yamls.
+            This is used to avoid hard-to-debug
+         automation issues.
+        """
+        from utils.providers import new_list_providers
+
+        def _recognized_by_ip(provider, ems):
+            if any(p_type in ems.type for p_type in RECOGNIZED_BY_IP):
+                try:
+                    prov_ip = getattr(provider, 'ip_address', None) \
+                        or resolve_hostname(provider.hostname)
+                except AttributeError:
+                    # Provider has no IP nor hostname; it should be looked up by credentials,
+                    # not by IP address
+                    return False
+                if prov_ip in self._get_ems_ips(ems):
+                    return True
+            return False
+
+        def _recognized_by_creds(provider, ems):
+            if any(p_type in ems.type for p_type in RECOGNIZED_BY_CREDS):
+                creds_table = self.db["authentications"]
+                try:
+                    default_creds = provider.credentials['default']
+                except KeyError:
+                    # Provider has no default credentials; it should be looked up by IP address,
+                    # not by credentials
+                    return False
+                auth = self.db.session.query(creds_table)\
+                    .filter(creds_table.resource_id == ems.id)\
+                    .filter(creds_table.userid == default_creds.principal)\
+                    .filter(creds_table.password == self._encrypt_string(default_creds.secret))\
+                    .order_by(creds_table.id.desc())\
+                    .first()
+                if auth is not None:
+                    return True
+            return False
+
+        prov_cruds = new_list_providers(use_global_filters=False)
+        managed_providers_names = [prov.name for prov in self.managed_providers]
+        for ems in self._list_ems():
+            # EMS found among managed providers can be safely ignored; they are not conflicting
+            if ems.name in managed_providers_names:
+                continue
+            # Otherwise, if the EMS matches a provider in our yamls by IP or credentials
+            # but isn't among managed providers -> same provider with a different name
+            for prov in prov_cruds:
+                if _recognized_by_ip(prov, ems) or _recognized_by_creds(prov, ems):
+                    raise ApplianceException(
+                        "Provider '{}' present on the appliance under the name '{}' instead"
+                        " of expected '{}', please rename or remove it before continuing"
+                        .format(prov.key, ems.name, prov.name))
 
     @property
     def has_os_infra(self):
@@ -443,9 +550,11 @@ class IPAppliance(object):
 
     @cached_property
     def rest_api(self):
-        return api.API(
+        return MiqApi(
             "{}://{}:{}/api".format(self.scheme, self.address, self.ui_port),
-            auth=("admin", "smartvm"))
+            (conf.credentials['default']['username'], conf.credentials['default']['password']),
+            logger=self.rest_logger,
+            verify_ssl=False)
 
     @cached_property
     def miqqe_version(self):
@@ -1814,6 +1923,7 @@ class IPAppliance(object):
                 raise
 
     def delete_all_providers(self):
+        logger.info('Destroying all appliance providers')
         for prov in self.rest_api.collections.providers:
             prov.action.delete()
 
@@ -1905,18 +2015,18 @@ class Appliance(IPAppliance):
         super(Appliance, self).__init__(browser_steal=browser_steal, container=None)
         self.name = Appliance._default_name
 
-        self._provider_name = provider_name
+        self._provider_key = provider_name
         self.vmname = vm_name
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and (
-            self.vmname == other.vmname and self._provider_name == other._provider_name)
+            self.vmname == other.vmname and self._provider_key == other._provider_key)
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash((self.vmname, self._provider_name))
+        return hash((self.vmname, self._provider_key))
 
     @property
     def ipapp(self):
@@ -1930,7 +2040,7 @@ class Appliance(IPAppliance):
             Cannot be cached because provider object is unpickable.
         """
         from utils.providers import get_mgmt
-        return get_mgmt(self._provider_name)
+        return get_mgmt(self._provider_key)
 
     @property
     def vm_name(self):
@@ -2002,7 +2112,7 @@ class Appliance(IPAppliance):
                          ``None`` (default ``None``)
 
         """
-        log_callback("Configuring appliance {} on {}".format(self.vmname, self._provider_name))
+        log_callback("Configuring appliance {} on {}".format(self.vmname, self._provider_key))
         if kwargs:
             with self:
                 self._custom_configure(**kwargs)
@@ -2040,13 +2150,13 @@ class Appliance(IPAppliance):
 
             # add provider
             log_callback('Setting up provider...')
-            setup_provider(self._provider_name)
+            setup_provider(self._provider_key)
 
             # credential hosts
             log_callback('Credentialing hosts...')
             if not RUNNING_UNDER_SPROUT:
                 from utils.hosts import setup_providers_hosts_credentials
-            setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
+            setup_providers_hosts_credentials(self._provider_key, ignore_errors=True)
 
             # if rhev, set relationship
             if self.is_on_rhev:
@@ -2054,7 +2164,7 @@ class Appliance(IPAppliance):
                 log_callback('Setting up CFME VM relationship...')
                 from cfme.common.vm import VM
                 from utils.providers import get_crud
-                vm = VM.factory(self.vm_name, get_crud(self._provider_name))
+                vm = VM.factory(self.vm_name, get_crud(self._provider_key))
                 cfme_rel = Vm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(self.server_name()), self.server_id())
 

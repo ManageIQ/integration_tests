@@ -12,6 +12,7 @@ from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cached_property import cached_property
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
@@ -23,7 +24,6 @@ from cfme.web_ui import (
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import conf, deferred_verpick, version
-from utils.api import rest_api
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
@@ -129,7 +129,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
     """
     provider_types = {}
     in_version = (version.LOWEST, version.LATEST)
-    type_tclass = "infra"
+    category = "infra"
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
@@ -157,14 +157,17 @@ class InfraProvider(Pretty, CloudInfraProvider):
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
-        self.vm_name = version.pick({
-            version.LOWEST: "VMs",
-            '5.5': "VMs and Instances",
-            '5.8': "Virtual Machines"})  # TODO: If it lands in some 5.7.x, change this version!
         self.template_name = "Templates"
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
+
+    @cached_property
+    def vm_name(self):
+        return version.pick({
+            version.LOWEST: "VMs",
+            '5.5': "VMs and Instances",
+            '5.8': "Virtual Machines"})  # TODO: If it lands in some 5.7.x, change this version!
 
     @variable(alias='db')
     def num_datastore(self):
@@ -189,9 +192,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @variable(alias='rest')
     def num_host(self):
-        provider = rest_api().collections.providers.find_by(name=self.name)[0]
+        provider = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
         num_host = 0
-        for host in rest_api().collections.hosts:
+        for host in self.appliance.rest_api.collections.hosts:
             if host['ems_id'] == provider.id:
                 num_host += 1
         return num_host
@@ -223,9 +226,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     @variable(alias='rest')
     def num_cluster(self):
-        provider = rest_api().collections.providers.find_by(name=self.name)[0]
+        provider = self.appliance.rest_api.collections.providers.find_by(name=self.name)[0]
         num_cluster = 0
-        for cluster in rest_api().collections.clusters:
+        for cluster in self.appliance.rest_api.collections.clusters:
             if cluster['ems_id'] == provider.id:
                 num_cluster += 1
         return num_cluster
@@ -269,7 +272,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
         """
         returns current provider id using rest api
         """
-        return rest_api().collections.providers.find_by(name=self.name)[0].id
+        return self.appliance.rest_api.collections.providers.find_by(name=self.name)[0].id
 
     @property
     def hosts(self):

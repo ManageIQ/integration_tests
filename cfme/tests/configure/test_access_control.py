@@ -511,16 +511,16 @@ cat_name = "Settings"
       {
           'my services': _go_to(MyService),
           'chargeback': _go_to(Server, 'Chargeback'),
-          'clouds providers': _go_to(BaseProvider.type_mapping['cloud']),
-          'infrastructure providers': _go_to(BaseProvider.type_mapping['infra']),
+          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
+          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
           'control explorer': _go_to(Server, 'ControlExplorer'),
           'automate explorer': _go_to(Server, 'AutomateExplorer')}],
      [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
       {
           'my services': _go_to(MyService),
           'chargeback': _go_to(Server, 'Chargeback'),
-          'clouds providers': _go_to(BaseProvider.type_mapping['cloud']),
-          'infrastructure providers': _go_to(BaseProvider.type_mapping['infra']),
+          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
+          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
           'control explorer': _go_to(Server, 'ControlExplorer'),
           'automate explorer': _go_to(Server, 'AutomateExplorer')},
       {}]])

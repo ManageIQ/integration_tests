@@ -434,6 +434,7 @@ class VerticalNavigation(Widget):
                 # finished
                 self.logger.debug('finishing the menu selection by clicking on %s', level)
                 self.browser.click(link)
+                self.browser.handle_alert(wait=2.0, squash=True)
 
     def get_child_div_for(self, *levels):
         current = self

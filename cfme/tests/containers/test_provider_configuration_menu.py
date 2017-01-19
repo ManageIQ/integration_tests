@@ -14,7 +14,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate(
-    testgen.container_providers, scope="function")
+    testgen.containers_providers, scope="function")
 
 
 def select_first_provider_and_get_its_name():
