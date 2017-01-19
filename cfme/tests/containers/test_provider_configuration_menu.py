@@ -4,7 +4,7 @@ from utils import testgen
 from utils.version import current_version
 from cfme.web_ui import toolbar as tb, Quadicon, breadcrumbs_names
 from utils.appliance.implementations.ui import navigate_to
-from cfme.containers.provider import ContainersProvider
+from cfme.providers.containers import ContainersProvider
 from utils.wait import wait_for
 
 

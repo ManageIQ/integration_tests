@@ -1,4 +1,4 @@
-from . import ContainersProvider
+from containers import ContainersProvider
 from mgmtsystem.kubernetes import Kubernetes
 
 

@@ -4,7 +4,7 @@ from manageiq_client.api import APIException
 
 from utils.version import current_version
 from utils import testgen
-from cfme.containers.provider.openshift import CustomAttribute
+from cfme.providers.openshift import CustomAttribute
 
 pytestmark = [
     pytest.mark.uncollectif(

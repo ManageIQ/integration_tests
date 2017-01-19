@@ -1,6 +1,5 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.common.provider import import_all_modules_of
 from cfme.common.provider import BaseProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
@@ -11,7 +10,7 @@ from utils import version
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 
-from .. import cfg_btn, mon_btn, pol_btn
+from cfme.middleware import cfg_btn, mon_btn, pol_btn
 
 
 details_page = Region(infoblock_type='detail')
@@ -178,6 +177,3 @@ class TopologyFromDetails(CFMENavigateStep):
 
     def step(self):
         sel.click(InfoBlock('Overview', 'Topology'))
-
-
-import_all_modules_of('cfme.middleware.provider')

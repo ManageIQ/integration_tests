@@ -7,7 +7,7 @@ import pytest
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.infrastructure import host
-from cfme.infrastructure.provider import InfraProvider
+from cfme.providers.infrastructure import InfraProvider
 # TODO: we should not call out to utils here, but maybe rather have an infra setup provider fixture
 from fixtures.pytest_store import store
 from utils.providers import setup_a_provider

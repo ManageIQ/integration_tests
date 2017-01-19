@@ -2,7 +2,7 @@
 import pytest
 from functools import partial
 
-from cfme.infrastructure.provider import InfraProvider, details_page
+from cfme.providers.infrastructure import InfraProvider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname

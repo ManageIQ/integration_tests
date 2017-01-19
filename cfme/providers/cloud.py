@@ -14,7 +14,7 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.common.provider import CloudInfraProvider, import_all_modules_of
+from cfme.common.provider import CloudInfraProvider
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio, \
@@ -320,6 +320,3 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
-
-
-import_all_modules_of('cfme.cloud.provider')

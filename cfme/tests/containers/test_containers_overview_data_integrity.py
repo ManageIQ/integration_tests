@@ -1,7 +1,7 @@
 import pytest
 from utils import testgen
 from utils.version import current_version
-from cfme.containers.provider import ContainersProvider
+from cfme.providers.containers import ContainersProvider
 from cfme.containers.node import Node
 from cfme.containers.pod import Pod
 from cfme.containers.service import Service

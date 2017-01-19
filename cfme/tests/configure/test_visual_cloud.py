@@ -5,7 +5,7 @@ from cfme import login
 from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.cloud.availability_zone import AvailabilityZone
-from cfme.cloud.provider import CloudProvider
+from cfme.providers.cloud import CloudProvider
 from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
 from cfme.cloud.keypairs import KeyPair

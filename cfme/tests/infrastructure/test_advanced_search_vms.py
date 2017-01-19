@@ -6,7 +6,7 @@ import pytest
 from random import sample
 
 from cfme.infrastructure import virtual_machines
-from cfme.infrastructure.provider import InfraProvider
+from cfme.providers.infrastructure import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import search
 from utils.appliance.implementations.ui import navigate_to
