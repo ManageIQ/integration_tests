@@ -1,6 +1,8 @@
+from __future__ import print_function
 import inspect
 import utils.appliance
 import utils.path
+import pprint
 
 
 def relevant_types(module):
@@ -12,10 +14,17 @@ def relevant_types(module):
 
 
 def main():
+    failures = {}
 
     for path in utils.path.project_path.join('cfme').visit('**.py'):
-        module = path.pyimport()
-
+        if path.basename.startswith('test_'):
+            # ignore tests
+            continue
+        try:
+            module = path.pyimport()
+        except Exception as e:
+            failures[path.pypkgpath()] = e
+            print(path.pypkgpath(), e)
         for clas in relevant_types(module):
             methods = []
             properties = []
@@ -33,3 +42,5 @@ def main():
             if properties:
                 print("\tProperties")
                 print("\t\t{}".format("\n\t\t".join(properties)))
+
+    pprint.pprint(failures)
