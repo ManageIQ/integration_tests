@@ -17,6 +17,7 @@ You can delete ${PROJECTS} folder if you have pushed all changes from your branc
 OR
 you can update your existing environment by running:
   
+  cd ${PROJECTS}/integration_tests_files
   ./integration_tests_init.sh init
 "
 else
