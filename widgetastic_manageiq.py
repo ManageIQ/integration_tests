@@ -374,7 +374,10 @@ class SummaryFormItem(Widget):
 
 class MultiBoxSelect(Widget):
 
-    TABLE = "//table[@id={}]{}"
+    TABLE = VersionPick({
+        Version.lowest(): "//table[@class='admintable']{1}//table[@id={0}]",
+        '5.7': "//table[@id={0}]{1}"
+    })
 
     def __init__(self, parent, id, number="", move_into=None, move_from=None,
             available_items="choices_chosen", chosen_items="members_chosen", logger=None):
@@ -406,9 +409,6 @@ class MultiBoxSelect(Widget):
 
     @property
     def move_into_button(self):
-        """This method is required to avoid 'Element is no longer attached to the DOM'
-        Selenium exception.
-        """
         if isinstance(self._move_into, Button):
             button = self._move_into
         elif isinstance(self._move_into, basestring):
