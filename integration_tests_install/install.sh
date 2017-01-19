@@ -38,8 +38,8 @@ cp -r /<path to custom yamls>/*.*y*ml ${CFME_TESTS}/my_custom_yaml_files
 
 You can configure your environment now by executing:
 
+cd ${CFME_TESTS}/integration_tests
 ./integration_tests_init.sh init
-
 "
 
-
+cd ${CFME_TESTS}/integration_tests
