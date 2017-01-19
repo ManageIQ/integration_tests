@@ -32,6 +32,12 @@ class RHEVMProvider(InfraProvider):
                 'candu_hostname_text':
                 kwargs.get('hostname') if self.credentials.get('candu', None) else None}
 
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        if 'default_cluster' not in deploy_args:
+            return {'cluster': self.data['default_cluster']}
+        return {}
+
     @classmethod
     def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']

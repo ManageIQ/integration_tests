@@ -21,8 +21,6 @@ import requests
 import traceback
 
 from sentaku import ImplementationContext
-from utils.mgmt_system import RHEVMSystem
-from mgmtsystem.virtualcenter import VMWareSystem
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
@@ -2189,7 +2187,8 @@ class Appliance(IPAppliance):
     def destroy(self):
         """Destroys the VM this appliance is running as
         """
-        if isinstance(self.provider, RHEVMSystem):
+        from cfme.infrastructure.provider.rhevm import RHEVMProvider
+        if isinstance(self.provider, RHEVMProvider):
             # if rhev, try to remove direct_lun just in case it is detach
             self.remove_rhev_direct_lun_disk()
         self.provider.delete_vm(self.vm_name)
@@ -2230,11 +2229,13 @@ class Appliance(IPAppliance):
 
     @property
     def is_on_rhev(self):
-        return isinstance(self.provider, RHEVMSystem)
+        from cfme.infrastructure.provider.rhevm import RHEVMProvider
+        return isinstance(self.provider, RHEVMProvider)
 
     @property
     def is_on_vsphere(self):
-        return isinstance(self.provider, VMWareSystem)
+        from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+        return isinstance(self.provider, VMwareProvider)
 
     def add_rhev_direct_lun_disk(self, log_callback=None):
         if log_callback is None:

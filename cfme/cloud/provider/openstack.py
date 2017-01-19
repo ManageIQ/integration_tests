@@ -61,6 +61,12 @@ class OpenStackProvider(CloudProvider):
             })
         return data_dict
 
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        if ('network_name' not in deploy_args) and self.data.get('network'):
+            return {'network_name': self.data['network']}
+        return {}
+
     @classmethod
     def from_config(cls, prov_config, prov_key):
         from utils.providers import get_crud

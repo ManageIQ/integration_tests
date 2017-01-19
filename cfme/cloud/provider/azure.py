@@ -30,6 +30,10 @@ class AzureProvider(CloudProvider):
                 'azure_tenant_id': kwargs.get('tenant_id'),
                 'azure_subscription_id': kwargs.get('subscription_id')}
 
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        return self.data['provisioning']
+
     @classmethod
     def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']

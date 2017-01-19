@@ -39,6 +39,12 @@ class SCVMMProvider(InfraProvider):
 
         return values
 
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        if 'host_group' not in deploy_args:
+            return {'host_group': self.data.get("host_group", "All Hosts")}
+        return {}
+
     @classmethod
     def from_config(cls, prov_config, prov_key):
         credentials_key = prov_config['credentials']
