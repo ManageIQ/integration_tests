@@ -4,6 +4,7 @@ from datetime import datetime
 import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services import requests
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
@@ -33,7 +34,7 @@ def needs_firefox():
         pytest.skip(msg="This test needs firefox to run")
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter'],
+pytest_generate_tests = testgen.generate(testgen.providers_by_class, [VMwareProvider],
                                          scope="module")
 
 

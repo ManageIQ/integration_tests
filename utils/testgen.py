@@ -246,55 +246,6 @@ def providers_by_class(metafunc, classes, required_fields=None):
     return providers(metafunc, filters=[pf])
 
 
-# Replaced by providers_by_class, above
-def provider_by_type(metafunc, provider_types, required_fields=None):
-    """Get the values of the named field keys from ``cfme_data.get('management_systems', {})``
-    ``required_fields`` is special and can take many forms, it is used to ensure that
-    yaml data is present for a particular key, or path of keys, and can even validate
-    the values as long as they are not None.
-    Args:
-        provider_types: A list of provider types to include. If None, all providers are considered
-    Returns:
-        An tuple of ``(argnames, argvalues, idlist)`` for use in a pytest_generate_tests hook, or
-        with the :py:func:`parametrize` helper.
-    Usage:
-        # In the function itself
-        def pytest_generate_tests(metafunc):
-            argnames, argvalues, idlist = testgen.provider_by_type(
-                ['openstack', 'ec2'], required_fields=['provisioning']
-            )
-        metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
-        # Using the parametrize wrapper
-        pytest_generate_tests = testgen.parametrize(testgen.provider_by_type, ['openstack', 'ec2'],
-            scope='module')
-        # Using required_fields
-        # Ensures that ``provisioning`` exists as a yaml field
-        testgen.provider_by_type(
-            ['openstack', 'ec2'], required_fields=['provisioning']
-        )
-        # Ensures that ``provisioning`` exists as a yaml field and has another field in it called
-        # ``host``
-        testgen.provider_by_type(
-            ['openstack', 'ec2'], required_fields=[['provisioning', 'host']]
-        )
-        # Ensures that ``powerctl`` exists as a yaml field and has a value 'True'
-        testgen.provider_by_type(
-            ['openstack', 'ec2'], required_fields=[('powerctl', True)]
-        )
-    Note:
-        Using the default 'function' scope, each test will be run individually for each provider
-        before moving on to the next test. To group all tests related to single provider together,
-        parametrize tests in the 'module' scope.
-    Note:
-        testgen for providers now requires the usage of test_flags for collection to work.
-        Please visit http://cfme-tests.readthedocs.org/guides/documenting.html#documenting-tests
-        for more details.
-    """
-    classes = [get_class_from_type(prov_type) for prov_type in provider_types]
-    return providers_by_class(metafunc=metafunc, classes=classes,
-                              required_fields=required_fields)
-
-
 def all_providers(metafunc, **options):
     """ Returns providers of all types """
     return providers_by_class(metafunc, [BaseProvider], **options)

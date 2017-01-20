@@ -2,6 +2,7 @@
 import pytest
 
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme import test_requirements
@@ -17,7 +18,7 @@ pytestmark = [
 ]
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter'],
+pytest_generate_tests = testgen.generate(testgen.providers_by_class, [VMwareProvider],
     scope="module")
 
 

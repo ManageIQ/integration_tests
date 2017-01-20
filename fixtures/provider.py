@@ -1,6 +1,6 @@
 """``setup_provider`` fixture
 
-In test modules paramatrized with :py:func:`utils.testgen.provider_by_type` (should be
+In test modules paramatrized with :py:func:`utils.testgen.providers_by_class` (should be
 just about any module that needs a provider to run its tests), this fixture will set up
 the single provider needed to run that test.
 

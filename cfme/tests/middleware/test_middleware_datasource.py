@@ -2,6 +2,7 @@ import pytest
 
 from cfme.middleware import get_random_list
 from cfme.middleware.datasource import MiddlewareDatasource
+from cfme.middleware.provider.hawkular import HawkularProvider
 from utils import testgen
 from utils.version import current_version
 from server_methods import get_eap_server, get_hawkular_server
@@ -20,7 +21,8 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ["hawkular"], scope="function")
+pytest_generate_tests = testgen.generate(
+    testgen.providers_by_class, [HawkularProvider], scope="function")
 ITEMS_LIMIT = 1  # when we have big list, limit number of items to test
 
 DATASOURCES = [ORACLE_12C_DS,

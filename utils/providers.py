@@ -40,7 +40,7 @@ class ProviderFilter(object):
         keys: List of acceptable provider keys, all if `None`
         categories: List of acceptable provider categories, all if `None`
         types: List of acceptable provider types, all if `None`
-        required_fields: List of required fields, see :py:func:`provider_by_type`
+        required_fields: List of required fields, see :py:func:`providers_by_class`
         restrict_version: Checks provider version in yamls if `True`
         required_tags: List of tags that must be set in yamls
         inverted: Inclusive if `False`, exclusive otherwise

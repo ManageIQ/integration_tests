@@ -3,15 +3,16 @@ This test can run only after overcloud cloud provider created and linked to
 undercloud infra provider, need to compare the cloud providers with the
 results of the relationships
 """
-from utils import testgen
 import pytest
+from utils import testgen
+from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 
 
 pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate')]
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type,
-                                         ['openstack-infra'],
+pytest_generate_tests = testgen.generate(testgen.providers_by_class,
+                                         [OpenstackInfraProvider],
                                          scope='module')
 
 

@@ -7,6 +7,8 @@ import utils.error as error
 from manageiq_client.api import APIException
 
 from cfme import test_requirements
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.rest.gen_data import vm as _vm
 from cfme.rest.gen_data import arbitration_settings, automation_requests_data
 from utils.providers import setup_a_provider as _setup_a_provider
@@ -19,8 +21,8 @@ from utils.log import logger
 pytestmark = [test_requirements.rest]
 
 pytest_generate_tests = testgen.generate(
-    testgen.provider_by_type,
-    ['virtualcenter', 'rhevm'],
+    testgen.providers_by_class,
+    [VMwareProvider, RHEVMProvider],
     scope="module"
 )
 

@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.infrastructure.pxe import get_template_from_config
 from utils import ssh
@@ -17,7 +18,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['rhevm'],
+    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [RHEVMProvider],
         required_fields=[
             ['provisioning', 'ci-template'],
             ['provisioning', 'ci-username'],
