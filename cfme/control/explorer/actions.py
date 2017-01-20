@@ -5,8 +5,8 @@ from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavig
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text
-from widgetastic_manageiq import SummaryFormItem, MultiBoxSelect
-from widgetastic_patternfly import BootstrapTreeview, BootstrapSelect, Button, Input
+from widgetastic_manageiq import SummaryFormItem, MultiBoxSelect, ManageIQTree
+from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
 from utils.appliance import Navigatable
@@ -46,7 +46,7 @@ class ActionFormCommon(ControlExplorerView):
     email_recipient = Input(name="to")
     vcenter_attr_name = Input(name="attribute")
     vcenter_attr_value = Input(name="value")
-    tag = BootstrapTreeview("action_tags_treebox")
+    tag = ManageIQTree("action_tags_treebox")
 
     cancel_button = Button('Cancel')
 
