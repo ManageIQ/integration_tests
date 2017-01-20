@@ -107,9 +107,10 @@ class ProviderFilter(object):
 
     def _filter_required_tags(self, provider):
         """ Filters by required yaml tags """
+        prov_tags = provider.data.get('tags', [])
         if self.required_tags is None:
             return None
-        if set(self.required_tags) & set(provider.data.tags):
+        if set(self.required_tags) & set(prov_tags):
             return True
         return False
 
