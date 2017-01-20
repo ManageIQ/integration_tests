@@ -127,20 +127,20 @@ class InfraProvidersView(BaseLoggedInPage):
                                                            'Infrastructure', 'Providers'],
                     match_page(summary='Infrastructure Providers')))
 
-    @View.nested
-    class toolbar(ProviderToolBar):  # NOQA
-        pass
+    # @View.nested
+    # class toolbar(ProviderToolBar):
+    #     pass
+    #
+    # @View.nested
+    # class sidebar(BaseSideBar):
+    #     pass
+    #
+    # @View.nested
+    # class items(Items):
+    #     pass
 
     @View.nested
-    class sidebar(BaseSideBar):  # NOQA
-        pass
-
-    @View.nested
-    class items(Items):  # NOQA
-        pass
-
-    @View.nested
-    class paginator(PaginationPane):  # NOQA
+    class paginator(PaginationPane):
         pass
 
 
@@ -157,41 +157,41 @@ class InfraProvidersDetailsView(InfraProvidersView):
     overview = Table('//table[.//th[normalize-space(text())="Overview"]]')
     smart_management = Table('//table[.//th[normalize-space(text())="Smart Management"]]')
 
-
-class InfraProvidersDiscoverView(InfraProvidersView):
-    vcenter = Checkbox('discover_type_virtualcenter')
-    mscvmm = Checkbox('discover_type_scvmm')
-    rhevm = Checkbox('discover_type_rhevm')
-
-    from_ip1 = Input('from_first')
-    from_ip2 = Input('from_second')
-    from_ip3 = Input('from_third')
-    from_ip4 = Input('from_fourth')
-    to_ip4 = Input('to_fourth')
-
-    start = Button('Start')
-    cancel = Button('Cancel')
-
-    @property
-    def is_displayed(self):
-        return all((self.logged_in_as_current_user,
-                    self.navigation.currently_selected == ['Compute',
-                                                           'Infrastructure', 'Providers'],
-                    match_page(summary='Infrastructure Providers Discovery')))
-
-
-class InfraProvidersAddView(InfraProvidersView):
-    name = Input('name')
-    type = Dropdown('emstype')
-
-    add = Button('Add')
-    cancel = Button('Cancel')
-
-    # todo: rest of entities should be added according to provider type
+#
+# class InfraProvidersDiscoverView(InfraProvidersView):
+#     vcenter = Checkbox('discover_type_virtualcenter')
+#     mscvmm = Checkbox('discover_type_scvmm')
+#     rhevm = Checkbox('discover_type_rhevm')
+#
+#     from_ip1 = Input('from_first')
+#     from_ip2 = Input('from_second')
+#     from_ip3 = Input('from_third')
+#     from_ip4 = Input('from_fourth')
+#     to_ip4 = Input('to_fourth')
+#
+#     start = Button('Start')
+#     cancel = Button('Cancel')
+#
+#     @property
+#     def is_displayed(self):
+#         return all((self.logged_in_as_current_user,
+#                     self.navigation.currently_selected == ['Compute',
+#                                                            'Infrastructure', 'Providers'],
+#                     match_page(summary='Infrastructure Providers Discovery')))
 
 
-class InfraProvidersManagePoliciesView(InfraProvidersView):
-    pass
+# class InfraProvidersAddView(InfraProvidersView):
+#     name = Input('name')
+#     type = Dropdown('emstype')
+#
+#     add = Button('Add')
+#     cancel = Button('Cancel')
+#
+#     # todo: rest of entities should be added according to provider type
+#
+
+# class InfraProvidersManagePoliciesView(InfraProvidersView):
+#     pass
 
 
 @CloudInfraProvider.add_base_type
