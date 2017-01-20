@@ -11,6 +11,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
 
 @pytest.mark.usefixtures("setup_provider_modscope")
 def test_number_of_cpu(provider, soft_assert):
+    provider.load_details()
     soft_assert((provider.summary.properties.aggregate_node_cpu_resources.
                  value.number) > 0, "Aggregate Node CPU Resources is 0")
     soft_assert((provider.summary.properties.aggregate_node_cpus.

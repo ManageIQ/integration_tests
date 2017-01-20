@@ -12,5 +12,6 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
 
 @pytest.mark.usefixtures("setup_provider_modscope")
 def test_api_port(provider, soft_assert):
-    soft_assert(provider.summary.properties.api_port.value.isdigit(),
+    provider_port = provider.get_yaml_data()['port']
+    soft_assert(provider.summary.properties.api_port.value == provider_port,
                 "Invalid API Port")

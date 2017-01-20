@@ -16,7 +16,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")
-def test_assinged_roles(provider):
+def test_assigned_roles(provider):
     provider.load_details()
     result = provider.summary.relationships.deployment_roles.value
 
