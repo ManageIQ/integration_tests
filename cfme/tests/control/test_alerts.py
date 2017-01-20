@@ -88,7 +88,6 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         vm_name: VM name to use for policy filtering
         provider: funcarg provider
     """
-    alerts = [alert.description for alert in alerts]
     alert_profile = alert_profiles.VMInstanceAlertProfile(
         "Alert profile for {}".format(vm_name),
         alerts
@@ -100,7 +99,7 @@ def setup_for_alerts(request, alerts, event=None, vm_name=None, provider=None):
         action = actions.Action(
             "Evaluate Alerts for {}".format(vm_name),
             "Evaluate Alerts",
-            alerts_to_evaluate=alerts
+            action_values={"alerts_to_evaluate": alerts}
         )
         action.create()
         request.addfinalizer(action.delete)

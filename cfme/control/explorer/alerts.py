@@ -156,11 +156,11 @@ class Alert(Updateable, Navigatable, Pretty):
         self.mgmt_event = mgmt_event
 
     def __str__(self):
-        "Conversion to string used when assigning in multibox selector."
+        """Conversion to string used when assigning in multibox selector."""
         return self.description
 
     def create(self):
-        "Create this Alert in UI."
+        """Create this Alert in UI."""
         view = navigate_to(self, "Add")
         self._fill(view)
         view.add_button.click()
