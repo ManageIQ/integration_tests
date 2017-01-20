@@ -2,14 +2,16 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils.wait import wait_for
 from utils import mgmt_system, testgen
 
 
 pytestmark = [test_requirements.provision]
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['virtualcenter', 'rhevm'],
-    scope="module")
+pytest_generate_tests = testgen.generate(
+    testgen.providers_by_class, [VMwareProvider, RHEVMProvider], scope="module")
 
 
 @pytest.fixture(scope="module")

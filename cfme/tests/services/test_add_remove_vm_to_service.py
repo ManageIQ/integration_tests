@@ -5,6 +5,7 @@ from cfme import test_requirements
 from cfme.automate.explorer import Class, Domain, Method, Namespace
 from cfme.automate.simulation import simulate
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.services import requests
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
@@ -23,8 +24,8 @@ pytestmark = [
 ]
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type,
-                                         ['virtualcenter'], scope="module")
+pytest_generate_tests = testgen.generate(testgen.providers_by_class,
+                                         [VMwareProvider], scope="module")
 
 
 @pytest.fixture(scope="function")

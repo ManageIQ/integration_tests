@@ -4,6 +4,8 @@ import pytest
 
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
@@ -35,7 +37,8 @@ def delete_fx_provider_event(db, provider):
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm'])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [VMwareProvider, RHEVMProvider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 

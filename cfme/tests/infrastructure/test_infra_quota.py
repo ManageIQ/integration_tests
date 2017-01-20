@@ -7,6 +7,7 @@ from cfme import test_requirements
 from cfme.configure.access_control import Tenant
 from cfme.fixtures import pytest_selenium as sel
 from cfme.automate import explorer as automate
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
@@ -23,8 +24,8 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, ['virtualcenter'])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [VMwareProvider])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
 
 

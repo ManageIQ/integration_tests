@@ -10,6 +10,8 @@ from cfme import Credential
 from cfme import test_requirements
 from cfme.common.vm import VM
 from cfme.configure.configuration import get_server_roles, set_server_roles, candu
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CustomReport
 from datetime import date
 from utils import testgen
@@ -26,7 +28,8 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers not meant for Chargeback Testing
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm'],
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [VMwareProvider, RHEVMProvider],
         required_fields=[(['cap_and_util', 'test_chargeback'], True)]
     )
 

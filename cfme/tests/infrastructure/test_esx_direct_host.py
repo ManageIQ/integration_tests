@@ -13,7 +13,7 @@ from utils.version import Version
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter'])
+    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [VMwareProvider])
     argnames = argnames + ["_host_provider"]
 
     new_idlist = []
