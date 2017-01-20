@@ -61,12 +61,10 @@ class ProvisioningForm(BaseLoggedInPage):
     class catalog(Tab):  # noqa
         TAB_NAME = 'Catalog'
         num_instances = BootstrapSelect('service__number_of_vms')
-        instance_name = Input(name='service__vm_name')
-        instance_description = Input(name='service__vm_description')
-        vm_filter = BootstrapSelect('service__vm_filter')
-        num_vms = BootstrapSelect('service__number_of_vms')
         vm_name = Input(name='service__vm_name')
         vm_description = Input(name='service__vm_description')
+        vm_filter = BootstrapSelect('service__vm_filter')
+        num_vms = BootstrapSelect('service__number_of_vms')
         catalog_name = Table('//div[@id="prov_vm_div"]/table')
         provision_type = BootstrapSelect('service__provision_type')
         linked_clone = Input(name='service__linked_clone')
@@ -81,7 +79,6 @@ class ProvisioningForm(BaseLoggedInPage):
         automatic_placement = Input(name='environment__placement_auto')
         # Cloud
         availability_zone = BootstrapSelect('environment__placement_availability_zone')
-        virtual_private_cloud = BootstrapSelect('environment__cloud_network')
         cloud_network = BootstrapSelect('environment__cloud_network')
         cloud_subnet = BootstrapSelect('environment__cloud_subnet')
         security_groups = BootstrapSelect('environment__security_groups')
@@ -135,25 +132,17 @@ class ProvisioningForm(BaseLoggedInPage):
         # Common
         dns_servers = Input(name='customize__dns_servers')
         dns_suffixes = Input(name='customize__dns_suffixes')
-        specification = BootstrapSelect('customize__sysprep_enabled')
         customize_type = BootstrapSelect('customize__sysprep_enabled')
         specification_name = Table('//div[@id="prov_vc_div"]/table')
-        # Cloud
-        computer_name = Input(name='customize__linux_host_name')
-        domain_name = Input(name='customize__linux_domain_name')
-        # Azure
         admin_username = Input(name='customize__root_username')
         admin_password = Input(name='customize__root_password')
-        # Infra
         linux_host_name = Input(name='customize__linux_host_name')
         linux_domain_name = Input(name='customize__linux_domain_name')
-        prov_host_name = Input(name='customize__hostname')
         ip_address = Input(name='customize__ip_addr')
         subnet_mask = Input(name='customize__subnet_mask')
         gateway = Input(name='customize__gateway')
         custom_template = Table('//div[@id="prov_template_div"]/table')
-        root_password = Input(name='customize__root_password')
-        vm_host_name = Input(name='customize__hostname')
+        hostname = Input(name='customize__hostname')
 
     @View.nested
     class schedule(Tab):  # noqa
