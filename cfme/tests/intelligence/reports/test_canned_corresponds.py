@@ -106,6 +106,9 @@ def test_operations_vm_on(soft_assert, setup_a_provider):
     hosts = adb['hosts']
     storages = adb['storages']
 
+    path = ["Operations", "Virtual Machines", "Online VMs (Powered On)"]
+    report = CannedSavedReport.new(path)
+
     vms_in_db = adb.session.query(
         vms.name.label('vm_name'),
         vms.location.label('vm_location'),
@@ -116,23 +119,50 @@ def test_operations_vm_on(soft_assert, setup_a_provider):
                 storages, vms.storage_id == storages.id).filter(
                     vms.power_state == 'on').order_by(vms.name).all()
 
-    path = ["Operations", "Virtual Machines", "Online VMs (Powered On)"]
-    report = CannedSavedReport.new(path)
-
     if len(vms_in_db) == len(list(report.data.rows)):
         for vm in vms_in_db:
+            store_path = '{}/{}'.format(vm.storages_name.encode('utf8'),
+                                        vm.vm_location.encode('utf8'))
             for item in report.data.rows:
-                if (vm.vm_name.encode('utf8') == item['VM Name'] and
-                vm.hosts_name.encode('utf8') == item['Host'] and
-                vm.storages_name.encode('utf8') == item['Datastore'] and
-                vm.vm_location.encode('utf8') == item['Datastore Path'] and
-                (vm.vm_last_scan.encode('utf8') == item['Last Analysis Time'] or
-                (str(vm.vm_last_scan.encode('utf8')) == 'None' and item['Last Analysis Time'] == '')
-                 )
-                ):
-                    continue
-                else:
-                    pytest.fail("Found not matching items. db:{} report:{}".format(vm, item))
+                if vm.vm_name.encode('utf8') == item['VM Name']:
+                    if (vm.hosts_name.encode('utf8') == item['Host'] and
+                        vm.storages_name.encode('utf8') == item['Datastore'] and
+                        store_path == item['Datastore Path'] and
+                        (str(vm.vm_last_scan).encode('utf8') == item['Last Analysis Time'] or
+                            (str(vm.vm_last_scan).encode('utf8') == 'None' and
+                             item['Last Analysis Time'] == '')
+                         )):
+                            continue
+                    else:
+                        pytest.fail("Found not matching items. db:{} report:{}".format(vm, item))
     else:
         pytest.fail("Lenghts of report and BD do not match. db count:{} report count:{}".format(
             len(vms_in_db), len(list(report.data.rows))))
+
+
+@pytest.mark.tier(3)
+@test_requirements.report
+def test_datastores_summary(soft_assert, setup_a_provider):
+
+    appliance = get_or_create_current_appliance()
+    adb = appliance.db
+    storages = adb['storages']
+
+    path = ["Configuration Management", "Storage", "Datastores Summary"]
+    report = CannedSavedReport.new(path)
+
+    storages_in_db = adb.session.query(storages).all()
+
+    if len(storages_in_db) == len(list(report.data.rows)):
+        print "number of stores is matching!"
+        for item in report.data.rows:
+            for store in storages_in_db:
+                if store.name.encode('utf8') == item['Datastore Name']:
+                    if (store.store_type.encode('utf8') == item['Type'] and
+                     extract_GB(store.free_space) == float(item['Free Space'].split(' ')[0]) and
+                      extract_GB(store.total_space) == float(item['Total Space'].split(' ')[0])):
+                        continue
+
+
+def extract_GB(column):
+    return round((float(column) / 1073741824), 1)
