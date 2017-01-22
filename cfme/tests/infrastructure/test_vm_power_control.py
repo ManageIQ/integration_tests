@@ -70,6 +70,7 @@ def testing_vm_tools(request, provider, vm_name, full_template):
 def if_scvmm_refresh_provider(provider):
     # No eventing from SCVMM so force a relationship refresh
     if provider.type == "scvmm":
+        provider.mgmt.update_scvmm_vmhost()
         provider.refresh_provider_relationships()
 
 
