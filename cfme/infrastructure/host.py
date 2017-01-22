@@ -17,9 +17,8 @@ import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
-    AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins, match_location
-)
+    AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable,
+    DriftGrid, fill, form_buttons, paginator, Input, mixins, match_location)
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
 from utils.db_queries import get_host_id
@@ -29,7 +28,8 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils import deferred_verpick, version
 from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
+    navigate_to
 from utils.appliance import Navigatable
 
 # Page specific locators
@@ -314,6 +314,10 @@ class Host(Updateable, Pretty, Navigatable):
         list_acc.select('Relationships', 'Datastores', by_title=False, partial=True)
         return [q.name for q in Quadicon.all("datastore")]
 
+    # def get_provider(self):
+    #     provider = self.get_detail('Infrastructure Provider')
+    #     return provider
+
     @property
     def get_db_id(self):
         if self.db_id is None:
@@ -332,6 +336,19 @@ class Host(Updateable, Pretty, Navigatable):
         tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
         sel.handle_alert()
         flash.assert_message_contain('"{}": Analysis successfully initiated'.format(self.name))
+
+    def get_host_provisioning_state(self, provider):
+        """" check on Ironic the current provision state
+        using mgmt system to query a node and its provision state
+        returns a string of current provision state: 'active', 'enroll',
+        'manageable', 'available'
+        USAGE: my_host.get_host_provisioning_state()
+        """
+        # provider = self.get_provider()
+        nodes = provider.mgmt.list_node()
+        nodes_dict = {i.uuid: i for i in nodes}
+        node = nodes_dict[(str(self.name).split()[0])]
+        return str(node.provision_state)
 
     def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text

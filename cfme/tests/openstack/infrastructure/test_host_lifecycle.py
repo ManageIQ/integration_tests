@@ -22,9 +22,7 @@ def test_host_manageable(provider):
     sel.check(quad.checkbox())
     tb.select('Configuration', 'Set Node to Manageable', invokes_alert=True)
     sel.handle_alert()
-    result = host.get_detail('Openstack Hardware', 'Provision State')
-    provider.refresh()
-
+    result = host.get_host_provisioning_state(provider)
     if not result == "Manageable":
         wait_for(lambda: result, delay=15,
                  timeout="10m", fail_func=lambda: tb.select('Reload'))
@@ -40,9 +38,7 @@ def test_host_available(provider):
     sel.check(quad.checkbox())
     tb.select('Configuration', 'Provide Nodes', invokes_alert=True)
     sel.handle_alert()
-    result = host.get_detail('Openstack Hardware', 'Provision State')
-    provider.refresh()
-
+    result = host.get_host_provisioning_state(provider)
     if not result == "available":
         wait_for(lambda: result, delay=15,
                  timeout="10m", fail_func=lambda: tb.select('Reload'))
@@ -68,15 +64,5 @@ def test_host_introspection(provider):
 
 
 def test_host_registration(provider, reg_file):
-    provider.load_details()
-    sel.click(InfoBlock.element("Relationships", "Nodes"))
-    my_quads = list(Quadicon.all())
-    quad = my_quads[0]
-    host = Host(name=quad.name)
-    sel.check(quad.checkbox())
-    # need a json file input to add here
-
-    tb.select('Configuration', 'Introspect Nodes', invokes_alert=True)
-    sel.handle_alert()
-    host.get_detail('Openstack Hardware', 'Introspected')
+    # TODO wait for merge of #4015
     pass
