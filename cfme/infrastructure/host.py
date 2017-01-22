@@ -18,8 +18,7 @@ import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins, match_location,
-    FileInput, InfoBlock)
+    form_buttons, paginator, Input, mixins, match_location, FileInput, InfoBlock)
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
 from utils.db_queries import get_host_id
@@ -30,7 +29,7 @@ from utils.wait import wait_for
 from utils import deferred_verpick, version
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.appliance import Navigatable, get_or_create_current_appliance
+from utils.appliance import Navigatable
 
 # Page specific locators
 details_page = Region(infoblock_type='detail')
@@ -589,11 +588,11 @@ def host_exist(provider, name='my_node'):
     """
     nodes = provider.mgmt.list_node()
     nodes_dict = {i.name: i for i in nodes}
-    appliance = get_or_create_current_appliance()
-    query = appliance.db.session.query(appliance.db['hosts'], 'guid')
+    query = provider.appliance.db.session.query(
+        provider.appliance.db['hosts'], 'guid')
     node_uuid = str(nodes_dict[name])
-
-    for db_node in query:
-        if node_uuid == str(db_node.guid):
+    for db_node in query.all():
+        if db_node.hosts.name == str(node_uuid.uuid):
             return True
-    return False
+        else:
+            return False
