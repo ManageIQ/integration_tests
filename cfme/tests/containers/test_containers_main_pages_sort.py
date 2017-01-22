@@ -8,6 +8,7 @@ from cfme.containers.service import Service
 from cfme.containers.route import Route
 from cfme.containers.provider import ContainersProvider
 from utils.appliance.implementations.ui import navigate_to
+from utils.blockers import BZ
 
 
 pytestmark = [
@@ -24,7 +25,10 @@ pytest_generate_tests = testgen.generate(
 TEST_OBJECTS = [Project, Service, Replicator, Route, ContainersProvider]
 
 
-@pytest.mark.meta(blockers=[1392413, 1409360])
+@pytest.mark.meta(blockers=[
+    BZ(1392413, unblock=lambda cls: cls != ContainersProvider),
+    BZ(1409360, unblock=lambda cls: cls != ContainersProvider)
+])
 @pytest.mark.parametrize('cls', TEST_OBJECTS)
 def test_containers_main_pages_sort(cls):
 
