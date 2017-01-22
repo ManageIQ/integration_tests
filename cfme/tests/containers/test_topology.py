@@ -42,6 +42,7 @@ def test_topology_display_names():
 
 
 @WithZoom(-4)
+@pytest.mark.meta(blockers=[1415472])
 def test_topology_search():
     """Testing search functionality in Topology view.
 
@@ -61,7 +62,7 @@ def test_topology_search():
     element_to_search = elements[choice(range(len(elements)))]
     topo_obj.search_box.text(text=element_to_search.name)
     for el in topo_obj.elements():
-        if element_to_search.name == el.name:
+        if element_to_search.name in el.name:
             assert not el.is_hidden
         else:
             assert el.is_hidden
