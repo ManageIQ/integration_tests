@@ -6,7 +6,7 @@ from cfme.infrastructure.provider import InfraProvider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.appliance.implementations.ui import navigate_to
 from utils.net import ip_address, resolve_hostname
-from utils.providers import get_mgmt_by_name, setup_a_provider as _setup_a_provider
+from utils.providers import get_crud_by_name, setup_a_provider as _setup_a_provider
 from utils.appliance import get_or_create_current_appliance
 from utils import version
 from cfme import test_requirements
@@ -147,22 +147,34 @@ def test_datastores_summary(soft_assert, setup_a_provider):
     appliance = get_or_create_current_appliance()
     adb = appliance.db
     storages = adb['storages']
+    vms = adb['vms']
+    host_storages = adb['host_storages']
 
     path = ["Configuration Management", "Storage", "Datastores Summary"]
     report = CannedSavedReport.new(path)
 
-    storages_in_db = adb.session.query(storages).all()
+    storages_in_db = adb.session.query(storages.store_type, storages.free_space,
+                                       storages.total_space, storages.name, storages.id).all()
 
     if len(storages_in_db) == len(list(report.data.rows)):
         print "number of stores is matching!"
-        for item in report.data.rows:
-            for store in storages_in_db:
+        for store in storages_in_db:
+
+            number_of_vms = adb.session.query(vms.id).filter(vms.storage_id == store.id).count()
+            number_of_hosts = adb.session.query(host_storages.host_id).filter(
+                host_storages.storage_id == store.id).count()
+
+            for item in report.data.rows:
                 if store.name.encode('utf8') == item['Datastore Name']:
                     if (store.store_type.encode('utf8') == item['Type'] and
-                     extract_GB(store.free_space) == float(item['Free Space'].split(' ')[0]) and
-                      extract_GB(store.total_space) == float(item['Total Space'].split(' ')[0])):
+                     extract_gb(store.free_space) == float(item['Free Space'].split(' ')[0]) and
+                      extract_gb(store.total_space) == float(item['Total Space'].split(' ')[0]) and
+                       int(number_of_hosts) == int(item['Number of Hosts']) and
+                       int(number_of_vms) == int(item['Number of VMs'])):
                         continue
+                    else:
+                        pytest.fail("Found not matching items. db:{} report:{}".format(store, item))
 
 
-def extract_GB(column):
+def extract_gb(column):
     return round((float(column) / 1073741824), 1)
