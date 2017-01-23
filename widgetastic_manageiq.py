@@ -878,3 +878,144 @@ class PaginationPane(View):
     @property
     def items_amount(self):
         return self.paginator.page_info()[1]
+
+
+class Stepper(Widget):
+    """ A CFME Stepper Control
+
+        stepper = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
+        stepper.inrease()
+    """
+    def __init__(self, parent, locator, logger=None):
+        super(Stepper, self).__init__(parent=parent, logger=logger)
+
+        self._stepper_control = self.browser.element(locator, parent=parent)
+
+        self.minus_button = Button(self, '-')
+        self.plus_button = Button(self, '+')
+        self.value_field = Input(self, locator='.//input[contains(@class, '
+                                               '"bootstrap-touchspin")]')
+
+    def __locator__(self):
+        return self._stepper_control
+
+    def read(self):
+        return int(self.value_field.read())
+
+    def decrease(self):
+        self.minus_button.click()
+
+    def increase(self):
+        self.plus_button.click()
+
+    def set_value(self, value):
+        if value < 1:
+            raise ValueError('The value cannot be less than 1')
+        steps = int(value) - self.read()
+        if steps == 0:
+            return
+        elif steps > 0:
+            operation = self.increase
+        else:
+            operation = self.decrease
+
+        steps = abs(steps)
+        for step in range(steps):
+            operation()
+
+    def fill(self, value):
+        self.set_value(value)
+
+
+class RadioButton(Button):
+    """CFME Radio Button Control
+       it should be mainly used in RadioGroup control
+    """
+    def __init__(self, parent, name, logger=None):
+        super(RadioButton, self).__init__(parent=parent, logger=logger)
+        self._name = name
+
+    def __locator__(self):
+        return (
+            './/*[self::input and @type="radio" '
+            'and parent::label[normalize-space(.)="{n}"]]'.format(n=self._name))
+
+    @property
+    def selected(self):
+        if 'ng-valid-parse' in self.browser.classes(self):
+            return True
+        return False
+
+    @property
+    def name(self):
+        return self._name
+
+
+class RadioGroup(Widget):
+    """ CFME Radio Group Control
+
+        rg = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
+        rg.
+    """
+    def __init__(self, parent, locator, logger=None):
+        super(RadioGroup, self).__init__(parent=parent, logger=logger)
+        self._locator = locator
+
+    def __locator__(self):
+        return self._locator
+
+    @property
+    def button_names(self):
+        buttons = self.browser.elements('//label[input[@type="radio"]]', parent=self)
+        return [self.browser.text(btn) for btn in buttons]
+
+    @property
+    def buttons(self):
+        radio_buttons = []
+        for name in self.button_names:
+            radio_buttons.append(RadioButton(self, name=name))
+        return radio_buttons
+
+    @property
+    def selected(self):
+        return [btn for btn in self.buttons if btn.selected][-1].name
+
+    def select(self, name):
+        button = [btn for btn in self.buttons if btn.name == name][-1]
+        if not button.selected:
+            button.click()
+
+    def read(self):
+        return self.selected
+
+    def fill(self, name):
+        self.select(name)
+
+
+class BreadCrumb(Widget):
+    """ CFME BreadCrumb navigation control
+
+        breadcrumb = BreadCrumb('//ol[@class="breadcrumb"]')
+        breadcrumb.click_location(breadcrumb.locations[0])
+    """
+    def __init__(self, parent, locator, logger=None):
+        super(BreadCrumb, self).__init__(parent=parent, logger=logger)
+        self.locator = locator
+        self._locations = self.browser.elements('.//li', parent=self.browser.element(self.locator))
+
+    def __locator__(self):
+        return self.locator
+
+    @property
+    def locations(self):
+        return [self.browser.text(loc) for loc in self._locations]
+
+    @property
+    def active_location(self):
+        br = self.browser
+        return [br.text(loc) for loc in self._locations if 'active' in br.classes(loc)][-1]
+
+    def click_location(self, name):
+        br = self.browser
+        location = [loc for loc in self._locations if br.text(loc) == name][-1]
+        return br.click(location)
