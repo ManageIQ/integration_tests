@@ -1,5 +1,3 @@
-from cached_property import cached_property
-
 from . import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
 
@@ -8,7 +6,7 @@ import cfme.fixtures.pytest_selenium as sel
 class GCEProvider(CloudProvider):
     type_name = "gce"
 
-    @cached_property
+    @property
     def mgmt_class(self):
         from mgmtsystem.google import GoogleCloudSystem
         return GoogleCloudSystem

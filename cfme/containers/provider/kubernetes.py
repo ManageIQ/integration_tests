@@ -1,5 +1,3 @@
-from cached_property import cached_property
-
 from . import ContainersProvider
 
 
@@ -7,7 +5,7 @@ from . import ContainersProvider
 class KubernetesProvider(ContainersProvider):
     type_name = "kubernetes"
 
-    @cached_property
+    @property
     def mgmt_class(self):
         from mgmtsystem.kubernetes import Kubernetes
         return Kubernetes

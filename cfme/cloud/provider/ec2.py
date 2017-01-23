@@ -1,5 +1,3 @@
-from cached_property import cached_property
-
 from . import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
 
@@ -8,7 +6,7 @@ import cfme.fixtures.pytest_selenium as sel
 class EC2Provider(CloudProvider):
     type_name = "ec2"
 
-    @cached_property
+    @property
     def mgmt_class(self):
         from mgmtsystem.ec2 import EC2System
         return EC2System

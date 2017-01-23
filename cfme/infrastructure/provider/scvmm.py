@@ -1,5 +1,3 @@
-from cached_property import cached_property
-
 from . import InfraProvider
 
 
@@ -8,7 +6,7 @@ class SCVMMProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     type_name = "scvmm"
 
-    @cached_property
+    @property
     def mgmt_class(self):
         from mgmtsystem.scvmm import SCVMMSystem
         return SCVMMSystem

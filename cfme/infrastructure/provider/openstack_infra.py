@@ -1,5 +1,3 @@
-from cached_property import cached_property
-
 from . import InfraProvider, prop_region
 
 
@@ -9,7 +7,7 @@ class OpenstackInfraProvider(InfraProvider):
     _properties_region = prop_region
     type_name = "openstack-infra"
 
-    @cached_property
+    @property
     def mgmt_class(self):
         from mgmtsystem.openstack_infra import OpenstackInfraSystem
         return OpenstackInfraSystem

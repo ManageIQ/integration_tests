@@ -1,5 +1,3 @@
-from cached_property import cached_property
-
 from utils.version import current_version
 
 from . import CloudProvider
@@ -9,7 +7,7 @@ from . import CloudProvider
 class OpenStackProvider(CloudProvider):
     type_name = "openstack"
 
-    @cached_property
+    @property
     def mgmt_class(self):
         from mgmtsystem.openstack import OpenstackSystem
         return OpenstackSystem

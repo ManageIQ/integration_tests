@@ -1,5 +1,3 @@
-from cached_property import cached_property
-
 from . import InfraProvider, prop_region
 
 
@@ -8,7 +6,7 @@ class RHEVMProvider(InfraProvider):
     _properties_region = prop_region
     type_name = "rhevm"
 
-    @cached_property
+    @property
     def mgmt_class(self):
         from mgmtsystem.rhevm import RHEVMSystem
         return RHEVMSystem
