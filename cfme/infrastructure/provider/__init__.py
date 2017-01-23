@@ -10,7 +10,7 @@
 """
 from functools import partial
 
-from navmazing import NavigateToSibling, NavigateToAttribute
+from navmazing import NavigateToSibling, NavigateToObject
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Input, Button, Dropdown
 from widgetastic_manageiq import PaginationPane, Checkbox, ProviderToolBar
@@ -25,6 +25,7 @@ from widgetastic_manageiq import (PaginationPane,
                                   Table,
                                   BreadCrumb)
 from cfme import BaseLoggedInPage
+from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
@@ -127,17 +128,17 @@ class InfraProvidersView(BaseLoggedInPage):
                                                            'Infrastructure', 'Providers'],
                     match_page(summary='Infrastructure Providers')))
 
-    # @View.nested
-    # class toolbar(ProviderToolBar):
-    #     pass
-    #
-    # @View.nested
-    # class sidebar(BaseSideBar):
-    #     pass
-    #
-    # @View.nested
-    # class items(Items):
-    #     pass
+    @View.nested
+    class toolbar(ProviderToolBar):
+        pass
+
+    @View.nested
+    class sidebar(BaseSideBar):
+        pass
+
+    @View.nested
+    class items(Items):
+        pass
 
     @View.nested
     class paginator(PaginationPane):
@@ -157,41 +158,41 @@ class InfraProvidersDetailsView(InfraProvidersView):
     overview = Table('//table[.//th[normalize-space(text())="Overview"]]')
     smart_management = Table('//table[.//th[normalize-space(text())="Smart Management"]]')
 
-#
-# class InfraProvidersDiscoverView(InfraProvidersView):
-#     vcenter = Checkbox('discover_type_virtualcenter')
-#     mscvmm = Checkbox('discover_type_scvmm')
-#     rhevm = Checkbox('discover_type_rhevm')
-#
-#     from_ip1 = Input('from_first')
-#     from_ip2 = Input('from_second')
-#     from_ip3 = Input('from_third')
-#     from_ip4 = Input('from_fourth')
-#     to_ip4 = Input('to_fourth')
-#
-#     start = Button('Start')
-#     cancel = Button('Cancel')
-#
-#     @property
-#     def is_displayed(self):
-#         return all((self.logged_in_as_current_user,
-#                     self.navigation.currently_selected == ['Compute',
-#                                                            'Infrastructure', 'Providers'],
-#                     match_page(summary='Infrastructure Providers Discovery')))
+
+class InfraProvidersDiscoverView(InfraProvidersView):
+    vcenter = Checkbox('discover_type_virtualcenter')
+    mscvmm = Checkbox('discover_type_scvmm')
+    rhevm = Checkbox('discover_type_rhevm')
+
+    from_ip1 = Input('from_first')
+    from_ip2 = Input('from_second')
+    from_ip3 = Input('from_third')
+    from_ip4 = Input('from_fourth')
+    to_ip4 = Input('to_fourth')
+
+    start = Button('Start')
+    cancel = Button('Cancel')
+
+    @property
+    def is_displayed(self):
+        return all((self.logged_in_as_current_user,
+                    self.navigation.currently_selected == ['Compute',
+                                                           'Infrastructure', 'Providers'],
+                    match_page(summary='Infrastructure Providers Discovery')))
 
 
-# class InfraProvidersAddView(InfraProvidersView):
-#     name = Input('name')
-#     type = Dropdown('emstype')
-#
-#     add = Button('Add')
-#     cancel = Button('Cancel')
-#
-#     # todo: rest of entities should be added according to provider type
-#
+class InfraProvidersAddView(InfraProvidersView):
+    name = Input('name')
+    type = Dropdown('emstype')
 
-# class InfraProvidersManagePoliciesView(InfraProvidersView):
-#     pass
+    add = Button('Add')
+    cancel = Button('Cancel')
+
+    # todo: rest of entities should be added according to provider type
+
+
+class InfraProvidersManagePoliciesView(InfraProvidersView):
+    pass
 
 
 @CloudInfraProvider.add_base_type
@@ -388,10 +389,19 @@ class InfraProvider(Pretty, CloudInfraProvider):
         return web_clusters
 
 
+@navigator.register(Server)
+class InfraProviders(CFMENavigateStep):
+    VIEW = InfraProvidersView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select('Compute', 'Infrastructure', 'Providers')
+
+
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
     VIEW = InfraProvidersView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToObject(Server, 'LoggedIn')
 
     def am_i_here(self):
         return match_page(summary='Infrastructure Providers')
@@ -413,7 +423,7 @@ class Add(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
-        self.view.configuration.item_select('Add a New Infrastructure Provider')
+        self.view.toolbar.configuration.item_select('Add a New Infrastructure Provider')
 
 
 @navigator.register(InfraProvider, 'Discover')
