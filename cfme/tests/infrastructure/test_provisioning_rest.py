@@ -2,8 +2,8 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.providers.rhevm import RHEVMProvider
-from cfme.providers.virtualcenter import VMwareProvider
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils.wait import wait_for
 from utils import testgen
 
