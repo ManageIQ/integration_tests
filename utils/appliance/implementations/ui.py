@@ -80,7 +80,8 @@ class MiqBrowserPlugin(DefaultPlugin):
             attr_dict = json.loads(observed_field_attr)
             interval = float(attr_dict.get('interval', self.DEFAULT_WAIT))
             # Pad the detected interval, as with default_wait
-            interval += .1
+            if interval < self.DEFAULT_WAIT:
+                interval = self.DEFAULT_WAIT
         except (TypeError, ValueError):
             # ValueError and TypeError happens if the attribute value couldn't be decoded as JSON
             # ValueError also happens if interval couldn't be coerced to float
