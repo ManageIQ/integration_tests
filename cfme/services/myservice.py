@@ -38,11 +38,11 @@ set_ownership_form = Form(
     fields=[
         ("select_owner", {
             version.LOWEST: ui.Select("select#user_name"),
-            '5.7': ui.AngularSelect("#user_name")
+            '5.7': ui.AngularSelect("user_name")
         }),
         ("select_group", {
             version.LOWEST: ui.Select("select#group_name"),
-            '5.7': ui.AngularSelect("#group_name")
+            '5.7': ui.AngularSelect("group_name")
         }),
     ])
 
@@ -218,9 +218,8 @@ class MyServiceDetails(CFMENavigateStep):
         return match_page(summary='Service "{}"'.format(self.obj.service_name))
 
     def step(self, *args, **kwargs):
-        if version.current_version() < '5.7':
-            logger.debug('Clicking tree for service: {}'.format(self.obj.service_name))
-            my_service_tree().click_path('All Services', self.obj.service_name)
+        logger.debug('Clicking tree for service: {}'.format(self.obj.service_name))
+        my_service_tree().click_path('All Services', self.obj.service_name)
 
     def resetter(self, *args, **kwargs):
         tb.refresh()
