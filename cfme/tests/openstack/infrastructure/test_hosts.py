@@ -47,11 +47,11 @@ def test_host_cpu_resources(provider, soft_assert):
     assert len(my_quads) > 0
     for quad in my_quads:
         host = Host(name=quad.name)
-        soft_assert(host.get_detail("Properties", "Number of CPUs") > 0,
+        soft_assert(int(host.get_detail("Properties", "Number of CPUs")) > 0,
                     "Aggregate Node CPU resources is 0")
-        soft_assert(host.get_detail("Properties", "Number of CPU Cores") > 0,
+        soft_assert(int(host.get_detail("Properties", "Number of CPU Cores")) > 0,
                     "Aggregate node CPUs is 0")
-        soft_assert(host.get_detail("Properties", "CPU Cores Per Socket") > 0,
+        soft_assert(int(host.get_detail("Properties", "CPU Cores Per Socket")) > 0,
                     "Aggregate Node CPU Cores is 0")
 
 
@@ -62,7 +62,7 @@ def test_host_devices(provider):
     assert len(my_quads) > 0
     for quad in my_quads:
         host = Host(name=quad.name)
-        assert host.get_detail("Properties", "Devices") > 0
+        assert int(host.get_detail("Properties", "Devices")) > 0
 
 
 def test_host_hostname(provider, soft_assert):
@@ -71,7 +71,7 @@ def test_host_hostname(provider, soft_assert):
     assert len(my_quads) > 0
     for quad in my_quads:
         host = Host(name=quad.name)
-        result = host.get_detail("Properties", "Hostname")
+        result = int(host.get_detail("Properties", "Hostname"))
         soft_assert(result) != '', "Missing hostname in: " + str(host)
 
 
@@ -82,7 +82,7 @@ def test_smbios_data(provider):
     assert len(my_quads) > 0
     for quad in my_quads:
         host = Host(name=quad.name)
-        result = host.get_detail("Properties", "Memory")
+        result = int(host.get_detail("Properties", "Memory"))
         assert result > 0
 
 
@@ -111,5 +111,5 @@ def test_host_zones_assigned(provider):
                       my_quads)
     for quad in my_quads:
         host = Host(name=quad.name)
-        result = host.get_detail('Relationships', 'Availability Zone')
+        result = int(host.get_detail('Relationships', 'Availability Zone'))
         assert result == 'nova'

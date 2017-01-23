@@ -19,7 +19,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_assigned_roles(provider):
     provider.load_details()
-    assert provider.get_detail('Relationships', 'Deployment roles') > 0
+    assert int(provider.get_detail('Relationships', 'Deployment roles')) > 0
 
 
 def test_nodes(provider):
@@ -29,7 +29,7 @@ def test_nodes(provider):
     it with result - currently not 0
     """
 
-    assert provider.get_detail('Relationships', 'Nodes') > 0
+    assert int(provider.get_detail('Relationships', 'Nodes')) > 0
 
 
 def test_templates(provider):
@@ -39,7 +39,7 @@ def test_templates(provider):
     it with result - currently  bigger than 0
     """
 
-    assert provider.get_detail('Relationships', 'Templates') > 0
+    assert int(provider.get_detail('Relationships', 'Templates')) > 0
 
 
 def test_stacks(provider):
@@ -49,4 +49,4 @@ def test_stacks(provider):
     it with result - currently not 0
     """
 
-    assert provider.get_detail('Relationships', 'Orchestration stacks') > 0
+    assert int(provider.get_detail('Relationships', 'Orchestration stacks')) > 0
