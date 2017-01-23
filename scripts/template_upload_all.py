@@ -373,12 +373,9 @@ def main():
         print("TEMPLATE_UPLOAD_ALL:-----Start of {} upload on: {}--------".format(
             kwargs['template_name'], provider_type))
 
-        try:
-            getattr(__import__(module), "run")(**kwargs)
-        except Exception as woops:
-            print("Exception: Module '{}' with provider '{}' exited with error.".format(
-                module, provider_type))
-            print(woops)
+        print("Executing {} with the following kwargs: {}".format(module, kwargs))
+        getattr(__import__(module), "run")(**kwargs)
+
         print("TEMPLATE_UPLOAD_ALL:------End of {} upload on: {}--------".format(
             kwargs['template_name'], provider_type))
 

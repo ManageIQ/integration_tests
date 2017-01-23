@@ -242,8 +242,10 @@ def list_providers_by_class(prov_class, validate=True, check_existing=True):
 
 # Replaced by list_providers_by_class which returns objects, not keys
 def list_providers(allowed_types=None, use_global_filters=False):
-    """ Lists providers keys by given provider types """
+    """ Lists providers keys by given provider type(s) """
     if allowed_types is not None:
+        if isinstance(allowed_types, six.string_types):
+            allowed_types = [allowed_types]
         classes = [get_class_from_type(prov_type) for prov_type in allowed_types]
     else:
         classes = None
