@@ -1,22 +1,24 @@
 import pytest
 import re
-from utils import testgen
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.web_ui import InfoBlock, Quadicon
+from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.version import current_version
 
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type,
                                          ['openstack-infra'],
                                          scope='module')
+pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7'),
+              pytest.mark.usefixtures("setup_provider_modscope")]
 
 
 ROLES = ['NovaCompute', 'Controller', 'BlockStorage', 'SwiftStorage',
          'CephStorage']
 
 
-@pytest.mark.usefixtures("setup_provider_modscope")
 def test_host_role_type(provider):
     provider.load_details()
     sel.click(InfoBlock.element("Relationships", "Nodes"))
@@ -32,7 +34,6 @@ def test_host_role_type(provider):
     assert result
 
 
-@pytest.mark.usefixtures("setup_provider_modscope")
 def test_roles_name(provider):
     navigate_to(Cluster, 'All')
     my_roles_quads = list(Quadicon.all())
