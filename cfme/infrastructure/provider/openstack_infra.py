@@ -1,5 +1,6 @@
+from cached_property import cached_property
+
 from . import InfraProvider, prop_region
-from utils.cached_property import cached_property
 
 
 @InfraProvider.add_provider_type

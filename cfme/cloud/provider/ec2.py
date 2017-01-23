@@ -1,6 +1,7 @@
+from cached_property import cached_property
+
 from . import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
-from utils.cached_property import cached_property
 
 
 @CloudProvider.add_provider_type

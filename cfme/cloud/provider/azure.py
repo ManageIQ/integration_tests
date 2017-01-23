@@ -1,5 +1,6 @@
+from cached_property import cached_property
+
 from . import CloudProvider
-from utils.cached_property import cached_property
 from utils.version import pick
 
 

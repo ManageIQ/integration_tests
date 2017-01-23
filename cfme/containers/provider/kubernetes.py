@@ -1,5 +1,6 @@
+from cached_property import cached_property
+
 from . import ContainersProvider
-from utils.cached_property import cached_property
 
 
 @ContainersProvider.add_provider_type

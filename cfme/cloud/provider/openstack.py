@@ -1,4 +1,5 @@
-from utils.cached_property import cached_property
+from cached_property import cached_property
+
 from utils.version import current_version
 
 from . import CloudProvider

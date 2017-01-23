@@ -1,5 +1,6 @@
+from cached_property import cached_property
+
 from . import ContainersProvider
-from utils.cached_property import cached_property
 from utils.varmeth import variable
 from os import path
 

@@ -1,9 +1,10 @@
 import re
 
+from cached_property import cached_property
+
 from cfme.common import TopologyMixin, TimelinesMixin
 from . import MiddlewareProvider
 from utils.appliance import Navigatable
-from utils.cached_property import cached_property
 from utils.db import cfmedb
 from utils.varmeth import variable
 from . import _get_providers_page, _db_select_query
