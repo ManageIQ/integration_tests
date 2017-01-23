@@ -1,6 +1,7 @@
 from . import ContainersProvider
 from utils.varmeth import variable
 from os import path
+from mgmtsystem.openshift import Openshift
 
 
 class CustomAttribute(object):
@@ -16,11 +17,7 @@ class OpenshiftProvider(ContainersProvider):
     num_route_template = ['num_route'] + ['num_template']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route_template
     type_name = "openshift"
-
-    @property
-    def mgmt_class(self):
-        from mgmtsystem.openshift import Openshift
-        return Openshift
+    mgmt_class = Openshift
 
     def __init__(self, name=None, credentials=None, key=None,
                  zone=None, hostname=None, port=None, provider_data=None):

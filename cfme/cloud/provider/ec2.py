@@ -1,15 +1,12 @@
 from . import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
+from mgmtsystem.ec2 import EC2System
 
 
 @CloudProvider.add_provider_type
 class EC2Provider(CloudProvider):
     type_name = "ec2"
-
-    @property
-    def mgmt_class(self):
-        from mgmtsystem.ec2 import EC2System
-        return EC2System
+    mgmt_class = EC2System
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, region=None):
         super(EC2Provider, self).__init__(name=name, credentials=credentials,
