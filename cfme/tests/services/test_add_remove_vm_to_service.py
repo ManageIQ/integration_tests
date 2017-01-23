@@ -57,6 +57,7 @@ def myservice(setup_provider, provider, catalog_item, request):
         logger.warning('Exception while deleting MyService, continuing: {}'.format(ex.message))
 
 
+@pytest.mark.ignore_stream("upstream")
 def test_add_vm_to_service(myservice, request, copy_domain):
     """Tests adding vm to service
 
