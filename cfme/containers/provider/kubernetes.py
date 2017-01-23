@@ -1,11 +1,12 @@
 from . import ContainersProvider
+from utils.cached_property import cached_property
 
 
 @ContainersProvider.add_provider_type
 class KubernetesProvider(ContainersProvider):
     type_name = "kubernetes"
 
-    @property
+    @cached_property
     def mgmt_class(self):
         from mgmtsystem.kubernetes import Kubernetes
         return Kubernetes

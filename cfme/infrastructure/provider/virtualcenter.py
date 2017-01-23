@@ -1,11 +1,12 @@
 from . import InfraProvider
+from utils.cached_property import cached_property
 
 
 @InfraProvider.add_provider_type
 class VMwareProvider(InfraProvider):
     type_name = "virtualcenter"
 
-    @property
+    @cached_property
     def mgmt_class(self):
         from mgmtsystem.virtualcenter import VMWareSystem
         return VMWareSystem

@@ -28,7 +28,7 @@ pytestmark = [
     pytest.mark.meta(blockers=[
         BZ(
             1265466,
-            unblock=lambda provider: not isinstance(provider, RHEVMProvider))
+            unblock=lambda provider: not provider.one_of(RHEVMProvider))
     ]),
     pytest.mark.tier(3)
 ]

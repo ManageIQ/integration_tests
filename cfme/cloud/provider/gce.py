@@ -1,12 +1,13 @@
 from . import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
+from utils.cached_property import cached_property
 
 
 @CloudProvider.add_provider_type
 class GCEProvider(CloudProvider):
     type_name = "gce"
 
-    @property
+    @cached_property
     def mgmt_class(self):
         from mgmtsystem.google import GoogleCloudSystem
         return GoogleCloudSystem

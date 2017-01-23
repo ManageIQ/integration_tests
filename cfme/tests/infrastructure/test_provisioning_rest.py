@@ -55,7 +55,7 @@ def provision_data(rest_api_modscope, provider, small_template_modscope):
         "ems_custom_attributes": {},
         "miq_custom_attributes": {}
     }
-    if isinstance(provider, RHEVMProvider):
+    if provider.one_of(RHEVMProvider):
         result["vm_fields"]["provision_type"] = "native_clone"
     return result
 

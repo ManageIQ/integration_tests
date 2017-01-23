@@ -1,12 +1,13 @@
-from utils.version import pick
 from . import CloudProvider
+from utils.cached_property import cached_property
+from utils.version import pick
 
 
 @CloudProvider.add_provider_type
 class AzureProvider(CloudProvider):
     type_name = "azure"
 
-    @property
+    @cached_property
     def mgmt_class(self):
         from mgmtsystem.azure import AzureSystem
         return AzureSystem

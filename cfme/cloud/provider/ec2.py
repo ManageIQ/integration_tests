@@ -1,12 +1,13 @@
 from . import CloudProvider
 import cfme.fixtures.pytest_selenium as sel
+from utils.cached_property import cached_property
 
 
 @CloudProvider.add_provider_type
 class EC2Provider(CloudProvider):
     type_name = "ec2"
 
-    @property
+    @cached_property
     def mgmt_class(self):
         from mgmtsystem.ec2 import EC2System
         return EC2System

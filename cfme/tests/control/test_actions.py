@@ -92,7 +92,7 @@ pytestmark = [
     pytest.mark.meta(blockers=[
         BZ(
             1149128,
-            unblock=lambda provider: not isinstance(provider, SCVMMProvider))
+            unblock=lambda provider: not provider.one_of(SCVMMProvider))
     ]),
     pytest.mark.meta(server_roles="+automate +smartproxy +smartstate"),
     pytest.mark.tier(2),
@@ -631,7 +631,7 @@ def test_action_initiate_smartstate_analysis(
         test_flag: actions, provision
     """
     # Set host credentials for VMWare
-    if isinstance(vm.provider, VMwareProvider):
+    if vm.provider.one_of(VMwareProvider):
         set_host_credentials(request, vm.provider, vm)
 
     # Set up the policy and prepare finalizer

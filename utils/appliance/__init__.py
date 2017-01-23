@@ -2188,7 +2188,7 @@ class Appliance(IPAppliance):
         """Destroys the VM this appliance is running as
         """
         from cfme.infrastructure.provider.rhevm import RHEVMProvider
-        if isinstance(self.provider, RHEVMProvider):
+        if self.provider.one_of(RHEVMProvider):
             # if rhev, try to remove direct_lun just in case it is detach
             self.remove_rhev_direct_lun_disk()
         self.provider.delete_vm(self.vm_name)
@@ -2230,12 +2230,12 @@ class Appliance(IPAppliance):
     @property
     def is_on_rhev(self):
         from cfme.infrastructure.provider.rhevm import RHEVMProvider
-        return isinstance(self.provider, RHEVMProvider)
+        return self.provider.one_of(RHEVMProvider)
 
     @property
     def is_on_vsphere(self):
         from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-        return isinstance(self.provider, VMwareProvider)
+        return self.provider.one_of(VMwareProvider)
 
     def add_rhev_direct_lun_disk(self, log_callback=None):
         if log_callback is None:
