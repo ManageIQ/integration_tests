@@ -1,12 +1,14 @@
 from . import InfraProvider
-from mgmtsystem.virtualcenter import VMWareSystem
 
 
 @InfraProvider.add_provider_type
 class VMwareProvider(InfraProvider):
     type_name = "virtualcenter"
 
-    mgmt_class = VMWareSystem
+    @property
+    def mgmt_class(self):
+        from mgmtsystem.virtualcenter import VMWareSystem
+        return VMWareSystem
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None):
