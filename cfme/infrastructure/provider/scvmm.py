@@ -1,15 +1,12 @@
 from . import InfraProvider
+from mgmtsystem.scvmm import SCVMMSystem
 
 
 @InfraProvider.add_provider_type
 class SCVMMProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     type_name = "scvmm"
-
-    @property
-    def mgmt_class(self):
-        from mgmtsystem.scvmm import SCVMMSystem
-        return SCVMMSystem
+    mgmt_class = SCVMMSystem
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None,

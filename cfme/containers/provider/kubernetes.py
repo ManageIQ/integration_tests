@@ -1,14 +1,11 @@
 from . import ContainersProvider
+from mgmtsystem.kubernetes import Kubernetes
 
 
 @ContainersProvider.add_provider_type
 class KubernetesProvider(ContainersProvider):
     type_name = "kubernetes"
-
-    @property
-    def mgmt_class(self):
-        from mgmtsystem.kubernetes import Kubernetes
-        return Kubernetes
+    mgmt_class = Kubernetes
 
     def __init__(self, name=None, credentials=None, key=None,
                  zone=None, hostname=None, port=None, provider_data=None):

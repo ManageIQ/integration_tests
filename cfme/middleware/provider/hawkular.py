@@ -8,6 +8,7 @@ from utils.varmeth import variable
 from . import _get_providers_page, _db_select_query
 from .. import download, MiddlewareBase, auth_btn, mon_btn
 from utils.appliance.implementations.ui import navigate_to
+from mgmtsystem.hawkular import Hawkular
 
 
 @MiddlewareProvider.add_provider_type
@@ -37,11 +38,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
     property_tuples = MiddlewareProvider.property_tuples +\
         [('name', 'Name'), ('hostname', 'Host Name'), ('port', 'Port'), ('provider_type', 'Type')]
     type_name = "hawkular"
-
-    @property
-    def mgmt_class(self):
-        from mgmtsystem.hawkular import Hawkular
-        return Hawkular
+    mgmt_class = Hawkular
 
     def __init__(self, name=None, hostname=None, port=None, credentials=None, key=None,
             appliance=None, **kwargs):
