@@ -2,10 +2,10 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.infrastructure.provider.rhevm import RHEVMProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from cfme.providers.rhevm import RHEVMProvider
+from cfme.providers.virtualcenter import VMwareProvider
 from utils.wait import wait_for
-from utils import mgmt_system, testgen
+from utils import testgen
 
 
 pytestmark = [test_requirements.provision]
@@ -55,7 +55,7 @@ def provision_data(rest_api_modscope, provider, small_template_modscope):
         "ems_custom_attributes": {},
         "miq_custom_attributes": {}
     }
-    if isinstance(provider.mgmt, mgmt_system.RHEVMSystem):
+    if provider.one_of(RHEVMProvider):
         result["vm_fields"]["provision_type"] = "native_clone"
     return result
 

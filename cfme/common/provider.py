@@ -155,6 +155,10 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def version(self):
         return self.data['version']
 
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines and usually overidden"""
+        return {}
+
     def get_yaml_data(self):
         """ Returns yaml data for this provider.
         """
@@ -311,15 +315,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
         if the match is not complete within a certain defined time period.
         """
 
-        client = self.get_mgmt_system()
-
         # If we're not using db, make sure we are on the provider detail page
         if ui:
             self.load_details()
 
         # Initial bullet check
-        if self._do_stats_match(client, self.STATS_TO_MATCH, ui=ui):
-            client.disconnect()
+        if self._do_stats_match(self.mgmt, self.STATS_TO_MATCH, ui=ui):
+            self.mgmt.disconnect()
             return
         else:
             # Set off a Refresh Relationships
@@ -328,13 +330,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
 
             refresh_timer = RefreshTimer(time_for_refresh=300)
             wait_for(self._do_stats_match,
-                     [client, self.STATS_TO_MATCH, refresh_timer],
+                     [self.mgmt, self.STATS_TO_MATCH, refresh_timer],
                      {'ui': ui},
                      message="do_stats_match_db",
                      num_sec=1000,
                      delay=60)
 
-        client.disconnect()
+        self.mgmt.disconnect()
 
     @variable(alias='rest')
     def refresh_provider_relationships(self, from_list_view=False):

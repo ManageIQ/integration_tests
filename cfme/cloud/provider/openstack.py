@@ -1,4 +1,4 @@
-from mgmtsystem.openstack import OpenstackSystem
+from cached_property import cached_property
 
 from utils.version import current_version
 
@@ -8,7 +8,11 @@ from . import CloudProvider
 @CloudProvider.add_provider_type
 class OpenStackProvider(CloudProvider):
     type_name = "openstack"
-    mgmt_class = OpenstackSystem
+
+    @cached_property
+    def mgmt_class(self):
+        from mgmtsystem.openstack import OpenstackSystem
+        return OpenstackSystem
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,
@@ -58,6 +62,12 @@ class OpenStackProvider(CloudProvider):
                 'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
             })
         return data_dict
+
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        if ('network_name' not in deploy_args) and self.data.get('network'):
+            return {'network_name': self.data['network']}
+        return {}
 
     @classmethod
     def from_config(cls, prov_config, prov_key):

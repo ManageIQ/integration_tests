@@ -1,4 +1,5 @@
-from mgmtsystem.rhevm import RHEVMSystem
+from cached_property import cached_property
+
 from . import InfraProvider, prop_region
 
 
@@ -6,7 +7,11 @@ from . import InfraProvider, prop_region
 class RHEVMProvider(InfraProvider):
     _properties_region = prop_region
     type_name = "rhevm"
-    mgmt_class = RHEVMSystem
+
+    @cached_property
+    def mgmt_class(self):
+        from mgmtsystem.rhevm import RHEVMSystem
+        return RHEVMSystem
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, start_ip=None, end_ip=None,
@@ -28,6 +33,12 @@ class RHEVMProvider(InfraProvider):
                 'ipaddress_text': kwargs.get('ip_address'),
                 'candu_hostname_text':
                 kwargs.get('hostname') if self.credentials.get('candu', None) else None}
+
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        if 'default_cluster' not in deploy_args:
+            return {'cluster': self.data['default_cluster']}
+        return {}
 
     @classmethod
     def from_config(cls, prov_config, prov_key):

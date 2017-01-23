@@ -1,12 +1,17 @@
-from utils.version import pick
-from mgmtsystem.azure import AzureSystem
+from cached_property import cached_property
+
 from . import CloudProvider
+from utils.version import pick
 
 
 @CloudProvider.add_provider_type
 class AzureProvider(CloudProvider):
     type_name = "azure"
-    mgmt_class = AzureSystem
+
+    @cached_property
+    def mgmt_class(self):
+        from mgmtsystem.azure import AzureSystem
+        return AzureSystem
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, region=None,
                  tenant_id=None, subscription_id=None):
@@ -26,6 +31,10 @@ class AzureProvider(CloudProvider):
                 'region_select': region,
                 'azure_tenant_id': kwargs.get('tenant_id'),
                 'azure_subscription_id': kwargs.get('subscription_id')}
+
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        return self.data['provisioning']
 
     @classmethod
     def from_config(cls, prov_config, prov_key):

@@ -1,6 +1,7 @@
+from cached_property import cached_property
+
 from . import ContainersProvider
 from utils.varmeth import variable
-from mgmtsystem.openshift import Openshift
 from os import path
 
 
@@ -17,7 +18,11 @@ class OpenshiftProvider(ContainersProvider):
     num_route_template = ['num_route'] + ['num_template']
     STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route_template
     type_name = "openshift"
-    mgmt_class = Openshift
+
+    @cached_property
+    def mgmt_class(self):
+        from mgmtsystem.openshift import Openshift
+        return Openshift
 
     def __init__(self, name=None, credentials=None, key=None,
                  zone=None, hostname=None, port=None, provider_data=None):

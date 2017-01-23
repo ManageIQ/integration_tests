@@ -8,10 +8,11 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import InfoBlock, fill, flash
-from utils import mgmt_system, testgen
+from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.generators import random_vm_name
@@ -27,7 +28,7 @@ pytestmark = [
     pytest.mark.meta(blockers=[
         BZ(
             1265466,
-            unblock=lambda provider: not isinstance(provider.mgmt, mgmt_system.RHEVMSystem))
+            unblock=lambda provider: not provider.one_of(RHEVMProvider))
     ]),
     pytest.mark.tier(3)
 ]

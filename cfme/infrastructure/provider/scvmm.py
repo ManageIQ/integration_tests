@@ -1,4 +1,5 @@
-from mgmtsystem.scvmm import SCVMMSystem
+from cached_property import cached_property
+
 from . import InfraProvider
 
 
@@ -6,7 +7,11 @@ from . import InfraProvider
 class SCVMMProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     type_name = "scvmm"
-    mgmt_class = SCVMMSystem
+
+    @cached_property
+    def mgmt_class(self):
+        from mgmtsystem.scvmm import SCVMMSystem
+        return SCVMMSystem
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None,
@@ -35,6 +40,12 @@ class SCVMMProvider(InfraProvider):
             values['sec_realm'] = kwargs.get('sec_realm')
 
         return values
+
+    def deployment_helper(self, deploy_args):
+        """ Used in utils.virtual_machines """
+        if 'host_group' not in deploy_args:
+            return {'host_group': self.data.get("host_group", "All Hosts")}
+        return {}
 
     @classmethod
     def from_config(cls, prov_config, prov_key):
