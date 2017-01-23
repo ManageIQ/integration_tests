@@ -37,7 +37,7 @@ pycrypto
 pygal
 PyGithub
 
-pytest==3.0.5
+pytest==3.0.6
 python-bugzilla>=1.2.0
 python-dateutil
 pywinrm
