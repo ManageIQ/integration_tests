@@ -13,8 +13,6 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToObject
 from widgetastic.widget import View, Text
 from widgetastic_patternfly import Input, Button, Dropdown
-from widgetastic_manageiq import PaginationPane, Checkbox, ProviderToolBar
-
 from cached_property import cached_property
 from widgetastic_manageiq import (PaginationPane,
                                   Checkbox,
@@ -23,7 +21,9 @@ from widgetastic_manageiq import (PaginationPane,
                                   Items,
                                   BaseSideBar,
                                   Table,
-                                  BreadCrumb)
+                                  BreadCrumb,
+                                  TimelinesFilter,
+                                  TimelinesChart)
 from cfme import BaseLoggedInPage
 from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
@@ -151,7 +151,7 @@ class InfraProvidersDetailsView(InfraProvidersView):
         pass
 
     title = Text('//div[@id="main-content"]//h1')
-    breadcrumb = BreadCrumb('//ol[@class="breadcrumb"]')
+    breadcrumb = BreadCrumb(locator='//ol[@class="breadcrumb"]')
     properties = Table('//table[.//th[normalize-space(text())="Properties"]]')
     status = Table('//table[.//th[normalize-space(text())="Status"]]')
     relationships = Table('//table[.//th[normalize-space(text())="Relationships"]]')
@@ -193,6 +193,20 @@ class InfraProvidersAddView(InfraProvidersView):
 
 class InfraProvidersManagePoliciesView(InfraProvidersView):
     pass
+
+
+class InfraProvidersTimelinesView(BaseLoggedInPage):
+    # @View.nested
+    # class sidebar(BaseSideBar):  # NOQA
+    #     pass
+
+    @View.nested
+    class filter(TimelinesFilter):  # NOQA
+        pass
+
+    # @View.nested
+    # class chart(TimelinesChart):  # NOQA
+    #     pass
 
 
 @CloudInfraProvider.add_base_type
@@ -471,6 +485,15 @@ class Edit(CFMENavigateStep):
     def step(self):
         sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
         cfg_btn('Edit Selected Infrastructure Providers')
+
+
+@navigator.register(InfraProvider, 'Timelines')
+class Timelines(CFMENavigateStep):
+    VIEW = InfraProvidersTimelinesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
 
 
 @navigator.register(InfraProvider, 'Instances')

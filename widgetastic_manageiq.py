@@ -884,17 +884,18 @@ class PaginationPane(View):
 class Stepper(Widget):
     """ A CFME Stepper Control
 
-        stepper = Stepper(locator='//')
+        stepper = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
+        stepper.inrease()
     """
     def __init__(self, parent, locator, logger=None):
         super(Stepper, self).__init__(parent=parent, logger=logger)
 
         self._stepper_control = self.browser.element(locator, parent=parent)
 
-        self.minus_button = Button(parent=self._stepper_control, text='-')
-        self.plus_button = Button(parent=self._stepper_control, text='+')
-        self.value_field = Input(parent=self._stepper_control, locator='.//input[contains(@class, '
-                                                                       '"bootstrap-touchspin"]')
+        self.minus_button = Button(self, '-')
+        self.plus_button = Button(self, '+')
+        self.value_field = Input(self, locator='.//input[contains(@class, '
+                                         '"bootstrap-touchspin")]')
 
     def __locator__(self):
         return self._stepper_control
@@ -909,7 +910,9 @@ class Stepper(Widget):
         self.plus_button.click()
 
     def set_value(self, value):
-        steps = int(value) - self.read
+        if value < 1:
+            raise ValueError('The value cannot be less than 1')
+        steps = int(value) - self.read()
         if steps == 0:
             return
         elif steps > 0:
@@ -927,41 +930,61 @@ class Stepper(Widget):
 
 class RadioButton(Button):
     """CFME Radio Button Control
-
+       it should be mainly used in RadioGroup control
     """
+    def __init__(self, parent, name, logger=None):
+        super(RadioButton, self).__init__(parent=parent, logger=logger)
+        self._name = name
+
     def __locator__(self):
         return (
             './/*[self::input and @type="radio" '
-            'and ({})]'.format(self.locator_conditions))
+            'and parent::label[normalize-space(.)="{n}"]]'.format(n=self._name))
+
+    @property
+    def selected(self):
+        if 'ng-valid-parse' in self.browser.classes(self):
+            return True
+        return False
+
+    @property
+    def name(self):
+        return self._name
 
 
 class RadioGroup(Widget):
     """ CFME Radio Group Control
 
+        rg = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
+        rg.
     """
-    def __init__(self, parent, logger=None):
+    def __init__(self, parent, locator, logger=None):
         super(RadioGroup, self).__init__(parent=parent, logger=logger)
+        self._locator = locator
+
+    def __locator__(self):
+        return self._locator
+
+    @property
+    def button_names(self):
+        buttons = self.browser.elements('//label[input[@type="radio"]]', parent=self)
+        return [self.browser.text(btn) for btn in buttons]
 
     @property
     def buttons(self):
         radio_buttons = []
-        for btn in self.browser.elements('.//input[@type="radio"]', parent=self.parent):
-            radio_buttons.append(RadioButton(text=btn.text))
+        for name in self.button_names:
+            radio_buttons.append(RadioButton(self, name=name))
         return radio_buttons
 
     @property
-    def button_names(self):
-        return [self.browser.text(btn) for btn in self.buttons]
-
-    @property
     def selected(self):
-        btn = [btn for btn in self.buttons if 'ng-valid-parse' in self.browser.classes(btn)][-1]
-        return self.browser.text(btn)
+        return [btn for btn in self.buttons if btn.selected][-1].name
 
-    def select(self, button_name):
-        if button_name != self.selected:
-            btn = [btn for btn in self.buttons if self.browser.text(btn) == button_name][-1]
-            btn.click()
+    def select(self, name):
+        button = [btn for btn in self.buttons if btn.name == name][-1]
+        if not button.selected:
+            button.click()
 
     def read(self):
         return self.selected
@@ -973,12 +996,13 @@ class RadioGroup(Widget):
 class BreadCrumb(Widget):
     """ CFME BreadCrumb navigation control
 
-        locator should be [@class='breadcrumb']
+        breadcrumb = BreadCrumb('//ol[@class="breadcrumb"]')
+        breadcrumb.click_location(breadcrumb.locations[0])
     """
     def __init__(self, parent, locator, logger=None):
         super(BreadCrumb, self).__init__(parent=parent, logger=logger)
         self.locator = locator
-        self._locations = self.browser.elements('.//li', parent=self.locator)
+        self._locations = self.browser.elements('.//li', parent=self.browser.element(self.locator))
 
     def __locator__(self):
         return self.locator
@@ -995,7 +1019,7 @@ class BreadCrumb(Widget):
     def click_location(self, name):
         br = self.browser
         location = [loc for loc in self._locations if br.text(loc) == name][-1]
-        br.click(location)
+        return br.click(location)
 
 
 class ToolBarViewSelector(View):
@@ -1078,26 +1102,26 @@ class BaseSideBar(View):
 
 
 class TimelinesFilter(View):
-    def __init__(self, parent, filter_type, logger=None):
+    def __init__(self, parent, logger=None):
         super(TimelinesFilter, self).__init__(parent=parent, logger=logger)
-        if filter_type in ('Management Events', 'Policy Events'):
-            self._filter_type = filter_type
-        else:
-            raise ValueError('incorrect filter type is passed')
+        # if filter_type in ('Management Events', 'Policy Events'):
+        #     self._filter_type = filter_type
+        # else:
+        #     raise ValueError('incorrect filter type is passed')
 
     # common
     event_type = BootstrapSelect(id='tl_show')
     event_category = BootstrapSelect(id='tl_category_management')
-    time_period = Stepper()
+    time_period = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
     time_range = BootstrapSelect(id='tl_range')
     time_position = BootstrapSelect(id='tl_timepivot')
-    date_picker = Calendar()
+    # date_picker = Calendar()
     apply = Button("Apply")
     # management controls
     detailed_events = Checkbox(name='showDetailedEvents')
     # policy controls
-    event_category = BootstrapSelect(id='tl_category_policy')
-    event_status = RadioGroup()
+    policy_event_category = BootstrapSelect(id='tl_category_policy')
+    policy_event_status = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
 
 
 class TimelinesChart(View):
@@ -1105,22 +1129,22 @@ class TimelinesChart(View):
     # currently only events collection is available
     pass
 
-
-class Timelines(View):
-    """
-    represents Timelines page
-    """
-
-    @View.nested
-    class sidebar(BaseSideBar):  # NOQA
-        pass
-
-    breadcrumb = BreadCrumb()
-
-    @View.nested
-    class filter(TimelinesFilter):  # NOQA
-        pass
-
-    @View.nested
-    class chart(TimelinesChart):  # NOQA
-        pass
+#
+# class Timelines(View):
+#     """
+#     represents Timelines page
+#     """
+#
+#     @View.nested
+#     class sidebar(BaseSideBar):  # NOQA
+#         pass
+#
+#     breadcrumb = BreadCrumb()
+#
+#     @View.nested
+#     class filter(TimelinesFilter):  # NOQA
+#         pass
+#
+#     @View.nested
+#     class chart(TimelinesChart):  # NOQA
+#         pass
