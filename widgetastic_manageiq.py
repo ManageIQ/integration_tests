@@ -1208,7 +1208,7 @@ class UpDownSelect(View):
 
 class AlertEmail(Widget):
 
-    ROOT = "//div[@id='edit_email_div']"
+    ROOT = ".//div[@id='edit_email_div']"
     ADD_BUTTON = ".//div[@title='Add']"
     RECIPIENTS = "./div[@id='edit_to_email_div']//a"
     EMAIL_LINK = ".//a[text()='{}']"
