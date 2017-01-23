@@ -12,9 +12,11 @@ class LogValidator(object):
     and validate the content of log during test execution,
     according to predefined patterns.
     Predefined patterns are:
-       a) Logs which should be skipped. Skip further checks on particular line if matched
-       b) Logs which should cause failure of test.
-       c) Logs which are expected to be matched, otherwise fail.
+
+    * Logs which should be skipped. Skip further checks on particular line if matched
+    * Logs which should cause failure of test.
+    * Logs which are expected to be matched, otherwise fail.
+
     The priority of patterns to be checked are defined in above order.
     Skipping patterns have priority over other ones,
     to be possible to skip particular ERROR log,
@@ -27,13 +29,13 @@ class LogValidator(object):
         matched_patterns: array of expected regex patterns to be matched
 
     Usage:
-
-        evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                                skip_patterns=['PARTICULAR_ERROR'],
-                                failure_patterns=['.*ERROR.*'],
-                                matched_patterns=['PARTICULAR_INFO'])
-        evm_tail.fix_before_start()
-        evm_tail.validate_logs()
+        .. code-block:: python
+          evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
+                                  skip_patterns=['PARTICULAR_ERROR'],
+                                  failure_patterns=['.*ERROR.*'],
+                                  matched_patterns=['PARTICULAR_INFO'])
+          evm_tail.fix_before_start()
+          evm_tail.validate_logs()
     """
 
     def __init__(self, remote_filename, **kwargs):

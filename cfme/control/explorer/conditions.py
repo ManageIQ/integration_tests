@@ -31,17 +31,22 @@ class Expression(Widget):
         return self.browser.element(self).text.split("\n")
 
     def read(self):
-        """In Condition details view Scope and Expression don't have any locator. So we
-        have to scrape whole text in the parent div and split it by "\n". After that in text_list
+        """
+        In Condition details view Scope and Expression don't have any locator. So we
+        have to scrape whole text in the parent div and split it by "\\n". After that in text_list
         we receive something like that:
-        [u'Scope',
-         u'COUNT OF VM and Instance.Files > 150',
-         u'Expression',
-         u'VM and Instance : Boot Time BEFORE "03/04/2014 00:00"',
-         u'Notes',
-         u'No notes have been entered.',
-         u'Assigned to Policies',
-         u'This Condition is not assigned to any Policies.']
+
+        .. code-block:: python
+
+          [u'Scope',
+           u'COUNT OF VM and Instance.Files > 150',
+           u'Expression',
+           u'VM and Instance : Boot Time BEFORE "03/04/2014 00:00"',
+           u'Notes',
+           u'No notes have been entered.',
+           u'Assigned to Policies',
+           u'This Condition is not assigned to any Policies.']
+
         To get value of Scope or Expression firstly we find its index in the list and then just
         seek next member.
         """
