@@ -97,6 +97,7 @@ class Alert(Updateable, Navigatable, Pretty):
         >>> alert = Alert("my_alert", timeline_event=True, driving_event="Hourly Timer")
         >>> alert.create()
         >>> alert.delete()
+
     Args:
         description: Name of the Alert.
         based_on: Cluster, Datastore, Host, Provider, ...
@@ -107,10 +108,13 @@ class Alert(Updateable, Navigatable, Pretty):
             it will use it as follows: ``("What to Evaluate selection", dict(values="for form"))``.
             If you want to select Nothing, you will therefore pass ``("Nothing", {})``.
             Other example:
-                .. code-block:: python
+
+            .. code-block:: python
+
                     ("Hardware Reconfigured",
                      dict(hw_attribute="Number of CPUs", hw_attribute_operator="Increased")
                     )
+
             For all fields, check the `form` class variable.
         driving_event: This Alert's driving event (Hourly Timer, ...).
         notification_frequency: 1 Minute, 2 Minutes, ...

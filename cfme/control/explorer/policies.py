@@ -221,11 +221,12 @@ class BasePolicy(Updateable, Navigatable, Pretty):
     """This class represents a Policy.
 
     Example:
+        .. code-block:: python
 
-        >>> from cfme.control.explorer.policy import VMCompliancePolicy
-        >>> policy = VMCompliancePolicy("policy_description")
-        >>> policy.create()
-        >>> policy.delete()
+          >>> from cfme.control.explorer.policy import VMCompliancePolicy
+          >>> policy = VMCompliancePolicy("policy_description")
+          >>> policy.create()
+          >>> policy.delete()
 
     Args:
         description: Policy name.
@@ -367,10 +368,12 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         return view.is_displayed
 
     def assign_actions_to_event(self, event, actions):
-        """This method takes a list or dict of actions, goes into the policy event and assigns them.
+        """
+        This method takes a list or dict of actions, goes into the policy event and assigns them.
         Actions can be passed both as the objects, but they can be passed also as a string.
         Actions, passed as an object but not created yet, will be created.
         If the specified event is not assigned to the policy, it will be assigned.
+
         Args:
             event: Name of the event under which the actions will be assigned.
             actions: If :py:class:`list` (or similar), all of these actions will be set under
