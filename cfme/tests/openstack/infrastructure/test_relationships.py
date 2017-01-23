@@ -3,11 +3,12 @@ This test can run only after overcloud cloud provider created and linked to
 undercloud infra provider, need to compare the cloud providers with the
 results of the relationships
 """
-from utils import testgen
+from utils import testgen, version
 import pytest
 
 
-pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate')]
+pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate'),
+              pytest.mark.usefixtures("setup_provider_modscope")]
 
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type,
@@ -15,10 +16,10 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
                                          scope='module')
 
 
-@pytest.mark.usefixtures("setup_provider_modscope")
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_assigned_roles(provider):
     provider.load_details()
-    result = provider.summary.relationships.deployment_roles.value
+    result = provider.summary.relationships.clusters.value
 
     assert result > 0
 
