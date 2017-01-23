@@ -17,7 +17,10 @@ def test_host_manageable(provider):
     provider.load_details()
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
-    quad = my_quads[0]
+    # quad = my_quads[0]
+    quad_dict = {i.name: i for i in my_quads}
+    # TODO remove the quad name, retrieve it from mgmt system
+    quad = quad_dict['c4f7a679-b895-44dd-9436-d6f469a07513']
     host = Host(name=quad.name)
     sel.check(quad.checkbox())
     tb.select('Configuration', 'Set Node to Manageable', invokes_alert=True)
@@ -33,7 +36,10 @@ def test_host_available(provider):
     provider.load_details()
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
-    quad = my_quads[0]
+    # quad = my_quads[0]
+    quad_dict = {i.name: i for i in my_quads}
+    # TODO remove the quad name, retrieve it from mgmt system
+    quad = quad_dict['c4f7a679-b895-44dd-9436-d6f469a07513']
     host = Host(name=quad.name)
     sel.check(quad.checkbox())
     tb.select('Configuration', 'Provide Nodes', invokes_alert=True)
@@ -49,7 +55,10 @@ def test_host_introspection(provider):
     provider.load_details()
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
-    quad = my_quads[0]
+    # quad = my_quads[0]
+    quad_dict = {i.name: i for i in my_quads}
+    # TODO remove the quad name, retrieve it from mgmt system
+    quad = quad_dict['c4f7a679-b895-44dd-9436-d6f469a07513']
     host = Host(name=quad.name)
     sel.check(quad.checkbox())
     tb.select('Configuration', 'Introspect Nodes', invokes_alert=True)
