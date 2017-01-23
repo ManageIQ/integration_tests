@@ -1,5 +1,3 @@
-from cached_property import cached_property
-
 from . import CloudProvider
 from utils.version import pick
 
@@ -8,7 +6,7 @@ from utils.version import pick
 class AzureProvider(CloudProvider):
     type_name = "azure"
 
-    @cached_property
+    @property
     def mgmt_class(self):
         from mgmtsystem.azure import AzureSystem
         return AzureSystem

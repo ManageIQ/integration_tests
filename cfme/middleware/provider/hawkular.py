@@ -1,7 +1,5 @@
 import re
 
-from cached_property import cached_property
-
 from cfme.common import TopologyMixin, TimelinesMixin
 from . import MiddlewareProvider
 from utils.appliance import Navigatable
@@ -40,7 +38,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         [('name', 'Name'), ('hostname', 'Host Name'), ('port', 'Port'), ('provider_type', 'Type')]
     type_name = "hawkular"
 
-    @cached_property
+    @property
     def mgmt_class(self):
         from mgmtsystem.hawkular import Hawkular
         return Hawkular
