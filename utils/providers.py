@@ -254,6 +254,13 @@ def list_providers(allowed_types=None, use_global_filters=False):
     return [prov.key for prov in provs]
 
 
+def list_all_provider_keys():
+    try:
+        return conf.cfme_data.management_systems.keys()
+    except:
+        return []
+
+
 def setup_provider(provider_key, validate=True, check_existing=True):
     provider = get_crud(provider_key)
     provider.create(validate_credentials=True, validate_inventory=validate,
