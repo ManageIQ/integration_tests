@@ -141,15 +141,6 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
                             clear_tasks_after_success=clear_tasks_after_success)
 
 
-def all_vm_analysis_tasks(**filter_kwargs):
-    """ Returns all tasks in the table for 'All VM Analysis Tasks'
-    Args:
-        **filter_kwargs: See :py:meth:`_filter`
-    Returns: List of dicts.
-    """
-    return _get_tasks("AllVMContainerAnalysis", **filter_kwargs)
-
-
 def wait_analysis_finished(task_name, task_type, delay=5, timeout='5M'):
     """ Wait until analysis is finished (or timeout exceeded)"""
     wait_for(lambda: is_analysis_finished(task_name, task_type),
