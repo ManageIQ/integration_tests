@@ -591,8 +591,9 @@ def host_exist(provider, name='my_node'):
     query = provider.appliance.db.session.query(
         provider.appliance.db['hosts'], 'guid')
     node_uuid = str(nodes_dict[name])
+    result = False
     for db_node in query.all():
         if db_node.hosts.name == str(node_uuid.uuid):
-            return True
-        else:
-            return False
+            return result
+    return result
+
