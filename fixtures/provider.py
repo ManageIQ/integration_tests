@@ -20,6 +20,7 @@ from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.templateloader import TEMPLATES
 from utils import providers
 from utils.log import logger
+from lya.lya import AttrDict
 
 # failed provider tracking for _setup_provider_fixture
 _failed_providers = set()
@@ -116,14 +117,17 @@ def template(template_location, provider):
 
 def _get_template(provider, template_type_name):
     template = provider.data.get(template_type_name, None)
-    if template:
+    if isinstance(template, AttrDict):
+        template_name = template.get("name", None)
+    else:
+        template_name = template
+    if template_name:
         if not TEMPLATES:
             # Same as couple of lines above
             return template
         templates = TEMPLATES.get(provider.key, None)
-        if templates is not None:
-            if template in templates:
-                return template
+        if templates is not None and template_name in templates:
+            return template
     else:
         pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))
     logger.info("Wanted template %s on %s but it is not there!", template, provider.key)
