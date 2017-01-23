@@ -10,15 +10,20 @@
 """
 from functools import partial
 
-from navmazing import NavigateToSibling, NavigateToAttribute
-
+from navmazing import NavigateToSibling, NavigateToObject
+from widgetastic.widget import View
+from widgetastic_patternfly import Input
 from cached_property import cached_property
+from widgetastic_manageiq import PaginationPane
+from .widgetastic_views import Items, BaseSideBar, ProviderToolBar
+from cfme import BaseLoggedInPage
+from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.cluster import Cluster
 from cfme.web_ui import (
-    Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input,
+    Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons,
     AngularSelect, toolbar as tb, Radio, InfoBlock, match_location
 )
 from cfme.web_ui.form_buttons import FormButton
@@ -32,8 +37,8 @@ from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
 
-details_page = Region(infoblock_type='detail')
 
+details_page = Region(infoblock_type='detail')
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
 
 # Forms
@@ -105,6 +110,31 @@ manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
+
+
+class InfraProvidersView(BaseLoggedInPage):
+    @property
+    def is_displayed(self):
+        return all((self.logged_in_as_current_user,
+                    self.navigation.currently_selected == ['Compute',
+                                                           'Infrastructure', 'Providers'],
+                    match_page(summary='Infrastructure Providers')))
+
+    @View.nested
+    class toolbar(ProviderToolBar):
+        pass
+
+    @View.nested
+    class sidebar(BaseSideBar):
+        pass
+
+    @View.nested
+    class items(Items):
+        pass
+
+    @View.nested
+    class paginator(PaginationPane):
+        pass
 
 
 @CloudInfraProvider.add_base_type
@@ -300,9 +330,19 @@ class InfraProvider(Pretty, CloudInfraProvider):
         return web_clusters
 
 
+@navigator.register(Server)
+class InfraProviders(CFMENavigateStep):
+    VIEW = InfraProvidersView
+    prerequisite = NavigateToSibling('LoggedIn')
+
+    def step(self):
+        self.view.navigation.select('Compute', 'Infrastructure', 'Providers')
+
+
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    VIEW = InfraProvidersView
+    prerequisite = NavigateToObject(Server, 'LoggedIn')
 
     def am_i_here(self):
         return match_page(summary='Infrastructure Providers')
@@ -312,9 +352,10 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        self.view.toolbar.view_selector.select("Grid View")
+
+        self.view.paginator.check_all()
+        self.view.paginator.uncheck_all()
 
 
 @navigator.register(InfraProvider, 'Add')
@@ -389,16 +430,19 @@ class Templates(CFMENavigateStep):
         sel.click(InfoBlock.element('Relationships', 'Templates'))
 
 
-def get_all_providers(do_not_navigate=False):
+def get_all_providers():
     """Returns list of all providers"""
-    if not do_not_navigate:
-        navigate_to(InfraProvider, 'All')
+    all_prov_view = navigate_to(InfraProvider, 'All')
+    cur_items_per_page = all_prov_view.paginator.items_per_page
+    all_prov_view.paginator.items_per_page = 1000
     providers = set([])
+    # fixme: to replace this somehow when quadicon is ready. probably need to wait of collections
     link_marker = "ems_infra"
-    for page in paginator.pages():
-        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
-                "'{}/show')]".format(link_marker)):
-            providers.add(sel.get_attribute(title, "title"))
+    for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
+                              "'{}/show')]".format(link_marker)):
+        providers.add(sel.get_attribute(title, "title"))
+
+    all_prov_view.paginator.items_per_page = cur_items_per_page
     return providers
 
 
@@ -438,10 +482,10 @@ def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None
 
 
 def wait_for_a_provider():
-    navigate_to(InfraProvider, 'All')
+    all_prov_view = navigate_to(InfraProvider, 'All')
     logger.info('Waiting for a provider to appear...')
-    wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
-             num_sec=1000, fail_func=sel.refresh)
+    wait_for(all_prov_view.paginator.items_amount, fail_condition=None,
+             message="Wait for any provider to appear", num_sec=1000, fail_func=sel.refresh)
 
 
 import_all_modules_of('cfme.infrastructure.provider')
