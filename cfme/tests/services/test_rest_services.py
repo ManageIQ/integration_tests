@@ -7,6 +7,7 @@ from manageiq_client.api import APIException
 
 from cfme.rest.gen_data import dialog as _dialog
 from cfme.rest.gen_data import services as _services
+from cfme.rest.gen_data import service_data as _service_data
 from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.rest.gen_data import service_templates as _service_templates
 from cfme import test_requirements
@@ -16,8 +17,11 @@ from utils.wait import wait_for
 from utils.log import logger
 
 
-pytestmark = [test_requirements.service,
-              pytest.mark.tier(2)]
+pytestmark = [
+    pytest.mark.long_running,
+    test_requirements.service,
+    pytest.mark.tier(2)
+]
 
 
 def pytest_generate_tests(metafunc):
@@ -56,6 +60,11 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
 @pytest.fixture(scope='function')
 def service_templates(request, rest_api, dialog):
     return _service_templates(request, rest_api, dialog)
+
+
+@pytest.fixture(scope='function')
+def service_data(request, rest_api, a_provider, dialog, service_catalogs):
+    return _service_data(request, rest_api, a_provider, dialog, service_catalogs)
 
 
 class TestServiceRESTAPI(object):
@@ -159,42 +168,87 @@ class TestServiceRESTAPI(object):
         def _finished():
             retire_service.reload()
             if retire_service.updated_at > date_before:
-                    return True
+                return True
             return False
 
         wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
 
-        @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-        def test_set_service_owner(self, rest_api, services):
-            if "set_ownership" not in rest_api.collections.services.action.all:
-                pytest.skip("Set owner action for service is not implemented in this version")
-            service = services[0]
-            user = rest_api.collections.users.get(userid='admin')
-            data = {
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    def test_set_service_owner(self, rest_api, services):
+        """Tests set_ownership action on /api/services/:id.
+
+        Metadata:
+            test_flag: rest
+        """
+        if "set_ownership" not in rest_api.collections.services.action.all:
+            pytest.skip("Set owner action for service is not implemented in this version")
+        service = services[0]
+        user = rest_api.collections.users.get(userid='admin')
+        data = {
+            "owner": {"href": user.href}
+        }
+        service.action.set_ownership(data)
+        service.reload()
+        assert hasattr(service, "evm_owner")
+        assert service.evm_owner.userid == user.userid
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
+    def test_set_services_owner(self, rest_api, services):
+        """Tests set_ownership action on /api/services collection.
+
+        Metadata:
+            test_flag: rest
+        """
+        if "set_ownership" not in rest_api.collections.services.action.all:
+            pytest.skip("Set owner action for service is not implemented in this version")
+        data = []
+        user = rest_api.collections.users.get(userid='admin')
+        for service in services:
+            tmp_data = {
+                "href": service.href,
                 "owner": {"href": user.href}
             }
-            service.action.set_ownership(data)
+            data.append(tmp_data)
+        rest_api.collections.services.action.set_ownership(*data)
+        for service in services:
             service.reload()
             assert hasattr(service, "evm_owner")
             assert service.evm_owner.userid == user.userid
 
-        @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-        def test_set_services_owner(self, rest_api, services):
-            if "set_ownership" not in rest_api.collections.services.action.all:
-                pytest.skip("Set owner action for service is not implemented in this version")
-            data = []
-            user = rest_api.collections.users.get(userid='admin')
-            for service in services:
-                tmp_data = {
-                    "href": service.href,
-                    "owner": {"href": user.href}
-                }
-                data.append(tmp_data)
-            rest_api.collections.services.action.set_ownership(*data)
-            for service in services:
-                service.reload()
-                assert hasattr(service, "evm_owner")
-                assert service.evm_owner.userid == user.userid
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_power_service(self, rest_api, service_data, from_detail):
+        """Tests power operations on /api/services and /api/services/:id.
+
+        * start, stop and suspend actions
+        * transition from one power state to another
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.services
+        service = collection.get(name=service_data['service_name'])
+        vm = rest_api.collections.vms.get(name=service_data['vm_name'])
+
+        def _action_and_check(action, resulting_state):
+            if from_detail:
+                getattr(service.action, action)()
+            else:
+                getattr(collection.action, action)(service)
+
+            wait_for(
+                lambda: vm.power_state == resulting_state,
+                num_sec=600, delay=20, fail_func=vm.reload,
+                message='Wait for VM to {} (current state: {})'.format(
+                    resulting_state, vm.power_state))
+
+        assert vm.power_state == 'on'
+        _action_and_check('stop', 'off')
+        _action_and_check('start', 'on')
+        _action_and_check('suspend', 'suspended')
+        _action_and_check('start', 'on')
 
 
 class TestServiceDialogsRESTAPI(object):
