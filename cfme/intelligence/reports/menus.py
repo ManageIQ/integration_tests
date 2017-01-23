@@ -5,17 +5,19 @@ from contextlib import contextmanager
 from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import FolderManager
-from cfme.web_ui import Region, BootstrapTreeview, Tree, form_buttons
+from cfme.web_ui import Region, BootstrapTreeview, Tree, accordion, form_buttons
 from cfme.web_ui.multibox import MultiBoxSelect
 from utils import version
 from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 
 
-if version.current_version() >= '5.7':
-    reports_tree = BootstrapTreeview("menu_roles_treebox")
-else:
-    reports_tree = Tree("//div[@id='menu_roles_treebox']/ul")
+def reports_tree():
+    if version.current_version() >= '5.7':
+        return BootstrapTreeview("menu_roles_treebox")
+    else:
+        return Tree("//div[@id='menu_roles_treebox']/ul")
+
 
 manager = FolderManager("//div[@id='folder_lists']/table")
 report_select = MultiBoxSelect(
@@ -45,7 +47,7 @@ def get_folders(group):
         group: User group to check.
     """
     go_to_group(group)
-    reports_tree.click_path("Top Level")
+    reports_tree().click_path("Top Level")
     return manager.fields
 
 
@@ -57,7 +59,7 @@ def get_subfolders(group, folder):
         folder: Folder to read.
     """
     go_to_group(group)
-    reports_tree.click_path("Top Level", folder)
+    reports_tree().click_path("Top Level", folder)
     return manager.fields
 
 
@@ -110,9 +112,9 @@ def manage_folder(group, folder=None):
     """
     go_to_group(group)
     if folder is None:
-        reports_tree.click_path("Top Level")
+        reports_tree().click_path("Top Level")
     else:
-        reports_tree.click_path("Top Level", folder)
+        reports_tree().click_path("Top Level", folder)
     try:
         yield manager
     except FolderManager._BailOut:
@@ -142,7 +144,7 @@ def manage_subfolder(group, folder, subfolder):
     Returns: Context-managed :py:class:`cfme.intelligence.reports.ui_elements.FolderManager` inst.
     """
     go_to_group(group)
-    reports_tree.click_path("Top Level", folder, subfolder)
+    reports_tree().click_path("Top Level", folder, subfolder)
     try:
         yield report_select
     except FolderManager._BailOut:
