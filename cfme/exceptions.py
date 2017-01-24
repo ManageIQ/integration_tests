@@ -245,6 +245,11 @@ class HostNotFound(CFMEException):
     pass
 
 
+class NodeNotFound(CFMEException):
+    """Raised if a specific container node cannot be found in the UI"""
+    pass
+
+
 class StackNotFound(CFMEException):
     """
     Raised if a specific stack cannot be found.
