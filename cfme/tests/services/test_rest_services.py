@@ -466,11 +466,12 @@ class TestOrchestrationTemplatesRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        assert len(orchestration_templates) > 0
-        record = rest_api.collections.orchestration_templates.get(id=orchestration_templates[0].id)
-        assert record.name == orchestration_templates[0].name
-        assert record.description == orchestration_templates[0].description
-        assert record.type == orchestration_templates[0].type
+        assert len(orchestration_templates) == 2
+        for template in orchestration_templates:
+            record = rest_api.collections.orchestration_templates.get(id=template.id)
+            assert record.name == template.name
+            assert record.description == template.description
+            assert record.type == template.type
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
