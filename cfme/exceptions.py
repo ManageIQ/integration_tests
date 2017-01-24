@@ -246,7 +246,7 @@ class HostNotFound(CFMEException):
 
 
 class NodeNotFound(CFMEException):
-    """Raised if a specific container node cannot be found int he UI"""
+    """Raised if a specific container node cannot be found in the UI"""
     pass
 
 
