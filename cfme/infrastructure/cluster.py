@@ -117,7 +117,12 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Infrastructure', 'Clusters')
+        try:
+            self.parent_view.navigation.select('Compute', 'Infrastructure',
+                                               'Clusters')
+        except sel.NoSuchElementException:
+            self.parent_view.navigation.select('Compute', 'Infrastructure',
+                                               'Deployment Roles')
 
     def resetter(self):
         tb.select("Grid View")
