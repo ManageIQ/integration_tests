@@ -11,8 +11,8 @@ from utils.db import cfmedb
 from utils.varmeth import variable
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from . provider import LIST_TABLE_LOCATOR, MiddlewareBase, download
-from . domain import MiddlewareDomain
+from .provider import LIST_TABLE_LOCATOR, MiddlewareBase, download
+from .domain import MiddlewareDomain
 from cfme.exceptions import MiddlewareDomainNotFound
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
