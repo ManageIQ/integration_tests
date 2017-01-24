@@ -18,7 +18,7 @@ import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins, match_location, FileInput, InfoBlock)
+    form_buttons, paginator, Input, mixins, match_location)
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
 from utils.db_queries import get_host_id
@@ -35,13 +35,6 @@ from utils.appliance import Navigatable
 details_page = Region(infoblock_type='detail')
 
 page_title_loc = '//div[@id="center_div" or @id="main-content"]//h1'
-
-register_nodes_form = Form(
-    fields=[
-        ('file', FileInput('nodes_json[file]')),
-        ('register', "//*[@name='register']"),
-        ('cancel', "//*[@name='cancel']")
-    ])
 
 properties_form = Form(
     fields=[
@@ -564,37 +557,3 @@ def find_quadicon(host, do_not_navigate=False):
             return quadicon
     else:
         raise HostNotFound("Host '{}' not found in UI!".format(host))
-
-
-def register(provider, file_path):
-    """Register new nodes (Openstack)
-    Fill a form for new host with json file format
-    Args:
-        provider - provider instance
-        file_path - file path of json file with new node details, navigation
-         MUST be from a specific provider
-    """
-    provider.load_details()
-    sel.click(InfoBlock.element("Relationships", "Nodes"))
-    tb.select('Configuration', 'Register Nodes')
-    my_form = {'file': file_path}
-    fill(register_nodes_form, my_form, action=register_nodes_form.register)
-
-
-def host_exist(provider, name='my_node'):
-    """" registered imported host exist
-
-    Args:
-        provider - provider instance
-        name - by default name is my_name Input provider, name of the new node,
-         looking for the host in Ironic clients, compare the record found with
-          hosts list in CFME DB
-    Returns: boolean value if host found
-    """
-    nodes = provider.mgmt.list_node()
-    nodes_dict = {i.name: i for i in nodes}
-    query = provider.appliance.db.session.query(
-        provider.appliance.db['hosts'], 'guid')
-    node_uuid = str(nodes_dict[name])
-    for db_node in query.all():
-        return db_node.hosts.name == str(node_uuid.uuid)
