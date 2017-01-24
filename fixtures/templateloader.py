@@ -3,7 +3,7 @@
 """
 from fixtures.pytest_store import store, write_line
 from utils import trackerbot
-from utils.providers import list_providers
+from utils.providers import list_provider_keys
 
 TEMPLATES = {}
 
@@ -14,5 +14,5 @@ def pytest_configure():
 
     write_line("Loading templates from trackerbot")
     provider_templates = trackerbot.provider_templates(trackerbot.api())
-    for provider in list_providers():
+    for provider in list_provider_keys():
         TEMPLATES[provider] = provider_templates.get(provider, [])
