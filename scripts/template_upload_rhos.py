@@ -17,7 +17,7 @@ from threading import Lock, Thread
 from utils import net, ports, trackerbot
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.providers import list_providers
+from utils.providers import list_provider_keys
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -231,7 +231,7 @@ def upload_template(rhosip, sshname, sshpass, username, password, auth_url, prov
 def run(**kwargs):
 
     thread_queue = []
-    providers = list_providers("openstack")
+    providers = list_provider_keys("openstack")
     if kwargs['provider_data']:
         provider_data = kwargs['provider_data']
         mgmt_sys = providers = provider_data['management_systems']

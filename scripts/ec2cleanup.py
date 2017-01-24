@@ -6,7 +6,7 @@ import time
 
 from utils.log import logger
 from utils.path import log_path
-from utils.providers import list_providers, get_mgmt
+from utils.providers import list_provider_keys, get_mgmt
 
 
 def parse_cmd_line():
@@ -95,7 +95,7 @@ def delete_unattached_volumes(ec2provider, excluded_volumes):
 
 
 def ec2cleanup(texts, max_hours, exclude_instances, exclude_volumes, exclude_eips, output):
-    for provider in list_providers('ec2'):
+    for provider in list_provider_keys('ec2'):
         ec2provider = get_mgmt(provider)
         logger.info("\n" + provider + ":\n")
         logger.info("Deleted instances:")

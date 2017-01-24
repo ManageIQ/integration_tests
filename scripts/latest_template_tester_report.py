@@ -11,7 +11,7 @@ from urllib2 import urlopen, HTTPError
 from utils import trackerbot
 from utils.conf import cfme_data
 from utils.path import template_path, log_path
-from utils.providers import list_providers
+from utils.providers import list_provider_keys
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -149,16 +149,16 @@ def templates_uploaded_on_providers(api, stream, template):
     for temp in api.template.get(
             limit=1, tested=False, group__name=stream).get('objects', []):
         if 'template_rhevm' in images_uploaded(stream):
-            if not provider_in_the_list(list_providers('rhevm'), temp['providers']):
+            if not provider_in_the_list(list_provider_keys('rhevm'), temp['providers']):
                 return False
         if 'template_rhos' in images_uploaded(stream):
-            if not provider_in_the_list(list_providers('openstack'), temp['providers']):
+            if not provider_in_the_list(list_provider_keys('openstack'), temp['providers']):
                 return False
         if 'template_vsphere' in images_uploaded(stream):
-            if not provider_in_the_list(list_providers('virtualcenter'), temp['providers']):
+            if not provider_in_the_list(list_provider_keys('virtualcenter'), temp['providers']):
                 return False
         if 'template_scvmm' in images_uploaded(stream):
-            if not provider_in_the_list(list_providers('scvmm'), temp['providers']):
+            if not provider_in_the_list(list_provider_keys('scvmm'), temp['providers']):
                 return False
     return True
 
@@ -217,16 +217,16 @@ def generate_html_report(api, stream, filename, appliance_template):
                 if 'template_rhos' not in images_uploaded(stream):
                     print('\n\nMISSING: Image for OpenStack in latest directory')
                     report.write('\n\nMISSING: Image for OpenStack in latest directory')
-                elif provider_in_the_list(list_providers('openstack'),
+                elif provider_in_the_list(list_provider_keys('openstack'),
                                           stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(images_uploaded(stream)['template_rhos']))
                     map(lambda (x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
-                        list_providers('openstack'), stream_data['passed_on_providers']))
-                elif provider_in_the_list(list_providers('openstack'),
+                        list_provider_keys('openstack'), stream_data['passed_on_providers']))
+                elif provider_in_the_list(list_provider_keys('openstack'),
                                           stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(images_uploaded(stream)['template_rhos']))
                     map(lambda (x): report.write('\n{}: Failed'.format(x)),
-                        provider_in_the_list(list_providers('openstack'),
+                        provider_in_the_list(list_provider_keys('openstack'),
                                              stream_data['failed_on_providers']))
                 else:
                     print('\n\nMISSING: OpenStack template is not available on any '
@@ -237,18 +237,18 @@ def generate_html_report(api, stream, filename, appliance_template):
                 if 'template_rhevm' not in images_uploaded(stream):
                     print('\n\nMISSING: Image for RHEVM in latest directory')
                     report.write('\n\nMISSING: Image for RHEVM in latest directory')
-                elif provider_in_the_list(list_providers('rhevm'),
+                elif provider_in_the_list(list_provider_keys('rhevm'),
                                           stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_rhevm']))
                     map(lambda(x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
-                        list_providers('rhevm'), stream_data['passed_on_providers']))
-                elif provider_in_the_list(list_providers('rhevm'),
+                        list_provider_keys('rhevm'), stream_data['passed_on_providers']))
+                elif provider_in_the_list(list_provider_keys('rhevm'),
                                           stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_rhevm']))
                     map(lambda(x): report.write('\n{}: Failed'.format(x)),
-                        provider_in_the_list(list_providers('rhevm'),
+                        provider_in_the_list(list_provider_keys('rhevm'),
                                              stream_data['failed_on_providers']))
                 else:
                     print('\n\nMISSING: RHEVM template is not available on any '
@@ -259,18 +259,18 @@ def generate_html_report(api, stream, filename, appliance_template):
                 if 'template_vsphere' not in images_uploaded(stream):
                     print('\n\nMISSING: Image for VIRTUALCENTER in latest directory')
                     report.write('\n\nMISSING: Image for VIRTUALCENTER in latest directory')
-                elif provider_in_the_list(list_providers('virtualcenter'),
+                elif provider_in_the_list(list_provider_keys('virtualcenter'),
                                           stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_vsphere']))
                     map(lambda (x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
-                        list_providers('virtualcenter'), stream_data['passed_on_providers']))
-                elif provider_in_the_list(list_providers('virtualcenter'),
+                        list_provider_keys('virtualcenter'), stream_data['passed_on_providers']))
+                elif provider_in_the_list(list_provider_keys('virtualcenter'),
                                           stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_vsphere']))
                     map(lambda (x): report.write('\n{}: Failed'.format(x)),
-                        provider_in_the_list(list_providers('virtualcenter'),
+                        provider_in_the_list(list_provider_keys('virtualcenter'),
                                              stream_data['failed_on_providers']))
                 else:
                     print('\n\nMISSING: VIRTUALCENTER template is not available on any '
@@ -281,18 +281,18 @@ def generate_html_report(api, stream, filename, appliance_template):
                 if 'template_scvmm' not in images_uploaded(stream):
                     print('\n\nMISSING: Image for SCVMM in latest directory')
                     report.write('\n\nMISSING: Image for SCVMM in latest directory')
-                elif provider_in_the_list(list_providers('scvmm'),
+                elif provider_in_the_list(list_provider_keys('scvmm'),
                                           stream_data['passed_on_providers']):
                     report.write('\n\nPASSED: {}'.format(
                         images_uploaded(stream)['template_scvmm']))
                     map(lambda (x): report.write('\n{}: Passed'.format(x)), provider_in_the_list(
-                        list_providers('scvmm'), stream_data['passed_on_providers']))
-                elif provider_in_the_list(list_providers('scvmm'),
+                        list_provider_keys('scvmm'), stream_data['passed_on_providers']))
+                elif provider_in_the_list(list_provider_keys('scvmm'),
                                           stream_data['failed_on_providers']):
                     report.write('\n\nFAILED: {}'.format(
                         images_uploaded(stream)['template_scvmm']))
                     map(lambda (x): report.write('\n{}: Failed'.format(x)),
-                        provider_in_the_list(list_providers('scvmm'),
+                        provider_in_the_list(list_provider_keys('scvmm'),
                                              stream_data['failed_on_providers']))
                 else:
                     print('\n\nMISSING: SCVMM template is not available on any '

@@ -19,7 +19,7 @@ from threading import Lock, Thread
 from mgmtsystem import GoogleCloudSystem
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.providers import list_providers
+from utils.providers import list_provider_keys
 
 lock = Lock()
 
@@ -137,7 +137,7 @@ def upload_template(project, zone, service_account, image_url,
 
 def run(**kwargs):
     thread_queue = []
-    for provider in list_providers("gce"):
+    for provider in list_provider_keys("gce"):
         mgmt_sys = cfme_data['management_systems'][provider]
         gce_credentials = credentials[mgmt_sys['credentials']]
 
