@@ -1,8 +1,8 @@
 import pytest
 
 import utils.error as error
-from cfme.middleware import get_random_list
 from cfme.middleware.deployment import MiddlewareDeployment
+from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
 from utils import testgen
 from utils.version import current_version

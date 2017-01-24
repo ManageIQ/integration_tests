@@ -6,7 +6,7 @@ from utils.appliance import Navigatable
 from utils.db import cfmedb
 from utils.varmeth import variable
 from . import _get_providers_page, _db_select_query
-from .. import download, MiddlewareBase, auth_btn, mon_btn
+from . import download, MiddlewareBase, auth_btn, mon_btn
 from utils.appliance.implementations.ui import navigate_to
 from mgmtsystem.hawkular import Hawkular
 

@@ -1,7 +1,7 @@
 import re
 from cfme.common import Taggable, UtilizationMixin
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import parse_properties
+from cfme.middleware.provider import parse_properties
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -12,7 +12,7 @@ from utils.db import cfmedb
 from utils.providers import get_crud, get_crud_by_name
 from utils.providers import list_providers
 from utils.varmeth import variable
-from . provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
+from .provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 

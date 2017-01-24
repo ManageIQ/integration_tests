@@ -2,7 +2,7 @@ import re
 from cfme.common import Taggable, UtilizationMixin
 from cfme.exceptions import MiddlewareServerNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import parse_properties, Container
+from cfme.middleware.provider import parse_properties, Container
 from cfme.web_ui import (
     CheckboxTable, paginator, Form, Input, fill, InfoBlock
 )
