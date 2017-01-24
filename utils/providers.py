@@ -254,11 +254,20 @@ def list_providers(allowed_types=None, use_global_filters=False):
     return [prov.key for prov in provs]
 
 
-def list_all_provider_keys():
+def list_provider_keys(provider_type=None):
     try:
-        return conf.cfme_data.management_systems.keys()
+        all_keys = conf.cfme_data.management_systems.keys()
     except:
-        return []
+        all_keys = []
+
+    if provider_type:
+        filtered_keys = []
+        for key in all_keys:
+            if conf.cfme_data.management_systems[key].type == provider_type:
+                filtered_keys.append(key)
+        return filtered_keys
+    else:
+        return all_keys
 
 
 def setup_provider(provider_key, validate=True, check_existing=True):
