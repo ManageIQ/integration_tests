@@ -19,7 +19,7 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_assigned_roles(provider):
     provider.load_details()
-    assert int(provider.get_detail('Relationships', 'Deployment roles')) > 0
+    assert int(provider.get_detail('Relationships', 'Deployment Roles')) > 0
 
 
 def test_nodes(provider):
