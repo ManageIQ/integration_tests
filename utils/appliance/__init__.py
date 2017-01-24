@@ -1452,7 +1452,7 @@ class IPAppliance(object):
                 log_callback('restarting evm service by killing processes')
                 status, msg = ssh.run_command(
                     'killall -9 ruby; service {}-postgresql stop'.format(db.scl_name()))
-                self._evm_service_command("start", expected_exit_code=0, log_callback=log_callback)
+                self._evm_service_command("restart", expected_exit_code=0, log_callback=log_callback)
             else:
                 self._evm_service_command(
                     "restart", expected_exit_code=0, log_callback=log_callback)
