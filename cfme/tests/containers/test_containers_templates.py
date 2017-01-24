@@ -39,7 +39,7 @@ def test_containers_templates_relationships(template, rel):
        Steps:
            * Navigate to Compute -> Containers -> Container Templates.
            Verify there's a list of Templates
-           * Select a random Container Template and chck its' Relationships fields
+           * Select a random Container Template and check its' Relationships fields
        """
     assert template.get_detail('Relationships', rel)
 
