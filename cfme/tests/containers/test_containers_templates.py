@@ -3,7 +3,6 @@ import random
 
 from cfme.web_ui import CheckboxTable
 from utils import testgen
-from utils.version import current_version
 
 from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.template import Template
