@@ -174,10 +174,10 @@ class ProviderFilter(object):
 
         Usage:
             pf = ProviderFilter('cloud_infra', categories=['cloud', 'infra'])
-            providers = new_list_providers([pf])
+            providers = list_providers([pf])
             pf2 = ProviderFilter(
                 classes=[GCEProvider, EC2Provider], required_fields=['small_template'])
-            provider_keys = [prov.key for prov in new_list_providers([pf, pf2])]
+            provider_keys = [prov.key for prov in list_providers([pf, pf2])]
             ^ this will list keys of all GCE and EC2 providers
             ...or...
             pf = ProviderFilter(required_tags=['openstack', 'complete'])
@@ -187,7 +187,7 @@ class ProviderFilter(object):
               and at the same time does not have the "disabled" tag
             ...or...
             pf = ProviderFilter(keys=['rhevm34'], class=CloudProvider, conjunctive=False)
-            providers = new_list_providers([pf])
+            providers = list_providers([pf])
             ^ this will list all providers that either have the 'rhevm34' key or are an instance
               of the CloudProvider class and therefore are a cloud provider
 
@@ -219,12 +219,16 @@ global_filters['enabled_only'] = ProviderFilter(required_tags=['disabled'], inve
 global_filters['restrict_version'] = ProviderFilter(restrict_version=True)
 
 
-def new_list_providers(filters=None, use_global_filters=True):
-    """ Returns list of provider crud objects, optional filtering (enabled by default)
+def list_providers(filters=None, use_global_filters=True):
+    """ Lists provider crud objects, global filter optional
 
     Args:
         filters: List if :py:class:`ProviderFilter` or None
         use_global_filters: Will apply global filters as well if `True`, will not otherwise
+
+    Note: Requires the framework to be pointed at an appliance to succeed.
+
+    Returns: List of provider crud objects.
     """
     filters = filters or []
     if use_global_filters:
@@ -235,26 +239,31 @@ def new_list_providers(filters=None, use_global_filters=True):
     return providers
 
 
-def list_providers_by_class(prov_class, validate=True, check_existing=True):
+def list_providers_by_class(prov_class, use_global_filters=True):
+    """ Lists provider crud objects of a specific class (or its subclasses), global filter optional
+
+    Args:
+        prov_class: Provider class to apply for filtering
+        use_global_filters: See :py:func:`list_providers`
+
+    Note: Requires the framework to be pointed at an appliance to succeed.
+
+    Returns: List of provider crud objects.
+    """
     pf = ProviderFilter(classes=[prov_class])
-    return new_list_providers(filters=[pf])
-
-
-# Replaced by list_providers_by_class which returns objects, not keys
-def list_providers(allowed_types=None, use_global_filters=False):
-    """ Lists providers keys by given provider type(s) """
-    if allowed_types is not None:
-        if isinstance(allowed_types, six.string_types):
-            allowed_types = [allowed_types]
-        classes = [get_class_from_type(prov_type) for prov_type in allowed_types]
-    else:
-        classes = None
-    pf = ProviderFilter(classes=classes)
-    provs = new_list_providers(filters=[pf], use_global_filters=use_global_filters)
-    return [prov.key for prov in provs]
+    return list_providers(filters=[pf], use_global_filters=use_global_filters)
 
 
 def list_provider_keys(provider_type=None):
+    """ Lists provider keys from conf (yamls)
+
+    Args:
+        provider_type: Optional filtering by 'type' string (from yaml); disabled by default
+
+    Note: Doesn't require the framework to be pointed at an appliance to succeed.
+
+    Returns: List of provider keys (strings).
+    """
     try:
         all_keys = conf.cfme_data.management_systems.keys()
     except:
@@ -290,7 +299,7 @@ def new_setup_a_provider(filters=None, use_global_filters=True, validate=True, c
     """
     filters = filters or []
 
-    providers = new_list_providers(filters=filters, use_global_filters=use_global_filters)
+    providers = list_providers(filters=filters, use_global_filters=use_global_filters)
     if not providers:
         raise Exception("All providers have been filtered out, cannot setup any providers")
 
@@ -304,7 +313,7 @@ def new_setup_a_provider(filters=None, use_global_filters=True, validate=True, c
         global_filters['problematic'] = ProviderFilter(keys=[], inverted=True)
 
     # If there are no non-problematic providers, reset the filter
-    nonproblematic_providers = new_list_providers(filters=filters)
+    nonproblematic_providers = list_providers(filters=filters)
     if not nonproblematic_providers:
         global_filters['problematic'].keys = []
         store.terminalreporter.write_line(
@@ -320,7 +329,7 @@ def new_setup_a_provider(filters=None, use_global_filters=True, validate=True, c
                                               inverted=True)
         # If we find any providers without the 'do_not_prefer' flag, add  the filter to the list
         # of active filters and make preferred providers the new cool
-        preferred_providers = new_list_providers(filters=filters + [do_not_prefer_filter])
+        preferred_providers = list_providers(filters=filters + [do_not_prefer_filter])
         if preferred_providers:
             filters.append(do_not_prefer_filter)
             providers = preferred_providers

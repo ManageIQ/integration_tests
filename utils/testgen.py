@@ -96,7 +96,7 @@ from cfme.middleware.provider import MiddlewareProvider
 from cfme.roles import group_data
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.providers import ProviderFilter, new_list_providers, get_class_from_type
+from utils.providers import ProviderFilter, list_providers
 
 
 def generate(gen_func, *args, **kwargs):
@@ -210,7 +210,7 @@ def providers(metafunc, filters=None):
         flags_filter = ProviderFilter(required_flags=test_flags)
         filters = filters + [flags_filter]
 
-    for provider in new_list_providers(filters):
+    for provider in list_providers(filters):
         argvalues.append([provider])
         # Use the provider key for idlist, helps with readable parametrized test output
         idlist.append(provider.key)

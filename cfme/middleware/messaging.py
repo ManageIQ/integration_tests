@@ -2,6 +2,7 @@ import re
 from cfme.common import Taggable, UtilizationMixin
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties
+from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
 from navmazing import NavigateToSibling, NavigateToAttribute
@@ -9,8 +10,7 @@ from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_crud_by_name
-from utils.providers import list_providers
+from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
 from .provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
@@ -171,8 +171,8 @@ class MiddlewareMessaging(MiddlewareBase, Navigatable, Taggable, UtilizationMixi
     def messagings_in_mgmt(cls, provider=None, server=None):
         if provider is None:
             messagings = []
-            for _provider in list_providers('hawkular'):
-                messagings.extend(cls._messagings_in_mgmt(get_crud(_provider), server))
+            for _provider in list_providers_by_class(HawkularProvider):
+                messagings.extend(cls._messagings_in_mgmt(_provider, server))
             return messagings
         else:
             return cls._messagings_in_mgmt(provider, server)

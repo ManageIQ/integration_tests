@@ -543,9 +543,9 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
     def clear_providers_by_class(prov_class, validate=True):
         """ Removes all providers that are an instance of given class or one of it's subclasses
         """
-        from utils.providers import ProviderFilter, new_list_providers
+        from utils.providers import ProviderFilter, list_providers
         pf = ProviderFilter(classes=[prov_class])
-        provs = new_list_providers(filters=[pf], use_global_filters=False)
+        provs = list_providers(filters=[pf], use_global_filters=False)
 
         # First, delete all
         deleted_provs = []

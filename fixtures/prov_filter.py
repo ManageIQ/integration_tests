@@ -1,5 +1,5 @@
 from utils.log import logger
-from utils.providers import global_filters, new_list_providers, ProviderFilter
+from utils.providers import global_filters, list_providers, ProviderFilter
 
 
 def pytest_addoption(parser):
@@ -24,4 +24,4 @@ def pytest_configure(config):
     global_filters['use_provider'] = new_filter
 
     logger.debug('Filtering providers with {}, leaves {}'.format(
-        cmd_filter, [prov.key for prov in new_list_providers()]))
+        cmd_filter, [prov.key for prov in list_providers()]))

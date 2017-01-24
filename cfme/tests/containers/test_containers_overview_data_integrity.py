@@ -13,7 +13,7 @@ from collections import namedtuple
 from cfme.containers.container import Container
 import time
 from cfme.web_ui import StatusBox
-from utils.providers import list_providers
+from utils.providers import list_providers_by_class
 from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.overview import ContainersOverview
 
@@ -85,10 +85,7 @@ def test_containers_overview_data_integrity():
     time.sleep(2)
     statusbox_values = {data_set.object: int(StatusBox(data_set.name).value())
                         for data_set in DATA_SETS}
-    api_values = get_api_object_counts(
-        map(lambda name: ContainersProvider(name, key=name),
-            list_providers('openshift'))
-    )
+    api_values = get_api_object_counts(list_providers_by_class(ContainersProvider))
     results = {}
     for cls in DATA_SETS:
         results[cls.object] = api_values[cls.object] == statusbox_values[cls.object]
