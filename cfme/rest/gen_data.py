@@ -15,6 +15,20 @@ from utils.log import logger
 from utils import version
 
 
+_TEMPLATE_TORSO = """{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "AWS CloudFormation Sample Template Rails_Single_Instance.",
+
+  "Parameters" : {
+    "KeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+    }
+  }
+}
+"""
+
 def service_catalogs(request, rest_api):
     name = fauxfactory.gen_alphanumeric()
     scls_data = [{
@@ -401,5 +415,30 @@ def arbitration_settings(request, rest_api, num=2):
         except APIException:
             # settings can be deleted by tests, just log warning
             logger.warning("Failed to delete arbitration settings.")
+
+    return response
+
+
+def orchestration_templates(request, rest_api, num=2):
+    collection = rest_api.collections.orchestration_templates
+    body = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric(5)
+        body.append({
+            'name': 'test_{}'.format(uniq),
+            'description': 'Test Template {}'.format(uniq),
+            'type': 'OrchestrationTemplateCfn',
+            'orderable': False,
+            'draft': False,
+            'content': _TEMPLATE_TORSO.replace('CloudFormation', uniq)})
+    response = collection.action.create(*body)
+
+    @request.addfinalizer
+    def _finished():
+        try:
+            collection.action.delete(*response)
+        except APIException:
+            # settings can be deleted by tests, just log warning
+            logger.warning("Failed to delete orchestration templates.")
 
     return response
