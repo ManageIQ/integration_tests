@@ -12,7 +12,7 @@ from utils.db import cfmedb
 from utils.providers import get_crud, get_crud_by_name
 from utils.providers import list_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
+from . provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
