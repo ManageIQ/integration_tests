@@ -71,7 +71,7 @@ def test_host_hostname(provider, soft_assert):
     assert len(my_quads) > 0
     for quad in my_quads:
         host = Host(name=quad.name)
-        result = int(host.get_detail("Properties", "Hostname"))
+        result = host.get_detail("Properties", "Hostname")
         soft_assert(result) != '', "Missing hostname in: " + str(host)
 
 
@@ -82,7 +82,7 @@ def test_smbios_data(provider):
     assert len(my_quads) > 0
     for quad in my_quads:
         host = Host(name=quad.name)
-        result = int(host.get_detail("Properties", "Memory"))
+        result = int(host.get_detail("Properties", "Memory").split()[0])
         assert result > 0
 
 
