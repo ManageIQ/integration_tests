@@ -14,10 +14,6 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
-ROLES = ['NovaCompute', 'Controller', 'BlockStorage', 'SwiftStorage',
-         'CephStorage']
-
-
 def test_host_configuration(provider, soft_assert):
     provider.load_details()
     sel.click(InfoBlock.element("Relationships", "Nodes"))
