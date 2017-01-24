@@ -135,14 +135,13 @@ class TestControlOnQuadicons(object):
         soft_assert(
             testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
-    def test_power_off(self, testing_vm, verify_vm_running, soft_assert, register_event):
+    def test_power_off(self, testing_vm, verify_vm_running, soft_assert):
         """Tests power off
 
         Metadata:
             test_flag: power_control, provision
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_ON, timeout=720)
-        register_event('VmOrTemplate', testing_vm.name, ['request_vm_poweroff', 'vm_poweroff'])
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False)
         flash.assert_message_contain("Stop initiated")
         if_scvmm_refresh_provider(testing_vm.provider)
@@ -166,14 +165,13 @@ class TestControlOnQuadicons(object):
             not testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm running")
 
     @pytest.mark.tier(1)
-    def test_power_on(self, testing_vm, verify_vm_stopped, soft_assert, register_event):
+    def test_power_on(self, testing_vm, verify_vm_stopped, soft_assert):
         """Tests power on
 
         Metadata:
             test_flag: power_control, provision
         """
         testing_vm.wait_for_vm_state_change(desired_state=testing_vm.STATE_OFF, timeout=720)
-        register_event('VmOrTemplate', testing_vm.name, ['request_vm_start', 'vm_start'])
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False)
         flash.assert_message_contain("Start initiated")
         if_scvmm_refresh_provider(testing_vm.provider)
@@ -185,7 +183,7 @@ class TestControlOnQuadicons(object):
 
 class TestVmDetailsPowerControlPerProvider(object):
 
-    def test_power_off(self, testing_vm, verify_vm_running, soft_assert, register_event):
+    def test_power_off(self, testing_vm, verify_vm_running, soft_assert):
         """Tests power off
 
         Metadata:
@@ -194,7 +192,6 @@ class TestVmDetailsPowerControlPerProvider(object):
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
         last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
-        register_event('VmOrTemplate', testing_vm.name, ['request_vm_poweroff', 'vm_poweroff'])
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_OFF, cancel=False,
                                            from_details=True)
         flash.assert_message_contain("Stop initiated")
@@ -210,7 +207,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             soft_assert(new_last_boot_time == last_boot_time,
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
-    def test_power_on(self, testing_vm, verify_vm_stopped, soft_assert, register_event):
+    def test_power_on(self, testing_vm, verify_vm_stopped, soft_assert):
         """Tests power on
 
         Metadata:
@@ -218,7 +215,6 @@ class TestVmDetailsPowerControlPerProvider(object):
         """
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_OFF, timeout=720, from_details=True)
-        register_event('VmOrTemplate', testing_vm.name, ['request_vm_start', 'vm_start'])
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False,
                                            from_details=True)
         flash.assert_message_contain("Start initiated")
@@ -228,7 +224,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(
             testing_vm.provider.mgmt.is_vm_running(testing_vm.name), "vm not running")
 
-    def test_suspend(self, testing_vm, verify_vm_running, soft_assert, register_event):
+    def test_suspend(self, testing_vm, verify_vm_running, soft_assert):
         """Tests suspend
 
         Metadata:
@@ -237,7 +233,6 @@ class TestVmDetailsPowerControlPerProvider(object):
         testing_vm.wait_for_vm_state_change(
             desired_state=testing_vm.STATE_ON, timeout=720, from_details=True)
         last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
-        register_event('VmOrTemplate', testing_vm.name, ['request_vm_suspend', 'vm_suspend'])
         testing_vm.power_control_from_cfme(option=testing_vm.SUSPEND, cancel=False,
                                            from_details=True)
         flash.assert_message_contain("Suspend initiated")
@@ -261,7 +256,7 @@ class TestVmDetailsPowerControlPerProvider(object):
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
     def test_start_from_suspend(
-            self, testing_vm, verify_vm_suspended, soft_assert, register_event):
+            self, testing_vm, verify_vm_suspended, soft_assert):
         """Tests start from suspend
 
         Metadata:
@@ -276,7 +271,6 @@ class TestVmDetailsPowerControlPerProvider(object):
                 logger.warning('working around bz1174858, ignoring timeout')
             else:
                 raise
-        register_event('VmOrTemplate', testing_vm.name, ['request_vm_start', 'vm_start'])
         last_boot_time = testing_vm.get_detail(properties=("Power Management", "Last Boot Time"))
         testing_vm.power_control_from_cfme(option=testing_vm.POWER_ON, cancel=False,
                                            from_details=True)
