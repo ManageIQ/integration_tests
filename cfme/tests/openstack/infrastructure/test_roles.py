@@ -15,7 +15,7 @@ pytestmark = [pytest.mark.uncollectif(lambda: current_version() < '5.7'),
               pytest.mark.usefixtures("setup_provider_modscope")]
 
 
-ROLES = ['NovaCompute', 'Controller', 'BlockStorage', 'SwiftStorage',
+ROLES = ['NovaCompute', 'Controller', 'Compute', 'BlockStorage', 'SwiftStorage',
          'CephStorage']
 
 
@@ -24,23 +24,15 @@ def test_host_role_type(provider):
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
-    result = True
-    while result:
-        for quad in my_quads:
-            role_name = str(quad.name)
-            role_name = re.search(r'\((\w+)\)', role_name).group(1)
-            if role_name not in ROLES:
-                result = False
-    assert result
+    for quad in my_quads:
+        role_name = str(quad.name)
+        role_name = re.search(r'\((\w+)\)', role_name).group(1)
+        assert role_name in ROLES
 
 
 def test_roles_name(provider):
     navigate_to(Cluster, 'All')
     my_roles_quads = list(Quadicon.all())
-    result = True
-    while result:
-        for quad in my_roles_quads:
-            role_name = str(quad.name).split('-')[1]
-            if role_name not in ROLES:
-                result = False
-    assert result
+    for quad in my_roles_quads:
+        role_name = str(quad.name).split('-')[1]
+        assert role_name in ROLES
