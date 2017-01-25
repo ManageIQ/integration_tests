@@ -9,9 +9,7 @@ from cfme.configure.tasks import is_host_analysis_finished
 from utils.wait import wait_for
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class,
-                                         [OpenstackInfraProvider],
-                                         scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 
 NODE_TYPE = "Compute"

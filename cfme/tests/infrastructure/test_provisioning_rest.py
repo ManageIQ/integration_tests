@@ -10,8 +10,7 @@ from utils import testgen
 
 pytestmark = [test_requirements.provision]
 
-pytest_generate_tests = testgen.generate(
-    testgen.providers_by_class, [VMwareProvider, RHEVMProvider], scope="module")
+pytest_generate_tests = testgen.generate([VMwareProvider, RHEVMProvider], scope="module")
 
 
 @pytest.fixture(scope="module")

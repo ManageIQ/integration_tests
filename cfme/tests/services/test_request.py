@@ -18,8 +18,7 @@ pytestmark = [
 ]
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class, [VMwareProvider],
-    scope="module")
+pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 def test_copy_request(setup_provider, provider, catalog_item, request):

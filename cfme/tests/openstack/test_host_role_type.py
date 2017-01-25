@@ -7,9 +7,7 @@ from cfme.fixtures import pytest_selenium as sel
 import re
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class,
-                                         [OpenstackInfraProvider],
-                                         scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 
 ROLES = ['NovaCompute', 'Controller', 'BlockStorage', 'SwiftStorage',

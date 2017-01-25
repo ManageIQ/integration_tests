@@ -17,7 +17,7 @@ pytestmark = [pytest.mark.tier(3),
               pytest.mark.usefixtures('setup_provider')]
 
 pytest_generate_tests = testgen.generate(
-    testgen.providers_by_class, [OpenStackProvider, EC2Provider, RHEVMProvider, VMwareProvider],
+    [OpenStackProvider, EC2Provider, RHEVMProvider, VMwareProvider],
     scope='module')
 
 

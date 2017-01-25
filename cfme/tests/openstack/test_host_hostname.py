@@ -4,8 +4,7 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 import pytest
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class,
-                                         [OpenstackInfraProvider], scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 

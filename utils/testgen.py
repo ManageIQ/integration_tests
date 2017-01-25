@@ -119,7 +119,7 @@ def providers_by_class(metafunc, classes, required_fields=None):
     return providers(metafunc, filters=[pf])
 
 
-def generate(gen_func=providers_by_class, *args, **kwargs):
+def generate(*args, **kwargs):
     """Functional handler for inline pytest_generate_tests definition
 
     Args:
@@ -156,6 +156,7 @@ def generate(gen_func=providers_by_class, *args, **kwargs):
     scope = kwargs.pop('scope', 'function')
     indirect = kwargs.pop('indirect', False)
     filter_unused = kwargs.pop('filter_unused', True)
+    gen_func = kwargs.pop('gen_func', providers_by_class)
 
     # If parametrize doesn't get you what you need, steal this and modify as needed
     def pytest_generate_tests(metafunc):
