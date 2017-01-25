@@ -8,7 +8,7 @@ from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.project import Project
 from cfme.containers.route import Route
-from cfme.containers.node import Node
+from cfme.containers.node import NodeCollection
 from cfme.containers.replicator import Replicator
 from cfme.web_ui import toolbar as tb
 from utils import testgen
@@ -30,7 +30,7 @@ mapping = {
     'Image Registries': ImageRegistry,
     'Projects': Project,
     'Routes': Route,
-    'Nodes': Node,
+    'Nodes': NodeCollection,
     'Containers': Container,
     'Replicators': Replicator
 }

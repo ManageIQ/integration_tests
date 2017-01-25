@@ -1,18 +1,19 @@
-from random import sample, shuffle
 import pytest
+from random import sample, shuffle
+from collections import namedtuple
 
-from utils.version import current_version
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
 from cfme.containers.pod import Pod
-from cfme.containers.provider import ContainersProvider
 from cfme.containers.service import Service
-from cfme.containers.node import Node
+from cfme.containers.node import Node, NodeCollection
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.replicator import Replicator
 from cfme.containers.image import Image
 from cfme.containers.project import Project
 from cfme.containers.template import Template
 from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, summary_title
+from utils import testgen
+from utils.appliance.implementations.ui import navigate_to
+from utils.version import current_version
 
 
 pytestmark = [
@@ -22,11 +23,20 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
+# This is a bit of a hack while only Node has a Collection class
+# When refactored for widgets the need for parametrization with tuples will go away
+DataSet = namedtuple('DataSet', ['collection', 'object'])
 
-TEST_OBJECTS = [Pod, Service, Node, Replicator, Image, Project, Template]
-
+TEST_OBJECTS = [DataSet(None, Pod),
+                DataSet(None, Service),
+                DataSet(NodeCollection, Node),
+                DataSet(None, Replicator),
+                DataSet(None, Image),
+                DataSet(None, Project)]
+rel_values = (0, 'Unknown image source', 'registry.access.redhat.com')
 
 # CMP-9930 CMP-9892 CMP-9965 CMP-9983 CMP-9869 CMP-10321
+
 
 @pytest.mark.parametrize('cls', sample(TEST_OBJECTS, 4))
 def test_relationships_tables(provider, cls):
@@ -37,15 +47,19 @@ def test_relationships_tables(provider, cls):
     or to the page where the number of rows is equal to the number
     that is displayed in the Relationships table.
     """
-    if current_version() < "5.7" and cls == Template:
-        pytest.skip('Templates are not exist in CFME version smaller than 5.7. skipping...')
-    navigate_to(cls, 'All')
+    collection = cls.collection if cls.collection is not None else cls.object
+    navigate_to(collection, 'All')
+    # TODO: When all parametrized classes have widgets, set view and use class properties
     tb.select('List View')
     list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
-    names = [r.name.text for r in list_tbl.rows()]
-    names = sample(names, min(2, len(names)))
-    for name in names:
-        obj = cls(name, provider)
+    cls_instances = [r.name.text for r in list_tbl.rows()]
+    cls_instances = sample(cls_instances, min(2, len(cls_instances)))
+    for name in cls_instances:
+        obj = cls.object(name, provider)
+        if current_version() < "5.7" and obj == Template:
+            pytest.skip('Templates do not exist in CFME version prior to 5.7, skipping...')
+        # TODO: SummaryMixin to be removed from parametrized classes, use widgets instead
+        # Basically refactor the this section of the test
         obj.summary.reload()
         sum_values = obj.summary.relationships.items().values()
         shuffle(sum_values)
