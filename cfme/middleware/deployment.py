@@ -3,15 +3,15 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import Deployable
 from cfme.middleware.server import MiddlewareServer
+from cfme.middleware.provider import Deployable
 from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
 from utils.providers import get_crud, get_crud_by_name, list_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
+from .provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 

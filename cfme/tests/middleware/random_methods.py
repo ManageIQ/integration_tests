@@ -1,4 +1,4 @@
-from cfme.middleware import get_random_list
+from cfme.middleware.provider import get_random_list
 from cfme.middleware.datasource import MiddlewareDatasource
 from cfme.middleware.server import MiddlewareServer
 from cfme.middleware.deployment import MiddlewareDeployment

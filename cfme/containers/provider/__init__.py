@@ -17,7 +17,11 @@ from utils.pretty import Pretty
 from utils.varmeth import variable
 
 
-from .. import cfg_btn, mon_btn, pol_btn, details_page
+cfg_btn = partial(tb.select, 'Configuration')
+mon_btn = partial(tb.select, 'Monitoring')
+pol_btn = partial(tb.select, 'Policy')
+
+details_page = Region(infoblock_type='detail')
 
 
 properties_form = Form(

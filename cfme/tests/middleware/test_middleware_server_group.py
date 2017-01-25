@@ -1,6 +1,7 @@
 import pytest
-from cfme.middleware import get_random_list
+
 from cfme.middleware.domain import MiddlewareDomain
+from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server_group import MiddlewareServerGroup
 from utils import testgen

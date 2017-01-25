@@ -3,7 +3,7 @@
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, match_location
-from . import details_page
+from .provider import details_page
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator,\
     navigate_to

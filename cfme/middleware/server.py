@@ -2,7 +2,7 @@ import re
 from cfme.common import Taggable, UtilizationMixin
 from cfme.exceptions import MiddlewareServerNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware import parse_properties, Container
+from cfme.middleware.provider import parse_properties, Container
 from cfme.web_ui import (
     CheckboxTable, paginator, Form, Input, fill, InfoBlock
 )
@@ -16,7 +16,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 from utils.db import cfmedb
 from utils.providers import get_crud, get_crud_by_name, list_providers
 from utils.varmeth import variable
-from . import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
+from .provider import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
