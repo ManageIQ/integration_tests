@@ -1115,6 +1115,10 @@ class AppliancePool(MetadataMixin):
         return Appliance.objects.filter(appliance_pool=self).order_by("id").all()
 
     @property
+    def single_or_none_appliance(self):
+        return self.appliances.count() <= 1
+
+    @property
     def current_count(self):
         return len(self.appliances)
 
