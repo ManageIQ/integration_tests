@@ -4,10 +4,13 @@ import random
 from cfme.web_ui import CheckboxTable
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
+from utils.version import current_version
 from cfme.containers.template import Template
 
 
 pytestmark = [
+    pytest.mark.uncollectif(
+        lambda: current_version() < 5.7),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(3)]
 pytest_generate_tests = testgen.generate(
