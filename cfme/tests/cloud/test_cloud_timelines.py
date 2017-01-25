@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 from cfme.cloud.instance import Instance
+from cfme.cloud.provider import CloudProvider
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
 from utils import testgen
@@ -12,7 +13,7 @@ from utils.log import logger
 from utils.wait import wait_for
 
 
-pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
+pytest_generate_tests = testgen.generate(testgen.providers_by_class(CloudProvider), scope="module")
 
 pytestmark = [pytest.mark.tier(2)]
 
