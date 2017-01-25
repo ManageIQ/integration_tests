@@ -7,6 +7,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services import requests
 from cfme import test_requirements
@@ -26,17 +27,18 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
-        'iso_datastore',
-        ['provisioning', 'host'],
-        ['provisioning', 'datastore'],
-        ['provisioning', 'iso_template'],
-        ['provisioning', 'iso_file'],
-        ['provisioning', 'iso_kickstart'],
-        ['provisioning', 'iso_root_password'],
-        ['provisioning', 'iso_image_type'],
-        ['provisioning', 'vlan'],
-    ])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [InfraProvider], required_fields=[
+            'iso_datastore',
+            ['provisioning', 'host'],
+            ['provisioning', 'datastore'],
+            ['provisioning', 'iso_template'],
+            ['provisioning', 'iso_file'],
+            ['provisioning', 'iso_kickstart'],
+            ['provisioning', 'iso_root_password'],
+            ['provisioning', 'iso_image_type'],
+            ['provisioning', 'vlan'],
+        ])
     argnames = argnames + ['iso_cust_template', 'iso_datastore']
 
     new_idlist = []

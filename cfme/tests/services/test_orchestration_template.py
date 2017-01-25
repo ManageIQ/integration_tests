@@ -43,11 +43,10 @@ METHOD_TORSO_copied = """
 """
 
 
-pytest_generate_tests = testgen.generate(
-    testgen.providers_by_class, [CloudProvider],
+pytest_generate_tests = testgen.generate([CloudProvider],
     required_fields=[
         ['provisioning', 'stack_provisioning']
-    ], scope="module")
+], scope="module")
 
 
 @pytest.yield_fixture(scope="function")

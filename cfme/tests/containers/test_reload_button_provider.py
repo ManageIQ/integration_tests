@@ -1,5 +1,6 @@
 import pytest
 
+from cfme.containers.provider import ContainersProvider
 from utils import testgen, version
 from cfme.web_ui import toolbar as tb
 from utils.appliance.implementations.ui import navigate_to
@@ -10,8 +11,7 @@ pytestmark = [
         lambda: version.current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2)]
-pytest_generate_tests = testgen.generate(
-    testgen.containers_providers, scope='function')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 # CMP-9878
 

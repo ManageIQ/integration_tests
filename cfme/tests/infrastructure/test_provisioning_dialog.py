@@ -8,6 +8,7 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
@@ -34,15 +35,11 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        required_fields=[
-            ['provisioning', 'template'],
-            ['provisioning', 'host'],
-            ['provisioning', 'datastore']
-        ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
+    ['provisioning', 'template'],
+    ['provisioning', 'host'],
+    ['provisioning', 'datastore']
+], scope="module")
 
 
 @pytest.fixture(scope="function")

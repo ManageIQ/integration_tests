@@ -27,8 +27,7 @@ pytestmark = [
         lambda provider: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.containers_providers, scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 DataSet = namedtuple('DataSet', ['object', 'name'])
 

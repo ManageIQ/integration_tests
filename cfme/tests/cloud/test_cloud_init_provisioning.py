@@ -19,7 +19,7 @@ pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
 pytest_generate_tests = testgen.generate(
-    testgen.providers_by_class, [CloudProvider], required_fields=[
+    [CloudProvider], required_fields=[
         ['provisioning', 'ci-template'],
         ['provisioning', 'ci-username'],
         ['provisioning', 'ci-pass'],

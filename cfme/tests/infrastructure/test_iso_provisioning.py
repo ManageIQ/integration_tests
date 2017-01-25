@@ -4,6 +4,7 @@ import pytest
 
 from utils.conf import cfme_data
 from cfme.common.provider import cleanup_vm
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.provisioning import do_vm_provisioning
 from utils import testgen
@@ -17,17 +18,18 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
-        ('iso_datastore', True),
-        ['provisioning', 'host'],
-        ['provisioning', 'datastore'],
-        ['provisioning', 'iso_template'],
-        ['provisioning', 'iso_file'],
-        ['provisioning', 'iso_kickstart'],
-        ['provisioning', 'iso_root_password'],
-        ['provisioning', 'iso_image_type'],
-        ['provisioning', 'vlan'],
-    ])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [InfraProvider], required_fields=[
+            ('iso_datastore', True),
+            ['provisioning', 'host'],
+            ['provisioning', 'datastore'],
+            ['provisioning', 'iso_template'],
+            ['provisioning', 'iso_file'],
+            ['provisioning', 'iso_kickstart'],
+            ['provisioning', 'iso_root_password'],
+            ['provisioning', 'iso_image_type'],
+            ['provisioning', 'vlan'],
+        ])
     argnames = argnames + ['iso_cust_template', 'iso_datastore']
 
     new_idlist = []

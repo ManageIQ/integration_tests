@@ -28,8 +28,8 @@ pytestmark = [pytest.mark.meta(server_roles="+automate"),
               test_requirements.provision, pytest.mark.tier(2)]
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class, [CloudProvider],
-    required_fields=[['provisioning', 'image']], scope="function")
+pytest_generate_tests = testgen.generate(
+    [CloudProvider], required_fields=[['provisioning', 'image']], scope="function")
 
 
 @pytest.fixture(scope="function")

@@ -14,7 +14,7 @@ from utils.version import current_version
 
 
 pytest_generate_tests = testgen.generate(
-    testgen.providers_by_class, [CloudProvider], required_fields=['remove_test'], scope="module")
+    [CloudProvider], required_fields=['remove_test'], scope="module")
 
 
 pytestmark = [pytest.mark.tier(2),

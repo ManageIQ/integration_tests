@@ -7,6 +7,7 @@ from cfme.common.vm import VM
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.control.explorer import actions, alert_profiles, alerts, policies, policy_profiles
 from cfme.exceptions import CFMEExceptionOccured
+from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import flash, jstimelines
 from utils import ports, testgen
 from utils.conf import credentials
@@ -30,7 +31,7 @@ CANDU_PROVIDER_TYPES = {"virtualcenter"}  # TODO: rhevm
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
+    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [InfraProvider])
     new_idlist = []
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):

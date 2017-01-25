@@ -7,6 +7,7 @@ from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.infrastructure.provider import InfraProvider
 from cfme.common.provider import cleanup_vm
 from cfme.services import requests
 from utils import testgen
@@ -22,15 +23,11 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        required_fields=[
-            ['provisioning', 'template'],
-            ['provisioning', 'host'],
-            ['provisioning', 'datastore']
-        ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
+    ['provisioning', 'template'],
+    ['provisioning', 'host'],
+    ['provisioning', 'datastore']
+], scope="module")
 
 
 @pytest.yield_fixture(scope="function")

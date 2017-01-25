@@ -87,18 +87,39 @@ More information on ``parametrize`` can be found in pytest's documentation:
 import pytest
 
 from cfme.common.provider import BaseProvider
-from cfme.containers.provider import ContainersProvider
 from cfme.infrastructure.config_management import get_config_manager_from_config
-from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
-from cfme.middleware.provider import MiddlewareProvider
 from cfme.roles import group_data
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.providers import ProviderFilter, list_providers
 
 
-def generate(gen_func, *args, **kwargs):
+def providers_by_class(metafunc, classes, required_fields=None):
+    """ Gets providers by their class
+
+    Args:
+        metafunc: Passed in by pytest
+        classes: List of classes to fetch
+        required_fields: See :py:class:`cfme.utils.provider.ProviderFilter`
+
+    Usage:
+        # In the function itself
+        def pytest_generate_tests(metafunc):
+            argnames, argvalues, idlist = testgen.providers_by_class(
+                [GCEProvider, AzureProvider], required_fields=['provisioning']
+            )
+        metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+
+        # Using the parametrize wrapper
+        pytest_generate_tests = testgen.parametrize(testgen.providers_by_class, [GCEProvider],
+            scope='module')
+    """
+    pf = ProviderFilter(classes=classes, required_fields=required_fields)
+    return providers(metafunc, filters=[pf])
+
+
+def generate(gen_func=providers_by_class, *args, **kwargs):
     """Functional handler for inline pytest_generate_tests definition
 
     Args:
@@ -221,48 +242,9 @@ def providers(metafunc, filters=None):
     return argnames, argvalues, idlist
 
 
-def providers_by_class(metafunc, classes, required_fields=None):
-    """ Gets providers by their class
-
-    Args:
-        metafunc: Passed in by pytest
-        classes: List of classes to fetch
-        required_fields: See :py:class:`cfme.utils.provider.ProviderFilter`
-
-    Usage:
-        # In the function itself
-        def pytest_generate_tests(metafunc):
-            argnames, argvalues, idlist = testgen.providers_by_class(
-                [GCEProvider, AzureProvider], required_fields=['provisioning']
-            )
-        metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
-
-        # Using the parametrize wrapper
-        pytest_generate_tests = testgen.parametrize(testgen.providers_by_class, [GCEProvider],
-            scope='module')
-    """
-    pf = ProviderFilter(classes=classes, required_fields=required_fields)
-    return providers(metafunc, filters=[pf])
-
-
 def all_providers(metafunc, **options):
     """ Returns providers of all types """
     return providers_by_class(metafunc, [BaseProvider], **options)
-
-
-def containers_providers(metafunc, **options):
-    """ Returns only containers providers """
-    return providers_by_class(metafunc, [ContainersProvider], **options)
-
-
-def infra_providers(metafunc, **options):
-    """ Returns only infrastructure providers """
-    return providers_by_class(metafunc, [InfraProvider], **options)
-
-
-def middleware_providers(metafunc, **options):
-    """ Returns only middleware providers """
-    return providers_by_class(metafunc, [MiddlewareProvider], **options)
 
 
 def auth_groups(metafunc, auth_mode):

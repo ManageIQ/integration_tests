@@ -2,6 +2,7 @@ import pytest
 
 from cfme.infrastructure import host
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
+from cfme.infrastructure.provider import InfraProvider
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill
@@ -19,21 +20,22 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without host provisioning data defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, required_fields=[
-        ['host_provisioning', 'pxe_server'],
-        ['host_provisioning', 'pxe_image'],
-        ['host_provisioning', 'pxe_image_type'],
-        ['host_provisioning', 'pxe_kickstart'],
-        ['host_provisioning', 'datacenter'],
-        ['host_provisioning', 'cluster'],
-        ['host_provisioning', 'datastores'],
-        ['host_provisioning', 'hostname'],
-        ['host_provisioning', 'root_password'],
-        ['host_provisioning', 'ip_addr'],
-        ['host_provisioning', 'subnet_mask'],
-        ['host_provisioning', 'gateway'],
-        ['host_provisioning', 'dns'],
-    ])
+    argnames, argvalues, idlist = testgen.providers_by_class(
+        metafunc, [InfraProvider], required_fields=[
+            ['host_provisioning', 'pxe_server'],
+            ['host_provisioning', 'pxe_image'],
+            ['host_provisioning', 'pxe_image_type'],
+            ['host_provisioning', 'pxe_kickstart'],
+            ['host_provisioning', 'datacenter'],
+            ['host_provisioning', 'cluster'],
+            ['host_provisioning', 'datastores'],
+            ['host_provisioning', 'hostname'],
+            ['host_provisioning', 'root_password'],
+            ['host_provisioning', 'ip_addr'],
+            ['host_provisioning', 'subnet_mask'],
+            ['host_provisioning', 'gateway'],
+            ['host_provisioning', 'dns'],
+        ])
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]
