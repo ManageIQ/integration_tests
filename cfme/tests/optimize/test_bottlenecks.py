@@ -15,8 +15,24 @@ db_events = store.current_appliance.db.session.query(tbl.timestamp,
     tbl.resource_type, tbl.resource_name, tbl.event_type, tbl.severity, tbl.message)
 
 
-@pytest.fixture(scope="module")
-def db_restore():
+@pytest.fixture(scope="session")
+def extend_db_partition():
+    app = get_or_create_current_appliance()
+    app.stop_evm_service()
+    app.extend_db_partition()
+    app.start_evm_service()
+
+
+@pytest.yield_fixture(scope="session")
+def backup_orig_state(extend_db_partition):
+    app = get_or_create_current_appliance()
+    app.backup_orig_state()
+    yield
+    app.restore_orig_state_from_backup()
+
+
+@pytest.fixture(scope="session")
+def db_restore(backup_orig_state):
     app = get_or_create_current_appliance()
     app.extend_db_partition()
     app.stop_evm_service()
