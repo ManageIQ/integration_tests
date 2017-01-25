@@ -19,6 +19,7 @@ Jinja2
 jsmin
 jupyter
 kwargify
+git+https://github.com/cdrage/kubeshift.git@971e69f8b29a9a4#egg=kubeshift
 # 15.8.1 breaks yaycl: https://github.com/mk-fg/layered-yaml-attrdict-config/commit/ea12fbf31b96abf15543c7b436272d8854b5d324
 layered-yaml-attrdict-config
 mgmtsystem>0.0.15
