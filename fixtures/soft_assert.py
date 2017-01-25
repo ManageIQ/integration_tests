@@ -100,8 +100,6 @@ def _soft_assert_cm():
     """
     _thread_locals.caught_asserts = []
     yield _thread_locals.caught_asserts
-    # if _thread_locals.caught_asserts:
-    #     raise SoftAssertionError(_thread_locals.caught_asserts)
 
 
 def handle_assert_artifacts(request, fail_message=None):

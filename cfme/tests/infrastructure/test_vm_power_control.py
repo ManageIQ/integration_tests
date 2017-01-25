@@ -9,7 +9,6 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import get_all_vms
 from cfme.web_ui import toolbar
 from utils import testgen
-from utils.events import EventBuilder
 from utils.generators import random_vm_name
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
@@ -20,9 +19,6 @@ pytestmark = [
     pytest.mark.tier(2),
     pytest.mark.usefixtures('setup_provider'),
     test_requirements.power]
-
-builder = EventBuilder()
-base_evt = partial(builder.new_event, target_type='VmOrTemplate')
 
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="class")

@@ -90,7 +90,7 @@ class EventTool(object):
         name_column = getattr(table, name_column)
         id_column = getattr(table, id_column)
         o = self.appliance.db.session.query(id_column).filter(name_column == target_name).first()
-        if o is None:
+        if not o:
             raise ValueError('{} with name {} not found.'.format(target_type, target_name))
         return o[0]
 
@@ -108,20 +108,20 @@ class EventTool(object):
         """
         until = until or datetime.utcnow()
         query = self.query(self.event_streams).filter(self.event_streams.type == 'MiqEvent')
-        if target_type is not None:
+        if target_type:
             query = query.filter(self.event_streams.target_type == target_type)
-        if target_id is not None:
-            if target_type is None:
+        if target_id:
+            if not target_type:
                 raise TypeError('When specifying target_id you also must specify target_type')
             target_id = self.process_id(target_type, target_id)
             query = query.filter(self.event_streams.target_id == target_id)
-        if event_type is not None:
+        if event_type:
             query = query.filter(self.event_streams.event_type == event_type)
-        if since is not None:
+        if since:
             query = query.filter(self.event_streams.timestamp >= since)
-        if until is not None:
+        if until:
             query = query.filter(self.event_streams.timestamp <= until)
-        if from_id is not None:
+        if from_id:
             query = query.filter(self.event_streams.id > from_id)
         results = []
         for event in query:
@@ -186,7 +186,7 @@ class EventAttr(object):
         if len(attrs) > 1:
             raise ValueError('event attribute can have only one key=value pair')
 
-        self.name, self.value = attrs.items()[-1]
+        self.name, self.value = attrs.items()[0]
         self.type = attr_type or type(self.value)
         self.cmp_func = cmp_func
 
@@ -197,9 +197,9 @@ class EventAttr(object):
         if not isinstance(attr, EventAttr) or self.name != attr.name:
             raise ValueError('Incorrect attribute is passed')
 
-        if attr.value is None or self.value is None:
+        if not attr.value or not self.value:
             return attr.value is None and self.value is None
-        elif self.cmp_func is not None:
+        elif self.cmp_func:
             return self.cmp_func(self.value, attr.value)
         else:
             return self.value == attr.value
@@ -214,14 +214,8 @@ class Event(object):
     """
     represents either db event received by CFME and stored in event_streams or an expected event
     """
-    def __init__(self, *args, **kwargs):
-
-        # preparing connection to appliance db and filling metadata
-        if 'event_tool' in kwargs:
-            self._tool = kwargs.pop('event_tool')
-        else:
-            raise ValueError("event tool is required to create event")
-
+    def __init__(self, event_tool, *args):
+        self._tool = event_tool
         # filling obtaining default attributes and their types
         self._default_attrs = {}  # EventAttr obj
         self._populate_defaults()
@@ -229,12 +223,11 @@ class Event(object):
         # container for event attributes
         self.event_attrs = {}  # EventAttr obj
 
-        if len(args) > 0:
-            for arg in args:
-                if isinstance(arg, EventAttr):
-                    self.add_attrs(arg)
-                else:
-                    logger.warning("arg {} doesn't belong to EventAttr. ignoring it".format(arg))
+        for arg in args:
+            if isinstance(arg, EventAttr):
+                self.add_attrs(arg)
+            else:
+                logger.warning("arg {} doesn't belong to EventAttr. ignoring it".format(arg))
 
     def __repr__(self):
         params = ", ".join(["{}={}".format(attr.name, attr.value) for attr in
@@ -252,7 +245,7 @@ class Event(object):
             evt_type = type(evt_value)
             # weird thing happens here. getattr sometimes takes value not equal to python_type
             # so, force type conversion has to be done
-            if evt_value is not None and evt_type is not default_type:
+            if evt_value and evt_type is not default_type:
                 if evt_type is unicode:
                     evt_value = evt_value.encode('utf8')
                 else:
@@ -336,7 +329,7 @@ class EventListener(Thread):
         self._stop_event = ThreadEvent()
 
     def set_last_record(self, evt=None):
-        if evt is not None:
+        if evt:
             self._last_processed_id = evt.event_attrs['id'].value
         else:
             try:
@@ -351,6 +344,15 @@ class EventListener(Thread):
         accepts one or many events
         callback function will be called when event arrived in event_streams.
         callback will receive expected event and got event as params.
+
+        *evts - list of events which EventListener should listen to
+
+        kwargs:
+            callback - callback function that will be called if event is received
+
+            first_event - EventListener waits for only first event of such type.
+            it ignores such event in future if first matching event is found.
+            By default EventListener collects and receives all matching events.
         """
         if 'callback' in kwargs:
             callback = kwargs['callback']
@@ -411,7 +413,7 @@ class EventListener(Thread):
                         continue
 
                     if exp_event['event'].matches(got_event):
-                        if exp_event['callback'] is not None:
+                        if exp_event['callback']:
                             exp_event['callback'](exp_event=exp_event['event'], got_event=got_event)
                         exp_event['matched_events'].append(got_event)
                 self.set_last_record(got_event)
