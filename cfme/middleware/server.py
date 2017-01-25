@@ -17,7 +17,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 from utils.db import cfmedb
 from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
-from .provider import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
+from cfme.middleware.provider import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
 
 list_tbl = CheckboxTable(table_locator=LIST_TABLE_LOCATOR)
 
