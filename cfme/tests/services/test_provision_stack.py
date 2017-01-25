@@ -8,6 +8,7 @@ from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services import requests
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
 from cfme import test_requirements
 from utils import testgen, version
@@ -132,12 +133,12 @@ outputs:
 """
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, required_fields=[
+pytest_generate_tests = testgen.generate(
+    testgen.providers_by_class, [CloudProvider],
+    required_fields=[
         ['provisioning', 'stack_provisioning']
-    ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+    ],
+    scope="module")
 
 
 @pytest.yield_fixture(scope="function")

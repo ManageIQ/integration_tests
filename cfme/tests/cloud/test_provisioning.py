@@ -13,6 +13,7 @@ from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
 from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
 from cfme.cloud.instance.azure import AzureInstance  # NOQA
 from cfme.cloud.instance.gce import GCEInstance  # NOQA
+from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
@@ -27,10 +28,8 @@ pytestmark = [pytest.mark.meta(server_roles="+automate"),
               test_requirements.provision, pytest.mark.tier(2)]
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc,
-        required_fields=[['provisioning', 'image']])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="function")
+pytest_generate_tests = testgen.generate(testgen.providers_by_class, [CloudProvider],
+    required_fields=[['provisioning', 'image']], scope="function")
 
 
 @pytest.fixture(scope="function")

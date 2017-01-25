@@ -23,7 +23,8 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from utils.log import logger
 
-pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
+pytest_generate_tests = testgen.generate(
+    testgen.providers_by_class, [CloudProvider], scope="function")
 
 
 @pytest.fixture(scope="module")
