@@ -12,6 +12,7 @@ from cfme.web_ui import Form, Region, CheckboxTable, fill, toolbar, match_locati
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.wait import wait_for, TimedOutError
+from cfme.services import requests
 
 buttons = Region(
     locators={
@@ -113,7 +114,7 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
     tabs_data = {
         'vm': {
             'tab': 'AllVMContainerAnalysis',
-            'task': 'Scan from Vm {}',
+            'task': '{}',
             'state': 'finished'
         },
         'host': {
@@ -138,6 +139,12 @@ def is_analysis_finished(name, task_type='vm', clear_tasks_after_success=True):
                             task_name=tabs_data['task'].format(name),
                             expected_status=tabs_data['state'],
                             clear_tasks_after_success=clear_tasks_after_success)
+
+
+def wait_analysis_finished(task_name, task_type, delay=5, timeout='5M'):
+    """ Wait until analysis is finished (or timeout exceeded)"""
+    wait_for(lambda: is_analysis_finished(task_name, task_type),
+             delay=delay, timeout=timeout, fail_func=requests.reload)
 
 
 class Tasks(Navigatable):

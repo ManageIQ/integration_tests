@@ -498,6 +498,10 @@ class SSHTail(SSHClient):
         self._remote_file_size = None
 
     def __iter__(self):
+        for line in self.raw_lines():
+            yield line.rstrip()
+
+    def raw_lines(self):
         with self as sshtail:
             fstat = sshtail._sftp_client.stat(self._remote_filename)
             if self._remote_file_size is not None:
@@ -505,9 +509,12 @@ class SSHTail(SSHClient):
                     remote_file = self._sftp_client.open(self._remote_filename, 'r')
                     remote_file.seek(self._remote_file_size, 0)
                     while (remote_file.tell() < fstat.st_size):
-                        line = remote_file.readline().rstrip()
+                        line = remote_file.readline()  # Note the  missing rstrip() here!
                         yield line
             self._remote_file_size = fstat.st_size
+
+    def raw_string(self):
+        return ''.join(self)
 
     def __enter__(self):
         self.connect(**self._connect_kwargs)
@@ -521,6 +528,10 @@ class SSHTail(SSHClient):
         with self as sshtail:
             fstat = sshtail._sftp_client.stat(self._remote_filename)
             self._remote_file_size = fstat.st_size  # Seed initial size of file
+
+    def lines_as_list(self):
+        """Return lines as list"""
+        return list(self)
 
 
 def keygen():

@@ -421,6 +421,14 @@ class Table(Pretty):
                 # but no data.
                 return
 
+    def rows_as_list(self):
+        """Returns rows as list"""
+        return [i for i in self.rows()]
+
+    def row_count(self):
+        """Returns row count"""
+        return len(self.rows_as_list())
+
     def find_row(self, header, value):
         """
         Finds a row in the Table by iterating through each visible item.
