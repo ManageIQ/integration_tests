@@ -3,36 +3,38 @@ from widgetastic.widget import View
 from widgetastic_patternfly import Button, Dropdown
 
 
-class BaseToolBarViewSelector(View):
-    """
-    represents toolbar's view selector control.
-    """
-    list_view = Button(title='List View')
-    grid_view = Button(title='Grid View')
-    tile_view = Button(title='Tile View')
+class ToolBarViewSelector(View):
+    """ represents toolbar's view selector control
 
-    def __locator__(self):
-        return './/div[contains(@class, "toolbar-pf-view-selector")]'
+        .. code-block:: python
+        @View.nested
+        class view_selector(ToolBarViewSelector):  # NOQA
+        
+        some_view.view_selector.select('Tile View')
+        some_view.view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+    BUTTONS = './/button'
 
-    def select(self, item):
-        if item == self.list_view.title:
-            self.list_view.click()
-        elif item == self.grid_view.title:
-            self.grid_view.click()
-        elif item == self.tile_view.title:
-            self.grid_view.click()
+    @property
+    def _view_buttons(self):
+        br = self.browser
+        return [Button(self, title=br.get_attribute('title', btn)) for btn
+                in br.elements(self.BUTTONS)]
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
         else:
-            raise ValueError('Incorrect value passed')
+            raise ValueError('Incorrect button title passed')
 
     @property
     def selected(self):
         """
-        goes thru buttons and returns the title of active button
-        Returns: currently selected view
-
+        Returns: title of currently selected view
         """
-        return [btn.title for btn in (self.list_view, self.grid_view, self.tile_view)
-                if btn.active][-1]
+        return [btn.title for btn in self._view_buttons if btn.active][-1]
 
 
 class ProviderToolBar(View):
@@ -45,11 +47,11 @@ class ProviderToolBar(View):
     download = Dropdown(text='Download')
 
     @View.nested
-    class view_selector(BaseToolBarViewSelector):  # NOQA
+    class view_selector(ToolBarViewSelector):  # NOQA
         pass
 
 
-class Items(View):
+class ProviderEntities(View):
     """
     should represent the view with different items like providers
     """
@@ -59,7 +61,7 @@ class Items(View):
         pass
 
 
-class BaseSideBar(View):
+class ProviderSideBar(View):
     """
     represents left side bar. it usually contains navigation, filters, etc
     """

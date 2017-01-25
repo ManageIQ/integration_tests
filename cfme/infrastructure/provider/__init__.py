@@ -9,13 +9,14 @@
 :var candu_form: A :py:class:`cfme.web_ui.Form` object describing the C&U credentials form.
 """
 from functools import partial
-
 from navmazing import NavigateToSibling, NavigateToObject
 from widgetastic.widget import View
+from widgetastic.utils import Fillable
 from widgetastic_patternfly import Input
 from cached_property import cached_property
+
 from widgetastic_manageiq import PaginationPane
-from .widgetastic_views import Items, BaseSideBar, ProviderToolBar
+from .widgetastic_views import ProviderEntities, ProviderSideBar, ProviderToolBar
 from cfme import BaseLoggedInPage
 from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
@@ -28,6 +29,7 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
+
 from utils import conf, deferred_verpick, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
@@ -112,7 +114,7 @@ pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
 
 
-class InfraProvidersView(BaseLoggedInPage):
+class InfraProviderView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return all((self.logged_in_as_current_user,
@@ -121,24 +123,37 @@ class InfraProvidersView(BaseLoggedInPage):
                     match_page(summary='Infrastructure Providers')))
 
     @View.nested
-    class toolbar(ProviderToolBar):
+    class toolbar(ProviderToolBar):  # NOQA
         pass
 
     @View.nested
-    class sidebar(BaseSideBar):
+    class sidebar(ProviderSideBar):  # NOQA
         pass
 
     @View.nested
-    class items(Items):
+    class providers(ProviderEntities):  # NOQA
         pass
 
     @View.nested
-    class paginator(PaginationPane):
+    class paginator(PaginationPane):  # NOQA
+        pass
+
+
+class InfraProviderCollection(Navigatable):
+    """Collection object for the :py:class:`InfraProvider`."""
+    def create(self, name=None, credentials=None, key=None, zone=None, provider_data=None,
+               cancel=False):
+        pass
+
+    def all(self):
+        pass
+
+    def delete(self, name):
         pass
 
 
 @CloudInfraProvider.add_base_type
-class InfraProvider(Pretty, CloudInfraProvider):
+class InfraProvider(Pretty, CloudInfraProvider, Fillable):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -178,7 +193,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None,
-            appliance=None):
+            appliance=None, collection=None):
+
+        self.collection = collection if collection else InfraProviderCollection(appliance=appliance)
         Navigatable.__init__(self, appliance=appliance)
         if not credentials:
             credentials = {}
@@ -329,10 +346,14 @@ class InfraProvider(Pretty, CloudInfraProvider):
             web_clusters.append(Cluster(icon.name, self))
         return web_clusters
 
+    @property
+    def parent(self):
+        return self.collection
+
 
 @navigator.register(Server)
 class InfraProviders(CFMENavigateStep):
-    VIEW = InfraProvidersView
+    VIEW = InfraProviderView
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
@@ -341,11 +362,8 @@ class InfraProviders(CFMENavigateStep):
 
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
-    VIEW = InfraProvidersView
+    VIEW = InfraProviderView
     prerequisite = NavigateToObject(Server, 'LoggedIn')
-
-    def am_i_here(self):
-        return match_page(summary='Infrastructure Providers')
 
     def step(self):
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Providers')
