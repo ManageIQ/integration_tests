@@ -86,7 +86,6 @@ More information on ``parametrize`` can be found in pytest's documentation:
 """
 import pytest
 
-from cfme.cloud.provider import CloudProvider
 from cfme.common.provider import BaseProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.infrastructure.config_management import get_config_manager_from_config
@@ -249,11 +248,6 @@ def providers_by_class(metafunc, classes, required_fields=None):
 def all_providers(metafunc, **options):
     """ Returns providers of all types """
     return providers_by_class(metafunc, [BaseProvider], **options)
-
-
-def cloud_providers(metafunc, **options):
-    """ Returns only cloud providers """
-    return providers_by_class(metafunc, [CloudProvider], **options)
 
 
 def containers_providers(metafunc, **options):
