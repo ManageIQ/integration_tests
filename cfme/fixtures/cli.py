@@ -4,6 +4,22 @@ from utils.appliance import current_appliance
 from utils.conf import cfme_data, credentials
 from utils.log import logger
 import pytest
+import paramiko
+
+
+@pytest.fixture()
+def dedicated_db(appliance, app_creds):
+    HOST = appliance.address
+    USER = app_creds['username']
+    PASS = app_creds['password']
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(HOST, username=USER, password=PASS)
+    channel = client.invoke_shell()
+    stdin = channel.makefile('wb')
+    stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {PASS} \n {PASS} \n \n")
+
+    return appliance
 
 
 @pytest.yield_fixture(scope="module")
@@ -43,6 +59,16 @@ def fqdn_appliance():
     yield apps[0]
 
     sp.destroy_pool(pool_id)
+
+
+@pytest.yield_fixture()
+def ipa_crud(fqdn_appliance, app_creds, ipa_creds):
+    fqdn_appliance.ap_cli.configure_ipa(ipa_creds['ipaserver'], ipa_creds['username'],
+        ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
+
+    yield(fqdn_appliance)
+
+    fqdn_appliance.ap_cli.uninstall_ipa_client()
 
 
 @pytest.fixture()

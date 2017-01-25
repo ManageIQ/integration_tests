@@ -75,17 +75,34 @@ class ApplianceConsoleCli(object):
     def set_hostname(self, hostname):
         self.run("-H {}".format(hostname))
 
+    def configure_appliance_external_join(self, dbhostname,
+            username, password, dbname, fetch_key, sshlogin, sshpass):
+        self.run("-h {} -U {} -p {} -d {} -v -K {} -s {} -a {}".format(
+            dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass))
+
+    def configure_appliance_external_create(self, region, dbhostname,
+            username, password, dbname, fetch_key, sshlogin, sshpass):
+        self.run("-r {} -h {} -U {} -p {} -d {} -v -K {} -s {} -a {}".format(
+            region, dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass))
+
     def configure_appliance_internal_fetch_key(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
         self.run("-r {} -i -h {} -U {} -p {} -d {} -v -K {} -s {} -a {}".format(
             region, dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass))
 
     def configure_ipa(self, ipaserver, username, password, domain, realm):
-        return self.run("-e {} -n {} -w {} -o {} -l {}".format(
+        self.run("-e {} -n {} -w {} -o {} -l {}".format(
             ipaserver, username, password, domain, realm))
+        assert self.appliance.ssh_client.run_command("systemctl status sssd | grep running")
+        return_code, output = self.appliance.ssh_client.run_command(
+            "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
+        assert return_code == 0
 
     def uninstall_ipa_client(self):
         self.run("--uninstall-ipa")
+        return_code, output = self.appliance.ssh_client.run_command(
+            "cat /etc/ipa/default.conf")
+        assert return_code != 0
 
 
 class IPAppliance(object):
