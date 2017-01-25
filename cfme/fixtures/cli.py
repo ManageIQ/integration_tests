@@ -9,12 +9,12 @@ import paramiko
 
 @pytest.fixture()
 def dedicated_db(appliance, app_creds):
-    HOST = appliance.address
-    USER = app_creds['username']
-    PASS = app_creds['password']
+    hostname = appliance.address
+    username = app_creds['username']
+    password = app_creds['password']
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(HOST, username=USER, password=PASS)
+    client.connect(hostname, username=username, password=password)
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
     stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {PASS} \n {PASS} \n \n")

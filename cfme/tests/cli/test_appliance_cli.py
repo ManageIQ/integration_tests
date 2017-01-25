@@ -30,9 +30,9 @@ def test_configure_appliance_external_join(request, app_creds, appliance):
 
 
 def test_configure_appliance_external_create(request, app_creds, appliance, dedicated_db):
-    HOST = dedicated_db.address
-    appliance.ap_cli.configure_appliance_external_create(5, HOST,
-        app_creds['username'], app_creds['password'], 'vmdb_production', HOST,
+    hostname = dedicated_db.address
+    appliance.ap_cli.configure_appliance_external_create(5, hostname,
+        app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
         app_creds['sshlogin'], app_creds['sshpass'])
     appliance.wait_for_evm_service()
     appliance.wait_for_web_ui()
