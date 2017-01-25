@@ -316,8 +316,7 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             else:
                 raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
 
-        # this is causing some issues in 5.5.0.9, commenting out for a bit
-        # paginator.results_per_page(1000)
+        paginator.results_per_page(1000)
         if use_search:
             try:
                 if not search.has_quick_search_box():
@@ -330,7 +329,6 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
                 search.normal_search(self.name)
             except Exception as e:
                 logger.warning("Failed to use search: %s", str(e))
-
         for page in paginator.pages():
             if sel.is_displayed(quadicon, move_to=True):
                 if mark:
