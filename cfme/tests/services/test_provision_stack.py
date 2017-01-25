@@ -134,7 +134,7 @@ outputs:
 
 
 pytest_generate_tests = testgen.generate(
-    testgen.cloud_providers, [CloudProvider],
+    testgen.providers_by_class, [CloudProvider],
     required_fields=[
         ['provisioning', 'stack_provisioning']
     ],
