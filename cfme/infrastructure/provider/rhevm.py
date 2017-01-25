@@ -56,7 +56,7 @@ class RHEVMProvider(InfraProvider):
             ip_address=prov_config['ipaddress'],
             api_port='',
             credentials=credentials,
-            zone=prov_config['server_zone'],
+            zone=prov_config.get('server_zone', 'default'),
             key=prov_key,
             start_ip=start_ip,
             end_ip=end_ip)
