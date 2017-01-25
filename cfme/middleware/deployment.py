@@ -3,13 +3,14 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 import re
 from cfme.common import Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.middleware.server import MiddlewareServer
 from cfme.middleware.provider import Deployable
+from cfme.middleware.provider.hawkular import HawkularProvider
+from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui import CheckboxTable, paginator, toolbar as tb
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_crud_by_name, list_providers
+from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
 from .provider import LIST_TABLE_LOCATOR, MiddlewareBase, download, get_server_name
 
@@ -161,8 +162,8 @@ class MiddlewareDeployment(MiddlewareBase, Taggable, Navigatable, Deployable):
     def deployments_in_mgmt(cls, provider=None, server=None):
         if provider is None:
             deployments = []
-            for _provider in list_providers('hawkular'):
-                deployments.extend(cls._deployments_in_mgmt(get_crud(_provider), server))
+            for _provider in list_providers_by_class(HawkularProvider):
+                deployments.extend(cls._deployments_in_mgmt(_provider, server))
             return deployments
         else:
             return cls._deployments_in_mgmt(provider, server)

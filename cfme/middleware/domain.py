@@ -3,13 +3,14 @@ from cfme.common import Taggable
 from cfme.exceptions import MiddlewareDomainNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties
+from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
 from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_crud_by_name, list_providers
+from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
 from .provider import LIST_TABLE_LOCATOR, MiddlewareBase, download
 
@@ -134,8 +135,8 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
     def domains_in_mgmt(cls, provider=None):
         if provider is None:
             deployments = []
-            for _provider in list_providers('hawkular'):
-                deployments.extend(cls._domains_in_mgmt(get_crud(_provider)))
+            for _provider in list_providers_by_class(HawkularProvider):
+                deployments.extend(cls._domains_in_mgmt(_provider))
             return deployments
         else:
             return cls._domains_in_mgmt(provider)

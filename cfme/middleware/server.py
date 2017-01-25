@@ -3,6 +3,7 @@ from cfme.common import Taggable, UtilizationMixin
 from cfme.exceptions import MiddlewareServerNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties, Container
+from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import (
     CheckboxTable, paginator, Form, Input, fill, InfoBlock
 )
@@ -14,7 +15,7 @@ from utils import attributize_string
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.db import cfmedb
-from utils.providers import get_crud, get_crud_by_name, list_providers
+from utils.providers import get_crud_by_name, list_providers_by_class
 from utils.varmeth import variable
 from .provider import LIST_TABLE_LOCATOR, pwr_btn, MiddlewareBase, download
 
@@ -177,8 +178,8 @@ class MiddlewareServer(MiddlewareBase, Taggable, Container, Navigatable, Utiliza
     def servers_in_mgmt(cls, provider=None, server_group=None):
         if provider is None:
             servers = []
-            for _provider in list_providers('hawkular'):
-                servers.extend(cls._servers_in_mgmt(get_crud(_provider), server_group))
+            for _provider in list_providers_by_class(HawkularProvider):
+                servers.extend(cls._servers_in_mgmt(_provider, server_group))
             return servers
         else:
             return cls._servers_in_mgmt(provider, server_group)

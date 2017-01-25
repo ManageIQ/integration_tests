@@ -445,8 +445,8 @@ class IPAppliance(object):
         Note:
             Recognized by name only.
         """
-        from utils.providers import new_list_providers
-        prov_cruds = new_list_providers(use_global_filters=False)
+        from utils.providers import list_providers
+        prov_cruds = list_providers(use_global_filters=False)
 
         found_cruds = set()
         unrecognized_ems_names = set()
@@ -475,7 +475,7 @@ class IPAppliance(object):
             This is used to avoid hard-to-debug
          automation issues.
         """
-        from utils.providers import new_list_providers
+        from utils.providers import list_providers
 
         def _recognized_by_ip(provider, ems):
             if any(p_type in ems.type for p_type in RECOGNIZED_BY_IP):
@@ -509,7 +509,7 @@ class IPAppliance(object):
                     return True
             return False
 
-        prov_cruds = new_list_providers(use_global_filters=False)
+        prov_cruds = list_providers(use_global_filters=False)
         managed_providers_names = [prov.name for prov in self.managed_providers]
         for ems in self._list_ems():
             # EMS found among managed providers can be safely ignored; they are not conflicting
