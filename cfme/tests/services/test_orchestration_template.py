@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from utils import testgen, error
 from utils.update import update
@@ -42,12 +43,11 @@ METHOD_TORSO_copied = """
 """
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, required_fields=[
+pytest_generate_tests = testgen.generate(
+    testgen.providers_by_class, [CloudProvider],
+    required_fields=[
         ['provisioning', 'stack_provisioning']
-    ])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+    ], scope="module")
 
 
 @pytest.yield_fixture(scope="function")

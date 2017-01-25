@@ -18,17 +18,13 @@ from utils.wait import wait_for
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.providers_by_class(metafunc, [CloudProvider],
-        required_fields=[
-            ['provisioning', 'ci-template'],
-            ['provisioning', 'ci-username'],
-            ['provisioning', 'ci-pass'],
-            ['provisioning', 'image']]
-    )
-
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(
+    testgen.providers_by_class, [CloudProvider], required_fields=[
+        ['provisioning', 'ci-template'],
+        ['provisioning', 'ci-username'],
+        ['provisioning', 'ci-pass'],
+        ['provisioning', 'image']],
+    scope="module")
 
 
 @pytest.fixture(scope="module")

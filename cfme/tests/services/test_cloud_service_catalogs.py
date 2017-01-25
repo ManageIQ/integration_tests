@@ -3,6 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.provider import cleanup_vm
+from cfme.cloud.provider import CloudProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
@@ -22,12 +23,8 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(
-        metafunc, required_fields=[['provisioning', 'image']]
-    )
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(testgen.providers_by_class, [CloudProvider],
+    required_fields=[['provisioning', 'image']], scope="module")
 
 
 @pytest.yield_fixture(scope="function")
