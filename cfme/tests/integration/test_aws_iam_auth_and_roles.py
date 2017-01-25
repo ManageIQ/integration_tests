@@ -7,7 +7,7 @@ from utils.testgen import auth_groups, generate
 from utils import version
 from utils.providers import setup_a_provider
 
-pytest_generate_tests = generate(auth_groups, auth_mode='aws_iam')
+pytest_generate_tests = generate(gen_func=auth_groups, auth_mode='aws_iam')
 
 
 @pytest.fixture(scope="module")

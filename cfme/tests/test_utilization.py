@@ -24,8 +24,7 @@ from utils.version import current_version
 # test_utilization_metrics.py go a step further and verify that specific performance metrics are
 # being collected.Eventually, support should be added to verify that specific metrics are being
 # collected for *all* providers.
-pytest_generate_tests = testgen.generate(testgen.providers_by_class,
-    [ContainersProvider, MiddlewareProvider], scope="module")
+pytest_generate_tests = testgen.generate([ContainersProvider, MiddlewareProvider], scope="module")
 
 
 pytestmark = [
