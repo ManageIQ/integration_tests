@@ -1,40 +1,7 @@
 # -*- coding: utf-8 -*-
 from widgetastic.widget import View
-from widgetastic_patternfly import Button, Dropdown
-
-
-class ToolBarViewSelector(View):
-    """ represents toolbar's view selector control
-
-        .. code-block:: python
-        @View.nested
-        class view_selector(ToolBarViewSelector):  # NOQA
-        
-        some_view.view_selector.select('Tile View')
-        some_view.view_selector.selected
-    """
-    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    BUTTONS = './/button'
-
-    @property
-    def _view_buttons(self):
-        br = self.browser
-        return [Button(self, title=br.get_attribute('title', btn)) for btn
-                in br.elements(self.BUTTONS)]
-
-    def select(self, title):
-        for button in self._view_buttons:
-            if button.title == title:
-                return button.click()
-        else:
-            raise ValueError('Incorrect button title passed')
-
-    @property
-    def selected(self):
-        """
-        Returns: title of currently selected view
-        """
-        return [btn.title for btn in self._view_buttons if btn.active][-1]
+from widgetastic_patternfly import Dropdown
+from widgetastic_manageiq import ToolBarViewSelector
 
 
 class ProviderToolBar(View):
