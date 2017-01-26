@@ -11,7 +11,7 @@ class OpenStackProvider(CloudProvider):
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, sec_protocol=None, amqp_sec_protocol=None,
-                 ten_mapping=None, infra_provider=None):
+                 tenant_mapping=None, infra_provider=None):
         super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
                                                 zone=zone, key=key)
         self.hostname = hostname
@@ -19,7 +19,7 @@ class OpenStackProvider(CloudProvider):
         self.api_port = api_port
         self.infra_provider = infra_provider
         self.sec_protocol = sec_protocol
-        self.ten_mapping = ten_mapping
+        self.tenant_mapping = tenant_mapping
         self.amqp_sec_protocol = amqp_sec_protocol
 
     def create(self, *args, **kwargs):
@@ -49,7 +49,7 @@ class OpenStackProvider(CloudProvider):
             'api_port': kwargs.get('api_port'),
             'ipaddress_text': kwargs.get('ip_address'),
             'sec_protocol': kwargs.get('sec_protocol'),
-            'ten_mapping': kwargs.get('ten_mapping'),
+            'tenant_mapping': kwargs.get('tenant_mapping'),
             'infra_provider': infra_provider_name}
         if 'amqp' in self.credentials:
             data_dict.update({
@@ -86,5 +86,5 @@ class OpenStackProvider(CloudProvider):
             zone=prov_config['server_zone'],
             key=prov_key,
             sec_protocol=prov_config.get('sec_protocol', "Non-SSL"),
-            ten_mapping=prov_config.get('ten_mapping', 'No'),
+            tenant_mapping=prov_config.get('tenant_mapping', False),
             infra_provider=infra_provider)
