@@ -3,6 +3,7 @@ import re
 from datetime import date
 from jsmin import jsmin
 from selenium.common.exceptions import WebDriverException
+from math import ceil
 
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
@@ -808,8 +809,7 @@ class PaginationPane(View):
 
     @property
     def exists(self):
-        cur_view = self.browser.element(self)
-        return False not in self.browser.classes(cur_view)
+        return self.is_displayed
 
     def check_all(self):
         self.check_all_items.fill(True)
@@ -827,7 +827,8 @@ class PaginationPane(View):
 
     @property
     def items_per_page(self):
-        return int(self.items_on_page.selected_option)
+        selected = self.items_on_page.selected_option
+        return int(re.sub(r'\sitems', '', selected))
 
     def set_items_per_page(self, value):
         self.items_on_page.select_by_visible_text(str(value))
@@ -842,16 +843,16 @@ class PaginationPane(View):
         # obtaining amount of existing pages, there is 1 page by default
         if item_amt == 0:
             page_amt = 1
-        elif item_amt % items_per_page != 0:
-            page_amt = item_amt // items_per_page + 1
         else:
-            page_amt = item_amt // items_per_page
+            # round up after dividing total item count by per-page
+            page_amt = int(ceil(float(item_amt) / float(items_per_page)))
 
         # calculating current_page_number
         if max_item <= items_per_page:
             cur_page = 1
         else:
-            cur_page = max_item // items_per_page
+            # round up after dividing highest displayed item number by per-page
+            cur_page = int(ceil(float(max_item) / float(items_per_page)))
 
         return cur_page, page_amt
 
@@ -879,16 +880,22 @@ class PaginationPane(View):
         """Generator to iterate over pages, yielding after moving to the next page"""
         if self.exists:
             # start iterating at the first page
-            self.first_page()
-            while self.cur_page < self.pages_amount:
-                # Aren't on the last page yet, advance
-                self.next_page()
-                yield
-            else:
-                # last page reached
-                pass
+            if self.cur_page != 1:
+                logger.debug('Resetting paginator to first page')
+                self.first_page()
+
+            # Adding 1 to pages_amount to include the last page in loop
+            for page in range(1, self.pages_amount + 1):
+                yield self.cur_page
+                if self.cur_page == self.pages_amount:
+                    # last or only page, stop looping
+                    break
+                else:
+                    logger.debug('Paginator advancing to next page')
+                    self.next_page()
+
         else:
-            yield
+            return
 
     @property
     def items_amount(self):
