@@ -1042,3 +1042,37 @@ class BreadCrumb(Widget):
             self.browser.handle_alert(wait=2.0, squash=True)
             self.browser.plugin.ensure_page_safe()
         return result
+
+
+class ToolBarViewSelector(View):
+    """ represents toolbar's view selector control ("Grid View", "Tile View", etc)
+
+        .. code-block:: python
+        @View.nested
+        class view_selector(ToolBarViewSelector):  # NOQA
+
+        some_view.view_selector.select('Tile View')
+        some_view.view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+    BUTTONS = './/button'
+
+    @property
+    def _view_buttons(self):
+        br = self.browser
+        return [Button(self, title=br.get_attribute('title', btn)) for btn
+                in br.elements(self.BUTTONS)]
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        """
+        Returns: title of currently selected view
+        """
+        return next(btn.title for btn in self._view_buttons if btn.active)
