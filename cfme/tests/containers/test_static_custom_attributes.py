@@ -131,14 +131,12 @@ def test_add_attribute_with_empty_name(provider):
         * You should get an error
         * You should not see this attribute in the custom  attributes table
     """
-    try:
+    with pytest.raises(APIException):
         provider.add_custom_attributes(
             CustomAttribute('', "17")
         )
         pytest.fail('You have added custom attribute with empty name'
                     'and didn\'t get an error!')
-    except APIException:
-        pass
 
     if hasattr(provider.summary, 'custom_attributes'):
         assert "" not in provider.summary.custom_attributes
@@ -148,13 +146,11 @@ def test_add_attribute_with_empty_name(provider):
 
 def test_add_date_value_with_wrong_value(provider):
     ca = CustomAttribute('nondate', "koko", 'Date')
-    try:
+    with pytest.raises(APIException):
         provider.add_custom_attributes(ca)
         pytest.fail('You have added custom attribute of type'
                     '{} with value of {} and didn\'t get an error!'
                     .format(ca.field_type, ca.value))
-    except APIException:
-        pass
 
     if hasattr(provider.summary, 'custom_attributes'):
         assert 'nondate' not in provider.summary.custom_attributes
@@ -166,7 +162,7 @@ def test_edit_non_exist_attribute(provider):
     setup_dataset(provider, verify_exists=False)
 
     ca = choice(ATTRIBUTES_DATASET)
-    try:
+    with pytest.raises(APIException):
         # Note: we need to implement it inside the test instead of using
         #       the API (provider.edit_custom_attributes) in order to
         #       specify the href and yield the exception
@@ -182,8 +178,6 @@ def test_edit_non_exist_attribute(provider):
         pytest.fail('You tried to edit a non-exist custom attribute'
                     '({}) and didn\'t get an error!'
                     .format(ca.value))
-    except APIException:
-        pass
 
 
 # CMP-10543
@@ -192,13 +186,11 @@ def test_delete_non_exist_attribute(provider):
     setup_dataset(provider, verify_exists=False)
 
     ca = choice(ATTRIBUTES_DATASET)
-    try:
+    with pytest.raises(APIException):
         provider.delete_custom_attributes(ca)
         pytest.fail('You tried to delete a non-exist custom attribute'
                     '({}) and didn\'t get an error!'
                     .format(ca.value))
-    except APIException:
-        pass
 
 
 # CMP-10542
@@ -207,13 +199,11 @@ def test_delete_non_exist_attribute(provider):
 def test_add_already_exist_attribute(provider):
     setup_dataset(provider, verify_exists=True)
     ca = choice(ATTRIBUTES_DATASET)
-    try:
+    with pytest.raises(APIException):
         provider.add_custom_attributes(ca)
         pytest.fail('You tried to add a custom attribute that already exists'
                     '({}) and didn\'t get an error!'
                     .format(ca.value))
-    except APIException:
-        pass
 
 
 # CMP-10540
