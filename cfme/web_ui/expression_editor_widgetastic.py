@@ -8,12 +8,71 @@ from utils.wait import wait_for, TimedOutError
 import re
 from utils.pretty import Pretty
 
-from widgetastic_patternfly import Input, BootstrapSelect
-from widgetastic.widget import Widget, View
+from widgetastic_patternfly import Input, BootstrapSelect, Button
+from widgetastic.widget import View
 from widgetastic_manageiq import Calendar
+from widgetastic.utils import VersionPick, Version
 
 
-class ExpressionEditor(Widget, Pretty):
+class FieldFormView(View):
+    type = BootstrapSelect("chosen_typ")
+    field = BootstrapSelect("chosen_field")
+    key = BootstrapSelect("chosen_key")
+    value = Input("chosen_value")
+    user_input = Input("user_input")
+
+
+class FieldDateForm(View):
+    dropdown_select = BootstrapSelect("chosen_from_1")
+    input_select_date = Calendar("miq_date_1_0")
+    input_select_time = BootstrapSelect("miq_time_1_0")
+
+
+class CountFormView(View):
+    type = BootstrapSelect("chosen_typ")
+    count = BootstrapSelect("chosen_count")
+    key = BootstrapSelect("chosen_key")
+    value = Input("chosen_value")
+    user_input = Input("user_input")
+
+
+class TagFormView(View):
+    type = BootstrapSelect("chosen_typ")
+    tag = BootstrapSelect("chosen_tag")
+    value = BootstrapSelect("chosen_value")
+    user_input = Input("user_input")
+
+
+class FindFormView(View):
+    type = BootstrapSelect("chosen_typ")
+    field = BootstrapSelect("chosen_field")
+    skey = BootstrapSelect("chosen_skey")
+    value = Input("#chosen_value")
+    check = BootstrapSelect("chosen_check")
+    cfield = BootstrapSelect("chosen_cfield")
+    ckey = BootstrapSelect("chosen_ckey")
+    cvalue = Input("chosen_cvalue")
+
+
+class RegistryFormView(View):
+    type = BootstrapSelect("chosen_typ")
+    key = Input("chosen_regkey")
+    value = Input("chosen_regval")
+    operation = BootstrapSelect("chosen_key")
+    contents = Input("chosen_value")
+
+
+class DateSpecificForm(View):
+    date = Calendar("miq_date_1_0")
+    time = BootstrapSelect("miq_time_1_0")
+
+
+class DateRelativeForm(View):
+    from_ = BootstrapSelect("chosen_from_1")
+    through = BootstrapSelect("chosen_through_1")
+
+
+class ExpressionEditor(View, Pretty):
     """This class enables to embed the expression in a Form.
 
     Args:
@@ -24,8 +83,14 @@ class ExpressionEditor(Widget, Pretty):
     MAKE_BUTTON = "//span[not(contains(@style,'none'))]//img[@alt='{}']"
     ATOM_ROOT = "./div[@id='exp_atom_editor_div']"
     EXPRESSIONS_ROOT = "./fieldset/div"
-    COMMIT = "//img[@alt='Commit expression element changes']"
-    DISCARD = "//img[@alt='Discard expression element changes']"
+    COMMIT = VersionPick({
+        Version.lowest(): "//img[@alt='Commit expression element changes']",
+        "5.7.1": Button(title="Commit expression element changes"),
+    })
+    DISCARD = VersionPick({
+        Version.lowest(): "//img[@alt='Discard expression element changes']",
+        "5.7.1": Button(title="Discard expression element changes"),
+    })
     REMOVE = "//span[not(contains(@style, 'none'))]//img[@alt='Remove this expression element']"
     NOT = ("//span[not(contains(@style, 'none'))]"
            "//img[@alt='Wrap this expression element with a NOT']")
@@ -35,63 +100,70 @@ class ExpressionEditor(Widget, Pretty):
     UNDO = "//img[@alt='Undo']"
     SELECT_SPECIFIC = "//img[@alt='Click to change to a specific Date/Time format']"
     SELECT_RELATIVE = "//img[@alt='Click to change to a relative Date/Time format']"
+    field_form_view = FieldFormView()
+    field_date_form = FieldDateForm()
+    count_form_view = CountFormView()
+    tag_form_view = TagFormView()
+    find_form_view = FindFormView()
+    registry_form_view = RegistryFormView()
+    date_specific_form = DateSpecificForm()
+    date_relative_form = DateRelativeForm()
 
     pretty_attrs = ['show_loc']
 
     def __init__(self, parent, show_loc=None, logger=None):
-        Widget.__init__(self, parent, logger=logger)
+        View.__init__(self, parent, logger=logger)
         self.show_loc = show_loc
 
     def __locator__(self):
         return self.ROOT
 
     def click_undo(self):
-        self.browser.element(self.UNDO, parent=self).click()
+        self.browser.click(self.UNDO)
 
     def click_redo(self):
-        self.browser.element(self.REDO, parent=self).click()
+        self.browser.click(self.REDO)
 
     def click_and(self):
-        self.browser.element(self.AND, parent=self).click()
+        self.browser.click(self.AND)
 
     def click_or(self):
-        self.browser.element(self.OR, parent=self).click()
+        self.browser.click(self.OR)
 
     def click_not(self):
-        self.browser.element(self.NOT, parent=self).click()
+        self.browser.click(self.NOT)
 
     def click_remove(self):
-        self.browser.element(self.REMOVE, parent=self).click()
+        self.browser.click(self.REMOVE)
 
     def click_commit(self):
-        self.browser.element(self.COMMIT, parent=self).click()
+        self.browser.click(self.COMMIT)
 
     def click_discard(self):
-        self.browser.element(self.DISCARD, parent=self).click()
+        self.browser.click(self.DISCARD)
 
     def click_switch_to_relative(self):
-        self.browser.element(self.SELECT_RELATIVE, parent=self).click()
+        self.browser.click(self.SELECT_RELATIVE)
 
     def click_switch_to_specific(self):
-        self.browser.element(self.SELECT_SPECIFIC, parent=self).click()
+        self.browser.click(self.SELECT_SPECIFIC)
 
     @property
     def _atom_root(self):
-        return self.browser.element(self.ATOM_ROOT, parent=self)
+        return self.browser.element(self.ATOM_ROOT)
 
     @property
     def _expressions_root(self):
-        return self.browser.element(self.EXPRESSIONS_ROOT, parent=self)
+        return self.browser.element(self.EXPRESSIONS_ROOT)
 
     def select_first_expression(self):
         """There is always at least one (???), so no checking of bounds."""
         self.browser.elements("//a[contains(@id,'exp_')]", parent=self._expressions_root)[0].click()
 
     def select_expression_by_text(self, text):
-        self.browser.element(
-            "//a[contains(@id,'exp_')][contains(normalize-space(text()),'{}')]".format(text),
-            parent=self
-        ).click()
+        self.browser.click(
+            "//a[contains(@id,'exp_')][contains(normalize-space(text()),'{}')]".format(text)
+        )
 
     def no_expression_present(self):
         els = self.browser.elements("//a[contains(@id,'exp_')]", parent=self._expressions_root)
@@ -123,7 +195,7 @@ class ExpressionEditor(Widget, Pretty):
 
     def enable_editor(self):
         try:
-            el = self.browser.element(self.show_loc, parent=self)
+            el = self.browser.element(self.show_loc)
             wait_for(lambda: el.is_displayed, num_sec=2, delay=0.2)
             el.click()
         except (TimedOutError, NoSuchElementException):
@@ -133,9 +205,9 @@ class ExpressionEditor(Widget, Pretty):
         if self.show_loc is not None:
             self.enable_editor()
         prog = create_program(expression, self)
-        before = self.read()
+        before = self._expressions_root.text.encode("utf-8").strip()
         prog()
-        after = self.read()
+        after = self._expressions_root.text.encode("utf-8").strip()
         return before != after
 
     def fill_count(self, count=None, key=None, value=None):
@@ -150,7 +222,7 @@ class ExpressionEditor(Widget, Pretty):
             value: Value to check against.
         Returns: See :py:func:`cfme.web_ui.fill`.
         """
-        view = self.browser.create_view(CountFormView)
+        view = self.count_form_view
         view.fill(dict(
             type="Count of",
             count=count,
@@ -171,7 +243,7 @@ class ExpressionEditor(Widget, Pretty):
             value: Value to check against.
         Returns: See :py:func:`cfme.web_ui.fill`.
         """
-        view = self.browser.create_view(TagFormView)
+        view = self.tag_form_view
         view.fill(dict(
             type="Tag",
             tag=tag,
@@ -185,7 +257,7 @@ class ExpressionEditor(Widget, Pretty):
 
     def fill_registry(self, key=None, value=None, operation=None, contents=None):
         """ Fills the 'Registry' type of form."""
-        view = self.browser.create_view(RegistryFormView)
+        view = self.registry_form_view
         view.fill(dict(
             type="Registry",
             key=key,
@@ -197,7 +269,7 @@ class ExpressionEditor(Widget, Pretty):
 
     def fill_find(self, field=None, skey=None, value=None, check=None, cfield=None, ckey=None,
                   cvalue=None):
-        view = self.browser.create_view(FindFormView)
+        view = self.find_form_view
         view.fill(dict(
             type="Find",
             field=field,
@@ -225,7 +297,7 @@ class ExpressionEditor(Widget, Pretty):
             no_date = False
         else:
             no_date = True
-        view = self.browser.create_view(FieldFormView)
+        view = self.field_form_view
         view.fill(dict(
             type="Field",
             field=field,
@@ -238,7 +310,7 @@ class ExpressionEditor(Widget, Pretty):
             view.user_input.fill(user_input)
         if not no_date:
             # Flip the right part of form
-            view = self.browser.create_view(FieldDateForm)
+            view = self.field_date_form
             if (isinstance(value, basestring) and
                     not re.match(r"^[0-9]{2}/[0-9]{2}/[0-9]{4}$", value)):
                 if not view.dropdown_select.is_displayed:
@@ -414,61 +486,3 @@ def create_program_from_list(command_list, widget_object):
     Returns: Callable, which fills the expression.
     """
     return partial(run_commands, command_list, context=widget_object)
-
-
-class FieldFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    field = BootstrapSelect("chosen_field")
-    key = BootstrapSelect("chosen_key")
-    value = Input("chosen_value")
-    user_input = Input("user_input")
-
-
-class FieldDateForm(View):
-    dropdown_select = BootstrapSelect("chosen_from_1")
-    input_select_date = Calendar("miq_date_1_0")
-    input_select_time = BootstrapSelect("miq_time_1_0")
-
-
-class CountFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    count = BootstrapSelect("chosen_count")
-    key = BootstrapSelect("chosen_key")
-    value = Input("chosen_value")
-    user_input = Input("user_input")
-
-
-class TagFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    tag = BootstrapSelect("chosen_tag")
-    value = BootstrapSelect("chosen_value")
-    user_input = Input("user_input")
-
-
-class FindFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    field = BootstrapSelect("chosen_field")
-    skey = BootstrapSelect("chosen_skey")
-    value = Input("#chosen_value")
-    check = BootstrapSelect("chosen_check")
-    cfield = BootstrapSelect("chosen_cfield")
-    ckey = BootstrapSelect("chosen_ckey")
-    cvalue = Input("chosen_cvalue")
-
-
-class RegistryFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    key = Input("chosen_regkey")
-    value = Input("chosen_regval")
-    operation = BootstrapSelect("chosen_key")
-    contents = Input("chosen_value")
-
-
-class DateSpecificForm(View):
-    date = Calendar("miq_date_1_0")
-    time = BootstrapSelect("miq_time_1_0")
-
-
-class DateRelativeForm(View):
-    from_ = BootstrapSelect("chosen_from_1")
-    through = BootstrapSelect("chosen_through_1")
