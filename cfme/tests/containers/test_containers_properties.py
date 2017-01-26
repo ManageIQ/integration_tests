@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import pytest
+from random import sample
+
 from cfme.containers.pod import Pod, list_tbl as list_tbl_pods
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.route import Route, list_tbl as list_tbl_routes
 from cfme.containers.project import Project, list_tbl as list_tbl_projects
 from cfme.containers.service import Service, list_tbl as list_tbl_services
+
 from utils import testgen
 from utils.version import current_version
 from utils.appliance.implementations.ui import navigate_to
@@ -40,7 +43,8 @@ def test_pods_properties_rel(provider, rel):
     the fields in the Properties table
     """
     navigate_to(Pod, 'All')
-    ui_pods = [r.name.text for r in list_tbl_pods.rows()]
+    ui_pods = sample([r.name.text for r in list_tbl_pods.rows()],
+                     min(2, list_tbl_pods.row_count()))
 
     for name in ui_pods:
         obj = Pod(name, provider)
@@ -65,7 +69,8 @@ def test_routes_properties_rel(provider, rel):
     the fields in the Properties table
     """
     navigate_to(Route, 'All')
-    ui_routes = [r.name.text for r in list_tbl_routes.rows()]
+    ui_routes = sample([r.name.text for r in list_tbl_routes.rows()],
+                       min(2, list_tbl_routes.row_count()))
 
     for name in ui_routes:
         obj = Route(name, provider)
@@ -89,7 +94,8 @@ def test_projects_properties_rel(provider, rel):
     the fields in the Properties table
     """
     navigate_to(Project, 'All')
-    ui_projects = [r.name.text for r in list_tbl_projects.rows()]
+    ui_projects = sample([r.name.text for r in list_tbl_projects.rows()],
+                         min(2, list_tbl_projects.row_count()))
 
     for name in ui_projects:
         obj = Project(name, provider)
@@ -116,7 +122,8 @@ def test_services_properties_rel(provider, rel):
     the fields in the Properties table
     """
     navigate_to(Service, 'All')
-    ui_services = [r.name.text for r in list_tbl_services.rows()]
+    ui_services = sample([r.name.text for r in list_tbl_services.rows()],
+                         min(2, list_tbl_services.row_count()))
 
     for name in ui_services:
         obj = Service(name, provider)
