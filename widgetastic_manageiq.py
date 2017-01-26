@@ -875,6 +875,21 @@ class PaginationPane(View):
     def last_page(self):
         self.paginator.last_page()
 
+    def pages(self):
+        """Generator to iterate over pages, yielding after moving to the next page"""
+        if self.exists:
+            # start iterating at the first page
+            self.first_page()
+            while self.cur_page < self.pages_amount:
+                # Aren't on the last page yet, advance
+                self.next_page()
+                yield
+            else:
+                # last page reached
+                pass
+        else:
+            yield
+
     @property
     def items_amount(self):
         return self.paginator.page_info()[1]
