@@ -1,5 +1,7 @@
 from string import digits, ascii_letters
 from random import choice
+from traceback import format_exception_only
+from os import path
 import sys
 import inspect
 import re
@@ -11,8 +13,6 @@ from utils.version import current_version
 from utils import testgen
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.provider.openshift import CustomAttribute
-from traceback import format_exception_only
-from os import path
 
 pytestmark = [
     pytest.mark.uncollectif(
