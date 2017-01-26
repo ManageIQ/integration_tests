@@ -9,12 +9,20 @@ from cfme.base import Server
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
+def automate_menu_name(appliance):
+    if appliance.version < '5.8':
+        return 'Automate'
+    else:
+        return 'Automation'
+
+
 class AutomateCustomizationView(BaseLoggedInPage):
     @property
     def is_displayed(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Automate', 'Customization'])
+            self.navigation.currently_selected == [
+                automate_menu_name(self.obj.appliance), 'Customization'])
 
     @View.nested
     class provisioning_dialogs(Accordion):  # noqa
@@ -47,7 +55,7 @@ class AutomateCustomization(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        self.view.navigation.select('Automate', 'Customization')
+        self.view.navigation.select(automate_menu_name(self.obj.appliance), 'Customization')
 
 
 class AutomateExplorerView(BaseLoggedInPage):
@@ -55,7 +63,8 @@ class AutomateExplorerView(BaseLoggedInPage):
     def is_displayed(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Automate', 'Explorer'])
+            self.navigation.currently_selected == [
+                automate_menu_name(self.obj.appliance), 'Explorer'])
 
     @View.nested
     class datastore(Accordion):  # noqa
@@ -70,4 +79,4 @@ class AutomateExplorer(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        self.view.navigation.select('Automate', 'Explorer')
+        self.view.navigation.select(automate_menu_name(self.obj.appliance), 'Explorer')
