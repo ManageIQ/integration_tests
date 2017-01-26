@@ -309,7 +309,7 @@ class All(CFMENavigateStep):
         return match_page(summary='Infrastructure Providers')
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Infrastructure', 'Providers')
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', 'Providers')
 
     def resetter(self):
         # Reset view and selection

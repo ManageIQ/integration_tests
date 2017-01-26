@@ -198,7 +198,7 @@ class All(CFMENavigateStep):
     VIEW = OrchestrationTemplatesView
 
     def step(self):
-        self.parent_view.navigation.select('Services', 'Catalogs')
+        self.prerequisite_view.navigation.select('Services', 'Catalogs')
         self.view.orchestration_templates.tree.click_path("All Orchestration Templates")
 
     def am_i_here(self, *args, **kwargs):

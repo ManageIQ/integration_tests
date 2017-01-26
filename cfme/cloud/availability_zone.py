@@ -33,7 +33,7 @@ class AvailabilityZoneAll(CFMENavigateStep):
         match_page(summary='Availability Zones')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Compute', 'Clouds', 'Availability Zones')
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Availability Zones')
 
 
 @navigator.register(AvailabilityZone, 'Details')

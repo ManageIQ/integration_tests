@@ -50,7 +50,7 @@ class ContainerAll(CFMENavigateStep):
         return match_page(summary='All Containers')
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Containers', 'Containers')
+        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Containers')
 
     def resetter(self):
         accordion.tree('Containers', version.pick({

@@ -22,7 +22,7 @@ class All(CFMENavigateStep):
         return match_page()
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Containers', 'Overview')
+        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Overview')
 
     def resetter(self):
         pass

@@ -127,7 +127,7 @@ class TenantAll(CFMENavigateStep):
         return match_page(summary='Cloud Tenants')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Compute', 'Clouds', 'Tenants')
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Tenants')
 
 
 @navigator.register(Tenant, 'Details')

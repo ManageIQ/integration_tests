@@ -29,7 +29,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.parent_view.navigation.select('Cloud Intel', 'Reports')
+        self.prerequisite_view.navigation.select('Cloud Intel', 'Reports')
 
 
 @navigator.register(Report, 'SavedReports')

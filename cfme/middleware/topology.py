@@ -15,4 +15,4 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.parent_view.navigation.select('Middleware', 'Topology')
+        self.prerequisite_view.navigation.select('Middleware', 'Topology')

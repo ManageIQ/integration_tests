@@ -362,7 +362,7 @@ class CFMENavigateStep(NavigateStep):
             self.log_message("Already here")
         else:
             self.log_message("Not here")
-            self.parent_view = self.prerequisite()
+            self.prerequisite_view = self.prerequisite()
             self.log_message("Heading to destination")
             self.check_for_badness(self.step, _tries, nav_args, *args, **kwargs)
         if nav_args['use_resetter']:

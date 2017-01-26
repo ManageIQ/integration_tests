@@ -44,9 +44,9 @@ class All(CFMENavigateStep):
 
     def step(self):
         if version.current_version() >= "5.7":
-            self.parent_view.navigation.select('Storage', 'Object Stores')
+            self.prerequisite_view.navigation.select('Storage', 'Object Stores')
         else:
-            self.parent_view.navigation.select('Compute', 'Clouds', 'Object Stores')
+            self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Object Stores')
 
     def resetter(self):
         tb.select("Grid View")

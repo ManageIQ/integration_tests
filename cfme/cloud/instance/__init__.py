@@ -327,7 +327,7 @@ class InstanceAll(CFMENavigateStep):
         return match_page(summary='All Instances')
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Clouds', 'Instances')
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
 
         # use accordion
         # If a filter was applied, it will persist through navigation and needs to be cleared
@@ -345,7 +345,7 @@ class InstanceProviderAll(CFMENavigateStep):
         return match_page(summary='Instances under Provider "{}"'.format(self.obj.provider.name))
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Compute', 'Clouds', 'Instances')
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
 
         # use accordion
         # If a filter was applied, it will persist through navigation and needs to be cleared

@@ -44,7 +44,7 @@ class AllVMs(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Services', 'Workloads')
+        self.prerequisite_view.navigation.select('Services', 'Workloads')
         if 'filter_folder' not in kwargs:
             vm_instances_tree()
         elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
@@ -65,7 +65,7 @@ class AllTemplates(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Services', 'Workloads')
+        self.prerequisite_view.navigation.select('Services', 'Workloads')
         if 'filter_folder' not in kwargs:
             templates_images_tree()
         elif 'filter_folder' in kwargs and 'filter_name' in kwargs:

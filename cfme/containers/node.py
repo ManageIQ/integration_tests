@@ -45,7 +45,7 @@ class All(CFMENavigateStep):
         return match_page(summary='Nodes')
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Containers', 'Container Nodes')
+        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Nodes')
 
     def resetter(self):
         # Reset view and selection

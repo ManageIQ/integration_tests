@@ -39,7 +39,7 @@ class All(CFMENavigateStep):
         return match_volumes(summary='Cloud Volumes')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Compute', 'Clouds', 'Volumes')
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Volumes')
 
 
 @navigator.register(Volume, 'AllByProvider')

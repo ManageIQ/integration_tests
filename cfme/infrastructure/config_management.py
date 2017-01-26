@@ -442,9 +442,9 @@ class MgrAll(CFMENavigateStep):
 
     def step(self):
         if self.obj.appliance.version > '5.7.0.8':
-            self.parent_view.navigation.select('Configuration', 'Management')
+            self.prerequisite_view.navigation.select('Configuration', 'Management')
         else:
-            self.parent_view.navigation.select('Configuration', 'Configuration Management')
+            self.prerequisite_view.navigation.select('Configuration', 'Configuration Management')
 
     def resetter(self):
         accordion.tree('Providers', 'All Configuration Manager Providers')
@@ -508,7 +508,7 @@ class SysAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.parent_view.navigation.select('Configuration', 'Configuration Management')
+        self.prerequisite_view.navigation.select('Configuration', 'Configuration Management')
 
     def resetter(self):
         accordion.tree('Configured Systems', 'All Configured Systems')
