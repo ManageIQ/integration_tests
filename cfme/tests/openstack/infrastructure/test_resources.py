@@ -8,8 +8,7 @@ from utils import testgen
 pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate')]
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class,
-                                         [OpenstackInfraProvider],
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
                                          scope='module')
 
 

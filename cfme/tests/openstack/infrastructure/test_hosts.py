@@ -10,8 +10,7 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class,
-                                         [OpenstackInfraProvider],
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
                                          scope='module')
 pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
