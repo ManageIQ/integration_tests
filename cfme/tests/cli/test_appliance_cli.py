@@ -1,6 +1,7 @@
 from fixtures.pytest_store import store
 from utils.log_validator import LogValidator
 import pytest
+from utils import version
 
 
 def test_set_hostname(request):
@@ -29,6 +30,7 @@ def test_configure_appliance_external_join(request, app_creds, appliance):
     appliance.wait_for_web_ui()
 
 
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_configure_appliance_external_create(request, app_creds, dedicated_db, appliance):
     hostname = dedicated_db.address
     appliance.ap_cli.configure_appliance_external_create(5, hostname,
