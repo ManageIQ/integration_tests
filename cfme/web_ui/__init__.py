@@ -113,6 +113,12 @@ class Selector(object):
         raise Exception('This widget does not have a "decide" method which is mandatory')
 
 
+
+@fill.method(Selector, Anything):
+def _fill_selector(selector, data):
+    fill(selector.decide(), data)
+
+
 class Region(Pretty):
     """
     Base class for all UI regions/pages
@@ -4046,12 +4052,6 @@ class CFMECheckbox(Selector):
             return BootstrapSwitch(self.input_id)
         else:
             return OldCheckbox(self.input_id)
-
-
-@fill.method((CFMECheckbox, bool))
-def fill_cfmecheckbox_switch(ob, val):
-    ob.fill(val)
-
 
 def breadcrumbs():
     """Returns a list of breadcrumbs names if names==True else return as elements.
