@@ -254,7 +254,8 @@ class AnalysisProfileAll(CFMENavigateStep):
 
     def step(self):
         server_region = store.current_appliance.server_region_string()
-        self.prerequisite_view.accordions.settings.tree.click_path((server_region, "Analysis Profiles"))
+        self.prerequisite_view.accordions.settings.tree.click_path(
+            (server_region, "Analysis Profiles"))
 
 
 @navigator.register(AnalysisProfile, 'Add')
