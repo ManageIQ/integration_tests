@@ -28,13 +28,3 @@ for folder in folders_to_process:
     print(" fix_name")
     res = find('cfme.providers.provider_{folder}')
     Rename(my_project, res).get_changes(folder).do()
-    print(" push up elements")
-    res = find('cfme.providers.{folder}')
-    for item in res.get_children():
-        if item.name == '__init__.py':
-            continue
-        print("  push up " + item.name)
-        MoveModule(my_project, item).get_changes(res.parent).do()
-    print(" meshing up __init__.py")
-    res.get_child('__init__.py').move(
-        'cfme/providers/{folder}.py'.format(folder=folder))
