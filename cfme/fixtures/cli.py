@@ -4,26 +4,45 @@ from utils.appliance import current_appliance
 from utils.conf import cfme_data, credentials
 from utils.log import logger
 import pytest
-import paramiko
+from wait_for import wait_for
+
+
+def is_dedicated_db_active(appliance2):
+    return_code, output = appliance2.ssh_client.run_command(
+        "systemctl status rh-postgresql95-postgresql.service | grep running")
+    return return_code == 0
 
 
 @pytest.fixture()
-def dedicated_db(appliance, app_creds):
-    hostname = appliance.address
-    username = app_creds['username']
-    password = app_creds['password']
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(hostname, username=username, password=password)
+def dedicated_db(appliance2, app_creds):
+    pwd = app_creds['password']
+    client = appliance2.ssh_client
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
-    stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {PASS} \n {PASS} \n \n")
+    stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
+    wait_for(is_dedicated_db_active, func_args=[appliance2])
+    return_code, output = client.run_command(
+        "systemctl status rh-postgresql95-postgresql.service | grep running")
+    assert return_code == 0
 
-    return appliance
+    return appliance2
 
 
 @pytest.yield_fixture(scope="module")
 def appliance():
+    sp = SproutClient.from_config()
+    version = current_appliance.version.vstring
+    stream = get_stream(current_appliance.version)
+    apps, pool_id = sp.provision_appliances(
+        count=1, preconfigured=False, version=version, stream=stream)
+
+    yield apps[0]
+
+    sp.destroy_pool(pool_id)
+
+
+@pytest.yield_fixture(scope="module")
+def appliance2():
     sp = SproutClient.from_config()
     version = current_appliance.version.vstring
     stream = get_stream(current_appliance.version)
@@ -51,7 +70,7 @@ def fqdn_appliance():
             break
         except Exception as e:
             logger.warning("Couldn't provision appliance with following error:")
-            logger.warning({}.format(e))
+            logger.warning("{}".format(e))
             continue
     else:
         logger.error("Couldn't provision an appliance at all")

@@ -29,7 +29,7 @@ def test_configure_appliance_external_join(request, app_creds, appliance):
     appliance.wait_for_web_ui()
 
 
-def test_configure_appliance_external_create(request, app_creds, appliance, dedicated_db):
+def test_configure_appliance_external_create(request, app_creds, dedicated_db, appliance):
     hostname = dedicated_db.address
     appliance.ap_cli.configure_appliance_external_create(5, hostname,
         app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
