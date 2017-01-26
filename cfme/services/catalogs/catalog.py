@@ -130,7 +130,7 @@ class All(CFMENavigateStep):
         return match_page(summary='All Catalogs')
 
     def step(self):
-        self.parent_view.navigation.select('Services', 'Catalogs')
+        self.prerequisite_view.navigation.select('Services', 'Catalogs')
         tree = accordion.tree('Catalogs')
         tree.click_path('All Catalogs')
 

@@ -202,7 +202,7 @@ class MyServiceAll(CFMENavigateStep):
         return match_page(summary='All Services')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Services', 'My Services')
+        self.prerequisite_view.navigation.select('Services', 'My Services')
 
     def resetter(self, *args, **kwargs):
         if version.current_version() < '5.7':

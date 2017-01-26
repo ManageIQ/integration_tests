@@ -298,7 +298,7 @@ class ItemAll(CFMENavigateStep):
         return match_page(summary='All Service Catalog Items')
 
     def step(self):
-        self.parent_view.navigation.select('Services', 'Catalogs')
+        self.prerequisite_view.navigation.select('Services', 'Catalogs')
         tree = accordion.tree('Catalog Items')
         tree.click_path('All Catalog Items')
 
@@ -356,7 +356,7 @@ class BundleAll(CFMENavigateStep):
         return match_page(summary='All Service Catalog Items')
 
     def step(self):
-        self.parent_view.navigation.select('Services', 'Catalogs')
+        self.prerequisite_view.navigation.select('Services', 'Catalogs')
         tree = accordion.tree('Catalog Items')
         tree.click_path('All Catalog Items')
 

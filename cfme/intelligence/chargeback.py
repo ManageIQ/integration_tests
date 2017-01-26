@@ -239,7 +239,7 @@ class ComputeRateAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.parent_view.navigation.select('Cloud Intel', 'Chargeback')
+        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         accordion.tree("Rates", "Rates", "Compute")
 
     def am_i_here(self):
@@ -321,7 +321,7 @@ class StorageRateAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.parent_view.navigation.select('Cloud Intel', 'Chargeback')
+        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         accordion.tree("Rates", "Rates", "Storage")
 
     def am_i_here(self):
@@ -410,7 +410,7 @@ class AssignAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.parent_view.navigation.select('Cloud Intel', 'Chargeback')
+        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
         accordion.tree("Rates", "Rates", "Storage")
 
 

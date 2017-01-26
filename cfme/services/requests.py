@@ -51,7 +51,7 @@ class RequestAll(CFMENavigateStep):
         return match_page(summary='Requests')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Services', 'Requests')
+        self.prerequisite_view.navigation.select('Services', 'Requests')
 
 
 def reload():

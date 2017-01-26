@@ -38,7 +38,7 @@ class ImageRegistryAll(CFMENavigateStep):
         return match_page(summary='Image Registries')
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Containers', 'Image Registries')
+        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Image Registries')
 
     def resetter(self):
         tb.select('List View')

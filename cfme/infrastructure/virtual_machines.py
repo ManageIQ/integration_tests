@@ -701,7 +701,7 @@ class VmAllWithTemplates(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
         accordion.tree('VMs & Templates', 'All VMs & Templates')
 
     def resetter(self, *args, **kwargs):
@@ -877,7 +877,7 @@ class TemplatesAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.parent_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
+        self.prerequisite_view.navigation.select('Compute', 'Infrastructure', '/vm_infra/explorer')
         templates = partial(accordion.tree, 'Templates', 'All Templates')
         if 'filter_folder' not in kwargs:
             templates()

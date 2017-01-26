@@ -143,7 +143,7 @@ class All(CFMENavigateStep):
         return match_page(summary='Orchestration Stacks')
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Clouds', 'Stacks')
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Stacks')
 
     def resetter(self):
         tb.select('Grid View')

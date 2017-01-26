@@ -46,7 +46,7 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Containers', 'Projects')
+        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Projects')
 
     def resetter(self):
         # Reset view and selection

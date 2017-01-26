@@ -65,4 +65,4 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.parent_view.navigation.select('Compute', 'Clouds', 'Key Pairs')
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Key Pairs')
