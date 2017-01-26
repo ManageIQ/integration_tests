@@ -8,7 +8,7 @@ from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from cfme.infrastructure import virtual_machines as vms  # NOQA
 from cfme.infrastructure.provider import InfraProvider
 from utils.appliance.implementations.ui import navigate_to
@@ -49,7 +49,7 @@ landing_pages = [
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    return _setup_a_provider(prov_class="infra", validate=True, check_existing=True)
+    return setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.yield_fixture(scope="module")

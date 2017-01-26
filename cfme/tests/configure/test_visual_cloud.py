@@ -6,6 +6,7 @@ from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
 from cfme.cloud.keypairs import KeyPair
@@ -14,7 +15,7 @@ from cfme.cloud.tenant import Tenant
 from cfme.cloud.volume import Volume
 from cfme.web_ui import paginator, toolbar as tb, match_location
 from utils.appliance.implementations.ui import navigate_to
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils import version
 
 pytestmark = [pytest.mark.tier(3),
@@ -61,7 +62,7 @@ landing_pages = {
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    _setup_a_provider(prov_class="cloud", prov_type="openstack", validate=True, check_existing=True)
+    setup_a_provider_by_class(OpenStackProvider)
 
 
 @pytest.yield_fixture(scope="module")

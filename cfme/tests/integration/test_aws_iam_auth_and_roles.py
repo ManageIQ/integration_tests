@@ -1,18 +1,19 @@
 import pytest
 
 from cfme.configure.access_control import simple_user
+from cfme.infrastructure.provider import InfraProvider
 from cfme.login import login, login_admin
 from utils.conf import credentials
 from utils.testgen import auth_groups, generate
 from utils import version
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 
 pytest_generate_tests = generate(gen_func=auth_groups, auth_mode='aws_iam')
 
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
-    setup_a_provider(validate=True, check_existing=True)
+    setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.mark.uncollect('Needs to be fixed after menu removed')

@@ -3,8 +3,9 @@ import fauxfactory
 import pytest
 import cfme.web_ui.flash as flash
 
+from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CustomReport
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils.log import logger
 
 pytestmark = [pytest.mark.tier(3)]
@@ -12,7 +13,7 @@ pytestmark = [pytest.mark.tier(3)]
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
-    setup_a_provider(validate=True, check_existing=True)
+    setup_a_provider_by_class(InfraProvider)
 
 
 def _cleanup_report(report):
