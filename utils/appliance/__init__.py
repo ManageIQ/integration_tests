@@ -124,6 +124,10 @@ class IPAppliance(object):
             [self.browser])
         self._server = None
 
+    def get(self, obj, *args, **kwargs):
+        kwargs.update({'appliance': self})
+        return obj(*args, **kwargs)
+
     @property
     def server(self):
         if self._server is None:
