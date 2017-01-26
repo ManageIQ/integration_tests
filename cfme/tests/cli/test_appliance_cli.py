@@ -36,8 +36,6 @@ def test_configure_appliance_external_create(request, app_creds, dedicated_db, a
         app_creds['sshlogin'], app_creds['sshpass'])
     appliance.wait_for_evm_service()
     appliance.wait_for_web_ui()
-    return_code, output = appliance.ssh_client.run_command("cat /var/www/miq/vmdb/REGION | grep 5")
-    assert return_code == 0
 
 
 @pytest.mark.parametrize('auth_type', ['sso_enabled', 'saml_enabled', 'local_login_disabled'],

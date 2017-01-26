@@ -8,8 +8,12 @@ from wait_for import wait_for
 
 
 def is_dedicated_db_active(appliance2):
+    if appliance2.version < '5.7':
+        postgres = 94
+    else:
+        postgres = 95
     return_code, output = appliance2.ssh_client.run_command(
-        "systemctl status rh-postgresql95-postgresql.service | grep running")
+        "systemctl status rh-postgresql{}-postgresql.service | grep running".format(postgres))
     return return_code == 0
 
 
@@ -21,9 +25,6 @@ def dedicated_db(appliance2, app_creds):
     stdin = channel.makefile('wb')
     stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
     wait_for(is_dedicated_db_active, func_args=[appliance2])
-    return_code, output = client.run_command(
-        "systemctl status rh-postgresql95-postgresql.service | grep running")
-    assert return_code == 0
 
     return appliance2
 
