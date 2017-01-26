@@ -15,7 +15,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.common.provider import CloudInfraProvider, import_all_modules_of
-from cfme.web_ui import form_buttons
+from cfme.web_ui import form_buttons, CFMECheckbox
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect, Radio, \
     InfoBlock, match_location
@@ -68,6 +68,7 @@ properties_form_56 = TabStripForm(
     fields=[
         ('type_select', AngularSelect("ems_type")),
         ('name_text', Input("name")),
+        ('ten_mapping', CFMECheckbox("tenant_mapping_enabled"), {"appeared_in": "5.7"}),
         ('region_select', {
             version.LOWEST: AngularSelect("ems_region"),
             '5.7': AngularSelect('provider_region')}),
