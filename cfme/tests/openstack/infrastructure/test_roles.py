@@ -21,7 +21,7 @@ ROLES = ['NovaCompute', 'Controller', 'Compute', 'BlockStorage', 'SwiftStorage',
 
 
 def test_host_role_type(provider):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
