@@ -24,8 +24,7 @@ pytestmark = [
 ]
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class,
-                                         [VMwareProvider], scope="module")
+pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 @pytest.fixture(scope="function")

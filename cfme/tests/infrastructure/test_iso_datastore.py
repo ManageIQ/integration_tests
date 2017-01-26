@@ -1,6 +1,7 @@
 import pytest
 
 from cfme.infrastructure import pxe
+from cfme.infrastructure.provider import InfraProvider
 from utils import testgen
 
 pytestmark = [
@@ -8,11 +9,7 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        required_fields=['iso_datastore'])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate([InfraProvider], required_fields=['iso_datastore'])
 
 
 @pytest.fixture()

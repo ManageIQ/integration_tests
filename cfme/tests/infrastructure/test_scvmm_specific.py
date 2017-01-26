@@ -7,8 +7,7 @@ from cfme.infrastructure.provider.scvmm import SCVMMProvider
 from utils import testgen
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class, [SCVMMProvider],
-    scope="module")
+pytest_generate_tests = testgen.generate([SCVMMProvider], scope="module")
 
 
 @pytest.mark.meta(blockers=[1178961])

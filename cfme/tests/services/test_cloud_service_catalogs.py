@@ -23,8 +23,8 @@ pytestmark = [
 ]
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class, [CloudProvider],
-    required_fields=[['provisioning', 'image']], scope="module")
+pytest_generate_tests = testgen.generate(
+    [CloudProvider], required_fields=[['provisioning', 'image']], scope="module")
 
 
 @pytest.yield_fixture(scope="function")

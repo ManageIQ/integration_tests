@@ -10,6 +10,7 @@ from cfme.configure.configuration import AnalysisProfile
 from cfme.control.explorer.policies import VMCompliancePolicy
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
+from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version
@@ -32,10 +33,8 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, required_fields=["vm_analysis"])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(
+    [InfraProvider], required_fields=["vm_analysis"], scope="module")
 
 
 def wait_for_ssa_enabled():

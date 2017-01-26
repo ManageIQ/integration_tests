@@ -7,6 +7,7 @@ from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
 from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
@@ -22,7 +23,7 @@ pytestmark = [pytest.mark.long_running,
               test_requirements.snapshot]
 
 
-pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
+pytest_generate_tests = testgen.generate([InfraProvider], scope="module")
 
 
 @pytest.fixture(scope="module")

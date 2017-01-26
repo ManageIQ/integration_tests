@@ -4,6 +4,7 @@ import uuid
 import pytest
 
 import utils.error as error
+from cfme.middleware.provider import MiddlewareProvider
 from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import fill, flash, form_buttons
 from cfme.fixtures import pytest_selenium as sel
@@ -17,8 +18,7 @@ from utils.appliance.implementations.ui import navigate_to
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
-
-pytest_generate_tests = testgen.generate(testgen.middleware_providers, scope="function")
+pytest_generate_tests = testgen.generate([MiddlewareProvider], scope='function')
 
 
 @pytest.mark.usefixtures('has_no_middleware_providers')

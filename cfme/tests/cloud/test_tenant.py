@@ -9,8 +9,7 @@ from utils.log import logger
 from utils.version import current_version
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class, [OpenStackProvider],
-                                         scope='module')
+pytest_generate_tests = testgen.generate([OpenStackProvider], scope='module')
 
 # Tag requirements here, does not currently match any requirements categories
 

@@ -13,8 +13,7 @@ from utils.log import logger
 from utils.wait import wait_for
 
 
-pytest_generate_tests = testgen.generate(
-    testgen.providers_by_class, [CloudProvider], scope="module")
+pytest_generate_tests = testgen.generate([CloudProvider], scope="module")
 
 pytestmark = [pytest.mark.tier(2)]
 

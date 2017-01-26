@@ -4,6 +4,7 @@ from cfme.containers.container import Container
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
 from cfme.containers.node import Node
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.service import Service
 from cfme.web_ui import toolbar as tb
 from utils import testgen
@@ -13,8 +14,7 @@ from cfme.containers.pod import Pod
 
 
 pytestmark = [pytest.mark.tier(2)]
-pytest_generate_tests = testgen.generate(
-    testgen.containers_providers, scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 # CMP-9907 # CMP-9908 # CMP-9909

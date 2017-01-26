@@ -9,8 +9,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.uncollectif(lambda: current_version() < '5.7'),
 ]
-pytest_generate_tests = testgen.generate(
-    testgen.providers_by_class, [HawkularProvider], scope="function")
+pytest_generate_tests = testgen.generate([HawkularProvider], scope="function")
 
 
 def test_list_domains():

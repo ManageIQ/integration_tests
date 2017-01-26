@@ -9,6 +9,7 @@ from utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui import InfoBlock
 from cfme.configure import tasks
 from cfme.containers.image import Image, list_tbl
+from cfme.containers.provider import ContainersProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, flash
 from cfme.configure.tasks import Tasks, tasks_table
@@ -21,8 +22,7 @@ pytestmark = [
         lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.containers_providers, scope='function')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 LOG_VERIFICATION_TAGS = ('pod_wait', 'analyze', 'finish')

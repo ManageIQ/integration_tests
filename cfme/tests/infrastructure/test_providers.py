@@ -18,7 +18,7 @@ from utils import testgen, providers, version
 from utils.update import update
 from cfme import test_requirements
 
-pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
+pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
 
 
 @pytest.fixture(scope="module")

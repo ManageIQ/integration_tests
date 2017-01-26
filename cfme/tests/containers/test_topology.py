@@ -3,6 +3,7 @@ import pytest
 from utils import testgen
 from utils.version import current_version
 from cfme.web_ui.topology import Topology
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.topology import Topology as ContainerTopology
 from cfme.fixtures.pytest_selenium import is_displayed_text
 from random import choice
@@ -14,8 +15,7 @@ pytestmark = [
         lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    testgen.containers_providers, scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 # CMP-9996

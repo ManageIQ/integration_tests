@@ -34,8 +34,7 @@ def needs_firefox():
         pytest.skip(msg="This test needs firefox to run")
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class, [VMwareProvider],
-                                         scope="module")
+pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 
 @pytest.yield_fixture(scope='function')

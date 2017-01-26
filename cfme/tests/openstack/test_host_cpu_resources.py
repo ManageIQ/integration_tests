@@ -6,8 +6,7 @@ from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import InfoBlock
 from cfme.fixtures import pytest_selenium as sel
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class,
-                                         [OpenstackInfraProvider], scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 
 def get_integer_value(x):

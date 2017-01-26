@@ -5,6 +5,7 @@ import random
 import time
 from cfme import test_requirements
 from cfme.common.vm import VM
+from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import get_all_vms
 from cfme.web_ui import toolbar
 from utils import testgen
@@ -20,12 +21,7 @@ pytestmark = [
     test_requirements.power]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
-    if not idlist:
-        return
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="class")
+pytest_generate_tests = testgen.generate([InfraProvider], scope="class")
 
 
 @pytest.fixture(scope='function')

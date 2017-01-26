@@ -12,6 +12,7 @@ from cfme.rest.gen_data import service_catalogs as _service_catalogs
 from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import orchestration_templates as _orchestration_templates
 from cfme import test_requirements
+from cfme.infrastructure.provider import InfraProvider
 from utils import error, version, testgen
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
@@ -25,17 +26,14 @@ pytestmark = [
 ]
 
 
-def pytest_generate_tests(metafunc):
-    # cfme.rest.services requires several provisioning tags
-    argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc,
-        required_fields=[['provisioning', 'template'],
-                         ['provisioning', 'host'],
-                         ['provisioning', 'datastore'],
-                         ['provisioning', 'iso_file'],
-                         ['provisioning', 'vlan'],
-                         ['provisioning', 'catalog_item_type']])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope='module')
+pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
+    ['provisioning', 'template'],
+    ['provisioning', 'host'],
+    ['provisioning', 'datastore'],
+    ['provisioning', 'iso_file'],
+    ['provisioning', 'vlan'],
+    ['provisioning', 'catalog_item_type']
+], scope='module')
 
 
 @pytest.fixture(scope="module")

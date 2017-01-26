@@ -9,9 +9,7 @@ from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
 
-pytest_generate_tests = testgen.generate(testgen.providers_by_class,
-                                         [OpenstackInfraProvider],
-                                         scope='module')
+pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 ROLES = ['Compute', 'Controller', 'BlockStorage', 'SwiftStorage',
          'CephStorage']
