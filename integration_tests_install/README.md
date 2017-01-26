@@ -42,6 +42,15 @@ Updating of Docker images works by pushing changes to integration_tests Dockerfi
  - Docker installed from official Docker repositories
 Follow official documentation on how to [install](https://www.docker.com/products/overview#/install_the_platform) Docker on your favourite platform.
 
+
+## SElinux
+- if you get error "ERROR! the playbook: configure_integration_tests.yml could not be found" you have most probably SElinux enabled. You can check if SElinux is enabled by executing:
+```
+getenforce
+```
+command. If Enforcing is displayed, it means that the SELinux policy is in effect.
+You can solve this issue by TODOD.
+
 ## Initial installation
 ```
 export PROJECTS="${HOME}/projects"
@@ -92,6 +101,8 @@ Configure or re-configure environment:
 ./integration_tests_init.sh init
 ```
 Note: Answers collected from user during init phase are stored inside .vars_config.yml.
+Note 2: If you would like to use YAML files stored on remote repo, you must have access to this repo. This means, you need to have private ssh key in your ${HOME}/.ssh directory and corresponding public ssh key must be added to your remote repo (gitlab, gerrit, ..)
+Note 3: If you answer "y" for possibility for pull requests reation, you must have remote repo forked. This must be done on remote side (githu, gitlab, ...).
 
 Run test:
 Note: This test requires to have YAML files configured.
