@@ -1,5 +1,6 @@
 import pytest
 import re
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.cluster import Cluster
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider

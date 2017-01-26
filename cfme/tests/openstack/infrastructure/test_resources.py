@@ -1,4 +1,6 @@
 import pytest
+
+from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from utils import testgen
 
@@ -13,7 +15,7 @@ pytest_generate_tests = testgen.generate(testgen.providers_by_class,
 
 @pytest.mark.usefixtures("setup_provider_modscope")
 def test_number_of_cpu(provider, soft_assert):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     v = provider.get_detail('Properties', 'Aggregate Node CPU Resources')
     soft_assert(int(v.split()[0]) > 0, "Aggregate Node CPU Resources is 0")
     v = provider.get_detail('Properties', 'Aggregate Node CPUs')
@@ -23,6 +25,6 @@ def test_number_of_cpu(provider, soft_assert):
 
 
 def test_node_memory(provider):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     node_memory = provider.get_detail('Properties', 'Aggregate Node Memory')
     assert int(node_memory.split()[0]) > 0

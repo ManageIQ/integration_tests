@@ -1,11 +1,12 @@
 import pytest
-from utils import testgen
-from cfme.web_ui import Quadicon, toolbar
+
+from cfme.configure.tasks import is_host_analysis_finished
+from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import InfoBlock
-from cfme.fixtures import pytest_selenium as sel
-from cfme.configure.tasks import is_host_analysis_finished
+from cfme.web_ui import InfoBlock, Quadicon, toolbar
+from utils import testgen
+from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
 
 
@@ -16,44 +17,37 @@ pytestmark = [pytest.mark.usefixtures("setup_provider_modscope")]
 
 
 def test_host_configuration(provider, soft_assert):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
     for quad in my_quads:
         host = Host(name=quad.name)
         host.run_smartstate_analysis()
-        wait_for(lambda: is_host_analysis_finished(host.name), delay=15,
-                 timeout="10m", fail_func=lambda: toolbar.select('Reload'))
-        soft_assert(
-            int(host.get_detail("Configuration", "Packages")) > 0,
-            'Nodes number of Packages is 0')
-
-        soft_assert(
-            int(host.get_detail("Configuration", "Services")) > 0,
-            'Nodes number of Services is 0')
-
-        soft_assert(int(host.get_detail("Configuration", "Files")) > 0,
-                    'Nodes number of Files is 0')
+        wait_for(is_host_analysis_finished, [host.name], delay=15,
+                 timeout="10m", fail_func=toolbar.refresh)
+        fields = ['Packages', 'Services', 'Files']
+        for field in fields:
+            value = int(host.get_detail("Configuration", field))
+            soft_assert(value > 0, 'Nodes number of {} is 0'.format(field))
 
 
 def test_host_cpu_resources(provider, soft_assert):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
     for quad in my_quads:
         host = Host(name=quad.name)
-        soft_assert(int(host.get_detail("Properties", "Number of CPUs")) > 0,
-                    "Aggregate Node CPU resources is 0")
-        soft_assert(int(host.get_detail("Properties", "Number of CPU Cores")) > 0,
-                    "Aggregate node CPUs is 0")
-        soft_assert(int(host.get_detail("Properties", "CPU Cores Per Socket")) > 0,
-                    "Aggregate Node CPU Cores is 0")
+        fields = ['Number of CPUs', 'Number of CPU Cores',
+                  'CPU Cores Per Socket']
+        for field in fields:
+            value = int(host.get_detail("Properties", field))
+            soft_assert(value > 0, "Aggregate Node {} is 0".format(field))
 
 
 def test_host_devices(provider):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
@@ -73,7 +67,7 @@ def test_host_hostname(provider, soft_assert):
 
 
 def test_smbios_data(provider):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
@@ -84,7 +78,7 @@ def test_smbios_data(provider):
 
 
 def test_host_security(provider, soft_assert):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
@@ -100,7 +94,7 @@ def test_host_security(provider, soft_assert):
 
 
 def test_host_zones_assigned(provider):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
