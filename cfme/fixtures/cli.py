@@ -29,7 +29,7 @@ def dedicated_db(appliance2, app_creds):
     return appliance2
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.yield_fixture(scope="function")
 def appliance():
     sp = SproutClient.from_config()
     version = current_appliance.version.vstring
@@ -42,7 +42,7 @@ def appliance():
     sp.destroy_pool(pool_id)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.yield_fixture(scope="function")
 def appliance2():
     sp = SproutClient.from_config()
     version = current_appliance.version.vstring
@@ -55,7 +55,7 @@ def appliance2():
     sp.destroy_pool(pool_id)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.yield_fixture(scope="function")
 def fqdn_appliance():
     sp = SproutClient.from_config()
     available_providers = set(sp.call_method('available_providers'))
