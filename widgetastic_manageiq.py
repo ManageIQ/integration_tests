@@ -828,7 +828,7 @@ class PaginationPane(View):
     @property
     def items_per_page(self):
         selected = self.items_on_page.selected_option
-        return int(re.sub(r'\sitems', '', selected))
+        return int(re.sub(r'\s+items', '', selected))
 
     def set_items_per_page(self, value):
         self.items_on_page.select_by_visible_text(str(value))
