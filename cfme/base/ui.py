@@ -822,8 +822,8 @@ class AutomateSimulationView(BaseLoggedInPage):
     def is_displayed(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == [
-                automate_menu_name(self.obj.appliance), 'Simulation'])
+            self.navigation.currently_selected == automate_menu_name(
+                self.obj.appliance) + ['Simulation'])
 
     # TODO: Actually convert this to Widgetastic.
 
@@ -834,4 +834,4 @@ class AutomateSimulation(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        self.view.navigation.select(automate_menu_name(self.obj.appliance), 'Simulation')
+        self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Simulation'])
