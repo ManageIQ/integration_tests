@@ -2,7 +2,7 @@ import pytest
 import re
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.cluster import Cluster
+from cfme.infrastructure.deployment_roles import DeploymentRoles
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import InfoBlock, Quadicon
 from utils import testgen
@@ -32,7 +32,7 @@ def test_host_role_type(provider):
 
 
 def test_roles_name(provider):
-    navigate_to(Cluster, 'All')
+    navigate_to(DeploymentRoles, 'All')
     my_roles_quads = list(Quadicon.all())
     for quad in my_roles_quads:
         role_name = str(quad.name).split('-')[1]
