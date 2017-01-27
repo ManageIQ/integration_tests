@@ -1047,7 +1047,8 @@ class BreadCrumb(Widget):
 class ToolBarViewSelector(View):
     """ represents toolbar's view selector control ("Grid View", "Tile View", etc)
 
-        .. code-block:: python
+    .. code-block:: python
+
         @View.nested
         class view_selector(ToolBarViewSelector):  # NOQA
 
