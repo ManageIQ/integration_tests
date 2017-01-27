@@ -60,6 +60,7 @@ class SproutClient(object):
             "args": args,
             "kwargs": kwargs,
         }
+        logger.info("SPROUT: Called {} with {} {}".format(name, args, kwargs))
         if self._auth is not None:
             req_data["auth"] = self._auth
         result = self._call_post(**req_data)
