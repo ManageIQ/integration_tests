@@ -61,7 +61,7 @@ def test_order_catalog_item_via_rest(
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     catalog_item.create()
     request.addfinalizer(catalog_item.delete)
-    catalog = rest_api.collections.service_catalogs.find_by(name=catalog)
+    catalog = rest_api.collections.service_catalogs.find_by(name=catalog.name)
     assert len(catalog) == 1
     catalog, = catalog
     template = catalog.service_templates.find_by(name=catalog_item.name)
