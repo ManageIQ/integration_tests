@@ -117,11 +117,8 @@ class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        page_name = 'Clusters'
-        if 'openstack' in self.obj.provider.type_name:
-            page_name = 'Deployment Roles'
         self.prerequisite_view.navigation.select('Compute', 'Infrastructure',
-                                                 page_name)
+                                                 'Clusters')
 
     def resetter(self):
         tb.select("Grid View")
