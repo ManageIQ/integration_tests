@@ -55,7 +55,7 @@ class ExpressionEditor(View, Pretty):
         type = BootstrapSelect("chosen_typ")
         field = BootstrapSelect("chosen_field")
         skey = BootstrapSelect("chosen_skey")
-        value = Input(name="#chosen_value")
+        value = Input(name="chosen_value")
         check = BootstrapSelect("chosen_check")
         cfield = BootstrapSelect("chosen_cfield")
         ckey = BootstrapSelect("chosen_ckey")
@@ -233,7 +233,6 @@ class ExpressionEditor(View, Pretty):
         Args:
             tag: Name of the field to compare.
             value: Value to check against.
-        Returns: See :py:func:`cfme.web_ui.fill`.
         """
         view = self.tag_form_view
         view.fill(dict(
@@ -285,7 +284,7 @@ class ExpressionEditor(View, Pretty):
         """
         field_norm = field.strip().lower()
         if ("date updated" in field_norm or "date created" in field_norm or
-                "boot time" in field_norm):
+                "boot time" in field_norm or "timestamp" in field_norm):
             no_date = False
         else:
             no_date = True

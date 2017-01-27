@@ -9,6 +9,7 @@ from widgetastic_patternfly import Button, Input
 from . import ControlExplorerView
 from utils.appliance import Navigatable
 from utils.update import Updateable
+from utils import version
 
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
@@ -291,5 +292,18 @@ class ContainerNodeCondition(BaseCondition):
 class ContainerImageCondition(BaseCondition):
 
     TREE_NODE = "Container Image"
-    PRETTY = "Container Image"
-    FIELD_VALUE = "Container Image"
+    PRETTY = version.pick({
+        version.LOWEST: "Image",
+        '5.7': "Container Image",
+    })
+    FIELD_VALUE = version.pick({
+        version.LOWEST: "Image",
+        '5.7': "Container Image",
+    })
+
+
+class ProviderCondition(BaseCondition):
+
+    TREE_NODE = "Container Provider"
+    PRETTY = "Provider"
+    FIELD_VALUE = "Provider"
