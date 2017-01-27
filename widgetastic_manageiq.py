@@ -23,7 +23,6 @@ from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
 from cached_property import cached_property
-from utils.log import logger
 
 
 class DynaTree(Widget):
@@ -631,7 +630,7 @@ class Calendar(TextInput):
             try:
                 self.browser.execute_script(script, self.browser.element(self))
             except WebDriverException as e:
-                logger.warning(
+                self.logger.warning(
                     "An exception was raised during handling of the Cal #{}'s change event:\n{}"
                     .format(self.name, str(e)))
         self.browser.plugin.ensure_page_safe()
@@ -881,7 +880,7 @@ class PaginationPane(View):
         if self.exists:
             # start iterating at the first page
             if self.cur_page != 1:
-                logger.debug('Resetting paginator to first page')
+                self.logger.debug('Resetting paginator to first page')
                 self.first_page()
 
             # Adding 1 to pages_amount to include the last page in loop
@@ -891,7 +890,7 @@ class PaginationPane(View):
                     # last or only page, stop looping
                     break
                 else:
-                    logger.debug('Paginator advancing to next page')
+                    self.logger.debug('Paginator advancing to next page')
                     self.next_page()
 
         else:
