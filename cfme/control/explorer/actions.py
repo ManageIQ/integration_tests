@@ -12,8 +12,6 @@ from . import ControlExplorerView
 from utils.appliance import Navigatable
 from utils.update import Updateable
 
-from utils.db import cfmedb
-
 
 class ActionsAllView(ControlExplorerView):
     title = Text("#explorer_title_text")
@@ -212,8 +210,12 @@ class Action(Updateable, Navigatable, Pretty):
 
     @property
     def exists(self):
-        actions = cfmedb()["miq_actions"]
-        return cfmedb().session\
+        """Check existence of this Action.
+
+        Returns: :py:class:`bool` signalizing the presence of the Action in the database.
+        """
+        actions = self.appliance.db["miq_actions"]
+        return self.appliance.db.session\
             .query(actions.description)\
             .filter(actions.description == self.description)\
             .count() > 0

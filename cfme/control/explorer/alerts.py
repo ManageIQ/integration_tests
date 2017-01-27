@@ -262,6 +262,18 @@ class Alert(Updateable, Navigatable, Pretty):
                 fill_details["snmp_trap"] = self.snmp_trap
         view.fill(fill_details)
 
+    @property
+    def exists(self):
+        """Check existence of this Alert.
+
+        Returns: :py:class:`bool` signalizing the presence of the Alert in the database.
+        """
+        alerts = self.appliance.db["miq_alerts"]
+        return self.appliance.db.session\
+            .query(alerts.description)\
+            .filter(alerts.description == self.description)\
+            .count() > 0
+
 
 @navigator.register(Alert, "Add")
 class AlertNew(CFMENavigateStep):
