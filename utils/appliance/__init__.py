@@ -124,9 +124,9 @@ class IPAppliance(object):
             [self.browser])
         self._server = None
 
-    def get(self, obj, *args, **kwargs):
-        kwargs.update({'appliance': self})
-        return obj(*args, **kwargs)
+    def get(self, cls, *args, **kwargs):
+        assert 'appliance' not in kwargs
+        return cls(appliance=self, *args, **kwargs)
 
     @property
     def server(self):
