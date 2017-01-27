@@ -24,7 +24,7 @@ def test_assigned_roles(provider):
 
 
 def test_nodes(provider):
-    provider.load_details()
+    navigate_to(provider, 'Details')
     """
     todo get the list of VM's from external resource and compare
     it with result - currently not 0
