@@ -14,70 +14,70 @@ from widgetastic_manageiq import Calendar
 from widgetastic.utils import VersionPick, Version
 
 
-class FieldFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    field = BootstrapSelect("chosen_field")
-    key = BootstrapSelect("chosen_key")
-    value = Input("chosen_value")
-    user_input = Input("user_input")
-
-
-class FieldDateForm(View):
-    dropdown_select = BootstrapSelect("chosen_from_1")
-    input_select_date = Calendar("miq_date_1_0")
-    input_select_time = BootstrapSelect("miq_time_1_0")
-
-
-class CountFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    count = BootstrapSelect("chosen_count")
-    key = BootstrapSelect("chosen_key")
-    value = Input("chosen_value")
-    user_input = Input("user_input")
-
-
-class TagFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    tag = BootstrapSelect("chosen_tag")
-    value = BootstrapSelect("chosen_value")
-    user_input = Input("user_input")
-
-
-class FindFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    field = BootstrapSelect("chosen_field")
-    skey = BootstrapSelect("chosen_skey")
-    value = Input("#chosen_value")
-    check = BootstrapSelect("chosen_check")
-    cfield = BootstrapSelect("chosen_cfield")
-    ckey = BootstrapSelect("chosen_ckey")
-    cvalue = Input("chosen_cvalue")
-
-
-class RegistryFormView(View):
-    type = BootstrapSelect("chosen_typ")
-    key = Input("chosen_regkey")
-    value = Input("chosen_regval")
-    operation = BootstrapSelect("chosen_key")
-    contents = Input("chosen_value")
-
-
-class DateSpecificForm(View):
-    date = Calendar("miq_date_1_0")
-    time = BootstrapSelect("miq_time_1_0")
-
-
-class DateRelativeForm(View):
-    from_ = BootstrapSelect("chosen_from_1")
-    through = BootstrapSelect("chosen_through_1")
-
-
 class ExpressionEditor(View, Pretty):
     """This class enables to embed the expression in a Form.
 
     Args:
         show_func: Function to call to show the expression if there are more of them.
     """
+
+    @View.nested
+    class field_form_view(View):  # noqa
+        type = BootstrapSelect("chosen_typ")
+        field = BootstrapSelect("chosen_field")
+        key = BootstrapSelect("chosen_key")
+        value = Input(name="chosen_value")
+        user_input = Input(name="user_input")
+
+    @View.nested
+    class field_date_form(View):  # noqa
+        dropdown_select = BootstrapSelect("chosen_from_1")
+        input_select_date = Calendar(name="miq_date_1_0")
+        input_select_time = BootstrapSelect("miq_time_1_0")
+
+    @View.nested
+    class count_form_view(View):  # noqa
+        type = BootstrapSelect("chosen_typ")
+        count = BootstrapSelect("chosen_count")
+        key = BootstrapSelect("chosen_key")
+        value = Input(name="chosen_value")
+        user_input = Input(name="user_input")
+
+    @View.nested
+    class tag_form_view(View):  # noqa
+        type = BootstrapSelect("chosen_typ")
+        tag = BootstrapSelect("chosen_tag")
+        value = BootstrapSelect("chosen_value")
+        user_input = Input(name="user_input")
+
+    @View.nested
+    class find_form_view(View):  # noqa
+        type = BootstrapSelect("chosen_typ")
+        field = BootstrapSelect("chosen_field")
+        skey = BootstrapSelect("chosen_skey")
+        value = Input(name="#chosen_value")
+        check = BootstrapSelect("chosen_check")
+        cfield = BootstrapSelect("chosen_cfield")
+        ckey = BootstrapSelect("chosen_ckey")
+        cvalue = Input(name="chosen_cvalue")
+
+    @View.nested
+    class registry_form_view(View):  # noqa
+        type = BootstrapSelect("chosen_typ")
+        key = Input(name="chosen_regkey")
+        value = Input(name="chosen_regval")
+        operation = BootstrapSelect("chosen_key")
+        contents = Input(name="chosen_value")
+
+    @View.nested
+    class date_specific_form_view(View):  # noqa
+        date = Calendar(name="miq_date_1_0")
+        time = BootstrapSelect("miq_time_1_0")
+
+    @View.nested
+    class date_relative_form_view(View):  # noqa
+        from_ = BootstrapSelect("chosen_from_1")
+        through = BootstrapSelect("chosen_through_1")
 
     ROOT = "//div[@id='exp_editor_div']"
     MAKE_BUTTON = "//span[not(contains(@style,'none'))]//img[@alt='{}']"
@@ -100,14 +100,6 @@ class ExpressionEditor(View, Pretty):
     UNDO = "//img[@alt='Undo']"
     SELECT_SPECIFIC = "//img[@alt='Click to change to a specific Date/Time format']"
     SELECT_RELATIVE = "//img[@alt='Click to change to a relative Date/Time format']"
-    field_form_view = FieldFormView()
-    field_date_form = FieldDateForm()
-    count_form_view = CountFormView()
-    tag_form_view = TagFormView()
-    find_form_view = FindFormView()
-    registry_form_view = RegistryFormView()
-    date_specific_form = DateSpecificForm()
-    date_relative_form = DateRelativeForm()
 
     pretty_attrs = ['show_loc']
 
@@ -190,7 +182,7 @@ class ExpressionEditor(View, Pretty):
             self.click_remove()
 
     def read(self):
-        "Returns whole expression as represented visually."
+        """Returns whole expression as represented visually."""
         return self._expressions_root.text.encode("utf-8").strip()
 
     def enable_editor(self):
