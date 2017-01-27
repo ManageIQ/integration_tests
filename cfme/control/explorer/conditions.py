@@ -200,6 +200,18 @@ class BaseCondition(Updateable, Navigatable, Pretty):
         assert view.is_displayed
         return view.scope.read()
 
+    @property
+    def exists(self):
+        """Check existence of this Condition.
+
+        Returns: :py:class:`bool` signalizing the presence of the Condition in the database.
+        """
+        conditions = self.appliance.db["conditions"]
+        return self.appliance.db.session\
+            .query(conditions.description)\
+            .filter(conditions.description == self.description)\
+            .count() > 0
+
 
 @navigator.register(BaseCondition, "Add")
 class ConditionNew(CFMENavigateStep):
