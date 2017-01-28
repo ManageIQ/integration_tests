@@ -16,6 +16,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen, providers, version
 from utils.update import update
+from utils.log import logger
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
@@ -249,23 +250,25 @@ def test_provider_crud(provider):
 class TestProvidersRESTAPI(object):
     @pytest.yield_fixture(scope="function")
     def custom_attributes(self, rest_api, setup_a_provider):
-        provider = rest_api.collections.providers[0]
+        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
         body = []
-        for _ in range(2):
+        attrs_num = 2
+        for _ in range(attrs_num):
             uid = fauxfactory.gen_alphanumeric(5)
             body.append({
                 'name': 'ca_name_{}'.format(uid),
                 'value': 'ca_value_{}'.format(uid)
             })
         attrs = provider.custom_attributes.action.add(*body)
+        assert len(attrs) == attrs_num
 
-        yield attrs
+        yield attrs, provider
 
         try:
-            # custom attributes can be deleted by tests, just log warning
             provider.custom_attributes.action.delete(*attrs)
         except APIException:
-            pass
+            # custom attributes can be deleted by tests, just log warning
+            logger.warning("Failed to delete custom attribute.")
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
@@ -276,9 +279,8 @@ class TestProvidersRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        assert len(custom_attributes) == 2
-        provider = rest_api.collections.providers.get(id=custom_attributes[0].resource_id)
-        for attr in custom_attributes:
+        attributes, provider = custom_attributes
+        for attr in attributes:
             record = provider.custom_attributes.get(id=attr.id)
             assert record.name == attr.name
             assert record.value == attr.value
@@ -295,16 +297,16 @@ class TestProvidersRESTAPI(object):
         Metadata:
             test_flag: rest
         """
+        attributes, provider = custom_attributes
         if from_detail:
-            for ent in custom_attributes:
+            for ent in attributes:
                 ent.action.delete()
                 with error.expected('ActiveRecord::RecordNotFound'):
                     ent.action.delete()
         else:
-            provider = rest_api.collections.providers.get(id=custom_attributes[0].resource_id)
-            provider.custom_attributes.action.delete(*custom_attributes)
+            provider.custom_attributes.action.delete(*attributes)
             with error.expected('ActiveRecord::RecordNotFound'):
-                provider.custom_attributes.action.delete(*custom_attributes)
+                provider.custom_attributes.action.delete(*attributes)
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
@@ -318,8 +320,8 @@ class TestProvidersRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        response_len = len(custom_attributes)
-        assert response_len > 0
+        attributes, provider = custom_attributes
+        response_len = len(attributes)
         body = []
         for _ in range(response_len):
             uid = fauxfactory.gen_alphanumeric(5)
@@ -331,11 +333,10 @@ class TestProvidersRESTAPI(object):
         if from_detail:
             edited = []
             for i in range(response_len):
-                edited.append(custom_attributes[i].action.edit(**body[i]))
+                edited.append(attributes[i].action.edit(**body[i]))
         else:
             for i in range(response_len):
-                body[i].update(custom_attributes[i]._ref_repr())
-            provider = rest_api.collections.providers.get(id=custom_attributes[0].resource_id)
+                body[i].update(attributes[i]._ref_repr())
             edited = provider.custom_attributes.action.edit(*body)
         assert len(edited) == response_len
         for i in range(response_len):
@@ -354,19 +355,18 @@ class TestProvidersRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        response_len = len(custom_attributes)
-        assert response_len > 0
+        attributes, provider = custom_attributes
+        response_len = len(attributes)
         body = []
         for _ in range(response_len):
             body.append({'section': 'bad_section'})
         if from_detail:
             for i in range(response_len):
                 with error.expected('Api::BadRequestError'):
-                    custom_attributes[i].action.edit(**body[i])
+                    attributes[i].action.edit(**body[i])
         else:
             for i in range(response_len):
-                body[i].update(custom_attributes[i]._ref_repr())
-            provider = rest_api.collections.providers.get(id=custom_attributes[0].resource_id)
+                body[i].update(attributes[i]._ref_repr())
             with error.expected('Api::BadRequestError'):
                 provider.custom_attributes.action.edit(*body)
 
