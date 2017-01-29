@@ -10,7 +10,7 @@ from cfme.containers.template import Template
 
 pytestmark = [
     pytest.mark.uncollectif(
-        lambda: current_version() > 5.6),
+        lambda: current_version() > 5.7),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(3)]
 pytest_generate_tests = testgen.generate([Template], scope='module')
