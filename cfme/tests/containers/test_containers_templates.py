@@ -14,7 +14,7 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(3)]
 pytest_generate_tests = testgen.generate(
-    testgen.containers_providers, scope='module')
+    testgen.containers_providers, scope='function')
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
