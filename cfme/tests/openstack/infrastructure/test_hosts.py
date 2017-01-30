@@ -65,7 +65,7 @@ def test_host_hostname(provider, soft_assert):
         soft_assert(result) != '', "Missing hostname in: " + str(host)
 
 
-def test_smbios_data(provider):
+def test_host_memory(provider):
     navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
