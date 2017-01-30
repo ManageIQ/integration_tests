@@ -217,6 +217,8 @@ class ProviderFilter(object):
 global_filters['enabled_only'] = ProviderFilter(required_tags=['disabled'], inverted=True)
 # Only providers relevant for current appliance version (requires SSH access when used)
 global_filters['restrict_version'] = ProviderFilter(restrict_version=True)
+# Only non-problematic providers will be considered
+global_filters['problematic'] = ProviderFilter(keys=[], inverted=True)
 
 
 def list_providers(filters=None, use_global_filters=True):
@@ -300,6 +302,16 @@ def new_setup_a_provider(filters=None, use_global_filters=True, validate=True, c
     filters = filters or []
 
     providers = list_providers(filters=filters, use_global_filters=use_global_filters)
+    # If all providers have been filtered out but we have some problematic ones blocked
+    # lets unblock them and try again
+    if not providers and global_filters['problematic'].keys:
+        global_filters['problematic'].keys = []
+        store.terminalreporter.write_line(
+            "Reached the point where all possible providers for this case are marked as bad. "
+            "Clearing the bad provider list for a fresh start and next chance.", yellow=True)
+        providers = list_providers(filters=filters, use_global_filters=use_global_filters)
+
+    # If still nothing, it was not the 'problematic' filter filtering them out this time
     if not providers:
         raise Exception("All providers have been filtered out, cannot setup any providers")
 
@@ -308,28 +320,14 @@ def new_setup_a_provider(filters=None, use_global_filters=True, validate=True, c
         if provider.exists:
             return provider
 
-    # Activate the 'nonproblematic' filter to filter out problematic providers (if any)
-    if global_filters.get('problematic') is None:
-        global_filters['problematic'] = ProviderFilter(keys=[], inverted=True)
-
-    # If there are no non-problematic providers, reset the filter
-    nonproblematic_providers = list_providers(filters=filters)
-    if not nonproblematic_providers:
-        global_filters['problematic'].keys = []
-        store.terminalreporter.write_line(
-            "Reached the point where all possible providers forthis case are marked as bad. "
-            "Clearing the bad provider list for a fresh start and next chance.", yellow=True)
-    # Otherwise, make non-problematic the new cool
-    else:
-        providers = nonproblematic_providers
-
     # If we have more than one provider, try to pick one that doesnt have the do_not_prefer flag set
     if len(providers) > 1:
         do_not_prefer_filter = ProviderFilter(required_fields=[("do_not_prefer", False)],
                                               inverted=True)
         # If we find any providers without the 'do_not_prefer' flag, add  the filter to the list
         # of active filters and make preferred providers the new cool
-        preferred_providers = list_providers(filters=filters + [do_not_prefer_filter])
+        preferred_providers = list_providers(
+            filters=filters + [do_not_prefer_filter], use_global_filters=use_global_filters)
         if preferred_providers:
             filters.append(do_not_prefer_filter)
             providers = preferred_providers
