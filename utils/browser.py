@@ -55,9 +55,9 @@ class HeartBeat(object):
     _heartbeat = attr.ib(repr=False)
     _delay = attr.ib(repr=False)
     _thread_name = attr.ib(default=None)
-    _trigger = attr.ib(default=attr.Factory(threading.Condition),
+    _trigger = attr.ib(default=attr.Factory(threading.Event),
                        init=False, repr=False)
-    _done = attr.ib(default=attr.Factory(threading.Condition),
+    _done = attr.ib(default=attr.Factory(threading.Event),
                     init=False, repr=False)
 
     def __post_init__(self):
