@@ -55,8 +55,10 @@ class HeartBeat(object):
     _heartbeat = attr.ib(repr=False)
     _delay = attr.ib(repr=False)
     _thread_name = attr.ib(default=None)
-    _trigger = attr.ib(default=attr.Factory(threading.Condition), init=False, repr=False)
-    _done = attr.ib(default=attr.Factory(threading.Condition), init=False, repr=False)
+    _trigger = attr.ib(default=attr.Factory(threading.Condition),
+                       init=False, repr=False)
+    _done = attr.ib(default=attr.Factory(threading.Condition),
+                    init=False, repr=False)
 
     def __post_init__(self):
         self._actor = threading.Thread(
@@ -125,17 +127,13 @@ class Wharf(object):
     def _heartbeat_func(self):
         # If we have a docker id, renew_timer shouldn't still be None
         if self.docker_id:
-            # You can call renew as frequently as desired, but it'll only run if
-            # the renewal timer has stopped or failed to renew
             response = self._get('renew', self.docker_id)
             try:
                 expiry_info = json.loads(response.content)
             except ValueError:
                 raise ValueError("JSON could not be decoded:\n{}".format(response.content))
             self.config.update(expiry_info)
-            self._reset_renewal_timer()
             log.info('Renewed webdriver container %s', self.docker_id)
-            # Floor div by 2 and add a second to renew roughly halfway before expiration
             return self._cautious_expire_interval()
 
     def __nonzero__(self):
