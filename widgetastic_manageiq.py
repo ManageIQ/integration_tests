@@ -883,7 +883,8 @@ class PaginationPane(View):
 class Stepper(Widget):
     """ A CFME Stepper Control
 
-        .. code-block:: python
+    .. code-block:: python
+
         stepper = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
         stepper.increase()
     """
@@ -893,7 +894,7 @@ class Stepper(Widget):
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent=parent, logger=logger)
 
-        self._locator = locator
+        self.locator = locator
 
         self.minus_button = Button(self, '-')
         self.plus_button = Button(self, '+')
@@ -930,59 +931,42 @@ class Stepper(Widget):
         return self.set_value(value)
 
 
-class RadioButton(Button):
-    """CFME Radio Button Control
-       it should be mainly used in RadioGroup control
-    """
-    ROOT = ParametrizedLocator('.//*[self::input and @type="radio" and '
-                               'parent::label[normalize-space(.)={@name|quote}]]')
-
-    def __init__(self, parent, name, logger=None):
-        Button.__init__(self, parent=parent, logger=logger)
-        self._name = name
-
-    @property
-    def is_selected(self):
-        if 'ng-valid-parse' in self.browser.classes(self):
-            return True
-        return False
-
-    @property
-    def name(self):
-        return self._name
-
-
 class RadioGroup(Widget):
     """ CFME Radio Group Control
 
-        .. code-block:: python
+    .. code-block:: python
+
         radio_group = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
         radio_group.select(radio_group.button_names()[-1])
     """
+    BUTTONS = './/label[input[@type="radio"]]'
+
     def __init__(self, parent, locator, logger=None):
         Widget.__init__(self, parent=parent, logger=logger)
-        self._locator = locator
+        self.locator = locator
 
     def __locator__(self):
-        return self._locator
+        return self.locator
+
+    def _get_button(self, name):
+        br = self.browser
+        return next(btn for btn in br.elements(self.BUTTONS) if br.text(btn) == name)
 
     @property
     def button_names(self):
-        buttons = self.browser.elements('//label[input[@type="radio"]]')
-        return [self.browser.text(btn) for btn in buttons]
-
-    def _get_button(self, name):
-        return RadioButton(self, name=name)
+        return [self.browser.text(btn) for btn in self.browser.elements(self.BUTTONS)]
 
     @property
     def selected(self):
-        for name in self.button_names:
-            if self._get_button(name).is_selected:
-                return name
+        names = self.button_names
+        for name in names:
+            if 'ng-valid-parse' in self.browser.classes(self._get_button(name)):
+                return True
+
         else:
-            # be default all radio buttons are equal.
-            # So, I don't see clear way to check which one is selected be default
-            return self.button_names[0]
+            # radio button doesn't have any marks to make out which button is selected by default.
+            # so, returning first radio button's name
+            return names[0]
 
     def select(self, name):
         button = self._get_button(name)
@@ -1001,7 +985,8 @@ class RadioGroup(Widget):
 class BreadCrumb(Widget):
     """ CFME BreadCrumb navigation control
 
-        .. code-block:: python
+    .. code-block:: python
+
         breadcrumb = BreadCrumb()
         breadcrumb.click_location(breadcrumb.locations[0])
     """
