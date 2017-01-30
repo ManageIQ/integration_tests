@@ -960,8 +960,9 @@ class RadioGroup(Widget):
     def selected(self):
         names = self.button_names
         for name in names:
-            if 'ng-valid-parse' in self.browser.classes(self._get_button(name)):
-                return True
+            if 'ng-valid-parse' in self.browser.classes('.//input[@type="radio"]',
+                                                        parent=self._get_button(name)):
+                return name
 
         else:
             # radio button doesn't have any marks to make out which button is selected by default.
@@ -970,7 +971,7 @@ class RadioGroup(Widget):
 
     def select(self, name):
         button = self._get_button(name)
-        if not button.is_selected:
+        if self.selected != name:
             button.click()
             return True
         return False
@@ -1011,11 +1012,11 @@ class BreadCrumb(Widget):
     @property
     def active_location(self):
         br = self.browser
-        return [br.text(loc) for loc in self._path_elements if 'active' in br.classes(loc)][-1]
+        return next(br.text(loc) for loc in self._path_elements if 'active' in br.classes(loc))
 
     def click_location(self, name, handle_alert=True):
         br = self.browser
-        location = [loc for loc in self._path_elements if br.text(loc) == name][-1]
+        location = next(loc for loc in self._path_elements if br.text(loc) == name)
         result = br.click(location, ignore_ajax=handle_alert)
         if handle_alert:
             self.browser.handle_alert(wait=2.0, squash=True)
