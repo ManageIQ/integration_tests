@@ -896,9 +896,17 @@ class Stepper(Widget):
 
         self.locator = locator
 
-        self.minus_button = Button(self, '-')
-        self.plus_button = Button(self, '+')
-        self.value_field = Input(self, locator=self.INPUT_CTL)
+    @property
+    def minus_button(self):
+        return Button(self, '-')
+
+    @property
+    def plus_button(self):
+        return Button(self, '+')
+
+    @property
+    def value_field(self):
+        return Input(self, locator=self.INPUT_CTL)
 
     def read(self):
         return int(self.value_field.read())
