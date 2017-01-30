@@ -1,3 +1,4 @@
+from utils.appliance.implementations.ui import navigate_to
 from . import InfraProvider, prop_region
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
 from cfme.web_ui import Form, FileInput, InfoBlock, fill
@@ -20,10 +21,10 @@ class OpenstackInfraProvider(InfraProvider):
     mgmt_class = OpenstackInfraSystem
 
     def __init__(self, name=None, credentials=None, key=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None,
-                 provider_data=None, sec_protocol=None):
-        super(OpenstackInfraProvider, self).__init__(name=name,
-             credentials=credentials, key=key, provider_data=provider_data)
+                 ip_address=None, start_ip=None, end_ip=None, provider_data=None,
+                 sec_protocol=None):
+        super(OpenstackInfraProvider, self).__init__(name=name, credentials=credentials,
+                                             key=key, provider_data=provider_data)
 
         self.hostname = hostname
         self.ip_address = ip_address
@@ -83,7 +84,7 @@ class OpenstackInfraProvider(InfraProvider):
             file_path - file path of json file with new node details, navigation
              MUST be from a specific self
         """
-        self.load_details()
+        navigate_to(self, 'Details')
         sel.click(InfoBlock.element("Relationships", "Nodes"))
         tb.select('Configuration', 'Register Nodes')
         my_form = {'file': file_path}
