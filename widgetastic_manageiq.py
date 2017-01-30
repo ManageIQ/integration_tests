@@ -1044,25 +1044,26 @@ class BreadCrumb(Widget):
         return result
 
 
-class ToolBarViewSelector(View):
-    """ represents toolbar's view selector control ("Grid View", "Tile View", etc)
+class ItemsToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+        it is present at pages with items like Infra or Cloud Providers pages
 
     .. code-block:: python
 
         @View.nested
-        class view_selector(ToolBarViewSelector):  # NOQA
+        class view_selector(ItemsToolBarViewSelector):  # NOQA
 
         some_view.view_selector.select('Tile View')
         some_view.view_selector.selected
     """
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
-    BUTTONS = './/button'
+    grid_button = Button(title='Grid View')
+    tile_button = Button(title='Tile View')
+    list_button = Button(title='List View')
 
     @property
     def _view_buttons(self):
-        br = self.browser
-        return [Button(self, title=br.get_attribute('title', btn)) for btn
-                in br.elements(self.BUTTONS)]
+        return self.grid_button, self.tile_button, self.list_button
 
     def select(self, title):
         for button in self._view_buttons:
@@ -1073,7 +1074,36 @@ class ToolBarViewSelector(View):
 
     @property
     def selected(self):
-        """
-        Returns: title of currently selected view
-        """
+        return next(btn.title for btn in self._view_buttons if btn.active)
+
+
+class DetailsToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+        it is present at pages with items like Infra or Cloud Providers pages
+
+    .. code-block:: python
+
+        @View.nested
+        class view_selector(DetailsToolBarViewSelector):  # NOQA
+
+        some_view.view_selector.select('Dashboard View')
+        some_view.view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+    summary_button = Button(title='Summary View')
+    dashboard_button = Button(title='Dashboard View')
+
+    @property
+    def _view_buttons(self):
+        return self.dashboard_button, self.summary_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
         return next(btn.title for btn in self._view_buttons if btn.active)
