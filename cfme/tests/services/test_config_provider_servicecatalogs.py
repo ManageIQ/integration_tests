@@ -98,6 +98,7 @@ def catalog_item(config_manager, dialog, catalog):
 
 @pytest.mark.tier(2)
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.6')
+@pytest.mark.meta(blockers=['GH#ManageIQ/manageiq-ui-classic:267'])
 def test_order_catalog_item(catalog_item, request):
     """Tests order catalog item
     Metadata:
@@ -111,11 +112,5 @@ def test_order_catalog_item(catalog_item, request):
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=1400, delay=20)
-    # Success message differs between 5.6 and 5.7
-    success_message = 'Service '
-    if version.current_version() >= '5.7':
-        # 5.7 success message includes catalog item name in brackets
-        success_message += '[{}] '.format(catalog_item.name)
-    success_message += 'Provisioned Successfully'
-    assert success_message in row.last_message.text
+    assert 'Provisioned Successfully' in row.last_message.text
     DefaultView.set_default_view("Configuration Management Providers", "List View")
