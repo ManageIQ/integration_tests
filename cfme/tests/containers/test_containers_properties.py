@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 import pytest
+
 from cfme.containers.pod import Pod, list_tbl as list_tbl_pods
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.route import Route, list_tbl as list_tbl_routes
 from cfme.containers.project import Project, list_tbl as list_tbl_projects
 from cfme.containers.service import Service, list_tbl as list_tbl_services
+
 from utils import testgen
 from utils.version import current_version
 from utils.appliance.implementations.ui import navigate_to
+import random
 
 
 pytestmark = [
@@ -16,6 +19,12 @@ pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
+
+
+def randomized_names_of(tbl, count):
+    names = [r.name.text for r in tbl.rows()]
+    random.shuffle(names)  # inplace
+    return names[:min(count, tbl.row_count())]
 
 
 # CMP-9911
@@ -40,7 +49,7 @@ def test_pods_properties_rel(provider, rel):
     the fields in the Properties table
     """
     navigate_to(Pod, 'All')
-    ui_pods = [r.name.text for r in list_tbl_pods.rows()]
+    ui_pods = randomized_names_of(list_tbl_pods, 2)
 
     for name in ui_pods:
         obj = Pod(name, provider)
@@ -65,7 +74,7 @@ def test_routes_properties_rel(provider, rel):
     the fields in the Properties table
     """
     navigate_to(Route, 'All')
-    ui_routes = [r.name.text for r in list_tbl_routes.rows()]
+    ui_routes = randomized_names_of(list_tbl_routes, 2)
 
     for name in ui_routes:
         obj = Route(name, provider)
@@ -89,7 +98,7 @@ def test_projects_properties_rel(provider, rel):
     the fields in the Properties table
     """
     navigate_to(Project, 'All')
-    ui_projects = [r.name.text for r in list_tbl_projects.rows()]
+    ui_projects = randomized_names_of(list_tbl_projects, 2)
 
     for name in ui_projects:
         obj = Project(name, provider)
@@ -116,7 +125,7 @@ def test_services_properties_rel(provider, rel):
     the fields in the Properties table
     """
     navigate_to(Service, 'All')
-    ui_services = [r.name.text for r in list_tbl_services.rows()]
+    ui_services = randomized_names_of(list_tbl_services, 2)
 
     for name in ui_services:
         obj = Service(name, provider)
