@@ -2,6 +2,7 @@
 
 from functools import partial
 from navmazing import NavigateToAttribute, NavigateToSibling
+from selenium.common.exceptions import NoSuchElementException
 
 from cfme.exceptions import DestinationNotFound
 from cfme.fixtures import pytest_selenium as sel
@@ -35,7 +36,7 @@ class DeploymentRoles(Pretty, Navigatable):
     def __init__(self, name, provider, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         if not isinstance(provider, OpenstackInfraProvider):
-            raise DestinationNotFound('Deployment roles available only '
+            raise NotImplementedError('Deployment roles available only '
                                       'for Openstack provider')
         self.name = name
         self.provider = provider
@@ -43,18 +44,38 @@ class DeploymentRoles(Pretty, Navigatable):
 
 @navigator.register(DeploymentRoles, 'All')
 class All(CFMENavigateStep):
+
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Compute', 'Infrastructure',
-                                                 'Deployment Roles')
+        nav_path = ('Compute', 'Infrastructure', 'Deployment Roles')
+        try:
+            self.prerequisite_view.navigation.select(*nav_path)
+        except NoSuchElementException:
+            raise DestinationNotFound('Navigation {} not found'.format(nav_path))
 
     def am_i_here(self):
         return match_location(match_page)
 
 
+@navigator.register(DeploymentRoles, 'AllByProvider')
+class AllByProvider(CFMENavigateStep):
+
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self):
+        navigate_to(self.obj.provider, 'Details')
+        list_acc.select('Relationships', 'Show all managed Deployment Roles',
+                        by_title=True, partial=False)
+
+    def am_i_here(self):
+        summary = "{} (All Deployment Roles)".format(self.obj.provider.name)
+        return match_page(summary=summary)
+
+
 @navigator.register(DeploymentRoles, 'Details')
 class Details(CFMENavigateStep):
+
     prerequisite = NavigateToSibling('All')
 
     def step(self):
@@ -66,10 +87,10 @@ class Details(CFMENavigateStep):
 
 @navigator.register(DeploymentRoles, 'DetailsFromProvider')
 class DetailsFromProvider(CFMENavigateStep):
+
+    prerequisite = NavigateToSibling('AllByProvider')
+
     def step(self):
-        navigate_to(self.obj.provider, 'Details')
-        list_acc.select('Relationships', 'Show all managed Deployment Roles',
-                        by_title=True, partial=False)
         sel.click(Quadicon(self.obj.name))
 
     def am_i_here(self):
