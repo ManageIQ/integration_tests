@@ -113,12 +113,6 @@ class Selector(object):
         raise Exception('This widget does not have a "decide" method which is mandatory')
 
 
-
-@fill.method(Selector, Anything):
-def _fill_selector(selector, data):
-    fill(selector.decide(), data)
-
-
 class Region(Pretty):
     """
     Base class for all UI regions/pages
@@ -1354,6 +1348,11 @@ def fill_select(slist, val):
     prev_sel = sel.select(slist, val)
     slist.observer_wait()
     return prev_sel
+
+
+@fill.method(Selector, Anything)
+def _fill_selector(selector, data):
+    fill(selector.decide(), data)
 
 
 class Calendar(Pretty):
