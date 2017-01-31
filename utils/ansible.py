@@ -194,7 +194,7 @@ def setup_ansible_script(provider, script, script_type=0, values_to_update=0, us
                 doc[0]['tasks'][0]['manageiq_custom_attributes']['custom_attributes'][count] = key
                 count += 1
         write_yml(script, doc)
-    copy_manageiq_ansible()
+    # copy_manageiq_ansible()
 
 
 def run_ansible(script):
@@ -228,13 +228,13 @@ def reply_status(reply):
     else:
         return 'No Change', message_status, ok_status
 
-
-def copy_manageiq_ansible():
-    print("this is the library to copy to: " + library_path_to_copy_to)
-    print("this is the library to copy from: " + library_path)
-    if not os.path.exists(library_path_to_copy_to):
-        os.makedirs(library_path_to_copy_to)
-        copy_tree(library_path, library_path_to_copy_to)
+#
+# def copy_manageiq_ansible():
+#     print("this is the library to copy to: " + library_path_to_copy_to)
+#     print("this is the library to copy from: " + library_path)
+#     if not os.path.exists(library_path_to_copy_to):
+#         os.makedirs(library_path_to_copy_to)
+#         copy_tree(library_path, library_path_to_copy_to)
 
 
 def config_formatter():
