@@ -19,7 +19,6 @@ from threading import Lock
 from mgmtsystem import EC2System
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.providers import list_provider_keys
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -184,10 +183,11 @@ def share_ami_image(ami_image_id, share_user_id):
                                 aws_cli_tool_client_password)
     permissions = '{{\"Add\":[{{\"UserId\":\"{user_id}\"}}]}}'.format(user_id=share_user_id)
     command = 'aws ec2 modify-image-attribute --image-id {ami_image_id}' \
-              ' --launch-permission {permissions}'.format(
-               ami_image_id=ami_image_id, permissions=permissions)
+              ' --launch-permission {permissions}' \
+              .format(ami_image_id=ami_image_id, permissions=permissions)
     output = sshclient.run_command(command)
     print("AMAZON EC2: Permissions added to share the AMI image ....")
+    return output
 
 
 def upload_template(provider, username, password, upload_bucket_name,
@@ -246,15 +246,17 @@ def run(**kwargs):
          **kwargs: Kwargs are passed by template_upload_all.
      """
     mgmt_sys = cfme_data['management_systems']
-    if 'ec2east' in mgmt_sys: 
-        ssh_rhevm_creds = mgmt_sys[provider]['credentials']
-        username = credentials[ssh_rhevm_creds]['username']
-        password = credentials[ssh_rhevm_creds]['password']
-        upload_bucket_name = mgmt_sys[provider]['upload_bucket_name']
-        share_user_id = credentials['aws_ami_share'][kwargs['share_team']]['aws_user_id']\
-            if kwargs.get('share_team', None) else None
-        upload_template(provider, username, password, upload_bucket_name, kwargs.get(
-            'image_url'), kwargs.get('template_name'), share_user_id=share_user_id)
+    valid_providers = ['ec2east']
+    for provider in valid_providers:
+        if provider in mgmt_sys:
+            ssh_rhevm_creds = mgmt_sys[provider]['credentials']
+            username = credentials[ssh_rhevm_creds]['username']
+            password = credentials[ssh_rhevm_creds]['password']
+            upload_bucket_name = mgmt_sys[provider]['upload_bucket_name']
+            share_user_id = credentials['aws_ami_share'][kwargs['share_team']]['aws_user_id']\
+                if kwargs.get('share_team', None) else None
+            upload_template(provider, username, password, upload_bucket_name, kwargs.get(
+                'image_url'), kwargs.get('template_name'), share_user_id=share_user_id)
 
 
 if __name__ == '__main__':
