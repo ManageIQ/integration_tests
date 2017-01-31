@@ -10,7 +10,7 @@ from utils.providers import get_crud
 yml_path = os.path.dirname(__file__) + "/manageiq_ansible_module/"
 library_path = yml_path + "/library/"
 basic_yml_path = os.path.dirname(__file__) + "/ansible_conf/"
-library_path_to_copy_to = basic_yml_path + "/library"
+library_path_to_copy_to = basic_yml_path + "library"
 providers_basic_script = "providers_basic_script.yml"
 users_basic_script = "users_basic_script.yml"
 provider_name = 'CI OSE'
