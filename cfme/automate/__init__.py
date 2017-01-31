@@ -22,7 +22,7 @@ class AutomateCustomizationView(BaseLoggedInPage):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == automate_menu_name(
-                self.obj.appliance) + ['Customization'])
+                self.context['object'].appliance) + ['Customization'])
 
     @View.nested
     class provisioning_dialogs(Accordion):  # noqa
@@ -64,7 +64,7 @@ class AutomateExplorerView(BaseLoggedInPage):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == automate_menu_name(
-                self.obj.appliance) + ['Explorer'])
+                self.context['object'].appliance) + ['Explorer'])
 
     @View.nested
     class datastore(Accordion):  # noqa
