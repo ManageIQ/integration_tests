@@ -86,6 +86,19 @@
                 Date: {{ pool.date }}
             {% endif %}
             </h2>
+            {% if pool.override_memory and pool.override_cpu %}
+            <h2>
+                With {{ pool.override_memory }} MB RAM and {{ pool.override_cpu }} cores
+            </h2>
+            {% elif pool.override_memory %}
+            <h2>
+                With {{ pool.override_memory }} MB RAM
+            </h2>
+            {% elif pool.override_cpu %}
+            <h2>
+                With {{ pool.override_cpu }} cores
+            </h2>
+            {% endif %}
             {% if pool.current_count != pool.total_count %}
                 <p>{{ pool.current_count }} from {{ pool.total_count }} appliances provisioned</p>
             {% endif %}
@@ -429,6 +442,24 @@
                 <input type="number" class="form-control" id="count" name="count" min="1" value="1" {% if per_pool_quota_enabled %}max="{{per_pool_quota}}"{% endif %}>
               </div>
             </div>
+            <div class="form-group" {% if not can_change_hw %}onclick="alert('You need special permissions for changing HW params.');"{% endif %}>
+              <label for="ram" class="col-md-2 control-label">Change RAM:</label>
+              <div class="col-md-1">
+                <input type="checkbox" class="form-control" id="enabled_ram" name="enabled_ram" {% if not can_change_hw %}disabled{% endif %}>
+              </div>
+              <div class="col-md-3">
+                <input type="number" class="form-control" id="ram" name="ram" min="8192" value="8192" disabled>
+              </div>
+            </div>
+            <div class="form-group" {% if not can_change_hw %}onclick="alert('You need special permissions for changing HW params.');"{% endif %}>
+              <label for="cpu" class="col-md-2 control-label">Change CPU:</label>
+              <div class="col-md-1">
+                <input type="checkbox" class="form-control" id="enabled_cpu" name="enabled_cpu" {% if not can_change_hw %}disabled{% endif %}>
+              </div>
+              <div class="col-md-3">
+                <input type="number" class="form-control" id="cpu" name="cpu" min="2" value="4" disabled>
+              </div>
+            </div>
             <div class="form-group">
               <label for="exp_hours" class="col-md-2 control-label">Expiration:</label>
               <div class="col-md-4" ng-controller="EditExpiration">
@@ -443,6 +474,23 @@
         </form>
         <script type="text/javascript">
         $(document).ready(function() {
+            // Some UI stuff
+            $('#enabled_ram').change(function(){
+                var e = $(this);
+                if(e.is(':checked')){
+                    $('#ram').prop('disabled', false);
+                } else {
+                    $('#ram').prop('disabled', true);
+                }
+            });
+            $('#enabled_cpu').change(function(){
+                var e = $(this);
+                if(e.is(':checked')){
+                    $('#cpu').prop('disabled', false);
+                } else {
+                    $('#cpu').prop('disabled', true);
+                }
+            });
             // Provisioning
             $('select#stream').change(function(){
                 $.ajax({
