@@ -2188,7 +2188,7 @@ class Appliance(IPAppliance):
         """Destroys the VM this appliance is running as
         """
         from cfme.infrastructure.provider.rhevm import RHEVMProvider
-        if self.provider.one_of(RHEVMProvider):
+        if isinstance(self.provider, RHEVMProvider.mgmt_class):
             # if rhev, try to remove direct_lun just in case it is detach
             self.remove_rhev_direct_lun_disk()
         self.provider.delete_vm(self.vm_name)
