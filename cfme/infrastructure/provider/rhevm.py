@@ -22,12 +22,9 @@ class RHEVMProvider(InfraProvider):
         self.end_ip = end_ip
 
     def _form_mapping(self, create=None, **kwargs):
-        provider_name = version.pick(
-            {
-                version.LOWEST: 'Red Hat Enterprise Virtualization Manager',
-                '5.7.1': 'Red Hat Virtualization Manager'
-            }
-        )
+        provider_name = version.pick({
+            version.LOWEST: 'Red Hat Enterprise Virtualization Manager',
+            '5.7.1': 'Red Hat Virtualization Manager'})
         return {'name_text': kwargs.get('name'),
                 'type_select': create and provider_name,
                 'hostname_text': kwargs.get('hostname'),
