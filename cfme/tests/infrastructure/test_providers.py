@@ -273,7 +273,7 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_add_custom_attributes(self, rest_api, custom_attributes):
+    def test_add_custom_attributes(self, custom_attributes):
         """Test adding custom attributes to provider using REST API.
 
         Metadata:
@@ -291,7 +291,7 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
-    def test_delete_custom_attributes(self, rest_api, custom_attributes, from_detail):
+    def test_delete_custom_attributes(self, custom_attributes, from_detail):
         """Test deleting custom attributes using REST API.
 
         Metadata:
@@ -314,7 +314,7 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
-    def test_edit_custom_attributes(self, rest_api, custom_attributes, from_detail):
+    def test_edit_custom_attributes(self, custom_attributes, from_detail):
         """Test editing custom attributes using REST API.
 
         Metadata:
@@ -349,7 +349,7 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.parametrize(
         'from_detail', [True, False],
         ids=['from_detail', 'from_collection'])
-    def test_edit_custom_attributes_bad_section(self, rest_api, custom_attributes, from_detail):
+    def test_edit_custom_attributes_bad_section(self, custom_attributes, from_detail):
         """Test that editing custom attributes using REST API and adding invalid section fails.
 
         Metadata:
@@ -380,7 +380,7 @@ class TestProvidersRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        provider = rest_api.collections.providers[0]
+        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
         uid = fauxfactory.gen_alphanumeric(5)
         body = {
             'name': 'ca_name_{}'.format(uid),
