@@ -90,13 +90,12 @@ def pytest_configure(config):
         conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider
 
 
-@pytest.mark.hookwrapper
+@pytest.mark.trylast
 def pytest_sessionfinish(session, exitstatus):
     global appliance
     global timer
     global pool_id
     global sprout
-    yield
     terminal = reporter()
     if timer is not None:
         terminal.write("Stopping timer\n")

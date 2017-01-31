@@ -46,7 +46,6 @@ from threading import Lock, RLock, Thread, Timer
 from time import sleep, time
 from urlparse import urlparse
 
-import pytest
 import zmq
 from _pytest import runner
 from functools32 import wraps
@@ -107,7 +106,6 @@ def pytest_addhooks(pluginmanager):
     pluginmanager.add_hookspecs(hooks)
 
 
-@pytest.mark.trylast
 def pytest_configure(config):
     # configures the parallel session, then fires pytest_parallel_configured
     if (config.option.appliances or (config.option.use_sprout and

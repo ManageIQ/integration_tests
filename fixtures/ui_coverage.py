@@ -287,9 +287,9 @@ class UiCoveragePlugin(object):
             conf.runtime['.ui-coverage']['collection_appliance'] = collection_appliance_address
             conf.save('.ui-coverage')
 
-    @pytest.mark.hookwrapper
+    @pytest.mark.trylast
     def pytest_collection_finish(self):
-        yield
+
         # Install coverage after collection finishes
         if store.parallelizer_role != 'master':
             manager().install()
