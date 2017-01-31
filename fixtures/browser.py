@@ -43,14 +43,11 @@ def pytest_exception_interact(node, call, report):
        isinstance(call.excinfo.value, BadStatusLine) or \
        isinstance(call.excinfo.value, error):
         from utils.browser import manager
-        try:
-            if isinstance(manager.factory, WharfFactory):
-                manager.factory.wharf.checkin()
-                manager.factory.wharf.checkout()
-            manager.start()
-            manager.ensure_open()
-        except Exception:
-            raise
+        if isinstance(manager.factory, WharfFactory):
+            manager.factory.wharf.checkin()
+            manager.factory.wharf.checkout()
+        manager.start()
+        manager.ensure_open()
 
     short_tb = '{}\n{}'.format(
         call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
