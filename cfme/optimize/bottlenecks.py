@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from navmazing import NavigateToAttribute, NavigateToSibling
-from widgetastic.widget import Text, Checkbox, Table, View, Select
-from widgetastic_patternfly import Tab
+from navmazing import NavigateToAttribute
+from widgetastic.widget import Text, Checkbox, Table, View
+from widgetastic_patternfly import Tab, BootstrapSelect
 from fixtures.pytest_store import store
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -11,7 +11,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 from . import BottlenecksView
 
 
-class BottlenecksView(BottlenecksView):
+class BottlenecksTabsView(BottlenecksView):
     title = Text("#explorer_title_text")
 
     # TODO: add chart widget
@@ -27,17 +27,17 @@ class BottlenecksView(BottlenecksView):
     @View.nested
     class summary(Tab):    # noqa
         TAB_NAME = 'Summary'
-        event_groups = Select(locator="//select[@name='tl_summ_fl_grp1']")
+        event_groups = BootstrapSelect('tl_summ_fl_grp1')
         show_host_events = Checkbox(locator='//input[@name="tl_summ_hosts"]')
-        time_zone = Select(locator='//select[@name="tl_summ_tz"]')
+        time_zone = BootstrapSelect("tl_summ_tz")
 
     @View.nested
     class report(Tab):     # noqa
         TAB_NAME = 'Report'
         event_details = Table("//div[@id='bottlenecks_report_div']/table")
-        event_groups = Select(locator="//select[@name='tl_report_fl_grp1']")
+        event_groups = BootstrapSelect('tl_report_fl_grp1')
         show_host_events = Checkbox(locator='//input[@name="tl_report_hosts"]')
-        time_zone = Select(locator='//select[@name="tl_report_tz"]')
+        time_zone = BootstrapSelect("tl_report_tz")
 
 
 class Bottlenecks(Updateable, Pretty, Navigatable):
@@ -55,36 +55,10 @@ class Bottlenecks(Updateable, Pretty, Navigatable):
 class All(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
-    VIEW = BottlenecksView
+    VIEW = BottlenecksTabsView
 
     def step(self):
-        self.parent_view.navigation.select("Optimize", "Bottlenecks")
+        self.prerequisite_view.navigation.select("Optimize", "Bottlenecks")
 
     def am_i_here(self, *args, **kwargs):
         return self.view.is_displayed
-
-
-@navigator.register(Bottlenecks, 'AllSummary')
-class AllSummary(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    VIEW = BottlenecksView
-
-    def step(self):
-        self.view.summary.select()
-
-    def am_i_here(self, *args, **kwargs):
-        return self.view.is_displayed and self.view.summary.selected
-
-
-@navigator.register(Bottlenecks, 'AllReport')
-class AllReport(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    VIEW = BottlenecksView
-
-    def step(self):
-        self.view.report.select()
-
-    def am_i_here(self, *args, **kwargs):
-        return self.view.is_displayed and self.view.report.selected
