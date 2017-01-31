@@ -1,8 +1,6 @@
 import fauxfactory
-import simplejson as json
 import os
 import subprocess
-import sys
 import yaml
 from shutil import copyfile
 from distutils.dir_util import copy_tree

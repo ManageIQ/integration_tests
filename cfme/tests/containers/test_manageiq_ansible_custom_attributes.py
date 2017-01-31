@@ -9,7 +9,7 @@ from utils.version import current_version
 pytestmark = [
     pytest.mark.uncollectif(lambda provider: current_version() < "5.7" and provider.version > 3.2),
     pytest.mark.tier(1)]
-pytest_generate_tests=testgen.generate([ContainersProvider], scope='function')
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 custom_attributes_to_add = {
     'name': 'custom1',
