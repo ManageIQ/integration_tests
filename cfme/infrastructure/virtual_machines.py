@@ -18,8 +18,9 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
     paginator, toolbar, Calendar, Select, Input, CheckboxTable, DriftGrid, match_location,
-    BootstrapTreeview, summary_title, Table
+    BootstrapTreeview, summary_title, Table, search
 )
+from cfme.web_ui.search import search_box
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.conf import cfme_data
 from utils.log import logger
@@ -78,6 +79,8 @@ match_page = partial(match_location, controller='vm_infra', title='Virtual Machi
 
 def reset_page():
     tb.select("Grid View")
+    if sel.is_displayed(search_box.search_field):
+        search.ensure_normal_search_empty()
     if paginator.page_controls_exist():
         # paginator.results_per_page(1000)
         sel.check(paginator.check_all())
