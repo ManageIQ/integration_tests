@@ -167,7 +167,7 @@ class InfraProvider(Pretty, CloudInfraProvider):
         return version.pick({
             version.LOWEST: "VMs",
             '5.5': "VMs and Instances",
-            '5.7': "Virtual Machines"})
+            '5.7.1': "Virtual Machines"})
 
     @variable(alias='db')
     def num_datastore(self):
