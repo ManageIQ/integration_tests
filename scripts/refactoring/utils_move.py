@@ -1,7 +1,7 @@
 from rope.base.project import Project
 from rope.refactor.move import MoveModule
 
-project = Project('.')#, pull_imports_to_top=False)
+project = Project('.')
 
 utils = project.find_module('utils')
 move = MoveModule(project, utils)
