@@ -230,6 +230,8 @@ def reply_status(reply):
 
 
 def copy_manageiq_ansible():
+    print("this is the library to copy to: " + library_path_to_copy_to)
+    print("this is the library to copy from: " + library_path)
     if not os.path.exists(library_path_to_copy_to):
         os.makedirs(library_path_to_copy_to)
         copy_tree(library_path, library_path_to_copy_to)
