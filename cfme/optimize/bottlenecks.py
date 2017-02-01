@@ -48,12 +48,10 @@ class Bottlenecks(Updateable, Pretty, Navigatable):
 
 @navigator.register(Bottlenecks, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToAttribute('appliance.server', 'Bottlenecks')
 
     VIEW = BottlenecksTabsView
 
-    def step(self):
-        self.prerequisite_view.navigation.select("Optimize", "Bottlenecks")
-
-    def am_i_here(self, *args, **kwargs):
-        return self.view.is_displayed
+    def resetter(self):
+        self.view.report.event_groups.fill('<ALL>')
+        self.view.report.show_host_events.fill(False)
