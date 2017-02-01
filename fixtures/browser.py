@@ -39,9 +39,7 @@ def pytest_exception_interact(node, call, report):
     name, location = get_test_idents(node)
     val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
 
-    if isinstance(call.excinfo.value, urllib2.URLError) or \
-       isinstance(call.excinfo.value, BadStatusLine) or \
-       isinstance(call.excinfo.value, error):
+    if isinstance(call.excinfo.value, (urllib2.URLError, BadStatusLine, error)):
         from utils.browser import manager
         if isinstance(manager.factory, WharfFactory):
             manager.factory.wharf.checkin()
