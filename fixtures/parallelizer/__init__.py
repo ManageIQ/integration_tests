@@ -391,8 +391,7 @@ class ParallelSession(object):
 
         """
         # Build master collection for slave diffing and distribution
-        for item in self.session.items:
-            self.collection[item.nodeid] = item
+        self.collection = [item.nodeid for item in self.session.items]
 
         # Fire up the workers after master collection is complete
         # master and the first slave share an appliance, this is a workaround to prevent a slave
@@ -429,8 +428,8 @@ class ParallelSession(object):
                     slave_collection = event_data['node_ids']
                     # compare slave collection to the master, all test ids must be the same
                     self.log.debug('diffing {} collection'.format(slaveid))
-                    diff_err = report_collection_diff(slaveid, self.collection.keys(),
-                        slave_collection)
+                    diff_err = report_collection_diff(
+                        slaveid, self.collection, slave_collection)
                     if diff_err:
                         self.print_message('collection differs, respawning', slaveid,
                             purple=True)
@@ -488,58 +487,35 @@ class ParallelSession(object):
         # breaks out tests by module, can work just about any way we want
         # as long as it yields lists of tests id from the master collection
         sent_tests = 0
-        module_items_cache = []
-        collection_ids = self.collection.keys()
-        collection_len = len(collection_ids)
-        for i, item_id in enumerate(collection_ids):
-            # everything before the first '::' is the module fspath
-            i_fspath = item_id.split('::')[0]
-            try:
-                nextitem_id = collection_ids[i + 1]
-                ni_fspath = nextitem_id.split('::')[0]
-            except IndexError:
-                nextitem_id = ni_fspath = None
 
-            module_items_cache.append(item_id)
-            if i_fspath == ni_fspath:
-                # This item and the next item are in the same module
-                # loop to the next item
-                continue
-            else:
-                # This item and the next item are in different modules,
-                # yield the indices if any items were generated
-                if not module_items_cache:
-                    continue
+        def get_fspart(nodeid):
+            return nodeid.split('::')[0]
 
-                for tests in self._modscope_id_splitter(module_items_cache):
-                    tests_len = len(tests)
-                    sent_tests += tests_len
-                    self.log.info('%d tests remaining to send'
-                        % (collection_len - sent_tests))
-                    if tests:
-                        yield tests
+        for fspath, gen_moditems in group_by(self.collection, key=get_fspart):
+            for tests in self._modscope_id_splitter(gen_moditems):
+                sent_tests += len(tests)
+                self.log.info('%d tests remaining to send'
+                              % (collection_len - sent_tests))
+                    yield tests
 
-                # Then clear the cache in-place
-                module_items_cache[:] = []
 
     def _modscope_id_splitter(self, module_items):
         # given a list of item ids from one test module, break up tests into groups with the same id
         parametrized_ids = defaultdict(list)
         for item in module_items:
-            try:
+            if '[' in item:
                 # split on the leftmost bracket, then strip everything after the rightmight bracket
                 # so 'test_module.py::test_name[parametrized_id]' becomes 'parametrized_id'
-                parametrized_id = item.split('[')[1].rsplit(']')[0]
-            except IndexError:
+                parametrized_id = item.split('[')[1].rstrip(']')
+            else:
                 # splits failed, item has no parametrized id
-                parametrized_id = None
+                parametrized_id = 'no params'
             parametrized_ids[parametrized_id].append(item)
 
         for id, tests in parametrized_ids.items():
-            if id is None:
-                id = 'no params'
-            self.log.info('sent tests with param {} {!r}'.format(id, tests))
-            yield tests
+            if tests:
+                self.log.info('sent tests with param {} {!r}'.format(id, tests))
+                yield tests
 
     def get(self, slave):
         if not self._pool:
