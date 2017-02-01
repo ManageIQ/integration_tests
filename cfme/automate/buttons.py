@@ -22,7 +22,7 @@ class ButtonsAllView(AutomateCustomizationView):
 
     @property
     def is_displayed(self):
-        return super(ButtonsAllView, self).is_displayed and self.title.text == 'All Object Types'
+        return self.in_customization and self.title.text == 'All Object Types'
 
 
 class ButtonGroupObjectTypeView(AutomateCustomizationView):
@@ -31,8 +31,9 @@ class ButtonGroupObjectTypeView(AutomateCustomizationView):
     @property
     def is_displayed(self):
         return (
-            super(ButtonGroupObjectTypeView, self).is_displayed and
+            self.in_customization and
             self.title.text == 'Button Groups' and
+            not self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
 
@@ -48,8 +49,9 @@ class ButtonGroupDetailView(AutomateCustomizationView):
     @property
     def is_displayed(self):
         return (
-            super(ButtonGroupDetailView, self).is_displayed and
+            self.in_customization and
             self.title.text == 'Button Group "{}"'.format(self.context['object'].text) and
+            self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == [
                 'Object Types', self.context['object'].type, self.context['object'].text])
@@ -72,8 +74,9 @@ class NewButtonGroupView(ButtonGroupFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewButtonGroupView, self).is_displayed and
+            self.in_customization and
             self.title.text == 'Adding a new Buttons Group' and
+            self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == ['Object Types', self.context['object'].type])
 
@@ -87,8 +90,9 @@ class EditButtonGroupView(ButtonGroupFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(EditButtonGroupView, self).is_displayed and
+            self.in_customization and
             self.title.text.startswith('Editing Buttons Group') and
+            self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == [
                 'Object Types', self.context['object'].type, self.context['object'].text])
@@ -243,8 +247,9 @@ class NewButtonView(ButtonFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(NewButtonView, self).is_displayed and
+            self.in_customization and
             self.title.text == 'Adding a new Button' and
+            self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == [
                 'Object Types', self.context['object'].group.type,
@@ -260,9 +265,10 @@ class EditButtonView(ButtonFormCommon):
     @property
     def is_displayed(self):
         return (
-            super(EditButtonView, self).is_displayed and
+            self.in_customization and
             # TODO: vvv BUG
             self.title.text.startswith('Adding a new Button') and
+            self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == [
                 'Object Types', self.context['object'].group.type,
@@ -289,8 +295,9 @@ class ButtonDetailView(AutomateCustomizationView):
     @property
     def is_displayed(self):
         return (
-            super(ButtonDetailView, self).is_displayed and
+            self.in_customization and
             self.title.text == 'Button "{}"'.format(self.context['object'].text) and
+            not self.buttons.is_dimmed and
             self.buttons.is_opened and
             self.buttons.tree.currently_selected == [
                 'Object Types', self.context['object'].group.type,
