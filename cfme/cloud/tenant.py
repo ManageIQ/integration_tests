@@ -83,7 +83,7 @@ class Tenant(Navigatable):
         updated_name = updates.get('name', self.name + '_edited')
         create_tenant_form.fill({'name': updated_name})
         sel.click(create_tenant_form.save_button)
-        flash.assert_success_message('Cloud Tenant "{}" updated'.format(updated_name))
+        self.wait_for(600)
 
     def delete(self, cancel=False, from_details=True, wait=True):
         if current_version() < '5.7':
@@ -126,7 +126,7 @@ class Tenant(Navigatable):
             # Flash message is the same whether deleted from details or by selection
             result = flash.assert_success_message('Delete initiated for 1 Cloud Tenant.')
             if wait:
-                result = self.wait_for_disappear()
+                result = self.wait_for_disappear(600)
             return result
 
     def exists(self):

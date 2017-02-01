@@ -11,11 +11,9 @@ from utils.version import current_version
 
 pytest_generate_tests = testgen.generate([OpenStackProvider], scope='module')
 
+
 # Tag requirements here, does not currently match any requirements categories
-
-
-def _refresh_provider(provider):
-    provider.load_details()
+def refresh_provider(provider):
     provider.refresh_provider_relationships()
 
 
@@ -44,20 +42,16 @@ def test_tenant_crud(tenant):
     assert not tenant.exists()
 
     tenant.create()
-    # # requires provider after each tenant CRUD
     assert tenant.exists()
 
-    tenant.update({'name': 'new_name'})
-    # requires provider after each tenant CRUD
-    _refresh_provider(tenant.provider)
+    tenant.update({'name': 'my_new_name'})
+    refresh_provider(tenant.provider)
     assert tenant.exists()
 
     tenant.delete(from_details=False, cancel=True)
-    # requires provider after each tenant CRUD
-    _refresh_provider(tenant.provider)
     assert tenant.exists()
 
     tenant.delete(from_details=True, cancel=False)
-    # requires provider after each tenant CRUD
-    _refresh_provider(tenant.provider)
+    # BZ#1411112  Delete cloud tenant not reflected in UI in cloud tenant list
+    refresh_provider(tenant.provider)
     assert not tenant.exists()
