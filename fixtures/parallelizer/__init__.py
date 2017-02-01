@@ -511,101 +511,69 @@ class ParallelSession(object):
                 yield tests
 
     def get(self, slave):
+
+        def provs_of_tests(test_group):
+            found = set()
+            for test in test_group:
+                found.update(pv for pv in self.provs
+                             if '[' in test and pv in test)
+            return sorted(found)
+
         if not self._pool:
             for test_group in self.test_groups:
                 self._pool.append(test_group)
-                for test in test_group:
-                    if '[' in test:
-                        found_prov = []
-                        for pv in self.provs:
-                            if pv in test:
-                                found_prov.append(pv)
-                                break
-                        provs = list(set(found_prov).intersection(self.provs))
-                        if provs:
-                            self.used_prov = self.used_prov.union(set(provs))
+                self.used_prov.update(provs_of_tests(test_group))
             if self.used_prov:
-                self.ratio = float(len(self.slaves)) / float(len(self.used_prov))
+                self.ratio = float(len(self.slaves)) / len(self.used_prov)
             else:
                 self.ratio = 0.0
             if not self._pool:
                 return []
-            current_allocate = slave.provider_allocation
-            # num_provs_list = [len(v) for k, v in self.slave_allocation.iteritems()]
-            # average_num_provs = sum(num_provs_list) / float(len(self.slaves))
+
             appliance_num_limit = 1
             for test_group in self._pool:
-                for test in test_group:
-                    # If the test is parametrized...
-                    if '[' in test:
-                        found_prov = []
-                        for pv in self.provs:
-                            if pv in test:
-                                found_prov.append(pv)
-                                break
-                        # The line below can probably be removed now, since we compare
-                        # providers in the loop above with self.provs, which is a list
-                        # of all providers.
-                        provs = list(set(found_prov).intersection(self.provs))
-                        # If the parametrization contains a provider...
-                        if provs:
-                            prov = provs[0]
-                            # num_slave_with_prov = len([sl for sl, provs_list
-                            #    in self.slave_allocation.iteritems()
-                            #    if prov in provs_list])
-                            # If this slave/appliance already has providers then...
-                            if prov in slave.provider_allocation:
-                                # provider is already with the slave, so just return the tests
-                                self._pool.remove(test_group)
-                                return test_group
-                            # If the slave doesn't have _our_ provider
-                            else:
-                                # Check to see how many slaves there are with this provider
-                                if len(slave.provider_allocation) >= appliance_num_limit:
-                                    continue
-                                else:
-                                    # Adding provider to slave since there are not too many
-                                    slave.provider_allocation.append(prov)
-                                    self._pool.remove(test_group)
-                                    return test_group
-                        else:
-                            # No providers - ie, not a provider parametrized test
-                            self._pool.remove(test_group)
-                            return test_group
-                    else:
-                        # No params, so no need to think about providers
+
+                provs = provs_of_tests(test_group)
+                if provs:
+                    prov = provs[0]
+                    if prov in slave.provider_allocation:
+                        # provider is already with the slave, so just return the tests
                         self._pool.remove(test_group)
                         return test_group
-                # Here means no tests were able to be sent
-            for test_group in self._pool:
-                for test in test_group:
-                    # If the test is parametrized...
-                    if '[' in test:
-                        found_prov = []
-                        for pv in self.provs:
-                            if pv in test:
-                                found_prov.append(pv)
-                                break
-                        # The line below can probably be removed now, since we compare
-                        # providers in the loop above with self.provs, which is a list
-                        # of all providers.
-                        provs = list(set(found_prov).intersection(self.provs))
-                        # If the parametrization contains a provider...
-                        if provs:
-                            # Already too many slaves with provider
-                            app_url = slave.url
-                            app_ip = urlparse(app_url).netloc
-                            app = IPAppliance(app_ip)
-                            self.print_message('cleansing appliance', slave,
-                                purple=True)
-                            try:
-                                app.delete_all_providers()
-                            except:
-                                self.print_message('cloud not cleanse', slave,
-                                red=True)
-                            self.slave_allocation[slave] = [prov]
+                    else:
+                        if len(slave.provider_allocation) >= appliance_num_limit:
+                            continue
+                        else:
+                            # Adding provider to slave since there are not too many
+                            slave.provider_allocation.append(prov)
                             self._pool.remove(test_group)
                             return test_group
+                else:
+                    # No providers - ie, not a provider parametrized test
+                    # or no params, so not parametrized at all
+                    self._pool.remove(test_group)
+                    return test_group
+
+            # Here means no tests were able to be sent
+            for test_group in self._pool:
+
+                provs = provs_of_tests(test_group)
+                if provs:
+                    prov = provs[0]
+                    # Already too many slaves with provider
+                    app_url = slave.url
+                    app_ip = urlparse(app_url).netloc
+                    app = IPAppliance(app_ip)
+                    self.print_message(
+                        'cleansing appliance', slave, purple=True)
+                    try:
+                        app.delete_all_providers()
+                    except:
+                        self.print_message(
+                            'cloud not cleanse', slave, red=True)
+                    self.slave_allocation[slave] = [prov]
+                    self._pool.remove(test_group)
+                    return test_group
             return []
 
 
