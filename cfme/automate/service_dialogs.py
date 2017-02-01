@@ -204,7 +204,10 @@ class ServiceDialogAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self):
-        self.prerequisite_view.navigation.select('Automate', 'Customization')
+        if version.current_version() < '5.8':
+            self.prerequisite_view.navigation.select('Automate', 'Customization')
+        else:
+            self.prerequisite_view.navigation.select('Automation', 'Automate', 'Customization')
 
     def resetter(self):
         accordion.tree("Service Dialogs", "All Dialogs")
