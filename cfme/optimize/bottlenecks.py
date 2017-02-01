@@ -2,6 +2,7 @@
 from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, Checkbox, Table, View
 from widgetastic_patternfly import Tab, BootstrapSelect
+
 from fixtures.pytest_store import store
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -43,12 +44,6 @@ class BottlenecksTabsView(BottlenecksView):
 class Bottlenecks(Updateable, Pretty, Navigatable):
     def __init__(self, appliance=None):
         Navigatable.__init__(self, appliance)
-
-    def bottlenecks_db_events(self):
-        tbl = self.appliance.db['bottleneck_events']
-        query = self.appliance.db.session.query(tbl.timestamp,
-                    tbl.resource_type, tbl.resource_name, tbl.event_type, tbl.severity, tbl.message)
-        return query
 
 
 @navigator.register(Bottlenecks, 'All')

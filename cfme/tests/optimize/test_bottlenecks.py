@@ -11,9 +11,9 @@ from utils.appliance import get_or_create_current_appliance
 from utils.ssh import SSHClient
 from utils.version import current_version
 
-tbl = store.current_appliance.db['bottleneck_events']
-db_events = store.current_appliance.db.session.query(tbl.timestamp,
-    tbl.resource_type, tbl.resource_name, tbl.event_type, tbl.severity, tbl.message)
+db_tbl = store.current_appliance.db['bottleneck_events']
+db_events = store.current_appliance.db.session.query(db_tbl.timestamp,
+    db_tbl.resource_type, db_tbl.resource_name, db_tbl.event_type, db_tbl.severity, db_tbl.message)
 
 
 @pytest.fixture(scope="session")
@@ -44,13 +44,13 @@ def db_restore(backup_orig_state):
         # Different files for different versions
         ver = "_56" if current_version() < '5.7' else ""
         rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
-        ssh.get_file("/home/backups/otsuman_db_bottleneks/v2_key{}".format(ver), rand_filename)
+        ssh.get_file("/home/backups/otsuman_db_bottlenecks/v2_key{}".format(ver), rand_filename)
         dump_filename = "/tmp/db_dump_{}".format(fauxfactory.gen_alphanumeric())
-        ssh.get_file("/home/backups/otsuman_db_bottleneks/db.backup{}".format(ver), dump_filename)
+        ssh.get_file("/home/backups/otsuman_db_bottlenecks/db.backup{}".format(ver), dump_filename)
         region_filename = "/tmp/REGION_{}".format(fauxfactory.gen_alphanumeric())
-        ssh.get_file("/home/backups/otsuman_db_bottleneks/REGION{}".format(ver), region_filename)
+        ssh.get_file("/home/backups/otsuman_db_bottlenecks/REGION{}".format(ver), region_filename)
         guid_filename = "/tmp/GUID_{}".format(fauxfactory.gen_alphanumeric())
-        ssh.get_file("/home/backups/otsuman_db_bottleneks/GUID{}".format(ver), guid_filename)
+        ssh.get_file("/home/backups/otsuman_db_bottlenecks/GUID{}".format(ver), guid_filename)
 
     with app.ssh_client as ssh:
         ssh.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
@@ -71,10 +71,10 @@ def test_bottlenecks_event_groups(db_restore):
     view.report.event_groups.fill('Capacity')
     rows = view.report.event_details.rows()
     # Compare number of rows in bottleneck's table with number of rows in db
-    assert sum(1 for row in rows) == db_events.filter(tbl.event_type == 'DiskUsage').count()
+    assert sum(1 for row in rows) == db_events.filter(db_tbl.event_type == 'DiskUsage').count()
     view.report.event_groups.fill('Utilization')
     rows = view.report.event_details.rows()
-    assert sum(1 for row in rows) == db_events.filter(tbl.event_type != 'DiskUsage').count()
+    assert sum(1 for row in rows) == db_events.filter(db_tbl.event_type != 'DiskUsage').count()
 
 
 @pytest.mark.tier(1)
@@ -95,8 +95,8 @@ def test_bottlenecks_time_zome(db_restore):
     view = navigate_to(Bottlenecks, 'All')
     row = view.report.event_details[0]
     # Selecting row by uniq value
-    db_row = db_events.filter(tbl.message == row[5].text)
-    # Compare bottleneck's table timeptamp with db
+    db_row = db_events.filter(db_tbl.message == row[5].text)
+    # Compare bottleneck's table timestamp with db
     assert row[0].text == db_row[0][0].strftime("%m/%d/%y %H:%M:%S UTC")
     # Changing time zone
     view.report.time_zone.fill('(GMT-04:00) La Paz')
