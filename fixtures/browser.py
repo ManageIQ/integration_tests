@@ -30,8 +30,23 @@ def pytest_runtest_setup(item):
 
 def pytest_exception_interact(node, call, report):
     from fixtures.artifactor_plugin import SLAVEID
+    from httplib import BadStatusLine
+    from socket import error
+    from utils.browser import WharfFactory
+
+    import urllib2
+
     name, location = get_test_idents(node)
     val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
+
+    if isinstance(call.excinfo.value, (urllib2.URLError, BadStatusLine, error)):
+        from utils.browser import manager
+        if isinstance(manager.factory, WharfFactory):
+            manager.factory.wharf.checkin()
+            manager.factory.wharf.checkout()
+        manager.start()
+        manager.ensure_open()
+
     short_tb = '{}\n{}'.format(
         call.excinfo.type.__name__, val.encode('ascii', 'xmlcharrefreplace'))
     art_client.fire_hook('filedump', test_location=location, test_name=name,
