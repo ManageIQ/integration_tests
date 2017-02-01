@@ -193,7 +193,7 @@ class ParallelSession(object):
         for slave in self.slaves.values():
             returncode = slave.poll()
             if returncode:
-                self.slaves.process = None
+                slave.process = None
                 if returncode == -9:
                     msg = '{} killed due to error, respawning'.format(slave.id)
                 else:
@@ -209,9 +209,11 @@ class ParallelSession(object):
 
         # If a slave has lost its base_url for any reason, kill that slave
         # Losing a base_url means the associated appliance died :(
-        for slave in self.slaves.values():
+        for slave in list(self.slaves.values()):
             if slave.url is None:
-                if slave.process is not None:
+                if slave.process is None:
+                    del self.slaves[slave.id]
+                else:
                     self.print_message("{}'s appliance has died, deactivating slave".format(slave.id))
                     self.interrupt(slave)
             else:
@@ -232,7 +234,7 @@ class ParallelSession(object):
     def recv(self):
         # poll the zmq socket, populate the recv queue deque with responses
 
-        events = zmq.zmq_poll([(self.sock, zmq.POLLIN)], 500)
+        events = zmq.zmq_poll([(self.sock, zmq.POLLIN)], 50)
         if not events:
             return None, None, None
         slaveid, _, event_json = self.sock.recv_multipart(flags=zmq.NOBLOCK)
@@ -332,14 +334,7 @@ class ParallelSession(object):
         try:
             tests = list(self.failed_slave_test_groups.popleft())
         except IndexError:
-            try:
-                tests = self.get(slave)
-                # To return to the old parallelizer distributor, remove the line above
-                # and replace it with the line below.
-                # tests = self.test_groups.next()
-            except StopIteration:
-                tests = []
-        tests = tests or []
+            tests = self.get(slave)
         self.send(slave, tests)
         slave.tests.update(tests)
         collect_len = len(self.collection)
@@ -452,6 +447,7 @@ class ParallelSession(object):
                     self.kill(slave)
                 elif event_name == 'shutdown':
                     self.ack(slave, event_name)
+                    del self.slaves[slave.id]
                     self.monitor_shutdown(slave)
 
                 # total slave spawn count * 3, to allow for each slave's initial spawn
@@ -490,7 +486,7 @@ class ParallelSession(object):
                 sent_tests += len(tests)
                 self.log.info('%d tests remaining to send'
                               % (collection_len - sent_tests))
-                yield tests
+                yield list(tests)
 
     def _modscope_id_splitter(self, module_items):
         # given a list of item ids from one test module, break up tests into groups with the same id
@@ -527,54 +523,54 @@ class ParallelSession(object):
                 self.ratio = float(len(self.slaves)) / len(self.used_prov)
             else:
                 self.ratio = 0.0
-            if not self._pool:
-                return []
-
-            appliance_num_limit = 1
-            for test_group in self._pool:
-
-                provs = provs_of_tests(test_group)
-                if provs:
-                    prov = provs[0]
-                    if prov in slave.provider_allocation:
-                        # provider is already with the slave, so just return the tests
+        if not self._pool:
+            return []
+        appliance_num_limit = 1
+        for idx, test_group in enumerate(self._pool):
+            provs = provs_of_tests(test_group)
+            #print(idx, test_group, provs)
+            if provs:
+                prov = provs[0]
+                if prov in slave.provider_allocation:
+                    # provider is already with the slave, so just return the tests
+                    self._pool.remove(test_group)
+                    return test_group
+                else:
+                    if len(slave.provider_allocation) >= appliance_num_limit:
+                        continue
+                    else:
+                        # Adding provider to slave since there are not too many
+                        slave.provider_allocation.append(prov)
                         self._pool.remove(test_group)
                         return test_group
-                    else:
-                        if len(slave.provider_allocation) >= appliance_num_limit:
-                            continue
-                        else:
-                            # Adding provider to slave since there are not too many
-                            slave.provider_allocation.append(prov)
-                            self._pool.remove(test_group)
-                            return test_group
-                else:
-                    # No providers - ie, not a provider parametrized test
-                    # or no params, so not parametrized at all
-                    self._pool.remove(test_group)
-                    return test_group
+            else:
+                # No providers - ie, not a provider parametrized test
+                # or no params, so not parametrized at all
+                self._pool.remove(test_group)
+                return test_group
 
-            # Here means no tests were able to be sent
-            for test_group in self._pool:
+        # Here means no tests were able to be sent
+        for test_group in self._pool:
 
-                provs = provs_of_tests(test_group)
-                if provs:
-                    prov = provs[0]
-                    # Already too many slaves with provider
-                    app_url = slave.url
-                    app_ip = urlparse(app_url).netloc
-                    app = IPAppliance(app_ip)
+            provs = provs_of_tests(test_group)
+            if provs:
+                prov = provs[0]
+                # Already too many slaves with provider
+                app_url = slave.url
+                app_ip = urlparse(app_url).netloc
+                app = IPAppliance(app_ip)
+                self.print_message(
+                    'cleansing appliance', slave, purple=True)
+                try:
+                    app.delete_all_providers()
+                except:
                     self.print_message(
-                        'cleansing appliance', slave, purple=True)
-                    try:
-                        app.delete_all_providers()
-                    except:
-                        self.print_message(
-                            'cloud not cleanse', slave, red=True)
-                    self.slave_allocation[slave] = [prov]
-                    self._pool.remove(test_group)
-                    return test_group
-            return []
+                        'cloud not cleanse', slave, red=True)
+            self.slave_allocation[slave] = [prov]
+            self._pool.remove(test_group)
+            return test_group
+        assert not self._pool, self._pool
+        return []
 
 
 def report_collection_diff(slaveid, from_collection, to_collection):
