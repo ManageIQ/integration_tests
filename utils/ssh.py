@@ -477,7 +477,10 @@ class SSHClient(paramiko.SSHClient):
             servers.append(srv)
 
         # Workers part
-        wrks = wrks.split("\n")
+        # TODO: Figure more permanent solution for ignoring the warnings
+        wrks = [
+            line for line in wrks.split("\n")
+            if 'key :terminate is duplicated and overwritten' not in line]
         wrk_headers = [h.strip() for h in wrks[0].strip().split("|")]
         wrk_body = wrks[2:]
         workers = []
