@@ -10,8 +10,6 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar, Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
-
 
 pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=['remove_test'], scope="module")
@@ -71,14 +69,13 @@ def test_delete_image(setup_provider, provider, set_grid, request):
     request.addfinalizer(reset)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < "5.4")
 def test_delete_stack(setup_provider, provider, provisioning, request):
     """ Tests delete stack
 
     Metadata:
         test_flag: delete_object
     """
-    stack = Stack(provisioning['stack'])
+    stack = Stack(provisioning['stack'], provider=provider)
     refresh_and_wait(provider, stack)
     stack.delete()
     navigate_to(stack, 'All')
