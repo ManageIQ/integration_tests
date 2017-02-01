@@ -31,19 +31,6 @@ def template(provider):
     return Template(template_name, provider)
 
 
-# CMP-10321
-@pytest.mark.parametrize('rel', TEMPLATE_RELATIONSHIP_FIELDS)
-def test_containers_templates_relationships(template, rel):
-    """ This test checks the Relationship fields of Container Templates
-        under Container Providers
-       Steps:
-           * Navigate to Compute -> Containers -> Container Templates.
-           Verify there's a list of Templates
-           * Select a random Container Template and check its' Relationships fields
-       """
-    assert template.get_detail('Relationships', rel)
-
-
 @pytest.mark.parametrize('prop', TEMPLATE_PROPERTES_FIELDS)
 def test_containers_templates_properties(template, prop):
     """ This test checks the Properties fields of Container Templates
