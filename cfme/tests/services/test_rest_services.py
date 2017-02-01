@@ -17,6 +17,7 @@ from utils import error, version, testgen
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
 from utils.log import logger
+from utils.blockers import BZ
 
 
 pytestmark = [
@@ -486,6 +487,8 @@ class TestOrchestrationTemplatesRESTAPI(object):
         collection = rest_api.collections.orchestration_templates
         if from_detail:
             methods = ['post', 'delete']
+            if BZ('1414881', forced_streams=['5.7', 'upstream']).blocks:
+                methods[0] = 'delete'  # because the 'post' method fails
             for i, ent in enumerate(orchestration_templates):
                 ent.action.delete(force_method=methods[i % 2])
                 with error.expected("ActiveRecord::RecordNotFound"):
