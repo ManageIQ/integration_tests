@@ -136,8 +136,8 @@ def test_button_crud(dialog, request):
 def test_button_on_host(dialog, request):
     buttongroup = ButtonGroup(
         text=fauxfactory.gen_alphanumeric(),
-        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
-        type=ButtonGroup.HOST)
+        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()))
+    buttongroup.type = buttongroup.HOST
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
     button = Button(group=buttongroup,
