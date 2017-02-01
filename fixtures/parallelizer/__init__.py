@@ -30,6 +30,8 @@ The Workflow
   shut down
 
 """
+from itertools import groupby
+
 
 import collections
 import difflib
@@ -487,17 +489,17 @@ class ParallelSession(object):
         # breaks out tests by module, can work just about any way we want
         # as long as it yields lists of tests id from the master collection
         sent_tests = 0
+        collection_len = len(self.collection)
 
         def get_fspart(nodeid):
             return nodeid.split('::')[0]
 
-        for fspath, gen_moditems in group_by(self.collection, key=get_fspart):
+        for fspath, gen_moditems in groupby(self.collection, key=get_fspart):
             for tests in self._modscope_id_splitter(gen_moditems):
                 sent_tests += len(tests)
                 self.log.info('%d tests remaining to send'
                               % (collection_len - sent_tests))
-                    yield tests
-
+                yield tests
 
     def _modscope_id_splitter(self, module_items):
         # given a list of item ids from one test module, break up tests into groups with the same id
