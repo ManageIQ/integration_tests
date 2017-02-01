@@ -631,7 +631,7 @@ def test_action_initiate_smartstate_analysis(
         test_flag: actions, provision
     """
     # Set host credentials for VMWare
-    if vm.provider.one_of(VMwareProvider):
+    if isinstance(vm.provider, VMwareProvider.mgmt_class):
         set_host_credentials(request, vm.provider, vm)
 
     # Set up the policy and prepare finalizer
