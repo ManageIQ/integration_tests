@@ -2,10 +2,11 @@ from functools import partial
 from xml.sax.saxutils import quoteattr
 
 from navmazing import NavigateToSibling, NavigateToAttribute
+from selenium.common.exceptions import NoSuchElementException
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import web_ui as ui
-from cfme.exceptions import DestinationNotFound, StackNotFound
+from cfme.exceptions import DestinationNotFound, StackNotFound, CandidateNotFound
 from cfme.web_ui import Quadicon, flash, Form, fill, form_buttons, paginator, toolbar as tb, \
     match_location, accordion
 from cfme.exceptions import CFMEException, FlashMessageException
@@ -32,9 +33,10 @@ match_page = partial(match_location, controller='orchestration_stack',
 class Stack(Pretty, Navigatable):
     pretty_attrs = ['name']
 
-    def __init__(self, name=None, quad_name=None, appliance=None):
+    def __init__(self, name, provider, quad_name=None, appliance=None):
         self.name = name
         self.quad_name = quad_name or 'stack'
+        self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
 
     def find_quadicon(self):
@@ -43,6 +45,7 @@ class Stack(Pretty, Navigatable):
     Args:
     Returns: :py:class:`cfme.web_ui.Quadicon` instance
     """
+        paginator.results_per_page(100)
         for page in paginator.pages():
             quadicon = Quadicon(self.name, self.quad_name)
             if sel.is_displayed(quadicon):
@@ -82,7 +85,6 @@ class Stack(Pretty, Navigatable):
 
     def edit_tags(self, tag, value):
         navigate_to(self, 'EditTags')
-        pol_btn('Edit Tags', invokes_alert=True)
         fill(edit_tags_form, {'select_tag': tag,
                               'select_value': value},
              action=form_buttons.save)
@@ -98,6 +100,10 @@ class Stack(Pretty, Navigatable):
         company_tag = sel.text(row).strip()
         return company_tag
 
+    def refresh_view_and_provider(self):
+        self.provider.refresh_provider_relationships()
+        tb.refresh()
+
     def wait_for_delete(self):
         def _wait_to_disappear():
             try:
@@ -109,7 +115,7 @@ class Stack(Pretty, Navigatable):
 
         navigate_to(self, 'All')
         wait_for(_wait_to_disappear, fail_condition=False, message="Wait stack to disappear",
-                 num_sec=10 * 60, fail_func=tb.refresh, delay=10)
+                 num_sec=15 * 60, fail_func=self.refresh_view_and_provider, delay=30)
 
     def wait_for_appear(self):
         def _wait_to_appear():
@@ -122,7 +128,7 @@ class Stack(Pretty, Navigatable):
 
         navigate_to(self, 'All')
         wait_for(_wait_to_appear, fail_condition=False, message="Wait stack to appear",
-                 num_sec=20 * 60, fail_func=tb.refresh, delay=10)
+                 num_sec=15 * 60, fail_func=self.refresh_view_and_provider, delay=30)
 
     def retire_stack(self, wait=True):
         navigate_to(self, 'All')
@@ -164,10 +170,9 @@ class Details(CFMENavigateStep):
 
 @navigator.register(Stack, 'EditTags')
 class EditTags(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    prerequisite = NavigateToSibling('Details')
 
     def step(self):
-        sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
         pol_btn('Edit Tags')
 
 
@@ -181,7 +186,10 @@ class RelationshipsSecurityGroups(CFMENavigateStep):
     def step(self):
         accordion.click('Relationships')
         # Click by anchor title since text contains a dynamic component
-        sel.click('//*[@id="stack_rel"]//a[@title="Show all Security Groups"]')
+        try:
+            sel.click('//*[@id="stack_rel"]//a[@title="Show all Security Groups"]')
+        except NoSuchElementException:
+            raise CandidateNotFound('No security groups for stack, cannot navigate')
 
 
 @navigator.register(Stack, 'RelationshipParameters')
@@ -207,7 +215,10 @@ class RelationshipOutputs(CFMENavigateStep):
     def step(self):
         accordion.click('Relationships')
         # Click by anchor title since text contains a dynamic component
-        sel.click('//*[@id="stack_rel"]//a[@title="Show all Outputs"]')
+        try:
+            sel.click('//*[@id="stack_rel"]//a[@title="Show all Outputs"]')
+        except NoSuchElementException:
+            raise CandidateNotFound('No Outputs for stack, cannot navigate')
 
 
 @navigator.register(Stack, 'RelationshipResources')
