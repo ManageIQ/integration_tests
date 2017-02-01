@@ -38,9 +38,14 @@ class SCVMMProvider(InfraProvider):
 
     def deployment_helper(self, deploy_args):
         """ Used in utils.virtual_machines """
+        values = {}
         if 'host_group' not in deploy_args:
-            return {'host_group': self.data.get("host_group", "All Hosts")}
-        return {}
+            values['host_group'] = self.data.get("host_group", "All Hosts")
+        if 'cpu' not in deploy_args:
+            values['cpu'] = self.data.get("cpu", 0)
+        if 'ram' not in deploy_args:
+            values['ram'] = self.data.get("ram", 0)
+        return values
 
     @classmethod
     def from_config(cls, prov_config, prov_key):
