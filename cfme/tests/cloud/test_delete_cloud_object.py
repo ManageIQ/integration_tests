@@ -58,8 +58,6 @@ def test_delete_image(setup_provider, provider, set_grid, request):
     Metadata:
         test_flag: delete_object
     """
-    # TODO as of 5.6+ clouds_images is no longer in the menu tree
-    # Refactor to navigate via clouds instances accordion
     image_name = provider.data['remove_test']['image']
     test_image = VM.factory(image_name, provider, template=True)
     test_image.delete(from_details=False)
