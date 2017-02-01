@@ -287,9 +287,10 @@ class ParallelSession(object):
             poll_num_sec = 300
 
             while (time() - start_time) < poll_num_sec:
+                polls += 1
                 yield
                 if polls % poll_report_modulo == 0:
-                    remaining_time = int(poll_num_sec - poll_walltime())
+                    remaining_time = int(poll_num_sec - (time() - start_time))
                     self.print_message(
                         '{} still shutting down, '
                         'will continue polling for {} seconds '
@@ -298,7 +299,6 @@ class ParallelSession(object):
 
         # start the poll
         for poll in sleep_and_poll():
-            polls += 1
             ec = process.poll()
             if ec is None:
                 continue
@@ -441,13 +441,13 @@ class ParallelSession(object):
                         event_data['nodeid'],
                         event_data['location'])
                 elif event_name == 'runtest_logreport':
-                    self.ack(slave.id, event_name)
+                    self.ack(slave, event_name)
                     report = unserialize_report(event_data['report'])
                     if report.when in ('call', 'teardown'):
                         slave.tests.discard(report.nodeid)
                     self.trdist.runtest_logreport(slave.id, report)
                 elif event_name == 'internalerror':
-                    self.ack(slave.id, event_name)
+                    self.ack(slave, event_name)
                     self.print_message(event_data['message'], slave, purple=True)
                     self.kill(slave)
                 elif event_name == 'shutdown':
