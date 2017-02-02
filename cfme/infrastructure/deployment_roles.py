@@ -55,11 +55,11 @@ class All(CFMENavigateStep):
             raise DestinationNotFound('Navigation {} not found'.format(nav_path))
 
     def am_i_here(self):
-        return match_location(match_page)
+        return match_page(summary='Deployment Roles')
 
 
-@navigator.register(DeploymentRoles, 'AllByProvider')
-class AllByProvider(CFMENavigateStep):
+@navigator.register(DeploymentRoles, 'AllForProvider')
+class AllForProvider(CFMENavigateStep):
 
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
@@ -79,6 +79,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')
 
     def step(self):
+        tb.select('Grid View')
         sel.click(Quadicon(self.obj.name))
 
     def am_i_here(self):
@@ -91,6 +92,7 @@ class DetailsFromProvider(CFMENavigateStep):
     prerequisite = NavigateToSibling('AllByProvider')
 
     def step(self):
+        tb.select('Grid View')
         sel.click(Quadicon(self.obj.name))
 
     def am_i_here(self):
