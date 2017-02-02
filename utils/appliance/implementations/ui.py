@@ -6,7 +6,6 @@ from inspect import isclass
 
 from utils.log import logger, create_sublogger
 from cfme import exceptions
-from cfme.fixtures.pytest_selenium import get_rails_error
 from time import sleep
 
 from navmazing import Navigate, NavigateStep
@@ -94,6 +93,31 @@ class MiqBrowserPlugin(DefaultPlugin):
         time.sleep(interval)
         self.browser.plugin.ensure_page_safe()
 
+    def get_rails_error(self):
+        """Get displayed rails error. If not present, return None"""
+        if not self.browser.is_displayed(
+                "//body[./h1 and ./p and ./hr and ./address] | "
+                "//h1[normalize-space(.)='Unexpected error encountered']"):
+            return None
+        if self.browser.is_displayed(
+                "//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
+            try:
+                title = self.browser.text("//body/h1", _no_deeper=True)
+                body = self.browser.text("//body/p", _no_deeper=True)
+            except NoSuchElementException:  # Just in case something goes really wrong
+                return None
+            return "{}: {}".format(title, body)
+        elif self.browser.is_displayed(
+                "//h1[normalize-space(.)='Unexpected error encountered']", _no_deeper=True):
+            try:
+                error_text = self.browser.text(
+                    "//h1[normalize-space(.)='Unexpected error encountered']"
+                    "/following-sibling::h3[not(fieldset)]", _no_deeper=True)
+            except NoSuchElementException:  # Just in case something goes really wrong
+                return None
+            return error_text
+        return None
+
 
 class MiqBrowser(Browser):
     def __init__(self, selenium, endpoint, extra_objects=None):
@@ -118,7 +142,52 @@ class MiqBrowser(Browser):
 
     @property
     def product_version(self):
-        return self.appliance.version
+            return self.appliance.version
+
+
+BADNESS = jsmin('''\
+        function isVis(l) {
+            try {
+                return $(l)[0].is(":visible");
+            } catch(e) {
+                return false;
+            }
+        }
+
+        var r = {};
+        r.r = false;
+        r.rw = false;
+        r.rs = [];
+
+        if(typeof $ != 'function') {
+            r.r = true;
+            r.rw = true;
+            r.rs.push('$ is not defined');
+            return r;
+        }
+
+        try {
+            miqSparkleOff();
+        } catch(e) {
+            // Diaper!
+        }
+
+        if(
+                isVis('#blocker_div') ||
+                isVis('#notification') ||
+                isVis('.modal-backdrop.fade.in')) {
+            r.r = true;
+            r.rs.push('Blocker div displayed');
+            return r;
+        }
+
+        if(isVis('div.modal-dialog.modal-lg')) {
+            r.rs.push('Closing a modal.');
+            $("button.close.modal").click();
+        }
+
+        return r;
+    ''')
 
 
 def can_skip_badness_test(fn):
@@ -182,29 +251,26 @@ class CFMENavigateStep(NavigateStep):
             except:  # noqa
                 pass
 
-        # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right
-        # here
-        if (
-                br.widgetastic.is_displayed("//div[@id='blocker_div' or @id='notification']") or
-                br.widgetastic.is_displayed(".modal-backdrop.fade.in")):
-            logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
-            self.appliance.browser.quit_browser()
-            self.go(_tries, *args, **go_kwargs)
-
-        # Check if modal window is displayed
-        if (br.widgetastic.is_displayed(
-                "//div[contains(@class, 'modal-dialog') and contains(@class, 'modal-lg')]")):
-            logger.warning("Modal window was open; closing the window")
-            br.widgetastic.click(
-                "//button[contains(@class, 'close') and contains(@data-dismiss, 'modal')]")
-
-        # Check if jQuery present
         try:
-            br.widgetastic.execute_script("jQuery", silent=True)
-        except Exception as e:
-            if "jQuery" not in str(e):
-                logger.error("Checked for jQuery but got something different.")
-                logger.exception(e)
+            br.widgetastic.logger.info('Badness check')
+            result = br.widgetastic.execute_script(BADNESS, silent=True)
+        except WebDriverException as e:
+            recycle = True
+            restart_workers = False
+            br.widgetastic.logger.error('Badness check raised an exception')
+            br.widgetastic.logger.exception(e)
+        else:
+            recycle = result['r']
+            restart_workers = result['rw']
+            if not (recycle or restart_workers):
+                br.widgetastic.logger.info('Badness check OK!')
+            else:
+                br.widgetastic.logger.warning('Badness check requires an action')
+            if result['rs']:
+                br.widgetastic.logger.warning(
+                    'Badness check: {}'.format('; '.join(result['rs'])))
+
+        if restart_workers:
             # Restart some workers
             logger.warning("Restarting UI and VimBroker workers!")
             with self.appliance.ssh_client as ssh:
@@ -213,12 +279,16 @@ class CFMENavigateStep(NavigateStep):
             logger.info("Waiting for web UI to come back alive.")
             sleep(10)   # Give it some rest
             self.appliance.wait_for_web_ui()
+            recycle = True
+
+        if recycle:
+            br.widgetastic.logger.info('Recycling browser')
             self.appliance.browser.quit_browser()
             self.appliance.browser.open_browser()
             self.go(_tries, *args, **go_kwargs)
 
         # Same with rails errors
-        rails_e = get_rails_error()
+        rails_e = br.widgetastic.plugin.get_rails_error()
         if rails_e is not None:
             logger.warning("Page was blocked by rails error, renavigating.")
             logger.error(rails_e)
