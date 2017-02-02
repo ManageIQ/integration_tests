@@ -365,30 +365,6 @@ def test_guest_os_shutdown(testing_vm_tools, verify_vm_running, soft_assert):
                 "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
 
-@pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
-class TestPowerControlRESTAPI(object):
-    @pytest.fixture(scope="function")
-    def vm(self, rest_api, testing_vm):
-        result = rest_api.collections.vms.get(name=testing_vm.name)
-        assert result.name == testing_vm.name
-        return result
-
-    def test_power_off(self, vm, verify_vm_running):
-        assert "stop" in vm.action
-        vm.action.stop()
-        wait_for(lambda: vm.power_state == "off", num_sec=300, delay=5, fail_func=vm.reload)
-
-    def test_power_on(self, vm, verify_vm_stopped):
-        assert "start" in vm.action
-        vm.action.start()
-        wait_for(lambda: vm.power_state == "on", num_sec=300, delay=5, fail_func=vm.reload)
-
-    def test_suspend(self, vm, verify_vm_running):
-        assert "suspend" in vm.action
-        vm.action.suspend()
-        wait_for(lambda: vm.power_state == "suspended", num_sec=300, delay=5, fail_func=vm.reload)
-
-
 @pytest.mark.usefixtures("testing_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
 @pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
