@@ -62,7 +62,7 @@ def test_host_hostname(provider, soft_assert):
     for quad in my_quads:
         host = Host(name=quad.name)
         result = host.get_detail("Properties", "Hostname")
-        soft_assert(result) != '', "Missing hostname in: " + str(host)
+        soft_assert(result, "Missing hostname in: " + str(result))
 
 
 def test_host_memory(provider):
@@ -97,9 +97,9 @@ def test_host_zones_assigned(provider):
     sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
     assert len(my_quads) > 0
-    my_quads = filter(lambda q: True if q.name == 'Compute' else False,
+    my_quads = filter(lambda q: True if 'Compute' in q.name else False,
                       my_quads)
     for quad in my_quads:
         host = Host(name=quad.name)
-        result = int(host.get_detail('Relationships', 'Availability Zone'))
-        assert result == 'nova'
+        result = host.get_detail('Relationships', 'Availability Zone')
+        assert result, "Availability zone doesn't specified"
