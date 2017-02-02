@@ -899,3 +899,146 @@ class PaginationPane(View):
     @property
     def items_amount(self):
         return self.paginator.page_info()[1]
+
+
+class Stepper(View):
+    """ A CFME Stepper Control
+
+    .. code-block:: python
+
+        stepper = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
+        stepper.increase()
+    """
+    ROOT = ParametrizedLocator('{@locator}')
+
+    minus_button = Button('-')
+    plus_button = Button('+')
+    value_field = Input(locator='.//input[contains(@class, "bootstrap-touchspin")]')
+
+    def __init__(self, parent, locator, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+
+        self.locator = locator
+
+    def read(self):
+        return int(self.value_field.read())
+
+    def decrease(self):
+        self.minus_button.click()
+
+    def increase(self):
+        self.plus_button.click()
+
+    def set_value(self, value):
+        value = int(value)
+        if value < 1:
+            raise ValueError('The value cannot be less than 1')
+
+        steps = value - self.read()
+        if steps == 0:
+            return False
+        elif steps > 0:
+            operation = self.increase
+        else:
+            operation = self.decrease
+
+        steps = abs(steps)
+        for step in range(steps):
+            operation()
+        return True
+
+    def fill(self, value):
+        return self.set_value(value)
+
+
+class RadioGroup(Widget):
+    """ CFME Radio Group Control
+
+    .. code-block:: python
+
+        radio_group = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
+        radio_group.select(radio_group.button_names()[-1])
+    """
+    BUTTONS = './/label[input[@type="radio"]]'
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+        self.locator = locator
+
+    def __locator__(self):
+        return self.locator
+
+    def _get_button(self, name):
+        br = self.browser
+        return next(btn for btn in br.elements(self.BUTTONS) if br.text(btn) == name)
+
+    @property
+    def button_names(self):
+        return [self.browser.text(btn) for btn in self.browser.elements(self.BUTTONS)]
+
+    @property
+    def selected(self):
+        names = self.button_names
+        for name in names:
+            if 'ng-valid-parse' in self.browser.classes('.//input[@type="radio"]',
+                                                        parent=self._get_button(name)):
+                return name
+
+        else:
+            # radio button doesn't have any marks to make out which button is selected by default.
+            # so, returning first radio button's name
+            return names[0]
+
+    def select(self, name):
+        button = self._get_button(name)
+        if self.selected != name:
+            button.click()
+            return True
+        return False
+
+    def read(self):
+        return self.selected
+
+    def fill(self, name):
+        return self.select(name)
+
+
+class BreadCrumb(Widget):
+    """ CFME BreadCrumb navigation control
+
+    .. code-block:: python
+
+        breadcrumb = BreadCrumb()
+        breadcrumb.click_location(breadcrumb.locations[0])
+    """
+    ROOT = '//ol[@class="breadcrumb"]'
+    ELEMENTS = './/li'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+        self._locator = locator or self.ROOT
+
+    def __locator__(self):
+        return self._locator
+
+    @property
+    def _path_elements(self):
+        return self.browser.elements(self.ELEMENTS, parent=self)
+
+    @property
+    def locations(self):
+        return [self.browser.text(loc) for loc in self._path_elements]
+
+    @property
+    def active_location(self):
+        br = self.browser
+        return next(br.text(loc) for loc in self._path_elements if 'active' in br.classes(loc))
+
+    def click_location(self, name, handle_alert=True):
+        br = self.browser
+        location = next(loc for loc in self._path_elements if br.text(loc) == name)
+        result = br.click(location, ignore_ajax=handle_alert)
+        if handle_alert:
+            self.browser.handle_alert(wait=2.0, squash=True)
+            self.browser.plugin.ensure_page_safe()
+        return result
