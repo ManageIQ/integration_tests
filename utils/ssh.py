@@ -436,6 +436,13 @@ class SSHClient(paramiko.SSHClient):
             contains dictionaries, one per line. You can refer inside the dictionary using the
             headers.
         """
+        matcher = re.compile(
+            '|'.join([
+                'DEPRECATION WARNING',
+                'called from block in',
+                'Please use .* instead',
+                'key :terminate is duplicated and overwritten',
+            ]))
         if version.current_version() < "5.5":
             data = self.run_command("service evmserverd status")
         else:
@@ -466,7 +473,7 @@ class SSHClient(paramiko.SSHClient):
                 d["Started On"] = iso8601.parse_date(d["Started On"])
 
         # Servers part
-        srvs = srvs.split("\n")[1:]
+        srvs = [line for line in srvs.split("\n")[1:] if matcher.search(line) is None]
         srv_headers = [h.strip() for h in srvs[0].strip().split("|")]
         srv_body = srvs[2:]
         servers = []
@@ -477,15 +484,18 @@ class SSHClient(paramiko.SSHClient):
             servers.append(srv)
 
         # Workers part
-        wrks = wrks.split("\n")
-        wrk_headers = [h.strip() for h in wrks[0].strip().split("|")]
-        wrk_body = wrks[2:]
+        # TODO: Figure more permanent solution for ignoring the warnings
+        wrks = [line for line in wrks.split("\n") if matcher.search(line) is None]
+
         workers = []
-        for worker in wrk_body:
-            fields = [f.strip() for f in worker.strip().split("|")]
-            wrk = dict(zip(wrk_headers, fields))
-            _process_dict(wrk)
-            workers.append(wrk)
+        if wrks:
+            wrk_headers = [h.strip() for h in wrks[0].strip().split("|")]
+            wrk_body = wrks[2:]
+            for worker in wrk_body:
+                fields = [f.strip() for f in worker.strip().split("|")]
+                wrk = dict(zip(wrk_headers, fields))
+                _process_dict(wrk)
+                workers.append(wrk)
         return {"servers": servers, "workers": workers}
 
 
