@@ -8,7 +8,7 @@ from widgetastic.utils import VersionPick
 from widgetastic_manageiq import SummaryFormItem
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
-from widgetastic_patternfly import CandidateNotFound
+from widgetastic_patternfly import CandidateNotFoundError
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from utils.update import Updateable
@@ -166,7 +166,7 @@ class ButtonGroup(Updateable, Navigatable):
         try:
             navigate_to(self, 'Details')
             return True
-        except CandidateNotFound:
+        except CandidateNotFoundError:
             return False
 
     def delete_if_exists(self):
@@ -369,7 +369,7 @@ class Button(Updateable, Navigatable):
         try:
             navigate_to(self, 'Details')
             return True
-        except CandidateNotFound:
+        except CandidateNotFoundError:
             return False
 
     def delete_if_exists(self):

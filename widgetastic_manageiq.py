@@ -21,7 +21,8 @@ from widgetastic.widget import (
 from widgetastic.utils import ParametrizedLocator
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
-    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
+    Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect,
+    Dropdown)
 from cached_property import cached_property
 
 
@@ -899,3 +900,280 @@ class PaginationPane(View):
     @property
     def items_amount(self):
         return self.paginator.page_info()[1]
+
+
+class Stepper(Widget):
+    """ A CFME Stepper Control
+
+        .. code-block:: python
+        stepper = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
+        stepper.increase()
+    """
+    ROOT = ParametrizedLocator('{@locator}')
+    INPUT_CTL = './/input[contains(@class, "bootstrap-touchspin")]'
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+
+        self._locator = locator
+
+        self.minus_button = Button(self, '-')
+        self.plus_button = Button(self, '+')
+        self.value_field = Input(self, locator=self.INPUT_CTL)
+
+    def read(self):
+        return int(self.value_field.read())
+
+    def decrease(self):
+        self.minus_button.click()
+
+    def increase(self):
+        self.plus_button.click()
+
+    def set_value(self, value):
+        value = int(value)
+        if value < 1:
+            raise ValueError('The value cannot be less than 1')
+
+        steps = value - self.read()
+        if steps == 0:
+            return False
+        elif steps > 0:
+            operation = self.increase
+        else:
+            operation = self.decrease
+
+        steps = abs(steps)
+        for step in range(steps):
+            operation()
+        return True
+
+    def fill(self, value):
+        return self.set_value(value)
+
+
+class RadioButton(Button):
+    """CFME Radio Button Control
+       it should be mainly used in RadioGroup control
+    """
+    ROOT = ParametrizedLocator('.//*[self::input and @type="radio" and '
+                               'parent::label[normalize-space(.)={name|quote}]]')
+
+    def __init__(self, parent, name, logger=None):
+        Button.__init__(self, parent=parent, logger=logger)
+        self._name = name
+
+    @property
+    def is_selected(self):
+        if 'ng-valid-parse' in self.browser.classes(self):
+            return True
+        return False
+
+    @property
+    def name(self):
+        return self._name
+
+
+class RadioGroup(Widget):
+    """ CFME Radio Group Control
+
+        .. code-block:: python
+        radio_group = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
+        radio_group.select(radio_group.button_names()[-1])
+    """
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+        self._locator = locator
+
+    def __locator__(self):
+        return self._locator
+
+    @property
+    def button_names(self):
+        buttons = self.browser.elements('//label[input[@type="radio"]]')
+        return [self.browser.text(btn) for btn in buttons]
+
+    @property
+    def buttons(self):
+        return [RadioButton(self, name=name) for name in self.button_names]
+
+    @property
+    def selected(self):
+        return [btn for btn in self.buttons if btn.is_selected][-1].name
+
+    def select(self, name):
+        button = [btn for btn in self.buttons if btn.name == name][-1]
+        if not button.is_selected:
+            button.click()
+            return True
+        return False
+
+    def read(self):
+        return self.selected
+
+    def fill(self, name):
+        return self.select(name)
+
+
+class BreadCrumb(Widget):
+    """ CFME BreadCrumb navigation control
+
+        .. code-block:: python
+        breadcrumb = BreadCrumb()
+        breadcrumb.click_location(breadcrumb.locations[0])
+    """
+    ROOT = '//ol[@class="breadcrumb"]'
+    ELEMENTS = './/li'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+        self._locator = locator or self.ROOT
+
+    def __locator__(self):
+        return self._locator
+
+    @property
+    def _path_elements(self):
+        return self.browser.elements(self.ELEMENTS)
+
+    @property
+    def locations(self):
+        return [self.browser.text(loc) for loc in self._path_elements]
+
+    @property
+    def active_location(self):
+        br = self.browser
+        return [br.text(loc) for loc in self._path_elements if 'active' in br.classes(loc)][-1]
+
+    def click_location(self, name):
+        br = self.browser
+        location = [loc for loc in self._path_elements if br.text(loc) == name][-1]
+        return br.click(location)
+
+
+class ToolBarViewSelector(View):
+    """
+    represents toolbar's view selector control.
+    """
+    list_view = Button(title='List View')
+    grid_view = Button(title='Grid View')
+    tile_view = Button(title='Tile View')
+
+    def __locator__(self):
+        return './/div[contains(@class, "toolbar-pf-view-selector")]'
+
+    def select(self, item):
+        if item == self.list_view.title:
+            self.list_view.click()
+        elif item == 'Grid View':
+            self.grid_view.click()
+        elif item == 'Tile View':
+            self.grid_view.click()
+        else:
+            raise ValueError('Incorrect value passed')
+
+    @property
+    def selected(self):
+        """
+        goes thru buttons and returns the title of active button
+        Returns: currently selected view
+
+        """
+        return [btn.title for btn in (self.list_view, self.grid_view, self.tile_view)
+                if btn.active][-1]
+
+
+class ProviderToolBar(View):
+    """
+    represents provider toolbar and its controls
+    """
+    configuration = Dropdown(text='Configuration')
+    policy = Dropdown(text='Policy')
+    authentication = Dropdown(text='Authentication')
+    download = Dropdown(text='Download')
+
+    @View.nested
+    class view_selector(ToolBarViewSelector):  # NOQA
+        pass
+
+
+class DetailsProviderToolBar(View):
+    """
+    represents provider toolbar and its controls
+    """
+    monitoring = Dropdown(text='Monitoring')
+    configuration = Dropdown(text='Configuration')
+    reload = Button(title='Reload Current Display')
+    policy = Dropdown(text='Policy')
+    authentication = Dropdown(text='Authentication')
+
+    @View.nested
+    class view_selector(ToolBarViewSelector):  # NOQA
+        # todo: there should be another ViewSelector. to add it later
+        pass
+
+
+class Items(View):
+    """
+    should represent the view with different items like providers
+    """
+
+    @View.nested
+    class search(object):  # NOQA
+        pass
+
+
+class BaseSideBar(View):
+    """
+    represents left side bar. it usually contains navigation, filters, etc
+    """
+    pass
+
+
+class TimelinesFilter(View):
+    def __init__(self, parent, logger=None):
+        super(TimelinesFilter, self).__init__(parent=parent, logger=logger)
+        # if filter_type in ('Management Events', 'Policy Events'):
+        #     self._filter_type = filter_type
+        # else:
+        #     raise ValueError('incorrect filter type is passed')
+
+    # common
+    event_type = BootstrapSelect(id='tl_show')
+    event_category = BootstrapSelect(id='tl_category_management')
+    time_period = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
+    time_range = BootstrapSelect(id='tl_range')
+    time_position = BootstrapSelect(id='tl_timepivot')
+    # date_picker = Calendar()
+    apply = Button("Apply")
+    # management controls
+    detailed_events = Checkbox(name='showDetailedEvents')
+    # policy controls
+    policy_event_category = BootstrapSelect(id='tl_category_policy')
+    policy_event_status = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
+
+
+class TimelinesChart(View):
+    # todo: to add widgets for all controls
+    # currently only events collection is available
+    pass
+
+#
+# class Timelines(View):
+#     """
+#     represents Timelines page
+#     """
+#
+#     @View.nested
+#     class sidebar(BaseSideBar):  # NOQA
+#         pass
+#
+#     breadcrumb = BreadCrumb()
+#
+#     @View.nested
+#     class filter(TimelinesFilter):  # NOQA
+#         pass
+#
+#     @View.nested
+#     class chart(TimelinesChart):  # NOQA
+#         pass

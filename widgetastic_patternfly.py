@@ -9,7 +9,8 @@ from cached_property import cached_property
 from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresentException
 from widgetastic.log import call_sig
 from widgetastic.utils import ParametrizedLocator
-from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget
+from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget, \
+    Checkbox
 from widgetastic.xpath import quote
 
 from wait_for import wait_for, wait_for_decorator
@@ -87,6 +88,10 @@ class Button(Widget, ClickableMixin):
 
     def __repr__(self):
         return '{}{}'.format(type(self).__name__, call_sig(self.args, self.kwargs))
+
+    @property
+    def title(self):
+        return self.browser.get_attribute('title', self)
 
 
 class Input(TextInput):
