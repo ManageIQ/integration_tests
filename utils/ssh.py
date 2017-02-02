@@ -481,14 +481,16 @@ class SSHClient(paramiko.SSHClient):
         wrks = [
             line for line in wrks.split("\n")
             if 'key :terminate is duplicated and overwritten' not in line]
-        wrk_headers = [h.strip() for h in wrks[0].strip().split("|")]
-        wrk_body = wrks[2:]
+
         workers = []
-        for worker in wrk_body:
-            fields = [f.strip() for f in worker.strip().split("|")]
-            wrk = dict(zip(wrk_headers, fields))
-            _process_dict(wrk)
-            workers.append(wrk)
+        if wrks:
+            wrk_headers = [h.strip() for h in wrks[0].strip().split("|")]
+            wrk_body = wrks[2:]
+            for worker in wrk_body:
+                fields = [f.strip() for f in worker.strip().split("|")]
+                wrk = dict(zip(wrk_headers, fields))
+                _process_dict(wrk)
+                workers.append(wrk)
         return {"servers": servers, "workers": workers}
 
 
