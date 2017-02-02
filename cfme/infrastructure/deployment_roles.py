@@ -89,7 +89,7 @@ class Details(CFMENavigateStep):
 @navigator.register(DeploymentRoles, 'DetailsFromProvider')
 class DetailsFromProvider(CFMENavigateStep):
 
-    prerequisite = NavigateToSibling('AllByProvider')
+    prerequisite = NavigateToSibling('AllForProvider')
 
     def step(self):
         tb.select('Grid View')
