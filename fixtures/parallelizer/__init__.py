@@ -33,13 +33,12 @@ The Workflow
 from itertools import groupby
 
 
-import collections
 import difflib
 import json
 import os
 import signal
 import subprocess
-from collections import OrderedDict, defaultdict, deque, namedtuple
+from collections import defaultdict, deque, namedtuple
 from datetime import datetime
 from itertools import count
 
@@ -214,13 +213,13 @@ class ParallelSession(object):
                 if slave.process is None:
                     del self.slaves[slave.id]
                 else:
-                    self.print_message("{}'s appliance has died, deactivating slave".format(slave.id))
+                    self.print_message(
+                        "{}'s appliance has died, deactivating slave".format(slave.id))
                     self.interrupt(slave)
             else:
                 if slave.process is None:
                     slave.start()
                     self.slave_spawn_count += 1
-
 
     def send(self, slave, event_data):
         """Send data to slave.
@@ -484,8 +483,8 @@ class ParallelSession(object):
         for fspath, gen_moditems in groupby(self.collection, key=get_fspart):
             for tests in self._modscope_id_splitter(gen_moditems):
                 sent_tests += len(tests)
-                self.log.info('%d tests remaining to send'
-                              % (collection_len - sent_tests))
+                self.log.info('{} tests remaining to send'.format(
+                    collection_len - sent_tests))
                 yield list(tests)
 
     def _modscope_id_splitter(self, module_items):
@@ -528,7 +527,6 @@ class ParallelSession(object):
         appliance_num_limit = 1
         for idx, test_group in enumerate(self._pool):
             provs = provs_of_tests(test_group)
-            #print(idx, test_group, provs)
             if provs:
                 prov = provs[0]
                 if prov in slave.provider_allocation:
