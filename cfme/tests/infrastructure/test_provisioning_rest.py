@@ -14,10 +14,9 @@ pytest_generate_tests = testgen.generate([VMwareProvider, RHEVMProvider], scope=
 
 
 def remove_vm(provider, vm_name):
-    if provider.mgmt.is_vm_running(vm_name)\
-            or provider.mgmt.is_vm_suspended(vm_name):
-        provider.mgmt.stop_vm(vm_name)
     if provider.mgmt.does_vm_exist(vm_name):
+        if provider.mgmt.is_vm_running(vm_name):
+            provider.mgmt.stop_vm(vm_name)
         provider.mgmt.delete_vm(vm_name)
 
 
