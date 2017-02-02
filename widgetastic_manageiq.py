@@ -18,7 +18,7 @@ from widgetastic.widget import (
     Checkbox,
     WidgetDescriptor,
     do_not_read_this_widget)
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, Parameter
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
@@ -372,18 +372,17 @@ class SummaryFormItem(Widget):
         return text
 
 
-class MultiBoxSelect(Widget):
+class MultiBoxSelect(View):
 
-    TABLE = VersionPick({
-        Version.lowest(): "//table[@class='admintable']{1}//table[@id={0}]",
-        '5.7': "//table[@id={0}]{1}"
-    })
+    ROOT = ParametrizedLocator("(.//table[@id={@id|quote}]){@number}")
+    available_options = Select(id=Parameter("@available_items"))
+    chosen_options = Select(id=Parameter("@chosen_items"))
 
     def __init__(self, parent, id, number="", move_into=None, move_from=None,
             available_items="choices_chosen", chosen_items="members_chosen", logger=None):
-        Widget.__init__(self, parent, logger=logger)
-        self.available_options = Select(self, id=available_items)
-        self.chosen_options = Select(self, id=chosen_items)
+        View.__init__(self, parent, logger=logger)
+        self.available_items = available_items
+        self.chosen_items = chosen_items
         self.id = id
         if number:
             self.number = "[{}]".format(number)
@@ -398,14 +397,11 @@ class MultiBoxSelect(Widget):
         else:
             self._move_from = move_from
 
-    def __locator__(self):
-        return self.TABLE.format(quote(self.id), self.number)
-
     def _values_to_remove(self, values):
-        return list((set(values) ^ self.read()) - set(values))
+        return list(self.all_options - set(values))
 
     def _values_to_add(self, values):
-        return list((set(values) ^ self.read()) - self.read())
+        return list(set(values) - self.all_options)
 
     @property
     def move_into_button(self):
@@ -424,7 +420,7 @@ class MultiBoxSelect(Widget):
         return button
 
     def fill(self, values):
-        if set(values) == self.read():
+        if set(values) == self.all_options:
             return False
         else:
             values_to_remove = self._values_to_remove(values)
@@ -439,13 +435,17 @@ class MultiBoxSelect(Widget):
                 self.browser.plugin.ensure_page_safe()
             return True
 
-    def read(self):
+    @property
+    def all_options(self):
         return {option.text for option in self.chosen_options.all_options}
+
+    def read(self):
+        return list(self.all_options)
 
 
 class CheckboxSelect(Widget):
 
-    ROOT = ParametrizedLocator("//div[@id={@search_root|quote}]")
+    ROOT = ParametrizedLocator(".//div[@id={@search_root|quote}]")
 
     def __init__(self, parent, search_root, text_access_func=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -456,21 +456,22 @@ class CheckboxSelect(Widget):
     def checkboxes(self):
         """All checkboxes."""
         return {Checkbox(self, id=el.get_attribute("id")) for el in self.browser.elements(
-            ".//input[@type='checkbox'] ", self)}
+            ".//input[@type='checkbox']")}
 
-    def read(self):
+    @property
+    def selected_checkboxes(self):
         """Only selected checkboxes."""
         return {cb for cb in self.checkboxes if cb.selected}
 
     @cached_property
     def selected_text(self):
         """Only selected checkboxes' text descriptions."""
-        return {cb.browser.element("./..", cb).text for cb in self.read()}
+        return {self.browser.element("./..", parent=cb).text for cb in self.selected_checkboxes}
 
     @property
     def selected_values(self):
         """Only selected checkboxes' values."""
-        return {cb.get_attribute("value") for cb in self.read()}
+        return {cb.get_attribute("value") for cb in self.selected_checkboxes}
 
     @property
     def unselected_checkboxes(self):
@@ -487,10 +488,10 @@ class CheckboxSelect(Widget):
         return Checkbox(self, id=id)
 
     def _values_to_remove(self, values):
-        return (set(values) ^ self.selected_text) - set(values)
+        return list(self.selected_text - set(values))
 
     def _values_to_add(self, values):
-        return (set(values) ^ self.selected_text) - self.selected_text
+        return list(set(values) - self.selected_text)
 
     def select_all(self):
         """Selects all checkboxes."""
@@ -503,7 +504,7 @@ class CheckboxSelect(Widget):
             cb.fill(False)
 
     def checkbox_by_text(self, text):
-        """Returns checkbox's WebElement by searched by its text."""
+        """Returns checkbox's WebElement searched by its text."""
         if self._access_func is not None:
             for cb in self.checkboxes:
                 txt = self._access_func(cb)
@@ -513,10 +514,10 @@ class CheckboxSelect(Widget):
                 raise NameError("Checkbox with text {} not found!".format(text))
         else:
             # Has to be only single
-            element = self.browser.element(
-                ".//*[normalize-space(.)={}]/input[@type='checkbox']".format(quote(text)), self
+            return Checkbox(
+                self,
+                locator=".//*[normalize-space(.)={}]/input[@type='checkbox']".format(quote(text))
             )
-            return Checkbox(self, id=element.get_attribute("id"))
 
     def fill(self, values):
         if set(values) == self.selected_text:
@@ -529,6 +530,10 @@ class CheckboxSelect(Widget):
                 checkbox = self.checkbox_by_text(value)
                 checkbox.fill(True)
             return True
+
+    def read(self):
+        """Only selected checkboxes."""
+        return [cb for cb in self.checkboxes if cb.selected]
 
 
 # ManageIQ table objects definition
@@ -637,10 +642,12 @@ class Calendar(TextInput):
         return True
 
 
-class SNMPHostsField(Widget):
+class SNMPHostsField(View):
+
+    _input = Input("host")
 
     def __init__(self, parent, logger=None):
-        Widget.__init__(self, parent, logger=logger)
+        View.__init__(self, parent, logger=logger)
 
     def fill(self, values):
         fields = self.host_fields
@@ -650,15 +657,11 @@ class SNMPHostsField(Widget):
             raise ValueError("You cannot specify more hosts than the form allows!")
         return any(fields[i].fill(value) for i, value in enumerate(values))
 
-    def read(self):
-        raise NotImplementedError
-
     @property
     def host_fields(self):
         """Returns list of locators to all host fields"""
-        _input = Input(self, "host")
-        if _input.is_displayed:
-            return [_input]
+        if self._input.is_displayed:
+            return [self._input]
         else:
             return [Input(self, "host_{}".format(i)) for i in range(1, 4)]
 
@@ -695,7 +698,7 @@ class SNMPTrapsField(Widget):
         return any(result)
 
     def read(self):
-        raise NotImplementedError
+        do_not_read_this_widget()
 
 
 class SNMPForm(View):
@@ -703,9 +706,6 @@ class SNMPForm(View):
     version = BootstrapSelect("snmp_version")
     id = Input("trap_id")
     traps = SNMPTrapsField()
-
-    def read(self):
-        raise NotImplementedError
 
 
 class ScriptBox(Widget):
