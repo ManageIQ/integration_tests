@@ -99,7 +99,6 @@ By default, even if you add a new appliance onto the stack, the browser operatio
 happening on the last appliance that was used, however, there is a simple way to steal the browsers
 focus, and this is detailed in the example below::
 
-    appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         provider_crud.create()
 
