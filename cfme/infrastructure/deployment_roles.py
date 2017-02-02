@@ -61,10 +61,10 @@ class All(CFMENavigateStep):
 @navigator.register(DeploymentRoles, 'AllForProvider')
 class AllForProvider(CFMENavigateStep):
 
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    def prerequisite(self):
+        navigate_to(self.obj.provider, 'Details')
 
     def step(self):
-        navigate_to(self.obj.provider, 'Details')
         list_acc.select('Relationships', 'Show all managed Deployment Roles',
                         by_title=True, partial=False)
 
