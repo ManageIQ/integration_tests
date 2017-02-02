@@ -13,6 +13,14 @@ pytestmark = [test_requirements.provision]
 pytest_generate_tests = testgen.generate([VMwareProvider, RHEVMProvider], scope="module")
 
 
+def remove_vm(provider, vm_name):
+    if provider.mgmt.is_vm_running(vm_name)\
+            or provider.mgmt.is_vm_suspended(vm_name):
+        provider.mgmt.stop_vm(vm_name)
+    if provider.mgmt.does_vm_exist(vm_name):
+        provider.mgmt.delete_vm(vm_name)
+
+
 @pytest.fixture(scope="module")
 def provision_data(rest_api_modscope, provider, small_template_modscope):
     templates = rest_api_modscope.collections.templates.find_by(name=small_template_modscope)
@@ -80,6 +88,7 @@ def test_provision(request, provision_data, provider, rest_api):
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(
             vm_name) else None)
+    request.addfinalizer(lambda: remove_vm(provider, vm_name))
     request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
 
     def _finished():
