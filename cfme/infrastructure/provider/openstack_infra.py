@@ -1,5 +1,16 @@
+from utils.appliance.implementations.ui import navigate_to
 from . import InfraProvider, prop_region
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
+from cfme.web_ui import Form, FileInput, InfoBlock, fill
+import cfme.fixtures.pytest_selenium as sel
+import cfme.web_ui.toolbar as tb
+
+register_nodes_form = Form(
+    fields=[
+        ('file', FileInput('nodes_json[file]')),
+        ('register', "//*[@name='register']"),
+        ('cancel', "//*[@name='cancel']")
+    ])
 
 
 @InfraProvider.add_provider_type
@@ -64,3 +75,34 @@ class OpenstackInfraProvider(InfraProvider):
             key=prov_key,
             start_ip=start_ip,
             end_ip=end_ip)
+
+    def register(self, file_path):
+        """Register new nodes (Openstack)
+        Fill a form for new host with json file format
+        This function is valid only for RHOS10 and above
+        Args:
+            file_path - file path of json file with new node details, navigation
+             MUST be from a specific self
+        """
+        navigate_to(self, 'Details')
+        sel.click(InfoBlock.element("Relationships", "Nodes"))
+        tb.select('Configuration', 'Register Nodes')
+        my_form = {'file': file_path}
+        fill(register_nodes_form, my_form, action=register_nodes_form.register)
+
+    def node_exist(self, name='my_node'):
+        """" registered imported host exist
+        This function is valid only for RHOS10 and above
+        Args:
+            name - by default name is my_name Input self, name of the new node,
+             looking for the host in Ironic clients, compare the record found with
+              hosts list in CFME DB
+        Returns: boolean value if host found
+        """
+        nodes = self.mgmt.list_node()
+        nodes_dict = {i.name: i for i in nodes}
+        query = self.appliance.db.session.query(
+            self.appliance.db['hosts'], 'guid')
+        node_uuid = str(nodes_dict[name])
+        for db_node in query.all():
+            return db_node.hosts.name == str(node_uuid.uuid)
