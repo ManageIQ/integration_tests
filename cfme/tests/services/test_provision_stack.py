@@ -11,7 +11,7 @@ from cfme.services import requests
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
 from cfme import test_requirements
-from utils import testgen, version
+from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -251,7 +251,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
 
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', item_name)
+    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -260,7 +260,6 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     assert 'Provisioned Successfully' in row.last_message.text
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() <= '5.5')
 def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -285,7 +284,7 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
 
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', item_name)
+    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -317,7 +316,6 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     assert row.last_message.text == 'Service_Template_Provisioning failed'
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -330,7 +328,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     stack_data = prepare_stack_data(provider, provisioning)
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', item_name)
+    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -338,7 +336,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
 
     assert 'Provisioned Successfully' in row.last_message.text
 
-    stack = Stack(stack_data['stack_name'])
+    stack = Stack(stack_data['stack_name'], provider=provider)
     stack.wait_for_appear()
     stack.retire_stack()
 
