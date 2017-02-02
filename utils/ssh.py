@@ -436,6 +436,13 @@ class SSHClient(paramiko.SSHClient):
             contains dictionaries, one per line. You can refer inside the dictionary using the
             headers.
         """
+        matcher = re.compile(
+            '|'.join([
+                'DEPRECATION WARNING',
+                'called from block in',
+                'Please use .* instead',
+                'key :terminate is duplicated and overwritten',
+            ]))
         if version.current_version() < "5.5":
             data = self.run_command("service evmserverd status")
         else:
@@ -466,7 +473,7 @@ class SSHClient(paramiko.SSHClient):
                 d["Started On"] = iso8601.parse_date(d["Started On"])
 
         # Servers part
-        srvs = srvs.split("\n")[1:]
+        srvs = [line for line in srvs.split("\n")[1:] if matcher.search(line) is None]
         srv_headers = [h.strip() for h in srvs[0].strip().split("|")]
         srv_body = srvs[2:]
         servers = []
@@ -478,9 +485,7 @@ class SSHClient(paramiko.SSHClient):
 
         # Workers part
         # TODO: Figure more permanent solution for ignoring the warnings
-        wrks = [
-            line for line in wrks.split("\n")
-            if 'key :terminate is duplicated and overwritten' not in line]
+        wrks = [line for line in wrks.split("\n") if matcher.search(line) is None]
 
         workers = []
         if wrks:
