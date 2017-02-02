@@ -1046,15 +1046,14 @@ class BreadCrumb(Widget):
 
 class ItemsToolBarViewSelector(View):
     """ represents toolbar's view selector control
-        it is present at pages with items like Infra or Cloud Providers pages
+        it is present on pages with items like Infra or Cloud Providers pages
 
     .. code-block:: python
 
-        @View.nested
-        class view_selector(ItemsToolBarViewSelector):  # NOQA
+        view_selector = View.nested(ItemsToolBarViewSelector)
 
-        some_view.view_selector.select('Tile View')
-        some_view.view_selector.selected
+        view_selector.select('Tile View')
+        view_selector.selected
     """
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
     grid_button = Button(title='Grid View')
@@ -1063,7 +1062,9 @@ class ItemsToolBarViewSelector(View):
 
     @property
     def _view_buttons(self):
-        return self.grid_button, self.tile_button, self.list_button
+        yield self.grid_button
+        yield self.tile_button
+        yield self.list_button
 
     def select(self, title):
         for button in self._view_buttons:
@@ -1079,15 +1080,14 @@ class ItemsToolBarViewSelector(View):
 
 class DetailsToolBarViewSelector(View):
     """ represents toolbar's view selector control
-        it is present at pages with items like Infra or Cloud Providers pages
+        it is present on pages like Infra Providers Details page
 
     .. code-block:: python
 
-        @View.nested
-        class view_selector(DetailsToolBarViewSelector):  # NOQA
+        view_selector = View.nested(DetailsToolBarViewSelector)
 
-        some_view.view_selector.select('Dashboard View')
-        some_view.view_selector.selected
+        view_selector.select('Dashboard View')
+        view_selector.selected
     """
     ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
     summary_button = Button(title='Summary View')
@@ -1095,7 +1095,8 @@ class DetailsToolBarViewSelector(View):
 
     @property
     def _view_buttons(self):
-        return self.dashboard_button, self.summary_button
+        yield self.dashboard_button
+        yield self.summary_button
 
     def select(self, title):
         for button in self._view_buttons:
