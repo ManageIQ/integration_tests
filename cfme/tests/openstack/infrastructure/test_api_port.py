@@ -10,7 +10,7 @@ pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module
 
 
 @pytest.mark.usefixtures("setup_provider_modscope")
-def test_api_port(provider, soft_assert):
+def test_api_port(provider):
     port = provider.get_yaml_data()['port']
-    soft_assert(provider.summary.properties.api_port.value == port,
-                "Invalid API Port")
+    assert provider.summary.properties.api_port.value == port,\
+        'Invalid API Port'
