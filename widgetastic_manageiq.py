@@ -880,7 +880,7 @@ class PaginationPane(View):
         return self.paginator.page_info()[1]
 
 
-class Stepper(Widget):
+class Stepper(View):
     """ A CFME Stepper Control
 
     .. code-block:: python
@@ -889,24 +889,15 @@ class Stepper(Widget):
         stepper.increase()
     """
     ROOT = ParametrizedLocator('{@locator}')
-    INPUT_CTL = './/input[contains(@class, "bootstrap-touchspin")]'
+
+    minus_button = Button('-')
+    plus_button = Button('+')
+    value_field = Input(locator='.//input[contains(@class, "bootstrap-touchspin")]')
 
     def __init__(self, parent, locator, logger=None):
-        Widget.__init__(self, parent=parent, logger=logger)
+        View.__init__(self, parent=parent, logger=logger)
 
         self.locator = locator
-
-    @property
-    def minus_button(self):
-        return Button(self, '-')
-
-    @property
-    def plus_button(self):
-        return Button(self, '+')
-
-    @property
-    def value_field(self):
-        return Input(self, locator=self.INPUT_CTL)
 
     def read(self):
         return int(self.value_field.read())
