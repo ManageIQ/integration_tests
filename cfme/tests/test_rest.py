@@ -11,22 +11,23 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.rest.gen_data import vm as _vm
 from cfme.rest.gen_data import arbitration_settings, automation_requests_data
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import new_setup_a_provider, ProviderFilter
 from utils.version import current_version
 from utils.wait import wait_for
-from utils import testgen
 from utils.log import logger
 from utils.blockers import BZ
 
 
 pytestmark = [test_requirements.rest]
 
-pytest_generate_tests = testgen.generate([VMwareProvider, RHEVMProvider], scope="module")
-
 
 @pytest.fixture(scope="module")
 def a_provider():
-    return _setup_a_provider("infra")
+    try:
+        pf = ProviderFilter(classes=[VMwareProvider, RHEVMProvider])
+        return new_setup_a_provider(filters=[pf])
+    except Exception:
+        pytest.skip("It's not possible to set up any providers, therefore skipping")
 
 
 @pytest.fixture(scope="function")
