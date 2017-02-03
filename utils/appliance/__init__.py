@@ -306,6 +306,8 @@ class IPAppliance(object):
     @logger_wrap("Extend DB partition")
     def extend_db_partition(self, log_callback=None):
         """Extends the /var partition with DB while shrinking the unused /repo partition"""
+        if self.db_partition_extended:
+            return
         with self.ssh_client as ssh:
             rc, out = ssh.run_command("df -h")
             log_callback("File systems before extending the DB partition:\n{}".format(out))

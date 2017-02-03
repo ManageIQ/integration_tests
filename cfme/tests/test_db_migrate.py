@@ -20,23 +20,14 @@ def pytest_generate_tests(metafunc):
     return metafunc.parametrize(argnames=argnames, argvalues=argvalues, ids=idlist)
 
 
-@pytest.fixture(scope="session")
-def extend_db_partition():
-    app = get_or_create_current_appliance()
-    app.stop_evm_service()
-    app.extend_db_partition()
-    app.start_evm_service()
-
-
-@pytest.yield_fixture(scope="session")
-def backup_orig_state(extend_db_partition):
+@pytest.yield_fixture(scope="module")
+def backup_orig_state():
     app = get_or_create_current_appliance()
     app.backup_database("/var/www/miq/orig_db.backup")
     app.ssh_client.run_command("cp /var/www/miq/vmdb/GUID{,.bak}")
     app.ssh_client.run_command("cp /var/www/miq/vmdb/REGION{,.bak}")
     app.ssh_client.run_command("cp /var/www/miq/vmdb/certs/v2_key{,.bak}")
-    if not app.db_partition_extended:
-        app.extend_db_partition()
+    app.extend_db_partition()
     yield
     app.stop_evm_service()
     app.drop_database()
