@@ -30,6 +30,7 @@ lcl_btn = partial(toolbar.select, "Lifecycle")
 mon_btn = partial(toolbar.select, 'Monitoring')
 pol_btn = partial(toolbar.select, "Policy")
 pwr_btn = partial(toolbar.select, "Power")
+acc_btn = partial(toolbar.select, 'Access')
 
 retire_remove_button = "//span[@id='remove_button']/a/img|//a/img[contains(@src, '/clear')]"
 
@@ -514,6 +515,17 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             'group_name': 'EvmGroup-administrator'},
             action=form_buttons.save)
         flash.assert_success_message('Ownership saved for selected {}'.format(self.VM_TYPE))
+
+    def open_console(self, console='Web Console', invokes_alert=False, cancel=False):
+        # TODO: implement vmrc vm console
+        if console in ['VM Console']:
+            raise NotImplementedError('VM Console not supported at this time')
+
+        navigate_to(self, 'Details')
+        # Click console button given by type
+        acc_btn(console, invokes_alert=invokes_alert)
+        if invokes_alert:
+            sel.handle_alert(cancel)
 
 
 def date_retire_element(fill_data):
