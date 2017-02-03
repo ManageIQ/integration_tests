@@ -8,7 +8,7 @@
     group_id: "{{ lookup('env','GROUP_ID') }}"
     username: "{{ lookup('env','USERNAME') }}"
     groupname: "{{ lookup('env','GROUPNAME') }}"
-    debug: "{{ lookup('env','INT_TESTS_DEBUG') }}"
+    debug: "{{ lookup('env','DEBUG') }}"
   
   tasks:
     - pause: prompt="Welcome to ManageIQ integration tests configuration \n
@@ -28,16 +28,16 @@
         - "{{ username }}"
         - "{{ groupname }}"
         - "{{ debug }}"
-      when: debug is defined
+      when: debug
       register: shell
 
       # We are passing name of the group and ID of the group from host into container as shell variables 
     - name: Adding group into container
       group: name="{{ groupname }}" gid="{{ group_id }}" state=present
     
-    - name: "[DEBUG] See if group ewas added into /etc/group file"
-      shell: cat /etc/
-      when: debug is defined
+    - name: "[DEBUG] See if group was added into /etc/group file"
+      shell: cat /etc/group
+      when: debug
       register: group_content
     
     - name: "[DEBUG] Print output"
@@ -59,7 +59,7 @@
     
     - name: "[DEBUG] List .ssh dir"
       shell: ls -ltra /home/{{ username }}/.ssh
-      when: debug is defined
+      when: debug
       register: ssh_content
     
     - name: "[DEBUG] Print output"
