@@ -39,11 +39,9 @@ class LogValidator(object):
     """
 
     def __init__(self, remote_filename, **kwargs):
-        self.skip_patterns = kwargs.pop('skip_patterns') if 'skip_patterns' in kwargs else []
-        self.failure_patterns = kwargs.pop(
-            'failure_patterns') if 'failure_patterns' in kwargs else []
-        self.matched_patterns = kwargs.pop(
-            'matched_patterns') if 'matched_patterns' in kwargs else []
+        self.skip_patterns = kwargs.pop('skip_patterns', [])
+        self.failure_patterns = kwargs.pop('failure_patterns', [])
+        self.matched_patterns = kwargs.pop('matched_patterns', [])
 
         self._remote_file_tail = SSHTail(remote_filename, **kwargs)
         self.matches = {}
