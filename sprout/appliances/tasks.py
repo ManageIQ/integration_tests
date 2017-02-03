@@ -775,10 +775,11 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             kwargs["power_on"] = False
             if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
                 kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
-            if appliance.appliance_pool.override_memory is not None:
-                kwargs['ram'] = appliance.appliance_pool.override_memory
-            if appliance.appliance_pool.override_cpu is not None:
-                kwargs['cpu'] = appliance.appliance_pool.override_cpu
+            if appliance.appliance_pool is not None:
+                if appliance.appliance_pool.override_memory is not None:
+                    kwargs['ram'] = appliance.appliance_pool.override_memory
+                if appliance.appliance_pool.override_cpu is not None:
+                    kwargs['cpu'] = appliance.appliance_pool.override_cpu
             appliance.provider_api.deploy_template(
                 appliance.template.name, vm_name=appliance.name,
                 progress_callback=lambda progress: appliance.set_status(
