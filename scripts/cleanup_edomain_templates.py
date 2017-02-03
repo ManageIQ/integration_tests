@@ -66,6 +66,7 @@ def change_edomain_state(provider_mgmt, state, edomain):
     try:
         # fetch name for logging
         provider_name = provider_mgmt.kwargs.get('name', None)
+        log_args = (provider_name, edomain, state)
 
         api = provider_mgmt.api
         dcs = api.datacenters.list()
@@ -78,14 +79,12 @@ def change_edomain_state(provider_mgmt, state, edomain):
                     dc.storagedomains.get(edomain).activate()
 
                 wait_for(is_edomain_in_state, [api, state, edomain], fail_condition=False, delay=5)
-                print('RHEVM:{} {} successfully set to {} state'
-                      .format(provider_name, edomain, state))
+                print('RHEVM:{}, domain {} set to "{}" state'.format(*log_args))
                 return True
         return False
     except Exception as e:
         print(e)
-        print("RHEVM:{} Exception occurred while changing {} state to {}"
-              .format(provider_name, edomain, state))
+        print('RHEVM:{} Exception setting domain {} to "{}" state'.format(*log_args))
         return False
 
 
@@ -125,12 +124,18 @@ def cleanup_empty_dir_on_edomain(provider_mgmt, edomain):
         command += 'find ~/tmp_filemount/master/vms/ -maxdepth 1 -type d -empty -delete &&'
         command += 'cd ~ && umount ~/tmp_filemount &&'
         command += 'find . -maxdepth 1 -name tmp_filemount -type d -empty -delete'
-        print("RHEVM:{} Deleting empty directories on edomain/vms file...".format(provider_name))
+
+        print('RHEVM:{} Deleting empty directories on edomain/vms file path {}'
+              .format(provider_name, path))
+
         exit_status, output = make_ssh_client(provider_mgmt).run_command(command)
+
         if exit_status != 0:
-            print("RHEVM:{} Error while deleting empty directories on path..".format(provider_name))
+            print('RHEVM:{} Error deleting empty directories on path {}'
+                  .format(provider_name, path))
             print(output)
-        print("RHEVM:{} successfully deleted empty directories on path..".format(provider_name))
+        print('RHEVM:{} successfully deleted empty directories on path {}'
+              .format(provider_name, path))
     except Exception as e:
         print(e)
         return False
@@ -163,10 +168,10 @@ def delete_edomain_templates(api, template, edomain):
         template.delete()
         print('waiting for {} to be deleted..'.format(name))
         wait_for(is_edomain_template_deleted, [api, name, edomain], fail_condition=False, delay=5)
-        print("RHEVM: successfully deleted the template {}".format(name))
+        print('RHEVM: successfully deleted template {} on domain {}'.format(name, edomain))
     except Exception as e:
         with lock:
-            print("RHEVM: Exception occurred while deleting the template {}".format(name))
+            print('RHEVM: Exception deleting template {} on domain {}'.format(name, edomain))
             logger.exception(e)
 
 
