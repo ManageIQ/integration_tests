@@ -10,6 +10,7 @@ from cfme.control.explorer.policies import VMCompliancePolicy, HostCompliancePol
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider import InfraProvider
+from cfme.configure.configuration import AnalysisProfile
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version
@@ -236,7 +237,7 @@ def test_check_files(request, fleecing_vm, ssh_client, analysis_profile):
     assert fleecing_vm.check_compliance()
 
 
-def test_compliance_with_unconditional_policy(request, host, assign_policy_for_testing):
+def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
     assign_policy_for_testing.assign_actions_to_event(
         "Host Compliance Check",
         {"Mark as Non-Compliant": True}

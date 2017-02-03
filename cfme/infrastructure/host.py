@@ -8,7 +8,6 @@
 """
 
 from functools import partial
-from contextlib import contextmanager
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 import cfme
@@ -332,36 +331,17 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         sel.handle_alert()
         flash.assert_message_contain('"{}": Analysis successfully initiated'.format(self.name))
 
-    def check_compliance(self):
-        """ Checks compliace on this host
-
-        Note:
-            The host must have assigned policy profile with host compliance policy.
-        """
+    def check_compliance(self, timeout=240):
+        """Initiates compliance check and waits for it to finish."""
         navigate_to(self, 'Details')
+        original_state = self.compliance_status
         tb.select('Policy', 'Check Compliance of Last Known Configuration', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
-
-    @contextmanager
-    def check_compliance_wrapper(self, timeout=240):
-        """This wrapper takes care of waiting for the compliance status to change
-
-        Args:
-            timeout: Wait timeout in seconds.
-        """
-        sel.refresh()
-        original_state = self.compliance_status
-        yield
         wait_for(
             lambda: self.compliance_status != original_state,
-            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name),
-            fail_func=sel.refresh)
-
-    def check_compliance_and_wait(self, timeout=240):
-        """Initiates compliance check and waits for it to finish."""
-        with self.check_compliance_wrapper(timeout=timeout):
-            self.check_compliance()
+            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
+        )
         return self.compliant
 
     @property
@@ -382,7 +362,7 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         Returns:
             :py:class:`NoneType` if the VM was never verified, otherwise :py:class:`bool`
         """
-        text = self.get_detail("Compliance", "Status").strip().lower()
+        text = self.compliance_status.strip().lower()
         if text == "never verified":
             return None
         elif text.startswith("non-compliant"):
