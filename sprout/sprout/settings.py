@@ -171,8 +171,8 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(minutes=17),
     },
 
-    'refresh-appliances': {
-        'task': 'appliances.tasks.refresh_appliances',
+    'refresh-providers': {
+        'task': 'appliances.tasks.refresh_providers',
         'schedule': timedelta(minutes=7),
     },
 
