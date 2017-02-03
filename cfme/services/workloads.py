@@ -18,7 +18,7 @@ class WorkloadsView(BaseLoggedInPage):
                 self.navigation.currently_selected == ['Services', 'Workloads'])
 
     @View.nested
-    class vms(Accordion):
+    class vms(Accordion):  # noqa
         ACCORDION_NAME = "VMs & Instances"
         tree = ManageIQTree()
 
@@ -33,7 +33,7 @@ class WorkloadsView(BaseLoggedInPage):
             self.tree.click_path("All VMs & Instances")
 
     @View.nested
-    class templates(Accordion):
+    class templates(Accordion):  # noqa
         ACCORDION_NAME = "Templates & Images"
         tree = ManageIQTree()
 
