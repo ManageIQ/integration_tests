@@ -8,7 +8,7 @@ from cached_property import cached_property
 
 from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresentException
 from widgetastic.log import call_sig
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, VersionPick
 from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget
 from widgetastic.xpath import quote
 
@@ -866,12 +866,18 @@ class BootstrapTreeview(Widget):
                 delay=0.2, num_sec=10)
         return True
 
-    @staticmethod
-    def _process_step(step):
+    def _process_step(self, step):
         """Steps can be plain strings or tuples when matching images"""
+        if isinstance(step, VersionPick):
+            # Version pick passed, coerce it ...
+            step = step.pick(self.browser.product_version)
+
         if isinstance(step, tuple):
             image = step[0]
             step = step[1]
+            if isinstance(step, VersionPick):
+                # Version pick passed, coerce it ...
+                step = step.pick(self.browser.product_version)
         else:
             image = None
         if not isinstance(step, six.string_types + (re._pattern_type,)):
@@ -890,9 +896,8 @@ class BootstrapTreeview(Widget):
         else:
             return '{}[{}]'.format(step_repr, image)
 
-    @classmethod
-    def pretty_path(cls, path):
-        return '/'.join(cls._repr_step(*cls._process_step(step)) for step in path)
+    def pretty_path(self, path):
+        return '/'.join(self._repr_step(*self._process_step(step)) for step in path)
 
     def validate_node(self, node, matcher, image):
         """Helper method that matches nodes by given conditions.
