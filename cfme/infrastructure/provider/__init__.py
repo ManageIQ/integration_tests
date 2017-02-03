@@ -141,14 +141,36 @@ class InfraProviderView(BaseLoggedInPage):
 
 class InfraProviderCollection(Navigatable):
     """Collection object for the :py:class:`InfraProvider`."""
+    def __init__(self, parent_class):
+        self.parent = parent_class
+        Navigatable.__init__(self, appliance=parent_class.appliance)
+
+    @staticmethod
+    def instantiate(**kwargs):
+        return InfraProvider(**kwargs)
+
     def create(self, name=None, credentials=None, key=None, zone=None, provider_data=None,
                cancel=False):
         pass
 
     def all(self):
-        pass
+        db = self.appliance.db
+        provs = db['ext_management_systems']
+        zones = db['zones']
+        query = db.session.query(provs.name, zones.name)
+        query.join(provs, zones, provs.zone_id == zones.id)
+        got_records = query.filter(provs.type.like('%InfraManager')).all()
+        return [InfraProvider(name=prov, zone=zone) for prov, zone in got_records]
 
     def delete(self, name):
+        # self.load_details()
+        # cfg_btn('Remove this {} Provider'.format(self.string_name),
+        #         invokes_alert=True)
+        # sel.handle_alert(cancel=cancel)
+        # if not cancel:
+        #     flash.assert_message_match(
+        #         'Delete initiated for 1 {} Provider from the {} Database'.format(
+        #             self.string_name, self.appliance.product_name))
         pass
 
 
