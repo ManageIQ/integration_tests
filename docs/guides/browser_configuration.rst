@@ -23,6 +23,16 @@ below.
 
 Some help for setting up the remote selenium server can be found in the :ref:`vnc_selenium` document.
 
+
+Standalone Selenium Server
+--------------------------
+
+A Selenium Server is needed in order to run Remote Selenium WebDriver.  You can install and run
+the Standalone Selenium Server which is a very common method.  Although you may run this locally, it is still setup as a Remote webdriver as described above.  
+
+For more information, view the :ref:`vnc_selenium` document.
+
+
 WebDriver Wharf
 ---------------
 
