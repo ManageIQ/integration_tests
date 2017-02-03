@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from widgetastic.widget import View
 from widgetastic_patternfly import Dropdown
-from widgetastic_manageiq import ToolBarViewSelector
+from widgetastic_manageiq import ItemsToolBarViewSelector, DetailsToolBarViewSelector
 
 
 class ProviderToolBar(View):
@@ -14,7 +14,7 @@ class ProviderToolBar(View):
     download = Dropdown(text='Download')
 
     @View.nested
-    class view_selector(ToolBarViewSelector):  # NOQA
+    class view_selector(ItemsToolBarViewSelector):  # NOQA
         pass
 
 
