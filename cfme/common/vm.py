@@ -189,32 +189,19 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     ###
     # Methods
     #
-    def check_compliance(self):
-        """Clicks the Check compliance button."""
-        self.load_details(refresh=True)
+    def check_compliance(self, timeout=240):
+        """Initiates compliance check and waits for it to finish."""
+        original_state = self.compliance_status
+        cfg_btn("Refresh Relationships and Power States", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
         pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
-
-    @contextmanager
-    def check_compliance_wrapper(self, timeout=240):
-        """This wrapper takes care of waiting for the compliance status to change
-
-        Args:
-            timeout: Wait timeout in seconds.
-        """
-        self.load_details(refresh=True)
-        original_state = self.compliance_status
-        yield
         wait_for(
             lambda: self.compliance_status != original_state,
-            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name),
-            fail_func=lambda: toolbar.select("Reload"))
-
-    def check_compliance_and_wait(self, timeout=240):
-        """Initiates compliance check and waits for it to finish."""
-        with self.check_compliance_wrapper(timeout=timeout):
-            self.check_compliance()
+            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
+        )
         return self.compliant
 
     @property
