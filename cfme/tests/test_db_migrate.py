@@ -3,7 +3,7 @@ from os import path as os_path
 
 from cfme.login import login
 from utils import version
-from utils.appliance import ApplianceException, get_or_create_current_appliance
+from utils.appliance import ApplianceException
 from utils.blockers import BZ
 from utils.conf import cfme_data
 from utils.log import logger
@@ -21,36 +21,12 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def extend_db_partition():
-    app = get_or_create_current_appliance()
+def temp_appliance_extended_db(temp_appliance):
+    app = temp_appliance
     app.stop_evm_service()
     app.extend_db_partition()
     app.start_evm_service()
-
-
-@pytest.yield_fixture(scope="module")
-def backup_orig_state(extend_db_partition):
-    app = get_or_create_current_appliance()
-    app.backup_database("/var/www/miq/orig_db.backup")
-    app.ssh_client.run_command("cp /var/www/miq/vmdb/GUID{,.bak}")
-    app.ssh_client.run_command("cp /var/www/miq/vmdb/REGION{,.bak}")
-    app.ssh_client.run_command("cp /var/www/miq/vmdb/certs/v2_key{,.bak}")
-    yield
-    app.stop_evm_service()
-    app.drop_database()
-    app.restore_database("/var/www/miq/orig_db.backup")
-    app.ssh_client.run_command("cp /var/www/miq/vmdb/GUID{.bak,}")
-    app.ssh_client.run_command("cp /var/www/miq/vmdb/REGION{.bak,}")
-    app.ssh_client.run_command("cp /var/www/miq/vmdb/certs/v2_key{.bak,}")
-    app.start_evm_service()
-    app.wait_for_web_ui()
-
-
-@pytest.fixture(scope="function")
-def stabilize_current_appliance(backup_orig_state):
-    app = get_or_create_current_appliance()
-    app.reboot(wait_for_web_ui=False)
-    app.stop_evm_service()
+    return app
 
 
 @pytest.mark.ignore_stream('5.5', 'upstream')
@@ -61,8 +37,8 @@ def stabilize_current_appliance(backup_orig_state):
         version.get_stream(db_version) == version.current_stream())
 @pytest.mark.meta(
     blockers=[BZ(1354466, unblock=lambda db_url: 'ldap' not in db_url)])
-def test_db_migrate(stabilize_current_appliance, db_url, db_version, db_desc):
-    app = get_or_create_current_appliance()
+def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
+    app = temp_appliance_extended_db
 
     # Download the database
     logger.info("Downloading database: {}".format(db_desc))
