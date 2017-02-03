@@ -28,8 +28,8 @@ HOME="/home/${USERNAME}"
 
 # these variables are passed into container and are read by playbook which will create same user/group inside container 
 if [[ -n "${INT_TESTS_DEBUG}" && ${INT_TESTS_DEBUG} -eq 1 ]]; then
-  ENV_VARS="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` -e HOME=/home/`whoami` INT_TESTS_DEBUG=1"
-  ENV_VARS_CONF="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` INT_TESTS_DEBUG=1"
+  ENV_VARS="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` -e HOME=/home/`whoami` -e INT_TESTS_DEBUG=1"
+  ENV_VARS_CONF="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` -e INT_TESTS_DEBUG=1"
 else
   ENV_VARS="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` -e HOME=/home/`whoami`"
   ENV_VARS_CONF="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn`"

@@ -20,7 +20,7 @@
                   If you want to change any of integration tests parameters, you can safely re-run this script. 
                   Now, you will be prompted to input needed variables (press ENTER to continue):"
   
-    - name: [DEBUG] Print out all variables collected from shell environment
+    - name: "[DEBUG] Print out all variables collected from shell environment"
       debug: msg="Shell variable is: {{ item }}"
       with_items: 
         - {{ user_id }}
@@ -35,12 +35,12 @@
     - name: Adding group into container
       group: name="{{ groupname }}" gid="{{ group_id }}" state=present
     
-    - name: [DEBUG] See if group ewas added into /etc/group file
+    - name: "[DEBUG] See if group ewas added into /etc/group file"
       shell: cat /etc/
       when: debug is defined
       register: group_content
     
-    - name: [Debug] Print output
+    - name: "[Debug] Print output"
       debug: msg="Content of group file: {{ group_content.stdout_lines }}"
       when: group_content is defined
  
@@ -48,21 +48,21 @@
     - name: Adding user to container
       user: name="{{ username }}" comment="{{ username }} container" uid="{{ user_id }}" group="{{ groupname }}"
 
-    - name: [DEBUG] List if home dir exists
+    - name: "[DEBUG] List if home dir exists"
       shell: ls -ltra /home/{{ username }}
       when: debug is defined
       register: home_content
     
-    - name: [Debug] Print output
+    - name: "[DEBUG] Print output"
       debug: msg="Content of home dir: {{ home_content.stdout_lines }}"
       when: home_content is defined
     
-    - name: [DEBUG] List .ssh dir 
+    - name: "[DEBUG] List .ssh dir"
       shell: ls -ltra /home/{{ username }}/.ssh
       when: debug is defined
       register: ssh_content
     
-    - name: [Debug] Print output
+    - name: "[DEBUG] Print output"
       debug: msg="Content of home dir: {{ home_content.stdout_lines }}"
       when: ssh_content is defined
 
