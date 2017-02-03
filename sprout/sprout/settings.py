@@ -234,7 +234,17 @@ CELERYBEAT_SCHEDULE = {
     'synchronize-appliances-metadata': {
         'task': 'appliances.tasks.appliances_synchronize_metadata',
         'schedule': timedelta(minutes=45),
-    }
+    },
+
+    'sync-quotas-perf': {
+        'task': 'appliances.tasks.sync_quotas_perf',
+        'schedule': timedelta(hours=12),
+    },
+
+    'sync-provider-hw': {
+        'task': 'appliances.tasks.sync_provider_hw',
+        'schedule': timedelta(minutes=61),
+    },
 }
 
 try:

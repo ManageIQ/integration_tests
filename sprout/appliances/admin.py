@@ -164,7 +164,9 @@ class GroupAdmin(Admin):
 @register_for(Provider)
 class ProviderAdmin(Admin):
     readonly_fields = [
-        "remaining_provisioning_slots", "provisioning_load", "show_ip_address", "appliance_load"]
+        "remaining_provisioning_slots", "provisioning_load", "show_ip_address", "appliance_load",
+        'total_memory', 'memory_limit', 'used_memory',
+        'total_cpu', 'cpu_limit', 'used_cpu']
     list_display = [
         "id", "working", "num_simultaneous_provisioning", "remaining_provisioning_slots",
         "provisioning_load", "show_ip_address", "appliance_load"]

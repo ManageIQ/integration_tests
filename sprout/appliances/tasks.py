@@ -163,13 +163,13 @@ def kill_appliance(self, appliance_id, replace_in_pool=False, minutes=60):
     If the appliance was assigned to pool and we want to replace it, redo the provisioning.
     """
     self.logger.info("Initiated kill of appliance {}".format(appliance_id))
+    appliance = Appliance.objects.get(id=appliance_id)
     workflow = [
         disconnect_direct_lun.si(appliance_id),
         appliance_power_off.si(appliance_id),
         kill_appliance_delete.si(appliance_id),
     ]
     if replace_in_pool:
-        appliance = Appliance.objects.get(id=appliance_id)
         if appliance.appliance_pool is not None:
             workflow.append(
                 replace_clone_to_pool.si(
@@ -775,7 +775,13 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             kwargs["power_on"] = False
             if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
                 kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
-            self.logger.info("Deployment kwargs: {}".format(repr(kwargs)))
+            if appliance.appliance_pool.override_memory is not None:
+                kwargs['ram'] = appliance.appliance_pool.override_memory
+            if appliance.appliance_pool.override_cpu is not None:
+                kwargs['cpu'] = appliance.appliance_pool.override_cpu
+            self.logger.info("Deployment kwargs: {!r}".format(kwargs))
+            with appliance.edit_metadata as metadata:
+                metadata['deployment_kwargs'] = kwargs
             appliance.provider_api.deploy_template(
                 appliance.template.name, vm_name=appliance.name,
                 progress_callback=lambda progress: appliance.set_status(
@@ -886,6 +892,8 @@ def appliance_power_on(self, appliance_id):
                         # Fire up the container
                         ssh.run_command('cfme-start', ensure_host=True)
                 # VM is running now.
+                sync_appliance_hw.delay(appliance.id)
+                sync_provider_hw.delay(appliance.template.provider.id)
                 return
             else:
                 # IP not present yet
@@ -945,6 +953,7 @@ def appliance_power_off(self, appliance_id):
                 appliance.set_power_state(Appliance.Power.OFF)
                 appliance.ready = False
                 appliance.save()
+            sync_provider_hw.delay(appliance.template.provider.id)
             return
         elif appliance.provider_api.is_vm_suspended(appliance.name):
             appliance.set_status("Starting appliance from suspended state to properly off it.")
@@ -978,6 +987,7 @@ def appliance_suspend(self, appliance_id):
                 appliance.set_power_state(Appliance.Power.SUSPENDED)
                 appliance.ready = False
                 appliance.save()
+            sync_provider_hw.delay(appliance.template.provider.id)
             return
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
@@ -1928,3 +1938,21 @@ def configure_docker_template(self, template_id, pull_url):
         template.set_status("Pulling the {}.".format(pull_url))
         ssh.run_command('docker pull {}'.format(pull_url), ensure_host=True)
         template.set_status('Pulling finished.')
+
+
+@singleton_task()
+def sync_appliance_hw(self, appliance_id):
+    Appliance.objects.get(id=appliance_id).sync_hw()
+
+
+@singleton_task()
+def sync_provider_hw(self, provider_id):
+    Provider.objects.get(id=provider_id).perf_sync()
+
+
+@singleton_task()
+def sync_quotas_perf(self):
+    for provider in Provider.objects.all():
+        sync_provider_hw.delay(provider.id)
+        for appliance in provider.currently_managed_appliances:
+            sync_appliance_hw.delay(appliance.id)
