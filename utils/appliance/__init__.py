@@ -932,22 +932,6 @@ class IPAppliance(object):
             log_callback(msg)
             raise ApplianceException(msg)
 
-    def backup_orig_state(self):
-        self.backup_database("/var/www/miq/orig_db.backup")
-        self.ssh_client.run_command("cp /var/www/miq/vmdb/GUID{,.bak}")
-        self.ssh_client.run_command("cp /var/www/miq/vmdb/REGION{,.bak}")
-        self.ssh_client.run_command("cp /var/www/miq/vmdb/certs/v2_key{,.bak}")
-
-    def restore_orig_state_from_backup(self):
-        self.stop_evm_service()
-        self.drop_database()
-        self.restore_database("/var/www/miq/orig_db.backup")
-        self.ssh_client.run_command("cp /var/www/miq/vmdb/GUID{.bak,}")
-        self.ssh_client.run_command("cp /var/www/miq/vmdb/REGION{.bak,}")
-        self.ssh_client.run_command("cp /var/www/miq/vmdb/certs/v2_key{.bak,}")
-        self.start_evm_service()
-        self.wait_for_web_ui()
-
     @logger_wrap("Setup upstream DB: {}")
     def setup_upstream_db(self, log_callback=None):
         """Configure upstream database
