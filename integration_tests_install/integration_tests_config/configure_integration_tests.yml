@@ -30,6 +30,10 @@
         - "{{ debug }}"
       when: debug
       register: shell
+    
+    - name: "[DEBUG] Print output"
+      debug: var=shell.stdout_lines
+      when: debug
 
       # We are passing name of the group and ID of the group from host into container as shell variables 
     - name: Adding group into container
@@ -41,7 +45,7 @@
       register: group_content
     
     - name: "[DEBUG] Print output"
-      debug: var="{{ group_content.stdout_lines }}"
+      debug: var=group_content.stdout_lines
       when: debug
  
       # We are passing username and UID of the user from host into container as shell variables 
@@ -54,7 +58,7 @@
       register: home_content
     
     - name: "[DEBUG] Print output"
-      debug: var="{{ home_content.stdout_lines }}"
+      debug: var=home_content.stdout_lines
       when: debug
     
     - name: "[DEBUG] List .ssh dir"
@@ -63,7 +67,7 @@
       register: ssh_content
     
     - name: "[DEBUG] Print output"
-      debug: var="{{ ssh_content.stdout_lines }}"
+      debug: var=ssh_content.stdout_lines
       when: debug
 
     - name: Checking if we are connected to internet - WIP
