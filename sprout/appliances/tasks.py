@@ -779,9 +779,6 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                 kwargs['ram'] = appliance.appliance_pool.override_memory
             if appliance.appliance_pool.override_cpu is not None:
                 kwargs['cpu'] = appliance.appliance_pool.override_cpu
-            self.logger.info("Deployment kwargs: {!r}".format(kwargs))
-            with appliance.edit_metadata as metadata:
-                metadata['deployment_kwargs'] = kwargs
             appliance.provider_api.deploy_template(
                 appliance.template.name, vm_name=appliance.name,
                 progress_callback=lambda progress: appliance.set_status(
