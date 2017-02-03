@@ -23,11 +23,11 @@
     - name: "[DEBUG] Print out all variables collected from shell environment"
       debug: msg="Shell variable is {{ item }}"
       with_items: 
-        - {{ user_id }}
-        - {{ group_id }}
-        - {{ username }}
-        - {{ groupname }}
-        - {{ debug }}
+        - "{{ user_id }}"
+        - "{{ group_id }}"
+        - "{{ username }}"
+        - "{{ groupname }}"
+        - "{{ debug }}"
       when: debug is defined
       register: shell
 
