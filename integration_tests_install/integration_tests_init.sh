@@ -27,7 +27,7 @@ GROUPNAME=`id -gn`
 HOME="/home/${USERNAME}"
 
 
-if [ ${INT_TESTS_DEBUG} -eq 1 ];then
+if [[ -n "${INT_TESTS_DEBUG}" && ${INT_TESTS_DEBUG} -eq 1 ]]; then
   ENV_VARS="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` -e HOME=/home/`whoami` INT_TESTS_DEBUG=1"
 else
   ENV_VARS="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` -e HOME=/home/`whoami`"
