@@ -1042,3 +1042,69 @@ class BreadCrumb(Widget):
             self.browser.handle_alert(wait=2.0, squash=True)
             self.browser.plugin.ensure_page_safe()
         return result
+
+
+class ItemsToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+        it is present on pages with items like Infra or Cloud Providers pages
+
+    .. code-block:: python
+
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
+        view_selector.select('Tile View')
+        view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+    grid_button = Button(title='Grid View')
+    tile_button = Button(title='Tile View')
+    list_button = Button(title='List View')
+
+    @property
+    def _view_buttons(self):
+        yield self.grid_button
+        yield self.tile_button
+        yield self.list_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        return next(btn.title for btn in self._view_buttons if btn.active)
+
+
+class DetailsToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+        it is present on pages like Infra Providers Details page
+
+    .. code-block:: python
+
+        view_selector = View.nested(DetailsToolBarViewSelector)
+
+        view_selector.select('Dashboard View')
+        view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+    summary_button = Button(title='Summary View')
+    dashboard_button = Button(title='Dashboard View')
+
+    @property
+    def _view_buttons(self):
+        yield self.dashboard_button
+        yield self.summary_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        return next(btn.title for btn in self._view_buttons if btn.active)
