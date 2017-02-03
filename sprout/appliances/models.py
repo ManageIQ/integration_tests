@@ -136,6 +136,32 @@ class Provider(MetadataMixin):
         max_length=64,
         null=True, blank=True, help_text='Base tempalte for containerized ManageIQ deployment.')
 
+    total_memory = models.IntegerField(null=True, blank=True, editable=False)
+    total_cpu = models.IntegerField(null=True, blank=True, editable=False)
+    used_memory = models.IntegerField(null=True, blank=True, editable=False)
+    used_cpu = models.IntegerField(null=True, blank=True, editable=False)
+
+    memory_limit = models.IntegerField(null=True, blank=True, editable=False)
+    cpu_limit = models.IntegerField(null=True, blank=True, editable=False)
+
+    custom_memory_limit = models.IntegerField(null=True, blank=True)
+    custom_cpu_limit = models.IntegerField(null=True, blank=True)
+
+    def perf_sync(self):
+        try:
+            stats = self.api.usage_and_quota()
+            with transaction.atomic():
+                provider = type(self).objects.get(pk=self.pk)
+                provider.total_memory = stats['ram_total']
+                provider.total_cpu = stats['cpu_total']
+                provider.used_memory = stats['ram_used']
+                provider.used_cpu = stats['cpu_used']
+                provider.memory_limit = stats['ram_limit']
+                provider.cpu_limit = stats['cpu_limit']
+                provider.save()
+        except NotImplementedError:
+            pass
+
     @property
     def is_working(self):
         return self.working and not self.disabled
@@ -581,6 +607,9 @@ class Template(MetadataMixin):
 
 
 class Appliance(MetadataMixin):
+    class Meta:
+        permissions = (('can_modify_hw', 'Can modify HW configuration'), )
+
     class Power(object):
         ON = "on"
         OFF = "off"
@@ -671,6 +700,9 @@ class Appliance(MetadataMixin):
         help_text="How many MB is the appliance in swap.", null=True, blank=True)
     ssh_failed = models.BooleanField(default=False, help_text="If last swap check failed on SSH.")
 
+    ram = models.IntegerField(null=True, blank=True)
+    cpu = models.IntegerField(null=True, blank=True)
+
     def synchronize_metadata(self):
         """If possible, uploads some metadata to the provider VM object to be able to recover."""
         self._set_meta('id', self.id)
@@ -709,6 +741,17 @@ class Appliance(MetadataMixin):
         except NotImplementedError:
             pass
 
+    def sync_hw(self):
+        try:
+            params = self.provider_api.vm_hardware_configuration(self.name)
+            with transaction.atomic():
+                appliance = type(self).objects.get(pk=self.pk)
+                appliance.cpu = params['cpu']
+                appliance.ram = params['ram']
+                appliance.save()
+        except NotImplementedError:
+            pass
+
     @property
     def serialized(self):
         return dict(
@@ -733,6 +776,8 @@ class Appliance(MetadataMixin):
             preconfigured=self.preconfigured,
             lun_disk_connected=self.lun_disk_connected,
             container=self.template.container,
+            ram=self.ram,
+            cpu=self.cpu,
         )
 
     @property
@@ -809,7 +854,7 @@ class Appliance(MetadataMixin):
         return cls.objects.filter(appliance_pool=None, ready=True)
 
     @classmethod
-    def give_to_pool(cls, pool, custom_limit=None):
+    def give_to_pool(cls, pool, custom_limit=None, cpu=None, ram=None):
         """Give appliances from shepherd to the pool where the maximum count is specified by pool
         or you can specify a custom limit
         """
@@ -821,10 +866,15 @@ class Appliance(MetadataMixin):
         if limit <= 0:
             # Nothing to do
             return 0
+        cpuram_filter = {}
+        if pool.cpu_override is not None:
+            cpuram_filter['cpu'] = pool.cpu_override
+        if pool.ram_override is not None:
+            cpuram_filter['ram'] = pool.ram_override
         with transaction.atomic():
             for template in pool.possible_templates:
                 for appliance in cls.unassigned().filter(
-                        template=template).all()[:limit - len(appliances)]:
+                        template=template, **cpuram_filter).all()[:limit - len(appliances)]:
                     with appliance.kill_lock:
                         appliance.appliance_pool = pool
                         appliance.save()
@@ -975,6 +1025,9 @@ class AppliancePool(MetadataMixin):
     yum_update = models.BooleanField(default=False, help_text="Whether to update appliances.")
     is_container = models.BooleanField(default=False, help_text='Whether the pool uses containers.')
 
+    override_memory = models.IntegerField(null=True, blank=True)
+    override_cpu = models.IntegerField(null=True, blank=True)
+
     @property
     def age(self):
         try:
@@ -989,7 +1042,8 @@ class AppliancePool(MetadataMixin):
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
-            time_leased=60, preconfigured=True, yum_update=False, container=False):
+            time_leased=60, preconfigured=True, yum_update=False, container=False, ram=None,
+            cpu=None):
         container_q = ~Q(container=None) if container else Q(container=None)
         if owner.has_quotas:
             user_pools_count = cls.objects.filter(owner=owner).count()
@@ -1043,7 +1097,7 @@ class AppliancePool(MetadataMixin):
         req_params = dict(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured, yum_update=yum_update,
-            is_container=container)
+            is_container=container, override_memory=ram, override_cpu=cpu)
         req = cls(**req_params)
         if not req.possible_templates:
             raise Exception("No possible templates! (pool params: {})".format(str(req_params)))
