@@ -50,7 +50,8 @@ def test_db_migrate(temp_appliance_extended_db, db_url, db_version, db_desc):
     # The v2_key is potentially here
     v2key_url = os_path.join(os_path.dirname(db_url), "v2_key")
 
-    # Drop vmdb_production DB
+    # Stop EVM service and drop vmdb_production DB
+    app.stop_evm_service()
     app.drop_database()
 
     # restore new DB and migrate it
