@@ -89,4 +89,4 @@ EXPOSE 5999
 
 # ENTRYPOINT ["/entry.sh"]
  
-CMD vncserver :99 -xstartup /usr/local/bin/xstartup -SecurityTypes None && tail -F /root/.vnc/*.log
+CMD vncserver :99 -xstartup /usr/local/bin/xstartup -SecurityTypes None && tail -F ~/.vnc/*.log

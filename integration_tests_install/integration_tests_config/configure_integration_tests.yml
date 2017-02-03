@@ -2,15 +2,13 @@
 - hosts: localhost
   connection: local
   become: yes
-  #become_user: "{{ username }}"
   become_method: su
-  #vars_files:
-  #  - "{{ vars_config }}"
   vars:
     user_id: "{{ lookup('env','USER_ID') }}"
     group_id: "{{ lookup('env','GROUP_ID') }}"
     username: "{{ lookup('env','USERNAME') }}"
     groupname: "{{ lookup('env','GROUPNAME') }}"
+    debug: "{{ lookup('env','INT_TESTS_DEBUG') }}"
   
   tasks:
     - pause: prompt="Welcome to ManageIQ integration tests configuration \n
@@ -21,28 +19,68 @@
                   
                   If you want to change any of integration tests parameters, you can safely re-run this script. 
                   Now, you will be prompted to input needed variables (press ENTER to continue):"
-    
-    - name: add group into container
+  
+    - name: [DEBUG] Print out all variables collected from shell environment
+      debug: msg="Shell variable is: {{ item }}"
+      with_items: 
+        - {{ user_id }}
+        - {{ group_id }}
+        - {{ username }}
+        - {{ groupname }}
+        - {{ debug }}
+      when: debug is defined
+      register: shell
+
+      # We are passing name of the group and ID of the group from host into container as shell variables 
+    - name: Adding group into container
       group: name="{{ groupname }}" gid="{{ group_id }}" state=present
+    
+    - name: [DEBUG] See if group ewas added into /etc/group file
+      shell: cat /etc/
+      when: debug is defined
+      register: group_content
+    
+    - name: [Debug] Print output
+      debug: msg="Content of group file: {{ group_content.stdout_lines }}"
+      when: group_content is defined
  
-    - name: add user to container
+      # We are passing username and UID of the user from host into container as shell variables 
+    - name: Adding user to container
       user: name="{{ username }}" comment="{{ username }} container" uid="{{ user_id }}" group="{{ groupname }}"
 
-    - name: Checking if we are connected to internet
+    - name: [DEBUG] List if home dir exists
+      shell: ls -ltra /home/{{ username }}
+      when: debug is defined
+      register: home_content
+    
+    - name: [Debug] Print output
+      debug: msg="Content of home dir: {{ home_content.stdout_lines }}"
+      when: home_content is defined
+    
+    - name: [DEBUG] List .ssh dir 
+      shell: ls -ltra /home/{{ username }}/.ssh
+      when: debug is defined
+      register: ssh_content
+    
+    - name: [Debug] Print output
+      debug: msg="Content of home dir: {{ home_content.stdout_lines }}"
+      when: ssh_content is defined
+
+    - name: Checking if we are connected to internet - WIP
       ipify_facts:
       register: ip
       become_user: root
 
-    - name: Set fact if we are connected to internet
+    - name: Set fact if we are connected to internet - WIP
       set_fact: 
         internet: false
       when: ip.ansible_facts.ipify_public_ip
  
-    - name: check if file with vars exists
+    - name: Check if file with vars exists
       stat: path="{{ vars_config }}"
       register: p
    
-    - name: create "{{ vars_config }}"
+    - name: File with variables does not exist, creating "{{ vars_config }}"
       file: path="{{ vars_config }}" state=touch owner="{{ username }}" group="{{ groupname }}" mode=0660
       when: p.stat.exists == False
     
@@ -53,7 +91,6 @@
     - name: import variables if defined
       include_vars: "{{ vars_config }}"
       when: p.stat.exists == True
-
 
     - name: "1)"
       # https://gist.githubusercontent.com/confiks/6d7b0ee3e137df01b758/raw/6b31d61151c4199e5121c34c841f7168850a6071/ask_key.py
@@ -85,8 +122,7 @@
     - name: "6)" 
       action: custom_prompt prompt="{{ any_yaml_question }} - [{{ any_yaml }}]:" accepted_keys="{{ accepted_keys_yn }}"
       register: any_yaml_p
-#      when: pull_requests_p.key != "n"
-#    
+    
       #  Ask user if he wants to use YAML files from remote repository 
     - name: "6.1)"
       action: custom_prompt prompt="{{ yaml_remote_repo_yn_question }} - [{{ yaml_remote_repo_yn }}]:" accepted_keys="{{ accepted_keys_yn }}"
@@ -131,21 +167,9 @@
 #      when: any_yaml_p.key == "y" and (pull_requests_p.key != "n" and yaml_local_repo_yn_p.key == "y")
       when: any_yaml_p.key == "y" and yaml_local_repo_yn_p.key == "y"
     
-    #- name: "6) 7) 8) nested loop"
-    #  action: custom_prompt prompt="{{ item.value }}" "{{ item.accepted_keys }}"="{{ item.accepted_key|default('') }}"
-    #  register: "{{ item.key }}"
-    #  with_items:
-    #    - { key: 'yaml_question', value: "Would you like to define repo with yaml files?", accepted_keys: "[y, n]" }
-    #    - { key: 'yaml_repo_p', value: "{{ yaml_repo_question }} - [{{ yaml_repo }}]:" }
-    #    - { key: 'yaml_repo_username_p', value: "{{ yaml_repo_username_question }} - [{{ yaml_repo_username }}]:" } 
-    #    - { key: 'yaml_key_password_p', value: "{{ yaml_key_password_question }} - [{{ yaml_key_password }}]:" }
-    #  until: yaml_question == 'n' 
-    #  #until: item.key == 'y' 
-
     - name: "10)"
       action: custom_prompt prompt="{{ base_url_question }} - [{{ base_url }}]:"
       register: base_url_p 
-#      when: pull_requests_p.key != "n"
 
     - name: "11)"
       action: custom_prompt prompt="{{ browser_question }} - [{{ browser }}]" accepted_keys="{{browser_accepted_keys}}" 
@@ -181,8 +205,6 @@
       include_vars: "{{ vars_config }}"
 
 
-    # - debug: msg="Mesage {{ git_account_username_p }}"          
-    # - debug: msg="Mesage {{ (git_account_username_p.key == "") | ternary(git_account_username_p.key, '1') }}"
 # TBD 
 #    - name: check if github account exists
 #      uri: 
@@ -194,7 +216,7 @@
 #      register: git_uri
 #      when: pull_requests_p.key != "n"
 
-    # - debug: msg="{{ git_uri }}"
+#    - debug: msg="{{ git_uri }}"
 
 #    - name: evaluating if account exists
 #      action: fail msg="Github account does not exist - create one and re-run again"
@@ -215,36 +237,10 @@
       register: git_active_branch
       when: not git_repo_exists.changed
 
-    #- name: Print active git branch
-    #  debug: msg="{{ git_active_branch.stdout_lines }}"
-    #  when: not git_repo_exists.changed
-
     - name: Check if we need to stash
       shell: cd "{{ cfme_vol }}/integration_tests"; git status
       register: git_stash_status
       when: not git_repo_exists.changed
-
-    #- name: Print status of branch
-    #  debug: msg="{{ git_stash_status.stdout_lines }}"
-    #  when: not git_repo_exists.changed
-      
-      # TBD - can be replaced by git_config module - Ansible 2.1
-#    - name: update git config
-#      ini_file: dest="{{ cfme_vol }}/integration_tests/.git/config" section="{{ item.section }}" option="        {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
-#      with_items:
-#        - { section: 'user',  key: 'email', value: "{{ git_email }}", state: 'present' }
-#        - { section: 'user', key: 'name', value: "{{ git_full_name }}", state: 'present' }
-#        - { section: 'user', key: 'signingkey', value: "{{ gpg_public_key }}", state: 'present' }
-#        - { section: 'push', key: 'default', value: 'simple', state: 'present'}
-#        - { section: 'remote "upstream"', key: 'url', value: 'git://github.com/ManageIQ/integration_tests.git', state: 'present'}
-#        - { section: 'remote "upstream"', key: 'fetch', value: '+refs/heads/*:refs/remotes/upstream/*', state: 'present'}
-#        - { section: 'remote "origin"', key: 'url', value: 'https://github.com/ManageIQ/integration_tests', state: 'absent'}
-#        - { section: 'remote "origin"', key: 'url', value: 'git://github.com/ManageIQ/integration_tests.git', state: 'absent'}
-#        # - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'absent'}
-#        - { section: 'remote "origin"', key: 'url', value: 'git@github.com/{{ git_account_username }}/cfme_tests.git', state: 'present' }
-#        # - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
-#      #when: pull_requests_p.key == "y"
-#      when: pull_requests == "y"
 
     - name: Update git config of integration_tests repo
       git_config: repo="{{ cfme_vol }}/integration_tests/" scope=local name="{{ item.name }}" value="{{ item.value }}"
@@ -263,9 +259,7 @@
 
     - name: We must stash changes - active branch is not clean
       shell: cd "{{ cfme_vol }}/integration_tests"; git stash
-      # when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1)
       become_user: "{{ username }}"
-      # when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
       when: (git_stash_status is defined) and (git_stash_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
 
     - name: Clone Integration tests repo
@@ -273,9 +267,6 @@
       # git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote=upstream
       git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote={{ git_remote_name | default('origin') }}
       become_user: "{{ username }}"
-      #when: pull_requests_p.key != "n"
-      #when: pull_requests.key != "n"
-#      when: pull_requests != "n"
     
     - name: Clone Integration tests PR [testing]
       git: repo="git://github.com/ManageIQ/integration_tests.git" dest="{{ cfme_vol }}/integration_tests" clone=yes update=yes version=master remote={{ git_remote_name | default('origin') }} refspec=+refs/pull/3254/head:integration_tests_container force=yes
@@ -290,34 +281,15 @@
 
     - name: unstash changes
       shell: cd "{{ cfme_vol }}/integration_tests"; git stash pop
-      #when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1) # and (not git_repo_exists.changed)
       become_user: "{{ username }}"
-      #when: (git_status is defined) and (git_status.stdout.find('Changes to be committed') != -1 or git_status.stdout.find('Changes not staged for commit')) # and (not git_repo_exists.changed)
       when: (git_stash_status is defined) and (git_stash_status.stdout.find('working directory clean') == False) # and (not git_repo_exists.changed)
 
-#    - name: get basename from url
-#      set_fact: 
-#        yamls_base: "{{ yaml_remote_repo | basename }}"
-#      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
-
     - name: Clone remote YAML repo - Add username into repo url - regexp
-      # git: repo="{{ yaml_repo }}" dest="{{ cfme_vol }}/{{ yamls_base }}" clone=yes remote=upstream
       git: repo="{{ yaml_remote_repo }}" dest="{{ cfme_vol }}/{{ yaml_remote_repo | basename }}" clone=yes remote={{ yaml_remote_name | default('origin') }}
       # git: repo="{{ yaml_remote_repo | regex_replace("^(.+)//(.+)$", "\\1//" + yaml_remote_repo_username + "@\\2") }}" dest="{{ cfme_vol }}/cfme-qe-yamls" clone=yes
       become_user: "{{ username }}"
-#      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
       when: yaml_remote_repo_yn_p.key == "y"
 
-      # TBD - can be replaced by git_config module - Ansible 2.1
-#    - name: Configure origin for remote YAML repo
-#      # ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
-#      ini_file: dest="{{ cfme_vol }}/cfme-qe-yamls.git/.git/config" section="{{ item.section }}" option="           {{ item.key }}" value="{{ item.value }}" state="{{ item.state }}"
-#      with_items:
-#        - { section: 'remote "origin"', key: 'url', value: "{{ yaml_remote_repo | regex_replace('^(.+)//(.+)/(.+)/(.+)$', '\\1//\\2:{{ yaml_remote_repo_username }}/\\4') }}", state: 'present' }
-#        - { section: 'remote "origin"', key: 'fetch', value: '+refs/heads/*:refs/remotes/origin/*', state: 'present' }
-#      become_user: "{{ username }}"
-#      when: pull_requests_p.key != "n" and yaml_remote_repo_yn_p.key == "y"
-   
     - name: Configure origin for remote YAML repo
       git_config: repo="{{ cfme_vol }}/cfme-qe-yamls.git/" scope=local name="{{ item.name }}" value="{{ item.value }}"
       with_items:

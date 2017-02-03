@@ -125,6 +125,13 @@ Run ipython with VNC and Selenium servers running:
 ./integration_tests_init.sh ipython
 ```
 
+## Debuging
+You can enable debugging of wrapper script/containers. First expoert DEBUG variable:
+```
+export INT_TESTS_DEBUG=1
+```
+Then run any commands from [here](#execution-of-wrapper-script)
+
 ## Building images manually
 Clone integration_tests repo which contains Dockerfiles:
 ```

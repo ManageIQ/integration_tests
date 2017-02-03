@@ -25,8 +25,16 @@ GROUP_ID=`id -g`
 USERNAME=`whoami`
 GROUPNAME=`id -gn`
 HOME="/home/${USERNAME}"
-ENV_VARS="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` -e HOME=/home/`whoami`"
-ENV_VARS_CONF="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn`"
+
+
+if [ ${INT_TESTS_DEBUG} -eq 1 ];then
+  ENV_VARS="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` -e HOME=/home/`whoami` INT_TESTS_DEBUG=1"
+else
+  ENV_VARS="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn` -e HOME=/home/`whoami`"
+fi
+
+# these variables are passed into container and are read by playbook which will create same user/group inside container 
+#ENV_VARS_CONF="-e USER_ID=`id -u` -e GROUP_ID=`id -g` -e USERNAME=`whoami` -e GROUPNAME=`id -gn`"
 
 HELPER_FILE="./.helper_file"
 DO_NOT_CHECK="/var/tmp/.dnc"
@@ -43,7 +51,7 @@ function check_4_new_img {
   AUTH_TOK=`curl --silent "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMG}:pull" | awk -F '\"' '{print $4}'`
   REGISTRY_URL="https://registry.hub.docker.com/v2/${IMG}/manifests/latest"
   AUTH_HEAD="Authorization: Bearer $AUTH_TOK"
-  log "AUTH head is: ${AUTH_HEAD}"
+  # log "AUTH head is: ${AUTH_HEAD}"
   ACCEPT_HEAD="Accept: application/vnd.docker.distribution.manifest.v2+json"
   GET_REMOTE_DIGEST=`curl -L --silent -k -X GET "${REGISTRY_URL}" -H "${AUTH_HEAD}" -H "${ACCEPT_HEAD}" | awk '/config/,/}/{if ($1 ~ /digest/) {gsub("\"","");print $2}}'`
   GET_LOCAL_DIGEST=`docker inspect ${DOCK_IMG} | sed -n 's/^.*"Id": "\(.[^"]*\).*/\1/gp'`
@@ -115,7 +123,7 @@ function run_config {
     -v ${PLAY_LOCATION}:/projects/ansible_virtenv/ansible_work \
     -v ${WORKDIR}:/projects/cfme_env/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
-    ${ENV_VARS_CONF} \
+    ${ENV_VARS} \
     ${DOCK_IMG_CFG} \
     ${1}
 }
@@ -126,7 +134,9 @@ function run_command {
 
   return_vnc_port
   log "VNC port is $VNC_PORT" 
+  # We create temporary file on the host system which is mounted into container later on
   echo "source /etc/bashrc" > /var/tmp/bashrc
+
   docker run -it --rm \
     -w /projects/cfme_env/cfme_vol/integration_tests \
     -u ${USER_ID}:${GROUP_ID} \
@@ -134,7 +144,6 @@ function run_command {
     -v ${WORKDIR}:/projects/cfme_env/cfme_vol/ \
     -v ~/.ssh:/home/${USERNAME}/.ssh:ro \
     -v ~/:${HOME} \
-    -v ${WORKDIR}/integration_tests/integration_tests_install/dockerfiles/integration_tests/xstartup:${HOME}/.vnc/xstartup \
     -v /var/tmp/bashrc:${HOME}/.bashrc \
     ${ENV_VARS} \
     ${DOCK_IMG} \
