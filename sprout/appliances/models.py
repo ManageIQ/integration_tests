@@ -867,10 +867,10 @@ class Appliance(MetadataMixin):
             # Nothing to do
             return 0
         cpuram_filter = {}
-        if pool.cpu_override is not None:
-            cpuram_filter['cpu'] = pool.cpu_override
-        if pool.ram_override is not None:
-            cpuram_filter['ram'] = pool.ram_override
+        if pool.override_cpu is not None:
+            cpuram_filter['cpu'] = pool.override_cpu
+        if pool.override_memory is not None:
+            cpuram_filter['ram'] = pool.override_memory
         with transaction.atomic():
             for template in pool.possible_templates:
                 for appliance in cls.unassigned().filter(
