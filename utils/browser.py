@@ -1,4 +1,5 @@
 """Core functionality for starting, restarting, and stopping a selenium browser."""
+import attr
 import atexit
 import json
 import os
@@ -6,7 +7,7 @@ import urllib2
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
-from threading import Timer
+import threading
 # import logging
 
 from werkzeug.local import LocalProxy
@@ -49,11 +50,48 @@ def _load_firefox_profile():
     return profile
 
 
+@attr.s
+class HeartBeat(object):
+    _heartbeat = attr.ib(repr=False)
+    _delay = attr.ib(repr=False)
+    _thread_name = attr.ib(default=None)
+    _trigger = attr.ib(default=attr.Factory(threading.Event),
+                       init=False, repr=False)
+    _done = attr.ib(default=attr.Factory(threading.Event),
+                    init=False, repr=False)
+
+    def __post_init__(self):
+        self._actor = threading.Thread(
+            target=self._loop,
+            name=self._thread_name,
+        )
+        self._actor.daemon = True
+        self._actor.start()
+
+    def _loop(self):
+        while self._delay is not None and self._heartbeat is not None:
+            self._done.clear()
+            self._trigger.wait(self._delay)
+            if self._heartbeat is not None:
+                self._delay = self._heartbeat()
+            self.done.set()
+            self.trigger.clear()
+
+    def manual_beat(self):
+        self._trigger.set()
+        self._done.wait()
+
+    def stop(self):
+        self._heartbeat = None
+        self._trigger.set()
+        self._done.wait()
+
+
+@attr.s
 class Wharf(object):
-    def __init__(self, wharf_url):
-        self.wharf_url = wharf_url
-        self.docker_id = None
-        self.renew_timer = None
+    wharf_url = attr.ib()
+    docker_id = attr.ib(default=None, init=False)
+    heartbeat = attr.ib(default=None, repr=False, init=False)
 
     def _get(self, *args):
         return requests.get(os.path.join(self.wharf_url, *args))
@@ -68,41 +106,35 @@ class Wharf(object):
             raise ValueError("JSON could not be decoded:\n{}".format(response.content))
         self.docker_id = checkout.keys()[0]
         self.config = checkout[self.docker_id]
-        self._reset_renewal_timer()
+        self.heartbeat = HeartBeat(self._heartbeat_func, self._cautious_expire_interval())
         log.info('Checked out webdriver container %s', self.docker_id)
         return self.docker_id
 
     def checkin(self):
         if self.docker_id:
             self._get('checkin', self.docker_id)
+            self.heartbeat.stop()
             log.info('Checked in webdriver container %s', self.docker_id)
             self.docker_id = None
 
+    def _cautious_expire_interval(self):
+        # Floor div by 2 and add a second to renew roughly halfway before expiration
+        return (self.config['expire_interval'] >> 1) + 1
+
     def renew(self):
+        self.heartbeat.manual_beat()
+
+    def _heartbeat_func(self):
         # If we have a docker id, renew_timer shouldn't still be None
-        if self.docker_id and not self.renew_timer.is_alive():
-            # You can call renew as frequently as desired, but it'll only run if
-            # the renewal timer has stopped or failed to renew
+        if self.docker_id:
             response = self._get('renew', self.docker_id)
             try:
                 expiry_info = json.loads(response.content)
             except ValueError:
                 raise ValueError("JSON could not be decoded:\n{}".format(response.content))
             self.config.update(expiry_info)
-            self._reset_renewal_timer()
             log.info('Renewed webdriver container %s', self.docker_id)
-
-    def _reset_renewal_timer(self):
-        if self.docker_id:
-            if self.renew_timer:
-                self.renew_timer.cancel()
-
-            # Floor div by 2 and add a second to renew roughly halfway before expiration
-            cautious_expire_interval = (self.config['expire_interval'] >> 1) + 1
-            self.renew_timer = Timer(cautious_expire_interval, self.renew)
-            # mark as daemon so the timer is rudely destroyed on shutdown
-            self.renew_timer.daemon = True
-            self.renew_timer.start()
+            return self._cautious_expire_interval()
 
     def __nonzero__(self):
         return bool(self.docker_id)
