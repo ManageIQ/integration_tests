@@ -9,10 +9,6 @@ from utils.providers import list_provider_keys
 TEMPLATES = {}
 
 
-class NoTemplates(object):
-    pass
-
-
 @pytest.mark.tryfirst
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
@@ -36,19 +32,19 @@ def pytest_configure(config):
         provider_templates = trackerbot.provider_templates(trackerbot.api())
         for provider in list_provider_keys():
             TEMPLATES[provider] = provider_templates.get(provider, [])
-            config.cache.set(provider, TEMPLATES[provider])
+            config.cache.set('miq-trackerbot/{}'.format(provider), TEMPLATES[provider])
             count += len(TEMPLATES[provider])
     else:
         write_line("Using templates from cache...")
         provider_templates = None
         for provider in list_provider_keys():
-            templates = config.cache.get(provider, NoTemplates())
-            if isinstance(templates, NoTemplates):
+            templates = config.cache.get('miq-trackerbot/{}'.format(provider), None)
+            if templates is None:
                 write_line("Loading templates for {} from source as not in cache".format(provider))
                 if not provider_templates:
                     provider_templates = trackerbot.provider_templates(trackerbot.api())
                 templates = provider_templates.get(provider, [])
-                config.cache.set(provider, templates)
+                config.cache.set('miq-trackerbot/{}'.format(provider), templates)
             count += len(templates)
             TEMPLATES[provider] = templates
     write_line("  Loaded {} templates successfully!".format(count))
