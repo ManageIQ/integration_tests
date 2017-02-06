@@ -17,6 +17,7 @@ from utils import error, version
 from utils.providers import new_setup_a_provider, ProviderFilter
 from utils.wait import wait_for
 from utils.log import logger
+from utils.blockers import BZ
 
 
 pytestmark = [
@@ -63,11 +64,6 @@ def service_templates(request, rest_api, dialog):
 @pytest.fixture(scope='function')
 def service_data(request, rest_api, a_provider, dialog, service_catalogs):
     return _service_data(request, rest_api, a_provider, dialog, service_catalogs)
-
-
-@pytest.fixture(scope='function')
-def orchestration_templates(request, rest_api):
-    return _orchestration_templates(request, rest_api, num=2)
 
 
 class TestServiceRESTAPI(object):
@@ -455,6 +451,12 @@ class TestBlueprintsRESTAPI(object):
 
 
 class TestOrchestrationTemplatesRESTAPI(object):
+    @pytest.fixture(scope='function')
+    def orchestration_templates(self, request, rest_api):
+        response = _orchestration_templates(request, rest_api, num=2)
+        assert len(response) == 2
+        return response
+
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     def test_create_orchestration_templates(self, rest_api, orchestration_templates):
@@ -463,7 +465,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        assert len(orchestration_templates) == 2
         for template in orchestration_templates:
             record = rest_api.collections.orchestration_templates.get(id=template.id)
             assert record.name == template.name
@@ -472,27 +473,33 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    @pytest.mark.parametrize(
-        "from_detail", [True, False],
-        ids=["from_detail", "from_collection"])
-    def test_delete_orchestration_templates(self, rest_api, orchestration_templates, from_detail):
-        """Tests delete orchestration templates.
+    def test_delete_orchestration_templates_from_collection(
+            self, rest_api, orchestration_templates):
+        """Tests delete orchestration templates from collection.
 
         Metadata:
             test_flag: rest
         """
-        assert len(orchestration_templates) > 0
         collection = rest_api.collections.orchestration_templates
-        if from_detail:
-            methods = ['post', 'delete']
-            for i, ent in enumerate(orchestration_templates):
-                ent.action.delete(force_method=methods[i % 2])
-                with error.expected("ActiveRecord::RecordNotFound"):
-                    ent.action.delete()
-        else:
+        collection.action.delete(*orchestration_templates)
+        with error.expected("ActiveRecord::RecordNotFound"):
             collection.action.delete(*orchestration_templates)
+
+    @pytest.mark.tier(3)
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.parametrize('method', ['post', 'delete'])
+    def test_delete_orchestration_templates_from_detail(self, orchestration_templates, method):
+        """Tests delete orchestration templates from detail.
+
+        Metadata:
+            test_flag: rest
+        """
+        if method == 'post' and BZ('1414881', forced_streams=['5.7', 'upstream']).blocks:
+            pytest.skip("Affected by BZ1414881, cannot test.")
+        for ent in orchestration_templates:
+            ent.action.delete(force_method=method)
             with error.expected("ActiveRecord::RecordNotFound"):
-                collection.action.delete(*orchestration_templates)
+                ent.action.delete()
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
@@ -506,7 +513,6 @@ class TestOrchestrationTemplatesRESTAPI(object):
             test_flag: rest
         """
         response_len = len(orchestration_templates)
-        assert response_len > 0
         new = []
         for _ in range(response_len):
             new.append({
