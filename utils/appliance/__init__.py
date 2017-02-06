@@ -97,7 +97,7 @@ class ApplianceConsoleCli(object):
                 dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_ipa(self, ipaserver, username, password, domain, realm):
-        self.run("-e {isaserver} -n {username} -w {password} -o {domain} -l {realm}".format(
+        self.run("-e {ipaserver} -n {username} -w {password} -o {domain} -l {realm}".format(
             ipaserver=ipaserver, username=username, passwrod=password, domain=domain, realm=realm))
         assert self.appliance.ssh_client.run_command("systemctl status sssd | grep running")
         return_code, output = self.appliance.ssh_client.run_command(
