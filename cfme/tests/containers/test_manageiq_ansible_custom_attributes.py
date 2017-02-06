@@ -51,81 +51,81 @@ def test_manageiq_ansible_add_custom_attributes(provider):
         assert sel.is_displayed_text('Custom Attributes')
 
 
-def test_manageiq_ansible_edit_custom_attributes(provider):
-    """This test checks editing a Custom Attribute using Ansible script via Manage IQ module
-        Steps:
-        1. 'add_custom_attributes.yml script runs against the appliance
-         and edits custom attributes
-        2. Test navigates to Providers page and verifies the Custom Attributes
-         were edited under Providers menu
-
-        """
-    setup_ansible_script(provider, script='add_custom_attributes',
-                         values_to_update=custom_attributes_to_edit,
-                         script_type='custom_attributes')
-    run_ansible('add_custom_attributes')
-    pytest.sel.refresh()
-    for custom_attribute in custom_attributes_to_edit:
-        assert provider.get_detail('Custom Attributes',
-                                   custom_attribute['name']) == custom_attribute['value']
-
-
-# Same name test
-def test_manageiq_ansible_add_custom_attributes_same_name(provider):
-    """This test checks adding a Custom Attribute with the same name
-        using Ansible script via Manage IQ module
-        Steps:
-        1. 'add_custom_attributes_same_name.yml script runs against the appliance
-         and adds same custom attributes that were already used
-        2. Test navigates to Providers page and verifies the Custom Attributes
-         weren't added under Providers menu
-
-        """
-    setup_ansible_script(provider, script='add_custom_attributes',
-                         values_to_update=custom_attributes_to_edit,
-                         script_type='custom_attributes')
-    run_ansible('add_custom_attributes')
-    pytest.sel.refresh()
-    for custom_attribute in custom_attributes_to_edit:
-        assert provider.get_detail('Custom Attributes',
-                                   custom_attribute['name']) == custom_attribute['value']
-
-# TODO WIP
-# def test_manageiq_ansible_add_custom_attributes_bad_user(provider):
-#     """This test checks adding a Custom Attribute with a bad user name
-#         using Ansible script via Manage IQ module
+# def test_manageiq_ansible_edit_custom_attributes(provider):
+#     """This test checks editing a Custom Attribute using Ansible script via Manage IQ module
 #         Steps:
-#         1. 'add_custom_attributes_bad_user.yml script runs against the appliance
-#          and tries to add custom attributes.
-#         2. Verify error message with Ansible reply
-#         3. Test navigates to Providers page and verifies the Custom Attributes
-#          weren't added under Providers menu
+#         1. 'add_custom_attributes.yml script runs against the appliance
+#          and edits custom attributes
+#         2. Test navigates to Providers page and verifies the Custom Attributes
+#          were edited under Providers menu
 #
 #         """
-#     setup_ansible_script(provider, script='add_custom_attributes_bad_user',
+#     setup_ansible_script(provider, script='add_custom_attributes',
 #                          values_to_update=custom_attributes_to_edit,
 #                          script_type='custom_attributes')
-#     with pytest.raises(Exception) as e_info:
-#         run_ansible('add_custom_attributes_bad_user')
-#     assert 'Authentication failed' in e_info.value.output
+#     run_ansible('add_custom_attributes')
 #     pytest.sel.refresh()
 #     for custom_attribute in custom_attributes_to_edit:
 #         assert provider.get_detail('Custom Attributes',
 #                                    custom_attribute['name']) == custom_attribute['value']
-
-
-def test_manageiq_ansible_remove_custom_attributes(provider):
-    """This test checks removing Custom Attribute using Ansible script via Manage IQ module
-        Steps:
-        1. 'remove_custom_attributes.yml script runs against the appliance
-         and removes custom attributes
-        2. Test navigates to Providers page and verifies the Custom Attributes
-         were removed under Providers menu
-
-        """
-    setup_ansible_script(provider, script='remove_custom_attributes',
-                         values_to_update=custom_attributes_to_edit,
-                         script_type='custom_attributes')
-    run_ansible('remove_custom_attributes')
-    pytest.sel.refresh()
-    assert not sel.is_displayed_text('Custom Attributes')
+#
+#
+# # Same name test
+# def test_manageiq_ansible_add_custom_attributes_same_name(provider):
+#     """This test checks adding a Custom Attribute with the same name
+#         using Ansible script via Manage IQ module
+#         Steps:
+#         1. 'add_custom_attributes_same_name.yml script runs against the appliance
+#          and adds same custom attributes that were already used
+#         2. Test navigates to Providers page and verifies the Custom Attributes
+#          weren't added under Providers menu
+#
+#         """
+#     setup_ansible_script(provider, script='add_custom_attributes',
+#                          values_to_update=custom_attributes_to_edit,
+#                          script_type='custom_attributes')
+#     run_ansible('add_custom_attributes')
+#     pytest.sel.refresh()
+#     for custom_attribute in custom_attributes_to_edit:
+#         assert provider.get_detail('Custom Attributes',
+#                                    custom_attribute['name']) == custom_attribute['value']
+#
+# # TODO WIP
+# # def test_manageiq_ansible_add_custom_attributes_bad_user(provider):
+# #     """This test checks adding a Custom Attribute with a bad user name
+# #         using Ansible script via Manage IQ module
+# #         Steps:
+# #         1. 'add_custom_attributes_bad_user.yml script runs against the appliance
+# #          and tries to add custom attributes.
+# #         2. Verify error message with Ansible reply
+# #         3. Test navigates to Providers page and verifies the Custom Attributes
+# #          weren't added under Providers menu
+# #
+# #         """
+# #     setup_ansible_script(provider, script='add_custom_attributes_bad_user',
+# #                          values_to_update=custom_attributes_to_edit,
+# #                          script_type='custom_attributes')
+# #     with pytest.raises(Exception) as e_info:
+# #         run_ansible('add_custom_attributes_bad_user')
+# #     assert 'Authentication failed' in e_info.value.output
+# #     pytest.sel.refresh()
+# #     for custom_attribute in custom_attributes_to_edit:
+# #         assert provider.get_detail('Custom Attributes',
+# #                                    custom_attribute['name']) == custom_attribute['value']
+#
+#
+# def test_manageiq_ansible_remove_custom_attributes(provider):
+#     """This test checks removing Custom Attribute using Ansible script via Manage IQ module
+#         Steps:
+#         1. 'remove_custom_attributes.yml script runs against the appliance
+#          and removes custom attributes
+#         2. Test navigates to Providers page and verifies the Custom Attributes
+#          were removed under Providers menu
+#
+#         """
+#     setup_ansible_script(provider, script='remove_custom_attributes',
+#                          values_to_update=custom_attributes_to_edit,
+#                          script_type='custom_attributes')
+#     run_ansible('remove_custom_attributes')
+#     pytest.sel.refresh()
+#     assert not sel.is_displayed_text('Custom Attributes')
