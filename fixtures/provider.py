@@ -126,7 +126,7 @@ def _get_template(provider, template_type_name):
             # Same as couple of lines above
             return template
         templates = TEMPLATES.get(provider.key, None)
-        if templates is not None and template_name in templates:
+        if templates and template_name in templates:
             return template
     else:
         pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))

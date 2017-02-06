@@ -1109,6 +1109,7 @@ class DetailsToolBarViewSelector(View):
         return next(btn.title for btn in self._view_buttons if btn.active)
 
 
+<<<<<<< HEAD
 class Search(View):
     """ Represents search_text control
     # TODO Add advanced search
@@ -1207,27 +1208,23 @@ class UpDownSelect(View):
 
 
 class AlertEmail(Widget):
+=======
+class AlertEmail(View):
+>>>>>>> AlertEmail widget refactoring
 
-    ROOT = ".//div[@id='edit_email_div']"
-    ADD_BUTTON = ".//div[@title='Add']"
+    ROOT = ParametrizedLocator(".//div[@id={@id|quote}]")
     RECIPIENTS = "./div[@id='edit_to_email_div']//a"
-    EMAIL_LINK = ".//a[text()='{}']"
+    add_button = Text(".//div[@title='Add']")
+    recipients_input = TextInput("email")
 
-    def __init__(self, parent, logger=None):
-        Widget.__init__(self, parent, logger=logger)
-        self.RECIPIENTS_INPUT = TextInput(self, "email")
-
-    def __locator__(self):
-        return self.ROOT
+    def __init__(self, parent, id="edit_email_div", logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.id = id
 
     def fill(self, values):
         if isinstance(values, basestring):
             values = [values]
-        elif isinstance(values, list):
-            pass
-        else:
-            raise ValueError("Emails should be a string or a list")
-        if self.read() == set(values):
+        if self.all_emails == set(values):
             return False
         else:
             values_to_remove = self._values_to_remove(values)
@@ -1238,23 +1235,23 @@ class AlertEmail(Widget):
                 self._add_recipient(value)
             return True
 
-    @property
-    def button_add_recipient(self):
-        return self.browser.element(self.ADD_BUTTON, parent=self)
-
     def _values_to_remove(self, values):
-        return list((set(values) ^ self.read()) - set(values))
+        return list(self.all_emails - set(values))
 
     def _values_to_add(self, values):
-        return list((set(values) ^ self.read()) - self.read())
+        return list(set(values) - self.all_emails)
 
     def _add_recipient(self, email):
-        self.RECIPIENTS_INPUT.fill(email)
-        self.button_add_recipient.click()
+        self.recipients_input.fill(email)
+        self.add_button.click()
 
     def _remove_recipient(self, email):
-        self.browser.element(self.EMAIL_LINK.format(email), parent=self).click()
+        Text(self, ".//a[text()='{}']".format(email)).click()
+
+    @property
+    def all_emails(self):
+        links = self.browser.elements(self.RECIPIENTS)
+        return {link.text for link in links}
 
     def read(self):
-        links = self.browser.elements(self.RECIPIENTS, parent=self)
-        return {link.text for link in links}
+        return list(self.all_emails)
