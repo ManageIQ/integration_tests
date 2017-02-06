@@ -3,7 +3,6 @@ import os
 import subprocess
 import yaml
 from shutil import copyfile
-from distutils.dir_util import copy_tree
 from utils import conf
 from utils.providers import get_crud
 
