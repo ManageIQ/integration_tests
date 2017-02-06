@@ -33,7 +33,7 @@ provider_name = 'CI OSE'
 
 @pytest.mark.usefixtures('setup_provider')
 def test_manageiq_ansible_add_custom_attributes(provider):
-    """This test checks adding a Custom Attribute using Ansible script via Manage IQ module
+    """This test checks adding a Custom Attributeusing Ansible script via Manage IQ module
         Steps:
         1. 'add_custom_attributes.yml script runs against the appliance
          and adds custom attributes
