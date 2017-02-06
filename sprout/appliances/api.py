@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
+from ipware.ip import get_ip
 
 from appliances.models import (
     Appliance, AppliancePool, Provider, Group, Template, User, GroupShepherd)
@@ -115,8 +116,9 @@ class JSONApi(object):
                 method = self._methods[method_name]
             except KeyError:
                 raise NameError("Method {} not found!".format(method_name))
+            ipaddr = get_ip(request)
             create_logger(method).info(
-                "Calling with parameters {}{}".format(repr(tuple(args)), repr(kwargs)))
+                "Calling with parameters {!r}{!r} from {!r}".format(tuple(args), kwargs, ipaddr))
             if method.auth:
                 if "auth" in data:
                     username, password = data["auth"]
@@ -139,6 +141,7 @@ class JSONApi(object):
             return json_exception(e)
         else:
             create_logger(method).info("Call finished")
+
 
 jsonapi = JSONApi()
 
