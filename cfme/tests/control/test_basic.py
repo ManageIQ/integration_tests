@@ -15,6 +15,7 @@ from cfme.control.explorer import (actions, alert_profiles, alerts, conditions, 
 
 from utils.update import update
 from utils.version import current_version
+from utils.blockers import BZ
 from cfme import test_requirements
 
 pytestmark = [
@@ -460,4 +461,18 @@ def test_alert_profile_crud(alert_profile):
     alert_profile.create()
     with update(alert_profile):
         alert_profile.notes = "Modified!"
+    alert_profile.delete()
+
+
+@pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[BZ(1416311, forced_streams=["5.7"])])
+@pytest.mark.uncollectif(
+    lambda alert_profile: alert_profile is alert_profiles.MiddlewareServerAlertProfile and
+    current_version() < "5.7")
+def test_alert_profile_assigning(alert_profile):
+    alert_profile.create()
+    if isinstance(alert_profile, alert_profiles.ServerAlertProfile):
+        alert_profile.assign_to("Selected Servers", selections=["Servers", "EVM"])
+    else:
+        alert_profile.assign_to("The Enterprise")
     alert_profile.delete()

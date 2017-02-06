@@ -744,8 +744,6 @@ class BootstrapTreeview(Widget):
     ITEM_BY_NODEID = './ul/li[@data-nodeid={}]'
     IS_EXPANDABLE = './span[contains(@class, "expand-icon")]'
     IS_EXPANDED = './span[contains(@class, "expand-icon") and contains(@class, "fa-angle-down")]'
-    IS_CHECKABLE = './span[contains(@class, "check-icon")]'
-    IS_CHECKED = './span[contains(@class, "check-icon") and contains(@class, "fa-check-square-o")]'
     IS_LOADING = './span[contains(@class, "expand-icon") and contains(@class, "fa-spinner")]'
     INDENT = './span[contains(@class, "indent")]'
 
@@ -825,12 +823,6 @@ class BootstrapTreeview(Widget):
 
     def is_expanded(self, item):
         return bool(self.browser.elements(self.IS_EXPANDED, parent=item))
-
-    def is_checkable(self, item):
-        return bool(self.browser.elements(self.IS_CHECKABLE, parent=item))
-
-    def is_checked(self, item):
-        return bool(self.browser.elements(self.IS_CHECKED, parent=item))
 
     def is_loading(self, item):
         return bool(self.browser.elements(self.IS_LOADING, parent=item))
@@ -1116,6 +1108,24 @@ class BootstrapTreeview(Widget):
         else:
             return this_item
 
+    def __repr__(self):
+        return '{}({!r})'.format(type(self).__name__, self.tree_id)
+
+
+class CheckableBootstrapTreeview(BootstrapTreeview):
+    """ Checkable variation of CFME Tree. This widget not only expand a tree for a provided path,
+    but also checks a checkbox.
+    """
+
+    IS_CHECKABLE = './span[contains(@class, "check-icon")]'
+    IS_CHECKED = './span[contains(@class, "check-icon") and contains(@class, "fa-check-square-o")]'
+
+    def is_checkable(self, item):
+        return bool(self.browser.elements(self.IS_CHECKABLE, parent=item))
+
+    def is_checked(self, item):
+        return bool(self.browser.elements(self.IS_CHECKED, parent=item))
+
     def check_uncheck_node(self, check, *path, **kwargs):
         leaf = self.expand_path(*path, **kwargs)
         if not self.is_checkable(leaf):
@@ -1141,8 +1151,15 @@ class BootstrapTreeview(Widget):
             return False
         return self.is_checked(leaf)
 
-    def __repr__(self):
-        return '{}({!r})'.format(type(self).__name__, self.tree_id)
+    def fill(self, path):
+        if self.node_checked(*path):
+            return False
+        else:
+            self.check_node(*path)
+            return True
+
+    def read(self):
+        do_not_read_this_widget()
 
 
 class Dropdown(Widget):
