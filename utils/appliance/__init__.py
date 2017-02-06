@@ -77,9 +77,9 @@ class ApplianceConsoleCli(object):
 
     def configure_appliance_external_join(self, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
-        self.run("-h {hostname} -U {username} -p {password} -d {dbname} -v -K {fetch_key} "
+        self.run("-h {dbhostname} -U {username} -p {password} -d {dbname} -v -K {fetch_key} "
             "-s {sshlogin} -a {sshpass}".format(
-                dbhostname=dbhostname, username=username, passowrd=password, dbname=dbname,
+                dbhostname=dbhostname, username=username, password=password, dbname=dbname,
                 fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_appliance_external_create(self, region, dbhostname,
@@ -98,7 +98,7 @@ class ApplianceConsoleCli(object):
 
     def configure_ipa(self, ipaserver, username, password, domain, realm):
         self.run("-e {ipaserver} -n {username} -w {password} -o {domain} -l {realm}".format(
-            ipaserver=ipaserver, username=username, passwrod=password, domain=domain, realm=realm))
+            ipaserver=ipaserver, username=username, password=password, domain=domain, realm=realm))
         assert self.appliance.ssh_client.run_command("systemctl status sssd | grep running")
         return_code, output = self.appliance.ssh_client.run_command(
             "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
