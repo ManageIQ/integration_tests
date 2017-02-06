@@ -22,9 +22,9 @@ import re
 from utils.log import logger
 from utils import classproperty, pretty
 
+
 datastore_tree = partial(accordion.tree, "Datastore", "Datastore")
 cfg_btn = partial(tb.select, 'Configuration')
-match_page = partial(match_location, controller='miq_ae_class', title='Automate')
 
 
 def table_click(name, type):

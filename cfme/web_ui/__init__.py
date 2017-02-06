@@ -1865,9 +1865,12 @@ class BootstrapTreeview(object):
                 delay=0.2, num_sec=10)
         return True
 
-    @staticmethod
-    def _process_step(step):
+    @classmethod
+    def _process_step(cls, step):
         """Steps can be plain strings or tuples when matching images"""
+        if isinstance(step, dict):
+            # Version pick and call again ...
+            return cls._process_step(version.pick(step))
         if isinstance(step, tuple):
             image = step[0]
             step = step[1]

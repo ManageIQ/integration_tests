@@ -283,8 +283,9 @@ def service_templates(request, rest_api, dialog):
     return s_tpls
 
 
-def automation_requests_data(vm):
-    return [{
+def automation_requests_data(vm, requests_collection=False, approve=True):
+    # for creating automation request using /api/automation_requests
+    automation_requests_col = {
         "uri_parts": {
             "namespace": "System",
             "class": "Request",
@@ -295,9 +296,29 @@ def automation_requests_data(vm):
             "vm_name": vm,
         },
         "requester": {
-            "auto_approve": True
+            "auto_approve": approve
         }
-    } for index in range(1, 5)]
+    }
+    # for creating automation request using /api/requests
+    requests_col = {
+        "options": {
+            "request_type": "automation",
+            "message": "create",
+            "namespace": "System",
+            "class_name": "Request",
+            "instance_name": "InspectME",
+            "attrs": {
+                "vm_name": vm,
+                "userid": "admin"
+            }
+        },
+        "requester": {
+            "user_name": "admin"
+        },
+        "auto_approve": approve
+    }
+    data = requests_col if requests_collection else automation_requests_col
+    return [data for _ in range(4)]
 
 
 def groups(request, rest_api, role, tenant, num=1):

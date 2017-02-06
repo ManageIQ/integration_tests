@@ -165,9 +165,8 @@ class InfraProvider(Pretty, CloudInfraProvider):
     @cached_property
     def vm_name(self):
         return version.pick({
-            version.LOWEST: "VMs",
-            '5.5': "VMs and Instances",
-            '5.8': "Virtual Machines"})  # TODO: If it lands in some 5.7.x, change this version!
+            version.LOWEST: "VMs and Instances",
+            '5.7.1': "Virtual Machines"})
 
     @variable(alias='db')
     def num_datastore(self):

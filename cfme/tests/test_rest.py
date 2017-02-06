@@ -11,21 +11,23 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.rest.gen_data import vm as _vm
 from cfme.rest.gen_data import arbitration_settings, automation_requests_data
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import new_setup_a_provider, ProviderFilter
 from utils.version import current_version
 from utils.wait import wait_for
-from utils import testgen
 from utils.log import logger
+from utils.blockers import BZ
 
 
 pytestmark = [test_requirements.rest]
 
-pytest_generate_tests = testgen.generate([VMwareProvider, RHEVMProvider], scope="module")
-
 
 @pytest.fixture(scope="module")
 def a_provider():
-    return _setup_a_provider("infra")
+    try:
+        pf = ProviderFilter(classes=[VMwareProvider, RHEVMProvider])
+        return new_setup_a_provider(filters=[pf])
+    except Exception:
+        pytest.skip("It's not possible to set up any providers, therefore skipping")
 
 
 @pytest.fixture(scope="function")
@@ -33,19 +35,24 @@ def vm(request, a_provider, rest_api):
     return _vm(request, a_provider, rest_api)
 
 
+def wait_for_requests(requests):
+    def _finished():
+        for request in requests:
+            request.reload()
+            if request.request_state != 'finished':
+                return False
+        return True
+
+    wait_for(_finished, num_sec=45, delay=5, message="requests finished")
+
+
 @pytest.fixture(scope="function")
 def generate_notifications(rest_api):
     requests_data = automation_requests_data('nonexistent_vm')
     requests = rest_api.collections.automation_requests.action.create(*requests_data[:2])
+    assert len(requests) == 2
 
-    def _finished():
-        for resource in requests:
-            resource.reload()
-            if resource.request_state != 'finished':
-                return False
-        return True
-
-    wait_for(_finished, num_sec=45, delay=5, message="notifications generation")
+    wait_for_requests(requests)
 
 
 @pytest.yield_fixture(scope="function")
@@ -410,3 +417,103 @@ def test_delete_notifications(rest_api, generate_notifications, from_detail):
         collection.action.delete(*notifications)
         with error.expected("ActiveRecord::RecordNotFound"):
             collection.action.delete(*notifications)
+
+
+class TestRequestsRESTAPI(object):
+    @pytest.fixture(scope="function")
+    def pending_requests(self, rest_api):
+        requests_data = automation_requests_data(
+            'nonexistent_vm', requests_collection=True, approve=False)
+        response = rest_api.collections.requests.action.create(*requests_data[:2])
+        assert len(response) == 2
+        for resource in response:
+            assert resource.request_state == 'pending'
+        return response
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.tier(3)
+    def test_create_automation_requests(self, rest_api, pending_requests):
+        """Tests creating automation requests using /api/requests.
+
+        Metadata:
+            test_flag: rest
+        """
+        for request in pending_requests:
+            resource = rest_api.collections.requests.get(id=request.id)
+            assert resource.type == 'AutomationRequest'
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @pytest.mark.parametrize(
+        'from_detail', [True, False],
+        ids=['from_detail', 'from_collection'])
+    def test_approve_requests(self, rest_api, pending_requests, from_detail):
+        """Tests approving requests.
+
+        Metadata:
+            test_flag: rest
+        """
+        if from_detail:
+            for request in pending_requests:
+                request.action.approve(reason="I said so")
+        else:
+            rest_api.collections.requests.action.approve(reason="I said so", *pending_requests)
+
+        wait_for_requests(pending_requests)
+
+        for request in pending_requests:
+            request.reload()
+            assert request.approval_state == 'approved'
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @pytest.mark.parametrize(
+        'from_detail', [True, False],
+        ids=['from_detail', 'from_collection'])
+    def test_deny_requests(self, rest_api, pending_requests, from_detail):
+        """Tests denying requests.
+
+        Metadata:
+            test_flag: rest
+        """
+        if from_detail:
+            for request in pending_requests:
+                request.action.deny(reason="I said so")
+        else:
+            rest_api.collections.requests.action.deny(reason="I said so", *pending_requests)
+
+        wait_for_requests(pending_requests)
+
+        for request in pending_requests:
+            request.reload()
+            assert request.approval_state == 'denied'
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @pytest.mark.parametrize(
+        'from_detail', [True, False],
+        ids=['from_detail', 'from_collection'])
+    def test_edit_requests(self, rest_api, pending_requests, from_detail):
+        """Tests editing requests.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.requests
+        body = {'options': {'arbitrary_key_allowed': 'test_rest'}}
+
+        if from_detail:
+            if BZ('1418331', forced_streams=['5.7', 'upstream']).blocks:
+                pytest.skip("Affected by BZ1418331, cannot test.")
+            for request in pending_requests:
+                request.action.edit(**body)
+        else:
+            identifiers = []
+            for i, resource in enumerate(pending_requests):
+                loc = ({'id': resource.id}, {'href': '{}/{}'.format(collection._href, resource.id)})
+                identifiers.append(loc[i % 2])
+            collection.action.edit(*identifiers, **body)
+
+        for request in pending_requests:
+            request.reload()
+            assert request.options['arbitrary_key_allowed'] == 'test_rest'

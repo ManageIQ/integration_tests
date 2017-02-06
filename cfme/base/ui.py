@@ -7,6 +7,7 @@ from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
 from widgetastic.widget import View, Table
 
 from cfme import BaseLoggedInPage
+from cfme.automate import automate_menu_name
 from cfme.dashboard import DashboardView
 from cfme.intelligence.rss import RSSView
 from cfme.exceptions import ZoneNotFound, DestinationNotFound
@@ -821,7 +822,8 @@ class AutomateSimulationView(BaseLoggedInPage):
     def is_displayed(self):
         return (
             self.logged_in_as_current_user and
-            self.navigation.currently_selected == ['Automate', 'Simulation'])
+            self.navigation.currently_selected == automate_menu_name(
+                self.obj.appliance) + ['Simulation'])
 
     # TODO: Actually convert this to Widgetastic.
 
@@ -832,4 +834,4 @@ class AutomateSimulation(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        self.view.navigation.select('Automate', 'Simulation')
+        self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Simulation'])

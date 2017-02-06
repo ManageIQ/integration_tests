@@ -3,6 +3,7 @@ import re
 from datetime import date
 from jsmin import jsmin
 from selenium.common.exceptions import WebDriverException
+from math import ceil
 
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic.utils import VersionPick, Version
@@ -17,12 +18,11 @@ from widgetastic.widget import (
     Checkbox,
     WidgetDescriptor,
     do_not_read_this_widget)
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, Parameter
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
 from cached_property import cached_property
-from utils.log import logger
 
 
 class DynaTree(Widget):
@@ -372,18 +372,17 @@ class SummaryFormItem(Widget):
         return text
 
 
-class MultiBoxSelect(Widget):
+class MultiBoxSelect(View):
 
-    TABLE = VersionPick({
-        Version.lowest(): "//table[@class='admintable']{1}//table[@id={0}]",
-        '5.7': "//table[@id={0}]{1}"
-    })
+    ROOT = ParametrizedLocator("(.//table[@id={@id|quote}]){@number}")
+    available_options = Select(id=Parameter("@available_items"))
+    chosen_options = Select(id=Parameter("@chosen_items"))
 
     def __init__(self, parent, id, number="", move_into=None, move_from=None,
             available_items="choices_chosen", chosen_items="members_chosen", logger=None):
-        Widget.__init__(self, parent, logger=logger)
-        self.available_options = Select(self, id=available_items)
-        self.chosen_options = Select(self, id=chosen_items)
+        View.__init__(self, parent, logger=logger)
+        self.available_items = available_items
+        self.chosen_items = chosen_items
         self.id = id
         if number:
             self.number = "[{}]".format(number)
@@ -398,14 +397,11 @@ class MultiBoxSelect(Widget):
         else:
             self._move_from = move_from
 
-    def __locator__(self):
-        return self.TABLE.format(quote(self.id), self.number)
-
     def _values_to_remove(self, values):
-        return list((set(values) ^ self.read()) - set(values))
+        return list(self.all_options - set(values))
 
     def _values_to_add(self, values):
-        return list((set(values) ^ self.read()) - self.read())
+        return list(set(values) - self.all_options)
 
     @property
     def move_into_button(self):
@@ -424,7 +420,7 @@ class MultiBoxSelect(Widget):
         return button
 
     def fill(self, values):
-        if set(values) == self.read():
+        if set(values) == self.all_options:
             return False
         else:
             values_to_remove = self._values_to_remove(values)
@@ -439,13 +435,17 @@ class MultiBoxSelect(Widget):
                 self.browser.plugin.ensure_page_safe()
             return True
 
-    def read(self):
+    @property
+    def all_options(self):
         return {option.text for option in self.chosen_options.all_options}
+
+    def read(self):
+        return list(self.all_options)
 
 
 class CheckboxSelect(Widget):
 
-    ROOT = ParametrizedLocator("//div[@id={@search_root|quote}]")
+    ROOT = ParametrizedLocator(".//div[@id={@search_root|quote}]")
 
     def __init__(self, parent, search_root, text_access_func=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -456,21 +456,22 @@ class CheckboxSelect(Widget):
     def checkboxes(self):
         """All checkboxes."""
         return {Checkbox(self, id=el.get_attribute("id")) for el in self.browser.elements(
-            ".//input[@type='checkbox'] ", self)}
+            ".//input[@type='checkbox']")}
 
-    def read(self):
+    @property
+    def selected_checkboxes(self):
         """Only selected checkboxes."""
         return {cb for cb in self.checkboxes if cb.selected}
 
     @cached_property
     def selected_text(self):
         """Only selected checkboxes' text descriptions."""
-        return {cb.browser.element("./..", cb).text for cb in self.read()}
+        return {self.browser.element("./..", parent=cb).text for cb in self.selected_checkboxes}
 
     @property
     def selected_values(self):
         """Only selected checkboxes' values."""
-        return {cb.get_attribute("value") for cb in self.read()}
+        return {cb.get_attribute("value") for cb in self.selected_checkboxes}
 
     @property
     def unselected_checkboxes(self):
@@ -487,10 +488,10 @@ class CheckboxSelect(Widget):
         return Checkbox(self, id=id)
 
     def _values_to_remove(self, values):
-        return (set(values) ^ self.selected_text) - set(values)
+        return list(self.selected_text - set(values))
 
     def _values_to_add(self, values):
-        return (set(values) ^ self.selected_text) - self.selected_text
+        return list(set(values) - self.selected_text)
 
     def select_all(self):
         """Selects all checkboxes."""
@@ -503,7 +504,7 @@ class CheckboxSelect(Widget):
             cb.fill(False)
 
     def checkbox_by_text(self, text):
-        """Returns checkbox's WebElement by searched by its text."""
+        """Returns checkbox's WebElement searched by its text."""
         if self._access_func is not None:
             for cb in self.checkboxes:
                 txt = self._access_func(cb)
@@ -513,10 +514,10 @@ class CheckboxSelect(Widget):
                 raise NameError("Checkbox with text {} not found!".format(text))
         else:
             # Has to be only single
-            element = self.browser.element(
-                ".//*[normalize-space(.)={}]/input[@type='checkbox']".format(quote(text)), self
+            return Checkbox(
+                self,
+                locator=".//*[normalize-space(.)={}]/input[@type='checkbox']".format(quote(text))
             )
-            return Checkbox(self, id=element.get_attribute("id"))
 
     def fill(self, values):
         if set(values) == self.selected_text:
@@ -529,6 +530,10 @@ class CheckboxSelect(Widget):
                 checkbox = self.checkbox_by_text(value)
                 checkbox.fill(True)
             return True
+
+    def read(self):
+        """Only selected checkboxes."""
+        return [cb for cb in self.checkboxes if cb.selected]
 
 
 # ManageIQ table objects definition
@@ -630,17 +635,19 @@ class Calendar(TextInput):
             try:
                 self.browser.execute_script(script, self.browser.element(self))
             except WebDriverException as e:
-                logger.warning(
+                self.logger.warning(
                     "An exception was raised during handling of the Cal #{}'s change event:\n{}"
                     .format(self.name, str(e)))
         self.browser.plugin.ensure_page_safe()
         return True
 
 
-class SNMPHostsField(Widget):
+class SNMPHostsField(View):
+
+    _input = Input("host")
 
     def __init__(self, parent, logger=None):
-        Widget.__init__(self, parent, logger=logger)
+        View.__init__(self, parent, logger=logger)
 
     def fill(self, values):
         fields = self.host_fields
@@ -650,15 +657,11 @@ class SNMPHostsField(Widget):
             raise ValueError("You cannot specify more hosts than the form allows!")
         return any(fields[i].fill(value) for i, value in enumerate(values))
 
-    def read(self):
-        raise NotImplementedError
-
     @property
     def host_fields(self):
         """Returns list of locators to all host fields"""
-        _input = Input(self, "host")
-        if _input.is_displayed:
-            return [_input]
+        if self._input.is_displayed:
+            return [self._input]
         else:
             return [Input(self, "host_{}".format(i)) for i in range(1, 4)]
 
@@ -695,7 +698,7 @@ class SNMPTrapsField(Widget):
         return any(result)
 
     def read(self):
-        raise NotImplementedError
+        do_not_read_this_widget()
 
 
 class SNMPForm(View):
@@ -703,9 +706,6 @@ class SNMPForm(View):
     version = BootstrapSelect("snmp_version")
     id = Input("trap_id")
     traps = SNMPTrapsField()
-
-    def read(self):
-        raise NotImplementedError
 
 
 class ScriptBox(Widget):
@@ -808,8 +808,7 @@ class PaginationPane(View):
 
     @property
     def exists(self):
-        cur_view = self.browser.element(self)
-        return False not in self.browser.classes(cur_view)
+        return self.is_displayed
 
     def check_all(self):
         self.check_all_items.fill(True)
@@ -827,7 +826,8 @@ class PaginationPane(View):
 
     @property
     def items_per_page(self):
-        return int(self.items_on_page.selected_option)
+        selected = self.items_on_page.selected_option
+        return int(re.sub(r'\s+items', '', selected))
 
     def set_items_per_page(self, value):
         self.items_on_page.select_by_visible_text(str(value))
@@ -842,16 +842,16 @@ class PaginationPane(View):
         # obtaining amount of existing pages, there is 1 page by default
         if item_amt == 0:
             page_amt = 1
-        elif item_amt % items_per_page != 0:
-            page_amt = item_amt // items_per_page + 1
         else:
-            page_amt = item_amt // items_per_page
+            # round up after dividing total item count by per-page
+            page_amt = int(ceil(float(item_amt) / float(items_per_page)))
 
         # calculating current_page_number
         if max_item <= items_per_page:
             cur_page = 1
         else:
-            cur_page = max_item // items_per_page
+            # round up after dividing highest displayed item number by per-page
+            cur_page = int(ceil(float(max_item) / float(items_per_page)))
 
         return cur_page, page_amt
 
@@ -875,6 +875,236 @@ class PaginationPane(View):
     def last_page(self):
         self.paginator.last_page()
 
+    def pages(self):
+        """Generator to iterate over pages, yielding after moving to the next page"""
+        if self.exists:
+            # start iterating at the first page
+            if self.cur_page != 1:
+                self.logger.debug('Resetting paginator to first page')
+                self.first_page()
+
+            # Adding 1 to pages_amount to include the last page in loop
+            for page in range(1, self.pages_amount + 1):
+                yield self.cur_page
+                if self.cur_page == self.pages_amount:
+                    # last or only page, stop looping
+                    break
+                else:
+                    self.logger.debug('Paginator advancing to next page')
+                    self.next_page()
+
+        else:
+            return
+
     @property
     def items_amount(self):
         return self.paginator.page_info()[1]
+
+
+class Stepper(View):
+    """ A CFME Stepper Control
+
+    .. code-block:: python
+
+        stepper = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
+        stepper.increase()
+    """
+    ROOT = ParametrizedLocator('{@locator}')
+
+    minus_button = Button('-')
+    plus_button = Button('+')
+    value_field = Input(locator='.//input[contains(@class, "bootstrap-touchspin")]')
+
+    def __init__(self, parent, locator, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+
+        self.locator = locator
+
+    def read(self):
+        return int(self.value_field.read())
+
+    def decrease(self):
+        self.minus_button.click()
+
+    def increase(self):
+        self.plus_button.click()
+
+    def set_value(self, value):
+        value = int(value)
+        if value < 1:
+            raise ValueError('The value cannot be less than 1')
+
+        steps = value - self.read()
+        if steps == 0:
+            return False
+        elif steps > 0:
+            operation = self.increase
+        else:
+            operation = self.decrease
+
+        steps = abs(steps)
+        for step in range(steps):
+            operation()
+        return True
+
+    def fill(self, value):
+        return self.set_value(value)
+
+
+class RadioGroup(Widget):
+    """ CFME Radio Group Control
+
+    .. code-block:: python
+
+        radio_group = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
+        radio_group.select(radio_group.button_names()[-1])
+    """
+    BUTTONS = './/label[input[@type="radio"]]'
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+        self.locator = locator
+
+    def __locator__(self):
+        return self.locator
+
+    def _get_button(self, name):
+        br = self.browser
+        return next(btn for btn in br.elements(self.BUTTONS) if br.text(btn) == name)
+
+    @property
+    def button_names(self):
+        return [self.browser.text(btn) for btn in self.browser.elements(self.BUTTONS)]
+
+    @property
+    def selected(self):
+        names = self.button_names
+        for name in names:
+            if 'ng-valid-parse' in self.browser.classes('.//input[@type="radio"]',
+                                                        parent=self._get_button(name)):
+                return name
+
+        else:
+            # radio button doesn't have any marks to make out which button is selected by default.
+            # so, returning first radio button's name
+            return names[0]
+
+    def select(self, name):
+        button = self._get_button(name)
+        if self.selected != name:
+            button.click()
+            return True
+        return False
+
+    def read(self):
+        return self.selected
+
+    def fill(self, name):
+        return self.select(name)
+
+
+class BreadCrumb(Widget):
+    """ CFME BreadCrumb navigation control
+
+    .. code-block:: python
+
+        breadcrumb = BreadCrumb()
+        breadcrumb.click_location(breadcrumb.locations[0])
+    """
+    ROOT = '//ol[@class="breadcrumb"]'
+    ELEMENTS = './/li'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+        self._locator = locator or self.ROOT
+
+    def __locator__(self):
+        return self._locator
+
+    @property
+    def _path_elements(self):
+        return self.browser.elements(self.ELEMENTS, parent=self)
+
+    @property
+    def locations(self):
+        return [self.browser.text(loc) for loc in self._path_elements]
+
+    @property
+    def active_location(self):
+        br = self.browser
+        return next(br.text(loc) for loc in self._path_elements if 'active' in br.classes(loc))
+
+    def click_location(self, name, handle_alert=True):
+        br = self.browser
+        location = next(loc for loc in self._path_elements if br.text(loc) == name)
+        result = br.click(location, ignore_ajax=handle_alert)
+        if handle_alert:
+            self.browser.handle_alert(wait=2.0, squash=True)
+            self.browser.plugin.ensure_page_safe()
+        return result
+
+
+class ItemsToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+        it is present on pages with items like Infra or Cloud Providers pages
+
+    .. code-block:: python
+
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
+        view_selector.select('Tile View')
+        view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+    grid_button = Button(title='Grid View')
+    tile_button = Button(title='Tile View')
+    list_button = Button(title='List View')
+
+    @property
+    def _view_buttons(self):
+        yield self.grid_button
+        yield self.tile_button
+        yield self.list_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        return next(btn.title for btn in self._view_buttons if btn.active)
+
+
+class DetailsToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+        it is present on pages like Infra Providers Details page
+
+    .. code-block:: python
+
+        view_selector = View.nested(DetailsToolBarViewSelector)
+
+        view_selector.select('Dashboard View')
+        view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+    summary_button = Button(title='Summary View')
+    dashboard_button = Button(title='Dashboard View')
+
+    @property
+    def _view_buttons(self):
+        yield self.dashboard_button
+        yield self.summary_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        return next(btn.title for btn in self._view_buttons if btn.active)

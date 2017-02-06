@@ -16,7 +16,6 @@ from cfme.web_ui import (
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
 from utils.log import logger
 from utils.pretty import Pretty
 from utils.timeutil import parsetime
@@ -190,32 +189,19 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     ###
     # Methods
     #
-    def check_compliance(self):
-        """Clicks the Check compliance button."""
-        self.load_details(refresh=True)
+    def check_compliance(self, timeout=240):
+        """Initiates compliance check and waits for it to finish."""
+        original_state = self.compliance_status
+        cfg_btn("Refresh Relationships and Power States", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
         pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
-
-    @contextmanager
-    def check_compliance_wrapper(self, timeout=240):
-        """This wrapper takes care of waiting for the compliance status to change
-
-        Args:
-            timeout: Wait timeout in seconds.
-        """
-        self.load_details(refresh=True)
-        original_state = self.compliance_status
-        yield
         wait_for(
             lambda: self.compliance_status != original_state,
-            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name),
-            fail_func=lambda: toolbar.select("Reload"))
-
-    def check_compliance_and_wait(self, timeout=240):
-        """Initiates compliance check and waits for it to finish."""
-        with self.check_compliance_wrapper(timeout=timeout):
-            self.check_compliance()
+            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
+        )
         return self.compliant
 
     @property
@@ -301,9 +287,9 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
                 # TODO implement as navigate_to when cfme.infra.virtual_machines has destination
                 navigate_to(self, 'All')
             elif self.is_vm:
-                self.provider.load_all_provider_vms()
+                navigate_to(self, 'AllForProvider', use_resetter=False)
             else:
-                self.provider.load_all_provider_templates()
+                navigate_to(self, 'AllForProvider', use_resetter=False)
             toolbar.select('Grid View')
         else:
             # Search requires navigation, we shouldn't use it then
@@ -320,12 +306,11 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         if use_search:
             try:
                 if not search.has_quick_search_box():
-                    # We don't use provider-specific page (vm_templates_provider_branch) here
-                    # as those don't list archived/orphaned VMs
+                    # TODO rework search for archived/orphaned VMs
                     if self.is_vm:
-                        navigate_to(self.provider, 'Instances')
+                        navigate_to(self, 'AllForProvider', use_resetter=False)
                     else:
-                        navigate_to(self.provider, self.provider.templates_destination_name)
+                        navigate_to(self, 'AllForProvider', use_resetter=False)
                 search.normal_search(self.name)
             except Exception as e:
                 logger.warning("Failed to use search: %s", str(e))
@@ -384,15 +369,9 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
             VmOrInstanceNotFound:
                 When unable to find the VM passed
         """
-        navigate_to(self, 'Details')
-        sel.click(self.find_quadicon())
+        navigate_to(self, 'Details', use_resetter=False)
         if refresh:
-            # bz1389299 for 5.7, should be fixed in 5.7.1 - dajo
-            reload_bug = BZ(1329299)
-            if reload_bug.bugzilla.get_bug(1329299).is_opened:
-                sel.click(self.find_quadicon())
-            else:
-                toolbar.refresh()
+            toolbar.refresh()
 
     def open_edit(self):
         """Loads up the edit page of the object."""

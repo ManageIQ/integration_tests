@@ -11,7 +11,7 @@ from cfme.services import requests
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
 from cfme import test_requirements
-from utils import testgen, version
+from utils import testgen
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -26,72 +26,126 @@ pytestmark = [
 AWS_TEMPLATE = """
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "AWS CloudFormation Sample Template DynamoDB_Table",
+  "Description" : "AWS CloudFormation Sample Template EC2InstanceWithSecurityGroupSample:",
   "Parameters" : {
-    "HaskKeyElementName" : {
-      "Description" : "HashType PrimaryKey Name",
+    "KeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+    },
+    "virtualMachineName" : {
+      "Description" : "Name of the Virtual Machine",
       "Type" : "String",
-      "AllowedPattern" : "[a-zA-Z0-9]*",
-      "Default" : "SSS",
-      "MinLength": "1",
-      "MaxLength": "2048",
-      "ConstraintDescription" : "must contain only alphanumberic characters"
+      "ConstraintDescription" : "must be a valid EC2 instance name."
     },
-
-    "HaskKeyElementType" : {
-      "Description" : "HashType PrimaryKey Type",
+    "InstanceType" : {
+      "Description" : "WebServer EC2 instance type",
       "Type" : "String",
-      "Default" : "S",
-      "AllowedPattern" : "[S|N]",
-      "MinLength": "1",
-      "MaxLength": "1",
-      "ConstraintDescription" : "must be either S or N"
+      "Default" : "m1.small",
+      "AllowedValues" : ["m1.small", "t1.micro", "t2.nano", "t2.micro", "t2.small", "t2.large"],
+      "ConstraintDescription" : "must be a valid EC2 instance type."
     },
-
-    "ReadCapacityUnits" : {
-      "Description" : "Provisioned read throughput",
-      "Type" : "Number",
-      "Default" : "5",
-      "MinValue": "5",
-      "MaxValue": "10000",
-      "ConstraintDescription" : "must be between 5 and 10000"
+    "SSHLocation" : {
+      "Description" : "The IP address range that can be used to SSH to the EC2 instances",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+   }
+  },
+  "Mappings" : {
+    "AWSInstanceType2Arch" : {
+      "m1.small"    : { "Arch" : "PV64"   },
+      "t1.micro"    : { "Arch" : "PV64"   },
+      "t2.nano"     : { "Arch" : "HVM64"  },
+      "t2.micro"    : { "Arch" : "HVM64"  },
+      "t2.small"    : { "Arch" : "HVM64"  },
+      "t2.large"    : { "Arch" : "HVM64"  }
     },
-
-    "WriteCapacityUnits" : {
-      "Description" : "Provisioned write throughput",
-      "Type" : "Number",
-      "Default" : "10",
-      "MinValue": "5",
-      "MaxValue": "10000",
-      "ConstraintDescription" : "must be between 5 and 10000"
+    "AWSInstanceType2NATArch" : {
+      "m1.small"    : { "Arch" : "NATPV64"   },
+      "t1.micro"    : { "Arch" : "NATPV64"   },
+      "t2.nano"     : { "Arch" : "NATHVM64"  },
+      "t2.micro"    : { "Arch" : "NATHVM64"  },
+      "t2.small"    : { "Arch" : "NATHVM64"  },
+      "t2.large"    : { "Arch" : "NATHVM64"  }
+    }
+,
+    "AWSRegionArch2AMI" : {
+      "us-east-1"        : {
+      "PV64" : "ami-2a69aa47", "HVM64" : "ami-6869aa05", "HVMG2" : "ami-2e5e9c43"},
+      "us-west-2"        : {
+      "PV64" : "ami-7f77b31f", "HVM64" : "ami-7172b611", "HVMG2" : "ami-83b770e3"},
+      "us-west-1"        : {
+      "PV64" : "ami-a2490dc2", "HVM64" : "ami-31490d51", "HVMG2" : "ami-fd76329d"},
+      "eu-west-1"        : {
+      "PV64" : "ami-4cdd453f", "HVM64" : "ami-f9dd458a", "HVMG2" : "ami-b9bd25ca"},
+      "eu-central-1"     : {
+      "PV64" : "ami-6527cf0a", "HVM64" : "ami-ea26ce85", "HVMG2" : "ami-7f04ec10"},
+      "ap-northeast-1"   : {
+      "PV64" : "ami-3e42b65f", "HVM64" : "ami-374db956", "HVMG2" : "ami-e0ee1981"},
+      "ap-northeast-2"   : {
+      "PV64" : "NOT_SUPPORTED", "HVM64" : "ami-2b408b45", "HVMG2" : "NOT_SUPPORTED"},
+      "ap-southeast-1"   : {
+      "PV64" : "ami-df9e4cbc", "HVM64" : "ami-a59b49c6", "HVMG2" : "ami-0cb5676f"},
+      "ap-southeast-2"   : {
+      "PV64" : "ami-63351d00", "HVM64" : "ami-dc361ebf", "HVMG2" : "ami-a71c34c4"},
+      "ap-south-1"       : {
+      "PV64" : "NOT_SUPPORTED", "HVM64" : "ami-ffbdd790", "HVMG2" : "ami-f5b2d89a"},
+      "sa-east-1"        : {
+      "PV64" : "ami-1ad34676", "HVM64" : "ami-6dd04501", "HVMG2" : "NOT_SUPPORTED"},
+      "cn-north-1"       : {
+      "PV64" : "ami-77559f1a", "HVM64" : "ami-8e6aa0e3", "HVMG2" : "NOT_SUPPORTED"}
     }
   },
   "Resources" : {
-    "myDynamoDBTable" : {
-      "Type" : "AWS::DynamoDB::Table",
+    "EC2Instance" : {
+      "Type" : "AWS::EC2::Instance",
       "Properties" : {
-        "AttributeDefinitions": [ {
-          "AttributeName" : {"Ref" : "HaskKeyElementName"},
-          "AttributeType" : {"Ref" : "HaskKeyElementType"}
-        } ],
-        "KeySchema": [
-          { "AttributeName": {"Ref" : "HaskKeyElementName"}, "KeyType": "HASH" }
-        ],
-        "ProvisionedThroughput" : {
-          "ReadCapacityUnits" : {"Ref" : "ReadCapacityUnits"},
-          "WriteCapacityUnits" : {"Ref" : "WriteCapacityUnits"}
-        }
+        "InstanceType" : { "Ref" : "InstanceType" },
+        "SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
+        "KeyName" : { "Ref" : "KeyName" },
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch",
+                          { "Ref" : "InstanceType" }, "Arch" ] } ] },
+        "Tags" : [{"Key" : "Name", "Value" : { "Ref" : "virtualMachineName" }}]
+      }
+    },
+    "InstanceSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Enable SSH access via port 22",
+        "SecurityGroupIngress" : [ {
+          "IpProtocol" : "tcp",
+          "FromPort" : "22",
+          "ToPort" : "22",
+          "CidrIp" : { "Ref" : "SSHLocation"}
+        } ]
       }
     }
   },
   "Outputs" : {
-    "TableName" : {
-      "Value" : {"Ref" : "myDynamoDBTable"},
-      "Description" : "Table name of the newly created DynamoDB table"
+    "InstanceId" : {
+      "Description" : "InstanceId of the newly created EC2 instance",
+      "Value" : { "Ref" : "EC2Instance" }
+    },
+    "AZ" : {
+      "Description" : "Availability Zone of the newly created EC2 instance",
+      "Value" : { "Fn::GetAtt" : [ "EC2Instance", "AvailabilityZone" ] }
+    },
+    "PublicDNS" : {
+      "Description" : "Public DNSName of the newly created EC2 instance",
+      "Value" : { "Fn::GetAtt" : [ "EC2Instance", "PublicDnsName" ] }
+    },
+    "PublicIP" : {
+      "Description" : "Public IP address of the newly created EC2 instance",
+      "Value" : { "Fn::GetAtt" : [ "EC2Instance", "PublicIp" ] }
     }
   }
 }
 """
+
 
 HEAT_TEMPLATE = """
 heat_template_version: 2013-05-23
@@ -204,8 +258,8 @@ def random_desc():
 
 def prepare_stack_data(provider, provisioning):
     stackname = "test" + fauxfactory.gen_alphanumeric()
+    vm_name = "test" + fauxfactory.gen_alphanumeric()
     if provider.type == "azure":
-        vm_name = "test" + fauxfactory.gen_alphanumeric()
         vm_user, vm_password, vm_size, resource_group,\
             user_image, os_type, mode = map(provisioning.get,
          ('vm_user', 'vm_password', 'vm_size', 'resource_group',
@@ -222,7 +276,15 @@ def prepare_stack_data(provider, provisioning):
         }
         return stack_data
     else:
-        stack_data = {'stack_name': stackname}
+        stack_prov = provisioning['stack_provisioning']
+
+        stack_data = {
+            'stack_name': stackname,
+            'vm_name': vm_name,
+            'key_name': stack_prov['key_name'],
+            'select_instance_type': stack_prov['instance_type'],
+            'ssh_location': provisioning['ssh_location']
+        }
         return stack_data
 
 
@@ -251,7 +313,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
 
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', item_name)
+    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -260,7 +322,6 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     assert 'Provisioned Successfully' in row.last_message.text
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() <= '5.5')
 def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -285,7 +346,7 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
 
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', item_name)
+    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -317,7 +378,6 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     assert row.last_message.text == 'Service_Template_Provisioning failed'
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -330,7 +390,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     stack_data = prepare_stack_data(provider, provisioning)
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', item_name)
+    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -338,7 +398,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
 
     assert 'Provisioned Successfully' in row.last_message.text
 
-    stack = Stack(stack_data['stack_name'])
+    stack = Stack(stack_data['stack_name'], provider=provider)
     stack.wait_for_appear()
     stack.retire_stack()
 

@@ -337,8 +337,8 @@ class InstanceAll(CFMENavigateStep):
         accordion.tree('Instances', 'All Instances')
 
 
-@navigator.register(Instance, 'ProviderAll')
-class InstanceProviderAll(CFMENavigateStep):
+@navigator.register(Instance, 'AllForProvider')
+class InstanceAllForProvider(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def am_i_here(self):

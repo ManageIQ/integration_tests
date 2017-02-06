@@ -95,7 +95,7 @@ class BaseAlertProfile(Updateable, Navigatable, Pretty):
         view.fill({
             "description": self.description,
             "notes": self.notes,
-            "alerts": self.alerts
+            "alerts": [str(alert) for alert in self.alerts]
         })
         view.add_button.click()
         view = self.create_view(AlertProfileDetailsView)
@@ -146,6 +146,18 @@ class BaseAlertProfile(Updateable, Navigatable, Pretty):
             view.flash.assert_no_error()
             view.flash.assert_message(
                 'Alert Profile "{}": Delete successful'.format(self.description))
+
+    @property
+    def exists(self):
+        """Check existence of this Alert Profile.
+
+        Returns: :py:class:`bool` signalizing the presence of the Alert Profile in the database.
+        """
+        miq_sets = self.appliance.db["miq_sets"]
+        return self.appliance.db.session.query(miq_sets.description)\
+            .filter(
+                miq_sets.description == self.description and miq_sets.set_type == "MiqAlertSet")\
+            .count() > 0
 
 
 @navigator.register(BaseAlertProfile, "Add")
