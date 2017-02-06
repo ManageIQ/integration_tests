@@ -48,26 +48,26 @@ class WorkloadsView(BaseLoggedInPage):
             self.tree.click_path("All Templates & Images")
 
 
-class WorkLoadsVM(WorkloadsView):
+class WorkloadsVM(WorkloadsView):
     title = Text("#explorer_title_text")
 
     @property
     def is_displayed(self):
         return (
-            super(WorkLoadsVM, self).is_displayed and
+            super(WorkloadsVM, self).is_displayed and
             self.title.text == 'All VMs & Instances' and
             self.vms.is_opened and
             self.vms.tree.currently_selected == [
                 "All VMs & Instances"])
 
 
-class WorkLoadsTemplate(WorkloadsView):
+class WorkloadsTemplate(WorkloadsView):
     title = Text("#explorer_title_text")
 
     @property
     def is_displayed(self):
         return (
-            super(WorkLoadsTemplate, self).is_displayed and
+            super(WorkloadsTemplate, self).is_displayed and
             self.title.text == 'All Templates & Images' and
             self.templates.is_opened and
             self.templates.tree.currently_selected == [
@@ -95,11 +95,11 @@ class TemplatesImages(Navigatable):
 
 @navigator.register(VmsInstances, 'All')
 class AllVMs(CFMENavigateStep):
-    VIEW = WorkLoadsVM
+    VIEW = WorkloadsVM
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        workloads = self.create_view(WorkloadsView)
+        workloads = self.create_view(WorkloadsVM)
         self.prerequisite_view.navigation.select('Services', 'Workloads')
         workloads.search.clear_search()
         workloads.vms.clear_filter()
@@ -110,14 +110,14 @@ class AllVMs(CFMENavigateStep):
 
 @navigator.register(TemplatesImages, 'All')
 class AllTemplates(CFMENavigateStep):
-    VIEW = WorkLoadsTemplate
+    VIEW = WorkloadsTemplate
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        workloads = self.create_view(WorkloadsView)
+        workloads = self.create_view(WorkloadsVM)
         self.prerequisite_view.navigation.select('Services', 'Workloads')
         workloads.search.clear_search()
         workloads.templates.clear_filter()
 
     def am_i_here(self, *args, **kwargs):
-        self.view.is_displayes()
+        self.view.is_displayed()
