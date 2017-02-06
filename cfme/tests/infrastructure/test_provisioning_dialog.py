@@ -34,7 +34,7 @@ pytestmark = [
 ]
 
 
-def remove_vm(provider, vm_name):
+def remove_vm(vm_name, provider):
     if provider.mgmt.does_vm_exist(vm_name):
         if provider.mgmt.is_vm_running(vm_name):
             provider.mgmt.stop_vm(vm_name)
