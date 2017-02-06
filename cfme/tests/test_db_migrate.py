@@ -21,8 +21,8 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def temp_appliance_extended_db(temp_appliance):
-    app = temp_appliance
+def temp_appliance_extended_db(temp_appliance_preconfig):
+    app = temp_appliance_preconfig
     app.stop_evm_service()
     app.extend_db_partition()
     app.start_evm_service()
