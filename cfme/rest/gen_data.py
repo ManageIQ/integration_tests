@@ -133,9 +133,9 @@ def service_data(request, rest_api, a_provider, dialog, service_catalogs):
     """
     The attempt to add the service entities via web
     """
-    template, host, datastore, iso_file, vlan, catalog_item_type = map(
-        a_provider.data.get("provisioning").get,
-        ('template', 'host', 'datastore', 'iso_file', 'vlan', 'catalog_item_type'))
+    template, host, datastore, vlan, catalog_item_type = map(
+        a_provider.data.get('provisioning').get,
+        ('template', 'host', 'datastore', 'vlan', 'catalog_item_type'))
 
     provisioning_data = {
         'vm_name': 'test_rest_{}'.format(fauxfactory.gen_alphanumeric()),
@@ -146,7 +146,7 @@ def service_data(request, rest_api, a_provider, dialog, service_catalogs):
     if a_provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = vlan
-        catalog_item_type = "RHEV"
+        catalog_item_type = 'RHEV'
     elif a_provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
         provisioning_data['vlan'] = vlan
@@ -158,7 +158,7 @@ def service_data(request, rest_api, a_provider, dialog, service_catalogs):
     catalog = service_catalogs[0].name
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
-                               description="my catalog", display_in=True,
+                               description='my catalog', display_in=True,
                                catalog=catalog,
                                dialog=dialog.label,
                                catalog_name=template,
