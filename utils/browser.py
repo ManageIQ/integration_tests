@@ -80,6 +80,7 @@ class Wharf(object):
         self.docker_id, self.config = checkout.items()[0]
         self._start_renew_thread()
         log.info('Checked out webdriver container %s', self.docker_id)
+        log.debug("%r", checkout)
         return self.docker_id
 
     def checkin(self):
@@ -92,18 +93,21 @@ class Wharf(object):
 
     def _start_renew_thread(self):
         assert self._renew_thread is None
-        self._renew_thread = threading.Thread(target=self._renew_thread)
+        self._renew_thread = threading.Thread(target=self._renew_function)
         self._renew_thread.daemon = True
         self._renew_thread.start()
 
-    def _renew_thread(self):
+    def _renew_function(self):
         # If we have a docker id, renew_timer shouldn't still be None
+        log.debug("renew thread started")
         while True:
             time.sleep(FIVE_MINUTES)
             if self._renew_thread is not threading.current_thread():
+                log.debug("renew done %s is not %s",
+                          self._renew_thread, threading.current_thread())
                 return
             if self.docker_id is None:
-                return
+                log.debug("renew done, docker id %s", self.docker_id)
             expiry_info = self._get('renew', self.docker_id)
             self.config.update(expiry_info)
             log.info('Renewed webdriver container %s', self.docker_id)
@@ -219,23 +223,29 @@ class BrowserManager(object):
         else:
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
-    def _is_running(self, url_key):
+    def _is_alive(self):
+        log.debug("alive check")
         try:
             self.browser.current_url
         except UnexpectedAlertPresentException:
             # Try to handle an open alert, restart the browser if possible
+            log.info("browser hangs on alert, dismissing")
             try:
                 self.browser.switch_to_alert().dismiss()
             except:
+                log.exception("browser died on alert")
                 return False
         except:
-            # If we couldn't poke the browser for any other reason, start a new one
+            log.exception("browser in unknown state, considering dead")
             return False
         return True
 
     def ensure_open(self, url_key=None):
         url_key = self.coerce_url_key(url_key)
-        if self._is_running(url_key):
+        if getattr(self.browser, 'url_key', None) != url_key:
+            return self.start(url_key=url_key)
+
+        if self._is_alive():
             return self.browser
         else:
             return self.start(url_key=url_key)
