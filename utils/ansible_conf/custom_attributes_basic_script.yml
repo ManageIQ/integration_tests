@@ -1,0 +1,16 @@
+- hosts: localhost
+  tasks:
+  - manageiq_custom_attributes:
+      custom_attributes:
+      - {name: ca1, value: value 1}
+      - {name: ca2, value: value 2}
+      entity_name: CI OSE
+      entity_type: provider
+      miq_password: smartvm
+      miq_url: https://10.35.162.41
+      miq_username: admin
+      state: present
+      verify_ssl: false
+    name: Add Custom Attributes to Openshift containers provider
+    register: result
+  - {debug: var=result}
