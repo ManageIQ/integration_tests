@@ -156,6 +156,9 @@ class BrowserFactory(object):
         browser.url_key = url_key
         return browser
 
+    def close(self, browser):
+        browser.quit()
+
 
 class WharfFactory(BrowserFactory):
     def __init__(self, webdriver_class, browser_kwargs, wharf):
@@ -199,6 +202,12 @@ class WharfFactory(BrowserFactory):
                 self.wharf.checkin()
                 raise
         return tries(10, urllib2.URLError, inner)
+
+    def close(self, browser):
+        try:
+            super(WharfFactory, self).close(browser)
+        finally:
+            self.wharf.checkin()
 
 
 class BrowserManager(object):
@@ -272,7 +281,7 @@ class BrowserManager(object):
         log.info('closing browser')
         self._consume_cleanups()
         try:
-            self.browser.quit()
+            self.factory.quit(self.browser)
         except:
             # Due to the multitude of exceptions can be thrown when attempting to kill the browser,
             # Diaper Pattern!
