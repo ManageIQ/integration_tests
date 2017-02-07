@@ -125,6 +125,15 @@ class IPAppliance(object):
         self._server = None
 
     def get(self, cls, *args, **kwargs):
+        """A generic getter for instantiation of Collection classes
+
+        This generic getter will supply an appliance (self) to an object and instantiate
+        it with the supplied args/kwargs e.g.::
+
+          my_appliance.get(NodeCollection)
+
+        This will return a NodeCollection object that is bound to the appliance.
+        """
         assert 'appliance' not in kwargs
         return cls(appliance=self, *args, **kwargs)
 
