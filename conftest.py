@@ -167,6 +167,7 @@ pytest_plugins = (
 
     'fixtures.prov_filter',
 
+    'fixtures.appliance',
     'fixtures.single_appliance_sprout',
     'fixtures.dev_branch',
     'fixtures.events',
