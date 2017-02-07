@@ -6,7 +6,7 @@ results of the relationships
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from utils import testgen, version
+from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -17,7 +17,6 @@ pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate'),
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_assigned_roles(provider):
     navigate_to(provider, 'Details')
     assert int(provider.get_detail('Relationships', 'Deployment Roles')) > 0
