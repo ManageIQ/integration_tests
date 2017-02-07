@@ -114,7 +114,7 @@ def test_black_console_ipa(request, fqdn_appliance, ipa_creds):
 
 @pytest.mark.parametrize('auth_type', [('sso_enabled', '1'), ('saml_enabled', '2'),
     ('local_login_disabled', '3')], ids=['sso', 'saml', 'local_login'])
-def test_black_console_external_auth(request, auth_type, ext_type, ipa_crud, app_creds):
+def test_black_console_external_auth(request, auth_type, ipa_crud, app_creds):
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
                             matched_patterns=['.*{} to true.*'.format(auth_type[0])],
                             hostname=ipa_crud.address,
