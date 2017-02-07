@@ -92,6 +92,17 @@ def test_host_security(provider, soft_assert):
             'Nodes number of Groups is 0')
 
 
+def test_host_smsbios_data(provider, soft_assert):
+    """Checks that Manufacturer/Model values are shown for each infra node"""
+    navigate_to(Host, 'All')
+    names = [q.name for q in list(Quadicon.all())]
+    for node in names:
+        host = Host(node, provider)
+        navigate_to(host, 'Detail')
+        soft_assert(host.get_detail('Properties', 'Manufacturer / Model'),
+                    'Manufacturer / Model value are empty')
+
+
 def test_host_zones_assigned(provider):
     navigate_to(provider, 'Details')
     sel.click(InfoBlock.element("Relationships", "Nodes"))
