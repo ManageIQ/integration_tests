@@ -1861,8 +1861,9 @@ def read_docker_images_from_url_group(self, group_id):
         elif cfme_docker and cfme_docker[0].lower().strip() == 'tags:':
             # Multiple tags, take the longest
             proper_pull_url = sorted(filter(None, cfme_docker[1:]), key=len, reverse=True)[0]
+            latest = proper_pull_url.rsplit(':', 1)[-1]
         else:
-            self.logger.info('Skipping: unknown format: {}'.format(str(cfme_docker)))
+            self.logger.info('Skipping: unknown format: {!r}'.format(cfme_docker))
             continue
         if cfme_version in result:
             continue
