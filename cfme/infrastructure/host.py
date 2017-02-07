@@ -18,8 +18,8 @@ import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins, match_location
-)
+    form_buttons, paginator, Input, mixins, match_location,
+    InfoBlock)
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
 from utils.db_queries import get_host_id
@@ -498,6 +498,7 @@ class Provision(CFMENavigateStep):
 
     def step(self):
         lif_btn('Provision this item')
+
 
 @fill.method((Form, Host.Credential))
 def _fill_credential(form, cred, validate=None):
