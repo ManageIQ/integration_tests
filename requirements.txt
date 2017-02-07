@@ -1,4 +1,98 @@
+<<<<<<< HEAD
 # this file is there for backward compatibility, it will be taken away after prt updates
 -r requirements/frozen.txt
+=======
+# Internal dependencies
+# MIQ REST API Client
+git+https://github.com/ManageIQ/manageiq-api-client-python.git
+
+# External dependencies
+boto
+bottle
+bottle-sqlite
+cached-property
+diaper
+docker-py
+fauxfactory>=2.0.7
+flake8
+functools32
+futures==3.0.5
+ipython
+iso8601
+Jinja2
+jsmin
+jupyter
+kwargify
+# 15.8.1 breaks yaycl: https://github.com/mk-fg/layered-yaml-attrdict-config/commit/ea12fbf31b96abf15543c7b436272d8854b5d324
+layered-yaml-attrdict-config
+mgmtsystem>0.0.15
+mock
+multimethods.py
+navmazing
+numpy
+ovirt-engine-sdk-python<4.0.0
+paramiko
+parsedatetime
+pdfminer
+progress
+psphere
+py
+pycurl
+pycrypto
+pygal
+PyGithub
+pytest==2.9.2
+python-bugzilla>=1.2.2
+python-dateutil
+pywinrm
+PyYAML
+requests
+riggerlib>=2.0
+scp
+# since 3.0 uses marionette by default
+selenium<3.0.0
+shyaml
+slumber
+sqlalchemy
+suds
+tabulate==0.7.7
+tornado
+tzlocal
+wait_for
+widgetastic.core>=0.3.2
+yaycl
+yaycl-crypt
+
+
+sentaku~=0.4.0
+attrs~=16.0
+
+# docs requirements
+Sphinx==1.3.5
+sphinx-rtd-theme
+six>=1.9
+
+debtcollector
+
+# requirements for prt-bot interaction via RabbitMQ
+pika
+
+###
+# Libraries with compiled components, and their related devel packages
+###
+
+# lxml super SGML parser, needs libxml2-devel and libxslt-devel
+lxml
+
+# Postgres client bindings, needs postgresql-devel
+psycopg2
+
+# zeromq bindings, for ipython and parallel testing, needs zeromq3-devel
+pyzmq
+
+# werkzeug.local until extraction
+werkzeug
+
+>>>>>>> Cloud Intel->Reports widgetastic conversion. Dashboards.
 # do editable self-install to avoid need for pythonpath changes
 -e .

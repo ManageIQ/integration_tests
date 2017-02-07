@@ -1,28 +1,145 @@
 # -*- coding: utf-8 -*-
-"""Module handling Dashboards accordion.
-"""
-from navmazing import NavigateToSibling, NavigateToObject
-
-from cfme.base import Server
-from cfme.fixtures import pytest_selenium as sel
-from cfme.intelligence.reports.ui_elements import NewerDashboardWidgetSelector
-from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar, Input
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.update import Updateable
+"""Page model for Cloud Intel / Reports / Dashboards"""
 from utils.pretty import Pretty
-from . import Report
+from utils.update import Updateable
+from utils.appliance import Navigatable
+from navmazing import NavigateToAttribute
+from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from . import CloudIntelReportsView
+
+from widgetastic.widget import Text, Checkbox
+from widgetastic_manageiq import SummaryFormItem, DashboardWidgetsPicker
+from widgetastic_patternfly import Button, Input
+
+
+class DashboardAllGroupsView(CloudIntelReportsView):
+
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.title.text == 'Dashboards for "{}"'.format(self.context["object"].group) and
+            self.dashboards.is_opened and
+            self.dashboards.tree.currently_selected == [
+                "All Dashboards",
+                "All Groups",
+                self.context["object"].group
+            ]
+        )
+
+
+class DashboardFormCommon(CloudIntelReportsView):
+
+    title = Text("#explorer_title_text")
+    basic_information = Text(".//div[@id='form_div']/h3")
+    name = Input(name="name")
+    tab_title = Input(name="description")
+    locked = Checkbox("locked")
+    sample_dashboard = Text(".//div[@id='form_widgets_div']/h3")
+    widgets = DashboardWidgetsPicker("form_widgets_div")
+    cancel_button = Button("Cancel")
+
+
+class NewDashboardView(DashboardFormCommon):
+
+    add_button = Button("Add")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.title.text == "Adding a new dashboard" and
+            self.dashboards.is_opened and
+            self.dashboards.tree.currently_selected == [
+                "All Dashboards",
+                "All Groups",
+                self.context["object"].group
+            ]
+        )
+
+
+class EditDashboardView(DashboardFormCommon):
+
+    save_button = Button("Save")
+    reset_button = Button("Reset")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.title.text == "Editing Dashboard {}".format(self.context["object"].name) and
+            self.dashboards.is_opened and
+            self.dashboards.tree.currently_selected == [
+                "All Dashboards",
+                "All Groups",
+                self.context["object"].group,
+                self.context["object"].name
+            ]
+        )
+
+
+class EditDefaultDashboardView(EditDashboardView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.title.text == "Editing Dashboard {}".format(self.context["object"].name) and
+            self.dashboards.is_opened and
+            self.dashboards.tree.currently_selected == [
+                "All Dashboards",
+                "{} ({})".format(self.context["object"].title, self.context["object"].name)
+            ]
+        )
+
+
+class DashboardDetailsView(CloudIntelReportsView):
+
+    title = Text("#explorer_title_text")
+    name = SummaryFormItem("Basic Information", "Name")
+    tab_title = SummaryFormItem("Basic Information", "Tab Title")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.title.text == 'Dashboard "{} ({})"'.format(
+                self.context["object"].title,
+                self.context["object"].name
+            ) and
+            self.dashboards.is_opened and
+            self.dashboards.tree.currently_selected == [
+                "All Dashboards",
+                "All Groups",
+                self.context["object"].group,
+                self.context["object"].name
+            ]
+        )
+
+
+class DefaultDashboardDetailsView(DashboardDetailsView):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.title.text == "Dashboard {} ({})".format(
+                self.context["object"].name,
+                self.context["object"].title
+            ) and
+            self.dashboards.is_opened and
+            self.dashboards.tree.currently_selected == [
+                "All Dashboards",
+                "{} ({})".format(self.context["object"].title, self.context["object"].name)
+            ]
+        )
 
 
 class Dashboard(Updateable, Pretty, Navigatable):
-    form = Form(fields=[
-        ("name", Input("name")),
-        ("title", Input("description")),
-        ("locked", Input("locked")),
-        ("widgets", NewerDashboardWidgetSelector("//div[@id='form_widgets_div']")),
-    ])
-    pretty_attrs = ['name', 'group', 'title', 'widgets']
+
+    pretty_attrs = ["name", "group", "title", "widgets"]
 
     def __init__(self, name, group, title=None, locked=None, widgets=None, appliance=None):
         Navigatable.__init__(self, appliance)
@@ -37,35 +154,67 @@ class Dashboard(Updateable, Pretty, Navigatable):
         return self._group
 
     def create(self, cancel=False):
-        navigate_to(self, 'Add')
-        fill(
-            self.form,
-            {k: v for k, v in self.__dict__.iteritems() if not k.startswith("_")},  # non-private
-            action=form_buttons.cancel if cancel else form_buttons.add
-        )
-        flash.assert_no_errors()
+        """Create this Dashboard in the UI."""
+        view = navigate_to(self, "Add")
+        view.fill({
+            "name": self.name,
+            "tab_title": self.title,
+            "locked": self.locked,
+            "widgets": self.widgets
+        })
+        view.add_button.click()
+        view = self.create_view(DashboardAllGroupsView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        view.flash.assert_message('Dashboard "{}" was saved'.format(self.name))
 
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        fill(self.form, updates, action=form_buttons.save)
-        flash.assert_no_errors()
+        """Update this Dashboard in the UI.
+
+        Args:
+            updates: Provided by update() context manager.
+            cancel: Whether to cancel the update (default False).
+        """
+        view = navigate_to(self, "Edit")
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        for attr, value in updates.items():
+            setattr(self, attr, value)
+        view = self.create_view(DashboardDetailsView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            view.flash.assert_message('Dashboard "{}" was saved'.format(self.name))
+        else:
+            view.flash.assert_message(
+                'Edit of Dashboard "{}" was cancelled by the user'.format(self.name))
 
     def delete(self, cancel=False):
-        navigate_to(self, 'Details')
-        toolbar.select(
-            "Configuration", "Delete this Dashboard from the Database", invokes_alert=True)
-        sel.handle_alert(cancel)
-        flash.assert_no_errors()
+        """Delete this Dashboard in the UI.
+
+        Args:
+            cancel: Whether to cancel the deletion (default False).
+        """
+        view = navigate_to(self, "Details")
+        view.configuration.item_select(
+            "Delete this Dashboard from the Database",
+            handle_alert=not cancel
+        )
+        if cancel:
+            assert view.is_displayed
+            view.flash.assert_no_error()
+        else:
+            view = self.create_view(DashboardAllGroupsView)
+            assert view.is_displayed
+            view.flash.assert_no_error()
 
 
 class DefaultDashboard(Updateable, Pretty, Navigatable):
-    form = Form(fields=[
-        ("title", Input("description")),
-        ("locked", Input("locked")),
-        ("widgets", NewerDashboardWidgetSelector("//div[@id='form_widgets_div']")),
-    ])
-    reset_button = "//*[@title='Reset Dashboard Widgets to the defaults']"
-    pretty_attrs = ['title', 'widgets']
+
+    pretty_attrs = ["name", "title", "widgets"]
 
     def __init__(self, title=None, locked=None, widgets=None, appliance=None):
         Navigatable.__init__(self, appliance)
@@ -73,75 +222,99 @@ class DefaultDashboard(Updateable, Pretty, Navigatable):
         self.locked = locked
         self.widgets = widgets
 
+    @property
+    def name(self):
+        """Name of Default Dashboard cannot be changed."""
+        return "default"
+
     def update(self, updates):
-        navigate_to(self, 'Edit')
-        fill(self.form, updates, action=form_buttons.save)
-        flash.assert_no_errors()
+        """Update Default Dashboard in the UI.
 
-    def delete(self, cancel=False):
-        navigate_to(self, 'Details')
-        toolbar.select(
-            "Configuration", "Delete this Dashboard from the Database", invokes_alert=True)
-        sel.handle_alert(cancel)
-        flash.assert_no_errors()
+        Args:
+            updates: Provided by update() context manager.
+            cancel: Whether to cancel the update (default False).
+        """
+        view = navigate_to(self, "Edit")
+        changed = view.fill(updates)
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        for attr, value in updates.items():
+            setattr(self, attr, value)
+        view = self.create_view(DefaultDashboardDetailsView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            view.flash.assert_message('Dashboard "{}" was saved'.format(self.name))
+        else:
+            view.flash.assert_message(
+                'Edit of Dashboard "{}" was cancelled by the user'.format(self.name))
 
-    @classmethod
-    def reset_widgets(cls, cancel=False):
-        navigate_to(Server, 'Dashboard')
-        sel.click(cls.reset_button, wait_ajax=False)
-        sel.handle_alert(cancel)
-        flash.assert_no_errors()
 
-
-@navigator.register(DefaultDashboard, 'All')
-@navigator.register(Dashboard, 'All')
-class DashboardAll(CFMENavigateStep):
-    prerequisite = NavigateToObject(Report, 'Dashboards')
-
-
-@navigator.register(Dashboard, 'Add')
+@navigator.register(Dashboard, "Add")
 class DashboardNew(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    VIEW = NewDashboardView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self):
-        accordion.tree("Dashboards", "All Dashboards", "All Groups", self.obj.group)
-        toolbar.select("Configuration", "Add a new Dashboard")
-        sel.wait_for_element(Dashboard.form.name)
+        self.view.dashboards.tree.click_path(
+            "All Dashboards",
+            "All Groups",
+            self.obj.group
+        )
+        self.view.configuration.item_select("Add a new Dashboard")
 
 
-@navigator.register(Dashboard, 'Details')
-class DashboardDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        accordion.tree("Dashboards", "All Dashboards", "All Groups", self.obj.group, self.obj.name)
-
-
-@navigator.register(Dashboard, 'Edit')
+@navigator.register(Dashboard, "Edit")
 class DashboardEdit(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
+    VIEW = EditDashboardView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self):
-        toolbar.select("Configuration", "Edit this Dashboard")
+        self.view.dashboards.tree.click_path(
+            "All Dashboards",
+            "All Groups",
+            self.obj.group,
+            self.obj.name
+        )
+        self.view.configuration.item_select("Edit this Dashboard")
 
 
-@navigator.register(DefaultDashboard, 'Details')
-class DefaultDashboardDetails(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        """This can change, because the title of the default dashboard is mutable. However, we can
-        xpath there quite reliable, so we use it that way we extract the name from the tree directly
-        """''
-        t = version.pick({
-            "5.6": "//li[@id='db_xx-1' or @id='dashboards_xx-1']/span/a",
-            "5.7": "//li[@data-nodeid='0.0.0' and @class = 'list-group-item node-db_treebox']"})
-        accordion.tree("Dashboards", "All Dashboards", sel.text(t).encode("utf-8"))
-
-
-@navigator.register(DefaultDashboard, 'Edit')
+@navigator.register(DefaultDashboard, "Edit")
 class DefaultDashboardEdit(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
+    VIEW = EditDefaultDashboardView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
 
     def step(self):
-        toolbar.select("Configuration", "Edit this Dashboard")
+        self.view.dashboards.tree.click_path(
+            "All Dashboards",
+            "{} ({})".format(self.obj.title, self.obj.name)
+        )
+        self.view.configuration.item_select("Edit this Dashboard")
+
+
+@navigator.register(Dashboard, "Details")
+class DashboardDetails(CFMENavigateStep):
+    VIEW = DashboardDetailsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.dashboards.tree.click_path(
+            "All Dashboards",
+            "All Groups",
+            self.obj.group,
+            self.obj.name
+        )
+
+
+@navigator.register(DefaultDashboard, "Details")
+class DefaultDashboardDetails(CFMENavigateStep):
+    VIEW = DefaultDashboardDetailsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.dashboards.tree.click_path(
+            "All Dashboards",
+            "{} ({})".format(self.obj.title, self.obj.name)
+        )

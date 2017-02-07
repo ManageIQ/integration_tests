@@ -1,88 +1,69 @@
 # -*- coding: utf-8 -*-
-"""This is a directory of modules, each one represents one accordion item.
+from navmazing import NavigateToSibling
+from widgetastic.widget import View
+from widgetastic_manageiq import ManageIQTree
+from widgetastic_patternfly import Accordion, Dropdown
 
-  * :py:mod:`cfme.intelligence.reports.reports`
-  * :py:mod:`cfme.intelligence.reports.schedules`
-  * :py:mod:`cfme.intelligence.reports.import_export`
-  * :py:mod:`cfme.intelligence.reports.saved`
-  * :py:mod:`cfme.intelligence.reports.widgets`
-  * :py:mod:`cfme.intelligence.reports.dashboards`
-"""
-from navmazing import NavigateToSibling, NavigateToAttribute
-
-from cfme.web_ui import accordion
-from utils.appliance import Navigatable
+from cfme import BaseLoggedInPage
+from cfme.base import Server
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
-class Report(Navigatable):
-    """
-        This is fake class mainly needed for navmazing navigation
+class CloudIntelReportsView(BaseLoggedInPage):
 
-    """
-    def __init__(self, appliance=None):
-        Navigatable.__init__(self, appliance)
+    @property
+    def in_intel_reports(self):
+        return (
+            self.logged_in_as_current_user and
+            self.navigation.currently_selected == ["Cloud Intel", "Reports"])
 
+    @property
+    def is_displayed(self):
+        return self.in_intel_reports and self.configuration.is_displayed
 
-@navigator.register(Report, 'All')
-class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    @View.nested
+    class saved_reports(Accordion):  # noqa
+        ACCORDION_NAME = "Saved Reports"
 
-    def step(self):
-        self.prerequisite_view.navigation.select('Cloud Intel', 'Reports')
+        tree = ManageIQTree()
 
+    @View.nested
+    class reports(Accordion):  # noqa
+        tree = ManageIQTree()
 
-@navigator.register(Report, 'SavedReports')
-class SavedReports(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    @View.nested
+    class schedules(Accordion):  # noqa
+        tree = ManageIQTree()
 
-    def step(self):
-        accordion.tree("Saved Reports", "All Saved Reports")
+    @View.nested
+    class dashboards(Accordion):  # noqa
+        tree = ManageIQTree()
 
+    @View.nested
+    class dashboard_widgets(Accordion):  # noqa
+        ACCORDION_NAME = "Dashboard Widgets"
 
-@navigator.register(Report, 'Reports')
-class Reports(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+        tree = ManageIQTree()
 
-    def step(self):
-        accordion.tree("Reports", "All Reports")
+    @View.nested
+    class edit_report_menus(Accordion):  # noqa
+        ACCORDION_NAME = "Edit Report Menus"
 
+        tree = ManageIQTree()
 
-@navigator.register(Report, 'Schedules')
-class Schedules(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+    @View.nested
+    class import_export(Accordion):  # noqa
+        ACCORDION_NAME = "Import/Export"
 
-    def step(self):
-        accordion.tree("Schedules", "All Schedules")
+        tree = ManageIQTree()
 
-
-@navigator.register(Report, 'Dashboards')
-class Dashboards(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        accordion.tree("Dashboards", "All Dashboards")
-
-
-@navigator.register(Report, 'DashboardWidgets')
-class DashboardWidgets(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        accordion.tree("Dashboard Widgets", "All Widgets")
+    configuration = Dropdown("Configuration")
 
 
-@navigator.register(Report, 'EditReportMenus')
-class EditReportMenus(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
+@navigator.register(Server)
+class CloudIntelReports(CFMENavigateStep):
+    VIEW = CloudIntelReportsView
+    prerequisite = NavigateToSibling("LoggedIn")
 
     def step(self):
-        accordion.tree("Edit Report Menus", "All EVM Groups")
-
-
-@navigator.register(Report, 'ImportExport')
-class ImportExport(CFMENavigateStep):
-    prerequisite = NavigateToSibling('All')
-
-    def step(self):
-        accordion.tree("Import/Export", "Import / Export")
+        self.view.navigation.select("Cloud Intel", "Reports")

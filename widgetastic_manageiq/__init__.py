@@ -2174,3 +2174,57 @@ class ProviderEntity(BaseEntity):
     quad_entity = ProviderQuadIconEntity
     list_entity = ProviderListEntity
     tile_entity = ProviderTileIconEntity
+
+
+class DashboardWidgetsPicker(View):
+    """Represents widgets picker in Dashboard editing screen (Cloud Intel/Reports/Dashobards)."""
+
+    ROOT = ParametrizedLocator(".//div[@id='{@id}']")
+    WIDGETS = ".//a[starts-with(@id, 'w_')]/.."
+    WIDGET_REMOVE = ".//div[contains(@title, {})]//a/i"
+    widget_picker = BootstrapSelect("widget")
+
+    def __init__(self, parent, id, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+        self.id = id
+
+    def add_widget(self, widget):
+        self.widget_picker.fill(widget)
+
+    def remove_widget(self, widget):
+        self.browser.click(self.WIDGET_REMOVE.format(quote(widget)))
+        self.browser.plugin.ensure_page_safe()
+
+    @property
+    def all_widgets(self):
+        try:
+            widgets = [widget.text for widget in self.browser.elements(self.WIDGETS)]
+        except NoSuchElementException:
+            return []
+        else:
+            return widgets
+
+    def _values_to_remove(self, values):
+        return list(set(self.all_widgets) - set(values))
+
+    def _values_to_add(self, values):
+        return list(set(values) - set(self.all_widgets))
+
+    def fill(self, values):
+        if isinstance(values, basestring):
+            values = [values]
+        if set(values) == set(self.all_widgets):
+            return False
+        else:
+            values_to_remove = self._values_to_remove(values)
+            values_to_add = self._values_to_add(values)
+            if values_to_remove:
+                for value in values_to_remove:
+                    self.remove_widget(value)
+            if values_to_add:
+                for value in values_to_add:
+                    self.add_widget(value)
+            return True
+
+    def read(self):
+        return self.all_widgets
