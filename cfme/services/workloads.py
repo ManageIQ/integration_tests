@@ -104,9 +104,6 @@ class AllVMs(CFMENavigateStep):
         workloads.search.clear_search()
         workloads.vms.clear_filter()
 
-    def am_i_here(self, *args, **kwargs):
-        self.view.is_displayed()
-
 
 @navigator.register(TemplatesImages, 'All')
 class AllTemplates(CFMENavigateStep):
@@ -118,6 +115,3 @@ class AllTemplates(CFMENavigateStep):
         self.prerequisite_view.navigation.select('Services', 'Workloads')
         workloads.search.clear_search()
         workloads.templates.clear_filter()
-
-    def am_i_here(self, *args, **kwargs):
-        self.view.is_displayed()
