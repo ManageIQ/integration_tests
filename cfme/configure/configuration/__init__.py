@@ -77,7 +77,8 @@ server_roles = Form(
         ("storage_metrics_coordinator", CFMECheckbox("server_roles_storage_metrics_coordinator")),
         ("storage_inventory", CFMECheckbox("server_roles_storage_inventory")),
         ("vmdb_storage_bridge", CFMECheckbox("server_roles_vmdb_storage_bridge")),
-
+        # NEW ANSIBLE ROLE
+        ("embedded_ansible", CFMECheckbox("server_roles_embedded_ansible")),
     ]
 )
 
