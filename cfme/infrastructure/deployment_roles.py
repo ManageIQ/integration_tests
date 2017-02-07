@@ -41,6 +41,11 @@ class DeploymentRoles(Pretty, Navigatable):
         self.name = name
         self.provider = provider
 
+    def delete(self):
+        navigate_to(self, 'Details')
+        tb.select('Configuration', 'Remove Item', invokes_alert=True)
+        sel.handle_alert(wait=60)
+
 
 @navigator.register(DeploymentRoles, 'All')
 class All(CFMENavigateStep):
