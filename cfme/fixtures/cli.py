@@ -5,6 +5,7 @@ from utils.conf import cfme_data, credentials
 from utils.log import logger
 import pytest
 from wait_for import wait_for
+from cfme.test_framework.sprout.client import SproutException
 
 
 def is_dedicated_db_active(appliance2):
@@ -75,7 +76,7 @@ def fqdn_appliance():
             continue
     else:
         logger.error("Couldn't provision an appliance at all")
-
+        raise SproutException('No provision available')
     yield apps[0]
 
     sp.destroy_pool(pool_id)
