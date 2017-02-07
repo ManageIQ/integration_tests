@@ -6,7 +6,7 @@ from . import InfraProvider, prop_region
 class OpenstackInfraProvider(InfraProvider):
     STATS_TO_MATCH = ['num_template', 'num_host']
     _properties_region = prop_region
-    type_name = "openstack-infra"
+    type_name = "openstack_infra"
     mgmt_class = OpenstackInfraSystem
 
     def __init__(self, name=None, credentials=None, key=None, hostname=None,
