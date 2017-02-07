@@ -4,43 +4,37 @@ import pytest
 from datetime import timedelta
 
 from cfme.optimize.bottlenecks import Bottlenecks
-from cfme.test_framework.sprout.client import SproutClient
 from utils import conf
 from utils.appliance.implementations.ui import navigate_to
 from utils.ssh import SSHClient
 from utils.version import current_version
 
 
-@pytest.yield_fixture(scope="session")
-def appliance():
-    client = SproutClient.from_config()
-    apps, request_id = client.provision_appliances(preconfigured=True)
-    yield apps[0]
-    client.destroy_pool(request_id)
-
-
-@pytest.fixture(scope="session")
-def db_tbl(appliance):
-    return appliance.db['bottleneck_events']
-
-
-@pytest.fixture(scope="session")
-def db_events(appliance, db_tbl):
-    return appliance.db.session.query(db_tbl.timestamp,
-    db_tbl.resource_type, db_tbl.resource_name, db_tbl.event_type, db_tbl.severity, db_tbl.message)
-
-
-@pytest.fixture(scope="session")
-def extend_db_partition(appliance):
-    app = appliance
+@pytest.fixture(scope="module")
+def temp_appliance_extended_db(temp_appliance_preconfig):
+    app = temp_appliance_preconfig
     app.stop_evm_service()
     app.extend_db_partition()
     app.start_evm_service()
+    return app
 
 
-@pytest.fixture(scope="session")
-def db_restore(appliance, extend_db_partition):
-    app = appliance
+@pytest.fixture(scope="module")
+def db_tbl(temp_appliance_extended_db):
+    app = temp_appliance_extended_db
+    return app.db['bottleneck_events']
+
+
+@pytest.fixture(scope="module")
+def db_events(temp_appliance_extended_db, db_tbl):
+    app = temp_appliance_extended_db
+    return app.db.session.query(db_tbl.timestamp,
+    db_tbl.resource_type, db_tbl.resource_name, db_tbl.event_type, db_tbl.severity, db_tbl.message)
+
+
+@pytest.fixture(scope="module")
+def db_restore(temp_appliance_extended_db):
+    app = temp_appliance_extended_db
     app.stop_evm_service()
     app.drop_database()
     db_storage_hostname = conf.cfme_data['bottlenecks']['hostname']
@@ -69,8 +63,8 @@ def db_restore(appliance, extend_db_partition):
 
 
 @pytest.mark.tier(1)
-def test_bottlenecks_event_groups(appliance, db_restore, db_tbl, db_events):
-    with appliance:
+def test_bottlenecks_event_groups(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+    with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         # Enabling this option to show all possible values
         view.report.show_host_events.fill(True)
@@ -84,8 +78,8 @@ def test_bottlenecks_event_groups(appliance, db_restore, db_tbl, db_events):
 
 
 @pytest.mark.tier(1)
-def test_bottlenecks_show_host_events(appliance, db_restore, db_tbl, db_events):
-    with appliance:
+def test_bottlenecks_show_host_events(temp_appliance_extended_db, db_restore, db_events):
+    with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         view.report.show_host_events.fill(False)
         rows = view.report.event_details.rows(type='Host / Node')
@@ -98,8 +92,8 @@ def test_bottlenecks_show_host_events(appliance, db_restore, db_tbl, db_events):
 
 
 @pytest.mark.tier(1)
-def test_bottlenecks_time_zome(appliance, db_restore, db_tbl, db_events):
-    with appliance:
+def test_bottlenecks_time_zome(temp_appliance_extended_db, db_restore, db_tbl, db_events):
+    with temp_appliance_extended_db:
         view = navigate_to(Bottlenecks, 'All')
         row = view.report.event_details[0]
         # Selecting row by uniq value
