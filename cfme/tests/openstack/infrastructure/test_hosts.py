@@ -98,7 +98,7 @@ def test_host_smsbios_data(provider, soft_assert):
     names = [q.name for q in list(Quadicon.all())]
     for node in names:
         host = Host(node, provider)
-        navigate_to(host, 'Detail')
+        navigate_to(host, 'Details')
         soft_assert(host.get_detail('Properties', 'Manufacturer / Model'),
                     'Manufacturer / Model value are empty')
 
