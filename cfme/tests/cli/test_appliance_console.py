@@ -1,4 +1,3 @@
-
 from fixtures.pytest_store import store
 from cfme.fixtures.cli import is_dedicated_db_active
 import pytest
@@ -113,26 +112,26 @@ def test_black_console_ipa(request, fqdn_appliance, ipa_creds):
     assert return_code == 0
 
 
-@pytest.mark.parametrize('auth_type', ['sso_enabled', 'saml_enabled', 'local_login_disabled'],
-    ids=['sso', 'saml', 'local_login'])
-def test_external_auth(request, auth_type, ipa_crud, app_creds):
+@pytest.mark.parametrize('auth_type', [('sso_enabled', '1'), ('saml_enabled', '2'),
+    ('local_login_disabled', '3')], ids=['sso', 'saml', 'local_login'])
+def test_black_console_external_auth(request, auth_type, ext_type, ipa_crud, app_creds):
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                            matched_patterns=['.*{} to true.*'.format(auth_type)],
+                            matched_patterns=['.*{} to true.*'.format(auth_type[0])],
                             hostname=ipa_crud.address,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
     evm_tail.fix_before_start()
-    command = 'appliance_console_cli --extauth-opts="/authentication/{}=true"'.format(auth_type)
+    command = "ap \n 15 \n {} \n 4 \n".format(auth_type[1])
     ipa_crud.ssh_client.run_command(command)
     evm_tail.validate_logs()
 
     evm_tail = LogValidator('/var/www/miq/vmdb/log/evm.log',
-                            matched_patterns=['.*{} to false.*'.format(auth_type)],
+                            matched_patterns=['.*{} to false.*'.format(auth_type[0])],
                             hostname=ipa_crud.address,
                             username=app_creds['sshlogin'],
                             password=app_creds['password'])
 
     evm_tail.fix_before_start()
-    command2 = 'appliance_console_cli --extauth-opts="/authentication/{}=false"'.format(auth_type)
+    command2 = "ap \n 15 \n {} \n 4 \n".format(auth_type[1])
     ipa_crud.ssh_client.run_command(command2)
     evm_tail.validate_logs()
