@@ -1,7 +1,7 @@
 from fixtures.pytest_store import store
 from utils.log_validator import LogValidator
-import pytest
 from utils import version
+import pytest
 
 
 def test_set_hostname(request):
