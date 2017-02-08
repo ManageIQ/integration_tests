@@ -160,6 +160,7 @@ def run(**kwargs):
             "username": username_powershell,
             "password": creds['password'],
             "domain": creds['domain'],
+            "provisioning": mgmt_sys['provisioning']
         }
         client = SCVMMSystem(**scvmm_args)
 
