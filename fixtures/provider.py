@@ -45,7 +45,7 @@ def _setup_provider(provider_key, request=None):
         skip(provider_key, previous_fail=True)
 
     try:
-        providers.setup_provider(provider_key)
+        providers.setup_a_provider(filters=[providers.ProviderFilter(keys=[provider_key])])
     except Exception as ex:
         logger.error('Error setting up provider %s', provider_key)
         logger.exception(ex)
