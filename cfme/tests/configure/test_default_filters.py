@@ -4,8 +4,9 @@ import pytest
 from cfme import test_requirements
 from cfme.configure import settings as st
 from cfme.fixtures import pytest_selenium as sel
+from cfme.infrastructure.provider import InfraProvider
 from utils.blockers import BZ
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from cfme.cloud.instance.image import Image
 from cfme.cloud.instance import Instance
 from cfme.infrastructure import virtual_machines as vms
@@ -19,7 +20,7 @@ pytestmark = [pytest.mark.tier(3),
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
-    setup_a_provider(validate=True, check_existing=True)
+    setup_a_provider_by_class(InfraProvider)
 
 
 def test_cloudimage_defaultfilters(setup_first_provider):

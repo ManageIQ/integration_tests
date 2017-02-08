@@ -10,11 +10,13 @@ from cfme.control.explorer.actions import Action
 from cfme.control.explorer.alerts import Alert
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
+from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 from utils.log import logger
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils.wait import wait_for
 from cfme import test_requirements
 from utils.generators import random_vm_name
@@ -129,12 +131,12 @@ items = [
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    return _setup_a_provider("infra")
+    return setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.fixture(scope="module")
 def vmware_provider():
-    return _setup_a_provider("infra", "virtualcenter")
+    return setup_a_provider_by_class(VMwareProvider)
 
 
 @pytest.fixture(scope="module")
