@@ -33,6 +33,7 @@ psphere
 py
 pycrypto
 pygal
+python-novaclient
 PyGithub
 
 pytest==2.9.2
