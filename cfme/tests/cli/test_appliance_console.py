@@ -135,3 +135,29 @@ def test_black_console_external_auth(request, auth_type, ipa_crud, app_creds):
     command2 = "ap \n 15 \n {} \n 4 \n".format(auth_type[1])
     ipa_crud.ssh_client.run_command(command2)
     evm_tail.validate_logs()
+
+
+def test_black_console_generate_key(request, appliance):
+    time = appliance.current_time  # figure this out
+    date = appliance.current_date  # figure this out
+    client = appliance.ssh_client
+    channel = client.invoke_shell()
+    stdin = channel.makefile('wb')
+    stdin.write("ap \n 16 \n y \n 1 \n \n")
+    return_code, output = appliance.ssh_client.run_command(
+        "cat /var/www/miq/vmdb/certs/v2_key | grep ':created: {date} {time}'"
+        .format(date=date, time=time))
+    assert return_code == 0
+
+
+def test_black_console_generate_fetch_key(request, appliance, app_creds):
+    ip = appliance.addresss
+    pwd = app_creds['password']
+    key = appliance.v2_key  # figure this out
+    client = appliance.ssh_client
+    channel = client.invoke_shell()
+    stdin = channel.makefile('wb')
+    stdin.write("ap \n 16 \n y \n 2 \n {ip} \n \n {pwd} \n \n \n".format(ip=ip, pwd=pwd))
+    return_code, output = appliance.ssh_client.run_command(
+        "cat /var/www/miq/vmdb/certs/v2_key | grep '{key}'".format(key=key))
+    assert return_code == 0
