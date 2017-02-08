@@ -36,7 +36,7 @@ def fqdn_appliance():
             break
         except Exception as e:
             logger.warning("Couldn't provision appliance with following error:")
-            logger.warning({}.format(e))
+            logger.warning("{}".format(e))
             continue
     else:
         logger.error("Couldn't provision an appliance at all")

@@ -4,15 +4,16 @@ import pytest
 from random import sample
 
 import utils
+from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CustomReport
-from utils.providers import get_crud_by_name, setup_a_provider
+from utils.providers import get_crud_by_name, setup_a_provider_by_class
 from utils.version import since_date_or_version
 from cfme import test_requirements
 
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
-    setup_a_provider(validate=True, check_existing=True)
+    setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.yield_fixture(scope="function")

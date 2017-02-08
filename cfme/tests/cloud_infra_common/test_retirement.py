@@ -115,4 +115,4 @@ def test_set_unset_retirement_date_tomorrow(existing_vm):
     tomorrow = datetime.date.today() + datetime.timedelta(days=1)
     existing_vm.set_retirement_date(tomorrow)
     existing_vm.set_retirement_date(None)
-    assert existing_vm.get_detail(["Lifecycle", "Retirement Date"]) == "Never"
+    assert existing_vm.get_detail(properties=["Lifecycle", "Retirement Date"]) == "Never"

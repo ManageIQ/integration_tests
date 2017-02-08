@@ -5,10 +5,11 @@ from manageiq_client.api import APIException
 
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.exceptions import OptionNotAvailable
+from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 from utils.log import logger
@@ -28,6 +29,7 @@ _TEMPLATE_TORSO = """{
   }
 }
 """
+
 
 def service_catalogs(request, rest_api):
     name = fauxfactory.gen_alphanumeric()
@@ -238,7 +240,7 @@ def rates(request, rest_api):
 
 
 def a_provider():
-    return _setup_a_provider("infra")
+    return setup_a_provider_by_class(InfraProvider)
 
 
 def vm(request, a_provider, rest_api):

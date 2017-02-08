@@ -6,7 +6,8 @@ import pytest
 import random
 
 from cfme import test_requirements
-from utils.providers import setup_a_provider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
+from utils.providers import setup_a_provider_by_class
 from utils import version
 
 
@@ -18,7 +19,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def provider():
-    return setup_a_provider(prov_class="infra", prov_type="virtualcenter")
+    return setup_a_provider_by_class(VMwareProvider)
 
 
 @pytest.mark.meta(blockers=[1273654])

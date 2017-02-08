@@ -6,10 +6,11 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer import Namespace, Domain
+from cfme.infrastructure.provider import InfraProvider
 from cfme.tests import automate as ta
 from cfme.tests.configure import test_access_control as tac
 from utils import error, version
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils.update import update
 
 
@@ -37,7 +38,7 @@ def namespace(request, domain):
 
 @pytest.fixture
 def setup_single_provider():
-    setup_a_provider()
+    setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.mark.tier(2)

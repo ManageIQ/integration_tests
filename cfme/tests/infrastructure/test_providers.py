@@ -23,8 +23,7 @@ pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    return providers.setup_a_provider_by_class(prov_class=InfraProvider, validate=True,
-                                               check_existing=True)
+    return providers.setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.mark.tier(3)
