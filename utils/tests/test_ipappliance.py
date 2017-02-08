@@ -2,9 +2,10 @@
 from urlparse import urlparse
 import pytest
 
+from cfme.infrastructure.provider import InfraProvider
 from fixtures.pytest_store import store
 from utils.appliance import IPAppliance
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 
 
 def test_ipappliance_from_address():
@@ -32,7 +33,7 @@ def test_ipappliance_use_baseurl():
 
 def test_ipappliance_managed_providers():
     ip_a = IPAppliance()
-    provider = setup_a_provider(prov_class='infra')
+    provider = setup_a_provider_by_class(InfraProvider)
     assert provider in ip_a.managed_providers
 
 

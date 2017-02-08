@@ -2,8 +2,9 @@
 import pytest
 import os
 import shutil
+from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils.wait import wait_for
 from utils import browser
 
@@ -21,7 +22,7 @@ def clean_temp_directory():
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    _setup_a_provider("infra")
+    setup_a_provider_by_class(InfraProvider)
 
 
 @pytest.fixture

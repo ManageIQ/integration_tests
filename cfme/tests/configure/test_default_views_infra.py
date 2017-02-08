@@ -4,13 +4,14 @@ import pytest
 from cfme import test_requirements
 from cfme.configure.settings import DefaultView
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.myservice import MyService
 from cfme.services.workloads import VmsInstances, TemplatesImages
 from cfme.web_ui import Quadicon, fill, toolbar as tb
 from utils.appliance.implementations.ui import navigate_to
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import setup_a_provider_by_class
 
 
 pytestmark = [pytest.mark.tier(3),
@@ -21,8 +22,7 @@ pytestmark = [pytest.mark.tier(3),
 # TODO refactor for setup_provider parametrization with new 'latest' tag
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    _setup_a_provider(prov_class='infra', prov_type='virtualcenter', validate=True,
-                      check_existing=True)
+    setup_a_provider_by_class(VMwareProvider)
 
 
 # TODO: infrastructure hosts, pools, stores, clusters are removed
