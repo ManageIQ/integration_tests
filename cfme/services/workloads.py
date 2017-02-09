@@ -54,7 +54,7 @@ class WorkloadsVM(WorkloadsView):
     @property
     def is_displayed(self):
         return (
-            super(WorkloadsVM, self).is_displayed and
+            super(WorkloadsVM, self).in_workloads() and
             self.title.text == 'All VMs & Instances' and
             self.vms.is_opened and
             self.vms.tree.currently_selected == [
@@ -67,7 +67,7 @@ class WorkloadsTemplate(WorkloadsView):
     @property
     def is_displayed(self):
         return (
-            super(WorkloadsTemplate, self).is_displayed and
+            super(WorkloadsTemplate, self).in_workloads() and
             self.title.text == 'All Templates & Images' and
             self.templates.is_opened and
             self.templates.tree.currently_selected == [
@@ -111,7 +111,7 @@ class AllTemplates(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        workloads = self.create_view(WorkloadsVM)
+        workloads = self.create_view(WorkloadsTemplate)
         self.prerequisite_view.navigation.select('Services', 'Workloads')
         workloads.search.clear_search()
         workloads.templates.clear_filter()
