@@ -184,7 +184,7 @@ if __name__ == '__main__':
     # overwrite the default logger before anything else is imported,
     # to get our best chance at having everything import the replaced logger
     import utils.log
-    utils.log.add_prefix.prefix = "({}) ".format(args.slaveid)
+    utils.log.setup_for_worker(args.slaveid)
 
     from fixtures import terminalreporter
     from fixtures.pytest_store import store
