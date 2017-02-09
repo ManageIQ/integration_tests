@@ -33,9 +33,11 @@ psphere
 py
 pycrypto
 pygal
-python-novaclient
-PyGithub
 
+# required for an import that we get from mgmtsystem
+python-novaclient<7.0.0
+
+PyGithub
 pytest==2.9.2
 python-bugzilla>=1.2.0
 python-dateutil
