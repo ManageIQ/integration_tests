@@ -10,9 +10,11 @@
 """
 from functools import partial
 
-from navmazing import NavigateToSibling, NavigateToAttribute
-
+from navmazing import NavigateToSibling, NavigateToObject
 from cached_property import cached_property
+from widgetastic_manageiq import TimelinesView
+from cfme import BaseLoggedInPage
+from cfme.base.ui import Server
 from cfme.common.provider import CloudInfraProvider
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.host import Host
@@ -32,8 +34,8 @@ from utils.pretty import Pretty
 from utils.varmeth import variable
 from utils.wait import wait_for
 
-details_page = Region(infoblock_type='detail')
 
+details_page = Region(infoblock_type='detail')
 match_page = partial(match_location, controller='ems_infra', title='Infrastructure Providers')
 
 # Forms
@@ -105,6 +107,15 @@ manage_policies_tree = CheckboxTree("//div[@id='protect_treebox']/ul")
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 mon_btn = partial(tb.select, 'Monitoring')
+
+
+class InfraProviderTimelinesView(TimelinesView, BaseLoggedInPage):
+
+    @property
+    def is_displayed(self):
+        return all((self.logged_in_as_current_user,
+                   self.navigation.currently_selected == ['Compute', 'Infrastructure', 'Providers'],
+                   TimelinesView.is_displayed))
 
 
 class InfraProvider(Pretty, CloudInfraProvider):
@@ -302,9 +313,10 @@ class InfraProvider(Pretty, CloudInfraProvider):
         return web_clusters
 
 
+@navigator.register(Server, 'InfraProviders')
 @navigator.register(InfraProvider, 'All')
 class All(CFMENavigateStep):
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+    prerequisite = NavigateToObject(Server, 'LoggedIn')
 
     def am_i_here(self):
         return match_page(summary='Infrastructure Providers')
@@ -374,6 +386,15 @@ class Edit(CFMENavigateStep):
     def step(self):
         sel.check(Quadicon(self.obj.name, self.obj.quad_name).checkbox())
         cfg_btn('Edit Selected Infrastructure Providers')
+
+
+@navigator.register(InfraProvider, 'Timelines')
+class Timelines(CFMENavigateStep):
+    VIEW = InfraProviderTimelinesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
 
 
 @navigator.register(InfraProvider, 'Instances')

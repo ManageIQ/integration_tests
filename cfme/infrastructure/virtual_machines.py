@@ -9,6 +9,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
+from cfme import BaseLoggedInPage
 from cfme.common.vm import VM as BaseVM, Template as BaseTemplate
 from cfme.exceptions import (CandidateNotFound, VmNotFound, OptionNotAvailable,
                              DestinationNotFound, TemplateNotFound)
@@ -26,6 +27,7 @@ from utils.conf import cfme_data
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version, deferred_verpick
+from widgetastic_manageiq import TimelinesView
 
 
 # for provider specific vm/template page
@@ -88,6 +90,16 @@ def reset_page():
 
 
 drift_table = CheckboxTable("//th[normalize-space(.)='Timestamp']/ancestor::table[1]")
+
+
+class InfraVmTimelinesView(TimelinesView, BaseLoggedInPage):
+
+    @property
+    def is_displayed(self):
+        return all((self.logged_in_as_current_user,
+                   self.navigation.currently_selected == ['Compute', 'Infrastructure',
+                                                          '/vm_infra/explorer'],
+                   TimelinesView.is_displayed))
 
 
 @BaseVM.register_for_provider_type("infra")
@@ -921,3 +933,12 @@ class ProvisionVM(CFMENavigateStep):
         else:
             raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
                 self.obj.template_name, self.obj.provider.key))
+
+
+@navigator.register(Vm, 'Timelines')
+class Timelines(CFMENavigateStep):
+    VIEW = InfraVmTimelinesView
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        mon_btn('Timelines')
