@@ -284,13 +284,12 @@ def run(**kwargs):
         **kwargs: Kwargs generated from cfme_data['template_upload']['template_upload_rhevm'].
     """
     providers = cfme_data['management_systems']
-    for provider in providers:
+    for provider in [prov for prov in providers if providers[prov]['type'] == 'rhevm']:
 
-        if providers[provider]['type'] != 'rhevm':
+        # If a provider was passed, only cleanup on it, otherwise all rhevm providers
+        cli_provider = kwargs.get('provider', None)
+        if cli_provider and cli_provider != provider:
             continue
-        if args.provider:
-            if args.provider != provider:
-                continue
 
         provider_mgmt = get_mgmt(provider)
 
@@ -302,19 +301,28 @@ def run(**kwargs):
 
         try:
             print('connecting to provider, to establish api handler')
-            edomain = args.get('edomain',
-                               provider_mgmt.kwargs['template_upload'].get('edomain', None))
+            edomain = kwargs.get('edomain', None)
+            if not edomain:
+                edomain = provider_mgmt.kwargs['template_upload']['edomain']
         except Exception as e:
             logger.exception(e)
             continue
 
         try:
             print("\n--------Start of {}--------".format(provider))
-            cleanup_templates(provider_mgmt.api, edomain, args.days_old, args.max_templates)
+            cleanup_templates(provider_mgmt.api,
+                              edomain,
+                              kwargs.get('days_old'),
+                              kwargs.get('max_templates'))
         finally:
-            change_edomain_state(provider_mgmt, 'maintenance', edomain)
+            change_edomain_state(provider_mgmt,
+                                 'maintenance',
+                                 edomain)
             cleanup_empty_dir_on_edomain(provider_mgmt, edomain)
-            change_edomain_state(provider_mgmt, 'active', edomain)
+
+            change_edomain_state(provider_mgmt,
+                                 'active',
+                                 edomain)
             print("--------End of {}--------\n".format(provider))
 
     print("Provider Execution completed")
