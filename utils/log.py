@@ -479,7 +479,6 @@ def setup_for_worker(workername, loggers=('cfme', 'py.warnings')):
         log.debug("worker log started")  # directly reopens the file
 
 
-
 _configure_warnings()
 
 # Register a custom excepthook to log unhandled exceptions
