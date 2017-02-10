@@ -138,10 +138,14 @@ class OrchestrationTemplate(Updateable, Pretty, Navigatable):
 
     def create(self, content):
         view = navigate_to(self, "AddTemplate")
-        if(self.template_type == "CloudFormation Templates"):
+        if self.template_type == "CloudFormation Templates":
             temp_type = "Amazon CloudFormation"
-        else:
+        elif self.template_type == "Heat Templates":
             temp_type = "OpenStack Heat"
+        elif self.template_type == "Azure Templates":
+            temp_type = "Microsoft Azure"
+        else:
+            raise Exception("ERROR template_type needs to be one of the above")
         view.fill({'name': self.template_name,
                    'description': self.description,
                    'template_type': temp_type,
