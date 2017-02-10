@@ -40,6 +40,9 @@ scripts_data_path = scripts_path.join('data')
 #: jinja2 templates, use with ``jinja2.FileSystemLoader``
 template_path = data_path.join('templates')
 
+#: orchestration datafile storage, ``cfme_tests/data/orchestration``
+orchestration_path = data_path.join('orchestration')
+
 #: resource files root directory, ``cfme_tests/data/resources``
 resources_path = data_path.join('resources')
 
