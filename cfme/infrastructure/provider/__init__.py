@@ -286,7 +286,9 @@ class InfraProvider(Pretty, CloudInfraProvider):
                 secret=creds["password"],
                 verify_secret=creds["password"],
             )
-            result.append(Host(name=host["name"], credentials=cred))
+            result.append(Host(name=host["name"],
+                               credentials=cred,
+                               provider=self))
         return result
 
     def get_clusters(self):
