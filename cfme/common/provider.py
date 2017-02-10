@@ -265,6 +265,13 @@ class BaseProvider(Taggable, Updateable, SummaryMixin, Navigatable):
                 'Delete initiated for 1 {} Provider from the {} Database'.format(
                     self.string_name, self.appliance.product_name))
 
+    def setup(self):
+        """
+        Sets up the provider robustly
+        """
+        return self.create(
+            cancel=False, validate_credentials=True, check_existing=True, validate_inventory=True)
+
     def delete_if_exists(self, *args, **kwargs):
         """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``
 

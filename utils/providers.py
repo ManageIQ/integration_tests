@@ -10,18 +10,16 @@ you with whatever you ask for with no limitations.
 The main clue to know what is limited by the filters and what isn't is the 'filters' parameter.
 """
 import operator
-import random
 import six
 from collections import Mapping, OrderedDict
 from copy import copy
 
-from fixtures.pytest_store import store
 from cfme.common.provider import base_types, provider_types
 
-from cfme.containers import provider as containers_providers # NOQA
-from cfme.cloud import provider as cloud_providers # NOQA
-from cfme.infrastructure import provider as infrastructure_providers # NOQA
-from cfme.middleware import provider as middleware_providers # NOQA
+from cfme.containers import provider as containers_providers  # NOQA
+from cfme.cloud import provider as cloud_providers  # NOQA
+from cfme.infrastructure import provider as infrastructure_providers  # NOQA
+from cfme.middleware import provider as middleware_providers  # NOQA
 
 from cfme.exceptions import UnknownProviderType
 from utils import conf, version
@@ -196,9 +194,9 @@ class ProviderFilter(object):
             ...or...
             pf = ProviderFilter(required_tags=['openstack', 'complete'])
             pf_inverted = ProviderFilter(required_tags=['disabled'], inverted=True)
-            provider = setup_a_provider([pf, pf_inverted])
-            ^ this will setup a provider that has both the "openstack" and "complete" tags set
-              and at the same time does not have the "disabled" tag
+            providers = list_providers([pf, pf_inverted])
+            ^ this will return providers that have both the "openstack" and "complete" tags set
+              and at the same time don't have the "disabled" tag
             ...or...
             pf = ProviderFilter(keys=['rhevm34'], class=CloudProvider, conjunctive=False)
             providers = list_providers([pf])
@@ -299,103 +297,6 @@ def list_provider_keys(provider_type=None):
         return filtered_keys
     else:
         return all_keys
-
-
-def setup_provider(provider_key, validate=True, check_existing=True, appliance=None):
-    provider = get_crud(provider_key, appliance=appliance)
-    provider.create(validate_credentials=True, validate_inventory=validate,
-                    check_existing=check_existing)
-    return provider
-
-
-def setup_a_provider(
-        filters=None, use_global_filters=True, validate=True, check_existing=True, appliance=None):
-    """ Sets up a single provider robustly.
-
-    Does some counter-badness measures.
-
-    Args:
-        filters: List if :py:class:`ProviderFilter` or None; infra providers by default
-        use_global_filters: Will apply global filters as well if `True`, will not otherwise
-        validate: Whether to validate the provider.
-        check_existing: Whether to check if the provider already exists.
-        appliance: Optional :py:class:`utils.appliance.IPAppliance` to be passed to provider CRUD
-            objects
-    """
-    filters = filters or []
-
-    providers = list_providers(
-        filters=filters, use_global_filters=use_global_filters, appliance=appliance)
-    if not providers:
-        raise Exception("All providers have been filtered out, cannot setup any providers")
-
-    # If there is a provider already set up matching the user's requirements, reuse it
-    for provider in providers:
-        if provider.exists:
-            return provider
-
-    # Activate the 'nonproblematic' filter to filter out problematic providers (if any)
-    if global_filters.get('problematic') is None:
-        global_filters['problematic'] = ProviderFilter(keys=[], inverted=True)
-
-    # If there are no non-problematic providers, reset the filter
-    nonproblematic_providers = list_providers(filters=filters)
-    if not nonproblematic_providers:
-        global_filters['problematic'].keys = []
-        store.terminalreporter.write_line(
-            "Reached the point where all possible providers forthis case are marked as bad. "
-            "Clearing the bad provider list for a fresh start and next chance.", yellow=True)
-    # Otherwise, make non-problematic the new cool
-    else:
-        providers = nonproblematic_providers
-
-    # If we have more than one provider, try to pick one that doesnt have the do_not_prefer flag set
-    if len(providers) > 1:
-        do_not_prefer_filter = ProviderFilter(required_fields=[("do_not_prefer", False)],
-                                              inverted=True)
-        # If we find any providers without the 'do_not_prefer' flag, add  the filter to the list
-        # of active filters and make preferred providers the new cool
-        preferred_providers = list_providers(filters=filters + [do_not_prefer_filter])
-        if preferred_providers:
-            filters.append(do_not_prefer_filter)
-            providers = preferred_providers
-
-    # Try to set up a nonexisting provider (return if successful, otherwise try another)
-    non_existing = [prov for prov in providers if not prov.exists]
-    random.shuffle(non_existing)  # Make the provider load even (long-term) by shuffling them around
-    for provider in non_existing:
-        try:
-            store.terminalreporter.write_line(
-                "Trying to set up provider {}\n".format(provider.key), green=True)
-            provider.create(validate_credentials=True, validate_inventory=validate,
-                            check_existing=check_existing)
-            return provider
-        except Exception as e:
-            # In case of a known provider error:
-            logger.exception(e)
-            message = "Provider {} is behaving badly, marking it as bad. {}: {}".format(
-                provider.key, type(e).__name__, str(e))
-            logger.warning(message)
-            store.terminalreporter.write_line(message + "\n", red=True)
-            global_filters['problematic'].keys.append(provider.key)
-            if provider.exists:
-                # Remove it in order to not explode on next calls
-                provider.delete(cancel=False)
-                provider.wait_for_delete()
-                message = "Provider {} was deleted because it failed to set up.".format(
-                    provider.key)
-                logger.warning(message)
-                store.terminalreporter.write_line(message + "\n", red=True)
-    else:
-        raise Exception("No providers could be set up matching the params")
-
-    return provider
-
-
-def setup_a_provider_by_class(prov_class, validate=True, check_existing=True, appliance=None):
-    pf = ProviderFilter(classes=[prov_class])
-    return setup_a_provider(
-        filters=[pf], validate=validate, check_existing=check_existing, appliance=appliance)
 
 
 def get_class_from_type(prov_type):

@@ -14,14 +14,12 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
-from utils import providers
 from utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.fixture(scope="module")
-def setup_first_provider():
-    providers.setup_a_provider_by_class(InfraProvider)
-    providers.setup_a_provider_by_class(CloudProvider)
+def cloud_and_infra_provider(cloud_provider, infra_provider):
+    pass
 
 
 param_classes = {
@@ -41,7 +39,7 @@ param_classes = {
 
 pytestmark = [
     pytest.mark.parametrize("location", param_classes),
-    pytest.mark.usefixtures("setup_first_provider"),
+    pytest.mark.usefixtures("cloud_and_infra_provider"),
     pytest.mark.tier(3)
 ]
 

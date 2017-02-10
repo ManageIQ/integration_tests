@@ -16,17 +16,12 @@ from cfme import test_requirements
 from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.web_ui import fill, flash
-from utils import testgen, version, providers
+from utils import testgen, version
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
 from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 
 pytest_generate_tests = testgen.generate([CloudProvider], scope="function")
-
-
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    return providers.setup_a_provider_by_class(CloudProvider)
 
 
 @pytest.mark.tier(3)
@@ -265,14 +260,13 @@ def test_password_max_character_validation():
 
 @pytest.mark.tier(3)
 @test_requirements.discovery
-def test_name_max_character_validation(request, setup_a_provider):
+def test_name_max_character_validation(request, cloud_provider):
     """Test to validate max character for name field"""
-    provider = setup_a_provider
-    request.addfinalizer(lambda: provider.delete_if_exists(cancel=False))
+    request.addfinalizer(lambda: cloud_provider.delete_if_exists(cancel=False))
     name = fauxfactory.gen_alphanumeric(255)
-    provider.update({'name': name})
-    provider.name = name
-    assert provider.exists
+    cloud_provider.update({'name': name})
+    cloud_provider.name = name
+    assert cloud_provider.exists
 
 
 @pytest.mark.tier(3)
@@ -322,9 +316,9 @@ def test_openstack_provider_has_api_version():
 
 class TestProvidersRESTAPI(object):
     @pytest.fixture(scope="function")
-    def arbitration_profiles(self, request, rest_api, setup_a_provider):
+    def arbitration_profiles(self, request, rest_api, cloud_provider):
         num_profiles = 2
-        response = _arbitration_profiles(request, rest_api, setup_a_provider, num=num_profiles)
+        response = _arbitration_profiles(request, rest_api, cloud_provider, num=num_profiles)
         assert rest_api.response.status_code == 200
         assert len(response) == num_profiles
 
@@ -333,14 +327,14 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.parametrize('from_detail', [True, False], ids=['from_detail', 'from_collection'])
-    def test_cloud_networks_query(self, setup_a_provider, rest_api, from_detail):
+    def test_cloud_networks_query(self, cloud_provider, rest_api, from_detail):
         """Tests querying cloud providers and cloud_networks collection for network info.
 
         Metadata:
             test_flag: rest
         """
         if from_detail:
-            networks = rest_api.collections.providers.get(name=setup_a_provider.name).cloud_networks
+            networks = rest_api.collections.providers.get(name=cloud_provider.name).cloud_networks
         else:
             networks = rest_api.collections.cloud_networks
         assert rest_api.response.status_code == 200
@@ -351,13 +345,13 @@ class TestProvidersRESTAPI(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    def test_security_groups_query(self, setup_a_provider, rest_api):
+    def test_security_groups_query(self, cloud_provider, rest_api):
         """Tests querying cloud networks subcollection for security groups info.
 
         Metadata:
             test_flag: rest
         """
-        network = rest_api.collections.providers.get(name=setup_a_provider.name).cloud_networks[0]
+        network = rest_api.collections.providers.get(name=cloud_provider.name).cloud_networks[0]
         network.reload(attributes='security_groups')
         security_groups = network.security_groups
         # "security_groups" needs to be present, even if it's just an empty list

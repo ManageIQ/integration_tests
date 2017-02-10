@@ -10,13 +10,12 @@ from cfme.control.explorer.actions import Action
 from cfme.control.explorer.alerts import Alert
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
-from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
+from cfme.fixtures import setup_one_by_class_or_skip
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 from utils.log import logger
-from utils.providers import setup_a_provider_by_class
 from utils.wait import wait_for
 from cfme import test_requirements
 from utils.generators import random_vm_name
@@ -130,13 +129,8 @@ items = [
 
 
 @pytest.fixture(scope="module")
-def setup_a_provider():
-    return setup_a_provider_by_class(InfraProvider)
-
-
-@pytest.fixture(scope="module")
-def vmware_provider():
-    return setup_a_provider_by_class(VMwareProvider)
+def vmware_provider(request):
+    return setup_one_by_class_or_skip(request, VMwareProvider)
 
 
 @pytest.fixture(scope="module")
@@ -148,7 +142,7 @@ def vmware_vm(request, vmware_provider):
 
 
 @pytest.mark.meta(blockers=[1155284])
-def test_scope_windows_registry_stuck(request, setup_a_provider):
+def test_scope_windows_registry_stuck(request, infra_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""
     policy = VMCompliancePolicy(
         "Windows registry scope glitch testing Compliance Policy",
@@ -165,7 +159,7 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
     request.addfinalizer(lambda: profile.delete() if profile.exists else None)
     profile.create()
     # Now assign this malformed profile to a VM
-    vm = VM.factory(Vm.get_first_vm_title(provider=setup_a_provider), setup_a_provider)
+    vm = VM.factory(Vm.get_first_vm_title(provider=infra_provider), infra_provider)
     vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
     navigate_to(Server, 'Dashboard')

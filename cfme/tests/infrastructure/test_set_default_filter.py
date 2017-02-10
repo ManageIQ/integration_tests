@@ -7,7 +7,7 @@ from cfme.infrastructure import host, datastore
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.login import login_admin, logout
 from cfme.web_ui.search import search_box
-from utils.providers import setup_a_provider_by_class
+from fixtures.provider import setup_one_by_class_or_skip
 from utils import version
 from cfme.web_ui import accordion, listaccordion as list_acc
 from utils.appliance.implementations.ui import navigate_to
@@ -16,14 +16,14 @@ from cfme.infrastructure.datastore import Datastore
 
 
 @pytest.fixture(scope="module")
-def provider():
-    return setup_a_provider_by_class(VMwareProvider)
+def vmware_provider(request):
+    return setup_one_by_class_or_skip(request, VMwareProvider)
 
 
-pytestmark = [pytest.mark.tier(3)]
+pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("vmware_provider")]
 
 
-def test_set_default_host_filter(provider, request):
+def test_set_default_host_filter(request):
     """ Test for setting default filter for hosts."""
 
     # Add cleanup finalizer
@@ -43,7 +43,7 @@ def test_set_default_host_filter(provider, request):
         'Status / Running filter not set as default'
 
 
-def test_clear_host_filter_results(provider):
+def test_clear_host_filter_results():
     """ Test for clearing filter results for hosts."""
 
     navigate_to(Host, 'All')
@@ -54,7 +54,7 @@ def test_clear_host_filter_results(provider):
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() >= "5.6")
-def test_set_default_datastore_filter(provider, request):
+def test_set_default_datastore_filter(request):
     """ Test for setting default filter for datastores."""
 
     # Add cleanup finalizer
@@ -74,7 +74,7 @@ def test_set_default_datastore_filter(provider, request):
         'Store Type / NFS not set as default'
 
 
-def test_clear_datastore_filter_results(provider):
+def test_clear_datastore_filter_results():
     """ Test for clearing filter results for datastores."""
 
     if version.current_version() >= 5.6:
