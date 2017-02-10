@@ -123,6 +123,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         """
         # Ensure the classes are loaded:
         import cfme.cloud.instance  # NOQA
+        from cfme.cloud.instance.azure import AzureInstance  # NOQA
+        from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
+        from cfme.cloud.instance.gce import GCEInstance  # NOQA
+        from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
         import cfme.infrastructure.virtual_machines  # NOQA
         try:
             return (

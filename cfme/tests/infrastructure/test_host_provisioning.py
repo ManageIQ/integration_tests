@@ -124,11 +124,11 @@ def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provide
                 test_host.delete(cancel=False)
                 host.wait_for_host_delete(test_host)
             elif renamed_host_name1 in host_list_ui:
-                host_renamed_obj1 = host.Host(name=renamed_host_name1)
+                host_renamed_obj1 = host.Host(name=renamed_host_name1, provider=provider)
                 host_renamed_obj1.delete(cancel=False)
                 host.wait_for_host_delete(host_renamed_obj1)
             elif renamed_host_name2 in host_list_ui:
-                host_renamed_obj2 = host.Host(name=renamed_host_name2)
+                host_renamed_obj2 = host.Host(name=renamed_host_name2, provider=provider)
                 host_renamed_obj2.delete(cancel=False)
                 host.wait_for_host_delete(host_renamed_obj2)
         except:

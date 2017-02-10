@@ -65,7 +65,7 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
     """
     # Add credentials to host
     host_data = get_host_data_by_name(provider.key, host_name)
-    test_host = host.Host(name=host_name)
+    test_host = host.Host(name=host_name, provider=provider)
 
     wait_for(lambda: test_host.exists, delay=10, num_sec=120)
 
