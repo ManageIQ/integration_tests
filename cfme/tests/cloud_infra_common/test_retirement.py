@@ -67,7 +67,7 @@ def existing_vm(provider):
 
 def verify_retirement(vm):
     # wait for the info block showing a date as retired date
-    wait_for(lambda: vm.is_retired, delay=30, num_sec=720,
+    wait_for(lambda: vm.is_retired, delay=15, num_sec=10 * 60,
              message="Wait until VM {} will be retired".format(vm.name))
 
     assert vm.summary.power_management.power_state.text_value in {'off', 'suspended', 'unknown'}
