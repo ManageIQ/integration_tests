@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
-from contextlib import contextmanager
 from datetime import date
 from functools import partial
 
@@ -522,10 +521,8 @@ class VM(BaseVM):
     TO_RETIRE = None
 
     retire_form = Form(fields=[
-        ('date_retire', {
-            version.LOWEST: date_retire_element,
-            "5.5": AngularCalendarInput(
-                "retirement_date", "//label[contains(normalize-space(.), 'Retirement Date')]")}),
+        ('date_retire', AngularCalendarInput(
+            "retirement_date", "//label[contains(normalize-space(.), 'Retirement Date')]")),
         ('warn', AngularSelect('retirementWarning'))
     ])
 
@@ -533,9 +530,10 @@ class VM(BaseVM):
         self.load_details(refresh=True)
         lcl_btn(self.TO_RETIRE, invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message({
-            version.LOWEST: "Retire initiated for 1 VM and Instance from the CFME Database",
-            "5.5": "Retirement initiated for 1 VM and Instance from the CFME Database"})
+        flash.assert_success_message(
+            'Retirement initiated for 1 VM and Instance from the {} Database'.format(version.pick({
+                version.LOWEST: 'CFME',
+                'upstream': 'ManageIQ'})))
 
     def power_control_from_provider(self):
         raise NotImplementedError("You have to implement power_control_from_provider!")
