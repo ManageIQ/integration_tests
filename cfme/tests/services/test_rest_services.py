@@ -66,6 +66,24 @@ def service_data(request, rest_api, a_provider, dialog, service_catalogs):
     return _service_data(request, rest_api, a_provider, dialog, service_catalogs)
 
 
+def wait_for_vm_power_state(vm, resulting_state):
+    wait_for(
+        lambda: vm.power_state == resulting_state,
+        num_sec=600, delay=20, fail_func=vm.reload,
+        message='Wait for VM to {} (current state: {})'.format(
+            resulting_state, vm.power_state))
+
+
+def service_body(**kwargs):
+    uid = fauxfactory.gen_alphanumeric(5)
+    body = {
+        'name': 'test_rest_service_{}'.format(uid),
+        'description': 'Test REST Service {}'.format(uid),
+    }
+    body.update(kwargs)
+    return body
+
+
 class TestServiceRESTAPI(object):
     def test_edit_service(self, rest_api, services):
         """Tests editing a service.
@@ -236,18 +254,111 @@ class TestServiceRESTAPI(object):
                 getattr(service.action, action)()
             else:
                 getattr(collection.action, action)(service)
-
-            wait_for(
-                lambda: vm.power_state == resulting_state,
-                num_sec=600, delay=20, fail_func=vm.reload,
-                message='Wait for VM to {} (current state: {})'.format(
-                    resulting_state, vm.power_state))
+            wait_for_vm_power_state(vm, resulting_state)
 
         assert vm.power_state == 'on'
         _action_and_check('stop', 'off')
         _action_and_check('start', 'on')
         _action_and_check('suspend', 'suspended')
         _action_and_check('start', 'on')
+
+    @pytest.mark.meta(blockers=[BZ(1416146, forced_streams=['5.7', 'upstream'])])
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_create_service_from_parent(self, request, rest_api):
+        """Tests creation of new service that reference existing service.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.services
+        service = collection.action.create(service_body())[0]
+        request.addfinalizer(service.action.delete)
+        bodies = []
+        for ref in {'id': service.id}, {'href': service.href}:
+            bodies.append(service_body(parent_service=ref))
+        response = collection.action.create(*bodies)
+        for ent in response:
+            assert ent.ancestry == str(service.id)
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_delete_parent_service(self, rest_api):
+        """Tests that when parent service is deleted, child service is deleted automatically.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.services
+        grandparent = collection.action.create(service_body())[0]
+        parent = collection.action.create(service_body(parent_service={'id': grandparent.id}))[0]
+        child = collection.action.create(service_body(parent_service={'id': parent.id}))[0]
+        assert parent.ancestry == str(grandparent.id)
+        assert child.ancestry == '{}/{}'.format(grandparent.id, parent.id)
+        grandparent.action.delete()
+        for gen in parent, child:
+            with error.expected("ActiveRecord::RecordNotFound"):
+                gen.action.delete()
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_add_service_parent(self, request, rest_api):
+        """Tests adding parent reference to already existing service.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.services
+        parent = collection.action.create(service_body())[0]
+        request.addfinalizer(parent.action.delete)
+        child = collection.action.create(service_body())[0]
+        child.action.edit(ancestry=str(parent.id))
+        child.reload()
+        assert child.ancestry == str(parent.id)
+
+    @pytest.mark.meta(blockers=[BZ(1416903, forced_streams=['5.7', 'upstream'])])
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_power_parent_service(self, request, rest_api, service_data):
+        """Tests that power operations triggered on service parent affects child service.
+
+        * start, stop and suspend actions
+        * transition from one power state to another
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.services
+        service = collection.action.create(service_body())[0]
+        request.addfinalizer(service.action.delete)
+        child = collection.get(name=service_data['service_name'])
+        vm = rest_api.collections.vms.get(name=service_data['vm_name'])
+        child.action.edit(ancestry=str(service.id))
+        child.reload()
+
+        def _action_and_check(action, resulting_state):
+            getattr(service.action, action)()
+            wait_for_vm_power_state(vm, resulting_state)
+
+        assert vm.power_state == 'on'
+        _action_and_check('stop', 'off')
+        _action_and_check('start', 'on')
+        _action_and_check('suspend', 'suspended')
+        _action_and_check('start', 'on')
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    def test_retire_parent_service_now(self, rest_api, service_data):
+        """Tests that child service is retired together with a parent service.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.services
+        parent = collection.action.create(service_body())[0]
+        child = collection.action.create(service_body(parent_service={'id': parent.id}))[0]
+
+        parent.action.retire()
+        wait_for(
+            lambda: not collection.find_by(name=child.name),
+            num_sec=600,
+            delay=10,
+        )
 
 
 class TestServiceDialogsRESTAPI(object):
@@ -299,7 +410,7 @@ class TestServiceTemplateRESTAPI(object):
             s_tpl.action.delete()
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
-    def test_assign_unassign_service_template_to_service_catalog(self, rest_api, service_catalogs,
+    def test_assign_unassign_service_template_to_service_catalog(self, service_catalogs,
             service_templates):
         """Tests assigning and unassigning the service templates to service catalog.
         Prerequisities:
