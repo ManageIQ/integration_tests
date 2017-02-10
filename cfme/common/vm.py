@@ -522,7 +522,7 @@ class VM(BaseVM):
 
     retire_form = Form(fields=[
         ('date_retire', AngularCalendarInput(
-            "retirement_date", "//label[contains(normalize-space(.), 'Retirement')]")),
+            "retirement_date", "//label[contains(normalize-space(.), 'Retirement Date')]")),
         ('warn', AngularSelect('retirementWarning'))
     ])
 
