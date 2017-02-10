@@ -530,8 +530,10 @@ class VM(BaseVM):
         self.load_details(refresh=True)
         lcl_btn(self.TO_RETIRE, invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Retirement initiated for 1 VM and Instance from the CFME '
-                                     'Database')
+        flash.assert_success_message(
+            'Retirement initiated for 1 VM and Instance from the {} Database'.format(version.pick({
+                version.LOWEST: 'CFME',
+                'upstream': 'ManageIQ'})))
 
     def power_control_from_provider(self):
         raise NotImplementedError("You have to implement power_control_from_provider!")
