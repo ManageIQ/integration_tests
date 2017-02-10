@@ -2180,29 +2180,33 @@ class DashboardWidgetsPicker(View):
     """Represents widgets picker in Dashboard editing screen (Cloud Intel/Reports/Dashobards)."""
 
     ROOT = ParametrizedLocator(".//div[@id='{@id}']")
-    WIDGETS = ".//a[starts-with(@id, 'w_')]/.."
-    WIDGET_REMOVE = ".//div[contains(@title, {})]//a/i"
-    widget_picker = BootstrapSelect("widget")
+    select = BootstrapSelect(Parameter("@select_id"))
 
-    def __init__(self, parent, id, logger=None):
+    def __init__(self, parent, id, names_locator=None, remove_locator=None,
+                 select_id=None, logger=None):
         View.__init__(self, parent=parent, logger=logger)
         self.id = id
+        self.names_locator = names_locator
+        self.remove_locator = remove_locator
+        self.select_id = select_id
 
     def add_widget(self, widget):
-        self.widget_picker.fill(widget)
+        self.select.fill(widget)
 
     def remove_widget(self, widget):
-        self.browser.click(self.WIDGET_REMOVE.format(quote(widget)))
+        self.browser.click(self.remove_locator.format(quote(widget)))
         self.browser.plugin.ensure_page_safe()
 
     @property
+    def all_elements(self):
+        return self.browser.elements(self.names_locator)
+
+    @property
     def all_widgets(self):
-        try:
-            widgets = [widget.text for widget in self.browser.elements(self.WIDGETS)]
-        except NoSuchElementException:
-            return []
+        if self.all_elements:
+            return [widget.text for widget in self.all_elements]
         else:
-            return widgets
+            return []
 
     def _values_to_remove(self, values):
         return list(set(self.all_widgets) - set(values))
@@ -2228,3 +2232,51 @@ class DashboardWidgetsPicker(View):
 
     def read(self):
         return self.all_widgets
+
+
+class MenuShortcutsPicker(DashboardWidgetsPicker):
+    """Represents shortcut picker in Menu Widget editing screen
+    (Cloud Intel/Reports/Dashobard Widgets/Menu)."""
+
+    def add_shortcut(self, shortcut, alias):
+        mapping = self.mapping
+        self.select.fill(shortcut)
+        if shortcut != alias:
+            Input(self, "shortcut_desc_{}".format(mapping[shortcut])).fill(alias)
+
+    @cached_property
+    def mapping(self):
+        return {option["text"]: option["value"] for option in self.select.all_available_options}
+
+    @property
+    def all_shortcuts(self):
+        if self.all_elements:
+            return [shortcut.get_attribute("value") for shortcut in self.all_elements]
+        else:
+            return []
+
+    def clear(self):
+        for el in self.browser.elements(".//a[@title='Remove this Shortcut']"):
+            self.browser.click(el)
+
+    def fill(self, values):
+        dict_values = None
+        if isinstance(values, basestring):
+            values = [values]
+        if isinstance(values, dict):
+            dict_values = values
+            values = values.values()
+        if set(values) == set(self.all_shortcuts):
+            return False
+        else:
+            self.clear()
+            if dict_values is not None:
+                dict_values_to_add = dict_values
+            else:
+                dict_values_to_add = {value: value for value in values}
+            for shortcut, alias in dict_values_to_add.iteritems():
+                self.add_shortcut(shortcut, alias)
+            return True
+
+    def read(self):
+        return self.all_shortcuts

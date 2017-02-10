@@ -38,7 +38,12 @@ class DashboardFormCommon(CloudIntelReportsView):
     tab_title = Input(name="description")
     locked = Checkbox("locked")
     sample_dashboard = Text(".//div[@id='form_widgets_div']/h3")
-    widgets = DashboardWidgetsPicker("form_widgets_div")
+    widgets = DashboardWidgetsPicker(
+        "form_widgets_div",
+        select_id="widget",
+        names_locator=".//a[starts-with(@id, 'w_')]/..",
+        remove_locator=".//div[contains(@title, {})]//a/i"
+    )
     cancel_button = Button("Cancel")
 
 
