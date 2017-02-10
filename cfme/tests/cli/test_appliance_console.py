@@ -153,7 +153,7 @@ def test_black_console_generate_key(request, appliance):
 def test_black_console_generate_fetch_key(request, appliance, app_creds):
     ip = appliance.addresss
     pwd = app_creds['password']
-    key = appliance.v2_key  # figure this out
+    key = appliance.v2_key  # figure this out md5 the 2 files
     client = appliance.ssh_client
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
