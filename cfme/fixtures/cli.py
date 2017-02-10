@@ -13,13 +13,13 @@ from cfme.test_framework.sprout.client import SproutException
 def dedicated_db(fqdn_appliance, app_creds):
     def is_dedicated_db_active(dedicated_db):
         return_code, output = dedicated_db.ssh_client.run_command(
-            "systemctl status rh-postgresql{}-postgresql.service | grep running".format(scl_name()))
+            "systemctl status {}-postgresql.service | grep running".format(scl_name()))
         return return_code == 0
     pwd = app_creds['password']
     client = fqdn_appliance.ssh_client
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
-    stdin.write("ap \n \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
+    stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
     wait_for(is_dedicated_db_active, func_args=[fqdn_appliance])
 
     return (fqdn_appliance)
