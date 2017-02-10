@@ -51,7 +51,7 @@ def fqdn_appliance():
     sp.destroy_pool(pool_id)
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.yield_fixture()
 def ipa_crud(fqdn_appliance, app_creds, ipa_creds):
     fqdn_appliance.ap_cli.configure_ipa(ipa_creds['ipaserver'], ipa_creds['username'],
         ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
