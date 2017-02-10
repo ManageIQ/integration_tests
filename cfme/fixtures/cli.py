@@ -2,58 +2,27 @@ from utils.version import get_stream
 from cfme.test_framework.sprout.client import SproutClient
 from utils.appliance import current_appliance
 from utils.conf import cfme_data, credentials
+from utils.db import scl_name
 from utils.log import logger
 import pytest
 from wait_for import wait_for
 from cfme.test_framework.sprout.client import SproutException
 
 
-def is_dedicated_db_active(appliance2):
-    if appliance2.version < '5.7':
-        postgres = 94
-    else:
-        postgres = 95
-    return_code, output = appliance2.ssh_client.run_command(
-        "systemctl status rh-postgresql{}-postgresql.service | grep running".format(postgres))
-    return return_code == 0
-
-
 @pytest.fixture()
-def dedicated_db(appliance2, app_creds):
+def dedicated_db(fqdn_appliance, app_creds):
+    def is_dedicated_db_active(dedicated_db):
+        return_code, output = dedicated_db.ssh_client.run_command(
+            "systemctl status rh-postgresql{}-postgresql.service | grep running".format(scl_name()))
+        return return_code == 0
     pwd = app_creds['password']
-    client = appliance2.ssh_client
+    client = fqdn_appliance.ssh_client
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
-    stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
-    wait_for(is_dedicated_db_active, func_args=[appliance2])
+    stdin.write("ap \n \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
+    wait_for(is_dedicated_db_active, func_args=[fqdn_appliance])
 
-    return appliance2
-
-
-@pytest.yield_fixture(scope="function")
-def appliance():
-    sp = SproutClient.from_config()
-    version = current_appliance.version.vstring
-    stream = get_stream(current_appliance.version)
-    apps, pool_id = sp.provision_appliances(
-        count=1, preconfigured=False, version=version, stream=stream)
-
-    yield apps[0]
-
-    sp.destroy_pool(pool_id)
-
-
-@pytest.yield_fixture(scope="function")
-def appliance2():
-    sp = SproutClient.from_config()
-    version = current_appliance.version.vstring
-    stream = get_stream(current_appliance.version)
-    apps, pool_id = sp.provision_appliances(
-        count=1, preconfigured=False, version=version, stream=stream)
-
-    yield apps[0]
-
-    sp.destroy_pool(pool_id)
+    return (fqdn_appliance)
 
 
 @pytest.yield_fixture(scope="function")
@@ -82,7 +51,7 @@ def fqdn_appliance():
     sp.destroy_pool(pool_id)
 
 
-@pytest.yield_fixture()
+@pytest.yield_fixture(scope="module")
 def ipa_crud(fqdn_appliance, app_creds, ipa_creds):
     fqdn_appliance.ap_cli.configure_ipa(ipa_creds['ipaserver'], ipa_creds['username'],
         ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])

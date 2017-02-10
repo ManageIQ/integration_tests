@@ -12,32 +12,34 @@ def test_set_hostname(request):
     assert return_code == 0
 
 
-def test_configure_appliance_internal_fetch_key(request, app_creds, appliance):
+def test_configure_appliance_internal_fetch_key(
+        request, app_creds, temp_appliance_unconfig_funcscope):
     fetch_key_ip = store.current_appliance.address
-    appliance.ap_cli.configure_appliance_internal_fetch_key(0, 'localhost',
+    temp_appliance_unconfig_funcscope.ap_cli.configure_appliance_internal_fetch_key(0, 'localhost',
         app_creds['username'], app_creds['password'], 'vmdb_production', fetch_key_ip,
         app_creds['sshlogin'], app_creds['sshpass'])
-    appliance.wait_for_evm_service()
-    appliance.wait_for_web_ui()
+    temp_appliance_unconfig_funcscope.wait_for_evm_service()
+    temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
-def test_configure_appliance_external_join(request, app_creds, appliance):
+def test_configure_appliance_external_join(request, app_creds, temp_appliance_unconfig_funcscope):
     appliance_ip = store.current_appliance.address
-    appliance.ap_cli.configure_appliance_external_join(appliance_ip,
+    temp_appliance_unconfig_funcscope.ap_cli.configure_appliance_external_join(appliance_ip,
         app_creds['username'], app_creds['password'], 'vmdb_production', appliance_ip,
         app_creds['sshlogin'], app_creds['sshpass'])
-    appliance.wait_for_evm_service()
-    appliance.wait_for_web_ui()
+    temp_appliance_unconfig_funcscope.wait_for_evm_service()
+    temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-def test_configure_appliance_external_create(request, app_creds, dedicated_db, appliance):
+def test_configure_appliance_external_create(
+        request, app_creds, dedicated_db, temp_appliance_unconfig_funcscope):
     hostname = dedicated_db.address
-    appliance.ap_cli.configure_appliance_external_create(5, hostname,
+    temp_appliance_unconfig_funcscope.ap_cli.configure_appliance_external_create(5, hostname,
         app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
         app_creds['sshlogin'], app_creds['sshpass'])
-    appliance.wait_for_evm_service()
-    appliance.wait_for_web_ui()
+    temp_appliance_unconfig_funcscope.wait_for_evm_service()
+    temp_appliance_unconfig_funcscope.wait_for_web_ui()
 
 
 @pytest.mark.parametrize('auth_type', ['sso_enabled', 'saml_enabled', 'local_login_disabled'],

@@ -102,7 +102,7 @@ class SproutClient(object):
             stream = get_stream(current_appliance.version)
         request_id = self.call_method(
             'request_appliances', preconfigured=preconfigured, version=version,
-            group=stream, provider=provider, lease_time=lease_time, ram=ram, cpu=cpu
+            group=stream, provider=provider, lease_time=lease_time, ram=ram, cpu=cpu, count=count
         )
         wait_for(
             lambda: self.call_method('request_check', str(request_id))['finished'], num_sec=300)
