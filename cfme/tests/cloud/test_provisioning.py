@@ -127,13 +127,15 @@ def test_provision_from_template_using_rest(
     Metadata:
         test_flag: provision
     """
-    if "flavors" not in rest_api.collections.all_names:
+    if 'flavors' not in rest_api.collections.all_names:
         pytest.skip("This appliance does not have `flavors` collection.")
     image_guid = rest_api.collections.templates.find_by(name=provisioning['image']['name'])[0].guid
-    instance_type = (
-        provisioning['instance_type'].split(":")[0].strip()
-        if ":" in provisioning['instance_type'] and provider.type in ["ec2", "gce"]
-        else provisioning['instance_type'])
+    if ':' in provisioning['instance_type'] and provider.type in ['ec2', 'gce']:
+        instance_type = provisioning['instance_type'].split(":")[0].strip()
+    elif provider.type == 'azure':
+        instance_type = provisioning['instance_type'].lower()
+    else:
+        instance_type = provisioning['instance_type']
     flavors = rest_api.collections.flavors.find_by(name=instance_type)
     assert len(flavors) > 0
     # TODO: Multi search when it works
@@ -154,10 +156,6 @@ def test_provision_from_template_using_rest(
             "vm_name": vm_name,
             "instance_type": flavor_id,
             "request_type": "template",
-            "availability_zone": provisioning["availability_zone"] if provider.type != "azure" else
-            provisioning["av_set"],
-            "security_groups": [provisioning["security_group"]],
-            "guest_keypair": provisioning["guest_keypair"] if provider.type != "azure" else None
         },
         "requester": {
             "user_name": "admin",
@@ -176,11 +174,21 @@ def test_provision_from_template_using_rest(
         }
     }
 
+    if not isinstance(provider, AzureProvider):
+        provision_data['vm_fields']['availability_zone'] = provisioning['availability_zone']
+        provision_data['vm_fields']['security_groups'] = [provisioning['security_group']]
+        provision_data['vm_fields']['guest_keypair'] = provisioning['guest_keypair']
+
     if isinstance(provider, GCEProvider):
         provision_data['vm_fields']['cloud_network'] = provisioning['cloud_network']
         provision_data['vm_fields']['boot_disk_size'] = provisioning['boot_disk_size']
         provision_data['vm_fields']['zone'] = provisioning['availability_zone']
         provision_data['vm_fields']['region'] = 'us-central1'
+    elif isinstance(provider, AzureProvider):
+        # mapping: product/dialogs/miq_dialogs/miq_provision_azure_dialogs_template.yaml
+        provision_data['vm_fields']['root_username'] = provisioning['vm_user']
+        provision_data['vm_fields']['root_password'] = provisioning['vm_password']
+
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
     request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
