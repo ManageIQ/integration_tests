@@ -249,8 +249,9 @@ class TestArbitrationSettingsRESTAPI(object):
         response = arbitration_settings(request, rest_api, num=num_settings)
         assert rest_api.response.status_code == 200
         assert len(response) == num_settings
-        record = rest_api.collections.arbitration_settings.get(id=response[0].id)
-        assert record._data == response[0]._data
+        for entity in response:
+            record = rest_api.collections.arbitration_settings.get(id=entity.id)
+            assert record._data == entity._data
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize('method', ['post', 'delete'])
@@ -268,7 +269,7 @@ class TestArbitrationSettingsRESTAPI(object):
             entity.action.delete(force_method=method)
             assert rest_api.response.status_code == status
             with error.expected('ActiveRecord::RecordNotFound'):
-                entity.action.delete()
+                entity.action.delete(force_method=method)
             assert rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
@@ -349,9 +350,10 @@ class TestArbitrationRulesRESTAPI(object):
         Metadata:
             test_flag: rest
         """
-        record = rest_api.collections.arbitration_rules.get(id=arbitration_rules[0].id)
-        assert rest_api.response.status_code == 200
-        assert record._data == arbitration_rules[0]._data
+        for rule in arbitration_rules:
+            record = rest_api.collections.arbitration_rules.get(id=rule.id)
+            assert rest_api.response.status_code == 200
+            assert record._data == rule._data
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     @pytest.mark.parametrize('method', ['post', 'delete'])
@@ -366,7 +368,7 @@ class TestArbitrationRulesRESTAPI(object):
             entity.action.delete(force_method=method)
             assert rest_api.response.status_code == status
             with error.expected('ActiveRecord::RecordNotFound'):
-                entity.action.delete()
+                entity.action.delete(force_method=method)
             assert rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
@@ -463,7 +465,7 @@ class TestNotificationsRESTAPI(object):
             entity.action.delete(force_method=method)
             assert rest_api.response.status_code == status
             with error.expected('ActiveRecord::RecordNotFound'):
-                entity.action.delete()
+                entity.action.delete(force_method=method)
             assert rest_api.response.status_code == 404
 
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
