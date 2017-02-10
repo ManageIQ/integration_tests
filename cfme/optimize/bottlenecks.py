@@ -3,7 +3,6 @@ from navmazing import NavigateToAttribute
 from widgetastic.widget import Text, Checkbox, Table, View
 from widgetastic_patternfly import Tab, BootstrapSelect
 
-from fixtures.pytest_store import store
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils.appliance import Navigatable
@@ -21,7 +20,7 @@ class BottlenecksTabsView(BottlenecksView):
         return (
             super(BottlenecksView, self).is_displayed and
             self.title.text == 'Region "Region {}" Bottlenecks Summary'
-            .format(store.current_appliance.server_region()) and
+            .format(self.browser.appliance.server_region()) and
             self.bottlenecks.is_opened and
             self.bottlenecks.tree.currently_selected == ["Bottlenecks"])
 
