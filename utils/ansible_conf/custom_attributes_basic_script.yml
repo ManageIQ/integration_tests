@@ -7,7 +7,7 @@
       entity_name: CI OSE
       entity_type: provider
       miq_password: smartvm
-      miq_url: https://10.8.197.114
+      miq_url: https://10.35.162.41
       miq_username: admin
       state: present
       verify_ssl: false
