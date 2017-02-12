@@ -2,14 +2,15 @@
 import pytest
 
 from cfme.configure.access_control import Group, User
+from cfme.infrastructure.provider import InfraProvider
 from cfme import login, Credential
 from utils.conf import cfme_data
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
-    setup_a_provider(validate=True, check_existing=True)
+    setup_a_provider_by_class(InfraProvider)
 
 
 def test_external_auth_ipa(request, configure_external_auth_ipa_module):

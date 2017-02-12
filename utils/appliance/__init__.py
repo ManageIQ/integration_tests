@@ -124,6 +124,19 @@ class IPAppliance(object):
             [self.browser])
         self._server = None
 
+    def get(self, cls, *args, **kwargs):
+        """A generic getter for instantiation of Collection classes
+
+        This generic getter will supply an appliance (self) to an object and instantiate
+        it with the supplied args/kwargs e.g.::
+
+          my_appliance.get(NodeCollection)
+
+        This will return a NodeCollection object that is bound to the appliance.
+        """
+        assert 'appliance' not in kwargs
+        return cls(appliance=self, *args, **kwargs)
+
     @property
     def server(self):
         if self._server is None:
@@ -306,6 +319,8 @@ class IPAppliance(object):
     @logger_wrap("Extend DB partition")
     def extend_db_partition(self, log_callback=None):
         """Extends the /var partition with DB while shrinking the unused /repo partition"""
+        if self.db_partition_extended:
+            return
         with self.ssh_client as ssh:
             rc, out = ssh.run_command("df -h")
             log_callback("File systems before extending the DB partition:\n{}".format(out))

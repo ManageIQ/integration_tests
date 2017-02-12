@@ -144,7 +144,7 @@ def local_setup_provider(request, setup_provider_modscope, provider, vm_analysis
 
 def set_host_credentials(request, provider, vm_analysis_data):
     # Add credentials to host
-    test_host = host.Host(name=vm_analysis_data['host'])
+    test_host = host.Host(name=vm_analysis_data['host'], provider=provider)
     wait_for(lambda: test_host.exists, delay=10, num_sec=120)
 
     host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
@@ -230,7 +230,7 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data)
                            num_sec=6000)
     logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
-    @pytest.wait_for(timeout="20m", delay=5)
+    @wait_for(timeout="20m", delay=5)
     def get_ip_address():
         logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
             vm_name, mgmt_system.vm_status(vm_name), mgmt_system.is_vm_stopped(vm_name)))
@@ -353,7 +353,7 @@ def test_ssa_template(request, local_setup_provider, provider, soft_assert, vm_a
         host_list = cfme_data.get('management_systems', {})[provider.key].get('hosts', [])
         host_names = test_datastore.get_hosts()
         for host_name in host_names:
-            test_host = host.Host(name=host_name)
+            test_host = host.Host(name=host_name, provider=provider)
             hosts_data = [x for x in host_list if x.name == host_name]
             if len(hosts_data) > 0:
                 host_data = hosts_data[0]

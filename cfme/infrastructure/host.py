@@ -123,7 +123,7 @@ class Host(Updateable, Pretty, Navigatable):
 
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
-                 ipmi_credentials=None, interface_type='lan', appliance=None):
+                 ipmi_credentials=None, interface_type='lan', provider=None, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.name = name
         self.quad_name = 'host'
@@ -137,6 +137,7 @@ class Host(Updateable, Pretty, Navigatable):
         self.ipmi_credentials = ipmi_credentials
         self.interface_type = interface_type
         self.db_id = None
+        self.provider = provider
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -495,7 +496,7 @@ def get_from_config(provider_config_name):
 
     Returns: A Host object that has methods that operate on CFME
     """
-
+    # TODO: Include provider key in YAML and include provider object when creating
     prov_config = conf.cfme_data.get('management_hosts', {})[provider_config_name]
     credentials = get_credentials_from_config(prov_config['credentials'])
     ipmi_credentials = get_credentials_from_config(prov_config['ipmi_credentials'])

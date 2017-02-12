@@ -1,0 +1,36 @@
+heat_template_version: 2013-05-23
+description: Simple template CFMETemplateName to deploy a single compute instance
+parameters:
+  image:
+    type: string
+    label: Image name or ID
+    description: Image to be used for compute instance
+    default: cirros
+  flavor:
+    type: string
+    label: Flavor
+    description: Type of instance (flavor) to be used
+    default: m1.small
+  key:
+    type: string
+    label: Key name
+    description: Name of key-pair to be used for compute instance
+    default: psav
+  private_network:
+    type: string
+    label: Private network name or ID
+    description: Network to attach instance to.
+    default: c0f0db9c-846f-4d4e-b058-0db5bfb2cb90
+resources:
+  my_instance:
+    type: OS::Nova::Server
+    properties:
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key }
+      networks:
+        - uuid: { get_param: private_network }
+outputs:
+  instance_ip:
+    description: IP address of the instance
+    value: { get_attr: [my_instance, first_address]}

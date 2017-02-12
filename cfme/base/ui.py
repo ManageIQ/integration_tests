@@ -7,7 +7,6 @@ from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
 from widgetastic.widget import View, Table
 
 from cfme import BaseLoggedInPage
-from cfme.automate import automate_menu_name
 from cfme.dashboard import DashboardView
 from cfme.intelligence.rss import RSSView
 from cfme.exceptions import ZoneNotFound, DestinationNotFound
@@ -17,6 +16,13 @@ from cfme.login import LoginPage
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
 from utils import version
 from . import Server, Region, Zone, ZoneCollection
+
+
+def automate_menu_name(appliance):
+    if appliance.version < '5.8':
+        return ['Automate']
+    else:
+        return ['Automation', 'Automate']
 
 
 # ######################## SERVER NAVS ################################

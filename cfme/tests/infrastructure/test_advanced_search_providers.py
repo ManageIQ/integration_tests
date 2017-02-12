@@ -10,7 +10,7 @@ from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 # TODO: we should not call out to utils here, but maybe rather have an infra setup provider fixture
 from fixtures.pytest_store import store
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils.appliance.implementations.ui import navigate_to
 from utils.log import logger
 from cfme.web_ui import search
@@ -26,7 +26,7 @@ pytestmark = [pytest.mark.usefixtures("setup_cleanup_search"), pytest.mark.tier(
 def single_provider():
     """Ensure the infra provider is setup"""
     try:
-        return setup_a_provider(prov_class="infra")
+        return setup_a_provider_by_class(InfraProvider)
     except Exception as ex:
         pytest.skip("Exception while setting up providers, therefore skipping: {}".format(ex))
 

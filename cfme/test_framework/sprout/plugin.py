@@ -41,6 +41,10 @@ def pytest_addoption(parser):
         '--sprout-date', dest='sprout_date', default=None, help="Which date to use.")
     group._addoption(
         '--sprout-desc', dest='sprout_desc', default=None, help="Set description of the pool.")
+    group._addoption('--sprout-override-ram', dest='sprout_override_ram', type=int,
+        default=0, help="Override RAM (MB). 0 means no override.")
+    group._addoption('--sprout-override-cpu', dest='sprout_override_cpu', type=int,
+        default=0, help="Override CPU core count. 0 means no override.")
 
 
 def dump_pool_info(log, pool_data):
@@ -103,6 +107,9 @@ class SproutProvisioningRequest(object):
     desc = attr.ib()
     provision_timeout = attr.ib()
 
+    cpu = attr.ib()
+    ram = attr.ib()
+
     @classmethod
     def from_config(cls, config):
         return cls(
@@ -113,6 +120,8 @@ class SproutProvisioningRequest(object):
             lease_time=config.option.sprout_timeout,
             desc=config.option.sprout_desc,
             provision_timeout=config.option.sprout_provision_timeout,
+            cpu=config.option.sprout_override_cpu or None,
+            ram=config.option.sprout_override_ram or None,
         )
 
 
@@ -162,6 +171,8 @@ class SproutManager(object):
             version=provision_request.version,
             date=provision_request.date,
             lease_time=provision_request.lease_time,
+            cpu=provision_request.cpu,
+            ram=provision_request.ram,
         )
         log.info("Pool %s. Waiting for fulfillment ...", self.pool)
 
