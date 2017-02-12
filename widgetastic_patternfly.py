@@ -463,6 +463,7 @@ class Tab(View, ClickableMixin):
     visible.
     """
     TAB_NAME = None
+    INDIRECT = True
 
     @property
     def tab_name(self):

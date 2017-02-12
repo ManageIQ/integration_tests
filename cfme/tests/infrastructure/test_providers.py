@@ -16,6 +16,7 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from utils import testgen, providers, version
 from utils.update import update
+from utils.log import logger
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="function")
@@ -248,25 +249,40 @@ def test_provider_crud(provider):
 class TestProvidersRESTAPI(object):
     @pytest.yield_fixture(scope="function")
     def custom_attributes(self, rest_api, setup_a_provider):
-        provider = rest_api.collections.providers[0]
-        attrs = provider.custom_attributes.action.add(
-            {"name": "ca_name1", "value": "ca_value1"}, {"name": "ca_name2", "value": "ca_value2"})
+        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
+        body = []
+        attrs_num = 2
+        for _ in range(attrs_num):
+            uid = fauxfactory.gen_alphanumeric(5)
+            body.append({
+                'name': 'ca_name_{}'.format(uid),
+                'value': 'ca_value_{}'.format(uid)
+            })
+        attrs = provider.custom_attributes.action.add(*body)
+        assert len(attrs) == attrs_num
 
-        yield attrs
+        yield attrs, provider
 
         try:
             provider.custom_attributes.action.delete(*attrs)
         except APIException:
-            pass
+            # custom attributes can be deleted by tests, just log warning
+            logger.warning("Failed to delete custom attribute.")
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
     def test_add_custom_attributes(self, custom_attributes):
-        """Test adding custom attributes to provider using REST API."""
-        assert len(custom_attributes) == 2
-        assert custom_attributes[0].name == "ca_name1" and custom_attributes[0].value == "ca_value1"
-        assert custom_attributes[1].name == "ca_name2" and custom_attributes[1].value == "ca_value2"
+        """Test adding custom attributes to provider using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        attributes, provider = custom_attributes
+        for attr in attributes:
+            record = provider.custom_attributes.get(id=attr.id)
+            assert record.name == attr.name
+            assert record.value == attr.value
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
@@ -274,18 +290,22 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
-    def test_delete_custom_attributes(self, rest_api, custom_attributes, from_detail):
-        """Test deleting custom attributes using REST API."""
+    def test_delete_custom_attributes(self, custom_attributes, from_detail):
+        """Test deleting custom attributes using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        attributes, provider = custom_attributes
         if from_detail:
-            for ent in custom_attributes:
+            for ent in attributes:
                 ent.action.delete()
-                with error.expected("ActiveRecord::RecordNotFound"):
+                with error.expected('ActiveRecord::RecordNotFound'):
                     ent.action.delete()
         else:
-            provider = rest_api.collections.providers[0]
-            provider.custom_attributes.action.delete(*custom_attributes)
-            with error.expected("ActiveRecord::RecordNotFound"):
-                provider.custom_attributes.action.delete(*custom_attributes)
+            provider.custom_attributes.action.delete(*attributes)
+            with error.expected('ActiveRecord::RecordNotFound'):
+                provider.custom_attributes.action.delete(*attributes)
 
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
@@ -293,18 +313,78 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.parametrize(
         "from_detail", [True, False],
         ids=["from_detail", "from_collection"])
-    def test_edit_custom_attributes(self, rest_api, custom_attributes, from_detail):
-        """Test editing custom attributes using REST API."""
-        attrs0 = {"name": "ca_new_name1", "value": "ca_new_value1"}
-        attrs1 = {"name": "ca_new_name2", "value": "ca_new_value2"}
+    def test_edit_custom_attributes(self, custom_attributes, from_detail):
+        """Test editing custom attributes using REST API.
+
+        Metadata:
+            test_flag: rest
+        """
+        attributes, provider = custom_attributes
+        response_len = len(attributes)
+        body = []
+        for _ in range(response_len):
+            uid = fauxfactory.gen_alphanumeric(5)
+            body.append({
+                'name': 'ca_name_{}'.format(uid),
+                'value': 'ca_value_{}'.format(uid),
+                'section': 'metadata'
+            })
         if from_detail:
-            changed_attrs = []
-            changed_attrs.append(custom_attributes[0].action.edit(**attrs0))
-            changed_attrs.append(custom_attributes[1].action.edit(**attrs1))
+            edited = []
+            for i in range(response_len):
+                edited.append(attributes[i].action.edit(**body[i]))
         else:
-            attrs0.update(custom_attributes[0]._ref_repr())
-            attrs1.update(custom_attributes[1]._ref_repr())
-            provider = rest_api.collections.providers[0]
-            changed_attrs = provider.custom_attributes.action.edit(attrs0, attrs1)
-        assert changed_attrs[0].name == "ca_new_name1" and changed_attrs[0].value == "ca_new_value1"
-        assert changed_attrs[1].name == "ca_new_name2" and changed_attrs[1].value == "ca_new_value2"
+            for i in range(response_len):
+                body[i].update(attributes[i]._ref_repr())
+            edited = provider.custom_attributes.action.edit(*body)
+        assert len(edited) == response_len
+        for i in range(response_len):
+            assert edited[i].name == body[i]['name']
+            assert edited[i].value == body[i]['value']
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @test_requirements.rest
+    @pytest.mark.parametrize(
+        'from_detail', [True, False],
+        ids=['from_detail', 'from_collection'])
+    def test_edit_custom_attributes_bad_section(self, custom_attributes, from_detail):
+        """Test that editing custom attributes using REST API and adding invalid section fails.
+
+        Metadata:
+            test_flag: rest
+        """
+        attributes, provider = custom_attributes
+        response_len = len(attributes)
+        body = []
+        for _ in range(response_len):
+            body.append({'section': 'bad_section'})
+        if from_detail:
+            for i in range(response_len):
+                with error.expected('Api::BadRequestError'):
+                    attributes[i].action.edit(**body[i])
+        else:
+            for i in range(response_len):
+                body[i].update(attributes[i]._ref_repr())
+            with error.expected('Api::BadRequestError'):
+                provider.custom_attributes.action.edit(*body)
+
+    @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.tier(3)
+    @test_requirements.rest
+    def test_add_custom_attributes_bad_section(self, rest_api, setup_a_provider):
+        """Test that adding custom attributes with invalid section
+        to provider using REST API fails.
+
+        Metadata:
+            test_flag: rest
+        """
+        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
+        uid = fauxfactory.gen_alphanumeric(5)
+        body = {
+            'name': 'ca_name_{}'.format(uid),
+            'value': 'ca_value_{}'.format(uid),
+            'section': 'bad_section'
+        }
+        with error.expected('Api::BadRequestError'):
+            provider.custom_attributes.action.add(body)

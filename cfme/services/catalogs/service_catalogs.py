@@ -32,6 +32,8 @@ stack_form = Form(
         ('vm_user', Input("param_adminUserName")),
         ('vm_password', Input("param_adminPassword__protected")),
         ('vm_size', Select("//select[@id='param_virtualMachineSize']")),
+        ('user_image', Select("//select[@id='param_userImageName']")),
+        ('os_type', Select("//select[@id='param_operatingSystemType']")),
         ('key_name', Input("param_KeyName")),
         ('ssh_location', Input("param_SSHLocation"))
     ])

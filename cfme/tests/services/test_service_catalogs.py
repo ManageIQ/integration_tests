@@ -69,7 +69,7 @@ def test_order_catalog_item_via_rest(
     template, = template
     req = template.action.order()
 
-    @pytest.wait_for(timeout="15m", delay=5)
+    @wait_for(timeout="15m", delay=5)
     def request_finished():
         req.reload()
         logger.info("Request status: %s, Request state: %s, Request message: %s",
