@@ -1,13 +1,18 @@
 import fauxfactory
 import os
 import subprocess
+import sys
 import yaml
-from shutil import copyfile
+from shutil import copy, copyfile, copytree
+import glob
 from utils import conf
 from utils.providers import get_crud
 
 yml_path = os.path.dirname(__file__) + "/manageiq_ansible_module/"
-library_path = yml_path + "library/"
+virtual_env = sys.executable
+# This is a test variable. Needs a better solution
+library_path = '/var/lib/jenkins/workspace/cfme-5.7-ose-3.4-provider-test-dev/cfme_tests/.cfme_tests/lib/python2.7/site-packages/'
+# library_path = '/home/pavel/Work/virtual_env/lib/python2.7/site-packages'
 basic_yml_path = os.path.dirname(__file__) + "/ansible_conf/"
 library_path_to_copy_to = basic_yml_path + "library"
 providers_basic_script = "providers_basic_script.yml"
@@ -97,6 +102,7 @@ def write_yml(script, doc):
 def setup_ansible_script(provider, script, script_type=0, values_to_update=0, user_name=0):
     # This function prepares the ansible scripts to work with the correct
     # appliance configs that will be received from Jenkins
+    copy_manageiq_ansible()
     setup_basic_script(provider, script_type)
     if script == 'add_provider':
         copyfile(basic_yml_path + providers_basic_script, basic_yml_path + script + ".yml")
@@ -227,13 +233,17 @@ def reply_status(reply):
     else:
         return 'No Change', message_status, ok_status
 
-#
-# def copy_manageiq_ansible():
-#     print("this is the library to copy to: " + library_path_to_copy_to)
-#     print("this is the library to copy from: " + library_path)
-#     if not os.path.exists(library_path_to_copy_to):
-#         os.makedirs(library_path_to_copy_to)
-#         copy_tree(library_path, library_path_to_copy_to)
+
+def copy_manageiq_ansible():
+    print("this is the library to copy to: " + library_path_to_copy_to)
+    print("this is the library to copy from: " + library_path)
+    if not os.path.exists(library_path_to_copy_to):
+        os.makedirs(library_path_to_copy_to)
+    fileslist = os.listdir(library_path)
+    for file in fileslist:
+        if ('manageiq_' in file) and (os.path.isfile(library_path + "/" + file)):
+            # if 'manageiq_' in file:
+            copy(library_path + "/" + file, library_path_to_copy_to + "/")
 
 
 def config_formatter():
