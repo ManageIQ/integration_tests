@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from cfme.containers.pod import Pod, list_tbl as list_tbl_pods
@@ -27,106 +26,83 @@ def randomized_names_of(tbl, count):
     return names[:min(count, tbl.row_count())]
 
 
+
 # CMP-9911
 
 
-@pytest.mark.parametrize('rel',
-                         ['name',
-                          'phase',
-                          'creation_timestamp',
-                          'resource_version',
-                          'restart_policy',
-                          'dns_policy',
-                          'ip_address'
-                          ])
-def test_pods_properties_rel(provider, rel):
-    """ Properties table fields tests - Containers Pods' summary page
-    This test verifies the fields of the Properties table in Containers Pods'
-    details menu
-    Steps:
-    Containers -- > Containers Pods
-    Loop through each Pod object in the table and check validity of
-    the fields in the Properties table
+def test_pods_properties(provider):
+    """ Steps:
+    Containers -- > Containers -- > Pods
+    Call the relevant API and verify data integrity for the following fields:
+    name, project_name, restart_policy, dns_policy
+
     """
+
     navigate_to(Pod, 'All')
     ui_pods = randomized_names_of(list_tbl_pods, 2)
 
-    for name in ui_pods:
-        obj = Pod(name, provider)
-        assert getattr(obj.summary.properties, rel).text_value
+    mgmt_objs_pods = provider.mgmt.list_container_group()
+
+    if ui_pods:
+        assert set(ui_pods).issubset([obj.name for obj in mgmt_objs_pods]), \
+            'Missing objects if compared to mgmt provider'
+
 
 # CMP-9877
 
 
-@pytest.mark.parametrize('rel',
-                         ['name',
-                          'creation_timestamp',
-                          'resource_version',
-                          'host_name'
-                          ])
-def test_routes_properties_rel(provider, rel):
-    """ Properties table fields tests - Containers Routes' summary page
-    This test verifies the fields of the Properties table in Containers Routes'
-    details menu
-    Steps:
-    Containers -- > Containers Routes
-    Loop through each Route object in the table and check validity of
-    the fields in the Properties table
+def test_routes_properties(provider):
+    """ Steps:
+    Containers -- > Containers -- > Routes
+    Call the relevant API and verify data integrity for the following fields:
+    name, project_name, restart_policy, dns_policy
+
     """
     navigate_to(Route, 'All')
     ui_routes = randomized_names_of(list_tbl_routes, 2)
 
-    for name in ui_routes:
-        obj = Route(name, provider)
-        assert getattr(obj.summary.properties, rel).text_value
+    mgmt_objs_routes = provider.mgmt.list_route()
+
+    if ui_routes:
+        assert set(ui_routes).issubset([obj.name for obj in mgmt_objs_routes]), \
+            'Missing objects if compared to mgmt provider'
+
 
 # CMP-9867
 
 
-@pytest.mark.parametrize('rel',
-                         ['name',
-                          'creation_timestamp',
-                          'resource_version'
-                          ])
-def test_projects_properties_rel(provider, rel):
-    """ Properties table fields tests - Containers Projects' summary page
-    This test verifies the fields of the Properties table in Containers Projects'
-    details menu
-    Steps:
-    Containers -- > Containers Projects
-    Loop through each Project object in the table and check validity of
-    the fields in the Properties table
+def test_projects_properties(provider):
+    """ Steps:
+    Containers -- > Containers -- > Projects
+    Call the relevant API and verify data integrity for the following fields:
+    name, project_name, restart_policy, dns_policy
+
     """
     navigate_to(Project, 'All')
     ui_projects = randomized_names_of(list_tbl_projects, 2)
 
-    for name in ui_projects:
-        obj = Project(name, provider)
-        assert getattr(obj.summary.properties, rel).text_value
+    mgmt_objs_projects = provider.mgmt.list_project()
+
+    if ui_projects:
+        assert set(ui_projects).issubset([obj.name for obj in mgmt_objs_projects]), \
+            'Missing objects if compared to mgmt provider'
+
 
 # CMP-9884
 
 
-@pytest.mark.parametrize('rel',
-                         ['name',
-                          'creation_timestamp',
-                          'resource_version',
-                          'session_affinity',
-                          'type',
-                          'portal_ip'
-                          ])
-def test_services_properties_rel(provider, rel):
-    """ Properties table fields tests - Containers Services' summary page
-    This test verifies the fields of the Properties table in Containers Services'
-    details menu
-    Steps:
-    Containers -- > Containers Services
-    Loop through each Service object in the table and check validity of
-    the fields in the Properties table
+def test_services_properties(provider):
+    """ Steps:
+    Containers -- > Containers -- > Container Services
+    Call the relevant API and verify data integrity for the following fields:
+    name, project_name, restart_policy, dns_policy
+
     """
     navigate_to(Service, 'All')
     ui_services = randomized_names_of(list_tbl_services, 2)
 
-    for name in ui_services:
-        obj = Service(name, provider)
-        assert getattr(obj.summary.properties, rel).text_value
+    mgmt_objs_services = provider.mgmt.list_service()
+
+    if ui_services:
+        assert set(ui_services).issubset([obj.name for obj in mgmt_objs_services]), \
+            'Missing objects if compared to mgmt provider'
