@@ -1,9 +1,6 @@
 from string import digits, ascii_letters
 from random import choice
-from traceback import format_exception_only
 from os import path
-import sys
-import inspect
 import re
 import pytest
 
@@ -36,28 +33,6 @@ ATTRIBUTES_DATASET = [
 VALUE_UPDATES = ['2018-07-12', 'ADF231VRWQ1', '1']
 
 
-def setup_dataset(provider, verify_exists=False):
-    """Either delete or add (verify_exists) the dataset according
-    to the test prerequisites, skipping test if failed
-    """
-    try:
-        current_attrs_names = [attr.name for attr in provider.custom_attributes()]
-        if verify_exists:
-            attrs_to_add = [attr for attr in ATTRIBUTES_DATASET
-                            if attr.name not in current_attrs_names]
-            if attrs_to_add:
-                provider.add_custom_attributes(*attrs_to_add)
-        else:
-            attrs_to_delete = [attr for attr in ATTRIBUTES_DATASET
-                               if attr.name in current_attrs_names]
-            if attrs_to_delete:
-                provider.delete_custom_attributes(*attrs_to_delete)
-    except:
-        pytest.skip('Could not setup prerequisites for {}:\n{}'
-                    .format(inspect.stack()[1][3],
-                            format_exception_only(sys.exc_type, sys.exc_value)[0]))
-
-
 # CMP-10281
 
 def test_add_static_custom_attributes(provider):
@@ -68,7 +43,6 @@ def test_add_static_custom_attributes(provider):
     Expected results:
         * The attributes was successfully added
     """
-    setup_dataset(provider, verify_exists=False)
 
     provider.add_custom_attributes(*ATTRIBUTES_DATASET)
     custom_attr_ui = provider.summary.custom_attributes.items()
@@ -89,7 +63,6 @@ def test_edit_static_custom_attributes(provider):
     Expected results:
         * The attributes was successfully updated to the new values
     """
-    setup_dataset(provider, verify_exists=True)
 
     edited_attribs = ATTRIBUTES_DATASET
     for ii, value in enumerate(VALUE_UPDATES):
@@ -112,7 +85,6 @@ def test_delete_static_custom_attributes(provider):
         * The attributes was successfully deleted
         (you should not see a custom attributes table)
     """
-    setup_dataset(provider, verify_exists=True)
 
     provider.delete_custom_attributes(*ATTRIBUTES_DATASET)
     if hasattr(provider.summary, 'custom_attributes'):
@@ -144,7 +116,8 @@ def test_add_attribute_with_empty_name(provider):
 
 # CMP-10404
 
-def test_add_date_value_with_wrong_value(provider):
+def test_add_date_attr_with_wrong_value(provider):
+    """Trying to add attribute of type date with non-date value"""
     ca = CustomAttribute('nondate', "koko", 'Date')
     with pytest.raises(APIException):
         provider.add_custom_attributes(ca)
@@ -159,20 +132,19 @@ def test_add_date_value_with_wrong_value(provider):
 # CMP-10405
 
 def test_edit_non_exist_attribute(provider):
-    setup_dataset(provider, verify_exists=False)
-
+    """Trying to edit non-exist attribute"""
     ca = choice(ATTRIBUTES_DATASET)
+    # Note: we need to implement it inside the test instead of using
+    #       the API (provider.edit_custom_attributes) in order to
+    #       specify the href and yield the exception
+    payload = {
+        "action": "edit",
+        "resources": [{
+            "href": '{}/custom_attributes/9876543210000000'
+                    .format(provider.href()),
+            "value": ca.value
+        }]}
     with pytest.raises(APIException):
-        # Note: we need to implement it inside the test instead of using
-        #       the API (provider.edit_custom_attributes) in order to
-        #       specify the href and yield the exception
-        payload = {
-            "action": "edit",
-            "resources": [{
-                "href": '{}/custom_attributes/9876543210000000'
-                        .format(provider.href()),
-                "value": ca.value
-            }]}
         provider.appliance.rest_api.post(
             path.join(provider.href(), 'custom_attributes'), **payload)
         pytest.fail('You tried to edit a non-exist custom attribute'
@@ -183,7 +155,6 @@ def test_edit_non_exist_attribute(provider):
 # CMP-10543
 
 def test_delete_non_exist_attribute(provider):
-    setup_dataset(provider, verify_exists=False)
 
     ca = choice(ATTRIBUTES_DATASET)
     with pytest.raises(APIException):
@@ -197,7 +168,6 @@ def test_delete_non_exist_attribute(provider):
 
 @pytest.mark.meta(blockers=[1416797])
 def test_add_already_exist_attribute(provider):
-    setup_dataset(provider, verify_exists=True)
     ca = choice(ATTRIBUTES_DATASET)
     with pytest.raises(APIException):
         provider.add_custom_attributes(ca)
