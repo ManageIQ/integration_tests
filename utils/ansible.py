@@ -3,15 +3,15 @@ import os
 import subprocess
 import sys
 import yaml
-from shutil import copy, copyfile, copytree
-import glob
+from shutil import copy, copyfile
 from utils import conf
 from utils.providers import get_crud
 
 yml_path = os.path.dirname(__file__) + "/manageiq_ansible_module/"
 virtual_env = sys.executable
 # This is a test variable. Needs a better solution
-library_path = '/var/lib/jenkins/workspace/cfme-5.7-ose-3.4-provider-test-dev/cfme_tests/.cfme_tests/lib/python2.7/site-packages/'
+library_path = '/var/lib/jenkins/workspace/cfme-5.7-ose-3.4-provider-test-dev' \
+               '/cfme_tests/.cfme_tests/lib/python2.7/site-packages/'
 # library_path = '/home/pavel/Work/virtual_env/lib/python2.7/site-packages'
 basic_yml_path = os.path.dirname(__file__) + "/ansible_conf/"
 library_path_to_copy_to = basic_yml_path + "library"
