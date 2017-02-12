@@ -199,7 +199,6 @@ def setup_ansible_script(provider, script, script_type=0, values_to_update=0, us
                 doc[0]['tasks'][0]['manageiq_custom_attributes']['custom_attributes'][count] = key
                 count += 1
         write_yml(script, doc)
-    # copy_manageiq_ansible()
 
 
 def run_ansible(script):
