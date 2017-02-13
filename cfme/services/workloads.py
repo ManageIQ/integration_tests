@@ -99,7 +99,7 @@ class AllVMs(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        workloads = self.create_view(WorkloadsVM)
+        workloads = self.create_view(self.VIEW)
         self.prerequisite_view.navigation.select('Services', 'Workloads')
         workloads.search.clear_search()
         workloads.vms.clear_filter()
@@ -111,7 +111,7 @@ class AllTemplates(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        workloads = self.create_view(WorkloadsTemplate)
+        workloads = self.create_view(self.VIEW)
         self.prerequisite_view.navigation.select('Services', 'Workloads')
         workloads.search.clear_search()
         workloads.templates.clear_filter()
