@@ -3,8 +3,8 @@
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.appliance import Navigatable
-from widgetastic.widget import Text
-from widgetastic_patternfly import Button
+from widgetastic.widget import Text, Checkbox
+from widgetastic_patternfly import Button, Input, BootstrapSelect
 from navmazing import NavigateToAttribute
 from utils.appliance.implementations.ui import navigator
 from cfme.intelligence.reports import CloudIntelReportsView
@@ -120,13 +120,24 @@ class DashboardWidgetDetailsView(DashboardWidgetsView):
     def is_displayed(self):
         return (
             self.in_dashboard_widgets and
-            self.title.text == 'Menu Widget "{}"'.format(self.context["object"].title) and
+            self.title.text == '{} Widget "{}"'.format(
+                self.context["object"].TITLE, self.context["object"].title) and
             self.dashboard_widgets.tree.currently_selected == [
                 "All Widgets",
                 self.context["object"].TYPE,
                 self.context["object"].title
             ]
         )
+
+
+class DashboardWidgetFormCommon(DashboardWidgetsView):
+
+    title = Text("#explorer_title_text")
+    widget_title = Input(name="title")
+    description = Input(name="description")
+    active = Checkbox("enabled")
+    visibility = BootstrapSelect("visibility_typ")
+    cancel_button = Button("Cancel")
 
 
 class NewDashboardWidgetView(DashboardWidgetsView):

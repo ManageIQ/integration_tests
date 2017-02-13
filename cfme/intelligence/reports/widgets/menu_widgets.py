@@ -1,32 +1,26 @@
-from widgetastic.widget import Text, Checkbox
+# -*- coding: utf-8 -*-
+"""Page model for Cloud Intel / Reports / Dashboard Widgets / Menus"""
 from widgetastic_manageiq import MenuShortcutsPicker
 from utils.appliance.implementations.ui import navigator
-from widgetastic_patternfly import Button, Input, BootstrapSelect
-from . import (Widget, DashboardWidgetsView, NewDashboardWidget, EditDashboardWidget,
+from . import (Widget, DashboardWidgetFormCommon, NewDashboardWidget, EditDashboardWidget,
     NewDashboardWidgetView, EditDashboardWidgetView)
 
 
-class MenuWidgetsFormCommon(DashboardWidgetsView):
+class MenuWidgetFormCommon(DashboardWidgetFormCommon):
 
-    title = Text("#explorer_title_text")
-    widget_title = Input(name="title")
-    description = Input(name="description")
-    active = Checkbox("enabled")
     menu_shortcuts = MenuShortcutsPicker(
         "form_filter_div",
         select_id="add_shortcut",
         names_locator=".//input[starts-with(@name, 'shortcut_desc_')]",
         remove_locator=".//input[@value={}]/../a[@title='Remove this Shortcut']"
     )
-    visibility = BootstrapSelect("visibility_typ")
-    cancel_button = Button("Cancel")
 
 
-class NewMenuWidgetView(NewDashboardWidgetView, MenuWidgetsFormCommon):
+class NewMenuWidgetView(NewDashboardWidgetView, MenuWidgetFormCommon):
     pass
 
 
-class EditMenuWidgetView(EditDashboardWidgetView, MenuWidgetsFormCommon):
+class EditMenuWidgetView(EditDashboardWidgetView, MenuWidgetFormCommon):
     pass
 
 

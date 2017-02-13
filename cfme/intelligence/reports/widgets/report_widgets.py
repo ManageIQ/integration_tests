@@ -1,0 +1,90 @@
+# -*- coding: utf-8 -*-
+"""Page model for Cloud Intel / Reports / Dashboard Widgets / Reports"""
+from widgetastic_manageiq import Calendar
+from widgetastic_patternfly import BootstrapSelect
+from utils.appliance.implementations.ui import navigator
+from . import (Widget, DashboardWidgetFormCommon, NewDashboardWidget, EditDashboardWidget,
+    NewDashboardWidgetView, EditDashboardWidgetView)
+
+
+class ReportWidgetFormCommon(DashboardWidgetFormCommon):
+
+    # Report Options
+    filter = BootstrapSelect("filter_typ")
+    subfilter = BootstrapSelect("subfilter_typ")
+    repfilter = BootstrapSelect("repfilter_typ")
+    column1 = BootstrapSelect("chosen_pivot1")
+    column2 = BootstrapSelect("chosen_pivot2")
+    column3 = BootstrapSelect("chosen_pivot3")
+    column4 = BootstrapSelect("chosen_pivot4")
+    row_count = BootstrapSelect("row_count")
+    # Timer
+    run = BootstrapSelect("timer_typ")
+    every = BootstrapSelect("timer_hours")
+    time_zone = BootstrapSelect("time_zone")
+    starting_date = Calendar("miq_date_1")
+    starting_hour = BootstrapSelect("start_hour")
+    starting_minute = BootstrapSelect("start_min")
+
+
+class NewReportWidgetView(NewDashboardWidgetView, ReportWidgetFormCommon):
+    pass
+
+
+class EditReportWidgetView(EditDashboardWidgetView, ReportWidgetFormCommon):
+    pass
+
+
+class ReportWidget(Widget):
+
+    TYPE = "Reports"
+    TITLE = "Report"
+    pretty_attrs = ['description', 'filter', 'visibility']
+
+    def __init__(self, title, description=None, active=None, filter=None, columns=None, rows=None,
+            timer=None, visibility=None):
+        self.title = title
+        self.description = description
+        self.active = active
+        self.filter, self.subfilter, self.repfilter = filter
+        for i in range(1, 5):
+            try:
+                setattr(self, "column{}".format(i), columns[i])
+            except IndexError:
+                setattr(self, "column{}".format(i), None)
+        self.run = timer.get("run")
+        self.every = timer.get("hours")
+        self.time_zone = timer.get("time_zone")
+        self.starting_date = timer.get("starting_date")
+        self.starting_hour = timer.get("starting_hour")
+        self.starting_minute = timer.get("starting_minute")
+        self.rows = rows
+        self.timer = timer
+        self.visibility = visibility
+
+    @property
+    def fill_dict(self):
+        return {
+            "widget_title": self.title,
+            "description": self.description,
+            "active": self.active,
+            "filter": self.filter,
+            "subfilter": self.subfilter,
+            "repfilter": self.repfilter,
+            "column1": self.column1,
+            "column2": self.column2,
+            "column3": self.column3,
+            "column4": self.column4,
+            "rows": self.rows,
+            "visibility": self.visibility
+        }
+
+
+@navigator.register(ReportWidget, "Add")
+class NewReportWidget(NewDashboardWidget):
+    VIEW = NewReportWidgetView
+
+
+@navigator.register(ReportWidget, "Edit")
+class EditReportWidget(EditDashboardWidget):
+    VIEW = EditReportWidgetView
