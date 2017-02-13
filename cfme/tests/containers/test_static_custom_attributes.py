@@ -10,6 +10,7 @@ from utils.version import current_version
 from utils import testgen
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.provider.openshift import CustomAttribute
+from utils.blockers import BZ
 
 pytestmark = [
     pytest.mark.uncollectif(
@@ -166,7 +167,7 @@ def test_delete_non_exist_attribute(provider):
 
 # CMP-10542
 
-@pytest.mark.meta(blockers=[1416797])
+@pytest.mark.meta(blockers=[BZ(1416797, forced_streams=['5.7'])])
 def test_add_already_exist_attribute(provider):
     ca = choice(ATTRIBUTES_DATASET)
     with pytest.raises(APIException):
