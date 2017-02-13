@@ -19,7 +19,7 @@ def dedicated_db(fqdn_appliance, app_creds):
     client = fqdn_appliance.ssh_client
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
-    stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
+    stdin.write("ap \n \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
     wait_for(is_dedicated_db_active, func_args=[fqdn_appliance])
 
     return (fqdn_appliance)
