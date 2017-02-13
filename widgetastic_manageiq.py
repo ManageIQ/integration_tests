@@ -19,6 +19,7 @@ from widgetastic.widget import (
     Text,
     TextInput,
     Checkbox,
+    ParametrizedView,
     WidgetDescriptor,
     do_not_read_this_widget)
 from widgetastic.utils import ParametrizedLocator, Parameter
@@ -1109,7 +1110,6 @@ class DetailsToolBarViewSelector(View):
         return next(btn.title for btn in self._view_buttons if btn.active)
 
 
-<<<<<<< HEAD
 class Search(View):
     """ Represents search_text control
     # TODO Add advanced search
@@ -1207,10 +1207,21 @@ class UpDownSelect(View):
         return True
 
 
-class AlertEmail(Widget):
-=======
 class AlertEmail(View):
->>>>>>> AlertEmail widget refactoring
+    """This set of widgets can be found in Control / Explorer / Alerts when you edit an alert."""
+
+    @ParametrizedView.nested
+    class recipients(ParametrizedView):  # noqa
+        PARAMETERS = ("email", )
+        ALL_EMAILS = ".//a[starts-with(@title, 'Remove')]"
+        email = Text(ParametrizedLocator(".//a[text()='{email}']"))
+
+        def remove(self):
+            self.email.click()
+
+        @classmethod
+        def all(cls, browser):
+            return [(browser.text(e), ) for e in browser.elements(cls.ALL_EMAILS)]
 
     ROOT = ParametrizedLocator(".//div[@id={@id|quote}]")
     RECIPIENTS = "./div[@id='edit_to_email_div']//a"
@@ -1230,7 +1241,7 @@ class AlertEmail(View):
             values_to_remove = self._values_to_remove(values)
             values_to_add = self._values_to_add(values)
             for value in values_to_remove:
-                self._remove_recipient(value)
+                self.recipients(value).remove()
             for value in values_to_add:
                 self._add_recipient(value)
             return True
@@ -1245,13 +1256,9 @@ class AlertEmail(View):
         self.recipients_input.fill(email)
         self.add_button.click()
 
-    def _remove_recipient(self, email):
-        Text(self, ".//a[text()='{}']".format(email)).click()
-
     @property
     def all_emails(self):
-        links = self.browser.elements(self.RECIPIENTS)
-        return {link.text for link in links}
+        return {self.browser.text(e) for e in self.browser.elements(self.RECIPIENTS)}
 
     def read(self):
         return list(self.all_emails)
