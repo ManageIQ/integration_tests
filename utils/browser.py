@@ -3,10 +3,12 @@ import atexit
 import json
 import os
 import urllib2
+import time
+import threading
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
-from threading import Timer
+
 # import logging
 
 from werkzeug.local import LocalProxy
@@ -27,6 +29,9 @@ from utils.path import data_path
 
 from utils.log import logger as log  # TODO remove after artifactor handler
 # log = logging.getLogger('cfme.browser')
+
+
+FIVE_MINUTES = 5 * 60
 
 
 def _load_firefox_profile():
@@ -50,62 +55,65 @@ def _load_firefox_profile():
 
 
 class Wharf(object):
+    # class level to allow python level atomic removal of instance values
+    docker_id = None
+
     def __init__(self, wharf_url):
         self.wharf_url = wharf_url
-        self.docker_id = None
-        self.renew_timer = None
+        self._renew_thread = None
 
     def _get(self, *args):
-        return requests.get(os.path.join(self.wharf_url, *args))
+
+        response = requests.get(os.path.join(self.wharf_url, *args))
+        if response.status_code == 204:
+            return
+        try:
+            return json.loads(response.content)
+        except ValueError:
+            raise ValueError(
+                "JSON could not be decoded:\n{}".format(response.content))
 
     def checkout(self):
         if self.docker_id is not None:
             return self.docker_id
-        response = self._get('checkout')
-        try:
-            checkout = json.loads(response.content)
-        except ValueError:
-            raise ValueError("JSON could not be decoded:\n{}".format(response.content))
-        self.docker_id = checkout.keys()[0]
-        self.config = checkout[self.docker_id]
-        self._reset_renewal_timer()
+        checkout = self._get('checkout')
+        self.docker_id, self.config = checkout.items()[0]
+        self._start_renew_thread()
         log.info('Checked out webdriver container %s', self.docker_id)
+        log.debug("%r", checkout)
         return self.docker_id
 
     def checkin(self):
-        if self.docker_id:
-            self._get('checkin', self.docker_id)
-            log.info('Checked in webdriver container %s', self.docker_id)
-            self.docker_id = None
+        # using dict pop to avoid race conditions
+        my_id = self.__dict__.pop('docker_id', None)
+        if my_id:
+            self._get('checkin', my_id)
+            log.info('Checked in webdriver container %s', my_id)
+            self._renew_thread = None
 
-    def renew(self):
+    def _start_renew_thread(self):
+        assert self._renew_thread is None
+        self._renew_thread = threading.Thread(target=self._renew_function)
+        self._renew_thread.daemon = True
+        self._renew_thread.start()
+
+    def _renew_function(self):
         # If we have a docker id, renew_timer shouldn't still be None
-        if self.docker_id and not self.renew_timer.is_alive():
-            # You can call renew as frequently as desired, but it'll only run if
-            # the renewal timer has stopped or failed to renew
-            response = self._get('renew', self.docker_id)
-            try:
-                expiry_info = json.loads(response.content)
-            except ValueError:
-                raise ValueError("JSON could not be decoded:\n{}".format(response.content))
+        log.debug("renew thread started")
+        while True:
+            time.sleep(FIVE_MINUTES)
+            if self._renew_thread is not threading.current_thread():
+                log.debug("renew done %s is not %s",
+                          self._renew_thread, threading.current_thread())
+                return
+            if self.docker_id is None:
+                log.debug("renew done, docker id %s", self.docker_id)
+            expiry_info = self._get('renew', self.docker_id)
             self.config.update(expiry_info)
-            self._reset_renewal_timer()
             log.info('Renewed webdriver container %s', self.docker_id)
 
-    def _reset_renewal_timer(self):
-        if self.docker_id:
-            if self.renew_timer:
-                self.renew_timer.cancel()
-
-            # Floor div by 2 and add a second to renew roughly halfway before expiration
-            cautious_expire_interval = (self.config['expire_interval'] >> 1) + 1
-            self.renew_timer = Timer(cautious_expire_interval, self.renew)
-            # mark as daemon so the timer is rudely destroyed on shutdown
-            self.renew_timer.daemon = True
-            self.renew_timer.start()
-
     def __nonzero__(self):
-        return bool(self.docker_id)
+        return self.docker_id is not None
 
 
 class BrowserFactory(object):
@@ -125,9 +133,6 @@ class BrowserFactory(object):
     @cached_property
     def _firefox_profile(self):
         return _load_firefox_profile()
-
-    def renew(self):
-        pass
 
     def processed_browser_args(self):
         return self.browser_kwargs
@@ -150,6 +155,9 @@ class BrowserFactory(object):
         browser.get(url_key)
         browser.url_key = url_key
         return browser
+
+    def close(self, browser):
+        browser.quit()
 
 
 class WharfFactory(BrowserFactory):
@@ -195,8 +203,11 @@ class WharfFactory(BrowserFactory):
                 raise
         return tries(10, urllib2.URLError, inner)
 
-    def renew(self):
-        self.wharf.renew()
+    def close(self, browser):
+        try:
+            super(WharfFactory, self).close(browser)
+        finally:
+            self.wharf.checkin()
 
 
 class BrowserManager(object):
@@ -221,30 +232,32 @@ class BrowserManager(object):
         else:
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
-    def _is_running(self, url_key):
+    def _is_alive(self):
+        log.debug("alive check")
         try:
             self.browser.current_url
         except UnexpectedAlertPresentException:
             # Try to handle an open alert, restart the browser if possible
+            log.info("browser hangs on alert, dismissing")
             try:
                 self.browser.switch_to_alert().dismiss()
             except:
+                log.exception("browser died on alert")
                 return False
         except:
-            # If we couldn't poke the browser for any other reason, start a new one
+            log.exception("browser in unknown state, considering dead")
             return False
         return True
 
     def ensure_open(self, url_key=None):
         url_key = self.coerce_url_key(url_key)
-        if self.browser is None or self.browser.url_key != url_key:
+        if getattr(self.browser, 'url_key', None) != url_key:
             return self.start(url_key=url_key)
 
-        if self._is_running(url_key):
-            self.factory.renew()
+        if self._is_alive():
+            return self.browser
         else:
-            self.start(url_key=url_key)
-        return self.browser
+            return self.start(url_key=url_key)
 
     def add_cleanup(self, callback):
         assert self.browser is not None
@@ -268,7 +281,7 @@ class BrowserManager(object):
         log.info('closing browser')
         self._consume_cleanups()
         try:
-            self.browser.quit()
+            self.factory.quit(self.browser)
         except:
             # Due to the multitude of exceptions can be thrown when attempting to kill the browser,
             # Diaper Pattern!
