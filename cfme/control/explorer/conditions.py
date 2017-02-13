@@ -9,7 +9,7 @@ from widgetastic_patternfly import Button, Input
 from . import ControlExplorerView
 from utils.appliance import Navigatable
 from utils.update import Updateable
-from utils import version
+from utils import version, deferred_verpick
 
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
@@ -292,11 +292,11 @@ class ContainerNodeCondition(BaseCondition):
 class ContainerImageCondition(BaseCondition):
 
     TREE_NODE = "Container Image"
-    PRETTY = version.pick({
+    PRETTY = deferred_verpick({
         version.LOWEST: "Image",
         '5.7': "Container Image",
     })
-    FIELD_VALUE = version.pick({
+    FIELD_VALUE = deferred_verpick({
         version.LOWEST: "Image",
         '5.7': "Container Image",
     })
