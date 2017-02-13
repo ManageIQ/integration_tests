@@ -4,7 +4,6 @@ from itertools import combinations
 from utils import testgen
 from utils.appliance import current_appliance
 from utils.providers import get_crud
-from utils.wait import wait_for
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider import discover, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -105,7 +104,7 @@ def test_discover_infra(providers_for_discover, start_ip, max_range):
 
     discover(rhevm, virtualcenter, scvmm, False, start_ip, max_range)
 
-    @wait_for(num_sec=count_timeout(start_ip, max_range), delay=5)
+    @pytest.wait_for(num_sec=count_timeout(start_ip, max_range), delay=5)
     def _wait_for_all_providers():
         for provider in providers_for_discover:
             if not provider.exists:

@@ -11,7 +11,6 @@ from cfme.intelligence.reports.widgets import ChartWidget, MenuWidget, ReportWid
 from utils.path import data_path
 from utils.update import update
 from utils.blockers import BZ
-from utils.wait import wait_for
 from utils import version
 from cfme import test_requirements
 
@@ -189,7 +188,7 @@ def test_run_report(rest_api):
     report = rest_api.collections.reports.get(name='VM Disk Usage')
     response = report.action.run()
 
-    @wait_for(timeout="5m", delay=5)
+    @pytest.wait_for(timeout="5m", delay=5)
     def rest_running_report_finishes():
         response.task.reload()
         if response.task.status.lower() in {"error"}:

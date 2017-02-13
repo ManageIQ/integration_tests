@@ -86,7 +86,7 @@ def test_vm_scan(rest_api, vm, from_detail):
     else:
         response, = rest_api.collections.vms.action.scan(rest_vm)
 
-    @wait_for(timeout="5m", delay=5, message="REST running scanning vm finishes")
+    @pytest.wait_for(timeout="5m", delay=5, message="REST running scanning vm finishes")
     def _finished():
         response.task.reload()
         if response.task.status.lower() in {"error"}:
