@@ -70,10 +70,10 @@ def get_hawkular_server(provider):
 
 
 def get_domain_server(provider):
-    return _get_server_by_name(provider, EAP_PRODUCT_NAME, 'EAP7-server-one|server-one')
+    return _get_server_by_name(provider=provider, name='EAP7-server-one|server-one')
 
 
-def _get_server_by_name(provider, product, name=None):
+def _get_server_by_name(provider, product=None, name=None):
     """
     Return server by given provider, product and server name.
 
