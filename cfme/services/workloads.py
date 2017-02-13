@@ -13,6 +13,7 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 class WorkloadsView(BaseLoggedInPage):
     search = View.nested(Search)
 
+    @property
     def in_workloads(self):
         return (self.logged_in_as_current_user and
                 self.navigation.currently_selected == ['Services', 'Workloads'])
@@ -54,7 +55,7 @@ class WorkloadsVM(WorkloadsView):
     @property
     def is_displayed(self):
         return (
-            super(WorkloadsVM, self).in_workloads() and
+            super(WorkloadsVM, self).in_workloads and
             self.title.text == 'All VMs & Instances' and
             self.vms.is_opened and
             self.vms.tree.currently_selected == [
@@ -67,7 +68,7 @@ class WorkloadsTemplate(WorkloadsView):
     @property
     def is_displayed(self):
         return (
-            super(WorkloadsTemplate, self).in_workloads() and
+            super(WorkloadsTemplate, self).in_workloads and
             self.title.text == 'All Templates & Images' and
             self.templates.is_opened and
             self.templates.tree.currently_selected == [
@@ -99,10 +100,9 @@ class AllVMs(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        workloads = self.create_view(self.VIEW)
         self.prerequisite_view.navigation.select('Services', 'Workloads')
-        workloads.search.clear_search()
-        workloads.vms.clear_filter()
+        self.view.search.clear_search()
+        self.view.vms.clear_filter()
 
 
 @navigator.register(TemplatesImages, 'All')
@@ -111,7 +111,6 @@ class AllTemplates(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
-        workloads = self.create_view(self.VIEW)
         self.prerequisite_view.navigation.select('Services', 'Workloads')
-        workloads.search.clear_search()
-        workloads.templates.clear_filter()
+        self.view.search.clear_search()
+        self.view.templates.clear_filter()

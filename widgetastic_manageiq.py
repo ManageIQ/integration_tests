@@ -6,6 +6,7 @@ from selenium.common.exceptions import WebDriverException
 from math import ceil
 
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.log import logged
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import (
     Table as VanillaTable,
@@ -1131,5 +1132,6 @@ class Search(View):
         self.search_btn.click()
 
     @property
+    @logged(log_result=True)
     def is_empty(self):
-        return self.search_text.read() == ''
+        return not bool(self.search_text.value)
