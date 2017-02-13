@@ -657,7 +657,7 @@ def test_action_initiate_smartstate_analysis(
 
     # Check that analyse job has appeared in the list
     # Wait for the task to finish
-    @wait_for(delay=15, timeout="8m", fail_func=lambda: tb.refresh())
+    @pytest.wait_for(delay=15, timeout="8m", fail_func=lambda: tb.refresh())
     def is_vm_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """

@@ -3,7 +3,6 @@
 import pytest
 import re
 from utils.version import current_version
-from utils.wait import wait_for
 
 
 @pytest.yield_fixture(scope="module")
@@ -34,7 +33,7 @@ def test_evmserverd_stop(ssh_client):
     server_names = {server["Server Name"] for server in ssh_client.status["servers"]}
     assert ssh_client.run_command("service evmserverd stop").rc == 0
 
-    @wait_for(timeout="2m", delay=5)
+    @pytest.wait_for(timeout="2m", delay=5)
     def servers_stopped():
         status = {server["Server Name"]: server for server in ssh_client.status["servers"]}
         for server_name in server_names:

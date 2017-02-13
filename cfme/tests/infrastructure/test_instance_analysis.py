@@ -230,7 +230,7 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data)
                            num_sec=6000)
     logger.info("VM %s provisioned, waiting for IP address to be assigned", vm_name)
 
-    @wait_for(timeout="20m", delay=5)
+    @pytest.wait_for(timeout="20m", delay=5)
     def get_ip_address():
         logger.info("Power state for {} vm: {}, is_vm_stopped: {}".format(
             vm_name, mgmt_system.vm_status(vm_name), mgmt_system.is_vm_stopped(vm_name)))
