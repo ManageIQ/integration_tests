@@ -46,35 +46,6 @@ def wait_for_requests(requests):
     wait_for(_finished, num_sec=45, delay=5, message="requests finished")
 
 
-@pytest.fixture(scope="function")
-def generate_notifications(rest_api):
-    requests_data = automation_requests_data('nonexistent_vm')
-    requests = rest_api.collections.automation_requests.action.create(*requests_data[:2])
-    assert len(requests) == 2
-
-    wait_for_requests(requests)
-
-
-@pytest.yield_fixture(scope="function")
-def arbitration_rules(rest_api):
-    body = []
-    for _ in range(2):
-        body.append({
-            'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
-            'operation': 'inject',
-            'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
-        })
-    response = rest_api.collections.arbitration_rules.action.create(*body)
-
-    yield response
-
-    try:
-        rest_api.collections.arbitration_rules.action.delete(*response)
-    except APIException:
-        # rules can be deleted by tests, just log warning
-        logger.warning("Failed to delete arbitration rules.")
-
-
 @pytest.mark.tier(2)
 @pytest.mark.parametrize(
     "from_detail", [True, False],
@@ -85,6 +56,7 @@ def test_vm_scan(rest_api, vm, from_detail):
         response = rest_vm.action.scan()
     else:
         response, = rest_api.collections.vms.action.scan(rest_vm)
+    assert rest_api.response.status_code == 200
 
     @pytest.wait_for(timeout="5m", delay=5, message="REST running scanning vm finishes")
     def _finished():
@@ -126,41 +98,64 @@ def test_query_simple_collections(rest_api, collection_name):
         test_flag: rest
     """
     collection = getattr(rest_api.collections, collection_name)
+    assert rest_api.response.status_code == 200
     collection.reload()
     list(collection)
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_add_picture(rest_api):
+    """Tests adding picture.
+
+    Metadata:
+        test_flag: rest
+    """
     collection = rest_api.collections.pictures
     count = collection.count
     collection.action.create({
         "extension": "png",
         "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS"
                    "JAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="})
+    assert rest_api.response.status_code == 200
     collection.reload()
     assert collection.count == count + 1
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_http_options(rest_api):
+    """Tests OPTIONS http method.
+
+    Metadata:
+        test_flag: rest
+    """
     assert 'boot_time' in rest_api.collections.vms.options()['attributes']
+    assert rest_api.response.status_code == 200
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_server_info(rest_api):
+    """Check that server info is present.
+
+    Metadata:
+        test_flag: rest
+    """
     assert all(item in rest_api.server_info for item in ('appliance', 'build', 'version'))
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_product_info(rest_api):
+    """Check that product info is present.
+
+    Metadata:
+        test_flag: rest
+    """
     assert all(item in rest_api.product_info for item in
                ('copyright', 'name', 'name_full', 'support_website', 'support_website_text'))
 
 
 @pytest.mark.uncollectif(lambda: current_version() < '5.7')
 def test_identity(rest_api):
-    """Check that user's identity is returned.
+    """Check that user's identity is present.
 
     Metadata:
         test_flag: rest
@@ -179,244 +174,316 @@ def test_user_settings(rest_api):
     assert isinstance(rest_api.settings, dict)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-def test_bulk_query(rest_api):
-    """Tests bulk query referencing resources by attributes id, href and guid
+class TestBulkQueryRESTAPI(object):
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_bulk_query(self, rest_api):
+        """Tests bulk query referencing resources by attributes id, href and guid
 
-    Metadata:
-        test_flag: rest
-    """
-    collection = rest_api.collections.events
-    data0, data1, data2 = collection[0]._data, collection[1]._data, collection[2]._data
-    response = rest_api.collections.events.action.query(
-        {"id": data0["id"]}, {"href": data1["href"]}, {"guid": data2["guid"]})
-    assert len(response) == 3
-    assert data0 == response[0]._data and data1 == response[1]._data and data2 == response[2]._data
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.events
+        data0, data1, data2 = collection[0]._data, collection[1]._data, collection[2]._data
+        response = rest_api.collections.events.action.query(
+            {'id': data0['id']}, {'href': data1['href']}, {'guid': data2['guid']})
+        assert rest_api.response.status_code == 200
+        assert len(response) == 3
+        assert (data0 == response[0]._data and
+                data1 == response[1]._data and
+                data2 == response[2]._data)
 
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_bulk_query_users(self, rest_api):
+        """Tests bulk query on 'users' collection
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-def test_bulk_query_users(rest_api):
-    """Tests bulk query on 'users' collection
+        Metadata:
+            test_flag: rest
+        """
+        data = rest_api.collections.users[0]._data
+        response = rest_api.collections.users.action.query(
+            {'name': data['name']}, {'userid': data['userid']})
+        assert rest_api.response.status_code == 200
+        assert len(response) == 2
+        assert data['id'] == response[0]._data['id'] == response[1]._data['id']
 
-    Metadata:
-        test_flag: rest
-    """
-    data = rest_api.collections.users[0]._data
-    response = rest_api.collections.users.action.query(
-        {"name": data["name"]}, {"userid": data["userid"]})
-    assert len(response) == 2
-    assert data["id"] == response[0]._data["id"] == response[1]._data["id"]
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_bulk_query_roles(self, rest_api):
+        """Tests bulk query on 'roles' collection
 
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.roles
+        data0, data1 = collection[0]._data, collection[1]._data
+        response = rest_api.collections.roles.action.query(
+            {'name': data0['name']}, {'name': data1['name']})
+        assert rest_api.response.status_code == 200
+        assert len(response) == 2
+        assert data0 == response[0]._data and data1 == response[1]._data
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-def test_bulk_query_roles(rest_api):
-    """Tests bulk query on 'roles' collection
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_bulk_query_groups(self, rest_api):
+        """Tests bulk query on 'groups' collection
 
-    Metadata:
-        test_flag: rest
-    """
-    collection = rest_api.collections.roles
-    data0, data1 = collection[0]._data, collection[1]._data
-    response = rest_api.collections.roles.action.query(
-        {"name": data0["name"]}, {"name": data1["name"]})
-    assert len(response) == 2
-    assert data0 == response[0]._data and data1 == response[1]._data
-
-
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-def test_bulk_query_groups(rest_api):
-    """Tests bulk query on 'groups' collection
-
-    Metadata:
-        test_flag: rest
-    """
-    collection = rest_api.collections.groups
-    data0, data1 = collection[0]._data, collection[1]._data
-    response = rest_api.collections.groups.action.query(
-        {"description": data0["description"]}, {"description": data1["description"]})
-    assert len(response) == 2
-    assert data0 == response[0]._data and data1 == response[1]._data
-
-
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-def test_create_arbitration_settings(request, rest_api):
-    """Tests create arbitration settings.
-
-    Metadata:
-        test_flag: rest
-    """
-    num_settings = 2
-    response = arbitration_settings(request, rest_api, num=num_settings)
-    assert len(response) == num_settings
-    collection = rest_api.collections.arbitration_settings
-    record = collection.get(id=response[0].id)
-    assert record._data == response[0]._data
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.groups
+        data0, data1 = collection[0]._data, collection[1]._data
+        response = rest_api.collections.groups.action.query(
+            {'description': data0['description']}, {'description': data1['description']})
+        assert rest_api.response.status_code == 200
+        assert len(response) == 2
+        assert data0 == response[0]._data and data1 == response[1]._data
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-@pytest.mark.parametrize(
-    "from_detail", [True, False],
-    ids=["from_detail", "from_collection"])
-def test_delete_arbitration_settings(request, rest_api, from_detail):
-    """Tests delete arbitration settings.
+class TestArbitrationSettingsRESTAPI(object):
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_create_arbitration_settings(self, request, rest_api):
+        """Tests create arbitration settings.
 
-    Metadata:
-        test_flag: rest
-    """
-    num_settings = 2
-    response = arbitration_settings(request, rest_api, num=num_settings)
-    assert len(response) == num_settings
-    collection = rest_api.collections.arbitration_settings
-    if from_detail:
-        methods = ['post', 'delete']
-        for i, ent in enumerate(response):
-            ent.action.delete(force_method=methods[i % 2])
-            with error.expected("ActiveRecord::RecordNotFound"):
-                ent.action.delete()
-    else:
+        Metadata:
+            test_flag: rest
+        """
+        num_settings = 2
+        response = arbitration_settings(request, rest_api, num=num_settings)
+        assert rest_api.response.status_code == 200
+        assert len(response) == num_settings
+        for entity in response:
+            record = rest_api.collections.arbitration_settings.get(id=entity.id)
+            assert record._data == entity._data
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.parametrize('method', ['post', 'delete'])
+    def test_delete_arbitration_settings_from_detail(self, request, rest_api, method):
+        """Tests delete arbitration settings from detail.
+
+        Metadata:
+            test_flag: rest
+        """
+        num_settings = 2
+        response = arbitration_settings(request, rest_api, num=num_settings)
+        assert len(response) == num_settings
+        status = 204 if method == 'delete' else 200
+        for entity in response:
+            entity.action.delete(force_method=method)
+            assert rest_api.response.status_code == status
+            with error.expected('ActiveRecord::RecordNotFound'):
+                entity.action.delete(force_method=method)
+            assert rest_api.response.status_code == 404
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_delete_arbitration_settings_from_collection(self, request, rest_api):
+        """Tests delete arbitration settings from collection.
+
+        Metadata:
+            test_flag: rest
+        """
+        num_settings = 2
+        response = arbitration_settings(request, rest_api, num=num_settings)
+        assert len(response) == num_settings
+        collection = rest_api.collections.arbitration_settings
         collection.action.delete(*response)
-        with error.expected("ActiveRecord::RecordNotFound"):
+        assert rest_api.response.status_code == 200
+        with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*response)
+        assert rest_api.response.status_code == 404
 
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.parametrize(
+        "from_detail", [True, False],
+        ids=["from_detail", "from_collection"])
+    def test_edit_arbitration_settings(self, request, rest_api, from_detail):
+        """Tests edit arbitration settings.
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-@pytest.mark.parametrize(
-    "from_detail", [True, False],
-    ids=["from_detail", "from_collection"])
-def test_edit_arbitration_settings(request, rest_api, from_detail):
-    """Tests edit arbitration settings.
-
-    Metadata:
-        test_flag: rest
-    """
-    num_settings = 2
-    response = arbitration_settings(request, rest_api, num=num_settings)
-    assert len(response) == num_settings
-    uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_settings)]
-    new = [{'name': 'test_edit{}'.format(u), 'display_name': 'Test Edit{}'.format(u)} for u in uniq]
-    if from_detail:
-        edited = []
+        Metadata:
+            test_flag: rest
+        """
+        num_settings = 2
+        response = arbitration_settings(request, rest_api, num=num_settings)
+        assert len(response) == num_settings
+        uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_settings)]
+        new = [{'name': 'test_edit{}'.format(u), 'display_name': 'Test Edit{}'.format(u)}
+               for u in uniq]
+        if from_detail:
+            edited = []
+            for i in range(num_settings):
+                edited.append(response[i].action.edit(**new[i]))
+                assert rest_api.response.status_code == 200
+        else:
+            for i in range(num_settings):
+                new[i].update(response[i]._ref_repr())
+            edited = rest_api.collections.arbitration_settings.action.edit(*new)
+            assert rest_api.response.status_code == 200
+        assert len(edited) == num_settings
         for i in range(num_settings):
-            edited.append(response[i].action.edit(**new[i]))
-    else:
-        for i in range(num_settings):
-            new[i].update(response[i]._ref_repr())
-        edited = rest_api.collections.arbitration_settings.action.edit(*new)
-    assert len(edited) == num_settings
-    for i in range(num_settings):
-        assert edited[i].name == new[i]['name'] and edited[i].display_name == new[i]['display_name']
+            assert (edited[i].name == new[i]['name'] and
+                    edited[i].display_name == new[i]['display_name'])
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-def test_create_arbitration_rules(arbitration_rules, rest_api):
-    """Tests create arbitration rules.
+class TestArbitrationRulesRESTAPI(object):
+    @pytest.yield_fixture(scope='function')
+    def arbitration_rules(self, rest_api):
+        num_rules = 2
+        body = []
+        for _ in range(num_rules):
+            body.append({
+                'description': 'test admin rule {}'.format(fauxfactory.gen_alphanumeric(5)),
+                'operation': 'inject',
+                'expression': {'EQUAL': {'field': 'User-userid', 'value': 'admin'}}
+            })
+        response = rest_api.collections.arbitration_rules.action.create(*body)
+        assert len(response) == num_rules
 
-    Metadata:
-        test_flag: rest
-    """
-    assert len(arbitration_rules) > 0
-    record = rest_api.collections.arbitration_rules.get(id=arbitration_rules[0].id)
-    assert record._data == arbitration_rules[0]._data
+        yield response
 
+        try:
+            rest_api.collections.arbitration_rules.action.delete(*response)
+        except APIException:
+            # rules can be deleted by tests, just log warning
+            logger.warning("Failed to delete arbitration rules.")
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-@pytest.mark.parametrize(
-    "from_detail", [True, False],
-    ids=["from_detail", "from_collection"])
-def test_delete_arbitration_rules(arbitration_rules, rest_api, from_detail):
-    """Tests delete arbitration rules.
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_create_arbitration_rules(self, arbitration_rules, rest_api):
+        """Tests create arbitration rules.
 
-    Metadata:
-        test_flag: rest
-    """
-    assert len(arbitration_rules) >= 2
-    collection = rest_api.collections.arbitration_rules
-    if from_detail:
-        methods = ['post', 'delete']
-        for i, ent in enumerate(arbitration_rules):
-            ent.action.delete(force_method=methods[i % 2])
-            with error.expected("ActiveRecord::RecordNotFound"):
-                ent.action.delete()
-    else:
+        Metadata:
+            test_flag: rest
+        """
+        for rule in arbitration_rules:
+            record = rest_api.collections.arbitration_rules.get(id=rule.id)
+            assert rest_api.response.status_code == 200
+            assert record._data == rule._data
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.parametrize('method', ['post', 'delete'])
+    def test_delete_arbitration_rules_from_detail(self, arbitration_rules, rest_api, method):
+        """Tests delete arbitration rules from detail.
+
+        Metadata:
+            test_flag: rest
+        """
+        status = 204 if method == 'delete' else 200
+        for entity in arbitration_rules:
+            entity.action.delete(force_method=method)
+            assert rest_api.response.status_code == status
+            with error.expected('ActiveRecord::RecordNotFound'):
+                entity.action.delete(force_method=method)
+            assert rest_api.response.status_code == 404
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_delete_arbitration_rules_from_collection(self, arbitration_rules, rest_api):
+        """Tests delete arbitration rules from collection.
+
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.arbitration_rules
         collection.action.delete(*arbitration_rules)
-        with error.expected("ActiveRecord::RecordNotFound"):
+        assert rest_api.response.status_code == 200
+        with error.expected('ActiveRecord::RecordNotFound'):
             collection.action.delete(*arbitration_rules)
+        assert rest_api.response.status_code == 404
 
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.parametrize(
+        'from_detail', [True, False],
+        ids=['from_detail', 'from_collection'])
+    def test_edit_arbitration_rules(self, arbitration_rules, rest_api, from_detail):
+        """Tests edit arbitration rules.
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-@pytest.mark.parametrize(
-    "from_detail", [True, False],
-    ids=["from_detail", "from_collection"])
-def test_edit_arbitration_rules(arbitration_rules, rest_api, from_detail):
-    """Tests edit arbitration rules.
-
-    Metadata:
-        test_flag: rest
-    """
-    num_rules = len(arbitration_rules)
-    assert num_rules > 0
-    uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_rules)]
-    new = [{'description': 'new test admin rule {}'.format(u)} for u in uniq]
-    if from_detail:
-        edited = []
+        Metadata:
+            test_flag: rest
+        """
+        num_rules = len(arbitration_rules)
+        uniq = [fauxfactory.gen_alphanumeric(5) for _ in range(num_rules)]
+        new = [{'description': 'new test admin rule {}'.format(u)} for u in uniq]
+        if from_detail:
+            edited = []
+            for i in range(num_rules):
+                edited.append(arbitration_rules[i].action.edit(**new[i]))
+                assert rest_api.response.status_code == 200
+        else:
+            for i in range(num_rules):
+                new[i].update(arbitration_rules[i]._ref_repr())
+            edited = rest_api.collections.arbitration_rules.action.edit(*new)
+            assert rest_api.response.status_code == 200
+        assert len(edited) == num_rules
         for i in range(num_rules):
-            edited.append(arbitration_rules[i].action.edit(**new[i]))
-    else:
-        for i in range(num_rules):
-            new[i].update(arbitration_rules[i]._ref_repr())
-        edited = rest_api.collections.arbitration_rules.action.edit(*new)
-    assert len(edited) == num_rules
-    for i in range(num_rules):
-        assert edited[i].description == new[i]['description']
+            assert edited[i].description == new[i]['description']
 
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-@pytest.mark.parametrize(
-    "from_detail", [True, False],
-    ids=["from_detail", "from_collection"])
-def test_mark_notifications(rest_api, generate_notifications, from_detail):
-    """Tests marking notifications as seen.
+class TestNotificationsRESTAPI(object):
+    @pytest.fixture(scope='function')
+    def generate_notifications(self, rest_api):
+        requests_data = automation_requests_data('nonexistent_vm')
+        requests = rest_api.collections.automation_requests.action.create(*requests_data[:2])
+        assert len(requests) == 2
+        wait_for_requests(requests)
 
-    Metadata:
-        test_flag: rest
-    """
-    unseen = rest_api.collections.notifications.find_by(seen=False)
-    notifications = [unseen[-i] for i in range(1, 3)]
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.parametrize(
+        'from_detail', [True, False],
+        ids=['from_detail', 'from_collection'])
+    def test_mark_notifications(self, rest_api, generate_notifications, from_detail):
+        """Tests marking notifications as seen.
 
-    if from_detail:
+        Metadata:
+            test_flag: rest
+        """
+        unseen = rest_api.collections.notifications.find_by(seen=False)
+        notifications = [unseen[-i] for i in range(1, 3)]
+
+        if from_detail:
+            for ent in notifications:
+                ent.action.mark_as_seen()
+                assert rest_api.response.status_code == 200
+        else:
+            rest_api.collections.notifications.action.mark_as_seen(*notifications)
+            assert rest_api.response.status_code == 200
+
         for ent in notifications:
-            ent.action.mark_as_seen()
-    else:
-        rest_api.collections.notifications.action.mark_as_seen(*notifications)
+            ent.reload()
+            assert ent.seen
 
-    for ent in notifications:
-        ent.reload()
-        assert ent.seen
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    @pytest.mark.parametrize('method', ['post', 'delete'])
+    def test_delete_notifications_from_detail(self, rest_api, generate_notifications, method):
+        """Tests delete notifications from detail.
 
+        Metadata:
+            test_flag: rest
+        """
+        if method == 'delete' and BZ('1420872', forced_streams=['5.7', 'upstream']).blocks:
+            pytest.skip("Affected by BZ1420872, cannot test.")
+        collection = rest_api.collections.notifications
+        collection.reload()
+        notifications = [collection[-i] for i in range(1, 3)]
+        status = 204 if method == 'delete' else 200
 
-@pytest.mark.uncollectif(lambda: current_version() < '5.7')
-@pytest.mark.parametrize(
-    "from_detail", [True, False],
-    ids=["from_detail", "from_collection"])
-def test_delete_notifications(rest_api, generate_notifications, from_detail):
-    """Tests delete notifications.
+        for entity in notifications:
+            entity.action.delete(force_method=method)
+            assert rest_api.response.status_code == status
+            with error.expected('ActiveRecord::RecordNotFound'):
+                entity.action.delete(force_method=method)
+            assert rest_api.response.status_code == 404
 
-    Metadata:
-        test_flag: rest
-    """
-    collection = rest_api.collections.notifications
-    collection.reload()
-    notifications = [collection[-i] for i in range(1, 3)]
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_delete_notifications_from_collection(self, rest_api, generate_notifications):
+        """Tests delete notifications from collection.
 
-    if from_detail:
-        for ent in notifications:
-            ent.action.delete()
-            with error.expected("ActiveRecord::RecordNotFound"):
-                ent.action.delete()
-    else:
+        Metadata:
+            test_flag: rest
+        """
+        collection = rest_api.collections.notifications
+        collection.reload()
+        notifications = [collection[-i] for i in range(1, 3)]
+
         collection.action.delete(*notifications)
+        assert rest_api.response.status_code == 200
         with error.expected("ActiveRecord::RecordNotFound"):
             collection.action.delete(*notifications)
+        assert rest_api.response.status_code == 404
 
 
 class TestRequestsRESTAPI(object):
