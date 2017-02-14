@@ -6,6 +6,7 @@ from selenium.common.exceptions import WebDriverException
 from math import ceil
 
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.log import logged
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import (
     Table as VanillaTable,
@@ -14,6 +15,7 @@ from widgetastic.widget import (
     Widget,
     View,
     Select,
+    Text,
     TextInput,
     Checkbox,
     WidgetDescriptor,
@@ -1108,3 +1110,28 @@ class DetailsToolBarViewSelector(View):
     @property
     def selected(self):
         return next(btn.title for btn in self._view_buttons if btn.active)
+
+
+class Search(View):
+    """ Represents search_text control
+    # TODO Add advanced search
+    """
+    search_text = Input(name="search_text")
+    search_btn = Text("//div[@id='searchbox']//div[contains(@class, 'form-group')]"
+                      "/*[self::a or (self::button and @type='submit')]")
+    clear_btn = Text(".//*[@id='searchbox']//div[contains(@class, 'clear')"
+                     "and not(contains(@style, 'display: none'))]/div/button")
+
+    def clear_search(self):
+        if not self.is_empty:
+            self.clear_btn.click()
+            self.search_btn.click()
+
+    def search(self, text):
+        self.search_text.fill(text)
+        self.search_btn.click()
+
+    @property
+    @logged(log_result=True)
+    def is_empty(self):
+        return not bool(self.search_text.value)

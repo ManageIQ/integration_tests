@@ -69,8 +69,8 @@ def test_servicetemplateandimages_defaultfilters(setup_first_provider):
     df = st.DefaultFilter(name='Platform / Microsoft')
     df.update({'filters': [(k, True) for k in filters]})
     try:
-        navigate_to(workloads.VmsInstances, 'All', filter_folder='Global Filters',
-                    filter_name=df.name)
+        view = navigate_to(workloads.TemplatesImages, 'All')
+        view.templates.select_global_filter(df.name)
         assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
     finally:
         df.update({'filters': [(k, False) for k in filters]})
@@ -81,8 +81,8 @@ def test_servicevmsandinstances_defaultfilters(setup_first_provider):
     df = st.DefaultFilter(name='Platform / Openstack')
     df.update({'filters': [(k, True) for k in filters]})
     try:
-        navigate_to(workloads.TemplatesImages, 'All', filter_folder='Global Filters',
-                    filter_name=df.name)
+        view = navigate_to(workloads.VmsInstances, 'All')
+        view.vms.select_global_filter(df.name)
         assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
     finally:
         df.update({'filters': [(k, False) for k in filters]})
