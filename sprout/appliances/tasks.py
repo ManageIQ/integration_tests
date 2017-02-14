@@ -300,19 +300,21 @@ def poke_trackerbot(self):
                     tpl.save()
                     original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
-        # Preconfigured one
-        try:
-            preconfigured_template = Template.objects.get(
-                provider=provider, template_group=group, original_name=template_name,
-                preconfigured=True)
-            if preconfigured_template.ga_released != ga_released:
-                preconfigured_template.ga_released = ga_released
-                preconfigured_template.save()
-        except ObjectDoesNotExist:
-            if template_name in provider.templates:
-                original_id = original_template.id if original_template is not None else None
-                create_appliance_template.delay(
-                    provider.id, group.id, template_name, source_template_id=original_id)
+        # If the provider is set to not preconfigure templates, do not bother even doing it.
+        if provider.num_simultaneous_configuring > 0:
+            # Preconfigured one
+            try:
+                preconfigured_template = Template.objects.get(
+                    provider=provider, template_group=group, original_name=template_name,
+                    preconfigured=True)
+                if preconfigured_template.ga_released != ga_released:
+                    preconfigured_template.ga_released = ga_released
+                    preconfigured_template.save()
+            except ObjectDoesNotExist:
+                if template_name in provider.templates:
+                    original_id = original_template.id if original_template is not None else None
+                    create_appliance_template.delay(
+                        provider.id, group.id, template_name, source_template_id=original_id)
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
