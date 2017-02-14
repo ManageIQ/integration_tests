@@ -152,6 +152,7 @@ class DashboardWidgetFormCommon(DashboardWidgetsView):
     description = Input(name="description")
     active = Checkbox("enabled")
     visibility = BootstrapSelect("visibility_typ")
+    # TODO add roles and groups CheckboxSelect
     cancel_button = Button("Cancel")
 
 

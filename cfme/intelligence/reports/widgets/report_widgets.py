@@ -39,7 +39,7 @@ class ReportWidget(Widget):
 
     TYPE = "Reports"
     TITLE = "Report"
-    pretty_attrs = ['description', 'filter', 'visibility']
+    pretty_attrs = ["description", "filter", "visibility"]
 
     def __init__(self, title, description=None, active=None, filter=None, columns=None, rows=None,
             timer=None, visibility=None):
@@ -52,12 +52,6 @@ class ReportWidget(Widget):
                 setattr(self, "column{}".format(i), columns[i])
             except IndexError:
                 setattr(self, "column{}".format(i), None)
-        self.run = timer.get("run")
-        self.every = timer.get("hours")
-        self.time_zone = timer.get("time_zone")
-        self.starting_date = timer.get("starting_date")
-        self.starting_hour = timer.get("starting_hour")
-        self.starting_minute = timer.get("starting_minute")
         self.rows = rows
         self.timer = timer
         self.visibility = visibility
@@ -75,6 +69,12 @@ class ReportWidget(Widget):
             "column2": self.column2,
             "column3": self.column3,
             "column4": self.column4,
+            "run": self.timer.get("run"),
+            "every": self.timer.get("hours"),
+            "time_zone": self.timer.get("time_zone"),
+            "starting_date": self.timer.get("starting_date"),
+            "starting_hour": self.timer.get("starting_hour"),
+            "starting_minute": self.timer.get("starting_minute"),
             "rows": self.rows,
             "visibility": self.visibility
         }

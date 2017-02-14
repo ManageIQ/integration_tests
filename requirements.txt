@@ -42,7 +42,7 @@ pycrypto
 pygal
 PyGithub
 pytest==2.9.2
-python-bugzilla>=1.2.2
+python-bugzilla>=1.2.0
 python-dateutil
 pywinrm
 PyYAML

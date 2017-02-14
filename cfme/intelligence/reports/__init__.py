@@ -67,6 +67,3 @@ class CloudIntelReports(CFMENavigateStep):
 
     def step(self):
         self.view.navigation.select("Cloud Intel", "Reports")
-
-
-Report = None
