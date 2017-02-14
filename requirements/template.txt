@@ -1,6 +1,6 @@
 # Internal dependencies
 # MIQ REST API Client
-git+https://github.com/ManageIQ/manageiq-api-client-python.git
+manageiq-client
 
 # External dependencies
 boto
@@ -59,6 +59,7 @@ widgetastic.core>=0.3.2
 yaycl
 yaycl-crypt
 
+virtualenv
 
 sentaku~=0.4.0
 attrs~=16.0
@@ -89,5 +90,3 @@ pyzmq
 # werkzeug.local until extraction
 werkzeug
 
-# do editable self-install to avoid need for pythonpath changes
--e .
