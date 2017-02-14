@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Dashboard Widgets"""
+from utils.wait import wait_for
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.appliance import Navigatable
+from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from widgetastic.widget import Text, Checkbox
+from widgetastic_manageiq import SummaryFormItem
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 from navmazing import NavigateToAttribute
-from utils.appliance.implementations.ui import navigator
 from cfme.intelligence.reports import CloudIntelReportsView
-from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to
 
 
 class Widget(Updateable, Pretty, Navigatable):
@@ -19,18 +20,30 @@ class Widget(Updateable, Pretty, Navigatable):
     TITLE = None
     pretty_attrs = None
 
-    def generate(self, wait=True, **kwargs):
-        pass
+    def generate(self, wait=True, cancel=False, **kwargs):
+        view = navigate_to(self, "Details")
+        view.configuration.item_select(
+            "Generate Widget content now",
+            handle_alert=not cancel
+        )
+        view.flash.assert_message("Content generation for this Widget has been initiated")
+        view.flash.assert_no_error()
+        if wait:
+            self.wait_generated(**kwargs)
+
+    def refresh(self):
+        view = navigate_to(self, "Details")
+        view.reload_button.click()
 
     def wait_generated(self, timeout=600):
         wait_for(
             self.check_status,
             num_sec=timeout, delay=5, fail_condition=lambda result: result != "Complete",
-            fail_func=toolbar.refresh)
+            fail_func=self.refresh)
 
     def check_status(self):
-        navigate_to(self, 'Details')
-        return self.status_info("Current Status").text
+        view = navigate_to(self, "Details")
+        return view.status_info.text
 
     def create(self):
         """Create this Widget in the UI."""
@@ -115,6 +128,8 @@ class AllDashboardWidgetsView(DashboardWidgetsView):
 class DashboardWidgetDetailsView(DashboardWidgetsView):
 
     title = Text("#explorer_title_text")
+    status_info = SummaryFormItem("Status", "Current Status")
+    reload_button = Button(title="Reload current display")
 
     @property
     def is_displayed(self):
