@@ -206,8 +206,16 @@ class SproutManager(object):
                 "Check if pool already exists for this %r Jenkins job", jenkins_job[0])
             jenkins_job_pools = self.client.find_pools_by_description(jenkins_job[0], partial=True)
             for pool in jenkins_job_pools:
-                log.info("Destroying the old pool %s for %r job.", pool, jenkins_job[0])
-                self.client.destroy_pool(pool)
+                # Some jobs have overlapping descriptions, sprout API doesn't support regex
+                # job-name-12345 vs job-name-master-12345
+                # the partial match alone will catch both of these, use regex to confirm pool
+                # description is an accurate match
+                if self.client.get_pool_description(pool) == '{}{}'.format(jenkins_job[0], pool):
+                    log.info("Destroying the old pool %s for %r job.", pool, jenkins_job[0])
+                    self.client.destroy_pool(pool)
+                else:
+                    log.info('Skipped pool destroy due to potential pool description overlap: %r',
+                             jenkins_job[0])
         except Exception:
             log.exception(
                 "Exception occurred during old pool deletion, this can be ignored"
