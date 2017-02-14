@@ -523,7 +523,6 @@ class TestRequestsRESTAPI(object):
     @pytest.mark.uncollectif(lambda: current_version() < '5.7')
     def test_create_automation_requests_parallel(self, rest_api):
         """Create automation requests in parallel.
-
         Metadata:
             test_flag: rest
         """
@@ -531,7 +530,7 @@ class TestRequestsRESTAPI(object):
         entry_point = rest_api._entry_point
         auth = rest_api._auth
 
-        def _gen_automation_requests(entry_point, auth, output):
+        def _gen_automation_requests(output):
             api = MiqApi(entry_point, auth, verify_ssl=False)
             requests_data = automation_requests_data(
                 'nonexistent_vm', requests_collection=True, approve=False)
@@ -540,7 +539,7 @@ class TestRequestsRESTAPI(object):
             output.put(result)
 
         processes = [
-            mp.Process(target=_gen_automation_requests, args=(entry_point, auth, output))
+            mp.Process(target=_gen_automation_requests, args=(output,))
             for _ in range(4)]
 
         for proc in processes:
