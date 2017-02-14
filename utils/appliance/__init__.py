@@ -1406,8 +1406,8 @@ class IPAppliance(object):
 
         return status, out
 
-    def is_dedicated_db_active(dedicated_db):
-        return_code, output = dedicated_db.ssh_client.run_command(
+    def is_dedicated_db_active(self):
+        return_code, output = self.ssh_client.run_command(
             "systemctl status {}-postgresql.service | grep running".format(scl_name()))
         return return_code == 0
 

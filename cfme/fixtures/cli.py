@@ -1,6 +1,6 @@
 from utils.version import get_stream
 from cfme.test_framework.sprout.client import SproutClient
-from utils.appliance import current_appliance, is_dedicated_db_active
+from utils.appliance import current_appliance
 from utils.conf import cfme_data, credentials
 from utils.log import logger
 import pytest
@@ -9,18 +9,18 @@ from cfme.test_framework.sprout.client import SproutException
 
 
 @pytest.yield_fixture(scope="function")
-def dedicated_db_appliance():
+def dedicated_db_appliance(app_creds):
     sp = SproutClient.from_config()
     version = current_appliance.version.vstring
     stream = get_stream(current_appliance.version)
     apps, pool_id = sp.provision_appliances(
         count=1, preconfigured=False, version=version, stream=stream)
     pwd = app_creds['password']
-    client = dedicated_db_appliance.ssh_client
+    client = apps[0].ssh_client
     channel = client.invoke_shell()
     stdin = channel.makefile('wb')
     stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
-    wait_for(is_dedicated_db_active, func_args=[dedicated_db_appliance])
+    wait_for(apps[0].is_dedicated_db_active)
 
     yield apps[0]
 
