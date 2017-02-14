@@ -69,36 +69,36 @@ class ApplianceConsoleCli(object):
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def run(self, ap_cli_command):
+    def _run(self, ap_cli_command):
         return self.appliance.ssh_client.run_command(
             "appliance_console_cli {}".format(ap_cli_command))
 
     def set_hostname(self, hostname):
-        self.run("-H {host}".format(host=hostname))
+        self._run("-H {host}".format(host=hostname))
 
     def configure_appliance_external_join(self, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
-        self.run("-h {dbhostname} -U {username} -p {password} -d {dbname} -v -K {fetch_key} "
+        self._run("-h {dbhostname} -U {username} -p {password} -d {dbname} -v -K {fetch_key} "
             "-s {sshlogin} -a {sshpass}".format(
                 dbhostname=dbhostname, username=username, password=password, dbname=dbname,
                 fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_appliance_external_create(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
-        self.run("-r {region} -h {dbhostname} -U {username} -p {password} "
+        self._run("-r {region} -h {dbhostname} -U {username} -p {password} "
             "-d {dbname} -v -K {fetch_key} -s {sshlogin} -a {sshpass}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
                 dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_appliance_internal_fetch_key(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
-        self.run("-r {region} -i -h {dbhostname} -U {username} -p {password} "
+        self._run("-r {region} -i -h {dbhostname} -U {username} -p {password} "
             "-d {dbname} -v -K {fetch_key} -s {sshlogin} -a {sshpass}".format(
                 region=region, dbhostname=dbhostname, username=username, password=password,
                 dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_ipa(self, ipaserver, username, password, domain, realm):
-        self.run("-e {ipaserver} -n {username} -w {password} -o {domain} -l {realm}".format(
+        self._run("-e {ipaserver} -n {username} -w {password} -o {domain} -l {realm}".format(
             ipaserver=ipaserver, username=username, password=password, domain=domain, realm=realm))
         assert self.appliance.ssh_client.run_command("systemctl status sssd | grep running")
         return_code, output = self.appliance.ssh_client.run_command(
@@ -106,7 +106,7 @@ class ApplianceConsoleCli(object):
         assert return_code == 0
 
     def uninstall_ipa_client(self):
-        self.run("--uninstall-ipa")
+        self._run("--uninstall-ipa")
         return_code, output = self.appliance.ssh_client.run_command(
             "cat /etc/ipa/default.conf")
         assert return_code != 0

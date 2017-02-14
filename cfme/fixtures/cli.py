@@ -27,6 +27,10 @@ def dedicated_db_appliance(app_creds):
     sp.destroy_pool(pool_id)
 
 
+""" The Following fixture 'fqdn_appliance' provisions one appliance for testing from an FQDN
+    provider unless there are no provisions available"""
+
+
 @pytest.yield_fixture(scope="function")
 def fqdn_appliance():
     sp = SproutClient.from_config()
@@ -35,7 +39,6 @@ def fqdn_appliance():
     usable_providers = available_providers & required_providers
     version = current_appliance.version.vstring
     stream = get_stream(current_appliance.version)
-
     for provider in usable_providers:
         try:
             apps, pool_id = sp.provision_appliances(
@@ -59,8 +62,6 @@ def ipa_crud(fqdn_appliance, app_creds, ipa_creds):
         ipa_creds['password'], ipa_creds['domain'], ipa_creds['realm'])
 
     yield(fqdn_appliance)
-
-    fqdn_appliance.ap_cli.uninstall_ipa_client()
 
 
 @pytest.fixture()
