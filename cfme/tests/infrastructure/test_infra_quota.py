@@ -6,7 +6,6 @@ import cfme.configure.access_control as ac
 from cfme import test_requirements
 from cfme.configure.access_control import Tenant
 from cfme.fixtures import pytest_selenium as sel
-from cfme.automate import explorer as automate
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.provisioning import provisioning_form
@@ -33,44 +32,6 @@ def pytest_generate_tests(metafunc):
 def vm_name():
     vm_name = 'test_quota_prov_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
-
-
-@pytest.fixture(scope="module")
-def domain(request):
-    domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
-    domain.create()
-    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
-    return domain
-
-
-@pytest.fixture(scope="module")
-def cls(request, domain):
-    tcls = automate.Class(name="ProvisionRequestQuotaVerification",
-        namespace=automate.Namespace.make_path("Infrastructure", "VM",
-            "Provisioning", "StateMachines",
-            parent=domain, create_on_init=True))
-    tcls.create()
-    request.addfinalizer(lambda: tcls.delete() if tcls.exists() else None)
-    return tcls
-
-
-@pytest.fixture(scope="module")
-def copy_methods(domain):
-    methods = ['rejected', 'validate_quotas']
-    for method in methods:
-        ocls = automate.Class(name="ProvisionRequestQuotaVerification",
-            namespace=automate.Namespace.make_path("Infrastructure", "VM",
-                "Provisioning", "StateMachines",
-                parent=automate.Domain(name="ManageIQ (Locked)")))
-
-        method = automate.Method(name=method, cls=ocls)
-
-        method = method.copy_to(domain)
-
-
-@pytest.fixture(scope="module")
-def set_domain_priority(domain):
-    automate.set_domain_order(domain.name)
 
 
 @pytest.yield_fixture(scope="module")

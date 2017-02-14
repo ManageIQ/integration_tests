@@ -55,13 +55,9 @@ class LoggedIn(CFMENavigateStep):
     VIEW = BaseLoggedInPage
     prerequisite = NavigateToSibling('LoginScreen')
 
-    def am_i_here(self):
-        return self.view.is_displayed
-
     def step(self):
-        login_view = self.create_view(LoginPage)
         user = self.obj.appliance.user
-        login_view.log_in(user)
+        self.prerequisite_view.log_in(user)
 
 
 class ConfigurationView(BaseLoggedInPage):
@@ -92,8 +88,12 @@ class ConfigurationView(BaseLoggedInPage):
 
     @property
     def is_displayed(self):
-        # TODO this needs fixing
-        return False
+        # TODO: We will need a better ID of this location when we have user permissions in effect
+        return (
+            self.accordions.settings.is_displayed and
+            self.accordions.accesscontrol.is_displayed and
+            self.accordions.diagnostics.is_displayed and
+            self.accordions.database.is_displayed)
 
 
 @navigator.register(Server)
@@ -101,16 +101,11 @@ class Configuration(CFMENavigateStep):
     VIEW = ConfigurationView
     prerequisite = NavigateToSibling('LoggedIn')
 
-    def am_i_here(self):
-        # TODO move this to using match_location once it uses widgetastic
-        return self.obj.appliance.browser.widgetastic.execute_script(
-            'return ManageIQ.controller;') == 'ops'
-
     def step(self):
         if self.obj.appliance.version > '5.7':
-            self.view.settings.select_item('Configuration')
+            self.prerequisite_view.settings.select_item('Configuration')
         else:
-            self.view.navigation.select('Settings', 'Configuration')
+            self.prerequisite_view.navigation.select('Settings', 'Configuration')
 
 
 @navigator.register(Server)
@@ -826,6 +821,7 @@ def create(self, name=None, description=None, smartproxy_ip=None, ntp_servers=No
 class AutomateSimulationView(BaseLoggedInPage):
     @property
     def is_displayed(self):
+        from cfme.automate import automate_menu_name
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == automate_menu_name(
@@ -840,4 +836,5 @@ class AutomateSimulation(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
+        from cfme.automate import automate_menu_name
         self.view.navigation.select(*automate_menu_name(self.obj.appliance) + ['Simulation'])

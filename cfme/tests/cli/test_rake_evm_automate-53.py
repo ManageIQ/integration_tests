@@ -2,7 +2,7 @@
 """This module contains tests that are supposed to test CFME's CLI functionality."""
 import pytest
 
-from cfme.automate.explorer import Domain
+from cfme.automate.explorer.domain import DomainCollection
 from utils.path import data_path
 from utils.update import update
 
@@ -20,15 +20,16 @@ def rake(ssh_client):
 
 
 @pytest.fixture(scope="function")
-def qe_ae_data(ssh_client, rake):
+def qe_ae_data(request, ssh_client, rake):
     ssh_client.put_file(cli_path.join("QECliTesting.yaml").strpath, "/root/QECliTesting.yaml")
     rc, stdout = rake(
         "evm:automate:import DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml PREVIEW=false "
         "ENABLED=true SYSTEM=false")
     assert rc == 0, stdout
     # Now we have to enable the domain to make it work.
-    qe_cli_testing = Domain(name="QECliTesting")
-    if not qe_cli_testing.is_enabled:
+    qe_cli_testing = DomainCollection().instantiate(name='QECliTesting')
+    request.addfinalizer(qe_cli_testing.delete_if_exists)
+    if not qe_cli_testing.enabled:
         with update(qe_cli_testing):
             qe_cli_testing.enabled = True
 

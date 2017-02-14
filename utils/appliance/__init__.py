@@ -24,7 +24,7 @@ from sentaku import ImplementationContext
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import conf, datafile, db, db_queries, ssh, ports
+from utils import conf, datafile, db, db_queries, ssh, ports, OverrideWithDict
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
@@ -2509,6 +2509,9 @@ class Navigatable(object):
     def browser(self):
         return self.appliance.browser.widgetastic
 
-    def create_view(self, view_class, o=None):
+    def create_view(self, view_class, o=None, override=None):
+        o = o or self
+        if override is not None:
+            o = OverrideWithDict(o, override)
         return self.appliance.browser.create_view(
-            view_class, additional_context={'object': o or self})
+            view_class, additional_context={'object': o})
