@@ -14,8 +14,8 @@ Usage:
 from xml.sax.saxutils import quoteattr, unescape
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.exceptions import AccordionItemNotFound
-from cfme.web_ui import Tree, BootstrapTreeview
+from cfme.exceptions import AccordionItemNotFound, TreeDimmedException
+from cfme.web_ui import Tree, BootstrapTreeview, form_buttons
 from utils import version
 from utils.log import logger
 from utils.wait import wait_for
@@ -160,6 +160,22 @@ def tree(name, *path):
         # treeview detected
         el = sel.element(TREEVIEW, root=locator)
         tree_id = sel.get_attribute(el, 'id')
+        # Check dimmed status
+        if sel.elements(
+                '//div[contains(@class, "dimmed") and ./div[@id={}]]'.format(
+                    unescape(quoteattr(tree_id)))):
+            if sel.is_displayed(form_buttons.cancel):
+                # In case a Cancel button is visible it is probable that some form stayed open
+                try:
+                    text = sel.text('#explorer_title_text')
+                except sel.NoSuchElementException:
+                    text = 'unknown'
+                raise TreeDimmedException(
+                    'Tree {} is dimmed! It looks like some form ({}) stayed open.'.format(
+                        tree_id, text))
+            else:
+                # Otherwise just say that the tree is dimmed.
+                raise TreeDimmedException('Tree {} is dimmed!'.format(tree_id))
         tree = BootstrapTreeview(tree_id)
     else:
         raise TypeError('None of the supported trees was detected.')
