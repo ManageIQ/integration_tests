@@ -11,6 +11,7 @@ from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
 from tempfile import NamedTemporaryFile
+from utils.db import scl_name
 
 from cached_property import cached_property
 
@@ -1404,6 +1405,11 @@ class IPAppliance(object):
             raise ApplianceException(msg)
 
         return status, out
+
+    def is_dedicated_db_active(dedicated_db):
+        return_code, output = dedicated_db.ssh_client.run_command(
+            "systemctl status {}-postgresql.service | grep running".format(scl_name()))
+        return return_code == 0
 
     def _check_appliance_ui_wait_fn(self):
         # Get the URL, don't verify ssl cert

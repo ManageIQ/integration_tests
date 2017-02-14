@@ -33,8 +33,8 @@ def test_configure_appliance_external_join(request, app_creds, temp_appliance_un
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
 def test_configure_appliance_external_create(
-        request, app_creds, dedicated_db, temp_appliance_unconfig_funcscope):
-    hostname = dedicated_db.address
+        request, app_creds, dedicated_db_appliance, temp_appliance_unconfig_funcscope):
+    hostname = dedicated_db_appliance.address
     temp_appliance_unconfig_funcscope.ap_cli.configure_appliance_external_create(5, hostname,
         app_creds['username'], app_creds['password'], 'vmdb_production', hostname,
         app_creds['sshlogin'], app_creds['sshpass'])
