@@ -167,7 +167,7 @@ class CFMENavigateStep(NavigateStep):
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
         if hasattr(fn, '_noop') and fn._noop:
-            self.log_message('Op is a Nop! ({})'.format(fn))
+            self.log_message('Op is a Nop! ({})'.format(fn.func_name))
             return
 
         if self.VIEW:
