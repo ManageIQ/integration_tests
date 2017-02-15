@@ -204,6 +204,7 @@ def run_ansible(script):
                                            stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         print("Status : FAIL", exc.returncode, exc.output)
+        return exc.output
     else:
         print("Output: \n{}\n".format(response))
 
