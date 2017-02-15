@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
+from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
 from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
@@ -33,9 +33,8 @@ def vm_name():
 
 @pytest.fixture(scope="module")
 def domain(request):
-    dom = Domain(fauxfactory.gen_alpha(), enabled=True)
-    dom.create()
-    request.addfinalizer(dom.delete)
+    dom = DomainCollection().create(name=fauxfactory.gen_alpha(), enabled=True)
+    request.addfinalizer(dom.delete_if_exists)
     return dom
 
 
@@ -158,15 +157,18 @@ def test_create_snapshot_via_ae(request, domain, test_vm):
     file = data_path.join("ui").join("automate").join("test_create_snapshot_via_ae.rb")
     with file.open("r") as f:
         method_contents = f.read()
-    miq_domain = Domain("ManageIQ (Locked)")
-    miq_class = Class("Request", namespace=Namespace("System", domain=miq_domain))
-    request_cls = miq_class.copy_to(domain)
+    miq_domain = DomainCollection().instantiate(name='ManageIQ')
+    miq_class = miq_domain.namespaces.instantiate(name='System').classes.instantiate(name='Request')
+    miq_class.copy_to(domain)
+    request_cls = domain.namespaces.instantiate(name='System').classes.instantiate(name='Request')
     request.addfinalizer(request_cls.delete)
-    method = Method("snapshot", data=method_contents, cls=request_cls)
-    method.create()
+    method = request_cls.methods.create(name="snapshot", location='inline', script=method_contents)
     request.addfinalizer(method.delete)
-    instance = Instance("snapshot", values={"meth5": "snapshot"}, cls=request_cls)
-    instance.create()
+    instance = request_cls.instances.create(
+        name="snapshot",
+        fields={
+            "meth5": {
+                'value': "snapshot"}})
     request.addfinalizer(instance.delete)
 
     # SIMULATE

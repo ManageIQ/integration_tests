@@ -6,6 +6,7 @@ from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import \
     accordion, flash, Quadicon, InfoBlock, Form, fill, form_buttons, match_location, toolbar as tb
+from widgetastic_patternfly import CandidateNotFound
 from utils import version
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
@@ -119,15 +120,16 @@ class MyService(Updateable, Navigatable):
                 current_appliance.product_name)
         )        # wait for service to retire
         wait_for(
-            lambda: self.get_detail(properties=('Lifecycle', 'Retirement State')) == 'Retiring',
+            lambda: self.get_detail(properties=('Lifecycle', 'Retirement State')) == 'Retired',
             fail_func=tb.refresh,
-            num_sec=5 * 60,
+            num_sec=10 * 60,
             delay=3,
             message='Service Retirement wait'
         )
         # wait for any vms to shutdown, this method leaves the page on the VM details
-        vm_state = self.wait_for_vm_retire()
-        assert vm_state in ['off', 'unknown']
+        if self.vm_name is not None:
+            vm_state = self.wait_for_vm_retire()
+            assert vm_state in ['off', 'unknown']
 
     def retire_on_date(self, retirement_date):
         navigate_to(self, 'SetRetirement')
@@ -155,6 +157,13 @@ class MyService(Updateable, Navigatable):
         wait_for(flash.get_messages, timeout=10, delay=2, fail_condition=[], fail_func=tb.refresh())
         if flash.assert_success_message('Service "{}" was saved'.format(updated_name)):
             setattr(self, 'service_name', updated_name)
+
+    def exists(self):
+        try:
+            navigate_to(self, 'Details')
+            return True
+        except CandidateNotFound:
+            return False
 
     def delete(self):
         navigate_to(self, 'Details')

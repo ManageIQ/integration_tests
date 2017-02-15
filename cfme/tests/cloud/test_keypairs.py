@@ -4,7 +4,7 @@ from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider.openstack import OpenStackProvider
 from utils import testgen
 from utils.version import current_version
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import setup_a_provider_by_class
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() > '5.7')
@@ -13,8 +13,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def a_provider():
-    return _setup_a_provider(
-        prov_class="cloud", prov_type="openstack", validate=True, check_existing=True)
+    return setup_a_provider_by_class(OpenStackProvider)
 
 
 def pytest_generate_tests(metafunc):

@@ -321,12 +321,17 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         view.flash.assert_message('Policy "Copy of {}" was added'.format(self.description))
         return type(self)("Copy of {}".format(self.description))
 
-    def assign_events(self, *events):
+    def assign_events(self, *events, **kwargs):
         """Assign events to this Policy.
 
         Args:
             events: Events which need to be assigned.
+            extend: Do not uncheck existing events.
         """
+        events = list(events)
+        extend = kwargs.pop("extend", False)
+        if extend:
+            events += self.assigned_events
         view = navigate_to(self, "Details")
         view.configuration.item_select("Edit this Policy's Event assignments")
         view = self.create_view(EditPolicyEventAssignments)
@@ -340,9 +345,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         view.flash.assert_message('Policy "{}" was saved'.format(self.description))
 
     def is_event_assigned(self, event):
-        self.testing_event = event
-        view = navigate_to(self, "Event Details")
-        return view.is_displayed
+        return event in self.assigned_events
 
     def assign_conditions(self, *conditions):
         """Assign conditions to this Policy.
@@ -404,7 +407,7 @@ class BasePolicy(Updateable, Navigatable, Pretty):
                     raise NameError("Action with name {} does not exist!".format(action))
         # Check whether we have all necessary events assigned
         if not self.is_event_assigned(event):
-            self.assign_events(event)
+            self.assign_events(event, extend=True)
             assert self.is_event_assigned(event), "Could not assign event {}!".format(event)
         # And now we can assign actions
         self.testing_event = event
@@ -432,6 +435,18 @@ class BasePolicy(Updateable, Navigatable, Pretty):
             .query(policies.description)\
             .filter(policies.description == self.description)\
             .count() > 0
+
+    @property
+    def assigned_events(self):
+        policies = self.appliance.db["miq_policies"]
+        events = self.appliance.db["miq_event_definitions"]
+        policy_contents = self.appliance.db["miq_policy_contents"]
+        session = self.appliance.db.session
+        policy_id = session.query(policies.id).filter(policies.description == self.description)
+        assigned_events = session.query(policy_contents.miq_event_definition_id).filter(
+            policy_contents.miq_policy_id == policy_id)
+        return [event_name[0] for event_name in session.query(events.description).filter(
+            events.id.in_(assigned_events))]
 
 
 @navigator.register(BasePolicy, "Add")

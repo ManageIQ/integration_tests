@@ -393,3 +393,19 @@ class InstanceClassMethod(object):
         else:
             # instancemethod
             return partial(self.instance_or_class_method, o)
+
+
+class OverrideWithDict(object):
+    """Override object's attribute access with a dictionary."""
+    def __init__(self, o, d):
+        self._o = o
+        self._d = d
+
+    def __getattribute__(self, attr):
+        if attr in {'_o', '_d'}:
+            return object.__getattribute__(self, attr)
+
+        if attr in self._d:
+            return self._d[attr]
+        else:
+            return getattr(self._o, attr)

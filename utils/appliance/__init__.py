@@ -24,7 +24,7 @@ from sentaku import ImplementationContext
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import conf, datafile, db, db_queries, ssh, ports
+from utils import conf, datafile, db, db_queries, ssh, ports, OverrideWithDict
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
@@ -319,6 +319,8 @@ class IPAppliance(object):
     @logger_wrap("Extend DB partition")
     def extend_db_partition(self, log_callback=None):
         """Extends the /var partition with DB while shrinking the unused /repo partition"""
+        if self.db_partition_extended:
+            return
         with self.ssh_client as ssh:
             rc, out = ssh.run_command("df -h")
             log_callback("File systems before extending the DB partition:\n{}".format(out))
@@ -2507,6 +2509,9 @@ class Navigatable(object):
     def browser(self):
         return self.appliance.browser.widgetastic
 
-    def create_view(self, view_class, o=None):
+    def create_view(self, view_class, o=None, override=None):
+        o = o or self
+        if override is not None:
+            o = OverrideWithDict(o, override)
         return self.appliance.browser.create_view(
-            view_class, additional_context={'object': o or self})
+            view_class, additional_context={'object': o})

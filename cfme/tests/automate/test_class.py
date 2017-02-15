@@ -2,8 +2,7 @@
 import fauxfactory
 import pytest
 from cfme import test_requirements
-from cfme.automate.explorer import Class
-from cfme.tests import automate as ta
+from cfme.automate.explorer.domain import DomainCollection
 from utils import error
 from utils.update import update
 
@@ -11,75 +10,118 @@ from utils.update import update
 pytestmark = [test_requirements.automate]
 
 
-@pytest.fixture(scope="module")
-def make_namespace(request):
-    return ta.make_namespace(request=request)
+@pytest.yield_fixture(scope='module')
+def domain():
+    dc = DomainCollection()
+    d = dc.create(
+        name='test_{}'.format(fauxfactory.gen_alpha()),
+        description='desc_{}'.format(fauxfactory.gen_alpha()),
+        enabled=True)
+    yield d
+    d.delete()
 
 
-@pytest.fixture(scope="function")
-def a_class(make_namespace):
-    return ta.a_class(make_namespace)
+@pytest.fixture(
+    scope="function",
+    params=["plain", "nested_existing"])
+def namespace(request, domain):
+    ns = domain.namespaces.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+    if request.param == 'plain':
+        return ns
+    else:
+        return ns.namespaces.create(
+            name=fauxfactory.gen_alpha(),
+            description=fauxfactory.gen_alpha()
+        )
 
 
 @pytest.mark.tier(2)
-def test_class_crud(a_class):
-    a_class.create()
+def test_class_crud(namespace):
+    a_class = namespace.classes.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
+    )
     orig = a_class.description
     with update(a_class):
         a_class.description = 'edited'
     with update(a_class):
         a_class.description = orig
     a_class.delete()
-    assert not a_class.exists()
+    assert not a_class.exists
 
 
 @pytest.mark.tier(2)
-def test_schema_crud(a_class):
-    a_class.create()
-    f1 = Class.SchemaField(name='foo')
-    f2 = Class.SchemaField(name='bar')
-    f3 = Class.SchemaField(name='baz')
-    a_class.edit_schema(add_fields=(f1, f2))
-    a_class.edit_schema(remove_fields=(f1,), add_fields=(f3,))
-
-
-# The inheritance box has been removed from the UI until it is implemented properly,
-# see 1138859
-#
-# def test_add_class_inherited(a_class):
-#     subclass = Class(name=fauxfactory.gen_alphanumeric(8),
-#                      namespace=a_class.namespace,
-#                      description="subclass",
-#                      inherits_from=a_class)
-#     a_class.create()
-#     subclass.create()
+def test_schema_crud(request, namespace):
+    a_class = namespace.classes.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
+    )
+    request.addfinalizer(a_class.delete_if_exists)
+    f1 = fauxfactory.gen_alpha()
+    f2 = fauxfactory.gen_alpha()
+    f3 = fauxfactory.gen_alpha()
+    a_class.schema.add_fields(
+        {'name': f1, 'type': 'Relationship'},
+        {'name': f2, 'type': 'Attribute'},)
+    a_class.schema.add_field(name=f3, type='Relationship')
+    a_class.schema.delete_field(f1)
+    assert set(a_class.schema.schema_field_names) == {f2, f3}
+    # TODO: Combined add/remove/update test
 
 
 @pytest.mark.tier(2)
-def test_duplicate_class_disallowed(a_class):
-    a_class.create()
+def test_duplicate_class_disallowed(namespace):
+    name = fauxfactory.gen_alphanumeric()
+    namespace.classes.create(name=name)
     with error.expected("Name has already been taken"):
-        a_class.create(allow_duplicate=True)
+        namespace.classes.create(name=name)
 
 
 @pytest.mark.tier(2)
-def test_same_class_name_different_namespace(make_namespace):
-    other_namespace = ta.make_namespace()
-    name = fauxfactory.gen_alphanumeric(8)
-    cls1 = Class(name=name, namespace=make_namespace)
-    cls2 = Class(name=name, namespace=other_namespace)
-    cls1.create()
-    cls2.create()
-    # delete one and check the other still exists
-    cls1.delete()
-    assert cls2.exists()
+def test_same_class_name_different_namespace(request, domain):
+    ns1 = domain.namespaces.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+    request.addfinalizer(ns1.delete_if_exists)
+    ns2 = domain.namespaces.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+    request.addfinalizer(ns2.delete_if_exists)
+
+    c1 = ns1.classes.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
+    )
+    c2 = ns2.classes.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
+    )
+    assert c1.exists
+    assert c2.exists
+
+    c1.delete()
+    assert not c1.exists
+    assert c2.exists
 
 
 @pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
-def test_display_name_unset_from_ui(request, a_class):
-    a_class.create()
-    request.addfinalizer(a_class.delete)
+def test_display_name_unset_from_ui(request, namespace):
+    a_class = namespace.classes.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
+    )
+    request.addfinalizer(a_class.delete_if_exists)
     with update(a_class):
         a_class.display_name = fauxfactory.gen_alphanumeric()
     assert a_class.exists

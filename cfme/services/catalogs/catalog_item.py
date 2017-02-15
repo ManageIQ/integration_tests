@@ -46,6 +46,7 @@ basic_info_form = Form(
         ('select_provider', AngularSelect('manager_id')),
         ('select_config_template', AngularSelect('template_id')),
         ('field_entry_point', Input("fqname")),
+        ('retirement_entry_point', Input("retire_fqname")),
         ('edit_button', form_buttons.save),
         ('apply_btn', '//a[normalize-space(.)="Apply"]')
     ])
@@ -155,6 +156,11 @@ class CatalogItem(Updateable, Pretty, Navigatable):
             else:
                 entry_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                     "StateMachines", "ServiceProvision_Template", "default")
+            sel.click(basic_info_form.apply_btn)
+        if version.current_version() >= "5.7" and self.item_type == "AnsibleTower":
+            sel.click(basic_info_form.retirement_entry_point)
+            entry_tree.click_path("Datastore", self.domain, "Service", "Retirement",
+                    "StateMachines", "ServiceRetirement", "Generic")
             sel.click(basic_info_form.apply_btn)
         if self.catalog_name is not None \
                 and self.provisioning_data is not None \

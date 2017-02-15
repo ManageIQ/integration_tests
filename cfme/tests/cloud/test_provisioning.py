@@ -7,7 +7,7 @@ import pytest
 from textwrap import dedent
 
 from cfme import test_requirements
-from cfme.automate import explorer as automate
+from cfme.automate.explorer.domain import DomainCollection
 from cfme.cloud.instance import Instance
 from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
 from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
@@ -127,13 +127,15 @@ def test_provision_from_template_using_rest(
     Metadata:
         test_flag: provision
     """
-    if "flavors" not in rest_api.collections.all_names:
+    if 'flavors' not in rest_api.collections.all_names:
         pytest.skip("This appliance does not have `flavors` collection.")
     image_guid = rest_api.collections.templates.find_by(name=provisioning['image']['name'])[0].guid
-    instance_type = (
-        provisioning['instance_type'].split(":")[0].strip()
-        if ":" in provisioning['instance_type'] and provider.type in ["ec2", "gce"]
-        else provisioning['instance_type'])
+    if ':' in provisioning['instance_type'] and provider.type in ['ec2', 'gce']:
+        instance_type = provisioning['instance_type'].split(":")[0].strip()
+    elif provider.type == 'azure':
+        instance_type = provisioning['instance_type'].lower()
+    else:
+        instance_type = provisioning['instance_type']
     flavors = rest_api.collections.flavors.find_by(name=instance_type)
     assert len(flavors) > 0
     # TODO: Multi search when it works
@@ -154,10 +156,6 @@ def test_provision_from_template_using_rest(
             "vm_name": vm_name,
             "instance_type": flavor_id,
             "request_type": "template",
-            "availability_zone": provisioning["availability_zone"] if provider.type != "azure" else
-            provisioning["av_set"],
-            "security_groups": [provisioning["security_group"]],
-            "guest_keypair": provisioning["guest_keypair"] if provider.type != "azure" else None
         },
         "requester": {
             "user_name": "admin",
@@ -176,11 +174,21 @@ def test_provision_from_template_using_rest(
         }
     }
 
+    if not isinstance(provider, AzureProvider):
+        provision_data['vm_fields']['availability_zone'] = provisioning['availability_zone']
+        provision_data['vm_fields']['security_groups'] = [provisioning['security_group']]
+        provision_data['vm_fields']['guest_keypair'] = provisioning['guest_keypair']
+
     if isinstance(provider, GCEProvider):
         provision_data['vm_fields']['cloud_network'] = provisioning['cloud_network']
         provision_data['vm_fields']['boot_disk_size'] = provisioning['boot_disk_size']
         provision_data['vm_fields']['zone'] = provisioning['availability_zone']
         provision_data['vm_fields']['region'] = 'us-central1'
+    elif isinstance(provider, AzureProvider):
+        # mapping: product/dialogs/miq_dialogs/miq_provision_azure_dialogs_template.yaml
+        provision_data['vm_fields']['root_username'] = provisioning['vm_user']
+        provision_data['vm_fields']['root_password'] = provisioning['vm_password']
+
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
     request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
@@ -209,33 +217,39 @@ ONE_FIELD = """{{:volume_id => "{}", :device_name => "{}"}}"""
 
 @pytest.fixture(scope="module")
 def domain(request):
-    domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
-    domain.create()
-    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
+    domain = DomainCollection().create(name=fauxfactory.gen_alphanumeric(), enabled=True)
+    request.addfinalizer(domain.delete_if_exists)
     return domain
 
 
 @pytest.fixture(scope="module")
-def cls(request, domain):
-    tcls = automate.Class(name="Methods",
-        namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
-            parent=domain, create_on_init=True))
-    tcls.create()
-    request.addfinalizer(lambda: tcls.delete() if tcls.exists() else None)
-    return tcls
+def original_request_class():
+    return DomainCollection().instantiate(name='ManageIQ')\
+        .namespaces.instantiate(name='Cloud')\
+        .namespaces.instantiate(name='VM')\
+        .namespaces.instantiate(name='Provisioning')\
+        .namespaces.instantiate(name='StateMachines')\
+        .classes.instantiate(name='Methods')
 
 
 @pytest.fixture(scope="module")
-def copy_domains(domain):
+def modified_request_class(request, domain, original_request_class):
+    original_request_class.copy_to(domain)
+    klass = domain\
+        .namespaces.instantiate(name='Cloud')\
+        .namespaces.instantiate(name='VM')\
+        .namespaces.instantiate(name='Provisioning')\
+        .namespaces.instantiate(name='StateMachines')\
+        .classes.instantiate(name='Methods')
+    request.addfinalizer(klass.delete_if_exists)
+    return klass
+
+
+@pytest.fixture(scope="module")
+def copy_domains(original_request_class, domain):
     methods = ['openstack_PreProvision', 'openstack_CustomizeRequest']
     for method in methods:
-        ocls = automate.Class(name="Methods",
-            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
-                parent=automate.Domain(name="ManageIQ (Locked)")))
-
-        method = automate.Method(name=method, cls=ocls)
-
-        method = method.copy_to(domain)
+        original_request_class.methods.instantiate(name=method).copy_to(domain)
 
 
 # Not collected for EC2 in generate_tests above
@@ -244,7 +258,7 @@ def copy_domains(domain):
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider, vm_name, provisioning,
-        disks, soft_assert, domain, cls, copy_domains):
+        disks, soft_assert, domain, modified_request_class, copy_domains):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:
@@ -262,23 +276,17 @@ def test_provision_from_template_with_attached_disks(
             device_mapping.append((volume, DEVICE_NAME.format(chr(ord("b") + i))))
         # Set up automate
 
-        cls = automate.Class(name="Methods",
-            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
-                parent=domain))
-
-        method = automate.Method(
-            name="openstack_PreProvision",
-            cls=cls)
+        method = modified_request_class.methods.instantiate(name="openstack_PreProvision")
 
         with update(method):
             disk_mapping = []
             for mapping in device_mapping:
                 disk_mapping.append(ONE_FIELD.format(*mapping))
-            method.data = VOLUME_METHOD.format(", ".join(disk_mapping))
+            method.script = VOLUME_METHOD.format(", ".join(disk_mapping))
 
         def _finish_method():
             with update(method):
-                method.data = """prov = $evm.root["miq_provision"]"""
+                method.script = """prov = $evm.root["miq_provision"]"""
         request.addfinalizer(_finish_method)
         instance = Instance.factory(vm_name, provider, image)
         request.addfinalizer(instance.delete_from_provider)
@@ -311,7 +319,7 @@ def test_provision_from_template_with_attached_disks(
 @pytest.mark.meta(blockers=[1160342])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
-        soft_assert, domain, copy_domains, provisioning):
+        soft_assert, domain, copy_domains, provisioning, modified_request_class):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
@@ -323,15 +331,9 @@ def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
 
     with provider.mgmt.with_volume(1, imageRef=provider.mgmt.get_template_id(image)) as volume:
         # Set up automate
-        cls = automate.Class(
-            name="Methods",
-            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
-                parent=domain))
-        method = automate.Method(
-            name="openstack_CustomizeRequest",
-            cls=cls)
+        method = modified_request_class.methods.instantiate(name="openstack_CustomizeRequest")
         with update(method):
-            method.data = dedent('''\
+            method.script = dedent('''\
                 $evm.root["miq_provision"].set_option(
                     :clone_options, {{
                         :image_ref => nil,
@@ -347,10 +349,10 @@ def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
                 )
             '''.format(volume))
 
+        @request.addfinalizer
         def _finish_method():
             with update(method):
-                method.data = """prov = $evm.root["miq_provision"]"""
-        request.addfinalizer(_finish_method)
+                method.script = """prov = $evm.root["miq_provision"]"""
         instance = Instance.factory(vm_name, provider, image)
         request.addfinalizer(instance.delete_from_provider)
         inst_args = {
@@ -379,7 +381,7 @@ def test_provision_with_boot_volume(request, setup_provider, provider, vm_name,
 @pytest.mark.meta(blockers=[1186413])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 def test_provision_with_additional_volume(request, setup_provider, provider, vm_name,
-        soft_assert, copy_domains, domain, provisioning):
+        soft_assert, copy_domains, domain, provisioning, modified_request_class):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
@@ -391,19 +393,13 @@ def test_provision_with_additional_volume(request, setup_provider, provider, vm_
         image, vm_name, provider.key))
 
     # Set up automate
-    cls = automate.Class(
-        name="Methods",
-        namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
-            parent=domain))
-    method = automate.Method(
-        name="openstack_CustomizeRequest",
-        cls=cls)
+    method = modified_request_class.methods.instantiate(name="openstack_CustomizeRequest")
     try:
         image_id = provider.mgmt.get_template_id(provider.data["small_template"])
     except KeyError:
         pytest.skip("No small_template in provider adta!")
     with update(method):
-        method.data = dedent('''\
+        method.script = dedent('''\
             $evm.root["miq_provision"].set_option(
               :clone_options, {{
                 :image_ref => nil,
@@ -422,7 +418,7 @@ def test_provision_with_additional_volume(request, setup_provider, provider, vm_
 
     def _finish_method():
         with update(method):
-            method.data = """prov = $evm.root["miq_provision"]"""
+            method.script = """prov = $evm.root["miq_provision"]"""
     request.addfinalizer(_finish_method)
     instance = Instance.factory(vm_name, provider, image)
     request.addfinalizer(instance.delete_from_provider)

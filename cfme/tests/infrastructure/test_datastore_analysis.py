@@ -94,7 +94,7 @@ def test_run_datastore_analysis(request, setup_provider, provider, datastore, so
                 continue
 
             found_host = True
-            test_host = host.Host(name=host_name)
+            test_host = host.Host(name=host_name, provider=provider)
 
             # Add them to the host
             wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh)

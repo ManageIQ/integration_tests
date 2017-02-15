@@ -12,6 +12,7 @@ from cfme.automate import AutomateExplorer # NOQA
 from cfme.base import Server
 from cfme.configure.access_control import set_group_order
 from cfme.control.explorer import ControlExplorer # NOQA
+from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.exceptions import OptionNotAvailable
 from cfme.common.provider import BaseProvider
@@ -22,7 +23,7 @@ from cfme.configure import tasks
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.log import logger
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils.update import update
 from utils import version
 
@@ -34,7 +35,7 @@ group_table = Table("//div[@id='main_div']//table")
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
-    setup_a_provider(validate=True, check_existing=True)
+    setup_a_provider_by_class(InfraProvider)
 
 
 # due to pytest.mark.meta(blockers=[1035399]), non admin users can't login

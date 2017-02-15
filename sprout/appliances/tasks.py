@@ -300,19 +300,21 @@ def poke_trackerbot(self):
                     tpl.save()
                     original_template = tpl
                     self.logger.info("Created a new template #{}".format(tpl.id))
-        # Preconfigured one
-        try:
-            preconfigured_template = Template.objects.get(
-                provider=provider, template_group=group, original_name=template_name,
-                preconfigured=True)
-            if preconfigured_template.ga_released != ga_released:
-                preconfigured_template.ga_released = ga_released
-                preconfigured_template.save()
-        except ObjectDoesNotExist:
-            if template_name in provider.templates:
-                original_id = original_template.id if original_template is not None else None
-                create_appliance_template.delay(
-                    provider.id, group.id, template_name, source_template_id=original_id)
+        # If the provider is set to not preconfigure templates, do not bother even doing it.
+        if provider.num_simultaneous_configuring > 0:
+            # Preconfigured one
+            try:
+                preconfigured_template = Template.objects.get(
+                    provider=provider, template_group=group, original_name=template_name,
+                    preconfigured=True)
+                if preconfigured_template.ga_released != ga_released:
+                    preconfigured_template.ga_released = ga_released
+                    preconfigured_template.save()
+            except ObjectDoesNotExist:
+                if template_name in provider.templates:
+                    original_id = original_template.id if original_template is not None else None
+                    create_appliance_template.delay(
+                        provider.id, group.id, template_name, source_template_id=original_id)
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
@@ -1861,8 +1863,9 @@ def read_docker_images_from_url_group(self, group_id):
         elif cfme_docker and cfme_docker[0].lower().strip() == 'tags:':
             # Multiple tags, take the longest
             proper_pull_url = sorted(filter(None, cfme_docker[1:]), key=len, reverse=True)[0]
+            latest = proper_pull_url.rsplit(':', 1)[-1]
         else:
-            self.logger.info('Skipping: unknown format: {}'.format(str(cfme_docker)))
+            self.logger.info('Skipping: unknown format: {!r}'.format(cfme_docker))
             continue
         if cfme_version in result:
             continue

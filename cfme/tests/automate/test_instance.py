@@ -3,52 +3,75 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from cfme.tests import automate as ta
 from utils import error
 from utils.update import update
 
+from cfme.automate.explorer.domain import DomainCollection
 
 pytestmark = [test_requirements.automate]
 
 
-@pytest.fixture(scope='module')
-def make_class(request):
-    return ta.make_class(request=request)
+@pytest.yield_fixture(scope='module')
+def domain():
+    dc = DomainCollection()
+    d = dc.create(
+        name='test_{}'.format(fauxfactory.gen_alpha()),
+        description='desc_{}'.format(fauxfactory.gen_alpha()),
+        enabled=True)
+    yield d
+    d.delete()
 
 
-@pytest.fixture(scope="function")
-def an_instance(request, make_class):
-    return ta.an_instance(make_class, request=request)
+@pytest.fixture(scope="module")
+def namespace(request, domain):
+    return domain.namespaces.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
+
+
+@pytest.fixture(scope="module")
+def klass(request, namespace):
+    return namespace.classes.create(
+        name=fauxfactory.gen_alpha(),
+        display_name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha()
+    )
 
 
 @pytest.mark.tier(2)
-def test_instance_crud(an_instance):
-    an_instance.create()
-    origname = an_instance.name
-    with update(an_instance):
-        an_instance.name = fauxfactory.gen_alphanumeric(8)
-        an_instance.description = "updated"
-    with update(an_instance):
-        an_instance.name = origname
-    an_instance.delete()
-    assert not an_instance.exists()
+def test_instance_crud(klass):
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
+    )
+    orig = instance.description
+    with update(instance):
+        instance.description = 'edited'
+    with update(instance):
+        instance.description = orig
+    instance.delete()
+    assert not instance.exists
 
 
 @pytest.mark.tier(2)
-def test_duplicate_disallowed(an_instance):
-    an_instance.create()
+def test_duplicate_disallowed(request, klass):
+    name = fauxfactory.gen_alphanumeric()
+    klass.instances.create(name=name)
     with error.expected("Name has already been taken"):
-        an_instance.create(allow_duplicate=True)
+        klass.instances.create(name=name)
 
 
 @pytest.mark.meta(blockers=[1148541])
 @pytest.mark.tier(3)
-def test_display_name_unset_from_ui(request, an_instance):
-    an_instance.create()
-    request.addfinalizer(an_instance.delete)
-    with update(an_instance):
-        an_instance.display_name = fauxfactory.gen_alphanumeric()
-    assert an_instance.exists
-    with update(an_instance):
-        an_instance.display_name = ""
-    assert an_instance.exists
+def test_display_name_unset_from_ui(request, klass):
+    instance = klass.instances.create(
+        name=fauxfactory.gen_alphanumeric(),
+        display_name=fauxfactory.gen_alphanumeric())
+    with update(instance):
+        instance.display_name = fauxfactory.gen_alphanumeric()
+    assert instance.exists
+    with update(instance):
+        instance.display_name = ""
+    assert instance.exists

@@ -20,8 +20,8 @@ from utils.appliance.implementations.ui import navigate_to
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
-    providers.setup_a_provider(prov_class="infra", validate=True, check_existing=True)
-    providers.setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
+    providers.setup_a_provider_by_class(InfraProvider)
+    providers.setup_a_provider_by_class(CloudProvider)
 
 
 param_classes = {

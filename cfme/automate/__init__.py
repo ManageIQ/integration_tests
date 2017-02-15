@@ -6,14 +6,8 @@ from widgetastic_patternfly import Dropdown
 
 from cfme import BaseLoggedInPage
 from cfme.base import Server
+from cfme.base.ui import automate_menu_name
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
-
-
-def automate_menu_name(appliance):
-    if appliance.version < '5.8':
-        return ['Automate']
-    else:
-        return ['Automation', 'Automate']
 
 
 class AutomateCustomizationView(BaseLoggedInPage):

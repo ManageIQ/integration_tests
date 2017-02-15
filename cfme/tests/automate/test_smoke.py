@@ -3,7 +3,7 @@
 import pytest
 
 from cfme import test_requirements
-from cfme.automate.explorer import Domain
+from cfme.automate.explorer.domain import DomainCollection
 from utils import db_queries as dbq
 
 pytestmark = [
@@ -25,8 +25,9 @@ def test_domain_present(domain_name, soft_assert):
         * Open the Automate Explorer.
         * Verify that all of the required domains are present.
     """
-    domain = Domain(domain_name)
+    dc = DomainCollection()
+    domain = dc.instantiate(name=domain_name)
     soft_assert(domain.exists, "Domain {} does not exist!".format(domain_name))
-    soft_assert(domain.is_locked, "Domain {} is not locked!".format(domain_name))
+    soft_assert(domain.locked, "Domain {} is not locked!".format(domain_name))
     soft_assert(
         dbq.check_domain_enabled(domain_name), "Domain {} is not enabled!".format(domain_name))
