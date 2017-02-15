@@ -18,8 +18,6 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='module')
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 
 
-REPLICATORS_PROPERTIES_FIELDS = ['Name', 'Creation timestamp', 'Resource version',
-                                 'Requested pods', 'Current pods']
 REPLICATORS_RELATIONSHIPS_FIELDS = ['Containers Provider', 'Project', 'Pods', 'Nodes',
                                     'My Company Tags']
 
@@ -29,18 +27,6 @@ def replicator(provider):
     navigate_to(Replicator, 'All')
     replicator_name = random.choice([r.name.text for r in list_tbl.rows()])
     return Replicator(replicator_name, provider)
-
-
-# CMP - 9531
-@pytest.mark.parametrize('prop', REPLICATORS_PROPERTIES_FIELDS)
-def test_replicators_properties(replicator, prop):
-    """ Default Project Replicator properties test.
-        Steps :
-            * Goes to Containers --> Replicators
-             * Goes through each Replicator and
-               checks each Properties field.
-    """
-    assert replicator.get_detail('Properties', prop)
 
 
 @pytest.mark.parametrize('rel', REPLICATORS_RELATIONSHIPS_FIELDS)

@@ -149,9 +149,10 @@ def api_get_service_properties(provider):
 def api_get_image_registry_properties(provider):
     out = {}
     for item in provider.mgmt.list_image_registry():
-        out[item.host] = {
-            'host': item.host
-        }
+        if item.host not in ('openshift', 'openshift3'):
+            out[item.host] = {
+                'host': item.host
+            }
     return out
 
 

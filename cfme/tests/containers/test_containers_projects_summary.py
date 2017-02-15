@@ -51,20 +51,3 @@ def test_containers_projects_summary_relationships(provider):
             obj = Project(name, provider)
             val = obj.get_detail('Relationships', field)
             assert val
-
-
-def test_containers_projects_summary_properties(provider):
-    """ Properties fields tests in Project summary
-        This test checks correct population of the Properties Fields in Containers Projects'
-        details menu
-        Steps:
-            * Goes to Containers -- > Projects menu
-            * Go through each Container Project in the menu and check validity of Properties fields
-        """
-    navigate_to(Project, 'All')
-    project_name = [r.name.text for r in list_tbl.rows()]
-    for name in project_name:
-        for field in projects_properties_fields:
-            obj = Project(name, provider)
-            val = obj.get_detail('Properties', field)
-            assert val
