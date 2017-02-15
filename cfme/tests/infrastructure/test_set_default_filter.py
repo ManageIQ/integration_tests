@@ -3,10 +3,11 @@ from functools import partial
 
 import pytest
 
+from cfme.infrastructure import host, datastore
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.login import login_admin, logout
 from cfme.web_ui.search import search_box
-from cfme.infrastructure import host, datastore
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils import version
 from cfme.web_ui import accordion, listaccordion as list_acc
 from utils.appliance.implementations.ui import navigate_to
@@ -16,7 +17,7 @@ from cfme.infrastructure.datastore import Datastore
 
 @pytest.fixture(scope="module")
 def provider():
-    return setup_a_provider(prov_class="infra", prov_type="virtualcenter")
+    return setup_a_provider_by_class(VMwareProvider)
 
 
 pytestmark = [pytest.mark.tier(3)]

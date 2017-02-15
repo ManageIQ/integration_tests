@@ -1,23 +1,78 @@
 # -*- coding: utf-8 -*-
 """ A model of Workloads page in CFME
 """
-from functools import partial
-from navmazing import NavigateToSibling, NavigateToAttribute  # NOQA
+from navmazing import NavigateToAttribute
+from widgetastic.widget import View, Text
+from widgetastic_manageiq import Accordion, ManageIQTree, Search
 
-from cfme.exceptions import DestinationNotFound
-from cfme.web_ui import accordion, match_location, toolbar
+from cfme import BaseLoggedInPage
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
-vm_instances_tree = partial(accordion.tree, "VMs & Instances", 'All VMs & Instances')
-templates_images_tree = partial(accordion.tree, "Templates & Images", 'All Templates & Images')
 
-# Only this buttons present. may be used in future
-cfg_btn = partial(toolbar.select, 'Configuration')
-pol_btn = partial(toolbar.select, 'Policy')
-lcl_btn = partial(toolbar.select, 'Lifecycle')
+class WorkloadsView(BaseLoggedInPage):
+    search = View.nested(Search)
 
-match_page = partial(match_location, controller='vm_or_template', title='Workloads')
+    @property
+    def in_workloads(self):
+        return (self.logged_in_as_current_user and
+                self.navigation.currently_selected == ['Services', 'Workloads'])
+
+    @View.nested
+    class vms(Accordion):  # noqa
+        ACCORDION_NAME = "VMs & Instances"
+        tree = ManageIQTree()
+
+        def select_global_filter(self, filter_name):
+            self.tree.click_path("All VMs & Instances", "Global Filters", filter_name)
+
+        def select_my_filter(self, filter_name):
+            self.tree.click_path("All VMs & Instances", "My Filters", filter_name)
+
+        def clear_filter(self):
+            self.parent.search.clear_search()
+            self.tree.click_path("All VMs & Instances")
+
+    @View.nested
+    class templates(Accordion):  # noqa
+        ACCORDION_NAME = "Templates & Images"
+        tree = ManageIQTree()
+
+        def select_global_filter(self, filter_name):
+            self.tree.click_path("All Templates & Images", "Global Filters", filter_name)
+
+        def select_my_filter(self, filter_name):
+            self.tree.click_path("All Templates & Images", "My Filters", filter_name)
+
+        def clear_filter(self):
+            self.parent.search.clear_search()
+            self.tree.click_path("All Templates & Images")
+
+
+class WorkloadsVM(WorkloadsView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            super(WorkloadsVM, self).in_workloads and
+            self.title.text == 'All VMs & Instances' and
+            self.vms.is_opened and
+            self.vms.tree.currently_selected == [
+                "All VMs & Instances"])
+
+
+class WorkloadsTemplate(WorkloadsView):
+    title = Text("#explorer_title_text")
+
+    @property
+    def is_displayed(self):
+        return (
+            super(WorkloadsTemplate, self).in_workloads and
+            self.title.text == 'All Templates & Images' and
+            self.templates.is_opened and
+            self.templates.tree.currently_selected == [
+                "All Templates & Images"])
 
 
 class VmsInstances(Navigatable):
@@ -41,41 +96,21 @@ class TemplatesImages(Navigatable):
 
 @navigator.register(VmsInstances, 'All')
 class AllVMs(CFMENavigateStep):
+    VIEW = WorkloadsVM
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'Workloads')
-        if 'filter_folder' not in kwargs:
-            vm_instances_tree()
-        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            vm_instances_tree(kwargs['filter_folder'], kwargs['filter_name'])
-        else:
-            raise DestinationNotFound("the destination isn't found")
-
-    def am_i_here(self, *args, **kwargs):
-        if 'filter_folder' not in kwargs:
-            return match_page(summary='All VMs & Instances')
-        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            return match_page(summary='All VMs and Instances - '
-                                      'Filtered by "{}" ( clear )'.format(kwargs['filter_name']))
+        self.view.search.clear_search()
+        self.view.vms.clear_filter()
 
 
 @navigator.register(TemplatesImages, 'All')
 class AllTemplates(CFMENavigateStep):
+    VIEW = WorkloadsTemplate
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.navigation.select('Services', 'Workloads')
-        if 'filter_folder' not in kwargs:
-            templates_images_tree()
-        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            templates_images_tree(kwargs['filter_folder'], kwargs['filter_name'])
-        else:
-            raise DestinationNotFound("the destination isn't found")
-
-    def am_i_here(self, *args, **kwargs):
-        if 'filter_folder' not in kwargs:
-            return match_page(summary='All Templates & Images')
-        elif 'filter_folder' in kwargs and 'filter_name' in kwargs:
-            return match_page(summary='All VM Templates and Images - '
-                                      'Filtered by "{}" ( clear )'.format(kwargs['filter_name']))
+        self.view.search.clear_search()
+        self.view.templates.clear_filter()

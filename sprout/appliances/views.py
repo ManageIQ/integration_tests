@@ -415,6 +415,7 @@ def my_appliances(request, show_user="my"):
             if remaining_vms < per_pool_quota:
                 per_pool_quota = remaining_vms
     per_pool_quota_enabled = per_pool_quota is not None
+    can_change_hw = request.user.has_perm('appliances.can_modify_hw')
     return render(request, 'appliances/my_appliances.html', locals())
 
 
@@ -601,9 +602,16 @@ def request_pool(request):
             preconfigured = True
         count = int(request.POST["count"])
         lease_time = int(request.POST.get("expiration", 60))
+        ram = None
+        cpu = None
+        if request.user.has_perm('appliances.can_modify_hw'):
+            if 'ram' in request.POST:
+                ram = int(request.POST['ram'])
+            if 'cpu' in request.POST:
+                cpu = int(request.POST['cpu'])
         pool_id = AppliancePool.create(
             request.user, group, version, date, provider, count, lease_time, preconfigured,
-            yum_update, container).id
+            yum_update, container, ram, cpu).id
         messages.success(request, "Pool requested - id {}".format(pool_id))
     except Exception as e:
         messages.warning(request, "{}: {}".format(type(e).__name__, e))

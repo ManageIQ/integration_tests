@@ -189,7 +189,7 @@ class Instance(VM, Navigatable):
         if kwargs.get('from_details', True):
             navigate_to(self, 'Details')
         else:
-            navigate_to(self, 'ProviderAll')
+            navigate_to(self, 'AllForProvider')
             self.find_quadicon(mark=True)
         if not kwargs.get('option'):
             raise ValueError('Need to provide option for power_control_from_cfme, no default.')
@@ -337,8 +337,8 @@ class InstanceAll(CFMENavigateStep):
         accordion.tree('Instances', 'All Instances')
 
 
-@navigator.register(Instance, 'ProviderAll')
-class InstanceProviderAll(CFMENavigateStep):
+@navigator.register(Instance, 'AllForProvider')
+class InstanceAllForProvider(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
 
     def am_i_here(self):

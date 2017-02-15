@@ -1,79 +1,73 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=E1101
-# pylint: disable=W0621
 import fauxfactory
 import pytest
 
-from cfme import test_requirements
-from cfme.automate.explorer import Namespace, Domain
-from cfme.tests import automate as ta
-from cfme.tests.configure import test_access_control as tac
-from utils import error, version
-from utils.providers import setup_a_provider
+from cfme.automate.explorer.domain import DomainCollection
+
+from utils import error
 from utils.update import update
 
 
-pytestmark = [test_requirements.automate]
-
-
-@pytest.fixture(scope="module")
-def domain(request):
-    domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
-    domain.create()
-    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
-    return domain
+@pytest.yield_fixture(scope='module')
+def domain():
+    dc = DomainCollection()
+    d = dc.create(
+        name='test_{}'.format(fauxfactory.gen_alpha()),
+        description='desc_{}'.format(fauxfactory.gen_alpha()),
+        enabled=True)
+    yield d
+    d.delete()
 
 
 @pytest.fixture(
-    scope="function",
-    params=[ta.a_namespace, ta.a_namespace_with_path],
-    ids=["plain", "nested_existing"])
-def namespace(request, domain):
-    # don't test with existing paths on upstream (there aren't any)
-    if request.param is ta.a_namespace_with_path and version.current_version() == version.UPSTREAM:
-        pytest.skip("don't test with existing paths on upstream (there aren't any)")
-    return request.param(domain=domain)
+    scope="module",
+    params=["plain", "nested_existing"])
+def parent_namespace(request, domain):
+    if request.param == 'plain':
+        return domain
+    else:
+        return domain.namespaces.create(
+            name=fauxfactory.gen_alpha(),
+            description=fauxfactory.gen_alpha()
+        )
 
 
-@pytest.fixture
-def setup_single_provider():
-    setup_a_provider()
+@pytest.mark.tier(1)
+def test_namespace_crud(request, parent_namespace):
+    ns = parent_namespace.namespaces.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha())
+    assert ns.exists
+    updated_description = "editdescription{}".format(fauxfactory.gen_alpha())
+    with update(ns):
+        ns.description = updated_description
+    assert ns.exists
+    ns.delete(cancel=True)
+    assert ns.exists
+    ns.delete()
+    assert not ns.exists
+
+
+@pytest.mark.tier(1)
+def test_namespace_delete_from_table(request, parent_namespace):
+    generated = []
+    for _ in range(3):
+        namespace = parent_namespace.namespaces.create(
+            name=fauxfactory.gen_alpha(),
+            description=fauxfactory.gen_alpha())
+        generated.append(namespace)
+
+    parent_namespace.namespaces.delete(*generated)
+    for namespace in generated:
+        assert not namespace.exists
 
 
 @pytest.mark.tier(2)
-def test_namespace_crud(namespace):
-    namespace.create()
-    old_name = namespace.name
-    with update(namespace):
-        namespace.name = fauxfactory.gen_alphanumeric(8)
-    with update(namespace):
-        namespace.name = old_name
-    namespace.delete()
-    assert not namespace.exists()
-
-
-@pytest.mark.tier(2)
-def test_add_delete_namespace_nested(namespace):
-    namespace.create()
-    nested_ns = Namespace(name="Nested", parent=namespace)
-    nested_ns.create()
-    namespace.delete()
-    assert not nested_ns.exists()
-
-
-@pytest.mark.meta(blockers=[1136518])
-@pytest.mark.tier(2)
-def test_duplicate_namespace_disallowed(namespace):
-    namespace.create()
+def test_duplicate_namespace_disallowed(request, parent_namespace):
+    ns = parent_namespace.namespaces.create(
+        name=fauxfactory.gen_alpha(),
+        description=fauxfactory.gen_alpha())
     with error.expected("Name has already been taken"):
-        namespace.create(allow_duplicate=True)
-
-
-# provider needed as workaround for bz1035399
-@pytest.mark.meta(blockers=[1140331])
-@pytest.mark.tier(3)
-def test_permissions_namespace_crud(setup_single_provider, domain):
-    """ Tests that a namespace can be manipulated only with the right permissions"""
-    tac.single_task_permission_test([['Everything', 'Automate', 'Explorer']],
-                                    {'Namespace CRUD':
-                                     lambda: test_namespace_crud(ta.a_namespace(domain=domain))})
+        parent_namespace.namespaces.create(
+            name=ns.name,
+            description=ns.description)

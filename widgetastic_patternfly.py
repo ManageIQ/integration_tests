@@ -8,7 +8,7 @@ from cached_property import cached_property
 
 from widgetastic.exceptions import NoSuchElementException, UnexpectedAlertPresentException
 from widgetastic.log import call_sig
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, VersionPick
 from widgetastic.widget import ClickableMixin, TextInput, Widget, View, do_not_read_this_widget
 from widgetastic.xpath import quote
 
@@ -87,6 +87,10 @@ class Button(Widget, ClickableMixin):
 
     def __repr__(self):
         return '{}{}'.format(type(self).__name__, call_sig(self.args, self.kwargs))
+
+    @property
+    def title(self):
+        return self.browser.get_attribute('title', self)
 
 
 class Input(TextInput):
@@ -459,19 +463,25 @@ class Tab(View, ClickableMixin):
     visible.
     """
     TAB_NAME = None
+    INDIRECT = True
+    ROOT = ParametrizedLocator(
+        './/ul[contains(@class, "nav-tabs")]/li[normalize-space(.)={@tab_name|quote}]')
 
     @property
     def tab_name(self):
         return self.TAB_NAME or type(self).__name__.capitalize()
 
-    def __locator__(self):
-        return '//li[normalize-space(.)={}]'.format(quote(self.tab_name))
-
     def is_active(self):
         return 'active' in self.browser.classes(self)
 
+    def is_disabled(self):
+        return 'disabled' in self.browser.classes(self)
+
     def select(self):
         if not self.is_active():
+            if self.is_disabled():
+                raise ValueError(
+                    'The tab {} you are trying to select is disabled'.format(self.tab_name))
             self.logger.info('opened the tab %s', self.tab_name)
             self.click()
 
@@ -480,7 +490,7 @@ class Tab(View, ClickableMixin):
         self.select()
 
     def __repr__(self):
-        return '<{} {!r}>'.format(type(self).__name__, self.tab_name)
+        return '<Tab {!r}>'.format(self.tab_name)
 
 
 class Accordion(View, ClickableMixin):
@@ -862,12 +872,18 @@ class BootstrapTreeview(Widget):
                 delay=0.2, num_sec=10)
         return True
 
-    @staticmethod
-    def _process_step(step):
+    def _process_step(self, step):
         """Steps can be plain strings or tuples when matching images"""
+        if isinstance(step, VersionPick):
+            # Version pick passed, coerce it ...
+            step = step.pick(self.browser.product_version)
+
         if isinstance(step, tuple):
             image = step[0]
             step = step[1]
+            if isinstance(step, VersionPick):
+                # Version pick passed, coerce it ...
+                step = step.pick(self.browser.product_version)
         else:
             image = None
         if not isinstance(step, six.string_types + (re._pattern_type,)):
@@ -886,9 +902,8 @@ class BootstrapTreeview(Widget):
         else:
             return '{}[{}]'.format(step_repr, image)
 
-    @classmethod
-    def pretty_path(cls, path):
-        return '/'.join(cls._repr_step(*cls._process_step(step)) for step in path)
+    def pretty_path(self, path):
+        return '/'.join(self._repr_step(*self._process_step(step)) for step in path)
 
     def validate_node(self, node, matcher, image):
         """Helper method that matches nodes by given conditions.

@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 from cfme import test_requirements
-from cfme.automate.explorer import Class, Domain, Method, Namespace
+from cfme.automate.explorer.domain import DomainCollection
 from cfme.automate.simulation import simulate
 from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
@@ -29,9 +29,13 @@ pytest_generate_tests = testgen.generate([VMwareProvider], scope="module")
 
 @pytest.fixture(scope="function")
 def copy_domain(request):
-    domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
-    domain.create()
-    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
+    dc = DomainCollection()
+    domain = dc.create(name=fauxfactory.gen_alphanumeric(), enabled=True)
+    request.addfinalizer(domain.delete_if_exists)
+    dc.instantiate(name='ManageIQ')\
+        .namespaces.instantiate(name='System')\
+        .classes.instantiate(name='Request')\
+        .copy_to(domain)
     return domain
 
 
@@ -83,20 +87,12 @@ def test_add_vm_to_service(myservice, request, copy_domain):
 
     add_to_service
     """.format(myservice.service_name)
+    method = copy_domain\
+        .namespaces.instantiate(name='System')\
+        .classes.instantiate(name='Request')\
+        .methods.create(name='InspectMe', location='inline', script=method_torso)
 
-    method = Method(
-        name="InspectMe",
-        data=method_torso,
-        cls=Class(
-            name="Request",
-            namespace=Namespace(
-                name="System",
-                parent=copy_domain
-            )
-        )
-    )
-    method.create()
-    request.addfinalizer(lambda: method.delete() if method.exists() else None)
+    request.addfinalizer(method.delete_if_exists)
     simulate(
         instance="Request",
         message="create",

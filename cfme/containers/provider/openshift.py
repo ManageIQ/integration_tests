@@ -14,8 +14,8 @@ class CustomAttribute(object):
 
 @ContainersProvider.add_provider_type
 class OpenshiftProvider(ContainersProvider):
-    num_route_template = ['num_route'] + ['num_template']
-    STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route_template
+    num_route = ['num_route']
+    STATS_TO_MATCH = ContainersProvider.STATS_TO_MATCH + num_route
     type_name = "openshift"
     mgmt_class = Openshift
 
@@ -30,7 +30,7 @@ class OpenshiftProvider(ContainersProvider):
         # probably a js wait issue, not reproducible manually
         super(OpenshiftProvider, self).create(validate_credentials=validate_credentials, **kwargs)
 
-    def _href(self):
+    def href(self):
         return self.appliance.rest_api.collections.providers\
             .find_by(name=self.name).resources[0].href
 
@@ -73,7 +73,7 @@ class OpenshiftProvider(ContainersProvider):
     def custom_attributes(self):
         """returns custom attributes"""
         response = self.appliance.rest_api.get(
-            path.join(self._href(), 'custom_attributes'))
+            path.join(self.href(), 'custom_attributes'))
         out = []
         for attr_dict in response['resources']:
             attr = self.appliance.rest_api.get(attr_dict['href'])
@@ -109,7 +109,7 @@ class OpenshiftProvider(ContainersProvider):
             if fld_tp:
                 payload['resources'][i]['field_type'] = fld_tp
         return self.appliance.rest_api.post(
-            path.join(self._href(), 'custom_attributes'), **payload)
+            path.join(self.href(), 'custom_attributes'), **payload)
 
     def edit_custom_attributes(self, *custom_attributes):
         """Editing static custom attributes in provider.
@@ -132,18 +132,24 @@ class OpenshiftProvider(ContainersProvider):
                 "value": ca.value
             } for ca in custom_attributes]}
         return self.appliance.rest_api.post(
-            path.join(self._href(), 'custom_attributes'), **payload)
+            path.join(self.href(), 'custom_attributes'), **payload)
 
-    def delete_custom_attributes(self, *names):
+    def delete_custom_attributes(self, *custom_attributes):
         """Deleting static custom attributes from provider.
         Args:
-            names: The names of the custom attributes to delete.
+            custom_attributes: The custom attributes to delete.
+                               (Could be also names (str))
         returns: response.
         """
-        for name in names:
-            if type(name) is not str:
-                raise TypeError('Type of names should be {}. ({} != {})'
-                                .format(str, type(name), str))
+        names = []
+        for attr in custom_attributes:
+            attr_type = type(attr)
+            if attr_type in (str, CustomAttribute):
+                names.append(attr if attr_type is str else attr.name)
+            else:
+                raise TypeError('Type of arguments should be either'
+                                'str or CustomAttribute. ({} not in [str, CustomAttribute])'
+                                .format(type(attr)))
         attribs = self.custom_attributes()
         if not names:
             names = [attr.name for attr in attribs]
@@ -153,4 +159,4 @@ class OpenshiftProvider(ContainersProvider):
                 "href": attr.href,
             } for attr in attribs if attr.name in names]}
         return self.appliance.rest_api.post(
-            path.join(self._href(), 'custom_attributes'), **payload)
+            path.join(self.href(), 'custom_attributes'), **payload)

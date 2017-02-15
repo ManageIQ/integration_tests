@@ -6,6 +6,7 @@ import cfme.web_ui.flash as flash
 from cfme.common.vm import VM
 from cfme.configure import configuration as conf
 from cfme.infrastructure.provider import wait_for_a_provider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 import cfme.fixtures.pytest_selenium as sel
 from time import sleep
 from urlparse import urlparse
@@ -14,7 +15,7 @@ from utils.appliance import provision_appliance, current_appliance
 from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
 from utils.log import logger
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -29,7 +30,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def vmware_provider():
-    return setup_a_provider(prov_class="infra", prov_type="virtualcenter")
+    return setup_a_provider_by_class(VMwareProvider)
 
 
 def get_ssh_client(hostname):

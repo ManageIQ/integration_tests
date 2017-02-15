@@ -24,7 +24,6 @@ from cfme.infrastructure import provider as infrastructure_providers # NOQA
 from cfme.middleware import provider as middleware_providers # NOQA
 
 from cfme.exceptions import UnknownProviderType
-from cfme.infrastructure.provider import InfraProvider
 from utils import conf, version
 from utils.log import logger
 
@@ -182,7 +181,7 @@ class ProviderFilter(object):
             ...or...
             pf = ProviderFilter(required_tags=['openstack', 'complete'])
             pf_inverted = ProviderFilter(required_tags=['disabled'], inverted=True)
-            provider = new_setup_a_provider([pf, pf_inverted])
+            provider = setup_a_provider([pf, pf_inverted])
             ^ this will setup a provider that has both the "openstack" and "complete" tags set
               and at the same time does not have the "disabled" tag
             ...or...
@@ -286,7 +285,7 @@ def setup_provider(provider_key, validate=True, check_existing=True):
     return provider
 
 
-def new_setup_a_provider(filters=None, use_global_filters=True, validate=True, check_existing=True):
+def setup_a_provider(filters=None, use_global_filters=True, validate=True, check_existing=True):
     """ Sets up a single provider robustly.
 
     Does some counter-badness measures.
@@ -366,16 +365,9 @@ def new_setup_a_provider(filters=None, use_global_filters=True, validate=True, c
     return provider
 
 
-def setup_a_provider_by_class(prov_class=InfraProvider, validate=True, check_existing=True):
+def setup_a_provider_by_class(prov_class, validate=True, check_existing=True):
     pf = ProviderFilter(classes=[prov_class])
-    return new_setup_a_provider(filters=[pf], validate=validate, check_existing=check_existing)
-
-
-# Replaced by setup_a_provider_by_class
-def setup_a_provider(prov_class="infra", prov_type=None, validate=True, check_existing=True):
-    prov_class = get_class_from_type(prov_type or prov_class)
-    return setup_a_provider_by_class(
-        prov_class=prov_class, validate=validate, check_existing=check_existing)
+    return setup_a_provider(filters=[pf], validate=validate, check_existing=check_existing)
 
 
 def get_class_from_type(prov_type):

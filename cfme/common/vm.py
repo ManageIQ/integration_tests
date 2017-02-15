@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Module containing classes with common behaviour for both VMs and Instances of all types."""
-from contextlib import contextmanager
 from datetime import date
 from functools import partial
 
@@ -124,6 +123,10 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
         """
         # Ensure the classes are loaded:
         import cfme.cloud.instance  # NOQA
+        from cfme.cloud.instance.azure import AzureInstance  # NOQA
+        from cfme.cloud.instance.ec2 import EC2Instance  # NOQA
+        from cfme.cloud.instance.gce import GCEInstance  # NOQA
+        from cfme.cloud.instance.openstack import OpenStackInstance  # NOQA
         import cfme.infrastructure.virtual_machines  # NOQA
         try:
             return (
@@ -189,32 +192,19 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     ###
     # Methods
     #
-    def check_compliance(self):
-        """Clicks the Check compliance button."""
-        self.load_details(refresh=True)
+    def check_compliance(self, timeout=240):
+        """Initiates compliance check and waits for it to finish."""
+        original_state = self.compliance_status
+        cfg_btn("Refresh Relationships and Power States", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
         pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
-
-    @contextmanager
-    def check_compliance_wrapper(self, timeout=240):
-        """This wrapper takes care of waiting for the compliance status to change
-
-        Args:
-            timeout: Wait timeout in seconds.
-        """
-        self.load_details(refresh=True)
-        original_state = self.compliance_status
-        yield
         wait_for(
             lambda: self.compliance_status != original_state,
-            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name),
-            fail_func=lambda: toolbar.select("Reload"))
-
-    def check_compliance_and_wait(self, timeout=240):
-        """Initiates compliance check and waits for it to finish."""
-        with self.check_compliance_wrapper(timeout=timeout):
-            self.check_compliance()
+            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
+        )
         return self.compliant
 
     @property
@@ -535,10 +525,8 @@ class VM(BaseVM):
     TO_RETIRE = None
 
     retire_form = Form(fields=[
-        ('date_retire', {
-            version.LOWEST: date_retire_element,
-            "5.5": AngularCalendarInput(
-                "retirement_date", "//label[contains(normalize-space(.), 'Retirement Date')]")}),
+        ('date_retire', AngularCalendarInput(
+            "retirement_date", "//label[contains(normalize-space(.), 'Retirement Date')]")),
         ('warn', AngularSelect('retirementWarning'))
     ])
 
@@ -546,9 +534,10 @@ class VM(BaseVM):
         self.load_details(refresh=True)
         lcl_btn(self.TO_RETIRE, invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message({
-            version.LOWEST: "Retire initiated for 1 VM and Instance from the CFME Database",
-            "5.5": "Retirement initiated for 1 VM and Instance from the CFME Database"})
+        flash.assert_success_message(
+            'Retirement initiated for 1 VM and Instance from the {} Database'.format(version.pick({
+                version.LOWEST: 'CFME',
+                'upstream': 'ManageIQ'})))
 
     def power_control_from_provider(self):
         raise NotImplementedError("You have to implement power_control_from_provider!")

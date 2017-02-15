@@ -149,7 +149,7 @@ class Action(Updateable, Navigatable, Pretty):
             "snapshot_name": self.snapshot_name,
             "analysis_profile": self.analysis_profile,
             "snapshot_age": self.snapshot_age,
-            "alerts_to_evaluate": self.alerts_to_evaluate,
+            "alerts_to_evaluate": [str(alert) for alert in self.alerts_to_evaluate],
             "parent_type": self.parent_type,
             "categories": self.categories,
             "cpu_number": self.cpu_number,

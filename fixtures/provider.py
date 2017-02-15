@@ -12,10 +12,15 @@ import pytest
 import six
 
 from cfme.common.provider import BaseProvider
+from cfme.cloud.provider import CloudProvider
+from cfme.infrastructure.provider import InfraProvider
+from cfme.containers.provider import ContainersProvider
+from cfme.middleware.provider import MiddlewareProvider
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.templateloader import TEMPLATES
 from utils import providers
 from utils.log import logger
+from collections import Mapping
 
 # failed provider tracking for _setup_provider_fixture
 _failed_providers = set()
@@ -112,14 +117,17 @@ def template(template_location, provider):
 
 def _get_template(provider, template_type_name):
     template = provider.data.get(template_type_name, None)
-    if template:
+    if isinstance(template, Mapping):
+        template_name = template.get("name", None)
+    else:
+        template_name = template
+    if template_name:
         if not TEMPLATES:
             # Same as couple of lines above
             return template
         templates = TEMPLATES.get(provider.key, None)
-        if templates is not None:
-            if template in templates:
-                return template
+        if templates and template_name in templates:
+            return template
     else:
         pytest.skip('No {} for provider {}'.format(template_type_name, provider.key))
     logger.info("Wanted template %s on %s but it is not there!", template, provider.key)
@@ -159,3 +167,49 @@ def big_template_modscope(provider):
 @pytest.fixture(scope="function")
 def provisioning(provider):
     return provider.data['provisioning']
+
+
+@pytest.fixture
+def has_no_providers():
+    """ Clears all management systems from an applicance
+
+    This is a destructive fixture. It will clear all managements systems from
+    the current appliance.
+    """
+    BaseProvider.clear_providers()
+
+
+@pytest.fixture
+def has_no_cloud_providers():
+    """ Clears all cloud providers from an appliance
+
+    This is a destructive fixture. It will clear all cloud managements systems from
+    the current appliance.
+    """
+    BaseProvider.clear_providers_by_class(CloudProvider, validate=True)
+
+
+@pytest.fixture
+def has_no_infra_providers():
+    """ Clears all infrastructure providers from an appliance
+
+    This is a destructive fixture. It will clear all infrastructure managements systems from
+    the current appliance.
+    """
+    BaseProvider.clear_providers_by_class(InfraProvider, validate=True)
+
+
+@pytest.fixture
+def has_no_containers_providers():
+    """ Clears all containers providers from an appliance
+
+    This is a destructive fixture. It will clear all container managements systems from
+    the current appliance.
+    """
+    BaseProvider.clear_providers_by_class(ContainersProvider, validate=True)
+
+
+@pytest.fixture
+def has_no_middleware_providers():
+    """Clear all middleware providers."""
+    BaseProvider.clear_providers_by_class(MiddlewareProvider, validate=True)

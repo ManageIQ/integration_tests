@@ -1,28 +1,26 @@
 # -*- coding: utf-8 -*-
 from navmazing import NavigateToSibling
 from widgetastic.widget import View
-from widgetastic_manageiq import ManageIQTree
-from widgetastic_patternfly import Accordion, Dropdown
+from widgetastic_manageiq import Accordion, ManageIQTree
+from widgetastic_patternfly import Dropdown
 
 from cfme import BaseLoggedInPage
 from cfme.base import Server
+from cfme.base.ui import automate_menu_name
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
-
-
-def automate_menu_name(appliance):
-    if appliance.version < '5.8':
-        return ['Automate']
-    else:
-        return ['Automation', 'Automate']
 
 
 class AutomateCustomizationView(BaseLoggedInPage):
     @property
-    def is_displayed(self):
+    def in_customization(self):
         return (
             self.logged_in_as_current_user and
             self.navigation.currently_selected == automate_menu_name(
                 self.context['object'].appliance) + ['Customization'])
+
+    @property
+    def is_displayed(self):
+        return self.in_customization and self.configuration.is_displayed
 
     @View.nested
     class provisioning_dialogs(Accordion):  # noqa

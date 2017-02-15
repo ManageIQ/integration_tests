@@ -48,7 +48,7 @@ def test_host_drift_analysis(request, setup_provider, provider, host, soft_asser
     Metadata:
         test_flag: host_drift_analysis
     """
-    test_host = host_obj.Host(name=host['name'])
+    test_host = host_obj.Host(name=host['name'], provider=provider)
 
     wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh,
              message="hosts_exists")

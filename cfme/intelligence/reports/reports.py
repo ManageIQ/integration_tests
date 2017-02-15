@@ -44,7 +44,7 @@ input = partial(tag, "input")
 
 
 def select(**kwargs):
-    Select(tag("select", **kwargs))
+    return Select(tag("select", **kwargs))
 
 
 button = partial(tag, "button")

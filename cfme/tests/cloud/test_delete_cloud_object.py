@@ -10,8 +10,6 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar, Quadicon
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
-
 
 pytest_generate_tests = testgen.generate(
     [CloudProvider], required_fields=['remove_test'], scope="module")
@@ -60,8 +58,6 @@ def test_delete_image(setup_provider, provider, set_grid, request):
     Metadata:
         test_flag: delete_object
     """
-    # TODO as of 5.6+ clouds_images is no longer in the menu tree
-    # Refactor to navigate via clouds instances accordion
     image_name = provider.data['remove_test']['image']
     test_image = VM.factory(image_name, provider, template=True)
     test_image.delete(from_details=False)
@@ -71,14 +67,13 @@ def test_delete_image(setup_provider, provider, set_grid, request):
     request.addfinalizer(reset)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < "5.4")
 def test_delete_stack(setup_provider, provider, provisioning, request):
     """ Tests delete stack
 
     Metadata:
         test_flag: delete_object
     """
-    stack = Stack(provisioning['stack'])
+    stack = Stack(provisioning['stack'], provider=provider)
     refresh_and_wait(provider, stack)
     stack.delete()
     navigate_to(stack, 'All')

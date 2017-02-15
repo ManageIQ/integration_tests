@@ -77,6 +77,20 @@ class ImageAll(CFMENavigateStep):
         accordion.tree('Images', 'All Images')
 
 
+@navigator.register(Image, 'AllForProvider')
+class ImageAllForProvider(CFMENavigateStep):
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def am_i_here(self):
+        return match_page(summary='Images under Provider "{}"'.format(self.obj.provider.name))
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.navigation.select('Compute', 'Clouds', 'Instances')
+
+        # use accordion
+        accordion.tree('Images by Provider', 'Images by Provider', self.obj.provider.name)
+
+
 @navigator.register(Image, 'Details')
 class ImageDetails(CFMENavigateStep):
     prerequisite = NavigateToSibling('All')

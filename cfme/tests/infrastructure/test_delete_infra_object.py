@@ -39,7 +39,7 @@ def test_delete_host(setup_provider, provider):
         test_flag: delete_object
     """
     host_name = provider.data['remove_test']['host']
-    test_host = host.Host(name=host_name)
+    test_host = host.Host(name=host_name, provider=provider)
     test_host.delete(cancel=False)
     host.wait_for_host_delete(test_host)
     provider.refresh_provider_relationships()

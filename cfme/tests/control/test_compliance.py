@@ -167,7 +167,7 @@ def test_check_package_presence(request, fleecing_vm, ssh_client, analysis_profi
             "check_services", "check_accounts", "check_software", "check_vmconfig", "check_system"]
 
     do_scan(fleecing_vm)
-    assert fleecing_vm.check_compliance_and_wait()
+    assert fleecing_vm.check_compliance()
 
 
 def test_check_files(request, fleecing_vm, ssh_client, analysis_profile):
@@ -202,4 +202,4 @@ def test_check_files(request, fleecing_vm, ssh_client, analysis_profile):
             "check_services", "check_accounts", "check_software", "check_vmconfig", "check_system"]
 
     do_scan(fleecing_vm, ("Configuration", "Files"))
-    assert fleecing_vm.check_compliance_and_wait()
+    assert fleecing_vm.check_compliance()

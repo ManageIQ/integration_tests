@@ -5,12 +5,14 @@ import pytest
 
 from cfme.configure import configuration as config
 from cfme.cloud import provider as cloud_provider
+from cfme.cloud.provider.ec2 import EC2Provider
 from cfme.common.vm import VM
 from cfme.infrastructure.provider import wait_for_a_provider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from fixtures.pytest_store import store
 from utils.appliance import provision_appliance
 from utils.log import logger
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider_by_class
 from utils import version
 
 
@@ -64,9 +66,9 @@ def test_db_restore(request, soft_assert):
         # Manage infra,cloud providers and set some roles before taking a DB backup
         config.set_server_roles(automate=True)
         roles = config.get_server_roles()
-        provider_crud = setup_a_provider('infra', 'virtualcenter', validate=True)
+        provider_crud = setup_a_provider_by_class(VMwareProvider)
         wait_for_a_provider()
-        setup_a_provider('cloud', 'ec2', validate=True)
+        setup_a_provider_by_class(EC2Provider)
         cloud_provider.wait_for_a_provider()
 
         providers_appl1 = appl1.ipapp.managed_providers

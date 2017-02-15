@@ -11,7 +11,9 @@ from cfme.services import requests
 from cfme.cloud.provider import CloudProvider
 from cfme.cloud.stack import Stack
 from cfme import test_requirements
-from utils import testgen, version
+from utils import testgen
+from utils.path import orchestration_path
+from utils.datafile import load_data_file
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -22,115 +24,6 @@ pytestmark = [
     test_requirements.stack,
     pytest.mark.tier(2)
 ]
-
-AWS_TEMPLATE = """
-{
-  "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "AWS CloudFormation Sample Template DynamoDB_Table",
-  "Parameters" : {
-    "HaskKeyElementName" : {
-      "Description" : "HashType PrimaryKey Name",
-      "Type" : "String",
-      "AllowedPattern" : "[a-zA-Z0-9]*",
-      "Default" : "SSS",
-      "MinLength": "1",
-      "MaxLength": "2048",
-      "ConstraintDescription" : "must contain only alphanumberic characters"
-    },
-
-    "HaskKeyElementType" : {
-      "Description" : "HashType PrimaryKey Type",
-      "Type" : "String",
-      "Default" : "S",
-      "AllowedPattern" : "[S|N]",
-      "MinLength": "1",
-      "MaxLength": "1",
-      "ConstraintDescription" : "must be either S or N"
-    },
-
-    "ReadCapacityUnits" : {
-      "Description" : "Provisioned read throughput",
-      "Type" : "Number",
-      "Default" : "5",
-      "MinValue": "5",
-      "MaxValue": "10000",
-      "ConstraintDescription" : "must be between 5 and 10000"
-    },
-
-    "WriteCapacityUnits" : {
-      "Description" : "Provisioned write throughput",
-      "Type" : "Number",
-      "Default" : "10",
-      "MinValue": "5",
-      "MaxValue": "10000",
-      "ConstraintDescription" : "must be between 5 and 10000"
-    }
-  },
-  "Resources" : {
-    "myDynamoDBTable" : {
-      "Type" : "AWS::DynamoDB::Table",
-      "Properties" : {
-        "AttributeDefinitions": [ {
-          "AttributeName" : {"Ref" : "HaskKeyElementName"},
-          "AttributeType" : {"Ref" : "HaskKeyElementType"}
-        } ],
-        "KeySchema": [
-          { "AttributeName": {"Ref" : "HaskKeyElementName"}, "KeyType": "HASH" }
-        ],
-        "ProvisionedThroughput" : {
-          "ReadCapacityUnits" : {"Ref" : "ReadCapacityUnits"},
-          "WriteCapacityUnits" : {"Ref" : "WriteCapacityUnits"}
-        }
-      }
-    }
-  },
-  "Outputs" : {
-    "TableName" : {
-      "Value" : {"Ref" : "myDynamoDBTable"},
-      "Description" : "Table name of the newly created DynamoDB table"
-    }
-  }
-}
-"""
-
-HEAT_TEMPLATE = """
-heat_template_version: 2013-05-23
-description: Simple template to deploy a single compute instance
-parameters:
-  image:
-    type: string
-    label: Image name or ID
-    description: Image to be used for compute instance
-    default: cirros
-  flavor:
-    type: string
-    label: Flavor
-    description: Type of instance (flavor) to be used
-    default: m1.small
-  key:
-    type: string
-    label: Key name
-    description: Name of key-pair to be used for compute instance
-    default: psav
-  private_network:
-    type: string
-    label: Private network name or ID
-    description: Network to attach instance to.
-    default: c0f0db9c-846f-4d4e-b058-0db5bfb2cb90
-resources:
-  my_instance:
-    type: OS::Nova::Server
-    properties:
-      image: { get_param: image }
-      flavor: { get_param: flavor }
-      key_name: { get_param: key }
-      networks:
-        - uuid: { get_param: private_network }
-outputs:
-  instance_ip:
-    description: IP address of the instance
-    value: { get_attr: [my_instance, first_address]}
-"""
 
 
 pytest_generate_tests = testgen.generate(
@@ -143,21 +36,18 @@ pytest_generate_tests = testgen.generate(
 @pytest.yield_fixture(scope="function")
 def template(provider, provisioning, dialog_name):
     template_type = provisioning['stack_provisioning']['template_type']
-    if provider.type == 'azure':
-        template_name = 'azure-single-vm-from-user-image'
-    else:
-        template_name = fauxfactory.gen_alphanumeric()
-
+    template_name = fauxfactory.gen_alphanumeric()
     template = OrchestrationTemplate(template_type=template_type,
                                      template_name=template_name)
 
     if provider.type == "ec2":
-        method = AWS_TEMPLATE.replace('CloudFormation', random_desc())
+        data_file = load_data_file(str(orchestration_path.join('aws_vm_template.json')))
     elif provider.type == "openstack":
-        method = HEAT_TEMPLATE.replace('Simple', random_desc())
+        data_file = load_data_file(str(orchestration_path.join('openstack_vm_template.data')))
+    elif provider.type == "azure":
+        data_file = load_data_file(str(orchestration_path.join('azure_vm_template.json')))
 
-    template.create(method)
-
+    template.create(data_file.read().replace('CFMETemplateName', template_name))
     if provider.type != "azure":
         template.create_service_dialog_from_template(dialog_name, template.template_name)
 
@@ -204,8 +94,8 @@ def random_desc():
 
 def prepare_stack_data(provider, provisioning):
     stackname = "test" + fauxfactory.gen_alphanumeric()
+    vm_name = "test" + fauxfactory.gen_alphanumeric()
     if provider.type == "azure":
-        vm_name = "test" + fauxfactory.gen_alphanumeric()
         vm_user, vm_password, vm_size, resource_group,\
             user_image, os_type, mode = map(provisioning.get,
          ('vm_user', 'vm_password', 'vm_size', 'resource_group',
@@ -218,11 +108,21 @@ def prepare_stack_data(provider, provisioning):
             'mode': mode,
             'vm_user': vm_user,
             'vm_password': vm_password,
+            'user_image': user_image,
+            'os_type': os_type,
             'vm_size': vm_size
         }
         return stack_data
     else:
-        stack_data = {'stack_name': stackname}
+        stack_prov = provisioning['stack_provisioning']
+
+        stack_data = {
+            'stack_name': stackname,
+            'vm_name': vm_name,
+            'key_name': stack_prov['key_name'],
+            'select_instance_type': stack_prov['instance_type'],
+            'ssh_location': provisioning['ssh_location']
+        }
         return stack_data
 
 
@@ -242,8 +142,10 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
             if provider.mgmt.stack_exist(stack_data['stack_name']):
                 wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
                          delay=10, num_sec=800, message="wait for stack delete")
-            stack_data['vm_name'].delete_from_provider()
             catalog_item.orch_template.delete()
+            if provider.type == 'azure' and provider.mgmt.vm_exist(stack_data['vm_name']):
+                wait_for(lambda: provider.mgmt.delete_vm(stack_data['vm_name']),
+                         delay=10, num_sec=800, message="wait for vm delete")
         except Exception as ex:
             logger.warning('Exception while checking/deleting stack, continuing: {}'
                            .format(ex.message))
@@ -251,7 +153,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
 
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', item_name)
+    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -260,7 +162,6 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
     assert 'Provisioned Successfully' in row.last_message.text
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() <= '5.5')
 def test_reconfigure_service(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -276,7 +177,6 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
             if provider.mgmt.stack_exist(stack_data['stack_name']):
                 wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
                  delay=10, num_sec=800, message="wait for stack delete")
-            stack_data['vm_name'].delete_from_provider()
             catalog_item.orch_template.delete()
         except Exception as ex:
             logger.warning('Exception while checking/deleting stack, continuing: {}'
@@ -285,7 +185,7 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
 
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', item_name)
+    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -317,7 +217,6 @@ def test_remove_template_provisioning(provider, provisioning, catalog, catalog_i
     assert row.last_message.text == 'Service_Template_Provisioning failed'
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     """Tests stack provisioning
 
@@ -330,7 +229,7 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     stack_data = prepare_stack_data(provider, provisioning)
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
-    logger.info('Waiting for cfme provision request for service %s', item_name)
+    logger.info('Waiting for cfme provision request for service {}'.format(item_name))
     row_description = item_name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
@@ -338,14 +237,13 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
 
     assert 'Provisioned Successfully' in row.last_message.text
 
-    stack = Stack(stack_data['stack_name'])
+    stack = Stack(stack_data['stack_name'], provider=provider)
     stack.wait_for_appear()
     stack.retire_stack()
 
     @request.addfinalizer
     def _cleanup_templates():
         try:
-            stack_data['vm_name'].delete_from_provider()
             catalog_item.orch_template.delete()
         except Exception as ex:
             logger.warning('Exception while checking/deleting stack, continuing: {}'

@@ -1,27 +1,44 @@
 #!/usr/bin/env python2
 import argparse
 import subprocess
-import time
+import socket
 from wait_for import wait_for
 
 from dockerbot import SeleniumDocker
-from utils.net import random_port, net_check
+from utils.net import random_port
 from utils.conf import docker as docker_conf
+
+
+def vnc_ready(addr, port):
+    try:
+        soc = socket.create_connection((addr, port), timeout=2)
+    except socket.error:
+        return False
+    # docker-proxy opens the port immediately after container is started.
+    # Receive data from the socket to check if VNC session is really running.
+    if not soc.recv(1024):
+        return False
+    soc.close()
+    return True
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=None)
 
     interaction = parser.add_argument_group('Ports')
-    interaction.add_argument('--watch', help='Opens vnc session',
-                             action="store_true", default=False)
+    interaction.add_argument('--watch', help='Opens VNC session',
+                             action='store_true', default=False)
     interaction.add_argument('--vnc', help='Chooses VNC port',
                              default=random_port())
-    interaction.add_argument('--webdriver', help='Choose WebDriver port',
+    interaction.add_argument('--webdriver', help='Chooses WebDriver port',
                              default=random_port())
-    interaction.add_argument('--image', help='Choose WebDriver port',
+    interaction.add_argument('--image', help='Chooses WebDriver port',
                              default=docker_conf.get('selff', 'cfme/sel_ff_chrome'))
+    interaction.add_argument('--vncviewer', help='Chooses VNC viewer command',
+                             default=docker_conf.get('vncviewer', None))
 
     args = parser.parse_args()
+    ip = '127.0.0.1'
 
     print("Starting container...")
 
@@ -33,13 +50,21 @@ if __name__ == "__main__":
     if args.watch:
         print
         print("  Waiting for VNC port to open...")
-        wait_for(lambda: net_check(args.vnc, '127.0.0.1'), num_sec=60)
-        time.sleep(10)
-        print net_check(args.vnc, '127.0.0.1')
+        wait_for(lambda: vnc_ready(ip, args.vnc), num_sec=60, delay=2)
 
         print("  Initiating VNC watching...")
-        ipport = "vnc://127.0.0.1:" + str(args.vnc)
-        cmd = ['xdg-open', ipport]
+        if args.vncviewer:
+            viewer = args.vncviewer
+            if '%I' in viewer or '%P' in viewer:
+                viewer = viewer.replace('%I', ip).replace('%P', str(args.vnc))
+                ipport = None
+            else:
+                ipport = '{}:{}'.format(ip, args.vnc)
+            cmd = viewer.split()
+            if ipport:
+                cmd.append(ipport)
+        else:
+            cmd = ['xdg-open', 'vnc://{}:{}'.format(ip, args.vnc)]
         subprocess.Popen(cmd)
 
     print(" Hit Ctrl+C to end container")
@@ -47,6 +72,5 @@ if __name__ == "__main__":
         dkb.wait()
     except KeyboardInterrupt:
         print(" Killing Container.....please wait...")
-        pass
     dkb.kill()
     dkb.remove()

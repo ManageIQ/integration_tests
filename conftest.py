@@ -167,6 +167,7 @@ pytest_plugins = (
 
     'fixtures.prov_filter',
 
+    'fixtures.appliance',
     'fixtures.single_appliance_sprout',
     'fixtures.dev_branch',
     'fixtures.events',
@@ -180,7 +181,6 @@ pytest_plugins = (
     'fixtures.log',
     'fixtures.maximized',
     'fixtures.merkyl',
-    'fixtures.mgmt_system',
     'fixtures.nelson',
     'fixtures.node_annotate',
     'fixtures.page_screenshots',

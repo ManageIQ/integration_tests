@@ -123,6 +123,23 @@ class MiqBrowser(Browser):
 class CFMENavigateStep(NavigateStep):
     VIEW = None
 
+    @staticmethod
+    def repeat_if_alert(accept=True):
+        """Repeats the step once more if an alert pops up and handles the alert as requested."""
+        def g(f):
+            def wrapped(self, *args, **kwargs):
+                try:
+                    return f(self, *args, **kwargs)
+                except UnexpectedAlertPresentException:
+                    logger.warning('Detected an alert, applying %r and retrying once', accept)
+                    wt = self.appliance.browser.widgetastic
+                    while wt.alert_present:
+                        wt.handle_alert(wait=0, cancel=not accept)
+                    return f(self, *args, **kwargs)
+            return wrapped
+
+        return g
+
     @cached_property
     def view(self):
         if self.VIEW is None:

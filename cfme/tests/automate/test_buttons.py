@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 from cfme import test_requirements
+from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import flash
 from cfme.automate.buttons import Button, ButtonGroup
 from cfme.automate.service_dialogs import ServiceDialog
@@ -135,8 +136,8 @@ def test_button_crud(dialog, request):
 def test_button_on_host(dialog, request):
     buttongroup = ButtonGroup(
         text=fauxfactory.gen_alphanumeric(),
-        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
-        type=ButtonGroup.HOST)
+        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()))
+    buttongroup.type = buttongroup.HOST
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
     button = Button(group=buttongroup,
@@ -167,7 +168,14 @@ def test_button_avp_displayed(request):
         type=ButtonGroup.VM_INSTANCE)
     request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
-    navigate_to(buttongroup, 'Details')
+    button = Button(group=buttongroup,
+                    text=fauxfactory.gen_alphanumeric(),
+                    hover="btn_hvr_{}".format(fauxfactory.gen_alphanumeric()),
+                    dialog=dialog, system="Request", request="InspectMe")
+    navigate_to(button, 'Add')
     section_loc = "//*[(self::h3 or self::p) and normalize-space(text())='Attribute/Value Pairs']"
-    assert pytest.sel.is_displayed(section_loc),\
+    assert sel.is_displayed(section_loc),\
         "The Attribute/Value Pairs part of the form is not displayed"
+    for i in range(1, 6):
+        assert sel.is_displayed('#attribute_{}'.format(i))
+        assert sel.is_displayed('#value_{}'.format(i))

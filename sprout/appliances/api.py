@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
+from ipware.ip import get_ip
 
 from appliances.models import (
     Appliance, AppliancePool, Provider, Group, Template, User, GroupShepherd)
@@ -115,8 +116,9 @@ class JSONApi(object):
                 method = self._methods[method_name]
             except KeyError:
                 raise NameError("Method {} not found!".format(method_name))
+            ipaddr = get_ip(request)
             create_logger(method).info(
-                "Calling with parameters {}{}".format(repr(tuple(args)), repr(kwargs)))
+                "Calling with parameters {!r}{!r} from {!r}".format(tuple(args), kwargs, ipaddr))
             if method.auth:
                 if "auth" in data:
                     username, password = data["auth"]
@@ -139,6 +141,7 @@ class JSONApi(object):
             return json_exception(e)
         else:
             create_logger(method).info("Call finished")
+
 
 jsonapi = JSONApi()
 
@@ -229,13 +232,13 @@ def num_shepherd_appliances(user, group, version=None, date=None, provider=None)
 @jsonapi.authenticated_method
 def request_appliances(
         user, group, count=1, lease_time=60, version=None, date=None, provider=None,
-        preconfigured=True, yum_update=False, container=False):
+        preconfigured=True, yum_update=False, container=False, ram=None, cpu=None):
     """Request a number of appliances."""
     if date:
         date = datetime.strptime(date, "%y%m%d")
     return AppliancePool.create(
         user, group, version, date, provider, count, lease_time, preconfigured, yum_update,
-        container).id
+        container, ram, cpu).id
 
 
 @jsonapi.authenticated_method

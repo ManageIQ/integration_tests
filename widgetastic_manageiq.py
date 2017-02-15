@@ -4,8 +4,10 @@ from datetime import date
 from jsmin import jsmin
 from selenium.common.exceptions import WebDriverException
 from math import ceil
+from wait_for import wait_for
 
 from widgetastic.exceptions import NoSuchElementException
+from widgetastic.log import logged
 from widgetastic.utils import VersionPick, Version
 from widgetastic.widget import (
     Table as VanillaTable,
@@ -14,11 +16,13 @@ from widgetastic.widget import (
     Widget,
     View,
     Select,
+    Text,
     TextInput,
     Checkbox,
+    ParametrizedView,
     WidgetDescriptor,
     do_not_read_this_widget)
-from widgetastic.utils import ParametrizedLocator
+from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
@@ -145,60 +149,6 @@ class DynaTree(Widget):
     }
     """)
 
-    # This function searches for specified node by path. If it faces an ajax load, it returns false.
-    # If it does not return false, the result is complete.
-    FIND_LEAF = jsmin(TREE_GET_ROOT + GET_LEVEL_NAME + EXPANDABLE + """\
-    function find_leaf(root, path, by_id) {
-        if(path.length == 0)
-            return null;
-        if(by_id === undefined)
-            by_id = false;
-        var item = get_root(root);
-        if(typeof item.childList === "undefined")
-            throw "CANNOT FIND TREE /" + root + "/";
-        var i;  // The start of matching for path. Because in one case, we already matched 1st
-        var lname = get_level_name(item, by_id);
-        if(item.childList.length == 1 && lname === null) {
-            item = item.childList[0];
-            i = 1;
-            if(get_level_name(item, by_id) != path[0])
-                throw "TREEITEM /" + path[0] + "/ NOT FOUND IN THE TREE";
-        } else if(lname === null) {
-            i = 0;
-        } else {
-            if(lname != path[0])
-                throw "TREEITEM /" + path[0] + "/ NOT FOUND IN THE TREE";
-            item = item.childList[0];
-            i = 1;
-        }
-        for(; i < path.length; i++) {
-            var last = (i + 1) == path.length;
-            var step = path[i];
-            var found = false;
-            if(expandable(item) && (!item.bExpanded)) {
-                item.expand();
-                if(item.childList === null)
-                    return false;  //We need to do wait_for_ajax and then repeat.
-            }
-
-            for(var j = 0; j < (item.childList || []).length; j++) {
-                var nextitem = item.childList[j];
-                var nextitem_name = get_level_name(nextitem, by_id);
-                if(nextitem_name == step) {
-                    found = true;
-                    item = nextitem;
-                    break;
-                }
-            }
-
-            if(!found)
-                throw "TREEITEM /" + step + "/ NOT FOUND IN THE TREE";
-        }
-
-        return xpath(item.li, "./span/a");
-    }
-    """)
-
     def __init__(self, parent, tree_id=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self._tree_id = tree_id
@@ -253,6 +203,52 @@ class DynaTree(Widget):
                 by_id)
         return result
 
+    @staticmethod
+    def _construct_xpath(path, by_id=False):
+        items = []
+        for item in path:
+            if by_id:
+                items.append('ul/li[@id={}]'.format(quote(item)))
+            else:
+                items.append('ul/li[./span/a[normalize-space(.)={}]]'.format(quote(item)))
+
+        return './' + '/'.join(items)
+
+    def _item_expanded(self, id):
+        span = self.browser.element('.//li[@id={}]/span'.format(quote(id)), parent=self)
+        return 'dynatree-expanded' in self.browser.get_attribute('class', span)
+
+    def _item_expandable(self, id):
+        return bool(
+            self.browser.elements(
+                './/li[@id={}]/span/span[contains(@class, "dynatree-expander")]'.format(quote(id)),
+                parent=self))
+
+    def _click_expander(self, id):
+        expander = self.browser.element(
+            './/li[@id={}]/span/span[contains(@class, "dynatree-expander")]'.format(quote(id)),
+            parent=self)
+        return self.browser.click(expander)
+
+    def expand_id(self, id):
+        self.browser.plugin.ensure_page_safe()
+        if not self._item_expanded(id) and self._item_expandable(id):
+            self.logger.debug('expanding node %r', id)
+            self._click_expander(id)
+            wait_for(lambda: self._item_expanded(id), num_sec=15, delay=0.5)
+
+    def child_items(self, id, ids=False):
+        self.expand_id(id)
+        items = self.browser.elements('.//li[@id={}]/ul/li'.format(quote(id)), parent=self)
+        result = []
+        for item in items:
+            if ids:
+                result.append(self.browser.get_attribute('id', item))
+            else:
+                text_item = self.browser.element('./span/a', parent=item)
+                result.append(self.browser.text(text_item))
+        return result
+
     def expand_path(self, *path, **kwargs):
         """ Exposes a path.
 
@@ -266,45 +262,43 @@ class DynaTree(Widget):
 
         """
         by_id = kwargs.pop("by_id", False)
-        result = False
+        current_path = []
+        last_id = None
+        node = None
 
-        # Ensure we pass str to the javascript. This handles objects that represent themselves
-        # using __str__ and generally, you should only pass str because that is what makes sense
-        path = map(str, path)
-
-        # We sometimes have to wait for ajax. In that case, JS function returns false
-        # Then we repeat and wait. It does not seem completely possible to wait for the data in JS
-        # as it runs on one thread it appears. So this way it will try to drill multiple times
-        # each time deeper and deeper :)
-        while result is False:
-            self.browser.plugin.ensure_page_safe()
-            try:
-                result = self.browser.execute_script(
-                    "{} return find_leaf(arguments[0],arguments[1],arguments[2]);".format(
-                        self.FIND_LEAF),
-                    self.__locator__(),
-                    path,
-                    by_id)
-            except WebDriverException as e:
-                text = str(e)
-                match = re.search(r"TREEITEM /(.*?)/ NOT FOUND IN THE TREE", text)
-                if match is not None:
-                    item = match.groups()[0]
+        for item in path:
+            if last_id is None:
+                last_id = self.browser.get_attribute(
+                    'id', self.browser.element('./ul/li', parent=self))
+            self.expand_id(last_id)
+            if isinstance(item, re._pattern_type):
+                self.logger.debug('Looking for regexp %r in path %r', item.pattern, current_path)
+                for child_item in self.child_items(last_id, ids=by_id):
+                    if item.match(child_item) is not None:
+                        # found
+                        item = child_item
+                        break
+                else:
                     raise CandidateNotFound(
-                        {'message': "{}: could not be found in the tree.".format(item),
-                         'path': path,
-                         'cause': e})
-                match = re.search(r"^CANNOT FIND TREE /(.*?)/$", text)
-                if match is not None:
-                    tree_id = match.groups()[0]
-                    raise NoSuchElementException(
-                        "Tree {} / {} not found.".format(tree_id, self.locator))
-                # Otherwise ...
-                raise CandidateNotFound({
-                    'message': 'Something else happened!',
-                    'path': path,
-                    'cause': e})
-        return result
+                        {'message': "r{!r}: could not be found in the tree.".format(item.pattern),
+                         'path': current_path,
+                         'cause': None})
+            current_path.append(item)
+            xpath = self._construct_xpath(current_path, by_id=by_id)
+            try:
+                node = self.browser.element(xpath, parent=self)
+            except NoSuchElementException:
+                raise CandidateNotFound(
+                    {'message': "{}: could not be found in the tree.".format(item),
+                     'path': current_path,
+                     'cause': None})
+
+            last_id = self.browser.get_attribute('id', node)
+
+        if node is not None:
+            self.expand_id(last_id)
+
+        return self.browser.element('./span/a', parent=node)
 
     def click_path(self, *path, **kwargs):
         """ Exposes a path and then clicks it.
@@ -318,10 +312,6 @@ class DynaTree(Widget):
         Returns: The leaf web element.
 
         """
-        # Ensure we pass str to the javascript. This handles objects that represent themselves
-        # using __str__ and generally, you should only pass str because that is what makes sense
-        path = map(str, path)
-
         leaf = self.expand_path(*path, **kwargs)
         self.logger.info("Path %r yielded menuitem %r", path, self.browser.text(leaf))
         if leaf is not None:
@@ -372,18 +362,17 @@ class SummaryFormItem(Widget):
         return text
 
 
-class MultiBoxSelect(Widget):
+class MultiBoxSelect(View):
 
-    TABLE = VersionPick({
-        Version.lowest(): "//table[@class='admintable']{1}//table[@id={0}]",
-        '5.7': "//table[@id={0}]{1}"
-    })
+    ROOT = ParametrizedLocator("(.//table[@id={@id|quote}]){@number}")
+    available_options = Select(id=Parameter("@available_items"))
+    chosen_options = Select(id=Parameter("@chosen_items"))
 
     def __init__(self, parent, id, number="", move_into=None, move_from=None,
             available_items="choices_chosen", chosen_items="members_chosen", logger=None):
-        Widget.__init__(self, parent, logger=logger)
-        self.available_options = Select(self, id=available_items)
-        self.chosen_options = Select(self, id=chosen_items)
+        View.__init__(self, parent, logger=logger)
+        self.available_items = available_items
+        self.chosen_items = chosen_items
         self.id = id
         if number:
             self.number = "[{}]".format(number)
@@ -398,14 +387,11 @@ class MultiBoxSelect(Widget):
         else:
             self._move_from = move_from
 
-    def __locator__(self):
-        return self.TABLE.format(quote(self.id), self.number)
-
     def _values_to_remove(self, values):
-        return list((set(values) ^ self.read()) - set(values))
+        return list(self.all_options - set(values))
 
     def _values_to_add(self, values):
-        return list((set(values) ^ self.read()) - self.read())
+        return list(set(values) - self.all_options)
 
     @property
     def move_into_button(self):
@@ -424,7 +410,7 @@ class MultiBoxSelect(Widget):
         return button
 
     def fill(self, values):
-        if set(values) == self.read():
+        if set(values) == self.all_options:
             return False
         else:
             values_to_remove = self._values_to_remove(values)
@@ -439,13 +425,17 @@ class MultiBoxSelect(Widget):
                 self.browser.plugin.ensure_page_safe()
             return True
 
-    def read(self):
+    @property
+    def all_options(self):
         return {option.text for option in self.chosen_options.all_options}
+
+    def read(self):
+        return list(self.all_options)
 
 
 class CheckboxSelect(Widget):
 
-    ROOT = ParametrizedLocator("//div[@id={@search_root|quote}]")
+    ROOT = ParametrizedLocator(".//div[@id={@search_root|quote}]")
 
     def __init__(self, parent, search_root, text_access_func=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -456,21 +446,22 @@ class CheckboxSelect(Widget):
     def checkboxes(self):
         """All checkboxes."""
         return {Checkbox(self, id=el.get_attribute("id")) for el in self.browser.elements(
-            ".//input[@type='checkbox'] ", self)}
+            ".//input[@type='checkbox']")}
 
-    def read(self):
+    @property
+    def selected_checkboxes(self):
         """Only selected checkboxes."""
         return {cb for cb in self.checkboxes if cb.selected}
 
     @cached_property
     def selected_text(self):
         """Only selected checkboxes' text descriptions."""
-        return {cb.browser.element("./..", cb).text for cb in self.read()}
+        return {self.browser.element("./..", parent=cb).text for cb in self.selected_checkboxes}
 
     @property
     def selected_values(self):
         """Only selected checkboxes' values."""
-        return {cb.get_attribute("value") for cb in self.read()}
+        return {cb.get_attribute("value") for cb in self.selected_checkboxes}
 
     @property
     def unselected_checkboxes(self):
@@ -487,10 +478,10 @@ class CheckboxSelect(Widget):
         return Checkbox(self, id=id)
 
     def _values_to_remove(self, values):
-        return (set(values) ^ self.selected_text) - set(values)
+        return list(self.selected_text - set(values))
 
     def _values_to_add(self, values):
-        return (set(values) ^ self.selected_text) - self.selected_text
+        return list(set(values) - self.selected_text)
 
     def select_all(self):
         """Selects all checkboxes."""
@@ -503,7 +494,7 @@ class CheckboxSelect(Widget):
             cb.fill(False)
 
     def checkbox_by_text(self, text):
-        """Returns checkbox's WebElement by searched by its text."""
+        """Returns checkbox's WebElement searched by its text."""
         if self._access_func is not None:
             for cb in self.checkboxes:
                 txt = self._access_func(cb)
@@ -513,10 +504,10 @@ class CheckboxSelect(Widget):
                 raise NameError("Checkbox with text {} not found!".format(text))
         else:
             # Has to be only single
-            element = self.browser.element(
-                ".//*[normalize-space(.)={}]/input[@type='checkbox']".format(quote(text)), self
+            return Checkbox(
+                self,
+                locator=".//*[normalize-space(.)={}]/input[@type='checkbox']".format(quote(text))
             )
-            return Checkbox(self, id=element.get_attribute("id"))
 
     def fill(self, values):
         if set(values) == self.selected_text:
@@ -529,6 +520,10 @@ class CheckboxSelect(Widget):
                 checkbox = self.checkbox_by_text(value)
                 checkbox.fill(True)
             return True
+
+    def read(self):
+        """Only selected checkboxes."""
+        return [cb for cb in self.checkboxes if cb.selected]
 
 
 # ManageIQ table objects definition
@@ -564,6 +559,9 @@ class Table(VanillaTable):
     CHECKBOX_ALL = '|'.join([
         './thead/tr/th[1]/input[contains(@class, "checkall")]',
         './tr/th[1]/input[contains(@class, "checkall")]'])
+    SORTED_BY_LOC = (
+        './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]')
+    SORT_LINK = './thead/tr/th[{}]/a'
     Row = TableRow
 
     @property
@@ -587,6 +585,50 @@ class Table(VanillaTable):
     def uncheck_all(self):
         self.check_all()
         self.browser.click(self.checkbox_all)
+
+    @property
+    def sorted_by(self):
+        """Returns the name of column that the table is sorted by. Attributized!"""
+        return attributize_string(self.browser.text(self.SORTED_BY_LOC, parent=self))
+
+    @property
+    def sort_order(self):
+        """Returns the sorting order of the table for current column.
+
+        Returns:
+            ``asc`` or ``desc``
+        """
+        klass = self.browser.get_attribute('class', self.SORTED_BY_LOC, parent=self)
+        return re.search(r'sorting_(asc|desc)', klass).groups()[0]
+
+    def click_sort(self, column):
+        """Clicks the sorting link in the given column. The column gets attributized."""
+        self.logger.info('click_sort(%r)', column)
+        column = attributize_string(column)
+        column_position = self.header_index_mapping[self.attributized_headers[column]]
+        self.browser.click(self.SORT_LINK.format(column_position + 1), parent=self)
+
+    def sort_by(self, column, order='asc'):
+        """Sort table by column and in given direction.
+
+        Args:
+            column: Name of the column, can be normal or attributized.
+            order: Sorting order. ``asc`` or ``desc``.
+        """
+        self.logger.info('sort_by(%r, %r)', column, order)
+        column = attributize_string(column)
+
+        # Sort column
+        if self.sorted_by != column:
+            self.click_sort(column)
+        else:
+            self.logger.debug('sort_by(%r, %r): column already selected', column, order)
+
+        # Sort order
+        if self.sort_order != order:
+            self.logger.info('sort_by(%r, %r): changing the sort order', column, order)
+            self.click_sort(column)
+            self.logger.debug('sort_by(%r, %r): order already selected', column, order)
 
 
 class Accordion(PFAccordion):
@@ -637,10 +679,12 @@ class Calendar(TextInput):
         return True
 
 
-class SNMPHostsField(Widget):
+class SNMPHostsField(View):
+
+    _input = Input("host")
 
     def __init__(self, parent, logger=None):
-        Widget.__init__(self, parent, logger=logger)
+        View.__init__(self, parent, logger=logger)
 
     def fill(self, values):
         fields = self.host_fields
@@ -650,15 +694,11 @@ class SNMPHostsField(Widget):
             raise ValueError("You cannot specify more hosts than the form allows!")
         return any(fields[i].fill(value) for i, value in enumerate(values))
 
-    def read(self):
-        raise NotImplementedError
-
     @property
     def host_fields(self):
         """Returns list of locators to all host fields"""
-        _input = Input(self, "host")
-        if _input.is_displayed:
-            return [_input]
+        if self._input.is_displayed:
+            return [self._input]
         else:
             return [Input(self, "host_{}".format(i)) for i in range(1, 4)]
 
@@ -695,7 +735,7 @@ class SNMPTrapsField(Widget):
         return any(result)
 
     def read(self):
-        raise NotImplementedError
+        do_not_read_this_widget()
 
 
 class SNMPForm(View):
@@ -703,9 +743,6 @@ class SNMPForm(View):
     version = BootstrapSelect("snmp_version")
     id = Input("trap_id")
     traps = SNMPTrapsField()
-
-    def read(self):
-        raise NotImplementedError
 
 
 class ScriptBox(Widget):
@@ -733,9 +770,19 @@ class ScriptBox(Widget):
             self.item_name = 'ManageIQ.editor'
         return self.item_name
 
-    def fill(self, values):
-        self.browser.execute_script('{}.setValue(arguments[0]);'.format(self.name), values)
+    @property
+    def script(self):
+        return self.browser.execute_script('{}.getValue();'.format(self.name))
+
+    def fill(self, value):
+        if self.script == value:
+            return False
+        self.browser.execute_script('{}.setValue(arguments[0]);'.format(self.name), value)
         self.browser.execute_script('{}.save();'.format(self.name))
+        return True
+
+    def read(self):
+        return self.script
 
     def get_value(self):
         script = self.browser.execute_script('return {}.getValue();'.format(self.name))
@@ -899,3 +946,366 @@ class PaginationPane(View):
     @property
     def items_amount(self):
         return self.paginator.page_info()[1]
+
+
+class Stepper(View):
+    """ A CFME Stepper Control
+
+    .. code-block:: python
+
+        stepper = Stepper(locator='//div[contains(@class, "timeline-stepper")]')
+        stepper.increase()
+    """
+    ROOT = ParametrizedLocator('{@locator}')
+
+    minus_button = Button('-')
+    plus_button = Button('+')
+    value_field = Input(locator='.//input[contains(@class, "bootstrap-touchspin")]')
+
+    def __init__(self, parent, locator, logger=None):
+        View.__init__(self, parent=parent, logger=logger)
+
+        self.locator = locator
+
+    def read(self):
+        return int(self.value_field.read())
+
+    def decrease(self):
+        self.minus_button.click()
+
+    def increase(self):
+        self.plus_button.click()
+
+    def set_value(self, value):
+        value = int(value)
+        if value < 1:
+            raise ValueError('The value cannot be less than 1')
+
+        steps = value - self.read()
+        if steps == 0:
+            return False
+        elif steps > 0:
+            operation = self.increase
+        else:
+            operation = self.decrease
+
+        steps = abs(steps)
+        for step in range(steps):
+            operation()
+        return True
+
+    def fill(self, value):
+        return self.set_value(value)
+
+
+class RadioGroup(Widget):
+    """ CFME Radio Group Control
+
+    .. code-block:: python
+
+        radio_group = RadioGroup(locator='//span[contains(@class, "timeline-option")]')
+        radio_group.select(radio_group.button_names()[-1])
+    """
+    BUTTONS = './/label[input[@type="radio"]]'
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+        self.locator = locator
+
+    def __locator__(self):
+        return self.locator
+
+    def _get_button(self, name):
+        br = self.browser
+        return next(btn for btn in br.elements(self.BUTTONS) if br.text(btn) == name)
+
+    @property
+    def button_names(self):
+        return [self.browser.text(btn) for btn in self.browser.elements(self.BUTTONS)]
+
+    @property
+    def selected(self):
+        names = self.button_names
+        for name in names:
+            if 'ng-valid-parse' in self.browser.classes('.//input[@type="radio"]',
+                                                        parent=self._get_button(name)):
+                return name
+
+        else:
+            # radio button doesn't have any marks to make out which button is selected by default.
+            # so, returning first radio button's name
+            return names[0]
+
+    def select(self, name):
+        button = self._get_button(name)
+        if self.selected != name:
+            button.click()
+            return True
+        return False
+
+    def read(self):
+        return self.selected
+
+    def fill(self, name):
+        return self.select(name)
+
+
+class BreadCrumb(Widget):
+    """ CFME BreadCrumb navigation control
+
+    .. code-block:: python
+
+        breadcrumb = BreadCrumb()
+        breadcrumb.click_location(breadcrumb.locations[0])
+    """
+    ROOT = '//ol[@class="breadcrumb"]'
+    ELEMENTS = './/li'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+        self._locator = locator or self.ROOT
+
+    def __locator__(self):
+        return self._locator
+
+    @property
+    def _path_elements(self):
+        return self.browser.elements(self.ELEMENTS, parent=self)
+
+    @property
+    def locations(self):
+        return [self.browser.text(loc) for loc in self._path_elements]
+
+    @property
+    def active_location(self):
+        br = self.browser
+        return next(br.text(loc) for loc in self._path_elements if 'active' in br.classes(loc))
+
+    def click_location(self, name, handle_alert=True):
+        br = self.browser
+        location = next(loc for loc in self._path_elements if br.text(loc) == name)
+        result = br.click(location, ignore_ajax=handle_alert)
+        if handle_alert:
+            self.browser.handle_alert(wait=2.0, squash=True)
+            self.browser.plugin.ensure_page_safe()
+        return result
+
+
+class ItemsToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+        it is present on pages with items like Infra or Cloud Providers pages
+
+    .. code-block:: python
+
+        view_selector = View.nested(ItemsToolBarViewSelector)
+
+        view_selector.select('Tile View')
+        view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+    grid_button = Button(title='Grid View')
+    tile_button = Button(title='Tile View')
+    list_button = Button(title='List View')
+
+    @property
+    def _view_buttons(self):
+        yield self.grid_button
+        yield self.tile_button
+        yield self.list_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        return next(btn.title for btn in self._view_buttons if btn.active)
+
+
+class DetailsToolBarViewSelector(View):
+    """ represents toolbar's view selector control
+        it is present on pages like Infra Providers Details page
+
+    .. code-block:: python
+
+        view_selector = View.nested(DetailsToolBarViewSelector)
+
+        view_selector.select('Dashboard View')
+        view_selector.selected
+    """
+    ROOT = './/div[contains(@class, "toolbar-pf-view-selector")]'
+    summary_button = Button(title='Summary View')
+    dashboard_button = Button(title='Dashboard View')
+
+    @property
+    def _view_buttons(self):
+        yield self.dashboard_button
+        yield self.summary_button
+
+    def select(self, title):
+        for button in self._view_buttons:
+            if button.title == title:
+                return button.click()
+        else:
+            raise ValueError("The view with title {title} isn't present".format(title=title))
+
+    @property
+    def selected(self):
+        return next(btn.title for btn in self._view_buttons if btn.active)
+
+
+class Search(View):
+    """ Represents search_text control
+    # TODO Add advanced search
+    """
+    search_text = Input(name="search_text")
+    search_btn = Text("//div[@id='searchbox']//div[contains(@class, 'form-group')]"
+                      "/*[self::a or (self::button and @type='submit')]")
+    clear_btn = Text(".//*[@id='searchbox']//div[contains(@class, 'clear')"
+                     "and not(contains(@style, 'display: none'))]/div/button")
+
+    def clear_search(self):
+        if not self.is_empty:
+            self.clear_btn.click()
+            self.search_btn.click()
+
+    def search(self, text):
+        self.search_text.fill(text)
+        self.search_btn.click()
+
+    @property
+    @logged(log_result=True)
+    def is_empty(self):
+        return not bool(self.search_text.value)
+
+
+class UpDownSelect(View):
+    """Multiselect with two arrows (up/down) next to it. Eg. in AE/Domain priority selection.
+
+    Args:
+        select_loc: Locator for the select box (without Select element wrapping)
+        up_loc: Locator of the Move Up arrow.
+        down_loc: Locator with Move Down arrow.
+    """
+
+    select = Select(ParametrizedLocator('{@select_loc}'))
+    up = Text(ParametrizedLocator('{@up_loc}'))
+    down = Text(ParametrizedLocator('{@down_loc}'))
+
+    def __init__(self, parent, select_loc, up_loc, down_loc, logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.select_loc = select_loc
+        self.up_loc = up_loc
+        self.down_loc = down_loc
+
+    @property
+    def is_displayed(self):
+        return self.select.is_displayed and self.up.is_displayed and self.down.is_displayed
+
+    def read(self):
+        return self.items
+
+    @property
+    def items(self):
+        return [option.text for option in self.select.all_options]
+
+    def move_up(self, item):
+        item = str(item)
+        assert item in self.items
+        self.select.deselect_all()
+        self.select.select_by_visible_text(item)
+        self.up.click()
+
+    def move_down(self, item):
+        item = str(item)
+        assert item in self.items
+        self.select.deselect_all()
+        self.select.select_by_visible_text(item)
+        self.down.click()
+
+    def move_top(self, item):
+        item = str(item)
+        assert item in self.items()
+        self.select.deselect_all()
+        while item != self.items[0]:
+            self.select.select_by_visible_text(item)
+            self.up.click()
+
+    def move_bottom(self, item):
+        item = str(item)
+        assert item in self.items()
+        self.select.deselect_all()
+        while item != self.items()[-1]:
+            self.select.select_by_visible_text(item)
+            self.down.click()
+
+    def fill(self, items):
+        if not isinstance(items, (list, tuple)):
+            items = [items]
+        current_items = self.items[:len(items)]
+        if current_items == items:
+            return False
+        items = map(str, items)
+        for item in reversed(items):  # reversed because every new item at top pushes others down
+            self.move_top(item)
+        return True
+
+
+class AlertEmail(View):
+    """This set of widgets can be found in Control / Explorer / Alerts when you edit an alert."""
+
+    @ParametrizedView.nested
+    class recipients(ParametrizedView):  # noqa
+        PARAMETERS = ("email", )
+        ALL_EMAILS = ".//a[starts-with(@title, 'Remove')]"
+        email = Text(ParametrizedLocator(".//a[text()='{email}']"))
+
+        def remove(self):
+            self.email.click()
+
+        @classmethod
+        def all(cls, browser):
+            return [(browser.text(e), ) for e in browser.elements(cls.ALL_EMAILS)]
+
+    ROOT = ParametrizedLocator(".//div[@id={@id|quote}]")
+    RECIPIENTS = "./div[@id='edit_to_email_div']//a"
+    add_button = Text(".//div[@title='Add']")
+    recipients_input = TextInput("email")
+
+    def __init__(self, parent, id="edit_email_div", logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.id = id
+
+    def fill(self, values):
+        if isinstance(values, basestring):
+            values = [values]
+        if self.all_emails == set(values):
+            return False
+        else:
+            values_to_remove = self._values_to_remove(values)
+            values_to_add = self._values_to_add(values)
+            for value in values_to_remove:
+                self.recipients(value).remove()
+            for value in values_to_add:
+                self._add_recipient(value)
+            return True
+
+    def _values_to_remove(self, values):
+        return list(self.all_emails - set(values))
+
+    def _values_to_add(self, values):
+        return list(set(values) - self.all_emails)
+
+    def _add_recipient(self, email):
+        self.recipients_input.fill(email)
+        self.add_button.click()
+
+    @property
+    def all_emails(self):
+        return {self.browser.text(e) for e in self.browser.elements(self.RECIPIENTS)}
+
+    def read(self):
+        return list(self.all_emails)

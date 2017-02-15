@@ -21,7 +21,6 @@ list_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 stack_form = Form(
     fields=[
         ('timeout', Input("stack_timeout")),
-        ('key_name', Input("param_KeyName")),
         ('db_user', Input("param_DBUser__protected")),
         ('db_password', Input("param_DBPassword__protected")),
         ('db_root_password', Input("param_DBRootPassword__protected")),
@@ -32,7 +31,11 @@ stack_form = Form(
         ('vm_name', Input("param_virtualMachineName")),
         ('vm_user', Input("param_adminUserName")),
         ('vm_password', Input("param_adminPassword__protected")),
-        ('vm_size', Select("//select[@id='param_virtualMachineSize']"))
+        ('vm_size', Select("//select[@id='param_virtualMachineSize']")),
+        ('user_image', Select("//select[@id='param_userImageName']")),
+        ('os_type', Select("//select[@id='param_operatingSystemType']")),
+        ('key_name', Input("param_KeyName")),
+        ('ssh_location', Input("param_SSHLocation"))
     ])
 
 dialog_form = Form(

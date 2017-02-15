@@ -24,7 +24,7 @@ from sentaku import ImplementationContext
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import conf, datafile, db, db_queries, ssh, ports
+from utils import conf, datafile, db, db_queries, ssh, ports, OverrideWithDict
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
@@ -123,6 +123,19 @@ class IPAppliance(object):
         self.context = ImplementationContext.from_instances(
             [self.browser])
         self._server = None
+
+    def get(self, cls, *args, **kwargs):
+        """A generic getter for instantiation of Collection classes
+
+        This generic getter will supply an appliance (self) to an object and instantiate
+        it with the supplied args/kwargs e.g.::
+
+          my_appliance.get(NodeCollection)
+
+        This will return a NodeCollection object that is bound to the appliance.
+        """
+        assert 'appliance' not in kwargs
+        return cls(appliance=self, *args, **kwargs)
 
     @property
     def server(self):
@@ -306,6 +319,8 @@ class IPAppliance(object):
     @logger_wrap("Extend DB partition")
     def extend_db_partition(self, log_callback=None):
         """Extends the /var partition with DB while shrinking the unused /repo partition"""
+        if self.db_partition_extended:
+            return
         with self.ssh_client as ssh:
             rc, out = ssh.run_command("df -h")
             log_callback("File systems before extending the DB partition:\n{}".format(out))
@@ -2187,8 +2202,7 @@ class Appliance(IPAppliance):
     def destroy(self):
         """Destroys the VM this appliance is running as
         """
-        from cfme.infrastructure.provider.rhevm import RHEVMProvider
-        if self.provider.one_of(RHEVMProvider):
+        if self.is_on_rhev:
             # if rhev, try to remove direct_lun just in case it is detach
             self.remove_rhev_direct_lun_disk()
         self.provider.delete_vm(self.vm_name)
@@ -2230,12 +2244,12 @@ class Appliance(IPAppliance):
     @property
     def is_on_rhev(self):
         from cfme.infrastructure.provider.rhevm import RHEVMProvider
-        return self.provider.one_of(RHEVMProvider)
+        return isinstance(self.provider, RHEVMProvider.mgmt_class)
 
     @property
     def is_on_vsphere(self):
         from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-        return self.provider.one_of(VMwareProvider)
+        return isinstance(self.provider, VMwareProvider.mgmt_class)
 
     def add_rhev_direct_lun_disk(self, log_callback=None):
         if log_callback is None:
@@ -2495,6 +2509,9 @@ class Navigatable(object):
     def browser(self):
         return self.appliance.browser.widgetastic
 
-    def create_view(self, view_class, o=None):
+    def create_view(self, view_class, o=None, override=None):
+        o = o or self
+        if override is not None:
+            o = OverrideWithDict(o, override)
         return self.appliance.browser.create_view(
-            view_class, additional_context={'object': o or self})
+            view_class, additional_context={'object': o})

@@ -124,7 +124,7 @@ def vm_name(provider):
 def set_host_credentials(request, provider, vm):
     # Add credentials to host
     host_name = vm.api.host.name
-    test_host = host.Host(name=host_name)
+    test_host = host.Host(name=host_name, provider=provider)
 
     host_list = cfme_data.get('management_systems', {})[vm._prov.key].get('hosts', [])
     host_data = [x for x in host_list if x.name == host_name][0]
@@ -631,7 +631,7 @@ def test_action_initiate_smartstate_analysis(
         test_flag: actions, provision
     """
     # Set host credentials for VMWare
-    if vm.provider.one_of(VMwareProvider):
+    if isinstance(vm.provider, VMwareProvider.mgmt_class):
         set_host_credentials(request, vm.provider, vm)
 
     # Set up the policy and prepare finalizer
