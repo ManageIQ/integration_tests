@@ -92,7 +92,7 @@ def test_host_security(provider, soft_assert):
             'Nodes number of Groups is 0')
 
 
-def test_host_smsbios_data(provider, soft_assert):
+def test_host_smbios_data(provider, soft_assert):
     """Checks that Manufacturer/Model values are shown for each infra node"""
     navigate_to(Host, 'All')
     names = [q.name for q in list(Quadicon.all())]

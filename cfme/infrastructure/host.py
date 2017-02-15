@@ -18,8 +18,8 @@ import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
-    form_buttons, paginator, Input, mixins, match_location,
-    InfoBlock)
+    form_buttons, paginator, Input, mixins, match_location
+)
 from cfme.web_ui.form_buttons import FormButton, change_stored_password
 from cfme.web_ui import listaccordion as list_acc
 from utils.db_queries import get_host_id
