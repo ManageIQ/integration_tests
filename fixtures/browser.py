@@ -2,11 +2,11 @@ import pytest
 from py.error import ENOENT
 
 import utils.browser
-from cfme.fixtures.pytest_selenium import take_screenshot
+from cfme.fixtures.pytest_selenium import ensure_browser_open, take_screenshot
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from utils.datafile import template_env
 from utils.path import log_path
-from utils import safe_string
+from utils import browser as browser_module, safe_string
 
 browser_fixtures = {'browser'}
 
@@ -118,12 +118,12 @@ def pytest_sessionfinish(session, exitstatus):
 
 @pytest.fixture(scope='session')
 def browser():
-    return utils.browser.browser
+    return browser_module.browser
 
 
 @pytest.yield_fixture(scope="function")
 def nuke_browser_after_test():
     """Some more disruptive tests have to take this measure."""
     yield
-    pytest.sel.quit()
-    pytest.sel.ensure_browser_open()
+    browser_module.quit()
+    ensure_browser_open()
