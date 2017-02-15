@@ -256,7 +256,7 @@ class CFMENavigateStep(NavigateStep):
         from cfme import login
 
         try:
-            self.log_message("Invoking {}, with {} and {}".format(fn, args, kwargs))
+            self.log_message("Invoking {}, with {} and {}".format(fn.func_name, args, kwargs))
             return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
