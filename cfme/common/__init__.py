@@ -241,6 +241,7 @@ class SummaryTable(object):
         self._object = o
         self._text = text
         self._entry = entry
+        self._raw_keys = []
         self._keys = []
         self.load()
 
@@ -250,6 +251,7 @@ class SummaryTable(object):
             " ".join("{}={}".format(key, repr(getattr(self, key))) for key in self._keys))
 
     def load(self):
+        self._raw_keys = []
         self._keys = []
         key_values = []
         if sel.is_displayed(self.MULTIKEY_LOC, root=self._entry):
@@ -277,6 +279,7 @@ class SummaryTable(object):
         for key, key_id, value in key_values:
             value_object = process_field(value)
             setattr(self, key_id, value_object)
+            self._raw_keys.append(sel.text_sane(key))
             self._keys.append(key_id)
 
     def reload(self):
@@ -287,6 +290,10 @@ class SummaryTable(object):
             except AttributeError:
                 pass
         return self.load()
+
+    @property
+    def raw_keys(self):
+        return self._raw_keys
 
     @property
     def keys(self):
