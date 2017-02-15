@@ -2,7 +2,11 @@
 # MIQ REST API Client
 git+https://github.com/ManageIQ/manageiq-api-client-python.git
 
+# MIQ Ansible Module
+git+https://github.com/dkorn/manageiq-ansible-module.git
+
 # External dependencies
+ansible
 boto
 bottle
 bottle-sqlite
