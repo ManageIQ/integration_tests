@@ -22,7 +22,7 @@ from widgetastic.widget import (
     ParametrizedView,
     WidgetDescriptor,
     do_not_read_this_widget)
-from widgetastic.utils import ParametrizedLocator, Parameter
+from widgetastic.utils import ParametrizedLocator, Parameter, attributize_string
 from widgetastic.xpath import quote
 from widgetastic_patternfly import (
     Accordion as PFAccordion, CandidateNotFound, BootstrapTreeview, Button, Input, BootstrapSelect)
@@ -559,6 +559,9 @@ class Table(VanillaTable):
     CHECKBOX_ALL = '|'.join([
         './thead/tr/th[1]/input[contains(@class, "checkall")]',
         './tr/th[1]/input[contains(@class, "checkall")]'])
+    SORTED_BY_LOC = (
+        './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]')
+    SORT_LINK = './thead/tr/th[{}]/a'
     Row = TableRow
 
     @property
@@ -582,6 +585,50 @@ class Table(VanillaTable):
     def uncheck_all(self):
         self.check_all()
         self.browser.click(self.checkbox_all)
+
+    @property
+    def sorted_by(self):
+        """Returns the name of column that the table is sorted by. Attributized!"""
+        return attributize_string(self.browser.text(self.SORTED_BY_LOC, parent=self))
+
+    @property
+    def sort_order(self):
+        """Returns the sorting order of the table for current column.
+
+        Returns:
+            ``asc`` or ``desc``
+        """
+        klass = self.browser.get_attribute('class', self.SORTED_BY_LOC, parent=self)
+        return re.search(r'sorting_(asc|desc)', klass).groups()[0]
+
+    def click_sort(self, column):
+        """Clicks the sorting link in the given column. The column gets attributized."""
+        self.logger.info('click_sort(%r)', column)
+        column = attributize_string(column)
+        column_position = self.header_index_mapping[self.attributized_headers[column]]
+        self.browser.click(self.SORT_LINK.format(column_position + 1), parent=self)
+
+    def sort_by(self, column, order='asc'):
+        """Sort table by column and in given direction.
+
+        Args:
+            column: Name of the column, can be normal or attributized.
+            order: Sorting order. ``asc`` or ``desc``.
+        """
+        self.logger.info('sort_by(%r, %r)', column, order)
+        column = attributize_string(column)
+
+        # Sort column
+        if self.sorted_by != column:
+            self.click_sort(column)
+        else:
+            self.logger.debug('sort_by(%r, %r): column already selected', column, order)
+
+        # Sort order
+        if self.sort_order != order:
+            self.logger.info('sort_by(%r, %r): changing the sort order', column, order)
+            self.click_sort(column)
+            self.logger.debug('sort_by(%r, %r): order already selected', column, order)
 
 
 class Accordion(PFAccordion):
