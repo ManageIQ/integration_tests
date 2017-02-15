@@ -191,7 +191,9 @@ def test_provision_from_template_using_rest(
 
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
+
     request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    assert rest_api.response.status_code == 200
 
     def _finished():
         request.reload()
