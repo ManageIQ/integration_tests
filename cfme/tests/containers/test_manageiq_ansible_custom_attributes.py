@@ -7,7 +7,7 @@ from utils.version import current_version
 
 
 pytestmark = [
-    pytest.mark.uncollectif(lambda provider: current_version() < "5.7" and provider.version > 3.2),
+    pytest.mark.uncollectif(lambda provider: current_version() < "5.7"),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
@@ -70,7 +70,6 @@ def test_manageiq_ansible_edit_custom_attributes(provider):
                                    custom_attribute['name']) == custom_attribute['value']
 
 
-# Same name test
 def test_manageiq_ansible_add_custom_attributes_same_name(provider):
     """This test checks adding a Custom Attribute with the same name
         using Ansible script via Manage IQ module
@@ -90,28 +89,27 @@ def test_manageiq_ansible_add_custom_attributes_same_name(provider):
         assert provider.get_detail('Custom Attributes',
                                    custom_attribute['name']) == custom_attribute['value']
 
-# TODO WIP
-# def test_manageiq_ansible_add_custom_attributes_bad_user(provider):
-#     """This test checks adding a Custom Attribute with a bad user name
-#         using Ansible script via Manage IQ module
-#         Steps:
-#         1. 'add_custom_attributes_bad_user.yml script runs against the appliance
-#          and tries to add custom attributes.
-#         2. Verify error message with Ansible reply
-#         3. Test navigates to Providers page and verifies the Custom Attributes
-#          weren't added under Providers menu
-#
-#         """
-#     setup_ansible_script(provider, script='add_custom_attributes_bad_user',
-#                          values_to_update=custom_attributes_to_edit,
-#                          script_type='custom_attributes')
-#     with pytest.raises(Exception) as e_info:
-#         run_ansible('add_custom_attributes_bad_user')
-#     assert 'Authentication failed' in e_info.value.output
-#     pytest.sel.refresh()
-#     for custom_attribute in custom_attributes_to_edit:
-#         assert provider.get_detail('Custom Attributes',
-#                                    custom_attribute['name']) == custom_attribute['value']
+
+def test_manageiq_ansible_add_custom_attributes_bad_user(provider):
+    """This test checks adding a Custom Attribute with a bad user name
+        using Ansible script via Manage IQ module
+        Steps:
+        1. 'add_custom_attributes_bad_user.yml script runs against the appliance
+         and tries to add custom attributes.
+        2. Verify error message with Ansible reply
+        3. Test navigates to Providers page and verifies the Custom Attributes
+         weren't added under Providers menu
+
+        """
+    setup_ansible_script(provider, script='add_custom_attributes_bad_user',
+                         values_to_update=custom_attributes_to_edit,
+                         script_type='custom_attributes')
+    run_result = run_ansible('add_custom_attributes_bad_user')
+    assert 'Authentication failed' in run_result
+    pytest.sel.refresh()
+    for custom_attribute in custom_attributes_to_edit:
+        assert provider.get_detail('Custom Attributes',
+                                   custom_attribute['name']) == custom_attribute['value']
 
 
 def test_manageiq_ansible_remove_custom_attributes(provider):
