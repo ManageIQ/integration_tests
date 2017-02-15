@@ -688,7 +688,8 @@ class TableRow(VanillaTableRow):
 class Table(VanillaTable):
     CHECKBOX_ALL = '|'.join([
         './thead/tr/th[1]/input[contains(@class, "checkall")]',
-        './tr/th[1]/input[contains(@class, "checkall")]'])
+        './tr/th[1]/input[contains(@class, "checkall")]',
+        './/th[1]/input[@id="check-all"]'])
     SORTED_BY_LOC = (
         './thead/tr/th[contains(@class, "sorting_asc") or contains(@class, "sorting_desc")]')
     SORT_LINK = './thead/tr/th[{}]/a'

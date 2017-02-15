@@ -1,32 +1,134 @@
 # -*- coding: utf-8 -*-
-from . import Report
-from cfme import web_ui as ui
-from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Region, fill, flash, form_buttons
-from utils.appliance.implementations.ui import navigate_to
+from widgetastic_manageiq import Table
+from widgetastic_patternfly import Button, Input
+from widgetastic.widget import Select, ClickableMixin, Checkbox, Text
+from utils.appliance import get_or_create_current_appliance
+from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.base.ui import Server
+from navmazing import NavigateToAttribute
+from . import CloudIntelReportsView
 
 
-form = Region(locators=dict(
-    export_select=ui.Select("//select[@id='choices_chosen']", multi=True),
-    export_button=form_buttons.FormButton("Download Report to YAML"),
-    import_overwrite=ui.Input('overwrite'),
-    import_file=ui.Input('upload_file'),
-    import_submit=ui.Input('upload_atags')
-))
+class InputButton(Input, ClickableMixin):
+    pass
 
-export_select = ui.Select("//select[@id='choices_chosen']", multi=True)
-export_button = form_buttons.FormButton("Download Report to YAML")
+
+class ImportExportCommonForm(CloudIntelReportsView):
+
+    title = Text("#explorer_title_text")
+    subtitle = Text(locator=".//div[@id='main_div']/h2")
+    upload_file = Input("upload[file]")
+    items_for_export = Select(id="choices_chosen")
+
+    upload_button = InputButton("commit")
+    export_button = Button("Export")
+
+
+class ImportExportCustomReportsView(ImportExportCommonForm):
+
+    overwrite = Checkbox("overwrite")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.title.text == "Import / Export" and
+            self.subtitle.text == "Custom Reports" and
+            self.import_export.tree.currently_selected == ["Import / Export", "Custom Reports"]
+        )
+
+
+class ImportExportWidgetsView(ImportExportCommonForm):
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.title.text == "Import / Export" and
+            self.subtitle.text == "Widgets" and
+            self.import_export.tree.currently_selected == ["Import / Export", "Widgets"]
+        )
+
+
+class ImportExportWidgetsCommitView(CloudIntelReportsView):
+
+    title = Text("#explorer_title_text")
+    table = Table(".//form[@id='import-widgets-form']/table")
+    commit_button = InputButton("commit")
+    cancel_button = InputButton("cancel")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.title.text == "Import / Export" and
+            self.import_export.tree.currently_selected == ["Import / Export", "Widgets"]
+        )
+
+
+@navigator.register(Server)
+class ImportExportCustomReports(CFMENavigateStep):
+    VIEW = ImportExportCustomReportsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.import_export.tree.click_path("Import / Export", "Custom Reports")
+
+
+@navigator.register(Server)
+class ImportExportWidgets(CFMENavigateStep):
+    VIEW = ImportExportWidgetsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.import_export.tree.click_path("Import / Export", "Widgets")
 
 
 def export_reports(*custom_report_names):
-    navigate_to(Report, 'ImportExport')
-    fill(form.export_select, custom_report_names)
-    sel.click(form.export_button)
+    view = navigate_to(Server, "ImportExportCustomReports")
+    assert view.is_displayed
+    view.fill({
+        "items_for_export": list(custom_report_names)
+    })
+    view.export_button.click()
 
 
 def import_reports(filename, overwrite=False):
-    navigate_to(Report, 'ImportExport')
-    sel.checkbox(form.import_overwrite, overwrite)
-    sel.send_keys(form.import_file, filename)
-    sel.click(form.import_submit)
-    flash.assert_no_errors()
+    view = navigate_to(Server, "ImportExportCustomReports")
+    assert view.is_displayed
+    view.fill({
+        "overwrite": overwrite,
+        "upload_file": filename
+    })
+    view.upload_button.click()
+    view.flash.assert_no_error()
+
+
+def export_widgets(*widget_names):
+    view = navigate_to(Server, "ImportExportWidgets")
+    assert view.is_displayed
+    view.fill({
+        "items_for_export": list(widget_names)
+    })
+    view.export_button.click()
+
+
+def import_widgets(filename, overwrite=False):
+    view = navigate_to(Server, "ImportExportWidgets")
+    assert view.is_displayed
+    view.fill({
+        "overwrite": overwrite,
+        "upload_file": filename
+    })
+    view.upload_button.click()
+    current_appliance = get_or_create_current_appliance()
+    view = current_appliance.browser.create_view(ImportExportWidgetsCommitView)
+    assert view.is_displayed
+    view.flash.assert_no_error()
+    view.flash.assert_message("Import file was uploaded successfully")
+    view.table.check_all()
+    view.commit_button.click()
+    view = current_appliance.browser.create_view(ImportExportWidgetsView)
+    assert view.is_displayed
+    view.flash.assert_no_error()
+    view.flash.assert_message("Widgets imported successfully")
