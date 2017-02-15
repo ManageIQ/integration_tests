@@ -314,9 +314,11 @@ class All(CFMENavigateStep):
 
     def resetter(self):
         # Reset view and selection
-        tb.select("Grid View")
-        sel.check(paginator.check_all())
-        sel.uncheck(paginator.check_all())
+        if tb.exists("Grid View"):
+            tb.select("Grid View")
+        if paginator.page_controls_exist():
+            sel.check(paginator.check_all())
+            sel.uncheck(paginator.check_all())
 
 
 @navigator.register(InfraProvider, 'Add')
@@ -341,6 +343,11 @@ class Details(CFMENavigateStep):
 
     def step(self):
         sel.click(Quadicon(self.obj.name, self.obj.quad_name))
+
+    def resetter(self):
+        # Reset view and selection
+        if tb.exists("Summary View"):
+            tb.select("Summary View")
 
 
 @navigator.register(InfraProvider, 'ManagePolicies')
