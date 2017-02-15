@@ -85,6 +85,7 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_prov
                        num_sec=900)
 
 
+@pytest.mark.meta(blockers=[BZ(1422208)])
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
 def test_provision_approval(
         setup_provider, provider, vm_name, smtp_test, request, edit, provisioning):
