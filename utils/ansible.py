@@ -228,7 +228,7 @@ def reply_status(reply):
     else:
         return 'No Change', message_status, ok_status
 
-#
+
 # def copy_manageiq_ansible():
 #     print("this is the library to copy to: " + library_path_to_copy_to)
 #     print("this is the library to copy from: " + library_path)
