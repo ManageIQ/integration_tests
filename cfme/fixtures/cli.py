@@ -6,27 +6,23 @@ from utils.log import logger
 import pytest
 from wait_for import wait_for
 from cfme.test_framework.sprout.client import SproutException
+from fixtures.appliance import temp_appliances
 
 
 @pytest.yield_fixture(scope="function")
 def dedicated_db_appliance(app_creds):
     if current_appliance.version.vstring > '5.7':
-        sp = SproutClient.from_config()
-        version = current_appliance.version.vstring
-        stream = get_stream(current_appliance.version)
-        apps, pool_id = sp.provision_appliances(
-            count=1, preconfigured=False, version=version, stream=stream)
-        pwd = app_creds['password']
-        client = apps[0].ssh_client
-        channel = client.invoke_shell()
-        stdin = channel.makefile('wb')
-        stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
-        wait_for(apps[0].is_dedicated_db_active)
+
+        with temp_appliances(count=1, preconfigured=False) as apps:
+            pwd = app_creds['password']
+            client = apps[0].ssh_client
+            channel = client.invoke_shell()
+            stdin = channel.makefile('wb')
+            stdin.write("ap \n 8 \n 1 \n 1 \n 1 \n y \n {} \n {} \n \n".format(pwd, pwd))
+            wait_for(apps[0].is_dedicated_db_active)
+            yield apps[0]
     else:
         raise Exception("Can't setup dedicated db on appliance below 5.7 builds")
-    yield apps[0]
-
-    sp.destroy_pool(pool_id)
 
 
 """ The Following fixture 'fqdn_appliance' provisions one appliance for testing from an FQDN
