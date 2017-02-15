@@ -292,7 +292,7 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    @pytest.mark.parametrize('method', ['post', 'delete'])
+    @pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
     def test_delete_custom_attributes_from_detail(self, rest_api, custom_attributes, method):
         """Test deleting custom attributes from detail using REST API.
 
