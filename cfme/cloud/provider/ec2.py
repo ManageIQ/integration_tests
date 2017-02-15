@@ -8,9 +8,10 @@ class EC2Provider(CloudProvider):
     type_name = "ec2"
     mgmt_class = EC2System
 
-    def __init__(self, name=None, credentials=None, zone=None, key=None, region=None):
+    def __init__(
+            self, name=None, credentials=None, zone=None, key=None, region=None, appliance=None):
         super(EC2Provider, self).__init__(name=name, credentials=credentials,
-                                          zone=zone, key=key)
+                                          zone=zone, key=key, appliance=appliance)
         self.region = region
 
     def _form_mapping(self, create=None, **kwargs):
@@ -19,11 +20,12 @@ class EC2Provider(CloudProvider):
                 'region_select': sel.ByValue(kwargs.get('region'))}
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         return cls(name=prov_config['name'],
             region=prov_config['region'],
             credentials={'default': credentials},
             zone=prov_config['server_zone'],
-            key=prov_key)
+            key=prov_key,
+            appliance=appliance)

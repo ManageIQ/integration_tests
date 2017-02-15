@@ -10,9 +10,10 @@ class SCVMMProvider(InfraProvider):
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None,
-                 provider_data=None):
-        super(SCVMMProvider, self).__init__(name=name, credentials=credentials,
-            zone=zone, key=key, provider_data=provider_data)
+                 provider_data=None, appliance=None):
+        super(SCVMMProvider, self).__init__(
+            name=name, credentials=credentials, zone=zone, key=key, provider_data=provider_data,
+            appliance=appliance)
 
         self.hostname = hostname
         self.ip_address = ip_address
@@ -48,7 +49,7 @@ class SCVMMProvider(InfraProvider):
         return values
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         if prov_config.get('discovery_range', None):
@@ -65,4 +66,5 @@ class SCVMMProvider(InfraProvider):
             start_ip=start_ip,
             end_ip=end_ip,
             sec_protocol=prov_config['sec_protocol'],
-            sec_realm=prov_config['sec_realm'])
+            sec_realm=prov_config['sec_realm'],
+            appliance=appliance)

@@ -154,7 +154,7 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
         mon_btn("Timelines")
 
     @staticmethod
-    def from_config(prov_config, prov_key):
+    def from_config(prov_config, prov_key, appliance=None):
         credentials_key = prov_config['credentials']
         credentials = HawkularProvider.process_credential_yaml_key(credentials_key)
         return HawkularProvider(
@@ -162,4 +162,5 @@ class HawkularProvider(MiddlewareBase, TopologyMixin, TimelinesMixin, Middleware
             key=prov_key,
             hostname=prov_config['hostname'],
             port=prov_config['port'],
-            credentials={'default': credentials})
+            credentials={'default': credentials},
+            appliance=appliance)

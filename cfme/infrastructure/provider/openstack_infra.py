@@ -22,9 +22,10 @@ class OpenstackInfraProvider(InfraProvider):
 
     def __init__(self, name=None, credentials=None, key=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None,
-                 sec_protocol=None):
-        super(OpenstackInfraProvider, self).__init__(name=name, credentials=credentials,
-                                             key=key, provider_data=provider_data)
+                 sec_protocol=None, appliance=None):
+        super(OpenstackInfraProvider, self).__init__(
+            name=name, credentials=credentials, key=key, provider_data=provider_data,
+            appliance=appliance)
 
         self.hostname = hostname
         self.ip_address = ip_address
@@ -51,7 +52,7 @@ class OpenstackInfraProvider(InfraProvider):
         return data_dict
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         credential_dict = {'default': credentials}
@@ -74,7 +75,8 @@ class OpenstackInfraProvider(InfraProvider):
             credentials=credential_dict,
             key=prov_key,
             start_ip=start_ip,
-            end_ip=end_ip)
+            end_ip=end_ip,
+            appliance=appliance)
 
     def register(self, file_path):
         """Register new nodes (Openstack)

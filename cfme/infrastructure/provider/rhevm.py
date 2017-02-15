@@ -11,9 +11,10 @@ class RHEVMProvider(InfraProvider):
 
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, start_ip=None, end_ip=None,
-                 provider_data=None):
-        super(RHEVMProvider, self).__init__(name=name, credentials=credentials,
-                                            zone=zone, key=key, provider_data=provider_data)
+                 provider_data=None, appliance=None):
+        super(RHEVMProvider, self).__init__(
+            name=name, credentials=credentials, zone=zone, key=key, provider_data=provider_data,
+            appliance=appliance)
 
         self.hostname = hostname
         self.ip_address = ip_address
@@ -40,7 +41,7 @@ class RHEVMProvider(InfraProvider):
         return {}
 
     @classmethod
-    def from_config(cls, prov_config, prov_key):
+    def from_config(cls, prov_config, prov_key, appliance=None):
         credentials_key = prov_config['credentials']
         credentials = {
             # The default credentials for controlling the provider
@@ -63,4 +64,5 @@ class RHEVMProvider(InfraProvider):
             zone=prov_config.get('server_zone', 'default'),
             key=prov_key,
             start_ip=start_ip,
-            end_ip=end_ip)
+            end_ip=end_ip,
+            appliance=appliance)

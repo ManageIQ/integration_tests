@@ -461,7 +461,7 @@ class IPAppliance(object):
             Recognized by name only.
         """
         from utils.providers import list_providers
-        prov_cruds = list_providers(use_global_filters=False)
+        prov_cruds = list_providers(use_global_filters=False, appliance=self)
 
         found_cruds = set()
         unrecognized_ems_names = set()

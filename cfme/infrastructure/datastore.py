@@ -58,7 +58,7 @@ class Datastore(Pretty, Navigatable):
         self.type = type
         self.quad_name = 'datastore'
         if provider_key:
-            self.provider = get_crud(provider_key)
+            self.provider = get_crud(provider_key, appliance=appliance)
         else:
             self.provider = None
 
