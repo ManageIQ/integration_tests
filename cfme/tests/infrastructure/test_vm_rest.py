@@ -22,7 +22,7 @@ def vm_name(request, a_provider, rest_api):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.parametrize('method', ['post', 'delete'])
+@pytest.mark.parametrize('method', ['post', 'delete'], ids=['POST', 'DELETE'])
 def test_delete_vm_from_detail(vm_name, rest_api, method):
     status = 204 if method == 'delete' else 200
     vm = rest_api.collections.vms.get(name=vm_name)
