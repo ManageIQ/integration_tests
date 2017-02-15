@@ -19,6 +19,7 @@ from widgetastic.widget import (
     Text,
     TextInput,
     Checkbox,
+    ParametrizedView,
     WidgetDescriptor,
     do_not_read_this_widget)
 from widgetastic.utils import ParametrizedLocator, Parameter
@@ -1204,3 +1205,60 @@ class UpDownSelect(View):
         for item in reversed(items):  # reversed because every new item at top pushes others down
             self.move_top(item)
         return True
+
+
+class AlertEmail(View):
+    """This set of widgets can be found in Control / Explorer / Alerts when you edit an alert."""
+
+    @ParametrizedView.nested
+    class recipients(ParametrizedView):  # noqa
+        PARAMETERS = ("email", )
+        ALL_EMAILS = ".//a[starts-with(@title, 'Remove')]"
+        email = Text(ParametrizedLocator(".//a[text()='{email}']"))
+
+        def remove(self):
+            self.email.click()
+
+        @classmethod
+        def all(cls, browser):
+            return [(browser.text(e), ) for e in browser.elements(cls.ALL_EMAILS)]
+
+    ROOT = ParametrizedLocator(".//div[@id={@id|quote}]")
+    RECIPIENTS = "./div[@id='edit_to_email_div']//a"
+    add_button = Text(".//div[@title='Add']")
+    recipients_input = TextInput("email")
+
+    def __init__(self, parent, id="edit_email_div", logger=None):
+        View.__init__(self, parent, logger=logger)
+        self.id = id
+
+    def fill(self, values):
+        if isinstance(values, basestring):
+            values = [values]
+        if self.all_emails == set(values):
+            return False
+        else:
+            values_to_remove = self._values_to_remove(values)
+            values_to_add = self._values_to_add(values)
+            for value in values_to_remove:
+                self.recipients(value).remove()
+            for value in values_to_add:
+                self._add_recipient(value)
+            return True
+
+    def _values_to_remove(self, values):
+        return list(self.all_emails - set(values))
+
+    def _values_to_add(self, values):
+        return list(set(values) - self.all_emails)
+
+    def _add_recipient(self, email):
+        self.recipients_input.fill(email)
+        self.add_button.click()
+
+    @property
+    def all_emails(self):
+        return {self.browser.text(e) for e in self.browser.elements(self.RECIPIENTS)}
+
+    def read(self):
+        return list(self.all_emails)

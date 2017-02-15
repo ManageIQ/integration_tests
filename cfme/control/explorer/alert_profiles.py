@@ -4,8 +4,8 @@ from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavig
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text, TextInput
-from widgetastic_manageiq import MultiBoxSelect
-from widgetastic_patternfly import Button, Input
+from widgetastic_manageiq import MultiBoxSelect, ManageIQTree
+from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from . import ControlExplorerView
 from utils.appliance import Navigatable
@@ -80,9 +80,33 @@ class AlertProfilesAllView(ControlExplorerView):
         )
 
 
+class AlertProfilesEditAssignmentsView(ControlExplorerView):
+    title = Text("#explorer_title_text")
+    assign_to = BootstrapSelect("chosen_assign_to")
+    tag_category = BootstrapSelect("chosen_cat")
+    selections = ManageIQTree("obj_treebox")
+    header = Text("//div[@id='alert_profile_assign_div']/h3")
+    based_on = Text('//label[normalize-space(.)="Based On"]/../div')
+
+    save_button = Button("Save")
+    reset_button = Button("Reset")
+    cancel_button = Button("Cancel")
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_control_explorer and
+            self.title.text == 'Alert Profile "{}"'.format(self.context["object"].description) and
+            self.header.text == "Assignments" and
+            self.based_on == self.context["object"].TYPE
+        )
+
+
 class BaseAlertProfile(Updateable, Navigatable, Pretty):
 
     TYPE = None
+
+    pretty_attrs = ["description", "alerts"]
 
     def __init__(self, description, alerts=None, notes=None, appliance=None):
             Navigatable.__init__(self, appliance=appliance)
@@ -151,13 +175,42 @@ class BaseAlertProfile(Updateable, Navigatable, Pretty):
     def exists(self):
         """Check existence of this Alert Profile.
 
-        Returns: :py:class:`bool` signalizing the presence of the Alert Profile in the database.
+        Returns: :py:class:`bool` signalizing the presence of the Alert Profile in database.
         """
         miq_sets = self.appliance.db["miq_sets"]
-        return self.appliance.db.session.query(miq_sets.description)\
+        return self.appliance.db.session\
+            .query(miq_sets.description)\
             .filter(
                 miq_sets.description == self.description and miq_sets.set_type == "MiqAlertSet")\
             .count() > 0
+
+    def assign_to(self, assign, selections=None, tag_category=None):
+        """Assigns this Alert Profile to specified objects.
+
+        Args:
+            assign: Where to assign (The Enterprise, ...).
+            selections: What items to check in the tree. N/A for The Enteprise.
+            tag_category: Only for choices starting with Tagged. N/A for The Enterprise.
+        """
+        view = navigate_to(self, "Edit assignments")
+        changed = view.fill({
+            "assign_to": assign,
+            "tag_category": tag_category,
+            "selections": selections
+        })
+        if changed:
+            view.save_button.click()
+        else:
+            view.cancel_button.click()
+        view = self.create_view(AlertProfileDetailsView)
+        assert view.is_displayed
+        view.flash.assert_no_error()
+        if changed:
+            view.flash.assert_message(
+                'Alert Profile "{}" assignments succesfully saved'.format(self.description))
+        else:
+            view.flash.assert_message(
+                'Edit of Alert Profile "{}" was cancelled by the user'.format(self.description))
 
 
 @navigator.register(BaseAlertProfile, "Add")
@@ -180,6 +233,17 @@ class AlertProfileEdit(CFMENavigateStep):
         self.view.alert_profiles.tree.click_path("All Alert Profiles",
             "{} Alert Profiles".format(self.obj.TYPE), self.obj.description)
         self.view.configuration.item_select("Edit this Alert Profile")
+
+
+@navigator.register(BaseAlertProfile, "Edit assignments")
+class AlertProfileEditAssignments(CFMENavigateStep):
+    VIEW = AlertProfilesEditAssignmentsView
+    prerequisite = NavigateToAttribute("appliance.server", "ControlExplorer")
+
+    def step(self):
+        self.view.alert_profiles.tree.click_path("All Alert Profiles",
+            "{} Alert Profiles".format(self.obj.TYPE), self.obj.description)
+        self.view.configuration.item_select("Edit assignments for this Alert Profile")
 
 
 @navigator.register(BaseAlertProfile, "Details")
