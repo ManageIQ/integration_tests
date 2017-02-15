@@ -197,12 +197,20 @@ def test_provision_approval(
 
     # Wait for e-mails to appear
     def verify():
-        return (
-            len(filter(
-                lambda mail:
-                "your virtual machine request has completed vm {}".format(normalize_text(vm_name))
-                in normalize_text(mail["subject"]),
-                smtp_test.get_emails())) == len(vm_names)
-        )
+        all_emails = smtp_test.get_emails()
+        for name in vm_names:
+            if len(filter(lambda mail:
+                          "your request to reconfigure virtual machine {} was approved".format(
+                              normalize_text(name)
+                          ) in normalize_text(mail["body"]),
+                          all_emails)) > 1:
+                return False
+            if len(filter(lambda mail:
+                          "virtual machine {} will be available".format(
+                              normalize_text(name)
+                          ) in normalize_text(mail["body"]),
+                          all_emails)) != 1:
+                return False
+        return True
 
     wait_for(verify, message="email receive check", delay=5)
