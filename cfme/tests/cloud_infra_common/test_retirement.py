@@ -5,7 +5,9 @@ from datetime import date, timedelta, datetime
 from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
+from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import toolbar as tb
+
 from utils import testgen
 from utils.blockers import BZ
 from utils.generators import random_vm_name
@@ -18,12 +20,11 @@ from utils.version import pick, current_version
 
 pytest_generate_tests = testgen.generate(
     gen_func=testgen.providers,
-    filters=[ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision', 'retire'])],
-    scope='module')
+    filters=[ProviderFilter(classes=[CloudInfraProvider], required_flags=['provision', 'retire'])])
 
 
 pytestmark = [
-    pytest.mark.usefixtures('setup_provider_modscope'),
+    pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(2),
     pytest.mark.long_running
 ]
@@ -99,10 +100,10 @@ def test_retirement_now(test_vm):
     # For 5.7 capture two times to assert the retire time is within a window.
     # Too finicky to get it down to minute precision, nor is it really needed here
     retire_times = dict()
-    retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-1)
+    retire_times['start'] = generate_retirement_date_now() + timedelta(minutes=-5)
     test_vm.retire()
     verify_retirement_state(test_vm)
-    retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=1)
+    retire_times['end'] = generate_retirement_date_now() + timedelta(minutes=5)
     if current_version() < '5.7':
         verify_retirement_date(test_vm,
                                expected_date=parsetime.now().to_american_date_only())
@@ -133,7 +134,7 @@ def test_unset_retirement_date(test_vm):
     num_days = 3
     retire_date = generate_retirement_date(delta=num_days)
     test_vm.set_retirement_date(retire_date)
-    if BZ(1419150, forced_streams='5.6').blocks:
+    if BZ(1419150, forced_streams=['5.6']).blocks:
         # The date is wrong, but we can still test unset
         logger.warning('Skipping test step verification for BZ 1419150')
     else:
@@ -141,3 +142,32 @@ def test_unset_retirement_date(test_vm):
 
     test_vm.set_retirement_date(None)
     verify_retirement_date(test_vm, expected_date='Never')
+
+
+@test_requirements.retirement
+@pytest.mark.meta(blockers=[BZ(1306471, unblock=lambda provider: provider.one_of(InfraProvider)),
+                            BZ(1430373, forced_streams=['5.6'],
+                               unblock=lambda provider: provider.one_of(InfraProvider))])
+@pytest.mark.parametrize('remove_date', [True, False], ids=['remove_date', 'set_future_date'])
+def test_resume_retired_instance(test_vm, provider, remove_date):
+    """Test resuming a retired instance, should be supported for infra and cloud, though the
+    actual recovery results may differ depending on state after retirement
+
+    Two methods to resume:
+    1. Set a retirement date in the future
+    2. Remove the set retirement date
+    """
+    num_days = 5
+
+    test_vm.retire()
+    verify_retirement_state(test_vm)
+
+    retire_date = None if remove_date else generate_retirement_date(delta=num_days)
+    test_vm.set_retirement_date(retire_date)
+
+    if BZ(1419150, forced_streams=['5.6']).blocks and not remove_date:
+        # The date is wrong in 5.6, but we can still test unset
+        logger.warning('Skipping test step verification for BZ 1419150')
+    else:
+        verify_retirement_date(test_vm, expected_date=retire_date if retire_date else 'Never')
+    assert test_vm.is_retired is False
