@@ -1,8 +1,7 @@
 import argparse
-import datetime
-import re
 import sys
-import time
+from datetime import datetime
+from tabulate import tabulate
 
 from utils.log import logger
 from utils.path import log_path
@@ -11,105 +10,92 @@ from utils.providers import list_provider_keys, get_mgmt
 
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
-    parser.add_argument('--max-hours', dest='maxhours', type=int, default=24,
-                        help='Max hours since Instanced was created. (Default is 24 hours.)')
-    parser.add_argument('--exclude-instances', nargs='+',
-                        help='List of instances, which should be excluded.')
     parser.add_argument('--exclude-volumes', nargs='+',
                         help='List of volumes, which should be excluded.')
     parser.add_argument('--exclude-eips', nargs='+',
                         help='List of EIPs, which should be '
                              'excluded. Allocation_id or public IP are allowed.')
-    parser.add_argument('text_to_match', nargs='*', default=None,
-                        help='Regex in the name of vm to be affected, can be use multiple times'
-                             "['^test_', '^jenkins', '^i-']")
-    parser.add_argument("--output", dest="output", help="target file name",
-                        default=log_path.join('ec2_instance_list.log').strpath)
+    parser.add_argument("--output", dest="output", help="target file name, default "
+                                                        "'cleanup_ec2.log' in utils.path.log_path",
+                        default=log_path.join('cleanup_ec2.log').strpath)
     args = parser.parse_args()
     return args
 
 
-def match(matchers, vm_name):
-    for matcher in matchers:
-        if matcher.match(vm_name):
-            return True
-    else:
-        return False
-
-
-def delete_old_instances(texts, ec2provider, provider_key, date,
-                         maxhours, excluded_instances, output):
-    deletetime = maxhours * 3600
+def delete_disassociated_addresses(provider_mgmt, excluded_eips, output):
+    ip_list = []
+    provider_name = provider_mgmt.kwargs['name']
     try:
-        matchers = [re.compile(text) for text in texts]
-        with open(output, 'a+') as report:
-            print("\n{}:\n-----------------------\n".format(provider_key))
-            report.write("\n{}:\n-----------------------\n".format(provider_key))
-            for vm in ec2provider.list_vm(include_terminated=True):
-                creation = ec2provider.vm_creation_time(vm)
-                message = "EC2:{provider}  {instance}  \t {time} \t {instance_type} " \
-                          "\t {instance_status}\n".format(provider=provider_key, instance=vm,
-                                                          time=(date - creation),
-                                                          instance_type=ec2provider.vm_type(vm),
-                                                          instance_status=ec2provider.vm_status(vm))
-                print(message)
-                report.write(message)
-                if excluded_instances and vm in excluded_instances:
-                    continue
-                if not match(matchers, vm):
-                    continue
-                difference = (date - creation).total_seconds()
-                if difference >= deletetime:
-                    ec2provider.delete_vm(instance_id=vm)
-                    print("EC2:{}  {} is successfully deleted".format(provider_key, vm))
-    except Exception as e:
-        logger.error(e)
-
-
-def delete_disassociated_addresses(ec2provider, excluded_eips):
-    try:
-        for ip in ec2provider.get_all_disassociated_addresses():
+        for ip in provider_mgmt.get_all_disassociated_addresses():
             if ip.allocation_id:
                 if excluded_eips and ip.allocation_id in excluded_eips:
+                    print "  Excluding allocation ID: {}".format(ip.allocation_id)  # noqa
                     continue
                 else:
-                    ec2provider.release_vpc_address(alloc_id=ip.allocation_id)
+                    ip_list.append([provider_name, ip.public_ip, ip.allocation_id])
+                    provider_mgmt.release_vpc_address(alloc_id=ip.allocation_id)
             else:
                 if excluded_eips and ip.public_ip in excluded_eips:
+                    print "  Excluding IP: {}".format(ip.public_ip)  # noqa
                     continue
                 else:
-                    ec2provider.release_address(address=ip.public_ip)
+                    ip_list.append([provider_name, ip.public_ip, 'N/A'])
+                    provider_mgmt.release_address(address=ip.public_ip)
+        print "  Released Addresses:\n  {}".format(ip_list)  # noqa
+        with open(output, 'a+') as report:
+            if ip_list:
+                # tabulate ip_list and write it
+                report.write(tabulate(tabular_data=ip_list,
+                                      headers=['Provider Key', 'Public IP', 'Allocation ID'],
+                                      tablefmt='orgtbl'))
+            else:
+                report.write("\n - No IPs released for {}".format(provider_name))
+
     except Exception as e:
         logger.error(e)
 
 
-def delete_unattached_volumes(ec2provider, excluded_volumes):
+def delete_unattached_volumes(provider_mgmt, excluded_volumes, output):
+    volume_list = []
+    provider_name = provider_mgmt.kwargs['name']
     try:
-        for volume in ec2provider.get_all_unattached_volumes():
+        for volume in provider_mgmt.get_all_unattached_volumes():
             if excluded_volumes and volume.id in excluded_volumes:
+                print "  Excluding volume id: {}".format(volume.id)  # noqa
                 continue
             else:
+                volume_list.append([provider_name, volume.id])
                 volume.delete()
+        print "  Deleted Volumes:\n  {}".format(volume_list)  # noqa
+        with open(output, 'a+') as report:
+            if volume_list:
+                # tabulate volume_list and write it
+                report.write(tabulate(tabular_data=volume_list,
+                                      headers=['Provider Key', 'Volume ID'],
+                                      tablefmt='orgtbl'))
+            else:
+                report.write("\n - No Volumes released for {}".format(provider_name))
     except Exception as e:
         logger.error(e)
 
 
-def ec2cleanup(texts, max_hours, exclude_instances, exclude_volumes, exclude_eips, output):
-    for provider in list_provider_keys('ec2'):
-        ec2provider = get_mgmt(provider)
-        logger.info("\n" + provider + ":\n")
-        logger.info("Deleted instances:")
-        delete_old_instances(texts=texts, ec2provider=ec2provider, provider_key=provider,
-                             date=datetime.datetime.now(), maxhours=max_hours,
-                             excluded_instances=exclude_instances, output=output)
-        time.sleep(120)
-        logger.info("\nReleased addresses:")
-        delete_disassociated_addresses(ec2provider=ec2provider, excluded_eips=exclude_eips)
-        logger.info("\nDeleted volumes:")
-        delete_unattached_volumes(ec2provider=ec2provider, excluded_volumes=exclude_volumes)
+def ec2cleanup(exclude_volumes, exclude_eips, output):
+    with open(output, 'a+') as report:
+        report.write('ec2cleanup.py, Address and Volume Cleanup')
+        report.write("\nDate: {}\n".format(datetime.now()))
+    for provider_key in list_provider_keys('ec2'):
+        provider_mgmt = get_mgmt(provider_key)
+        print "----- Provider: {} -----".format(provider_key)  # noqa
+        print "Releasing addresses..."  # noqa
+        delete_disassociated_addresses(provider_mgmt=provider_mgmt,
+                                       excluded_eips=exclude_eips,
+                                       output=output)
+        print "Deleting volumes..."  # noqa
+        delete_unattached_volumes(provider_mgmt=provider_mgmt,
+                                  excluded_volumes=exclude_volumes,
+                                  output=output)
 
 
 if __name__ == "__main__":
     args = parse_cmd_line()
-    sys.exit(ec2cleanup(args.text_to_match, args.maxhours, args.exclude_instances,
-                        args.exclude_volumes, args.exclude_eips, args.output))
+    sys.exit(ec2cleanup(args.exclude_volumes, args.exclude_eips, args.output))
