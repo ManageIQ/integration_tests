@@ -63,7 +63,7 @@ def test_set_ownership(rest_api, template, from_detail):
 
 
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1422807, forced_streams=["5.7", "upstream"])])
+@pytest.mark.meta(blockers=[BZ(1422807, forced_streams=["5.6", "5.7", "upstream"])])
 def test_delete_template_from_detail_post(rest_api, template):
     """Tests deletion of template from detail using POST method.
 
