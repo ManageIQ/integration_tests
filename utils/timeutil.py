@@ -15,14 +15,14 @@ class parsetime(_datetime):  # NOQA
     """ Modified class with loaders for our datetime formats.
 
     """
-    _american_with_utc_format = "%m/%d/%y %H:%M:%S UTC"
-    _iso_with_utc_format = "%Y-%m-%d %H:%M:%S UTC"
-    _american_minutes = "%m/%d/%y %H:%M"
-    _american_minutes_wit_utc = "%m/%d/%y %H:%M UTC"
-    _american_date_only_format = "%m/%d/%y"
-    _iso_date_only_format = "%Y-%m-%d"
-    _request_format = "%Y-%m-%d-%H-%M-%S"
-    _long_date_format = "%B %d, %Y %H:%M"
+    american_with_utc_format = "%m/%d/%y %H:%M:%S UTC"
+    iso_with_utc_format = "%Y-%m-%d %H:%M:%S UTC"
+    american_minutes = "%m/%d/%y %H:%M"
+    american_minutes_wit_utc = "%m/%d/%y %H:%M UTC"
+    american_date_only_format = "%m/%d/%y"
+    iso_date_only_format = "%Y-%m-%d"
+    request_format = "%Y-%m-%d-%H-%M-%S"
+    long_date_format = "%B %d, %Y %H:%M"
 
     @classmethod
     def _parse(cls, fmt, time_string):
@@ -45,7 +45,7 @@ class parsetime(_datetime):  # NOQA
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return cls._parse(cls._american_with_utc_format, time_string)
+        return cls._parse(cls.american_with_utc_format, time_string)
 
     def to_american_with_utc(self):
         """ Convert the this object to string representation in american with UTC.
@@ -54,7 +54,7 @@ class parsetime(_datetime):  # NOQA
 
         Returns: :py:class`str` object
         """
-        return self.strftime(self._american_with_utc_format)
+        return self.strftime(self.american_with_utc_format)
 
     @classmethod
     def from_iso_with_utc(cls, time_string):
@@ -66,7 +66,7 @@ class parsetime(_datetime):  # NOQA
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return cls._parse(cls._iso_with_utc_format, time_string)
+        return cls._parse(cls.iso_with_utc_format, time_string)
 
     def to_iso_with_utc(self):
         """ Convert the this object to string representation in american with UTC.
@@ -75,7 +75,7 @@ class parsetime(_datetime):  # NOQA
 
         Returns: :py:class`str` object
         """
-        return self.strftime(self._iso_with_utc_format)
+        return self.strftime(self.iso_with_utc_format)
 
     @classmethod
     def from_american_minutes(cls, time_string):
@@ -87,7 +87,7 @@ class parsetime(_datetime):  # NOQA
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return cls._parse(cls._american_minutes, time_string)
+        return cls._parse(cls.american_minutes, time_string)
 
     def to_american_minutes(self):
         """ Convert the this object to string representation in american with just minutes.
@@ -96,7 +96,7 @@ class parsetime(_datetime):  # NOQA
 
         Returns: :py:class`str` object
         """
-        return self.strftime(self._american_minutes)
+        return self.strftime(self.american_minutes)
 
     @classmethod
     def from_american_minutes_with_utc(cls, time_string):
@@ -108,7 +108,7 @@ class parsetime(_datetime):  # NOQA
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return cls._parse(cls._american_minutes_wit_utc, time_string)
+        return cls._parse(cls.american_minutes_wit_utc, time_string)
 
     def to_american_minutes_with_utc(self):
         """ Convert the this object to string representation in american with just minutes.
@@ -117,7 +117,7 @@ class parsetime(_datetime):  # NOQA
 
         Returns: :py:class`str` object
         """
-        return self.strftime(self._american_minutes_wit_utc)
+        return self.strftime(self.american_minutes_wit_utc)
 
     @classmethod
     def from_american_date_only(cls, time_string):
@@ -129,7 +129,7 @@ class parsetime(_datetime):  # NOQA
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return cls._parse(cls._american_date_only_format, time_string)
+        return cls._parse(cls.american_date_only_format, time_string)
 
     def to_american_date_only(self):
         """ Convert the this object to string representation in american date only format.
@@ -138,7 +138,7 @@ class parsetime(_datetime):  # NOQA
 
         Returns: :py:class`str` object
         """
-        return self.strftime(self._american_date_only_format)
+        return self.strftime(self.american_date_only_format)
 
     @classmethod
     def from_iso_date(cls, time_string):
@@ -150,7 +150,7 @@ class parsetime(_datetime):  # NOQA
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return cls._parse(cls._iso_date_only_format, time_string)
+        return cls._parse(cls.iso_date_only_format, time_string)
 
     def to_iso_date(self):
         """ Convert the this object to string representation in ISO format.
@@ -159,7 +159,7 @@ class parsetime(_datetime):  # NOQA
 
         Returns: :py:class`str` object
         """
-        return self.strftime(self._iso_date_only_format)
+        return self.strftime(self.iso_date_only_format)
 
     @classmethod
     def from_request_format(cls, time_string):
@@ -171,7 +171,7 @@ class parsetime(_datetime):  # NOQA
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return cls._parse(cls._request_format, time_string)
+        return cls._parse(cls.request_format, time_string)
 
     def to_request_format(self):
         """ Convert the this object to string representation in http request.
@@ -180,7 +180,7 @@ class parsetime(_datetime):  # NOQA
 
         Returns: :py:class`str` object
         """
-        return self.strftime(self._request_format)
+        return self.strftime(self.request_format)
 
     @classmethod
     def from_long_date_format(cls, time_string):
@@ -192,7 +192,7 @@ class parsetime(_datetime):  # NOQA
                     time_string: String with time to parse
                 Returns: :py:class`utils.timeutil.datetime()` object
                 """
-        return cls._parse(cls._long_date_format, time_string)
+        return cls._parse(cls.long_date_format, time_string)
 
     def to_long_date_format(self):
         """ Convert the this object to string representation in http request.
@@ -201,7 +201,7 @@ class parsetime(_datetime):  # NOQA
 
                 Returns: :py:class`str` object
                 """
-        return self.strftime(self._long_date_format)
+        return self.strftime(self.long_date_format)
 
 
 def nice_seconds(t_s):
