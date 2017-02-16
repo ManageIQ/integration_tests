@@ -231,6 +231,10 @@ def list_providers(filters=None, use_global_filters=True, appliance=None):
 
     Returns: List of provider crud objects.
     """
+    if isinstance(filters, six.string_types):
+        raise TypeError(
+            'You are probably using the old-style invocation of provider setup functions! '
+            'You need to change it appropriately.')
     filters = filters or []
     if use_global_filters:
         filters = filters + global_filters.values()
