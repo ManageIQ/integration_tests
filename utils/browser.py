@@ -117,19 +117,17 @@ class Wharf(object):
         return self.docker_id is not None
 
 
-def WebDriverClassFactory(BaseClass, lock):
+def web_driver_class_factory(base_class, lock):
     def execute(self, *args, **kwargs):
         with lock:
-            ab = BaseClass.execute(self, *args, **kwargs)
-        return ab
-    newclass = type(BaseClass.__name__, (BaseClass,), {"execute": execute})
-    return newclass
+            return base_class.execute(self, *args, **kwargs)
+    return type(base_class.__name__, (base_class,), {"execute": execute})
 
 
 class BrowserFactory(object):
     def __init__(self, webdriver_class, browser_kwargs):
         self.lock = threading.RLock()
-        self.webdriver_class = WebDriverClassFactory(webdriver_class, self.lock)
+        self.webdriver_class = web_driver_class_factory(webdriver_class, self.lock)
         self.browser_kwargs = browser_kwargs
 
         if webdriver_class is not webdriver.Remote:
@@ -246,7 +244,7 @@ class BrowserManager(object):
 
     def _browser_start_renew_thread(self):
         assert self._browser_renew_thread is None
-        log.debug('BORE: starting repeater')
+        log.debug('starting repeater')
         self._browser_renew_thread = threading.Thread(target=self._browser_renew_function)
         self._browser_renew_thread.daemon = True
         self._browser_renew_thread.start()
@@ -257,7 +255,6 @@ class BrowserManager(object):
             time.sleep(THIRTY_SECONDS)
             with self.factory.lock:
                 try:
-                    log.debug('BORE: renewing')
                     self.current_url
                     self.current_url
                 except:
@@ -327,8 +324,7 @@ class BrowserManager(object):
         if self.browser is not None:
             self.quit()
         self._browser_start_renew_thread()
-        br = self.open_fresh(url_key=url_key)
-        return br
+        return self.open_fresh(url_key=url_key)
 
     def open_fresh(self, url_key=None):
         url_key = self.coerce_url_key(url_key)
