@@ -120,6 +120,12 @@ class MiqBrowser(Browser):
         return self.appliance.version
 
 
+def can_skip_badness_test(fn):
+    """Decorator for setting a noop"""
+    fn._can_skip_badness_test = True
+    return fn
+
+
 class CFMENavigateStep(NavigateStep):
     VIEW = None
 
@@ -160,6 +166,10 @@ class CFMENavigateStep(NavigateStep):
             return False
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
+        if getattr(fn, '_can_skip_badness_test', False):
+            self.log_message('Op is a Nop! ({})'.format(fn.func_name))
+            return
+
         if self.VIEW:
             self.view.flush_widget_cache()
         go_kwargs = kwargs.copy()
@@ -246,7 +256,7 @@ class CFMENavigateStep(NavigateStep):
         from cfme import login
 
         try:
-            logger.debug("Invoking {}, with {} and {}".format(fn, args, kwargs))
+            self.log_message("Invoking {}, with {} and {}".format(fn.func_name, args, kwargs))
             return fn(*args, **kwargs)
         except (KeyboardInterrupt, ValueError):
             # KeyboardInterrupt: Don't block this while navigating
@@ -346,9 +356,15 @@ class CFMENavigateStep(NavigateStep):
             # If given a "start" nav destination, it won't be valid after quitting the browser
             self.go(_tries, *args, **go_kwargs)
 
+    @can_skip_badness_test
+    def resetter(self, *args, **kwargs):
+        pass
+
+    @can_skip_badness_test
     def pre_navigate(self, *args, **kwargs):
         pass
 
+    @can_skip_badness_test
     def post_navigate(self, *args, **kwargs):
         pass
 
