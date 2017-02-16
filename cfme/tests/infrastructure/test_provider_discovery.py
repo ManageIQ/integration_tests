@@ -2,8 +2,9 @@ import pytest
 from itertools import combinations
 
 from utils import testgen
-from utils.appliance import current_appliance
 from utils.providers import get_crud
+from utils.wait import TimedOutError, wait_for_decorator
+
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider import discover, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -52,8 +53,8 @@ def minmax_ip(providers):
 
 
 def pytest_generate_tests(metafunc):
-    types = [VMwareProvider, RHEVMProvider, SCVMMProvider]
-    argnames, argvalues, idlist = testgen.providers_by_class(
+    types = ['virtualcenter', 'rhevm', 'scvmm']
+    argnames, argvalues, idlist = testgen.provider_by_type(
         metafunc, types)
 
     argnames = ['providers_for_discover', 'start_ip', 'max_range']
@@ -84,7 +85,7 @@ def pytest_generate_tests(metafunc):
 @pytest.yield_fixture(scope='function')
 def delete_providers_after_test():
     yield
-    BaseProvider.clear_providers_by_class(InfraProvider)
+    BaseProvider.clear_provider_by_type(InfraProvider)
 
 
 @pytest.mark.tier(2)
@@ -104,14 +105,18 @@ def test_discover_infra(providers_for_discover, start_ip, max_range):
 
     discover(rhevm, virtualcenter, scvmm, False, start_ip, max_range)
 
-    @pytest.wait_for(num_sec=count_timeout(start_ip, max_range), delay=5)
-    def _wait_for_all_providers():
-        for provider in providers_for_discover:
-            if not provider.exists:
+    try:
+        @wait_for_decorator(num_sec=count_timeout(start_ip, max_range), delay=5)
+        def _wait_for_all_providers():
+            for provider in providers_for_discover:
+                if provider.key not in pytest.store.current_appliance.managed_providers:
+                    return False
+            if len(pytest.store.current_appliance.managed_providers) != len(providers_for_discover):
                 return False
-        if len(current_appliance.managed_providers) != len(providers_for_discover):
-            return False
-        return True
+            return True
+    except TimedOutError:
+        assert list(pytest.store.current_appliance.managed_providers) == [prov.key for
+                    prov in providers_for_discover]
 
 
 def count_timeout(start_ip, max_range):
