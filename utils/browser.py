@@ -215,7 +215,7 @@ class BrowserManager(object):
     def __init__(self, browser_factory):
         self.factory = browser_factory
         self.browser = None
-        self._renew_thread = None
+        self._browser_renew_thread = None
 
     def coerce_url_key(self, key):
         return key or store.base_url
@@ -234,25 +234,30 @@ class BrowserManager(object):
         else:
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
-    def _start_renew_thread(self):
-        assert self._renew_thread is None
-        self._renew_thread = threading.Thread(target=self._renew_function)
-        self._renew_thread.daemon = True
-        self._renew_thread.start()
+    def _browser_start_renew_thread(self):
+        assert self._browser_renew_thread is None
+        log.debug('BORE: starting repeater')
+        self._browser_renew_thread = threading.Thread(target=self._browser_renew_function)
+        self._browser_renew_thread.daemon = True
+        self._browser_renew_thread.start()
 
-    def _renew_function(self):
+    def _browser_renew_function(self):
         # If we have a docker id, renew_timer shouldn't still be None
         while True:
             time.sleep(THIRTY_SECONDS)
-            if self._renew_thread is not threading.current_thread():
+            if self._browser_renew_thread is not threading.current_thread():
                 log.debug("renew done %s is not %s",
-                          self._renew_thread, threading.current_thread())
+                          self._browser_renew_thread, threading.current_thread())
                 return
             try:
+                log.debug('BORE: renewing connection')
                 self.browser.current_url
-                log.debug('renewing connection')
             except:
-                self.browser.current_url
+                try:
+                    log.debug('BORE: connection failed: renewing')
+                    self.browser.current_url
+                except:
+                    pass
 
     def _is_alive(self):
         log.debug("alive check")
@@ -310,13 +315,14 @@ class BrowserManager(object):
             pass
         finally:
             self.browser = None
-            self._renew_thread = None
+            self._browser_renew_thread = None
 
     def start(self, url_key=None):
+        log.info('starting browser')
         url_key = self.coerce_url_key(url_key)
         if self.browser is not None:
             self.quit()
-        self._start_renew_thread()
+        self._browser_start_renew_thread()
         return self.open_fresh(url_key=url_key)
 
     def open_fresh(self, url_key=None):
