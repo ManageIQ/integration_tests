@@ -2544,5 +2544,7 @@ class Navigatable(object):
         if override is not None:
             new_obj = copy(o)
             new_obj.__dict__.update(override)
+        else:
+            new_obj = o
         return self.appliance.browser.create_view(
             view_class, additional_context={'object': new_obj})
