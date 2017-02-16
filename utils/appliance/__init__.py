@@ -11,6 +11,7 @@ from textwrap import dedent
 from time import sleep
 from urlparse import ParseResult, urlparse
 from tempfile import NamedTemporaryFile
+from utils.db import scl_name
 
 from cached_property import cached_property
 
@@ -68,24 +69,47 @@ class ApplianceConsoleCli(object):
     def __init__(self, appliance):
         self.appliance = appliance
 
-    def run(self, ap_cli_command):
+    def _run(self, ap_cli_command):
         return self.appliance.ssh_client.run_command(
             "appliance_console_cli {}".format(ap_cli_command))
 
     def set_hostname(self, hostname):
-        self.run("-H {}".format(hostname))
+        self._run("-H {host}".format(host=hostname))
+
+    def configure_appliance_external_join(self, dbhostname,
+            username, password, dbname, fetch_key, sshlogin, sshpass):
+        self._run("-h {dbhostname} -U {username} -p {password} -d {dbname} -v -K {fetch_key} "
+            "-s {sshlogin} -a {sshpass}".format(
+                dbhostname=dbhostname, username=username, password=password, dbname=dbname,
+                fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
+
+    def configure_appliance_external_create(self, region, dbhostname,
+            username, password, dbname, fetch_key, sshlogin, sshpass):
+        self._run("-r {region} -h {dbhostname} -U {username} -p {password} "
+            "-d {dbname} -v -K {fetch_key} -s {sshlogin} -a {sshpass}".format(
+                region=region, dbhostname=dbhostname, username=username, password=password,
+                dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_appliance_internal_fetch_key(self, region, dbhostname,
             username, password, dbname, fetch_key, sshlogin, sshpass):
-        self.run("-r {} -i -h {} -U {} -p {} -d {} -v -K {} -s {} -a {}".format(
-            region, dbhostname, username, password, dbname, fetch_key, sshlogin, sshpass))
+        self._run("-r {region} -i -h {dbhostname} -U {username} -p {password} "
+            "-d {dbname} -v -K {fetch_key} -s {sshlogin} -a {sshpass}".format(
+                region=region, dbhostname=dbhostname, username=username, password=password,
+                dbname=dbname, fetch_key=fetch_key, sshlogin=sshlogin, sshpass=sshpass))
 
     def configure_ipa(self, ipaserver, username, password, domain, realm):
-        return self.run("-e {} -n {} -w {} -o {} -l {}".format(
-            ipaserver, username, password, domain, realm))
+        self._run("-e {ipaserver} -n {username} -w {password} -o {domain} -l {realm}".format(
+            ipaserver=ipaserver, username=username, password=password, domain=domain, realm=realm))
+        assert self.appliance.ssh_client.run_command("systemctl status sssd | grep running")
+        return_code, output = self.appliance.ssh_client.run_command(
+            "cat /etc/ipa/default.conf | grep 'enable_ra = True'")
+        assert return_code == 0
 
     def uninstall_ipa_client(self):
-        self.run("--uninstall-ipa")
+        self._run("--uninstall-ipa")
+        return_code, output = self.appliance.ssh_client.run_command(
+            "cat /etc/ipa/default.conf")
+        assert return_code != 0
 
 
 class IPAppliance(object):
@@ -1381,6 +1405,11 @@ class IPAppliance(object):
             raise ApplianceException(msg)
 
         return status, out
+
+    def is_dedicated_db_active(self):
+        return_code, output = self.ssh_client.run_command(
+            "systemctl status {}-postgresql.service | grep running".format(scl_name()))
+        return return_code == 0
 
     def _check_appliance_ui_wait_fn(self):
         # Get the URL, don't verify ssl cert

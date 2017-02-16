@@ -4,9 +4,6 @@ In cases where you cannot run a certain test againts the primary appliance becau
 destructive potential (which could render all subsequent testing useless), you want to use
 a temporary appliance parallel to the primary one.
 
-For tests such as setting up an appliance (or multiple) in a certain setup, you will want to use
-the :py:func:`temp_appliance_unconfig` fixture and then configure the appliance(s) yourself.
-
 For tests where all you need is a single preconfigured appliance to run a database restore on for
 example, you will want to use the :py:func:`temp_appliance_preconfig` fixture.
 
