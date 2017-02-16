@@ -32,6 +32,7 @@ from utils.log import logger as log  # TODO remove after artifactor handler
 
 
 FIVE_MINUTES = 5 * 60
+THIRTY_SECONDS = 30
 
 
 def _load_firefox_profile():
@@ -116,9 +117,17 @@ class Wharf(object):
         return self.docker_id is not None
 
 
+def web_driver_class_factory(base_class, lock):
+    def execute(self, *args, **kwargs):
+        with lock:
+            return base_class.execute(self, *args, **kwargs)
+    return type(base_class.__name__, (base_class,), {"execute": execute})
+
+
 class BrowserFactory(object):
     def __init__(self, webdriver_class, browser_kwargs):
-        self.webdriver_class = webdriver_class
+        self.lock = threading.RLock()
+        self.webdriver_class = web_driver_class_factory(webdriver_class, self.lock)
         self.browser_kwargs = browser_kwargs
 
         if webdriver_class is not webdriver.Remote:
@@ -214,6 +223,7 @@ class BrowserManager(object):
     def __init__(self, browser_factory):
         self.factory = browser_factory
         self.browser = None
+        self._browser_renew_thread = None
 
     def coerce_url_key(self, key):
         return key or store.base_url
@@ -232,6 +242,31 @@ class BrowserManager(object):
         else:
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
+    def _browser_start_renew_thread(self):
+        assert self._browser_renew_thread is None
+        log.debug('starting repeater')
+        self._browser_renew_thread = threading.Thread(target=self._browser_renew_function)
+        self._browser_renew_thread.daemon = True
+        self._browser_renew_thread.start()
+
+    def _browser_renew_function(self):
+        # If we have a docker id, renew_timer shouldn't still be None
+        while True:
+            time.sleep(THIRTY_SECONDS)
+            with self.factory.lock:
+                try:
+                    log.debug('renew')
+                    self.browser.current_url
+                except Exception as e:
+                    log.error('something bad happened')
+                    log.error(e)
+                    try:
+                        log.debug('renew2')
+                        self.browser.current_url
+                    except Exception as e:
+                        log.error('something bad happened')
+                        log.error(e)
+
     def _is_alive(self):
         log.debug("alive check")
         try:
@@ -244,7 +279,7 @@ class BrowserManager(object):
             except:
                 log.exception("browser died on alert")
                 return False
-        except:
+        except Exception:
             log.exception("browser in unknown state, considering dead")
             return False
         return True
@@ -288,11 +323,14 @@ class BrowserManager(object):
             pass
         finally:
             self.browser = None
+            self._browser_renew_thread = None
 
     def start(self, url_key=None):
+        log.info('starting browser')
         url_key = self.coerce_url_key(url_key)
         if self.browser is not None:
             self.quit()
+        self._browser_start_renew_thread()
         return self.open_fresh(url_key=url_key)
 
     def open_fresh(self, url_key=None):
