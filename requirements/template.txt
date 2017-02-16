@@ -1,0 +1,10 @@
+# include what we need for doc building
+-r template_docs.txt
+
+# add what breaks on RTD
+
+mgmtsystem>0.0.15
+ovirt-engine-sdk-python<4.0.0
+pycurl
+
+virtualenv
