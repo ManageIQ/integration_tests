@@ -411,9 +411,9 @@ def mark_vm_as_template(rest_api, provider, vm_name):
     """
     t_vm = rest_api.collections.vms.get(name=vm_name)
     t_vm.action.stop()
-    provider.mgmt.wait_vm_stopped(vm_name=vm_name, num_sec=600)
+    provider.mgmt.wait_vm_stopped(vm_name=vm_name, num_sec=900)
 
-    provider.mgmt.mark_as_template(vm_name, delete=False)
+    provider.mgmt.mark_as_template(vm_name)
 
     wait_for(
         lambda: rest_api.collections.templates.find_by(name=vm_name).subcount != 0,
