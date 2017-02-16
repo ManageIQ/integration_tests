@@ -167,7 +167,7 @@ class CFMENavigateStep(NavigateStep):
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
         if getattr(fn, '_can_skip_badness_test', False):
-            self.log_message('Op is a Nop! ({})'.format(fn.func_name))
+            self.log_message('Op is a Nop! ({})'.format(fn.__name__))
             return
 
         if self.VIEW:
@@ -187,7 +187,7 @@ class CFMENavigateStep(NavigateStep):
         br = self.appliance.browser
 
         try:
-            br.widgetastic.execute_script('miqSparkleOff();')
+            br.widgetastic.execute_script('miqSparkleOff();', silent=True)
         except:  # Diaper OK (mfalesni)
             # miqSparkleOff undefined, so it's definitely off.
             pass
@@ -210,7 +210,7 @@ class CFMENavigateStep(NavigateStep):
 
         # Check if jQuery present
         try:
-            br.widgetastic.execute_script("jQuery")
+            br.widgetastic.execute_script("jQuery", silent=True)
         except Exception as e:
             if "jQuery" not in str(e):
                 logger.error("Checked for jQuery but got something different.")
