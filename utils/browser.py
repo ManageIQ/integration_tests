@@ -255,10 +255,17 @@ class BrowserManager(object):
             time.sleep(THIRTY_SECONDS)
             with self.factory.lock:
                 try:
-                    self.current_url
-                    self.current_url
-                except:
-                    pass
+                    log.debug('renew')
+                    self.browser.current_url
+                except Exception as e:
+                    log.error('something bad happened')
+                    log.error(e)
+                    try:
+                        log.debug('renew2')
+                        self.browser.current_url
+                    except Exception as e:
+                        log.error('something bad happened')
+                        log.error(e)
 
     def _is_alive(self):
         log.debug("alive check")
