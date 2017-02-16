@@ -5,12 +5,14 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location
+from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location,\
+    PagedTable
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.containers.provider import pol_btn
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
+paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 
 match_page = partial(match_location, controller='container_image_registry',
@@ -60,7 +62,8 @@ class ImageRegistryDetails(CFMENavigateStep):
 
     def step(self):
         tb.select('List View')
-        list_tbl.click_row_by_cells({'Host': self.obj.host})
+        sel.click(paged_tbl.find_row_by_cell_on_all_pages(
+            {'Host': self.obj.host}))
 
 
 @navigator.register(ImageRegistry, 'EditTags')

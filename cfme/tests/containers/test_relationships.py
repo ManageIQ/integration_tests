@@ -4,17 +4,18 @@ import pytest
 from utils.version import current_version
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
-from cfme.containers.pod import Pod
-from cfme.containers.provider import ContainersProvider
-from cfme.containers.service import Service
-from cfme.containers.node import Node
-from cfme.containers.replicator import Replicator
-from cfme.containers.image import Image
-from cfme.containers.project import Project
-from cfme.containers.template import Template
 from cfme.web_ui import toolbar as tb, paginator, summary_title
-from cfme.containers.container import list_tbl, Container
-from cfme.containers.image_registry import ImageRegistry
+
+from cfme.containers.pod import Pod, paged_tbl as pod_paged_tbl
+from cfme.containers.provider import ContainersProvider, paged_tbl as provider_paged_tbl
+from cfme.containers.service import Service, paged_tbl as service_paged_tbl
+from cfme.containers.node import Node, paged_tbl as node_paged_tbl
+from cfme.containers.replicator import Replicator, paged_tbl as replicator_paged_tbl
+from cfme.containers.image import Image, paged_tbl as image_paged_tbl
+from cfme.containers.project import Project, paged_tbl as project_paged_tbl
+from cfme.containers.template import Template, paged_tbl as template_paged_tbl
+from cfme.containers.container import Container, paged_tbl as container_paged_tbl
+from cfme.containers.image_registry import ImageRegistry, paged_tbl as image_registry_paged_tbl
 
 
 pytestmark = [
@@ -25,98 +26,24 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-def get_field_name(base_name, table):
-    """Since in the relationships table sometimes fields appear in different
-    names (i.e. (Image, Images, Container Images, ...)) we use this function
-    to find the object we want as it appear in the table, this function
-    covers ALL the options
-    """
-    name_options = [
-        base_name,
-        base_name + 's',
-        'container_{}'.format(base_name),
-        'containers_{}'.format(base_name),
-        'containers_{}s'.format(base_name),
-        'container_{}s'.format(base_name)
-    ]
-    if base_name.endswith('y'):
-        # relevant for image_registry
-        name_options.append('{}ies'.format(base_name[:-1]))
-    for name in name_options:
-        if hasattr(table, name):
-            return name
-
-
 class DataSet(object):
-    def __init__(self, obj, expected_fields, polarion_id):
+    def __init__(self, obj, paged_tbl, polarion_id):
         self.obj = obj
-        self.expected_fields = expected_fields
+        self.paged_tbl = paged_tbl
         pytest.mark.polarion(polarion_id)(self)
 
 
 TEST_OBJECTS = [
-    DataSet(ContainersProvider, ['project',
-                                 'image_registry',
-                                 'replicator',
-                                 'pod',
-                                 'node',
-                                 'image',
-                                 'route',
-                                 'container',
-                                 'service',
-                                 'template',
-                                 'volume',
-                                 'builds'], 'CMP-9851'),
-    DataSet(Container, ['provider',
-                        'project',
-                        'replicator',
-                        'pod',
-                        'node',
-                        'image'], 'CMP-9947'),
-    DataSet(Pod, ['provider',
-                  'project',
-                  'service',
-                  'replicator',
-                  'container',
-                  'node',
-                  'image'], 'CMP-9929'),
-    DataSet(Service, ['provider',
-                      'project',
-                      'route',
-                      'pod',
-                      'node'], 'CMP-10564'),
-    DataSet(Node, ['provider',
-                   'route',
-                   'service',
-                   'replicator',
-                   'pod',
-                   'container',
-                   'image'], 'CMP-9962'),
-    DataSet(Replicator, ['provider',
-                         'project',
-                         'pod',
-                         'node'], 'CMP-10565'),
-    DataSet(Image, ['provider',
-                    'image_registry',
-                    'project',
-                    'pod',
-                    'container',
-                    'node'], 'CMP-9980'),
-    DataSet(ImageRegistry, ['provider',
-                            'service',
-                            'pod',
-                            'container',
-                            'image'], 'CMP-9994'),
-    DataSet(Project, ['provider',
-                      'route',
-                      'service',
-                      'replicator',
-                      'pod',
-                      'node',
-                      'image',
-                      'template'], 'CMP-9868'),
-    DataSet(Template, ['provider',
-                       'project'], 'CMP-10319')
+    DataSet(ContainersProvider, provider_paged_tbl, 'CMP-9851'),
+    DataSet(Container, container_paged_tbl, 'CMP-9947'),
+    DataSet(Pod, pod_paged_tbl, 'CMP-9929'),
+    DataSet(Service, service_paged_tbl, 'CMP-10564'),
+    DataSet(Node, node_paged_tbl, 'CMP-9962'),
+    DataSet(Replicator, replicator_paged_tbl, 'CMP-10565'),
+    DataSet(Image, image_paged_tbl, 'CMP-9980'),
+    DataSet(ImageRegistry, image_registry_paged_tbl, 'CMP-9994'),
+    DataSet(Project, project_paged_tbl, 'CMP-9868'),
+    DataSet(Template, template_paged_tbl, 'CMP-10319')
 ]
 
 
@@ -135,7 +62,7 @@ def test_relationships_tables(provider, data_set):
     navigate_to(data_set.obj, 'All')
     tb.select('List View')
     paginator.results_per_page(1000)
-    rows = list(list_tbl.rows())
+    rows = list(data_set.paged_tbl.rows())
     if not rows:
         pytest.skip('No objects to test for relationships for {}'.format(data_set.obj.__name__))
 
@@ -143,15 +70,6 @@ def test_relationships_tables(provider, data_set):
     instance = data_set.obj(row.name.text,
                             (row.pod_name.text if data_set.obj is Container else provider))
     instance.summary.reload()
-
-    missing_fields = []
-    for field in data_set.expected_fields:
-        if not get_field_name(field, instance.summary.relationships):
-            missing_fields.append(field)
-    if missing_fields:
-        raise Exception('Missing fields in {}({}) relationships table: {}'
-                        .format(data_set.obj.__name__, instance.name, missing_fields))
-
     sum_values = instance.summary.relationships.items().values()
     shuffle(sum_values)
     for attr in sum_values:

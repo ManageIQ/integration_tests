@@ -6,7 +6,7 @@ from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb,
-    InfoBlock, Region, paginator, match_location)
+    InfoBlock, Region, paginator, match_location, PagedTable)
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
 from utils.appliance import Navigatable
@@ -16,6 +16,8 @@ from utils.db import cfmedb
 from utils.pretty import Pretty
 from utils.varmeth import variable
 
+
+paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 cfg_btn = partial(tb.select, 'Configuration')
 mon_btn = partial(tb.select, 'Monitoring')

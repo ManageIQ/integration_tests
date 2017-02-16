@@ -126,8 +126,7 @@ def api_get_node_properties(provider):
             'container_runtime_version': item['status']['nodeInfo']['containerRuntimeVersion'],
             'kubernetes_kubelet_version': item['status']['nodeInfo']['kubeletVersion'],
             'proxy_version': item['status']['nodeInfo']['kubeProxyVersion'],
-            'kernel_version': item['status']['nodeInfo']['kernelVersion'],
-            'proxy_version': item['status']['nodeInfo']['kubeProxyVersion'],
+            'kernel_version': item['status']['nodeInfo']['kernelVersion']
         }
     return out
 

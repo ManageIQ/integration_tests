@@ -2,7 +2,7 @@
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb, paginator, match_location,\
-    PagedTable
+    PagedTable, CheckboxTable
 from cfme.containers.provider import details_page
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator,\
@@ -10,6 +10,7 @@ from utils.appliance.implementations.ui import CFMENavigateStep, navigator,\
 from navmazing import NavigateToAttribute, NavigateToSibling
 from functools import partial
 
+list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
 paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 match_page = partial(match_location, controller='container_projects', title='Projects')
