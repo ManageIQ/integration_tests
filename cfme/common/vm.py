@@ -156,6 +156,8 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
     REMOVE_SINGLE = {'5.6': 'Remove Virtual Machine',
                      '5.6.2.2': 'Remove from the VMDB',
                      '5.7': 'Remove Virtual Machine'}
+    RETIRE_DATE_FMT = {version.LOWEST: parsetime.american_date_only_format,
+                       '5.7': parsetime.american_minutes_wit_utc}
 
     ###
     # Shared behaviour
@@ -419,18 +421,12 @@ class BaseVM(Pretty, Updateable, PolicyProfileAssignable, Taggable, SummaryMixin
 
     @property
     def retirement_date(self):
-        """Returns the retirement date of the selected machine.
+        """Returns the retirement date of the selected machine, or 'Never'
 
         Returns:
-            :py:class:`NoneType` if there is none, or :py:class:`utils.timeutil.parsetime`
+            :py:class:`str` object
         """
-        date_str = self.get_detail(properties=("Lifecycle", "Retirement Date")).strip()
-        if date_str.lower() == "never":
-            return None
-        if version.current_version() < "5.7":
-            return parsetime.from_american_date_only(date_str).to_american_date_only()
-        else:
-            return parsetime.from_american_minutes_with_utc(date_str).to_american_date_only()
+        return self.get_detail(properties=("Lifecycle", "Retirement Date")).strip()
 
     def smartstate_scan(self, cancel=False, from_details=False):
         """Initiates fleecing from the UI.
@@ -525,8 +521,9 @@ class VM(BaseVM):
     TO_RETIRE = None
 
     retire_form = Form(fields=[
-        ('date_retire', AngularCalendarInput(
-            "retirement_date", "//label[contains(normalize-space(.), 'Retirement Date')]")),
+        ('date_retire',
+            AngularCalendarInput("retirement_date",
+                                 "//label[contains(normalize-space(.), 'Retirement Date')]")),
         ('warn', AngularSelect('retirementWarning'))
     ])
 
@@ -671,7 +668,7 @@ class VM(BaseVM):
         pretty and it can't be just "done".
 
         Args:
-            when: When to retire. :py:class:`str` in format mm/dd/yy of
+            when: When to retire. :py:class:`str` in format mm/dd/yyyy of
                 :py:class:`datetime.datetime` or :py:class:`utils.timeutil.parsetime`.
             warn: When to warn, fills the select in the form in case the ``when`` is specified.
         """
