@@ -32,6 +32,7 @@ from utils.log import logger as log  # TODO remove after artifactor handler
 
 
 FIVE_MINUTES = 5 * 60
+THIRTY_SECONDS = 30
 
 
 def _load_firefox_profile():
@@ -214,6 +215,7 @@ class BrowserManager(object):
     def __init__(self, browser_factory):
         self.factory = browser_factory
         self.browser = None
+        self._renew_thread = None
 
     def coerce_url_key(self, key):
         return key or store.base_url
@@ -232,6 +234,26 @@ class BrowserManager(object):
         else:
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
+    def _start_renew_thread(self):
+        assert self._renew_thread is None
+        self._renew_thread = threading.Thread(target=self._renew_function)
+        self._renew_thread.daemon = True
+        self._renew_thread.start()
+
+    def _renew_function(self):
+        # If we have a docker id, renew_timer shouldn't still be None
+        while True:
+            time.sleep(THIRTY_SECONDS)
+            if self._renew_thread is not threading.current_thread():
+                log.debug("renew done %s is not %s",
+                          self._renew_thread, threading.current_thread())
+                return
+            try:
+                self.browser.current_url
+                log.debug('renewing connection')
+            except:
+                self.browser.current_url
+
     def _is_alive(self):
         log.debug("alive check")
         try:
@@ -244,7 +266,7 @@ class BrowserManager(object):
             except:
                 log.exception("browser died on alert")
                 return False
-        except:
+        except Exception:
             log.exception("browser in unknown state, considering dead")
             return False
         return True
@@ -288,11 +310,13 @@ class BrowserManager(object):
             pass
         finally:
             self.browser = None
+            self._renew_thread = None
 
     def start(self, url_key=None):
         url_key = self.coerce_url_key(url_key)
         if self.browser is not None:
             self.quit()
+        self._start_renew_thread()
         return self.open_fresh(url_key=url_key)
 
     def open_fresh(self, url_key=None):
