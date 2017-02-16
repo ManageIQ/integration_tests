@@ -120,9 +120,9 @@ class MiqBrowser(Browser):
         return self.appliance.version
 
 
-def noop(fn):
+def can_skip_badness_test(fn):
     """Decorator for setting a noop"""
-    fn._noop = True
+    fn._can_skip_badness_test = True
     return fn
 
 
@@ -166,7 +166,7 @@ class CFMENavigateStep(NavigateStep):
             return False
 
     def check_for_badness(self, fn, _tries, nav_args, *args, **kwargs):
-        if hasattr(fn, '_noop') and fn._noop:
+        if getattr(fn, '_can_skip_badness_test', False):
             self.log_message('Op is a Nop! ({})'.format(fn.func_name))
             return
 
@@ -356,15 +356,15 @@ class CFMENavigateStep(NavigateStep):
             # If given a "start" nav destination, it won't be valid after quitting the browser
             self.go(_tries, *args, **go_kwargs)
 
-    @noop
+    @can_skip_badness_test
     def resetter(self, *args, **kwargs):
         pass
 
-    @noop
+    @can_skip_badness_test
     def pre_navigate(self, *args, **kwargs):
         pass
 
-    @noop
+    @can_skip_badness_test
     def post_navigate(self, *args, **kwargs):
         pass
 
