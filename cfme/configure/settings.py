@@ -10,7 +10,7 @@ import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (
     AngularSelect, Form, Region, fill, form_buttons, flash, Table, ButtonGroup, Quadicon,
-    CheckboxTree, Input, CFMECheckbox, BootstrapTreeview)
+    CheckboxTree, Input, CFMECheckbox, BootstrapTreeview, match_location)
 from navmazing import NavigateToSibling, NavigateToAttribute
 from utils import version, deferred_verpick
 from utils.pretty import Pretty
@@ -349,12 +349,17 @@ class DefaultView(Updateable, Navigatable):
         Navigatable.__init__(self, appliance=appliance)
 
     @classmethod
-    def set_default_view(cls, button_group_name, default):
+    def save(cls):
+        sel.click(form_buttons.save)
+
+    @classmethod
+    def set_default_view(cls, button_group_name, default, save=True):
         bg = ButtonGroup(button_group_name)
         navigate_to(cls, 'All')
         if bg.active != default:
             bg.choose(default)
-            sel.click(form_buttons.save)
+            if save:
+                cls.save()
 
     @classmethod
     def get_default_view(cls, button_group_name):
@@ -366,6 +371,10 @@ class DefaultView(Updateable, Navigatable):
 @navigator.register(DefaultView, 'All')
 class DefaultViewAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
+
+    def am_i_here(self):
+        if match_location(title='Configuration'):
+            return tabs.is_tab_selected('Default Views')
 
     def step(self, *args, **kwargs):
         tabs.select_tab('Default Views')
