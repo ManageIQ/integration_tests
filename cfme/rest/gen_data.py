@@ -248,7 +248,15 @@ def vm(request, a_provider, rest_api):
     vm_name = deploy_template(
         a_provider.key,
         "test_rest_vm_{}".format(fauxfactory.gen_alphanumeric(length=4)))
-    request.addfinalizer(lambda: a_provider.mgmt.delete_vm(vm_name))
+
+    @request.addfinalizer
+    def _finished():
+        try:
+            a_provider.mgmt.delete_vm(vm_name)
+        except Exception:
+            # vm can be deleted/retired by test
+            logger.warning("Failed to delete vm '{}'.".format(vm_name))
+
     provider_rest.action.refresh()
     wait_for(
         lambda: len(rest_api.collections.vms.find_by(name=vm_name)) > 0,
@@ -411,7 +419,7 @@ def mark_vm_as_template(rest_api, provider, vm_name):
     """
     t_vm = rest_api.collections.vms.get(name=vm_name)
     t_vm.action.stop()
-    provider.mgmt.wait_vm_stopped(vm_name=vm_name, num_sec=900)
+    provider.mgmt.wait_vm_stopped(vm_name=vm_name, num_sec=1000)
 
     provider.mgmt.mark_as_template(vm_name)
 
