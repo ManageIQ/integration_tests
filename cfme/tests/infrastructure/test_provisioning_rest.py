@@ -80,13 +80,15 @@ def test_provision(request, provision_data, provider, rest_api):
     request.addfinalizer(
         lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(
             vm_name) else None)
-    request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
+    response = rest_api.collections.provision_requests.action.create(**provision_data)
+    assert rest_api.response.status_code == 200
+    provision_request = response[0]
 
     def _finished():
-        request.reload()
-        if request.status.lower() in {"error"}:
-            pytest.fail("Error when provisioning: `{}`".format(request.message))
-        return request.request_state.lower() in {"finished", "provisioned"}
+        provision_request.reload()
+        if provision_request.status.lower() in {"error"}:
+            pytest.fail("Error when provisioning: `{}`".format(provision_request.message))
+        return provision_request.request_state.lower() in {"finished", "provisioned"}
 
     wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
