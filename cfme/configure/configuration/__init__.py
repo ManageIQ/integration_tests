@@ -255,7 +255,7 @@ class AnalysisProfileAll(CFMENavigateStep):
     def step(self):
         server_region = store.current_appliance.server_region_string()
         self.prerequisite_view.accordions.settings.tree.click_path(
-            (server_region, "Analysis Profiles"))
+            server_region, "Analysis Profiles")
 
 
 @navigator.register(AnalysisProfile, 'Add')
@@ -272,8 +272,8 @@ class AnalysisProfileDetails(CFMENavigateStep):
 
     def step(self):
         server_region = store.current_appliance.server_region_string()
-        self.prerequisite_view.accordions.settings.tree.click_path((server_region,
-                                                              "Analysis Profiles", str(self)))
+        self.prerequisite_view.accordions.settings.tree.click_path(
+            server_region, "Analysis Profiles", str(self))
 
 
 @navigator.register(AnalysisProfile, 'Edit')
@@ -1130,7 +1130,7 @@ class ScheduleAll(CFMENavigateStep):
 
     def step(self):
         server_region = store.current_appliance.server_region_string()
-        self.prerequisite_view.accordions.settings.tree.click_path((server_region, "Schedules"))
+        self.prerequisite_view.accordions.settings.tree.click_path(server_region, "Schedules")
 
 
 @navigator.register(Schedule, 'Add')
