@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
+from cached_property import cached_property
 from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
@@ -138,7 +139,7 @@ class Action(Updateable, Navigatable, Pretty):
     def __str__(self):
         return self.description
 
-    @property
+    @cached_property
     def alerts_to_evaluate(self):
         if self._alerts_to_evaluate is not None:
             return [str(alert) for alert in self._alerts_to_evaluate]
