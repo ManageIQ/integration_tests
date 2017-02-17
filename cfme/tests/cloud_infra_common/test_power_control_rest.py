@@ -5,8 +5,10 @@ from cfme import test_requirements
 from cfme.common.vm import VM
 from utils import testgen
 from utils.generators import random_vm_name
-from utils.version import current_version
 from utils.wait import wait_for
+from utils.log import logger
+from cfme.cloud.provider.gce import GCEProvider
+from cfme.cloud.provider.ec2 import EC2Provider
 
 
 pytestmark = [
@@ -21,28 +23,41 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-@pytest.fixture(scope="function")
-def vm_obj(request, provider, setup_provider, small_template, rest_api):
-    vm_obj = VM.factory(random_vm_name('pwrctl'), provider, template_name=small_template)
+@pytest.fixture(scope="module")
+def vm_obj(request, provider, setup_provider_modscope, small_template_modscope):
+    vm_obj = VM.factory(random_vm_name('pwrctl'), provider, template_name=small_template_modscope)
 
     @request.addfinalizer
     def _delete_vm():
-        if provider.mgmt.does_vm_exist(vm_obj.name):
+        try:
             provider.mgmt.delete_vm(vm_obj.name)
+        except Exception:
+            logger.warning("Failed to delete vm `{}`.".format(vm_obj.name))
+
     vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm_obj
 
 
-def verify_vm_power_state(vm, state, minutes=10, action=None):
+def verify_vm_power_state(vm, state, num_sec=1000, action=None):
     if action:
         action(vm)
     wait_for(lambda: vm.power_state == state,
-        num_sec=minutes * 60, delay=20, fail_func=vm.reload,
-        message='Wait for VM to {} (current state: {})'.format(state, vm.power_state))
+        num_sec=num_sec, delay=20, fail_func=vm.reload,
+        message='Wait for VM state `{}` (current state: {})'.format(state, vm.power_state))
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud' and current_version() < "5.6.0")
+def verify_action_result(rest_api, assert_success=True):
+    assert rest_api.response.status_code == 200
+    response = rest_api.response.json()
+    if 'results' in response:
+        response = response['results'][0]
+    message = response['message']
+    success = response['success']
+    if assert_success:
+        assert success
+    return success, message
+
+
 @pytest.mark.parametrize("from_detail", [True, False], ids=["cfrom_detail", "from_collection"])
 def test_stop(rest_api, vm_obj, from_detail):
     """Test stop of vm
@@ -62,19 +77,17 @@ def test_stop(rest_api, vm_obj, from_detail):
         test_flag: rest
     """
     vm = vm_obj.get_vm_via_rest()
-    assert "stop" in vm.action
-    verify_vm_power_state(vm, state=vm_obj.STATE_ON)
+    verify_vm_power_state(vm, state=vm_obj.STATE_ON,
+        action=vm_obj.get_collection_via_rest().action.start)
+
     if from_detail:
         vm.action.stop()
     else:
         vm_obj.get_collection_via_rest().action.stop(vm)
-    wait_for(lambda: vm.power_state == vm_obj.STATE_OFF,
-        num_sec=1000, delay=20, fail_func=vm.reload,
-        message='Wait for VM to stop (current state: {})'.format(vm.power_state))
+    verify_action_result(rest_api)
+    verify_vm_power_state(vm, state=vm_obj.STATE_OFF)
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud' and current_version() < "5.6.0")
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_start(rest_api, vm_obj, from_detail):
     """Test start vm
@@ -94,20 +107,19 @@ def test_start(rest_api, vm_obj, from_detail):
         test_flag: rest
     """
     vm = vm_obj.get_vm_via_rest()
-    assert "start" in vm.action
-    verify_vm_power_state(vm, state=vm_obj.STATE_SUSPENDED,
-        action=vm_obj.get_collection_via_rest().action.suspend)
+    # If vm is on, stop it. Otherwise try to start from whatever state it's currently in.
+    if vm.power_state == vm_obj.STATE_ON:
+        verify_vm_power_state(vm, state=vm_obj.STATE_OFF,
+            action=vm_obj.get_collection_via_rest().action.stop)
+
     if from_detail:
         vm.action.start()
     else:
         vm_obj.get_collection_via_rest().action.start(vm)
-    wait_for(lambda: vm.power_state == vm_obj.STATE_ON,
-        num_sec=1000, delay=20, fail_func=vm.reload,
-        message='Wait for VM to stop (current state: {})'.format(vm.power_state))
+    verify_action_result(rest_api)
+    verify_vm_power_state(vm, state=vm_obj.STATE_ON)
 
 
-@pytest.mark.uncollectif(
-    lambda provider: provider.category == 'cloud' and current_version() < "5.6.0")
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_suspend(rest_api, vm_obj, from_detail):
     """Test suspend vm
@@ -127,18 +139,22 @@ def test_suspend(rest_api, vm_obj, from_detail):
         test_flag: rest
     """
     vm = vm_obj.get_vm_via_rest()
-    assert "suspend" in vm.action
-    verify_vm_power_state(vm, state=vm_obj.STATE_ON)
+    verify_vm_power_state(vm, state=vm_obj.STATE_ON,
+        action=vm_obj.get_collection_via_rest().action.start)
+
     if from_detail:
         vm.action.suspend()
     else:
         vm_obj.get_collection_via_rest().action.suspend(vm)
-    wait_for(lambda: vm.power_state == vm_obj.STATE_SUSPENDED,
-        num_sec=1000, delay=20, fail_func=vm.reload,
-        message='Wait for VM to stop (current state: {})'.format(vm.power_state))
+    success, message = verify_action_result(rest_api, assert_success=False)
+    if isinstance(vm_obj.provider, GCEProvider) or isinstance(vm_obj.provider, EC2Provider):
+        assert success is False
+        assert "not available" in message
+    else:
+        assert success
+        verify_vm_power_state(vm, state=vm_obj.STATE_SUSPENDED)
 
 
-@pytest.mark.uncollectif(lambda: current_version() < "5.6.0")
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_reset_vm(rest_api, vm_obj, from_detail):
     """
@@ -159,12 +175,19 @@ def test_reset_vm(rest_api, vm_obj, from_detail):
         test_flag: rest
     """
     vm = vm_obj.get_vm_via_rest()
-    assert "reset" in vm.action
-    verify_vm_power_state(vm, state=vm_obj.STATE_ON)
+    verify_vm_power_state(vm, state=vm_obj.STATE_ON,
+        action=vm_obj.get_collection_via_rest().action.start)
+
     old_date = vm.updated_on
     if from_detail:
         vm.action.reset()
     else:
         vm_obj.get_collection_via_rest().action.reset(vm)
-    wait_for(lambda: vm.updated_on >= old_date,
-        num_sec=600, delay=20, fail_func=vm.reload, message='Wait for VM to reset')
+    success, message = verify_action_result(rest_api, assert_success=False)
+    if isinstance(vm_obj.provider, GCEProvider) or isinstance(vm_obj.provider, EC2Provider):
+        assert success is False
+        assert "not available" in message
+    else:
+        assert success
+        wait_for(lambda: vm.updated_on >= old_date,
+            num_sec=600, delay=20, fail_func=vm.reload, message='Wait for VM to reset')
