@@ -38,9 +38,14 @@ def vm_obj(request, provider, setup_provider_modscope, small_template_modscope):
     return vm_obj
 
 
-def verify_vm_power_state(vm, state, num_sec=1000, action=None):
+def verify_vm_power_state(vm_obj, state, action=None):
+    vm = vm_obj.get_vm_via_rest()
+    if vm_obj.provider.one_of(GCEProvider, EC2Provider):
+        num_sec = 1600  # extra time for slow providers
+    else:
+        num_sec = 1000
     if action:
-        action(vm)
+        action()
     wait_for(lambda: vm.power_state == state,
         num_sec=num_sec, delay=20, fail_func=vm.reload,
         message='Wait for VM state `{}` (current state: {})'.format(state, vm.power_state))
@@ -77,15 +82,14 @@ def test_stop(rest_api, vm_obj, from_detail):
         test_flag: rest
     """
     vm = vm_obj.get_vm_via_rest()
-    verify_vm_power_state(vm, state=vm_obj.STATE_ON,
-        action=vm_obj.get_collection_via_rest().action.start)
+    verify_vm_power_state(vm_obj, state=vm_obj.STATE_ON, action=vm.action.start)
 
     if from_detail:
         vm.action.stop()
     else:
         vm_obj.get_collection_via_rest().action.stop(vm)
     verify_action_result(rest_api)
-    verify_vm_power_state(vm, state=vm_obj.STATE_OFF)
+    verify_vm_power_state(vm_obj, state=vm_obj.STATE_OFF)
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
@@ -109,15 +113,14 @@ def test_start(rest_api, vm_obj, from_detail):
     vm = vm_obj.get_vm_via_rest()
     # If vm is on, stop it. Otherwise try to start from whatever state it's currently in.
     if vm.power_state == vm_obj.STATE_ON:
-        verify_vm_power_state(vm, state=vm_obj.STATE_OFF,
-            action=vm_obj.get_collection_via_rest().action.stop)
+        verify_vm_power_state(vm_obj, state=vm_obj.STATE_OFF, action=vm.action.stop)
 
     if from_detail:
         vm.action.start()
     else:
         vm_obj.get_collection_via_rest().action.start(vm)
     verify_action_result(rest_api)
-    verify_vm_power_state(vm, state=vm_obj.STATE_ON)
+    verify_vm_power_state(vm_obj, state=vm_obj.STATE_ON)
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
@@ -139,20 +142,19 @@ def test_suspend(rest_api, vm_obj, from_detail):
         test_flag: rest
     """
     vm = vm_obj.get_vm_via_rest()
-    verify_vm_power_state(vm, state=vm_obj.STATE_ON,
-        action=vm_obj.get_collection_via_rest().action.start)
+    verify_vm_power_state(vm_obj, state=vm_obj.STATE_ON, action=vm.action.start)
 
     if from_detail:
         vm.action.suspend()
     else:
         vm_obj.get_collection_via_rest().action.suspend(vm)
     success, message = verify_action_result(rest_api, assert_success=False)
-    if isinstance(vm_obj.provider, GCEProvider) or isinstance(vm_obj.provider, EC2Provider):
+    if vm_obj.provider.one_of(GCEProvider, EC2Provider):
         assert success is False
         assert "not available" in message
     else:
         assert success
-        verify_vm_power_state(vm, state=vm_obj.STATE_SUSPENDED)
+        verify_vm_power_state(vm_obj, state=vm_obj.STATE_SUSPENDED)
 
 
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
@@ -175,8 +177,7 @@ def test_reset_vm(rest_api, vm_obj, from_detail):
         test_flag: rest
     """
     vm = vm_obj.get_vm_via_rest()
-    verify_vm_power_state(vm, state=vm_obj.STATE_ON,
-        action=vm_obj.get_collection_via_rest().action.start)
+    verify_vm_power_state(vm_obj, state=vm_obj.STATE_ON, action=vm.action.start)
 
     old_date = vm.updated_on
     if from_detail:
@@ -184,7 +185,7 @@ def test_reset_vm(rest_api, vm_obj, from_detail):
     else:
         vm_obj.get_collection_via_rest().action.reset(vm)
     success, message = verify_action_result(rest_api, assert_success=False)
-    if isinstance(vm_obj.provider, GCEProvider) or isinstance(vm_obj.provider, EC2Provider):
+    if vm_obj.provider.one_of(GCEProvider, EC2Provider):
         assert success is False
         assert "not available" in message
     else:
