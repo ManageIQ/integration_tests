@@ -3,6 +3,8 @@
 """ Module dealing with Configure/My Setting section."""
 
 from functools import partial
+import re
+
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
@@ -160,7 +162,7 @@ class Visual(Updateable, Navigatable):
     @property
     def grid_view_limit(self):
         navigate_to(self, 'All')
-        return int(self.item_form.grid_view.first_selected_option_text)
+        return int(re.findall("\d+", self.item_form.grid_view.first_selected_option_text)[0])
 
     @grid_view_limit.setter
     def grid_view_limit(self, value):
@@ -171,7 +173,7 @@ class Visual(Updateable, Navigatable):
     @property
     def tile_view_limit(self):
         navigate_to(self, 'All')
-        return int(self.item_form.tile_view.first_selected_option_text)
+        return int(re.findall("\d+", self.item_form.tile_view.first_selected_option_text)[0])
 
     @tile_view_limit.setter
     def tile_view_limit(self, value):
@@ -182,7 +184,7 @@ class Visual(Updateable, Navigatable):
     @property
     def list_view_limit(self):
         navigate_to(self, 'All')
-        return int(self.item_form.list_view.first_selected_option_text)
+        return int(re.findall("\d+", self.item_form.list_view.first_selected_option_text)[0])
 
     @list_view_limit.setter
     def list_view_limit(self, value):
@@ -193,7 +195,7 @@ class Visual(Updateable, Navigatable):
     @property
     def report_view_limit(self):
         navigate_to(self, 'All')
-        return int(self.item_form.reports.first_selected_option_text)
+        return int(re.findall("\d+", self.item_form.reports.first_selected_option_text)[0])
 
     @report_view_limit.setter
     def report_view_limit(self, value):
