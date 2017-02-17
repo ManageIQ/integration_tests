@@ -13,7 +13,6 @@ from cfme.base import Server
 from cfme.configure.access_control import set_group_order
 from cfme.control.explorer import ControlExplorer # NOQA
 from cfme.infrastructure.provider import InfraProvider
-from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.exceptions import OptionNotAvailable
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure import virtual_machines as vms
@@ -93,7 +92,7 @@ def test_user_login():
     user.create()
     try:
         with user:
-            navigate_to(Dashboard, 'Main')
+            navigate_to(Server, 'Dashboard')
     finally:
         login.login_admin()
 
