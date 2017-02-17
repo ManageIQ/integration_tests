@@ -32,17 +32,6 @@ class AutomateExplorerView(BaseLoggedInPage):
     configuration = Dropdown('Configuration')
 
 
-@navigator.register(Server)
-class AutomateExplorer(CFMENavigateStep):
-    VIEW = AutomateExplorerView
-    prerequisite = NavigateToSibling('LoggedIn')
-
-    # Repeat if alert because you might be at a page that asks you if you really want to leave
-    @CFMENavigateStep.repeat_if_alert(accept=True)
-    def step(self):
-        self.view.navigation.select('Automate', 'Explorer')
-
-
 def check_tree_path(actual, desired):
     if len(actual) != len(desired):
         return False
