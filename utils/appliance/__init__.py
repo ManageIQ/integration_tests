@@ -6,6 +6,7 @@ import random
 import re
 import socket
 import yaml
+from copy import copy
 from manageiq_client.api import ManageIQClient as MiqApi
 from textwrap import dedent
 from time import sleep
@@ -25,7 +26,7 @@ from sentaku import ImplementationContext
 
 from fixtures import ui_coverage
 from fixtures.pytest_store import store
-from utils import conf, datafile, db, db_queries, ssh, ports, OverrideWithDict
+from utils import conf, datafile, db, db_queries, ssh, ports
 from utils.datafile import load_data_file
 from utils.events import EventTool
 from utils.log import logger, create_sublogger, logger_wrap
@@ -2541,6 +2542,9 @@ class Navigatable(object):
     def create_view(self, view_class, o=None, override=None):
         o = o or self
         if override is not None:
-            o = OverrideWithDict(o, override)
+            new_obj = copy(o)
+            new_obj.__dict__.update(override)
+        else:
+            new_obj = o
         return self.appliance.browser.create_view(
-            view_class, additional_context={'object': o})
+            view_class, additional_context={'object': new_obj})

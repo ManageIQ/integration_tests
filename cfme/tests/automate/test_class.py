@@ -55,13 +55,13 @@ def test_class_crud(namespace):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[1404788])
 def test_schema_crud(request, namespace):
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()
     )
-    request.addfinalizer(a_class.delete_if_exists)
     f1 = fauxfactory.gen_alpha()
     f2 = fauxfactory.gen_alpha()
     f3 = fauxfactory.gen_alpha()
@@ -88,12 +88,10 @@ def test_same_class_name_different_namespace(request, domain):
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
     )
-    request.addfinalizer(ns1.delete_if_exists)
     ns2 = domain.namespaces.create(
         name=fauxfactory.gen_alpha(),
         description=fauxfactory.gen_alpha()
     )
-    request.addfinalizer(ns2.delete_if_exists)
 
     c1 = ns1.classes.create(
         name=fauxfactory.gen_alphanumeric(),
@@ -121,7 +119,6 @@ def test_display_name_unset_from_ui(request, namespace):
         display_name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric()
     )
-    request.addfinalizer(a_class.delete_if_exists)
     with update(a_class):
         a_class.display_name = fauxfactory.gen_alphanumeric()
     assert a_class.exists
