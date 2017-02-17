@@ -51,7 +51,7 @@ def test_infrastructurevms_defaultfilters(setup_first_provider):
     filters = [['Infrastructure', 'Virtual Machines', 'VMs', 'Platform / VMware']]
     df = st.DefaultFilter(name='Platform / VMware')
     df.update({'filters': [(k, True) for k in filters]})
-    navigate_to(vms.Vm, 'VMsOnly', filter_folder='Global Filters')
+    navigate_to(vms.Vm, 'VMsOnly')
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
@@ -59,7 +59,7 @@ def test_infrastructuretemplates_defaultfilters(setup_first_provider):
     filters = [['Infrastructure', 'Virtual Machines', 'Templates', 'Platform / Redhat']]
     df = st.DefaultFilter(name='Platform / Redhat')
     df.update({'filters': [(k, True) for k in filters]})
-    navigate_to(vms.Template, 'TemplatesOnly', filter_folder='Global Filters')
+    navigate_to(vms.Template, 'TemplatesOnly')
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
