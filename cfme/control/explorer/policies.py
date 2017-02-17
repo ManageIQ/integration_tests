@@ -417,8 +417,8 @@ class BasePolicy(Updateable, Navigatable, Pretty):
         view = self.create_view(EditEventView)
         assert view.is_displayed
         changed = view.fill({
-            "true_actions": [ac.description for ac in true_actions],
-            "false_actions": [ac.description for ac in false_actions]
+            "true_actions": [str(action) for action in true_actions],
+            "false_actions": [str(action) for action in false_actions]
         })
         if changed:
             view.save_button.click()
