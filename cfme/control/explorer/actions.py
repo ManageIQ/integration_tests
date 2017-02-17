@@ -126,7 +126,7 @@ class Action(Updateable, Navigatable, Pretty):
         self.snapshot_name = action_values.get("snapshot_name")
         self.analysis_profile = action_values.get("analysis_profile")
         self.snapshot_age = action_values.get("snapshot_age")
-        self.alerts_to_evaluate = action_values.get("alerts_to_evaluate")
+        self.alerts_to_evaluate = action_values.get("alerts_to_evaluate", [])
         self.parent_type = action_values.get("parent_type")
         self.categories = action_values.get("categories")
         self.cpu_number = action_values.get("cpu_number")
