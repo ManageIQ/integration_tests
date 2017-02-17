@@ -38,15 +38,12 @@ class AlertFormCommon(ControlExplorerView):
         # Real Time Performance Parameters
         performance_field = BootstrapSelect("perf_column")
         performance_field_operator = BootstrapSelect("select_operator")
-        performance_field_value = Input("value_threshold")
+        performance_field_value = Input(name="value_threshold")
         performance_trend = BootstrapSelect("trend_direction")
         performance_time_threshold = BootstrapSelect("rt_time_threshold")
 
         def fill(self, values):
-            new_values = {
-                "type": values[0]
-            }
-            new_values.update(values[1])
+            new_values = dict(type=values[0], **values[1])
             return View.fill(self, new_values)
 
     driving_event = BootstrapSelect("exp_event")
