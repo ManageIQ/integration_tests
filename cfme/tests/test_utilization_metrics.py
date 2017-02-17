@@ -194,7 +194,7 @@ def test_raw_metric_vm_memory(metrics_collection, db, provider):
 @pytest.mark.uncollectif(
     lambda provider: current_version() < "5.7" and provider.type == 'gce')
 @pytest.mark.meta(
-    blockers=[BZ(1322094, forced_streams=["5.6", "5.7"],
+    blockers=[BZ(1408963, forced_streams=["5.6", "5.7"],
         unblock=lambda provider: provider.type != 'rhevm')]
 )
 def test_raw_metric_vm_network(metrics_collection, db, provider):
@@ -267,7 +267,7 @@ def test_raw_metric_host_network(metrics_collection, db, provider):
 @pytest.mark.uncollectif(
     lambda provider: provider.category == 'cloud')
 @pytest.mark.meta(
-    blockers=[BZ(1322094, forced_streams=["5.6", "5.7"],
+    blockers=[BZ(1424589, forced_streams=["5.6", "5.7"],
         unblock=lambda provider: provider.type != 'rhevm')]
 )
 def test_raw_metric_host_disk(metrics_collection, db, provider):
