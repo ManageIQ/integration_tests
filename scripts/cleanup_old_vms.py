@@ -42,7 +42,7 @@ def parse_cmd_line():
                         help='comma separated list of the provider type, useful in case of gce,'
                              'azure, ec2 to get the insight into cost/vm listing')
     parser.add_argument('--outfile', dest='outfile', default=log_path.join(
-        'instance_list.log').strpath, help='outfile to list ')
+        'cleanup_old_vms.log').strpath, help='outfile to list ')
     args = parser.parse_args()
     return args
 
