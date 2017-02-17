@@ -391,7 +391,12 @@ def my_appliances(request, show_user="my"):
         end_index -= start_index
         start_index = 0
     pages = pages[start_index:end_index]
-    groups = Group.objects.order_by("id")
+    available_groups = Group.objects.filter(
+        id__in=Template.objects.values_list('template_group', flat=True).distinct())
+    group_tuples = []
+    for group in available_groups:
+        group_tuples.append((group.templates.order_by('-date')[0].date, group))
+    group_tuples.sort(key=lambda gt: gt[0], reverse=True)
     can_order_pool = show_user == "my"
     new_pool_possible = True
     display_legend = False

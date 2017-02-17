@@ -373,8 +373,8 @@
               <div class="col-md-4">
                   <select class="form-control" id="stream" name="stream">
                     <option value="<None>">Please select ...</option>
-                    {% for group in groups %}
-                    <option value="{{ group.id }}">{{ group.id }}</option>
+                    {% for date, group in group_tuples %}
+                    <option value="{{ group.id }}">{{ group.id }} ({{ date}})</option>
                     {% endfor %}
                   </select>
               </div>
