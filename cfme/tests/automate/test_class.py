@@ -55,6 +55,7 @@ def test_class_crud(namespace):
 
 
 @pytest.mark.tier(2)
+@pytest.mark.meta(blockers=[1404788])
 def test_schema_crud(request, namespace):
     a_class = namespace.classes.create(
         name=fauxfactory.gen_alphanumeric(),
