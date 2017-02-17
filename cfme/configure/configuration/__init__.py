@@ -20,6 +20,7 @@ from cfme.web_ui import (
 from cfme.web_ui.form_buttons import change_stored_password
 from utils.appliance import Navigatable, current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.base.ui import ConfigurationView
 from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
@@ -250,6 +251,7 @@ class AnalysisProfile(Pretty, Updateable, Navigatable):
 
 @navigator.register(AnalysisProfile, 'All')
 class AnalysisProfileAll(CFMENavigateStep):
+    VIEW = ConfigurationView
     prerequisite = NavigateToObject(Server, 'Configuration')
 
     def step(self):
@@ -273,7 +275,7 @@ class AnalysisProfileDetails(CFMENavigateStep):
     def step(self):
         server_region = store.current_appliance.server_region_string()
         self.prerequisite_view.accordions.settings.tree.click_path(
-            server_region, "Analysis Profiles", str(self))
+            server_region, "Analysis Profiles", str(self.obj))
 
 
 @navigator.register(AnalysisProfile, 'Edit')
