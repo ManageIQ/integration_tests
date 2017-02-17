@@ -276,6 +276,6 @@ def test_raw_metric_host_disk(metrics_collection, db, provider):
         host_name)
 
     for record in query:
-        if record.disk_usage_rate_average is None:
+        if record.disk_usage_rate_average is not None:
             assert record.disk_usage_rate_average > 0, 'Zero Host Disk IO'
             break
