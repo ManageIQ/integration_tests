@@ -272,13 +272,8 @@ class BrowserManager(object):
         try:
             self.browser.current_url
         except UnexpectedAlertPresentException:
-            # Try to handle an open alert, restart the browser if possible
-            log.info("browser hangs on alert, dismissing")
-            try:
-                self.browser.switch_to_alert().dismiss()
-            except:
-                log.exception("browser died on alert")
-                return False
+            # We shouldn't think that an Unexpected alert means the browser is dead
+            return True
         except Exception:
             log.exception("browser in unknown state, considering dead")
             return False
