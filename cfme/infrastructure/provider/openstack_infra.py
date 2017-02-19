@@ -1,4 +1,6 @@
-from utils.appliance.implementations.ui import navigate_to
+from navmazing import NavigateToSibling
+from utils.appliance.implementations.ui import (navigate_to, CFMENavigateStep,
+                                                navigator)
 from cfme.web_ui import Form, FileInput, InfoBlock, fill
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Region
@@ -53,8 +55,7 @@ class OpenstackInfraProvider(InfraProvider):
             })
         return data_dict
 
-    @staticmethod
-    def has_nodes():
+    def has_nodes(self):
         try:
             details_page.infoblock.text("Relationships", "Hosts")
             return False
@@ -119,10 +120,10 @@ class OpenstackInfraProvider(InfraProvider):
         for db_node in query.all():
             return db_node.hosts.name == str(node_uuid.uuid)
 
-    def load_all_provider_nodes(self):
-        self.load_details()
-        if not self.has_nodes():
-            return False
-        else:
-            sel.click(details_page.infoblock.element('Relationships', 'Nodes'))
-            return True
+
+@navigator.register(OpenstackInfraProvider, 'ProviderNodes')
+class ProviderNodes(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element("Relationships", "Nodes"))

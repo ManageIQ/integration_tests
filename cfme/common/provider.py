@@ -6,17 +6,16 @@ from functools import partial
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
-    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException
-)
-from cfme.web_ui import breadcrumbs_names, summary_title, InfoBlock
-from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, Form, Input, Radio
+    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty,
+    FlashMessageException)
+from cfme.web_ui import breadcrumbs_names, summary_title
+from cfme.web_ui import (flash, Quadicon, CheckboxTree, Region, fill, FileInput,
+                         Form, Input, Radio)
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
-from navmazing import NavigateToSibling
 from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to, CFMENavigateStep, \
-    navigator
+from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.log import logger
@@ -775,11 +774,3 @@ def import_all_modules_of(loc):
     path = project_path.join('{}'.format(loc.replace('.', '/'))).strpath
     for _, name, _ in pkgutil.iter_modules([path]):
         importlib.import_module('{}.{}'.format(loc, name))
-
-
-@navigator.register(CloudInfraProvider, 'ProviderNodes')
-class ProviderNodes(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Details')
-
-    def step(self):
-        sel.click(InfoBlock.element("Relationships", "Nodes"))

@@ -236,7 +236,9 @@ class Host(Updateable, Pretty, Navigatable):
         sel.handle_alert()
 
     def get_power_state(self):
-        return self.get_detail("Properties", "Power State")
+        return self.get_detail('Properties', 'Power State')
+        # return str(find_quadicon(self.name, do_not_navigate=True).state)
+        # return state.split()[1]
 
     def refresh(self, cancel=False):
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
