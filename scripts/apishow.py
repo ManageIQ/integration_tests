@@ -8,12 +8,14 @@ Optionally it can add coverage info taken from cfme log file to each action.
 from __future__ import print_function
 
 import argparse
+import os
 import random
 import re
 import warnings
 
 from collections import namedtuple
 from utils import conf
+from utils.path import log_path
 from manageiq_client.api import ManageIQClient as MiqApi
 
 
@@ -205,12 +207,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--address',
         default=conf.env.get('base_url', None),
-        help="hostname or ip address of target appliance")
+        help="hostname or ip address of target appliance, "
+             "default pulled from local environment conf")
     parser.add_argument(
         '--logfile',
         metavar='FILE',
-        default=None,
-        help="path to cfme log file")
+        default=os.path.join(log_path.strpath, 'cfme.log'),
+        help="path to cfme log file, default: %(default)s")
     args = parser.parse_args()
 
     # we are really not interested in any warnings and "warnings.simplefilter('ignore')"
@@ -218,9 +221,8 @@ if __name__ == '__main__':
     warnings.showwarning = lambda *args, **kwargs: None
 
     api = MiqApi(
-        '{}/api'.format(
-            args.address if not args.address.endswith('/') else re.sub(r'/+$', '', args.address)),
-        ('admin', 'smartvm'),
+        '{}/api'.format(args.address.rstrip('/')),
+        (conf.credentials['default']['username'], conf.credentials['default']['password']),
         verify_ssl=False)
 
     print("Appliance IP: {}".format(args.address))
@@ -229,7 +231,7 @@ if __name__ == '__main__':
 
     get_collections_info(api, store)
 
-    if args.logfile:
+    if os.path.isfile(args.logfile):
         get_coverage(args.logfile, store)
 
     print_info(store)
