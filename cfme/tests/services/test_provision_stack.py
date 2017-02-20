@@ -34,7 +34,7 @@ pytest_generate_tests = testgen.generate(
 
 
 @pytest.yield_fixture(scope="function")
-def template(provider, provisioning, dialog_name):
+def template(provider, provisioning, dialog_name, setup_provider):
     template_type = provisioning['stack_provisioning']['template_type']
     template_name = fauxfactory.gen_alphanumeric()
     template = OrchestrationTemplate(template_type=template_type,
