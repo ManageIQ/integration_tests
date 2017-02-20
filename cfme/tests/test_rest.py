@@ -3,8 +3,10 @@
 import pytest
 import fauxfactory
 import utils.error as error
+import multiprocessing as mp
 
 from manageiq_client.api import APIException
+from manageiq_client.api import ManageIQClient as MiqApi
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -584,3 +586,38 @@ class TestRequestsRESTAPI(object):
         for request in pending_requests:
             request.reload()
             assert request.options['arbitrary_key_allowed'] == 'test_rest'
+
+    @pytest.mark.uncollectif(lambda: current_version() < '5.7')
+    def test_create_automation_requests_parallel(self, rest_api):
+        """Create automation requests in parallel.
+        Metadata:
+            test_flag: rest
+        """
+        output = mp.Queue()
+        entry_point = rest_api._entry_point
+        auth = rest_api._auth
+
+        def _gen_automation_requests(output):
+            api = MiqApi(entry_point, auth, verify_ssl=False)
+            requests_data = automation_requests_data(
+                'nonexistent_vm', requests_collection=True, approve=False)
+            api.collections.requests.action.create(*requests_data[:2])
+            result = (api.response.status_code, api.response.json())
+            output.put(result)
+
+        processes = [
+            mp.Process(target=_gen_automation_requests, args=(output,))
+            for _ in range(4)]
+
+        for proc in processes:
+            proc.start()
+
+        # wait for all processes to finish
+        for proc in processes:
+            proc.join()
+
+        for proc in processes:
+            status, response = output.get()
+            assert status == 200
+            for result in response['results']:
+                assert result['request_type'] == 'automation'
