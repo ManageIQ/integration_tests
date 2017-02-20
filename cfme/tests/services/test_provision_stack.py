@@ -112,7 +112,14 @@ def prepare_stack_data(provider, provisioning):
             'os_type': os_type,
             'vm_size': vm_size
         }
-        return stack_data
+    elif provider.type == 'openstack':
+        stack_prov = provisioning['stack_provisioning']
+
+        stack_data = {
+            'stack_name': stackname,
+            'key': stack_prov['key_name'],
+            'flavor': stack_prov['instance_type'],
+        }
     else:
         stack_prov = provisioning['stack_provisioning']
 
@@ -123,7 +130,7 @@ def prepare_stack_data(provider, provisioning):
             'select_instance_type': stack_prov['instance_type'],
             'ssh_location': provisioning['ssh_location']
         }
-        return stack_data
+    return stack_data
 
 
 def test_provision_stack(setup_provider, provider, provisioning, catalog, catalog_item, request):

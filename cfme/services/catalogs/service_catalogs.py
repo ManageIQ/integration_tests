@@ -35,7 +35,13 @@ stack_form = Form(
         ('user_image', Select("//select[@id='param_userImageName']")),
         ('os_type', Select("//select[@id='param_operatingSystemType']")),
         ('key_name', Input("param_KeyName")),
-        ('ssh_location', Input("param_SSHLocation"))
+        ('ssh_location', Input("param_SSHLocation")),
+
+        # OpenStack
+        ('flavor', Input("param_flavor")),
+        ('image', Input("param_image")),
+        ('key', Input('param_key')),
+        ('private_network', Input('param_private_network'))
     ])
 
 dialog_form = Form(
