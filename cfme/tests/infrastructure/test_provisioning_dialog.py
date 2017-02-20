@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 import fauxfactory
 import pytest
 from cfme import test_requirements
-from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
@@ -33,6 +32,13 @@ pytestmark = [
     ]),
     pytest.mark.tier(3)
 ]
+
+
+def remove_vm(provider, vm_name):
+    if provider.mgmt.does_vm_exist(vm_name):
+        if provider.mgmt.is_vm_running(vm_name):
+            provider.mgmt.stop_vm(vm_name)
+        provider.mgmt.delete_vm(vm_name)
 
 
 pytest_generate_tests = testgen.generate([InfraProvider], required_fields=[
@@ -83,7 +89,7 @@ def provisioner(request, setup_provider, provider, vm_name):
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         flash.assert_no_errors()
 
-        request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+        request.addfinalizer(lambda: remove_vm(vm_name, provider))
         if delayed is not None:
             total_seconds = (delayed - datetime.utcnow()).total_seconds()
             row_description = 'Provision from [{}] to [{}]'.format(template, vm_name)
