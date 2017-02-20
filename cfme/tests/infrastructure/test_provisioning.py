@@ -41,6 +41,9 @@ def vm_name():
 
 
 @pytest.mark.tier(1)
+@pytest.mark.skipif(lambda provider:
+                    provider.type == 'virtualcenter' and BZ('1422953', forced_streams='5.7').blocks,
+                    reason="Affected by 1422953, cannot test for VMware")
 def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_provider, provider,
         vm_name, smtp_test, request, provisioning):
     """ Tests provisioning from a template
@@ -85,6 +88,9 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_prov
                        num_sec=900)
 
 
+@pytest.mark.skipif(lambda provider:
+                    provider.type == 'virtualcenter' and BZ('1422953', forced_streams='5.7').blocks,
+                    reason="Affected by 1422953, cannot test for VMware")
 @pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
 def test_provision_approval(
         setup_provider, provider, vm_name, smtp_test, request, edit, provisioning):
