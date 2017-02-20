@@ -5,7 +5,6 @@
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from multimethods import singledispatch
-from widgetastic.utils import VersionPick
 
 from utils.wait import wait_for, TimedOutError
 from utils import version
@@ -37,10 +36,10 @@ def _expressions_root():
 # Buttons container
 buttons = Region(
     locators=dict(
-        commit=VersionPick(
+        commit=version.pick(
             {version.LOWEST: "//img[@alt='Commit expression element changes']",
              '5.7': "//button[@title='Commit expression element changes']"}),
-        discard=VersionPick(
+        discard=version.pick(
             {version.LOWEST: "//img[@alt='Discard expression element changes']",
              '5.7': "//button[@title='Discard expression element changes']"}),
         remove="//span[not(contains(@style, 'none'))]//img[@alt='Remove this expression element']",
