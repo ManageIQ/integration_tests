@@ -4,7 +4,7 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 from widgetastic_manageiq import ManageIQTree
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
     FlashMessages, BootstrapSelect, Tab)
-from widgetastic.widget import View, Table
+from widgetastic.widget import View, Table, Text
 
 from cfme import BaseLoggedInPage
 from cfme.dashboard import DashboardView
@@ -62,6 +62,7 @@ class LoggedIn(CFMENavigateStep):
 
 class ConfigurationView(BaseLoggedInPage):
     flash = FlashMessages('.//div[starts-with(@id, "flash_text_div")]')
+    title = Text('#explorer_title_text')
 
     @View.nested
     class accordions(View):  # noqa
@@ -171,7 +172,7 @@ class Dashboard(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self):
-        self.view.navigation.select('Cloud Intel', 'Dashboard')
+        self.prerequisite_view.navigation.select('Cloud Intel', 'Dashboard')
 
 
 @navigator.register(Server)
@@ -180,7 +181,7 @@ class Chargeback(CFMENavigateStep):
     prerequisite = NavigateToSibling('LoggedIn')
 
     def step(self, *args, **kwargs):
-        self.view.navigation.select('Cloud Intel', 'Chargeback')
+        self.prerequisite_view.navigation.select('Cloud Intel', 'Chargeback')
 
 
 class ServerView(ConfigurationView):
@@ -204,6 +205,15 @@ class ServerView(ConfigurationView):
     class advanced(Tab):  # noqa
         TAB_NAME = "Advanced"
 
+    @property
+    def is_displayed(self):
+        return self.view.accordions.settings.tree.currently_selected == [
+            self.context['object'].zone.region.settings_string,
+            "Zones",
+            "Zone: {} (current)".format(self.context['object'].zone.description),
+            "Server: {} [{}] (current)".format(self.context['object'].name,
+                self.context['object'].sid)]
+
 
 @navigator.register(Server)
 class Details(CFMENavigateStep):
@@ -211,7 +221,7 @@ class Details(CFMENavigateStep):
     prerequisite = NavigateToSibling('Configuration')
 
     def step(self):
-        self.view.accordions.settings.tree.click_path(
+        self.prerequisite_view.accordions.settings.tree.click_path(
             self.obj.zone.region.settings_string,
             "Zones",
             "Zone: {} (current)".format(self.obj.zone.description),
@@ -224,8 +234,12 @@ class ServerDetails(CFMENavigateStep):
     VIEW = ServerView
     prerequisite = NavigateToSibling('Details')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.server.is_displayed and self.view.server.is_active)
+
     def step(self):
-        self.view.server.select()
+        self.prerequisite_view.server.select()
 
 
 @navigator.register(Server)
@@ -233,8 +247,13 @@ class Authentication(CFMENavigateStep):
     VIEW = ServerView
     prerequisite = NavigateToSibling('Details')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.authentication.is_displayed and
+            self.view.authentication.is_active)
+
     def step(self):
-        self.view.authentication.select()
+        self.prerequisite_view.authentication.select()
 
 
 @navigator.register(Server)
@@ -242,8 +261,13 @@ class Workers(CFMENavigateStep):
     VIEW = ServerView
     prerequisite = NavigateToSibling('Details')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.workers.is_displayed and
+            self.view.workers.is_active)
+
     def step(self):
-        self.view.workers.select()
+        self.prerequisite_view.workers.select()
 
 
 @navigator.register(Server)
@@ -251,8 +275,13 @@ class CustomLogos(CFMENavigateStep):
     VIEW = ServerView
     prerequisite = NavigateToSibling('Details')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.custom_logos.is_displayed and
+            self.view.custom_logos.is_active)
+
     def step(self):
-        self.view.customlogos.select()
+        self.prerequisite_view.customlogos.select()
 
 
 @navigator.register(Server)
@@ -260,8 +289,13 @@ class Advanced(CFMENavigateStep):
     VIEW = ServerView
     prerequisite = NavigateToSibling('Details')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.advanced.is_displayed and
+            self.view.advanced.is_active)
+
     def step(self):
-        self.view.advanced.select()
+        self.prerequisite_view.advanced.select()
 
 
 class ServerDiagnosticsView(ConfigurationView):
@@ -299,6 +333,14 @@ class ServerDiagnosticsView(ConfigurationView):
 
     configuration = Dropdown('Configuration')
 
+    @property
+    def is_displayed(self):
+        return self.prerequisite_view.accordions.diagnostics.tree.currently_selected == [
+            self.context['object'].zone.region.settings_string,
+            "Zone: {} (current)".format(self.context['object'].zone.description),
+            "Server: {} [{}] (current)".format(
+                self.context['object'].name, self.context['object'].sid)]
+
 
 @navigator.register(Server)
 class Diagnostics(CFMENavigateStep):
@@ -306,7 +348,7 @@ class Diagnostics(CFMENavigateStep):
     prerequisite = NavigateToSibling('Configuration')
 
     def step(self):
-        self.view.accordions.diagnostics.tree.click_path(
+        self.prerequisite_view.accordions.diagnostics.tree.click_path(
             self.obj.zone.region.settings_string,
             "Zone: {} (current)".format(self.obj.zone.description),
             "Server: {} [{}] (current)".format(
@@ -318,8 +360,13 @@ class DiagnosticsDetails(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.summary.is_displayed and
+            self.view.summary.is_active)
+
     def step(self):
-        self.view.summary.select()
+        self.prerequisite_view.summary.select()
 
 
 @navigator.register(Server)
@@ -327,12 +374,24 @@ class DiagnosticsWorkers(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.workers.is_displayed and
+            self.view.workers.is_active)
+
     def step(self):
-        self.view.workers.select()
+        self.prerequisite_view.workers.select()
 
 
 class DiagnosticsCollectLogsView(ServerDiagnosticsView):
     edit = Button(title="Edit the Log Depot settings for the selected Server")
+
+    @property
+    def is_displayed(self):
+        return (
+            super(DiagnosticsCollectLogsView, self).is_displayed and
+            self.view.collectlogs.is_displayed and
+            self.view.collectlogs.is_active)
 
 
 @navigator.register(Server)
@@ -341,22 +400,35 @@ class DiagnosticsCollectLogs(CFMENavigateStep):
     prerequisite = NavigateToSibling('Diagnostics')
 
     def step(self):
-        self.view.collectlogs.select()
+        self.prerequisite_view.collectlogs.select()
+
+
+class DiagnosticsCollectLogsEdit(DiagnosticsCollectLogsView):
+    protocol = BootstrapSelect('log_protocol')
+
+    @property
+    def is_displayed(self):
+        return super(DiagnosticsCollectLogsEdit, self).is_displayed and self.protocol.is_displayed
 
 
 @navigator.register(Server)
 class DiagnosticsCollectLogsEdit(CFMENavigateStep):
-    VIEW = DiagnosticsCollectLogsView
+    VIEW = DiagnosticsCollectLogsEdit
     prerequisite = NavigateToSibling('DiagnosticsCollectLogs')
 
     def step(self):
-        self.view.edit.click()
+        self.prerequisite_view.edit.click()
 
 
 @navigator.register(Server)
 class CFMELog(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.cfmelog.is_displayed and
+            self.view.cfmelog.is_active)
 
     def step(self):
         self.view.cfmelog.select()
@@ -367,6 +439,11 @@ class AuditLog(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.auditlog.is_displayed and
+            self.view.auditlog.is_active)
+
     def step(self):
         self.view.auditlog.select()
 
@@ -375,6 +452,11 @@ class AuditLog(CFMENavigateStep):
 class ProductionLog(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.productionlog.is_displayed and
+            self.view.productionlog.is_active)
 
     def step(self):
         self.view.productionlog.select()
@@ -385,6 +467,11 @@ class Utilization(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.utilization.is_displayed and
+            self.view.utilization.is_active)
+
     def step(self):
         self.view.utilization.select()
 
@@ -393,6 +480,11 @@ class Utilization(CFMENavigateStep):
 class Timelines(CFMENavigateStep):
     VIEW = ServerDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return (
+            self.view.is_displayed and self.view.timelines.is_displayed and
+            self.view.timelines.is_active)
 
     def step(self):
         self.view.timelines.select()
@@ -421,6 +513,10 @@ class RegionView(ConfigurationView):
     class importtags(Tab):  # noqa
         TAB_NAME = "Import Tags"
 
+    @property
+    def is_displayed(self):
+        return self.accordions.settings.tree.currently_selected == [self.obj.settings_string]
+
 
 @navigator.register(Region, 'Details')
 class RegionDetails(CFMENavigateStep):
@@ -430,7 +526,7 @@ class RegionDetails(CFMENavigateStep):
     def step(self):
         # TODO: This string can now probably be built up with the relevant server, zone,
         # region objects
-        self.view.accordions.settings.tree.click_path(self.obj.settings_string)
+        self.prerequisite_view.accordions.settings.tree.click_path(self.obj.settings_string)
         self.view.details.select()
 
 
@@ -438,6 +534,9 @@ class RegionDetails(CFMENavigateStep):
 class CANDUCollection(CFMENavigateStep):
     VIEW = RegionView
     prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return False
 
     def step(self):
         self.view.canducollection.select()
@@ -448,6 +547,9 @@ class RedHatUpdates(CFMENavigateStep):
     VIEW = RegionView
     prerequisite = NavigateToSibling('Details')
 
+    def am_i_here(self):
+        return False
+
     def step(self):
         self.view.redhatupdates.select()
 
@@ -456,6 +558,9 @@ class RedHatUpdates(CFMENavigateStep):
 class ImportTags(CFMENavigateStep):
     VIEW = RegionView
     prerequisite = NavigateToSibling('Details')
+
+    def am_i_here(self):
+        return False
 
     def step(self):
         self.view.importtags.select()
@@ -466,17 +571,34 @@ class Import(CFMENavigateStep):
     VIEW = RegionView
     prerequisite = NavigateToSibling('Details')
 
+    def am_i_here(self):
+        return False
+
     def step(self):
         self.view.imports.select()
 
 
+class ZoneListView(ConfigurationView):
+    configuration = Dropdown('Configuration')
+    table = Table('//div[@id="settings_list"]/table')
+
+    @property
+    def is_displayed(self):
+        return (
+            self.accordions.settings.is_opened and
+            self.accordions.settings.tree.currently_selected == [
+                self.context['object'].settings_string, 'Zones'] and
+            self.title.text == 'Settings Zones')
+
+
 @navigator.register(Region, 'Zones')
 class RegionZones(CFMENavigateStep):
-    VIEW = ConfigurationView
+    VIEW = ZoneListView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.accordions.settings.tree.click_path(self.obj.settings_string, 'Zones')
+        self.prerequisite_view.accordions.settings.tree.click_path(
+            self.obj.settings_string, 'Zones')
 
 
 class RegionDiagnosticsView(ConfigurationView):
@@ -508,20 +630,31 @@ class RegionDiagnosticsView(ConfigurationView):
     class orphaneddata(Tab):  # noqa
         TAB_NAME = "Orphaned Data"
 
+    @property
+    def is_displayed(self):
+        return (
+            self.accordions.diagnostics.is_opened and
+            self.accordions.diagnostics.tree.currently_selected == [
+                self.context['object'].settings_string] and
+            self.title.text.startswith('Diagnostics Region '))
+
 
 @navigator.register(Region, 'Diagnostics')
 class RegionDiagnostics(CFMENavigateStep):
-    VIEW = ConfigurationView
+    VIEW = RegionDiagnosticsView
     prerequisite = NavigateToAttribute('appliance.server', 'Configuration')
 
     def step(self):
-        self.view.accordions.diagnostics.tree.click_path(self.obj.settings_string)
+        self.prerequisite_view.accordions.diagnostics.tree.click_path(self.obj.settings_string)
 
 
 @navigator.register(Region, 'DiagnosticsZones')
 class RegionDiagnosticsZones(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return False
 
     def step(self):
         self.view.zones.select()
@@ -532,6 +665,9 @@ class RegionDiagnosticsRolesByServers(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return False
+
     def step(self):
         self.view.rolesbyservers.select()
 
@@ -540,6 +676,9 @@ class RegionDiagnosticsRolesByServers(CFMENavigateStep):
 class RegionDiagnosticsReplication(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return False
 
     def step(self):
         if version.current_version() < '5.7':
@@ -553,6 +692,9 @@ class RegionDiagnosticsServersByRoles(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return False
+
     def step(self):
         self.view.serversbyroles.select()
 
@@ -561,6 +703,9 @@ class RegionDiagnosticsServersByRoles(CFMENavigateStep):
 class RegionDiagnosticsServers(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return False
 
     def step(self):
         self.view.servers.select()
@@ -571,6 +716,9 @@ class RegionDiagnosticsDatabase(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
 
+    def am_i_here(self):
+        return False
+
     def step(self):
         self.view.database.select()
 
@@ -579,6 +727,9 @@ class RegionDiagnosticsDatabase(CFMENavigateStep):
 class RegionDiagnosticsOrphanedData(CFMENavigateStep):
     VIEW = RegionDiagnosticsView
     prerequisite = NavigateToSibling('Diagnostics')
+
+    def am_i_here(self):
+        return False
 
     def step(self):
         self.view.orphaneddata.select()
@@ -602,14 +753,14 @@ class ZoneForm(ConfigurationView):
     cancel_button = Button('Cancel')
 
 
-class ZoneListView(ConfigurationView):
-    configuration = Dropdown('Configuration')
-    table = Table('//div[@id="settings_list"]/table')
-
-
 # Zone Details #
 class ZoneDetailsView(ConfigurationView):
     configuration = Dropdown('Configuration')
+
+    @property
+    def is_displayed(self):
+        return self.title.text.startswith(
+            'Settings Zone "{}"'.format(self.context['object'].description))
 
 
 @navigator.register(Zone, 'Details')
@@ -634,6 +785,10 @@ class ZoneDetails(CFMENavigateStep):
 class ZoneAddView(ZoneForm):
     add_button = Button('Add')
 
+    @property
+    def is_displayed(self):
+        return self.title.text == 'Adding a new Zone'
+
 
 @navigator.register(ZoneCollection, 'Add')
 class ZoneAdd(CFMENavigateStep):
@@ -648,6 +803,10 @@ class ZoneAdd(CFMENavigateStep):
 # Zone Edit #
 class ZoneEditView(ZoneForm):
     save_button = Button('Save')
+
+    @property
+    def is_displayed(self):
+        return self.title.text == 'Editing Zone "{}"'.format(self.context['object'].description)
 
 
 @navigator.register(Zone, 'Edit')

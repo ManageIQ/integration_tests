@@ -23,6 +23,7 @@ def test_server_name():
     settings_pg = BasicInformation(appliance_name=new_server_name)
     settings_pg.update()
     flash.assert_message_contain(flash_msg.format(new_server_name))
+    current_appliance.server.name = new_server_name
     # CFME updates about box only after any navigation BZ(1408681)
     navigate_to(current_appliance.server, 'Dashboard')
 
@@ -42,5 +43,6 @@ def test_server_name():
     settings_pg = BasicInformation(appliance_name=old_server_name)
     settings_pg.update()
     flash.assert_message_contain(flash_msg.format(old_server_name))
+    current_appliance.server.name = old_server_name
 
     clear_property_cache(store.current_appliance, 'configuration_details')
