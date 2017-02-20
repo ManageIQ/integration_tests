@@ -440,6 +440,7 @@ class IPAppliance(object):
         return list(ip_addresses)
 
     def _list_ems(self):
+        self.db.session.expire_all()
         ems_table = self.db["ext_management_systems"]
         # Fetch all providers at once, return empty list otherwise
         try:
@@ -452,8 +453,6 @@ class IPAppliance(object):
             # Skip any EMS types that we don't care about / can't recognize safely
             if not any(p_type in ems.type for p_type in RECOGNIZED_BY_IP + RECOGNIZED_BY_CREDS):
                 continue
-            # Make sure we load current data from the DB
-            self.db.session.expire(ems)
             known_ems_list.append(ems)
         return known_ems_list
 
