@@ -2,7 +2,6 @@ import pytest
 from itertools import combinations
 
 from utils import testgen
-from utils.appliance import current_appliance
 from utils.providers import get_crud
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider import discover, InfraProvider
@@ -107,11 +106,18 @@ def test_discover_infra(providers_for_discover, start_ip, max_range):
     @pytest.wait_for(num_sec=count_timeout(start_ip, max_range), delay=5)
     def _wait_for_all_providers():
         for provider in providers_for_discover:
-            if not provider.exists:
+            # When the provider is discovered, its name won't match what would be expected from
+            # the crud objects generated from yaml data. The name in CFME will contain an IP
+            # which should uniquely identify the resource
+            if [name for name in provider.appliance.managed_provider_names
+                    if provider.ip_address in name]:
+                # provider IP matched an appliance provider
+                continue
+            else:
                 return False
-        if len(current_appliance.managed_providers) != len(providers_for_discover):
-            return False
-        return True
+        else:
+            # all provider IPs found in the provider names
+            return True
 
 
 def count_timeout(start_ip, max_range):
