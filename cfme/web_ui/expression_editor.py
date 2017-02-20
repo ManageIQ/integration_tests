@@ -6,6 +6,7 @@ from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from multimethods import singledispatch
 from utils.wait import wait_for, TimedOutError
+from utils import version, deferred_verpick
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Anything, Calendar, Form, Input, Region, AngularSelect, fill
 import re
@@ -34,8 +35,12 @@ def _expressions_root():
 # Buttons container
 buttons = Region(
     locators=dict(
-        commit="//button[@title='Commit expression element changes']",
-        discard="//button[@title='Discard expression element changes']",
+        commit=deferred_verpick(
+            {version.LOWEST: "//img[@alt='Commit expression element changes']",
+             '5.7': "//button[@title='Commit expression element changes']"}),
+        discard=deferred_verpick(
+            {version.LOWEST: "//img[@alt='Discard expression element changes']",
+             '5.7': "//button[@title='Discard expression element changes']"}),
         remove="//span[not(contains(@style, 'none'))]//img[@alt='Remove this expression element']",
         NOT="//span[not(contains(@style, 'none'))]" +
             "//img[@alt='Wrap this expression element with a NOT']",
