@@ -20,8 +20,9 @@ match_page = partial(match_location, controller='container_image',
 
 class Image(Taggable, SummaryMixin, Navigatable):
 
-    def __init__(self, name, provider, appliance=None):
+    def __init__(self, name, tag, provider, appliance=None):
         self.name = name
+        self.tag = tag
         self.provider = provider
         Navigatable.__init__(self, appliance=appliance)
 
@@ -63,4 +64,5 @@ class Details(CFMENavigateStep):
 
     def step(self):
         tb.select('List View')
-        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name}))
+        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name,
+                                                           'Tag': self.obj.tag}))

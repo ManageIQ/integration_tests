@@ -8,7 +8,7 @@ from widgetastic_manageiq import (
 from widgetastic_patternfly import Dropdown
 
 from cfme import BaseLoggedInPage
-from cfme.common import Taggable
+from cfme.common import Taggable, SummaryMixin
 from cfme.containers.provider import ContainersProvider
 from cfme.exceptions import NodeNotFound
 from cfme.fixtures import pytest_selenium as sel
@@ -88,7 +88,7 @@ class All(CFMENavigateStep):
         tb.select("List View")
 
 
-class Node(Taggable, Navigatable):
+class Node(Taggable, SummaryMixin, Navigatable):
     def __init__(self, name, provider, collection=None, appliance=None):
         self.name = name
         self.provider = provider
@@ -97,13 +97,18 @@ class Node(Taggable, Navigatable):
         self.collection = collection
         Navigatable.__init__(self, appliance=appliance)
 
+    def load_details(self, refresh=False):
+        navigate_to(self, 'Details')
+        if refresh:
+            tb.refresh()
+
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
         Args:
             *ident: Table name and Key name, e.g. "Relationships", "Images"
         Returns: A string representing the contents of the summary's value.
         """
-        navigate_to(self, 'Details')
+        self.load_details()
         return InfoBlock.text(*ident)
 
 

@@ -4,6 +4,7 @@ import pytest
 
 from utils import testgen
 from utils.version import current_version
+from utils.soft_get import soft_get
 from mgmtsystem.utils import eval_strings
 
 from cfme.containers.container import Container
@@ -36,6 +37,19 @@ Expected results:
 """
 
 
+def get_item_if_exist(dict_, *keys):
+    """Trying to get fields in the dict 'dict_',
+    if getting KeyError, return ''
+    """
+    out = dict_
+    try:
+        for key in keys:
+            out = out[key]
+        return out
+    except KeyError:
+        return ''
+
+
 def api_get_project_properties(provider):
     out = {}
     for item in provider.mgmt.api.get('namespace')[1]['items']:
@@ -53,14 +67,15 @@ def api_get_image_properties(provider):
         name = item['dockerImageMetadata']['Config']['Labels']['Name']
         out[name] = {
             'name': name,
+            'tag': (item['dockerImageReference'].split(':')[-1]
+                    if ':' in item['dockerImageReference'] else ''),
             'full_name': item['dockerImageReference'],
             'architecture': item['dockerImageMetadata']['Architecture'],
             'docker_version': item['dockerImageMetadata']['DockerVersion'],
             'size': item['dockerImageMetadata']['Size'],
-            'author': (item['dockerImageMetadata']['Author']
-                if 'Author' in item['dockerImageMetadata'] else ''),
-            'entrypoint': (item['dockerImageMetadata']['Config']['Entrypoint'][-1]
-                if 'Entrypoint' in item['dockerImageMetadata']['Config'] else '')
+            'author': get_item_if_exist(item, 'dockerImageMetadata', 'Author'),
+            'entrypoint': get_item_if_exist(item, 'dockerImageMetadata',
+                                            'Config', 'Entrypoint', -1)
         }
     return out
 
@@ -85,10 +100,9 @@ def api_get_pod_properties(provider):
             'creation_timestamp': item['metadata']['creationTimestamp'],
             'resource_version': item['metadata']['resourceVersion'],
             'phase': item['status']['phase'],
-            'restart_policy': item['spec']['restartPolicy'],
-            'dns_policy': item['spec']['dnsPolicy'],
-            'ip_address': (item['status']['podIP']
-                           if 'podIP' in item['status'] else '')
+            'restart_policy': get_item_if_exist(item, 'spec', 'restartPolicy'),
+            'dns_policy': get_item_if_exist(item, 'spec', 'dnsPolicy'),
+            'ip_address': get_item_if_exist(item, 'status', 'podIP')
         }
     return out
 
@@ -105,11 +119,9 @@ def api_get_container_properties(provider):
                     'selinux_level':
                         ''.join(cnt['securityContext']['seLinuxOptions']['level']),
                     'drop_capabilities':
-                        ','.join(cnt['securityContext']['capabilities']['drop'])
+                        ','.join(cnt['securityContext']['capabilities']['drop']),
+                    'run_as_user': get_item_if_exist(cnt, 'securityContext', 'runAsUser')
                 }
-                if 'runAsUser' in cnt['securityContext']:
-                    out[cnt['name']]['run_as_user'] =\
-                        cnt['securityContext']['runAsUser']
     return out
 
 
@@ -123,10 +135,14 @@ def api_get_node_properties(provider):
             'max_pods_capacity': item['status']['capacity']['pods'],
             'system_bios_uuid': item['status']['nodeInfo']['systemUUID'],
             'machine_id': item['status']['nodeInfo']['machineID'],
-            'container_runtime_version': item['status']['nodeInfo']['containerRuntimeVersion'],
-            'kubernetes_kubelet_version': item['status']['nodeInfo']['kubeletVersion'],
-            'proxy_version': item['status']['nodeInfo']['kubeProxyVersion'],
-            'kernel_version': item['status']['nodeInfo']['kernelVersion']
+            'runtime_version':
+                get_item_if_exist(item, 'status', 'nodeInfo', 'containerRuntimeVersion'),
+            'kubelet_version':
+                get_item_if_exist(item, 'status', 'nodeInfo', 'kubeletVersion'),
+            'proxy_version':
+                get_item_if_exist(item, 'status', 'nodeInfo', 'kubeProxyVersion'),
+            'kernel_version':
+                get_item_if_exist(item, 'status', 'nodeInfo', 'kernelVersion')
         }
     return out
 
@@ -139,8 +155,8 @@ def api_get_service_properties(provider):
             'creation_timestamp': item['metadata']['creationTimestamp'],
             'resource_version': item['metadata']['resourceVersion'],
             'session_affinity': item['spec']['sessionAffinity'],
-            'type': item['spec']['type'],
-            'portal_ip': item['spec']['portalIP']
+            'type': get_item_if_exist(item, 'spec', 'type'),
+            'portal_ip': get_item_if_exist(item, 'spec', 'portalIP')
         }
     return out
 
@@ -185,17 +201,26 @@ def test_properties(provider, dataset):
 
     errors = []
     for obj_name in object_names:
-        instance = dataset.obj(obj_name, (props_api[obj_name].pop('pod_name')
-                                      if dataset.obj is Container else provider))
+
+        if dataset.obj is Container:
+            instance = dataset.obj(obj_name, props_api[obj_name].pop('pod_name'))
+        elif dataset.obj is Image:
+            instance = dataset.obj(obj_name, props_api[obj_name]['tag'], provider)
+        else:
+            instance = dataset.obj(obj_name, provider)
+
+        instance.summary.reload()
         props_ui = instance.summary.properties
         for field in props_api[obj_name].keys():
 
-            if not hasattr(props_ui, field):
+            try:
+                row = soft_get(props_ui, field)
+            except AttributeError:
                 errors.append('Missing field in {}({}) properties table: {}'
                               .format(dataset.obj.__name__, obj_name, field))
+                continue
 
-            ui_val, api_val = eval_strings([getattr(props_ui, field).value,
-                                            props_api[obj_name][field]])
+            ui_val, api_val = eval_strings([row.value, props_api[obj_name][field]])
 
             if api_val != ui_val:
                 errors.append('Data integrity error: '
