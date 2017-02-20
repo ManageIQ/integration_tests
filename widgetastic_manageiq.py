@@ -1228,7 +1228,7 @@ class UpDownSelect(View):
 
     def move_top(self, item):
         item = str(item)
-        assert item in self.items()
+        assert item in self.items
         self.select.deselect_all()
         while item != self.items[0]:
             self.select.select_by_visible_text(item)
@@ -1236,9 +1236,9 @@ class UpDownSelect(View):
 
     def move_bottom(self, item):
         item = str(item)
-        assert item in self.items()
+        assert item in self.items
         self.select.deselect_all()
-        while item != self.items()[-1]:
+        while item != self.items[-1]:
             self.select.select_by_visible_text(item)
             self.down.click()
 

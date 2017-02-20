@@ -146,7 +146,6 @@ def test_priority(
         .namespaces.instantiate(name='System')\
         .classes.instantiate(name='Request')\
         .methods.instantiate(name=original_method.name)
-    request.addfinalizer(copied_method.delete_if_exists)
     # Set up a different thing to write to the file
     with update(copied_method):
         copied_method.script = METHOD_TORSO.format(copy_method_write_data)
