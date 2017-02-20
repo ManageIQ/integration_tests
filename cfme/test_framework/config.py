@@ -5,6 +5,7 @@ classes to manage the cfme test framework configuration
 import os
 import warnings
 import yaycl
+import attr
 
 
 class Configuration(object):
@@ -46,32 +47,36 @@ class Configuration(object):
         return getattr(self.yaycl_config, name)
 
 
+@attr.s
 class DeprecatedConfigWrapper(object):
     """
     a wrapper that provides the old :code:``utils.conf`` api
     """
-    def __init__(self, configuration):
-        self.configuration = configuration
+    configuration = attr.ib()
+    _warn = attr.ib(default=False)
 
     def __getattr__(self, key):
-        warnings.warn(
-            'the configuration module {} will be deprecated'.format(key),
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
+        if self._warn:
+            warnings.warn(
+                'the configuration module {} will be deprecated'.format(key),
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
         return self.configuration.get_config(key)
 
     def __getitem__(self, key):
-        warnings.warn(
-            'the configuration module {} will be deprecated'.format(key),
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
+        if self._warn:
+            warnings.warn(
+                'the configuration module {} will be deprecated'.format(key),
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
         return self.configuration.get_config(key)
 
     def __delitem__(self, key):
         # used in bad logging
-        warnings.warn('clearing configuration is bad', stacklevel=2)
+        if self._warn:
+            warnings.warn('clearing configuration is bad', stacklevel=2)
 
         del self.configuration.yaycl_config[key]
 
