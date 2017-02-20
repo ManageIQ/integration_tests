@@ -42,7 +42,7 @@ def vm_obj(request, provider, setup_provider_modscope, small_template_modscope):
 def verify_vm_power_state(vm_obj, state, action=None):
     vm = vm_obj.get_vm_via_rest()
     if vm_obj.provider.one_of(GCEProvider, EC2Provider, SCVMMProvider):
-        num_sec = 2500  # extra time for slow providers
+        num_sec = 4000  # extra time for slow providers
     else:
         num_sec = 1000
     if action:
