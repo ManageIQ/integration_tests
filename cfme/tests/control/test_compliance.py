@@ -16,6 +16,7 @@ from fixtures.pytest_store import store
 from utils import testgen, version
 from utils.appliance import Appliance, ApplianceException, provision_appliance
 from utils.log import logger
+from utils.providers import setup_a_provider_by_class
 from utils.update import update
 from utils.wait import wait_for
 from urlparse import urlparse
@@ -23,12 +24,18 @@ from cfme import test_requirements
 
 PREFIX = "test_compliance_"
 
+
+@pytest.fixture(scope="module")
+def setup_a_provider():
+    setup_a_provider_by_class(InfraProvider)
+
 pytestmark = [
     # TODO: Problems with fleecing configuration - revisit later
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles=["+automate", "+smartstate", "+smartproxy"]),
     pytest.mark.uncollectif(lambda provider: provider.type in {"scvmm"}),
     pytest.mark.tier(3),
+    pytest.mark.usefixtures("setup_a_provider"),
     test_requirements.control
 ]
 
