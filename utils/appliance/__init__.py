@@ -502,6 +502,11 @@ class IPAppliance(object):
                 "Unrecognized managed providers: {}".format(','.join(unrecognized_ems_names)))
         return list(found_cruds)
 
+    @property
+    def managed_provider_names(self):
+        """Returns a list of names for all providers configured on the appliance"""
+        return [ems.name for ems in self._list_ems()]
+
     def check_no_conflicting_providers(self):
         """ Checks that there are no conflicting providers set up on the appliance
 
