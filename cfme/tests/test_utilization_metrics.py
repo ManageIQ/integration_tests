@@ -109,10 +109,12 @@ def metrics_collection(handle_provider, provider, enable_candu):
             metrics_tbl.resource_type == "VmOrTemplate"
         ).count()
 
-        if (host_count > last_host_count) and (last_host_count > 0):
-            host_rising = True
-        if (vm_count > last_vm_count) and (last_vm_count > 0):
-            vm_rising = True
+        if host_rising is not True:
+            if host_count > last_host_count:
+                host_rising = True
+        if vm_rising is not True:
+            if vm_count > last_vm_count:
+                vm_rising = True
 
         # only vms are collected for cloud
         if provider.category == "cloud" and vm_rising:
