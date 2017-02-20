@@ -124,7 +124,8 @@ class MiddlewareDomain(MiddlewareBase, Navigatable, Taggable):
         rows = provider.mgmt.inventory.list_domain()
         for row in rows:
             domains.append(MiddlewareDomain(
-                name=row.data['Local Host Name'],
+                name=row.data['Local Host Name']
+                if row.data['Local Host Name'] != 'master' else 'Unnamed Domain',
                 feed=row.path.feed_id,
                 product=row.data['Product Name']
                 if 'Product Name' in row.data else None,
