@@ -2,13 +2,10 @@
 """Page model for Cloud Intel / Reports / Reports"""
 from cached_property import cached_property
 from utils.pretty import Pretty
-<<<<<<< HEAD
-from cfme.exceptions import ItemNotFound
-=======
 from utils.update import Updateable
->>>>>>> Cloud Intel / Reports / Reports conversion to widgetastic
 from utils.appliance import Navigatable
 from navmazing import NavigateToAttribute
+from utils.appliance import get_or_create_current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from . import CloudIntelReportsView
 
@@ -22,7 +19,7 @@ class CustomReportFormCommon(CloudIntelReportsView):
     title = Text("#explorer_title_text")
 
     name = Input("name")
-    title = Input("title")
+    report_title = Input("title")
 
     @View.nested
     class columns(Tab):  # noqa
@@ -85,7 +82,9 @@ class NewCustomReportView(CustomReportFormCommon):
     def is_displayed(self):
         return (
             self.in_intel_reports and
-            self.title.text == "Adding a new Report"
+            self.reports.is_opened and
+            self.title.text == "Adding a new Report" and
+            self.reports.tree.currently_selected == ["All Reports"]
         )
 
 
@@ -96,7 +95,59 @@ class EditCustomReportView(CustomReportFormCommon):
     def is_displayed(self):
         return (
             self.in_intel_reports and
+            self.reports.is_opened and
+            self.reports.tree.currently_selected == [
+                "All Reports",
+                "My Company (All EVM Groups)",
+                "Custom",
+                self.context["object"].name
+            ] and
             self.title.text == 'Editing Report "{}"'.format(self.context["object"].name)
+        )
+
+
+class CustomReportDetailsView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.reports.is_opened and
+            self.reports.tree.currently_selected == [
+                "All Reports",
+                "My Company (All EVM Groups)",
+                "Custom",
+                self.context["object"].name
+            ] and
+            self.title.text == 'Report "{}"'.format(self.context["object"].name)
+        )
+
+
+class AllReportsView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.reports.is_opened and
+            self.reports.tree.currently_selected == ["All Reports"] and
+            self.title.text == "All Reports"
+        )
+
+
+class AllCustomReportsView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.reports.is_opened and
+            self.reports.tree.currently_selected == [
+                "All Reports",
+                "My Company (All EVM Groups)",
+                "Custom"
+            ] and
+            self.title == "Custom Reports"
         )
 
 
@@ -143,8 +194,11 @@ class CustomReport(Updateable, Navigatable):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            view = self.create_view(AllCustomReportsView)
-            assert view.is_displayed
+            # This check needs because after deleting the only one existing custom report
+            # whole "My Company (All EVM Groups)" branch in the tree will be removed
+            if len(get_all_custom_reports()) > 1:
+                view = self.create_view(AllCustomReportsView)
+                assert view.is_displayed
             view.flash.assert_no_error()
             view.flash.assert_message(
                 'Report "{}": Delete successful'.format(self.description))
@@ -154,6 +208,17 @@ class CustomReport(Updateable, Navigatable):
 
     def queue(self, wait_for_finish=False):
         pass
+
+
+def get_all_custom_reports():
+    appliance = get_or_create_current_appliance()
+    view = CloudIntelReportsView(appliance.browser.widgetastic)
+    node = view.reports.tree.expand_path([
+        "All Reports",
+        "My Company (All EVM Groups)",
+        "Custom"
+    ])
+    return view.reports.tree.child_items(node)
 
 
 class CustomSavedReport(Updateable, Pretty, Navigatable):
@@ -207,89 +272,35 @@ class CannedSavedReport(CustomSavedReport, Navigatable):
         pass
 
     def delete(self):
-<<<<<<< HEAD
-        navigate_to(self, 'Saved')
-        self.saved_table.select_row(header='Run At', value=self.datetime)
-        cfg_btn("Delete this Saved Report from the Database", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_no_errors()
-
-    @property
-    def exists(self):
-        try:
-            navigate_to(self, 'Saved')
-            return True
-        except ItemNotFound:
-            return False
-
-    def delete_if_exists(self):
-        if self.exists:
-            self.delete()
-
-
-@navigator.register(CannedSavedReport, 'Details')
-class CannedSavedDetails(CFMENavigateStep):
-    prerequisite = NavigateToObject(CustomReport, 'All')
-
-    def step(self):
-        accordion.tree(
-            "Reports", *(["All Reports"] + self.obj.path + [self.obj.datetime_in_tree]))
-
-
-@navigator.register(CannedSavedReport, 'Path')
-class CannedPath(CFMENavigateStep):
-    prerequisite = NavigateToObject(CustomReport, 'All')
-
-    def step(self):
-        accordion.tree("Reports", *(["All Reports"] + self.obj.path))
-
-
-@navigator.register(CannedSavedReport, 'Info')
-class CannedInfo(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Path')
-
-    def step(self):
-        tabstrip.select_tab("Report Info")
-
-
-@navigator.register(CannedSavedReport, 'Saved')
-class CannedSave(CFMENavigateStep):
-    prerequisite = NavigateToSibling('Path')
-
-    def step(self):
-        tabstrip.select_tab("Saved Reports")
-
-
-class SavedReportData(Pretty):
-    """This class stores data retrieved from saved report.
-
-    Args:
-        headers: Tuple with header columns.
-        body: List of tuples with body rows.
-    """
-    pretty_attrs = ['headers', 'body']
-
-    def __init__(self, headers, body):
-        self.headers = headers
-        self.body = body
-
-    @property
-    def rows(self):
-        for row in self.body:
-            yield dict(zip(self.headers, row))
-
-    def find_row(self, column, value):
-        if column not in self.headers:
-            return None
-        for row in self.rows:
-            if row[column] == value:
-                return row
-
-    def find_cell(self, column, value, cell):
-        try:
-            return self.find_row(column, value)[cell]
-        except TypeError:
-            return None
-=======
         pass
->>>>>>> Cloud Intel / Reports / Reports conversion to widgetastic
+
+
+@navigator.register(CustomReport, "Add")
+class CustomReportNew(CFMENavigateStep):
+    VIEW = NewCustomReportView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.reports.tree.click_path("All Reports")
+        self.view.configuration.item_select("Add a new Report")
+
+
+@navigator.register(CustomReport, "Edit")
+class CustomReportEdit(CFMENavigateStep):
+    VIEW = EditCustomReportView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.reports.tree.click_path(
+            "All Reports", "My Company (All EVM Groups)", "Custom", self.obj.description)
+        self.view.configuration.item_select("Edit this Report")
+
+
+@navigator.register(CustomReport, "Details")
+class CustomReportDetails(CFMENavigateStep):
+    VIEW = CustomReportDetailsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.reports.tree.click_path(
+            "All Reports", "My Company (All EVM Groups)", "Custom", self.obj.description)
