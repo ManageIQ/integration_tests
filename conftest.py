@@ -10,6 +10,7 @@ import pytest
 import requests
 
 from fixtures.artifactor_plugin import art_client, appliance_ip_address
+from cfme.configure import configuration
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
 from utils import ports
@@ -59,6 +60,16 @@ def pytest_sessionstart(session):
 @pytest.fixture(scope="session", autouse=True)
 def set_session_timeout():
     store.current_appliance.set_session_timeout(86400)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def ensure_websocket_role_disabled():
+    # TODO: This is a temporary solution until we find something better.
+    roles = configuration.get_server_roles()
+    if 'websocket' in roles and roles['websocket']:
+        logger.info('Disabling the websocket role to ensure we get no intrusive popups')
+        roles['websocket'] = False
+        configuration.set_server_roles(**roles)
 
 
 @pytest.fixture(scope="session", autouse=True)
