@@ -52,7 +52,7 @@ def schedule(request):
         name = data.pop("name")
         description = data.pop("description")
         yfilter = data.pop("filter")
-        if version.current_version() >= 5.6:
+        if '5.6' <= version.current_version() < '5.7.1.1':
             yfilter[2] += ' - Sample 1'
         return Schedule(name, description, yfilter, **data)
 
