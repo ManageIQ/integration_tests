@@ -69,8 +69,7 @@ product_assistance = Region(
 def get_detail(properties):
     navigate_to(current_appliance().server, 'About')
     if current_version() < '5.7':
-        if not isinstance(properties, (list, tuple)):
-            properties = [properties]
+        properties = ['Session Information', properties]
         return InfoBlock.text(*properties).encode(
             "utf-8").strip()
     else:
