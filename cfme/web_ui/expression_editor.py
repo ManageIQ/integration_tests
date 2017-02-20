@@ -36,12 +36,10 @@ def _expressions_root():
 # Buttons container
 buttons = Region(
     locators=dict(
-        commit=version.pick(
-            {version.LOWEST: "//img[@alt='Commit expression element changes']",
-             '5.7': "//button[@title='Commit expression element changes']"}),
-        discard=version.pick(
-            {version.LOWEST: "//img[@alt='Discard expression element changes']",
-             '5.7': "//button[@title='Discard expression element changes']"}),
+        commit={version.LOWEST: "//img[@alt='Commit expression element changes']",
+                '5.7': "//button[@title='Commit expression element changes']"},
+        discard={version.LOWEST: "//img[@alt='Discard expression element changes']",
+                 '5.7': "//button[@title='Discard expression element changes']"},
         remove="//span[not(contains(@style, 'none'))]//img[@alt='Remove this expression element']",
         NOT="//span[not(contains(@style, 'none'))]" +
             "//img[@alt='Wrap this expression element with a NOT']",
