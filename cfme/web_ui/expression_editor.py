@@ -34,8 +34,8 @@ def _expressions_root():
 # Buttons container
 buttons = Region(
     locators=dict(
-        commit="//img[@alt='Commit expression element changes']",
-        discard="//img[@alt='Discard expression element changes']",
+        commit="//button[@title='Commit expression element changes']",
+        discard="//button[@title='Discard expression element changes']",
         remove="//span[not(contains(@style, 'none'))]//img[@alt='Remove this expression element']",
         NOT="//span[not(contains(@style, 'none'))]" +
             "//img[@alt='Wrap this expression element with a NOT']",

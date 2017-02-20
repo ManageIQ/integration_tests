@@ -118,7 +118,7 @@ def test_filter_save_cancel(vms, subset_of_vms, expression_for_vms_subset):
         cancel=True
     )
     assert_no_cfme_exception()
-    with pytest.raises(pytest.sel.NoSuchElementException):
+    with pytest.raises(search.DisabledButtonException):
         search.load_filter(filter_name)  # does not exist
 
 
