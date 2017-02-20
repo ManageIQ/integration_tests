@@ -243,7 +243,6 @@ class BrowserManager(object):
             return cls(BrowserFactory(webdriver_class, browser_kwargs))
 
     def _browser_start_renew_thread(self):
-        assert self._browser_renew_thread is None
         log.debug('starting repeater')
         self._browser_renew_thread = threading.Thread(target=self._browser_renew_function)
         self._browser_renew_thread.daemon = True
