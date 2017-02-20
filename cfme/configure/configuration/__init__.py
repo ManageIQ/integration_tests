@@ -1622,7 +1622,7 @@ def restart_workers(name, wait_time_min=1):
     Returns: bool whether the restart succeeded.
     """
 
-    navigate_to(current_appliance.server, 'Workers')
+    navigate_to(current_appliance.server, 'DiagnosticsWorkers')
 
     def get_all_pids(worker_name):
         return {row.pid.text for row in records_table.rows() if worker_name in row.name.text}
