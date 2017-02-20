@@ -64,6 +64,7 @@ def simulate(**data):
     if data.get("attribute", None) is None:
         t = sel.text(sim_form.attribute[0].options[0]).encode("utf-8")  # None
         sel.select(sim_form.attribute[0], t)
-    fill(sim_form, data, action=sim_btn)
+    fill(sim_form, data)
+    sel.click(sim_btn)
     flash.assert_message_match("Automation Simulation has been run")
     flash.assert_no_errors()
