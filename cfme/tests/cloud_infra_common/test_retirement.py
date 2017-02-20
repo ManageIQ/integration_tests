@@ -31,15 +31,15 @@ pytestmark = [
 
 @pytest.yield_fixture(scope="function")
 def test_vm(small_template, provider):
-    test_vm = VM.factory(random_vm_name('retire'), provider, template_name=small_template)
-    test_vm.create_on_provider(find_in_cfme=True, allow_skip="default")
-    yield test_vm
+    vm = VM.factory(random_vm_name('retire'), provider, template_name=small_template)
+    vm.create_on_provider(find_in_cfme=True, allow_skip="default")
+    yield vm
 
     try:
-        if provider.mgmt.does_vm_exist(test_vm.name):
-            provider.mgmt.delete_vm(test_vm.name)
+        if provider.mgmt.does_vm_exist(vm.name):
+            provider.mgmt.delete_vm(vm.name)
     except Exception:
-        logger.warning('Failed to delete vm from provider: {}'.format(test_vm.name))
+        logger.warning('Failed to delete vm from provider: {}'.format(vm.name))
 
 
 def verify_retirement_state(test_vm):
@@ -67,7 +67,7 @@ def verify_retirement_date(test_vm, expected_date='Never'):
         else:
             convert_func = parsetime.from_american_date_only
         expected_date.update({'retire': convert_func(test_vm.retirement_date)})
-        logger.info('Asserting retire date "%s" is between "%s" and "%s"',
+        logger.info('Asserting retire date "%s" is between "%s" and "%s"',  # noqa
                     expected_date['retire'],
                     expected_date['start'],
                     expected_date['end'])
