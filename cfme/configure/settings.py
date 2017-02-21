@@ -349,17 +349,24 @@ class DefaultView(Updateable, Navigatable):
         Navigatable.__init__(self, appliance=appliance)
 
     @classmethod
-    def save(cls):
-        sel.click(form_buttons.save)
+    def set_default_view(cls, button_group_names, defaults):
 
-    @classmethod
-    def set_default_view(cls, button_group_name, default, save=True):
-        bg = ButtonGroup(button_group_name)
-        navigate_to(cls, 'All')
-        if bg.active != default:
-            bg.choose(default)
-            if save:
-                cls.save()
+        if not isinstance(button_group_names, (list, tuple)):
+            button_group_names = [button_group_names]
+        if not isinstance(defaults, (list, tuple)):
+            defaults = [defaults] * len(button_group_names)
+        assert len(button_group_names) == len(defaults)
+
+        is_something_changed = False
+        for button_group_name, default in zip(button_group_names, defaults):
+            bg = ButtonGroup(button_group_name)
+            navigate_to(cls, 'All')
+            if bg.active != default:
+                bg.choose(default)
+                is_something_changed = True
+
+        if is_something_changed:
+            sel.click(form_buttons.save)
 
     @classmethod
     def get_default_view(cls, button_group_name):
@@ -373,7 +380,7 @@ class DefaultViewAll(CFMENavigateStep):
     prerequisite = NavigateToAttribute('appliance.server', 'MySettings')
 
     def am_i_here(self):
-        if match_location(title='Configuration'):
+        if match_location(title='Configuration', controller='configuration'):
             return tabs.is_tab_selected('Default Views')
 
     def step(self, *args, **kwargs):

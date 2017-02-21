@@ -16,6 +16,7 @@ from cfme.containers.replicator import Replicator
 from cfme.containers.pod import Pod
 from cfme.containers.route import Route
 from cfme.containers.project import Project
+from collections import OrderedDict
 
 
 pytestmark = [pytest.mark.tier(2), pytest.mark.usefixtures('setup_provider')]
@@ -23,7 +24,9 @@ pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
 VIEWS = ('Grid View', 'Tile View', 'List View')
-objects_mapping = {  # <object> : <ui name>
+# We're using OrderedDict in order to be able to set keys and values
+# to DefaultView and keep the order of the LUT
+objects_mapping = OrderedDict({  # <object> : <ui name>
     ContainersProvider: 'Containers Providers',
     Image: 'Images',
     ImageRegistry: 'Image Registries',
@@ -34,28 +37,22 @@ objects_mapping = {  # <object> : <ui name>
     Service: 'Services',
     Container: 'Containers',
     Replicator: 'Replicators'
-}
+})
 
 
 @pytest.yield_fixture(scope='function')
 def random_default_views():
     """This fixture setup random default views for container objects.
     Revert the default views to the original on exit"""
-
-    original_default_views, tested_default_views = {}, {}
-    # Collecting the original default views:
+    # Collecting the original default views and Generating random views LUT for test:
+    original_default_views, tested_default_views = OrderedDict(), OrderedDict()
     for obj, ui_name in objects_mapping.items():
         original_default_views[obj] = DefaultView.get_default_view(ui_name)
-    # Generating random views LUT and set them:
-    for obj, ui_name in objects_mapping.items():
         tested_default_views[obj] = choice(VIEWS)
-        DefaultView.set_default_view(ui_name, tested_default_views[obj], save=False)
-    DefaultView.save()
+    DefaultView.set_default_view(objects_mapping.values(), tested_default_views.values())
     yield tested_default_views
     # setting back the default views to the original state:
-    for obj, default_view in original_default_views.items():
-        DefaultView.set_default_view(objects_mapping[obj], default_view, save=False)
-    DefaultView.save()
+    DefaultView.set_default_view(objects_mapping.values(), original_default_views.values())
 
 
 @pytest.mark.polarion('CMP-10568')
