@@ -13,6 +13,7 @@ from utils.appliance.implementations.ui import (CFMENavigateStep, navigate_to,
 from cfme.web_ui import (listaccordion as list_acc, match_location, Quadicon,
                          Region, toolbar as tb)
 from utils.pretty import Pretty
+from utils.version import current_version
 
 
 details_page = Region(infoblock_type='detail')
@@ -41,9 +42,22 @@ class DeploymentRoles(Pretty, Navigatable):
         self.name = name
         self.provider = provider
 
+    def get_detail(self, *ident):
+        """ Gets details from the details InfoBlock
+        Args:
+            *ident: An InfoBlock title, followed by the Key name,
+                e.g. "Relationships", "All VMs"
+        Returns: A string representing the contents of the InfoBlock's value.
+        """
+        navigate_to(self, 'Details')
+        return details_page.infoblock.text(*ident)
+
     def delete(self):
         navigate_to(self, 'Details')
-        tb.select('Configuration', 'Remove Item', invokes_alert=True)
+        menu_item = 'Remove item'
+        if current_version() < '5.7':
+            menu_item = 'Remove from the VMDB'
+        tb.select('Configuration', menu_item, invokes_alert=True)
         sel.handle_alert(wait=60)
 
 
