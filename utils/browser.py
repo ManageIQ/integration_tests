@@ -310,11 +310,10 @@ class BrowserManager(object):
         log.info('closing browser')
         self._consume_cleanups()
         try:
-            self.factory.quit(self.browser)
-        except:
-            # Due to the multitude of exceptions can be thrown when attempting to kill the browser,
-            # Diaper Pattern!
-            pass
+            self.factory.close(self.browser)
+        except Exception as e:
+            log.error('An exception happened during browser shutdown:')
+            log.exception(e)
         finally:
             self.browser = None
             self._browser_renew_thread = None
