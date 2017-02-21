@@ -99,8 +99,9 @@ def test_host_smbios_data(provider, soft_assert):
     for node in names:
         host = Host(node, provider)
         navigate_to(host, 'Details')
-        soft_assert(host.get_detail('Properties', 'Manufacturer / Model'),
-                    'Manufacturer / Model value are empty')
+        res = host.get_detail('Properties', 'Manufacturer / Model')
+        soft_assert(res, 'Manufacturer / Model value are empty')
+        soft_assert(res != 'N/A')
 
 
 def test_host_zones_assigned(provider):
