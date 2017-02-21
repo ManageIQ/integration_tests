@@ -251,7 +251,7 @@ def fill_count(count=None, key=None, value=None):
             type="Count of",
             count=count,
             key=key,
-            value=value,
+            value=int(value),
         ),
     )
     # In case of advanced search box
