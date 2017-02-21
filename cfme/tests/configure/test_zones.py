@@ -101,3 +101,25 @@ def test_zone_add_maxlength(request, soft_assert):
     soft_assert(zone.exists, "The zone {} does not exist!".format(
         zone.description
     ))
+
+
+@pytest.mark.tier(3)
+@pytest.mark.sauce
+def test_zone_add_blank_name():
+    zc = ZoneCollection(current_appliance)
+    with error.expected("Name can't be blank"):
+        zc.create(
+            name='',
+            description=fauxfactory.gen_alphanumeric(8)
+        )
+
+
+@pytest.mark.tier(3)
+@pytest.mark.sauce
+def test_zone_add_blank_description():
+    zc = ZoneCollection(current_appliance)
+    with error.expected("Description is required"):
+        zc.create(
+            name=fauxfactory.gen_alphanumeric(5),
+            description=''
+        )
