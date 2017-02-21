@@ -14,6 +14,10 @@ class ServicesCatalogView(BaseLoggedInPage):
             self.logged_in_as_current_user and
             self.navigation.currently_selected == ['Services', 'Catalogs'])
 
+    @property
+    def is_displayed(self):
+        return self.in_explorer and self.configuration.is_displayed and not self.catalogs.is_dimmed
+
     @View.nested
     class service_catalogs(Accordion):  # noqa
         ACCORDION_NAME = "Service Catalogs"
