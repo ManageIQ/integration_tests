@@ -163,12 +163,15 @@ class IPAppliance(object):
         return cls(appliance=self, *args, **kwargs)
 
     @property
+    def default_zone(self):
+        from cfme.base import Region, Zone
+        return Zone(self, region=Region(self, self.server_region()))
+
+    @property
     def server(self):
         if self._server is None:
-            from cfme.base import Server, Region, Zone
-            region = Region(self, self.server_region())
-            zone = Zone(self, region=region)
-            self._server = Server(appliance=self, zone=zone, sid=self.server_id())
+            from cfme.base import Server
+            self._server = Server(appliance=self, zone=self.default_zone, sid=self.server_id())
         return self._server
 
     @property

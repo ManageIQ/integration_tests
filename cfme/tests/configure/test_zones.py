@@ -61,35 +61,43 @@ def test_zone_change_appliance_zone(request):
         description=fauxfactory.gen_alphanumeric(8)
     )
     request.addfinalizer(zone.delete)
+
+    @request.addfinalizer
+    def _return_zone_back():
+        current_appliance.server.zone = current_appliance.default_zone
     request.addfinalizer(conf.BasicInformation(appliance_zone="default").update)
-    zone.create()
     basic_info = conf.BasicInformation(appliance_zone=zone.name)
     basic_info.update()
+    current_appliance.server.zone = zone
     assert zone.description == store.current_appliance.zone_description
-    basic_info = conf.BasicInformation(appliance_zone="default")
-    basic_info.update()
 
 
 @pytest.mark.tier(2)
 @pytest.mark.sauce
-def test_zone_add_dupe():
-    zone = conf.Zone(
-        name=fauxfactory.gen_alphanumeric(5),
-        description=fauxfactory.gen_alphanumeric(8))
+def test_zone_add_dupe(request):
+    zc = ZoneCollection(current_appliance)
+    name = fauxfactory.gen_alphanumeric(5)
+    description = fauxfactory.gen_alphanumeric(8)
+    zone = zc.create(
+        name=name,
+        description=description)
+    request.addfinalizer(zone.delete)
 
-    zone.create()
     with error.expected('Name has already been taken'):
-        zone.create()
+        zc.create(
+            name=name,
+            description=description)
 
 
 @pytest.mark.tier(3)
 @pytest.mark.sauce
-def test_zone_add_maxlength(soft_assert):
-    zone = conf.Zone(
+def test_zone_add_maxlength(request, soft_assert):
+    zc = ZoneCollection(current_appliance)
+    zone = zc.create(
         name=fauxfactory.gen_alphanumeric(50),
         description=fauxfactory.gen_alphanumeric(50)
     )
-    zone.create()
+    request.addfinalizer(zone.delete)
     soft_assert(zone.exists, "The zone {} does not exist!".format(
         zone.description
     ))
