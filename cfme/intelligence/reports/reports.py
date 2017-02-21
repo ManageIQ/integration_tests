@@ -10,28 +10,25 @@ from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navi
 from . import CloudIntelReportsView
 
 from widgetastic.widget import Text, Checkbox, View
-from widgetastic_manageiq import SummaryFormItem, DashboardWidgetsPicker, MultiBoxSelect
+from widgetastic_manageiq import DashboardWidgetsPicker, MultiBoxSelect
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 
 class CustomReportFormCommon(CloudIntelReportsView):
-    title = Text("#explorer_title_text")
+    report_title = Text("#explorer_title_text")
 
-    name = Input("name")
-    report_title = Input("title")
-
-    @View.nested
-    class columns(Tab):  # noqa
-        based_on = BootstrapSelect("chosen_model")
-        fields = MultiBoxSelect(
-            "column_lists",
-            move_into=Button(title="Move selected fields down"),
-            move_from=Button(title="Move selected fields up"),
-            available_items="available_fields",
-            chosen_items="selected_fields"
-        )
-        cancel_after = BootstrapSelect("chosen_queue_timeout")
+    menu_name = Input("name")
+    title = Input("title")
+    base_report_on = BootstrapSelect("chosen_model")
+    report_fields = MultiBoxSelect(
+        ".//*[@id='column_lists']/table",
+        move_into=Button(title="Move selected fields down"),
+        move_from=Button(title="Move selected fields up"),
+        available_items="available_fields",
+        chosen_items="selected_fields"
+    )
+    cancel_after = BootstrapSelect("chosen_queue_timeout")
 
     @View.nested
     class consolidation(Tab):  # noqa
@@ -83,7 +80,7 @@ class NewCustomReportView(CustomReportFormCommon):
         return (
             self.in_intel_reports and
             self.reports.is_opened and
-            self.title.text == "Adding a new Report" and
+            self.report_title.text == "Adding a new Report" and
             self.reports.tree.currently_selected == ["All Reports"]
         )
 
@@ -100,9 +97,9 @@ class EditCustomReportView(CustomReportFormCommon):
                 "All Reports",
                 "My Company (All EVM Groups)",
                 "Custom",
-                self.context["object"].name
+                self.context["object"].menu_name
             ] and
-            self.title.text == 'Editing Report "{}"'.format(self.context["object"].name)
+            self.report_title.text == 'Editing Report "{}"'.format(self.context["object"].menu_name)
         )
 
 
@@ -117,9 +114,9 @@ class CustomReportDetailsView(CloudIntelReportsView):
                 "All Reports",
                 "My Company (All EVM Groups)",
                 "Custom",
-                self.context["object"].name
+                self.context["object"].menu_name
             ] and
-            self.title.text == 'Report "{}"'.format(self.context["object"].name)
+            self.title.text == 'Report "{}"'.format(self.context["object"].menu_name)
         )
 
 
@@ -152,19 +149,41 @@ class AllCustomReportsView(CloudIntelReportsView):
 
 
 class CustomReport(Updateable, Navigatable):
+    _default_dict = {
+        "menu_name": None,
+        "title": None,
+        "base_report_on": None,
+        "report_fields": None,
+        "cancel_after": None,
+        "consolidation": None,
+        "formatting": None,
+        "styling": None,
+        "filter": None,
+        "summary": None,
+        "charts": None,
+        "timeline": None
+    }
 
     def __init__(self, appliance=None, **values):
         Navigatable.__init__(self, appliance=appliance)
+        # We will override the
+        #  original dict
+        self.__dict__ = dict(self._default_dict)
+        self.__dict__.update(values)
+        # We need to pass the knowledge whether it is a candu report
+        try:
+            self.is_candu
+        except AttributeError:
+            self.is_candu = False
 
     def create(self, cancel=False):
         view = navigate_to(self, "Add")
-        view.fill({
-        })
+        view.fill(self.__dict__)
         view.add_button.click()
         view = self.create_view(AllReportsView)
         assert view.is_displayed
         view.flash.assert_no_error()
-        view.flash.assert_message('Report "{}" was added'.format(self.description))
+        view.flash.assert_message('Report "{}" was added'.format(self.menu_name))
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
@@ -181,10 +200,10 @@ class CustomReport(Updateable, Navigatable):
         if changed:
             view.flash.assert_message(
                 'Report "{}" was saved'.format(
-                    updates.get("description", self.description)))
+                    updates.get("menu_name", self.menu_name)))
         else:
             view.flash.assert_message(
-                'Edit of Report "{}" was cancelled by the user'.format(self.description))
+                'Edit of Report "{}" was cancelled by the user'.format(self.menu_name))
 
     def delete(self, cancel=False):
         view = navigate_to(self, "Details")
@@ -194,14 +213,14 @@ class CustomReport(Updateable, Navigatable):
             assert view.is_displayed
             view.flash.assert_no_error()
         else:
-            # This check needs because after deleting the only one existing custom report
+            # This check needs because after deleting the last custom report
             # whole "My Company (All EVM Groups)" branch in the tree will be removed
             if len(get_all_custom_reports()) > 1:
                 view = self.create_view(AllCustomReportsView)
                 assert view.is_displayed
             view.flash.assert_no_error()
             view.flash.assert_message(
-                'Report "{}": Delete successful'.format(self.description))
+                'Report "{}": Delete successful'.format(self.menu_name))
 
     def get_saved_reports(self):
         pass
@@ -292,7 +311,7 @@ class CustomReportEdit(CFMENavigateStep):
 
     def step(self):
         self.view.reports.tree.click_path(
-            "All Reports", "My Company (All EVM Groups)", "Custom", self.obj.description)
+            "All Reports", "My Company (All EVM Groups)", "Custom", self.obj.menu_name)
         self.view.configuration.item_select("Edit this Report")
 
 
@@ -303,4 +322,4 @@ class CustomReportDetails(CFMENavigateStep):
 
     def step(self):
         self.view.reports.tree.click_path(
-            "All Reports", "My Company (All EVM Groups)", "Custom", self.obj.description)
+            "All Reports", "My Company (All EVM Groups)", "Custom", self.obj.menu_name)
