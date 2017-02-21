@@ -208,8 +208,12 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data)
         image = vm_analysis_data['image']
         vm = VM.factory(vm_name, provider, image)
         request.addfinalizer(vm.delete_from_provider)
-        connect_ip = mgmt_system.get_first_floating_ip()
         provider.refresh_provider_relationships(method='ui')
+        wait_for(provider.is_refreshed,
+                 message="is_refreshed",
+                 num_sec=1000,
+                 delay=60,
+                 handle_exception=True)
         inst_args = {
             'email': 'image_provisioner@example.com',
             'first_name': 'Image',
@@ -221,9 +225,16 @@ def instance(request, local_setup_provider, provider, vm_name, vm_analysis_data)
             'availability_zone': vm_analysis_data['availability_zone'],
             'security_groups': [vm_analysis_data['security_group']],
             'cloud_network': vm_analysis_data['cloud_network'],
-            'public_ip_address': connect_ip,
+            # 'public_ip_address': connect_ip,
         }
         vm.create(**inst_args)
+        vm.wait_to_appear(timeout=600)
+        # TODO remove this after provisioning dialog gets widgetastic and get_first/get_any for
+        # Dropdowns
+        connect_ip = mgmt_system.assign_floating_ip(vm_name, 'public')
+        # Block to check if we really have  FIP on our VM
+        wait_for(lambda: mgmt_system.current_ip_address(vm_name), num_sec=200, delay=60,
+                 handle_exception=True)
     else:
         request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
         do_vm_provisioning(template, provider, vm_name, provisioning_data, request, None,
