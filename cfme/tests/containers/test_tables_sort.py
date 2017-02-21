@@ -18,10 +18,14 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
-# CMP-9924 CMP-9925 CMP-9926 CMP-9927 CMP-9928
 
-
-TEST_OBJECTS = [Project, Service, Replicator, Route, ContainersProvider]
+TEST_OBJECTS = [
+    pytest.mark.polarion('CMP-9924')(ContainersProvider),
+    pytest.mark.polarion('CMP-9925')(Project),
+    pytest.mark.polarion('CMP-9926')(Route),
+    pytest.mark.polarion('CMP-9927')(Service),
+    pytest.mark.polarion('CMP-9928')(Replicator)
+]
 
 
 @pytest.mark.meta(blockers=[

@@ -18,10 +18,8 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-# CMP-9996
-
-
 @WithZoom(-4)
+@pytest.mark.polarion('CMP-9996')
 def test_topology_display_names():
     """Testing Display Names functionality in Topology view/
 
@@ -38,11 +36,10 @@ def test_topology_display_names():
         for elem in elements:
             assert is_displayed_text(elem.name) == bool_
 
-# CMP-9998
-
 
 @WithZoom(-4)
 @pytest.mark.meta(blockers=[1415472])
+@pytest.mark.polarion('CMP-9998')
 def test_topology_search():
     """Testing search functionality in Topology view.
 
@@ -67,10 +64,9 @@ def test_topology_search():
         else:
             assert el.is_hidden
 
-# CMP-9999
-
 
 @WithZoom(-4)
+@pytest.mark.polarion('CMP-9999')
 def test_topology_toggle_display():
     """Testing display functionality in Topology view.
 

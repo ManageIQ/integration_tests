@@ -13,6 +13,7 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
+@pytest.mark.polarion('CMP-10205')
 def test_basic_metrics(provider, ssh_client):
     """ Basic Metrics availability test
         This test checks that the Metrics service is up
