@@ -97,19 +97,24 @@ def test_provider_add_with_bad_credentials(provider):
     Metadata:
         test_flag: crud
     """
+
+    cred_args = dict()
+    cred_args['secret'] = 'notyourday'
     if provider.type == "azure":
         flash = (
             "Credential validation was not successful: Incorrect credentials - "
             "check your Azure Client ID and Client Key"
         )
-        principal = str(uuid.uuid4())
+        cred_args['principal'] = str(uuid.uuid4())
+    elif provider.type == "gce":
+        flash = 'Credential validation was not successful: Invalid Google JSON key'
+        cred_args['cred_type'] = 'service_account'
+        cred_args['service_account'] = '{"test": "bad"}'
     else:
         flash = 'Login failed due to a bad username or password.'
-        principal = "bad"
-    provider.credentials['default'] = provider.Credential(
-        principal=principal,
-        secret='reallybad',
-    )
+        cred_args['principal'] = "bad"
+
+    provider.credentials['default'] = provider.Credential(**cred_args)
     with error.expected(flash):
         provider.create(validate_credentials=True)
 
