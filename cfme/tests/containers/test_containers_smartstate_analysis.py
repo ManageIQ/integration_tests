@@ -32,9 +32,8 @@ RESULT_DETAIL_FIELDS = {'Packages': lambda val: int(val) > 0,
 
 def delete_all_vm_tasks():
     # delete all tasks
-    navigate_to(Tasks, 'AllVMContainerAnalysis')
-    tb.select('Delete Tasks', 'Delete All', invokes_alert=True)
-    sel.handle_alert()
+    view = navigate_to(Tasks, 'AllTasks')
+    view.delete.item_select('Delete All', handle_alert=True)
 
 
 def check_log(log, verify_tags):

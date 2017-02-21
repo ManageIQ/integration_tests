@@ -16,7 +16,6 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.common.vm import VM
 from cfme.control.explorer import actions, policies, policy_profiles
-from cfme.configure import tasks
 from cfme.configure.tasks import Tasks
 from cfme.infrastructure import host
 from cfme.services import requests
@@ -661,12 +660,10 @@ def test_action_initiate_smartstate_analysis(
     def is_vm_analysis_finished():
         """ Check if analysis is finished - if not, reload page
         """
-        navigate_to(Tasks, 'AllVMContainerAnalysis')
-        vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
-            'task_name': "Scan from Vm {}".format(vm.name),
-            'state': 'finished'
-        })
-        return vm_analysis_finished is not None
+        view = navigate_to(Tasks, 'AllTasks')
+        vm_analysis_row = view.tabs.alltasks.table.row(task_name="Scan from Vm {}"
+                                                                 .format(vm.name))
+        return vm_analysis_row.state.text == 'Finished'
 
     # Wait for VM analysis to finish
     def wait_analysis_finished():
