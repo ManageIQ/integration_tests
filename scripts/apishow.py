@@ -40,6 +40,15 @@ def parse_coverage_line(line):
         # line not in expected format
         return
 
+    if method not in ('POST', 'DELETE'):
+        return
+
+    try:
+        action = re.search(r'\'action\': u?\'([a-z_]*)', line).group(1)
+    except AttributeError:
+        # line not in expected format
+        return
+
     searches = [
         # collection, e.g. /api/vms
         r'/api/([a-z_]*) ',
@@ -61,15 +70,10 @@ def parse_coverage_line(line):
         except (AttributeError, IndexError):
             pass
         if collection:
+            # found matching expression
             break
     else:
         return
-
-    if '[RESTAPI] POST http' in line:
-        try:
-            action = re.search(r'\'action\': u?\'([a-z_]*)', line).group(1)
-        except AttributeError:
-            pass
 
     return Coverage(
         method=method,
@@ -101,16 +105,12 @@ def save_coverage_record(record, store):
     else:
         target = current
 
-    if 'methods' not in target:
-        target['methods'] = set([record.method])
+    _init_store('actions', target)
+    if record.action in target['actions']:
+        if record.method not in target['actions'][record.action]:
+            target['actions'][record.action].append(record.method)
     else:
-        target['methods'].add(record.method)
-
-    if record.action:
-        if 'actions' not in target:
-            target['actions'] = set([record.action])
-        else:
-            target['actions'].add(record.action)
+        target['actions'][record.action] = [record.method]
 
 
 def get_coverage(logfile, store):
@@ -136,16 +136,25 @@ def get_collections_info(api, store):
     except IndexError:
         subcollections = {}
 
+    def _get_actions(entity, store):
+        try:
+            entity.reload_if_needed()
+        except KeyError:
+            return
+        try:
+            actions = entity._actions
+        except AttributeError:
+            return
+        for record in actions:
+            if record['name'] in store:
+                store[record['name']].append(record['method'].upper())
+            else:
+                store[record['name']] = [record['method'].upper()]
+
     def _process_collection(collection, store):
         _init_store(collection.name, store)
-
-        try:
-            actions = collection.action.all
-        except KeyError:
-            actions = []
-
-        if 'actions_avail' not in store[collection.name]:
-            store[collection.name]['actions_avail'] = set(actions)
+        _init_store('actions_avail', store[collection.name])
+        _get_actions(collection, store[collection.name]['actions_avail'])
 
         try:
             collection_len = len(collection)
@@ -154,14 +163,9 @@ def get_collections_info(api, store):
 
         if collection_len > 0:
             _init_store('entity', store[collection.name])
+            _init_store('actions_avail', store[collection.name]['entity'])
             entity = random.choice(collection)
-
-            try:
-                actions = entity.action.all
-            except KeyError:
-                actions = []
-            if 'actions_avail' not in store[collection.name]['entity']:
-                store[collection.name]['entity']['actions_avail'] = set(actions)
+            _get_actions(entity, store[collection.name]['entity']['actions_avail'])
 
             if collection.name in subcollections:
                 for subcol_name in subcollections[collection.name]:
@@ -186,15 +190,27 @@ def print_info(store):
             if 'actions_avail' in res_dict and res_dict['actions_avail']:
                 print('  {} actions:'.format(res_title))
                 covered = True if 'actions' in res_dict else False
-                for action in res_dict['actions_avail']:
-                    print('    * {}{}'.format(
-                        action,
-                        ' OK' if covered and action in res_dict['actions'] else ''))
+                for action, methods in res_dict['actions_avail'].iteritems():
+                    methods_num = len(methods)
+                    only_post = True if methods_num == 1 and methods[0] == 'POST' else False
+                    if (covered and only_post and
+                            action in res_dict['actions'] and
+                            'POST' in res_dict['actions'][action]):
+                        cov_str = ' OK'
+                    else:
+                        cov_str = ''
+                    print('    * {}{}'.format(action, cov_str))
+                    # not only POST method exists for this action, list them all
+                    if not only_post:
+                        for method in methods:
+                            print('        {}{}'.format(
+                                method,
+                                ' OK' if covered and method in res_dict['actions'][action] else ''))
             if 'entity' in res_dict:
                 _print_resource('{} entity'.format(res_title), res_dict['entity'])
 
             for key, subcollection in sorted(res_dict.iteritems()):
-                if key in ('actions', 'actions_avail', 'entity', 'methods'):
+                if key in ('actions', 'actions_avail', 'entity'):
                     continue
                 _print_resource('Subcollection "{}"'.format(key), subcollection)
 
