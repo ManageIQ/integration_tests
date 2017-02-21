@@ -5,8 +5,9 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.deployment_roles import DeploymentRoles
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from cfme.web_ui import flash, InfoBlock, Quadicon, summary_title
+from cfme.web_ui import flash, Quadicon, summary_title
 from utils import testgen
+from utils.wait import wait_for
 from utils.appliance.implementations.ui import navigate_to
 
 
@@ -45,28 +46,27 @@ def test_roles_summary(provider, soft_assert):
     roles_names = [q.name for q in Quadicon.all()]
 
     for name in roles_names:
-        navigate_to(DeploymentRoles(name, provider), 'DetailsFromProvider')
+        dr = DeploymentRoles(name, provider)
+        navigate_to(dr, 'DetailsFromProvider')
 
         values = ('Nodes', 'Direct VMs', 'All VMs')
         for v in values:
-            res = sel.text(InfoBlock.element('Relationships', v))
+            res = dr.get_detail('Relationships', v)
             soft_assert(res.isdigit(), err_ptrn.format(v))
 
         values = ('Total CPUs', 'Total Node CPU Cores')
         for v in values:
-            res = sel.text(InfoBlock.element('Totals for Nodes', v))
+            res = dr.get_detail('Totals for Nodes', v)
             soft_assert(res.isdigit() and int(res) > 0, err_ptrn.format(v))
 
-        total_cpu = sel.text(InfoBlock.element('Totals for Nodes',
-                                               'Total CPU Resources'))
+        total_cpu = dr.get_detail('Totals for Nodes', 'Total CPU Resources')
         soft_assert('GHz' in total_cpu, err_ptrn.format('Total CPU Resources'))
-        total_memory = sel.text(InfoBlock.element('Totals for Nodes',
-                                                  'Total Memory'))
+        total_memory = dr.get_detail('Totals for Nodes', 'Total Memory')
         soft_assert('GB' in total_memory, err_ptrn.format('Total Memory'))
 
         values = ('Total Configured Memory', 'Total Configured CPUs')
         for v in values:
-            res = sel.text(InfoBlock.element('Totals for VMs', v))
+            res = dr.get_detail('Totals for VMs', v)
             soft_assert(res, err_ptrn.format(v))
 
 
@@ -78,7 +78,8 @@ def test_role_delete(provider):
     dr = DeploymentRoles(role_name, provider)
     dr.delete()
     flash.assert_no_errors()
+    provider.refresh_provider_relationships()
+    wait_for(provider.is_refreshed)
     sel.refresh()
     names = [q.name for q in list(Quadicon.all())]
-    assert role_name not in names, \
-        'Deleted deployment role does not disappear from UI'
+    assert role_name not in names
