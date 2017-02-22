@@ -29,6 +29,10 @@ class ImageRegistry(Taggable, SummaryMixin, Navigatable):
         if refresh:
             tb.refresh()
 
+    @property
+    def name(self):
+        return self.host
+
 
 @navigator.register(ImageRegistry, 'All')
 class ImageRegistryAll(CFMENavigateStep):
