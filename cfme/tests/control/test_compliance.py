@@ -3,8 +3,6 @@ import diaper
 import fauxfactory
 import pytest
 
-from mgmtsystem import exceptions
-
 from cfme.common.vm import VM
 from cfme.control.explorer.policies import VMCompliancePolicy, HostCompliancePolicy
 from cfme.control.explorer.conditions import VMCondition
@@ -12,14 +10,11 @@ from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.infrastructure.provider import InfraProvider
 from cfme.configure.configuration import AnalysisProfile
 from cfme.web_ui import flash, toolbar
-from fixtures.pytest_store import store
 from utils import testgen, version
-from utils.appliance import Appliance, ApplianceException, provision_appliance
 from utils.log import logger
 from utils.providers import setup_a_provider_by_class
 from utils.update import update
 from utils.wait import wait_for
-from urlparse import urlparse
 from cfme import test_requirements
 
 PREFIX = "test_compliance_"
