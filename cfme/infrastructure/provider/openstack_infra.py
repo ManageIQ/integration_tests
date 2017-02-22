@@ -1,9 +1,14 @@
-from utils.appliance.implementations.ui import navigate_to
+from navmazing import NavigateToSibling
+from utils.appliance.implementations.ui import (navigate_to, CFMENavigateStep,
+                                                navigator)
+from cfme.web_ui import Form, FileInput, InfoBlock, fill
+import cfme.web_ui.toolbar as tb
+from cfme.web_ui import Region
 from . import InfraProvider, prop_region
 from mgmtsystem.openstack_infra import OpenstackInfraSystem
-from cfme.web_ui import Form, FileInput, InfoBlock, fill
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.toolbar as tb
+
+details_page = Region(infoblock_type='detail')
 
 register_nodes_form = Form(
     fields=[
@@ -49,6 +54,14 @@ class OpenstackInfraProvider(InfraProvider):
                 'amqp_sec_protocol': kwargs.get('amqp_sec_protocol', "Non-SSL")
             })
         return data_dict
+
+    def has_nodes(self):
+        try:
+            details_page.infoblock.text("Relationships", "Hosts")
+            return False
+        except sel.NoSuchElementException:
+            return int(
+                details_page.infoblock.text("Relationships", "Nodes")) > 0
 
     @classmethod
     def from_config(cls, prov_config, prov_key):
@@ -106,3 +119,11 @@ class OpenstackInfraProvider(InfraProvider):
         node_uuid = str(nodes_dict[name])
         for db_node in query.all():
             return db_node.hosts.name == str(node_uuid.uuid)
+
+
+@navigator.register(OpenstackInfraProvider, 'ProviderNodes')
+class ProviderNodes(CFMENavigateStep):
+    prerequisite = NavigateToSibling('Details')
+
+    def step(self):
+        sel.click(InfoBlock.element("Relationships", "Nodes"))

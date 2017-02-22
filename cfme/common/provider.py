@@ -6,14 +6,14 @@ from functools import partial
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import (
-    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty, FlashMessageException
-)
+    ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty,
+    FlashMessageException)
 from cfme.web_ui import breadcrumbs_names, summary_title
-from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, FileInput, Form, Input, Radio
+from cfme.web_ui import (flash, Quadicon, CheckboxTree, Region, fill, FileInput,
+                         Form, Input, Radio)
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons, paginator
 from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf, version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigate_to
 from utils.browser import ensure_browser_open
@@ -24,6 +24,7 @@ from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
 from utils.update import Updateable
 from utils.varmeth import variable
+from utils import conf, version
 
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 
