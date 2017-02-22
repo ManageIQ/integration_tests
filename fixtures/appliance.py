@@ -18,7 +18,7 @@ from cfme.test_framework.sprout.client import SproutClient
 
 
 @contextmanager
-def temp_appliances(count=1, preconfigured=True, lease_time=180):
+def temp_appliances(count=1, preconfigured=True, provider=None, lease_time=180):
     """ Provisions one or more appliances for testing
 
     Args:
@@ -29,7 +29,7 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180):
     try:
         sprout_client = SproutClient.from_config()
         apps, request_id = sprout_client.provision_appliances(
-            count=count, lease_time=lease_time, preconfigured=preconfigured)
+            count=count, lease_time=lease_time, preconfigured=preconfigured, provider=provider)
         yield apps
     finally:
         sprout_client.destroy_pool(request_id)
@@ -39,6 +39,12 @@ def temp_appliances(count=1, preconfigured=True, lease_time=180):
 @pytest.yield_fixture(scope="module")
 def temp_appliance_preconfig(temp_appliance_preconfig_modscope):
     yield temp_appliance_preconfig_modscope
+
+
+@pytest.yield_fixture(scope="module")
+def temp_appliance_for_cur_provider(provider):
+    with temp_appliances(preconfigured=True, provider=provider.key) as appliances:
+        yield appliances[0]
 
 
 @pytest.yield_fixture(scope="module")
