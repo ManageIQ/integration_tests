@@ -357,10 +357,10 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
 
     @property
     def compliant(self):
-        """Check if the VM is compliant
+        """Check if the Host is compliant
 
         Returns:
-            :py:class:`NoneType` if the VM was never verified, otherwise :py:class:`bool`
+            :py:class:`NoneType` if the Host was never verified, otherwise :py:class:`bool`
         """
         text = self.compliance_status.strip().lower()
         if text == "never verified":
