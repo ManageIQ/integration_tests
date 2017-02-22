@@ -45,7 +45,8 @@ pytestmark = [pytest.mark.usefixtures("close_search"), pytest.mark.tier(3)]
 @pytest.fixture(scope="module")
 def subset_of_vms(vms):
     """We'll pick a host with median number of vms"""
-    return sample(vms, 4)
+    vm_num = 4 if len(vms) >= 4 else len(vms)
+    return sample(vms, vm_num)
 
 
 @pytest.fixture(scope="module")
