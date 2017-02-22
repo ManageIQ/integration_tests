@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-# added new list_tbl definition
 from functools import partial
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, CheckboxTable, paginator, match_location, InfoBlock
+from cfme.web_ui import toolbar as tb, paginator, match_location, InfoBlock,\
+    PagedTable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from utils.appliance import Navigatable
 
-list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
+paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 
 match_page = partial(match_location, controller='container_image',
@@ -62,4 +62,4 @@ class Details(CFMENavigateStep):
 
     def step(self):
         tb.select('List View')
-        list_tbl.click_row_by_cells({'Name': self.obj.name})
+        sel.click(paged_tbl.find_row_by_cell_on_all_pages({'Name': self.obj.name}))
