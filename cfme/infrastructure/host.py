@@ -32,6 +32,8 @@ from utils.pretty import Pretty
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from utils.appliance import Navigatable
 
+from cfme.common import PolicyProfileAssignable
+
 # Page specific locators
 details_page = Region(infoblock_type='detail')
 
@@ -91,7 +93,7 @@ match_page = partial(match_location, controller='host',
                      title='Hosts')
 
 
-class Host(Updateable, Pretty, Navigatable):
+class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
     """
     Model of an infrastructure host in cfme.
 
@@ -215,6 +217,12 @@ class Host(Updateable, Pretty, Navigatable):
         cfg_btn(btn_name, invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
+    def load_details(self, refresh=False):
+        """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
+        navigate_to(self, 'Details')
+        if refresh:
+            sel.refresh()
+
     def execute_button(self, button_group, button, cancel=True):
         navigate_to(self, 'Details')
         host_btn = partial(tb.select, button_group)
@@ -298,41 +306,6 @@ class Host(Updateable, Pretty, Navigatable):
         quad = Quadicon(self.name, 'host')
         return 'checkmark' in quad.creds
 
-    def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
-        """DRY function for managing policy profiles.
-
-        See :py:func:`assign_policy_profiles` and :py:func:`assign_policy_profiles`
-
-        Args:
-            assign: Wheter to assign or unassign.
-            policy_profile_names: :py:class:`str` with Policy Profile names.
-        """
-        navigate_to(self, 'PolicyAssignment')
-        for policy_profile in policy_profile_names:
-            if assign:
-                manage_policies_tree.check_node(policy_profile)
-            else:
-                manage_policies_tree.uncheck_node(policy_profile)
-        sel.click(form_buttons.save)
-
-    def assign_policy_profiles(self, *policy_profile_names):
-        """ Assign Policy Profiles to this Host.
-
-        Args:
-            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
-                coverage goes in, PolicyProfile objects will be also passable.
-        """
-        self._assign_unassign_policy_profiles(True, *policy_profile_names)
-
-    def unassign_policy_profiles(self, *policy_profile_names):
-        """ Unssign Policy Profiles to this Host.
-
-        Args:
-            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
-                coverage goes in, PolicyProfile objects will be also passable.
-        """
-        self._assign_unassign_policy_profiles(False, *policy_profile_names)
-
     def get_datastores(self):
         """ Gets list of all datastores used by this host"""
         navigate_to(self, 'Details')
@@ -357,6 +330,44 @@ class Host(Updateable, Pretty, Navigatable):
         tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
         sel.handle_alert()
         flash.assert_message_contain('"{}": Analysis successfully initiated'.format(self.name))
+
+    def check_compliance(self, timeout=240):
+        """Initiates compliance check and waits for it to finish."""
+        navigate_to(self, 'Details')
+        original_state = self.compliance_status
+        tb.select('Policy', 'Check Compliance of Last Known Configuration', invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
+        wait_for(
+            lambda: self.compliance_status != original_state,
+            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
+        )
+
+    @property
+    def compliance_status(self):
+        """Returns the title of the compliance infoblock. The title contains datetime so it can be
+        compared.
+
+        Returns:
+            :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
+        """
+        sel.refresh()
+        return self.get_detail('Compliance', 'Status')
+
+    @property
+    def is_compliant(self):
+        """Check if the Host is compliant
+
+        Returns:
+            :py:class:`bool`
+        """
+        text = self.compliance_status.strip().lower()
+        if text.startswith("non-compliant"):
+            return False
+        elif text.startswith("compliant"):
+            return True
+        else:
+            raise ValueError("{} is not a known state for compliance".format(text))
 
     def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text
