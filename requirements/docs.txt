@@ -1,0 +1,3 @@
+-r frozen_docs.txt
+# do editable self-install to avoid need for pythonpath changes
+-e .
