@@ -242,4 +242,5 @@ def test_compliance_with_unconditional_policy(host, assign_policy_for_testing):
         "Host Compliance Check",
         {"Mark as Non-Compliant": True}
     )
-    assert not host.check_compliance()
+    host.check_compliance()
+    assert not host.is_compliant

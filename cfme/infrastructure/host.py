@@ -342,7 +342,6 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
             lambda: self.compliance_status != original_state,
             num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name)
         )
-        return self.compliant
 
     @property
     def compliance_status(self):
@@ -356,16 +355,14 @@ class Host(Updateable, Pretty, Navigatable, PolicyProfileAssignable):
         return self.get_detail('Compliance', 'Status')
 
     @property
-    def compliant(self):
+    def is_compliant(self):
         """Check if the Host is compliant
 
         Returns:
-            :py:class:`NoneType` if the Host was never verified, otherwise :py:class:`bool`
+            :py:class:`bool`
         """
         text = self.compliance_status.strip().lower()
-        if text == "never verified":
-            return None
-        elif text.startswith("non-compliant"):
+        if text.startswith("non-compliant"):
             return False
         elif text.startswith("compliant"):
             return True
