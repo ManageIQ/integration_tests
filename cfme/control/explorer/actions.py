@@ -6,7 +6,7 @@ from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavig
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text
-from widgetastic_manageiq import SummaryFormItem, MultiBoxSelect, ManageIQTree
+from widgetastic_manageiq import SummaryFormItem, MultiBoxSelect, ManageIQTree, CheckboxSelect
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
@@ -46,7 +46,7 @@ class ActionFormCommon(ControlExplorerView):
     vcenter_attr_name = Input("attribute")
     vcenter_attr_value = Input("value")
     tag = ManageIQTree("action_tags_treebox")
-
+    remove_tag = CheckboxSelect("action_options_div")
     cancel_button = Button('Cancel')
 
 
@@ -110,7 +110,8 @@ class Action(Updateable, Navigatable, Pretty):
 
         >>> from cfme.control.explorer import Action
         >>> action = Action("some_action",
-        ...     "Tag", tag=("My Company Tags", "Department", "Accounting"))
+        ...     action_type="Tag",
+        ...     action_values={"tag": ("My Company Tags", "Service Level", "Gold")}
         >>> action.create()
         >>> action.delete()
 
@@ -135,6 +136,7 @@ class Action(Updateable, Navigatable, Pretty):
         self.vcenter_attr_name = action_values.get("vcenter_attr_name")
         self.vcenter_attr_value = action_values.get("vcenter_attr_value")
         self.tag = action_values.get("tag")
+        self.remove_tag = action_values.get("remove_tag")
 
     def __str__(self):
         return self.description
@@ -164,7 +166,8 @@ class Action(Updateable, Navigatable, Pretty):
             "email_recipient": self.email_recipient,
             "vcenter_attr_name": self.vcenter_attr_name,
             "vcenter_attr_value": self.vcenter_attr_value,
-            "tag": self.tag
+            "tag": self.tag,
+            "remove_tag": self.remove_tag
         })
         view.add_button.click()
         view = self.create_view(ActionDetailsView)

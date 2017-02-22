@@ -775,7 +775,7 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
     tag_unassign_action = actions.Action(
         fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
-        action_values={"cat_service_level": True}
+        action_values={"remove_tag": ["Service Level"]}
     )
     assign_policy_for_testing.assign_actions_to_event("VM Power On", [tag_unassign_action])
 
