@@ -3,14 +3,14 @@ import pytest
 from cfme.containers.container import Container
 from cfme.containers.image import Image
 from cfme.containers.image_registry import ImageRegistry
-from cfme.containers.node import Node
+from cfme.containers.node import NodeCollection
+from cfme.containers.replicator import Replicator
+from cfme.containers.pod import Pod
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.service import Service
 from cfme.web_ui import toolbar as tb
 from utils import testgen
 from utils.appliance.implementations.ui import navigate_to
-from cfme.containers.replicator import Replicator
-from cfme.containers.pod import Pod
 
 
 pytestmark = [pytest.mark.tier(2)]
@@ -78,7 +78,7 @@ def test_services_views():
 
 
 def test_nodes_views():
-    navigate_to(Node, 'All')
+    navigate_to(NodeCollection, 'All')
     tb.select('Grid View')
     assert tb.is_active('Grid View'), "Nodes grid view setting failed"
     tb.select('Tile View')

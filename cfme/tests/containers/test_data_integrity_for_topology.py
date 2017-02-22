@@ -1,30 +1,26 @@
 import pytest
 import time
+from collections import namedtuple
+
+from selenium.common.exceptions import NoSuchElementException
 
 from cfme.containers.container import Container
 from cfme.containers.image_registry import ImageRegistry
+from cfme.containers.node import NodeCollection
 from cfme.containers.overview import ContainersOverview
 from cfme.containers.pod import Pod
 from cfme.containers.project import Project
+from cfme.containers.provider import ContainersProvider
 from cfme.containers.route import Route
 from cfme.containers.service import Service
 from cfme.containers.image import Image
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import StatusBox, Quadicon
+from cfme.web_ui import StatusBox, Quadicon, toolbar as tb, search
 from utils import testgen
-from utils.version import current_version
-from cfme.containers.provider import ContainersProvider
 from utils.appliance.implementations.ui import navigate_to
-from cfme.containers.node import Node
-from collections import namedtuple
-from cfme.web_ui import toolbar as tb
-from cfme.web_ui.search import ensure_no_filter_applied
-from selenium.common.exceptions import NoSuchElementException
 
 
 pytestmark = [
-    pytest.mark.uncollectif(
-        lambda provider: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
@@ -33,7 +29,7 @@ DataSet = namedtuple('DataSet', ['object', 'name'])
 
 DATA_SETS = [
     DataSet(Container, 'Containers'),
-    DataSet(Node, 'Nodes'),
+    DataSet(NodeCollection, 'Nodes'),
     DataSet(Project, 'Projects'),
     DataSet(Pod, 'Pods'),
     DataSet(Service, 'Services'),
@@ -60,7 +56,7 @@ def test_data_integrity_for_topology(test_data):
     if statusbox_value > 0:
         tb.select('Grid View')
         try:
-            ensure_no_filter_applied()
+            search.ensure_no_filter_applied()
         except NoSuchElementException:
             pass
         assert len(list(Quadicon.all())) == statusbox_value
