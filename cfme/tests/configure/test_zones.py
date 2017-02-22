@@ -75,7 +75,7 @@ def test_zone_change_appliance_zone(request):
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_zone_add_dupe(request):
-    zc = ZoneCollection(current_appliance)
+    zc = current_appliance.get(ZoneCollection)
     name = fauxfactory.gen_alphanumeric(5)
     description = fauxfactory.gen_alphanumeric(8)
     zone = zc.create(
@@ -92,7 +92,7 @@ def test_zone_add_dupe(request):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_maxlength(request, soft_assert):
-    zc = ZoneCollection(current_appliance)
+    zc = current_appliance.get(ZoneCollection)
     zone = zc.create(
         name=fauxfactory.gen_alphanumeric(50),
         description=fauxfactory.gen_alphanumeric(50)
