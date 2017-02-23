@@ -112,7 +112,8 @@ def test_retirement_now(test_vm):
 
 @test_requirements.retirement
 @pytest.mark.tier(2)
-@pytest.mark.meta(blockers=[BZ(1419150, forced_streams='5.6')])
+@pytest.mark.meta(blockers=[BZ(1419150, forced_streams='5.6',
+                               unblock=lambda: current_version() >= '5.7')])
 def test_set_retirement_date(test_vm):
     """Tests setting retirement date and verifies configured date is reflected in UI
 
