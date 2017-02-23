@@ -2,7 +2,7 @@
 """This module contains REST API specific tests."""
 import pytest
 import fauxfactory
-import utils.error as error
+from cfme.utils import error
 import multiprocessing as mp
 
 from manageiq_client.api import APIException

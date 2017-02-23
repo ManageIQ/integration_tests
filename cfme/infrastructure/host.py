@@ -14,7 +14,6 @@ import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
-import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     AngularSelect, Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill,
@@ -28,6 +27,7 @@ from cfme.utils.log import logger
 from cfme.utils.update import Updateable
 from cfme.utils.wait import wait_for
 from cfme.utils import deferred_verpick, version
+from cfme.utils import conf
 from cfme.utils.pretty import Pretty
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.utils.appliance import Navigatable

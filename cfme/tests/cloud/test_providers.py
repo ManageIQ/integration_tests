@@ -8,7 +8,7 @@ import pytest
 
 from manageiq_client.api import APIException
 
-import utils.error as error
+from cfme.utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme.exceptions import FlashMessageException

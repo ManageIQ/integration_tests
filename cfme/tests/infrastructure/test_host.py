@@ -8,7 +8,7 @@ from cfme.infrastructure.provider import details_page, InfraProvider
 from cfme.web_ui import Quadicon, fill, toolbar as tb, flash
 from cfme.utils import testgen
 from cfme.utils import version
-import utils.conf as conf
+from cfme.utils import conf
 from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [

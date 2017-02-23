@@ -7,7 +7,7 @@ from cfme.base import ZoneCollection
 from fixtures.pytest_store import store
 from cfme.utils.appliance import current_appliance
 from cfme.utils.update import update
-import utils.error as error
+from cfme.utils import error
 
 
 @pytest.mark.tier(1)

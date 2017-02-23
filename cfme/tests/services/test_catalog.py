@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 import cfme.tests.configure.test_access_control as tac
-import utils.error as error
+from cfme.utils import error
 from cfme import test_requirements
 from cfme.services.catalogs.catalog import Catalog
 from cfme.utils.update import update

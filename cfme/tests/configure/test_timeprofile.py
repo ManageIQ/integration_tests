@@ -2,7 +2,7 @@
 import fauxfactory
 import cfme.configure.settings as st
 import pytest
-import utils.error as error
+from cfme.utils import error
 from cfme.utils.blockers import BZ
 from cfme.utils.update import update
 from cfme.utils import version

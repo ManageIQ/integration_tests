@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 import cfme.intelligence.chargeback as cb
 import cfme.web_ui.flash as flash
-import utils.error as error
+from cfme.utils import error
 
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates

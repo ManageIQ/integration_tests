@@ -16,7 +16,6 @@ from selenium.common.exceptions import NoSuchElementException
 from cfme.utils import version
 from cfme.utils.appliance import Navigatable
 from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-import utils.conf as conf
 from cfme.utils.datafile import load_data_file
 from cfme.utils.log import logger
 from cfme.utils.path import project_path
@@ -25,6 +24,7 @@ from cfme.utils.wait import wait_for
 from cfme.utils.pretty import Pretty
 from cfme.utils.db import cfmedb
 from cfme.utils.varmeth import variable
+from cfme.utils import conf
 
 cfg_btn = partial(tb.select, 'Configuration')
 

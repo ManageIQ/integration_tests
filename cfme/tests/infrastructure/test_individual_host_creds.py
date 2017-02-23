@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
 import random
-import utils.conf as conf
-import utils.error as error
+from cfme.utils import conf
+from cfme.utils import error
 
 from cfme.infrastructure import host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
