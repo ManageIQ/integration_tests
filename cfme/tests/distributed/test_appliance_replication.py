@@ -13,7 +13,7 @@ from cfme.infrastructure.provider import wait_for_a_provider
 import cfme.fixtures.pytest_selenium as sel
 
 from utils import db, version
-from utils.appliance import provision_appliance, current_appliance
+from utils.appliance import provision_appliance, current_appliance, get_or_create_current_appliance
 from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
 from utils.events import EventBuilder
@@ -354,7 +354,7 @@ def test_distributed_vm_power_control(request, test_vm, vmware_provider, verify_
 
     appl2.ipapp.browser_steal = True
 
-    builder = EventBuilder()
+    builder = EventBuilder(get_or_create_current_appliance())
     base_evt = partial(builder.new_event, target_type='VmOrTemplate', target_name=test_vm.name)
 
     with appl2.ipapp:

@@ -11,6 +11,7 @@ from cfme.exceptions import CFMEExceptionOccured
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import flash, jstimelines
 from utils import ports, testgen
+from utils.appliance import get_or_create_current_appliance
 from utils.conf import credentials
 from utils.events import EventBuilder
 from utils.log import logger
@@ -212,7 +213,7 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
     provider.refresh_provider_relationships()
 
     # preparing events to listen to
-    builder = EventBuilder()
+    builder = EventBuilder(get_or_create_current_appliance())
     base_evt = partial(builder.new_event, target_type='VmOrTemplate', target_name=vm_name)
     register_event(base_evt(event_type='request_vm_poweroff'), base_evt(event_type='vm_poweoff'))
 

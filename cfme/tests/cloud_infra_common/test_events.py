@@ -8,6 +8,7 @@ from cfme.control.explorer.policy_profiles import PolicyProfile
 from cfme.control.explorer.policies import VMControlPolicy
 from cfme.control.explorer.actions import Action
 from utils import testgen
+from utils.appliance import get_or_create_current_appliance
 from utils.events import EventBuilder
 from utils.wait import wait_for
 
@@ -73,7 +74,7 @@ def test_vm_create(request, vm_crud, provider, register_event):
     provider.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: provider.unassign_policy_profiles(profile.description))
 
-    event = EventBuilder().new_event(target_type='VmOrTemplate',
+    event = EventBuilder(get_or_create_current_appliance()).new_event(target_type='VmOrTemplate',
                                      target_name=vm_crud.name,
                                      event_type='vm_create')
     register_event(event)

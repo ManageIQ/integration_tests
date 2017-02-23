@@ -13,8 +13,6 @@ from sqlalchemy.sql.expression import func
 from time import sleep
 from threading import Thread, Event as ThreadEvent
 
-
-from utils.appliance import get_or_create_current_appliance
 from utils.log import create_sublogger
 
 logger = create_sublogger('events')
@@ -160,13 +158,13 @@ class EventBuilder(object):
     this class just simplifies "expected" event creation.
 
     Usage:
-        builder = EventBuilder()
+        builder = EventBuilder(appliance)
         evt = builder.new_event(target_type='VmOrTemplate',
                                 target_name='my_lovely_vm',
                                 event_type='vm_create')
     """
-    def __init__(self):
-        self._tool = EventTool(get_or_create_current_appliance())
+    def __init__(self, appliance):
+        self._tool = EventTool(appliance)
 
     def new_event(self, *attrs, **kwattrs):
         event = Event(event_tool=self._tool)

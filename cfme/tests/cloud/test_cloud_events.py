@@ -6,8 +6,10 @@ import re
 from cfme.common.vm import VM
 from cfme.cloud.provider.azure import AzureProvider
 from utils import testgen
+from utils.appliance import get_or_create_current_appliance
 from utils.events import EventBuilder
 from utils.generators import random_vm_name
+
 
 pytestmark = [
     pytest.mark.tier(3)
@@ -26,7 +28,7 @@ def test_manage_nsg_group(provider, setup_provider, register_event):
 
     # registering add/remove network security group events
     # we need to check raw data by regexps, since many azure events aren't parsed by CFME yet
-    builder = EventBuilder()
+    builder = EventBuilder(get_or_create_current_appliance())
     fd_regexp = '^\s*resourceId:.*?{nsg}.*?^\s*status:.*?^\s*value:\s*{stat}.*?^' \
                 '\s*subStatus:.*?^\s*value:\s*{sstat}'
 
@@ -72,7 +74,7 @@ def test_vm_capture(request, provider, setup_provider, register_event):
     request.addfinalizer(vm.delete_from_provider)
 
     # register event
-    builder = EventBuilder()
+    builder = EventBuilder(get_or_create_current_appliance())
     capt_regexp = '^\s*resourceId:.*?{}.*?^\s*status:.*?^\s*value:\s*Succeeded'.format(vm.name)
     full_data_attr = {'full_data': 'will be ignored',
                       'cmp_func': lambda _, y: bool(re.search(capt_regexp, y,

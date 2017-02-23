@@ -9,6 +9,7 @@ from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
 from utils import conf, testgen, version
+from utils.appliance import get_or_create_current_appliance
 from utils.events import EventBuilder
 from utils.update import update
 from utils.wait import wait_for
@@ -82,7 +83,7 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
                 test_host.credentials = host.Host.Credential(
                     principal="", secret="", verify_secret="")
 
-    builder = EventBuilder()
+    builder = EventBuilder(get_or_create_current_appliance())
     base_evt = partial(builder.new_event, target_type='Host', target_name=host_name)
 
     register_event(base_evt(event_type='request_host_scan'),
