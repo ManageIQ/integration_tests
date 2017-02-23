@@ -7,14 +7,10 @@ Paths rendered below will be different in your local environment.
 .. _py.path.local: http://pylib.readthedocs.org/en/latest/path.html
 """
 
-import os
-
 from py.path import local
 
-_this_file = os.path.abspath(__file__)
-
 #: The project root, ``cfme_tests/``
-project_path = local(_this_file).new(basename='..')
+project_path = local(__file__).dirpath().dirpath().dirpath()
 
 #: conf yaml storage, ``cfme_tests/conf/``
 conf_path = project_path.join('conf')
