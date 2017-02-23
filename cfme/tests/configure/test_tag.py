@@ -169,8 +169,7 @@ class TestTagsViaREST(object):
             "name": "test_tag_{}".format(fauxfactory.gen_alphanumeric().lower()),
             "description": "test_tag_{}".format(fauxfactory.gen_alphanumeric().lower())
         }
-        with error.expected("Api::BadRequestError: "
-                "Category id, href or name needs to be specified"):
+        with error.expected("BadRequestError: Category id, href or name needs to be specified"):
             rest_api.collections.tags.action.create(data)
         assert rest_api.response.status_code == 400
 
