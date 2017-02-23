@@ -21,11 +21,11 @@ from cfme.web_ui import (
     BootstrapTreeview, summary_title, Table, search
 )
 from cfme.web_ui.search import search_box
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.conf import cfme_data
-from utils.log import logger
-from utils.wait import wait_for
-from utils import version, deferred_verpick
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils import version, deferred_verpick
 
 
 # for provider specific vm/template page

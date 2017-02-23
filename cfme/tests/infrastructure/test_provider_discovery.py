@@ -1,8 +1,8 @@
 import pytest
 from itertools import combinations
 
-from utils import testgen
-from utils.providers import get_crud
+from cfme.utils import testgen
+from cfme.utils.providers import get_crud
 from cfme.common.provider import BaseProvider
 from cfme.infrastructure.provider import discover, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider

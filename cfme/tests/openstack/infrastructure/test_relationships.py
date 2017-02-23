@@ -6,8 +6,8 @@ results of the relationships
 import pytest
 
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from utils import testgen, version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen, version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [pytest.mark.meta(server_roles='+smartproxy +smartstate'),

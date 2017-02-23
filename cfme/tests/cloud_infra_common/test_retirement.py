@@ -5,12 +5,12 @@ import pytest
 from cfme import test_requirements
 from cfme.common.provider import CloudInfraProvider
 from cfme.common.vm import VM
-from utils import testgen
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.providers import ProviderFilter
-from utils.timeutil import parsetime
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.providers import ProviderFilter
+from cfme.utils.timeutil import parsetime
+from cfme.utils.wait import wait_for
 
 
 pytest_generate_tests = testgen.generate(

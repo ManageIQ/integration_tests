@@ -8,9 +8,9 @@ from functools import wraps
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import CFMEExceptionOccured, FlashMessageException
 from cfme.web_ui import Region
-from utils import version
-from utils.log import logger
-from utils.pretty import Pretty
+from cfme.utils import version
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
 
 area = Region(
     locators={

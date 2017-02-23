@@ -1,9 +1,9 @@
 import pytest
 
 from cfme.containers.provider import ContainersProvider
-from utils import testgen, version
+from cfme.utils import testgen, version
 from cfme.web_ui import toolbar as tb
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

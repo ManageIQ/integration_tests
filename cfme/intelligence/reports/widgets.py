@@ -9,12 +9,12 @@ from cfme.web_ui import (
     CheckboxSelect, Form, InfoBlock, Select, ShowingInputs, accordion, fill, toolbar, Input)
 from navmazing import NavigateToObject, NavigateToSibling
 from cfme.web_ui import flash, form_buttons, summary_title
-from utils import version
-from utils.update import Updateable
-from utils.pretty import Pretty
-from utils.wait import wait_for
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import version
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 
 visibility_obj = ShowingInputs(

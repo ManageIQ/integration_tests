@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 import pytest
 import random
-import utils.conf as conf
-import utils.error as error
+from cfme.utils import conf
+from cfme.utils import error
 
 from cfme.infrastructure import host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import testgen
-from utils.blockers import BZ
-from utils.update import update
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3)]
 

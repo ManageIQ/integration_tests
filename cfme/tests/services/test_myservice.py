@@ -9,10 +9,10 @@ from cfme.services import requests
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.web_ui import toolbar as tb
-from utils import browser, testgen, version
-from utils.browser import ensure_browser_open
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import browser, testgen, version
+from cfme.utils.browser import ensure_browser_open
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name", "catalog_item"),

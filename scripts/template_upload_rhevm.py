@@ -17,12 +17,12 @@ from threading import Lock, Thread
 
 from ovirtsdk.xml import params
 
-from utils import net, trackerbot
-from utils.conf import cfme_data
-from utils.conf import credentials
-from utils.providers import get_mgmt, list_provider_keys
-from utils.ssh import SSHClient
-from utils.wait import wait_for
+from cfme.utils import net, trackerbot
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
+from cfme.utils.providers import get_mgmt, list_provider_keys
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
 
 lock = Lock()
 

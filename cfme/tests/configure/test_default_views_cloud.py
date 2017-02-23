@@ -10,8 +10,8 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.instance.image import Image
 from cfme.configure.settings import DefaultView
 from cfme.web_ui import Quadicon, fill, toolbar as tb
-from utils.appliance.implementations.ui import navigate_to
-from utils.providers import setup_a_provider_by_class
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.providers import setup_a_provider_by_class
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,

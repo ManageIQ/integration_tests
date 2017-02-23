@@ -27,11 +27,11 @@ import pytest
 from artifactor import ArtifactorClient
 from fixtures.pytest_store import write_line, store
 from markers.polarion import extract_polarion_ids
-from utils.conf import env, credentials
-from utils.net import random_port, net_check
-from utils.path import project_path
-from utils.wait import wait_for
-from utils import version
+from cfme.utils.conf import env, credentials
+from cfme.utils.net import random_port, net_check
+from cfme.utils.path import project_path
+from cfme.utils.wait import wait_for
+from cfme.utils import version
 
 
 # Create a list of all our passwords for use with the sanitize request later in this module
@@ -109,7 +109,7 @@ def pytest_configure(config):
     global proc
     if not SLAVEID and not proc and isinstance(art_client, ArtifactorClient):
         import subprocess
-        path = project_path.join('utils', 'artifactor_start.py')
+        path = project_path.join('cfme', 'utils', 'artifactor_start.py')
         cmd = [path.strpath]
         cmd.append('--port')
         cmd.append(str(art_client.port))

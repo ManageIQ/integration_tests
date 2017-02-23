@@ -6,7 +6,7 @@ import subprocess
 import time
 from optparse import OptionParser
 
-from utils import db
+from cfme.utils import db
 
 parser = OptionParser()
 parser.add_option('--backupfile', help='backup file to be restored')

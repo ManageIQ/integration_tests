@@ -3,8 +3,8 @@ import pytest
 from cfme.middleware.messaging import MiddlewareMessaging
 from cfme.middleware.provider import get_random_list
 from cfme.middleware.provider.hawkular import HawkularProvider
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from server_methods import get_hawkular_server
 
 pytestmark = [

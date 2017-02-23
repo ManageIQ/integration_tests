@@ -27,7 +27,7 @@ from _pytest.terminal import TerminalReporter
 from cached_property import cached_property
 from py.io import TerminalWriter
 
-from utils import diaper, property_or_none
+from cfme.utils import diaper, property_or_none
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -60,7 +60,7 @@ class Store(object):
     @property
     def current_appliance(self):
         # layz import due to loops and loops and loops
-        from utils import appliance
+        from cfme.utils import appliance
         return appliance.current_appliance
 
     def __init__(self):

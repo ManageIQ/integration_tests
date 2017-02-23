@@ -5,8 +5,8 @@ from functools import partial
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.web_ui import PagedTable, CheckboxTable, toolbar as tb, match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 
 # Page specific locators
 listview_pagetable = PagedTable(table_locator="//div[@id='list_grid']//table")

@@ -3,8 +3,8 @@ import fauxfactory
 import pytest
 
 from cfme import test_requirements
-from utils import error
-from utils.update import update
+from cfme.utils import error
+from cfme.utils.update import update
 
 from cfme.automate.explorer.domain import DomainCollection
 

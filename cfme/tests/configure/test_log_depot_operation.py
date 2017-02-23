@@ -8,16 +8,16 @@ Since: 2013-02-20
 import fauxfactory
 import pytest
 import re
-from utils.timeutil import parsetime
-from utils import conf, testgen
-from utils.ftp import FTPClient
-from utils.path import log_path
+from cfme.utils.timeutil import parsetime
+from cfme.utils import conf, testgen
+from cfme.utils.ftp import FTPClient
+from cfme.utils.path import log_path
 from cfme import test_requirements
 from cfme.configure import configuration as configure
 from cfme.web_ui import toolbar
-from utils.virtual_machines import deploy_template
-from utils.providers import get_mgmt
-from utils.blockers import BZ
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.providers import get_mgmt
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [test_requirements.log_depot]

@@ -1,4 +1,4 @@
-from utils.version import current_version
+from cfme.utils.version import current_version
 from mgmtsystem.openstack import OpenstackSystem
 
 from . import CloudProvider
@@ -68,7 +68,7 @@ class OpenStackProvider(CloudProvider):
 
     @classmethod
     def from_config(cls, prov_config, prov_key):
-        from utils.providers import get_crud
+        from cfme.utils.providers import get_crud
         credentials_key = prov_config['credentials']
         credentials = cls.process_credential_yaml_key(credentials_key)
         creds = {'default': credentials}

@@ -5,8 +5,8 @@ import socket
 from wait_for import wait_for
 
 from dockerbot import SeleniumDocker
-from utils.net import random_port
-from utils.conf import docker as docker_conf
+from cfme.utils.net import random_port
+from cfme.utils.conf import docker as docker_conf
 
 
 def vnc_ready(addr, port):

@@ -7,7 +7,7 @@ import random
 import re
 import warnings
 
-from utils import conf
+from cfme.utils import conf
 from manageiq_client.api import ManageIQClient as MiqApi
 
 parser = argparse.ArgumentParser(

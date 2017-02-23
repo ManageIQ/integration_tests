@@ -7,12 +7,12 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import \
     accordion, flash, Quadicon, InfoBlock, Form, fill, form_buttons, match_location, toolbar as tb
 from widgetastic_patternfly import CandidateNotFound
-from utils import version
-from utils.appliance import Navigatable, current_appliance
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.log import logger
-from utils.update import Updateable
-from utils.wait import wait_for
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable, current_appliance
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.log import logger
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
 
 cfg_btn = partial(tb.select, "Configuration")
 pol_btn = partial(tb.select, "Policy")

@@ -14,9 +14,9 @@ from cfme.web_ui import (
     form_buttons, toolbar as tb, paginator, fill, FileInput,
     CFMECheckbox, Select, flash
 )
-from utils import version
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
+from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.db import cfmedb
 
 
 cfg_btn = partial(tb.select, 'Configuration')

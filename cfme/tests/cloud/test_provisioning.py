@@ -17,12 +17,12 @@ from cfme.cloud.provider import CloudProvider
 from cfme.cloud.provider.azure import AzureProvider
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
-from utils import testgen
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.update import update
-from utils.version import current_version
-from utils.wait import wait_for, RefreshTimer
+from cfme.utils import testgen
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.update import update
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for, RefreshTimer
 
 pytestmark = [pytest.mark.meta(server_roles="+automate"),
               test_requirements.provision, pytest.mark.tier(2)]

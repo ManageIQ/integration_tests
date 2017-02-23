@@ -3,12 +3,12 @@ import json
 import os
 import requests
 
-from utils.version import get_stream
-from utils.appliance import current_appliance, IPAppliance
-from utils.conf import credentials, env
+from cfme.utils.version import get_stream
+from cfme.utils.appliance import current_appliance, IPAppliance
+from cfme.utils.conf import credentials, env
 # TODO: use custom wait_for logger fitting sprout
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 class SproutException(Exception):

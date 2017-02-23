@@ -5,7 +5,7 @@ from time import sleep
 import traceback
 
 from cfme.configure.access_control import User, Group, Role, Tenant, Project
-import utils.error as error
+from cfme.utils import error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential, login, test_requirements
 from cfme.automate import AutomateExplorer # NOQA
@@ -19,12 +19,12 @@ from cfme.infrastructure import virtual_machines as vms
 from cfme.services.myservice import MyService
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
 from cfme.configure import tasks
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.log import logger
-from utils.providers import setup_a_provider_by_class
-from utils.update import update
-from utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils.update import update
+from cfme.utils import version
 
 
 records_table = Table("//div[@id='main_div']//table")

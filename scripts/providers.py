@@ -27,8 +27,8 @@ error will happen.
 import argparse
 import os
 import sys
-from utils import iterate_pairs, process_shell_output
-from utils.providers import get_mgmt
+from cfme.utils import iterate_pairs, process_shell_output
+from cfme.utils.providers import get_mgmt
 
 # Make sure the parent dir is on the path before importing get_mgmt
 cfme_tests_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))

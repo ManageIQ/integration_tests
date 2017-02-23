@@ -6,11 +6,11 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.middleware.provider import parse_properties
 from cfme.web_ui import CheckboxTable, paginator, InfoBlock, toolbar as tb
 from mgmtsystem.hawkular import CanonicalPath
-from utils import attributize_string
-from utils.db import cfmedb
-from utils.varmeth import variable
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import attributize_string
+from cfme.utils.db import cfmedb
+from cfme.utils.varmeth import variable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.middleware.provider import LIST_TABLE_LOCATOR, MiddlewareBase, download
 from cfme.middleware.domain import MiddlewareDomain
 from cfme.exceptions import MiddlewareDomainNotFound

@@ -1,5 +1,5 @@
 import pytest
-from utils import testgen
+from cfme.utils import testgen
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 
 

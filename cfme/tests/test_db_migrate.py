@@ -2,11 +2,11 @@ import pytest
 from os import path as os_path
 
 from cfme.login import login
-from utils import version
-from utils.appliance import ApplianceException
-from utils.blockers import BZ
-from utils.conf import cfme_data
-from utils.log import logger
+from cfme.utils import version
+from cfme.utils.appliance import ApplianceException
+from cfme.utils.blockers import BZ
+from cfme.utils.conf import cfme_data
+from cfme.utils.log import logger
 
 
 def pytest_generate_tests(metafunc):

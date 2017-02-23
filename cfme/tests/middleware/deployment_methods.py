@@ -5,8 +5,8 @@ import pytest
 from contextlib import closing
 from urllib2 import urlopen, HTTPError, URLError
 from cfme.middleware.deployment import MiddlewareDeployment
-from utils.wait import wait_for
-from utils.path import middleware_resources_path
+from cfme.utils.wait import wait_for
+from cfme.utils.path import middleware_resources_path
 
 RESOURCE_WAR_NAME = 'cfme_test_war_middleware.war'
 RESOURCE_WAR_NAME_NEW = 'new_cfme_test_war_middleware.war'

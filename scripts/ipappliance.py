@@ -24,7 +24,7 @@ from datetime import datetime
 from threading import Lock
 from concurrent import futures
 import traceback
-from utils.appliance import IPAppliance
+from cfme.utils.appliance import IPAppliance
 
 lock = Lock()
 

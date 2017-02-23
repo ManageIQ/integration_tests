@@ -4,9 +4,9 @@
 """
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
-from utils.wait import wait_for, TimedOutError
+from cfme.utils.wait import wait_for, TimedOutError
 import re
-from utils.pretty import Pretty
+from cfme.utils.pretty import Pretty
 
 from widgetastic_patternfly import Input, BootstrapSelect, Button
 from widgetastic.widget import View

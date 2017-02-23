@@ -9,9 +9,9 @@ from cfme import dashboard
 from cfme.base import Server
 from cfme.dashboard import Widget
 from cfme.intelligence.reports.dashboards import Dashboard, DefaultDashboard
-from utils.blockers import BZ
+from cfme.utils.blockers import BZ
 from cfme import test_requirements
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

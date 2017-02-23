@@ -14,9 +14,9 @@ from cfme.cloud.stack import Stack
 from cfme.cloud.tenant import Tenant
 from cfme.cloud.volume import Volume
 from cfme.web_ui import paginator, toolbar as tb, match_location
-from utils.appliance.implementations.ui import navigate_to
-from utils.providers import setup_a_provider_by_class
-from utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils import version
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings]

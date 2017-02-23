@@ -13,11 +13,11 @@ import argparse
 import sys
 import os
 
-from utils import trackerbot
-from utils.providers import list_provider_keys
-from utils.conf import cfme_data
-from utils.conf import credentials
-from utils.wait import wait_for
+from cfme.utils import trackerbot
+from cfme.utils.providers import list_provider_keys
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
+from cfme.utils.wait import wait_for
 from mgmtsystem.scvmm import SCVMMSystem
 
 

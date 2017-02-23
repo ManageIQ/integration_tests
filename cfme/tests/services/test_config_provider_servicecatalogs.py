@@ -9,10 +9,10 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
-from utils import testgen, version
-from utils.log import logger
-from utils.wait import wait_for
-from utils.blockers import BZ
+from cfme.utils import testgen, version
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
+from cfme.utils.blockers import BZ
 
 pytestmark = [
     test_requirements.service,

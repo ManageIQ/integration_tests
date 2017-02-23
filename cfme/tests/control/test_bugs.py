@@ -13,16 +13,16 @@ from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
-from utils.log import logger
-from utils.providers import setup_a_provider_by_class
-from utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
+from cfme.utils.log import logger
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils.wait import wait_for
 from cfme import test_requirements
-from utils.generators import random_vm_name
+from cfme.utils.generators import random_vm_name
 from widgetastic.widget import Text
-from utils.appliance import get_or_create_current_appliance
-from utils.blockers import BZ
+from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [

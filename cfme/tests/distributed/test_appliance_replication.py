@@ -10,14 +10,14 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 import cfme.fixtures.pytest_selenium as sel
 from time import sleep
 from urlparse import urlparse
-from utils import db, version
-from utils.appliance import provision_appliance, current_appliance
-from utils.appliance.implementations.ui import navigate_to
-from utils.conf import credentials
-from utils.log import logger
-from utils.providers import setup_a_provider_by_class
-from utils.ssh import SSHClient
-from utils.wait import wait_for
+from cfme.utils import db, version
+from cfme.utils.appliance import provision_appliance, current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
+from cfme.utils.log import logger
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
 
 from cfme import test_requirements
 

@@ -14,11 +14,11 @@ import time
 
 from cfme.configure import configuration
 from fixtures.artifactor_plugin import art_client, get_test_idents
-from utils.conf import env
-from utils.log import setup_logger
-from utils.net import random_port, my_ip_address, net_check_remote
-from utils.path import scripts_path
-from utils.smtp_collector_client import SMTPCollectorClient
+from cfme.utils.conf import env
+from cfme.utils.log import setup_logger
+from cfme.utils.net import random_port, my_ip_address, net_check_remote
+from cfme.utils.path import scripts_path
+from cfme.utils.smtp_collector_client import SMTPCollectorClient
 
 
 logger = setup_logger(logging.getLogger('emails'))

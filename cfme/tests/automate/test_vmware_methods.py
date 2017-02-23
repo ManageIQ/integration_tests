@@ -11,10 +11,10 @@ from cfme.automate.explorer.domain import DomainCollection
 from cfme.common.vm import VM
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import flash, toolbar
-from utils import testgen
-from utils.blockers import BZ
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     test_requirements.automate,

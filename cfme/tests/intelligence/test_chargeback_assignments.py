@@ -7,8 +7,8 @@ import random
 
 from cfme import test_requirements
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils.providers import setup_a_provider_by_class
-from utils import version
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils import version
 
 
 pytestmark = [

@@ -17,13 +17,13 @@ from threading import Lock, Thread
 # from psphere.client import Client
 from psphere.managedobjects import VirtualMachine, ClusterComputeResource, HostSystem, Datacenter
 
-from utils import net, trackerbot
-from utils.conf import cfme_data
-from utils.conf import credentials
-from utils.providers import list_provider_keys
-from utils.ssh import SSHClient
+from cfme.utils import net, trackerbot
+from cfme.utils.conf import cfme_data
+from cfme.utils.conf import credentials
+from cfme.utils.providers import list_provider_keys
+from cfme.utils.ssh import SSHClient
 from mgmtsystem import VMWareSystem
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 # ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
 NUM_OF_TRIES_OVFTOOL = 5

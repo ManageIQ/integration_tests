@@ -7,7 +7,7 @@ from widgetastic_patternfly import Dropdown
 from cfme import BaseLoggedInPage
 from cfme.base import Server
 from cfme.base.ui import automate_menu_name
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class AutomateCustomizationView(BaseLoggedInPage):

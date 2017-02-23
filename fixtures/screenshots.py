@@ -15,7 +15,7 @@ import fauxfactory
 import pytest
 
 from fixtures.artifactor_plugin import art_client
-from utils.log import logger
+from cfme.utils.log import logger
 
 
 @pytest.fixture(scope="function")

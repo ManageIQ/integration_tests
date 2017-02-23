@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
 from cached_property import cached_property
-from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text
@@ -10,8 +10,8 @@ from widgetastic_manageiq import SummaryFormItem, MultiBoxSelect, ManageIQTree, 
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from . import ControlExplorerView
-from utils.appliance import Navigatable
-from utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.update import Updateable
 
 
 class ActionsAllView(ControlExplorerView):

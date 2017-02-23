@@ -9,13 +9,13 @@ from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.conf import credentials
-from utils.log import logger
-from utils.path import data_path
-from utils.ssh import SSHClient
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.conf import credentials
+from cfme.utils.log import logger
+from cfme.utils.path import data_path
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [pytest.mark.long_running,

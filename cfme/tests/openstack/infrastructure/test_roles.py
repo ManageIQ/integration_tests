@@ -5,9 +5,9 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.deployment_roles import DeploymentRoles
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import InfoBlock, Quadicon
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
 
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],

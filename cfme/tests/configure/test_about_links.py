@@ -5,9 +5,9 @@ import pytest
 from cfme.base.ui import Server
 from cfme.fixtures import pytest_selenium as sel
 from cfme.configure import about
-from utils import version
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
+from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
 
 
 @pytest.mark.tier(3)

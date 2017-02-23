@@ -16,12 +16,12 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from fixtures.pytest_store import store
 from operator import attrgetter
-from utils import providers
-from utils import testgen
-from utils import conf
-from utils.blockers import BZ
-from utils.log import logger
-from utils.version import current_version
+from cfme.utils import providers
+from cfme.utils import testgen
+from cfme.utils import conf
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
 
 
 def pytest_generate_tests(metafunc):

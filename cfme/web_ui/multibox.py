@@ -3,9 +3,9 @@ from collections import Sequence, namedtuple
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Select, fill, flash
-from utils.category import CategoryBase, categorize
-from utils.log import logger
-from utils.pretty import Pretty
+from cfme.utils.category import CategoryBase, categorize
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
 
 SelectItem = namedtuple("SelectItem", ["sync", "value", "text"])
 

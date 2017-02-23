@@ -1,7 +1,7 @@
 from cfme import web_ui as ui
 from cfme.web_ui import form_buttons, CFMECheckbox
-from utils.appliance import current_appliance
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 form = ui.Form(
     fields=[

@@ -3,8 +3,8 @@
 """
 import pytest
 from fixtures.pytest_store import store, write_line
-from utils import trackerbot
-from utils.providers import list_provider_keys
+from cfme.utils import trackerbot
+from cfme.utils.providers import list_provider_keys
 
 TEMPLATES = {}
 

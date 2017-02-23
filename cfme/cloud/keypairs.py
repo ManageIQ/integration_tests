@@ -2,13 +2,13 @@
 import cfme.fixtures.pytest_selenium as sel
 from navmazing import NavigateToAttribute
 from cfme.common import SummaryMixin, Taggable
-from utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
-from utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to, navigator, CFMENavigateStep
+from cfme.utils.appliance import Navigatable
 from cfme.web_ui import (Quadicon, flash, Form, Input, form_buttons, fill, AngularSelect,
                          CheckboxTable)
 from functools import partial
 from cfme.web_ui import toolbar as tb
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 
 cfg_btn = partial(tb.select, "Configuration")

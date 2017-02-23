@@ -6,8 +6,8 @@ from cfme.services.catalogs import service_catalogs  # NOQA
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.web_ui import AngularSelect, fill
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
 
 
 @pytest.mark.tier(3)

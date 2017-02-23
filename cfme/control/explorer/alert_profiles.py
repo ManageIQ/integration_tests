@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text, TextInput
@@ -8,8 +8,8 @@ from widgetastic_manageiq import MultiBoxSelect, ManageIQTree
 from widgetastic_patternfly import Button, Input, BootstrapSelect
 
 from . import ControlExplorerView
-from utils.appliance import Navigatable
-from utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.update import Updateable
 
 
 class AlertProfileFormCommon(ControlExplorerView):

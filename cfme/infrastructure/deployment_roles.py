@@ -7,12 +7,12 @@ from selenium.common.exceptions import NoSuchElementException
 from cfme.exceptions import DestinationNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import (CFMENavigateStep, navigate_to,
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import (CFMENavigateStep, navigate_to,
                                                 navigator)
 from cfme.web_ui import (listaccordion as list_acc, match_location, Quadicon,
                          Region, toolbar as tb)
-from utils.pretty import Pretty
+from cfme.utils.pretty import Pretty
 
 
 details_page = Region(infoblock_type='detail')

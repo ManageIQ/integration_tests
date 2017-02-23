@@ -6,9 +6,9 @@ from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import do_vm_provisioning
 from cfme.infrastructure.pxe import get_template_from_config
-from utils import ssh
-from utils import testgen
-from utils.wait import wait_for
+from cfme.utils import ssh
+from cfme.utils import testgen
+from cfme.utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),

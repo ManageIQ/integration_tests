@@ -14,8 +14,8 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
-from utils import providers
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import providers
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 @pytest.fixture(scope="module")

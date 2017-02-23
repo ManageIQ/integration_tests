@@ -8,12 +8,12 @@ from cfme.web_ui import flash
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from urlparse import urlparse
-from utils import conf, testgen
-from utils.ssh import SSHClient
-from utils.wait import wait_for
-from utils.pretty import Pretty
-from utils.virtual_machines import deploy_template
-from utils.providers import get_mgmt
+from cfme.utils import conf, testgen
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.providers import get_mgmt
 
 PROTOCOL_TYPES = ('smb', 'nfs')
 

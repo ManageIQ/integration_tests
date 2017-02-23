@@ -5,8 +5,8 @@ from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.middleware.server import MiddlewareServer
 from cfme.web_ui.utilization import Option
 from random_methods import get_random_object
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),

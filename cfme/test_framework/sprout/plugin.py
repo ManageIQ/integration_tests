@@ -3,13 +3,13 @@ import pytest
 import random
 import attr
 from threading import Timer
-from utils import at_exit, conf
-from utils.appliance import IPAppliance, stack as appliance_stack
+from cfme.utils import at_exit, conf
+from cfme.utils.appliance import IPAppliance, stack as appliance_stack
 # todo: use own logger after logfix merge
-from utils.log import logger as log
-from utils.path import project_path
+from cfme.utils.log import logger as log
+from cfme.utils.path import project_path
 from .client import SproutClient, SproutException
-from utils.wait import wait_for
+from cfme.utils.wait import wait_for
 
 
 _appliance_help = '''specify appliance URLs to use for distributed testing.
