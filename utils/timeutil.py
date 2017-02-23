@@ -18,7 +18,7 @@ class parsetime(_datetime):  # NOQA
     american_with_utc_format = "%m/%d/%y %H:%M:%S UTC"
     iso_with_utc_format = "%Y-%m-%d %H:%M:%S UTC"
     american_minutes = "%m/%d/%y %H:%M"
-    american_minutes_wit_utc = "%m/%d/%y %H:%M UTC"
+    american_minutes_with_utc = "%m/%d/%y %H:%M UTC"
     american_date_only_format = "%m/%d/%y"
     iso_date_only_format = "%Y-%m-%d"
     request_format = "%Y-%m-%d-%H-%M-%S"
@@ -108,7 +108,7 @@ class parsetime(_datetime):  # NOQA
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return cls._parse(cls.american_minutes_wit_utc, time_string)
+        return cls._parse(cls.american_minutes_with_utc, time_string)
 
     def to_american_minutes_with_utc(self):
         """ Convert the this object to string representation in american with just minutes.
@@ -117,7 +117,7 @@ class parsetime(_datetime):  # NOQA
 
         Returns: :py:class`str` object
         """
-        return self.strftime(self.american_minutes_wit_utc)
+        return self.strftime(self.american_minutes_with_utc)
 
     @classmethod
     def from_american_date_only(cls, time_string):
