@@ -1,11 +1,10 @@
 import pytest
 from xml.sax.saxutils import quoteattr, unescape
 
+from cfme.control import explorer  # noqa
 from cfme.exceptions import CannotScrollException
 from cfme.base.ui import Server
-from cfme import automate  # noqa
 from cfme.cloud.instance import Instance
-from cfme.control.explorer import ControlExplorer  # noqa
 from cfme.infrastructure.config_management import ConfigManager
 from cfme.infrastructure.datastore import Datastore
 from cfme.infrastructure.pxe import ISODatastore
@@ -14,7 +13,10 @@ from cfme.intelligence.chargeback import ComputeRate
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services.myservice import MyService
-from cfme.services.workloads import VmsInstances, TemplatesImages
+from cfme.services import workloads  # noqa
+from cfme.optimize.utilization import Utilization
+from cfme.optimize.bottlenecks import Bottlenecks
+from cfme.infrastructure.networking import InfraNetworking
 from cfme.web_ui.splitter import pull_splitter_left, pull_splitter_right
 from utils import version
 from utils.appliance import current_appliance
@@ -22,13 +24,11 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 
 LOCATIONS = [
-    # Bottlenecks missing
-    # infra_networking missing
     (Server, 'ControlExplorer'), (Server, 'AutomateExplorer'), (Server, 'AutomateCustomization'),
-    (MyService, 'All'), (ServiceCatalogs, 'All'), (CustomReport, 'All'), (ComputeRate, 'All'),
-    (Instance, 'All'), (Vm, 'VMsOnly'), (ISODatastore, 'All'), (Server, 'Configuration'),
-    (Datastore, 'All'), (ConfigManager, 'All'), (Server, 'Utilization'), (VmsInstances, 'All'),
-    (TemplatesImages, 'All')
+    (MyService, 'All'), (ServiceCatalogs, 'All'), (Server, 'WorkloadsDefault'),
+    (CustomReport, 'All'), (ComputeRate, 'All'), (Instance, 'All'), (Vm, 'VMsOnly'),
+    (ISODatastore, 'All'), (Server, 'Configuration'), (Datastore, 'All'), (ConfigManager, 'All'),
+    (Utilization, 'All'), (InfraNetworking, 'All'), (Bottlenecks, 'All')
 ]
 
 
@@ -37,13 +37,15 @@ pytestmark = [
         "location", LOCATIONS, ids=[
             "{}-{}".format(loc[0].__name__, loc[1]) for loc in LOCATIONS]
     ),
-    pytest.mark.uncollectif(lambda
-        location: location == "infrastructure_networking" and version.current_version() < '5.7')]
+    pytest.mark.uncollectif(lambda location: location[0] == InfraNetworking and
+        version.current_version() < '5.7')
+]
 
 
 @pytest.mark.meta(
     blockers=[
-        BZ('1380443', unblock=lambda location: location != "bottlenecks")  # Leaving this for later
+        BZ(1380443, forced_streams=['5.6', '5.7', '5.8'], unblock=lambda location: location[0] !=
+            Bottlenecks)
     ]
 )
 @pytest.mark.requirement('general_ui')
