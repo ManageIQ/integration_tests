@@ -36,14 +36,14 @@ DATA_SETS = [DataSet(Service, 'Container Services', 'CMP-9906'),
              DataSet(ContainersProvider, 'Containers Providers', 'CMP-9903')]
 
 
-@pytest.mark.parametrize(('cls'), DATA_SETS, ids=[cls.object.__name__ for cls in DATA_SETS])
+@pytest.mark.parametrize(('cls'), DATA_SETS, ids=[cls.obj.__name__ for cls in DATA_SETS])
 def test_summary_pages_links(provider, cls):
 
-    navigate_to(cls.object, 'All')
+    navigate_to(cls.obj, 'All')
     all_url = sel.current_url()
     tb.select('List View')
     name = choice([r[2].text for r in list_tbl.rows()])
-    obj = cls.object(name, provider)
+    obj = cls.obj(name, provider)
     obj.summary  # <- reload summary
 
     breads = breadcrumbs()
