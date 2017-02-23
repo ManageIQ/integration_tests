@@ -2319,30 +2319,6 @@ class Appliance(IPAppliance):
             raise
 
 
-class ApplianceSet(object):
-    """Convenience class to ease access to appliances in appliance_set
-    """
-    def __init__(self, primary_appliance=None, secondary_appliances=None):
-        self.primary = primary_appliance
-        self.secondary = secondary_appliances or list()
-
-    @property
-    def all_appliances(self):
-        all_appliances = self.secondary[:]
-        all_appliances.append(self.primary)
-        return all_appliances
-
-    def find_by_name(self, appliance_name):
-        """Finds appliance of given name
-
-        Returns: Instance of :py:class:`Appliance` if found, ``None`` otherwise
-        """
-        for appliance in self.all_appliances:
-            if appliance.name == appliance_name:
-                return appliance
-        return None
-
-
 def provision_appliance(version=None, vm_name_prefix='cfme', template=None, provider_name=None,
                         vm_name=None):
     """Provisions fresh, unconfigured appliance of a specific version
@@ -2429,66 +2405,6 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     provider.deploy_template(template_name, **deploy_args)
 
     return Appliance(provider_name, vm_name)
-
-
-def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
-    """Provisions configured appliance set according to appliance_set_data dict
-
-    This provides complete working appliance set - with DBs enabled and names set.
-
-    Primary appliance will have internal database enabled and secondary appliances
-    will be connected to the database on primary.
-
-    Args:
-        vm_name_prefix: name prefix to use when deploying the appliance vms
-        appliance_set_data: dict that corresponds to the following yaml structure:
-
-    .. code-block:: yaml
-
-        primary_appliance:
-            name: name_primary
-            version: 1.3.3
-        secondary_appliances:
-            - name: name_secondary_1
-              version: 1.2.3
-            - name: name_secondary_2
-              version: 1.3.3
-
-    Warning:
-        Secondary appliances must be of the same or lower version than the primary one.
-        Otherwise, there is a risk that the secondary of higher version will try to
-        migrate the primary's database (and fail at it).
-
-    Returns: Configured appliance set; instance of :py:class:`ApplianceSet`
-    """
-
-    primary_data = appliance_set_data['primary_appliance']
-    secondary_data = appliance_set_data.get('secondary_appliances') or []
-    all_appliances_data = [primary_data] + secondary_data
-
-    logger.info('Provisioning appliances')
-    provisioned_appliances = []
-    try:
-        for appliance_data in all_appliances_data:
-            app = provision_appliance(appliance_data['version'], vm_name_prefix)
-            provisioned_appliances.append(app)
-    except Exception as e:
-        logger.exception(e)
-        raise ApplianceException(
-            'Failed to provision appliance set - error in provisioning stage\n'
-            'Check cfme_data yaml for errors in template names and provider setup'
-        )
-    appliance_set = ApplianceSet(provisioned_appliances[0], provisioned_appliances[1:])
-    logger.info('Done - provisioning appliances')
-
-    logger.info('Configuring appliances')
-    appliance_set.primary.configure(name_to_set=primary_data['name'])
-    for i, appliance in enumerate(appliance_set.secondary):
-        appliance.configure(db_address=appliance_set.primary.address,
-                            name_to_set=secondary_data[i]['name'])
-    logger.info('Done - configuring appliances')
-
-    return appliance_set
 
 
 class ApplianceStack(LocalStack):
