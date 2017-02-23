@@ -60,7 +60,7 @@ def verify_retirement_date(test_vm, expected_date='Never'):
         expected_date: a :py:class: `str` or :py:class: `parsetime` date
             or a dict of :py:class: `parsetime` dates with 'start' and 'end' keys.
     """
-    if isinstance(expected_date, list):
+    if isinstance(expected_date, dict):
         # convert to a parsetime object for comparsion, function depends on version
         if 'UTC' in pick(VM.RETIRE_DATE_FMT):
             convert_func = parsetime.from_american_minutes_with_utc
@@ -75,9 +75,9 @@ def verify_retirement_date(test_vm, expected_date='Never'):
         assert expected_date['start'] <= expected_date['retire'] <= expected_date['end']
 
     elif isinstance(expected_date, (parsetime, datetime, date)):
-        test_vm.retirement_date == expected_date.strftime(pick(VM.RETIRE_DATE_FMT))
+        assert test_vm.retirement_date == expected_date.strftime(pick(VM.RETIRE_DATE_FMT))
     else:
-        test_vm.retirement_date == expected_date
+        assert test_vm.retirement_date == expected_date
 
 
 def generate_retirement_date(delta=None):
