@@ -84,11 +84,12 @@ def categories(request, rest_api, num=1):
 def tags(request, rest_api, categories):
     # Category id, href or name needs to be specified for creating a new tag resource
     tags = []
-    for ctg in categories:
+    for i, ctg in enumerate(categories):
+        refs = [{'id': ctg.id}, {'href': ctg.href}, {'name': ctg.name}]
         data = {
             'name': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
             'description': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
-            'category': {'href': ctg.href}
+            'category': refs[i % 3]
         }
         tags.append(data)
     tags = rest_api.collections.tags.action.create(*tags)
