@@ -209,7 +209,11 @@ def test_properties(provider, dataset):
         else:
             instance = dataset.obj(obj_name, provider)
 
-        instance.summary.reload()
+        try:
+            instance.summary.reload()
+        except TypeError:
+            raise Exception('Could not find a row that match to the name from'
+                            ' the API {}'.format(instance.name))
         props_ui = instance.summary.properties
         for field in props_api[obj_name].keys():
 
