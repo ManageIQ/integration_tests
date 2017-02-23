@@ -52,11 +52,11 @@ from functools32 import wraps
 from fixtures import terminalreporter
 from fixtures.parallelizer import remote
 from fixtures.pytest_store import store
-from utils import at_exit, conf
-from utils.appliance import IPAppliance
-from utils.log import create_sublogger
-from utils.net import random_port
-from utils.path import conf_path
+from cfme.utils import at_exit, conf
+from cfme.utils.appliance import IPAppliance
+from cfme.utils.log import create_sublogger
+from cfme.utils.net import random_port
+from cfme.utils.path import conf_path
 
 # Initialize slaveid to None, indicating this as the master process
 # slaves will set this to a unique string when they're initialized
@@ -159,7 +159,7 @@ class ParallelSession(object):
 
         self._pool = []
         self.pool_lock = Lock()
-        from utils.conf import cfme_data
+        from cfme.utils.conf import cfme_data
         self.provs = sorted(set(cfme_data['management_systems'].keys()),
                             key=len, reverse=True)
         self.slave_allocation = collections.defaultdict(list)

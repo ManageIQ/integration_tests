@@ -5,8 +5,8 @@ from navmazing import NavigateToSibling, NavigateToObject
 from . import Report
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, accordion, toolbar
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance import Navigatable
 
 reports_table = CheckboxTable("//div[@id='records_div']//table[thead]")
 cfg_btn = partial(toolbar.select, "Configuration")

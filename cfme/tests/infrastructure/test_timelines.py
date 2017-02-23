@@ -10,12 +10,12 @@ from cfme.rest.gen_data import a_provider as _a_provider
 from cfme.rest.gen_data import vm as _vm
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
-from utils import testgen
-from utils import version
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils import version
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 from selenium.common.exceptions import NoSuchElementException
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [pytest.mark.tier(2)]

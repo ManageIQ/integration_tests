@@ -1,14 +1,14 @@
 import pytest
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from cfme.web_ui import toolbar, SortTable
 from cfme.containers.project import Project
 from cfme.containers.replicator import Replicator
 from cfme.containers.service import Service
 from cfme.containers.route import Route
 from cfme.containers.provider import ContainersProvider
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [

@@ -7,10 +7,10 @@ from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Input, Region, Table, fill, flash, paginator, toolbar, match_location)
-from utils import version
-from utils.log import logger
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import version
+from cfme.utils.log import logger
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 
 REQUEST_FINISHED_STATES = {'Migrated', 'Finished'}
 

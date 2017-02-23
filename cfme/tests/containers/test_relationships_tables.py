@@ -11,9 +11,9 @@ from cfme.containers.image import Image
 from cfme.containers.project import Project
 from cfme.containers.template import Template
 from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, summary_title
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
 
 
 pytestmark = [

@@ -12,10 +12,10 @@ from cfme.login import login_admin
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill
-from utils.appliance.implementations.ui import navigate_to
-from utils.browser import browser
-from utils.providers import setup_a_provider_by_class
-from utils.wait import wait_for
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.browser import browser
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils.wait import wait_for
 from fixtures.pytest_store import store
 
 

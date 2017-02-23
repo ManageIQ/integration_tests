@@ -2,7 +2,7 @@ from cfme.exceptions import OptionNotAvailable
 from cfme.web_ui import fill, flash
 from cfme.fixtures import pytest_selenium as sel
 from cfme.common.vm import VM
-from utils import version, deferred_verpick
+from cfme.utils import version, deferred_verpick
 from . import Instance, select_provision_image
 
 

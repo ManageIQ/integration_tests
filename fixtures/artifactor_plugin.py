@@ -27,11 +27,11 @@ import pytest
 from artifactor import ArtifactorClient
 from fixtures.pytest_store import write_line, store
 from markers.polarion import extract_polarion_ids
-from utils.conf import env, credentials
-from utils.net import random_port, net_check
-from utils.path import project_path
-from utils.wait import wait_for
-from utils import version
+from cfme.utils.conf import env, credentials
+from cfme.utils.net import random_port, net_check
+from cfme.utils.path import project_path
+from cfme.utils.wait import wait_for
+from cfme.utils import version
 
 
 # Create a list of all our passwords for use with the sanitize request later in this module

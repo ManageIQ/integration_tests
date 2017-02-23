@@ -7,10 +7,10 @@ from cfme.infrastructure import host, datastore
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.login import login_admin, logout
 from cfme.web_ui.search import search_box
-from utils.providers import setup_a_provider_by_class
-from utils import version
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils import version
 from cfme.web_ui import accordion, listaccordion as list_acc
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import Datastore
 

@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from utils.version import current_version
+from cfme.utils.version import current_version
 
 pytestmark = [
     pytest.mark.ignore_stream("upstream"),

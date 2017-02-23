@@ -16,9 +16,9 @@ from xml.sax.saxutils import quoteattr, unescape
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import AccordionItemNotFound
 from cfme.web_ui import Tree, BootstrapTreeview
-from utils import version
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import version
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'

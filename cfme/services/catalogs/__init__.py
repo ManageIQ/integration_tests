@@ -5,7 +5,7 @@ from widgetastic_patternfly import Dropdown
 
 from cfme import BaseLoggedInPage
 from cfme.base import Server
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class ServicesCatalogView(BaseLoggedInPage):

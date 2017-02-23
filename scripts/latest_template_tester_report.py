@@ -8,12 +8,12 @@ from contextlib import closing
 from jinja2 import Environment, FileSystemLoader
 from urllib2 import urlopen, HTTPError
 
-from utils import trackerbot
-from utils.conf import cfme_data
-from utils.path import template_path, log_path
-from utils.providers import list_provider_keys
-from utils.ssh import SSHClient
-from utils.wait import wait_for
+from cfme.utils import trackerbot
+from cfme.utils.conf import cfme_data
+from cfme.utils.path import template_path, log_path
+from cfme.utils.providers import list_provider_keys
+from cfme.utils.ssh import SSHClient
+from cfme.utils.wait import wait_for
 
 template_env = Environment(
     loader=FileSystemLoader(template_path.strpath)

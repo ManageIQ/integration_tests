@@ -14,9 +14,9 @@ from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import discover, wait_for_a_provider, InfraProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import testgen, providers, version
-from utils.update import update
-from utils.log import logger
+from cfme.utils import testgen, providers, version
+from cfme.utils.update import update
+from cfme.utils.log import logger
 from cfme import test_requirements
 
 pytest_generate_tests = testgen.generate([InfraProvider], scope="function")

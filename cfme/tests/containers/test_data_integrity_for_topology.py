@@ -16,8 +16,8 @@ from cfme.containers.service import Service
 from cfme.containers.image import Image
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import StatusBox, Quadicon, toolbar as tb, search
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

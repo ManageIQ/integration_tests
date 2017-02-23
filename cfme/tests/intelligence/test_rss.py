@@ -4,7 +4,7 @@ import requests
 
 from cfme.base.ui import Server
 from cfme.web_ui import Table
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 rss_table = Table("//div[@id='tab_div']/table", header_offset=1)
 

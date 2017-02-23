@@ -11,12 +11,12 @@ from cfme.web_ui import (
     form_buttons, Input, Table, UpDownSelect, CFMECheckbox, BootstrapTreeview)
 from cfme.web_ui.form_buttons import change_stored_password
 from fixtures.pytest_store import store
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.update import Updateable
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
+from cfme.utils.update import Updateable
 
 
 def server_region_string():

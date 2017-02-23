@@ -5,9 +5,9 @@ import pytest
 import cfme.fixtures.pytest_selenium as sel
 from cfme.configure.configuration import AnalysisProfile
 from cfme.web_ui import Table, flash, toolbar as tb, form_buttons
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 import utils.error as error
-from utils.update import update
+from cfme.utils.update import update
 
 
 records_table = Table("//div[@id='records_div']/table")

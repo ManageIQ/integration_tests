@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToSibling
 
 from widgetastic.widget import Select, ClickableMixin

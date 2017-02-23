@@ -8,9 +8,9 @@ from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
-from utils import testgen
-from utils.blockers import BZ
-from utils.log import logger
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.report,

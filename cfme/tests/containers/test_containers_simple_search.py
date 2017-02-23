@@ -4,9 +4,9 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Table
 from cfme.web_ui import search
 
-from utils import testgen
-from utils.version import current_version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.route import Route
 from cfme.containers.project import Project
 from cfme.containers.provider import ContainersProvider

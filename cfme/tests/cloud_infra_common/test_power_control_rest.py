@@ -3,10 +3,10 @@ import pytest
 
 from cfme import test_requirements
 from cfme.common.vm import VM
-from utils import testgen
-from utils.generators import random_vm_name
-from utils.wait import wait_for
-from utils.log import logger
+from cfme.utils import testgen
+from cfme.utils.generators import random_vm_name
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
 from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.ec2 import EC2Provider
 

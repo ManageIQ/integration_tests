@@ -8,10 +8,10 @@ from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.intelligence.reports.reports import CustomReport
 from cfme.intelligence.reports.schedules import Schedule
 from cfme.intelligence.reports.widgets import ChartWidget, MenuWidget, ReportWidget, RSSFeedWidget
-from utils.path import data_path
-from utils.update import update
-from utils.blockers import BZ
-from utils import version
+from cfme.utils.path import data_path
+from cfme.utils.update import update
+from cfme.utils.blockers import BZ
+from cfme.utils import version
 from cfme import test_requirements
 
 

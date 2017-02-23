@@ -1,4 +1,4 @@
-from utils.pretty import Pretty
+from cfme.utils.pretty import Pretty
 
 from widgetastic.widget import View
 from widgetastic_patternfly import NavDropdown, VerticalNavigation, FlashMessages

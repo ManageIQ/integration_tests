@@ -4,7 +4,7 @@ from widgetastic.utils import Fillable
 from widgetastic_manageiq import Input
 from widgetastic_patternfly import BootstrapSelect, Button
 
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 class CopyViewBase(View):

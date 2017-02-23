@@ -11,9 +11,9 @@ from cfme.containers.route import Route
 from cfme.containers.container import Container
 from cfme.containers.overview import ContainersOverview
 from cfme.web_ui import StatusBox
-from utils import testgen, version
-from utils.providers import list_providers_by_class
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen, version
+from cfme.utils.providers import list_providers_by_class
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

@@ -3,7 +3,7 @@ from django import template
 from django.utils.safestring import mark_safe
 from appliances.models import Appliance
 
-from utils.timeutil import nice_seconds
+from cfme.utils.timeutil import nice_seconds
 
 register = template.Library()
 

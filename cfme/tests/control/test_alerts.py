@@ -9,13 +9,13 @@ from cfme.control.explorer import actions, alert_profiles, alerts, policies, pol
 from cfme.exceptions import CFMEExceptionOccured
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import flash, jstimelines
-from utils import ports, testgen
-from utils.conf import credentials
-from utils.log import logger
-from utils.net import net_check
-from utils.ssh import SSHClient
-from utils.update import update
-from utils.wait import wait_for
+from cfme.utils import ports, testgen
+from cfme.utils.conf import credentials
+from cfme.utils.log import logger
+from cfme.utils.net import net_check
+from cfme.utils.ssh import SSHClient
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 from cfme import test_requirements
 from fixtures.pytest_store import store
 

@@ -1,7 +1,7 @@
 import pytest
 from cfme.middleware.provider.hawkular import HawkularProvider
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from server_methods import get_eap_server
 from jdbc_driver_methods import download_jdbc_driver, deploy_jdbc_driver
 from jdbc_driver_methods import ORACLE_12C_JDBC, DB2_105_JDBC, MSSQL_2014_JDBC, MYSQL_57_JDBC

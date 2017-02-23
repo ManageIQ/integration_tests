@@ -1,4 +1,4 @@
-from utils import version
+from cfme.utils import version
 from . import InfraProvider, prop_region
 from mgmtsystem.rhevm import RHEVMSystem
 

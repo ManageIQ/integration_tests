@@ -164,9 +164,9 @@ import pytest
 
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.pytest_store import store
-from utils.datafile import template_env
-from utils.log import setup_logger
-from utils.wait import wait_for, TimedOutError
+from cfme.utils.datafile import template_env
+from cfme.utils.log import setup_logger
+from cfme.utils.wait import wait_for, TimedOutError
 
 # xxx better logger name
 logger = setup_logger(logging.getLogger('events'))

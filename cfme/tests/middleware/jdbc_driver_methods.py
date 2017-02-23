@@ -3,7 +3,7 @@ import pytest
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
 from cfme.exceptions import JDBCDriverConfigNotFound
-from utils import conf
+from cfme.utils import conf
 from deployment_methods import get_resource_path
 
 

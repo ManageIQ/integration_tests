@@ -13,18 +13,18 @@ from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table,
 from cfme.web_ui import paginator as pg
 from navmazing import NavigateToSibling, NavigateToAttribute
 from selenium.common.exceptions import NoSuchElementException
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 import utils.conf as conf
-from utils.datafile import load_data_file
-from utils.log import logger
-from utils.path import project_path
-from utils.update import Updateable
-from utils.wait import wait_for
-from utils.pretty import Pretty
-from utils.db import cfmedb
-from utils.varmeth import variable
+from cfme.utils.datafile import load_data_file
+from cfme.utils.log import logger
+from cfme.utils.path import project_path
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
+from cfme.utils.db import cfmedb
+from cfme.utils.varmeth import variable
 
 cfg_btn = partial(tb.select, 'Configuration')
 

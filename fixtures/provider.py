@@ -18,8 +18,8 @@ from cfme.containers.provider import ContainersProvider
 from cfme.middleware.provider import MiddlewareProvider
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.templateloader import TEMPLATES
-from utils import providers
-from utils.log import logger
+from cfme.utils import providers
+from cfme.utils.log import logger
 from collections import Mapping
 
 # failed provider tracking for _setup_provider_fixture

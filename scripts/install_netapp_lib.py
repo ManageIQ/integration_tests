@@ -5,8 +5,8 @@
 
 import argparse
 from urlparse import urlparse
-from utils.appliance import IPAppliance
-from utils.conf import cfme_data, env
+from cfme.utils.appliance import IPAppliance
+from cfme.utils.conf import cfme_data, env
 
 
 def parse_if_not_none(o):

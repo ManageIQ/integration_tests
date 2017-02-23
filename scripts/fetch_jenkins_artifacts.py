@@ -5,8 +5,8 @@
 
 import argparse
 import sys
-from utils.conf import credentials
-from utils.ssh import SSHClient
+from cfme.utils.conf import credentials
+from cfme.utils.ssh import SSHClient
 
 
 def main():

@@ -3,10 +3,10 @@ from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location
 from cfme.containers.provider import details_page
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep,\
     navigate_to
 from navmazing import NavigateToAttribute, NavigateToSibling
-from utils.appliance import Navigatable
+from cfme.utils.appliance import Navigatable
 from functools import partial
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")

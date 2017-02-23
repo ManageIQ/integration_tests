@@ -2,8 +2,8 @@ import pytest
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
 from cfme.web_ui import Quadicon
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider], scope='module')

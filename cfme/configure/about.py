@@ -4,11 +4,11 @@ import re
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import ElementOrBlockNotFound
 from cfme.web_ui import Region, InfoBlock
-from utils import version
-from utils.appliance import current_appliance
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
-from utils.version import current_version
+from cfme.utils import version
+from cfme.utils.appliance import current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
 
 
 product_assistance = Region(

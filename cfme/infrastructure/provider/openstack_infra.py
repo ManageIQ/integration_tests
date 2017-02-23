@@ -1,5 +1,5 @@
 from navmazing import NavigateToSibling
-from utils.appliance.implementations.ui import (navigate_to, CFMENavigateStep,
+from cfme.utils.appliance.implementations.ui import (navigate_to, CFMENavigateStep,
                                                 navigator)
 from cfme.web_ui import Form, FileInput, InfoBlock, fill
 import cfme.web_ui.toolbar as tb

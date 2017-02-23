@@ -1,9 +1,9 @@
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.containers.pod import list_tbl
-from utils import testgen
-from utils.version import current_version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.service import Service
 from cfme.containers.route import Route
 from cfme.containers.project import Project

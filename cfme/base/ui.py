@@ -13,8 +13,8 @@ from cfme.exceptions import ZoneNotFound, DestinationNotFound
 from cfme.intelligence.chargeback import ChargebackView
 from cfme.login import LoginPage
 
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
-from utils import version
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, ViaUI, navigate_to
+from cfme.utils import version
 from . import Server, Region, Zone, ZoneCollection
 
 
@@ -32,12 +32,12 @@ class LoginScreen(CFMENavigateStep):
     VIEW = LoginPage
 
     def prerequisite(self):
-        from utils.browser import ensure_browser_open
+        from cfme.utils.browser import ensure_browser_open
         ensure_browser_open()
 
     def step(self):
         # Can be either blank or logged in
-        from utils.browser import ensure_browser_open
+        from cfme.utils.browser import ensure_browser_open
         logged_in_view = self.create_view(BaseLoggedInPage)
         if logged_in_view.logged_in:
             logged_in_view.logout()

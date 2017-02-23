@@ -1,6 +1,6 @@
 import pytest
 
-import utils.db
+import cfme.utils.db
 
 
 @pytest.fixture(scope='module')
@@ -25,4 +25,4 @@ def db(uses_db):
     at the module level within tests.
 
     """
-    return utils.db.cfmedb().copy()
+    return cfme.utils.db.cfmedb().copy()

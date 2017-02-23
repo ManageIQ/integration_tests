@@ -13,13 +13,13 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import InfoBlock, fill, flash
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.version import current_version
-from utils.wait import wait_for, TimedOutError
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for, TimedOutError
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),

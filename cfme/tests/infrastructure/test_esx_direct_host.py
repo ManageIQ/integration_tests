@@ -6,10 +6,10 @@ not be difficult to extend the parametrizer.
 import pytest
 
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils.conf import credentials
-from utils.net import resolve_hostname
-from utils import testgen
-from utils.version import Version
+from cfme.utils.conf import credentials
+from cfme.utils.net import resolve_hostname
+from cfme.utils import testgen
+from cfme.utils.version import Version
 
 
 def pytest_generate_tests(metafunc):

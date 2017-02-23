@@ -2,9 +2,9 @@ import pytest
 import random
 
 from cfme.web_ui import CheckboxTable
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.version import current_version
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.template import Template
 

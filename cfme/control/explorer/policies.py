@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Page model for Control / Explorer"""
-from utils.pretty import Pretty
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
 from navmazing import NavigateToAttribute
 
 from widgetastic.widget import Text, Checkbox, TextInput
@@ -11,8 +11,8 @@ from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
 from . import ControlExplorerView
 from actions import Action
-from utils.appliance import Navigatable
-from utils.update import Updateable
+from cfme.utils.appliance import Navigatable
+from cfme.utils.update import Updateable
 
 
 class PoliciesAllView(ControlExplorerView):

@@ -10,13 +10,13 @@ from cfme.web_ui import (
     EmailSelectForm, Form, CheckboxTable, Select, ShowingInputs,
     fill, flash, toolbar, form_buttons, Input, accordion
 )
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
-from utils.update import Updateable
-from utils.wait import wait_for
-from utils.pretty import Pretty
-from utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.db import cfmedb
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for
+from cfme.utils.pretty import Pretty
+from cfme.utils import version
 
 
 cfg_btn = partial(toolbar.select, "Configuration")

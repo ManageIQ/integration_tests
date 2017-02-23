@@ -33,14 +33,14 @@ from sprout import settings, redis
 from sprout.irc_bot import send_message
 from sprout.log import create_logger
 
-from utils import conf
-from utils.appliance import Appliance as CFMEAppliance
-from utils.path import project_path
-from utils.providers import get_mgmt
-from utils.timeutil import parsetime
-from utils.trackerbot import api, depaginate, parse_template
-from utils.version import Version
-from utils.wait import wait_for
+from cfme.utils import conf
+from cfme.utils.appliance import Appliance as CFMEAppliance
+from cfme.utils.path import project_path
+from cfme.utils.providers import get_mgmt
+from cfme.utils.timeutil import parsetime
+from cfme.utils.trackerbot import api, depaginate, parse_template
+from cfme.utils.version import Version
+from cfme.utils.wait import wait_for
 
 
 LOCK_EXPIRE = 60 * 15  # 15 minutes

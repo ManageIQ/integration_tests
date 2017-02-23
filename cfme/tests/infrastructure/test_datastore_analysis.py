@@ -7,9 +7,9 @@ from cfme.infrastructure import datastore, host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.web_ui import toolbar as tb, Quadicon, InfoBlock
-from utils import conf, testgen
-from utils.blockers import BZ
-from utils.wait import wait_for
+from cfme.utils import conf, testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.wait import wait_for
 import pytest
 
 pytestmark = [test_requirements.smartstate]

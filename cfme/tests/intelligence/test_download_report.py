@@ -4,9 +4,9 @@ import os
 import shutil
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CannedSavedReport
-from utils.providers import setup_a_provider_by_class
-from utils.wait import wait_for
-from utils import browser
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils.wait import wait_for
+from cfme.utils import browser
 
 
 def clean_temp_directory():

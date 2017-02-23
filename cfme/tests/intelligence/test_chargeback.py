@@ -7,8 +7,8 @@ import utils.error as error
 
 from cfme import test_requirements
 from cfme.rest.gen_data import rates as _rates
-from utils.update import update
-from utils.wait import wait_for
+from cfme.utils.update import update
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [

@@ -4,9 +4,9 @@ import pytest
 
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.tenant import Tenant
-from utils import testgen
-from utils.log import logger
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
 
 
 pytest_generate_tests = testgen.generate([OpenStackProvider], scope='module')

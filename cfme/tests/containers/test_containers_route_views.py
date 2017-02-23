@@ -1,9 +1,9 @@
 import pytest
 from cfme.web_ui import toolbar as tb
-from utils import testgen
-from utils.version import current_version
+from cfme.utils import testgen
+from cfme.utils.version import current_version
 from cfme.containers.route import Route
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.containers.project import Project
 from cfme.containers.provider import ContainersProvider
 

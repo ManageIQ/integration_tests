@@ -7,9 +7,9 @@ import utils.error as error
 from cfme.infrastructure import host
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils import testgen
-from utils.blockers import BZ
-from utils.update import update
+from cfme.utils import testgen
+from cfme.utils.blockers import BZ
+from cfme.utils.update import update
 
 pytestmark = [pytest.mark.tier(3)]
 

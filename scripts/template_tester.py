@@ -14,7 +14,7 @@ mark:
 import os
 import sys
 
-from utils import trackerbot
+from cfme.utils import trackerbot
 
 
 def get(api, request_type=None):

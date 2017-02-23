@@ -10,10 +10,10 @@ from cfme.exceptions import DestinationNotFound, StackNotFound, CandidateNotFoun
 from cfme.web_ui import Quadicon, flash, Form, fill, form_buttons, paginator, toolbar as tb, \
     match_location, accordion
 from cfme.exceptions import CFMEException, FlashMessageException
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
-from utils.pretty import Pretty
-from utils.wait import wait_for
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, navigate_to, CFMENavigateStep
+from cfme.utils.pretty import Pretty
+from cfme.utils.wait import wait_for
 
 
 cfg_btn = partial(tb.select, "Configuration")

@@ -4,8 +4,8 @@ from collections import Mapping
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Input, Select, ShowingInputs, fill, flash, form_buttons
 
-from utils.appliance import get_or_create_current_appliance
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance import get_or_create_current_appliance
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 class AVPForm(object):

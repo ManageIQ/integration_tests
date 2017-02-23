@@ -6,9 +6,9 @@ from widgetastic_manageiq import SummaryFormItem, ScriptBox, Input
 from widgetastic_patternfly import BootstrapSelect, Button, CandidateNotFound
 
 from cfme.exceptions import ItemNotFound
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.timeutil import parsetime
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.timeutil import parsetime
 
 from . import AutomateExplorerView, check_tree_path
 from .common import Copiable, CopyViewBase

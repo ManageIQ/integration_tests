@@ -18,16 +18,16 @@ from cfme.web_ui import (
     AngularSelect, Calendar, CheckboxSelect, CFMECheckbox, DynamicTable, Form, InfoBlock, Input,
     MultiFill, Region as UIRegion, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.form_buttons import change_stored_password
-from utils.appliance import Navigatable, current_appliance
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.appliance import Navigatable, current_appliance
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from cfme.base.ui import ConfigurationView
-from utils.db import cfmedb
-from utils.log import logger
-from utils.timeutil import parsetime
-from utils.update import Updateable
-from utils.wait import wait_for, TimedOutError
-from utils import version, conf
-from utils.pretty import Pretty
+from cfme.utils.db import cfmedb
+from cfme.utils.log import logger
+from cfme.utils.timeutil import parsetime
+from cfme.utils.update import Updateable
+from cfme.utils.wait import wait_for, TimedOutError
+from cfme.utils import version, conf
+from cfme.utils.pretty import Pretty
 
 
 access_tree = partial(accordion.tree, "Access Control")

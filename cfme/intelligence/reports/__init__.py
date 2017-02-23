@@ -11,8 +11,8 @@
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.web_ui import accordion
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep
 
 
 class Report(Navigatable):

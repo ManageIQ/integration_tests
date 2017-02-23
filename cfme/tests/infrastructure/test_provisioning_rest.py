@@ -4,8 +4,8 @@ import pytest
 from cfme import test_requirements
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from utils.wait import wait_for
-from utils import testgen
+from cfme.utils.wait import wait_for
+from cfme.utils import testgen
 
 
 pytestmark = [test_requirements.provision]

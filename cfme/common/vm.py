@@ -12,15 +12,15 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     AngularCalendarInput, AngularSelect, Form, InfoBlock, Input, Quadicon, Select, fill, flash,
     form_buttons, paginator, toolbar, PagedTable, SplitPagedTable, search)
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigate_to
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.timeutil import parsetime
-from utils.update import Updateable
-from utils.virtual_machines import deploy_template
-from utils.wait import wait_for, TimedOutError
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
+from cfme.utils.timeutil import parsetime
+from cfme.utils.update import Updateable
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import wait_for, TimedOutError
 
 from . import PolicyProfileAssignable, Taggable, SummaryMixin
 

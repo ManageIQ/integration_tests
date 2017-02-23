@@ -11,12 +11,12 @@ from cfme.web_ui import (
     Form, Select, Table, accordion, fill, paginator,
     flash, form_buttons, tabstrip, DHTMLSelect, Input, Tree, AngularSelect,
     BootstrapTreeview, toolbar as tb, match_location, CheckboxTable)
-from utils import version, fakeobject_or_object
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
-from utils.update import Updateable
-from utils.pretty import Pretty
-from utils.version import current_version
+from cfme.utils import version, fakeobject_or_object
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigate_to, navigator
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
+from cfme.utils.version import current_version
 
 cfg_btn = partial(tb.select, "Configuration")
 policy_btn = partial(tb.select, "Policy")

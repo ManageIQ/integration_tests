@@ -4,7 +4,7 @@ import cfme.fixtures.pytest_selenium as sel
 import re
 from selenium.common.exceptions import NoSuchElementException
 from functools import partial
-from utils import version
+from cfme.utils import version
 from cfme.exceptions import PaginatorException
 
 

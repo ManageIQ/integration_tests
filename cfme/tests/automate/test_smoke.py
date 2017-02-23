@@ -4,7 +4,7 @@ import pytest
 
 from cfme import test_requirements
 from cfme.automate.explorer.domain import DomainCollection
-from utils import db_queries as dbq
+from cfme.utils import db_queries as dbq
 
 pytestmark = [
     test_requirements.automate,

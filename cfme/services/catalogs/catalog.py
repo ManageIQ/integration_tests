@@ -1,11 +1,11 @@
 from widgetastic.widget import Text
 from widgetastic_patternfly import Button, Input
 from navmazing import NavigateToAttribute, NavigateToSibling
-from utils.update import Updateable
-from utils.pretty import Pretty
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils import version
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils import version
 
 
 from . import ServicesCatalogView

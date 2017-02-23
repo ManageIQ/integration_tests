@@ -9,10 +9,10 @@ from cfme.middleware.provider.hawkular import HawkularProvider
 from cfme.web_ui import fill, flash, form_buttons
 from cfme.fixtures import pytest_selenium as sel
 from cfme.exceptions import FlashMessageException
-from utils import testgen
-from utils.update import update
-from utils.version import current_version
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.update import update
+from cfme.utils.version import current_version
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [

@@ -10,8 +10,8 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import PagedTable, toolbar as tb, match_location
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator
 
 listview_table = PagedTable(table_locator="//div[@id='list_grid']//table")
 

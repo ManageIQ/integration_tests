@@ -1,12 +1,12 @@
 import pytest
 from py.error import ENOENT
 
-import utils.browser
+import cfme.utils.browser
 from cfme.fixtures.pytest_selenium import ensure_browser_open, take_screenshot
 from fixtures.artifactor_plugin import art_client, get_test_idents
-from utils.datafile import template_env
-from utils.path import log_path
-from utils import browser as browser_module, safe_string
+from cfme.utils.datafile import template_env
+from cfme.utils.path import log_path
+from cfme.utils import browser as browser_module, safe_string
 
 browser_fixtures = {'browser'}
 
@@ -25,14 +25,14 @@ def pytest_namespace():
 
 def pytest_runtest_setup(item):
     if set(getattr(item, 'fixturenames', [])) & browser_fixtures:
-        utils.browser.ensure_browser_open()
+        cfme.utils.browser.ensure_browser_open()
 
 
 def pytest_exception_interact(node, call, report):
     from fixtures.artifactor_plugin import SLAVEID
     from httplib import BadStatusLine
     from socket import error
-    from utils.browser import WharfFactory
+    from cfme.utils.browser import WharfFactory
 
     import urllib2
 
@@ -40,7 +40,7 @@ def pytest_exception_interact(node, call, report):
     val = safe_string(call.excinfo.value.message).decode('utf-8', 'ignore')
 
     if isinstance(call.excinfo.value, (urllib2.URLError, BadStatusLine, error)):
-        from utils.browser import manager
+        from cfme.utils.browser import manager
         if isinstance(manager.factory, WharfFactory):
             manager.factory.wharf.checkin()
             manager.factory.wharf.checkout()

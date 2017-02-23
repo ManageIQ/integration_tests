@@ -5,9 +5,9 @@ import fauxfactory
 
 from cfme import test_requirements
 from cfme.rest.gen_data import a_provider as _a_provider
-from utils.version import current_version
-from utils.virtual_machines import deploy_template
-from utils.wait import wait_for
+from cfme.utils.version import current_version
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import wait_for
 
 
 pytestmark = [test_requirements.retirement]

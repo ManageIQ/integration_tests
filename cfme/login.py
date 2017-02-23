@@ -11,8 +11,8 @@ import time
 from selenium.webdriver.common.keys import Keys
 
 from cfme import Credential
-from utils import conf
-from utils.log import logger
+from cfme.utils import conf
+from cfme.utils.log import logger
 from fixtures.pytest_store import store
 
 from widgetastic.widget import Text, View
@@ -161,7 +161,7 @@ def login(user, submit_method=LOGIN_METHODS[-1]):
         if logged_in_view.logged_in:
             logged_in_view.logout()
 
-        from utils.appliance.implementations.ui import navigate_to
+        from cfme.utils.appliance.implementations.ui import navigate_to
         login_view = navigate_to(store.current_appliance.server, 'LoginScreen')
 
         time.sleep(1)

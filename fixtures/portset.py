@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
-from utils import ports
-from utils.log import logger
+from cfme.utils import ports
+from cfme.utils.log import logger
 
 
 def pytest_addoption(parser):

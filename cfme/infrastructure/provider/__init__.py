@@ -23,14 +23,14 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.tabstrip import TabStripForm
-from utils import conf, deferred_verpick, version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.db import cfmedb
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.varmeth import variable
-from utils.wait import wait_for
+from cfme.utils import conf, deferred_verpick, version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.db import cfmedb
+from cfme.utils.log import logger
+from cfme.utils.pretty import Pretty
+from cfme.utils.varmeth import variable
+from cfme.utils.wait import wait_for
 
 details_page = Region(infoblock_type='detail')
 

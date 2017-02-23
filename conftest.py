@@ -13,13 +13,13 @@ from fixtures.artifactor_plugin import art_client, appliance_ip_address
 from cfme.configure import configuration
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
-from utils import ports
-from utils.appliance import ApplianceException
-from utils.conf import rdb
-from utils.log import logger
-from utils.path import data_path
-from utils.net import net_check
-from utils.wait import TimedOutError
+from cfme.utils import ports
+from cfme.utils.appliance import ApplianceException
+from cfme.utils.conf import rdb
+from cfme.utils.log import logger
+from cfme.utils.path import data_path
+from cfme.utils.net import net_check
+from cfme.utils.wait import TimedOutError
 
 
 class _AppliancePoliceException(Exception):

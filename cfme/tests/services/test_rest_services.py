@@ -13,11 +13,11 @@ from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import orchestration_templates as _orchestration_templates
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
-from utils import error, version
-from utils.providers import setup_a_provider, ProviderFilter
-from utils.wait import wait_for
-from utils.log import logger
-from utils.blockers import BZ
+from cfme.utils import error, version
+from cfme.utils.providers import setup_a_provider, ProviderFilter
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [

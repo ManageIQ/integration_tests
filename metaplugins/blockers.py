@@ -40,9 +40,9 @@ from kwargify import kwargify as _kwargify
 
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from markers.meta import plugin
-from utils import version
-from utils.blockers import Blocker
-from utils.pytest_shortcuts import extract_fixtures_values
+from cfme.utils import version
+from cfme.utils.blockers import Blocker
+from cfme.utils.pytest_shortcuts import extract_fixtures_values
 
 
 def kwargify(f):

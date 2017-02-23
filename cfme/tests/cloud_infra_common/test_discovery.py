@@ -4,10 +4,10 @@ import time
 from cfme.common.vm import VM
 from cfme.exceptions import CFMEException
 from cfme.infrastructure.provider.scvmm import SCVMMProvider
-from utils import testgen
-from utils.generators import random_vm_name
-from utils.log import logger
-from utils.wait import TimedOutError
+from cfme.utils import testgen
+from cfme.utils.generators import random_vm_name
+from cfme.utils.log import logger
+from cfme.utils.wait import TimedOutError
 from cfme import test_requirements
 
 

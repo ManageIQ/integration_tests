@@ -16,7 +16,7 @@ import base64
 import os
 import re
 
-from utils import normalize_text, safe_string
+from cfme.utils import normalize_text, safe_string
 
 
 class Filedump(ArtifactorBasePlugin):

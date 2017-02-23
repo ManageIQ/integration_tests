@@ -7,11 +7,11 @@ from cfme.base import Server
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import NewerDashboardWidgetSelector
 from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar, Input
-from utils import version
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
-from utils.update import Updateable
-from utils.pretty import Pretty
+from cfme.utils import version
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
+from cfme.utils.update import Updateable
+from cfme.utils.pretty import Pretty
 from . import Report
 
 

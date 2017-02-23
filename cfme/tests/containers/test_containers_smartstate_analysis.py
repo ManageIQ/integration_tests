@@ -2,10 +2,10 @@ import re
 import pytest
 from random import choice
 from traceback import format_exc
-from utils import testgen
-from utils.version import current_version
-from utils.ssh import SSHTail
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.version import current_version
+from cfme.utils.ssh import SSHTail
+from cfme.utils.appliance.implementations.ui import navigate_to
 from cfme.web_ui import InfoBlock
 from cfme.configure import tasks
 from cfme.containers.image import Image, list_tbl

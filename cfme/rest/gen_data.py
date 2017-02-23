@@ -9,11 +9,11 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
-from utils.providers import setup_a_provider_by_class
-from utils.virtual_machines import deploy_template
-from utils.wait import wait_for
-from utils.log import logger
-from utils import version
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils.virtual_machines import deploy_template
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils import version
 
 
 _TEMPLATE_TORSO = """{

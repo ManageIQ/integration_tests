@@ -5,12 +5,12 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.provider import CloudProvider
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyedOrUnavailable
-from utils import testgen
-from utils import version
-from utils.appliance.implementations.ui import navigate_to
-from utils.blockers import BZ
-from utils.log import logger
-from utils.wait import wait_for
+from cfme.utils import testgen
+from cfme.utils import version
+from cfme.utils.appliance.implementations.ui import navigate_to
+from cfme.utils.blockers import BZ
+from cfme.utils.log import logger
+from cfme.utils.wait import wait_for
 
 
 pytest_generate_tests = testgen.generate([CloudProvider], scope="module")

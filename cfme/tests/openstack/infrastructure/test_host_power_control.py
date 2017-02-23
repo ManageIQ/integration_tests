@@ -1,10 +1,10 @@
 import pytest
 from navmazing import NavigationDestinationNotFound
-from utils import testgen
+from cfme.utils import testgen
 from cfme.web_ui import Quadicon
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.provider.openstack_infra import OpenstackInfraProvider
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 pytest_generate_tests = testgen.generate([OpenstackInfraProvider],
                                          scope='module')

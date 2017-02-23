@@ -4,8 +4,8 @@ import pytest
 
 from cfme.automate.explorer.domain import DomainCollection
 
-from utils import error
-from utils.update import update
+from cfme.utils import error
+from cfme.utils.update import update
 
 
 @pytest.mark.tier(1)

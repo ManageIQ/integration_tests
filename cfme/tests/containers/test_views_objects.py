@@ -9,8 +9,8 @@ from cfme.containers.pod import Pod
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.service import Service
 from cfme.web_ui import toolbar as tb
-from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
+from cfme.utils import testgen
+from cfme.utils.appliance.implementations.ui import navigate_to
 
 
 pytestmark = [pytest.mark.tier(2)]

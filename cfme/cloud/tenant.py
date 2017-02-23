@@ -14,11 +14,11 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     PagedTable, CheckboxTable, toolbar as tb, match_location, Form, AngularSelect, Input,
     form_buttons, flash, paginator)
-from utils.appliance import Navigatable
-from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
-from utils.log import logger
-from utils.version import current_version
-from utils.wait import wait_for, TimedOutError
+from cfme.utils.appliance import Navigatable
+from cfme.utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
+from cfme.utils.log import logger
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for, TimedOutError
 
 create_tenant_form = Form(
     fields=[

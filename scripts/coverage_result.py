@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 from coverage import CoverageData, misc
-from utils.path import project_path
+from cfme.utils.path import project_path
 import sys
 import subprocess
 import re

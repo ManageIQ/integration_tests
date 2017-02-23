@@ -13,11 +13,11 @@ from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.rest.gen_data import vm as _vm
 from cfme.rest.gen_data import arbitration_settings, automation_requests_data
-from utils.providers import setup_a_provider, ProviderFilter
-from utils.version import current_version
-from utils.wait import wait_for
-from utils.log import logger
-from utils.blockers import BZ
+from cfme.utils.providers import setup_a_provider, ProviderFilter
+from cfme.utils.version import current_version
+from cfme.utils.wait import wait_for
+from cfme.utils.log import logger
+from cfme.utils.blockers import BZ
 
 
 pytestmark = [test_requirements.rest]

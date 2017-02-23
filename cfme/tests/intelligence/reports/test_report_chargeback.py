@@ -5,8 +5,8 @@ import cfme.web_ui.flash as flash
 
 from cfme.infrastructure.provider import InfraProvider
 from cfme.intelligence.reports.reports import CustomReport
-from utils.providers import setup_a_provider_by_class
-from utils.log import logger
+from cfme.utils.providers import setup_a_provider_by_class
+from cfme.utils.log import logger
 
 pytestmark = [pytest.mark.tier(3)]
 
