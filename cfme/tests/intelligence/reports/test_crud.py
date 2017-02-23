@@ -182,11 +182,11 @@ def test_dashboard_crud():
 
 
 @pytest.mark.tier(2)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 @test_requirements.report
 def test_run_report(rest_api):
     report = rest_api.collections.reports.get(name='VM Disk Usage')
     response = report.action.run()
+    assert rest_api.response.status_code == 200
 
     @pytest.wait_for(timeout="5m", delay=5)
     def rest_running_report_finishes():
@@ -200,7 +200,6 @@ def test_run_report(rest_api):
 
 
 @pytest.mark.tier(3)
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.5')
 @test_requirements.report
 def test_import_report(rest_api):
     menu_name = 'test_report_{}'.format(fauxfactory.gen_alphanumeric())
@@ -217,9 +216,11 @@ def test_import_report(rest_api):
         'options': {'save': 'true'}
     }
     response, = rest_api.collections.reports.action.execute_action("import", data)
+    assert rest_api.response.status_code == 200
     assert response['message'] == 'Imported Report: [{}]'.format(menu_name)
     report = rest_api.collections.reports.get(name=menu_name)
     assert report.name == menu_name
 
     response, = rest_api.collections.reports.action.execute_action("import", data)
+    assert rest_api.response.status_code == 200
     assert response['message'] == 'Skipping Report (already in DB): [{}]'.format(menu_name)
