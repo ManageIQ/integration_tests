@@ -3,7 +3,7 @@
 import fauxfactory
 import pytest
 
-from datetime import timedelta
+from datetime import timedelta, date
 
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
@@ -11,8 +11,10 @@ from cfme.automate.buttons import ButtonGroup, Button
 from cfme.common.vm import VM
 from cfme.web_ui import toolbar
 from utils import testgen
-from utils.timeutil import parsetime
+from utils.blockers import BZ
+from utils.log import logger
 from utils.wait import wait_for
+from utils.version import pick
 
 
 pytestmark = [
@@ -40,7 +42,10 @@ def testing_vm(request, vm_name, setup_provider, provider, provisioning):
     vm_obj = VM.factory(vm_name, provider, provisioning["template"])
 
     def _finalize():
-        vm_obj.delete_from_provider()
+        try:
+            vm_obj.delete_from_provider()
+        except Exception:
+            logger.warn('Failed deleting VM from provider: %s', vm_name)
     request.addfinalizer(_finalize)
     vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm_obj
@@ -70,6 +75,13 @@ def retire_extend_button(request):
     return lambda: toolbar.select(grp.text, button.text)
 
 
+def generate_retirement_date(delta=None):
+    gen_date = date.today()
+    if delta:
+        gen_date += timedelta(days=delta)
+    return gen_date
+
+
 @pytest.mark.tier(3)
 def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button):
     """ Tests extending a retirement using an AE method.
@@ -87,11 +99,16 @@ def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button
     Metadata:
         test_flag: retire, provision
     """
-    soft_assert(testing_vm.retirement_date is None, "The retirement date is not None!")
-    retirement_date = parsetime.now() + timedelta(days=5)
+    num_days = 5
+    soft_assert(testing_vm.retirement_date == 'Never', "The retirement date is not 'Never'!")
+    retirement_date = generate_retirement_date(delta=num_days)
     testing_vm.set_retirement_date(retirement_date)
-    wait_for(lambda: testing_vm.retirement_date is not None, message="retirement date be set")
-    soft_assert(testing_vm.retirement_date is not None, "The retirement date is None!")
+    wait_for(lambda: testing_vm.retirement_date != 'Never', message="retirement date set")
+    set_date = testing_vm.retirement_date
+    if not BZ(1419150, forced_streams='5.6').blocks:
+        soft_assert(set_date == retirement_date.strftime(pick(VM.RETIRE_DATE_FMT)),
+                    "The retirement date '{}' did not match expected date '{}'"
+                    .format(set_date, retirement_date.strftime(pick(VM.RETIRE_DATE_FMT))))
     # current_retirement_date = testing_vm.retirement_date
 
     # Now run the extend stuff
