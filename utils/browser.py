@@ -219,6 +219,39 @@ class WharfFactory(BrowserFactory):
             self.wharf.checkin()
 
 
+class BrowserKeepAliveThread(threading.Thread):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the stopped() condition."""
+
+    def __init__(self, manager):
+        super(BrowserKeepAliveThread, self).__init__()
+        self._stop = threading.Event()
+        self.manager = manager
+
+    def run(self):
+        while not self.stopped():
+            with self.manager.factory.lock:
+                try:
+                    log.debug('renew')
+                    self.manager.browser.current_url
+                except Exception as e:
+                    log.error('something bad happened')
+                    log.error(e)
+                    try:
+                        log.debug('renew2')
+                        self.manager.browser.current_url
+                    except Exception as e:
+                        log.error('something bad happened')
+                        log.error(e)
+            time.sleep(THIRTY_SECONDS)
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
+
+
 class BrowserManager(object):
     def __init__(self, browser_factory):
         self.factory = browser_factory
@@ -244,27 +277,9 @@ class BrowserManager(object):
 
     def _browser_start_renew_thread(self):
         log.debug('starting repeater')
-        self._browser_renew_thread = threading.Thread(target=self._browser_renew_function)
+        self._browser_renew_thread = BrowserKeepAliveThread(self)
         self._browser_renew_thread.daemon = True
         self._browser_renew_thread.start()
-
-    def _browser_renew_function(self):
-        # If we have a docker id, renew_timer shouldn't still be None
-        while True:
-            time.sleep(THIRTY_SECONDS)
-            with self.factory.lock:
-                try:
-                    log.debug('renew')
-                    self.browser.current_url
-                except Exception as e:
-                    log.error('something bad happened')
-                    log.error(e)
-                    try:
-                        log.debug('renew2')
-                        self.browser.current_url
-                    except Exception as e:
-                        log.error('something bad happened')
-                        log.error(e)
 
     def _is_alive(self):
         log.debug("alive check")
@@ -316,6 +331,7 @@ class BrowserManager(object):
             log.exception(e)
         finally:
             self.browser = None
+            self._browser_renew_thread.stop()
             self._browser_renew_thread = None
 
     def start(self, url_key=None):
