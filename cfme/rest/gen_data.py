@@ -213,14 +213,19 @@ def services(request, rest_api, a_provider, dialog, service_catalogs):
 
 def rates(request, rest_api):
     chargeback = rest_api.collections.chargebacks.get(rate_type='Compute')
-    data = [{
-        'description': 'test_rate_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
-        'source': 'allocated',
-        'group': 'cpu',
-        'per_time': 'daily',
-        'per_unit': 'megahertz',
-        'chargeback_rate_id': chargeback.id
-    } for _index in range(0, 3)]
+    data = []
+    for _index in range(3):
+        req = {
+            'description': 'test_rate_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
+            'source': 'allocated',
+            'group': 'cpu',
+            'per_time': 'daily',
+            'per_unit': 'megahertz',
+            'chargeback_rate_id': chargeback.id
+        }
+        if version.current_version() >= '5.8':
+            req['chargeable_field_id'] = chargeback.id
+        data.append(req)
 
     rates = rest_api.collections.rates.action.create(*data)
     for rate in data:
