@@ -13,8 +13,9 @@ from cfme.rest.gen_data import service_templates as _service_templates
 from cfme.rest.gen_data import orchestration_templates as _orchestration_templates
 from cfme import test_requirements
 from cfme.infrastructure.provider import InfraProvider
+from fixtures.provider import setup_one_or_skip
 from utils import error, version
-from utils.providers import setup_a_provider, ProviderFilter
+from utils.providers import ProviderFilter
 from utils.wait import wait_for
 from utils.log import logger
 from utils.blockers import BZ
@@ -28,17 +29,14 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def a_provider():
-    try:
-        pf = ProviderFilter(classes=[InfraProvider], required_fields=[
-            ['provisioning', 'template'],
-            ['provisioning', 'host'],
-            ['provisioning', 'datastore'],
-            ['provisioning', 'vlan'],
-            ['provisioning', 'catalog_item_type']])
-        return setup_a_provider(filters=[pf])
-    except Exception:
-        pytest.skip("It's not possible to set up any providers, therefore skipping")
+def a_provider(request):
+    pf = ProviderFilter(classes=[InfraProvider], required_fields=[
+        ['provisioning', 'template'],
+        ['provisioning', 'host'],
+        ['provisioning', 'datastore'],
+        ['provisioning', 'vlan'],
+        ['provisioning', 'catalog_item_type']])
+    return setup_one_or_skip(request, filters=[pf])
 
 
 @pytest.fixture(scope="function")

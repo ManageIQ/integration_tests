@@ -12,8 +12,24 @@ from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from fixtures.pytest_store import store
 from utils.appliance import provision_appliance
 from utils.log import logger
-from utils.providers import setup_a_provider_by_class
+from utils.providers import list_providers_by_class
 from utils import version
+
+
+@pytest.fixture
+def vmware_provider_crud():
+    try:
+        return list_providers_by_class(VMwareProvider)[0]
+    except IndexError:
+        pytest.skip("No VMware providers available (required)")
+
+
+@pytest.fixture
+def ec2_provider_crud():
+    try:
+        return list_providers_by_class(EC2Provider)[0]
+    except IndexError:
+        pytest.skip("No EC2 provider available (required)")
 
 
 def provision_vm(request, provider):
@@ -52,7 +68,7 @@ def get_appliances():
 @pytest.mark.uncollectif(
     lambda: not (store.current_appliance.is_downstream and
         store.current_appliance.version >= '5.4'))
-def test_db_restore(request, soft_assert):
+def test_db_restore(request, soft_assert, vmware_provider_crud, ec2_provider_crud):
 
     appl1, appl2 = get_appliances()
 
@@ -66,9 +82,9 @@ def test_db_restore(request, soft_assert):
         # Manage infra,cloud providers and set some roles before taking a DB backup
         config.set_server_roles(automate=True)
         roles = config.get_server_roles()
-        provider_crud = setup_a_provider_by_class(VMwareProvider)
+        vmware_provider_crud.setup()
         wait_for_a_provider()
-        setup_a_provider_by_class(EC2Provider)
+        ec2_provider_crud.setup()
         cloud_provider.wait_for_a_provider()
 
         providers_appl1 = appl1.ipapp.managed_providers
@@ -102,7 +118,7 @@ def test_db_restore(request, soft_assert):
             'Restored DB is missing some providers'
 
         # Verify that existing provider can detect new VMs on the second appliance
-        vm = provision_vm(request, provider_crud)
+        vm = provision_vm(request, vmware_provider_crud)
         soft_assert(vm.find_quadicon().state == 'currentstate-on')
         soft_assert(vm.provider.mgmt.is_vm_running(vm.name),
             "vm running")

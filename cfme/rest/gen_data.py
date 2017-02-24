@@ -7,7 +7,7 @@ from cfme.infrastructure.provider import InfraProvider
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
-from fixture.provider import setup_one_by_class_or_skip
+from fixtures.provider import setup_one_by_class_or_skip
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 from utils.log import logger
