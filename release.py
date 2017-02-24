@@ -5,7 +5,7 @@ import sys
 new_ver = sys.argv[1]
 
 print('integration_tests {} Released'.format(new_ver))
-print()
+print('')
 print('Includes:')
 
 proc = subprocess.Popen(['git', 'describe', '--tags', '--abbrev=0'],
