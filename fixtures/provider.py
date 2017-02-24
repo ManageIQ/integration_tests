@@ -166,7 +166,7 @@ def vmware_provider(request):
     return setup_one_by_class_or_skip(request, VMwareProvider)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def setup_provider(request, provider):
     """Function-scoped fixture to set up a provider"""
     return setup_or_skip(request, provider)
