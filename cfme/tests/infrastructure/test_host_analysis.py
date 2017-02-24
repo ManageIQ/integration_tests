@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from functools import partial
 
 from cfme import test_requirements
 from cfme.configure.tasks import is_host_analysis_finished
@@ -7,9 +8,9 @@ from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.infrastructure import host
 from cfme.infrastructure.provider import InfraProvider
 from cfme.web_ui import listaccordion as list_acc, toolbar, InfoBlock
-from utils import conf
-from utils import testgen
-from utils import version
+from utils import conf, testgen, version
+from utils.appliance import get_or_create_current_appliance
+from utils.events import EventBuilder
 from utils.update import update
 from utils.wait import wait_for
 
@@ -82,7 +83,11 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
                 test_host.credentials = host.Host.Credential(
                     principal="", secret="", verify_secret="")
 
-    register_event('Host', host_name, ["request_host_scan", "host_scan_complete"])
+    builder = EventBuilder(get_or_create_current_appliance())
+    base_evt = partial(builder.new_event, target_type='Host', target_name=host_name)
+
+    register_event(base_evt(event_type='request_host_scan'),
+                   base_evt(event_type='host_scan_complete'))
 
     # Initiate analysis
     test_host.run_smartstate_analysis()
