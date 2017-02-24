@@ -2175,7 +2175,6 @@ class Appliance(IPAppliance):
     @logger_wrap("Configure fleecing: {}")
     def configure_fleecing(self, log_callback=None):
         from cfme.configure.configuration import set_server_roles, get_server_roles
-        from utils.providers import setup_provider
         with self(browser_steal=True):
             if self.is_on_vsphere:
                 self.install_vddk(reboot=True, log_callback=log_callback)
