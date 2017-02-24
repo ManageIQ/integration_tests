@@ -368,6 +368,11 @@ def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_as
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_terminate_via_rest(setup_provider_funcscope, provider, testing_instance, soft_assert,
         verify_vm_running, rest_api, from_detail):
+    """ Tests instance terminate via REST API
+
+    Metadata:
+        test_flag: power_control, provision, rest
+    """
     assert "terminate" in rest_api.collections.instances.action.all
     testing_instance.wait_for_instance_state_change(desired_state=testing_instance.STATE_ON)
     vm = rest_api.collections.instances.get(name=testing_instance.name)
