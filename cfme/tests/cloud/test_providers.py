@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=E1101
 # pylint: disable=W0621
-import fauxfactory
 import uuid
+import fauxfactory
 
 import pytest
-
-from manageiq_client.api import APIException
 
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
@@ -21,7 +19,7 @@ from cfme.web_ui import fill, flash
 from utils import testgen, version, providers
 from utils.appliance.implementations.ui import navigate_to
 from utils.update import update
-from utils.log import logger
+from cfme.rest.gen_data import arbitration_profiles as _arbitration_profiles
 
 pytest_generate_tests = testgen.generate([CloudProvider], scope="function")
 
@@ -323,27 +321,14 @@ def test_openstack_provider_has_api_version():
 
 
 class TestProvidersRESTAPI(object):
-    @pytest.yield_fixture(scope="function")
-    def arbitration_profiles(self, rest_api, setup_a_provider):
+    @pytest.fixture(scope="function")
+    def arbitration_profiles(self, request, rest_api, setup_a_provider):
         num_profiles = 2
-        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
-        body = []
-        providers = [{'id': provider.id}, {'href': provider.href}]
-        for i in range(num_profiles):
-            body.append({
-                'name': 'test_settings_{}'.format(fauxfactory.gen_alphanumeric(5)),
-                'provider': providers[i % 2]
-            })
-        response = rest_api.collections.arbitration_profiles.action.create(*body)
+        response = _arbitration_profiles(request, rest_api, setup_a_provider, num=num_profiles)
+        assert rest_api.response.status_code == 200
         assert len(response) == num_profiles
 
-        yield response
-
-        try:
-            rest_api.collections.arbitration_profiles.action.delete(*response)
-        except APIException:
-            # profiles can be deleted by tests, just log warning
-            logger.warning("Failed to delete arbitration profiles.")
+        return response
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
