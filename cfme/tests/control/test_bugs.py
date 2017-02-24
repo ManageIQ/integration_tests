@@ -10,9 +10,7 @@ from cfme.control.explorer.actions import Action
 from cfme.control.explorer.alerts import Alert
 from cfme.control.explorer.conditions import VMCondition
 from cfme.control.explorer.alert_profiles import VMInstanceAlertProfile
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.infrastructure.virtual_machines import Vm
-from cfme.fixtures import setup_one_by_class_or_skip
 from utils.appliance.implementations.ui import navigate_to
 from utils.version import current_version
 from utils.log import logger
@@ -126,11 +124,6 @@ items = [
     ("Alert profiles", create_alert_profile),
     ("Alerts", create_alert)
 ]
-
-
-@pytest.fixture(scope="module")
-def vmware_provider(request):
-    return setup_one_by_class_or_skip(request, VMwareProvider)
 
 
 @pytest.fixture(scope="module")

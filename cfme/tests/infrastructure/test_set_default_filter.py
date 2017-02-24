@@ -4,20 +4,13 @@ from functools import partial
 import pytest
 
 from cfme.infrastructure import host, datastore
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.login import login_admin, logout
 from cfme.web_ui.search import search_box
-from fixtures.provider import setup_one_by_class_or_skip
 from utils import version
 from cfme.web_ui import accordion, listaccordion as list_acc
 from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import Datastore
-
-
-@pytest.fixture(scope="module")
-def vmware_provider(request):
-    return setup_one_by_class_or_skip(request, VMwareProvider)
 
 
 pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("vmware_provider")]

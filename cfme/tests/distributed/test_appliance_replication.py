@@ -10,7 +10,6 @@ import cfme.web_ui.flash as flash
 from cfme.common.vm import VM
 from cfme.configure import configuration as conf
 from cfme.infrastructure.provider import wait_for_a_provider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 import cfme.fixtures.pytest_selenium as sel
 
 from utils import db, version
@@ -19,22 +18,17 @@ from utils.appliance.implementations.ui import navigate_to
 from utils.conf import credentials
 from utils.events import EventBuilder
 from utils.log import logger
-from utils.providers import setup_a_provider_by_class
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 from cfme import test_requirements
+
 
 pytestmark = [
     pytest.mark.long_running,
     test_requirements.distributed,
     pytest.mark.uncollect(reason="test framework broke browser_steal"),
 ]
-
-
-@pytest.fixture(scope="module")
-def vmware_provider():
-    return setup_a_provider_by_class(VMwareProvider)
 
 
 def get_ssh_client(hostname):

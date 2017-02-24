@@ -11,12 +11,11 @@ from cfme.cloud.provider.gce import GCEProvider
 from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.configure.configuration import get_server_roles, set_server_roles, candu
 from cfme.common.provider import BaseProvider
-from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider.rhevm import RHEVMProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from fixtures.pytest_store import store
+from fixtures.provider import setup_or_skip
 from operator import attrgetter
-from utils import providers
 from utils import testgen
 from utils import conf
 from utils.blockers import BZ
@@ -57,23 +56,16 @@ def enable_candu():
         set_server_roles(**original_roles)
 
 
-# Blow away all providers when done - collecting metrics for all of them is
-# too much
-@pytest.yield_fixture(scope="module")
-def handle_provider(provider):
-    try:
-        BaseProvider.clear_providers()
-        providers.setup_provider(provider.key)
-    except FlashMessageException as e:
-        e.skip_and_log("Provider failed to set up")
-    else:
-        yield
-    finally:
-        BaseProvider.clear_providers()
+@pytest.yield_fixture
+def clean_setup_provider(request, provider):
+    BaseProvider.clear_providers()
+    setup_or_skip(provider)
+    yield
+    BaseProvider.clear_providers()
 
 
 @pytest.fixture(scope="module")
-def metrics_collection(handle_provider, provider, enable_candu):
+def metrics_collection(clean_setup_provider, provider, enable_candu):
     """Check the db is gathering collection data for the given provider.
 
     Metadata:

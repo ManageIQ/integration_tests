@@ -14,12 +14,13 @@ from cfme.cloud.stack import Stack
 from cfme.cloud.tenant import Tenant
 from cfme.cloud.volume import Volume
 from cfme.web_ui import paginator, toolbar as tb, match_location
+from fixtures.provider import setup_one_by_class_or_skip
 from utils.appliance.implementations.ui import navigate_to
-from utils.providers import setup_a_provider_by_class
 from utils import version
 
 pytestmark = [pytest.mark.tier(3),
-              test_requirements.settings]
+              test_requirements.settings,
+              pytest.mark.use_fixtures("rhos_provider")]
 
 grid_pages = version.pick({
     version.LOWEST: [CloudProvider,
@@ -61,8 +62,8 @@ landing_pages = {
 
 
 @pytest.fixture(scope="module")
-def setup_a_provider():
-    setup_a_provider_by_class(OpenStackProvider)
+def rhos_provider():
+    setup_one_by_class_or_skip(OpenStackProvider)
 
 
 @pytest.yield_fixture(scope="module")
@@ -106,7 +107,7 @@ def set_cloud_provider_quad():
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
+def test_grid_page_per_item(request, page, set_grid):
     """ Tests grid items per page
 
     Metadata:
@@ -123,7 +124,7 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
+def test_tile_page_per_item(request, page, set_tile):
     """ Tests tile items per page
 
     Metadata:
@@ -140,7 +141,7 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
 
 
 @pytest.mark.parametrize('page', grid_pages, scope="module")
-def test_list_page_per_item(request, setup_a_provider, page, set_list):
+def test_list_page_per_item(request, page, set_list):
     """ Tests list items per page
 
     Metadata:
@@ -157,7 +158,7 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
 
 
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
-def test_start_page(request, setup_a_provider, start_page):
+def test_start_page(request, start_page):
     """ Tests start page
 
     Metadata:
@@ -171,6 +172,6 @@ def test_start_page(request, setup_a_provider, start_page):
     assert match_location(**match_args), "Landing Page Failed"
 
 
-def test_cloudprovider_noquads(request, setup_a_provider, set_cloud_provider_quad):
+def test_cloudprovider_noquads(request, set_cloud_provider_quad):
     navigate_to(CloudProvider, 'All')
     assert visual.check_image_exists, "Image View Failed!"

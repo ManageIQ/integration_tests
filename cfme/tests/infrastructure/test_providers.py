@@ -400,14 +400,14 @@ class TestProvidersRESTAPI(object):
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
     @pytest.mark.tier(3)
     @test_requirements.rest
-    def test_add_custom_attributes_bad_section(self, rest_api, setup_a_provider):
+    def test_add_custom_attributes_bad_section(self, rest_api, infra_provider):
         """Test that adding custom attributes with invalid section
         to provider using REST API fails.
 
         Metadata:
             test_flag: rest
         """
-        provider = rest_api.collections.providers.get(name=setup_a_provider.name)
+        provider = rest_api.collections.providers.get(name=infra_provider.name)
         uid = fauxfactory.gen_alphanumeric(5)
         body = {
             'name': 'ca_name_{}'.format(uid),

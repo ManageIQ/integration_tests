@@ -16,6 +16,7 @@ from collections import defaultdict
 from cfme.common.provider import BaseProvider, CloudInfraProvider
 from cfme.cloud.provider import CloudProvider
 from cfme.infrastructure.provider import InfraProvider
+from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.containers.provider import ContainersProvider
 from cfme.middleware.provider import MiddlewareProvider
 from fixtures.artifactor_plugin import art_client, get_test_idents
@@ -33,6 +34,57 @@ _setup_failures = defaultdict(lambda: 0)
 SETUP_FAIL_LIMIT = 3
 
 
+def _artifactor_skip_providers(request, providers, skip_msg):
+    node = request.node
+    name, location = get_test_idents(node)
+    skip_data = {'type': 'provider', 'reason': [p.key for p in providers].join(', ')}
+    art_client.fire_hook('skip_test', test_location=location, test_name=name,
+        skip_data=skip_data)
+    pytest.skip(skip_msg)
+
+
+def _setup_provider_verbose(provider):
+    try:
+        store.terminalreporter.write_line(
+            "Trying to set up provider {}\n".format(provider.key), green=True)
+        provider.setup()
+        return True
+    except Exception as e:
+        logger.exception(e)
+        _setup_failures[provider] += 1
+        if _setup_failures[provider] >= SETUP_FAIL_LIMIT:
+            _problematic_providers.add(provider)
+            message = "Provider {} is now marked as problematic and won't be used again."\
+                      " {}: {}".format(provider.key, type(e).__name__, str(e))
+            logger.warning(message)
+            store.terminalreporter.write_line(message + "\n", red=True)
+        if provider.exists:
+            # Remove it in order to not explode on next calls
+            provider.delete(cancel=False)
+            provider.wait_for_delete()
+            message = "Provider {} was deleted because it failed to set up.".format(
+                provider.key)
+            logger.warning(message)
+            store.terminalreporter.write_line(message + "\n", red=True)
+        return False
+
+
+def setup_or_skip(request, provider):
+    """ Sets up given provider or skips the test
+
+    Note:
+        If a provider fails to setup SETUP_FAIL_LIMIT times, it will be added to the list
+        of problematic providers and won't be used by any test until the end of the test run.
+    """
+    if provider in _problematic_providers:
+        skip_msg = "Provider {} had been marked as problematic".format(provider.key)
+        _artifactor_skip_providers(request, [provider], skip_msg)
+
+    if not _setup_provider_verbose(provider):
+        _artifactor_skip_providers(
+            request, [provider], "Unable to setup provider {}".format(provider.key))
+
+
 def setup_one_or_skip(request, filters=None, use_global_filters=True):
     """ Sets up one of matching providers or skips the test
 
@@ -42,51 +94,12 @@ def setup_one_or_skip(request, filters=None, use_global_filters=True):
         use_global_filters: Will apply global filters as well if `True`, will not otherwise
     """
 
-    def _artifactor_skip_providers(providers, request):
-        node = request.node
-        name, location = get_test_idents(node)
-        skip_data = {'type': 'provider', 'reason': [p.key for p in providers].join(', ')}
-        art_client.fire_hook('skip_test', test_location=location, test_name=name,
-            skip_data=skip_data)
-
-    def _setup_provider(provider):
-        """ Sets up given provider robustly
-
-        Note:
-
-            If a provider fails to setup SETUP_FAIL_LIMIT times, it will be added to the list
-            of problematic providers and won't be used by any test until the end of the test run.
-        """
-        try:
-            store.terminalreporter.write_line(
-                "Trying to set up provider {}\n".format(provider.key), green=True)
-            provider.setup()
-            return True
-        except Exception as e:
-            logger.exception(e)
-            _setup_failures[provider] += 1
-            if _setup_failures[provider] >= SETUP_FAIL_LIMIT:
-                _problematic_providers.add(provider)
-                message = "Provider {} is now marked as problematic and won't be used again."\
-                          " {}: {}".format(provider.key, type(e).__name__, str(e))
-                logger.warning(message)
-                store.terminalreporter.write_line(message + "\n", red=True)
-            if provider.exists:
-                # Remove it in order to not explode on next calls
-                provider.delete(cancel=False)
-                provider.wait_for_delete()
-                message = "Provider {} was deleted because it failed to set up.".format(
-                    provider.key)
-                logger.warning(message)
-                store.terminalreporter.write_line(message + "\n", red=True)
-            return False
-
     filters = filters or []
     providers = list_providers(filters=filters, use_global_filters=use_global_filters)
 
     # All providers filtered out?
     if not providers:
-        global_providers = list_providers(filters=None, use_global_filters=True)
+        global_providers = list_providers(filters=None, use_global_filters=use_global_filters)
         if not global_providers:
             # This can also mean that there simply are no providers in the yamls!
             pytest.skip("No provider matching global filters found")
@@ -95,8 +108,8 @@ def setup_one_or_skip(request, filters=None, use_global_filters=True):
 
     # Are all providers marked as problematic?
     if _problematic_providers.issuperset(providers):
-        _artifactor_skip_providers(providers, request)
-        pytest.skip("All providers marked as problematic: {}".format([p.key for p in providers]))
+        skip_msg = "All providers marked as problematic: {}".format([p.key for p in providers])
+        _artifactor_skip_providers(request, providers, skip_msg)
 
     # If there is a provider already set up matching the user's requirements, reuse it
     for provider in providers:
@@ -118,11 +131,11 @@ def setup_one_or_skip(request, filters=None, use_global_filters=True):
     # Try to set up one of matching providers
     non_existing = [prov for prov in providers if not prov.exists]
     for provider in non_existing:
-        if _setup_provider(provider):
+        if _setup_provider_verbose(provider):
             return provider
 
-    _artifactor_skip_providers(non_existing, request)
-    pytest.skip("Failed to set up any matching provider(s): {}", [p.key for p in providers])
+    skip_msg = "Failed to set up any matching providers: {}", [p.key for p in providers]
+    _artifactor_skip_providers(request, non_existing, skip_msg)
 
 
 def setup_one_by_class_or_skip(request, prov_class, use_global_filters=True):
@@ -145,22 +158,30 @@ def cloud_provider(request):
     return setup_one_by_class_or_skip(request, CloudProvider)
 
 
+# TODO investigate
+# For some reason we have quite a few places that depend _specifically_ on a vmware type provider
+# and it doesn't really seem right
+@pytest.fixture(scope="module")
+def vmware_provider(request):
+    return setup_one_by_class_or_skip(request, VMwareProvider)
+
+
 @pytest.fixture(scope='module')
 def setup_provider(request, provider):
     """Function-scoped fixture to set up a provider"""
-    return setup_one_or_skip(request, filters=[ProviderFilter(keys=[provider.key])])
+    return setup_or_skip(request, provider)
 
 
 @pytest.fixture(scope='module')
 def setup_provider_modscope(request, provider):
     """Module-scoped fixture to set up a provider"""
-    return setup_one_or_skip(request, filters=[ProviderFilter(keys=[provider.key])])
+    return setup_or_skip(request, provider)
 
 
 @pytest.fixture(scope='class')
 def setup_provider_clsscope(request, provider):
     """Module-scoped fixture to set up a provider"""
-    return setup_one_or_skip(request, filters=[ProviderFilter(keys=[provider.key])])
+    return setup_or_skip(request, provider)
 
 
 @pytest.fixture
@@ -173,7 +194,7 @@ def setup_provider_funcscope(request, provider):
         be module-scoped the majority of the time.
 
     """
-    return setup_one_or_skip(request, filters=[ProviderFilter(keys=[provider.key])])
+    return setup_or_skip(request, provider)
 
 
 @pytest.fixture(scope="session")

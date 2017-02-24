@@ -1,11 +1,10 @@
 """ Helper functions related to the creation, listing, filtering and destruction of providers
 
-The functions in this module that require the 'filters' parameter, such as list_providers,
-setup_a_provider etc depend on a (by default global) dict of filters by default.
-If you are writing tests or fixtures, you want to depend on those functions as de facto gateways.
+The list_providers function in this module depend on a (by default global) dict of filters.
+If you are writing tests or fixtures, you want to depend on this function as a de facto gateway.
 
-The rest of the functions, such as get_mgmt, get_crud etc ignore this global dict and will provide
-you with whatever you ask for with no limitations.
+The rest of the functions, such as get_mgmt, get_crud, get_provider_keys etc ignore this global
+dict and will provide you with whatever you ask for with no limitations.
 
 The main clue to know what is limited by the filters and what isn't is the 'filters' parameter.
 """

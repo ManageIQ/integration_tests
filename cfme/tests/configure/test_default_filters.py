@@ -4,9 +4,7 @@ import pytest
 from cfme import test_requirements
 from cfme.configure import settings as st
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.provider import InfraProvider
 from utils.blockers import BZ
-from utils.providers import setup_a_provider_by_class
 from cfme.cloud.instance.image import Image
 from cfme.cloud.instance import Instance
 from cfme.infrastructure import virtual_machines as vms
@@ -15,15 +13,11 @@ from utils.appliance.implementations.ui import navigate_to
 from cfme.infrastructure.host import Host
 
 pytestmark = [pytest.mark.tier(3),
-              test_requirements.settings]
+              test_requirements.settings,
+              pytest.mark.use_fixtures("infra_provider")]
 
 
-@pytest.fixture(scope="module")
-def setup_first_provider():
-    setup_a_provider_by_class(InfraProvider)
-
-
-def test_cloudimage_defaultfilters(setup_first_provider):
+def test_cloudimage_defaultfilters():
     filters = [['Cloud', 'Instances', 'Images', 'Platform / Amazon']]
     df = st.DefaultFilter(name='Platform / Amazon')
     df.update({'filters': [(k, True) for k in filters]})
@@ -31,7 +25,7 @@ def test_cloudimage_defaultfilters(setup_first_provider):
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
-def test_cloudinstance_defaultfilters(setup_first_provider):
+def test_cloudinstance_defaultfilters():
     filters = [['Cloud', 'Instances', 'Instances', 'Platform / Openstack']]
     df = st.DefaultFilter(name='Platform / Openstack')
     df.update({'filters': [(k, True) for k in filters]})
@@ -39,7 +33,7 @@ def test_cloudinstance_defaultfilters(setup_first_provider):
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
-def test_infrastructurehost_defaultfilters(setup_first_provider):
+def test_infrastructurehost_defaultfilters():
     filters = [['Infrastructure', 'Hosts', 'Platform / HyperV']]
     df = st.DefaultFilter(name='Platform / HyperV')
     df.update({'filters': [(k, True) for k in filters]})
@@ -47,7 +41,7 @@ def test_infrastructurehost_defaultfilters(setup_first_provider):
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
-def test_infrastructurevms_defaultfilters(setup_first_provider):
+def test_infrastructurevms_defaultfilters():
     filters = [['Infrastructure', 'Virtual Machines', 'VMs', 'Platform / VMware']]
     df = st.DefaultFilter(name='Platform / VMware')
     df.update({'filters': [(k, True) for k in filters]})
@@ -55,7 +49,7 @@ def test_infrastructurevms_defaultfilters(setup_first_provider):
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
-def test_infrastructuretemplates_defaultfilters(setup_first_provider):
+def test_infrastructuretemplates_defaultfilters():
     filters = [['Infrastructure', 'Virtual Machines', 'Templates', 'Platform / Redhat']]
     df = st.DefaultFilter(name='Platform / Redhat')
     df.update({'filters': [(k, True) for k in filters]})
@@ -64,7 +58,7 @@ def test_infrastructuretemplates_defaultfilters(setup_first_provider):
 
 
 @pytest.mark.meta(blockers=[BZ(1290300, forced_streams=["upstream"])])
-def test_servicetemplateandimages_defaultfilters(setup_first_provider):
+def test_servicetemplateandimages_defaultfilters():
     filters = [['Services', 'Workloads', 'Templates & Images', 'Platform / Microsoft']]
     df = st.DefaultFilter(name='Platform / Microsoft')
     df.update({'filters': [(k, True) for k in filters]})
@@ -76,7 +70,7 @@ def test_servicetemplateandimages_defaultfilters(setup_first_provider):
         df.update({'filters': [(k, False) for k in filters]})
 
 
-def test_servicevmsandinstances_defaultfilters(setup_first_provider):
+def test_servicevmsandinstances_defaultfilters():
     filters = [['Services', 'Workloads', 'VMs & Instances', 'Platform / Openstack']]
     df = st.DefaultFilter(name='Platform / Openstack')
     df.update({'filters': [(k, True) for k in filters]})

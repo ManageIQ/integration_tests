@@ -10,12 +10,12 @@ from cfme.cloud.instance import Instance
 from cfme.cloud.instance.image import Image
 from cfme.configure.settings import DefaultView
 from cfme.web_ui import Quadicon, fill, toolbar as tb
+from fixtures.provider import setup_one_by_class_or_skip
 from utils.appliance.implementations.ui import navigate_to
-from utils.providers import setup_a_provider_by_class
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.usefixtures('setup_a_provider')]
+              pytest.mark.usefixtures('rhos_provider')]
 
 gtl_params = {
     'Cloud Providers': CloudProvider,
@@ -28,8 +28,8 @@ gtl_params = {
 
 # TODO refactor for setup_provider parametrization with new 'latest' tag
 @pytest.fixture(scope="module")
-def setup_a_provider():
-    setup_a_provider_by_class(OpenStackProvider)
+def rhos_provider():
+    setup_one_by_class_or_skip(OpenStackProvider)
 
 
 def select_two_quads():

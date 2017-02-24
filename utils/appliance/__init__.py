@@ -2199,7 +2199,7 @@ class Appliance(IPAppliance):
 
             # add provider
             log_callback('Setting up provider...')
-            setup_provider(self._provider_key)
+            self.provider.setup()
 
             # credential hosts
             log_callback('Credentialing hosts...')
