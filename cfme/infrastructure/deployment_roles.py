@@ -12,8 +12,8 @@ from utils.appliance.implementations.ui import (CFMENavigateStep, navigate_to,
                                                 navigator)
 from cfme.web_ui import (listaccordion as list_acc, match_location, Quadicon,
                          Region, toolbar as tb)
+from utils import version
 from utils.pretty import Pretty
-from utils.version import current_version
 
 
 details_page = Region(infoblock_type='detail')
@@ -54,9 +54,8 @@ class DeploymentRoles(Pretty, Navigatable):
 
     def delete(self):
         navigate_to(self, 'Details')
-        menu_item = 'Remove item'
-        if current_version() < '5.7':
-            menu_item = 'Remove from the VMDB'
+        menu_item = version.pick({version.LOWEST: 'Remove from the VMDB',
+                                  '5.7': 'Remove item'})
         cfg_btn(menu_item, invokes_alert=True)
         sel.handle_alert(wait=60)
 
