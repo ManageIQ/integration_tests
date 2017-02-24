@@ -331,8 +331,9 @@ class BrowserManager(object):
             log.exception(e)
         finally:
             self.browser = None
-            self._browser_renew_thread.stop()
-            self._browser_renew_thread = None
+            if self._browser_renew_thread:
+                self._browser_renew_thread.stop()
+                self._browser_renew_thread = None
 
     def start(self, url_key=None):
         log.info('starting browser')
