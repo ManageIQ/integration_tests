@@ -57,7 +57,7 @@ class DeploymentRoles(Pretty, Navigatable):
         menu_item = 'Remove item'
         if current_version() < '5.7':
             menu_item = 'Remove from the VMDB'
-        tb.select('Configuration', menu_item, invokes_alert=True)
+        cfg_btn(menu_item, invokes_alert=True)
         sel.handle_alert(wait=60)
 
 

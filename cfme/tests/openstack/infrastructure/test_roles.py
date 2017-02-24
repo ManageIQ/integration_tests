@@ -49,13 +49,11 @@ def test_roles_summary(provider, soft_assert):
         dr = DeploymentRoles(name, provider)
         navigate_to(dr, 'DetailsFromProvider')
 
-        values = ('Nodes', 'Direct VMs', 'All VMs')
-        for v in values:
+        for v in ('Nodes', 'Direct VMs', 'All VMs'):
             res = dr.get_detail('Relationships', v)
             soft_assert(res.isdigit(), err_ptrn.format(v))
 
-        values = ('Total CPUs', 'Total Node CPU Cores')
-        for v in values:
+        for v in ('Total CPUs', 'Total Node CPU Cores'):
             res = dr.get_detail('Totals for Nodes', v)
             soft_assert(res.isdigit() and int(res) > 0, err_ptrn.format(v))
 
@@ -64,8 +62,7 @@ def test_roles_summary(provider, soft_assert):
         total_memory = dr.get_detail('Totals for Nodes', 'Total Memory')
         soft_assert('GB' in total_memory, err_ptrn.format('Total Memory'))
 
-        values = ('Total Configured Memory', 'Total Configured CPUs')
-        for v in values:
+        for v in ('Total Configured Memory', 'Total Configured CPUs'):
             res = dr.get_detail('Totals for VMs', v)
             soft_assert(res, err_ptrn.format(v))
 
