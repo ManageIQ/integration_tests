@@ -365,7 +365,6 @@ def test_terminate(setup_provider_funcscope, provider, testing_instance, soft_as
                                                                 timeout=1200))
 
 
-@pytest.mark.ignore_stream("5.4")
 @pytest.mark.parametrize("from_detail", [True, False], ids=["from_detail", "from_collection"])
 def test_terminate_via_rest(setup_provider_funcscope, provider, testing_instance, soft_assert,
         verify_vm_running, rest_api, from_detail):
@@ -376,6 +375,7 @@ def test_terminate_via_rest(setup_provider_funcscope, provider, testing_instance
         vm.action.terminate()
     else:
         rest_api.collections.instances.action.terminate(vm)
+    assert rest_api.response.status_code == 200
     terminated_states = (testing_instance.STATE_TERMINATED, testing_instance.STATE_ARCHIVED,
                          testing_instance.STATE_UNKNOWN)
     soft_assert(testing_instance.wait_for_instance_state_change(desired_state=terminated_states,
