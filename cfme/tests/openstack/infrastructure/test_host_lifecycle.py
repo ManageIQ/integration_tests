@@ -1,9 +1,10 @@
 import pytest
+from navmazing import NavigationDestinationNotFound
 from utils import testgen
 from cfme.web_ui import Quadicon, toolbar as tb
 from cfme.infrastructure.host import Host
-from cfme.web_ui import InfoBlock
 from cfme.fixtures import pytest_selenium as sel
+from utils.appliance.implementations.ui import navigate_to
 from utils.wait import wait_for
 
 
@@ -14,10 +15,11 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type,
 
 @pytest.mark.usefixtures("setup_provider_modscope")
 def test_host_manageable(provider):
-    provider.load_details()
-    sel.click(InfoBlock.element("Relationships", "Nodes"))
+    try:
+        navigate_to(provider, 'ProviderNodes')
+    except NavigationDestinationNotFound:
+        assert "Missing nodes in provider's details"
     my_quads = list(Quadicon.all())
-    # quad = my_quads[0]
     quad_dict = {i.name: i for i in my_quads}
     # TODO remove the quad name, retrieve it from mgmt system
     quad = quad_dict['c4f7a679-b895-44dd-9436-d6f469a07513']
@@ -33,10 +35,11 @@ def test_host_manageable(provider):
 
 
 def test_host_available(provider):
-    provider.load_details()
-    sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
-    # quad = my_quads[0]
+    try:
+        navigate_to(provider, 'ProviderNodes')
+    except NavigationDestinationNotFound:
+        assert "Missing nodes in provider's details"
     quad_dict = {i.name: i for i in my_quads}
     # TODO remove the quad name, retrieve it from mgmt system
     quad = quad_dict['c4f7a679-b895-44dd-9436-d6f469a07513']
@@ -52,10 +55,11 @@ def test_host_available(provider):
 
 
 def test_host_introspection(provider):
-    provider.load_details()
-    sel.click(InfoBlock.element("Relationships", "Nodes"))
     my_quads = list(Quadicon.all())
-    # quad = my_quads[0]
+    try:
+        navigate_to(provider, 'ProviderNodes')
+    except NavigationDestinationNotFound:
+        assert "Missing nodes in provider's details"
     quad_dict = {i.name: i for i in my_quads}
     # TODO remove the quad name, retrieve it from mgmt system
     quad = quad_dict['c4f7a679-b895-44dd-9436-d6f469a07513']
@@ -72,6 +76,11 @@ def test_host_introspection(provider):
     return result
 
 
-def test_host_registration(provider, reg_file):
-    # TODO wait for merge of #4015
-    pass
+def test_host_registration(provider, file_path):
+    try:
+        navigate_to(provider, 'ProviderNodes')
+    except NavigationDestinationNotFound:
+        assert "Missing nodes in provider's details"
+
+    provider.register(file_path)
+    assert provider.node_exist()

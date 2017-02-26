@@ -344,7 +344,6 @@ class Host(Updateable, Pretty, Navigatable):
         'manageable', 'available'
         USAGE: my_host.get_host_provisioning_state()
         """
-        # provider = self.get_provider()
         nodes = provider.mgmt.list_node()
         nodes_dict = {i.uuid: i for i in nodes}
         node = nodes_dict[(str(self.name).split()[0])]
