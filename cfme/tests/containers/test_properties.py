@@ -1,236 +1,147 @@
 # -*- coding: utf-8 -*-
-from random import sample
 import pytest
 
-from utils import testgen
-from utils.version import current_version
-from utils.soft_get import soft_get
-from mgmtsystem.utils import eval_strings
+from cfme.containers.provider import ContainersProvider, navigate_and_get_rows
+from cfme.containers.route import Route, list_tbl as route_list_tbl
+from cfme.containers.project import Project, list_tbl as project_list_tbl
+from cfme.containers.service import Service, list_tbl as service_list_tbl
+from cfme.containers.container import Container, list_tbl as container_list_tbl
+from cfme.containers.node import Node, list_tbl as node_list_tbl
+from cfme.containers.image import Image, list_tbl as image_list_tbl
+from cfme.containers.image_registry import ImageRegistry, list_tbl as image_registry_list_tbl
+from cfme.containers.pod import Pod, list_tbl as pod_list_tbl
 
-from cfme.containers.container import Container
-from cfme.containers.project import Project
-from cfme.containers.route import Route
-from cfme.containers.pod import Pod
-from cfme.containers.node import Node
-from cfme.containers.provider import ContainersProvider
-from cfme.containers.image import Image
-from cfme.containers.service import Service
-from cfme.containers.image_registry import ImageRegistry
+from utils import testgen, version
+from utils.soft_get import soft_get
 
 
 pytestmark = [
-    pytest.mark.uncollectif(
-        lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
-pytest_generate_tests = testgen.generate(
-    [ContainersProvider], scope="function")
+pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-"""
-Test container objects properties.
-Steps:
-    * Go to object detail page, view properties table
-Expected results:
-    * All fields should have the correct information
-    (i.e. equal to the values in the API)
-"""
-
-
-def get_item_if_exist(dict_, *keys):
-    """Trying to get fields in the dict 'dict_',
-    if getting KeyError, return ''
-    """
-    out = dict_
-    try:
-        for key in keys:
-            out = out[key]
-        return out
-    except KeyError:
-        return ''
-
-
-def api_get_project_properties(provider):
-    out = {}
-    for item in provider.mgmt.api.get('namespace')[1]['items']:
-        out[item['metadata']['name']] = {
-            'name': item['metadata']['name'],
-            'creation_timestamp': item['metadata']['creationTimestamp'],
-            'resource_version': item['metadata']['resourceVersion']
-        }
-    return out
-
-
-def api_get_image_properties(provider):
-    out = {}
-    for item in provider.mgmt.o_api.get('image')[1]['items']:
-        name = item['dockerImageMetadata']['Config']['Labels']['Name']
-        out[name] = {
-            'name': name,
-            'tag': (item['dockerImageReference'].split(':')[-1]
-                    if ':' in item['dockerImageReference'] else ''),
-            'full_name': item['dockerImageReference'],
-            'architecture': item['dockerImageMetadata']['Architecture'],
-            'docker_version': item['dockerImageMetadata']['DockerVersion'],
-            'size': item['dockerImageMetadata']['Size'],
-            'author': get_item_if_exist(item, 'dockerImageMetadata', 'Author'),
-            'entrypoint': get_item_if_exist(item, 'dockerImageMetadata',
-                                            'Config', 'Entrypoint', -1)
-        }
-    return out
-
-
-def api_get_route_properties(provider):
-    out = {}
-    for item in provider.mgmt.o_api.get('route')[1]['items']:
-        out[item['metadata']['name']] = {
-            'name': item['metadata']['name'],
-            'creation_timestamp': item['metadata']['creationTimestamp'],
-            'resource_version': item['metadata']['resourceVersion'],
-            'host_name': item['spec']['host']
-        }
-    return out
-
-
-def api_get_pod_properties(provider):
-    out = {}
-    for item in provider.mgmt.api.get('pod')[1]['items']:
-        out[item['metadata']['name']] = {
-            'name': item['metadata']['name'],
-            'creation_timestamp': item['metadata']['creationTimestamp'],
-            'resource_version': item['metadata']['resourceVersion'],
-            'phase': item['status']['phase'],
-            'restart_policy': get_item_if_exist(item, 'spec', 'restartPolicy'),
-            'dns_policy': get_item_if_exist(item, 'spec', 'dnsPolicy'),
-            'ip_address': get_item_if_exist(item, 'status', 'podIP')
-        }
-    return out
-
-
-def api_get_container_properties(provider):
-    out = {}
-    for item in provider.mgmt.api.get('pod')[1]['items']:
-        for cnt in item['spec']['containers']:
-            if cnt['name'] not in out:
-                out[cnt['name']] = {
-                    'pod_name': item['metadata']['name'],
-                    'name': cnt['name'],
-                    'privileged': cnt['securityContext']['privileged'],
-                    'selinux_level':
-                        ''.join(cnt['securityContext']['seLinuxOptions']['level']),
-                    'drop_capabilities':
-                        ','.join(cnt['securityContext']['capabilities']['drop']),
-                    'run_as_user': get_item_if_exist(cnt, 'securityContext', 'runAsUser')
-                }
-    return out
-
-
-def api_get_node_properties(provider):
-    out = {}
-    for item in provider.mgmt.api.get('node')[1]['items']:
-        out[item['metadata']['name']] = {
-            'name': item['metadata']['name'],
-            'creation_timestamp': item['metadata']['creationTimestamp'],
-            'number_of_cpu_cores': item['status']['allocatable']['cpu'],
-            'max_pods_capacity': item['status']['capacity']['pods'],
-            'system_bios_uuid': item['status']['nodeInfo']['systemUUID'],
-            'machine_id': item['status']['nodeInfo']['machineID'],
-            'runtime_version':
-                get_item_if_exist(item, 'status', 'nodeInfo', 'containerRuntimeVersion'),
-            'kubelet_version':
-                get_item_if_exist(item, 'status', 'nodeInfo', 'kubeletVersion'),
-            'proxy_version':
-                get_item_if_exist(item, 'status', 'nodeInfo', 'kubeProxyVersion'),
-            'kernel_version':
-                get_item_if_exist(item, 'status', 'nodeInfo', 'kernelVersion')
-        }
-    return out
-
-
-def api_get_service_properties(provider):
-    out = {}
-    for item in provider.mgmt.api.get('service')[1]['items']:
-        out[item['metadata']['name']] = {
-            'name': item['metadata']['name'],
-            'creation_timestamp': item['metadata']['creationTimestamp'],
-            'resource_version': item['metadata']['resourceVersion'],
-            'session_affinity': item['spec']['sessionAffinity'],
-            'type': get_item_if_exist(item, 'spec', 'type'),
-            'portal_ip': get_item_if_exist(item, 'spec', 'portalIP')
-        }
-    return out
-
-
-def api_get_image_registry_properties(provider):
-    out = {}
-    for item in provider.mgmt.list_image_registry():
-        if item.host not in ('openshift', 'openshift3'):
-            out[item.host] = {
-                'host': item.host
-            }
-    return out
-
-
-class DataSet(object):
-    def __init__(self, obj, get_props_api, polarion_id):
+class TestObj(object):
+    def __init__(self, obj, expected_fields, list_tbl, polarion_id):
         self.obj = obj
-        self.get_props_api = get_props_api
+        self.expected_fields = expected_fields
+        self.list_tbl = list_tbl
         pytest.mark.polarion(polarion_id)(self)
 
 
-DataSets = [
-    DataSet(Container, api_get_container_properties, 'CMP-9945'),
-    DataSet(Project, api_get_project_properties, 'CMP-10430'),
-    DataSet(Route, api_get_route_properties, 'CMP-9877'),
-    DataSet(Pod, api_get_pod_properties, 'CMP-9911'),
-    DataSet(Node, api_get_node_properties, 'CMP-9960'),
-    DataSet(Image, api_get_image_properties, 'CMP-9978'),
-    DataSet(Service, api_get_service_properties, 'CMP-9890'),
-    DataSet(ImageRegistry, api_get_image_registry_properties, 'CMP-9988')
+TEST_OBJECTS = [
+    TestObj(Container, [
+            'name',
+            'state',
+            'last_state',
+            'restart_count',
+            'backing_ref_container_id',
+            'privileged',
+            'selinux_level'
+            ], container_list_tbl, 'CMP-9945'),
+    TestObj(Project, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+            ], project_list_tbl, 'CMP-10430'),
+    TestObj(Route, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+            'host_name'
+            ], route_list_tbl, 'CMP-9877'),
+    TestObj(Pod, [
+            'name',
+            'phase',
+            'creation_timestamp',
+            'resource_version',
+            'restart_policy',
+            'dns_policy',
+            'ip_address'
+            ], pod_list_tbl, 'CMP-9911'),
+    TestObj(Node, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+            'number_of_cpu_cores',
+            'memory',
+            'max_pods_capacity',
+            'system_bios_uuid',
+            'machine_id',
+            'infrastructure_machine_id',
+            'runtime_version',
+            'kubelet_version',
+            'proxy_version',
+            'operating_system_distribution',
+            'kernel_version',
+            ], node_list_tbl, 'CMP-9960'),
+    TestObj(Image, {
+            version.LOWEST:
+                [
+                    'name',
+                    'tag',
+                    'image_id',
+                    'full_name'
+                ],
+            '5.7':
+                [
+                    'name',
+                    'tag',
+                    'image_id',
+                    'full_name',
+                    'architecture',
+                    'author',
+                    'entrypoint',
+                    'docker_version',
+                    'exposed_ports',
+                    'size'
+                ]
+            }, image_list_tbl, 'CMP-9978'),
+    TestObj(Service, [
+            'name',
+            'creation_timestamp',
+            'resource_version',
+            'session_affinity',
+            'type',
+            'portal_ip'
+            ], service_list_tbl, 'CMP-9890'),
+    TestObj(ImageRegistry, [
+            'host'
+            ], image_registry_list_tbl, 'CMP-9988')
 ]
 
 
-@pytest.mark.parametrize('dataset', DataSets, ids=[dataset.obj.__name__ for dataset in DataSets])
-def test_properties(provider, dataset):
+@pytest.mark.parametrize('test_obj', TEST_OBJECTS,
+                         ids=[obj.obj.__name__ for obj in TEST_OBJECTS])
+def test_services_properties_rel(provider, test_obj):
 
-    props_api = dataset.get_props_api(provider)
-    count = len(props_api)
-    if not count:
-        pytest.skip('No objects to test for {}.'.format(dataset.obj.__name__))
-    object_names = sample(props_api.keys(), min(2, count))
+    rows = navigate_and_get_rows(provider, test_obj.obj, test_obj.list_tbl, 2)
+
+    if not rows:
+        pytest.skip('No records found for {}s. Skipping...'.format(test_obj.obj.__name__))
+    names = [r[2].text for r in rows]
+
+    if test_obj.obj is Container:
+        args = [(r.pod_name.text, ) for r in rows]
+    elif test_obj.obj is Image:
+        args = [(r.tag.text, provider) for r in rows]
+    else:
+        args = [(provider, ) for _ in rows]
 
     errors = []
-    for obj_name in object_names:
+    for name, arg in zip(names, args):
 
-        if dataset.obj is Container:
-            instance = dataset.obj(obj_name, props_api[obj_name].pop('pod_name'))
-        elif dataset.obj is Image:
-            instance = dataset.obj(obj_name, props_api[obj_name]['tag'], provider)
+        instance = test_obj.obj(name, *arg)
+        if isinstance(test_obj.expected_fields, dict):
+            expected_fields = version.pick(test_obj.expected_fields)
         else:
-            instance = dataset.obj(obj_name, provider)
-
-        try:
-            instance.summary.reload()
-        except TypeError:
-            raise Exception('Could not find a row that match to the name from'
-                            ' the API {}'.format(instance.name))
-        props_ui = instance.summary.properties
-        for field in props_api[obj_name].keys():
-
+            expected_fields = test_obj.expected_fields
+        for field in expected_fields:
             try:
-                row = soft_get(props_ui, field)
+                soft_get(instance.summary.properties, field)
             except AttributeError:
-                errors.append('Missing field in {}({}) properties table: {}'
-                              .format(dataset.obj.__name__, obj_name, field))
-                continue
-
-            ui_val, api_val = eval_strings([row.value, props_api[obj_name][field]])
-
-            if api_val != ui_val:
-                errors.append('Data integrity error: '
-                              '{}({}) - field({}) ui({}) != api({})'
-                              .format(dataset.obj.__name__, obj_name,
-                               field, ui_val, api_val))
+                errors.append('{} "{}" properties table has missing field - "{}"'
+                              .format(test_obj.obj.__name__, name, field))
 
     if errors:
-        raise Exception('\n' + '\n'.join(errors))
+        raise Exception('\n'.join(errors))

@@ -75,19 +75,6 @@ class NodeAllView(NodeView):
     paginator = PaginationPane()
 
 
-@navigator.register(NodeCollection, 'All')
-class All(CFMENavigateStep):
-    VIEW = NodeAllView
-    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
-
-    def step(self, *args, **kwargs):
-        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Nodes')
-
-    def resetter(self):
-        # Reset view and selection
-        tb.select("List View")
-
-
 class Node(Taggable, SummaryMixin, Navigatable):
     def __init__(self, name, provider, collection=None, appliance=None):
         self.name = name
@@ -110,6 +97,21 @@ class Node(Taggable, SummaryMixin, Navigatable):
         """
         self.load_details()
         return InfoBlock.text(*ident)
+
+
+# Still registering Node to keep on consistency on container objects navigations
+@navigator.register(Node, 'All')
+@navigator.register(NodeCollection, 'All')
+class All(CFMENavigateStep):
+    VIEW = NodeAllView
+    prerequisite = NavigateToAttribute('appliance.server', 'LoggedIn')
+
+    def step(self, *args, **kwargs):
+        self.prerequisite_view.navigation.select('Compute', 'Containers', 'Container Nodes')
+
+    def resetter(self):
+        # Reset view and selection
+        tb.select("List View")
 
 
 class NodeDetailsView(NodeView):

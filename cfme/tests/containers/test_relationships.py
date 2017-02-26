@@ -1,15 +1,16 @@
-from random import shuffle, choice
+from random import shuffle
+
 import pytest
 
-from utils.version import current_version
 from utils import testgen
-from utils.appliance.implementations.ui import navigate_to
-from cfme.web_ui import toolbar as tb, paginator, summary_title
+from utils.version import current_version
+from cfme.web_ui import paginator, summary_title
 
 from cfme.containers.pod import Pod, paged_tbl as pod_paged_tbl
-from cfme.containers.provider import ContainersProvider, paged_tbl as provider_paged_tbl
+from cfme.containers.provider import ContainersProvider, paged_tbl as provider_paged_tbl,\
+    navigate_and_get_rows
 from cfme.containers.service import Service, paged_tbl as service_paged_tbl
-from cfme.containers.node import Node, NodeCollection, list_tbl as node_paged_tbl
+from cfme.containers.node import Node, list_tbl as node_paged_tbl
 from cfme.containers.replicator import Replicator, paged_tbl as replicator_paged_tbl
 from cfme.containers.image import Image, paged_tbl as image_paged_tbl
 from cfme.containers.project import Project, paged_tbl as project_paged_tbl
@@ -36,7 +37,7 @@ TEST_OBJECTS = [
     DataSet(Container, container_paged_tbl, 'CMP-9947'),
     DataSet(Pod, pod_paged_tbl, 'CMP-9929'),
     DataSet(Service, service_paged_tbl, 'CMP-10564'),
-    DataSet(NodeCollection, node_paged_tbl, 'CMP-9962'),
+    DataSet(Node, node_paged_tbl, 'CMP-9962'),
     DataSet(Replicator, replicator_paged_tbl, 'CMP-10565'),
     DataSet(Image, image_paged_tbl, 'CMP-9980'),
     DataSet(ImageRegistry, image_registry_paged_tbl, 'CMP-9994'),
@@ -45,22 +46,8 @@ TEST_OBJECTS = [
 ]
 
 
-def navigate_and_get_row(provider, data_set):
-    if current_version() < "5.7" and data_set.obj == Template:
-        pytest.skip('Templates are not exist in CFME version smaller than 5.7. skipping...')
-
-    navigate_to(data_set.obj, 'All')
-    tb.select('List View')
-    paginator.results_per_page(1000)
-    rows = list(data_set.paged_tbl.rows())
-    if not rows:
-        pytest.skip('No objects to test for relationships for {}'.format(data_set.obj.__name__))
-
-    return choice(rows)
-
-
 def check_relationships(instance):
-    instance.summary.reload()
+    """Check the relationships linking & data integrity"""
     sum_values = instance.summary.relationships.items().values()
     shuffle(sum_values)
     for attr in sum_values:
@@ -89,7 +76,14 @@ def test_relationships_tables(provider, data_set):
     or to the page where the number of rows is equal to the number
     that is displayed in the Relationships table.
     """
-    row = navigate_and_get_row(provider, data_set)
+
+    if current_version() < "5.7" and data_set.obj == Template:
+        pytest.skip('Templates are not exist in CFME version smaller than 5.7. skipping...')
+
+    rows = navigate_and_get_rows(provider, data_set.obj, data_set.paged_tbl, 1)
+    if not rows:
+        pytest.skip('No objects to test for relationships for {}'.format(data_set.obj.__name__))
+    row = rows[-1]
 
     if data_set.obj is Container:
         instance = data_set.obj(row.name.text, row.pod_name.text)
@@ -97,8 +91,6 @@ def test_relationships_tables(provider, data_set):
         instance = data_set.obj(row.host.text, provider)
     elif data_set.obj is Image:
         instance = data_set.obj(row.name.text, row.tag.text, provider)
-    elif data_set.obj is NodeCollection:
-        instance = Node(row.name.text, provider)
     else:
         instance = data_set.obj(row.name.text, provider)
 

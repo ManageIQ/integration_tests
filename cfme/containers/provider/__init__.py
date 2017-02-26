@@ -1,4 +1,5 @@
 from functools import partial
+from random import sample
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
@@ -313,3 +314,27 @@ class TopologyFromDetails(CFMENavigateStep):
 
 
 import_all_modules_of('cfme.containers.provider')
+
+
+# Common methods:
+
+def navigate_and_get_rows(provider, obj, table, count):
+    """Get <count> random rows from the obj list table,
+    if <count> is greater that the number of rows, return number of rows.
+
+    Args:
+        provider: containers provider
+        obj: the containers object
+        table: the object's Table object
+        count: number of random rows to return
+
+    return: list of rows"""
+
+    navigate_to(obj, 'All')
+    tb.select('List View')
+    paginator.results_per_page(1000)
+    rows = table.rows_as_list()
+    if not rows:
+        return []
+
+    return sample(rows, min(count, len(rows)))
