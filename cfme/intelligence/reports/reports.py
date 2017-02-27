@@ -87,6 +87,8 @@ report_form = TabStripForm(
         "Filter": [
             ("filter", Expression()),
             ("filter_show_costs", select(id="cb_show_typ")),
+            ('provider', ShowingInputs(select(id="cb_provider_id"))),
+            ("project", ShowingInputs(select(id="cb_entity_id"))),
             ("filter_owner", select(id="cb_owner_id")),
             ("filter_tag_cat", select(id="cb_tag_cat")),
             ("filter_tag_value", select(id="cb_tag_value")),

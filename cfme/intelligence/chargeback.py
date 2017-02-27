@@ -176,6 +176,8 @@ assign_form = Form(
         ("enterprise", Select_old("select#enterprise__1")),  # Simple shotcut, might explode once
         # Tagged DS
         ("tag_category", Select_old("select#cbtag_cat")),
+        # Docker Labels
+        ("docker_labels", Select_old('select#cblabel_key')),
         # Common - selection table
         ("selections", AssignFormTable({
             LOWEST: (
@@ -198,6 +200,9 @@ class ComputeRate(Updateable, Pretty, Navigatable):
         self.description = description
         self.currency = currency
         self.fields = fields
+
+    def __getitem__(self, name):
+        return self.fields.get(name, None)
 
     def create(self):
         view = navigate_to(self, 'New')
@@ -326,11 +331,13 @@ class Assign(Updateable, Pretty, Navigatable):
     """
     def __init__(self, assign_to=None,
                  tag_category=None,
+                 docker_labels=None,
                  selections=None,
                  appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.assign_to = assign_to
         self.tag_category = tag_category
+        self.docker_labels = docker_labels
         self.selections = selections
 
     def storageassign(self):
@@ -347,6 +354,7 @@ class Assign(Updateable, Pretty, Navigatable):
         fill(assign_form,
             {'assign_to': self.assign_to,
              'tag_category': self.tag_category,
+             'docker_labels': self.docker_labels,
              'selections': self.selections},
             action=assign_form.save_button)
         flash.assert_no_errors()

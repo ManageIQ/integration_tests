@@ -73,7 +73,9 @@ pytest_plugins = (
     'cfme.fixtures.smtp',
     'cfme.fixtures.tag',
     'cfme.fixtures.vm_name',
+    'cfme.fixtures.rand_fake_metrics',
     'cfme.fixtures.vporizer',
+    'cfme.fixtures.setup_chargeback_generation_interval',
 
     'cfme.metaplugins',
 )
