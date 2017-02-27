@@ -40,34 +40,35 @@ class Datasource():
 
 
 H2_DS = Datasource('H2', 'H2DS', 'java:/H2DS',
-      'jdbc:h2:mem:test;DB_CLOSE_DELAY=-1', 'admin', '')
+      'jdbc:h2:mem:test;DB_CLOSE_DELAY=-1', 'admin', 'password')
 DB2_105_DS = Datasource('IBM DB2', 'DB2DS', 'java:/DB2DS',
-           'jdbc:ibmdb2://db2', 'admin', '',
+           'jdbc:ibmdb2://db2', 'admin', 'password',
            DB2_105_DBALLO, DB2_105_JDBC)
 MSSQL_2014_DS = Datasource('Microsoft SQL Server', 'MSSQLDS', 'java:/MSSQLDS',
-              'jdbc:sqlserver://localhost:1433;DatabaseName=MyDatabase', 'admin', '',
+              'jdbc:sqlserver://localhost:1433;DatabaseName=MyDatabase', 'admin', 'password',
               MSSQL_2014_DBALLO, MSSQL_2014_JDBC)
 MYSQL_57_DS = Datasource('MySql', 'MySqlDS', 'java:/MySqlDS',
-            'jdbc:mysql://localhost:3306/mysqldb', 'admin', '',
+            'jdbc:mysql://localhost:3306/mysqldb', 'admin', 'password',
             MYSQL_57_DBALLO, MYSQL_57_JDBC)
 POSTGRESPLUS_94_DS = Datasource('Postgres', 'PostgresPlusDS', 'java:/PostgresPlusDS',
-                   'jdbc:postresql://localhost:5432/postgresdb', 'admin', '',
+                   'jdbc:postresql://localhost:5432/postgresdb', 'admin', 'password',
                    POSTGRESPLUS_94_DBALLO, POSTGRESPLUS_94_JDBC)
 POSTGRESQL_94_DS = Datasource('Postgres', 'PostgresDS', 'java:/PostgresDS',
-                 'jdbc:postresql://localhost:5432/postgresdb', 'admin', '',
+                 'jdbc:postresql://localhost:5432/postgresdb', 'admin', 'password',
                  POSTGRESQL_94_DBALLO, POSTGRESQL_94_JDBC)
 SYBASE_157_DS = Datasource('Sybase', 'SybaseDS', 'java:/SybaseDB',
-              'jdbc:sybase:Tds:localhost:5000/mydatabase?JCONNECT_VERSION=6', 'admin', '',
+              'jdbc:sybase:Tds:localhost:5000/mydatabase?JCONNECT_VERSION=6', 'admin', 'password',
               SYBASE_157_DBALLO, SYBASE_157_JDBC)
 ORACLE_12C_DS = Datasource('Oracle', 'OracleDS', 'java:/OracleDS',
-              'jdbc:oracle:thin:@localhost:1521:orcalesid', 'admin', '',
+              'jdbc:oracle:thin:@localhost:1521:orcalesid', 'admin', 'password',
               ORACLE_12C_DBALLO, ORACLE_12C_JDBC)
 ORACLE_12C_RAC_DS = Datasource('Oracle', 'OracleRACDS', 'java:/OracleRACDS',
                   'jdbc:oracle:thin:@(DESCRIPTION=(LOAD_BALANCE=on)(ADDRESS=(PROTOCOL=TCP)' +
-                  '(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=qaora)))', 'admin', '',
+                  '(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=qaora)))',
+                  'admin', 'password',
                   ORACLE_12C_RAC_DBALLO, ORACLE_12C_JDBC)
 MARIADB10_DS = Datasource('MariaDB', 'MariaDBDS', 'java:/MariaDBDS',
-             'jdbc:mariadb://localhost:3306/mariadb', 'admin', '',
+             'jdbc:mariadb://localhost:3306/mariadb', 'admin', 'password',
              MARIADB_10_DBALLO, MARIADB10_JDBC)
 
 

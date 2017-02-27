@@ -21,28 +21,37 @@ class JDBCDriver():
         minor_version minor version of driver.
     """
     def __init__(self, database_name, driver_name, module_name, driver_class,
-                 major_version=None, minor_version=None):
+                 xa_class, major_version=None, minor_version=None):
         self.database_name = database_name
         self.driver_name = driver_name
         self.module_name = module_name
         self.driver_class = driver_class
+        self.xa_class = xa_class
         self.major_version = major_version
         self.minor_version = minor_version
 
 
-DB2_105_JDBC = JDBCDriver('db2-105', 'db2', 'com.ibm', 'com.ibm.db2.jcc.DB2Driver', '', '')
+DB2_105_JDBC = JDBCDriver('db2-105', 'db2', 'com.ibm', 'com.ibm.db2.jcc.DB2Driver',
+                          'com.ibm.db2.jcc.DB2XADataSource', '', '')
 MSSQL_2014_JDBC = JDBCDriver('mssql2014', 'mssql', 'com.microsoft',
-              'com.microsoft.sqlserver.jdbc.SQLServerDriver', '', '')
-MYSQL_57_JDBC = JDBCDriver('mysql57', 'mysql', 'com.mysql', 'com.mysql.jdbc.Driver', '5', '1')
-POSTGRESPLUS_94_JDBC = JDBCDriver('postgresplus94', 'edb', 'com.edb', 'com.edb.Driver', '', '')
+              'com.microsoft.sqlserver.jdbc.SQLServerDriver',
+              'com.microsoft.sqlserver.jdbc.SQLServerXADataSource', '', '')
+MYSQL_57_JDBC = JDBCDriver('mysql57', 'mysql', 'com.mysql.jdbc', 'com.mysql.jdbc.Driver',
+                           'com.mysql.jdbc.jdbc2.optional.MysqlXADataSource', '5', '1')
+POSTGRESPLUS_94_JDBC = JDBCDriver('postgresplus94', 'edb', 'com.edb', 'com.edb.Driver',
+                                  'com.edb.xa.PGXADataSource', '', '')
 POSTGRESQL_94_JDBC = JDBCDriver('postgresql94', 'postgresql', 'org.postgresql',
-                      'org.postgresql.Driver', '', '')
-SYBASE_157_JDBC = JDBCDriver('sybase157', 'sybase', 'com.sybase',
-                   'com.sybase.jdbc4.jdbc.SybDriver', '', '')
+                      'org.postgresql.Driver',
+                      'org.postgresql.xa.PGXADataSource', '', '')
+SYBASE_157_JDBC = JDBCDriver('sybase157', 'sybase', 'com.sybase.jdbc4',
+                   'com.sybase.jdbc4.jdbc.SybDriver',
+                   'com.sybase.jdbc4.jdbc.SybXADataSource', '', '')
 ORACLE_12C_JDBC = JDBCDriver('oracle12c', 'oracle12c', 'com.oracle.jdbc',
-                             'oracle.jdbc.OracleDriver', '', '')
-MARIADB10_JDBC = JDBCDriver('mariadb10', 'mariadb10', 'org.mariadb',
-                            'org.mariadb.jdbc.Driver', '', '')
+                             'oracle.jdbc.OracleDriver',
+                             'oracle.jdbc.xa.client.OracleXADataSource', '', '')
+MARIADB10_JDBC = JDBCDriver('mariadb10', 'mariadb10', 'org.mariadb.jdbc',
+                            'org.mariadb.jdbc.Driver',
+                            'org.mariadb.jdbc.MySQLDataSource', '', '')
 
 
 def download_jdbc_driver(database_name):
