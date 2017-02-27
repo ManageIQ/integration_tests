@@ -34,8 +34,7 @@ ATTRIBUTES_DATASET = [
 VALUE_UPDATES = ['2018-07-12', 'ADF231VRWQ1', '1']
 
 
-# CMP-10281
-
+@pytest.mark.polarion('CMP-10281')
 def test_add_static_custom_attributes(provider):
     """Tests adding of static custom attributes to provider
     Steps:
@@ -52,8 +51,7 @@ def test_add_static_custom_attributes(provider):
         assert custom_attr_ui[attr.name].text_value == attr.value
 
 
-# CMP-10286
-
+@pytest.mark.polarion('CMP-10286')
 def test_edit_static_custom_attributes(provider):
     """Tests editing of static custom attributes from provider
     Prerequisite:
@@ -75,8 +73,7 @@ def test_edit_static_custom_attributes(provider):
         assert custom_attr_ui[attr.name].text_value == attr.value
 
 
-# CMP-10285
-
+@pytest.mark.polarion('CMP-10285')
 def test_delete_static_custom_attributes(provider):
     """Tests deleting of static custom attributes from provider
     Steps:
@@ -93,8 +90,7 @@ def test_delete_static_custom_attributes(provider):
             assert attr.name not in provider.summary.custom_attributes
 
 
-# CMP-10303
-
+@pytest.mark.polarion('CMP-10303')
 def test_add_attribute_with_empty_name(provider):
     """Tests adding of static custom attributes with empty field
     Steps:
@@ -115,8 +111,7 @@ def test_add_attribute_with_empty_name(provider):
         assert "" not in provider.summary.custom_attributes
 
 
-# CMP-10404
-
+@pytest.mark.polarion('CMP-10404')
 def test_add_date_attr_with_wrong_value(provider):
     """Trying to add attribute of type date with non-date value"""
     ca = CustomAttribute('nondate', "koko", 'Date')
@@ -130,8 +125,7 @@ def test_add_date_attr_with_wrong_value(provider):
         assert 'nondate' not in provider.summary.custom_attributes
 
 
-# CMP-10405
-
+@pytest.mark.polarion('CMP-10405')
 def test_edit_non_exist_attribute(provider):
     """Trying to edit non-exist attribute"""
     ca = choice(ATTRIBUTES_DATASET)
@@ -153,8 +147,7 @@ def test_edit_non_exist_attribute(provider):
                     .format(ca.value))
 
 
-# CMP-10543
-
+@pytest.mark.polarion('CMP-10543')
 def test_delete_non_exist_attribute(provider):
 
     ca = choice(ATTRIBUTES_DATASET)
@@ -165,8 +158,7 @@ def test_delete_non_exist_attribute(provider):
                     .format(ca.value))
 
 
-# CMP-10542
-
+@pytest.mark.polarion('CMP-10542')
 @pytest.mark.meta(blockers=[BZ(1416797, forced_streams=['5.7'])])
 def test_add_already_exist_attribute(provider):
     ca = choice(ATTRIBUTES_DATASET)
@@ -177,8 +169,7 @@ def test_add_already_exist_attribute(provider):
                     .format(ca.value))
 
 
-# CMP-10540
-
+@pytest.mark.polarion('CMP-10540')
 def test_very_long_name_with_special_characters(provider):
     ca = CustomAttribute(get_random_string(1000), 'very_long_name', None)
     provider.add_custom_attributes(ca)
@@ -187,8 +178,7 @@ def test_very_long_name_with_special_characters(provider):
     provider.delete_custom_attributes(ca)
 
 
-# CMP-10541
-
+@pytest.mark.polarion('CMP-10541')
 def test_very_long_value_with_special_characters(provider):
     ca = CustomAttribute('very_long_value', get_random_string(1000), None)
     provider.add_custom_attributes(ca)

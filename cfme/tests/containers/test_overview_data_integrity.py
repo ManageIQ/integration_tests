@@ -3,7 +3,7 @@ import time
 from collections import namedtuple
 
 from cfme.containers.provider import ContainersProvider
-from cfme.containers.node import Node
+from cfme.containers.node import NodeCollection
 from cfme.containers.pod import Pod
 from cfme.containers.service import Service
 from cfme.containers.project import Project
@@ -27,7 +27,7 @@ DataSet = namedtuple('DataSet', ['object', 'name'])
 
 DATA_SETS = [
     DataSet(Container, 'Containers'),
-    DataSet(Node, 'Nodes'),
+    DataSet(NodeCollection, 'Nodes'),
     DataSet(Project, 'Projects'),
     DataSet(Pod, 'Pods'),
     DataSet(Service, 'Services'),
@@ -40,7 +40,7 @@ def get_api_object_counts(providers):
     out = {
         ContainersProvider: 0,
         Container: 0,
-        Node: 0,
+        NodeCollection: 0,
         Pod: 0,
         Service: 0,
         Project: 0,
@@ -49,7 +49,7 @@ def get_api_object_counts(providers):
     for provider in providers:
         out[ContainersProvider] += 1
         out[Container] = len(provider.mgmt.list_container())
-        out[Node] += len(provider.mgmt.list_node())
+        out[NodeCollection] += len(provider.mgmt.list_node())
         out[Pod] += len(provider.mgmt.list_container_group())
         out[Service] += len(provider.mgmt.list_service())
         out[Project] += len(provider.mgmt.list_project())
@@ -57,9 +57,7 @@ def get_api_object_counts(providers):
     return out
 
 
-# CMP-9521
-
-
+@pytest.mark.polarion('CMP-9521')
 def test_containers_overview_data_integrity(provider):
     """Test data integrity of status boxes in containers dashboard.
     Steps:

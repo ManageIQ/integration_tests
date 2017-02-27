@@ -13,9 +13,8 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
-# CMP-9934
 
-
+@pytest.mark.polarion('CMP-9934')
 def test_summary_properties_validation(provider):
     """ This test verifies that the sum of running, waiting and terminated containers
         in the status summary table

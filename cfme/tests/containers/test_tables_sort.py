@@ -18,10 +18,14 @@ pytestmark = [
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
-# CMP-9924 CMP-9925 CMP-9926 CMP-9927 CMP-9928
 
-
-TEST_OBJECTS = [Project, Service, Replicator, Route, ContainersProvider]
+TEST_OBJECTS = [
+    pytest.mark.polarion('CMP-9924')(ContainersProvider),
+    pytest.mark.polarion('CMP-9925')(Project),
+    pytest.mark.polarion('CMP-9926')(Route),
+    pytest.mark.polarion('CMP-9927')(Service),
+    pytest.mark.polarion('CMP-9928')(Replicator)
+]
 
 
 @pytest.mark.meta(blockers=[
@@ -30,6 +34,9 @@ TEST_OBJECTS = [Project, Service, Replicator, Route, ContainersProvider]
 ])
 @pytest.mark.parametrize('cls', TEST_OBJECTS)
 def test_containers_main_pages_sort(cls):
+
+    pytest.skip('This test is currently skipped due to an issue in the testing framework:'
+                ' https://github.com/ManageIQ/integration_tests/issues/4052')
 
     navigate_to(cls, 'All')
     toolbar.select('List View')

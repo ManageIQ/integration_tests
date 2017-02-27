@@ -14,15 +14,19 @@ pytestmark = [
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
 
-# CMP-9827 # CMP-9826 # CMP-9825 # CMP-9824 # CMP-9823 # CMP-9822 # CMP-9821 # CMP-9820
 container_object_types = \
     ['routes', 'projects', 'container_images', 'image_registries',
      'container_services', 'containers', 'pods', 'nodes']
 container_object_types_lowest = \
     ['routes', 'projects', 'images', 'image_registries',
      'services', 'containers', 'pods', 'nodes']
+objects_key = ({
+    version.LOWEST: container_object_types_lowest,
+    '5.7': container_object_types
+})
 
 
+@pytest.mark.polarion('CMP-10575')
 def test_containers_summary_objects(provider):
     """ Containers overview page > Widgets > Widgets summary
        This test checks that the amount of a selected object in the system is shown correctly
@@ -34,10 +38,6 @@ def test_containers_summary_objects(provider):
            * Goes to Containers summary page and checks how many objects are shown there.
            * Checks the amount is equal
        """
-    objects_key = ({
-        version.LOWEST: container_object_types_lowest,
-        '5.7': container_object_types
-    })
     container_object = version.pick(objects_key)
     prov_ui_values, status_box_values = dict(), dict()
     navigate_to(ContainersOverview, 'All')

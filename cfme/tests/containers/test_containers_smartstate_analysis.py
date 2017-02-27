@@ -15,7 +15,7 @@ from cfme.web_ui import toolbar as tb, flash
 from cfme.configure.tasks import Tasks, tasks_table
 from wait_for import TimedOutError
 
-# CMP - 9496
+
 pytestmark = [
     pytest.mark.meta(server_roles='+smartproxy'),
     pytest.mark.uncollectif(
@@ -44,6 +44,7 @@ def check_log(log, verify_tags):
 
 
 @pytest.mark.meta(blockers=[1382326, 1406023])
+@pytest.mark.polarion('CMP-9496')
 def test_containers_smartstate_analysis(provider, ssh_client):
     """Smart State analysis functionality check for single container image.
     Steps:
