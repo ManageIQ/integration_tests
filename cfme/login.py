@@ -18,7 +18,7 @@ from fixtures.pytest_store import store
 from widgetastic.widget import Text, View
 from widgetastic_patternfly import Button, Input, FlashMessages
 
-from cfme.base.ui import BaseLoggedInPage
+from cfme.base.workaround import BaseLoggedInPage
 
 
 class LoginPage(View):

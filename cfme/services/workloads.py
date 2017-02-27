@@ -5,7 +5,7 @@ from navmazing import NavigateToAttribute
 from widgetastic.widget import View, Text
 from widgetastic_manageiq import Accordion, ManageIQTree, Search
 
-from cfme import BaseLoggedInPage
+from cfme.base.workaround import BaseLoggedInPage
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep
 

@@ -6,7 +6,7 @@ from functools import partial
 from selenium.webdriver.common.by import By
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from cfme.base.ui import BaseLoggedInPage
+from cfme.base.workaround import BaseLoggedInPage
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel

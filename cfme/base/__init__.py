@@ -65,9 +65,6 @@ class Region(Navigatable, sentaku.Element):
         return "{} Region: Region {} [{}]".format(
             self.appliance.product_name, self.number, self.number)
 
-from . import ui, ssui  # NOQA last for import cycles
-sentaku.register_external_implementations_in(ui, ssui)
-
 
 class Credential(Pretty):
     """
@@ -99,3 +96,6 @@ class Credential(Pretty):
                 return object.__getattribute__(self, 'token')
         else:
             return object.__getattribute__(self, attr)
+
+from . import ui, ssui  # NOQA last for import cycles
+sentaku.register_external_implementations_in(ui, ssui)

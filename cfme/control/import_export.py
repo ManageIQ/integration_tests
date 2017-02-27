@@ -5,7 +5,8 @@ from navmazing import NavigateToSibling
 from widgetastic.widget import Select, ClickableMixin
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
-from cfme.base.ui import Server, BaseLoggedInPage
+from cfme.base.ui import Server
+from cfme.base.workaround import BaseLoggedInPage
 
 
 class InputButton(Input, ClickableMixin):

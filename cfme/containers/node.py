@@ -7,7 +7,7 @@ from widgetastic_manageiq import (
     BootstrapSelect, Button, Table, Accordion, ManageIQTree, PaginationPane)
 from widgetastic_patternfly import Dropdown
 
-from cfme.base.ui import BaseLoggedInPage
+from cfme.base.workaround import BaseLoggedInPage
 from cfme.common import Taggable, SummaryMixin
 from cfme.containers.provider import ContainersProvider
 from cfme.exceptions import NodeNotFound
