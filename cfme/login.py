@@ -10,7 +10,7 @@ from __future__ import absolute_import
 import time
 from selenium.webdriver.common.keys import Keys
 
-from cfme import Credential
+from cfme.base import Credential
 from utils import conf
 from utils.log import logger
 from fixtures.pytest_store import store

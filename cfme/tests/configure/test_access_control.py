@@ -8,12 +8,13 @@ from cfme.configure.access_control import User, Group, Role, Tenant, Project
 import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential, login, test_requirements
-from cfme.automate.explorer import AutomateExplorer # NOQA
-from cfme.base import Server
+from cfme.automate import AutomateExplorer # NOQA
+from cfme.base import Server, Credential
 from cfme.configure.access_control import set_group_order
 from cfme.control.explorer import ControlExplorer # NOQA
+from cfme.infrastructure.provider import InfraProvider
 from cfme.exceptions import OptionNotAvailable
-from cfme.common.provider import base_types
+from cfme.common.provider import BaseProvider
 from cfme.infrastructure import virtual_machines as vms
 from cfme.services.myservice import MyService
 from cfme.web_ui import flash, Table, InfoBlock, toolbar as tb
@@ -21,6 +22,7 @@ from cfme.configure import tasks
 from utils.appliance.implementations.ui import navigate_to
 from utils.blockers import BZ
 from utils.log import logger
+from utils.providers import setup_a_provider_by_class
 from utils.update import update
 from utils import version
 
@@ -30,10 +32,15 @@ usergrp = Group(description='EvmGroup-user')
 group_table = Table("//div[@id='main_div']//table")
 
 
+@pytest.fixture(scope="module")
+def setup_first_provider():
+    setup_a_provider_by_class(InfraProvider)
+
+
 # due to pytest.mark.meta(blockers=[1035399]), non admin users can't login
 # with no providers added
 pytestmark = [test_requirements.rbac,
-              pytest.mark.usefixtures("infra_provider")]
+              pytest.mark.usefixtures("setup_first_provider")]
 
 
 def new_credential():
@@ -504,16 +511,16 @@ cat_name = "Settings"
       {
           'my services': _go_to(MyService),
           'chargeback': _go_to(Server, 'Chargeback'),
-          'clouds providers': _go_to(base_types()['cloud']),
-          'infrastructure providers': _go_to(base_types()['infra']),
+          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
+          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
           'control explorer': _go_to(Server, 'ControlExplorer'),
           'automate explorer': _go_to(Server, 'AutomateExplorer')}],
      [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
       {
           'my services': _go_to(MyService),
           'chargeback': _go_to(Server, 'Chargeback'),
-          'clouds providers': _go_to(base_types()['cloud']),
-          'infrastructure providers': _go_to(base_types()['infra']),
+          'clouds providers': _go_to(BaseProvider.base_types['cloud']),
+          'infrastructure providers': _go_to(BaseProvider.base_types['infra']),
           'control explorer': _go_to(Server, 'ControlExplorer'),
           'automate explorer': _go_to(Server, 'AutomateExplorer')},
       {}]])
@@ -597,7 +604,7 @@ def test_permissions_vm_provisioning():
 #    # Ensure VMs exist
 #    if not vms.get_number_of_vms():
 #        logger.debug("Setting up providers")
-#        infra_provider
+#        setup_first_provider()
 #        logger.debug("Providers setup")
 #    single_task_permission_test(
 #        [
