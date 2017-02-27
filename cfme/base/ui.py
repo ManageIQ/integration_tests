@@ -2,8 +2,9 @@ import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
 from widgetastic_manageiq import ManageIQTree
-from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
-                                    FlashMessages, BootstrapSelect, Tab, NavDropdown, VerticalNavigation)
+from widgetastic_patternfly import (
+    Accordion, Input, Button, Dropdown,
+    FlashMessages, BootstrapSelect, Tab, NavDropdown, VerticalNavigation)
 from widgetastic.widget import View, Table, Text
 
 
