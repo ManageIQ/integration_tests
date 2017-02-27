@@ -7,6 +7,8 @@ import re
 import sys
 from utils.conf import docker
 
+full = True
+
 new_ver = sys.argv[1]
 
 if len(sys.argv) <= 2:
@@ -68,5 +70,17 @@ for commit in commits.split("\n"):
         if pr_number in prs:
             old_lab = prs[pr_number]['label']
             label = old_lab + " " * (max_len - len(old_lab))
-            print "{} | {} | {}".format(
+            msg = "{} | {} | {}".format(
                 pr_number, label, clean_commit(prs[pr_number]['title']))
+            if full:
+                print "=" * len(msg)
+            print msg
+            if full:
+                print "-" * len(msg)
+                string = prs[pr_number]['body']
+                pytest_match = re.findall("({{.*}}\s*)", string, flags=re.S | re.M)
+                if pytest_match:
+                    string = string.replace(pytest_match[0], '')
+                print string
+                print "=" * len(msg)
+                print ("")
