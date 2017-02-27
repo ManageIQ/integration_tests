@@ -474,3 +474,16 @@ def orchestration_templates(request, rest_api, num=2):
             logger.warning("Failed to delete orchestration templates.")
 
     return response
+
+
+def arbitration_profiles(request, rest_api, a_provider, num=2):
+    provider = rest_api.collections.providers.get(name=a_provider.name)
+    body = []
+    providers = [{'id': provider.id}, {'href': provider.href}]
+    for i in range(num):
+        body.append({
+            'name': 'test_settings_{}'.format(fauxfactory.gen_alphanumeric(5)),
+            'provider': providers[i % 2]
+        })
+
+    return _creating_skeleton(request, rest_api, 'arbitration_profiles', body)
