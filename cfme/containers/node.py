@@ -8,7 +8,7 @@ from widgetastic_manageiq import (
 from widgetastic_patternfly import Dropdown
 
 from cfme import BaseLoggedInPage
-from cfme.common import Taggable
+from cfme.common import Taggable, SummaryMixin
 from cfme.containers.provider import ContainersProvider
 from cfme.exceptions import NodeNotFound
 from cfme.fixtures import pytest_selenium as sel
@@ -75,6 +75,32 @@ class NodeAllView(NodeView):
     paginator = PaginationPane()
 
 
+class Node(Taggable, SummaryMixin, Navigatable):
+    def __init__(self, name, provider, collection=None, appliance=None):
+        self.name = name
+        self.provider = provider
+        if not collection:
+            collection = NodeCollection(appliance=appliance)
+        self.collection = collection
+        Navigatable.__init__(self, appliance=appliance)
+
+    def load_details(self, refresh=False):
+        navigate_to(self, 'Details')
+        if refresh:
+            tb.refresh()
+
+    def get_detail(self, *ident):
+        """ Gets details from the details infoblock
+        Args:
+            *ident: Table name and Key name, e.g. "Relationships", "Images"
+        Returns: A string representing the contents of the summary's value.
+        """
+        self.load_details()
+        return InfoBlock.text(*ident)
+
+
+# Still registering Node to keep on consistency on container objects navigations
+@navigator.register(Node, 'All')
 @navigator.register(NodeCollection, 'All')
 class All(CFMENavigateStep):
     VIEW = NodeAllView
@@ -86,25 +112,6 @@ class All(CFMENavigateStep):
     def resetter(self):
         # Reset view and selection
         tb.select("List View")
-
-
-class Node(Taggable, Navigatable):
-    def __init__(self, name, provider, collection=None, appliance=None):
-        self.name = name
-        self.provider = provider
-        if not collection:
-            collection = NodeCollection(appliance=appliance)
-        self.collection = collection
-        Navigatable.__init__(self, appliance=appliance)
-
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-        Args:
-            *ident: Table name and Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the summary's value.
-        """
-        navigate_to(self, 'Details')
-        return InfoBlock.text(*ident)
 
 
 class NodeDetailsView(NodeView):

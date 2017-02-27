@@ -1,4 +1,5 @@
 from functools import partial
+from random import sample
 
 from navmazing import NavigateToSibling, NavigateToAttribute
 
@@ -6,7 +7,7 @@ from cfme.common.provider import BaseProvider, import_all_modules_of
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Quadicon, Form, AngularSelect, form_buttons, Input, toolbar as tb,
-    InfoBlock, Region, paginator, match_location)
+    InfoBlock, Region, paginator, match_location, PagedTable)
 from cfme.web_ui.tabstrip import TabStripForm
 from utils import deferred_verpick, version
 from utils.appliance import Navigatable
@@ -16,6 +17,8 @@ from utils.db import cfmedb
 from utils.pretty import Pretty
 from utils.varmeth import variable
 
+
+paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 cfg_btn = partial(tb.select, 'Configuration')
 mon_btn = partial(tb.select, 'Monitoring')
@@ -311,3 +314,27 @@ class TopologyFromDetails(CFMENavigateStep):
 
 
 import_all_modules_of('cfme.containers.provider')
+
+
+# Common methods:
+
+def navigate_and_get_rows(provider, obj, table, count):
+    """Get <count> random rows from the obj list table,
+    if <count> is greater that the number of rows, return number of rows.
+
+    Args:
+        provider: containers provider
+        obj: the containers object
+        table: the object's Table object
+        count: number of random rows to return
+
+    return: list of rows"""
+
+    navigate_to(obj, 'All')
+    tb.select('List View')
+    paginator.results_per_page(1000)
+    rows = table.rows_as_list()
+    if not rows:
+        return []
+
+    return sample(rows, min(count, len(rows)))

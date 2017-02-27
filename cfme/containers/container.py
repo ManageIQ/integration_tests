@@ -5,13 +5,15 @@ from navmazing import NavigateToSibling, NavigateToAttribute
 
 from cfme.common import SummaryMixin, Taggable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location, accordion
+from cfme.web_ui import CheckboxTable, toolbar as tb, paginator, match_location, accordion,\
+    PagedTable
 from utils import version
 from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import CFMENavigateStep, navigator, navigate_to
 from cfme.containers.provider import details_page, pol_btn, mon_btn
 
 list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
+paged_tbl = PagedTable(table_locator="//div[@id='list_grid']//table")
 
 match_page = partial(match_location, controller='container', title='Containers')
 
@@ -69,7 +71,8 @@ class ContainerDetails(CFMENavigateStep):
 
     def step(self):
         tb.select('List View')
-        list_tbl.click_row_by_cells({'Name': self.obj.name, 'Pod Name': self.obj.pod})
+        sel.click(paged_tbl.find_row_by_cell_on_all_pages(
+            {'Name': self.obj.name, 'Pod Name': self.obj.pod}))
 
 
 @navigator.register(Container, 'EditTags')
