@@ -1,7 +1,7 @@
 # dummy for editable installs
 import sys
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # just cleanly exit on readthedocs
 if os.environ.get('READTHEDOCS', None) == 'True':
@@ -13,5 +13,10 @@ else:
 
 setup(
     name='manageiq-integration-tests',
-    packages=[],
+    entry_points={
+        'console_scripts': [
+            'cfme-audit-navigatables = cfme.tools.audit_navigatables:main',
+        ],
+    },
+    packages=find_packages(),
 )

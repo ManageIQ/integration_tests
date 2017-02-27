@@ -1,0 +1,51 @@
+from __future__ import print_function
+import inspect
+import utils.appliance
+import utils.path
+import pprint
+
+
+def relevant_types(module):
+    return sorted(
+        cls for cls in vars(module).values()
+        if isinstance(cls, type) and
+        issubclass(cls, utils.appliance.Navigatable) and
+        cls is not utils.appliance.Navigatable)
+
+
+def main():
+    failures = {}
+
+    seen = set()
+    for path in utils.path.project_path.join('cfme').visit('**.py'):
+        if path.basename.startswith('test_'):
+            # ignore tests
+            continue
+        try:
+            module = path.pyimport()
+        except Exception as e:
+            failures[path.pypkgpath()] = e
+            print(path.pypkgpath(), e)
+        for clas in relevant_types(module):
+            if clas in seen:
+                continue
+            seen.add(clas)
+            methods = []
+            properties = []
+            for name, obj in sorted(vars(clas).items()):
+                if name[0] == '_':
+                    continue
+                if inspect.isfunction(obj):
+                    methods.append(name)
+                elif isinstance(obj, property):
+                    properties.append(name)
+            if methods or properties:
+                print("{}.{}".format(clas.__module__, clas.__name__))
+            if methods:
+                print("  Methods:")
+                print("    {}".format("\n    ".join(methods)))
+            if properties:
+                print("  Properties")
+                print("    {}".format("\n    ".join(properties)))
+
+    pprint.pprint(failures)
