@@ -78,6 +78,8 @@ for commit in commits.split("\n"):
             if full:
                 print "-" * len(msg)
                 string = prs[pr_number]['body']
+                if string is None:
+                    string = ""
                 pytest_match = re.findall("({{.*}}\s*)", string, flags=re.S | re.M)
                 if pytest_match:
                     string = string.replace(pytest_match[0], '')
