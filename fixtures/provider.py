@@ -1,11 +1,40 @@
-"""``setup_provider`` fixture
+""" Fixtures to set up providers
 
-In test modules paramatrized with :py:func:`utils.testgen.providers_by_class` (should be
-just about any module that needs a provider to run its tests), this fixture will set up
-the single provider needed to run that test.
+There are two ways to request a setup provider depending on what kind of test we create.
 
-If the provider setup fails, this fixture will record that failure and skip future tests
-using the provider.
+1. Test parametrized by provider (test is run once per each matching provider)
+   For parametrized tests, provider is delivered by testgen. Testgen ensures that the requested
+   provider is available as the 'provider' parameter. It doesn't set the provider up, however, as
+   it will only provide you with the appropriate provider CRUD object.
+   To get the provider set up, we need to add one of the following fixtures to parameters as well:
+     - setup_provider
+     - setup_provider_modscope
+     - setup_provider_clsscope
+     - setup_provider_funcscope (same as setup_provider)
+
+   This ensures that whatever is currently hiding under the 'provider' parameter will be set up.
+
+2. Test not parametrized by provider (test is run once and we just need some provider available)
+   In this case, we don't really care about what sort of a provider we have available. Usually,
+   we just want something to fill the UI with data so that we can test our provider non-specific
+   functionality. For that, we can leverage one of the following fixtures:
+     - core_provider (infra + cloud)
+     - infra_provider
+     - cloud_provider
+     - middleware_provider
+     - containers_provider
+     - ...and others
+
+   If these don't really fit your needs, you can implement your own module-local 'a_provider'
+   fixture using setup_one_by_class_or_skip or more adjustable setup_one_or_skip. These functions
+   do exactly what their names suggest - they setup one of the providers fitting given parameters
+   or skip the test. All of these fixtures are (and should be) module scoped - please keep that in
+   mind when defining your module-local ones.
+
+If setting up a provider fails, the issue is logged and an internal counter is incremented
+as a result. If this counter reaches a predefined number of failures (see SETUP_FAIL_LIMIT),
+the provider will be added to a list of problematic providers and no further attempts to set it up
+will be made.
 
 """
 import pytest
@@ -15,6 +44,7 @@ from collections import defaultdict
 
 from cfme.common.provider import BaseProvider, CloudInfraProvider
 from cfme.cloud.provider import CloudProvider
+from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.infrastructure.provider import InfraProvider
 from cfme.infrastructure.provider.virtualcenter import VMwareProvider
 from cfme.containers.provider import ContainersProvider
@@ -143,6 +173,8 @@ def setup_one_by_class_or_skip(request, prov_class, use_global_filters=True):
     return setup_one_or_skip(request, filters=[pf], use_global_filters=use_global_filters)
 
 
+# I want to setup a provider of specific type but I don't care which one it is:
+# -----------------------------------------------------------------------------
 @pytest.fixture(scope="module")
 def core_provider(request):
     return setup_one_by_class_or_skip(request, CloudInfraProvider)
@@ -158,14 +190,31 @@ def cloud_provider(request):
     return setup_one_by_class_or_skip(request, CloudProvider)
 
 
+@pytest.fixture(scope="module")
+def middleware_provider(request):
+    return setup_one_by_class_or_skip(request, MiddlewareProvider)
+
+
+@pytest.fixture(scope="module")
+def containers_provider(request):
+    return setup_one_by_class_or_skip(request, ContainersProvider)
+
+
 # TODO investigate
-# For some reason we have quite a few places that depend _specifically_ on a vmware type provider
-# and it doesn't really seem right
+# For some reason we have quite a few places that depend on a specific provider type
 @pytest.fixture(scope="module")
 def vmware_provider(request):
     return setup_one_by_class_or_skip(request, VMwareProvider)
 
 
+@pytest.fixture(scope="module")
+def rhos_provider(request):
+    return setup_one_by_class_or_skip(request, OpenStackProvider)
+# -----------------------------------------------------------------------------
+
+
+# I want to setup a provider provided by testgen:
+# -----------------------------------------------
 @pytest.fixture(scope='function')
 def setup_provider(request, provider):
     """Function-scoped fixture to set up a provider"""
@@ -186,15 +235,9 @@ def setup_provider_clsscope(request, provider):
 
 @pytest.fixture
 def setup_provider_funcscope(request, provider):
-    """Function-scoped fixture to set up a provider
-
-    Note:
-
-        While there are cases where this is useful, provider fixtures should
-        be module-scoped the majority of the time.
-
-    """
+    """Function-scoped fixture to set up a provider"""
     return setup_or_skip(request, provider)
+# -----------------------------------------------
 
 
 @pytest.fixture(scope="session")
