@@ -29,6 +29,11 @@ class ImageRegistry(Taggable, SummaryMixin, Navigatable):
         if refresh:
             tb.refresh()
 
+    @staticmethod
+    def get_names():
+        navigate_to(ImageRegistry, 'All', use_resetter=False)
+        return [r.host.text for r in list_tbl.rows()]
+
 
 @navigator.register(ImageRegistry, 'All')
 class ImageRegistryAll(CFMENavigateStep):

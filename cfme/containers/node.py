@@ -106,6 +106,11 @@ class Node(Taggable, Navigatable):
         navigate_to(self, 'Details')
         return InfoBlock.text(*ident)
 
+    @staticmethod
+    def get_names():
+        navigate_to(Node, 'All', use_resetter=False)
+        return [r.name.text for r in list_tbl.rows()]
+
 
 class NodeDetailsView(NodeView):
     download = Button(name='download_view')

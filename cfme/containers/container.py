@@ -41,6 +41,16 @@ class Container(Taggable, SummaryMixin, Navigatable):
         self.load_details(refresh=True)
         return details_page.infoblock.text(*ident)
 
+    @staticmethod
+    def get_container_names():
+        navigate_to(Container, 'All', use_resetter=False)
+        return [r.name.text for r in list_tbl.rows()]
+
+    @staticmethod
+    def get_pod_names():
+        navigate_to(Container, 'All', use_resetter=False)
+        return [r.pod_name.text for r in list_tbl.rows()]
+
 
 @navigator.register(Container, 'All')
 class ContainerAll(CFMENavigateStep):
