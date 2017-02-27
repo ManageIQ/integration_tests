@@ -77,3 +77,4 @@ def test_search_bar(test_obj):
                 raise Exception('Unexpected result for search string "{}", '
                                 'Should not find records, search results: "{}"'
                                 .format(search_string, results_row_names))
+    search.reset_filter()

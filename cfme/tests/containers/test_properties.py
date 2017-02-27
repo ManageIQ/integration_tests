@@ -113,7 +113,7 @@ TEST_OBJECTS = [
 
 @pytest.mark.parametrize('test_obj', TEST_OBJECTS,
                          ids=[obj.obj.__name__ for obj in TEST_OBJECTS])
-def test_services_properties_rel(provider, test_obj):
+def test_properties(provider, test_obj):
 
     rows = navigate_and_get_rows(provider, test_obj.obj, test_obj.list_tbl, 2)
 

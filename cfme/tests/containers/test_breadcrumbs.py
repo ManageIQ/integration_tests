@@ -37,7 +37,7 @@ DATA_SETS = [DataSet(Service, 'Container Services', 'CMP-9906'),
 
 
 @pytest.mark.parametrize(('cls'), DATA_SETS, ids=[cls.obj.__name__ for cls in DATA_SETS])
-def test_summary_pages_links(provider, cls):
+def test_breadcrumbs(provider, cls):
 
     navigate_to(cls.obj, 'All')
     all_url = sel.current_url()
