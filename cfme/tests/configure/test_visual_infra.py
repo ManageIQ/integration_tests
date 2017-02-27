@@ -16,7 +16,7 @@ from cfme.infrastructure.datastore import Datastore
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.use_fixtures("infra_provider")]
+              pytest.mark.usefixtures("infra_provider")]
 
 # todo: infrastructure hosts, pools, stores, cluster are removed due to changing
 # navigation to navmazing. all items have to be put back once navigation change is fully done

@@ -25,9 +25,9 @@ pytestmark = [test_requirements.rest]
 
 
 @pytest.fixture(scope="module")
-def a_provider():
+def a_provider(request):
     pf = ProviderFilter(classes=[VMwareProvider, RHEVMProvider])
-    return setup_one_or_skip(filters=[pf])
+    return setup_one_or_skip(request, filters=[pf])
 
 
 @pytest.fixture(scope="function")

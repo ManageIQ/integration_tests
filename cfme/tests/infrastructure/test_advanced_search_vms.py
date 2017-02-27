@@ -16,13 +16,13 @@ from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
 from utils.providers import ProviderFilter
 
 
-def large_template_infra_provider(request):
+def a_provider(request):
     pf = ProviderFilter(classes=[InfraProvider], required_fields=['large'])
     setup_one_or_skip(request, filters=[pf])
 
 
 @pytest.fixture(scope="module")
-def vms(large_template_infra_provider):
+def vms(a_provider):
     """Ensure the infra providers are set up and get list of vms"""
     navigate_to(Vm, 'VMsOnly')
     search.ensure_no_filter_applied()

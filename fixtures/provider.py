@@ -1,41 +1,42 @@
 """ Fixtures to set up providers
 
-There are two ways to request a setup provider depending on what kind of test we create.
+Used to ensure that we have a provider set up on the appliance before running a test.
+
+There are two ways to request a setup provider depending on what kind of test we create:
 
 1. Test parametrized by provider (test is run once per each matching provider)
    For parametrized tests, provider is delivered by testgen. Testgen ensures that the requested
-   provider is available as the 'provider' parameter. It doesn't set the provider up, however, as
+   provider is available as the ``provider`` parameter. It doesn't set the provider up, however, as
    it will only provide you with the appropriate provider CRUD object.
    To get the provider set up, we need to add one of the following fixtures to parameters as well:
-     - setup_provider
-     - setup_provider_modscope
-     - setup_provider_clsscope
-     - setup_provider_funcscope (same as setup_provider)
+     - ``setup_provider``
+     - ``setup_provider_modscope``
+     - ``setup_provider_clsscope``
+     - ``setup_provider_funcscope`` (same as ``setup_provider``)
 
-   This ensures that whatever is currently hiding under the 'provider' parameter will be set up.
+   This ensures that whatever is currently hiding under the ``provider`` parameter will be set up.
 
 2. Test not parametrized by provider (test is run once and we just need some provider available)
    In this case, we don't really care about what sort of a provider we have available. Usually,
    we just want something to fill the UI with data so that we can test our provider non-specific
    functionality. For that, we can leverage one of the following fixtures:
-     - core_provider (infra + cloud)
-     - infra_provider
-     - cloud_provider
-     - middleware_provider
-     - containers_provider
+     - ``core_provider`` (infra or cloud)
+     - ``infra_provider``
+     - ``cloud_provider``
+     - ``middleware_provider``
+     - ``containers_provider``
      - ...and others
 
-   If these don't really fit your needs, you can implement your own module-local 'a_provider'
-   fixture using setup_one_by_class_or_skip or more adjustable setup_one_or_skip. These functions
-   do exactly what their names suggest - they setup one of the providers fitting given parameters
-   or skip the test. All of these fixtures are (and should be) module scoped - please keep that in
-   mind when defining your module-local ones.
+   If these don't really fit your needs, you can implement your own module-local ``a_provider``
+   fixture using ``setup_one_by_class_or_skip`` or more adjustable ``setup_one_or_skip``.
+   These functions do exactly what their names suggest - they setup one of the providers fitting
+   given parameters or skip the test. All of these fixtures are (and should be) module scoped.
+   Please keep that in mind when creating your module-local substitutes.
 
 If setting up a provider fails, the issue is logged and an internal counter is incremented
-as a result. If this counter reaches a predefined number of failures (see SETUP_FAIL_LIMIT),
-the provider will be added to a list of problematic providers and no further attempts to set it up
-will be made.
-
+as a result. If this counter reaches a predefined number of failures (see ``SETUP_FAIL_LIMIT``),
+the failing provider will be added to the list of problematic providers and no further attempts
+to set it up will be made.
 """
 import pytest
 import random

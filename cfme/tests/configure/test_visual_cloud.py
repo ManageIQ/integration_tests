@@ -6,7 +6,6 @@ from cfme import test_requirements
 from cfme.configure.settings import visual
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
 from cfme.cloud.keypairs import KeyPair
@@ -14,13 +13,12 @@ from cfme.cloud.stack import Stack
 from cfme.cloud.tenant import Tenant
 from cfme.cloud.volume import Volume
 from cfme.web_ui import paginator, toolbar as tb, match_location
-from fixtures.provider import setup_one_by_class_or_skip
 from utils.appliance.implementations.ui import navigate_to
 from utils import version
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.use_fixtures("rhos_provider")]
+              pytest.mark.usefixtures("rhos_provider")]
 
 grid_pages = version.pick({
     version.LOWEST: [CloudProvider,
@@ -59,11 +57,6 @@ landing_pages = {
                                     'title': 'Availability Zones',
                                     'summary': 'Availability Zones'},
 }
-
-
-@pytest.fixture(scope="module")
-def rhos_provider():
-    setup_one_by_class_or_skip(OpenStackProvider)
 
 
 @pytest.yield_fixture(scope="module")

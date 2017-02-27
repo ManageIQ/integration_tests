@@ -2,18 +2,12 @@ import fauxfactory
 import pytest
 from cfme.cloud.keypairs import KeyPair
 from cfme.cloud.provider.openstack import OpenStackProvider
-from fixtures.provider import setup_one_by_class_or_skip
 from utils import testgen
 from utils.version import current_version
 
 pytestmark = [
     pytest.mark.uncollectif(lambda: current_version() > '5.7')
 ]
-
-
-@pytest.fixture(scope="module")
-def rhos_provider(request):
-    return setup_one_by_class_or_skip(request, OpenStackProvider)
 
 
 def pytest_generate_tests(metafunc):

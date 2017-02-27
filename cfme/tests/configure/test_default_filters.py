@@ -14,7 +14,7 @@ from cfme.infrastructure.host import Host
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.use_fixtures("infra_provider")]
+              pytest.mark.usefixtures("infra_provider")]
 
 
 def test_cloudimage_defaultfilters():

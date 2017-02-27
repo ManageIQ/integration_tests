@@ -3,14 +3,12 @@ import pytest
 
 from cfme import test_requirements
 from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
 from cfme.cloud.availability_zone import AvailabilityZone
 from cfme.cloud.flavor import Flavor
 from cfme.cloud.instance import Instance
 from cfme.cloud.instance.image import Image
 from cfme.configure.settings import DefaultView
 from cfme.web_ui import Quadicon, fill, toolbar as tb
-from fixtures.provider import setup_one_by_class_or_skip
 from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3),
@@ -27,9 +25,6 @@ gtl_params = {
 
 
 # TODO refactor for setup_provider parametrization with new 'latest' tag
-@pytest.fixture(scope="module")
-def rhos_provider():
-    setup_one_by_class_or_skip(OpenStackProvider)
 
 
 def select_two_quads():

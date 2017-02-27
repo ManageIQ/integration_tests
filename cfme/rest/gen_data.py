@@ -178,8 +178,8 @@ def rates(request, rest_api, num=3):
     return _creating_skeleton(request, rest_api, 'rates', data)
 
 
-def a_provider():
-    return setup_one_by_class_or_skip(InfraProvider)
+def a_provider(request):
+    return setup_one_by_class_or_skip(request, InfraProvider)
 
 
 def vm(request, a_provider, rest_api):
