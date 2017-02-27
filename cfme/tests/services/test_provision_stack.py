@@ -144,19 +144,7 @@ def test_provision_stack(setup_provider, provider, provisioning, catalog, catalo
 
     @request.addfinalizer
     def _cleanup_vms():
-        try:
-            # stack_exist returns 400 if stack ID not found, which triggers an exception
-            if provider.mgmt.stack_exist(stack_data['stack_name']):
-                wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
-                         delay=10, num_sec=800, message="wait for stack delete")
-            catalog_item.orch_template.delete()
-            if provider.type == 'azure' and provider.mgmt.vm_exist(stack_data['vm_name']):
-                wait_for(lambda: provider.mgmt.delete_vm(stack_data['vm_name']),
-                         delay=10, num_sec=800, message="wait for vm delete")
-        except Exception as ex:
-            logger.warning('Exception while checking/deleting stack, continuing: {}'
-                           .format(ex.message))
-            pass
+        clean_up(stack_data, provider)
 
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
@@ -180,15 +168,7 @@ def test_reconfigure_service(provider, provisioning, catalog, catalog_item, requ
 
     @request.addfinalizer
     def _cleanup_vms():
-        try:
-            if provider.mgmt.stack_exist(stack_data['stack_name']):
-                wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
-                 delay=10, num_sec=800, message="wait for stack delete")
-            catalog_item.orch_template.delete()
-        except Exception as ex:
-            logger.warning('Exception while checking/deleting stack, continuing: {}'
-                           .format(ex.message))
-            pass
+        clean_up(stack_data, provider)
 
     service_catalogs = ServiceCatalogs(item_name, stack_data)
     service_catalogs.order()
@@ -249,10 +229,21 @@ def test_retire_stack(provider, provisioning, catalog, catalog_item, request):
     stack.retire_stack()
 
     @request.addfinalizer
-    def _cleanup_templates():
-        try:
-            catalog_item.orch_template.delete()
-        except Exception as ex:
-            logger.warning('Exception while checking/deleting stack, continuing: {}'
-                           .format(ex.message))
-            pass
+    def _cleanup_vms():
+        clean_up(stack_data, provider)
+
+
+def clean_up(stack_data, provider):
+    try:
+        # stack_exist returns 400 if stack ID not found, which triggers an exception
+        if provider.mgmt.stack_exist(stack_data['stack_name']):
+            wait_for(lambda: provider.mgmt.delete_stack(stack_data['stack_name']),
+                     delay=10, num_sec=800, message="wait for stack delete")
+        if provider.type == 'azure' and provider.mgmt.does_vm_exist(stack_data['vm_name']):
+            wait_for(lambda: provider.mgmt.delete_vm(stack_data['vm_name']),
+                     delay=10, num_sec=800, message="wait for vm delete")
+        catalog_item.orch_template.delete()
+    except Exception as ex:
+        logger.warning('Exception while checking/deleting stack, continuing: {}'
+                       .format(ex.message))
+        pass
