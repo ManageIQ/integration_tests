@@ -6,7 +6,7 @@ from widgetastic.widget import Select, ClickableMixin
 from widgetastic_patternfly import BootstrapSelect, Button, Input
 
 from cfme import BaseLoggedInPage
-from cfme.base.ui import Server
+from cfme.base.ui import Server, BaseLoggedInPage
 
 
 class InputButton(Input, ClickableMixin):
