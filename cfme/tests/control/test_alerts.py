@@ -168,7 +168,7 @@ def vm_name(request, initialize_provider, full_template):
         initialize_provider.refresh_provider_relationships()
         vm_obj.wait_to_appear()
     if initialize_provider.type in CANDU_PROVIDER_TYPES:
-        vm_obj.wait_candu_data_available(timeout=20 * 60)
+        vm_obj.wait_candu_data_available(timeout=60 * 60)
     return name
 
 
@@ -187,13 +187,12 @@ def vm_crud(provider, vm_name, full_template):
 
 # TODO Replace this with the appliance fixture once complete
 @pytest.yield_fixture(scope="module")
-def snmp():
-    ssh = store.current_appliance.ssh_client
-    ssh.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
-    ssh.run_command("systemctl start snmptrapd.service")
+def snmp(ssh_client_modscope):
+    ssh_client_modscope.run_command("echo 'disableAuthorization yes' >> /etc/snmp/snmptrapd.conf")
+    ssh_client_modscope.run_command("systemctl start snmptrapd.service")
     yield
-    ssh.run_command("systemctl stop snmptrapd.service")
-    ssh.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
+    ssh_client_modscope.run_command("systemctl stop snmptrapd.service")
+    ssh_client_modscope.run_command("sed -i '$ d' /etc/snmp/snmptrapd.conf")
 
 
 @pytest.mark.meta(server_roles=["+automate", "+notifier"], blockers=[1266547])
