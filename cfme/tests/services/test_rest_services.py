@@ -311,7 +311,7 @@ class TestServiceRESTAPI(object):
             assert rest_api.response.status_code == 200
             wait_for_vm_power_state(vm, resulting_state)
 
-        assert vm.power_state == 'on'
+        _action_and_check('start', 'on')
         _action_and_check('stop', 'off')
         _action_and_check('start', 'on')
         _action_and_check('suspend', 'suspended')
@@ -400,7 +400,7 @@ class TestServiceRESTAPI(object):
             assert rest_api.response.status_code == 200
             wait_for_vm_power_state(vm, resulting_state)
 
-        assert vm.power_state == 'on'
+        _action_and_check('start', 'on')
         _action_and_check('stop', 'off')
         _action_and_check('start', 'on')
         _action_and_check('suspend', 'suspended')
