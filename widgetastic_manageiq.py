@@ -1309,3 +1309,46 @@ class AlertEmail(View):
 
     def read(self):
         return list(self.all_emails)
+
+
+class Slider(Widget):
+    """This control represents HTML5 Slider
+
+    """
+    ROOT = ParametrizedLocator('{@locator}')
+
+    def __init__(self, parent, locator, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.locator = locator
+
+    @property
+    def value(self):
+        return float(self.browser.get_attribute('value', self))
+
+    @property
+    def max(self):
+        return float(self.browser.get_attribute('max', self))
+
+    @property
+    def min(self):
+        return float(self.browser.get_attribute('min', self))
+
+    @property
+    def step(self):
+        return float(self.browser.get_attribute('step', self))
+
+    @value.setter
+    def value(self, val):
+        self.browser.set_attribute('value', val, self)
+
+    def increase(self):
+        self.value += self.step
+
+    def decrease(self):
+        self.value -= self.step
+
+    def read(self):
+        return self.value
+
+    def fill(self, val):
+        self.value = val
