@@ -1662,6 +1662,7 @@ class IPAppliance(object):
             else:
                 log_callback(
                     'Appliance must be restarted before the netapp functionality can be used.')
+        del self.is_storage_enabled
 
     def wait_for_db(self, timeout=600):
         """Waits for appliance database to be ready
@@ -1890,6 +1891,10 @@ class IPAppliance(object):
     @cached_property
     def host_id(self, hostname):
         return db_queries.get_host_id(hostname, db=self.db)
+
+    @cached_property
+    def is_storage_enabled(self):
+        return 'storage' in self.get_yaml_config('vmdb').get('product', {})
 
     def get_yaml_config(self, config_name):
         if config_name == 'vmdb':

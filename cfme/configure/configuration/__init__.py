@@ -1516,18 +1516,17 @@ def get_server_roles(navigate=True, db=True):
         accepts as kwargs.
     """
     if db:
-        asr = cfmedb()['assigned_server_roles']
-        sr = cfmedb()['server_roles']
-        cfg = store.current_appliance.get_yaml_config('vmdb')
-        roles = list(cfmedb().session.query(sr.name))
-        roles_set = list(cfmedb().session.query(sr.name)
+        asr = store.current_appliance.db['assigned_server_roles']
+        sr = store.current_appliance.db['server_roles']
+        roles = list(store.current_appliance.db.session.query(sr.name))
+        roles_set = list(store.current_appliance.db.session.query(sr.name)
                          .join(asr, asr.server_role_id == sr.id))
         role_set = [role_set[0] for role_set in roles_set]
         roles_with_bool = {role[0]: role[0] in role_set for role in roles}
 
         dead_keys = ['database_owner', 'vdi_inventory']
         for key in roles_with_bool:
-            if 'storage' not in cfg.get('product', {}):
+            if not store.current_appliance.is_storage_enabled:
                 if key.startswith('storage'):
                     dead_keys.append(key)
                 if key == 'vmdb_storage_bridge':
