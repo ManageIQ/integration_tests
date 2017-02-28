@@ -1,33 +1,41 @@
-import re
-import pytest
 from random import choice
+import dateparser
 from traceback import format_exc
+from collections import namedtuple
+
+import pytest
+
 from utils import testgen
-from utils.version import current_version
 from utils.ssh import SSHTail
 from utils.appliance.implementations.ui import navigate_to
-from cfme.web_ui import InfoBlock
-from cfme.configure import tasks
+
+from cfme.web_ui import paginator, toolbar as tb
 from cfme.containers.image import Image, list_tbl
 from cfme.containers.provider import ContainersProvider
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import toolbar as tb, flash
-from cfme.configure.tasks import Tasks, tasks_table
-from wait_for import TimedOutError
+from cfme.configure.tasks import Tasks
 
 
 pytestmark = [
     pytest.mark.meta(server_roles='+smartproxy'),
-    pytest.mark.uncollectif(
-        lambda: current_version() < "5.6"),
     pytest.mark.usefixtures('setup_provider'),
     pytest.mark.tier(1)]
 pytest_generate_tests = testgen.generate([ContainersProvider], scope='function')
 
-
+REGISTRIES = (
+    pytest.mark.polarion('CMP-9496')('Unknown Image Source'),
+    pytest.mark.polarion('CMP-10064')('registry.access.redhat.com')
+)
 LOG_VERIFICATION_TAGS = ('pod_wait', 'analyze', 'finish')
-RESULT_DETAIL_FIELDS = {'Packages': lambda val: int(val) > 0,
-                        'OpenSCAP Resultids': len, 'OpenSCAP HTML': len, 'Last scan': len}
+TESTED_ATTR = namedtuple('TESTED_ATTR', ['table', 'attr', 'verifier'])
+TESTED_ATTRIBUTES = (
+    TESTED_ATTR('configuration', 'packages', bool),
+    TESTED_ATTR('configuration', 'openscap_results', bool),
+    TESTED_ATTR('configuration', 'openscap_html', lambda val: val == 'Available'),
+    TESTED_ATTR('configuration', 'last_scan', dateparser.parse),
+    TESTED_ATTR('compliance', 'status', lambda val: val == 'Compliant'),
+    TESTED_ATTR('configuration', 'history', lambda val: val == 'Available')
+)
 
 
 def delete_all_vm_tasks():
@@ -36,15 +44,18 @@ def delete_all_vm_tasks():
     view.delete.item_select('Delete All', handle_alert=True)
 
 
-def check_log(log, verify_tags):
-    """Verify that verify_tags are shown in the log as the pattern below"""
-    for tag in verify_tags:
-        assert re.findall(r'\n(.+Scanning::Job#{}.+)\n'.format(re.escape(tag)), log)
+def verify_log(log, verification_tags):
+    """Verify that verification_tags are shown in the log as the pattern below"""
+    for tag in verification_tags:
+        if 'Scanning::Job#{}'.format(tag) not in log:
+            raise Exception('Could not find verification tag in log: {}'
+                            .format(tag))
 
 
-@pytest.mark.meta(blockers=[1382326, 1406023])
-@pytest.mark.polarion('CMP-9496')
-def test_containers_smartstate_analysis(provider):
+@pytest.mark.meta(blockers=[1382326, 1408255, 1371896])
+@pytest.mark.parametrize(('registry'), REGISTRIES)
+def test_containers_smartstate_analysis(provider, ssh_client, registry, soft_assert):
+
     """Smart State analysis functionality check for single container image.
     Steps:
         1. Perform smart state analysis
@@ -56,7 +67,6 @@ def test_containers_smartstate_analysis(provider):
         4. verify that detail was added
             Expected: all RESULT_DETAIL_FIELDS are shown an pass the function"""
     delete_all_vm_tasks()
-    # step 1
     navigate_to(Image, 'All')
     tb.select('List View')
     count = list_tbl.row_count()
@@ -68,22 +78,25 @@ def test_containers_smartstate_analysis(provider):
         pytest.skip('Cannot continue test, probably due to containerized appliance\n'
                     'Traceback: \n{}'.format(format_exc()))
     evm_tail.set_initial_file_end()
-    list_tbl.select_rows_by_indexes(choice(range(count)))
-    tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
-    sel.handle_alert()
-    flash.assert_message_contain('Analysis successfully initiated')
-    # step 2
-    ssa_timeout = '5M'
-    try:
-        tasks.wait_analysis_finished('Container image analysis',
-                                     'vm', delay=5, timeout=ssa_timeout)
-    except TimedOutError:
-        pytest.fail('Timeout exceeded, Waited too much time for SSA to finish ({}).'
-                    .format(ssa_timeout))
-    # Step 3
-    check_log(evm_tail.raw_string(), LOG_VERIFICATION_TAGS)
-    # Step 4
-    time_queued = tasks_table.rows_as_list()[0].updated.text
-    tasks_table.click_cell('Updated', value=time_queued)
-    for field, verify_func in RESULT_DETAIL_FIELDS.items():
-        assert verify_func(InfoBlock.text('Configuration', field))
+    relevant_images = []
+    paginator.results_per_page(1000)
+    for row in list_tbl.rows():
+        if row.registry.text.lower() == registry.lower():
+            relevant_images.append(row)
+    if not relevant_images:
+        pytest.skip('Images of the following registry not found: {}'
+                    .format(registry))
+    chosen_row = choice(relevant_images)
+    image_obj = Image(chosen_row.name.text, chosen_row.tag.text, provider)
+    image_obj.perform_smartstate_analysis(wait_for_finish=True)
+    verify_log(evm_tail.raw_string(), LOG_VERIFICATION_TAGS)
+    image_obj.summary.reload()
+    for tbl, attr, verifier in TESTED_ATTRIBUTES:
+        table = getattr(image_obj.summary, tbl)
+        if not hasattr(table, attr):
+            soft_assert(False,
+                '{} table has no parameter \'{}\''.format(tbl, attr))
+            continue
+        value = getattr(table, attr).value
+        soft_assert(verifier(value),
+                'Error in parameter ({}.{}.value == {})'.format(tbl, attr, value))
