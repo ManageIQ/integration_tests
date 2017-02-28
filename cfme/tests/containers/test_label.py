@@ -41,7 +41,7 @@ def test_create_label_check(ssh_client, provider):
 
     ssh_client.run_command(
         "master_node=$(oc get nodes | awk 'NR==2' | sed -e 's/\s.*$//'); "
-        "oc label nodes $master_node kube-new=master-new")
+        "oc label nodes $master_node kube=master")
 
     navigate_to(provider, 'Details')
     tb.select(
@@ -69,6 +69,6 @@ def test_create_label_check(ssh_client, provider):
         labels_all = obj.summary.labels
         lbls_cfme = list(labels_all)
         lbls_cfme_new = [i for j in lbls_cfme for i in j]
-        lst_lbls_found = ['kube-new', 'master-new']
+        lst_lbls_found = ['kube', 'master']
         found = any(x in lst_lbls_found for x in lbls_cfme_new)
         assert found
