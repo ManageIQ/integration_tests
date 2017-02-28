@@ -1261,7 +1261,7 @@ class AlertEmail(View):
     class recipients(ParametrizedView):  # noqa
         PARAMETERS = ("email", )
         ALL_EMAILS = ".//a[starts-with(@title, 'Remove')]"
-        email = Text(ParametrizedLocator(".//a[text()='{email}']"))
+        email = Text(ParametrizedLocator(".//a[text()={email|quote}]"))
 
         def remove(self):
             self.email.click()
