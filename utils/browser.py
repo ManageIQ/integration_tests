@@ -166,7 +166,8 @@ class BrowserFactory(object):
         return browser
 
     def close(self, browser):
-        browser.quit()
+        if browser:
+            browser.quit()
 
 
 class WharfFactory(BrowserFactory):
