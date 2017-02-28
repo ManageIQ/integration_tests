@@ -57,13 +57,13 @@ def categories(request, rest_api, num=1):
 def tags(request, rest_api, categories):
     # Category id, href or name needs to be specified for creating a new tag resource
     tags = []
-    for i, ctg in enumerate(categories):
+    for index, ctg in enumerate(categories):
         uniq = fauxfactory.gen_alphanumeric().lower()
         refs = [{'id': ctg.id}, {'href': ctg.href}, {'name': ctg.name}]
         tags.append({
             'name': 'test_tag_{}'.format(uniq),
             'description': 'test_tag_{}'.format(uniq),
-            'category': refs[i % 3]
+            'category': refs[index % 3]
         })
 
     return _creating_skeleton(request, rest_api, 'tags', tags)
@@ -221,17 +221,19 @@ def service_templates(request, rest_api, dialog, num=4):
     for catalog_item in catalog_items:
         catalog_item.create()
 
-    for new_name in new_names:
-        wait_for(lambda: rest_api.collections.service_templates.find_by(
-            name=new_name), num_sec=180, delay=10)
+    collection = rest_api.collections.service_templates
 
-    s_tpls = [ent for ent in rest_api.collections.service_templates if ent.name in new_names]
+    for new_name in new_names:
+        wait_for(lambda: collection.find_by(name=new_name), num_sec=180, delay=10)
+
+    s_tpls = [ent for ent in collection if ent.name in new_names]
 
     @request.addfinalizer
     def _finished():
-        to_delete = [ent for ent in rest_api.collections.service_templates if ent.name in new_names]
+        collection.reload()
+        to_delete = [ent for ent in collection if ent.name in new_names]
         if len(to_delete) != 0:
-            rest_api.collections.service_templates.action.delete(*s_tpls)
+            collection.action.delete(*to_delete)
 
     return s_tpls
 
@@ -275,11 +277,13 @@ def automation_requests_data(vm, requests_collection=False, approve=True, num=4)
 
 
 def groups(request, rest_api, role, tenant, num=1):
-    data = [{
-        "description": "group_description_{}".format(fauxfactory.gen_alphanumeric()),
-        "role": {"href": role.href},
-        "tenant": {"href": tenant.href}
-    } for _ in range(num)]
+    data = []
+    for _ in range(num):
+        data.append({
+            "description": "group_description_{}".format(fauxfactory.gen_alphanumeric()),
+            "role": {"href": role.href},
+            "tenant": {"href": tenant.href}
+        })
 
     groups = _creating_skeleton(request, rest_api, "groups", data)
     if num == 1:
@@ -288,9 +292,9 @@ def groups(request, rest_api, role, tenant, num=1):
 
 
 def roles(request, rest_api, num=1):
-    data = [{
-        "name": "role_name_{}".format(fauxfactory.gen_alphanumeric())
-    } for _ in range(num)]
+    data = []
+    for _ in range(num):
+        data.append({"name": "role_name_{}".format(fauxfactory.gen_alphanumeric())})
 
     roles = _creating_skeleton(request, rest_api, "roles", data)
     if num == 1:
@@ -318,12 +322,14 @@ def tenants(request, rest_api, num=1):
 
 
 def users(request, rest_api, num=1):
-    data = [{
-        "userid": "user_{}".format(fauxfactory.gen_alphanumeric(3)),
-        "name": "name_{}".format(fauxfactory.gen_alphanumeric()),
-        "password": "pass_{}".format(fauxfactory.gen_alphanumeric(3)),
-        "group": {"description": "EvmGroup-user"}
-    } for _ in range(num)]
+    data = []
+    for _ in range(num):
+        data.append({
+            "userid": "user_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "name": "name_{}".format(fauxfactory.gen_alphanumeric()),
+            "password": "pass_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "group": {"description": "EvmGroup-user"}
+        })
 
     users = _creating_skeleton(request, rest_api, "users", data)
     if num == 1:
@@ -382,21 +388,21 @@ def mark_vm_as_template(rest_api, provider, vm_name):
 
 
 def arbitration_settings(request, rest_api, num=2):
-    body = []
+    data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
-        body.append({
+        data.append({
             'name': 'test_settings_{}'.format(uniq),
             'display_name': 'Test Settings {}'.format(uniq)})
 
-    return _creating_skeleton(request, rest_api, 'arbitration_settings', body)
+    return _creating_skeleton(request, rest_api, 'arbitration_settings', data)
 
 
 def orchestration_templates(request, rest_api, num=2):
-    body = []
+    data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
-        body.append({
+        data.append({
             'name': 'test_{}'.format(uniq),
             'description': 'Test Template {}'.format(uniq),
             'type': 'OrchestrationTemplateCfn',
@@ -404,17 +410,17 @@ def orchestration_templates(request, rest_api, num=2):
             'draft': False,
             'content': _TEMPLATE_TORSO.replace('CloudFormation', uniq)})
 
-    return _creating_skeleton(request, rest_api, 'orchestration_templates', body)
+    return _creating_skeleton(request, rest_api, 'orchestration_templates', data)
 
 
 def arbitration_profiles(request, rest_api, a_provider, num=2):
     provider = rest_api.collections.providers.get(name=a_provider.name)
-    body = []
+    data = []
     providers = [{'id': provider.id}, {'href': provider.href}]
-    for i in range(num):
-        body.append({
+    for index in range(num):
+        data.append({
             'name': 'test_settings_{}'.format(fauxfactory.gen_alphanumeric(5)),
-            'provider': providers[i % 2]
+            'provider': providers[index % 2]
         })
 
-    return _creating_skeleton(request, rest_api, 'arbitration_profiles', body)
+    return _creating_skeleton(request, rest_api, 'arbitration_profiles', data)
