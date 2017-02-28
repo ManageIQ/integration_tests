@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """Page model for Cloud Intel / Reports / Reports"""
 from cached_property import cached_property
+from navmazing import NavigateToAttribute, NavigateToSibling
+from utils import version
+from utils.wait import wait_for
 from utils.pretty import Pretty
 from utils.update import Updateable
-from utils.appliance import Navigatable
-from navmazing import NavigateToAttribute
-from utils.appliance import get_or_create_current_appliance
+from utils.appliance import Navigatable, get_or_create_current_appliance
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from . import CloudIntelReportsView
 
 from widgetastic.widget import Text, Checkbox, View
-from widgetastic_manageiq import DashboardWidgetsPicker, MultiBoxSelect
+from widgetastic_manageiq import MultiBoxSelect, Table
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab
 from cfme.web_ui.expression_editor_widgetastic import ExpressionEditor
 
@@ -22,7 +23,7 @@ class CustomReportFormCommon(CloudIntelReportsView):
     title = Input("title")
     base_report_on = BootstrapSelect("chosen_model")
     report_fields = MultiBoxSelect(
-        ".//*[@id='column_lists']/table",
+        ".//div[@id='column_lists']/table",
         move_into=Button(title="Move selected fields down"),
         move_from=Button(title="Move selected fields up"),
         available_items="available_fields",
@@ -105,7 +106,19 @@ class EditCustomReportView(CustomReportFormCommon):
 
 class CustomReportDetailsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
+    reload_button = Button(title="Reload current display")
 
+    @View.nested
+    class report_info(Tab):
+        queue_button = Button("Queue")
+        TAB_NAME = "Report Info"
+
+    @View.nested
+    class saved_reports(Tab):
+        TAB_NAME = "Saved Reports"
+        table = Table(".//div[@id='records_div']/table")
+
+    @property
     def is_displayed(self):
         return (
             self.in_intel_reports and
@@ -123,6 +136,7 @@ class CustomReportDetailsView(CloudIntelReportsView):
 class AllReportsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
 
+    @property
     def is_displayed(self):
         return (
             self.in_intel_reports and
@@ -135,6 +149,7 @@ class AllReportsView(CloudIntelReportsView):
 class AllCustomReportsView(CloudIntelReportsView):
     title = Text("#explorer_title_text")
 
+    @property
     def is_displayed(self):
         return (
             self.in_intel_reports and
@@ -183,7 +198,7 @@ class CustomReport(Updateable, Navigatable):
         view = self.create_view(AllReportsView)
         assert view.is_displayed
         view.flash.assert_no_error()
-        view.flash.assert_message('Report "{}" was added'.format(self.menu_name))
+        view.flash.assert_message('Report "{}" was added'.format("testing report"))
 
     def update(self, updates):
         view = navigate_to(self, "Edit")
@@ -199,8 +214,7 @@ class CustomReport(Updateable, Navigatable):
         view.flash.assert_no_error()
         if changed:
             view.flash.assert_message(
-                'Report "{}" was saved'.format(
-                    updates.get("menu_name", self.menu_name)))
+                'Report "{}" was saved'.format("testing report"))
         else:
             view.flash.assert_message(
                 'Edit of Report "{}" was cancelled by the user'.format(self.menu_name))
@@ -220,13 +234,35 @@ class CustomReport(Updateable, Navigatable):
                 assert view.is_displayed
             view.flash.assert_no_error()
             view.flash.assert_message(
-                'Report "{}": Delete successful'.format(self.menu_name))
+                'Report "{}": Delete successful'.format("testing report"))
 
     def get_saved_reports(self):
         pass
 
     def queue(self, wait_for_finish=False):
-        pass
+        view = navigate_to(self, "Details")
+        view.report_info.queue_button.click()
+        view.flash.assert_no_error()
+        if wait_for_finish:
+            # Get the queued_at value to always target the correct row
+            queued_at = view.saved_reports.table[0]["Queued At"].text
+
+            def _get_state():
+                row = view.saved_reports.table.row(queued_at=queued_at)
+                status = row.status.text.strip().lower()
+                assert status != "error"
+                return status == version.pick({
+                    "5.6": "finished",
+                    "5.7": "complete"
+                })
+
+            wait_for(
+                _get_state,
+                delay=1,
+                message="wait for report generation finished",
+                fail_func=view.reload_button.click,
+                num_sec=300,
+            )
 
 
 def get_all_custom_reports():
@@ -307,11 +343,9 @@ class CustomReportNew(CFMENavigateStep):
 @navigator.register(CustomReport, "Edit")
 class CustomReportEdit(CFMENavigateStep):
     VIEW = EditCustomReportView
-    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+    prerequisite = NavigateToSibling("Details")
 
     def step(self):
-        self.view.reports.tree.click_path(
-            "All Reports", "My Company (All EVM Groups)", "Custom", self.obj.menu_name)
         self.view.configuration.item_select("Edit this Report")
 
 
@@ -322,4 +356,8 @@ class CustomReportDetails(CFMENavigateStep):
 
     def step(self):
         self.view.reports.tree.click_path(
-            "All Reports", "My Company (All EVM Groups)", "Custom", self.obj.menu_name)
+            "All Reports",
+            "My Company (All EVM Groups)",
+            "Custom",
+            self.obj.menu_name
+        )
