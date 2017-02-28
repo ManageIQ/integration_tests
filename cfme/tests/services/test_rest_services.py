@@ -150,7 +150,7 @@ class TestServiceRESTAPI(object):
             service.reload()
             assert service.name == new_names[i]
 
-    @pytest.mark.meta(blockers=[BZ(1414852, forced_streams=['5.7', 'upstream'])])
+    @pytest.mark.meta(blockers=[BZ(1414852, forced_streams=['5.7', '5.8', 'upstream'])])
     def test_delete_service_post(self, rest_api, services):
         """Tests deleting services from detail using POST method.
 
@@ -311,14 +311,14 @@ class TestServiceRESTAPI(object):
             assert rest_api.response.status_code == 200
             wait_for_vm_power_state(vm, resulting_state)
 
-        _action_and_check('start', 'on')
+        wait_for_vm_power_state(vm, 'on')
         _action_and_check('stop', 'off')
         _action_and_check('start', 'on')
         _action_and_check('suspend', 'suspended')
         _action_and_check('start', 'on')
 
-    @pytest.mark.meta(blockers=[BZ(1416146, forced_streams=['5.7', 'upstream'])])
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.meta(blockers=[BZ(1416146, forced_streams=['5.7', '5.8', 'upstream'])])
     def test_create_service_from_parent(self, request, rest_api):
         """Tests creation of new service that reference existing service.
 
@@ -376,8 +376,8 @@ class TestServiceRESTAPI(object):
         child.reload()
         assert child.ancestry == str(parent.id)
 
-    @pytest.mark.meta(blockers=[BZ(1416903, forced_streams=['5.7', 'upstream'])])
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
+    @pytest.mark.meta(blockers=[BZ(1416903, forced_streams=['5.7', '5.8', 'upstream'])])
     def test_power_parent_service(self, request, rest_api, service_data):
         """Tests that power operations triggered on service parent affects child service.
 
@@ -400,7 +400,7 @@ class TestServiceRESTAPI(object):
             assert rest_api.response.status_code == 200
             wait_for_vm_power_state(vm, resulting_state)
 
-        _action_and_check('start', 'on')
+        wait_for_vm_power_state(vm, 'on')
         _action_and_check('stop', 'off')
         _action_and_check('start', 'on')
         _action_and_check('suspend', 'suspended')
@@ -489,7 +489,7 @@ class TestServiceTemplateRESTAPI(object):
             rest_api.collections.service_templates.action.delete(*service_templates)
         assert rest_api.response.status_code == 404
 
-    @pytest.mark.meta(blockers=[BZ(1427338, forced_streams=['5.7', 'upstream'])])
+    @pytest.mark.meta(blockers=[BZ(1427338, forced_streams=['5.6', '5.7', '5.8', 'upstream'])])
     def test_delete_service_template_post(self, rest_api, service_templates):
         """Tests deleting service templates from detail using POST method.
 
@@ -702,7 +702,7 @@ class TestOrchestrationTemplatesRESTAPI(object):
 
     @pytest.mark.tier(3)
     @pytest.mark.uncollectif(lambda: version.current_version() < '5.7')
-    @pytest.mark.meta(blockers=[BZ(1414881, forced_streams=['5.7', 'upstream'])])
+    @pytest.mark.meta(blockers=[BZ(1414881, forced_streams=['5.7', '5.8', 'upstream'])])
     def test_delete_orchestration_templates_from_detail_post(self, orchestration_templates,
             rest_api):
         """Tests deleting orchestration templates from detail using POST method.
