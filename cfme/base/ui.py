@@ -1,7 +1,7 @@
 import re
 from navmazing import NavigateToSibling, NavigateToAttribute
 
-from widgetastic_manageiq import ManageIQTree
+from widgetastic_manageiq import ManageIQTree, Checkbox, AttributeValueForm
 from widgetastic_patternfly import (Accordion, Input, Button, Dropdown,
     FlashMessages, BootstrapSelect, Tab)
 from widgetastic.widget import View, Table, Text
@@ -991,7 +991,15 @@ class AutomateSimulationView(BaseLoggedInPage):
             self.navigation.currently_selected == automate_menu_name(
                 self.obj.appliance) + ['Simulation'])
 
-    # TODO: Actually convert this to Widgetastic.
+    instance = BootstrapSelect('instance_name')
+    message = Input(name='object_message')
+    request = Input(name='object_request')
+    target_type = BootstrapSelect('target_class')
+    target_object = BootstrapSelect('target_id')
+    execute_methods = Checkbox(name='readonly')
+    avp = AttributeValueForm('attribute_', 'value_')
+
+    submit_button = Button(title='Submit Automation Simulation with the specified options')
 
 
 @navigator.register(Server)

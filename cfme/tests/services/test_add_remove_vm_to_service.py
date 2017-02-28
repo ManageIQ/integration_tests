@@ -97,7 +97,8 @@ def test_add_vm_to_service(myservice, request, copy_domain):
         instance="Request",
         message="create",
         request=method.name,
-        attribute=["VM and Instance", "auto_test_services"],  # Random selection, does not matter
+        target_type='VM and Instance',
+        target_object="auto_test_services",
         execute_methods=True
     )
     myservice.check_vm_add("auto_test_services")

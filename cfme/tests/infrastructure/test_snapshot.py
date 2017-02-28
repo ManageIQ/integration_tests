@@ -175,10 +175,12 @@ def test_create_snapshot_via_ae(request, domain, test_vm):
     snap_name = fauxfactory.gen_alpha()
     snapshot = Vm.Snapshot(name=snap_name, parent_vm=test_vm)
     simulate(
-        instance="Request", request="snapshot",
-        attribute=["VM and Instance", test_vm.name],
+        instance="Request",
+        request="snapshot",
+        target_type='VM and Instance',
+        target_object=test_vm.name,
         execute_methods=True,
-        avp={"snap_name": snap_name})
+        attributes_values={"snap_name": snap_name})
 
     wait_for(snapshot.does_snapshot_exist, timeout="2m", delay=10)
 

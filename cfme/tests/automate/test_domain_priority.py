@@ -128,7 +128,6 @@ def test_priority(
         instance="Request",
         message="create",
         request=original_instance.name,
-        attribute=None,  # Random selection, does not matter
         execute_methods=True
     )
     wait_for(
@@ -159,7 +158,6 @@ def test_priority(
         instance="Request",
         message="create",
         request=original_instance.name,
-        attribute=None,  # Does not matter
         execute_methods=True
     )
     wait_for(
@@ -180,7 +178,6 @@ def test_priority(
         instance="Request",
         message="create",
         request=original_instance.name,
-        attribute=None,  # Does not matter
         execute_methods=True
     )
     wait_for(
