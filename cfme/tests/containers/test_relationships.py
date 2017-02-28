@@ -95,3 +95,22 @@ def test_relationships_tables(provider, data_set):
         instance = data_set.obj(row.name.text, provider)
 
     check_relationships(instance)
+
+
+@pytest.mark.polarion('CMP-9934')
+def test_container_status_relationships_data_integrity(provider):
+    """ This test verifies that the sum of running, waiting and terminated containers
+        in the status summary table
+        is the same number that appears in the Relationships table containers field
+    """
+    rows = navigate_and_get_rows(provider, Pod, pod_paged_tbl, 3)
+    if not rows:
+        pytest.skip('No containers found to test. skipping...')
+    pod_names = [r.name.text for r in rows]
+
+    for name in pod_names:
+        obj = Pod(name, provider)
+        assert obj.summary.relationships.containers.value == \
+            obj.summary.container_statuses_summary.running.value + \
+            obj.summary.container_statuses_summary.waiting.value + \
+            obj.summary.container_statuses_summary.terminated.value

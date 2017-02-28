@@ -43,6 +43,12 @@ def test_containers_summary_objects(provider):
     navigate_to(ContainersOverview, 'All')
     for obj_type in container_object:
         status_box_values[obj_type] = StatusBox(obj_type).value()
+    errors = []
     for obj_type in container_object:
         prov_ui_values[obj_type] = getattr(provider.summary.relationships, obj_type).value
-        assert status_box_values[obj_type] == prov_ui_values[obj_type]
+        if status_box_values[obj_type] != prov_ui_values[obj_type]:
+            errors.append('{}: Mismatch between status box ({}) value in Containers overview'
+                          'and provider\'s relationships table ({}):'
+                          .format(obj_type, status_box_values[obj_type], prov_ui_values[obj_type]))
+    if errors:
+        raise Exception('\n'.join(errors))

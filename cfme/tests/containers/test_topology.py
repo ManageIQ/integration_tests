@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
+import time
+from random import choice
+
 import pytest
+
 from utils import testgen
+from utils.blockers import BZ
+from utils.wait import wait_for
+from utils.browser import WithZoom
+
 from cfme.web_ui.topology import Topology
 from cfme.containers.provider import ContainersProvider
 from cfme.containers.topology import Topology as ContainerTopology
 from cfme.fixtures.pytest_selenium import is_displayed_text
-from random import choice
-from utils.wait import wait_for
-from utils.browser import WithZoom
-import time
+
 
 pytestmark = [
     pytest.mark.usefixtures('setup_provider'),
@@ -37,7 +42,7 @@ def test_topology_display_names():
                 assert is_displayed_text(elem.name) == bool_
 
 
-@pytest.mark.meta(blockers=[1415472])
+@pytest.mark.meta(blockers=[BZ(1415472, forced_streams=['5.6', '5.7'])])
 @pytest.mark.polarion('CMP-9998')
 def test_topology_search():
     """Testing search functionality in Topology view.
@@ -49,6 +54,7 @@ def test_topology_search():
         Entity found, should be highlighted and all other entities should be "disabled"
     """
     topo_obj = Topology(ContainerTopology)
+    topo_obj.display_names.enable(True)  # For better debugging on failures
     topo_obj.reload_elements()  # we reload again to prevent stale element exception
     wait_for(lambda: len(topo_obj.elements()) > 0, fail_func=topo_obj.reload_elements,
              delay=3, timeout=60.0)
