@@ -13,7 +13,7 @@ import six
 from collections import Mapping, OrderedDict
 from copy import copy
 
-from cfme.common.provider import base_types, provider_types
+from cfme.common.provider import all_types
 
 from cfme.containers import provider as containers_providers  # NOQA
 from cfme.cloud import provider as cloud_providers  # NOQA
@@ -299,12 +299,8 @@ def list_provider_keys(provider_type=None):
 
 
 def get_class_from_type(prov_type):
-    """ Serves to translate both provider types and categories to actual classes """
-    all_classes_map = base_types().copy()
-    for base_type in base_types().keys():
-        all_classes_map.update(provider_types(base_type))
     try:
-        return all_classes_map[prov_type]
+        return all_types()[prov_type]
     except KeyError:
         raise UnknownProviderType("Unknown provider type: {}!".format(prov_type))
 

@@ -17,7 +17,7 @@ from utils import version
 
 
 @pytest.fixture
-def vmware_provider_crud():
+def virtualcenter_provider_crud():
     try:
         return list_providers_by_class(VMwareProvider)[0]
     except IndexError:
@@ -68,7 +68,7 @@ def get_appliances():
 @pytest.mark.uncollectif(
     lambda: not (store.current_appliance.is_downstream and
         store.current_appliance.version >= '5.4'))
-def test_db_restore(request, soft_assert, vmware_provider_crud, ec2_provider_crud):
+def test_db_restore(request, soft_assert, virtualcenter_provider_crud, ec2_provider_crud):
 
     appl1, appl2 = get_appliances()
 
@@ -82,7 +82,7 @@ def test_db_restore(request, soft_assert, vmware_provider_crud, ec2_provider_cru
         # Manage infra,cloud providers and set some roles before taking a DB backup
         config.set_server_roles(automate=True)
         roles = config.get_server_roles()
-        vmware_provider_crud.setup()
+        virtualcenter_provider_crud.setup()
         wait_for_a_provider()
         ec2_provider_crud.setup()
         cloud_provider.wait_for_a_provider()
@@ -118,7 +118,7 @@ def test_db_restore(request, soft_assert, vmware_provider_crud, ec2_provider_cru
             'Restored DB is missing some providers'
 
         # Verify that existing provider can detect new VMs on the second appliance
-        vm = provision_vm(request, vmware_provider_crud)
+        vm = provision_vm(request, virtualcenter_provider_crud)
         soft_assert(vm.find_quadicon().state == 'currentstate-on')
         soft_assert(vm.provider.mgmt.is_vm_running(vm.name),
             "vm running")

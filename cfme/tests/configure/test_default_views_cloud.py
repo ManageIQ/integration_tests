@@ -13,7 +13,7 @@ from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.usefixtures('rhos_provider')]
+              pytest.mark.usefixtures('openstack_provider')]
 
 gtl_params = {
     'Cloud Providers': CloudProvider,

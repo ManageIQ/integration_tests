@@ -13,7 +13,7 @@ from cfme.infrastructure.host import Host
 from cfme.infrastructure.datastore import Datastore
 
 
-pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("vmware_provider")]
+pytestmark = [pytest.mark.tier(3), pytest.mark.usefixtures("virtualcenter_provider")]
 
 
 def test_set_default_host_filter(request):

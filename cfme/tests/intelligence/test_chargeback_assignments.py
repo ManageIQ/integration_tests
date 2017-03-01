@@ -16,7 +16,7 @@ pytestmark = [
 
 
 @pytest.mark.meta(blockers=[1273654])
-def test_assign_compute_enterprise(vmware_provider):
+def test_assign_compute_enterprise(virtualcenter_provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
@@ -31,22 +31,22 @@ def test_assign_compute_enterprise(vmware_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_compute_provider(vmware_provider):
+def test_assign_compute_provider(virtualcenter_provider):
     compute_provider = cb.Assign(
         assign_to="Selected Cloud/Infrastructure Providers",
         selections={
-            vmware_provider.name: "Default"
+            virtualcenter_provider.name: "Default"
         })
     compute_provider.computeassign()
 
     flash.assert_message_match('Rate Assignments saved')
     selected_option = sel.text(
-        cb.assign_form.selections.select_by_name(vmware_provider.name).first_selected_option)
+        cb.assign_form.selections.select_by_name(virtualcenter_provider.name).first_selected_option)
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_compute_cluster(vmware_provider):
-    cluster_name = random.choice(vmware_provider.get_yaml_data()["clusters"])
+def test_assign_compute_cluster(virtualcenter_provider):
+    cluster_name = random.choice(virtualcenter_provider.get_yaml_data()["clusters"])
 
     cluster = cb.Assign(
         assign_to=version.pick({version.LOWEST: 'Selected Clusters',
@@ -62,7 +62,7 @@ def test_assign_compute_cluster(vmware_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_compute_taggedvm(vmware_provider):
+def test_assign_compute_taggedvm(virtualcenter_provider):
     tagged_vm = cb.Assign(
         assign_to="Tagged VMs and Instances",
         tag_category="Location",
@@ -78,7 +78,7 @@ def test_assign_compute_taggedvm(vmware_provider):
 
 
 @pytest.mark.meta(blockers=[1273654])
-def test_assign_storage_enterprise(vmware_provider):
+def test_assign_storage_enterprise(virtualcenter_provider):
     enterprise = cb.Assign(
         assign_to="The Enterprise",
         selections={
@@ -93,8 +93,8 @@ def test_assign_storage_enterprise(vmware_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_storage_datastores(vmware_provider):
-    datastore = random.choice(vmware_provider.get_yaml_data()["datastores"])["name"]
+def test_assign_storage_datastores(virtualcenter_provider):
+    datastore = random.choice(virtualcenter_provider.get_yaml_data()["datastores"])["name"]
 
     sel_datastore = cb.Assign(
         assign_to="Selected Datastores",
@@ -109,7 +109,7 @@ def test_assign_storage_datastores(vmware_provider):
     assert selected_option == "Default", 'Selection does not match'
 
 
-def test_assign_storage_tagged_datastores(vmware_provider):
+def test_assign_storage_tagged_datastores(virtualcenter_provider):
     tagged_datastore = cb.Assign(
         assign_to="Tagged Datastores",
         tag_category="Location",

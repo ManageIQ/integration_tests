@@ -20,7 +20,6 @@ There are two ways to request a setup provider depending on what kind of test we
    In this case, we don't really care about what sort of a provider we have available. Usually,
    we just want something to fill the UI with data so that we can test our provider non-specific
    functionality. For that, we can leverage one of the following fixtures:
-     - ``core_provider`` (infra or cloud)
      - ``infra_provider``
      - ``cloud_provider``
      - ``middleware_provider``
@@ -43,13 +42,7 @@ import random
 import six
 from collections import defaultdict
 
-from cfme.common.provider import BaseProvider, CloudInfraProvider
-from cfme.cloud.provider import CloudProvider
-from cfme.cloud.provider.openstack import OpenStackProvider
-from cfme.infrastructure.provider import InfraProvider
-from cfme.infrastructure.provider.virtualcenter import VMwareProvider
-from cfme.containers.provider import ContainersProvider
-from cfme.middleware.provider import MiddlewareProvider
+from cfme.common.provider import BaseProvider, all_types
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.pytest_store import store
 from fixtures.templateloader import TEMPLATES
@@ -174,48 +167,37 @@ def setup_one_by_class_or_skip(request, prov_class, use_global_filters=True):
     return setup_one_or_skip(request, filters=[pf], use_global_filters=use_global_filters)
 
 
-# I want to setup a provider of specific type but I don't care which one it is:
-# -----------------------------------------------------------------------------
-@pytest.fixture(scope="module")
-def core_provider(request):
-    return setup_one_by_class_or_skip(request, CloudInfraProvider)
+def _generate_provider_fixtures():
+    """ Generate provider setup and clear fixtures based on what classes are available
+
+    This will make fixtures like "cloud_provider" and "has_no_cloud_provider" available to tests.
+    """
+    for prov_type, prov_class in all_types().iteritems():
+        def gen_setup_provider(prov_class):
+            @pytest.fixture(scope='module')
+            def _setup_provider(request):
+                """ Sets up one of the matching providers """
+                return setup_one_by_class_or_skip(request, prov_class)
+            return _setup_provider
+        fn_name = '{}_provider'.format(prov_type)
+        globals()[fn_name] = gen_setup_provider(prov_class)
+
+        def gen_has_no_providers(prov_class):
+            @pytest.fixture
+            def _has_no_providers():
+                """ Clears all providers of given class from the appliance """
+                BaseProvider.clear_providers_by_class(prov_class, validate=True)
+            return _has_no_providers
+        fn_name = 'has_no_{}_provider'.format(prov_type)
+        globals()[fn_name] = gen_has_no_providers(prov_class)
 
 
-@pytest.fixture(scope="module")
-def infra_provider(request):
-    return setup_one_by_class_or_skip(request, InfraProvider)
+# Let's generate all the provider setup and clear fixtures within the scope of this module
+_generate_provider_fixtures()
 
 
-@pytest.fixture(scope="module")
-def cloud_provider(request):
-    return setup_one_by_class_or_skip(request, CloudProvider)
-
-
-@pytest.fixture(scope="module")
-def middleware_provider(request):
-    return setup_one_by_class_or_skip(request, MiddlewareProvider)
-
-
-@pytest.fixture(scope="module")
-def containers_provider(request):
-    return setup_one_by_class_or_skip(request, ContainersProvider)
-
-
-# TODO investigate
-# For some reason we have quite a few places that depend on a specific provider type
-@pytest.fixture(scope="module")
-def vmware_provider(request):
-    return setup_one_by_class_or_skip(request, VMwareProvider)
-
-
-@pytest.fixture(scope="module")
-def rhos_provider(request):
-    return setup_one_by_class_or_skip(request, OpenStackProvider)
-# -----------------------------------------------------------------------------
-
-
-# I want to setup a provider provided by testgen:
-# -----------------------------------------------
+# When we want to setup a provider provided by testgen
+# ----------------------------------------------------
 @pytest.fixture(scope='function')
 def setup_provider(request, provider):
     """Function-scoped fixture to set up a provider"""
@@ -323,49 +305,3 @@ def big_template_modscope(provider):
 @pytest.fixture(scope="function")
 def provisioning(provider):
     return provider.data['provisioning']
-
-
-@pytest.fixture
-def has_no_providers():
-    """ Clears all management systems from an applicance
-
-    This is a destructive fixture. It will clear all managements systems from
-    the current appliance.
-    """
-    BaseProvider.clear_providers()
-
-
-@pytest.fixture
-def has_no_cloud_providers():
-    """ Clears all cloud providers from an appliance
-
-    This is a destructive fixture. It will clear all cloud managements systems from
-    the current appliance.
-    """
-    BaseProvider.clear_providers_by_class(CloudProvider, validate=True)
-
-
-@pytest.fixture
-def has_no_infra_providers():
-    """ Clears all infrastructure providers from an appliance
-
-    This is a destructive fixture. It will clear all infrastructure managements systems from
-    the current appliance.
-    """
-    BaseProvider.clear_providers_by_class(InfraProvider, validate=True)
-
-
-@pytest.fixture
-def has_no_containers_providers():
-    """ Clears all containers providers from an appliance
-
-    This is a destructive fixture. It will clear all container managements systems from
-    the current appliance.
-    """
-    BaseProvider.clear_providers_by_class(ContainersProvider, validate=True)
-
-
-@pytest.fixture
-def has_no_middleware_providers():
-    """Clear all middleware providers."""
-    BaseProvider.clear_providers_by_class(MiddlewareProvider, validate=True)

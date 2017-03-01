@@ -14,7 +14,7 @@ from utils.appliance.implementations.ui import navigate_to
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.usefixtures('vmware_provider')]
+              pytest.mark.usefixtures('virtualcenter_provider')]
 
 
 # TODO refactor for setup_provider parametrization with new 'latest' tag

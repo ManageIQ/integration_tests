@@ -18,7 +18,7 @@ from utils import version
 
 pytestmark = [pytest.mark.tier(3),
               test_requirements.settings,
-              pytest.mark.usefixtures("rhos_provider")]
+              pytest.mark.usefixtures("openstack_provider")]
 
 grid_pages = version.pick({
     version.LOWEST: [CloudProvider,
