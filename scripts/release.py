@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+from __future__ import print_function
+
 import argparse
 from collections import defaultdict
 import datetime
@@ -96,24 +98,24 @@ def main():
                     for line in title[1:]:
                         msg += "\n{} | {} | {}".format(" " * max_len_pr, " " * max_len_labels, line)
                     if full:
-                        print "=" * line_length
-                    print msg
+                        print("=" * line_length)
+                    print(msg)
                     if full:
-                        print "-" * line_length
+                        print("-" * line_length)
                         string = prs[pr_number]['body']
                         if string is None:
                             string = ""
                         pytest_match = re.findall("({{.*}}\s*)", string, flags=re.S | re.M)
                         if pytest_match:
                             string = string.replace(pytest_match[0], '')
-                        print "\n".join(
-                            textwrap.wrap(string, line_length, replace_whitespace=False))
-                        print "=" * line_length
-                        print ("")
+                        print("\n".join(
+                            textwrap.wrap(string, line_length, replace_whitespace=False)))
+                        print("=" * line_length)
+                        print("")
 
     elif args.stats:
         for label in labels:
-            print "{},{}".format(label, labels[label])
+            print("{},{}".format(label, labels[label]))
 
 
 if __name__ == "__main__":
