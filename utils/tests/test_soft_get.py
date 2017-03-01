@@ -1,6 +1,6 @@
 import pytest
 
-from utils.soft_get import soft_get
+from utils.soft_get import soft_get, MultipleResultsException
 
 
 def test_soft_get():
@@ -22,10 +22,13 @@ def test_soft_get():
         is_dict = (type(tested) is dict)
         with pytest.raises(AttributeError):
             soft_get(tested, 'no_such_attr', dict_=is_dict)
-        with pytest.raises(Exception):
+        with pytest.raises(MultipleResultsException):
             soft_get(tested, 'a', dict_=is_dict, best_match=False)
-        with pytest.raises(Exception):
+        with pytest.raises(AttributeError):
             soft_get(tested, 'Aa', dict_=is_dict, case_sensitive=True)
+        if not is_dict:
+            with pytest.raises(TypeError):
+                soft_get(tested, 'a', dict_=True)
 
         assert soft_get(tested, 'a', dict_=is_dict) == 1
         assert soft_get(tested, 'bb', dict_=is_dict) == 22

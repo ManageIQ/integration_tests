@@ -2,6 +2,10 @@ import collections
 from difflib import SequenceMatcher
 
 
+class MultipleResultsException(Exception):
+    pass
+
+
 def soft_get(obj,
              field_base_name,
              dict_=False,
@@ -40,7 +44,7 @@ def soft_get(obj,
         field_base_name = field_base_name.lower()
     if dict_:
         if not isinstance(obj, collections.Mapping):
-            raise Exception('{}: {} is not a dict (type={}). '
+            raise TypeError('{}: {} is not a dict (type={}). '
                             .format(signature, obj, type(obj)))
         all_fields = obj.keys()
     else:
@@ -49,17 +53,18 @@ def soft_get(obj,
     if not case_sensitive:
             dont_include = [s.lower() for s in dont_include]
     for field in all_fields:
+        origin_field = field
         if not case_sensitive:
             field = field.lower()
         if (field_base_name in field) and \
                 all([(s not in field) for s in dont_include]):
-            found_fields.append(field)
+            found_fields.append(origin_field)
     if not found_fields:
         raise AttributeError('{}: Could not find a member for field {}.'
                              .format(signature, field_base_name))
     elif len(found_fields) > 1:
         if not best_match:
-            raise Exception('{}: Found more than 1 member for {}: {}'
+            raise MultipleResultsException('{}: Found more than 1 member for {}: {}'
                             .format(signature, field_base_name, found_fields))
         found_fields = [max(found_fields, key=lambda s:
                             SequenceMatcher(None, s, field_base_name).ratio())]
