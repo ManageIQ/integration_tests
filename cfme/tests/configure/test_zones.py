@@ -14,7 +14,7 @@ import utils.error as error
 @pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_crud(soft_assert):
-    zc = ZoneCollection(current_appliance)
+    zc = current_appliance.get(ZoneCollection)
     # CREATE
     zone = zc.create(
         name=fauxfactory.gen_alphanumeric(5),
@@ -40,7 +40,7 @@ def test_zone_crud(soft_assert):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_cancel_validation():
-    zc = ZoneCollection(current_appliance)
+    zc = current_appliance.get(ZoneCollection)
     # CREATE
     zc.create(
         name=fauxfactory.gen_alphanumeric(5),
@@ -54,7 +54,7 @@ def test_zone_add_cancel_validation():
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_change_appliance_zone(request):
     """ Tests that an appliance can be changed to another Zone """
-    zc = ZoneCollection(current_appliance)
+    zc = current_appliance.get(ZoneCollection)
     # CREATE
     zone = zc.create(
         name=fauxfactory.gen_alphanumeric(5),
@@ -75,7 +75,7 @@ def test_zone_change_appliance_zone(request):
 @pytest.mark.tier(2)
 @pytest.mark.sauce
 def test_zone_add_dupe(request):
-    zc = ZoneCollection(current_appliance)
+    zc = current_appliance.get(ZoneCollection)
     name = fauxfactory.gen_alphanumeric(5)
     description = fauxfactory.gen_alphanumeric(8)
     zone = zc.create(
@@ -92,7 +92,7 @@ def test_zone_add_dupe(request):
 @pytest.mark.tier(3)
 @pytest.mark.sauce
 def test_zone_add_maxlength(request, soft_assert):
-    zc = ZoneCollection(current_appliance)
+    zc = current_appliance.get(ZoneCollection)
     zone = zc.create(
         name=fauxfactory.gen_alphanumeric(50),
         description=fauxfactory.gen_alphanumeric(50)
