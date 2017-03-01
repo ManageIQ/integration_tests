@@ -1,9 +1,13 @@
 #!/usr/bin/env python2
+from __future__ import print_function
+
 import argparse
+from collections import defaultdict
 import datetime
 import re
 import requests
 import subprocess
+import textwrap
 
 from utils.conf import docker
 
@@ -24,9 +28,14 @@ def main():
         help='Build the release from an older tag')
     parser.add_argument('--full', action="store_true", default=False,
         help='Whether to generate full PR details')
+    parser.add_argument('--stats', action="store_true", default=False,
+        help='Whether to generate label stats')
+    parser.add_argument('--line-limit', default='80',
+        help='Line length limit')
 
     args = parser.parse_args()
 
+    line_length = int(args.line_limit)
     full = args.full
 
     new_ver = args.new_tag
@@ -50,7 +59,7 @@ def main():
     print('')
     print('Includes: {} -> {}'.format(old_tag, new_ver))
 
-    max_len = len(reduce((lambda x, y: x if len(x) > len(y) else y), valid_labels))
+    max_len_labels = len(reduce((lambda x, y: x if len(x) > len(y) else y), valid_labels))
 
     now = datetime.date.today()
     start_of_week = now - datetime.timedelta(days=15)
@@ -62,36 +71,51 @@ def main():
         '{}+merged:>{}'.format(docker['gh_owner'], docker['gh_repo'], string_start),
         headers=headers)
 
+    labels = defaultdict(int)
     prs = {}
     for pr in r.json()['items']:
         prs[pr['number']] = pr
         for label in pr['labels']:
             if label['name'] in valid_labels:
                 pr['label'] = label['name']
+        labels[pr['label']] += 1
 
-    for commit in commits.split("\n"):
-        pr = re.match('.*[#](\d+).*', commit)
-        if pr:
-            pr_number = int(pr.groups()[0].replace("#", ''))
-            if pr_number in prs:
-                old_lab = prs[pr_number]['label']
-                label = old_lab + " " * (max_len - len(old_lab))
-                msg = "{} | {} | {}".format(
-                    pr_number, label, clean_commit(prs[pr_number]['title']))
-                if full:
-                    print "=" * len(msg)
-                print msg
-                if full:
-                    print "-" * len(msg)
-                    string = prs[pr_number]['body']
-                    if string is None:
-                        string = ""
-                    pytest_match = re.findall("({{.*}}\s*)", string, flags=re.S | re.M)
-                    if pytest_match:
-                        string = string.replace(pytest_match[0], '')
-                    print string
-                    print "=" * len(msg)
-                    print ("")
+    if not args.stats:
+        max_len_pr = len(
+            reduce((lambda x, y: str(x) if len(str(x)) > len(str(y)) else str(y)), prs.keys()))
+
+        for commit in commits.split("\n"):
+            pr = re.match('.*[#](\d+).*', commit)
+            if pr:
+                pr_number = int(pr.groups()[0].replace("#", ''))
+                if pr_number in prs:
+                    old_lab = prs[pr_number]['label']
+                    label = old_lab + " " * (max_len_labels - len(old_lab))
+                    title = clean_commit(prs[pr_number]['title'])
+                    title = textwrap.wrap(title, line_length - 6 - max_len_pr - max_len_labels)
+                    msg = "{} | {} | {}".format(
+                        pr_number, label, title[0])
+                    for line in title[1:]:
+                        msg += "\n{} | {} | {}".format(" " * max_len_pr, " " * max_len_labels, line)
+                    if full:
+                        print("=" * line_length)
+                    print(msg)
+                    if full:
+                        print("-" * line_length)
+                        string = prs[pr_number]['body']
+                        if string is None:
+                            string = ""
+                        pytest_match = re.findall("({{.*}}\s*)", string, flags=re.S | re.M)
+                        if pytest_match:
+                            string = string.replace(pytest_match[0], '')
+                        print("\n".join(
+                            textwrap.wrap(string, line_length, replace_whitespace=False)))
+                        print("=" * line_length)
+                        print("")
+
+    elif args.stats:
+        for label in labels:
+            print("{},{}".format(label, labels[label]))
 
 
 if __name__ == "__main__":
