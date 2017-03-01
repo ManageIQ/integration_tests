@@ -1,7 +1,7 @@
 import pytest
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.containers.node import Node
+from cfme.containers.node import NodeCollection, Node
 from utils import testgen, version
 from cfme.web_ui import CheckboxTable, toolbar as tb
 from utils.appliance.implementations.ui import navigate_to
@@ -26,7 +26,6 @@ def test_create_label_check(ssh_client, provider):
         then it verifies the label exists and is visible on the summary
         page.There is a sufficient time provided so that CFME is updated
         with the latest data
-
     """
 
     hostname = conf.cfme_data.get('management_systems', {})[provider.key] \
@@ -55,7 +54,7 @@ def test_create_label_check(ssh_client, provider):
     provider.validate_stats(ui=True)
     time.sleep(6)
 
-    navigate_to(Node, 'All')
+    navigate_to(NodeCollection, 'All')
     tb.select('List View')
 
     list_tbl = CheckboxTable(table_locator="//div[@id='list_grid']//table")
@@ -65,10 +64,4 @@ def test_create_label_check(ssh_client, provider):
 
     for name in names:
         obj = Node(name, provider)
-        obj.summary.reload()
-        labels_all = obj.summary.labels
-        lbls_cfme = list(labels_all)
-        lbls_cfme_new = [i for j in lbls_cfme for i in j]
-        lst_lbls_found = ['kube', 'master']
-        found = any(x in lst_lbls_found for x in lbls_cfme_new)
-        assert found
+        assert obj.get_detail('Labels', 'kube') == 'master'
