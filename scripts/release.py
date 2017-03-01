@@ -78,6 +78,9 @@ def main():
         for label in pr['labels']:
             if label['name'] in valid_labels:
                 pr['label'] = label['name']
+                break
+        else:
+            raise Exception("PR [{}]: Does not have a label".format(pr['number']))
         labels[pr['label']] += 1
 
     if not args.stats:
