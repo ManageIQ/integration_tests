@@ -31,6 +31,7 @@ def template(provider):
     return Template(template_name, provider)
 
 
+@pytest.mark.polarion('CMP-10316')
 @pytest.mark.parametrize('prop', TEMPLATE_PROPERTES_FIELDS)
 def test_containers_templates_properties(template, prop):
     """ This test checks the Properties fields of Container Templates
