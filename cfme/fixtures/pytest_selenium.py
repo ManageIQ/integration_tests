@@ -20,9 +20,9 @@ from textwrap import dedent
 import json
 import re
 from selenium.common.exceptions import \
-    (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
+    (NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
-     InvalidElementStateException, MoveTargetOutOfBoundsException, WebDriverException,
+     MoveTargetOutOfBoundsException, WebDriverException,
      StaleElementReferenceException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
@@ -70,6 +70,7 @@ def __repr__(self):
             return "element({})".format(repr(this))
     else:
         return _old__repr__(self)
+
 
 if WebElement.__repr__ is not __repr__:
     WebElement.__repr__ = __repr__
@@ -125,7 +126,7 @@ def elements(o, **kwargs):
         if check_visibility:
             return [e for e in els if is_displayed(e)]
         else:
-            els
+            return els
     else:
         raise TypeError("Unprocessable type for elements({}) -> class {} (kwargs: {})".format(
             str(repr(o)), o.__class__.__name__, str(repr(kwargs))
@@ -315,6 +316,12 @@ def wait_for_ajax():
         TimedOutError: when ajax did not load in time
     """
 
+    execute_script("""
+        try {
+            angular.element('error-modal').hide();
+        } catch(err) {
+        }""")
+
     _thread_local.ajax_log_msg = ''
 
     def _nothing_in_flight():
@@ -473,7 +480,7 @@ def wait_for_element(*locs, **kwargs):
         new_kwargs["timeout"] = kwargs["timeout"]
     wait_until(
         lambda s: filt([is_displayed(loc, move_to=True) for loc in locs]),
-        msg="{} of the elements '{}' did not appear as expected.".format(msg, str(locs)),
+        msg="{} of the elements '{}' to appear".format(msg, str(locs)),
         **kwargs
     )
 
@@ -883,7 +890,7 @@ def checkbox(loc, set_to=False):
             selected = el.is_selected()
 
         if selected is not set_to:
-            logger.debug("Setting checkbox %s to %s", str(loc), str(set_to))
+            logger.debug("Setting checkbox to {}".format(set_to))
             click(el)
         return selected
 
@@ -978,6 +985,8 @@ class ContextWrapper(dict):
 
 
 @removed
+<<<<<<< HEAD
+=======
 def force_navigate(page_name, _tries=0, *args, **kwargs):
     """force_navigate(page_name)
 
@@ -1225,6 +1234,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
 
 @removed
+>>>>>>> Stuf
 def detect_observed_field(loc):
     """Detect observed fields; sleep if needed
 
