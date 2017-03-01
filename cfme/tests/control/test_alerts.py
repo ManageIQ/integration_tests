@@ -355,7 +355,7 @@ def test_alert_snmp(request, vm_name, snmp, provider):
 
     def _snmp_arrived():
         rc, stdout = store.current_appliance.ssh_client.run_command(
-            "journalctl /usr/sbin/snmptrapd | grep {}".format(match_string))
+            "journalctl --no-pager /usr/sbin/snmptrapd | grep {}".format(match_string))
         if rc != 0:
             return False
         elif stdout:
