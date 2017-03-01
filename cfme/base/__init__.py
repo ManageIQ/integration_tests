@@ -17,6 +17,9 @@ class Server(Navigatable, sentaku.Element):
     logged_in = sentaku.ContextualMethod()
     current_full_name = sentaku.ContextualMethod()
     current_username = sentaku.ContextualMethod()
+    print "========in server===="
+    print address
+    print login
 
 
 from . import ui, ssui  # NOQA last for import cycles

@@ -98,7 +98,7 @@ navigate_to = navigator.navigate
 
 class ViaSSUI(Implementation):
     def __str__(self):
-        return 'ViaUI'
+        return 'ViaSSUI'
 
     @cached_property
     def widgetastic(self):

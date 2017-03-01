@@ -2200,11 +2200,14 @@ stack = ApplianceStack()
 
 
 def get_or_create_current_appliance():
+    print "=======in method===="
     if stack.top is None:
         base_url = conf.env['base_url']
         if base_url is None or str(base_url.lower()) == 'none':
             raise ValueError('No IP address specified! Specified: {}'.format(repr(base_url)))
         stack.push(IPAppliance(urlparse(base_url), container=conf.env.get('container', None)))
+        print stack.top
+        print "-------stack----"
     return stack.top
 
 current_appliance = LocalProxy(get_or_create_current_appliance)
