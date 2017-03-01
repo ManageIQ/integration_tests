@@ -351,6 +351,26 @@ class DefaultView(Updateable, Navigatable):
     @classmethod
     def set_default_view(cls, button_group_names, defaults):
 
+        """This function sets default views for the objects.
+        Args:
+            * button_group_names: either the name of the button_group_name
+                                  or list of the button groups to set the
+                                  default view for.
+            * default: the default view to set. in case that button_group_names
+                       is a list, you can either set 1 view and it'll be set
+                       for all the button_group_names or you can use a list
+                       (default view per button_group_name).
+        Examples:
+            * set_default_view('Containers Providers, 'List View') --> set
+              'List View' default view to 'Containers Providers'
+            * set_default_view(['Images', 'Projects', 'Routes'], 'Tile View')
+              --> set 'Tile View' default view to 'Images', 'Projects' and 'Routes'
+            * set_default_view(['Images', 'Projects', 'Routes'],
+                               ['Tile View', 'Tile View', 'Grid View']) -->
+              set 'Tile View' default view to 'Images' and 'Projects' and 'Grid View'
+              default view to 'Routes'
+        """
+
         if not isinstance(button_group_names, (list, tuple)):
             button_group_names = [button_group_names]
         if not isinstance(defaults, (list, tuple)):
