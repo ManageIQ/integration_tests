@@ -1662,7 +1662,7 @@ class IPAppliance(object):
             else:
                 log_callback(
                     'Appliance must be restarted before the netapp functionality can be used.')
-        del self.is_storage_enabled
+        clear_property_cache(self, 'is_storage_enabled')
 
     def wait_for_db(self, timeout=600):
         """Waits for appliance database to be ready
