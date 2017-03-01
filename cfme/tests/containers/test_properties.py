@@ -113,7 +113,7 @@ TEST_OBJECTS = [
 
 @pytest.mark.parametrize('test_obj', TEST_OBJECTS,
                          ids=[obj.obj.__name__ for obj in TEST_OBJECTS])
-def test_properties(provider, test_obj):
+def test_properties(provider, test_obj, soft_assert):
 
     rows = navigate_and_get_rows(provider, test_obj.obj, test_obj.list_tbl, 2)
 
@@ -128,7 +128,6 @@ def test_properties(provider, test_obj):
     else:
         args = [(provider, ) for _ in rows]
 
-    errors = []
     for name, arg in zip(names, args):
 
         instance = test_obj.obj(name, *arg)
@@ -140,8 +139,5 @@ def test_properties(provider, test_obj):
             try:
                 soft_get(instance.summary.properties, field)
             except AttributeError:
-                errors.append('{} "{}" properties table has missing field - "{}"'
-                              .format(test_obj.obj.__name__, name, field))
-
-    if errors:
-        raise Exception('\n'.join(errors))
+                soft_assert(False, '{} "{}" properties table has missing field - "{}"'
+                                   .format(test_obj.obj.__name__, name, field))

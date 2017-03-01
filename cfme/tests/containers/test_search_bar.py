@@ -38,7 +38,7 @@ TEST_OBJECTS = [
 
 
 @pytest.mark.polarion('CMP-10577')
-def test_search_bar(provider):
+def test_search_bar(provider, soft_assert):
     """ <object> summary page - Search bar
     This test checks Search bar functionality on every object summary page
     Steps:
@@ -46,7 +46,6 @@ def test_search_bar(provider):
         * Inserts: Irregular symbol, '*' character, full search string, partial search string
         * Verify proper results
     """
-    errors = []
     for test_obj in TEST_OBJECTS:
         rows = navigate_and_get_rows(provider, test_obj.obj, test_obj.list_tbl, 1)
         if not rows:
@@ -67,17 +66,14 @@ def test_search_bar(provider):
                 results_row_names = ([r.name.text for r in test_obj.list_tbl.rows_as_list()]
                              if not sel.is_displayed_text("No Records Found.") else [])
                 if result:
-                    if result not in results_row_names:
-                        errors.append('Expected to get result "{}" '
-                                      'for search string "{}". search results: {}'
-                                      .format(result, search_string, results_row_names))
+                    soft_assert(result in results_row_names,
+                        'Expected to get result "{}" '
+                        'for search string "{}". search results: {}'
+                        .format(result, search_string, results_row_names))
                 else:
-                    if results_row_names:
-                        errors.append('Unexpected result for search string "{}", '
-                                      'Should not find records, search results: "{}"'
-                                      .format(search_string, results_row_names))
+                    soft_assert(not results_row_names,
+                        'Unexpected result for search string "{}", '
+                        'Should not find records, search results: "{}"'
+                        .format(search_string, results_row_names))
         finally:
             search.ensure_no_filter_applied()
-
-    if errors:
-        raise Exception('\n'.join(errors))

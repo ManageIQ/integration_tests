@@ -48,9 +48,8 @@ DATA_SETS = [
 
 
 @pytest.mark.polarion('CMP-10567')
-def test_breadcrumbs(provider):
+def test_breadcrumbs(provider, soft_assert):
 
-    errors = []
     for dataset in DATA_SETS:
 
         if current_version() < '5.7' and dataset.obj == Template:
@@ -65,16 +64,17 @@ def test_breadcrumbs(provider):
         sel.click(row)
 
         breadcrumb_elements = breadcrumbs()
-        if not breadcrumb_elements:
-            errors.append('Breadcrumbs not found in {} {} summary page'
-                .format(dataset.obj.__name__, instance_name))
+        soft_assert(breadcrumb_elements,
+                    'Breadcrumbs not found in {} {} summary page'
+                    .format(dataset.obj.__name__, instance_name))
         bread_names_2_element = {sel.text_sane(b): b for b in breadcrumb_elements}
 
         try:
             breadcrumb_element = soft_get(bread_names_2_element,
                                           dataset.obj_base_name, dict_=True)
         except:
-            errors.append('Could not find breadcrumb "{}" in {} {} summary page. breadcrumbs: {}'
+            soft_assert(False,
+                'Could not find breadcrumb "{}" in {} {} summary page. breadcrumbs: {}'
                 .format(dataset.obj_base_name, bread_names_2_element.keys(),
                         dataset.obj.__name__, instance_name))
 
@@ -82,9 +82,9 @@ def test_breadcrumbs(provider):
         sel.click(breadcrumb_element)
 
         # We verify the location as following since we want to prevent from name convention errors
-        if dataset.obj_base_name not in summary_title().lower():
-            errors.append('Breadcrumb link "{}" in {} {} page should navigate to '
-                          '{}s main page. navigated instead to: {}'
-                          .format(breadcrumb_name, dataset.obj.__name__,
-                                  instance_name, dataset.obj.__name__,
-                                  sel.current_url()))
+        soft_assert(dataset.obj_base_name in summary_title().lower(),
+            'Breadcrumb link "{}" in {} {} page should navigate to '
+            '{}s main page. navigated instead to: {}'
+            .format(breadcrumb_name, dataset.obj.__name__,
+                    instance_name, dataset.obj.__name__,
+                    sel.current_url()))
