@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 
-from manageiq_client.api import APIException
-
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure.provider import InfraProvider
@@ -31,83 +29,44 @@ _TEMPLATE_TORSO = """{
 """
 
 
-def service_catalogs(request, rest_api):
-    name = fauxfactory.gen_alphanumeric()
-    scls_data = [{
-        "name": "name_{}_{}".format(name, index),
-        "description": "description_{}_{}".format(name, index),
-        "service_templates": []
-    } for index in range(1, 5)]
+def service_catalogs(request, rest_api, num=5):
+    scls_data = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric()
+        scls_data.append({
+            'name': 'name_{}'.format(uniq),
+            'description': 'description_{}'.format(uniq),
+            'service_templates': []
+        })
 
-    scls = rest_api.collections.service_catalogs.action.add(*scls_data)
-    for scl in scls:
-        wait_for(
-            lambda: rest_api.collections.service_catalogs.find_by(name=scl.name),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [s.id for s in scls]
-        delete_scls = [s for s in rest_api.collections.service_catalogs if s.id in ids]
-        if len(delete_scls) != 0:
-            rest_api.collections.service_catalogs.action.delete(*delete_scls)
-
-    return scls
+    return _creating_skeleton(request, rest_api, 'service_catalogs', scls_data, col_action='add')
 
 
 def categories(request, rest_api, num=1):
-    ctg_data = [{
-        'name': 'test_category_{}_{}'.format(fauxfactory.gen_alphanumeric().lower(), _index),
-        'description': 'test_category_{}_{}'.format(fauxfactory.gen_alphanumeric().lower(), _index)
-    } for _index in range(0, num)]
-    ctgs = rest_api.collections.categories.action.create(*ctg_data)
-    for ctg in ctgs:
-        wait_for(
-            lambda: rest_api.collections.categories.find_by(description=ctg.description),
-            num_sec=180,
-            delay=10,
-        )
+    ctg_data = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric().lower()
+        ctg_data.append({
+            'name': 'test_category_{}'.format(uniq),
+            'description': 'test_category_{}'.format(uniq)
+        })
 
-    @request.addfinalizer
-    def _finished():
-        ids = [ctg.id for ctg in ctgs]
-        delete_ctgs = [ctg for ctg in rest_api.collections.categories
-            if ctg.id in ids]
-        if len(delete_ctgs) != 0:
-            rest_api.collections.categories.action.delete(*delete_ctgs)
-
-    return ctgs
+    return _creating_skeleton(request, rest_api, 'categories', ctg_data)
 
 
 def tags(request, rest_api, categories):
     # Category id, href or name needs to be specified for creating a new tag resource
     tags = []
-    for i, ctg in enumerate(categories):
+    for index, ctg in enumerate(categories):
+        uniq = fauxfactory.gen_alphanumeric().lower()
         refs = [{'id': ctg.id}, {'href': ctg.href}, {'name': ctg.name}]
-        data = {
-            'name': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
-            'description': 'test_tag_{}'.format(fauxfactory.gen_alphanumeric().lower()),
-            'category': refs[i % 3]
-        }
-        tags.append(data)
-    tags = rest_api.collections.tags.action.create(*tags)
-    for tag in tags:
-        wait_for(
-            lambda: rest_api.collections.tags.find_by(name=tag.name),
-            num_sec=180,
-            delay=10,
-        )
+        tags.append({
+            'name': 'test_tag_{}'.format(uniq),
+            'description': 'test_tag_{}'.format(uniq),
+            'category': refs[index % 3]
+        })
 
-    @request.addfinalizer
-    def _finished():
-        ids = [tag.id for tag in tags]
-        delete_tags = [tag for tag in rest_api.collections.tags if tag.id in ids]
-        if len(delete_tags) != 0:
-            rest_api.collections.tags.action.delete(*delete_tags)
-
-    return tags
+    return _creating_skeleton(request, rest_api, 'tags', tags)
 
 
 def dialog():
@@ -194,29 +153,18 @@ def service_data(request, rest_api, a_provider, dialog, service_catalogs):
 
 
 def services(request, rest_api, a_provider, dialog, service_catalogs):
-    service_data(request, rest_api, a_provider, dialog, service_catalogs)
-
-    try:
-        services = [_ for _ in rest_api.collections.services]
-        services[0]
-    except IndexError:
-        raise Exception("No options are selected")
-
-    @request.addfinalizer
-    def _finished():
-        services = [_ for _ in rest_api.collections.services]
-        if len(services) != 0:
-            rest_api.collections.services.action.delete(*services)
-
-    return services
+    new_service = service_data(request, rest_api, a_provider, dialog, service_catalogs)
+    rest_service = rest_api.collections.services.get(name=new_service['service_name'])
+    # tests expect iterable
+    return [rest_service]
 
 
-def rates(request, rest_api):
+def rates(request, rest_api, num=3):
     chargeback = rest_api.collections.chargebacks.get(rate_type='Compute')
     data = []
-    for _index in range(3):
+    for _ in range(num):
         req = {
-            'description': 'test_rate_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
+            'description': 'test_rate_{}'.format(fauxfactory.gen_alphanumeric()),
             'source': 'allocated',
             'group': 'cpu',
             'per_time': 'daily',
@@ -227,22 +175,7 @@ def rates(request, rest_api):
             req['chargeable_field_id'] = chargeback.id
         data.append(req)
 
-    rates = rest_api.collections.rates.action.create(*data)
-    for rate in data:
-        wait_for(
-            lambda: rest_api.collections.rates.find_by(description=rate.get('description')),
-            num_sec=180,
-            delay=10,
-        )
-
-    @request.addfinalizer
-    def _finished():
-        ids = [rate.id for rate in rates]
-        delete_rates = [rate for rate in rest_api.collections.rates if rate.id in ids]
-        if len(delete_rates) != 0:
-            rest_api.collections.rates.action.delete(*delete_rates)
-
-    return rates
+    return _creating_skeleton(request, rest_api, 'rates', data)
 
 
 def a_provider():
@@ -253,7 +186,7 @@ def vm(request, a_provider, rest_api):
     provider_rest = rest_api.collections.providers.get(name=a_provider.name)
     vm_name = deploy_template(
         a_provider.key,
-        "test_rest_vm_{}".format(fauxfactory.gen_alphanumeric(length=4)))
+        'test_rest_vm_{}'.format(fauxfactory.gen_alphanumeric(length=4)))
 
     @request.addfinalizer
     def _finished():
@@ -270,36 +203,42 @@ def vm(request, a_provider, rest_api):
     return vm_name
 
 
-def service_templates(request, rest_api, dialog):
+def service_templates(request, rest_api, dialog, num=4):
     catalog_items = []
-    for index in range(1, 5):
+    new_names = []
+    for _ in range(num):
+        new_name = 'item_{}'.format(fauxfactory.gen_alphanumeric())
+        new_names.append(new_name)
         catalog_items.append(
             CatalogItem(
-                item_type="Generic",
-                name="item_{}_{}".format(index, fauxfactory.gen_alphanumeric()),
-                description="my catalog", display_in=True,
+                item_type='Generic',
+                name=new_name,
+                description='my catalog',
+                display_in=True,
                 dialog=dialog.label)
         )
 
     for catalog_item in catalog_items:
         catalog_item.create()
 
-    try:
-        s_tpls = [_ for _ in rest_api.collections.service_templates]
-        s_tpls[0]
-    except IndexError:
-        raise Exception("There is no service template to be taken")
+    collection = rest_api.collections.service_templates
+
+    for new_name in new_names:
+        wait_for(lambda: collection.find_by(name=new_name), num_sec=180, delay=10)
+
+    s_tpls = [ent for ent in collection if ent.name in new_names]
 
     @request.addfinalizer
     def _finished():
-        s_tpls = [_ for _ in rest_api.collections.service_templates]
-        if len(s_tpls) != 0:
-            rest_api.collections.service_templates.action.delete(*s_tpls)
+        collection.reload()
+        to_delete = [ent for ent in collection if ent.name in new_names]
+        if len(to_delete) != 0:
+            collection.action.delete(*to_delete)
 
     return s_tpls
 
 
-def automation_requests_data(vm, requests_collection=False, approve=True):
+def automation_requests_data(vm, requests_collection=False, approve=True, num=4):
     # for creating automation request using /api/automation_requests
     automation_requests_col = {
         "uri_parts": {
@@ -334,15 +273,17 @@ def automation_requests_data(vm, requests_collection=False, approve=True):
         "auto_approve": approve
     }
     data = requests_col if requests_collection else automation_requests_col
-    return [data for _ in range(4)]
+    return [data for _ in range(num)]
 
 
 def groups(request, rest_api, role, tenant, num=1):
-    data = [{
-        "description": "group_description_{}".format(fauxfactory.gen_alphanumeric()),
-        "role": {"href": role.href},
-        "tenant": {"href": tenant.href}
-    } for index in range(0, num)]
+    data = []
+    for _ in range(num):
+        data.append({
+            "description": "group_description_{}".format(fauxfactory.gen_alphanumeric()),
+            "role": {"href": role.href},
+            "tenant": {"href": tenant.href}
+        })
 
     groups = _creating_skeleton(request, rest_api, "groups", data)
     if num == 1:
@@ -351,9 +292,9 @@ def groups(request, rest_api, role, tenant, num=1):
 
 
 def roles(request, rest_api, num=1):
-    data = [{
-        "name": "role_name_{}".format(fauxfactory.gen_alphanumeric())
-    } for index in range(0, num)]
+    data = []
+    for _ in range(num):
+        data.append({"name": "role_name_{}".format(fauxfactory.gen_alphanumeric())})
 
     roles = _creating_skeleton(request, rest_api, "roles", data)
     if num == 1:
@@ -363,27 +304,32 @@ def roles(request, rest_api, num=1):
 
 def tenants(request, rest_api, num=1):
     parent = rest_api.collections.tenants.get(name='My Company')
-    data = [{
-        'description': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
-        'name': 'test_tenants_{}_{}'.format(_index, fauxfactory.gen_alphanumeric()),
-        'divisible': 'true',
-        'use_config_for_attributes': 'false',
-        'parent': {'href': parent.href}
-    } for _index in range(0, num)]
+    data = []
+    for _ in range(num):
+        uniq = fauxfactory.gen_alphanumeric()
+        data.append({
+            'description': 'test_tenants_{}'.format(uniq),
+            'name': 'test_tenants_{}'.format(uniq),
+            'divisible': 'true',
+            'use_config_for_attributes': 'false',
+            'parent': {'href': parent.href}
+        })
 
-    tenants = _creating_skeleton(request, rest_api, "tenants", data)
+    tenants = _creating_skeleton(request, rest_api, 'tenants', data)
     if num == 1:
         return tenants.pop()
     return tenants
 
 
 def users(request, rest_api, num=1):
-    data = [{
-        "userid": "user_{}_{}".format(_index, fauxfactory.gen_alphanumeric(3)),
-        "name": "name_{}_{}".format(_index, fauxfactory.gen_alphanumeric()),
-        "password": "pass_{}_{}".format(_index, fauxfactory.gen_alphanumeric(3)),
-        "group": {"description": "EvmGroup-user"}
-    } for _index in range(0, num)]
+    data = []
+    for _ in range(num):
+        data.append({
+            "userid": "user_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "name": "name_{}".format(fauxfactory.gen_alphanumeric()),
+            "password": "pass_{}".format(fauxfactory.gen_alphanumeric(3)),
+            "group": {"description": "EvmGroup-user"}
+        })
 
     users = _creating_skeleton(request, rest_api, "users", data)
     if num == 1:
@@ -391,12 +337,16 @@ def users(request, rest_api, num=1):
     return users
 
 
-def _creating_skeleton(request, rest_api, col_name, col_data):
+def _creating_skeleton(request, rest_api, col_name, col_data, col_action='create'):
     collection = getattr(rest_api.collections, col_name)
-    if "create" not in collection.action.all:
+    try:
+        action = getattr(collection.action, col_action)
+    except AttributeError:
         raise OptionNotAvailable(
-            "Create action for {} is not implemented in this version".format(col_name))
-    entities = collection.action.create(*col_data)
+            "Action `{}` for {} is not implemented in this version".format(col_action, col_name))
+
+    entities = action(*col_data)
+    action_status = rest_api.response.status_code
     for entity in col_data:
         if entity.get('name', None):
             wait_for(lambda: collection.find_by(name=entity.get('name')), num_sec=180, delay=10)
@@ -414,6 +364,8 @@ def _creating_skeleton(request, rest_api, col_name, col_data):
         if len(delete_entities) != 0:
             collection.action.delete(*delete_entities)
 
+    # make sure action status code is preserved
+    rest_api.response.status_code = action_status
     return entities
 
 
@@ -436,59 +388,39 @@ def mark_vm_as_template(rest_api, provider, vm_name):
 
 
 def arbitration_settings(request, rest_api, num=2):
-    collection = rest_api.collections.arbitration_settings
-    body = []
+    data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
-        body.append({
+        data.append({
             'name': 'test_settings_{}'.format(uniq),
             'display_name': 'Test Settings {}'.format(uniq)})
-    response = collection.action.create(*body)
 
-    @request.addfinalizer
-    def _finished():
-        try:
-            collection.action.delete(*response)
-        except APIException:
-            # settings can be deleted by tests, just log warning
-            logger.warning("Failed to delete arbitration settings.")
-
-    return response
+    return _creating_skeleton(request, rest_api, 'arbitration_settings', data)
 
 
 def orchestration_templates(request, rest_api, num=2):
-    collection = rest_api.collections.orchestration_templates
-    body = []
+    data = []
     for _ in range(num):
         uniq = fauxfactory.gen_alphanumeric(5)
-        body.append({
+        data.append({
             'name': 'test_{}'.format(uniq),
             'description': 'Test Template {}'.format(uniq),
             'type': 'OrchestrationTemplateCfn',
             'orderable': False,
             'draft': False,
             'content': _TEMPLATE_TORSO.replace('CloudFormation', uniq)})
-    response = collection.action.create(*body)
 
-    @request.addfinalizer
-    def _finished():
-        try:
-            collection.action.delete(*response)
-        except APIException:
-            # settings can be deleted by tests, just log warning
-            logger.warning("Failed to delete orchestration templates.")
-
-    return response
+    return _creating_skeleton(request, rest_api, 'orchestration_templates', data)
 
 
 def arbitration_profiles(request, rest_api, a_provider, num=2):
     provider = rest_api.collections.providers.get(name=a_provider.name)
-    body = []
+    data = []
     providers = [{'id': provider.id}, {'href': provider.href}]
-    for i in range(num):
-        body.append({
+    for index in range(num):
+        data.append({
             'name': 'test_settings_{}'.format(fauxfactory.gen_alphanumeric(5)),
-            'provider': providers[i % 2]
+            'provider': providers[index % 2]
         })
 
-    return _creating_skeleton(request, rest_api, 'arbitration_profiles', body)
+    return _creating_skeleton(request, rest_api, 'arbitration_profiles', data)
