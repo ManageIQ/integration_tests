@@ -11,7 +11,8 @@ from utils.appliance import Navigatable
 from utils.appliance.implementations.ui import navigator, CFMENavigateStep, navigate_to
 from . import CloudIntelReportsView
 
-from widgetastic.widget import Text, Checkbox, View
+from widgetastic.utils import ParametrizedLocator
+from widgetastic.widget import Text, Checkbox, View, ParametrizedView, Table as VanillaTable
 from widgetastic.exceptions import NoSuchElementException
 from widgetastic_manageiq import MultiBoxSelect, Table, PaginationPane
 from widgetastic_patternfly import Button, Input, BootstrapSelect, Tab
@@ -111,12 +112,12 @@ class CustomReportDetailsView(CloudIntelReportsView):
     reload_button = Button(title="Reload current display")
 
     @View.nested
-    class report_info(Tab):
+    class report_info(Tab):  # noqa
         TAB_NAME = "Report Info"
         queue_button = Button("Queue")
 
     @View.nested
-    class saved_reports(Tab):
+    class saved_reports(Tab):  # noqa
         TAB_NAME = "Saved Reports"
         table = Table(".//div[@id='records_div']/table")
         paginator = PaginationPane()
@@ -163,7 +164,7 @@ class AllCustomReportsView(CloudIntelReportsView):
                 "My Company (All EVM Groups)",
                 "Custom"
             ] and
-            self.title == "Custom Reports"
+            self.title.text == "Custom Reports"
         )
 
 
@@ -234,7 +235,7 @@ class CustomReport(Updateable, Navigatable):
             view.flash.assert_no_error()
         else:
             # This check needs because after deleting the last custom report
-            # whole "My Company (All EVM Groups)" branch in the tree will be removed
+            # whole "My Company (All EVM Groups)" branch in the tree will be removed.
             if len(all_custom_reports) > 1:
                 view = self.create_view(AllCustomReportsView)
                 assert view.is_displayed
@@ -249,8 +250,8 @@ class CustomReport(Updateable, Navigatable):
             for page in view.saved_reports.paginator.pages():
                 for row in view.saved_reports.table.rows():
                     results.append(
-                        # CustomSavedReport(self, row.run_at.text.encode("utf-8"), self.is_candu)
-                        row
+                        CustomSavedReport(self, row.run_at.text.encode("utf-8"),
+                            row.queued_at.text.encode("utf-8"), self.is_candu)
                     )
         except NoSuchElementException:
             pass
@@ -282,53 +283,97 @@ class CustomReport(Updateable, Navigatable):
             )
 
 
+class CustomSavedReportDetailsView(CloudIntelReportsView):
+    title = Text("#explorer_title_text")
+    table = VanillaTable(".//div[@id='report_html_div']/table")
+    paginator = PaginationPane()
+
+    @ParametrizedView.nested
+    class download(ParametrizedView):  # noqa
+        PARAMETERS = ("format", )
+        ALL_LINKS = ".//a[starts-with(@name, 'download_choice__render_report_')]"
+        download_button = Button(title="Download")
+        link = Text(ParametrizedLocator(".//a[normalize-space()={format|quote}]"))
+
+        def __init__(self, *args, **kwargs):
+            ParametrizedView.__init__(self, *args, **kwargs)
+            self.download_button.click()
+            self.link.click()
+
+        @classmethod
+        def all(cls, browser):
+            return [(browser.text(e), ) for e in browser.elements(cls.ALL_LINKS)]
+
+    @property
+    def is_displayed(self):
+        return (
+            self.in_intel_reports and
+            self.reports.is_opened and
+            self.reports.tree.currently_selected == [
+                "All Reports",
+                "My Company (All EVM Groups)",
+                "Custom",
+                self.context["object"].report.menu_name,
+                self.context["object"].datetime_in_tree
+            ] and
+            self.title.text == 'Saved Report "{} - {}"'.format(
+                self.context["object"].report.title,
+                self.context["object"].queued_datetime_in_title
+            )
+        )
+
+
 class CustomSavedReport(Updateable, Pretty, Navigatable):
     """Custom Saved Report. Enables us to retrieve data from the table.
 
     Args:
         report: Report that we have data from.
-        datetime: Datetime of "Run At" of the report. That's what :py:func:`queue_canned_report`
-            returns.
+        run_datetime: Datetime of "Run At" of the report. That's what :py:func:`queue` returns.
+        queued_datetime: Datetime of "Queued At" of the report.
         candu: If it is a C&U report, in that case it uses a different table.
     """
-    _table_loc = "//div[@id='report_html_div']/table[thead]"
 
-    pretty_attrs = ['report', 'datetime']
+    pretty_attrs = ["report", "run_datetime", "queued_datetime"]
 
-    def __init__(self, report, datetime, candu=False, appliance=None):
+    def __init__(self, report, run_datetime, queued_datetime, candu=False, appliance=None):
         Navigatable.__init__(self, appliance=appliance)
         self.report = report
-        self.datetime = datetime
+        self.run_datetime = run_datetime
+        self.queued_datetime_in_title = parsetime.from_american_with_utc(
+            queued_datetime).to_saved_report_title_format()
         self.candu = candu
-        self.datetime_in_tree = version.pick({
-            "5.6": self.datetime,
-            "5.7": parsetime.from_american_with_utc(self.datetime).to_iso_with_utc()
-        })
 
     @property
-    def _table(self):
-        """This is required to prevent the StaleElementReference for different instances"""
-        if self.candu:
-            return CAndUGroupTable(self._table_loc)
-        else:
-            return Table(self._table_loc)
+    def datetime_in_tree(self):
+        return version.pick({
+            "5.6": self.run_datetime,
+            "5.7": parsetime.from_american_with_utc(self.run_datetime).to_iso_with_utc()
+        })
+
+    # @property
+    # def _table(self):
+    #     """This is required to prevent the StaleElementReference for different instances"""
+    #     if self.candu:
+    #         return CAndUGroupTable(self._table_loc)
+    #     else:
+    #         return Table(self._table_loc)
 
     @cached_property
     def data(self):
         """Retrieves data from the saved report.
 
-        Returns: :py:class:`SavedReportData` if it is not a candu report. If it is, then it returns
-            a list of groups in the table.
+        Returns: :py:class:`SavedReportData`.
         """
-        navigate_to(self, "Details")
-        if isinstance(self._table, CAndUGroupTable):
-            return list(self._table.groups())
+        view = navigate_to(self, "Details")
+        view.paginator.set_items_per_page("1000 items")
+        # if isinstance(self._table, CAndUGroupTable):
+        #     return list(self._table.groups())
         try:
-            headers = tuple([sel.text(hdr).encode("utf-8") for hdr in self._table.headers])
+            headers = tuple([hdr.encode("utf-8") for hdr in view.table.headers])
             body = []
-            for page in paginator.pages():
-                for row in self._table.rows():
-                    row_data = tuple([sel.text(row[header]).encode("utf-8") for header in headers])
+            for page in view.paginator.pages():
+                for row in view.table.rows():
+                    row_data = tuple([row[header].text.encode("utf-8") for header in headers])
                     body.append(row_data)
         except NoSuchElementException:
             # No data found
@@ -337,10 +382,10 @@ class CustomSavedReport(Updateable, Pretty, Navigatable):
             return SavedReportData(headers, body)
 
     def download(self, extension):
-        navigate_to(self, "Details")
+        view = navigate_to(self, "Details")
         extensions_mapping = {'txt': 'Text', 'csv': 'CSV', 'pdf': 'PDF'}
         try:
-            download_btn("Download as {}".format(extensions_mapping[extension]))
+            view.download("Download as {}".format(extensions_mapping[extension]))
         except:
             raise ValueError("Unknown extention. check the extentions_mapping")
 
@@ -352,7 +397,7 @@ class SavedReportData(Pretty):
         headers: Tuple with header columns.
         body: List of tuples with body rows.
     """
-    pretty_attrs = ['headers', 'body']
+    pretty_attrs = ["headers", "body"]
 
     def __init__(self, headers, body):
         self.headers = headers
@@ -440,3 +485,18 @@ class CustomReportDetails(CFMENavigateStep):
             self.obj.menu_name
         )
         self.view.report_info.select()
+
+
+@navigator.register(CustomSavedReport, "Details")
+class CustomSavedReportDetails(CFMENavigateStep):
+    VIEW = CustomSavedReportDetailsView
+    prerequisite = NavigateToAttribute("appliance.server", "CloudIntelReports")
+
+    def step(self):
+        self.view.reports.tree.click_path(
+            "All Reports",
+            "My Company (All EVM Groups)",
+            "Custom",
+            self.obj.report.menu_name,
+            self.obj.datetime_in_tree,
+        )

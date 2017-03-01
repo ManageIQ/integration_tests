@@ -5,7 +5,7 @@ import yaml
 
 from cfme.intelligence.reports.dashboards import Dashboard
 from cfme.intelligence.reports.reports import CustomReport
-from cfme.intelligence.reports.schedules import Schedule
+# from cfme.intelligence.reports.schedules import Schedule
 from cfme.intelligence.reports.widgets.menu_widgets import MenuWidget
 from cfme.intelligence.reports.widgets.report_widgets import ReportWidget
 from cfme.intelligence.reports.widgets.chart_widgets import ChartWidget

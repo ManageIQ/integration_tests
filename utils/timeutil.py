@@ -23,6 +23,7 @@ class parsetime(_datetime):  # NOQA
     iso_date_only_format = "%Y-%m-%d"
     request_format = "%Y-%m-%d-%H-%M-%S"
     long_date_format = "%B %d, %Y %H:%M"
+    saved_report_title_format = "%a, %d %b %Y %H:%M:%S +0000"
 
     @classmethod
     def _parse(cls, fmt, time_string):
@@ -202,6 +203,27 @@ class parsetime(_datetime):  # NOQA
                 Returns: :py:class`str` object
                 """
         return self.strftime(self.long_date_format)
+
+    @classmethod
+    def from_saved_report_title_format(cls, time_string):
+        """ Convert the string representation of the time into parsetime()
+
+                Format here is '%a, %d %b %Y %H:%M:%S +0000'.
+
+                Args:
+                    time_string: String with time to parse
+                Returns: :py:class`utils.timeutil.datetime()` object
+                """
+        return cls._parse(cls.saved_report_title_format, time_string)
+
+    def to_saved_report_title_format(self):
+        """ Convert the this object to string representation in Saved Report title.
+
+                Format here is '%a, %d %b %Y %H:%M:%S +0000'
+
+                Returns: :py:class`str` object
+                """
+        return self.strftime(self.saved_report_title_format)
 
 
 def nice_seconds(t_s):
